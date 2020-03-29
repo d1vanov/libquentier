@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,20 +21,6 @@
 
 namespace quentier {
 
-ResourceRecognitionIndexItemData::ResourceRecognitionIndexItemData() :
-    m_x(-1),
-    m_y(-1),
-    m_h(-1),
-    m_w(-1),
-    m_offset(-1),
-    m_duration(-1),
-    m_strokeList(),
-    m_textItems(),
-    m_objectItems(),
-    m_shapeItems(),
-    m_barcodeItems()
-{}
-
 bool ResourceRecognitionIndexItemData::isValid() const
 {
     if (m_textItems.isEmpty() && m_objectItems.isEmpty() &&
@@ -44,32 +30,24 @@ bool ResourceRecognitionIndexItemData::isValid() const
         return false;
     }
 
-    for(auto it = m_textItems.constBegin(),
-        end = m_textItems.constEnd(); it != end; ++it)
+    for(const auto & textItem: qAsConst(m_textItems))
     {
-        const TextItem & textItem = *it;
-
-        if (textItem.m_weight < 0)
-        {
+        if (textItem.m_weight < 0) {
             QNTRACE("Resource recognition index item contains "
-                    << "text item with weight less than 0: "
-                    << textItem.m_text << ", weight = "
-                    << textItem.m_weight);
+                << "text item with weight less than 0: "
+                << textItem.m_text << ", weight = "
+                << textItem.m_weight);
             return false;
         }
     }
 
-    for(auto it = m_objectItems.constBegin(),
-        end = m_objectItems.constEnd(); it != end; ++it)
+    for(const auto & objectItem: qAsConst(m_objectItems))
     {
-        const ObjectItem & objectItem = *it;
-
-        if (objectItem.m_weight < 0)
-        {
+        if (objectItem.m_weight < 0) {
             QNTRACE("Resource recognition index item contains "
-                    << "object item with weight less than 0: "
-                    << objectItem.m_objectType << ", weight = "
-                    << objectItem.m_weight);
+                << "object item with weight less than 0: "
+                << objectItem.m_objectType << ", weight = "
+                << objectItem.m_weight);
             return false;
         }
 
@@ -89,22 +67,18 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (objectItem.m_objectType != QStringLiteral("car")))
         {
             QNTRACE("Resource recognition index object item has "
-                    << "invalid object type: " << objectItem.m_objectType);
+                << "invalid object type: " << objectItem.m_objectType);
             return false;
         }
     }
 
-    for(auto it = m_shapeItems.constBegin(),
-        end = m_shapeItems.constEnd(); it != end; ++it)
+    for(const auto & shapeItem: qAsConst(m_shapeItems))
     {
-        const ShapeItem & shapeItem = *it;
-
-        if (shapeItem.m_weight < 0)
-        {
+        if (shapeItem.m_weight < 0) {
             QNTRACE("Resource recognition index item contains "
-                    << "shape item with weight less than 0: "
-                    << shapeItem.m_shapeType << ", weight = "
-                    << shapeItem.m_weight);
+                << "shape item with weight less than 0: "
+                << shapeItem.m_shapeType << ", weight = "
+                << shapeItem.m_weight);
             return false;
         }
 
@@ -117,22 +91,18 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (shapeItem.m_shapeType != QStringLiteral("polyline")))
         {
             QNTRACE("Resource recognition index shape item has "
-                    << "invalid shape type: " << shapeItem.m_shapeType);
+                << "invalid shape type: " << shapeItem.m_shapeType);
             return false;
         }
     }
 
-    for(auto it = m_barcodeItems.constBegin(),
-        end = m_barcodeItems.constEnd(); it != end; ++it)
+    for(const auto & barcodeItem: qAsConst(m_barcodeItems))
     {
-        const BarcodeItem & barcodeItem = *it;
-
-        if (barcodeItem.m_weight < 0)
-        {
+        if (barcodeItem.m_weight < 0) {
             QNTRACE("Resource recognition index item contains "
-                    << "barcode item with weight less than 0: "
-                    << barcodeItem.m_barcode << ", weight = "
-                    << barcodeItem.m_weight);
+                << "barcode item with weight less than 0: "
+                << barcodeItem.m_barcode << ", weight = "
+                << barcodeItem.m_weight);
             return false;
         }
     }

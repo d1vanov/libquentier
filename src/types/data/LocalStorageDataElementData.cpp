@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,12 +28,14 @@ LocalStorageDataElementData::LocalStorageDataElementData() :
 LocalStorageDataElementData::~LocalStorageDataElementData()
 {}
 
-LocalStorageDataElementData::LocalStorageDataElementData(const LocalStorageDataElementData & other) :
+LocalStorageDataElementData::LocalStorageDataElementData(
+        const LocalStorageDataElementData & other) :
     QSharedData(other),
     m_localUid(other.m_localUid)
 {}
 
-LocalStorageDataElementData::LocalStorageDataElementData(LocalStorageDataElementData && other) :
+LocalStorageDataElementData::LocalStorageDataElementData(
+        LocalStorageDataElementData && other) :
     QSharedData(std::move(other)),
     m_localUid(std::move(other.m_localUid))
 {}

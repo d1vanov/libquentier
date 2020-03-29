@@ -36,7 +36,7 @@ public:
     NoteData(const NoteData & other);
     NoteData(NoteData && other);
     NoteData(const qevercloud::Note & other);
-    virtual ~NoteData();
+    virtual ~NoteData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -73,8 +73,8 @@ public:
     QByteArray                      m_thumbnailData;
 
 private:
-    NoteData & operator=(const NoteData & other)  = delete;
-    NoteData & operator=(NoteData && other)  = delete;
+    NoteData & operator=(const NoteData & other) = delete;
+    NoteData & operator=(NoteData && other) = delete;
 };
 
 } // namespace quentier

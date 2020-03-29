@@ -39,8 +39,8 @@ public:
     int                             m_indexInNotebook;
 
 private:
-    SharedNotebookData & operator=(const SharedNotebookData & other)  = delete;
-    SharedNotebookData & operator=(SharedNotebookData && other)  = delete;
+    SharedNotebookData & operator=(const SharedNotebookData & other) = delete;
+    SharedNotebookData & operator=(SharedNotebookData && other) = delete;
 };
 
 } // namespace quentier

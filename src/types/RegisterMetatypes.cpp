@@ -17,23 +17,26 @@
  */
 
 #include "../src/synchronization/SynchronizationShared.h"
-#include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Account.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/User.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
+
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
+#include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
+#include <quentier/types/Resource.h>
+#include <quentier/types/LinkedNotebook.h>
+#include <quentier/types/RegisterMetatypes.h>
+#include <quentier/types/SavedSearch.h>
+#include <quentier/types/SharedNotebook.h>
+#include <quentier/types/Tag.h>
+#include <quentier/types/User.h>
+
 #include <quentier_private/utility/IKeychainService.h>
+
 #include <QMetaType>
-#include <QSqlError>
 #include <QSharedPointer>
+#include <QSqlError>
 #include <QVector>
 
 namespace quentier {
