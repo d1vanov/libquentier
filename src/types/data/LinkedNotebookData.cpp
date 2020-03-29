@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -63,16 +63,18 @@ bool LinkedNotebookData::checkParameters(ErrorString & errorDescription) const
 {
     if (!m_qecLinkedNotebook.guid.isSet())
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("LinkedNotebookData",
-                                                   "Linked notebook's guid "
-                                                   "is not set"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "LinkedNotebookData",
+            "Linked notebook's guid is not set"));
+
         return false;
     }
     else if (!checkGuid(m_qecLinkedNotebook.guid.ref()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("LinkedNotebookData",
-                                                   "Linked notebook's guid "
-                                                   "is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "LinkedNotebookData",
+            "Linked notebook's guid is invalid"));
+
         errorDescription.details() = m_qecLinkedNotebook.guid.ref();
         return false;
     }
@@ -81,9 +83,10 @@ bool LinkedNotebookData::checkParameters(ErrorString & errorDescription) const
     {
         if (m_qecLinkedNotebook.shareName->isEmpty())
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("LinkedNotebookData",
-                                                       "Linked notebook's custom "
-                                                       "name is empty"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "LinkedNotebookData",
+                "Linked notebook's custom name is empty"));
+
             return false;
         }
         else
@@ -103,11 +106,11 @@ bool LinkedNotebookData::checkParameters(ErrorString & errorDescription) const
 
             if (!nonSpaceCharFound)
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("LinkedNotebookData",
-                                                           "Linked notebook's "
-                                                           "custom name must "
-                                                           "contain non-whitespace "
-                                                           "characters"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "LinkedNotebookData",
+                    "Linked notebook's custom name must contain non-whitespace "
+                    "characters"));
+
                 return false;
             }
         }
@@ -119,7 +122,7 @@ bool LinkedNotebookData::checkParameters(ErrorString & errorDescription) const
 bool LinkedNotebookData::operator==(const LinkedNotebookData & other) const
 {
     return (m_qecLinkedNotebook == other.m_qecLinkedNotebook) &&
-           (m_isDirty == other.m_isDirty);
+        (m_isDirty == other.m_isDirty);
 }
 
 bool LinkedNotebookData::operator!=(const LinkedNotebookData & other) const

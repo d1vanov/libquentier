@@ -41,8 +41,8 @@ public:
     int                     m_indexInNote;
 
 private:
-    SharedNoteData & operator=(const SharedNoteData & other)  = delete;
-    SharedNoteData & operator=(SharedNoteData && other)  = delete;
+    SharedNoteData & operator=(const SharedNoteData & other) = delete;
+    SharedNoteData & operator=(SharedNoteData && other) = delete;
 };
 
 } // namespace quentier

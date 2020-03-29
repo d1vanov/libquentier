@@ -45,7 +45,10 @@ public:
     QString     m_displayName;
 
     Account::Type   m_accountType = Account::Type::Local;
-    Account::EvernoteAccountType    m_evernoteAccountType = Account::EvernoteAccountType::Free;
+
+    Account::EvernoteAccountType    m_evernoteAccountType =
+        Account::EvernoteAccountType::Free;
+
     qevercloud::UserID  m_userId = -1;
 
     QString     m_evernoteHost;

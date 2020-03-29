@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,13 +29,15 @@ NoteStoreDataElementData::NoteStoreDataElementData() :
 NoteStoreDataElementData::~NoteStoreDataElementData()
 {}
 
-NoteStoreDataElementData::NoteStoreDataElementData(const NoteStoreDataElementData & other) :
+NoteStoreDataElementData::NoteStoreDataElementData(
+        const NoteStoreDataElementData & other) :
     LocalStorageDataElementData(other),
     m_isDirty(other.m_isDirty),
     m_isLocal(other.m_isLocal)
 {}
 
-NoteStoreDataElementData::NoteStoreDataElementData(NoteStoreDataElementData && other) :
+NoteStoreDataElementData::NoteStoreDataElementData(
+        NoteStoreDataElementData && other) :
     LocalStorageDataElementData(std::move(other)),
     m_isDirty(std::move(other.m_isDirty)),
     m_isLocal(std::move(other.m_isLocal))

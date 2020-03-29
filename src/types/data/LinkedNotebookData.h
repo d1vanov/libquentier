@@ -48,8 +48,8 @@ public:
     bool                          m_isDirty;
 
 private:
-    LinkedNotebookData & operator=(const LinkedNotebookData & other)  = delete;
-    LinkedNotebookData & operator=(LinkedNotebookData && other)  = delete;
+    LinkedNotebookData & operator=(const LinkedNotebookData & other) = delete;
+    LinkedNotebookData & operator=(LinkedNotebookData && other) = delete;
 };
 
 } // namespace quentier

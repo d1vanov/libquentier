@@ -35,7 +35,7 @@ public:
     SavedSearchData(SavedSearchData && other);
     SavedSearchData(const qevercloud::SavedSearch & other);
     SavedSearchData(qevercloud::SavedSearch && other);
-    virtual ~SavedSearchData();
+    virtual ~SavedSearchData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -46,8 +46,8 @@ public:
     qevercloud::SavedSearch     m_qecSearch;
 
 private:
-    SavedSearchData & operator=(const SavedSearchData & other)  = delete;
-    SavedSearchData & operator=(SavedSearchData && other)  = delete;
+    SavedSearchData & operator=(const SavedSearchData & other) = delete;
+    SavedSearchData & operator=(SavedSearchData && other) = delete;
 };
 
 } // namespace quentier

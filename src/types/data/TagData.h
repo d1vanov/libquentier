@@ -47,8 +47,8 @@ public:
     qevercloud::Optional<QString>   m_parentLocalUid;
 
 private:
-    TagData & operator=(const TagData & other)  = delete;
-    TagData & operator=(TagData && other)  = delete;
+    TagData & operator=(const TagData & other) = delete;
+    TagData & operator=(TagData && other) = delete;
 };
 
 } // namespace quentier

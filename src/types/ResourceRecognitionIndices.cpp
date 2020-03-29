@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndices.h>
+
 #include "data/ResourceRecognitionIndicesData.h"
 
 namespace quentier {
@@ -107,7 +108,8 @@ QVector<ResourceRecognitionIndexItem> ResourceRecognitionIndices::items() const
     return d->m_items;
 }
 
-bool ResourceRecognitionIndices::setData(const QByteArray & rawRecognitionIndicesData)
+bool ResourceRecognitionIndices::setData(
+    const QByteArray & rawRecognitionIndicesData)
 {
     return d->setData(rawRecognitionIndicesData);
 }
@@ -180,10 +182,8 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
     if (!d->m_items.isEmpty())
     {
         strm << "  recognition items: \n";
-        for(auto it = d->m_items.constBegin(),
-            end = d->m_items.constEnd(); it != end; ++it)
-        {
-            strm << *it << "\n";
+        for(const auto & item: qAsConst(d->m_items)) {
+            strm << item << "\n";
         }
         strm << "\n";
     }

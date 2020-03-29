@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,38 +20,38 @@
 #define LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDEX_ITEM_DATA_H
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
+
 #include <QSharedData>
-#include <QVector>
 #include <QString>
+#include <QVector>
 
 namespace quentier {
+
 class Q_DECL_HIDDEN ResourceRecognitionIndexItemData: public QSharedData
 {
 public:
-    ResourceRecognitionIndexItemData();
-
     bool isValid() const;
 
-    int m_x;
-    int m_y;
-    int m_h;
-    int m_w;
+    int m_x = -1;
+    int m_y = -1;
+    int m_h = -1;
+    int m_w = -1;
 
     int m_offset;
     int m_duration;
 
     QVector<int>    m_strokeList;
 
-    typedef ResourceRecognitionIndexItem::TextItem TextItem;
+    using TextItem = ResourceRecognitionIndexItem::TextItem;
     QVector<TextItem>   m_textItems;
 
-    typedef ResourceRecognitionIndexItem::ObjectItem ObjectItem;
+    using ObjectItem = ResourceRecognitionIndexItem::ObjectItem;
     QVector<ObjectItem> m_objectItems;
 
-    typedef ResourceRecognitionIndexItem::ShapeItem ShapeItem;
+    using ShapeItem = ResourceRecognitionIndexItem::ShapeItem;
     QVector<ShapeItem>  m_shapeItems;
 
-    typedef ResourceRecognitionIndexItem::BarcodeItem BarcodeItem;
+    using BarcodeItem = ResourceRecognitionIndexItem::BarcodeItem;
     QVector<BarcodeItem>    m_barcodeItems;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_ERROR_STRING_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_ERROR_STRING_DATA_H
 
-#include <QStringList>
 #include <QSharedData>
+#include <QStringList>
 
 namespace quentier {
 

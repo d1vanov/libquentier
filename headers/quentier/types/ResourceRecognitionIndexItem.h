@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
+
 #include <QByteArray>
 #include <QSharedDataPointer>
 

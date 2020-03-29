@@ -33,15 +33,15 @@ public:
     ResourceData(ResourceData && other);
     ResourceData(const qevercloud::Resource & other);
     ResourceData(qevercloud::Resource && other);
-    virtual ~ResourceData();
+    virtual ~ResourceData() override;
 
     qevercloud::Resource            m_qecResource;
     int                             m_indexInNote;
     qevercloud::Optional<QString>   m_noteLocalUid;
 
 private:
-    ResourceData & operator=(const ResourceData & other)  = delete;
-    ResourceData & operator=(ResourceData && other)  = delete;
+    ResourceData & operator=(const ResourceData & other) = delete;
+    ResourceData & operator=(ResourceData && other) = delete;
 };
 
 } // namespace quentier

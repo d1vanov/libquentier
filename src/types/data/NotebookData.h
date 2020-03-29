@@ -36,7 +36,7 @@ public:
     NotebookData(const qevercloud::Notebook & other);
     NotebookData(qevercloud::Notebook && other);
 
-    virtual ~NotebookData();
+    virtual ~NotebookData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -49,8 +49,8 @@ public:
     qevercloud::Optional<QString>   m_linkedNotebookGuid;
 
 private:
-    NotebookData & operator=(const NotebookData & other)  = delete;
-    NotebookData & operator=(NotebookData && other)  = delete;
+    NotebookData & operator=(const NotebookData & other) = delete;
+    NotebookData & operator=(NotebookData && other) = delete;
 };
 
 } // namespace quentier
