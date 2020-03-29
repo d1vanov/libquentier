@@ -119,9 +119,17 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
 
     if (m_qecNotebook.sharedNotebooks.isSet())
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         for(const auto & sharedNotebook:
             qAsConst(m_qecNotebook.sharedNotebooks.ref()))
         {
+#else
+        for(auto it = m_qecNotebook.sharedNotebooks.ref().constBegin(),
+            end = m_qecNotebook.sharedNotebooks.ref().constEnd();
+            it != end; ++it)
+        {
+            const auto & sharedNotebook = *it;
+#endif
             if (!sharedNotebook.id.isSet())
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
