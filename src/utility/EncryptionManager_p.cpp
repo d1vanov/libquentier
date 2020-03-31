@@ -30,6 +30,8 @@
 #include <openssl/evp.h>
 
 #include <QCryptographicHash>
+#include <QDebug>
+#include <QTextStream>
 
 #include <stdlib.h>
 
@@ -38,6 +40,25 @@ namespace quentier {
 #ifdef _MSC_VER
 #pragma warning(disable:4351)
 #endif
+
+#define PRINT_SALT_KIND(strm, kind)                                            \
+    using SaltKind = EncryptionManagerPrivate::SaltKind;                       \
+    switch(kind)                                                               \
+    {                                                                          \
+    case SaltKind::SALT:                                                       \
+        strm << "SALT";                                                        \
+        break;                                                                 \
+    case SaltKind::SALTMAC:                                                    \
+        strm << "SALTMAC";                                                     \
+        break;                                                                 \
+    case SaltKind::IV:                                                         \
+        strm << "IV";                                                          \
+        break;                                                                 \
+    default:                                                                   \
+        strm << "Unknown (" << static_cast<qint64>(kind) << ")";               \
+        break;                                                                 \
+    }                                                                          \
+// PRINT_SALT_KIND
 
 EncryptionManagerPrivate::EncryptionManagerPrivate() :
     m_salt(),
@@ -926,6 +947,19 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
     }
 
     return (crc ^ (-1));
+}
+
+QDebug & operator<<(QDebug & dbg, const EncryptionManagerPrivate::SaltKind kind)
+{
+    PRINT_SALT_KIND(dbg, kind)
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const EncryptionManagerPrivate::SaltKind kind)
+{
+    PRINT_SALT_KIND(strm, kind)
+    return strm;
 }
 
 } // namespace quentier

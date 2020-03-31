@@ -2018,7 +2018,8 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
                                             *m_pSavedSearchSyncCache, m_syncedGuids,
                                             QString());
 
-    int expungerTestResult = -1;
+    EventLoopWithExitStatus::ExitStatus expungerTestStatus =
+        EventLoopWithExitStatus::ExitStatus::Failure;
     {
         QTimer timer;
         timer.setInterval(MAX_ALLOWED_MILLISECONDS);
@@ -2038,18 +2039,15 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
 
         timer.start();
         slotInvokingTimer.singleShot(0, &expunger, SLOT(start()));
-        expungerTestResult = loop.exec();
+        Q_UNUSED(loop.exec())
+        expungerTestStatus = loop.exitStatus();
     }
 
-    if (expungerTestResult == -1) {
-        QFAIL("Internal error: incorrect return status from "
-              "FullSyncStaleDataItemsExpunger");
-    }
-    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Failure) {
+    if (expungerTestStatus == EventLoopWithExitStatus::ExitStatus::Failure) {
         QFAIL("Detected failure during the asynchronous loop processing "
               "in FullSyncStaleDataItemsExpunger");
     }
-    else if (expungerTestResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+    else if (expungerTestStatus == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("FullSyncStaleDataItemsExpunger failed to finish in time");
     }
 

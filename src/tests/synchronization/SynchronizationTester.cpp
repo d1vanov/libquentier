@@ -7485,7 +7485,8 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
 
 void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)
 {
-    int testAsyncResult = -1;
+    EventLoopWithExitStatus::ExitStatus status =
+        EventLoopWithExitStatus::ExitStatus::Failure;
     {
         QTimer timer;
         timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
@@ -7508,20 +7509,21 @@ void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catch
         timer.start();
         slotInvokingTimer.singleShot(0, m_pSynchronizationManager,
                                      SLOT(synchronize()));
-        testAsyncResult = loop.exec();
+        Q_UNUSED(loop.exec())
+        status = loop.exitStatus();
     }
 
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+    if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Synchronization test failed to finish in time");
     }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+    else if (status != EventLoopWithExitStatus::ExitStatus::Success) {
         QFAIL("Internal error: incorrect return status from synchronization test");
     }
 
     if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous "
-                                           "synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
+        QFAIL(qPrintable(QString::fromUtf8(
+            "Detected failure during the asynchronous synchronization loop: ") +
+            catcher.failureErrorDescription().nonLocalizedString()));
     }
 }
 

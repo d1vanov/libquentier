@@ -302,7 +302,8 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
 
     QTimer::singleShot(0, this, SLOT(startLocalStorageBackup()));
 
-    int result = backupEventLoop.exec();
+    Q_UNUSED(backupEventLoop.exec())
+    auto status = backupEventLoop.exitStatus();
 
     if (!pFileCopierQPtr.isNull())
     {
@@ -313,7 +314,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             &FileCopier::copyFile);
     }
 
-    if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
+    if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
         errorDescription = backupEventLoop.errorDescription();
         return false;
     }
@@ -463,7 +464,8 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(
 
     QTimer::singleShot(0, this, SLOT(startLocalStorageRestorationFromBackup()));
 
-    int result = restoreFromBackupEventLoop.exec();
+    Q_UNUSED(restoreFromBackupEventLoop.exec())
+    auto status = restoreFromBackupEventLoop.exitStatus();
 
     if (!pFileCopierQPtr.isNull())
     {
@@ -474,7 +476,7 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(
             &FileCopier::copyFile);
     }
 
-    if (result == EventLoopWithExitStatus::ExitStatus::Failure) {
+    if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
         errorDescription = restoreFromBackupEventLoop.errorDescription();
         return false;
     }
