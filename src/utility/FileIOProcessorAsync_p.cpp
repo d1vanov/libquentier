@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,11 +17,13 @@
  */
 
 #include "FileIOProcessorAsync_p.h"
-#include <quentier/utility/Utility.h>
+
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Utility.h>
+
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
 #include <QTimerEvent>
 
 namespace quentier {
@@ -34,7 +36,9 @@ FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
 
 void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
 {
-    QNDEBUG("FileIOProcessorAsyncPrivate::setIdleTimePeriod: seconds = " << seconds);
+    QNDEBUG("FileIOProcessorAsyncPrivate::setIdleTimePeriod: seconds = "
+        << seconds);
+
     m_idleTimePeriodSeconds = seconds;
 }
 
@@ -44,25 +48,27 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
     }                                                                          \
     m_postOperationTimerId = startTimer(SEC_TO_MSEC(m_idleTimePeriodSeconds)); \
     QNTRACE("FileIOProcessorAsyncPrivate: started post operation "             \
-            << "timer with id " << m_postOperationTimerId)                     \
+        << "timer with id " << m_postOperationTimerId)                         \
 // RESTART_TIMER
 
-void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath,
-                                                     QByteArray data,
-                                                     QUuid requestId, bool append)
+void FileIOProcessorAsyncPrivate::onWriteFileRequest(
+    QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
 {
     QNDEBUG("FileIOProcessorAsyncPrivate::onWriteFileRequest: "
-            << "file path = " << absoluteFilePath
-            << ", request id = " << requestId
-            << ", append = " << (append ? "true" : "false"));
+        << "file path = " << absoluteFilePath
+        << ", request id = " << requestId
+        << ", append = " << (append ? "true" : "false"));
 
     QFileInfo fileInfo(absoluteFilePath);
     QDir folder = fileInfo.absoluteDir();
     if (!folder.exists())
     {
         bool madeFolder = folder.mkpath(folder.absolutePath());
-        if (!madeFolder) {
-            ErrorString error(QT_TR_NOOP("can't create folder to write file into"));
+        if (!madeFolder)
+        {
+            ErrorString error(
+                QT_TR_NOOP("can't create folder to write file into"));
+
             error.details() = absoluteFilePath;
             QNWARNING(error);
             Q_EMIT writeFileRequestProcessed(false, error, requestId);
@@ -107,19 +113,25 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(QString absoluteFilePath,
     RESTART_TIMER();
 }
 
-void FileIOProcessorAsyncPrivate::onReadFileRequest(QString absoluteFilePath,
-                                                    QUuid requestId)
+void FileIOProcessorAsyncPrivate::onReadFileRequest(
+    QString absoluteFilePath, QUuid requestId)
 {
     QNDEBUG("FileIOProcessorAsyncPrivate::onReadFileRequest: "
-            << "file path = " << absoluteFilePath
-            << ", request id = " << requestId);
+        << "file path = " << absoluteFilePath
+        << ", request id = " << requestId);
 
     QFile file(absoluteFilePath);
-    if (!file.exists()) {
-        QNTRACE("The file to read does not exist, sending empty "
-                "data in return");
-        Q_EMIT readFileRequestProcessed(true, ErrorString(), QByteArray(),
-                                        requestId);
+    if (!file.exists())
+    {
+        QNTRACE("The file to read does not exist, sending empty data in "
+            << "return");
+
+        Q_EMIT readFileRequestProcessed(
+            true,
+            ErrorString(),
+            QByteArray(),
+            requestId);
+
         RESTART_TIMER();
         return;
     }
@@ -143,7 +155,7 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
 {
     if (!pEvent) {
         QNWARNING("Detected null pointer to QTimerEvent in "
-                  "FileIOProcessorAsyncPrivate");
+            << "FileIOProcessorAsyncPrivate");
         return;
     }
 
@@ -151,7 +163,7 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
 
     if (timerId != m_postOperationTimerId) {
         QNTRACE("Received unidentified timer event for "
-                "FileIOProcessorAsyncPrivate");
+            << "FileIOProcessorAsyncPrivate");
         return;
     }
 

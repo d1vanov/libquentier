@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_UTILITY_MACROS_H
 #define LIB_QUENTIER_UTILITY_MACROS_H
 
-#include <QtGlobal>
 #include <QString>
+#include <QtGlobal>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
 #include <type_traits>

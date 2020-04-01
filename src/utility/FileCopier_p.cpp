@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,28 +17,27 @@
  */
 
 #include "FileCopier_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QByteArray>
-#include <QFile>
-#include <QDir>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+
 #include <algorithm>
 
 namespace quentier {
 
 FileCopierPrivate::FileCopierPrivate(QObject * parent) :
-    QObject(parent),
-    m_sourcePath(),
-    m_destPath(),
-    m_idle(true),
-    m_cancelled(false),
-    m_currentProgress(0.0)
+    QObject(parent)
 {}
 
-void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & destPath)
+void FileCopierPrivate::copyFile(
+    const QString & sourcePath, const QString & destPath)
 {
     QNDEBUG("FileCopierPrivate::copyFile: source path = " << sourcePath
-            << ", dest path = " << destPath);
+        << ", dest path = " << destPath);
 
     if ((m_sourcePath == sourcePath) && (m_destPath == destPath)) {
         QNDEBUG("Paths haven't changed, nothing to do");
@@ -54,8 +53,10 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
     QFile fromFile(sourcePath);
     if (!fromFile.open(QIODevice::ReadOnly))
     {
-        ErrorString error(QT_TR_NOOP("Can't copy file, failed to open the source "
-                                     "file for writing"));
+        ErrorString error(
+            QT_TR_NOOP("Can't copy file, failed to open the source "
+                       "file for writing"));
+
         error.details() = QDir::toNativeSeparators(sourcePath);
         clear();
 
@@ -66,7 +67,9 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
     qint64 fromFileSize = fromFile.size();
     if (Q_UNLIKELY(fromFileSize <= 0))
     {
-        ErrorString error(QT_TR_NOOP("Can't copy file, the source file is empty"));
+        ErrorString error(
+            QT_TR_NOOP("Can't copy file, the source file is empty"));
+
         error.details() = QDir::toNativeSeparators(sourcePath);
         clear();
 
@@ -77,8 +80,10 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
     QFile toFile(destPath);
     if (!toFile.open(QIODevice::WriteOnly))
     {
-        ErrorString error(QT_TR_NOOP("Can't copy file, failed to open "
-                                     "the destination file for writing"));
+        ErrorString error(
+            QT_TR_NOOP("Can't copy file, failed to open "
+                       "the destination file for writing"));
+
         error.details() = QDir::toNativeSeparators(destPath);
         clear();
 
@@ -86,7 +91,7 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         return;
     }
 
-    int bufLen = 4194304;   // 4 Mb in bytes
+    int bufLen = 4194304;  // 4 Mb in bytes
     QByteArray buf;
     buf.reserve(bufLen);
 
@@ -107,8 +112,10 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         qint64 bytesRead = fromFile.read(buf.data(), bufLen);
         if (Q_UNLIKELY(bytesRead <= 0))
         {
-            ErrorString error(QT_TR_NOOP("Can't copy file, failed to read data "
-                                         "from the source file"));
+            ErrorString error(
+                QT_TR_NOOP("Can't copy file, failed to read data "
+                           "from the source file"));
+
             error.details() = sourcePath;
             clear();
 
@@ -116,13 +123,16 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
             return;
         }
 
-        qint64 bytesWritten = toFile.write(buf.constData(),
-                                           std::min(static_cast<int>(bytesRead),
-                                                    bufLen));
+        qint64 bytesWritten = toFile.write(
+            buf.constData(),
+            std::min(static_cast<int>(bytesRead), bufLen));
+
         if (Q_UNLIKELY(bytesWritten < 0))
         {
-            ErrorString error(QT_TR_NOOP("Can't copy file, failed to write data "
-                                         "to the destination file"));
+            ErrorString error(
+                QT_TR_NOOP("Can't copy file, failed to write data "
+                           "to the destination file"));
+
             error.details() = destPath;
             clear();
 
@@ -131,15 +141,17 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
         }
 
         totalBytesWritten += bytesWritten;
-        m_currentProgress = static_cast<double>(totalBytesWritten) / fromFileSize;
+
+        m_currentProgress =
+            static_cast<double>(totalBytesWritten) / fromFileSize;
 
         QNTRACE("File copying progress update: progress = "
-                << m_currentProgress
-                << ", total bytes written = "
-                << totalBytesWritten
-                << ", source file size = " << fromFileSize
-                << ", source path = " << sourcePath
-                << ", dest path = " << destPath);
+            << m_currentProgress
+            << ", total bytes written = "
+            << totalBytesWritten
+            << ", source file size = " << fromFileSize
+            << ", source path = " << sourcePath
+            << ", dest path = " << destPath);
 
         Q_EMIT progressUpdate(m_currentProgress);
 
@@ -149,7 +161,7 @@ void FileCopierPrivate::copyFile(const QString & sourcePath, const QString & des
     }
 
     QNDEBUG("File copying is complete: source path = "
-            << sourcePath << ", dest path = " << destPath);
+        << sourcePath << ", dest path = " << destPath);
 
     clear();
     Q_EMIT finished(sourcePath, destPath);
