@@ -34,7 +34,14 @@ bool sortTagsByParentChildRelationsImpl(
         QTextStream strm(&log);
         strm << "Tags list before performing the topological sort: ";
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         for(const auto & tag: qAsConst(tagList)) {
+#else
+        for(auto it = tagList.constBegin(), end = tagList.constEnd();
+            it != end; ++it)
+        {
+            const auto & tag = *it;
+#endif
             strm << tag << ", ";
         }
         strm.flush();
@@ -52,8 +59,16 @@ bool sortTagsByParentChildRelationsImpl(
     // string i.e. the parent of parentless tags has empty guid
 
     bool allTagsHaveGuids = true;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     for(const auto & tag: qAsConst(tagList))
     {
+#else
+    for(auto it = tagList.constBegin(), end = tagList.constEnd();
+        it != end; ++it)
+    {
+        const auto & tag = *it;
+#endif
         if (!tagHasGuid(tag)) {
             allTagsHaveGuids = false;
             QNDEBUG("Not all tags have guids, won't use guids to track "
@@ -65,8 +80,16 @@ bool sortTagsByParentChildRelationsImpl(
     if (!allTagsHaveGuids)
     {
         bool allTagsHaveLocalUids = true;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         for(const auto & tag: qAsConst(tagList))
         {
+#else
+        for(auto it = tagList.constBegin(), end = tagList.constEnd();
+            it != end; ++it)
+        {
+            const auto & tag = *it;
+#endif
             if (!tagHasLocalUid(tag)) {
                 allTagsHaveLocalUids = false;
                 break;
@@ -85,8 +108,16 @@ bool sortTagsByParentChildRelationsImpl(
     }
 
     TagDirectedGraph graph;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     for(const auto & tag: qAsConst(tagList))
     {
+#else
+    for(auto it = tagList.constBegin(), end = tagList.constEnd();
+        it != end; ++it)
+    {
+        const auto & tag = *it;
+#endif
         if (allTagsHaveGuids && tagHasGuid(tag))
         {
             QString guid = tagGuid(tag);
@@ -172,7 +203,15 @@ bool sortTagsByParentChildRelationsImpl(
         QString log;
         QTextStream strm(&log);
         strm << "Tags list after performing the topological sort: ";
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         for(const auto & tag: qAsConst(tagList)) {
+#else
+        for(auto it = tagList.constBegin(), end = tagList.constEnd();
+            it != end; ++it)
+        {
+            const auto & tag = *it;
+#endif
             strm << tag << "\n";
         }
         strm.flush();
