@@ -41,8 +41,12 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #else // Linux, BSD-derivatives etc
     QString storagePath;
-    storagePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    storagePath += QStringLiteral("/.") + QCoreApplication::applicationName().toLower();
+    storagePath = QStandardPaths::writableLocation(
+        QStandardPaths::HomeLocation);
+
+    storagePath += QStringLiteral("/.") +
+        QCoreApplication::applicationName().toLower();
+
     return storagePath;
 #endif
 }

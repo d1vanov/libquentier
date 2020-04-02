@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,8 +49,8 @@ QDebug & operator <<(QDebug & debug, const Printable & printable)
     return debug;
 }
 
-QTextStream & operator <<(QTextStream & strm,
-                          const Printable & printable)
+QTextStream & operator <<(
+    QTextStream & strm, const Printable & printable)
 {
     return printable.print(strm);
 }

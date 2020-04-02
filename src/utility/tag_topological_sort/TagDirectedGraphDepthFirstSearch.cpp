@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,14 +22,7 @@ namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
         const TagDirectedGraph & graph) :
-    m_graph(graph),
-    m_reachedTagIds(),
-    m_parentTagIdByChildTagId(),
-    m_cycle(),
-    m_onStack(),
-    m_tagIdsInPreOrder(),
-    m_tagIdsInPostOrder(),
-    m_tagIdsInReversePostOrder()
+    m_graph(graph)
 {
     QStringList allTagIds = m_graph.allTagIds();
     for(auto it = allTagIds.constBegin(),
@@ -61,7 +54,8 @@ const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
     return m_cycle;
 }
 
-void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTagId)
+void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
+    const QString & sourceTagId)
 {
     auto stackIt = m_onStack.insert(sourceTagId).first;
 

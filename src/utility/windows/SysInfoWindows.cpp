@@ -26,7 +26,6 @@
 
 #include <QMutexLocker>
 #include <QString>
-#include <QSysInfo>
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -80,11 +79,6 @@ QString SysInfo::stackTrace()
     return QStringLiteral(
         "Stack trace obtaining is not implemented on Windows, "
         "patches are welcome");
-}
-
-QString SysInfo::platformName()
-{
-    return QSysInfo::prettyProductName();
 }
 
 } // namespace quentier

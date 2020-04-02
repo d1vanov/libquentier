@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/QuentierUndoCommand.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/QuentierUndoCommand.h>
 
 namespace quentier {
 
@@ -27,8 +27,8 @@ QuentierUndoCommand::QuentierUndoCommand(QUndoCommand * parent) :
     m_onceUndoExecuted(false)
 {}
 
-QuentierUndoCommand::QuentierUndoCommand(const QString & text,
-                                         QUndoCommand * parent) :
+QuentierUndoCommand::QuentierUndoCommand(
+        const QString & text, QUndoCommand * parent) :
     QObject(nullptr),
     QUndoCommand(text, parent),
     m_onceUndoExecuted(false)
@@ -50,7 +50,7 @@ void QuentierUndoCommand::redo()
 
     if (Q_UNLIKELY(!m_onceUndoExecuted)) {
         QNTRACE("Ignoring the attempt to execute redo for command "
-                << text() << " as there was no previous undo");
+            << text() << " as there was no previous undo");
         return;
     }
 

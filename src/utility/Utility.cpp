@@ -25,7 +25,6 @@
 #include <QApplication>
 #include <QDir>
 #include <QFileInfoList>
-#include <QScopedPointer>
 #include <QStyleFactory>
 #include <QUrl>
 
@@ -36,6 +35,7 @@
 #endif
 
 #include <limits>
+#include <memory>
 #include <string>
 
 #include <qwindowdefs.h>
@@ -207,7 +207,7 @@ const QString getExistingFolderDialog(QWidget * parent, const QString & title,
                                       const QString & initialFolder,
                                       QFileDialog::Options options)
 {
-    QScopedPointer<QFileDialog> pFileDialog(new QFileDialog(parent));
+    auto pFileDialog = std::make_unique<QFileDialog>(parent);
     if (parent) {
         pFileDialog->setWindowModality(Qt::WindowModal);
     }
