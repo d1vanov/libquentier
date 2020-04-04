@@ -18,6 +18,8 @@
 
 #include "TagDirectedGraphDepthFirstSearch.h"
 
+#include <quentier/utility/Macros.h>
+
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
@@ -25,11 +27,10 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
     m_graph(graph)
 {
     QStringList allTagIds = m_graph.allTagIds();
-    for(auto it = allTagIds.constBegin(),
-        end = allTagIds.constEnd(); it != end; ++it)
+    for(const auto & tagId: qAsConst(allTagIds))
     {
-        if (!reached(*it)) {
-            depthFirstSearch(*it);
+        if (!reached(tagId)) {
+            depthFirstSearch(tagId);
         }
     }
 }
@@ -63,20 +64,19 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
     QStringList childTagIds = m_graph.childTagIds(sourceTagId);
-    for(auto it = childTagIds.constBegin(),
-        end = childTagIds.constEnd(); it != end; ++it)
+    for(const auto & childTagId: qAsConst(childTagIds))
     {
         if (hasCycle()) {
             return;
         }
 
-        if (!reached(*it)) {
-            m_parentTagIdByChildTagId[*it] = sourceTagId;
-            depthFirstSearch(*it);
+        if (!reached(childTagId)) {
+            m_parentTagIdByChildTagId[childTagId] = sourceTagId;
+            depthFirstSearch(childTagId);
         }
-        else if (m_onStack.find(*it) != m_onStack.end())
+        else if (m_onStack.find(childTagId) != m_onStack.end())
         {
-            QString cycledId = *it;
+            QString cycledId = childTagId;
             while(true)
             {
                 if (cycledId == sourceTagId) {
@@ -93,7 +93,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
                 cycledId = pit.value();
             }
             m_cycle.push(sourceTagId);
-            m_cycle.push(*it);
+            m_cycle.push(childTagId);
         }
     }
 

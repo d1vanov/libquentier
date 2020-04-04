@@ -26,7 +26,8 @@
 
 namespace quentier {
 
-ShortcutManagerPrivate::ShortcutManagerPrivate(ShortcutManager & shortcutManager) :
+ShortcutManagerPrivate::ShortcutManagerPrivate(
+        ShortcutManager & shortcutManager) :
     QObject(&shortcutManager),
     q_ptr(&shortcutManager)
 {

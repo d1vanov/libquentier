@@ -17,16 +17,19 @@
  */
 
 #include "EnexExportImportTests.h"
+
 #include <quentier/enml/ENMLConverter.h>
+#include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/Resource.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/logging/QuentierLogger.h>
-#include <QHash>
+
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QFile>
-#include <QCoreApplication>
+#include <QHash>
+
 #include <cmath>
 
 namespace quentier {
@@ -35,8 +38,7 @@ namespace test {
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error);
 
 bool compareNotes(
-    const QVector<Note> & originalNotes,
-    const QVector<Note> & importedNotes,
+    const QVector<Note> & originalNotes, const QVector<Note> & importedNotes,
     QString & error);
 
 void setupSampleNote(Note & note);
@@ -54,6 +56,7 @@ void bindTagsWithNotes(
     const QHash<QString, QString> & tagNamesByTagLocalUids);
 
 bool setupNoteResources(Note & note, QString & error);
+
 void setupNoteResourcesV2(Note & note);
 
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
@@ -283,8 +286,8 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
 
     if (Q_UNLIKELY(!tagNamesByNoteLocalUid.isEmpty())) {
         error = QStringLiteral("The hash of tag names by note local uid is not "
-                               "empty even though the option to not include tag "
-                               "names to ENEX was specified during export");
+                               "empty even though the option to not include "
+                               "tag names to ENEX was specified during export");
         return false;
     }
 
@@ -365,7 +368,8 @@ bool importRealWorldEnex(QString & error)
     QFile sampleEnex1File(QStringLiteral(":/tests/SampleEnex1.enex"));
     bool res = sampleEnex1File.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!res)) {
-        error = QStringLiteral("Failed to open the sample enex file for reading");
+        error = QStringLiteral("Failed to open the sample enex file for "
+                               "reading");
         return false;
     }
 
@@ -382,8 +386,9 @@ bool importRealWorldEnex(QString & error)
     }
 
     if (importedNotes.size() != 1) {
-        error = QStringLiteral("Unexpected number of imported notes, expected 1, ") +
-                QStringLiteral("got ") + QString::number(importedNotes.size());
+        error = QStringLiteral(
+            "Unexpected number of imported notes, expected 1, got ");
+        error += QString::number(importedNotes.size());
         return false;
     }
 
@@ -391,7 +396,7 @@ bool importRealWorldEnex(QString & error)
     QFile sampleEnex2File(QStringLiteral(":/tests/SampleEnex2.enex"));
     res = sampleEnex2File.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!res)) {
-        error = QStringLiteral("Failed to open the sample enex file for reading");
+        error = QStringLiteral("Failed to open sample enex file for reading");
         return false;
     }
 
@@ -411,8 +416,9 @@ bool importRealWorldEnex(QString & error)
     }
 
     if (importedNotes.size() != 1) {
-        error = QStringLiteral("Unexpected number of imported notes, expected 1, ") +
-                QStringLiteral("got ") + QString::number(importedNotes.size());
+        error = QStringLiteral(
+            "Unexpected number of imported notes, expected 1, got ");
+        error += QString::number(importedNotes.size());
         return false;
     }
 
@@ -420,7 +426,8 @@ bool importRealWorldEnex(QString & error)
     QFile sampleEnex3File(QStringLiteral(":/tests/SampleEnex3.enex"));
     res = sampleEnex3File.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!res)) {
-        error = QStringLiteral("Failed to open the sample enex file for reading");
+        error = QStringLiteral(
+            "Failed to open the sample enex file for reading");
         return false;
     }
 
@@ -440,8 +447,9 @@ bool importRealWorldEnex(QString & error)
     }
 
     if (importedNotes.size() != 1) {
-        error = QStringLiteral("Unexpected number of imported notes, expected 1, ") +
-                QStringLiteral("got ") + QString::number(importedNotes.size());
+        error = QStringLiteral(
+            "Unexpected number of imported notes, expected 1, got ");
+        error += QString::number(importedNotes.size());
         return false;
     }
 
@@ -449,7 +457,8 @@ bool importRealWorldEnex(QString & error)
     QFile sampleEnex4File(QStringLiteral(":/tests/SampleEnex4.enex"));
     res = sampleEnex4File.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!res)) {
-        error = QStringLiteral("Failed to open the sample enex file for reading");
+        error = QStringLiteral(
+            "Failed to open the sample enex file for reading");
         return false;
     }
 
@@ -458,17 +467,20 @@ bool importRealWorldEnex(QString & error)
     importedNotes.clear();
     tagNamesByNoteLocalUid.clear();
 
-    res = converter.importEnex(sampleEnex4, importedNotes,
-                               tagNamesByNoteLocalUid,
-                               errorDescription);
+    res = converter.importEnex(
+        sampleEnex4,
+        importedNotes,
+        tagNamesByNoteLocalUid,
+        errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
     if (importedNotes.size() != 1) {
-        error = QStringLiteral("Unexpected number of imported notes, expected 1, ") +
-                QStringLiteral("got ") + QString::number(importedNotes.size());
+        error = QStringLiteral(
+            "Unexpected number of imported notes, expected 1, got ");
+        error += QString::number(importedNotes.size());
         return false;
     }
 
@@ -477,44 +489,54 @@ bool importRealWorldEnex(QString & error)
 
 bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
 {
-    if (lhs.hasTitle() != rhs.hasTitle()) {
+    if (lhs.hasTitle() != rhs.hasTitle())
+    {
         error = QStringLiteral("left: has title = ") +
-                (lhs.hasTitle() ? QStringLiteral("true") : QStringLiteral("false")) +
-                QStringLiteral(", right: has title = ") +
-                (rhs.hasTitle() ? QStringLiteral("true") : QStringLiteral("false"));
+            (lhs.hasTitle()
+             ? QStringLiteral("true")
+             : QStringLiteral("false")) +
+            QStringLiteral(", right: has title = ") +
+            (rhs.hasTitle()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
         return false;
     }
 
     if (lhs.hasTitle() && (lhs.title() != rhs.title())) {
         error = QStringLiteral("left: title = ") + lhs.title() +
-                QStringLiteral(", right: title = ") + rhs.title();
+            QStringLiteral(", right: title = ") + rhs.title();
         return false;
     }
 
-    if (lhs.hasContent() != rhs.hasContent()) {
+    if (lhs.hasContent() != rhs.hasContent())
+    {
         error = QStringLiteral("left: has content = ") +
-                (lhs.hasContent() ? QStringLiteral("true") : QStringLiteral("false")) +
-                QStringLiteral(", right: has title = ") +
-                (rhs.hasContent() ? QStringLiteral("true") : QStringLiteral("false"));
+            (lhs.hasContent()
+             ? QStringLiteral("true")
+             : QStringLiteral("false")) +
+            QStringLiteral(", right: has title = ") +
+            (rhs.hasContent()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
         return false;
     }
 
     if (lhs.hasContent() && (lhs.content() != rhs.content())) {
         error = QStringLiteral("left: content = ") + lhs.content() +
-                QStringLiteral("\n\nRight: content = ") + rhs.content();
+            QStringLiteral("\n\nRight: content = ") + rhs.content();
         return false;
     }
 
     if (lhs.hasCreationTimestamp() != rhs.hasCreationTimestamp())
     {
         error = QStringLiteral("left: has creation timestamp = ") +
-                (lhs.hasCreationTimestamp()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false")) +
-                QStringLiteral(", right: has creation timestamp = ") +
-                (rhs.hasCreationTimestamp()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"));
+            (lhs.hasCreationTimestamp()
+             ? QStringLiteral("true")
+             : QStringLiteral("false")) +
+            QStringLiteral(", right: has creation timestamp = ") +
+            (rhs.hasCreationTimestamp()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
         return false;
     }
 
@@ -522,22 +544,22 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         (lhs.creationTimestamp() != rhs.creationTimestamp()))
     {
         error = QStringLiteral("left: creation timestamp = ") +
-                QString::number(lhs.creationTimestamp()) +
-                QStringLiteral(", right: creation timestamp = ") +
-                QString::number(rhs.creationTimestamp());
+            QString::number(lhs.creationTimestamp()) +
+            QStringLiteral(", right: creation timestamp = ") +
+            QString::number(rhs.creationTimestamp());
         return false;
     }
 
     if (lhs.hasModificationTimestamp() != rhs.hasModificationTimestamp())
     {
         error = QStringLiteral("left: has modification timestamp = ") +
-                (lhs.hasModificationTimestamp()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false")) +
-                QStringLiteral(", right: has modification timestamp = ") +
-                (rhs.hasModificationTimestamp()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"));
+            (lhs.hasModificationTimestamp()
+             ? QStringLiteral("true")
+             : QStringLiteral("false")) +
+            QStringLiteral(", right: has modification timestamp = ") +
+            (rhs.hasModificationTimestamp()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
         return false;
     }
 
@@ -545,22 +567,22 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         (lhs.modificationTimestamp() != rhs.modificationTimestamp()))
     {
         error = QStringLiteral("left: modification timestamp = ") +
-                QString::number(lhs.modificationTimestamp()) +
-                QStringLiteral(", right: modification timestamp = ") +
-                QString::number(rhs.modificationTimestamp());
+            QString::number(lhs.modificationTimestamp()) +
+            QStringLiteral(", right: modification timestamp = ") +
+            QString::number(rhs.modificationTimestamp());
         return false;
     }
 
     if (lhs.hasTagLocalUids() != rhs.hasTagLocalUids())
     {
         error = QStringLiteral("left: has tag local uids = ") +
-                (lhs.hasTagLocalUids()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false")) +
-                QStringLiteral(", right: has tag local uids = ") +
-                (rhs.hasTagLocalUids()
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"));
+            (lhs.hasTagLocalUids()
+             ? QStringLiteral("true")
+             : QStringLiteral("false")) +
+            QStringLiteral(", right: has tag local uids = ") +
+            (rhs.hasTagLocalUids()
+             ? QStringLiteral("true")
+             : QStringLiteral("false"));
         return false;
     }
 

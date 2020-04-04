@@ -21,8 +21,8 @@
 
 #include "TagDirectedGraph.h"
 
-#include <QStack>
 #include <QQueue>
+#include <QStack>
 
 #include <set>
 
