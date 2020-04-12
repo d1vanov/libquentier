@@ -11,11 +11,11 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
   endif()
 
   if(NOT EXISTS ${TIDY_HTML5_INCLUDE_DIR}/tidyenum.h)
-    message(FATAL_ERROR "Can't find development headers for tidy-html5 library (tidyenum.h is missing)")
+    message(FATAL_ERROR "Can't find development headers for tidy-html5 library: tidyenum.h is missing; found include dir is ${TIDY_HTML5_INCLUDE_DIR}")
   endif()
 
   if(NOT EXISTS ${TIDY_HTML5_INCLUDE_DIR}/tidyplatform.h)
-    message(FATAL_ERROR "Can't find development headers for tidy-html5 library (tidyplatform.h is missing)")
+    message(FATAL_ERROR "Can't find development headers for tidy-html5 library: tidyplatform.h is missing; found include dir is ${TIDY_HTML5_INCLUDE_DIR}")
   endif()
 
   find_library(TIDY_HTML5_LIBRARIES
