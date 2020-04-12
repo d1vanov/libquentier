@@ -162,13 +162,15 @@ script:
           cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
                 -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_ROOT=$(pwd)/../../tidy-html5/build-tidy/installdir \
+                -DTIDY_HTML5_INCLUDE_DIR=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIBRARIES=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_PREFIX_PATH=/opt/qt512 ..
         else
           cmake -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
                 -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
                 -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-                -DTIDY_HTML5_ROOT=$(pwd)/../../tidy-html5/build-tidy/installdir \
+                -DTIDY_HTML5_INCLUDE_DIR=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+                -DTIDY_HTML5_LIBRARIES=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.so \
                 -DCMAKE_VERBOSE_MAKEFILE=ON -DUSE_QT5_WEBKIT=1 ..
         fi
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/../../qtkeychain/build/installdir/lib &&
@@ -181,7 +183,8 @@ script:
               -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
               -DQt5Keychain_DIR=$(pwd)/../../qtkeychain/build/installdir/lib/cmake/Qt5Keychain \
               -DQEverCloud-qt5_DIR=$(pwd)/../../QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
-              -DTIDY_HTML5_ROOT=$(pwd)/../../tidy-html5/build-tidy/installdir \
+              -DTIDY_HTML5_INCLUDE_DIR=$(pwd)/../../tidy-html5/build-tidy/installdir/include \
+              -DTIDY_HTML5_LIBRARIES=$(pwd)/../../tidy-html5/build-tidy/installdir/lib/libtidy.dylib \
               -DCMAKE_VERBOSE_MAKEFILE=ON ..
       fi
       make &&
