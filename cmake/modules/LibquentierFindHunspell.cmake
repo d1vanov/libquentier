@@ -3,9 +3,8 @@ set(HUNSPELL_FOUND FALSE)
 if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
   find_path(HUNSPELL_INCLUDE_DIR
     NAMES hunspell/hunspell.hxx
-    PATHS
-    ${CMAKE_INCLUDE_PATH}
-    ${HUNSPELL_ROOT}/include)
+    PATHS ${HUNSPELL_ROOT} ${CMAKE_PREFIX_PATH}
+    PATH_SUFFIXES include)
 
   if(NOT HUNSPELL_INCLUDE_DIR)
     message(FATAL_ERROR "Can't find development headers for hunspell library")
@@ -13,11 +12,11 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
 
   find_library(HUNSPELL_LIBRARIES
     NAMES
-    hunspell hunspell-1.7 hunspell-1.6 hunspell-1.5 hunspell-1.4 hunspell-1.3 hunspell-1.2
-    libhunspell libhunspell-1.7 libhunspell-1.6 libhunspell-1.5 libhunspell-1.4 libhunspell-1.3 libhunspell-1.2
-    PATHS
-    ${CMAKE_LIBRARY_PATH}
-    ${HUNSPELL_ROOT}/lib)
+    hunspell hunspell-1.7 hunspell-1.6 hunspell-1.5 hunspell-1.4 hunspell-1.3
+    hunspell-1.2 libhunspell libhunspell-1.7 libhunspell-1.6 libhunspell-1.5
+    libhunspell-1.4 libhunspell-1.3 libhunspell-1.2
+    PATHS ${CMAKE_PREFIX_PATH} ${HUNSPELL_ROOT}
+    PATH_SUFFIXES lib)
 
   if(NOT HUNSPELL_LIBRARIES)
     message(FATAL_ERROR "Can't find hunspell library")
