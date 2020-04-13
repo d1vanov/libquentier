@@ -15,7 +15,7 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
     hunspell hunspell-1.7 hunspell-1.6 hunspell-1.5 hunspell-1.4 hunspell-1.3
     hunspell-1.2 libhunspell libhunspell-1.7 libhunspell-1.6 libhunspell-1.5
     libhunspell-1.4 libhunspell-1.3 libhunspell-1.2
-    PATHS ${CMAKE_PREFIX_PATH} ${HUNSPELL_ROOT}
+    PATHS ${HUNSPELL_ROOT} ${CMAKE_PREFIX_PATH}
     PATH_SUFFIXES lib)
 
   if(NOT HUNSPELL_LIBRARIES)
