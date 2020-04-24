@@ -28,7 +28,10 @@
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Printable.h>
 #include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
+
 #include <QCoreApplication>
+#include <QTimeZone>
+
 #include <limits>
 
 namespace quentier {
@@ -1583,6 +1586,22 @@ bool SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon(
     QNDEBUG("SynchronizationManagerPrivate::"
             << "checkIfTimestampIsAboutToExpireSoon: "
             << printableDateTimeFromTimestamp(timestamp));
+
+    // Workaround problem manifested on 24.04.2020 induced by update rolled out
+    // to Evernote servers
+    QDateTime evernoteServerBugStartDate(
+        QDate(2020, 4, 24),
+        QTime(0, 0),
+        QTimeZone::utc());
+
+    qevercloud::Timestamp evernoteServerBugStartTimestamp =
+        evernoteServerBugStartDate.toMSecsSinceEpoch();
+
+    if (timestamp <= evernoteServerBugStartTimestamp) {
+        return true;
+    }
+
+    // Normal logic
 
     qevercloud::Timestamp currentTimestamp = QDateTime::currentMSecsSinceEpoch();
     QNTRACE("Current datetime: "
