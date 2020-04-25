@@ -221,6 +221,9 @@ private:
     void launchStoreOAuthResult(const AuthData & result);
     void finalizeStoreOAuthResult();
 
+    void finalizeRevokeAuthentication(const qevercloud::UserID userId);
+    void removeNonSecretPersistentAuthInfo(const qevercloud::UserID userId);
+
     void launchSync();
     void launchFullSync();
     void launchIncrementalSync();
