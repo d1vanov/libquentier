@@ -267,11 +267,22 @@ private:
 
     void onDeleteAuthTokenFinished(
         const IKeychainService::ErrorCode::type errorCode,
+        const qevercloud::UserID userId,
         const ErrorString & errorDescription);
 
     void onDeleteShardIdFinished(
         const IKeychainService::ErrorCode::type errorCode,
+        const qevercloud::UserID userId,
         const ErrorString & errorDescription);
+
+    bool isReadingAuthToken(const qevercloud::UserID userId) const;
+    bool isReadingShardId(const qevercloud::UserID userId) const;
+
+    bool isWritingAuthToken(const qevercloud::UserID userId) const;
+    bool isWritingShardId(const qevercloud::UserID userId) const;
+
+    bool isDeletingAuthToken(const qevercloud::UserID userId) const;
+    bool isDeletingShardId(const qevercloud::UserID userId) const;
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
@@ -288,7 +299,8 @@ private:
     class RemoteToLocalSynchronizationManagerController;
     friend class RemoteToLocalSynchronizationManagerController;
 
-    using JobIdWithGuidBimap = boost::bimap<QString,QUuid>;
+    using KeychainJobIdWithGuidBimap = boost::bimap<QString,QUuid>;
+    using KeychainJobIdWithUserId = boost::bimap<qevercloud::UserID,QUuid>;
 
 private:
     Q_DISABLE_COPY(SynchronizationManagerPrivate)
@@ -335,27 +347,21 @@ private:
 
     IKeychainService *                      m_pKeychainService;
 
-    QUuid                                   m_readAuthTokenJobId;
-    QUuid                                   m_readShardIdJobId;
-    bool                                    m_readingAuthToken = false;
-    bool                                    m_readingShardId = false;
+    KeychainJobIdWithUserId                 m_readAuthTokenJobIdsWithUserIds;
+    KeychainJobIdWithUserId                 m_readShardIdJobIdsWithUserIds;
 
-    QUuid                                   m_writeAuthTokenJobId;
-    QUuid                                   m_writeShardIdJobId;
-    bool                                    m_writingAuthToken = false;
-    bool                                    m_writingShardId = false;
-    AuthData                                m_writtenOAuthResult;
+    KeychainJobIdWithUserId                 m_writeAuthTokenJobIdsWithUserIds;
+    KeychainJobIdWithUserId                 m_writeShardIdJobIdsWithUserIds;
 
-    QUuid                                   m_deleteAuthTokenJobId;
-    QUuid                                   m_deleteShardIdJobId;
-    bool                                    m_deletingAuthToken = false;
-    bool                                    m_deletingShardId = false;
-    qevercloud::UserID                      m_lastRevokedAuthenticationUserId = -1;
+    QHash<qevercloud::UserID, AuthData>     m_writtenOAuthResultByUserId;
 
-    JobIdWithGuidBimap                      m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
-    JobIdWithGuidBimap                      m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
-    JobIdWithGuidBimap                      m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
-    JobIdWithGuidBimap                      m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+    KeychainJobIdWithUserId                 m_deleteAuthTokenJobIdsWithUserIds;
+    KeychainJobIdWithUserId                 m_deleteShardIdJobIdsWithUserIds;
+
+    KeychainJobIdWithGuidBimap              m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+    KeychainJobIdWithGuidBimap              m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+    KeychainJobIdWithGuidBimap              m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+    KeychainJobIdWithGuidBimap              m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
 
     QHash<QString,QString>                  m_linkedNotebookAuthTokensPendingWritingByGuid;
     QHash<QString,QString>                  m_linkedNotebookShardIdsPendingWritingByGuid;

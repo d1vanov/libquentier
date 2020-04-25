@@ -184,7 +184,10 @@ void SynchronizationManagerPrivate::synchronize()
 {
     QNDEBUG("SynchronizationManagerPrivate::synchronize");
 
-    if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId)
+    bool writingAuthToken = isWritingAuthToken(m_OAuthResult.m_userId);
+    bool writingShardId = isWritingShardId(m_OAuthResult.m_userId);
+
+    if (m_authenticationInProgress || writingAuthToken || writingShardId)
     {
         ErrorString error(
             QT_TR_NOOP("Authentication is not finished yet, please wait"));
@@ -192,9 +195,9 @@ void SynchronizationManagerPrivate::synchronize()
         QNDEBUG(error << ", authentication in progress = "
             << (m_authenticationInProgress ? "true" : "false")
             << ", writing OAuth token = "
-            << (m_writingAuthToken ? "true" : "false")
+            << (writingAuthToken ? "true" : "false")
             << ", writing shard id = "
-            << (m_writingShardId ? "true" : "false"));
+            << (writingShardId ? "true" : "false"));
 
         Q_EMIT notifyError(error);
         return;
@@ -208,7 +211,10 @@ void SynchronizationManagerPrivate::authenticate()
 {
     QNDEBUG("SynchronizationManagerPrivate::authenticate");
 
-    if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId)
+    bool writingAuthToken = isWritingAuthToken(m_OAuthResult.m_userId);
+    bool writingShardId = isWritingShardId(m_OAuthResult.m_userId);
+
+    if (m_authenticationInProgress || writingAuthToken || writingShardId)
     {
         ErrorString error(
             QT_TR_NOOP("Previous authentication is not finished yet, please wait"));
@@ -216,9 +222,9 @@ void SynchronizationManagerPrivate::authenticate()
         QNDEBUG(error << ", authentication in progress = "
             << (m_authenticationInProgress ? "true" : "false")
             << ", writing OAuth token = "
-            << (m_writingAuthToken ? "true" : "false")
+            << (writingAuthToken ? "true" : "false")
             << ", writing shard id = "
-            << (m_writingShardId ? "true" : "false"));
+            << (writingShardId ? "true" : "false"));
 
         Q_EMIT authenticationFinished(/* success = */ false, error, Account());
         return;
@@ -231,7 +237,10 @@ void SynchronizationManagerPrivate::authenticateCurrentAccount()
 {
     QNDEBUG("SynchronizationManagerPrivate::authenticateCurrentAccount");
 
-    if (m_authenticationInProgress || m_writingAuthToken || m_writingShardId)
+    bool writingAuthToken = isWritingAuthToken(m_OAuthResult.m_userId);
+    bool writingShardId = isWritingShardId(m_OAuthResult.m_userId);
+
+    if (m_authenticationInProgress || writingAuthToken || writingShardId)
     {
         ErrorString error(
             QT_TR_NOOP("Previous authentication is not finished yet, please wait"));
@@ -239,9 +248,9 @@ void SynchronizationManagerPrivate::authenticateCurrentAccount()
         QNDEBUG(error << ", authentication in progress = "
             << (m_authenticationInProgress ? "true" : "false")
             << ", writing OAuth token = "
-            << (m_writingAuthToken ? "true" : "false")
+            << (writingAuthToken ? "true" : "false")
             << ", writing shard id = "
-            << (m_writingShardId ? "true" : "false"));
+            << (writingShardId ? "true" : "false"));
 
         Q_EMIT authenticationFinished(/* success = */ false, error, Account());
         return;
@@ -266,22 +275,20 @@ void SynchronizationManagerPrivate::revokeAuthentication(
     QNDEBUG("SynchronizationManagerPrivate::revokeAuthentication: user id = "
         << userId);
 
-    m_lastRevokedAuthenticationUserId = userId;
-    m_deletingAuthToken = true;
-
     QString deleteAuthTokenService =
         QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
 
     QString deleteAuthTokenKey =
         QCoreApplication::applicationName() +
         QStringLiteral("_") + m_host + QStringLiteral("_") +
-        QString::number(m_lastRevokedAuthenticationUserId);
+        QString::number(userId);
 
-    m_deleteAuthTokenJobId = m_pKeychainService->startDeletePasswordJob(
+    auto deleteAuthTokenJobId = m_pKeychainService->startDeletePasswordJob(
         deleteAuthTokenService,
         deleteAuthTokenKey);
 
-    m_deletingShardId = true;
+    m_deleteAuthTokenJobIdsWithUserIds.insert(
+        KeychainJobIdWithUserId::value_type(userId, deleteAuthTokenJobId));
 
     QString deleteShardIdService =
         QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
@@ -289,11 +296,14 @@ void SynchronizationManagerPrivate::revokeAuthentication(
     QString deleteShardIdKey =
         QCoreApplication::applicationName() +
         QStringLiteral("_") + m_host + QStringLiteral("_") +
-        QString::number(m_lastRevokedAuthenticationUserId);
+        QString::number(userId);
 
-    m_deleteShardIdJobId = m_pKeychainService->startDeletePasswordJob(
+    auto deleteShardIdJobId = m_pKeychainService->startDeletePasswordJob(
         deleteShardIdService,
         deleteShardIdKey);
+
+    m_deleteShardIdJobIdsWithUserIds.insert(
+        KeychainJobIdWithUserId::value_type(userId, deleteShardIdJobId));
 }
 
 void SynchronizationManagerPrivate::setDownloadNoteThumbnails(const bool flag)
@@ -325,74 +335,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
 
     m_authenticationInProgress = false;
 
-    if (success)
-    {
-        AuthData authData;
-        authData.m_userId = userId;
-        authData.m_authToken = authToken;
-        authData.m_expirationTime = authTokenExpirationTime;
-        authData.m_shardId = shardId;
-        authData.m_noteStoreUrl = noteStoreUrl;
-        authData.m_webApiUrlPrefix = webApiUrlPrefix;
-
-        m_OAuthResult = authData;
-        QNDEBUG("OAuth result = " << m_OAuthResult);
-
-        Account previousAccount = m_pRemoteToLocalSyncManager->account();
-
-        Account newAccount(
-            QString(),
-            Account::Type::Evernote,
-            userId,
-            Account::EvernoteAccountType::Free,
-            m_host);
-
-        m_pRemoteToLocalSyncManager->setAccount(newAccount);
-
-        m_pUserStore->setAuthenticationToken(authToken);
-
-        ErrorString error;
-        bool res = m_pRemoteToLocalSyncManager->syncUser(
-            userId,
-            error,
-            /* write user data to * local storage = */ false);
-
-        if (Q_UNLIKELY(!res))
-        {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't switch to new Evernote "
-                           "account: failed to sync user data"));
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
-            Q_EMIT notifyError(errorDescription);
-
-            m_pRemoteToLocalSyncManager->setAccount(previousAccount);
-
-            return;
-        }
-
-        const User & user = m_pRemoteToLocalSyncManager->user();
-        if (Q_UNLIKELY(!user.hasUsername()))
-        {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't switch to new Evernote account: the synched "
-                           "user data lacks username"));
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
-            Q_EMIT notifyError(errorDescription);
-
-            m_pRemoteToLocalSyncManager->setAccount(previousAccount);
-
-            return;
-        }
-
-        launchStoreOAuthResult(authData);
-    }
-    else
+    if (!success)
     {
         if ((m_authContext == AuthContext::NewUserRequest) ||
             (m_authContext == AuthContext::CurrentUserRequest))
@@ -405,7 +348,74 @@ void SynchronizationManagerPrivate::onOAuthResult(
         {
             Q_EMIT notifyError(errorDescription);
         }
+
+        return;
     }
+
+    AuthData authData;
+    authData.m_userId = userId;
+    authData.m_authToken = authToken;
+    authData.m_expirationTime = authTokenExpirationTime;
+    authData.m_shardId = shardId;
+    authData.m_noteStoreUrl = noteStoreUrl;
+    authData.m_webApiUrlPrefix = webApiUrlPrefix;
+
+    m_OAuthResult = authData;
+    QNDEBUG("OAuth result = " << m_OAuthResult);
+
+    Account previousAccount = m_pRemoteToLocalSyncManager->account();
+
+    Account newAccount(
+        QString(),
+        Account::Type::Evernote,
+        userId,
+        Account::EvernoteAccountType::Free,
+        m_host);
+
+    m_pRemoteToLocalSyncManager->setAccount(newAccount);
+
+    m_pUserStore->setAuthenticationToken(authToken);
+
+    ErrorString error;
+    bool res = m_pRemoteToLocalSyncManager->syncUser(
+        userId,
+        error,
+        /* write user data to * local storage = */ false);
+
+    if (Q_UNLIKELY(!res))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't switch to new Evernote "
+                        "account: failed to sync user data"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        Q_EMIT notifyError(errorDescription);
+
+        m_pRemoteToLocalSyncManager->setAccount(previousAccount);
+
+        return;
+    }
+
+    const User & user = m_pRemoteToLocalSyncManager->user();
+    if (Q_UNLIKELY(!user.hasUsername()))
+    {
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't switch to new Evernote account: the synched "
+                        "user data lacks username"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(errorDescription);
+        Q_EMIT notifyError(errorDescription);
+
+        m_pRemoteToLocalSyncManager->setAccount(previousAccount);
+
+        return;
+    }
+
+    launchStoreOAuthResult(authData);
 }
 
 void SynchronizationManagerPrivate::onWritePasswordJobFinished(
@@ -417,14 +427,24 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
         << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
-    if (jobId == m_writeAuthTokenJobId) {
-        onWriteAuthTokenFinished(errorCode, errorDescription);
-        return;
+    {
+        auto it = m_writeAuthTokenJobIdsWithUserIds.right.find(jobId);
+        if (it != m_writeAuthTokenJobIdsWithUserIds.right.end()) {
+            // TODO: make use of userId from the bimap
+            m_writeAuthTokenJobIdsWithUserIds.right.erase(it);
+            onWriteAuthTokenFinished(errorCode, errorDescription);
+            return;
+        }
     }
 
-    if (jobId == m_writeShardIdJobId) {
-        onWriteShardIdFinished(errorCode, errorDescription);
-        return;
+    {
+        auto it = m_writeShardIdJobIdsWithUserIds.right.find(jobId);
+        if (it != m_writeShardIdJobIdsWithUserIds.right.end()) {
+            // TODO: make use of userId from the bimap
+            m_writeShardIdJobIdsWithUserIds.right.erase(it);
+            onWriteShardIdFinished(errorCode, errorDescription);
+            return;
+        }
     }
 
     auto writeAuthTokenIt =
@@ -464,7 +484,7 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
                 token);
 
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
-                JobIdWithGuidBimap::value_type(guid, jobId));
+                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
         }
         else if (errorCode != IKeychainService::ErrorCode::NoError)
         {
@@ -523,7 +543,7 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
                 shardId);
 
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
-                JobIdWithGuidBimap::value_type(guid, jobId));
+                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
         }
         else if (errorCode != IKeychainService::ErrorCode::NoError)
         {
@@ -558,14 +578,24 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
         << "job id = " << jobId << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
-    if (jobId == m_readAuthTokenJobId) {
-        onReadAuthTokenFinished(errorCode, errorDescription, password);
-        return;
+    {
+        auto it = m_readAuthTokenJobIdsWithUserIds.right.find(jobId);
+        if (it != m_readAuthTokenJobIdsWithUserIds.right.end()) {
+            // TODO: make use of userId from the bimap
+            m_readAuthTokenJobIdsWithUserIds.right.erase(it);
+            onReadAuthTokenFinished(errorCode, errorDescription, password);
+            return;
+        }
     }
 
-    if (jobId == m_readShardIdJobId) {
-        onReadShardIdFinished(errorCode, errorDescription, password);
-        return;
+    {
+        auto it = m_readShardIdJobIdsWithUserIds.right.find(jobId);
+        if (it != m_readShardIdJobIdsWithUserIds.right.end()) {
+            // TODO: make use of userId from the bimap
+            m_readShardIdJobIdsWithUserIds.right.erase(it);
+            onReadShardIdFinished(errorCode, errorDescription, password);
+            return;
+        }
     }
 
     auto readAuthTokenIt =
@@ -670,14 +700,24 @@ void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
         << "job id = " << jobId << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
-    if (jobId == m_deleteAuthTokenJobId) {
-        onDeleteAuthTokenFinished(errorCode, errorDescription);
-        return;
+    {
+        auto it = m_deleteAuthTokenJobIdsWithUserIds.right.find(jobId);
+        if (it != m_deleteAuthTokenJobIdsWithUserIds.right.end()) {
+            auto userId = it->second;
+            m_deleteAuthTokenJobIdsWithUserIds.right.erase(it);
+            onDeleteAuthTokenFinished(errorCode, userId, errorDescription);
+            return;
+        }
     }
 
-    if (jobId == m_deleteShardIdJobId) {
-        onDeleteShardIdFinished(errorCode, errorDescription);
-        return;
+    {
+        auto it = m_deleteShardIdJobIdsWithUserIds.right.find(jobId);
+        if (it != m_deleteShardIdJobIdsWithUserIds.right.end()) {
+            auto userId = it->second;
+            m_deleteShardIdJobIdsWithUserIds.right.erase(it);
+            onDeleteShardIdFinished(errorCode, userId, errorDescription);
+            return;
+        }
     }
 
     QNDEBUG("Couldn't identify the delete password from keychain job");
@@ -1329,8 +1369,6 @@ void SynchronizationManagerPrivate::authenticateImpl(
     QNDEBUG("Trying to restore the authentication token and "
         << "the shard id from the keychain");
 
-    m_readingAuthToken = true;
-
     QString readAuthTokenService =
         QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
 
@@ -1339,11 +1377,13 @@ void SynchronizationManagerPrivate::authenticateImpl(
         QStringLiteral("_auth_token_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
-    m_readAuthTokenJobId = m_pKeychainService->startReadPasswordJob(
+    auto readAuthTokenJobId = m_pKeychainService->startReadPasswordJob(
         readAuthTokenService,
         readAuthTokenKey);
 
-    m_readingShardId = true;
+    m_readAuthTokenJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
+        m_OAuthResult.m_userId,
+        readAuthTokenJobId));
 
     QString readShardIdService =
         QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
@@ -1353,9 +1393,13 @@ void SynchronizationManagerPrivate::authenticateImpl(
         QStringLiteral("_shard_id_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
-    m_readShardIdJobId = m_pKeychainService->startReadPasswordJob(
+    auto readShardIdJobId = m_pKeychainService->startReadPasswordJob(
         readShardIdService,
         readShardIdKey);
+
+    m_readShardIdJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
+        m_OAuthResult.m_userId,
+        readShardIdJobId));
 }
 
 void SynchronizationManagerPrivate::launchOAuth()
@@ -1427,9 +1471,7 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(
 {
     QNDEBUG("SynchronizationManagerPrivate::launchStoreOAuthResult");
 
-    m_writtenOAuthResult = result;
-
-    m_writingAuthToken = true;
+    m_writtenOAuthResultByUserId[result.m_userId] = result;
 
     QString writeAuthTokenService =
         QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
@@ -1439,12 +1481,14 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(
         QStringLiteral("_auth_token_") + m_host + QStringLiteral("_") +
         QString::number(result.m_userId);
 
-    m_writeAuthTokenJobId = m_pKeychainService->startWritePasswordJob(
+    auto writeAuthTokenJobId = m_pKeychainService->startWritePasswordJob(
         writeAuthTokenService,
         writeAuthTokenKey,
         result.m_authToken);
 
-    m_writingShardId = true;
+    m_writeAuthTokenJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
+        m_OAuthResult.m_userId,
+        writeAuthTokenJobId));
 
     QString writeShardIdService =
         QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
@@ -1454,15 +1498,34 @@ void SynchronizationManagerPrivate::launchStoreOAuthResult(
         QStringLiteral("_shard_id_") + m_host + QStringLiteral("_") +
         QString::number(result.m_userId);
 
-    m_writeShardIdJobId = m_pKeychainService->startWritePasswordJob(
+    auto writeShardIdJobId = m_pKeychainService->startWritePasswordJob(
         writeShardIdService,
         writeShardIdKey,
         result.m_shardId);
+
+    m_writeShardIdJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
+        m_OAuthResult.m_userId,
+        writeShardIdJobId));
 }
 
 void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
 {
     QNDEBUG("SynchronizationManagerPrivate::finalizeStoreOAuthResult");
+
+    auto it = m_writtenOAuthResultByUserId.find(m_OAuthResult.m_userId);
+    if (Q_UNLIKELY(it == m_writtenOAuthResultByUserId.end()))
+    {
+        ErrorString error(
+            QT_TR_NOOP("Internal error: can't finalize the store of OAuth "
+                       "result, no OAuth data found for user id"));
+
+        error.details() = QString::number(m_OAuthResult.m_userId);
+        QNWARNING(error);
+        Q_EMIT notifyError(error);
+        return;
+    }
+
+    const auto & writtenOAuthResult = it.value();
 
     ApplicationSettings appSettings(
         m_pRemoteToLocalSyncManager->account(),
@@ -1470,28 +1533,28 @@ void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
 
     QString keyGroup =
         QStringLiteral("Authentication/") + m_host + QStringLiteral("/") +
-        QString::number(m_writtenOAuthResult.m_userId) +
+        QString::number(writtenOAuthResult.m_userId) +
         QStringLiteral("/");
 
     appSettings.setValue(
         keyGroup + NOTE_STORE_URL_KEY,
-        m_writtenOAuthResult.m_noteStoreUrl);
+        writtenOAuthResult.m_noteStoreUrl);
 
     appSettings.setValue(
         keyGroup + EXPIRATION_TIMESTAMP_KEY,
-        m_writtenOAuthResult.m_expirationTime);
+        writtenOAuthResult.m_expirationTime);
 
     appSettings.setValue(
         keyGroup + WEB_API_URL_PREFIX_KEY,
-        m_writtenOAuthResult.m_webApiUrlPrefix);
+        writtenOAuthResult.m_webApiUrlPrefix);
 
     QNDEBUG("Successfully wrote the authentication result info "
         << "to the application settings for host " << m_host << ", user id "
-        << m_writtenOAuthResult.m_userId
+        << writtenOAuthResult.m_userId
         << ": auth token expiration timestamp = "
-        << printableDateTimeFromTimestamp(m_writtenOAuthResult.m_expirationTime)
+        << printableDateTimeFromTimestamp(writtenOAuthResult.m_expirationTime)
         << ", web API url prefix = "
-        << m_writtenOAuthResult.m_webApiUrlPrefix);
+        << writtenOAuthResult.m_webApiUrlPrefix);
 
     finalizeAuthentication();
 }
@@ -1527,8 +1590,11 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
             ErrorString(),
             account);
 
-        m_writtenOAuthResult = AuthData();
-        m_writtenOAuthResult.m_userId = -1;
+        auto it = m_writtenOAuthResultByUserId.find(m_OAuthResult.m_userId);
+        if (it != m_writtenOAuthResultByUserId.end()) {
+            m_writtenOAuthResultByUserId.erase(it);
+        }
+
         break;
     }
     case AuthContext::AuthToLinkedNotebooks:
@@ -1984,7 +2050,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                     keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
 
                 m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
-                    JobIdWithGuidBimap::value_type(guid, jobId));
+                    KeychainJobIdWithGuidBimap::value_type(guid, jobId));
             }
 
             // 2) Set up the job reading the shard id
@@ -1998,7 +2064,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                     keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
 
                 m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
-                    JobIdWithGuidBimap::value_type(guid, jobId));
+                    KeychainJobIdWithGuidBimap::value_type(guid, jobId));
             }
         }
 
@@ -2036,7 +2102,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                 token);
 
             m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
-                JobIdWithGuidBimap::value_type(guid, jobId));
+                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
         }
         else {
             m_linkedNotebookAuthTokensPendingWritingByGuid[guid] = token;
@@ -2056,7 +2122,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                 shardId);
 
             m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
-                JobIdWithGuidBimap::value_type(guid, jobId));
+                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
         }
         else
         {
@@ -2072,8 +2138,6 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     QNDEBUG("SynchronizationManagerPrivate::onReadAuthTokenFinished: "
         << "error code = " << errorCode << ", error description = "
         << errorDescription);
-
-    m_readingAuthToken = false;
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
         QNWARNING("Unexpectedly missing OAuth token in the keychain: "
@@ -2093,7 +2157,10 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     QNDEBUG("Successfully restored the authentication token");
     m_OAuthResult.m_authToken = password;
 
-    if (!m_readingShardId && !m_authenticationInProgress && !m_writingShardId) {
+    if (!m_authenticationInProgress &&
+        !isReadingShardId(m_OAuthResult.m_userId) &&
+        !isWritingShardId(m_OAuthResult.m_userId))
+    {
         finalizeAuthentication();
     }
 }
@@ -2105,8 +2172,6 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(
     QNDEBUG("SynchronizationManagerPrivate::onReadShardIdFinished: "
         << "error code = " << errorCode
         << ", error description = " << errorDescription);
-
-    m_readingShardId = false;
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
         QNWARNING("Unexpectedly missing OAuth shard id in the keychain: "
@@ -2126,8 +2191,9 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(
     QNDEBUG("Successfully restored the shard id");
     m_OAuthResult.m_shardId = password;
 
-    if (!m_readingAuthToken && !m_authenticationInProgress &&
-        !m_writingAuthToken)
+    if (!m_authenticationInProgress &&
+        !isReadingAuthToken(m_OAuthResult.m_userId) &&
+        !isWritingAuthToken(m_OAuthResult.m_userId))
     {
         finalizeAuthentication();
     }
@@ -2140,8 +2206,6 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
     QNDEBUG("SynchronizationManagerPrivate::onWriteAuthTokenFinished: "
         << "error code = " << errorCode
         << ", error description = " << errorDescription);
-
-    m_writingAuthToken = false;
 
     if (errorCode != IKeychainService::ErrorCode::NoError)
     {
@@ -2157,7 +2221,10 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
 
     QNDEBUG("Successfully stored the authentication token in the keychain");
 
-    if (!m_writingShardId && !m_authenticationInProgress && !m_readingShardId) {
+    if (!m_authenticationInProgress &&
+        !isReadingShardId(m_OAuthResult.m_userId) &&
+        !isWritingShardId(m_OAuthResult.m_userId))
+    {
         finalizeStoreOAuthResult();
     }
 }
@@ -2169,8 +2236,6 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
     QNDEBUG("SynchronizationManagerPrivate::onWriteShardIdFinished: "
         << "error code = " << errorCode << ", error description = "
         << errorDescription);
-
-    m_writingShardId = false;
 
     if (errorCode != IKeychainService::ErrorCode::NoError)
     {
@@ -2186,8 +2251,9 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
 
     QNDEBUG("Successfully stored the shard id in the keychain");
 
-    if (!m_writingAuthToken && !m_authenticationInProgress &&
-        !m_readingAuthToken)
+    if (!m_authenticationInProgress &&
+        !isReadingAuthToken(m_OAuthResult.m_userId) &&
+        !isWritingAuthToken(m_OAuthResult.m_userId))
     {
         finalizeStoreOAuthResult();
     }
@@ -2195,25 +2261,28 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
 
 void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
     const IKeychainService::ErrorCode::type errorCode,
+    const qevercloud::UserID userId,
     const ErrorString & errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onDeleteAuthTokenFinished: "
-        << "user id = " << m_lastRevokedAuthenticationUserId
-        << ", error code = " << errorCode
+        << "user id = " << userId << ", error code = " << errorCode
         << ", error description = " << errorDescription);
-
-    m_deletingAuthToken = false;
 
     if ( (errorCode != IKeychainService::ErrorCode::NoError) &&
          (errorCode != IKeychainService::ErrorCode::EntryNotFound) )
     {
-        m_deletingShardId = false;
-        m_deleteShardIdJobId = QUuid();
+        auto it = m_deleteShardIdJobIdsWithUserIds.left.find(userId);
+        if (it != m_deleteShardIdJobIdsWithUserIds.left.end()) {
+            m_deleteShardIdJobIdsWithUserIds.left.erase(it);
+        }
 
         QNWARNING("Attempt to delete the auth token returned "
             << "with error: " << errorDescription);
-        ErrorString error(QT_TR_NOOP("Failed to delete authentication token "
-                                     "from the keychain"));
+
+        ErrorString error(
+            QT_TR_NOOP("Failed to delete authentication token "
+                       "from the keychain"));
+
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
@@ -2221,34 +2290,34 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
         Q_EMIT authenticationRevoked(
             /* success = */ false,
             error,
-            m_lastRevokedAuthenticationUserId);
+            userId);
         return;
     }
 
-    if (!m_deletingShardId) {
+    if (!isDeletingShardId(userId)) {
         Q_EMIT authenticationRevoked(
             /* success = */ true,
             ErrorString(),
-            m_lastRevokedAuthenticationUserId);
+            userId);
     }
 }
 
 void SynchronizationManagerPrivate::onDeleteShardIdFinished(
     const IKeychainService::ErrorCode::type errorCode,
+    const qevercloud::UserID userId,
     const ErrorString & errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onDeleteShardIdFinished: "
-        << "user id = " << m_lastRevokedAuthenticationUserId
-        << ", error code = " << errorCode
+        << "user id = " << userId << ", error code = " << errorCode
         << ", error description = " << errorDescription);
-
-    m_deletingShardId = false;
 
     if ( (errorCode != IKeychainService::ErrorCode::NoError) &&
          (errorCode != IKeychainService::ErrorCode::EntryNotFound) )
     {
-        m_deletingAuthToken = false;
-        m_deleteAuthTokenJobId = QUuid();
+        auto it = m_deleteAuthTokenJobIdsWithUserIds.left.find(userId);
+        if (it != m_deleteAuthTokenJobIdsWithUserIds.left.end()) {
+            m_deleteAuthTokenJobIdsWithUserIds.left.erase(it);
+        }
 
         QNWARNING("Attempt to delete the shard id returned with error: "
             << errorDescription);
@@ -2262,16 +2331,82 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
         Q_EMIT authenticationRevoked(
             /* success = */ false,
             error,
-            m_lastRevokedAuthenticationUserId);
+            userId);
         return;
     }
 
-    if (!m_deletingAuthToken) {
+    if (!isDeletingAuthToken(userId)) {
         Q_EMIT authenticationRevoked(
             /* success = */ true,
             ErrorString(),
-            m_lastRevokedAuthenticationUserId);
+            userId);
     }
+}
+
+bool SynchronizationManagerPrivate::isReadingAuthToken(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_readAuthTokenJobIdsWithUserIds.left.find(userId) !=
+        m_readAuthTokenJobIdsWithUserIds.left.end());
+}
+
+bool SynchronizationManagerPrivate::isReadingShardId(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_readShardIdJobIdsWithUserIds.left.find(userId) !=
+        m_readShardIdJobIdsWithUserIds.left.end());
+}
+
+bool SynchronizationManagerPrivate::isWritingAuthToken(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_writeAuthTokenJobIdsWithUserIds.left.find(userId) !=
+        m_writeAuthTokenJobIdsWithUserIds.left.end());
+}
+
+bool SynchronizationManagerPrivate::isWritingShardId(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_writeShardIdJobIdsWithUserIds.left.find(userId) !=
+        m_writeShardIdJobIdsWithUserIds.left.end());
+}
+
+bool SynchronizationManagerPrivate::isDeletingAuthToken(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_deleteAuthTokenJobIdsWithUserIds.left.find(userId) !=
+        m_deleteAuthTokenJobIdsWithUserIds.left.end());
+}
+
+bool SynchronizationManagerPrivate::isDeletingShardId(
+    const qevercloud::UserID userId) const
+{
+    if (Q_UNLIKELY(userId < 0)) {
+        return false;
+    }
+
+    return (m_deleteShardIdJobIdsWithUserIds.left.find(userId) !=
+        m_deleteShardIdJobIdsWithUserIds.left.end());
 }
 
 void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
