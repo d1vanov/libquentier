@@ -28,11 +28,13 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/QuentierCheckPtr.h>
+#include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
 
 #include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QTimeZone>
 
 #include <limits>
@@ -1613,6 +1615,120 @@ void SynchronizationManagerPrivate::finalizeAuthentication()
     m_authContext = AuthContext::Blank;
 }
 
+void SynchronizationManagerPrivate::finalizeRevokeAuthentication(
+    const qevercloud::UserID userId)
+{
+    QNDEBUG("SynchronizationManagerPrivate::finalizeRevokeAuthentication: "
+        << userId);
+
+    removeNonSecretPersistentAuthInfo(userId);
+
+    if (m_OAuthResult.m_userId == userId) {
+        QNDEBUG("Cleaning up the auth data for current user: " << userId);
+        m_OAuthResult = AuthData();
+        m_OAuthResult.m_userId = userId;
+    }
+
+    Q_EMIT authenticationRevoked(
+        /* success = */ true,
+        ErrorString(),
+        userId);
+}
+
+void SynchronizationManagerPrivate::removeNonSecretPersistentAuthInfo(
+    const qevercloud::UserID userId)
+{
+    QNDEBUG("SynchronizationManagerPrivate::removeNonSecretPersistentAuthInfo: "
+        << userId);
+
+    // FIXME: not only user id but name and host are also required to access
+    // the account's persistent settings. They are not easily available so
+    // using the hacky way to get them. In future account should be passed in
+    // here to avoid that.
+
+    QString accountName;
+    QString host;
+
+    auto storagePath = applicationPersistentStoragePath();
+
+    auto evernoteAccountsDirPath =
+        storagePath + QStringLiteral("/EvernoteAccounts");
+
+    QDir evernoteAccountsDir(evernoteAccountsDirPath);
+    if (evernoteAccountsDir.exists() && evernoteAccountsDir.isReadable())
+    {
+        auto subdirs = evernoteAccountsDir.entryList(
+            QDir::Filters(QDir::AllDirs | QDir::NoDotAndDotDot));
+
+        QString userIdStr = QString::number(userId);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+        for(const auto & subdir: qAsConst(subdirs))
+        {
+#else
+        for(auto it = subdirs.constBegin(), end = subdirs.constEnd();
+            it != end; ++it)
+        {
+            const auto & subdir = *it;
+#endif
+
+            if (!subdir.endsWith(userIdStr)) {
+                continue;
+            }
+
+            QStringList nameParts = subdir.split(
+                QStringLiteral("_"),
+                QString::SkipEmptyParts,
+                Qt::CaseInsensitive);
+
+            int numParts = nameParts.size();
+            if (numParts < 3) {
+                continue;
+            }
+
+            if (nameParts[numParts - 1] == userIdStr)
+            {
+                host = nameParts[numParts - 2];
+
+                nameParts = nameParts.mid(0, numParts - 2);
+                accountName = nameParts.join(QStringLiteral("_"));
+                break;
+            }
+        }
+    }
+
+    if (accountName.isEmpty()) {
+        QNWARNING("Failed to detect existing Evernote account for user id "
+            << userId << ", cannot remove its persistent auth info");
+        return;
+    }
+
+    QNDEBUG("Found Evernote account corresponding to user id " << userId
+        << ": name = " << accountName << ", host = " << host);
+
+    // Now can actually create this account and mess with its persistent
+    // settings
+
+    Account account(
+        accountName,
+        Account::Type::Evernote,
+        userId,
+        Account::EvernoteAccountType::Free, // it doesn't really matter now
+        host);
+
+    ApplicationSettings appSettings(
+        account,
+        SYNCHRONIZATION_PERSISTENCE_NAME);
+
+    QString authKeyGroup =
+        QStringLiteral("Authentication/") + host +
+        QStringLiteral("/") +
+        QString::number(userId) +
+        QStringLiteral("/");
+
+    appSettings.remove(authKeyGroup);
+}
+
 void SynchronizationManagerPrivate::timerEvent(QTimerEvent * pTimerEvent)
 {
     if (Q_UNLIKELY(!pTimerEvent))
@@ -2295,10 +2411,7 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
     }
 
     if (!isDeletingShardId(userId)) {
-        Q_EMIT authenticationRevoked(
-            /* success = */ true,
-            ErrorString(),
-            userId);
+        finalizeRevokeAuthentication(userId);
     }
 }
 
@@ -2336,10 +2449,7 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
     }
 
     if (!isDeletingAuthToken(userId)) {
-        Q_EMIT authenticationRevoked(
-            /* success = */ true,
-            ErrorString(),
-            userId);
+        finalizeRevokeAuthentication(userId);
     }
 }
 
