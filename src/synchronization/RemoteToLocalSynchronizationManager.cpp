@@ -5091,8 +5091,6 @@ bool RemoteToLocalSynchronizationManager::checkProtocolVersion(
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::checkProtocolVersion");
 
-    return true;
-
     if (m_edamProtocolVersionChecked) {
         QNDEBUG("Already checked the protocol version, skipping it");
         return true;
@@ -5101,6 +5099,7 @@ bool RemoteToLocalSynchronizationManager::checkProtocolVersion(
     // NOTE: 24.04.2020: temporarily disabled checking protocol version
     // as it appears to be broken on Evernote servers side. Will enable again
     // in future when Evernote servers are fixed.
+    Q_UNUSED(errorDescription)
     /*
     QString clientName = clientNameForProtocolVersionCheck();
     qint16 edamProtocolVersionMajor = qevercloud::EDAM_VERSION_MAJOR;
