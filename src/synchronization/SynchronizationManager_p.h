@@ -147,7 +147,9 @@ private Q_SLOTS:
                        QString authToken,
                        qevercloud::Timestamp authTokenExpirationTime,
                        QString shardId, QString noteStoreUrl,
-                       QString webApiUrlPrefix, ErrorString errorDescription);
+                       QString webApiUrlPrefix,
+                       QList<QNetworkCookie> userStoreCookies,
+                       ErrorString errorDescription);
 
     void onWritePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
                                     ErrorString errorDescription);
@@ -214,6 +216,7 @@ private:
         QString                 m_shardId;
         QString                 m_noteStoreUrl;
         QString                 m_webApiUrlPrefix;
+        QList<QNetworkCookie>   m_userStoreCookies;
 
         virtual QTextStream & print(QTextStream & strm) const override;
     };

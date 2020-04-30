@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,6 +36,9 @@ public:
     qevercloud::UserID userId() const;
     void setUserId(const qevercloud::UserID userId);
 
+    QList<QNetworkCookie> userStoreCookies() const;
+    void setUserStoreCookies(QList<QNetworkCookie> cookies);
+
     void failNextRequest();
 
 public Q_SLOTS:
@@ -45,6 +48,8 @@ private:
     qevercloud::UserID  m_userId;
     QString             m_authToken;
     bool                m_failNextRequest;
+
+    QList<QNetworkCookie>   m_userStoreCookies;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,6 +40,7 @@ Q_SIGNALS:
                                   QString shardId,
                                   QString noteStoreUrl,
                                   QString webApiUrlPrefix,
+                                  QList<QNetworkCookie> cookies,
                                   ErrorString errorDescription);
 
 public Q_SLOTS:

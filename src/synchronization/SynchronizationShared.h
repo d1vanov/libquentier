@@ -45,6 +45,8 @@
 
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
 
+#define USER_STORE_COOKIE_KEY QStringLiteral("UserStoreCookie")
+
 #define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX                        \
     QStringLiteral("LinkedNotebookExpirationTimestamp_")                       \
 // LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX

@@ -31,7 +31,10 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier_private/utility/IKeychainService.h>
+
+#include <QList>
 #include <QMetaType>
+#include <QNetworkCookie>
 #include <QSqlError>
 #include <QSharedPointer>
 #include <QVector>
@@ -119,6 +122,8 @@ void registerMetatypes()
 
     typedef IKeychainService::ErrorCode ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
+
+    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkProxy>");
 }
 
 } // namespace quentier
