@@ -28,6 +28,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QQueue>
 #include <QPointer>
 #include <QUuid>
 
@@ -230,6 +231,8 @@ private:
         const qevercloud::EDAMNotFoundException & notFoundException,
         ErrorString & errorDescription) const;
 
+    void processNextPendingGetNoteAsyncRequest();
+
 private:
     Q_DISABLE_COPY(NoteStore)
 
@@ -239,6 +242,26 @@ private:
         QString     m_guid;
         QPointer<qevercloud::AsyncResult>   m_asyncResult;
     };
+
+    struct GetNoteRequest
+    {
+        QString m_guid;
+        QString m_authToken;
+
+        bool m_withContent = false;
+        bool m_withResourceData = false;
+        bool m_withResourcesRecognition = false;
+        bool m_withResourceAlternateData = false;
+        bool m_withSharedNotes = false;
+        bool m_withNoteAppDataValues = false;
+        bool m_withResourceAppDataValues = false;
+        bool m_withNoteLimits = false;
+    };
+
+    int     m_getNoteAsyncRequestCount = 0;
+    int     m_getNoteAsyncRequestCountMax = 100;
+
+    QQueue<GetNoteRequest>  m_pendingGetNoteRequests;
 
     QHash<QUuid, RequestData>   m_noteRequestDataById;
     QHash<QUuid, RequestData>   m_resourceRequestDataById;
