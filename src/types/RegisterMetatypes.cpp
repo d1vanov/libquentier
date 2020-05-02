@@ -123,7 +123,7 @@ void registerMetatypes()
     typedef IKeychainService::ErrorCode ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
 
-    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkProxy>");
+    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
 }
 
 } // namespace quentier
