@@ -698,6 +698,31 @@ bool NoteStore::getNoteAsync(const bool withContent,
         return false;
     }
 
+    if (m_getNoteAsyncRequestCount >= m_getNoteAsyncRequestCountMax)
+    {
+        QNDEBUG("Too many get note async requests are already in flight: "
+            << m_getNoteAsyncRequestCount << ", queueing the request to be "
+            << "executed later for note with guid " << noteGuid);
+
+        GetNoteRequest request;
+        request.m_guid = noteGuid;
+        request.m_authToken = authToken;
+        request.m_withContent = withContent;
+        request.m_withResourceData = withResourceData;
+        request.m_withResourcesRecognition = withResourcesRecognition;
+        request.m_withResourceAlternateData = withResourceAlternateData;
+        request.m_withSharedNotes = withSharedNotes;
+        request.m_withNoteAppDataValues = withNoteAppDataValues;
+        request.m_withResourceAppDataValues = withResourceAppDataValues;
+        request.m_withNoteLimits = withNoteLimits;
+
+        m_pendingGetNoteRequests.enqueue(request);
+        QNDEBUG("Queue of pending get note async requests now has "
+            << m_pendingGetNoteRequests.size() << " items");
+
+        return true;
+    }
+
     qevercloud::NoteResultSpec noteResultSpec;
     noteResultSpec.includeContent = withContent;
     noteResultSpec.includeResourcesData = withResourceData;
@@ -727,11 +752,14 @@ bool NoteStore::getNoteAsync(const bool withContent,
     requestData.m_guid = noteGuid;
     requestData.m_asyncResult = pAsyncResult;
 
-    QObject::connect(pAsyncResult,
-                     &qevercloud::AsyncResult::finished,
-                     this,
-                     &NoteStore::onGetNoteAsyncFinished,
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
+    QObject::connect(
+        pAsyncResult,
+        &qevercloud::AsyncResult::finished,
+        this,
+        &NoteStore::onGetNoteAsyncFinished,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
+
+    ++m_getNoteAsyncRequestCount;
     return true;
 }
 
@@ -956,10 +984,13 @@ void NoteStore::onGetNoteAsyncFinished(
 {
     QNDEBUG("NoteStore::onGetNoteAsyncFinished");
 
+    --m_getNoteAsyncRequestCount;
+
     auto it = m_noteRequestDataById.find(ctx->requestId());
     if (Q_UNLIKELY(it == m_noteRequestDataById.end())) {
         QNWARNING("Received getNoteAsyncFinished event for unidentified "
             << "request id: " << ctx->requestId());
+        processNextPendingGetNoteAsyncRequest();
         return;
     }
 
@@ -1005,12 +1036,23 @@ void NoteStore::onGetNoteAsyncFinished(
             errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN))
 
         Q_EMIT getNoteAsyncFinished(
-            errorCode, note, rateLimitSeconds, errorDescription);
+            errorCode,
+            note,
+            rateLimitSeconds,
+            errorDescription);
+
+        processNextPendingGetNoteAsyncRequest();
         return;
     }
 
     note = result.value<qevercloud::Note>();
-    Q_EMIT getNoteAsyncFinished(errorCode, note, rateLimitSeconds, errorDescription);
+    Q_EMIT getNoteAsyncFinished(
+        errorCode,
+        note,
+        rateLimitSeconds,
+        errorDescription);
+
+    processNextPendingGetNoteAsyncRequest();
 }
 
 void NoteStore::onGetResourceAsyncFinished(
@@ -2150,6 +2192,54 @@ void NoteStore::processEdamNotFoundException(
     {
         errorDescription.details() = notFoundException.key.ref();
     }
+}
+
+void NoteStore::processNextPendingGetNoteAsyncRequest()
+{
+    QNDEBUG("NoteStore::processNextPendingGetNoteAsyncRequest");
+
+    if (m_pendingGetNoteRequests.isEmpty()) {
+        QNDEBUG("No pending get note request");
+        return;
+    }
+
+    QNDEBUG("Queue of pending get note async requests is not empty, executing "
+        << "the next pending request");
+
+    auto request = m_pendingGetNoteRequests.dequeue();
+    ErrorString errorDescription;
+
+    bool res = getNoteAsync(
+        request.m_withContent,
+        request.m_withResourceData,
+        request.m_withResourcesRecognition,
+        request.m_withResourceAlternateData,
+        request.m_withSharedNotes,
+        request.m_withNoteAppDataValues,
+        request.m_withResourceAppDataValues,
+        request.m_withNoteLimits,
+        request.m_guid,
+        request.m_authToken,
+        errorDescription);
+    if (Q_UNLIKELY(!res))
+    {
+        auto errorCode = static_cast<int>(qevercloud::EDAMErrorCode::UNKNOWN);
+
+        qevercloud::Note note;
+        note.guid = request.m_guid;
+
+        Q_EMIT getNoteAsyncFinished(
+            errorCode,
+            note,
+            -1,
+            errorDescription);
+
+        processNextPendingGetNoteAsyncRequest();
+        return;
+    }
+
+    QNDEBUG("Queue of pending get note async requests now contains "
+        << m_pendingGetNoteRequests.size() << " items");
 }
 
 } // namespace quentier
