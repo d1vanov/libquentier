@@ -43,6 +43,8 @@
 
 #define HALF_AN_HOUR_IN_MSEC (1800000)
 
+#define AUTHENTICATION_TIMESTAMP_KEY QStringLiteral("AuthenticationTimestamp")
+
 #define EXPIRATION_TIMESTAMP_KEY QStringLiteral("ExpirationTimestamp")
 
 #define USER_STORE_COOKIE_KEY QStringLiteral("UserStoreCookie")

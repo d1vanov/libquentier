@@ -210,9 +210,10 @@ private:
     class AuthData: public Printable
     {
     public:
-        qevercloud::UserID      m_userId;
+        qevercloud::UserID      m_userId = -1;
         QString                 m_authToken;
-        qevercloud::Timestamp   m_expirationTime;
+        qevercloud::Timestamp   m_authenticationTime = 0;
+        qevercloud::Timestamp   m_expirationTime = 0;
         QString                 m_shardId;
         QString                 m_noteStoreUrl;
         QString                 m_webApiUrlPrefix;
