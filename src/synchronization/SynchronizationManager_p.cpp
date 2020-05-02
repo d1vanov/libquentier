@@ -322,7 +322,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
     bool success, qevercloud::UserID userId, QString authToken,
     qevercloud::Timestamp authTokenExpirationTime, QString shardId,
     QString noteStoreUrl, QString webApiUrlPrefix,
-    QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription)
+    QList<QNetworkCookie> cookies, ErrorString errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onOAuthResult: "
             << (success ? "success" : "failure")
@@ -341,7 +341,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         authData.m_shardId = shardId;
         authData.m_noteStoreUrl = noteStoreUrl;
         authData.m_webApiUrlPrefix = webApiUrlPrefix;
-        authData.m_userStoreCookies = std::move(userStoreCookies);
+        authData.m_cookies = std::move(cookies);
 
         m_OAuthResult = authData;
         QNDEBUG("OAuth result = " << m_OAuthResult);
@@ -353,7 +353,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         m_pRemoteToLocalSyncManager->setAccount(newAccount);
 
         m_pUserStore->setAuthenticationToken(authToken);
-        m_pUserStore->setCookies(authData.m_userStoreCookies);
+        m_pUserStore->setCookies(authData.m_cookies);
 
         ErrorString error;
         bool res = m_pRemoteToLocalSyncManager->syncUser(
@@ -1289,20 +1289,12 @@ void SynchronizationManagerPrivate::authenticateImpl(
 
     m_OAuthResult.m_webApiUrlPrefix = webApiUrlPrefix;
 
-    QNDEBUG("Restoring user store cookies");
+    QNDEBUG("Restoring cookie for UserStore");
 
-    QList<QNetworkCookie> userStoreCookies;
-    int cookieCount = appSettings.beginReadArray(USER_STORE_COOKIE_KEY);
-    userStoreCookies.reserve(cookieCount);
-    for(int i = 0; i < cookieCount; ++i) {
-        appSettings.setArrayIndex(i);
-        QByteArray rawCookie = appSettings.value(USER_STORE_COOKIE_KEY).toByteArray();
-        QList<QNetworkCookie> cookies = QNetworkCookie::parseCookies(rawCookie);
-        userStoreCookies.append(cookies);
-    }
+    QByteArray rawCookie = appSettings.value(
+        keyGroup + USER_STORE_COOKIE_KEY).toByteArray();
 
-    appSettings.endArray();
-    m_OAuthResult.m_userStoreCookies = userStoreCookies;
+    m_OAuthResult.m_cookies = QNetworkCookie::parseCookies(rawCookie);
 
     QNDEBUG("Trying to restore the authentication token and "
             "the shard id from the keychain");
@@ -1356,7 +1348,7 @@ void SynchronizationManagerPrivate::launchSync()
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
     m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_pUserStore->setCookies(m_OAuthResult.m_userStoreCookies);
+    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
 
     if (m_lastUpdateCount <= 0) {
         QNDEBUG("The client has never synchronized with "
@@ -1445,15 +1437,19 @@ void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
     appSettings.setValue(keyGroup + WEB_API_URL_PREFIX_KEY,
                          m_writtenOAuthResult.m_webApiUrlPrefix);
 
-    appSettings.beginWriteArray(USER_STORE_COOKIE_KEY);
+    for(const auto & cookie: qAsConst(m_OAuthResult.m_cookies))
+    {
+        QString cookieName = QString::fromUtf8(cookie.name());
+        if (!cookieName.startsWith(QStringLiteral("web")) ||
+            !cookieName.endsWith(QStringLiteral("PreUserGuid")))
+        {
+            QNDEBUG("Skipping cookie " << cookie.name() << " from persistence");
+            continue;
+        }
 
-    int i = 0;
-    for(const auto & userStoreCookie: m_writtenOAuthResult.m_userStoreCookies) {
-        appSettings.setArrayIndex(i++);
-        appSettings.setValue(USER_STORE_COOKIE_KEY, userStoreCookie.toRawForm());
+        appSettings.setValue(keyGroup + USER_STORE_COOKIE_KEY, cookie.toRawForm());
+        QNDEBUG("Persisted cookie " << cookie.name());
     }
-
-    appSettings.endArray();
 
     QNDEBUG("Successfully wrote the authentication result info "
             << "to the application settings for host " << m_host << ", user id "
@@ -2496,7 +2492,7 @@ QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm)
          << "    shard id = " << m_shardId << ";\n"
          << "    note store url = " << m_noteStoreUrl << ";\n"
          << "    web API url prefix = " << m_webApiUrlPrefix << ";\n"
-         << "    user store cookies count: " << m_userStoreCookies.size()
+         << "    cookies count: " << m_cookies.size()
          << ";\n"
          << "};\n";
     return strm;

@@ -68,7 +68,7 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
                                         result.authenticationToken, result.expires,
                                         result.shardId, result.noteStoreUrl,
                                         result.webApiUrlPrefix,
-                                        result.userStoreCookies,
+                                        result.cookies,
                                         ErrorString());
     }
     else

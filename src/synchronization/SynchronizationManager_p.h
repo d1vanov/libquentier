@@ -216,7 +216,7 @@ private:
         QString                 m_shardId;
         QString                 m_noteStoreUrl;
         QString                 m_webApiUrlPrefix;
-        QList<QNetworkCookie>   m_userStoreCookies;
+        QList<QNetworkCookie>   m_cookies;
 
         virtual QTextStream & print(QTextStream & strm) const override;
     };
