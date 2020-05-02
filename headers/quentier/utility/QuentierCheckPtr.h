@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_QUENTIER_CHECK_PTR_H
 
 #include <quentier/exception/NullPtrException.h>
+#include <quentier/logging/QuentierLogger.h>
 
 #ifndef QUENTIER_CHECK_PTR
 #define QUENTIER_CHECK_PTR(pointer, ...)                                       \
@@ -35,6 +36,7 @@
         quentier_null_ptr_error.details() += QStringLiteral(") ");             \
         quentier_null_ptr_error.details() +=                                   \
             QString::fromUtf8("" #__VA_ARGS__ "");                             \
+        QNERROR(quentier_null_ptr_error);                                      \
         throw NullPtrException(quentier_null_ptr_error);                       \
     }                                                                          \
 }                                                                              \

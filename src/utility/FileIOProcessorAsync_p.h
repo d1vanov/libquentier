@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,12 +19,13 @@
 #ifndef LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
 #define LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
+
+#include <QIODevice>
 #include <QObject>
 #include <QString>
 #include <QUuid>
-#include <QIODevice>
 
 namespace quentier {
 
@@ -38,19 +39,23 @@ public:
 
 Q_SIGNALS:
     void readyForIO();
-    void writeFileRequestProcessed(bool success, ErrorString errorDescription,
-                                   QUuid requestId);
-    void readFileRequestProcessed(bool success, ErrorString errorDescription,
-                                  QByteArray data, QUuid requestId);
+
+    void writeFileRequestProcessed(
+        bool success, ErrorString errorDescription, QUuid requestId);
+
+    void readFileRequestProcessed(
+        bool success, ErrorString errorDescription, QByteArray data,
+        QUuid requestId);
 
 public Q_SLOTS:
-    void onWriteFileRequest(QString absoluteFilePath, QByteArray data,
-                            QUuid requestId, bool append);
+    void onWriteFileRequest(
+        QString absoluteFilePath, QByteArray data, QUuid requestId,
+        bool append);
 
     void onReadFileRequest(QString absoluteFilePath, QUuid requestId);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent);
+    virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     qint32  m_idleTimePeriodSeconds;

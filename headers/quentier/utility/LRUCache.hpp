@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,12 +23,15 @@
 
 #include <QHash>
 
-#include <list>
 #include <cstddef>
+#include <list>
 
 namespace quentier {
 
-template<class Key, class Value, class Allocator = std::allocator<std::pair<Key, Value> > >
+template<
+    class Key,
+    class Value,
+    class Allocator = std::allocator<std::pair<Key, Value>>>
 class LRUCache
 {
 public:
@@ -39,29 +42,24 @@ public:
         m_mapper()
     {}
 
-    typedef Key key_type;
-    typedef Value mapped_type;
-    typedef Allocator allocator_type;
-    typedef std::pair<key_type, mapped_type> value_type;
-    typedef std::list<value_type, allocator_type> container_type;
-    typedef typename container_type::size_type size_type;
-    typedef typename container_type::difference_type difference_type;
-    typedef typename container_type::iterator iterator;
-    typedef typename container_type::const_iterator const_iterator;
-    typedef std::reverse_iterator<iterator> reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    using key_type = Key;
+    using mapped_type = Value;
+    using allocator_type = Allocator;
+    using value_type = std::pair<key_type, mapped_type>;
+    using container_type = std::list<value_type, allocator_type>;
+    using size_type = typename container_type::size_type;
+    using difference_type = typename container_type::difference_type;
+    using iterator = typename container_type::iterator;
+    using const_iterator = typename container_type::const_iterator;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-#if __cplusplus < 201103L
-    typedef typename allocator_type::reference reference;
-    typedef typename allocator_type::const_reference const_reference;
-    typedef typename allocator_type::pointer pointer;
-    typedef typename allocator_type::const_pointer const_pointer;
-#else
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
-    typedef typename std::allocator_traits<allocator_type>::pointer pointer;
-    typedef typename std::allocator_traits<allocator_type>::const_pointer const_pointer;
-#endif
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using pointer = typename std::allocator_traits<allocator_type>::pointer;
+
+    using const_pointer =
+        typename std::allocator_traits<allocator_type>::const_pointer;
 
     iterator begin() { return m_container.begin(); }
     const_iterator begin() const { return m_container.begin(); }

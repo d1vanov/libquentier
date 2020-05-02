@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include <quentier/local_storage/LocalStorageCacheManager.h>
+
 #include "LocalStorageCacheManager_p.h"
+
 #include <quentier/local_storage/ILocalStorageCacheExpiryChecker.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -81,8 +83,8 @@ const Type * LocalStorageCacheManager::find##Type(                             \
         return d->find##Type##ByGuid(uid);                                     \
     default:                                                                   \
         QNERROR("Detected incorrect local uid/remote guid "                    \
-                "qualifier in local storage cache manager");                   \
-        return nullptr;                                                      \
+            << "qualifier in local storage cache manager");                    \
+        return nullptr;                                                        \
     }                                                                          \
 }                                                                              \
 // FIND_OBJECT
@@ -118,7 +120,7 @@ const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(
 size_t LocalStorageCacheManager::numCachedResources() const
 {
     Q_D(const LocalStorageCacheManager);
-    return d->numCachesResources();
+    return d->numCachedResources();
 }
 
 void LocalStorageCacheManager::cacheResource(const Resource & resource)
@@ -232,7 +234,8 @@ void LocalStorageCacheManager::cacheSavedSearch(const SavedSearch & savedSearch)
     d->cacheSavedSearch(savedSearch);
 }
 
-void LocalStorageCacheManager::expungeSavedSearch(const SavedSearch & savedSearch)
+void LocalStorageCacheManager::expungeSavedSearch(
+    const SavedSearch & savedSearch)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeSavedSearch(savedSearch);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,18 +27,15 @@ namespace quentier {
 class Q_DECL_HIDDEN EncryptUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+    using Callback = NoteEditorPage::Callback;
 public:
     EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         QUndoCommand * parent = nullptr);
 
     EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~EncryptUndoCommand();
 

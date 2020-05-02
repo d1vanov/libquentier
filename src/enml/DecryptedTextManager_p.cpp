@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,30 +17,23 @@
  */
 
 #include "DecryptedTextManager_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
 
-DecryptedTextManagerPrivate::DecryptedTextManagerPrivate() :
-    m_dataHash(),
-    m_staleDataHash(),
-    m_encryptionManager()
-{}
-
-void DecryptedTextManagerPrivate::addEntry(const QString & hash,
-                                           const QString & decryptedText,
-                                           const bool rememberForSession,
-                                           const QString & passphrase,
-                                           const QString & cipher,
-                                           const size_t keyLength)
+void DecryptedTextManagerPrivate::addEntry(
+    const QString & hash, const QString & decryptedText,
+    const bool rememberForSession, const QString & passphrase,
+    const QString & cipher, const size_t keyLength)
 {
     QNDEBUG("DecryptedTextManagerPrivate::addEntry: hash = "
-            << hash << ", rememberForSession = "
-            << (rememberForSession ? "true" : "false"));
+        << hash << ", rememberForSession = "
+        << (rememberForSession ? "true" : "false"));
 
     if (passphrase.isEmpty()) {
         QNWARNING("detected attempt to add decrypted text for "
-                  "empty passphrase to decrypted text manager");
+            << "empty passphrase to decrypted text manager");
         return;
     }
 
@@ -87,17 +80,17 @@ void DecryptedTextManagerPrivate::clearNonRememberedForSessionEntries()
 }
 
 bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
-    const QString & encryptedText,
-    QString & decryptedText,
+    const QString & encryptedText, QString & decryptedText,
     bool & rememberForSession) const
 {
     QNDEBUG("DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText: "
-            << encryptedText);
+        << encryptedText);
 
-    DataHash::const_iterator dataIt = m_dataHash.find(encryptedText);
+    auto dataIt = m_dataHash.find(encryptedText);
     if (dataIt == m_dataHash.end())
     {
-        QNTRACE("Can't find entry in the up to date data hash, trying the stale hash");
+        QNTRACE("Can't find entry in the up to date data hash, trying "
+            << "the stale hash");
 
         // Try the stale data hash
         dataIt = m_staleDataHash.find(encryptedText);
@@ -107,7 +100,7 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
         }
     }
 
-    const Data & data = dataIt.value();
+    auto & data = dataIt.value();
     decryptedText = data.m_decryptedText;
     rememberForSession = data.m_rememberForSession;
     QNTRACE("Found decrypted text");
@@ -115,12 +108,11 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
 }
 
 bool DecryptedTextManagerPrivate::modifyDecryptedText(
-    const QString & originalEncryptedText,
-    const QString & newDecryptedText,
+    const QString & originalEncryptedText, const QString & newDecryptedText,
     QString & newEncryptedText)
 {
     QNDEBUG("DecryptedTextManagerPrivate::modifyDecryptedText: "
-            << "original decrypted text = " << originalEncryptedText);
+        << "original decrypted text = " << originalEncryptedText);
 
     bool foundInDataHash = true;
     auto it = m_dataHash.find(originalEncryptedText);
@@ -137,12 +129,19 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
 
     Data & entry = it.value();
     const QString & passphrase = entry.m_passphrase;
+
     ErrorString errorDescription;
-    bool res = m_encryptionManager.encrypt(newDecryptedText, passphrase,
-                                           entry.m_cipher, entry.m_keyLength,
-                                           newEncryptedText, errorDescription);
+    bool res = m_encryptionManager.encrypt(
+        newDecryptedText,
+        passphrase,
+        entry.m_cipher,
+        entry.m_keyLength,
+        newEncryptedText,
+        errorDescription);
+
     if (!res) {
-        QNWARNING("Could not re-encrypt the decrypted text: " << errorDescription);
+        QNWARNING("Could not re-encrypt the decrypted text: "
+            << errorDescription);
         return false;
     }
 
@@ -150,7 +149,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     {
         // Copy the previous entry's stale data to the stale data hash
         // in case it would be needed further
-        Data & staleEntry = m_staleDataHash[originalEncryptedText];
+        auto & staleEntry = m_staleDataHash[originalEncryptedText];
         staleEntry.m_cipher = entry.m_cipher;
         staleEntry.m_keyLength = entry.m_keyLength;
         staleEntry.m_rememberForSession = entry.m_rememberForSession;
@@ -158,7 +157,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
         staleEntry.m_passphrase = entry.m_passphrase;
 
         m_dataHash.erase(it);
-        Data & newEntry = m_dataHash[newEncryptedText];
+        auto & newEntry = m_dataHash[newEncryptedText];
         newEntry.m_cipher = staleEntry.m_cipher;
         newEntry.m_keyLength = staleEntry.m_keyLength;
         newEntry.m_rememberForSession = staleEntry.m_rememberForSession;
@@ -169,7 +168,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     }
     else
     {
-        Data & dataEntry = m_dataHash[newEncryptedText];
+        auto & dataEntry = m_dataHash[newEncryptedText];
         dataEntry.m_cipher = entry.m_cipher;
         dataEntry.m_keyLength = entry.m_keyLength;
         dataEntry.m_rememberForSession = entry.m_rememberForSession;

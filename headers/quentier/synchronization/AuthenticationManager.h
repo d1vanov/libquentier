@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,9 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(AuthenticationManagerPrivate)
 
 /**
- * @brief The AuthenticationManager class is libquentier's default implementation
- * of IAuthenticationManager interface; internally uses QEverCloud's OAuth widget
+ * @brief The AuthenticationManager class is libquentier's default
+ * implementation of IAuthenticationManager interface; internally uses
+ * QEverCloud's OAuth widget
  */
 class QUENTIER_EXPORT AuthenticationManager: public IAuthenticationManager
 {

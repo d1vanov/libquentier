@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,6 +18,28 @@
 
 #include <quentier/utility/EventLoopWithExitStatus.h>
 
+#include <QDebug>
+#include <QTextStream>
+
+#define PRINT_EXIT_STATUS(strm, status)                                        \
+    using ExitStatus = EventLoopWithExitStatus::ExitStatus;                    \
+    switch(status)                                                             \
+    {                                                                          \
+        case ExitStatus::Success:                                              \
+            strm << "Success";                                                 \
+            break;                                                             \
+        case ExitStatus::Failure:                                              \
+            strm << "Failure";                                                 \
+            break;                                                             \
+        case ExitStatus::Timeout:                                              \
+            strm << "Timeout";                                                 \
+            break;                                                             \
+        default:                                                               \
+            strm << "Unknown (" << static_cast<qint64>(status) << ")";         \
+            break;                                                             \
+    }                                                                          \
+// PRINT_EXIT_STATUS
+
 namespace quentier {
 
 EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
@@ -26,7 +48,7 @@ EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
     m_errorDescription()
 {}
 
-EventLoopWithExitStatus::ExitStatus::type EventLoopWithExitStatus::exitStatus() const
+EventLoopWithExitStatus::ExitStatus EventLoopWithExitStatus::exitStatus() const
 {
     return m_exitStatus;
 }
@@ -39,33 +61,48 @@ const ErrorString & EventLoopWithExitStatus::errorDescription() const
 void EventLoopWithExitStatus::exitAsSuccess()
 {
     m_exitStatus = ExitStatus::Success;
-    QEventLoop::exit(m_exitStatus);
+    QEventLoop::exit(static_cast<int>(m_exitStatus));
 }
 
 void EventLoopWithExitStatus::exitAsFailure()
 {
     m_exitStatus = ExitStatus::Failure;
-    QEventLoop::exit(m_exitStatus);
+    QEventLoop::exit(static_cast<int>(m_exitStatus));
 }
 
 void EventLoopWithExitStatus::exitAsTimeout()
 {
     m_exitStatus = ExitStatus::Timeout;
-    QEventLoop::exit(m_exitStatus);
+    QEventLoop::exit(static_cast<int>(m_exitStatus));
 }
 
 void EventLoopWithExitStatus::exitAsFailureWithError(QString errorDescription)
 {
     m_errorDescription = ErrorString(errorDescription);
     m_exitStatus = ExitStatus::Failure;
-    QEventLoop::exit(m_exitStatus);
+    QEventLoop::exit(static_cast<int>(m_exitStatus));
 }
 
-void EventLoopWithExitStatus::exitAsFailureWithErrorString(ErrorString errorDescription)
+void EventLoopWithExitStatus::exitAsFailureWithErrorString(
+    ErrorString errorDescription)
 {
     m_errorDescription = errorDescription;
     m_exitStatus = ExitStatus::Failure;
-    QEventLoop::exit(m_exitStatus);
+    QEventLoop::exit(static_cast<int>(m_exitStatus));
+}
+
+QDebug & operator<<(
+    QDebug & dbg, const EventLoopWithExitStatus::ExitStatus status)
+{
+    PRINT_EXIT_STATUS(dbg, status)
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const EventLoopWithExitStatus::ExitStatus status)
+{
+    PRINT_EXIT_STATUS(strm, status);
+    return strm;
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,12 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <QString>
-#include <QTextStream>
+
 #include <QDebug>
 #include <QHash>
 #include <QSet>
+#include <QString>
+#include <QTextStream>
 
 namespace quentier {
 
@@ -50,6 +51,7 @@ public:
 protected:
     Printable();
     Printable(const Printable & other);
+    Printable & operator=(const Printable & other);
     virtual ~Printable();
 };
 

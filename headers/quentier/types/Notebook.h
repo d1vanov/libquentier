@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,7 +51,7 @@ public:
     Notebook & operator=(const qevercloud::Notebook & other);
     Notebook & operator=(qevercloud::Notebook && other);
 
-    virtual ~Notebook();
+    virtual ~Notebook() override;
 
     bool operator==(const Notebook & other) const;
     bool operator!=(const Notebook & other) const;
@@ -126,7 +126,9 @@ public:
 
     bool hasBusinessNotebookDescription() const;
     const QString & businessNotebookDescription() const;
-    void setBusinessNotebookDescription(const QString & businessNotebookDescription);
+
+    void setBusinessNotebookDescription(
+        const QString & businessNotebookDescription);
 
     bool hasBusinessNotebookPrivilegeLevel() const;
     qint8 businessNotebookPrivilegeLevel() const;
@@ -143,7 +145,6 @@ public:
     bool isLastUsed() const;
     void setLastUsed(const bool lastUsed);
 
-    // Restrictions
     bool canReadNotes() const;
     void setCanReadNotes(const bool canReadNotes);
 
@@ -214,9 +215,9 @@ public:
 
     bool hasRestrictions() const;
     const qevercloud::NotebookRestrictions & restrictions() const;
-    void setNotebookRestrictions(qevercloud::NotebookRestrictions && restrictions);
 
-    // Recipient settings
+    void setNotebookRestrictions(
+        qevercloud::NotebookRestrictions && restrictions);
 
     bool hasRecipientReminderNotifyEmail() const;
     bool recipientReminderNotifyEmail() const;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,9 @@
 #define LIB_QUENTIER_TYPES_DATA_LOCAL_STORAGE_DATA_ELEMENT_DATA_H
 
 #include <quentier/utility/Macros.h>
-#include <QUuid>
+
 #include <QSharedData>
+#include <QUuid>
 
 namespace quentier {
 
@@ -38,10 +39,10 @@ public:
 
 private:
     LocalStorageDataElementData &
-    operator=(const LocalStorageDataElementData & other)  = delete;
+    operator=(const LocalStorageDataElementData & other) = delete;
 
     LocalStorageDataElementData &
-    operator=(LocalStorageDataElementData && other)  = delete;
+    operator=(LocalStorageDataElementData && other) = delete;
 };
 
 } // namespace quentier

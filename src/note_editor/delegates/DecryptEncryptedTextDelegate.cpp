@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,18 +17,21 @@
  */
 
 #include "DecryptEncryptedTextDelegate.h"
+
 #include "../NoteEditor_p.h"
 #include "../NoteEditorPage.h"
 #include "../dialogs/DecryptionDialog.h"
 
-#include <quentier/utility/EncryptionManager.h>
-#include <quentier/enml/ENMLConverter.h>
 #include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/EncryptionManager.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebFrame>
 #endif
+
+#include <memory>
 
 namespace quentier {
 
@@ -41,7 +44,8 @@ namespace quentier {
 
 #define CHECK_ACCOUNT()                                                        \
     CHECK_NOTE_EDITOR()                                                        \
-    if (Q_UNLIKELY(!m_pNoteEditor->accountPtr())) {                            \
+    if (Q_UNLIKELY(!m_pNoteEditor->accountPtr()))                              \
+    {                                                                          \
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate",                  \
                               "Can't decrypt the encrypted text: "             \
@@ -54,9 +58,9 @@ namespace quentier {
 
 #define GET_PAGE()                                                             \
     CHECK_NOTE_EDITOR()                                                        \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());                  \
-    if (Q_UNLIKELY(!page)) {                                                   \
+    auto * page = qobject_cast<NoteEditorPage*>(m_pNoteEditor->page());        \
+    if (Q_UNLIKELY(!page))                                                     \
+    {                                                                          \
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate",                  \
                               "Can't decrypt the encrypted text: "             \
@@ -71,17 +75,12 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
         const QString & encryptedTextId, const QString & encryptedText,
         const QString & cipher, const QString & length, const QString & hint,
         NoteEditorPrivate * pNoteEditor,
-        QSharedPointer<EncryptionManager> encryptionManager,
-        QSharedPointer<DecryptedTextManager> decryptedTextManager) :
-    m_encryptedTextId(encryptedTextId),
-    m_encryptedText(encryptedText),
+        std::shared_ptr<EncryptionManager> encryptionManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager) :
+    m_encryptedTextId(std::move(encryptedTextId)),
+    m_encryptedText(std::move(encryptedText)),
     m_cipher(cipher),
-    m_length(0),
     m_hint(hint),
-    m_decryptedText(),
-    m_passphrase(),
-    m_rememberForSession(false),
-    m_decryptPermanently(false),
     m_pNoteEditor(pNoteEditor),
     m_encryptionManager(encryptionManager),
     m_decryptedTextManager(decryptedTextManager)
@@ -119,15 +118,18 @@ void DecryptEncryptedTextDelegate::start()
         return;
     }
 
-    if (m_pNoteEditor->isEditorPageModified()) {
-        QObject::connect(m_pNoteEditor.data(),
-                         QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                         this,
-                         QNSLOT(DecryptEncryptedTextDelegate,
-                                onOriginalPageConvertedToNote,Note));
+    if (m_pNoteEditor->isEditorPageModified())
+    {
+        QObject::connect(
+            m_pNoteEditor.data(),
+            &NoteEditorPrivate::convertedToNote,
+            this,
+            &DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote);
+
         m_pNoteEditor->convertToNote();
     }
-    else {
+    else
+    {
         raiseDecryptionDialog();
     }
 }
@@ -140,11 +142,11 @@ void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(Note note)
 
     Q_UNUSED(note)
 
-    QObject::disconnect(m_pNoteEditor.data(),
-                        QNSIGNAL(NoteEditorPrivate,convertedToNote,Note),
-                        this,
-                        QNSLOT(DecryptEncryptedTextDelegate,
-                               onOriginalPageConvertedToNote,Note));
+    QObject::disconnect(
+        m_pNoteEditor.data(),
+        &NoteEditorPrivate::convertedToNote,
+        this,
+        &DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote);
 
     raiseDecryptionDialog();
 }
@@ -159,17 +161,24 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
         m_cipher = QStringLiteral("AES");
     }
 
-    QScopedPointer<DecryptionDialog> pDecryptionDialog(
-        new DecryptionDialog(m_encryptedText, m_cipher, m_hint, m_length,
-                             *m_pNoteEditor->accountPtr(), m_encryptionManager,
-                             m_decryptedTextManager, m_pNoteEditor));
+    auto pDecryptionDialog = std::make_unique<DecryptionDialog>(
+        m_encryptedText,
+        m_cipher,
+        m_hint,
+        m_length,
+        *m_pNoteEditor->accountPtr(),
+        m_encryptionManager,
+        m_decryptedTextManager,
+        m_pNoteEditor);
+
     pDecryptionDialog->setWindowModality(Qt::WindowModal);
-    QObject::connect(pDecryptionDialog.data(),
-                     QNSIGNAL(DecryptionDialog,accepted,QString,size_t,QString,
-                              QString,QString,bool,bool),
-                     this,
-                     QNSLOT(DecryptEncryptedTextDelegate,onEncryptedTextDecrypted,
-                            QString,size_t,QString,QString,QString,bool,bool));
+
+    QObject::connect(
+        pDecryptionDialog.get(),
+        &DecryptionDialog::accepted,
+        this,
+        &DecryptEncryptedTextDelegate::onEncryptedTextDecrypted);
+
     QNTRACE("Will exec decryption dialog now");
     int res = pDecryptionDialog->exec();
     if (res == QDialog::Rejected) {
@@ -184,11 +193,11 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
     bool decryptPermanently)
 {
     QNDEBUG("DecryptEncryptedTextDelegate::onEncryptedTextDecrypted: "
-            << "encrypted text = " << encryptedText
-            << ", remember for session = "
-            << (rememberForSession ? "true" : "false")
-            << ", decrypt permanently = "
-            << (decryptPermanently ? "true" : "false"));
+        << "encrypted text = " << encryptedText
+        << ", remember for session = "
+        << (rememberForSession ? "true" : "false")
+        << ", decrypt permanently = "
+        << (decryptPermanently ? "true" : "false"));
 
     CHECK_NOTE_EDITOR()
 
@@ -201,13 +210,18 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
     Q_UNUSED(keyLength)
 
     QString decryptedTextHtml;
-    if (!m_decryptPermanently) {
+    if (!m_decryptPermanently)
+    {
         decryptedTextHtml = ENMLConverter::decryptedTextHtml(
-            m_decryptedText, m_encryptedText,
-            m_hint, m_cipher, m_length,
+            m_decryptedText,
+            m_encryptedText,
+            m_hint,
+            m_cipher,
+            m_length,
             m_pNoteEditor->GetFreeDecryptedTextId());
     }
-    else {
+    else
+    {
         decryptedTextHtml = m_decryptedText;
     }
 
@@ -218,22 +232,25 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
         QStringLiteral("encryptDecryptManager.decryptEncryptedText('") +
         m_encryptedTextId + QStringLiteral("', '") +
         decryptedTextHtml + QStringLiteral("');"),
-        JsCallback(*this, &DecryptEncryptedTextDelegate::onDecryptionScriptFinished));
+        JsCallback(
+            *this,
+            &DecryptEncryptedTextDelegate::onDecryptionScriptFinished));
 }
 
 void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
     const QVariant & data)
 {
     QNDEBUG("DecryptEncryptedTextDelegate::onDecryptionScriptFinished: "
-            << data);
+        << data);
 
-    QMap<QString,QVariant> resultMap = data.toMap();
+    auto resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end()))
     {
-        ErrorString error(QT_TR_NOOP("Can't parse the result of text decryption "
-                                     "script from JavaScript"));
+        ErrorString error(
+            QT_TR_NOOP("Can't parse the result of text decryption "
+                       "script from JavaScript"));
         QNWARNING(error);
         Q_EMIT notifyError(error);
         return;
@@ -247,8 +264,9 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
         auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end()))
         {
-            error.setBase(QT_TR_NOOP("Can't parse the error of text decryption "
-                                     "from JavaScript"));
+            error.setBase(
+                QT_TR_NOOP("Can't parse the error of text decryption "
+                           "from JavaScript"));
         }
         else
         {
@@ -261,8 +279,15 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
         return;
     }
 
-    Q_EMIT finished(m_encryptedText, m_cipher, m_length, m_hint, m_decryptedText,
-                    m_passphrase, m_rememberForSession, m_decryptPermanently);
+    Q_EMIT finished(
+        m_encryptedText,
+        m_cipher,
+        m_length,
+        m_hint,
+        m_decryptedText,
+        m_passphrase,
+        m_rememberForSession,
+        m_decryptPermanently);
 }
 
 } // namespace quentier

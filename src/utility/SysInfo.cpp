@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,10 @@
  */
 
 #include <quentier/utility/SysInfo.h>
+
 #include "SysInfo_p.h"
+
+#include <QSysInfo>
 
 namespace quentier {
 
@@ -26,6 +29,13 @@ SysInfo::SysInfo() :
 {}
 
 SysInfo::~SysInfo()
-{}
+{
+    delete d_ptr;
+}
+
+QString SysInfo::platformName()
+{
+    return QSysInfo::prettyProductName();
+}
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,10 +32,10 @@ class Q_DECL_HIDDEN LocalStoragePatch1To2: public ILocalStoragePatch
 {
     Q_OBJECT
 public:
-    explicit LocalStoragePatch1To2(const Account & account,
-                                   LocalStorageManagerPrivate & localStorageManager,
-                                   QSqlDatabase & database,
-                                   QObject * parent = nullptr);
+    explicit LocalStoragePatch1To2(
+        const Account & account,
+        LocalStorageManagerPrivate & localStorageManager,
+        QSqlDatabase & database, QObject * parent = nullptr);
 
     virtual int fromVersion() const override { return 1; }
     virtual int toVersion() const override { return 2; }
@@ -45,8 +45,10 @@ public:
 
     virtual bool backupLocalStorage(
         ErrorString & errorDescription) override;
+
     virtual bool restoreLocalStorageFromBackup(
         ErrorString & errorDescription) override;
+
     virtual bool removeLocalStorageBackup(
         ErrorString & errorDescription) override;
 
@@ -63,8 +65,10 @@ private Q_SLOTS:
 private:
     QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
+
     void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
         QStringList & resourceLocalUids);
+
     bool ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
 

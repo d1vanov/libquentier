@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,23 +21,23 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPage)
+QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
 class Q_DECL_HIDDEN EditHyperlinkDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit EditHyperlinkDelegate(NoteEditorPrivate & noteEditor,
-                                   const quint64 hyperlinkId);
+    explicit EditHyperlinkDelegate(
+        NoteEditorPrivate & noteEditor, const quint64 hyperlinkId);
 
     void start();
 
@@ -49,18 +49,21 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onHyperlinkDataReceived(const QVariant & data);
-    void onHyperlinkDataEdited(QString text, QUrl url,
-                               quint64 hyperlinkId,
-                               bool startupUrlWasEmpty);
+
+    void onHyperlinkDataEdited(
+        QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty);
+
     void onHyperlinkModified(const QVariant & data);
 
 private:
     void doStart();
-    void raiseEditHyperlinkDialog(const QString & startupHyperlinkText,
-                                  const QString & startupHyperlinkUrl);
+
+    void raiseEditHyperlinkDialog(
+        const QString & startupHyperlinkText,
+        const QString & startupHyperlinkUrl);
 
 private:
-    typedef JsResultCallbackFunctor<EditHyperlinkDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<EditHyperlinkDelegate>;
 
 private:
     NoteEditorPrivate &     m_noteEditor;

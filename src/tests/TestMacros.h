@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2019-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,19 +19,13 @@
 #ifndef LIB_QUENTIER_TESTS_TEST_MACROS_H
 #define LIB_QUENTIER_TESTS_TEST_MACROS_H
 
-#include <QtTest/QtTest>
 #include <QDebug>
+#include <QtTest/QtTest>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
 #define VERIFY_QDEBUG_HELPER()                                                 \
     dbg.nospace();                                                             \
     dbg.noquote()                                                              \
 // VERIFY_QDEBUG_HELPER
-#else
-#define VERIFY_QDEBUG_HELPER()                                                 \
-    dbg.nospace()                                                              \
-// VERIFY_QDEBUG_HELPER
-#endif
 
 #define VERIFY2(condition, message)                                            \
     if (!(condition))                                                          \

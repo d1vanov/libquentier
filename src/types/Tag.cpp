@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,14 +17,15 @@
  */
 
 #include "data/TagData.h"
+
 #include <quentier/types/Tag.h>
 
 namespace quentier {
 
-QN_DEFINE_LOCAL_UID(Tag)
 QN_DEFINE_DIRTY(Tag)
-QN_DEFINE_LOCAL(Tag)
 QN_DEFINE_FAVORITED(Tag)
+QN_DEFINE_LOCAL(Tag)
+QN_DEFINE_LOCAL_UID(Tag)
 
 Tag::Tag() :
     d(new TagData)
@@ -110,10 +111,12 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
 {
     if (name != name.trimmed())
     {
-        if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag",
-                                                         "Tag name cannot start "
-                                                         "or end with whitespace"));
+        if (pErrorDescription)
+        {
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP(
+                "Tag",
+                "Tag name cannot start or end with whitespace"));
+
             pErrorDescription->details() = name;
         }
 
@@ -123,10 +126,12 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
     int len = name.length();
     if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN)
     {
-        if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag",
-                                                         "Tag name's length is "
-                                                         "too small"));
+        if (pErrorDescription)
+        {
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP(
+                "Tag",
+                "Tag name's length is too small"));
+
             pErrorDescription->details() = name;
         }
 
@@ -135,10 +140,12 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
 
     if (len > qevercloud::EDAM_TAG_NAME_LEN_MAX)
     {
-        if (pErrorDescription) {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP("Tag",
-                                                         "Tag name's length is "
-                                                         "too large"));
+        if (pErrorDescription)
+        {
+            pErrorDescription->setBase(QT_TRANSLATE_NOOP(
+                "Tag",
+                "Tag name's length is too large"));
+
             pErrorDescription->details() = name;
         }
 
@@ -192,9 +199,10 @@ bool Tag::checkParameters(ErrorString & errorDescription) const
 {
     if (localUid().isEmpty() && !d->m_qecTag.guid.isSet())
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("Tag",
-                                                   "Both tag's local and remote "
-                                                   "guids are empty"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "Tag",
+            "Both tag's local and remote guids are empty"));
+
         return false;
     }
 

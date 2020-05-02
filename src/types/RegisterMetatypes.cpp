@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,19 +17,21 @@
  */
 
 #include "../src/synchronization/SynchronizationShared.h"
-#include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Account.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/User.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
+
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
+#include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
+#include <quentier/types/Resource.h>
+#include <quentier/types/LinkedNotebook.h>
+#include <quentier/types/RegisterMetatypes.h>
+#include <quentier/types/SavedSearch.h>
+#include <quentier/types/SharedNotebook.h>
+#include <quentier/types/Tag.h>
+#include <quentier/types/User.h>
+
 #include <quentier_private/utility/IKeychainService.h>
 
 #include <QList>
@@ -37,6 +39,7 @@
 #include <QNetworkCookie>
 #include <QSqlError>
 #include <QSharedPointer>
+#include <QSqlError>
 #include <QVector>
 
 namespace quentier {
@@ -75,18 +78,18 @@ void registerMetatypes()
 
     qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
         "LocalStorageManager::ListObjectsOptions");
-    qRegisterMetaType<LocalStorageManager::ListNotesOrder::type>(
-        "LocalStorageManager::ListNotesOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder::type>(
-        "LocalStorageManager::ListNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder::type>(
-        "LocalStorageManager::ListLinkedNotebooksOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListTagsOrder::type>(
-        "LocalStorageManager::ListTagsOrder::type");
-    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder::type>(
-        "LocalStorageManager::ListSavedSearchesOrder::type");
-    qRegisterMetaType<LocalStorageManager::OrderDirection::type>(
-        "LocalStorageManager::OrderDirection::type");
+    qRegisterMetaType<LocalStorageManager::ListNotesOrder>(
+        "LocalStorageManager::ListNotesOrder");
+    qRegisterMetaType<LocalStorageManager::ListNotebooksOrder>(
+        "LocalStorageManager::ListNotebooksOrder");
+    qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder>(
+        "LocalStorageManager::ListLinkedNotebooksOrder");
+    qRegisterMetaType<LocalStorageManager::ListTagsOrder>(
+        "LocalStorageManager::ListTagsOrder");
+    qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder>(
+        "LocalStorageManager::ListSavedSearchesOrder");
+    qRegisterMetaType<LocalStorageManager::OrderDirection>(
+        "LocalStorageManager::OrderDirection");
     qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
         "LocalStorageManager::UpdateNoteOptions");
     qRegisterMetaType<LocalStorageManager::GetNoteOptions>(
@@ -120,10 +123,13 @@ void registerMetatypes()
     qRegisterMetaType<QList<std::pair<Tag, QStringList> > >(
         "QList<std::pair<Tag, QStringList> >");
 
-    typedef IKeychainService::ErrorCode ErrorCode;
+    qRegisterMetaType<QHash<QString,std::pair<QString,QString> > >(
+        "QHash<QString,std::pair<QString,QString> >");
+
+    using ErrorCode = IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
 
-    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkProxy>");
+    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
 }
 
 } // namespace quentier

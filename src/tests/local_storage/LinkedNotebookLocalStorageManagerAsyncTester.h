@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,10 +19,12 @@
 #ifndef LIB_QUENTIER_TESTS_LINKED_NOTEBOOK_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 #define LIB_QUENTIER_TESTS_LINKED_NOTEBOOK_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
+#include <quentier/utility/Macros.h>
+
+QT_FORWARD_DECLARE_CLASS(QDebug)
 
 namespace quentier {
 
@@ -34,8 +36,10 @@ class LinkedNotebookLocalStorageManagerAsyncTester: public QObject
 {
     Q_OBJECT
 public:
-    explicit LinkedNotebookLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~LinkedNotebookLocalStorageManagerAsyncTester();
+    explicit LinkedNotebookLocalStorageManagerAsyncTester(
+        QObject * parent = nullptr);
+
+    virtual ~LinkedNotebookLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -49,54 +53,64 @@ Q_SIGNALS:
     void addLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
     void updateLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
     void findLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+
     void listAllLinkedNotebooksRequest(
-            size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
-            QUuid requestId);
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QUuid requestId);
+
     void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
     void onGetLinkedNotebookCountCompleted(int count, QUuid requestId);
-    void onGetLinkedNotebookCountFailed(ErrorString errorDescription,
-                                        QUuid requestId);
+
+    void onGetLinkedNotebookCountFailed(
+        ErrorString errorDescription, QUuid requestId);
+
     void onAddLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onAddLinkedNotebookFailed(LinkedNotebook notebook,
-                                   ErrorString errorDescription,
-                                   QUuid requestId);
-    void onUpdateLinkedNotebookCompleted(LinkedNotebook notebook,
-                                         QUuid requestId);
-    void onUpdateLinkedNotebookFailed(LinkedNotebook notebook,
-                                      ErrorString errorDescription,
-                                      QUuid requestId);
-    void onFindLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
-    void onFindLinkedNotebookFailed(LinkedNotebook notebook,
-                                    ErrorString errorDescription,
-                                    QUuid requestId);
+
+    void onAddLinkedNotebookFailed(
+        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateLinkedNotebookCompleted(
+        LinkedNotebook notebook, QUuid requestId);
+
+    void onUpdateLinkedNotebookFailed(
+        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+
+    void onFindLinkedNotebookCompleted(
+        LinkedNotebook notebook, QUuid requestId);
+
+    void onFindLinkedNotebookFailed(
+        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+
     void onListAllLinkedNotebooksCompleted(
-            size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
-            QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+
     void onListAllLinkedNotebooksFailed(
-            size_t limit, size_t offset,
-            LocalStorageManager::ListLinkedNotebooksOrder::type order,
-            LocalStorageManager::OrderDirection::type orderDirection,
-            ErrorString errorDescription, QUuid requestId);
-    void onExpungeLinkedNotebookCompleted(LinkedNotebook notebook,
-                                          QUuid requestId);
-    void onExpungeLinkedNotebookFailed(LinkedNotebook notebook,
-                                       ErrorString errorDescription,
-                                       QUuid requestId);
+        size_t limit, size_t offset,
+        LocalStorageManager::ListLinkedNotebooksOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        ErrorString errorDescription, QUuid requestId);
+
+    void onExpungeLinkedNotebookCompleted(
+        LinkedNotebook notebook, QUuid requestId);
+
+    void onExpungeLinkedNotebookFailed(
+        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
     void clear();
 
-    enum State
+    enum class State
     {
-        STATE_UNINITIALIZED,
+        STATE_UNINITIALIZED = 0,
         STATE_SENT_ADD_REQUEST,
         STATE_SENT_FIND_AFTER_ADD_REQUEST,
         STATE_SENT_UPDATE_REQUEST,
@@ -110,10 +124,13 @@ private:
         STATE_SENT_LIST_LINKED_NOTEBOOKS_REQUEST
     };
 
-    State   m_state;
+    friend QDebug & operator<<(QDebug & dbg, const State state);
 
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
-    QThread *                       m_pLocalStorageManagerThread;
+private:
+    State   m_state = State::STATE_UNINITIALIZED;
+
+    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
+    QThread *                       m_pLocalStorageManagerThread = nullptr;
 
     LinkedNotebook          m_initialLinkedNotebook;
     LinkedNotebook          m_foundLinkedNotebook;

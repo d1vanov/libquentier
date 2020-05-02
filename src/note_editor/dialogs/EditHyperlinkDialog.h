@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,15 +34,15 @@ class Q_DECL_HIDDEN EditHyperlinkDialog: public QDialog
 {
     Q_OBJECT
 public:
-    explicit EditHyperlinkDialog(QWidget * parent = nullptr,
-                                 const QString & startupText = QString(),
-                                 const QString & startupUrl = QString(),
-                                 const quint64 idNumber = 0);
+    explicit EditHyperlinkDialog(
+        QWidget * parent = nullptr, const QString & startupText = {},
+        const QString & startupUrl = {}, const quint64 idNumber = 0);
+
     virtual ~EditHyperlinkDialog();
 
 Q_SIGNALS:
-    void accepted(QString text, QUrl url,
-                  quint64 idNumber, bool startupUrlWasEmpty);
+    void accepted(
+        QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
     virtual void accept() override;

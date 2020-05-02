@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 

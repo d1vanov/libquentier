@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,8 @@ SharedNotebookData::SharedNotebookData(SharedNotebookData && other) :
     m_indexInNotebook(std::move(other.m_indexInNotebook))
 {}
 
-SharedNotebookData::SharedNotebookData(const qevercloud::SharedNotebook & other) :
+SharedNotebookData::SharedNotebookData(
+        const qevercloud::SharedNotebook & other) :
     QSharedData(),
     m_qecSharedNotebook(other),
     m_indexInNotebook(-1)

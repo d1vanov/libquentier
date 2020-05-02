@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
+
 #include <QApplication>
 
 namespace quentier {
@@ -30,7 +31,7 @@ class QUENTIER_EXPORT QuentierApplication: public QApplication
     Q_OBJECT
 public:
     QuentierApplication(int & argc, char * argv[]);
-    virtual ~QuentierApplication();
+    virtual ~QuentierApplication() override;
 
     virtual bool notify(QObject * pObject, QEvent * pEvent) override;
     virtual bool event(QEvent * pEvent) override;

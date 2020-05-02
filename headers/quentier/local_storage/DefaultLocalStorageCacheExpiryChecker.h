@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,10 +29,13 @@ namespace quentier {
  * by default, if no another implementation of ILocalStorageCacheExpiryChecker
  * is set to be used by LocalStorageCacheManager
  */
-class QUENTIER_EXPORT DefaultLocalStorageCacheExpiryChecker: public ILocalStorageCacheExpiryChecker
+class QUENTIER_EXPORT DefaultLocalStorageCacheExpiryChecker:
+    public ILocalStorageCacheExpiryChecker
 {
 public:
-    DefaultLocalStorageCacheExpiryChecker(const LocalStorageCacheManager & cacheManager);
+    DefaultLocalStorageCacheExpiryChecker(
+        const LocalStorageCacheManager & cacheManager);
+
     virtual ~DefaultLocalStorageCacheExpiryChecker();
 
     /**
@@ -85,7 +88,6 @@ public:
     virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
-    DefaultLocalStorageCacheExpiryChecker()  = delete;
     Q_DISABLE_COPY(DefaultLocalStorageCacheExpiryChecker)
 };
 

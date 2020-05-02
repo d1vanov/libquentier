@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,9 @@
 #ifndef LIB_QUENTIER_UTILITY_FILE_COPIER_PRIVATE_H
 #define LIB_QUENTIER_UTILITY_FILE_COPIER_PRIVATE_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
+
 #include <QObject>
 #include <QString>
 
@@ -58,9 +59,10 @@ private:
 private:
     QString     m_sourcePath;
     QString     m_destPath;
-    bool        m_idle;
-    bool        m_cancelled;
-    double      m_currentProgress;
+
+    bool        m_idle = true;
+    bool        m_cancelled = false;
+    double      m_currentProgress = 0.0;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,18 +19,18 @@
 #ifndef LIB_QUENTIER_UTILITY_UTILITY_H
 #define LIB_QUENTIER_UTILITY_UTILITY_H
 
-#include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Linkage.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
-#include <QtGlobal>
 #include <QByteArray>
-#include <QString>
-#include <QUrl>
-#include <QStyle>
 #include <QFileDialog>
 #include <QFlags>
+#include <QString>
+#include <QStyle>
+#include <QtGlobal>
+#include <QUrl>
 
 #include <cstdint>
 
@@ -48,7 +48,8 @@ namespace quentier {
 void QUENTIER_EXPORT initializeLibquentier();
 
 /**
- * checkGuid checks the valitidy of the input string (QString or other string type)
+ * checkGuid checks the valitidy of the input string (QString or other string
+ * type)
  *
  * @param guid      The guid to be checked for validity
  * @return          True if the passed in guid is valid, false otherwise
@@ -78,7 +79,8 @@ bool checkGuid(const T & guid)
  * @return                      True if the passed in update sequence number
  *                              is valid, false otherwise
  */
-bool QUENTIER_EXPORT checkUpdateSequenceNumber(const int32_t updateSequenceNumber);
+bool QUENTIER_EXPORT checkUpdateSequenceNumber(
+    const int32_t updateSequenceNumber);
 
 /**
  * @brief The DateTimePrint class simply wraps the enum containing datetime
@@ -119,23 +121,23 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
  * @param timestamp             The timestamp to be translated to
  *                              a human readable string
  * @param options               Datetime printing options
- * @param customFormat          The custom format string; internally, if not null,
- *                              it would be passed to strftime function declared
- *                              in <ctime> header of the C++ standard library;
- *                              but beware that the length of the printed string
- *                              is limited by 100 characters regardless
- *                              of the format string
+ * @param customFormat          The custom format string; internally, if not
+ *                              null, it would be passed to strftime function
+ *                              declared in <ctime> header of the C++ standard
+ *                              library; but beware that the length of
+ *                              the printed string is limited by 100 characters
+ *                              regardless of the format string
  *
  * @return                      Human readable datetime string corresponding to
  *                              the passed in timestamp
  */
 const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
-                                const qint64 timestamp,
-                                DateTimePrint::Options options =
-                                DateTimePrint::Options(DateTimePrint::IncludeNumericTimestamp |
-                                                       DateTimePrint::IncludeMilliseconds |
-                                                       DateTimePrint::IncludeTimezone),
-                                const char * customFormat = nullptr);
+    const qint64 timestamp,
+    DateTimePrint::Options options = DateTimePrint::Options(
+        DateTimePrint::IncludeNumericTimestamp |
+        DateTimePrint::IncludeMilliseconds |
+        DateTimePrint::IncludeTimezone),
+    const char * customFormat = nullptr);
 
 /**
  * applicationStyle provides the current style of the application
@@ -160,25 +162,26 @@ const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);
  * getExistingFolderDialog shows the file dialog with properly specified window
  * modality
  */
-const QString QUENTIER_EXPORT getExistingFolderDialog(QWidget * parent,
-                                                      const QString & title,
-                                                      const QString & initialFolder,
-                                                      QFileDialog::Options options =
-                                                      QFileDialog::ShowDirsOnly);
+const QString QUENTIER_EXPORT getExistingFolderDialog(
+    QWidget * parent, const QString & title, const QString & initialFolder,
+    QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 
 /**
  * relativePathFromAbsolutePath converts the absolute path to a relative one
  * with respect to the given folder name
  *
  * @param absolutePath                  The absolute path for which
- *                                      the corresponding relative path is needed
- * @param relativePathRootFolderPath    The path to the root directory with respect
- *                                      to which the relative path is needed
+ *                                      the corresponding relative path is
+ *                                      needed
+ * @param relativePathRootFolderPath    The path to the root directory with
+ *                                      respect to which the relative path is
+ *                                      needed
  * @return                              The relative path corresponding to
- *                                      the input absolute path and root dir path
+ *                                      the input absolute path and root dir
+ *                                      path
  */
-const QString QUENTIER_EXPORT relativePathFromAbsolutePath(const QString & absolutePath,
-                                                           const QString & relativePathRootFolderPath);
+const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
+    const QString & absolutePath, const QString & relativePathRootFolderPath);
 
 /**
  * @return              The system user name of the currently logged in user
@@ -200,17 +203,19 @@ void QUENTIER_EXPORT openUrl(const QUrl & url);
  * prints warning into the log; works around some platform specific quirks
  *
  * @param filePath      The path to the file which needs to be removed
- * @return              True if the file was removed successfully, false otherwise
+ * @return              True if the file was removed successfully, false
+ *                      otherwise
  */
 bool QUENTIER_EXPORT removeFile(const QString & filePath);
 
 /**
  * removeDir removes the directory specified by path recursively, with all its
- * contents; in case of dir removal error prints warning into the log; workarounds
- * the lack of QDir::removeRecursively in Qt 4.
+ * contents; in case of dir removal error prints warning into the log;
+ * workarounds the lack of QDir::removeRecursively in Qt 4.
  *
  * @param dirPath       The path to the directory which needs to be removed
- * @return              True if the directory was removed successfully, false otherwise
+ * @return              True if the directory was removed successfully, false
+ *                      otherwise
  */
 bool QUENTIER_EXPORT removeDir(const QString & dirPath);
 
@@ -225,8 +230,8 @@ bool QUENTIER_EXPORT removeDir(const QString & dirPath);
  * @return                  QByteArray with file's contents read into memory or
  *                          empty QByteArray in case of I/O error
  */
-QByteArray QUENTIER_EXPORT readFileContents(const QString & filePath,
-                                            ErrorString & errorDescription);
+QByteArray QUENTIER_EXPORT readFileContents(
+    const QString & filePath, ErrorString & errorDescription);
 
 /**
  * renameFile renames file with absolute path "from" to file with absolute
@@ -242,8 +247,8 @@ QByteArray QUENTIER_EXPORT readFileContents(const QString & filePath,
  * @return                  True if file was successfully renamed, false
  *                          otherwise
  */
-bool QUENTIER_EXPORT renameFile(const QString & from, const QString & to,
-                                ErrorString & errorDescription);
+bool QUENTIER_EXPORT renameFile(
+    const QString & from, const QString & to, ErrorString & errorDescription);
 
 } // namespace quentier
 

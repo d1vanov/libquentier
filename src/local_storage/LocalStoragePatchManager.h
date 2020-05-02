@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,10 +19,12 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_PATCH_MANAGER_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_PATCH_MANAGER_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/Macros.h>
+
 #include <QObject>
-#include <QSharedPointer>
+
+#include <memory>
 
 QT_FORWARD_DECLARE_CLASS(QSqlDatabase)
 
@@ -40,16 +42,17 @@ class Q_DECL_HIDDEN LocalStoragePatchManager: public QObject
 {
     Q_OBJECT
 public:
-    explicit LocalStoragePatchManager(const Account & account,
-                                      LocalStorageManagerPrivate & localStorageManager,
-                                      QSqlDatabase & database,
-                                      QObject * parent = nullptr);
+    explicit LocalStoragePatchManager(
+        const Account & account,
+        LocalStorageManagerPrivate & localStorageManager,
+        QSqlDatabase & database,
+        QObject * parent = nullptr);
 
     /**
      * @return          The list of patches required to be applied to the
      *                  current version of local storage
      */
-    QVector<QSharedPointer<ILocalStoragePatch> > patchesForCurrentVersion();
+    QVector<std::shared_ptr<ILocalStoragePatch> > patchesForCurrentVersion();
 
 private:
     Q_DISABLE_COPY(LocalStoragePatchManager)

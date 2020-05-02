@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "SavedSearchData.h"
+
 #include <quentier/types/SavedSearch.h>
 #include <quentier/utility/Utility.h>
 
@@ -60,8 +61,10 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 {
     if (m_qecSearch.guid.isSet() && !checkGuid(m_qecSearch.guid.ref()))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
-                                                   "Saved search's guid is invalid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "SavedSearchData",
+            "Saved search's guid is invalid"));
+
         errorDescription.details() = m_qecSearch.guid;
         return false;
     }
@@ -75,10 +78,13 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
     if (m_qecSearch.updateSequenceNum.isSet() &&
         !checkUpdateSequenceNumber(m_qecSearch.updateSequenceNum))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
-                                                   "Saved search's update sequence "
-                                                   "number is invalid"));
-        errorDescription.details() = QString::number(m_qecSearch.updateSequenceNum);
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "SavedSearchData",
+            "Saved search's update sequence number is invalid"));
+
+        errorDescription.details() = QString::number(
+            m_qecSearch.updateSequenceNum);
+
         return false;
     }
 
@@ -90,9 +96,10 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
         if ( (querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
              (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX) )
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
-                                                       "Saved search's query "
-                                                       "exceeds the allowed size"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "SavedSearchData",
+                "Saved search's query exceeds the allowed size"));
+
             errorDescription.details() = query;
             return false;
         }
@@ -102,9 +109,10 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
         (static_cast<qevercloud::QueryFormat>(m_qecSearch.format) !=
          qevercloud::QueryFormat::USER))
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("SavedSearchData",
-                                                   "Saved search has unsupported "
-                                                   "query format"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "SavedSearchData",
+            "Saved search has unsupported query format"));
+
         errorDescription.details() = ToString(m_qecSearch.format.ref());
         return false;
     }
@@ -115,9 +123,9 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 bool SavedSearchData::operator==(const SavedSearchData & other) const
 {
     return (m_qecSearch == other.m_qecSearch) &&
-           (m_isDirty == other.m_isDirty) &&
-           (m_isLocal == other.m_isLocal) &&
-           (m_isFavorited == other.m_isFavorited);
+        (m_isDirty == other.m_isDirty) &&
+        (m_isLocal == other.m_isLocal) &&
+        (m_isFavorited == other.m_isFavorited);
 }
 
 bool SavedSearchData::operator!=(const SavedSearchData & other) const

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,13 +24,13 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
-        ErrorString error(QT_TRANSLATE_NOOP("TableActionUndoCommand",          \
-                                            "Can't table action: can't get "   \
-                                            "note editor page"));              \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("TableActionUndoCommand",                        \
+                              "Can't table action: can't get "                 \
+                              "note editor page"));                            \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -38,8 +38,7 @@ namespace quentier {
 // GET_PAGE
 
 TableActionUndoCommand::TableActionUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        Callback callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
@@ -48,10 +47,8 @@ TableActionUndoCommand::TableActionUndoCommand(
 }
 
 TableActionUndoCommand::TableActionUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
-        Callback callback,
-        QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}

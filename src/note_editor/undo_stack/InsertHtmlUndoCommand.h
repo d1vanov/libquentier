@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,13 +23,13 @@
 #include "../NoteEditorPage.h"
 
 #include <quentier/utility/Macros.h>
-#include <quentier/types/Resource.h>
 
 #include <QStringList>
 #include <QHash>
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
 class Q_DECL_HIDDEN InsertHtmlUndoCommand: public INoteEditorUndoCommand
@@ -41,8 +41,8 @@ public:
         const Callback & callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
-        const QList<Resource> & addedResources = QList<Resource>(),
-        const QStringList & resourceFileStoragePaths = QStringList(),
+        const QList<Resource> & addedResources = {},
+        const QStringList & resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
     InsertHtmlUndoCommand(
@@ -50,8 +50,8 @@ public:
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
         ResourceInfo & resourceInfo,
         const QString & text,
-        const QList<Resource> & addedResources = QList<Resource>(),
-        const QStringList & resourceFileStoragePaths = QStringList(),
+        const QList<Resource> & addedResources = {},
+        const QStringList & resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
     virtual ~InsertHtmlUndoCommand();
@@ -64,8 +64,8 @@ private:
     QStringList         m_resourceFileStoragePaths;
     Callback            m_callback;
 
-    QHash<QString, QString> &       m_resourceFileStoragePathsByResourceLocalUid;
-    ResourceInfo &                  m_resourceInfo;
+    QHash<QString, QString> &   m_resourceFileStoragePathsByResourceLocalUid;
+    ResourceInfo &              m_resourceInfo;
 };
 
 } // namespace quentier

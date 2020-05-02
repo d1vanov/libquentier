@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,26 +21,26 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
+#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/Macros.h>
 
 #include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
 class Q_DECL_HIDDEN RemoveResourceDelegate: public QObject
 {
     Q_OBJECT
 public:
-    explicit RemoveResourceDelegate(const Resource & resourceToRemove,
-                                    NoteEditorPrivate & noteEditor,
-                                    LocalStorageManagerAsync & localStorageManager);
+    explicit RemoveResourceDelegate(
+        const Resource & resourceToRemove, NoteEditorPrivate & noteEditor,
+        LocalStorageManagerAsync & localStorageManager);
 
     void start();
 
@@ -50,9 +50,9 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 // private signals
-    void findResource(Resource resource,
-                      LocalStorageManager::GetResourceOptions options,
-                      QUuid requestId);
+    void findResource(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        QUuid requestId);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
@@ -60,12 +60,13 @@ private Q_SLOTS:
     void onResourceReferenceRemovedFromNoteContent(const QVariant & data);
 
 private Q_SLOTS:
-    void onFindResourceComplete(Resource resource,
-                                LocalStorageManager::GetResourceOptions options,
-                                QUuid requestId);
-    void onFindResourceFailed(Resource resource,
-                              LocalStorageManager::GetResourceOptions options,
-                              ErrorString errorDescription, QUuid requestId);
+    void onFindResourceComplete(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        QUuid requestId);
+
+    void onFindResourceFailed(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        ErrorString errorDescription, QUuid requestId);
 
 private:
     void doStart();
@@ -73,13 +74,13 @@ private:
     void connectToLocalStorage();
 
 private:
-    typedef JsResultCallbackFunctor<RemoveResourceDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<RemoveResourceDelegate>;
 
 private:
     NoteEditorPrivate &         m_noteEditor;
     LocalStorageManagerAsync &  m_localStorageManager;
     Resource                    m_resource;
-    bool                        m_reversible;
+    bool                        m_reversible = true;
 
     QUuid                       m_findResourceRequestId;
 };

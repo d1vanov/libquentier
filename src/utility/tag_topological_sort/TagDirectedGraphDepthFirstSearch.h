@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,10 @@
 #define LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIRECTED_GRAPH_DEPTH_FIRST_SEARCH_H
 
 #include "TagDirectedGraph.h"
-#include <QStack>
+
 #include <QQueue>
+#include <QStack>
+
 #include <set>
 
 namespace quentier {
@@ -38,13 +40,19 @@ public:
     const QStack<QString> & cycle() const;
 
     const QQueue<QString> & tagIdsInPreOrder() const
-    { return m_tagIdsInPreOrder; }
+    {
+        return m_tagIdsInPreOrder;
+    }
 
     const QQueue<QString> & tagIdsInPostOrder() const
-    { return m_tagIdsInPostOrder; }
+    {
+        return m_tagIdsInPostOrder;
+    }
 
     const QStack<QString> & tagIdsInReversePostOrder() const
-    { return m_tagIdsInReversePostOrder; }
+    {
+        return m_tagIdsInReversePostOrder;
+    }
 
 private:
     void depthFirstSearch(const QString & sourceTagGuid);

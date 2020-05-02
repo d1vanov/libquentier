@@ -21,7 +21,6 @@
 #include "TagSortByParentChildRelationsTest.h"
 #include "LRUCacheTests.h"
 #include <quentier/exception/IQuentierException.h>
-#include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Tag.h>

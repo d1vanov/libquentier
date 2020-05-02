@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIGRAPH_H
 #define LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIGRAPH_H
 
+#include <QHash>
 #include <QString>
 #include <QStringList>
-#include <QHash>
 
 namespace quentier {
 

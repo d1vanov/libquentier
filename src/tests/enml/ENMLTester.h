@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TESTS_ENML_ENML_TESTER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {
@@ -30,7 +31,7 @@ class ENMLTester: public QObject
     Q_OBJECT
 public:
     ENMLTester(QObject * parent = nullptr);
-    virtual ~ENMLTester();
+    virtual ~ENMLTester() override;
 
 private Q_SLOTS:
     void init();

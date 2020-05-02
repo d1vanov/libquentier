@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,16 +20,17 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
 #include <quentier_private/synchronization/INoteStore.h>
-#include <quentier/utility/Macros.h>
+
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
+
+#include <qt5qevercloud/QEverCloud.h>
 
 #include <QHash>
 #include <QObject>
 #include <QQueue>
 #include <QPointer>
 #include <QUuid>
-
-#include <qt5qevercloud/QEverCloud.h>
 
 namespace quentier {
 
@@ -59,130 +60,101 @@ class Q_DECL_HIDDEN NoteStore: public INoteStore
 {
     Q_OBJECT
 public:
-    explicit NoteStore(const qevercloud::INoteStorePtr & pQecNoteStore,
-                       QObject * parent = nullptr);
-    virtual ~NoteStore();
+    explicit NoteStore(
+        const qevercloud::INoteStorePtr & pQecNoteStore,
+        QObject * parent = nullptr);
+
+    virtual ~NoteStore() override;
 
     virtual INoteStore * create() const override;
 
     virtual void stop() override;
 
     virtual qint32 createNotebook(
-        Notebook & notebook,
-        ErrorString & errorDescription,
+        Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 updateNotebook(
-        Notebook & notebook,
-        ErrorString & errorDescription,
+        Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 createNote(
-        Note & note,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
+        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 updateNote(
-        Note & note,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
+        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 createTag(
-        Tag & tag,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
+        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 updateTag(
-        Tag & tag,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
+        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
         const QString & linkedNotebookAuthToken = QString()) override;
 
     virtual qint32 createSavedSearch(
-        SavedSearch & savedSearch,
-        ErrorString & errorDescription,
+        SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 updateSavedSearch(
-        SavedSearch & savedSearch,
-        ErrorString & errorDescription,
+        SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
-    virtual qint32 getSyncState(qevercloud::SyncState & syncState,
-                                ErrorString & errorDescription,
-                                qint32 & rateLimitSeconds) override;
+    virtual qint32 getSyncState(
+        qevercloud::SyncState & syncState, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) override;
 
-    virtual qint32 getSyncChunk(const qint32 afterUSN,
-                                const qint32 maxEntries,
-                                const qevercloud::SyncChunkFilter & filter,
-                                qevercloud::SyncChunk & syncChunk,
-                                ErrorString & errorDescription,
-                                qint32 & rateLimitSeconds) override;
+    virtual qint32 getSyncChunk(
+        const qint32 afterUSN, const qint32 maxEntries,
+        const qevercloud::SyncChunkFilter & filter,
+        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) override;
 
     virtual qint32 getLinkedNotebookSyncState(
         const qevercloud::LinkedNotebook & linkedNotebook,
-        const QString & authToken,
-        qevercloud::SyncState & syncState,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) override;
+        const QString & authToken, qevercloud::SyncState & syncState,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     virtual qint32 getLinkedNotebookSyncChunk(
         const qevercloud::LinkedNotebook & linkedNotebook,
-        const qint32 afterUSN,
-        const qint32 maxEntries,
-        const QString & linkedNotebookAuthToken,
-        const bool fullSyncOnly,
-        qevercloud::SyncChunk & syncChunk,
-        ErrorString & errorDescription,
+        const qint32 afterUSN, const qint32 maxEntries,
+        const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
-    virtual qint32 getNote(const bool withContent,
-                           const bool withResourcesData,
-                           const bool withResourcesRecognition,
-                           const bool withResourceAlternateData,
-                           Note & note,
-                           ErrorString & errorDescription,
-                           qint32 & rateLimitSeconds) override;
+    virtual qint32 getNote(
+        const bool withContent, const bool withResourcesData,
+        const bool withResourcesRecognition,
+        const bool withResourceAlternateData, Note & note,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
-    virtual bool getNoteAsync(const bool withContent,
-                              const bool withResourceData,
-                              const bool withResourcesRecognition,
-                              const bool withResourceAlternateData,
-                              const bool withSharedNotes,
-                              const bool withNoteAppDataValues,
-                              const bool withResourceAppDataValues,
-                              const bool withNoteLimits,
-                              const QString & noteGuid,
-                              const QString & authToken,
-                              ErrorString & errorDescription) override;
+    virtual bool getNoteAsync(
+        const bool withContent, const bool withResourceData,
+        const bool withResourcesRecognition,
+        const bool withResourceAlternateData, const bool withSharedNotes,
+        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+        const bool withNoteLimits, const QString & noteGuid,
+        const QString & authToken, ErrorString & errorDescription) override;
 
-    virtual qint32 getResource(const bool withDataBody,
-                               const bool withRecognitionDataBody,
-                               const bool withAlternateDataBody,
-                               const bool withAttributes,
-                               const QString & authToken,
-                               Resource & resource,
-                               ErrorString & errorDescription,
-                               qint32 & rateLimitSeconds) override;
+    virtual qint32 getResource(
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & authToken, Resource & resource,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
-    virtual bool getResourceAsync(const bool withDataBody,
-                                  const bool withRecognitionDataBody,
-                                  const bool withAlternateDataBody,
-                                  const bool withAttributes,
-                                  const QString & resourceGuid,
-                                  const QString & authToken,
-                                  ErrorString & errorDescription) override;
+    virtual bool getResourceAsync(
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & resourceGuid, const QString & authToken,
+        ErrorString & errorDescription) override;
 
     virtual qint32 authenticateToSharedNotebook(
-        const QString & shareKey,
-        qevercloud::AuthenticationResult & authResult,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) override;
+        const QString & shareKey, qevercloud::AuthenticationResult & authResult,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
     using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
@@ -190,46 +162,42 @@ private:
 
 private Q_SLOTS:
     void onGetNoteAsyncFinished(
-        QVariant result,
-        EverCloudExceptionDataPtr exceptionData,
+        QVariant result, EverCloudExceptionDataPtr exceptionData,
         IRequestContextPtr ctx);
 
     void onGetResourceAsyncFinished(
-        QVariant result,
-        EverCloudExceptionDataPtr exceptionData,
+        QVariant result, EverCloudExceptionDataPtr exceptionData,
         IRequestContextPtr ctx);
 
 private:
-    struct UserExceptionSource
+    enum class UserExceptionSource
     {
-        enum type {
-            Creation = 0,
-            Update
-        };
+        Creation = 0,
+        Update
     };
 
     qint32 processEdamUserExceptionForNotebook(
         const Notebook & notebook,
         const qevercloud::EDAMUserException & userException,
-        const UserExceptionSource::type & source,
+        const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForNote(
         const Note & note,
         const qevercloud::EDAMUserException & userException,
-        const UserExceptionSource::type & source,
+        const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForTag(
         const Tag & tag,
         const qevercloud::EDAMUserException & userException,
-        const UserExceptionSource::type & source,
+        const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForSavedSearch(
         const SavedSearch & search,
         const qevercloud::EDAMUserException & userException,
-        const UserExceptionSource::type & source,
+        const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForGetSyncChunk(
@@ -251,7 +219,7 @@ private:
     qint32 processUnexpectedEdamUserException(
         const QString & typeName,
         const qevercloud::EDAMUserException & userException,
-        const UserExceptionSource::type & source,
+        const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamSystemException(
