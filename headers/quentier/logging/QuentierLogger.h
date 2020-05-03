@@ -21,8 +21,9 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <QString>
+
 #include <QDebug>
+#include <QString>
 
 namespace quentier {
 
@@ -37,6 +38,8 @@ public:
         ErrorLevel
     };
 };
+
+QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const LogLevel logLevel);
 
 void QUENTIER_EXPORT QuentierInitializeLogging();
 
