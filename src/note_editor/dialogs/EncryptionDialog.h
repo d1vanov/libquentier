@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,13 +19,14 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
 #define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTION_DIALOG_H
 
+#include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Account.h>
 
 #include <QDialog>
-#include <QSharedPointer>
+
+#include <memory>
 
 namespace Ui {
 QT_FORWARD_DECLARE_CLASS(EncryptionDialog)
@@ -41,10 +42,11 @@ class Q_DECL_HIDDEN EncryptionDialog: public QDialog
 public:
     explicit EncryptionDialog(
         const QString & textToEncrypt, const Account & account,
-        QSharedPointer<EncryptionManager> encryptionManager,
-        QSharedPointer<DecryptedTextManager> decryptedTextManager,
+        std::shared_ptr<EncryptionManager> encryptionManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent = nullptr);
-    virtual ~EncryptionDialog();
+
+    virtual ~EncryptionDialog() override;
 
     QString passphrase() const;
     bool rememberPassphrase() const;
@@ -53,9 +55,9 @@ public:
     QString hint() const;
 
 Q_SIGNALS:
-    void accepted(QString textToEncrypt, QString encryptedText,
-                  QString cipher, size_t keyLength,
-                  QString hint, bool rememberForSession);
+    void accepted(
+        QString textToEncrypt, QString encryptedText, QString cipher,
+        size_t keyLength, QString hint, bool rememberForSession);
 
 private Q_SLOTS:
     void setRememberPassphraseDefaultState(const bool checked);
@@ -71,8 +73,8 @@ private:
     QString                                 m_textToEncrypt;
     QString                                 m_cachedEncryptedText;
     Account                                 m_account;
-    QSharedPointer<EncryptionManager>       m_encryptionManager;
-    QSharedPointer<DecryptedTextManager>    m_decryptedTextManager;
+    std::shared_ptr<EncryptionManager>      m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
 };
 
 } // namespace quentier

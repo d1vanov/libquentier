@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,12 +19,12 @@
 #ifndef LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_H
 #define LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_H
 
+#include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/Account.h>
 
-#include <QObject>
 #include <QKeySequence>
+#include <QObject>
 
 namespace quentier {
 
@@ -114,70 +114,79 @@ public:
 
     /**
      * @return              Active shortcut for the standard key - either
-     *                      the user defined shortcut (if present) or the default
-     *                      one (if present as well)
+     *                      the user defined shortcut (if present) or
+     *                      the default one (if present as well)
      */
-    QKeySequence shortcut(const int key, const Account & account,
-                          const QString & context = QString()) const;
+    QKeySequence shortcut(
+        const int key, const Account & account,
+        const QString & context = {}) const;
 
     /**
      * @return              Active shortcut for the non-standard key - either
-     *                      the user defined shortcut (if present) or the default
-     *                      one (if present as well)
+     *                      the user defined shortcut (if present) or
+     *                      the default one (if present as well)
      */
-    QKeySequence shortcut(const QString & nonStandardKey, const Account & account,
-                          const QString & context = QString()) const;
+    QKeySequence shortcut(
+        const QString & nonStandardKey, const Account & account,
+        const QString & context = {}) const;
 
     /**
      * @return              Default shortcut for the standard key if present,
      *                      otherwise empty key sequence
      */
-    QKeySequence defaultShortcut(const int key, const Account & account,
-                                 const QString & context = QString()) const;
+    QKeySequence defaultShortcut(
+        const int key, const Account & account,
+        const QString & context = {}) const;
 
     /**
-     * @return              Default shortcut for the non-standard key if present,
-     *                      otherwise empty key sequence
+     * @return              Default shortcut for the non-standard key if
+     *                      present, otherwise empty key sequence
      */
-    QKeySequence defaultShortcut(const QString & nonStandardKey,
-                                 const Account & account,
-                                 const QString & context = QString()) const;
+    QKeySequence defaultShortcut(
+        const QString & nonStandardKey, const Account & account,
+        const QString & context = {}) const;
 
     /**
-     * @return              User defined shortcut for the standard key if present,
-     *                      otherwise empty key sequence
+     * @return              User defined shortcut for the standard key if
+     *                      present, otherwise empty key sequence
      */
-    QKeySequence userShortcut(const int key, const Account & account,
-                              const QString & context = QString()) const;
+    QKeySequence userShortcut(
+        const int key, const Account & account,
+        const QString & context = {}) const;
 
     /**
      * @return              User defined shortcut for the non-standard key if
      *                      present, otherwise empty key sequence
      */
-    QKeySequence userShortcut(const QString & nonStandardKey,
-                              const Account & account,
-                              const QString & context = QString()) const;
+    QKeySequence userShortcut(
+        const QString & nonStandardKey, const Account & account,
+        const QString & context = {}) const;
 
 Q_SIGNALS:
-    void shortcutChanged(int key, QKeySequence shortcut,
-                         const Account & account, QString context);
-    void nonStandardShortcutChanged(QString nonStandardKey, QKeySequence shortcut,
-                                    const Account & account, QString context);
+    void shortcutChanged(
+        int key, QKeySequence shortcut, const Account & account,
+        QString context);
+
+    void nonStandardShortcutChanged(
+        QString nonStandardKey, QKeySequence shortcut, const Account & account,
+        QString context);
 
 public Q_SLOTS:
-    void setUserShortcut(int key, QKeySequence shortcut,
-                         const Account & account, QString context = QString());
-    void setNonStandardUserShortcut(QString nonStandardKey,
-                                    QKeySequence shortcut,
-                                    const Account & account,
-                                    QString context = QString());
+    void setUserShortcut(
+        int key, QKeySequence shortcut, const Account & account,
+        QString context = {});
 
-    void setDefaultShortcut(int key, QKeySequence shortcut,
-                            const Account & account, QString context = QString());
-    void setNonStandardDefaultShortcut(QString nonStandardKey,
-                                       QKeySequence shortcut,
-                                       const Account & account,
-                                       QString context = QString());
+    void setNonStandardUserShortcut(
+        QString nonStandardKey, QKeySequence shortcut, const Account & account,
+        QString context = {});
+
+    void setDefaultShortcut(
+        int key, QKeySequence shortcut, const Account & account,
+        QString context = {});
+
+    void setNonStandardDefaultShortcut(
+        QString nonStandardKey, QKeySequence shortcut, const Account & account,
+        QString context = {});
 
 private:
     ShortcutManagerPrivate * const d_ptr;

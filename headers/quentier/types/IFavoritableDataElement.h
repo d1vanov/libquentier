@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,11 +24,12 @@
 namespace quentier {
 
 /**
- * Class adding one more attribute to each note store data element subclassing it:
- * "favorited" flag. Favorited data elements are expected to be somehow arranged
- * for quick access in the client application's UI.
+ * Class adding one more attribute to each note store data element subclassing
+ * it: "favorited" flag. Favorited data elements are expected to be somehow
+ * arranged for quick access in the client application's UI.
  */
-class QUENTIER_EXPORT IFavoritableDataElement : public virtual INoteStoreDataElement
+class QUENTIER_EXPORT IFavoritableDataElement :
+    public virtual INoteStoreDataElement
 {
 public:
     virtual bool isFavorited() const = 0;

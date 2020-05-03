@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,8 +18,9 @@
 
 #include "EncryptedAreaPlugin.h"
 #include "ui_EncryptedAreaPlugin.h"
-#include "NoteEditorPluginFactory.h"
+
 #include "NoteEditor_p.h"
+#include "NoteEditorPluginFactory.h"
 
 #include <quentier/logging/QuentierLogger.h>
 
@@ -30,7 +31,7 @@ namespace quentier {
 EncryptedAreaPlugin::EncryptedAreaPlugin(
         NoteEditorPrivate & noteEditor, QWidget * parent) :
     QWidget(parent),
-    m_pUI(new Ui::EncryptedAreaPlugin),
+    m_pUi(new Ui::EncryptedAreaPlugin),
     m_noteEditor(noteEditor),
     m_hint(),
     m_cipher(),
@@ -39,37 +40,47 @@ EncryptedAreaPlugin::EncryptedAreaPlugin(
 {
     QNDEBUG("EncryptedAreaPlugin: constructor");
 
-    m_pUI->setupUi(this);
+    m_pUi->setupUi(this);
 
     QAction * showEncryptedTextAction = new QAction(this);
-    showEncryptedTextAction->setText(tr("Show encrypted text") +
-                                     QStringLiteral("..."));
+
+    showEncryptedTextAction->setText(
+        tr("Show encrypted text") + QStringLiteral("..."));
+
     showEncryptedTextAction->setEnabled(m_noteEditor.isPageEditable());
-    QObject::connect(showEncryptedTextAction, QNSIGNAL(QAction,triggered),
-                     this, QNSLOT(EncryptedAreaPlugin,decrypt));
-    m_pUI->toolButton->addAction(showEncryptedTextAction);
+
+    QObject::connect(
+        showEncryptedTextAction,
+        &QAction::triggered,
+        this,
+        &EncryptedAreaPlugin::decrypt);
+
+    m_pUi->toolButton->addAction(showEncryptedTextAction);
 
     if (m_noteEditor.isPageEditable()) {
-        QObject::connect(m_pUI->iconPushButton, QNSIGNAL(QPushButton,released),
-                         this, QNSLOT(EncryptedAreaPlugin,decrypt));
+        QObject::connect(
+            m_pUi->iconPushButton,
+            &QPushButton::released,
+            this,
+            &EncryptedAreaPlugin::decrypt);
     }
 }
 
 EncryptedAreaPlugin::~EncryptedAreaPlugin()
 {
     QNDEBUG("EncryptedAreaPlugin: destructor");
-    delete m_pUI;
+    delete m_pUi;
 }
 
-bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
-                                     const QStringList & parameterValues,
-                                     const NoteEditorPluginFactory & pluginFactory,
-                                     ErrorString & errorDescription)
+bool EncryptedAreaPlugin::initialize(
+    const QStringList & parameterNames, const QStringList & parameterValues,
+    const NoteEditorPluginFactory & pluginFactory,
+    ErrorString & errorDescription)
 {
     QNDEBUG("EncryptedAreaPlugin::initialize: parameter names = "
-            << parameterNames.join(QStringLiteral(", "))
-            << ", parameter values = "
-            << parameterValues.join(QStringLiteral(", ")));
+        << parameterNames.join(QStringLiteral(", "))
+        << ", parameter values = "
+        << parameterValues.join(QStringLiteral(", ")));
 
     Q_UNUSED(pluginFactory)
 
@@ -77,20 +88,24 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
 
     int cipherIndex = parameterNames.indexOf(QStringLiteral("cipher"));
     if (numParameterValues <= cipherIndex) {
-        errorDescription.setBase(QT_TR_NOOP("No value was found for cipher attribute"));
+        errorDescription.setBase(
+            QT_TR_NOOP("No value was found for cipher attribute"));
         return false;
     }
 
-    int encryptedTextIndex = parameterNames.indexOf(QStringLiteral("encrypted_text"));
+    int encryptedTextIndex = parameterNames.indexOf(
+        QStringLiteral("encrypted_text"));
     if (encryptedTextIndex < 0) {
-        errorDescription.setBase(QT_TR_NOOP("Encrypted text parameter was not found "
-                                            "within the object with encrypted text"));
+        errorDescription.setBase(
+            QT_TR_NOOP("Encrypted text parameter was not found within "
+                       "the object with encrypted text"));
         return false;
     }
 
     int keyLengthIndex = parameterNames.indexOf(QStringLiteral("length"));
     if (numParameterValues <= keyLengthIndex) {
-        errorDescription.setBase(QT_TR_NOOP("No value was found for length attribute"));
+        errorDescription.setBase(
+            QT_TR_NOOP("No value was found for length attribute"));
         return false;
     }
 
@@ -100,7 +115,7 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
     else {
         m_keyLength = QStringLiteral("128");
         QNDEBUG("Using the default value of key length = " << m_keyLength
-                << " instead of missing HTML attribute");
+            << " instead of missing HTML attribute");
     }
 
     if (cipherIndex >= 0) {
@@ -109,7 +124,7 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
     else {
         m_cipher = QStringLiteral("AES");
         QNDEBUG("Using the default value of cipher = " << m_cipher
-                << " instead of missing HTML attribute");
+            << " instead of missing HTML attribute");
     }
 
     m_encryptedText = parameterValues[encryptedTextIndex];
@@ -122,7 +137,8 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
         m_hint = parameterValues[hintIndex];
     }
 
-    int enCryptIndexIndex = parameterNames.indexOf(QStringLiteral("en-crypt-id"));
+    int enCryptIndexIndex = parameterNames.indexOf(
+        QStringLiteral("en-crypt-id"));
     if ((enCryptIndexIndex < 0) || (numParameterValues <= enCryptIndexIndex)) {
         m_id.clear();
     }
@@ -131,9 +147,9 @@ bool EncryptedAreaPlugin::initialize(const QStringList & parameterNames,
     }
 
     QNTRACE("Initialized encrypted area plugin: cipher = "
-            << m_cipher << ", length = " << m_keyLength
-            << ", hint = " << m_hint << ", en-crypt-id = " << m_id
-            << ", encrypted text = " << m_encryptedText);
+        << m_cipher << ", length = " << m_keyLength
+        << ", hint = " << m_hint << ", en-crypt-id = " << m_id
+        << ", encrypted text = " << m_encryptedText);
     return true;
 }
 
@@ -150,8 +166,12 @@ QString EncryptedAreaPlugin::description() const
 
 void EncryptedAreaPlugin::decrypt()
 {
-    m_noteEditor.decryptEncryptedText(m_encryptedText, m_cipher,
-                                      m_keyLength, m_hint, m_id);
+    m_noteEditor.decryptEncryptedText(
+        m_encryptedText,
+        m_cipher,
+        m_keyLength,
+        m_hint,
+        m_id);
 }
 
 } // namespace quentier

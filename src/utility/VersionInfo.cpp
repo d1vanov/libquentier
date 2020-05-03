@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include <quentier/utility/VersionInfo.h>
+
 #include <quentier/utility/Macros.h>
+
 #include <QtGlobal>
 
 namespace quentier {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,20 +34,18 @@ class Q_DECL_HIDDEN RenameResourceUndoCommand: public INoteEditorUndoCommand
     Q_OBJECT
 public:
     RenameResourceUndoCommand(
-        const Resource & resource,
-        const QString & previousResourceName,
+        const Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash,
         QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
-        const Resource & resource,
-        const QString & previousResourceName,
+        const Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
-        const QString & text,  QUndoCommand * parent = nullptr);
+        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash,
+        const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~RenameResourceUndoCommand();
 
@@ -55,11 +53,11 @@ public:
     virtual void redoImpl() override;
 
 private:
-    Resource                        m_resource;
-    QString                         m_previousResourceName;
-    QString                         m_newResourceName;
-    GenericResourceImageManager *   m_pGenericResourceImageManager;
-    QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;
+    Resource                      m_resource;
+    QString                       m_previousResourceName;
+    QString                       m_newResourceName;
+    GenericResourceImageManager * m_pGenericResourceImageManager;
+    QHash<QByteArray, QString> &  m_genericResourceImageFilePathsByResourceHash;
 };
 
 } // namespace quentier

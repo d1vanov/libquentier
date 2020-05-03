@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TYPES_DATA_FAVORITABLE_DATA_ELEMENT_DATA_H
 
 #include "NoteStoreDataElementData.h"
+
 #include <quentier/utility/Macros.h>
 
 namespace quentier {
@@ -37,10 +38,10 @@ public:
 
 private:
     FavoritableDataElementData &
-    operator=(const FavoritableDataElementData & other)  = delete;
+    operator=(const FavoritableDataElementData & other) = delete;
 
     FavoritableDataElementData &
-    operator=(FavoritableDataElementData && other)  = delete;
+    operator=(FavoritableDataElementData && other) = delete;
 };
 
 } // namespace quentier

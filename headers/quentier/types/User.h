@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_TYPES_USER_H
 #define LIB_QUENTIER_TYPES_USER_H
 
-#include <quentier/utility/Printable.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Printable.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -44,7 +44,7 @@ public:
     User(User && other);
     User & operator=(const User & other);
     User & operator=(User && other);
-    virtual ~User();
+    virtual ~User() override;
 
     bool operator==(const User & other) const;
     bool operator!=(const User & other) const;

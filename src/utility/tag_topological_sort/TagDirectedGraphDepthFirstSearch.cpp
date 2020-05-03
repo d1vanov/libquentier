@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,25 +18,19 @@
 
 #include "TagDirectedGraphDepthFirstSearch.h"
 
+#include <quentier/utility/Macros.h>
+
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
         const TagDirectedGraph & graph) :
-    m_graph(graph),
-    m_reachedTagIds(),
-    m_parentTagIdByChildTagId(),
-    m_cycle(),
-    m_onStack(),
-    m_tagIdsInPreOrder(),
-    m_tagIdsInPostOrder(),
-    m_tagIdsInReversePostOrder()
+    m_graph(graph)
 {
     QStringList allTagIds = m_graph.allTagIds();
-    for(auto it = allTagIds.constBegin(),
-        end = allTagIds.constEnd(); it != end; ++it)
+    for(const auto & tagId: qAsConst(allTagIds))
     {
-        if (!reached(*it)) {
-            depthFirstSearch(*it);
+        if (!reached(tagId)) {
+            depthFirstSearch(tagId);
         }
     }
 }
@@ -61,7 +55,8 @@ const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
     return m_cycle;
 }
 
-void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTagId)
+void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
+    const QString & sourceTagId)
 {
     auto stackIt = m_onStack.insert(sourceTagId).first;
 
@@ -69,20 +64,19 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTa
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
     QStringList childTagIds = m_graph.childTagIds(sourceTagId);
-    for(auto it = childTagIds.constBegin(),
-        end = childTagIds.constEnd(); it != end; ++it)
+    for(const auto & childTagId: qAsConst(childTagIds))
     {
         if (hasCycle()) {
             return;
         }
 
-        if (!reached(*it)) {
-            m_parentTagIdByChildTagId[*it] = sourceTagId;
-            depthFirstSearch(*it);
+        if (!reached(childTagId)) {
+            m_parentTagIdByChildTagId[childTagId] = sourceTagId;
+            depthFirstSearch(childTagId);
         }
-        else if (m_onStack.find(*it) != m_onStack.end())
+        else if (m_onStack.find(childTagId) != m_onStack.end())
         {
-            QString cycledId = *it;
+            QString cycledId = childTagId;
             while(true)
             {
                 if (cycledId == sourceTagId) {
@@ -99,7 +93,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(const QString & sourceTa
                 cycledId = pit.value();
             }
             m_cycle.push(sourceTagId);
-            m_cycle.push(*it);
+            m_cycle.push(childTagId);
         }
     }
 

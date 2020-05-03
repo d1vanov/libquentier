@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,30 +21,31 @@
 
 #include "EncryptDecryptUndoCommandInfo.h"
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
+
 #include <quentier/enml/DecryptedTextManager.h>
-#include <QSharedPointer>
+
+#include <memory>
 
 namespace quentier {
 
 class Q_DECL_HIDDEN DecryptUndoCommand: public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+    using Callback = NoteEditorPage::Callback;
 public:
     DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
-        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         QUndoCommand * parent = nullptr);
 
     DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
-        const QSharedPointer<DecryptedTextManager> & decryptedTextManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
-        const QString & text,
+        const Callback & callback, const QString & text,
         QUndoCommand * parent = nullptr);
 
     virtual ~DecryptUndoCommand();
@@ -54,7 +55,7 @@ public:
 
 private:
     EncryptDecryptUndoCommandInfo           m_info;
-    QSharedPointer<DecryptedTextManager>    m_decryptedTextManager;
+    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
     Callback                                m_callback;
 };
 

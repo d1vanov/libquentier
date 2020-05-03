@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,15 +19,15 @@
 #ifndef LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H
 #define LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H
 
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 
+#include <QByteArray>
+#include <QIODevice>
 #include <QObject>
 #include <QString>
 #include <QUuid>
-#include <QByteArray>
-#include <QIODevice>
 
 namespace quentier {
 
@@ -70,11 +70,11 @@ Q_SIGNALS:
      * @param success                   True if write operation was successful,
      *                                  false otherwise
      * @param errorDescription          Textual description of the error
-     * @param requestId                 Unique identifier of the file write request
+     * @param requestId                 Unique identifier of the file write
+     *                                  request
      */
-    void writeFileRequestProcessed(bool success,
-                                   ErrorString errorDescription,
-                                   QUuid requestId);
+    void writeFileRequestProcessed(
+        bool success, ErrorString errorDescription, QUuid requestId);
 
     /**
      * @brief readFileRequestProcessed signal is emitted when the file read
@@ -84,11 +84,12 @@ Q_SIGNALS:
      *                                  false otherwise
      * @param errorDescription          Textual description of the error
      * @param data                      Data read from file
-     * @param requestId                 Unique identifier of the file read request
+     * @param requestId                 Unique identifier of the file read
+     *                                  request
      */
-    void readFileRequestProcessed(bool success,
-                                  ErrorString errorDescription,
-                                  QByteArray data, QUuid requestId);
+    void readFileRequestProcessed(
+        bool success, ErrorString errorDescription, QByteArray data,
+        QUuid requestId);
 
 public Q_SLOTS:
     /**
@@ -102,8 +103,9 @@ public Q_SLOTS:
      *                              otherwise the entire file would be erased
      *                              before with the data is written
      */
-    void onWriteFileRequest(QString absoluteFilePath, QByteArray data,
-                            QUuid requestId, bool append);
+    void onWriteFileRequest(
+        QString absoluteFilePath, QByteArray data, QUuid requestId,
+        bool append);
 
     /**
      * @brief onReadFileRequest slot processes file read requests

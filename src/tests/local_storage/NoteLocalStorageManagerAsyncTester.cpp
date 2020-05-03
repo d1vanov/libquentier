@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -352,11 +352,11 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
 
         m_state = STATE_SENT_LIST_NOTES_PER_NOTEBOOK_ONE_REQUEST;
         LocalStorageManager::ListObjectsOptions flag =
-            LocalStorageManager::ListAll;
+            LocalStorageManager::ListObjectsOption::ListAll;
         size_t limit = 0, offset = 0;
-        LocalStorageManager::ListNotesOrder::type order =
+        LocalStorageManager::ListNotesOrder order =
             LocalStorageManager::ListNotesOrder::NoOrder;
-        LocalStorageManager::OrderDirection::type orderDirection =
+        LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
         LocalStorageManager::GetNoteOptions options(
             LocalStorageManager::GetNoteOption::WithResourceMetadata |
@@ -533,8 +533,8 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
     Notebook notebook, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QList<Note> notes, QUuid requestId)
 {
     Q_UNUSED(notebook)
@@ -612,8 +612,8 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
     Notebook notebook, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag,
     size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(flag)
@@ -715,15 +715,15 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
                               listNotesPerNotebookRequest,Notebook,
                               LocalStorageManager::GetNoteOptions,
                               LocalStorageManager::ListObjectsOptions,size_t,
-                              size_t,LocalStorageManager::ListNotesOrder::type,
-                              LocalStorageManager::OrderDirection::type,QUuid),
+                              size_t,LocalStorageManager::ListNotesOrder,
+                              LocalStorageManager::OrderDirection,QUuid),
                      m_pLocalStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,
                             onListNotesPerNotebookRequest,
                             Notebook,LocalStorageManager::GetNoteOptions,
                             LocalStorageManager::ListObjectsOptions,size_t,
-                            size_t,LocalStorageManager::ListNotesOrder::type,
-                            LocalStorageManager::OrderDirection::type,QUuid));
+                            size_t,LocalStorageManager::ListNotesOrder,
+                            LocalStorageManager::OrderDirection,QUuid));
     QObject::connect(this,
                      QNSIGNAL(NoteLocalStorageManagerAsyncTester,
                               expungeNoteRequest,Note,QUuid),
@@ -808,32 +808,32 @@ void NoteLocalStorageManagerAsyncTester::createConnections()
                               listNotesPerNotebookComplete,
                               Notebook,LocalStorageManager::GetNoteOptions,
                               LocalStorageManager::ListObjectsOptions,size_t,
-                              size_t,LocalStorageManager::ListNotesOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              size_t,LocalStorageManager::ListNotesOrder,
+                              LocalStorageManager::OrderDirection,
                               QList<Note>,QUuid),
                      this,
                      QNSLOT(NoteLocalStorageManagerAsyncTester,
                             onListNotesPerNotebookCompleted,Notebook,
                             LocalStorageManager::GetNoteOptions,
                             LocalStorageManager::ListObjectsOptions,size_t,
-                            size_t,LocalStorageManager::ListNotesOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            size_t,LocalStorageManager::ListNotesOrder,
+                            LocalStorageManager::OrderDirection,
                             QList<Note>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listNotesPerNotebookFailed,
                               Notebook,LocalStorageManager::GetNoteOptions,
                               LocalStorageManager::ListObjectsOptions,size_t,
-                              size_t,LocalStorageManager::ListNotesOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              size_t,LocalStorageManager::ListNotesOrder,
+                              LocalStorageManager::OrderDirection,
                               ErrorString,QUuid),
                      this,
                      QNSLOT(NoteLocalStorageManagerAsyncTester,
                             onListNotesPerNotebookFailed,Notebook,
                             LocalStorageManager::GetNoteOptions,
                             LocalStorageManager::ListObjectsOptions,size_t,
-                            size_t,LocalStorageManager::ListNotesOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            size_t,LocalStorageManager::ListNotesOrder,
+                            LocalStorageManager::OrderDirection,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,expungeNoteComplete,

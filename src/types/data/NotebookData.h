@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,13 +20,10 @@
 #define LIB_QUENTIER_TYPES_DATA_NOTEBOOK_DATA_H
 
 #include "FavoritableDataElementData.h"
+
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -39,7 +36,7 @@ public:
     NotebookData(const qevercloud::Notebook & other);
     NotebookData(qevercloud::Notebook && other);
 
-    virtual ~NotebookData();
+    virtual ~NotebookData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -52,8 +49,8 @@ public:
     qevercloud::Optional<QString>   m_linkedNotebookGuid;
 
 private:
-    NotebookData & operator=(const NotebookData & other)  = delete;
-    NotebookData & operator=(NotebookData && other)  = delete;
+    NotebookData & operator=(const NotebookData & other) = delete;
+    NotebookData & operator=(NotebookData && other) = delete;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -39,8 +38,7 @@ namespace quentier {
 // GET_PAGE
 
 ToDoCheckboxAutomaticInsertionUndoCommand::ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
+        NoteEditorPrivate & noteEditor, const Callback & callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
@@ -49,10 +47,8 @@ ToDoCheckboxAutomaticInsertionUndoCommand::ToDoCheckboxAutomaticInsertionUndoCom
 }
 
 ToDoCheckboxAutomaticInsertionUndoCommand::ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditor, const Callback & callback,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}
@@ -65,8 +61,9 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
     QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("toDoCheckboxAutomaticInserter.redo()"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("toDoCheckboxAutomaticInserter.redo()"),
+        m_callback);
 }
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
@@ -74,8 +71,9 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
     QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("toDoCheckboxAutomaticInserter.undo()"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("toDoCheckboxAutomaticInserter.undo()"),
+        m_callback);
 }
 
 } // namespace quentier

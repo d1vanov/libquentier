@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_ENCRYPTED_AREA_PLUGIN_H
 #define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTED_AREA_PLUGIN_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
 
 #include <QWidget>
 
@@ -37,14 +37,18 @@ class Q_DECL_HIDDEN EncryptedAreaPlugin: public QWidget
 {
     Q_OBJECT
 public:
-    explicit EncryptedAreaPlugin(NoteEditorPrivate & noteEditor,
-                                 QWidget * parent = nullptr);
+    explicit EncryptedAreaPlugin(
+        NoteEditorPrivate & noteEditor,
+        QWidget * parent = nullptr);
+
     virtual ~EncryptedAreaPlugin();
 
-    bool initialize(const QStringList & parameterNames,
-                    const QStringList & parameterValues,
-                    const NoteEditorPluginFactory & pluginFactory,
-                    ErrorString & errorDescription);
+    bool initialize(
+        const QStringList & parameterNames,
+        const QStringList & parameterValues,
+        const NoteEditorPluginFactory & pluginFactory,
+        ErrorString & errorDescription);
+
     QString name() const;
     QString description() const;
 
@@ -52,13 +56,13 @@ private Q_SLOTS:
     void decrypt();
 
 private:
-    Ui::EncryptedAreaPlugin *           m_pUI;
-    NoteEditorPrivate &                 m_noteEditor;
-    QString                             m_hint;
-    QString                             m_cipher;
-    QString                             m_encryptedText;
-    QString                             m_keyLength;
-    QString                             m_id;
+    Ui::EncryptedAreaPlugin *       m_pUi;
+    NoteEditorPrivate &             m_noteEditor;
+    QString                         m_hint;
+    QString                         m_cipher;
+    QString                         m_encryptedText;
+    QString                         m_keyLength;
+    QString                         m_id;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,13 +24,16 @@
 namespace quentier {
 
 /**
- * @brief The ApplicationSettingsInitializationException can be throws from methods of
- * ApplicationSettings class if it's unable to locate the file with persistent settings
+ * @brief The ApplicationSettingsInitializationException can be thrown from
+ * methods of ApplicationSettings class if it's unable to locate the file with
+ * persistent settings
  */
-class QUENTIER_EXPORT ApplicationSettingsInitializationException: public IQuentierException
+class QUENTIER_EXPORT ApplicationSettingsInitializationException:
+    public IQuentierException
 {
 public:
-    explicit ApplicationSettingsInitializationException(const ErrorString & message);
+    explicit ApplicationSettingsInitializationException(
+        const ErrorString & message);
 
 protected:
     virtual const QString exceptionDisplayName() const override;

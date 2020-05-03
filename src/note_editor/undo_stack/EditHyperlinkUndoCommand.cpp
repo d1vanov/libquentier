@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,13 +24,13 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
-        ErrorString error(QT_TRANSLATE_NOOP("EditHyperlinkUndoCommand",        \
-                                            "Can't undo/redo hyperlink edit: " \
-                                            "no note editor page"));           \
+        ErrorString error(                                                     \
+            QT_TRANSLATE_NOOP("EditHyperlinkUndoCommand",                      \
+                              "Can't undo/redo hyperlink edit: "               \
+                              "no note editor page"));                         \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -38,8 +38,7 @@ namespace quentier {
 // GET_PAGE
 
 EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
@@ -48,10 +47,8 @@ EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
 }
 
 EditHyperlinkUndoCommand::EditHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent) :
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}
@@ -64,8 +61,9 @@ void EditHyperlinkUndoCommand::redoImpl()
     QNDEBUG("EditHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.redo();"),
+        m_callback);
 }
 
 void EditHyperlinkUndoCommand::undoImpl()
@@ -73,8 +71,9 @@ void EditHyperlinkUndoCommand::undoImpl()
     QNDEBUG("EditHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier

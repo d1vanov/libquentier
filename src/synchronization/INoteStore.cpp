@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,9 @@
 namespace quentier {
 
 INoteStore::INoteStore(
-        const qevercloud::INoteStorePtr & pQecNoteStore,
-        QObject * parent) :
+        const qevercloud::INoteStorePtr & pQecNoteStore, QObject * parent) :
     QObject(parent),
-    m_pQecNoteStore(pQecNoteStore),
-    m_authenticationToken()
+    m_pQecNoteStore(pQecNoteStore)
 {}
 
 INoteStore::~INoteStore()

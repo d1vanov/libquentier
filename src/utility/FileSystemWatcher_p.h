@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,10 +24,7 @@
 #include <QFileSystemWatcher>
 #include <QSet>
 
-// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
-#ifndef Q_MOC_RUN
 #include <boost/bimap.hpp>
-#endif
 
 namespace quentier {
 
@@ -83,7 +80,8 @@ private:
     QSet<QString>       m_watchedFiles;
     QSet<QString>       m_watchedDirectories;
 
-    typedef boost::bimap<QString, int> PathWithTimerId;
+    using PathWithTimerId = boost::bimap<QString, int>;
+
     PathWithTimerId     m_justRemovedFilePathsWithPostRemovalTimerIds;
     PathWithTimerId     m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
 };

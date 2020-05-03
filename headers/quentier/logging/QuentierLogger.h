@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,32 +26,30 @@
 
 namespace quentier {
 
-class LogLevel
+enum class LogLevel
 {
-public:
-    enum type {
-        TraceLevel,
-        DebugLevel,
-        InfoLevel,
-        WarnLevel,
-        ErrorLevel
-    };
+    Trace,
+    Debug,
+    Info,
+    Warning,
+    Error
 };
 
 void QUENTIER_EXPORT QuentierInitializeLogging();
 
-void QUENTIER_EXPORT QuentierAddLogEntry(const QString & sourceFileName,
-                                         const int sourceFileLineNumber,
-                                         const QString & message,
-                                         const LogLevel::type logLevel);
+void QUENTIER_EXPORT QuentierAddLogEntry(
+    const QString & sourceFileName,
+    const int sourceFileLineNumber,
+    const QString & message,
+    const LogLevel logLevel);
 
-LogLevel::type QUENTIER_EXPORT QuentierMinLogLevel();
+LogLevel QUENTIER_EXPORT QuentierMinLogLevel();
 
-void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel::type logLevel);
+void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel logLevel);
 
 void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
 
-bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel::type logLevel);
+bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel logLevel);
 
 QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
@@ -65,15 +63,16 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 // __QNLOG_QDEBUG_HELPER
 
 #define __QNLOG_BASE(message, level)                                           \
-    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level##Level))  \
+    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level))         \
     {                                                                          \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
         __QNLOG_QDEBUG_HELPER();                                               \
         dbg << message;                                                        \
-        quentier::QuentierAddLogEntry(QStringLiteral(__FILE__),                \
-                                      __LINE__, msg,                           \
-                                      quentier::LogLevel::level##Level);       \
+        quentier::QuentierAddLogEntry(                                         \
+            QStringLiteral(__FILE__),                                          \
+            __LINE__, msg,                                                     \
+            quentier::LogLevel::level);                                        \
     }                                                                          \
 // __QNLOG_BASE
 
@@ -90,7 +89,7 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 // QNINFO
 
 #define QNWARNING(message)                                                     \
-    __QNLOG_BASE(message, Warn)                                                \
+    __QNLOG_BASE(message, Warning)                                             \
 // QNWARNING
 
 #define QNERROR(message)                                                       \
@@ -98,7 +97,7 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
-    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level##Level)         \
+    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level)                \
 // QUENTIER_SET_MIN_LOG_LEVEL
 
 #define QUENTIER_INITIALIZE_LOGGING()                                          \

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,10 +31,11 @@
 
 namespace quentier {
 
+using WebPage =
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-typedef QWebPage WebPage;
+    QWebPage;
 #else
-typedef QWebEnginePage WebPage;
+    QWebEnginePage;
 #endif
 
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
@@ -44,10 +45,11 @@ class Q_DECL_HIDDEN NoteEditorPage: public WebPage
 {
     Q_OBJECT
 public:
-    typedef JavaScriptInOrderExecutor::Callback Callback;
+    using Callback = JavaScriptInOrderExecutor::Callback;
 
 public:
     explicit NoteEditorPage(NoteEditorPrivate & parent);
+
     virtual ~NoteEditorPage();
 
     bool javaScriptQueueEmpty() const;
@@ -56,11 +58,11 @@ public:
     void setActive();
 
     /**
-     * @brief stopJavaScriptAutoExecution method can be used to prevent the actual
-     * execution of JavaScript code immediately on calling executeJavaScript;
-     * instead the code would be put on the queue for subsequent execution and
-     * the signal javaScriptLoaded would only be emitted when the whole queue
-     * is executed
+     * @brief stopJavaScriptAutoExecution method can be used to prevent
+     * the actual execution of JavaScript code immediately on calling
+     * executeJavaScript; instead the code would be put on the queue for
+     * subsequent execution and the signal javaScriptLoaded would only be
+     * emitted when the whole queue is executed
      */
     void stopJavaScriptAutoExecution();
 
@@ -88,45 +90,46 @@ Q_SIGNALS:
     void cutActionRequested();
 
 public Q_SLOTS:
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)) && !defined(QUENTIER_USE_QT_WEB_ENGINE)
+#ifndef QUENTIER_USE_QT_WEB_ENGINE
     virtual bool shouldInterruptJavaScript() override;
 #else
     bool shouldInterruptJavaScript();
 #endif
 
-    void executeJavaScript(const QString & script, Callback callback = 0,
-                           const bool clearPreviousQueue = false);
+    void executeJavaScript(
+        const QString & script, Callback callback = 0,
+        const bool clearPreviousQueue = false);
 
 private Q_SLOTS:
     void onJavaScriptQueueEmpty();
 
 private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    virtual void javaScriptAlert(QWebFrame * pFrame,
-                                 const QString & message) override;
-    virtual bool javaScriptConfirm(QWebFrame * pFrame,
-                                   const QString & message) override;
+    virtual void javaScriptAlert(
+        QWebFrame * pFrame, const QString & message) override;
+
+    virtual bool javaScriptConfirm(
+        QWebFrame * pFrame, const QString & message) override;
 
     virtual void javaScriptConsoleMessage(
-        const QString & message,
-        int lineNumber,
-        const QString & sourceID) override;
-#else
-    virtual void javaScriptAlert(const QUrl & securityOrigin,
-                                 const QString & msg) override;
-    virtual bool javaScriptConfirm(const QUrl & securityOrigin,
-                                   const QString & msg) override;
-
-    virtual void javaScriptConsoleMessage(
-        JavaScriptConsoleMessageLevel level,
         const QString & message, int lineNumber,
         const QString & sourceID) override;
+#else
+    virtual void javaScriptAlert(
+        const QUrl & securityOrigin, const QString & msg) override;
+
+    virtual bool javaScriptConfirm(
+        const QUrl & securityOrigin, const QString & msg) override;
+
+    virtual void javaScriptConsoleMessage(
+        JavaScriptConsoleMessageLevel level, const QString & message,
+        int lineNumber, const QString & sourceID) override;
 #endif
 
 private:
     NoteEditorPrivate *         m_parent;
     JavaScriptInOrderExecutor * m_pJavaScriptInOrderExecutor;
-    bool                        m_javaScriptAutoExecution;
+    bool                        m_javaScriptAutoExecution = true;
 };
 
 } // namespace quentier

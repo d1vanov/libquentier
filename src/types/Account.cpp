@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,23 +23,22 @@ namespace quentier {
 
 Account::Account() :
     d(new AccountData)
-{
-    d->m_accountType = Account::Type::Local;
-    d->m_userId = -1;
-}
+{}
 
-Account::Account(const QString & name, const Type::type type,
-                 const qevercloud::UserID userId,
-                 const EvernoteAccountType::type evernoteAccountType,
-                 const QString & evernoteHost,
-                 const QString & shardId) :
+Account::Account(
+        QString name, const Type type,
+        const qevercloud::UserID userId,
+        const EvernoteAccountType evernoteAccountType,
+        QString evernoteHost,
+        QString shardId) :
     d(new AccountData)
 {
-    d->m_name = name;
+    d->m_name = std::move(name);
     d->m_accountType = type;
     d->m_userId = userId;
-    d->m_evernoteHost = evernoteHost;
-    d->m_shardId = shardId;
+    d->m_evernoteHost = std::move(evernoteHost);
+    d->m_shardId = std::move(shardId);
+
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
@@ -105,19 +104,20 @@ bool Account::isEmpty() const
     }
 }
 
-void Account::setEvernoteAccountType(const EvernoteAccountType::type evernoteAccountType)
+void Account::setEvernoteAccountType(
+    const EvernoteAccountType evernoteAccountType)
 {
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
-void Account::setEvernoteHost(const QString & evernoteHost)
+void Account::setEvernoteHost(QString evernoteHost)
 {
-    d->m_evernoteHost = evernoteHost;
+    d->m_evernoteHost = std::move(evernoteHost);
 }
 
-void Account::setShardId(const QString & shardId)
+void Account::setShardId(QString shardId)
 {
-    d->m_shardId = shardId;
+    d->m_shardId = std::move(shardId);
 }
 
 void Account::setEvernoteAccountLimits(const qevercloud::AccountLimits & limits)
@@ -130,9 +130,9 @@ QString Account::name() const
     return d->m_name;
 }
 
-void Account::setName(const QString & name)
+void Account::setName(QString name)
 {
-    d->m_name = name;
+    d->m_name = std::move(name);
 }
 
 QString Account::displayName() const
@@ -140,9 +140,9 @@ QString Account::displayName() const
     return d->m_displayName;
 }
 
-void Account::setDisplayName(const QString & displayName)
+void Account::setDisplayName(QString displayName)
 {
-    d->m_displayName = displayName;
+    d->m_displayName = std::move(displayName);
 }
 
 qevercloud::UserID Account::id() const
@@ -150,12 +150,12 @@ qevercloud::UserID Account::id() const
     return d->m_userId;
 }
 
-Account::Type::type Account::type() const
+Account::Type Account::type() const
 {
     return d->m_accountType;
 }
 
-Account::EvernoteAccountType::type Account::evernoteAccountType() const
+Account::EvernoteAccountType Account::evernoteAccountType() const
 {
     return d->m_evernoteAccountType;
 }
@@ -291,6 +291,71 @@ QTextStream & Account::print(QTextStream & strm) const
     strm << "};\n";
 
     return strm;
+}
+
+template <typename T>
+void printAccountType(T & t, const Account::Type type)
+{
+    switch(type)
+    {
+    case Account::Type::Local:
+        t << "Local";
+        break;
+    case Account::Type::Evernote:
+        t << "Evernote";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(type) << ")";
+        break;
+    }
+}
+
+QTextStream & operator<<(QTextStream & strm, const Account::Type type)
+{
+    printAccountType(strm, type);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const Account::Type type)
+{
+    printAccountType(dbg, type);
+    return dbg;
+}
+
+template <typename T>
+void printEvernoteAccountType(T & t, const Account::EvernoteAccountType type)
+{
+    switch(type)
+    {
+    case Account::EvernoteAccountType::Free:
+        t << "Free";
+        break;
+    case Account::EvernoteAccountType::Plus:
+        t << "Plus";
+        break;
+    case Account::EvernoteAccountType::Premium:
+        t << "Premium";
+        break;
+    case Account::EvernoteAccountType::Business:
+        t << "Business";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(type) << ")";
+        break;
+    }
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const Account::EvernoteAccountType type)
+{
+    printEvernoteAccountType(strm, type);
+    return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const Account::EvernoteAccountType type)
+{
+    printEvernoteAccountType(dbg, type);
+    return dbg;
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_NOTE_EDITOR_WEB_SOCKET_TRANSPORT_H
 
 #include <QtWebChannel/QWebChannelAbstractTransport>
-#include <QScopedPointer>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 

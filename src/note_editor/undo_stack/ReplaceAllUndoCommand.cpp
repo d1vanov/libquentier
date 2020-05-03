@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -39,10 +38,8 @@ namespace quentier {
 // GET_PAGE
 
 ReplaceAllUndoCommand::ReplaceAllUndoCommand(
-        const QString & textToReplace,
-        const bool matchCase,
-        NoteEditorPrivate & noteEditorPrivate,
-        Callback callback,
+        const QString & textToReplace, const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_textToReplace(textToReplace),
@@ -53,12 +50,9 @@ ReplaceAllUndoCommand::ReplaceAllUndoCommand(
 }
 
 ReplaceAllUndoCommand::ReplaceAllUndoCommand(
-        const QString & textToReplace,
-        const bool matchCase,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
-        Callback callback,
-        QUndoCommand * parent) :
+        const QString & textToReplace, const bool matchCase,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_textToReplace(textToReplace),
     m_matchCase(matchCase),
@@ -78,8 +72,10 @@ void ReplaceAllUndoCommand::redoImpl()
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {
-        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase,
-                                               /* force = */ true);
+        m_noteEditorPrivate.setSearchHighlight(
+            m_textToReplace,
+            m_matchCase,
+            /* force = */ true);
     }
 }
 
@@ -93,8 +89,10 @@ void ReplaceAllUndoCommand::undoImpl()
     page->executeJavaScript(javascript, m_callback);
 
     if (m_noteEditorPrivate.searchHighlightEnabled()) {
-        m_noteEditorPrivate.setSearchHighlight(m_textToReplace, m_matchCase,
-                                               /* force = */ true);
+        m_noteEditorPrivate.setSearchHighlight(
+            m_textToReplace,
+            m_matchCase,
+            /* force = */ true);
     }
 }
 

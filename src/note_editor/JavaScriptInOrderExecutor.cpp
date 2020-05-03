@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ void JavaScriptInOrderExecutor::append(
 {
     m_javaScriptsQueue.enqueue(QPair<QString, Callback>(script, callback));
     QNTRACE("JavaScriptInOrderExecutor: appended new script, there are "
-            << m_javaScriptsQueue.size() << " to execute now");
+        << m_javaScriptsQueue.size() << " to execute now");
 }
 
 void JavaScriptInOrderExecutor::start()
@@ -79,8 +79,8 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
     }
 
     QNTRACE("JavaScriptInOrderExecutor: "
-            << m_javaScriptsQueue.size()
-            << " more scripts to execute");
+        << m_javaScriptsQueue.size()
+        << " more scripts to execute");
     start();
 }
 

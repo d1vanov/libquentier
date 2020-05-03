@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -49,10 +48,8 @@ RemoveResourceUndoCommand::RemoveResourceUndoCommand(
 }
 
 RemoveResourceUndoCommand::RemoveResourceUndoCommand(
-        const Resource & resource,
-        const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
+        const Resource & resource, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resource(resource),
@@ -70,8 +67,10 @@ void RemoveResourceUndoCommand::undoImpl()
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resourceManager.undo();"));
-    page->executeJavaScript(QStringLiteral("setupGenericResourceOnClickHandler();"),
-                            m_callback);
+
+    page->executeJavaScript(
+        QStringLiteral("setupGenericResourceOnClickHandler();"),
+        m_callback);
 }
 
 void RemoveResourceUndoCommand::redoImpl()
@@ -81,7 +80,9 @@ void RemoveResourceUndoCommand::redoImpl()
     m_noteEditorPrivate.removeResourceFromNote(m_resource);
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("resourceManager.redo();"), m_callback);
+    page->executeJavaScript(
+        QStringLiteral("resourceManager.redo();"),
+        m_callback);
 }
 
 } // namespace quentier

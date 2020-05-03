@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -210,9 +210,9 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
 
         m_state = STATE_SENT_LIST_SEARCHES_REQUEST;
         size_t limit = 0, offset = 0;
-        LocalStorageManager::ListSavedSearchesOrder::type order =
+        LocalStorageManager::ListSavedSearchesOrder order =
             LocalStorageManager::ListSavedSearchesOrder::NoOrder;
-        LocalStorageManager::OrderDirection::type orderDirection =
+        LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
         Q_EMIT listAllSavedSearchesRequest(limit, offset, order,
                                            orderDirection, QUuid::createUuid());
@@ -371,8 +371,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchFailed(
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
     size_t limit, size_t offset,
-    LocalStorageManager::ListSavedSearchesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListSavedSearchesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     QList<SavedSearch> searches, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -412,8 +412,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(
     size_t limit, size_t offset,
-    LocalStorageManager::ListSavedSearchesOrder::type order,
-    LocalStorageManager::OrderDirection::type orderDirection,
+    LocalStorageManager::ListSavedSearchesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(limit)
@@ -496,13 +496,13 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(this,
                      QNSIGNAL(SavedSearchLocalStorageManagerAsyncTester,
                               listAllSavedSearchesRequest,size_t,size_t,
-                              LocalStorageManager::ListSavedSearchesOrder::type,
-                              LocalStorageManager::OrderDirection::type,QUuid),
+                              LocalStorageManager::ListSavedSearchesOrder,
+                              LocalStorageManager::OrderDirection,QUuid),
                      m_pLocalStorageManagerAsync,
                      QNSLOT(LocalStorageManagerAsync,
                             onListAllSavedSearchesRequest,size_t,size_t,
-                            LocalStorageManager::ListSavedSearchesOrder::type,
-                            LocalStorageManager::OrderDirection::type,QUuid));
+                            LocalStorageManager::ListSavedSearchesOrder,
+                            LocalStorageManager::OrderDirection,QUuid));
     QObject::connect(this,
                      QNSIGNAL(SavedSearchLocalStorageManagerAsyncTester,
                               expungeSavedSearchRequest,SavedSearch,QUuid),
@@ -565,26 +565,26 @@ void SavedSearchLocalStorageManagerAsyncTester::createConnections()
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listAllSavedSearchesComplete,size_t,size_t,
-                              LocalStorageManager::ListSavedSearchesOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListSavedSearchesOrder,
+                              LocalStorageManager::OrderDirection,
                               QList<SavedSearch>,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onListAllSavedSearchesCompleted,size_t,size_t,
-                            LocalStorageManager::ListSavedSearchesOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListSavedSearchesOrder,
+                            LocalStorageManager::OrderDirection,
                             QList<SavedSearch>,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,
                               listAllSavedSearchesFailed,size_t,size_t,
-                              LocalStorageManager::ListSavedSearchesOrder::type,
-                              LocalStorageManager::OrderDirection::type,
+                              LocalStorageManager::ListSavedSearchesOrder,
+                              LocalStorageManager::OrderDirection,
                               ErrorString,QUuid),
                      this,
                      QNSLOT(SavedSearchLocalStorageManagerAsyncTester,
                             onListAllSavedSearchedFailed,size_t,size_t,
-                            LocalStorageManager::ListSavedSearchesOrder::type,
-                            LocalStorageManager::OrderDirection::type,
+                            LocalStorageManager::ListSavedSearchesOrder,
+                            LocalStorageManager::OrderDirection,
                             ErrorString,QUuid));
     QObject::connect(m_pLocalStorageManagerAsync,
                      QNSIGNAL(LocalStorageManagerAsync,

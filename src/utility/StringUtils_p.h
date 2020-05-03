@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_STRING_UTILS_PRIVATE_H
 
 #include <quentier/utility/StringUtils.h>
+
 #include <QHash>
 #include <QStringList>
 
@@ -30,8 +31,9 @@ class Q_DECL_HIDDEN StringUtilsPrivate
 public:
     StringUtilsPrivate();
 
-    void removePunctuation(QString & str,
-                           const QVector<QChar> & charactersToPreserve) const;
+    void removePunctuation(
+        QString & str, const QVector<QChar> & charactersToPreserve) const;
+
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 

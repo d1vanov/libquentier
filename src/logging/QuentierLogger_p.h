@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,27 +21,26 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Macros.h>
-#include <QObject>
-#include <QString>
+
+#include <QAtomicInt>
 #include <QFile>
-#include <QVector>
+#include <QObject>
 #include <QPointer>
+#include <QScopedPointer>
+#include <QString>
 #include <QTextStream>
 #include <QThread>
-#include <QAtomicInt>
-#include <QScopedPointer>
-
-#if __cplusplus < 201103L
-#include <QMutex>
-#endif
+#include <QVector>
 
 namespace quentier {
 
 /**
- * @brief The IQuentierLogWriter class is the interface for any class willing to implement a log writer.
+ * @brief The IQuentierLogWriter class is the interface for any class willing to
+ * implement a log writer.
  *
- * Typically a particular log writer writes the log messages to some particular logging destination,
- * like file or stderr or just something which can serve as a logging destination
+ * Typically a particular log writer writes the log messages to some particular
+ * logging destination, like file or stderr or just something which can serve as
+ * a logging destination
  */
 class Q_DECL_HIDDEN IQuentierLogWriter: public QObject
 {
@@ -88,18 +87,22 @@ private:
 };
 
 /**
- * @brief The QuentierFileLogWriter class implements the log writer to a log file destination
+ * @brief The QuentierFileLogWriter class implements the log writer to a log
+ * file destination
  *
- * It features the automatic rotation of the log file by its max size and ensures not more than just a handful
- * of previous log files are stored around
+ * It features the automatic rotation of the log file by its max size and
+ * ensures not more than just a handful of previous log files are stored around
  */
 class Q_DECL_HIDDEN QuentierFileLogWriter: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
-    explicit QuentierFileLogWriter(const MaxSizeBytes & maxSizeBytes, const MaxOldLogFilesCount & maxOldLogFilesCount,
-                                   QObject * parent = nullptr);
-    ~QuentierFileLogWriter();
+    explicit QuentierFileLogWriter(
+        const MaxSizeBytes & maxSizeBytes,
+        const MaxOldLogFilesCount & maxOldLogFilesCount,
+        QObject * parent = nullptr);
+
+    virtual ~QuentierFileLogWriter() override;
 
 public Q_SLOTS:
     virtual void write(QString message) override;
@@ -144,8 +147,8 @@ public:
 
     void write(QString message);
 
-    LogLevel::type minLogLevel() const;
-    void setMinLogLevel(const LogLevel::type minLogLevel);
+    LogLevel minLogLevel() const;
+    void setMinLogLevel(const LogLevel minLogLevel);
 
     void restartLogging();
 
@@ -159,10 +162,6 @@ private:
 
 private:
     QuentierLoggerImpl * m_pImpl;
-
-#if __cplusplus < 201103L
-    QMutex  m_constructionMutex;
-#endif
 };
 
 class Q_DECL_HIDDEN QuentierLoggerImpl: public QObject
@@ -171,7 +170,7 @@ class Q_DECL_HIDDEN QuentierLoggerImpl: public QObject
 public:
     QuentierLoggerImpl(QObject * parent = nullptr);
 
-    QVector<QPointer<IQuentierLogWriter> >  m_logWriterPtrs;
+    QVector<QPointer<IQuentierLogWriter>>   m_logWriterPtrs;
     QAtomicInt          m_minLogLevel;
     QThread *           m_pLogWriteThread;
 };

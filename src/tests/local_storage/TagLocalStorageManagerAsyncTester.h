@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,8 +50,8 @@ Q_SIGNALS:
     void updateTagRequest(Tag tag, QUuid requestId);
     void findTagRequest(Tag tag, QUuid requestId);
     void listAllTagsRequest(size_t limit, size_t offset,
-                            LocalStorageManager::ListTagsOrder::type order,
-                            LocalStorageManager::OrderDirection::type orderDirection,
+                            LocalStorageManager::ListTagsOrder order,
+                            LocalStorageManager::OrderDirection orderDirection,
                             QString linkedNotebookGuid,
                             QUuid requestId);
     void expungeTagRequest(Tag tag, QUuid requestId);
@@ -67,13 +67,13 @@ private Q_SLOTS:
     void onFindTagCompleted(Tag tag, QUuid requestId);
     void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onListAllTagsCompleted(size_t limit, size_t offset,
-                                LocalStorageManager::ListTagsOrder::type order,
-                                LocalStorageManager::OrderDirection::type orderDirection,
+                                LocalStorageManager::ListTagsOrder order,
+                                LocalStorageManager::OrderDirection orderDirection,
                                 QString linkedNotebookGuid,
                                 QList<Tag> tags, QUuid requestId);
     void onListAllTagsFailed(size_t limit, size_t offset,
-                             LocalStorageManager::ListTagsOrder::type order,
-                             LocalStorageManager::OrderDirection::type orderDirection,
+                             LocalStorageManager::ListTagsOrder order,
+                             LocalStorageManager::OrderDirection orderDirection,
                              QString linkedNotebookGuid,
                              ErrorString errorDescription, QUuid requestId);
     void onExpungeTagCompleted(Tag tag,

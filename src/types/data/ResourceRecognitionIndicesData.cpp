@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,24 +18,14 @@
 
 #include "ResourceRecognitionIndicesData.h"
 #include "ResourceRecognitionIndexItemData.h"
+
 #include <quentier/logging/QuentierLogger.h>
-#include <QXmlStreamReader>
+
 #include <QStringList>
+#include <QXmlStreamReader>
 
 namespace quentier {
 
-ResourceRecognitionIndicesData::ResourceRecognitionIndicesData() :
-    m_isNull(true),
-    m_objectId(),
-    m_objectType(),
-    m_recoType(),
-    m_engineVersion(),
-    m_docType(),
-    m_lang(),
-    m_objectHeight(-1),
-    m_objectWidth(-1),
-    m_items()
-{}
 
 bool ResourceRecognitionIndicesData::isValid() const
 {
@@ -93,7 +83,7 @@ bool ResourceRecognitionIndicesData::setData(
     const QByteArray & rawRecognitionIndicesData)
 {
     QNTRACE("ResourceRecognitionIndicesData::setData: "
-            << rawRecognitionIndicesData);
+        << rawRecognitionIndicesData);
 
     if (rawRecognitionIndicesData.isEmpty()) {
         QNTRACE("Recognition data is empty");
@@ -172,15 +162,22 @@ bool ResourceRecognitionIndicesData::setData(
 
             ResourceRecognitionIndexItem & item = m_items.last();
 
-            if (lastElementName == QStringLiteral("t")) {
-                parseTextItemAttributesAndData(lastElementAttributes,
-                                               chars, item);
+            if (lastElementName == QStringLiteral("t"))
+            {
+                parseTextItemAttributesAndData(
+                    lastElementAttributes,
+                    chars,
+                    item);
             }
-            else if (lastElementName == QStringLiteral("barcode")) {
-                parseBarcodeItemAttributesAndData(lastElementAttributes,
-                                                  chars, item);
+            else if (lastElementName == QStringLiteral("barcode"))
+            {
+                parseBarcodeItemAttributesAndData(
+                    lastElementAttributes,
+                    chars,
+                    item);
             }
-            else {
+            else
+            {
                 continue;
             }
         }
@@ -188,9 +185,9 @@ bool ResourceRecognitionIndicesData::setData(
 
     if (reader.hasError()) {
         QNWARNING("Failed to parse resource recognition indices "
-                  << "data: " << reader.errorString()
-                  << " (error code " << reader.error()
-                  << ", original raw data: " << rawRecognitionIndicesData);
+            << "data: " << reader.errorString()
+            << " (error code " << reader.error()
+            << ", original raw data: " << rawRecognitionIndicesData);
         restoreFrom(backup);
         return false;
     }
@@ -240,11 +237,8 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
 {
     QNTRACE("ResourceRecognitionIndicesData::parseRecoIndexAttributes");
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
@@ -269,11 +263,7 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         else if (name == QStringLiteral("objHeight"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int objectHeight = value.toInt(&conversionResult);
-#else
-            int objectHeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 m_objectHeight = objectHeight;
             }
@@ -281,11 +271,7 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         else if (name == QStringLiteral("objWidth"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int objectWidth = value.toInt(&conversionResult);
-#else
-            int objectWidth = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 m_objectWidth = objectWidth;
             }
@@ -298,24 +284,17 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
     ResourceRecognitionIndexItem & item) const
 {
     QNTRACE("ResourceRecognitionIndicesData::"
-            "parseCommonItemAttributes");
+        << "parseCommonItemAttributes");
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
         if (name == QStringLiteral("x"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int x = value.toInt(&conversionResult);
-#else
-            int x = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setX(x);
             }
@@ -323,11 +302,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("y"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int y = value.toInt(&conversionResult);
-#else
-            int y = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setY(y);
             }
@@ -335,11 +310,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("h"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int h = value.toInt(&conversionResult);
-#else
-            int h = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setH(h);
             }
@@ -347,11 +318,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int w = value.toInt(&conversionResult);
-#else
-            int w = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setW(w);
             }
@@ -359,11 +326,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("offset"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int offset = value.toInt(&conversionResult);
-#else
-            int offset = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setOffset(offset);
             }
@@ -371,11 +334,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         else if (name == QStringLiteral("duration"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int duration = value.toInt(&conversionResult);
-#else
-            int duration = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 item.setDuration(duration);
             }
@@ -404,26 +363,19 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
     ResourceRecognitionIndexItem & item) const
 {
     QNTRACE("ResourceRecognitionIndicesData::"
-            << "parseTextItemAttributesAndData: data = " << data);
+        << "parseTextItemAttributesAndData: data = " << data);
 
     int weight = -1;
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
         if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -438,8 +390,9 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
     textItem.m_weight = weight;
     textItem.m_text = data;
     item.addTextItem(textItem);
+
     QNTRACE("Added text item: text = " << data
-            << "; weight = " << weight);
+        << "; weight = " << weight);
 }
 
 void ResourceRecognitionIndicesData::parseObjectItemAttributes(
@@ -447,16 +400,13 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     ResourceRecognitionIndexItem & item) const
 {
     QNTRACE("ResourceRecognitionIndicesData::"
-            "parseObjectItemAttributes");
+        << "parseObjectItemAttributes");
 
     QString objectType;
     int weight = -1;
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
@@ -467,11 +417,7 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
-            int parsedWeight = value.toInt(&conversionResult);
-#else
             int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -486,8 +432,9 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     objectItem.m_objectType = objectType;
     objectItem.m_weight = weight;
     item.addObjectItem(objectItem);
+
     QNTRACE("Added object item: type = " << objectType
-            << ", weight = " << weight);
+        << ", weight = " << weight);
 }
 
 void ResourceRecognitionIndicesData::parseShapeItemAttributes(
@@ -499,11 +446,8 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
     QString shapeType;
     int weight = -1;
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
@@ -514,11 +458,7 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
         else if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -533,7 +473,9 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
     shapeItem.m_shapeType = shapeType;
     shapeItem.m_weight = weight;
     item.addShapeItem(shapeItem);
-    QNTRACE("Added shape item: type = " << shapeType << ", weight = " << weight);
+
+    QNTRACE("Added shape item: type = " << shapeType << ", weight = "
+        << weight);
 }
 
 void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
@@ -541,26 +483,19 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
     ResourceRecognitionIndexItem & item) const
 {
     QNTRACE("ResourceRecognitionIndicesData::"
-            << "parseBarcodeItemAttributesAndData: " << data);
+        << "parseBarcodeItemAttributesAndData: " << data);
 
     int weight = -1;
 
-    for(auto it = attributes.constBegin(),
-        end = attributes.constEnd(); it != end; ++it)
+    for(const auto & attribute: qAsConst(attributes))
     {
-        const QXmlStreamAttribute & attribute = *it;
-
         const QStringRef & name = attribute.name();
         const QStringRef & value = attribute.value();
 
         if (name == QStringLiteral("w"))
         {
             bool conversionResult = false;
-#if QT_VERSION >= QT_VERSION_CHECK(5, 1, 0)
             int parsedWeight = value.toInt(&conversionResult);
-#else
-            int parsedWeight = value.toString().toInt(&conversionResult);
-#endif
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -575,7 +510,9 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
     barcodeItem.m_weight = weight;
     barcodeItem.m_barcode = data;
     item.addBarcodeItem(barcodeItem);
-    QNTRACE("Added barcode item: barcode = " << data << "; weight = " << weight);
+
+    QNTRACE("Added barcode item: barcode = " << data << "; weight = "
+        << weight);
 }
 
 } // namespace quentier

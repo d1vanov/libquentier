@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,188 +17,17 @@
  */
 
 #include "NoteSearchQueryData.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QDateTime>
 
 namespace quentier {
 
-NoteSearchQueryData::NoteSearchQueryData() :
-    m_queryString(),
-    m_notebookModifier(),
-    m_hasAnyModifier(false),
-    m_tagNames(),
-    m_negatedTagNames(),
-    m_hasAnyTag(false),
-    m_hasNegatedAnyTag(false),
-    m_titleNames(),
-    m_negatedTitleNames(),
-    m_hasAnyTitleName(false),
-    m_hasNegatedAnyTitleName(false),
-    m_creationTimestamps(),
-    m_negatedCreationTimestamps(),
-    m_hasAnyCreationTimestamp(false),
-    m_hasNegatedAnyCreationTimestamp(false),
-    m_modificationTimestamps(),
-    m_negatedModificationTimestamps(),
-    m_hasAnyModificationTimestamp(false),
-    m_hasNegatedAnyModificationTimestamp(false),
-    m_resourceMimeTypes(),
-    m_negatedResourceMimeTypes(),
-    m_hasAnyResourceMimeType(false),
-    m_hasNegatedAnyResourceMimeType(false),
-    m_subjectDateTimestamps(),
-    m_negatedSubjectDateTimestamps(),
-    m_hasAnySubjectDateTimestamp(false),
-    m_hasNegatedAnySubjectDateTimestamp(false),
-    m_latitudes(),
-    m_negatedLatitudes(),
-    m_hasAnyLatitude(false),
-    m_hasNegatedAnyLatitude(false),
-    m_longitudes(),
-    m_negatedLongitudes(),
-    m_hasAnyLongitude(false),
-    m_hasNegatedAnyLongitude(false),
-    m_altitudes(),
-    m_negatedAltitudes(),
-    m_hasAnyAltitude(false),
-    m_hasNegatedAnyAltitude(false),
-    m_authors(),
-    m_negatedAuthors(),
-    m_hasAnyAuthor(false),
-    m_hasNegatedAnyAuthor(false),
-    m_sources(),
-    m_negatedSources(),
-    m_hasAnySource(false),
-    m_hasNegatedAnySource(false),
-    m_sourceApplications(),
-    m_negatedSourceApplications(),
-    m_hasAnySourceApplication(false),
-    m_hasNegatedAnySourceApplication(false),
-    m_contentClasses(),
-    m_negatedContentClasses(),
-    m_hasAnyContentClass(false),
-    m_hasNegatedAnyContentClass(false),
-    m_placeNames(),
-    m_negatedPlaceNames(),
-    m_hasAnyPlaceName(false),
-    m_hasNegatedAnyPlaceName(false),
-    m_applicationData(),
-    m_negatedApplicationData(),
-    m_hasAnyApplicationData(false),
-    m_hasNegatedAnyApplicationData(false),
-    m_reminderOrders(),
-    m_negatedReminderOrders(),
-    m_hasAnyReminderOrder(false),
-    m_hasNegatedAnyReminderOrder(false),
-    m_reminderTimes(),
-    m_negatedReminderTimes(),
-    m_hasAnyReminderTime(false),
-    m_hasNegatedAnyReminderTime(false),
-    m_reminderDoneTimes(),
-    m_negatedReminderDoneTimes(),
-    m_hasAnyReminderDoneTime(false),
-    m_hasNegatedAnyReminderDoneTime(false),
-    m_hasUnfinishedToDo(false),
-    m_hasNegatedUnfinishedToDo(false),
-    m_hasFinishedToDo(false),
-    m_hasNegatedFinishedToDo(false),
-    m_hasAnyToDo(false),
-    m_hasNegatedAnyToDo(false),
-    m_hasEncryption(false),
-    m_hasNegatedEncryption(false),
-    m_contentSearchTerms(),
-    m_negatedContentSearchTerms()
-{}
+NoteSearchQueryData::NoteSearchQueryData() = default;
 
-NoteSearchQueryData::NoteSearchQueryData(const NoteSearchQueryData & other) :
-    QSharedData(),
-    Printable(),
-    m_queryString(other.m_queryString),
-    m_notebookModifier(other.m_notebookModifier),
-    m_hasAnyModifier(other.m_hasAnyModifier),
-    m_tagNames(other.m_tagNames),
-    m_negatedTagNames(other.m_negatedTagNames),
-    m_hasAnyTag(other.m_hasAnyTag),
-    m_hasNegatedAnyTag(other.m_hasNegatedAnyTag),
-    m_titleNames(other.m_titleNames),
-    m_negatedTitleNames(other.m_negatedTitleNames),
-    m_hasAnyTitleName(other.m_hasAnyTitleName),
-    m_hasNegatedAnyTitleName(other.m_hasNegatedAnyTitleName),
-    m_creationTimestamps(other.m_creationTimestamps),
-    m_negatedCreationTimestamps(other.m_negatedCreationTimestamps),
-    m_hasAnyCreationTimestamp(other.m_hasAnyCreationTimestamp),
-    m_hasNegatedAnyCreationTimestamp(other.m_hasNegatedAnyCreationTimestamp),
-    m_modificationTimestamps(other.m_modificationTimestamps),
-    m_negatedModificationTimestamps(other.m_negatedModificationTimestamps),
-    m_hasAnyModificationTimestamp(other.m_hasAnyModificationTimestamp),
-    m_hasNegatedAnyModificationTimestamp(other.m_hasNegatedAnyModificationTimestamp),
-    m_resourceMimeTypes(other.m_resourceMimeTypes),
-    m_negatedResourceMimeTypes(other.m_negatedResourceMimeTypes),
-    m_hasAnyResourceMimeType(other.m_hasAnyResourceMimeType),
-    m_hasNegatedAnyResourceMimeType(other.m_hasNegatedAnyResourceMimeType),
-    m_subjectDateTimestamps(other.m_subjectDateTimestamps),
-    m_negatedSubjectDateTimestamps(other.m_negatedSubjectDateTimestamps),
-    m_hasAnySubjectDateTimestamp(other.m_hasAnySubjectDateTimestamp),
-    m_hasNegatedAnySubjectDateTimestamp(other.m_hasNegatedAnySubjectDateTimestamp),
-    m_latitudes(other.m_latitudes),
-    m_negatedLatitudes(other.m_negatedLatitudes),
-    m_hasAnyLatitude(other.m_hasAnyLatitude),
-    m_hasNegatedAnyLatitude(other.m_hasNegatedAnyLatitude),
-    m_longitudes(other.m_longitudes),
-    m_negatedLongitudes(other.m_negatedLongitudes),
-    m_hasAnyLongitude(other.m_hasAnyLongitude),
-    m_hasNegatedAnyLongitude(other.m_hasNegatedAnyLongitude),
-    m_altitudes(other.m_altitudes),
-    m_negatedAltitudes(other.m_negatedAltitudes),
-    m_hasAnyAltitude(other.m_hasAnyAltitude),
-    m_hasNegatedAnyAltitude(other.m_hasNegatedAnyAltitude),
-    m_authors(other.m_authors),
-    m_negatedAuthors(other.m_negatedAuthors),
-    m_hasAnyAuthor(other.m_hasAnyAuthor),
-    m_hasNegatedAnyAuthor(other.m_hasNegatedAnyAuthor),
-    m_sources(other.m_sources),
-    m_negatedSources(other.m_negatedSources),
-    m_hasAnySource(other.m_hasAnySource),
-    m_hasNegatedAnySource(other.m_hasNegatedAnySource),
-    m_sourceApplications(other.m_sourceApplications),
-    m_negatedSourceApplications(other.m_negatedSourceApplications),
-    m_hasAnySourceApplication(other.m_hasAnySourceApplication),
-    m_hasNegatedAnySourceApplication(other.m_hasNegatedAnySourceApplication),
-    m_contentClasses(other.m_contentClasses),
-    m_negatedContentClasses(other.m_negatedContentClasses),
-    m_hasAnyContentClass(other.m_hasAnyContentClass),
-    m_hasNegatedAnyContentClass(other.m_hasNegatedAnyContentClass),
-    m_placeNames(other.m_placeNames),
-    m_negatedPlaceNames(other.m_negatedPlaceNames),
-    m_hasAnyPlaceName(other.m_hasAnyPlaceName),
-    m_hasNegatedAnyPlaceName(other.m_hasNegatedAnyPlaceName),
-    m_applicationData(other.m_applicationData),
-    m_negatedApplicationData(other.m_negatedApplicationData),
-    m_hasAnyApplicationData(other.m_hasAnyApplicationData),
-    m_hasNegatedAnyApplicationData(other.m_hasNegatedAnyApplicationData),
-    m_reminderOrders(other.m_reminderOrders),
-    m_negatedReminderOrders(other.m_negatedReminderOrders),
-    m_hasAnyReminderOrder(other.m_hasAnyReminderOrder),
-    m_hasNegatedAnyReminderOrder(other.m_hasNegatedAnyReminderOrder),
-    m_reminderTimes(other.m_reminderTimes),
-    m_negatedReminderTimes(other.m_negatedReminderTimes),
-    m_hasAnyReminderTime(other.m_hasAnyReminderTime),
-    m_hasNegatedAnyReminderTime(other.m_hasNegatedAnyReminderTime),
-    m_reminderDoneTimes(other.m_reminderDoneTimes),
-    m_negatedReminderDoneTimes(other.m_negatedReminderDoneTimes),
-    m_hasAnyReminderDoneTime(other.m_hasAnyReminderDoneTime),
-    m_hasNegatedAnyReminderDoneTime(other.m_hasNegatedAnyReminderDoneTime),
-    m_hasUnfinishedToDo(other.m_hasUnfinishedToDo),
-    m_hasNegatedUnfinishedToDo(other.m_hasNegatedUnfinishedToDo),
-    m_hasFinishedToDo(other.m_hasFinishedToDo),
-    m_hasNegatedFinishedToDo(other.m_hasNegatedFinishedToDo),
-    m_hasAnyToDo(other.m_hasAnyToDo),
-    m_hasNegatedAnyToDo(other.m_hasNegatedAnyToDo),
-    m_hasEncryption(other.m_hasEncryption),
-    m_hasNegatedEncryption(other.m_hasNegatedEncryption),
-    m_contentSearchTerms(other.m_contentSearchTerms),
-    m_negatedContentSearchTerms(other.m_negatedContentSearchTerms)
-{}
+NoteSearchQueryData::NoteSearchQueryData(
+    const NoteSearchQueryData & other) = default;
 
 void NoteSearchQueryData::clear()
 {
@@ -289,8 +118,8 @@ void NoteSearchQueryData::clear()
     m_negatedContentSearchTerms.clear();
 }
 
-bool NoteSearchQueryData::parseQueryString(const QString & queryString,
-                                           ErrorString & error)
+bool NoteSearchQueryData::parseQueryString(
+    const QString & queryString, ErrorString & error)
 {
     m_queryString = queryString;
 
@@ -312,11 +141,13 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
     else if (notebookScopeModifierPosition == 0)
     {
         m_notebookModifier = words[notebookScopeModifierPosition];
-        m_notebookModifier = m_notebookModifier.remove(QStringLiteral("notebook:"));
+        m_notebookModifier = m_notebookModifier.remove(
+            QStringLiteral("notebook:"));
         removeBoundaryQuotesFromWord(m_notebookModifier);
     }
 
-    // NOTE: "any:" scope modifier is not position dependent and affects the whole query
+    // NOTE: "any:" scope modifier is not position dependent and affects
+    // the whole query
     int anyScopeModifierPosition = words.indexOf(QStringLiteral("any:"));
     if (anyScopeModifierPosition >= 0) {
         m_hasAnyModifier = true;
@@ -330,89 +161,182 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
         return false;
     }
 
-    parseStringValue(QStringLiteral("tag"), words, m_tagNames, m_negatedTagNames,
-                     m_hasAnyTag, m_hasNegatedAnyTag);
-    parseStringValue(QStringLiteral("intitle"), words, m_titleNames,
-                     m_negatedTitleNames, m_hasAnyTitleName, m_hasNegatedAnyTitleName);
-    parseStringValue(QStringLiteral("resource"), words, m_resourceMimeTypes,
-                     m_negatedResourceMimeTypes, m_hasAnyResourceMimeType,
-                     m_hasNegatedAnyResourceMimeType);
-    parseStringValue(QStringLiteral("author"), words, m_authors, m_negatedAuthors,
-                     m_hasAnyAuthor, m_hasNegatedAnyAuthor);
-    parseStringValue(QStringLiteral("source"), words, m_sources, m_negatedSources,
-                     m_hasAnySource, m_hasNegatedAnySource);
-    parseStringValue(QStringLiteral("sourceApplication"), words, m_sourceApplications,
-                     m_negatedSourceApplications, m_hasAnySourceApplication,
-                     m_hasNegatedAnySourceApplication);
-    parseStringValue(QStringLiteral("contentClass"), words, m_contentClasses,
-                     m_negatedContentClasses, m_hasAnyContentClass,
-                     m_hasNegatedAnyContentClass);
-    parseStringValue(QStringLiteral("placeName"), words, m_placeNames,
-                     m_negatedPlaceNames, m_hasAnyPlaceName, m_hasNegatedAnyPlaceName);
-    parseStringValue(QStringLiteral("applicationData"), words, m_applicationData,
-                     m_negatedApplicationData, m_hasAnyApplicationData,
-                     m_hasNegatedAnyApplicationData);
+    parseStringValue(
+        QStringLiteral("tag"),
+        words,
+        m_tagNames,
+        m_negatedTagNames,
+        m_hasAnyTag,
+        m_hasNegatedAnyTag);
 
-    res = parseIntValue(QStringLiteral("created"), words, m_creationTimestamps,
-                        m_negatedCreationTimestamps, m_hasAnyCreationTimestamp,
-                        m_hasNegatedAnyCreationTimestamp, error);
+    parseStringValue(
+        QStringLiteral("intitle"),
+        words,
+        m_titleNames,
+        m_negatedTitleNames,
+        m_hasAnyTitleName,
+        m_hasNegatedAnyTitleName);
+
+    parseStringValue(
+        QStringLiteral("resource"),
+        words,
+        m_resourceMimeTypes,
+        m_negatedResourceMimeTypes,
+        m_hasAnyResourceMimeType,
+        m_hasNegatedAnyResourceMimeType);
+
+    parseStringValue(
+        QStringLiteral("author"),
+        words,
+        m_authors,
+        m_negatedAuthors,
+        m_hasAnyAuthor,
+        m_hasNegatedAnyAuthor);
+
+    parseStringValue(
+        QStringLiteral("source"),
+        words,
+        m_sources,
+        m_negatedSources,
+        m_hasAnySource,
+        m_hasNegatedAnySource);
+
+    parseStringValue(
+        QStringLiteral("sourceApplication"),
+        words,
+        m_sourceApplications,
+        m_negatedSourceApplications,
+        m_hasAnySourceApplication,
+        m_hasNegatedAnySourceApplication);
+
+    parseStringValue(
+        QStringLiteral("contentClass"),
+        words,
+        m_contentClasses,
+        m_negatedContentClasses,
+        m_hasAnyContentClass,
+        m_hasNegatedAnyContentClass);
+
+    parseStringValue(
+        QStringLiteral("placeName"),
+        words,
+        m_placeNames,
+        m_negatedPlaceNames,
+        m_hasAnyPlaceName,
+        m_hasNegatedAnyPlaceName);
+
+    parseStringValue(
+        QStringLiteral("applicationData"),
+        words,
+        m_applicationData,
+        m_negatedApplicationData,
+        m_hasAnyApplicationData,
+        m_hasNegatedAnyApplicationData);
+
+    res = parseIntValue(
+        QStringLiteral("created"),
+        words,
+        m_creationTimestamps,
+        m_negatedCreationTimestamps,
+        m_hasAnyCreationTimestamp,
+        m_hasNegatedAnyCreationTimestamp,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseIntValue(QStringLiteral("updated"), words, m_modificationTimestamps,
-                        m_negatedModificationTimestamps, m_hasAnyModificationTimestamp,
-                        m_hasNegatedAnyModificationTimestamp, error);
+    res = parseIntValue(
+        QStringLiteral("updated"),
+        words,
+        m_modificationTimestamps,
+        m_negatedModificationTimestamps,
+        m_hasAnyModificationTimestamp,
+        m_hasNegatedAnyModificationTimestamp,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseIntValue(QStringLiteral("subjectDate"), words, m_subjectDateTimestamps,
-                        m_negatedSubjectDateTimestamps, m_hasAnySubjectDateTimestamp,
-                        m_hasNegatedAnySubjectDateTimestamp, error);
+    res = parseIntValue(
+        QStringLiteral("subjectDate"),
+        words,
+        m_subjectDateTimestamps,
+        m_negatedSubjectDateTimestamps,
+        m_hasAnySubjectDateTimestamp,
+        m_hasNegatedAnySubjectDateTimestamp,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseIntValue(QStringLiteral("reminderTime"), words, m_reminderTimes,
-                        m_negatedReminderTimes, m_hasAnyReminderTime,
-                        m_hasNegatedAnyReminderTime, error);
+    res = parseIntValue(
+        QStringLiteral("reminderTime"),
+        words,
+        m_reminderTimes,
+        m_negatedReminderTimes,
+        m_hasAnyReminderTime,
+        m_hasNegatedAnyReminderTime,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseIntValue(QStringLiteral("reminderDoneTime"), words,
-                        m_reminderDoneTimes, m_negatedReminderDoneTimes,
-                        m_hasAnyReminderDoneTime, m_hasNegatedAnyReminderDoneTime,
-                        error);
+    res = parseIntValue(
+        QStringLiteral("reminderDoneTime"),
+        words,
+        m_reminderDoneTimes,
+        m_negatedReminderDoneTimes,
+        m_hasAnyReminderDoneTime,
+        m_hasNegatedAnyReminderDoneTime,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseIntValue(QStringLiteral("reminderOrder"), words, m_reminderOrders,
-                        m_negatedReminderOrders, m_hasAnyReminderOrder,
-                        m_hasNegatedAnyReminderOrder, error);
+    res = parseIntValue(
+        QStringLiteral("reminderOrder"),
+        words,
+        m_reminderOrders,
+        m_negatedReminderOrders,
+        m_hasAnyReminderOrder,
+        m_hasNegatedAnyReminderOrder,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseDoubleValue(QStringLiteral("latitude"), words, m_latitudes,
-                           m_negatedLatitudes, m_hasAnyLatitude,
-                           m_hasNegatedAnyLatitude, error);
+    res = parseDoubleValue(
+        QStringLiteral("latitude"),
+        words,
+        m_latitudes,
+        m_negatedLatitudes,
+        m_hasAnyLatitude,
+        m_hasNegatedAnyLatitude,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseDoubleValue(QStringLiteral("longitude"), words, m_longitudes,
-                           m_negatedLongitudes, m_hasAnyLongitude,
-                           m_hasNegatedAnyLongitude, error);
+    res = parseDoubleValue(
+        QStringLiteral("longitude"),
+        words,
+        m_longitudes,
+        m_negatedLongitudes,
+        m_hasAnyLongitude,
+        m_hasNegatedAnyLongitude,
+        error);
     if (!res) {
         return false;
     }
 
-    res = parseDoubleValue(QStringLiteral("altitude"), words, m_altitudes,
-                           m_negatedAltitudes, m_hasAnyAltitude,
-                           m_hasNegatedAnyAltitude, error);
+    res = parseDoubleValue(
+        QStringLiteral("altitude"),
+        words,
+        m_altitudes,
+        m_negatedAltitudes,
+        m_hasAnyAltitude,
+        m_hasNegatedAnyAltitude,
+        error);
     if (!res) {
         return false;
     }
@@ -426,18 +350,17 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
     QString negatedAnyToDo = QStringLiteral("-todo:*");
     QString anyToDo = QStringLiteral("todo:*");
 
-    for(auto it = words.constBegin(), end = words.constEnd(); it != end; ++it)
+    for(const auto & searchTerm: qAsConst(words))
     {
-        const QString & searchTerm = *it;
-
         if (searchTerm == negatedFinishedToDo)
         {
             if (m_hasFinishedToDo)
             {
                 error.setBase(
                     QT_TRANSLATE_NOOP("NoteSearchQueryData",
-                                      "Incorrect search query: both finished todo and "
-                                      "negated finished todo tags were found"));
+                                      "Incorrect search query: both finished "
+                                      "todo and negated finished todo tags "
+                                      "were found"));
                 return false;
             }
             m_hasNegatedFinishedToDo = true;
@@ -448,8 +371,9 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
             {
                 error.setBase(
                     QT_TRANSLATE_NOOP("NoteSearchQueryData",
-                                      "Incorrect search query: both negated finished todo "
-                                      "and finished todo tags were found"));
+                                      "Incorrect search query: both negated "
+                                      "finished todo and finished todo tags "
+                                      "were found"));
                 return false;
             }
             m_hasFinishedToDo = true;
@@ -460,8 +384,9 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
             {
                 error.setBase(
                     QT_TRANSLATE_NOOP("NoteSearchQueryData",
-                                      "Incorrect search query: both unfinished todo and "
-                                      "negated unfinished todo tags were found"));
+                                      "Incorrect search query: both unfinished "
+                                      "todo and negated unfinished todo tags "
+                                      "were found"));
                 return false;
             }
             m_hasNegatedUnfinishedToDo = true;
@@ -472,8 +397,9 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
             {
                 error.setBase(
                     QT_TRANSLATE_NOOP("NoteSearchQueryData",
-                                      "Incorrect search query: both negated unfinished todo "
-                                      "and unfinished todo tags were found"));
+                                      "Incorrect search query: both negated "
+                                      "unfinished todo and unfinished todo "
+                                      "tags were found"));
                 return false;
             }
             m_hasUnfinishedToDo = true;
@@ -500,10 +426,8 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
     QString negatedEncryption = QStringLiteral("-encryption:");
     QString encryption = QStringLiteral("encryption:");
 
-    for(auto it = words.constBegin(), end = words.constEnd(); it != end; ++it)
+    for(const auto & searchTerm: qAsConst(words))
     {
-        const QString & searchTerm = *it;
-
         if (searchTerm == negatedEncryption) {
             m_hasNegatedEncryption = true;
         }
@@ -518,8 +442,8 @@ bool NoteSearchQueryData::parseQueryString(const QString & queryString,
     /**
      * By now most of tagged search terms must have been removed from the list
      * of words so we can extract the actual untagged content search terms;
-     * In the Evernote search grammar the searches are case insensitive so forcing
-     * all words to the lower case
+     * In the Evernote search grammar the searches are case insensitive so
+     * forcing all words to the lower case
      */
 
     QRegExp asteriskFilter(QStringLiteral("[*]"));
@@ -570,10 +494,14 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
 
     strm << "NoteSearchQuery: { \n";
     strm << indent << "query string: "
-         << (m_queryString.isEmpty() ? QStringLiteral("<empty>") : m_queryString)
+         << (m_queryString.isEmpty()
+             ? QStringLiteral("<empty>")
+             : m_queryString)
          << "; \n";
     strm << indent << "notebookModifier: "
-         << (m_notebookModifier.isEmpty() ? QStringLiteral("<empty>") : m_notebookModifier)
+         << (m_notebookModifier.isEmpty()
+             ? QStringLiteral("<empty>")
+             : m_notebookModifier)
          << "; \n";
     strm << indent << "hasAnyModifier: "
          << (m_hasAnyModifier ? "true" : "false")
@@ -596,10 +524,9 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
     else                                                                       \
     {                                                                          \
         strm << indent <<  #name ": { \n";                                     \
-        for(auto it = m_##name.constBegin(),                                   \
-            end = m_##name.constEnd(); it != end; ++it)                        \
+        for(const auto & value: qAsConst(m_##name))                            \
         {                                                                      \
-            strm << indent << indent << __VA_ARGS__ (*it) << "; \n";           \
+            strm << indent << indent << __VA_ARGS__ (value) << "; \n";         \
         }                                                                      \
         strm << indent << "}; \n";                                             \
     }                                                                          \
@@ -857,12 +784,15 @@ QStringList NoteSearchQueryData::splitSearchQueryString(
                         {
                             bool backslashEscaped = false;
                             // Looks like this space is escaped. Just in case,
-                            // let's check whether the backslash is escaped itself
-                            if (i != 1) {
+                            // let's check whether the backslash is escaped
+                            // itself
+                            if (i != 1)
+                            {
                                 QChar prevPrevChar = searchQueryString[i-2];
                                 if (prevPrevChar == backslash) {
                                     // Yes, backslash is escaped itself, so
-                                    // the quote at i is really the enclosing one
+                                    // the quote at i is really the enclosing
+                                    // one
                                     backslashEscaped = true;
                                 }
                             }
@@ -911,12 +841,10 @@ QStringList NoteSearchQueryData::splitSearchQueryString(
     return words;
 }
 
-void NoteSearchQueryData::parseStringValue(const QString & key,
-                                           QStringList & words,
-                                           QStringList & container,
-                                           QStringList & negatedContainer,
-                                           bool & hasAnyValue,
-                                           bool & hasNegatedAnyValue) const
+void NoteSearchQueryData::parseStringValue(
+    const QString & key, QStringList & words,
+    QStringList & container, QStringList & negatedContainer,
+    bool & hasAnyValue, bool & hasNegatedAnyValue) const
 {
     int keyIndex = 0;
     QChar negation = QChar::fromLatin1('-');
@@ -986,11 +914,10 @@ void NoteSearchQueryData::parseStringValue(const QString & key,
     }
 }
 
-bool NoteSearchQueryData::parseIntValue(const QString & key, QStringList & words,
-                                        QVector<qint64> & container,
-                                        QVector<qint64> & negatedContainer,
-                                        bool & hasAnyValue, bool & hasNegatedAnyValue,
-                                        ErrorString & error) const
+bool NoteSearchQueryData::parseIntValue(
+    const QString & key, QStringList & words, QVector<qint64> & container,
+    QVector<qint64> & negatedContainer, bool & hasAnyValue,
+    bool & hasNegatedAnyValue, ErrorString & error) const
 {
     int keyIndex = 0;
     QChar negation = QChar::fromLatin1('-');
@@ -1079,13 +1006,10 @@ bool NoteSearchQueryData::parseIntValue(const QString & key, QStringList & words
     return true;
 }
 
-bool NoteSearchQueryData::parseDoubleValue(const QString & key,
-                                           QStringList & words,
-                                           QVector<double> & container,
-                                           QVector<double> & negatedContainer,
-                                           bool & hasAnyValue,
-                                           bool & hasNegatedAnyValue,
-                                           ErrorString & error) const
+bool NoteSearchQueryData::parseDoubleValue(
+    const QString & key, QStringList & words, QVector<double> & container,
+    QVector<double> & negatedContainer, bool & hasAnyValue,
+    bool & hasNegatedAnyValue, ErrorString & error) const
 {
     int keyIndex = 0;
     QChar negation = QChar::fromLatin1('-');
@@ -1173,9 +1097,8 @@ bool NoteSearchQueryData::parseDoubleValue(const QString & key,
     return true;
 }
 
-bool NoteSearchQueryData::dateTimeStringToTimestamp(QString dateTimeString,
-                                                    qint64 & timestamp,
-                                                    ErrorString & error) const
+bool NoteSearchQueryData::dateTimeStringToTimestamp(
+    QString dateTimeString, qint64 & timestamp, ErrorString & error) const
 {
     QDateTime todayMidnight = QDateTime::currentDateTime();
     todayMidnight.setTime(QTime(0, 0, 0, 0));
@@ -1308,15 +1231,15 @@ bool NoteSearchQueryData::convertAbsoluteAndRelativeDateTimesToTimestamps(
 {
     QStringList dateTimePrefixes;
     dateTimePrefixes << QStringLiteral("created:")
-                     << QStringLiteral("-created:")
-                     << QStringLiteral("updated:")
-                     << QStringLiteral("-updated:")
-                     << QStringLiteral("subjectDate:")
-                     << QStringLiteral("-subjectDate:")
-                     << QStringLiteral("reminderTime:")
-                     << QStringLiteral("-reminderTime:")
-                     << QStringLiteral("reminderDoneTime:")
-                     << QStringLiteral("-reminderDoneTime:");
+        << QStringLiteral("-created:")
+        << QStringLiteral("updated:")
+        << QStringLiteral("-updated:")
+        << QStringLiteral("subjectDate:")
+        << QStringLiteral("-subjectDate:")
+        << QStringLiteral("reminderTime:")
+        << QStringLiteral("-reminderTime:")
+        << QStringLiteral("reminderDoneTime:")
+        << QStringLiteral("-reminderDoneTime:");
 
     QString asterisk = QStringLiteral("*");
     int numWords = words.size();
@@ -1325,11 +1248,8 @@ bool NoteSearchQueryData::convertAbsoluteAndRelativeDateTimesToTimestamps(
     {
         QString & word = words[i];
 
-        for(auto it = dateTimePrefixes.constBegin(),
-            end = dateTimePrefixes.constEnd(); it != end; ++it)
+        for(const auto & prefix: qAsConst(dateTimePrefixes))
         {
-            const QString & prefix = *it;
-
             if (word.startsWith(prefix))
             {
                 wordCopy = word;
@@ -1342,9 +1262,10 @@ bool NoteSearchQueryData::convertAbsoluteAndRelativeDateTimesToTimestamps(
                 word = wordCopy;
 
                 qint64 timestamp;
-                bool res = dateTimeStringToTimestamp(dateTimeString,
-                                                     timestamp,
-                                                     error);
+                bool res = dateTimeStringToTimestamp(
+                    dateTimeString,
+                    timestamp,
+                    error);
                 if (!res) {
                     return false;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,11 +23,12 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteStoreDataElementData : public LocalStorageDataElementData
+class Q_DECL_HIDDEN NoteStoreDataElementData:
+    public LocalStorageDataElementData
 {
 public:
     NoteStoreDataElementData();
-    virtual ~NoteStoreDataElementData();
+    virtual ~NoteStoreDataElementData() override;
 
     NoteStoreDataElementData(const NoteStoreDataElementData & other);
     NoteStoreDataElementData(NoteStoreDataElementData && other);
@@ -36,8 +37,11 @@ public:
     bool    m_isLocal;
 
 private:
-    NoteStoreDataElementData & operator=(const NoteStoreDataElementData & other)  = delete;
-    NoteStoreDataElementData & operator=(NoteStoreDataElementData && other)  = delete;
+    NoteStoreDataElementData & operator=(
+        const NoteStoreDataElementData & other) = delete;
+
+    NoteStoreDataElementData & operator=(
+        NoteStoreDataElementData && other) = delete;
 };
 
 } // namespace quentier

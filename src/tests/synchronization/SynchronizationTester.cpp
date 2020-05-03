@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -6902,9 +6902,9 @@ void SynchronizationTester::listSavedSearchesFromLocalStorage(
     }
 
     ErrorString errorDescription;
-    QList<SavedSearch> searches =
-        pLocalStorageManager->listSavedSearches(LocalStorageManager::ListAll,
-                                                errorDescription);
+    QList<SavedSearch> searches = pLocalStorageManager->listSavedSearches(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription);
     if (searches.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6946,12 +6946,12 @@ void SynchronizationTester::listTagsFromLocalStorage(
     }
 
     ErrorString errorDescription;
-    QList<Tag> localTags =
-        pLocalStorageManager->listTags(LocalStorageManager::ListAll,
-                                       errorDescription, 0, 0,
-                                       LocalStorageManager::ListTagsOrder::NoOrder,
-                                       LocalStorageManager::OrderDirection::Ascending,
-                                       localLinkedNotebookGuid);
+    QList<Tag> localTags = pLocalStorageManager->listTags(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription, 0, 0,
+        LocalStorageManager::ListTagsOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        localLinkedNotebookGuid);
     if (localTags.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6994,12 +6994,12 @@ void SynchronizationTester::listNotebooksFromLocalStorage(
     }
 
     ErrorString errorDescription;
-    QList<Notebook> localNotebooks =
-        pLocalStorageManager->listNotebooks(LocalStorageManager::ListAll,
-                                            errorDescription, 0, 0,
-                                            LocalStorageManager::ListNotebooksOrder::NoOrder,
-                                            LocalStorageManager::OrderDirection::Ascending,
-                                            localLinkedNotebookGuid);
+    QList<Notebook> localNotebooks = pLocalStorageManager->listNotebooks(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        errorDescription, 0, 0,
+        LocalStorageManager::ListNotebooksOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        localLinkedNotebookGuid);
     if (localNotebooks.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -7045,12 +7045,12 @@ void SynchronizationTester::listNotesFromLocalStorage(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     ErrorString errorDescription;
-    QList<Note> localNotes =
-        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                        options, errorDescription, 0, 0,
-                                        LocalStorageManager::ListNotesOrder::NoOrder,
-                                        LocalStorageManager::OrderDirection::Ascending,
-                                        localLinkedNotebookGuid);
+    QList<Note> localNotes = pLocalStorageManager->listNotes(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        options, errorDescription, 0, 0,
+        LocalStorageManager::ListNotesOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -7096,12 +7096,12 @@ void SynchronizationTester::listResourcesFromLocalStorage(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
     ErrorString errorDescription;
-    QList<Note> localNotes =
-        pLocalStorageManager->listNotes(LocalStorageManager::ListAll,
-                                        options, errorDescription, 0, 0,
-                                        LocalStorageManager::ListNotesOrder::NoOrder,
-                                        LocalStorageManager::OrderDirection::Ascending,
-                                        localLinkedNotebookGuid);
+    QList<Note> localNotes = pLocalStorageManager->listNotes(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        options, errorDescription, 0, 0,
+        LocalStorageManager::ListNotesOrder::NoOrder,
+        LocalStorageManager::OrderDirection::Ascending,
+        localLinkedNotebookGuid);
     if (localNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -7151,7 +7151,7 @@ void SynchronizationTester::listLinkedNotebooksFromLocalStorage(
     ErrorString errorDescription;
     QList<LinkedNotebook> localLinkedNotebooks =
         pLocalStorageManager->listLinkedNotebooks(
-            LocalStorageManager::ListAll,
+            LocalStorageManager::ListObjectsOption::ListAll,
             errorDescription, 0, 0,
             LocalStorageManager::ListLinkedNotebooksOrder::NoOrder,
             LocalStorageManager::OrderDirection::Ascending);
@@ -7485,7 +7485,8 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
 
 void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catcher)
 {
-    int testAsyncResult = -1;
+    EventLoopWithExitStatus::ExitStatus status =
+        EventLoopWithExitStatus::ExitStatus::Failure;
     {
         QTimer timer;
         timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
@@ -7508,20 +7509,21 @@ void SynchronizationTester::runTest(SynchronizationManagerSignalsCatcher & catch
         timer.start();
         slotInvokingTimer.singleShot(0, m_pSynchronizationManager,
                                      SLOT(synchronize()));
-        testAsyncResult = loop.exec();
+        Q_UNUSED(loop.exec())
+        status = loop.exitStatus();
     }
 
-    if (testAsyncResult == EventLoopWithExitStatus::ExitStatus::Timeout) {
+    if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Synchronization test failed to finish in time");
     }
-    else if (testAsyncResult != EventLoopWithExitStatus::ExitStatus::Success) {
+    else if (status != EventLoopWithExitStatus::ExitStatus::Success) {
         QFAIL("Internal error: incorrect return status from synchronization test");
     }
 
     if (catcher.receivedFailedSignal()) {
-        QFAIL(qPrintable(QString::fromUtf8("Detected failure during the asynchronous "
-                                           "synchronization loop: ") +
-                         catcher.failureErrorDescription().nonLocalizedString()));
+        QFAIL(qPrintable(QString::fromUtf8(
+            "Detected failure during the asynchronous synchronization loop: ") +
+            catcher.failureErrorDescription().nonLocalizedString()));
     }
 }
 

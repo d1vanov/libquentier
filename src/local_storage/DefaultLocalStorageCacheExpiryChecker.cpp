@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,9 +30,11 @@ DefaultLocalStorageCacheExpiryChecker::DefaultLocalStorageCacheExpiryChecker(
 DefaultLocalStorageCacheExpiryChecker::~DefaultLocalStorageCacheExpiryChecker()
 {}
 
-DefaultLocalStorageCacheExpiryChecker * DefaultLocalStorageCacheExpiryChecker::clone() const
+DefaultLocalStorageCacheExpiryChecker *
+DefaultLocalStorageCacheExpiryChecker::clone() const
 {
-    return new DefaultLocalStorageCacheExpiryChecker(m_localStorageCacheManager);
+    return new DefaultLocalStorageCacheExpiryChecker(
+        m_localStorageCacheManager);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkNotes() const
@@ -61,17 +63,22 @@ bool DefaultLocalStorageCacheExpiryChecker::checkTags() const
 
 bool DefaultLocalStorageCacheExpiryChecker::checkLinkedNotebooks() const
 {
-    size_t numCachedLinkedNotebooks = m_localStorageCacheManager.numCachedLinkedNotebooks();
+    size_t numCachedLinkedNotebooks =
+        m_localStorageCacheManager.numCachedLinkedNotebooks();
+
     return (numCachedLinkedNotebooks < MAX_LINKED_NOTEBOOKS_TO_STORE);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkSavedSearches() const
 {
-    size_t numCachedSavedSearches = m_localStorageCacheManager.numCachedSavedSearches();
+    size_t numCachedSavedSearches =
+        m_localStorageCacheManager.numCachedSavedSearches();
+
     return (numCachedSavedSearches < MAX_SAVED_SEARCHES_TO_STORE);
 }
 
-QTextStream & DefaultLocalStorageCacheExpiryChecker::print(QTextStream & strm) const
+QTextStream & DefaultLocalStorageCacheExpiryChecker::print(
+    QTextStream & strm) const
 {
     const char * indent = "  ";
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,19 +21,19 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/utility/Macros.h>
 
+#include <QHash>
 #include <QObject>
 #include <QUuid>
-#include <QHash>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
+QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
 /**
  * @brief The RenameResourceDelegate class encapsulates a chain of callbacks
@@ -50,13 +50,17 @@ public:
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
         const bool performingUndo = false);
+
     void start();
-    void startWithPresetNames(const QString & oldResourceName,
-                              const QString & newResourceName);
+
+    void startWithPresetNames(
+        const QString & oldResourceName, const QString & newResourceName);
 
 Q_SIGNALS:
-    void finished(QString oldResourceName, QString newResourceName,
-                  Resource resource, bool performingUndo);
+    void finished(
+        QString oldResourceName, QString newResourceName,
+        Resource resource, bool performingUndo);
+
     void cancelled();
     void notifyError(ErrorString);
 
@@ -77,6 +81,7 @@ private Q_SLOTS:
     void onGenericResourceImageWriterFinished(
         bool success, QByteArray resourceHash, QString filePath,
         ErrorString errorDescription, QUuid requestId);
+
     void onGenericResourceImageUpdated(const QVariant & data);
 #endif
 
@@ -89,7 +94,7 @@ private:
 #endif
 
 private:
-    typedef JsResultCallbackFunctor<RenameResourceDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<RenameResourceDelegate>;
 
 private:
     NoteEditorPrivate &             m_noteEditor;
@@ -99,7 +104,7 @@ private:
 
     QString                         m_oldResourceName;
     QString                         m_newResourceName;
-    bool                            m_shouldGetResourceNameFromDialog;
+    bool                            m_shouldGetResourceNameFromDialog = true;
 
     bool                            m_performingUndo;
 

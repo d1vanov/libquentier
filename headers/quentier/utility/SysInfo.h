@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,6 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <QScopedPointer>
 
 namespace quentier {
 
@@ -45,7 +44,7 @@ private:
     Q_DISABLE_COPY(SysInfo)
 
 private:
-    QScopedPointer<SysInfoPrivate> d_ptr;
+    SysInfoPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(SysInfo)
 };
 

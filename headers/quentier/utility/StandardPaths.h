@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,15 +19,17 @@
 #ifndef LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
 #define LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 /**
  * This macro defines the name of the environment variable which can be set to
  * override the default persistence storage path used by libquentier
  */
-#define LIBQUENTIER_PERSISTENCE_STORAGE_PATH "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
+#define LIBQUENTIER_PERSISTENCE_STORAGE_PATH                                   \
+    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"                                     \
+// LIBQUENTIER_PERSISTENCE_STORAGE_PATH
 
 namespace quentier {
 
@@ -48,10 +50,11 @@ const QString QUENTIER_EXPORT applicationPersistentStoragePath(
  * The path returned by this function is a sub-path within that returned by
  * applicationPersistentStoragePath function.
  *
- * @param account   The account for which the path needs to be returned; if empty,
- *                  the application persistent storage path is returned
+ * @param account   The account for which the path needs to be returned; if
+ *                  empty, the application persistent storage path is returned
  */
-const QString QUENTIER_EXPORT accountPersistentStoragePath(const Account & account);
+const QString QUENTIER_EXPORT accountPersistentStoragePath(
+    const Account & account);
 
 /**
  * @return          The path to folder in which the application can store
@@ -61,8 +64,8 @@ const QString QUENTIER_EXPORT applicationTemporaryStoragePath();
 
 /**
  * @return          The path to user's home directory - /home/<username> on
- *                  Linux/BSD, /Users/<username> on OS X/macOS, C:/Users/<username>
- *                  on Windows
+ *                  Linux/BSD, /Users/<username> on OS X/macOS,
+ *                  C:/Users/<username> on Windows
  */
 const QString QUENTIER_EXPORT homePath();
 
