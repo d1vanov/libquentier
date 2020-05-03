@@ -270,8 +270,23 @@ void SynchronizationManagerPrivate::stop()
 
     tryUpdateLastSyncStatus();
 
-    Q_EMIT stopRemoteToLocalSync();
-    Q_EMIT stopSendingLocalChanges();
+    m_pNoteStore->stop();
+
+    for(auto it = m_noteStoresByLinkedNotebookGuids.begin(),
+        end = m_noteStoresByLinkedNotebookGuids.end(); it != end; ++it)
+    {
+        INoteStore * pNoteStore = it.value();
+        pNoteStore->stop();
+    }
+
+    if (!m_pRemoteToLocalSyncManager->active() &&
+        !m_pSendLocalChangesManager->active())
+    {
+        Q_EMIT notifyStop();
+    }
+
+    m_pRemoteToLocalSyncManager->stop();
+    m_pSendLocalChangesManager->stop();
 }
 
 void SynchronizationManagerPrivate::revokeAuthentication(
@@ -762,9 +777,8 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(
     QNDEBUG("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: "
             << errorDescription);
 
-    Q_EMIT stopRemoteToLocalSync();
-    Q_EMIT stopSendingLocalChanges();
     Q_EMIT notifyError(errorDescription);
+    stop();
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersOwnAccount(
@@ -1050,11 +1064,6 @@ void SynchronizationManagerPrivate::createConnections(
                               linkedNotebooksNotesDownloadProgress,quint32,quint32),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
     QObject::connect(this,
-                     QNSIGNAL(SynchronizationManagerPrivate,stopRemoteToLocalSync),
-                     m_pRemoteToLocalSyncManager,
-                     QNSLOT(RemoteToLocalSynchronizationManager,stop),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(this,
                      QNSIGNAL(SynchronizationManagerPrivate,
                               sendAuthenticationTokenAndShardId,
                               QString,QString,qevercloud::Timestamp),
@@ -1156,11 +1165,6 @@ void SynchronizationManagerPrivate::createConnections(
                             onAuthenticationTokensForLinkedNotebooksReceived,
                             QHash<QString,QPair<QString,QString> >,
                             QHash<QString,qevercloud::Timestamp>),
-                     Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-    QObject::connect(this,
-                     QNSIGNAL(SynchronizationManagerPrivate,stopSendingLocalChanges),
-                     m_pSendLocalChangesManager,
-                     QNSLOT(SendLocalChangesManager,stop),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
