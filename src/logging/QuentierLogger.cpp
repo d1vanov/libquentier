@@ -20,14 +20,102 @@
 
 #include "QuentierLogger_p.h"
 
+#include <qt5qevercloud/Log.h>
+
 #include <QCoreApplication>
 
+#include <exception>
+
 namespace quentier {
+
+////////////////////////////////////////////////////////////////////////////////
+
+LogLevel QEverCloudLogLevelToQuentierLogLevel(
+    const qevercloud::LogLevel logLevel)
+{
+    switch(logLevel)
+    {
+    case qevercloud::LogLevel::Trace:
+        return LogLevel::Trace;
+    case qevercloud::LogLevel::Debug:
+        return LogLevel::Debug;
+    case qevercloud::LogLevel::Info:
+        return LogLevel::Info;
+    case qevercloud::LogLevel::Warn:
+        return LogLevel::Warning;
+    case qevercloud::LogLevel::Error:
+        return LogLevel::Error;
+    default:
+        return LogLevel::Info;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+class QEverCloudLogger final: public qevercloud::ILogger
+{
+public:
+    virtual bool shouldLog(
+        const qevercloud::LogLevel level, const char * component) const override
+    {
+        Q_UNUSED(component)
+
+        auto logLevel = QEverCloudLogLevelToQuentierLogLevel(level);
+        return QuentierIsLogLevelActive(logLevel);
+    }
+
+    virtual void log(
+        const qevercloud::LogLevel level, const char * component,
+        const char * fileName, const quint32 lineNumber, const qint64 timestamp,
+        const QString & message) override
+    {
+        Q_UNUSED(component)
+        Q_UNUSED(timestamp)
+
+        QuentierAddLogEntry(
+            QString::fromUtf8(fileName),
+            static_cast<int>(lineNumber),
+            message,
+            QEverCloudLogLevelToQuentierLogLevel(level));
+    }
+
+    virtual void setLevel(const qevercloud::LogLevel level) override
+    {
+        Q_UNUSED(level)
+
+        throw std::runtime_error(
+            "Unimplemented method QEverCloudLogger::setLevel was called");
+    }
+
+    virtual qevercloud::LogLevel level() const override
+    {
+        auto logLevel = QuentierMinLogLevel();
+        switch(logLevel)
+        {
+        case LogLevel::Trace:
+            return qevercloud::LogLevel::Trace;
+        case LogLevel::Debug:
+            return qevercloud::LogLevel::Debug;
+        case LogLevel::Info:
+            return qevercloud::LogLevel::Info;
+        case LogLevel::Warning:
+            return qevercloud::LogLevel::Warn;
+        case LogLevel::Error:
+            return qevercloud::LogLevel::Error;
+        default:
+            return qevercloud::LogLevel::Info;
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 void QuentierInitializeLogging()
 {
     QuentierLogger & logger = QuentierLogger::instance();
     Q_UNUSED(logger)
+
+    qevercloud::setLogger(std::make_shared<QEverCloudLogger>());
 }
 
 void QuentierAddLogEntry(
@@ -35,9 +123,17 @@ void QuentierAddLogEntry(
     const QString & message, const LogLevel logLevel)
 {
     QString relativeSourceFileName = sourceFileName;
+
     int prefixIndex = relativeSourceFileName.indexOf(
         QStringLiteral("libquentier"),
         Qt::CaseInsensitive);
+
+    if (prefixIndex < 0) {
+        prefixIndex = relativeSourceFileName.indexOf(
+            QStringLiteral("QEverCloud"),
+            Qt::CaseInsensitive);
+    }
+
     if (prefixIndex >= 0)
     {
         relativeSourceFileName.remove(0, prefixIndex);
@@ -48,6 +144,7 @@ void QuentierAddLogEntry(
         prefixIndex = relativeSourceFileName.indexOf(
             appName,
             Qt::CaseInsensitive);
+
         if (prefixIndex >= 0) {
             relativeSourceFileName.remove(0, prefixIndex + appName.size() + 1);
         }
