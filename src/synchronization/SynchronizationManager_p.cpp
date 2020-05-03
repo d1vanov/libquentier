@@ -33,7 +33,9 @@
 #include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDir>
+#include <QTimeZone>
 
 #include <limits>
 
@@ -321,7 +323,8 @@ void SynchronizationManagerPrivate::setInkNoteImagesStoragePath(const QString & 
 void SynchronizationManagerPrivate::onOAuthResult(
     bool success, qevercloud::UserID userId, QString authToken,
     qevercloud::Timestamp authTokenExpirationTime, QString shardId,
-    QString noteStoreUrl, QString webApiUrlPrefix, ErrorString errorDescription)
+    QString noteStoreUrl, QString webApiUrlPrefix,
+    QList<QNetworkCookie> cookies, ErrorString errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onOAuthResult: "
             << (success ? "success" : "failure")
@@ -340,6 +343,10 @@ void SynchronizationManagerPrivate::onOAuthResult(
         authData.m_shardId = shardId;
         authData.m_noteStoreUrl = noteStoreUrl;
         authData.m_webApiUrlPrefix = webApiUrlPrefix;
+        authData.m_cookies = std::move(cookies);
+
+        authData.m_authenticationTime = static_cast<qevercloud::Timestamp>(
+            QDateTime::currentMSecsSinceEpoch());
 
         m_OAuthResult = authData;
         QNDEBUG("OAuth result = " << m_OAuthResult);
@@ -351,6 +358,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         m_pRemoteToLocalSyncManager->setAccount(newAccount);
 
         m_pUserStore->setAuthenticationToken(authToken);
+        m_pUserStore->setCookies(authData.m_cookies);
 
         ErrorString error;
         bool res = m_pRemoteToLocalSyncManager->syncUser(
@@ -891,11 +899,11 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(&authenticationManager,
                      QNSIGNAL(IAuthenticationManager,sendAuthenticationResult,
                               bool,qevercloud::UserID,QString,qevercloud::Timestamp,
-                              QString,QString,QString,ErrorString),
+                              QString,QString,QString,QList<QNetworkCookie>,ErrorString),
                      this,
                      QNSLOT(SynchronizationManagerPrivate,onOAuthResult,
                             bool,qevercloud::UserID,QString,qevercloud::Timestamp,
-                            QString,QString,QString,ErrorString),
+                            QString,QString,QString,QList<QNetworkCookie>,ErrorString),
                      Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connections with keychain service
@@ -1206,6 +1214,42 @@ void SynchronizationManagerPrivate::authenticateImpl(
                        QString::number(m_OAuthResult.m_userId) +
                        QStringLiteral("/");
 
+    QVariant authenticationTimestamp =
+        appSettings.value(keyGroup + AUTHENTICATION_TIMESTAMP_KEY);
+
+    QDateTime authenticationDateTime;
+    if (!authenticationTimestamp.isNull())
+    {
+        bool conversionResult = false;
+        qint64 authenticationTimestampInt =
+            authenticationTimestamp.toLongLong(&conversionResult);
+        if (conversionResult) {
+            authenticationDateTime = QDateTime::fromMSecsSinceEpoch(
+                authenticationTimestampInt);
+        }
+    }
+
+    if (!authenticationDateTime.isValid()) {
+        QNINFO("Authentication datetime was not found within application "
+            << "settings, assuming it has never been written & launching "
+            << "the OAuth procedure");
+        launchOAuth();
+        return;
+    }
+
+    if (authenticationDateTime <
+        QDateTime(QDate(2020, 4, 22), QTime(0, 0), QTimeZone::utc()))
+    {
+        QNINFO("Last authentication was performed before Evernote introduced "
+            << "a bug which requires to set a particular cookie into API calls "
+            << "which was received during OAuth. Forcing new OAuth");
+        launchOAuth();
+        return;
+    }
+
+    m_OAuthResult.m_authenticationTime = static_cast<qevercloud::Timestamp>(
+        authenticationDateTime.toMSecsSinceEpoch());
+
     QVariant tokenExpirationValue =
         appSettings.value(keyGroup + EXPIRATION_TIMESTAMP_KEY);
     if (tokenExpirationValue.isNull()) {
@@ -1286,6 +1330,13 @@ void SynchronizationManagerPrivate::authenticateImpl(
 
     m_OAuthResult.m_webApiUrlPrefix = webApiUrlPrefix;
 
+    QNDEBUG("Restoring cookie for UserStore");
+
+    QByteArray rawCookie = appSettings.value(
+        keyGroup + USER_STORE_COOKIE_KEY).toByteArray();
+
+    m_OAuthResult.m_cookies = QNetworkCookie::parseCookies(rawCookie);
+
     QNDEBUG("Trying to restore the authentication token and "
             "the shard id from the keychain");
 
@@ -1338,6 +1389,7 @@ void SynchronizationManagerPrivate::launchSync()
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
     m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
     m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
+    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
 
     if (m_lastUpdateCount <= 0) {
         QNDEBUG("The client has never synchronized with "
@@ -1423,8 +1475,24 @@ void SynchronizationManagerPrivate::finalizeStoreOAuthResult()
                          m_writtenOAuthResult.m_noteStoreUrl);
     appSettings.setValue(keyGroup + EXPIRATION_TIMESTAMP_KEY,
                          m_writtenOAuthResult.m_expirationTime);
+    appSettings.setValue(keyGroup + AUTHENTICATION_TIMESTAMP_KEY,
+                         m_writtenOAuthResult.m_authenticationTime);
     appSettings.setValue(keyGroup + WEB_API_URL_PREFIX_KEY,
                          m_writtenOAuthResult.m_webApiUrlPrefix);
+
+    for(const auto & cookie: qAsConst(m_OAuthResult.m_cookies))
+    {
+        QString cookieName = QString::fromUtf8(cookie.name());
+        if (!cookieName.startsWith(QStringLiteral("web")) ||
+            !cookieName.endsWith(QStringLiteral("PreUserGuid")))
+        {
+            QNDEBUG("Skipping cookie " << cookie.name() << " from persistence");
+            continue;
+        }
+
+        appSettings.setValue(keyGroup + USER_STORE_COOKIE_KEY, cookie.toRawForm());
+        QNDEBUG("Persisted cookie " << cookie.name());
+    }
 
     QNDEBUG("Successfully wrote the authentication result info "
             << "to the application settings for host " << m_host << ", user id "
@@ -1690,6 +1758,11 @@ void SynchronizationManagerPrivate::clear()
 bool SynchronizationManagerPrivate::validAuthentication() const
 {
     if (m_OAuthResult.m_expirationTime == static_cast<qint64>(0)) {
+        // The value is not set
+        return false;
+    }
+
+    if (m_OAuthResult.m_authenticationTime == static_cast<qint64>(0)) {
         // The value is not set
         return false;
     }
@@ -2464,9 +2537,13 @@ QTextStream & SynchronizationManagerPrivate::AuthData::print(QTextStream & strm)
          << "    user id = " << m_userId << ";\n"
          << "    auth token expiration time = "
          << printableDateTimeFromTimestamp(m_expirationTime) << ";\n"
+         << "    authentication time = "
+         << printableDateTimeFromTimestamp(m_authenticationTime) << ";\n"
          << "    shard id = " << m_shardId << ";\n"
          << "    note store url = " << m_noteStoreUrl << ";\n"
          << "    web API url prefix = " << m_webApiUrlPrefix << ";\n"
+         << "    cookies count: " << m_cookies.size()
+         << ";\n"
          << "};\n";
     return strm;
 }

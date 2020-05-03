@@ -147,7 +147,9 @@ private Q_SLOTS:
                        QString authToken,
                        qevercloud::Timestamp authTokenExpirationTime,
                        QString shardId, QString noteStoreUrl,
-                       QString webApiUrlPrefix, ErrorString errorDescription);
+                       QString webApiUrlPrefix,
+                       QList<QNetworkCookie> userStoreCookies,
+                       ErrorString errorDescription);
 
     void onWritePasswordJobFinished(QUuid jobId, ErrorCode::type errorCode,
                                     ErrorString errorDescription);
@@ -208,12 +210,14 @@ private:
     class AuthData: public Printable
     {
     public:
-        qevercloud::UserID      m_userId;
+        qevercloud::UserID      m_userId = -1;
         QString                 m_authToken;
-        qevercloud::Timestamp   m_expirationTime;
+        qevercloud::Timestamp   m_authenticationTime = 0;
+        qevercloud::Timestamp   m_expirationTime = 0;
         QString                 m_shardId;
         QString                 m_noteStoreUrl;
         QString                 m_webApiUrlPrefix;
+        QList<QNetworkCookie>   m_cookies;
 
         virtual QTextStream & print(QTextStream & strm) const override;
     };

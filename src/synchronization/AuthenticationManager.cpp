@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,12 +32,12 @@ AuthenticationManager::AuthenticationManager(const QString & consumerKey,
                      QNSIGNAL(AuthenticationManagerPrivate,
                               sendAuthenticationResult,
                               bool,qevercloud::UserID,QString,qevercloud::Timestamp,
-                              QString,QString,QString,ErrorString),
+                              QString,QString,QString,QList<QNetworkCookie>,ErrorString),
                      this,
                      QNSIGNAL(AuthenticationManager,
                               sendAuthenticationResult,bool,qevercloud::UserID,
                               QString,qevercloud::Timestamp,QString,QString,
-                              QString,ErrorString));
+                              QString,QList<QNetworkCookie>,ErrorString));
 }
 
 AuthenticationManager::~AuthenticationManager()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,7 +67,9 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
         Q_EMIT sendAuthenticationResult(/* success = */ true, result.userId,
                                         result.authenticationToken, result.expires,
                                         result.shardId, result.noteStoreUrl,
-                                        result.webApiUrlPrefix, ErrorString());
+                                        result.webApiUrlPrefix,
+                                        result.cookies,
+                                        ErrorString());
     }
     else
     {
@@ -76,7 +78,9 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
         Q_EMIT sendAuthenticationResult(/* success = */ false,
                                         qevercloud::UserID(-1), QString(),
                                         qevercloud::Timestamp(0), QString(),
-                                        QString(), QString(), errorDescription);
+                                        QString(), QString(),
+                                        QList<QNetworkCookie>(),
+                                        errorDescription);
     }
 }
 

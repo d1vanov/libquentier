@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,6 +52,17 @@ void FakeAuthenticationManager::setUserId(const qevercloud::UserID userId)
     m_userId = userId;
 }
 
+QList<QNetworkCookie> FakeAuthenticationManager::userStoreCookies() const
+{
+    return m_userStoreCookies;
+}
+
+void FakeAuthenticationManager::setUserStoreCookies(
+    QList<QNetworkCookie> cookies)
+{
+    m_userStoreCookies = std::move(cookies);
+}
+
 void FakeAuthenticationManager::failNextRequest()
 {
     m_failNextRequest = true;
@@ -64,6 +75,7 @@ void FakeAuthenticationManager::onAuthenticationRequest()
         Q_EMIT sendAuthenticationResult(false, m_userId, QString(),
                                         qevercloud::Timestamp(0),
                                         QString(), QString(), QString(),
+                                        QList<QNetworkCookie>(),
                                         ErrorString("Artificial error"));
         return;
     }
@@ -72,7 +84,7 @@ void FakeAuthenticationManager::onAuthenticationRequest()
         true, m_userId, m_authToken,
         qevercloud::Timestamp(QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
         UidGenerator::Generate(), QStringLiteral("note_store_url"),
-        QStringLiteral("web_api_url_prefix"), ErrorString());
+        QStringLiteral("web_api_url_prefix"), m_userStoreCookies, ErrorString());
 }
 
 } // namespace quentier

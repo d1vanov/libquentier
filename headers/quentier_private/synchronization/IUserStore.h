@@ -21,6 +21,9 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
+
+#include <QList>
+#include <QNetworkCookie>
 #include <QSharedPointer>
 
 #include <qt5qevercloud/QEverCloud.h>
@@ -54,6 +57,9 @@ public:
 
     QString authenticationToken() const;
     void setAuthenticationToken(const QString & authToken);
+
+    QList<QNetworkCookie> cookies() const;
+    void setCookies(QList<QNetworkCookie> cookies);
 
     /**
      * Factory method, create a new IUserStore subclass object
@@ -126,7 +132,8 @@ public:
 
 protected:
     qevercloud::IUserStorePtr   m_pQecUserStore;
-    QString     m_authenticationToken;
+    QString                     m_authenticationToken;
+    QList<QNetworkCookie>       m_cookies;
 };
 
 } // namespace quentier
