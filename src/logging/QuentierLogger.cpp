@@ -122,4 +122,33 @@ void QuentierRestartLogging()
     logger.restartLogging();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+QDebug & operator<<(QDebug & dbg, const LogLevel logLevel)
+{
+    switch(logLevel)
+    {
+    case LogLevel::Trace:
+        dbg << "Trace";
+        break;
+    case LogLevel::Debug:
+        dbg << "Debug";
+        break;
+    case LogLevel::Info:
+        dbg << "Info";
+        break;
+    case LogLevel::Warning:
+        dbg << "Warning";
+        break;
+    case LogLevel::Error:
+        dbg << "Error";
+        break;
+    default:
+        dbg << "Unknown (" << static_cast<qint64>(logLevel) << ")";
+        break;
+    }
+
+    return dbg;
+}
+
 } // namespace quentier
