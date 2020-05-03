@@ -48,4 +48,14 @@ void IUserStore::setAuthenticationToken(const QString & authToken)
     m_authenticationToken = authToken;
 }
 
+QList<QNetworkCookie> IUserStore::cookies() const
+{
+    return m_cookies;
+}
+
+void IUserStore::setCookies(QList<QNetworkCookie> cookies)
+{
+    m_cookies = std::move(cookies);
+}
+
 } // namespace quentier

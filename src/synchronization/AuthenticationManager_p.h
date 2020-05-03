@@ -36,7 +36,7 @@ Q_SIGNALS:
         bool success, qevercloud::UserID userId, QString authToken,
         qevercloud::Timestamp authTokenExpirationTime, QString shardId,
         QString noteStoreUrl, QString webApiUrlPrefix,
-        ErrorString errorDescription);
+        QList<QNetworkCookie> cookies, ErrorString errorDescription);
 
 public Q_SLOTS:
     void onAuthenticationRequest();

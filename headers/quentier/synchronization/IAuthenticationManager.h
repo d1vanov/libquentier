@@ -26,6 +26,8 @@
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QHash>
+#include <QList>
+#include <QNetworkCookie>
 #include <QObject>
 #include <QVector>
 
@@ -45,7 +47,7 @@ Q_SIGNALS:
         bool success, qevercloud::UserID userId,
         QString authToken, qevercloud::Timestamp authTokenExpirationTime,
         QString shardId, QString noteStoreUrl, QString webApiUrlPrefix,
-        ErrorString errorDescription);
+        QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
 public Q_SLOTS:
     virtual void onAuthenticationRequest() = 0;

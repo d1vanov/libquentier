@@ -34,7 +34,10 @@
 
 #include <quentier_private/utility/IKeychainService.h>
 
+#include <QList>
 #include <QMetaType>
+#include <QNetworkCookie>
+#include <QSqlError>
 #include <QSharedPointer>
 #include <QSqlError>
 #include <QVector>
@@ -125,6 +128,8 @@ void registerMetatypes()
 
     using ErrorCode = IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
+
+    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
 }
 
 } // namespace quentier

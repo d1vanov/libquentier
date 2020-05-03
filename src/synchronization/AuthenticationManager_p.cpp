@@ -64,6 +64,7 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
             result.shardId,
             result.noteStoreUrl,
             result.webApiUrlPrefix,
+            result.cookies,
             ErrorString());
     }
     else
@@ -77,6 +78,7 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
             qevercloud::UserID(-1),
             {},
             qevercloud::Timestamp(0),
+            {},
             {},
             {},
             {},

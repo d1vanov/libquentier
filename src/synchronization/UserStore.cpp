@@ -47,7 +47,11 @@ bool UserStore::checkVersion(
     {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC);
+            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
+            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
+            m_cookies);
 
         return m_pQecUserStore->checkVersion(
             clientName,
@@ -67,7 +71,11 @@ qint32 UserStore::getUser(
     {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC);
+            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
+            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
+            m_cookies);
 
         user.qevercloudUser() = m_pQecUserStore->getUser(ctx);
         return 0;
@@ -99,7 +107,11 @@ qint32 UserStore::getAccountLimits(
     {
         auto ctx = qevercloud::newRequestContext(
             m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC);
+            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
+            qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
+            m_cookies);
 
         limits = m_pQecUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;
