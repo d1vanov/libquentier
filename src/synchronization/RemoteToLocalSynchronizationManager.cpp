@@ -8292,11 +8292,12 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
         return;
     }
 
-    if (!note.hasNotebookGuid())
+    if (!note.hasNotebookGuid() && syncingLinkedNotebooksContent())
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Detected the attempt to get full note's data for "
-                       "a note without notebook guid"));
+                       "a note without notebook guid while syncing linked "
+                       "notebooks content"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
         Q_EMIT failure(errorDescription);
@@ -8307,6 +8308,7 @@ void RemoteToLocalSynchronizationManager::getFullNoteDataAsync(const Note & note
     ErrorString errorDescription;
     INoteStore * pNoteStore = noteStoreForNote(note, authToken, errorDescription);
     if (Q_UNLIKELY(!pNoteStore)) {
+        QNWARNING(errorDescription);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -10392,11 +10394,12 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
         return nullptr;
     }
 
-    if (!note.hasNotebookGuid())
+    if (!note.hasNotebookGuid() && syncingLinkedNotebooksContent())
     {
         errorDescription.setBase(
             QT_TR_NOOP("Detected the attempt to get full note's "
-                       "data for a note without notebook guid"));
+                       "data for a note without notebook guid "
+                       "while syncing linked notebooks content"));
         APPEND_NOTE_DETAILS(errorDescription, note)
         QNWARNING(errorDescription << ": " << note);
         return nullptr;
@@ -10406,13 +10409,21 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
     // account or the one for the stuff from some linked notebook
 
     INoteStore * pNoteStore = nullptr;
-    auto linkedNotebookGuidIt =
-        m_linkedNotebookGuidsByNotebookGuids.find(note.notebookGuid());
+
+    auto linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.end();
+    if (note.hasNotebookGuid()) {
+        linkedNotebookGuidIt = m_linkedNotebookGuidsByNotebookGuids.find(
+            note.notebookGuid());
+    }
+
     if (linkedNotebookGuidIt == m_linkedNotebookGuidsByNotebookGuids.end())
     {
         QNDEBUG("Found no linked notebook corresponding to notebook guid "
-                << note.notebookGuid()
-                << ", using the note store for the user's own account");
+                << (note.hasNotebookGuid()
+                    ? note.notebookGuid()
+                    : QStringLiteral("<null>"))
+                << ", using the note store for user's own account");
+
         pNoteStore = &(m_manager.noteStore());
         authToken = m_authenticationToken;
         return pNoteStore;
