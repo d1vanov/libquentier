@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,8 +55,8 @@ Q_SIGNALS:
     void findDefaultOrLastUsedNotebookRequest(Notebook notebook,
                                               QUuid requestId);
     void listAllNotebooksRequest(size_t limit, size_t offset,
-                                 LocalStorageManager::ListNotebooksOrder::type order,
-                                 LocalStorageManager::OrderDirection::type orderDirection,
+                                 LocalStorageManager::ListNotebooksOrder order,
+                                 LocalStorageManager::OrderDirection orderDirection,
                                  QString linkedNotebookGuid, QUuid requestId);
     void listAllSharedNotebooksRequest(QUuid requestId);
     void listSharedNotebooksPerNotebookRequest(QString notebookGuid,
@@ -93,14 +93,14 @@ private Q_SLOTS:
                                                ErrorString errorDescription,
                                                QUuid requestId);
     void onListAllNotebooksCompleted(size_t limit, size_t offset,
-                                     LocalStorageManager::ListNotebooksOrder::type order,
-                                     LocalStorageManager::OrderDirection::type orderDirection,
+                                     LocalStorageManager::ListNotebooksOrder order,
+                                     LocalStorageManager::OrderDirection orderDirection,
                                      QString linkedNotebookGuid,
                                      QList<Notebook> notebooks,
                                      QUuid requestId);
     void onListAllNotebooksFailed(size_t limit, size_t offset,
-                                  LocalStorageManager::ListNotebooksOrder::type order,
-                                  LocalStorageManager::OrderDirection::type orderDirection,
+                                  LocalStorageManager::ListNotebooksOrder order,
+                                  LocalStorageManager::OrderDirection orderDirection,
                                   QString linkedNotebookGuid,
                                   ErrorString errorDescription,
                                   QUuid requestId);

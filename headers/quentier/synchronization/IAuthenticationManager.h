@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,17 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
-#include <QObject>
 #include <QHash>
+#include <QList>
+#include <QNetworkCookie>
+#include <QObject>
 #include <QVector>
-
 
 namespace quentier {
 
@@ -46,7 +47,7 @@ Q_SIGNALS:
         bool success, qevercloud::UserID userId,
         QString authToken, qevercloud::Timestamp authTokenExpirationTime,
         QString shardId, QString noteStoreUrl, QString webApiUrlPrefix,
-        ErrorString errorDescription);
+        QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
 public Q_SLOTS:
     virtual void onAuthenticationRequest() = 0;

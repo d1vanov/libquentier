@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,12 +19,12 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_DISPLAY_WIDGET_H
 #define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_DISPLAY_WIDGET_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/Macros.h>
 
-#include <QWidget>
 #include <QUuid>
+#include <QWidget>
 
 QT_FORWARD_DECLARE_CLASS(QMimeDatabase)
 
@@ -43,8 +43,9 @@ public:
     GenericResourceDisplayWidget(QWidget * parent = nullptr);
     virtual ~GenericResourceDisplayWidget();
 
-    void initialize(const QIcon & icon, const QString & name,
-                    const QString & size, const Resource & resource);
+    void initialize(
+        const QIcon & icon, const QString & name, const QString & size,
+        const Resource & resource);
 
     QString resourceLocalUid() const;
 
@@ -63,7 +64,7 @@ private:
     Q_DISABLE_COPY(GenericResourceDisplayWidget)
 
 private:
-    Ui::GenericResourceDisplayWidget *  m_pUI;
+    Ui::GenericResourceDisplayWidget *  m_pUi;
     QString             m_resourceLocalUid;
     QByteArray          m_resourceHash;
 };

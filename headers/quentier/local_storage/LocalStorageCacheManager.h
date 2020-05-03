@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,16 +20,17 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_H
 
 #include <quentier/utility/Printable.h>
-#include <QScopedPointer>
+
+#include <memory>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(Tag)
 QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
+QT_FORWARD_DECLARE_CLASS(Note)
+QT_FORWARD_DECLARE_CLASS(Notebook)
+QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
+QT_FORWARD_DECLARE_CLASS(Tag)
 
 QT_FORWARD_DECLARE_CLASS(ILocalStorageCacheExpiryChecker)
 
@@ -53,21 +54,30 @@ public:
     size_t numCachedNotes() const;
     void cacheNote(const Note & note);
     void expungeNote(const Note & note);
-    const Note * findNote(const QString & uid, const WhichUid whichUid) const;
+
+    const Note * findNote(
+        const QString & uid, const WhichUid whichUid) const;
+
     void clearAllNotes();
 
     // Resources cache
     size_t numCachedResources() const;
     void cacheResource(const Resource & resource);
     void expungeResource(const Resource & resource);
-    const Resource * findResource(const QString & id, const WhichUid whichUid) const;
+
+    const Resource * findResource(
+        const QString & id, const WhichUid whichUid) const;
+
     void clearAllResources();
 
     // Notebooks cache
     size_t numCachedNotebooks() const;
     void cacheNotebook(const Notebook & notebook);
     void expungeNotebook(const Notebook & notebook);
-    const Notebook * findNotebook(const QString & uid, const WhichUid whichUid) const;
+
+    const Notebook * findNotebook(
+        const QString & uid, const WhichUid whichUid) const;
+
     const Notebook * findNotebookByName(const QString & name) const;
     void clearAllNotebooks();
 
@@ -90,18 +100,22 @@ public:
     size_t numCachedSavedSearches() const;
     void cacheSavedSearch(const SavedSearch & savedSearch);
     void expungeSavedSearch(const SavedSearch & savedSearch);
-    const SavedSearch * findSavedSearch(const QString & uid, const WhichUid whichUid) const;
+
+    const SavedSearch * findSavedSearch(
+        const QString & uid, const WhichUid whichUid) const;
+
     const SavedSearch * findSavedSearchByName(const QString & name) const;
     void clearAllSavedSearches();
 
-    void installCacheExpiryFunction(const ILocalStorageCacheExpiryChecker & checker);
+    void installCacheExpiryFunction(
+        const ILocalStorageCacheExpiryChecker & checker);
 
     virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
     Q_DISABLE_COPY(LocalStorageCacheManager)
 
-    LocalStorageCacheManagerPrivate *   d_ptr;
+    LocalStorageCacheManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageCacheManager)
 };
 

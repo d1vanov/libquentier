@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include "StringUtils_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <QRegExp>
 
 namespace quentier {
@@ -35,11 +37,9 @@ void StringUtilsPrivate::removePunctuation(
     QString filterStr =
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
-    for(auto it = charactersToPreserve.begin(),
-        end = charactersToPreserve.end(); it != end; ++it)
-    {
+    for(const auto & chr: qAsConst(charactersToPreserve)) {
         int pos = -1;
-        while((pos = filterStr.indexOf(*it)) >= 0) {
+        while((pos = filterStr.indexOf(chr)) >= 0) {
             filterStr.remove(pos, 1);
         }
     }

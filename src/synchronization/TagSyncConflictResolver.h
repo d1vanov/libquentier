@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,18 +20,15 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLVER_H
 
 #include <quentier/types/Tag.h>
-#include <QObject>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
+
+#include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(TagSyncCache)
 
 /**
  * The TagSyncConflictResolver class resolves the conflict between two tags:
@@ -45,7 +42,7 @@ class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
 public:
     explicit TagSyncConflictResolver(
         const qevercloud::Tag & remoteTag,
-        const QString & remoteTagLinkedNotebookGuid,
+        QString remoteTagLinkedNotebookGuid,
         const Tag & localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
@@ -67,14 +64,19 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddTagComplete(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription,
-                        QUuid requestId);
+
+    void onAddTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription,
-                           QUuid requestId);
+
+    void onUpdateTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
     void onFindTagComplete(Tag tag, QUuid requestId);
-    void onFindTagFailed(Tag tag, ErrorString errorDescription,
-                         QUuid requestId);
+
+    void onFindTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -86,16 +88,15 @@ private:
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalTag(const Tag & localConflict);
 
-    struct State
+    enum class State
     {
-        enum type
-        {
-            Undefined = 0,
-            OverrideLocalChangesWithRemoteChanges,
-            PendingConflictingTagRenaming,
-            PendingRemoteTagAdoptionInLocalStorage
-        };
+        Undefined = 0,
+        OverrideLocalChangesWithRemoteChanges,
+        PendingConflictingTagRenaming,
+        PendingRemoteTagAdoptionInLocalStorage
     };
+
+    friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
     TagSyncCache &              m_cache;
@@ -108,14 +109,14 @@ private:
 
     Tag                         m_tagToBeRenamed;
 
-    State::type                 m_state;
+    State                       m_state = State::Undefined;
 
     QUuid                       m_addTagRequestId;
     QUuid                       m_updateTagRequestId;
     QUuid                       m_findTagRequestId;
 
-    bool                        m_started;
-    bool                        m_pendingCacheFilling;
+    bool                        m_started = false;
+    bool                        m_pendingCacheFilling = false;
 };
 
 } // namespace quentier

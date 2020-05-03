@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include <quentier/logging/QuentierLogger.h>
+
 #include "QuentierLogger_p.h"
+
 #include <QCoreApplication>
 
 namespace quentier {
@@ -28,18 +30,24 @@ void QuentierInitializeLogging()
     Q_UNUSED(logger)
 }
 
-void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLineNumber,
-                         const QString & message, const LogLevel::type logLevel)
+void QuentierAddLogEntry(
+    const QString & sourceFileName, const int sourceFileLineNumber,
+    const QString & message, const LogLevel logLevel)
 {
     QString relativeSourceFileName = sourceFileName;
-    int prefixIndex = relativeSourceFileName.indexOf(QStringLiteral("libquentier"),
-                                                     Qt::CaseInsensitive);
-    if (prefixIndex >= 0) {
+    int prefixIndex = relativeSourceFileName.indexOf(
+        QStringLiteral("libquentier"),
+        Qt::CaseInsensitive);
+    if (prefixIndex >= 0)
+    {
         relativeSourceFileName.remove(0, prefixIndex);
     }
-    else {
+    else
+    {
         QString appName = QCoreApplication::applicationName().toLower();
-        prefixIndex = relativeSourceFileName.indexOf(appName, Qt::CaseInsensitive);
+        prefixIndex = relativeSourceFileName.indexOf(
+            appName,
+            Qt::CaseInsensitive);
         if (prefixIndex >= 0) {
             relativeSourceFileName.remove(0, prefixIndex + appName.size() + 1);
         }
@@ -52,24 +60,25 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
 
     switch(logLevel)
     {
-    case LogLevel::TraceLevel:
+    case LogLevel::Trace:
         logEntry += QStringLiteral("Trace]: ");
         break;
-    case LogLevel::DebugLevel:
+    case LogLevel::Debug:
         logEntry += QStringLiteral("Debug]: ");
         break;
-    case LogLevel::InfoLevel:
+    case LogLevel::Info:
         logEntry += QStringLiteral("Info]: ");
         break;
-    case LogLevel::WarnLevel:
+    case LogLevel::Warning:
         logEntry += QStringLiteral("Warn]: ");
         break;
-    case LogLevel::ErrorLevel:
+    case LogLevel::Error:
         logEntry += QStringLiteral("Error]: ");
         break;
     default:
         logEntry += QStringLiteral("Unknown log level: ") +
-            QString::number(logLevel) + QStringLiteral("]: ");
+            QString::number(static_cast<qint64>(logLevel)) +
+            QStringLiteral("]: ");
         break;
     }
 
@@ -79,19 +88,19 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     logger.write(logEntry);
 }
 
-LogLevel::type QuentierMinLogLevel()
+LogLevel QuentierMinLogLevel()
 {
     QuentierLogger & logger = QuentierLogger::instance();
     return logger.minLogLevel();
 }
 
-void QuentierSetMinLogLevel(const LogLevel::type logLevel)
+void QuentierSetMinLogLevel(const LogLevel logLevel)
 {
     QuentierLogger & logger = QuentierLogger::instance();
     logger.setMinLogLevel(logLevel);
 }
 
-bool QuentierIsLogLevelActive(const LogLevel::type logLevel)
+bool QuentierIsLogLevelActive(const LogLevel logLevel)
 {
     return (QuentierLogger::instance().minLogLevel() <= logLevel);
 }

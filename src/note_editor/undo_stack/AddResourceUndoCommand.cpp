@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,7 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
@@ -71,8 +70,9 @@ void AddResourceUndoCommand::undoImpl()
     m_noteEditorPrivate.removeResourceFromNote(m_resource);
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("resourceManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("resourceManager.undo();"),
+        m_callback);
 }
 
 void AddResourceUndoCommand::redoImpl()
@@ -82,8 +82,9 @@ void AddResourceUndoCommand::redoImpl()
     m_noteEditorPrivate.addResourceToNote(m_resource);
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("resourceManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("resourceManager.redo();"),
+        m_callback);
 }
 
 } // namespace quentier

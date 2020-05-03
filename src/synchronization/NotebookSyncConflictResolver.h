@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,18 +20,17 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLVER_H
 
 #include <quentier/types/Notebook.h>
+
+#include <qt5qevercloud/QEverCloud.h>
+
 #include <QObject>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
+QT_FORWARD_DECLARE_CLASS(QDebug)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
 
 /**
  * The NotebookSyncConflictResolver class resolves the conflict between two
@@ -52,12 +51,18 @@ public:
 
     void start();
 
-    const qevercloud::Notebook & remoteNotebook() const { return m_remoteNotebook; }
+    const qevercloud::Notebook & remoteNotebook() const
+    {
+        return m_remoteNotebook;
+    }
+
     const Notebook & localConflict() const { return m_localConflict; }
 
 Q_SIGNALS:
     void finished(qevercloud::Notebook remoteNotebook);
-    void failure(qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
+
+    void failure(
+        qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
 
 // private signals
     void fillNotebooksCache();
@@ -67,14 +72,19 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook, ErrorString errorDescription,
-                             QUuid requestId);
+
+    void onAddNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookFailed(Notebook notebook, ErrorString errorDescription,
-                                QUuid requestId);
+
+    void onUpdateNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+
     void onFindNotebookComplete(Notebook notebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook, ErrorString errorDescription,
-                              QUuid requestId);
+
+    void onFindNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -86,16 +96,15 @@ private:
     void overrideLocalChangesWithRemoteChanges();
     void renameConflictingLocalNotebook(const Notebook & localConflict);
 
-    struct State
+    enum class State
     {
-        enum type
-        {
-            Undefined = 0,
-            OverrideLocalChangesWithRemoteChanges,
-            PendingConflictingNotebookRenaming,
-            PendingRemoteNotebookAdoptionInLocalStorage
-        };
+        Undefined = 0,
+        OverrideLocalChangesWithRemoteChanges,
+        PendingConflictingNotebookRenaming,
+        PendingRemoteNotebookAdoptionInLocalStorage
     };
+
+    friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
     NotebookSyncCache &         m_cache;
@@ -108,7 +117,7 @@ private:
 
     Notebook                    m_notebookToBeRenamed;
 
-    State::type                 m_state;
+    State                       m_state;
 
     QUuid                       m_addNotebookRequestId;
     QUuid                       m_updateNotebookRequestId;

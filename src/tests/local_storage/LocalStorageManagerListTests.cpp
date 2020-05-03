@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2019-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,14 +17,16 @@
  */
 
 #include "LocalStorageManagerListTests.h"
+
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
-#include <quentier/logging/QuentierLogger.h>
+
 #include <QtTest/QtTest>
 
 namespace quentier {
@@ -33,8 +35,10 @@ namespace test {
 void TestListSavedSearches()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
@@ -48,15 +52,19 @@ void TestListSavedSearches()
         SavedSearch & search = searches.back();
 
         if (i > 1) {
-            search.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                           QString::number(i+1));
+            search.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
         search.setUpdateSequenceNumber(i);
-        search.setName(QStringLiteral("SavedSearch #") +
-                       QString::number(i));
-        search.setQuery(QStringLiteral("Fake saved search query #") +
-                        QString::number(i));
+
+        search.setName(
+            QStringLiteral("SavedSearch #") + QString::number(i));
+
+        search.setQuery(
+            QStringLiteral("Fake saved search query #") + QString::number(i));
+
         search.setQueryFormat(1);
         search.setIncludeAccount(true);
         search.setIncludeBusinessLinkedNotebooks(true);
@@ -90,19 +98,25 @@ void TestListSavedSearches()
     // 1) Test method listing all saved searches
 
     errorMessage.clear();
+
     QList<SavedSearch> foundSearches =
         localStorageManager.listAllSavedSearches(errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundSearches = foundSearches.size();
-    if (numFoundSearches != nSearches) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of saved searches "
-                                        "in the result of LocalStorageManager::"
-                                        "ListAllSavedSearches (") +
-                         QString::number(numFoundSearches) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added saved searches (") +
-                         QString::number(nSearches) + QStringLiteral(")")));
+    if (numFoundSearches != nSearches)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of saved searches "
+                           "in the result of LocalStorageManager::"
+                           "ListAllSavedSearches (") +
+            QString::number(numFoundSearches) +
+            QStringLiteral(") does not match the original number "
+                           "of added saved searches (") +
+            QString::number(nSearches) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundSearches; ++i)
@@ -118,8 +132,9 @@ void TestListSavedSearches()
 #define CHECK_LIST_SAVED_SEARCHES(flag, name, true_cond, false_cond)           \
     errorMessage.clear();                                                      \
     foundSearches = localStorageManager.listSavedSearches(flag, errorMessage); \
-    QVERIFY2(errorMessage.isEmpty(),                                           \
-             qPrintable(errorMessage.nonLocalizedString()));                   \
+    QVERIFY2(                                                                  \
+        errorMessage.isEmpty(),                                                \
+        qPrintable(errorMessage.nonLocalizedString()));                        \
     for(int i = 0; i < nSearches; ++i)                                         \
     {                                                                          \
         const SavedSearch & search = searches.at(i);                           \
@@ -137,55 +152,82 @@ void TestListSavedSearches()
     }                                                                          \
 // CHECK_LIST_SAVED_SEARCHES
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty, "dirty",
-                              i > 2, i <= 2);
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListDirty,
+        "dirty",
+        i > 2,
+        i <= 2);
 
     // 3) Test method listing only local saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal, "local",
-                              i < 3, i >= 3);
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListLocal,
+        "local",
+        i < 3,
+        i >= 3);
 
     // 4) Test method listing only saved searches without guid
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListElementsWithoutGuid,
-                              "guidless", i <= 1, i > 1);
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListElementsWithoutGuid,
+        "guidless",
+        i <= 1,
+        i > 1);
 
     // 5) Test method listing only favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListFavoritedElements,
-                              "favorited", (i == 0) || (i == 4),
-                              (i != 0) && (i != 4));
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListFavoritedElements,
+        "favorited",
+        (i == 0) || (i == 4),
+        (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited saved searches with guid
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListDirty |
-                              LocalStorageManager::ListElementsWithGuid |
-                              LocalStorageManager::ListFavoritedElements,
-                              "dirty, favorited, having guid",
-                              i == 4, i != 4);
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListDirty |
+        ListObjectsOption::ListElementsWithGuid |
+        ListObjectsOption::ListFavoritedElements,
+        "dirty, favorited, having guid",
+        i == 4,
+        i != 4);
 
     // 7) Test method listing local favorited saved searches
-    CHECK_LIST_SAVED_SEARCHES(LocalStorageManager::ListLocal |
-                              LocalStorageManager::ListFavoritedElements,
-                              "local, favorited", i == 0, i != 0);
+    CHECK_LIST_SAVED_SEARCHES(
+        ListObjectsOption::ListLocal |
+        ListObjectsOption::ListFavoritedElements,
+        "local, favorited",
+        i == 0,
+        i != 0);
 
     // 8) Test method listing saved searches with guid set also specifying
     // limit, offset and order
     size_t limit = 2;
     size_t offset = 1;
-    LocalStorageManager::ListSavedSearchesOrder::type order =
+    auto order =
         LocalStorageManager::ListSavedSearchesOrder::ByUpdateSequenceNumber;
 
     errorMessage.clear();
-    foundSearches =
-        localStorageManager.listSavedSearches(LocalStorageManager::ListElementsWithGuid,
-                                              errorMessage, limit, offset, order);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
-    if (foundSearches.size() != static_cast<int>(limit)) {
-        QFAIL(qPrintable(QStringLiteral("Unexpected number of found saved searches "
-                                        "not corresponding to the specified limit: "
-                                        "limit = ") +
-                         QString::number(limit) +
-                         QStringLiteral(", number of searches found is ") +
-                         QString::number(foundSearches.size())));
+    foundSearches = localStorageManager.listSavedSearches(
+        ListObjectsOption::ListElementsWithGuid,
+        errorMessage,
+        limit,
+        offset,
+        order);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    if (foundSearches.size() != static_cast<int>(limit))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Unexpected number of found saved searches "
+                           "not corresponding to the specified limit: "
+                           "limit = ") +
+            QString::number(limit) +
+            QStringLiteral(", number of searches found is ") +
+            QString::number(foundSearches.size())));
     }
 
     const SavedSearch & firstSearch = foundSearches[0];
@@ -194,34 +236,41 @@ void TestListSavedSearches()
     if (!firstSearch.hasUpdateSequenceNumber() ||
         !secondSearch.hasUpdateSequenceNumber())
     {
-        QFAIL(qPrintable(QStringLiteral("One of found saved searches doesn't "
-                                        "have the update sequence number "
-                                        "which is unexpected: first search: ") +
-                         firstSearch.toString() +
-                         QStringLiteral("\nSecond search: ") +
-                         secondSearch.toString()));
+        QFAIL(qPrintable(
+            QStringLiteral("One of found saved searches doesn't "
+                           "have the update sequence number "
+                           "which is unexpected: first search: ") +
+            firstSearch.toString() +
+            QStringLiteral("\nSecond search: ") +
+            secondSearch.toString()));
     }
 
-    if (firstSearch.updateSequenceNumber() != 3) {
-        QFAIL(qPrintable(QStringLiteral("First saved search was expected to "
-                                        "have update sequence number of 3, "
-                                        "instead it is ") +
-                         QString::number(firstSearch.updateSequenceNumber())));
+    if (firstSearch.updateSequenceNumber() != 3)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("First saved search was expected to "
+                           "have update sequence number of 3, "
+                           "instead it is ") +
+            QString::number(firstSearch.updateSequenceNumber())));
     }
 
-    if (secondSearch.updateSequenceNumber() != 4) {
-        QFAIL(qPrintable(QStringLiteral("Second saved search was expected "
-                                        "to have update sequence number of 4, "
-                                        "instead it is ") +
-                         QString::number(secondSearch.updateSequenceNumber())));
+    if (secondSearch.updateSequenceNumber() != 4)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Second saved search was expected "
+                           "to have update sequence number of 4, "
+                           "instead it is ") +
+            QString::number(secondSearch.updateSequenceNumber())));
     }
 }
 
 void TestListLinkedNotebooks()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
@@ -234,28 +283,44 @@ void TestListLinkedNotebooks()
         linkedNotebooks << LinkedNotebook();
         LinkedNotebook & linkedNotebook = linkedNotebooks.back();
 
-        linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                               QString::number(i+1));
+        linkedNotebook.setGuid(
+            QStringLiteral("00000000-0000-0000-c000-00000000000") +
+            QString::number(i + 1));
+
         linkedNotebook.setUpdateSequenceNumber(i);
-        linkedNotebook.setShareName(QStringLiteral("Linked notebook share name #") +
-                                    QString::number(i));
-        linkedNotebook.setUsername(QStringLiteral("Linked notebook username #") +
-                                   QString::number(i));
-        linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id #") +
-                                  QString::number(i));
+
+        linkedNotebook.setShareName(
+            QStringLiteral("Linked notebook share name #") +
+            QString::number(i));
+
+        linkedNotebook.setUsername(
+            QStringLiteral("Linked notebook username #") +
+            QString::number(i));
+
+        linkedNotebook.setShardId(
+            QStringLiteral("Linked notebook shard id #") +
+            QString::number(i));
+
         linkedNotebook.setSharedNotebookGlobalId(
             QStringLiteral("Linked notebook shared notebook global id #") +
             QString::number(i));
-        linkedNotebook.setUri(QStringLiteral("Linked notebook uri #") +
-                              QString::number(i));
+
+        linkedNotebook.setUri(
+            QStringLiteral("Linked notebook uri #") +
+            QString::number(i));
+
         linkedNotebook.setNoteStoreUrl(
             QStringLiteral("Linked notebook note store url #") +
             QString::number(i));
+
         linkedNotebook.setWebApiUrlPrefix(
             QStringLiteral("Linked notebook web api url prefix #") +
             QString::number(i));
-        linkedNotebook.setStack(QStringLiteral("Linked notebook stack #") +
-                                QString::number(i));
+
+        linkedNotebook.setStack(
+            QStringLiteral("Linked notebook stack #") +
+            QString::number(i));
+
         linkedNotebook.setBusinessId(1);
 
         if (i > 2) {
@@ -265,27 +330,35 @@ void TestListLinkedNotebooks()
             linkedNotebook.setDirty(false);
         }
 
-        bool res = localStorageManager.addLinkedNotebook(linkedNotebook,
-                                                         errorMessage);
+        bool res = localStorageManager.addLinkedNotebook(
+            linkedNotebook,
+            errorMessage);
+
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
     }
 
     // 1) Test method listing all linked notebooks
 
     errorMessage.clear();
+
     QList<LinkedNotebook> foundLinkedNotebooks =
         localStorageManager.listAllLinkedNotebooks(errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundLinkedNotebooks = foundLinkedNotebooks.size();
-    if (numFoundLinkedNotebooks != nLinkedNotebooks) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of linked notebooks "
-                                        "in the result of LocalStorageManager::"
-                                        "ListAllLinkedNotebooks (") +
-                         QString::number(numFoundLinkedNotebooks) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added linked notebooks (") +
-                         QString::number(nLinkedNotebooks) + QStringLiteral(")")));
+    if (numFoundLinkedNotebooks != nLinkedNotebooks)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of linked notebooks "
+                           "in the result of LocalStorageManager::"
+                           "ListAllLinkedNotebooks (") +
+            QString::number(numFoundLinkedNotebooks) +
+            QStringLiteral(") does not match the original number "
+                           "of added linked notebooks (") +
+            QString::number(nLinkedNotebooks) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundLinkedNotebooks; ++i)
@@ -300,24 +373,26 @@ void TestListLinkedNotebooks()
 
     // 2) Test method listing only dirty linked notebooks
     errorMessage.clear();
-    foundLinkedNotebooks =
-        localStorageManager.listLinkedNotebooks(LocalStorageManager::ListDirty,
-                                                errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    foundLinkedNotebooks = localStorageManager.listLinkedNotebooks(
+        LocalStorageManager::ListObjectsOption::ListDirty,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     for(int i = 0; i < nLinkedNotebooks; ++i)
     {
         const LinkedNotebook & linkedNotebook = linkedNotebooks.at(i);
         bool res = foundLinkedNotebooks.contains(linkedNotebook);
         if ((i > 2) && !res) {
-            QNWARNING("Not found linked notebook: "
-                      << linkedNotebook);
+            QNWARNING("Not found linked notebook: " << linkedNotebook);
             QFAIL("One of dirty linked notebooks was not found by "
                   "LocalStorageManager::ListLinkedNotebooks");
         }
         else if ((i <= 2) && res) {
-            QNWARNING("Found irrelevant linked notebook: "
-                      << linkedNotebook);
+            QNWARNING("Found irrelevant linked notebook: " << linkedNotebook);
             QFAIL("LocalStorageManager::ListLinkedNotebooks with flag "
                   "ListDirty returned incorrect linked notebook");
         }
@@ -327,8 +402,10 @@ void TestListLinkedNotebooks()
 void TestListTags()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
@@ -342,8 +419,9 @@ void TestListTags()
         Tag & tag = tags.back();
 
         if (i > 1) {
-            tag.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                        QString::number(i+1));
+            tag.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
         tag.setUpdateSequenceNumber(i);
@@ -382,32 +460,39 @@ void TestListTags()
 
     errorMessage.clear();
     QList<Tag> foundTags = localStorageManager.listAllTags(errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundTags = foundTags.size();
-    if (numFoundTags != nTags) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of tags in the result "
-                                        "of LocalStorageManager::ListAllTags (") +
-                         QString::number(numFoundTags) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added tags (") +
-                         QString::number(nTags) + QStringLiteral(")")));
+    if (numFoundTags != nTags)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of tags in the result "
+                           "of LocalStorageManager::ListAllTags (") +
+            QString::number(numFoundTags) +
+            QStringLiteral(") does not match the original number "
+                           "of added tags (") +
+            QString::number(nTags) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundTags; ++i)
     {
         const Tag & foundTag = foundTags.at(i);
         if (!tags.contains(foundTag)) {
-            QFAIL("One of tags from the result of LocalStorageManager::ListAllTags "
-                  "was not found in the list of original tags");
+            QFAIL("One of tags from the result of "
+                  "LocalStorageManager::ListAllTags was not found in the list "
+                  "of original tags");
         }
     }
 
 #define CHECK_LIST_TAGS(flag, name, true_cond, false_cond)                     \
     errorMessage.clear();                                                      \
     foundTags = localStorageManager.listTags(flag, errorMessage);              \
-    QVERIFY2(errorMessage.isEmpty(),                                           \
-             qPrintable(errorMessage.nonLocalizedString()));                   \
+    QVERIFY2(                                                                  \
+        errorMessage.isEmpty(),                                                \
+        qPrintable(errorMessage.nonLocalizedString()));                        \
     for(int i = 0; i < nTags; ++i)                                             \
     {                                                                          \
         const Tag & tag = tags.at(i);                                          \
@@ -425,31 +510,44 @@ void TestListTags()
     }                                                                          \
 // CHECK_LIST_TAGS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
-                    "guidless", i <= 1, i > 1);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListElementsWithoutGuid,
+        "guidless",
+        i <= 1,
+        i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
-                    "favorited", (i == 0) || (i == 4),
-                    (i != 0) && (i != 4));
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListFavoritedElements,
+        "favorited",
+        (i == 0) || (i == 4),
+        (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
-                    LocalStorageManager::ListElementsWithGuid |
-                    LocalStorageManager::ListFavoritedElements,
-                    "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListDirty |
+        ListObjectsOption::ListElementsWithGuid |
+        ListObjectsOption::ListFavoritedElements,
+        "dirty, favorited, having guid",
+        i == 4,
+        i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
-                    LocalStorageManager::ListFavoritedElements,
-                    "local, favorited", i == 0, i != 0);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListLocal |
+        ListObjectsOption::ListFavoritedElements,
+        "local, favorited",
+        i == 0,
+        i != 0);
 
 #undef CHECK_LIST_TAGS
 }
@@ -457,8 +555,10 @@ void TestListTags()
 void TestListTagsWithNoteLocalUids()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
@@ -472,8 +572,9 @@ void TestListTagsWithNoteLocalUids()
         Tag & tag = tags.back();
 
         if (i > 1) {
-            tag.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                        QString::number(i+1));
+            tag.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
         tag.setUpdateSequenceNumber(i);
@@ -531,8 +632,9 @@ void TestListTagsWithNoteLocalUids()
         Note & note = notes.back();
 
         if (i > 1) {
-            note.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                         QString::number(i+1));
+            note.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
         if (i > 2) {
@@ -576,12 +678,15 @@ void TestListTagsWithNoteLocalUids()
 
 #undef APPEND_TAG_TO_NOTE
 
-        note.setUpdateSequenceNumber(i+1);
+        note.setUpdateSequenceNumber(i + 1);
         note.setTitle(QStringLiteral("Fake note title #") + QString::number(i));
-        note.setContent(QStringLiteral("<en-note><h1>Hello, world #") +
-                        QString::number(i) + QStringLiteral("</h1></en-note>"));
-        note.setCreationTimestamp(i+1);
-        note.setModificationTimestamp(i+1);
+
+        note.setContent(
+            QStringLiteral("<en-note><h1>Hello, world #") +
+            QString::number(i) + QStringLiteral("</h1></en-note>"));
+
+        note.setCreationTimestamp(i + 1);
+        note.setModificationTimestamp(i + 1);
         note.setActive(true);
         note.setNotebookGuid(notebook.guid());
         note.setNotebookLocalUid(notebook.localUid());
@@ -596,8 +701,9 @@ void TestListTagsWithNoteLocalUids()
     errorMessage.clear();                                                      \
     foundTagsWithNoteLocalUids =                                               \
     localStorageManager.listTagsWithNoteLocalUids(flag, errorMessage);         \
-    QVERIFY2(errorMessage.isEmpty(),                                           \
-             qPrintable(errorMessage.nonLocalizedString()));                   \
+    QVERIFY2(                                                                  \
+        errorMessage.isEmpty(),                                                \
+        qPrintable(errorMessage.nonLocalizedString()));                        \
     for(int i = 0; i < nTags; ++i)                                             \
     {                                                                          \
         const Tag & tag = tags.at(i);                                          \
@@ -627,9 +733,9 @@ void TestListTagsWithNoteLocalUids()
                 !foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())        \
             {                                                                  \
                 QNWARNING("Found irrelevant list of note local "               \
-                          "uids for a tag: "                                   \
-                          << foundTagsWithNoteLocalUids[tagIndex].second       \
-                             .join(QStringLiteral(", ")));                     \
+                    << "uids for a tag: "                                      \
+                    << foundTagsWithNoteLocalUids[tagIndex].second             \
+                       .join(QStringLiteral(", ")));                           \
                 QFAIL("LocalStorageManager::ListTags with flag " name          \
                       " returned redundant note local uids");                  \
             }                                                                  \
@@ -638,9 +744,9 @@ void TestListTagsWithNoteLocalUids()
                 if (foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())     \
                 {                                                              \
                     QNWARNING("Found empty list of note local "                \
-                              "uids for a tag for which they "                 \
-                              "were expected: "                                \
-                              << noteIt.value().join(QStringLiteral(", ")));   \
+                        << "uids for a tag for which they "                    \
+                        << "were expected: "                                   \
+                        << noteIt.value().join(QStringLiteral(", ")));         \
                     QFAIL("LocalStorageManager::ListTags with flag " name      \
                           " did not return proper note local uids");           \
                 }                                                              \
@@ -648,9 +754,9 @@ void TestListTagsWithNoteLocalUids()
                          noteIt.value().size())                                \
                 {                                                              \
                     QNWARNING("Found list of note local uids "                 \
-                              "for a tag with incorrect list size: "           \
-                              << foundTagsWithNoteLocalUids[tagIndex].second   \
-                                 .join(QStringLiteral(", ")));                 \
+                        << "for a tag with incorrect list size: "              \
+                        << foundTagsWithNoteLocalUids[tagIndex].second.join(   \
+                            QStringLiteral(", ")));                            \
                     QFAIL("LocalStorageManager::ListTags with flag " name      \
                           " did not return proper number of note local uids"); \
                 }                                                              \
@@ -665,9 +771,9 @@ void TestListTagsWithNoteLocalUids()
                                 .second[j]))                                   \
                         {                                                      \
                             QNWARNING("Found incorrect list of "               \
-                                      "note local uids for a tag: "            \
-                                      << foundTagsWithNoteLocalUids[tagIndex]  \
-                                      .second.join(QStringLiteral(", ")));     \
+                                << "note local uids for a tag: "               \
+                                << foundTagsWithNoteLocalUids[tagIndex]        \
+                                   .second.join(QStringLiteral(", ")));        \
                             QFAIL("LocalStorageManager::ListTags with flag "   \
                                   name                                         \
                                   " did not return correct set of note local " \
@@ -680,41 +786,57 @@ void TestListTagsWithNoteLocalUids()
     }                                                                          \
 // CHECK_LIST_TAGS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 1) Test method listing all tags with note local uids
-    CHECK_LIST_TAGS(LocalStorageManager::ListAll, "all", true, false);
+    CHECK_LIST_TAGS(ListObjectsOption::ListAll, "all", true, false);
 
     // 2) Test method listing only dirty tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_TAGS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_TAGS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only tags without guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListElementsWithoutGuid,
-                    "guidless", i <= 1, i > 1);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListElementsWithoutGuid,
+        "guidless",
+        i <= 1,
+        i > 1);
 
     // 5) Test method listing only favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListFavoritedElements,
-                    "favorited", (i == 0) || (i == 4), (i != 0) && (i != 4));
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListFavoritedElements,
+        "favorited",
+        (i == 0) || (i == 4),
+        (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited tags with guid
-    CHECK_LIST_TAGS(LocalStorageManager::ListDirty |
-                    LocalStorageManager::ListElementsWithGuid |
-                    LocalStorageManager::ListFavoritedElements,
-                    "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListDirty |
+        ListObjectsOption::ListElementsWithGuid |
+        ListObjectsOption::ListFavoritedElements,
+        "dirty, favorited, having guid",
+        i == 4,
+        i != 4);
 
     // 7) Test method listing local favorited tags
-    CHECK_LIST_TAGS(LocalStorageManager::ListLocal |
-                    LocalStorageManager::ListFavoritedElements,
-                    "local, favorited", i == 0, i != 0);
+    CHECK_LIST_TAGS(
+        ListObjectsOption::ListLocal |
+        ListObjectsOption::ListFavoritedElements,
+        "local, favorited",
+        i == 0,
+        i != 0);
 #undef CHECK_LIST_TAGS
 }
 
 void TestListAllSharedNotebooks()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     Notebook notebook;
@@ -739,14 +861,22 @@ void TestListAllSharedNotebooks()
         sharedNotebook.setId(i);
         sharedNotebook.setUserId(i);
         sharedNotebook.setNotebookGuid(notebook.guid());
+
         sharedNotebook.setEmail(
-            QStringLiteral("Fake shared notebook email #") + QString::number(i));
-        sharedNotebook.setCreationTimestamp(i+1);
-        sharedNotebook.setModificationTimestamp(i+1);
+            QStringLiteral("Fake shared notebook email #") +
+            QString::number(i));
+
+        sharedNotebook.setCreationTimestamp(i + 1);
+        sharedNotebook.setModificationTimestamp(i + 1);
+
         sharedNotebook.setGlobalId(
-            QStringLiteral("Fake shared notebook global id #") + QString::number(i));
+            QStringLiteral("Fake shared notebook global id #") +
+            QString::number(i));
+
         sharedNotebook.setUsername(
-            QStringLiteral("Fake shared notebook username #") + QString::number(i));
+            QStringLiteral("Fake shared notebook username #") +
+            QString::number(i));
+
         sharedNotebook.setPrivilegeLevel(1);
         sharedNotebook.setReminderNotifyEmail(true);
         sharedNotebook.setReminderNotifyApp(false);
@@ -760,18 +890,22 @@ void TestListAllSharedNotebooks()
 
     QList<SharedNotebook> foundSharedNotebooks =
         localStorageManager.listAllSharedNotebooks(errorMessage);
-    QVERIFY2(!foundSharedNotebooks.isEmpty(),
-             qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        !foundSharedNotebooks.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundSharedNotebooks = foundSharedNotebooks.size();
-    if (numFoundSharedNotebooks != numSharedNotebooks) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of shared notebooks "
-                                        "in the result of LocalStorageManager::"
-                                        "ListAllSharedNotebooks (") +
-                         QString::number(numFoundSharedNotebooks) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added shared notebooks (") +
-                         QString::number(numSharedNotebooks) + QStringLiteral(")")));
+    if (numFoundSharedNotebooks != numSharedNotebooks)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of shared notebooks "
+                           "in the result of LocalStorageManager::"
+                           "ListAllSharedNotebooks (") +
+            QString::number(numFoundSharedNotebooks) +
+            QStringLiteral(") does not match the original number "
+                           "of added shared notebooks (") +
+            QString::number(numSharedNotebooks) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundSharedNotebooks; ++i)
@@ -788,8 +922,10 @@ void TestListAllSharedNotebooks()
 void TestListAllTagsPerNote()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     Notebook notebook;
@@ -825,8 +961,10 @@ void TestListAllTagsPerNote()
         tags << Tag();
         Tag & tag = tags.back();
 
-        tag.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                    QString::number(i+1));
+        tag.setGuid(
+            QStringLiteral("00000000-0000-0000-c000-00000000000") +
+            QString::number(i + 1));
+
         tag.setUpdateSequenceNumber(i);
         tag.setName(QStringLiteral("Tag name #") + QString::number(i));
 
@@ -846,40 +984,56 @@ void TestListAllTagsPerNote()
         LocalStorageManager::UpdateNoteOptions updateNoteOptions(
             LocalStorageManager::UpdateNoteOption::UpdateTags);
 
-        res = localStorageManager.updateNote(note, updateNoteOptions,
-                                             errorMessage);
+        res = localStorageManager.updateNote(
+            note,
+            updateNoteOptions,
+            errorMessage);
+
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
     }
 
     Tag tagNotLinkedWithNote;
-    tagNotLinkedWithNote.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000045"));
+
+    tagNotLinkedWithNote.setGuid(
+        QStringLiteral("00000000-0000-0000-c000-000000000045"));
+
     tagNotLinkedWithNote.setUpdateSequenceNumber(9);
     tagNotLinkedWithNote.setName(QStringLiteral("Tag not linked with note"));
 
     res = localStorageManager.addTag(tagNotLinkedWithNote, errorMessage);
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
-    // 1) Test method listing all tags per given note without any additional conditions
+    // 1) Test method listing all tags per given note without any additional
+    // conditions
 
     errorMessage.clear();
-    QList<Tag> foundTags = localStorageManager.listAllTagsPerNote(note, errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    QList<Tag> foundTags = localStorageManager.listAllTagsPerNote(
+        note,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundTags = foundTags.size();
-    if (numFoundTags != numTags) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of tags in the result "
-                                        "of LocalStorageManager::ListAllTagsPerNote (") +
-                         QString::number(numFoundTags) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added tags (") +
-                         QString::number(numTags) + QStringLiteral(")")));
+    if (numFoundTags != numTags)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of tags in the result "
+                           "of LocalStorageManager::ListAllTagsPerNote (") +
+            QString::number(numFoundTags) +
+            QStringLiteral(") does not match the original number "
+                           "of added tags (") +
+            QString::number(numTags) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundTags; ++i)
     {
         const Tag & foundTag = foundTags.at(i);
         if (!tags.contains(foundTag)) {
-            QFAIL("One of tags from the result of LocalStorageManager::ListAllTagsPerNote "
+            QFAIL("One of tags from the result of "
+                  "LocalStorageManager::ListAllTagsPerNote "
                   "was not found in the list of original tags");
         }
     }
@@ -895,48 +1049,65 @@ void TestListAllTagsPerNote()
     errorMessage.clear();
     const size_t limit = 2;
     const size_t offset = 1;
+
     const LocalStorageManager::ListObjectsOptions flag =
-        LocalStorageManager::ListDirty;
-    const LocalStorageManager::ListTagsOrder::type order =
+        LocalStorageManager::ListObjectsOption::ListDirty;
+
+    const LocalStorageManager::ListTagsOrder order =
         LocalStorageManager::ListTagsOrder::ByUpdateSequenceNumber;
-    const LocalStorageManager::OrderDirection::type orderDirection =
+
+    const LocalStorageManager::OrderDirection orderDirection =
         LocalStorageManager::OrderDirection::Descending;
-    foundTags = localStorageManager.listAllTagsPerNote(note, errorMessage,
-                                                       flag, limit, offset,
-                                                       order, orderDirection);
-    if (foundTags.size() != static_cast<int>(limit)) {
-        QFAIL(qPrintable(QStringLiteral("Found unexpected amount of tags: "
-                                        "expected to find ") +
-                         QString::number(limit) + QStringLiteral(" tags, found ") +
-                         QString::number(foundTags.size()) + QStringLiteral(" tags")));
+
+    foundTags = localStorageManager.listAllTagsPerNote(
+        note,
+        errorMessage,
+        flag,
+        limit,
+        offset,
+        order,
+        orderDirection);
+
+    if (foundTags.size() != static_cast<int>(limit))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Found unexpected amount of tags: "
+                           "expected to find ") +
+            QString::number(limit) + QStringLiteral(" tags, found ") +
+            QString::number(foundTags.size()) + QStringLiteral(" tags")));
     }
 
     const Tag & firstTag = foundTags[0];
     const Tag & secondTag = foundTags[1];
 
     if (!firstTag.hasUpdateSequenceNumber()) {
-        QFAIL("First of found tags doesn't have the update sequence number set");
+        QFAIL("First of found tags doesn't have the update sequence number "
+              "set");
     }
 
     if (!secondTag.hasUpdateSequenceNumber()) {
-        QFAIL("Second of found tags doesn't have the update sequence number set");
+        QFAIL("Second of found tags doesn't have the update sequence number "
+              "set");
     }
 
     if ((firstTag.updateSequenceNumber() != 3) ||
         (secondTag.updateSequenceNumber() != 2))
     {
-        QFAIL(qPrintable(QStringLiteral("Unexpected order of found tags by "
-                                        "update sequence number: first tag: ") +
-                         firstTag.toString() + QStringLiteral("\nSecond tag: ") +
-                         secondTag.toString()));
+        QFAIL(qPrintable(
+            QStringLiteral("Unexpected order of found tags by "
+                           "update sequence number: first tag: ") +
+            firstTag.toString() + QStringLiteral("\nSecond tag: ") +
+            secondTag.toString()));
     }
 }
 
 void TestListNotes()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     Notebook notebook;
@@ -951,7 +1122,10 @@ void TestListNotes()
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
     Notebook secondNotebook;
-    secondNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
+
+    secondNotebook.setGuid(
+        QStringLiteral("00000000-0000-0000-c000-000000000048"));
+
     secondNotebook.setUpdateSequenceNumber(1);
     secondNotebook.setName(QStringLiteral("Fake second notebook name"));
     secondNotebook.setCreationTimestamp(1);
@@ -969,7 +1143,10 @@ void TestListNotes()
     notebookNotLinkedWithNotes.setCreationTimestamp(1);
     notebookNotLinkedWithNotes.setModificationTimestamp(1);
 
-    res = localStorageManager.addNotebook(notebookNotLinkedWithNotes, errorMessage);
+    res = localStorageManager.addNotebook(
+        notebookNotLinkedWithNotes,
+        errorMessage);
+
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
     Tag firstTestTag;
@@ -996,8 +1173,9 @@ void TestListNotes()
         Note & note = notes.back();
 
         if (i > 1) {
-            note.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                         QString::number(i+1));
+            note.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
         if (i > 2) {
@@ -1028,12 +1206,15 @@ void TestListNotes()
             note.addTagLocalUid(secondTestTag.localUid());
         }
 
-        note.setUpdateSequenceNumber(i+1);
+        note.setUpdateSequenceNumber(i + 1);
         note.setTitle(QStringLiteral("Fake note title #") + QString::number(i));
-        note.setContent(QStringLiteral("<en-note><h1>Hello, world #") +
-                        QString::number(i) + QStringLiteral("</h1></en-note>"));
-        note.setCreationTimestamp(i+1);
-        note.setModificationTimestamp(i+1);
+
+        note.setContent(
+            QStringLiteral("<en-note><h1>Hello, world #") +
+            QString::number(i) + QStringLiteral("</h1></en-note>"));
+
+        note.setCreationTimestamp(i + 1);
+        note.setModificationTimestamp(i + 1);
         note.setActive(true);
 
         if (i != 3) {
@@ -1053,19 +1234,26 @@ void TestListNotes()
 
     errorMessage.clear();
     LocalStorageManager::GetNoteOptions getNoteOptions = 0;
-    QList<Note> foundNotes = localStorageManager.listNotesPerNotebook(notebook,
-                                                                      getNoteOptions,
-                                                                      errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    QList<Note> foundNotes = localStorageManager.listNotesPerNotebook(
+        notebook,
+        getNoteOptions,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundNotes = foundNotes.size();
-    if (numFoundNotes != (numNotes-1)) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
-                                        "of LocalStorageManager::ListNotesPerNotebook (") +
-                         QString::number(numFoundNotes) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notes (") +
-                         QString::number(numNotes) + QStringLiteral(")")));
+    if (numFoundNotes != (numNotes-1))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of notes in the result "
+                           "of LocalStorageManager::ListNotesPerNotebook (") +
+            QString::number(numFoundNotes) +
+            QStringLiteral(") does not match the original number "
+                           "of added notes (") +
+            QString::number(numNotes) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numNotes; ++i)
@@ -1084,18 +1272,25 @@ void TestListNotes()
     // 2) Ensure the method listing notes per notebook returns zero properly
 
     errorMessage.clear();
-    foundNotes = localStorageManager.listNotesPerNotebook(notebookNotLinkedWithNotes,
-                                                          getNoteOptions,
-                                                          errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
-    if (foundNotes.size() != 0) {
-        QFAIL(qPrintable(QStringLiteral("Found non-zero number of notes in "
-                                        "the result of LocalStorageManager::"
-                                        "ListNotesPerNotebook "
-                                        "called with guid of notebook not "
-                                        "containing any notes (found ") +
-                         QString::number(foundNotes.size()) + QStringLiteral(" notes)")));
+    foundNotes = localStorageManager.listNotesPerNotebook(
+        notebookNotLinkedWithNotes,
+        getNoteOptions,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    if (foundNotes.size() != 0)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Found non-zero number of notes in "
+                           "the result of LocalStorageManager::"
+                           "ListNotesPerNotebook "
+                           "called with guid of notebook not "
+                           "containing any notes (found ") +
+            QString::number(foundNotes.size()) + QStringLiteral(" notes)")));
     }
 
     // 3) Test method listing notes per notebook considering only the notes
@@ -1104,42 +1299,57 @@ void TestListNotes()
     errorMessage.clear();
     size_t limit = 2;
     size_t offset = 0;
-    LocalStorageManager::ListNotesOrder::type order =
+
+    LocalStorageManager::ListNotesOrder order =
         LocalStorageManager::ListNotesOrder::ByUpdateSequenceNumber;
-    LocalStorageManager::OrderDirection::type orderDirection =
+
+    LocalStorageManager::OrderDirection orderDirection =
         LocalStorageManager::OrderDirection::Descending;
+
     getNoteOptions = LocalStorageManager::GetNoteOptions(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
+
     foundNotes = localStorageManager.listNotesPerNotebook(
-        notebook, getNoteOptions, errorMessage,
-        LocalStorageManager::ListElementsWithGuid,
-        limit, offset, order, orderDirection);
-    if (foundNotes.size() != static_cast<int>(limit)) {
-        QFAIL(qPrintable(QStringLiteral("Found unexpected amount of notes: "
-                                        "expected to find ") +
-                         QString::number(limit) + QStringLiteral(" notes, found ") +
-                         QString::number(foundNotes.size()) + QStringLiteral(" notes")));
+        notebook,
+        getNoteOptions,
+        errorMessage,
+        LocalStorageManager::ListObjectsOption::ListElementsWithGuid,
+        limit,
+        offset,
+        order,
+        orderDirection);
+
+    if (foundNotes.size() != static_cast<int>(limit))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Found unexpected amount of notes: "
+                           "expected to find ") +
+            QString::number(limit) + QStringLiteral(" notes, found ") +
+            QString::number(foundNotes.size()) + QStringLiteral(" notes")));
     }
 
     const Note & firstNote = foundNotes[0];
     const Note & secondNote = foundNotes[1];
 
     if (!firstNote.hasUpdateSequenceNumber()) {
-        QFAIL("First of found notes doesn't have the update sequence number set");
+        QFAIL("First of found notes doesn't have the update sequence number "
+              "set");
     }
 
     if (!secondNote.hasUpdateSequenceNumber()) {
-        QFAIL("Second of found notes doesn't have the update sequence number set");
+        QFAIL("Second of found notes doesn't have the update sequence number "
+              "set");
     }
 
     if ((firstNote.updateSequenceNumber() != 5) ||
         (secondNote.updateSequenceNumber() != 3))
     {
-        QFAIL(qPrintable(QStringLiteral("Unexpected order of found notes by "
-                                        "update sequence number: first note: ") +
-                         firstNote.toString() + QStringLiteral("\nSecond note: ") +
-                         secondNote.toString()));
+        QFAIL(qPrintable(
+            QStringLiteral("Unexpected order of found notes by "
+                           "update sequence number: first note: ") +
+            firstNote.toString() + QStringLiteral("\nSecond note: ") +
+            secondNote.toString()));
     }
 
     // 4) Test method listing notes per tag considering only the notes
@@ -1150,32 +1360,42 @@ void TestListNotes()
     offset = 0;
 
     foundNotes = localStorageManager.listNotesPerTag(
-        firstTestTag, getNoteOptions, errorMessage,
-        LocalStorageManager::ListElementsWithGuid, limit, offset, order,
+        firstTestTag,
+        getNoteOptions,
+        errorMessage,
+        LocalStorageManager::ListObjectsOption::ListElementsWithGuid,
+        limit,
+        offset,
+        order,
         orderDirection);
 
-    if (foundNotes.size() != static_cast<int>(limit)) {
-        QFAIL(qPrintable(QStringLiteral("Found unexpected amount of notes: "
-                                        "expected to find ") +
-                         QString::number(limit) + QStringLiteral(" notes, found ") +
-                         QString::number(foundNotes.size()) +
-                         QStringLiteral(" notes")));
+    if (foundNotes.size() != static_cast<int>(limit))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Found unexpected amount of notes: "
+                           "expected to find ") +
+            QString::number(limit) + QStringLiteral(" notes, found ") +
+            QString::number(foundNotes.size()) + QStringLiteral(" notes")));
     }
 
     const Note & firstNotePerTag = foundNotes[0];
     const Note & secondNotePerTag = foundNotes[1];
 
     if (!firstNotePerTag.hasUpdateSequenceNumber()) {
-        QFAIL("First of found notes doesn't have the update sequence number set");
+        QFAIL("First of found notes doesn't have the update sequence number "
+              "set");
     }
 
     if (!secondNotePerTag.hasUpdateSequenceNumber()) {
-        QFAIL("Second of found notes doesn't have the update sequence number set");
+        QFAIL("Second of found notes doesn't have the update sequence number "
+              "set");
     }
 
-    if (firstNotePerTag.updateSequenceNumber() < secondNotePerTag.updateSequenceNumber()) {
-        QFAIL("Incorrect sorting of found notes, expected descending sorting by "
-              "update sequence number");
+    if (firstNotePerTag.updateSequenceNumber() <
+        secondNotePerTag.updateSequenceNumber())
+    {
+        QFAIL("Incorrect sorting of found notes, expected descending sorting "
+              "by update sequence number");
     }
 
     if ((firstNotePerTag != notes[4]) && (secondNotePerTag != notes[2])) {
@@ -1185,36 +1405,48 @@ void TestListNotes()
     // 5) Test method listing all notes
     errorMessage.clear();
     getNoteOptions = LocalStorageManager::GetNoteOptions(0);
-    foundNotes = localStorageManager.listNotes(LocalStorageManager::ListAll,
-                                               getNoteOptions, errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+
+    foundNotes = localStorageManager.listNotes(
+        LocalStorageManager::ListObjectsOption::ListAll,
+        getNoteOptions,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     numFoundNotes = foundNotes.size();
-    if (numFoundNotes != numNotes) {
-        QFAIL(qPrintable(QStringLiteral("Error number of notes in the result "
-                                        "of LocalStorageManager::ListNotes "
-                                        "with flag ListAll (") +
-                         QString::number(numFoundNotes) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notes (") +
-                         QString::number(numNotes) + QStringLiteral(")")));
+    if (numFoundNotes != numNotes)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error number of notes in the result "
+                           "of LocalStorageManager::ListNotes "
+                           "with flag ListAll (") +
+            QString::number(numFoundNotes) +
+            QStringLiteral(") does not match the original number "
+                           "of added notes (") +
+            QString::number(numNotes) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundNotes; ++i)
     {
         const Note & foundNote = foundNotes[i];
         if (!notes.contains(foundNote)) {
-            QFAIL("One of notes from the result of LocalStorageManager::ListNotes "
-                  "with flag ListAll was not found in the list of original notes");
+            QFAIL("One of notes from the result of "
+                  "LocalStorageManager::ListNotes with flag ListAll was not "
+                  "found in the list of original notes");
         }
     }
 
 #define CHECK_LIST_NOTES(flag, name, true_cond, false_cond)                    \
     errorMessage.clear();                                                      \
-    foundNotes =                                                               \
-        localStorageManager.listNotes(flag, getNoteOptions, errorMessage);     \
-    QVERIFY2(errorMessage.isEmpty(),                                           \
-             qPrintable(errorMessage.nonLocalizedString()));                   \
+    foundNotes = localStorageManager.listNotes(                                \
+        flag,                                                                  \
+        getNoteOptions,                                                        \
+        errorMessage);                                                         \
+    QVERIFY2(                                                                  \
+        errorMessage.isEmpty(),                                                \
+        qPrintable(errorMessage.nonLocalizedString()));                        \
     for(int i = 0; i < numNotes; ++i)                                          \
     {                                                                          \
         const Note & note = notes[i];                                          \
@@ -1232,50 +1464,70 @@ void TestListNotes()
     }                                                                          \
 // CHECK_LIST_NOTES
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 6) Test method listing only dirty notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTES(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 7) Test method listing only local notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTES(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 8) Test method listing only notes without guid
-    CHECK_LIST_NOTES(LocalStorageManager::ListElementsWithoutGuid,
-                     "guidless", i <= 1, i > 1);
+    CHECK_LIST_NOTES(
+        ListObjectsOption::ListElementsWithoutGuid,
+        "guidless",
+        i <= 1,
+        i > 1);
 
     // 9) Test method listing only favorited notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListFavoritedElements,
-                     "favorited", (i == 0) || (i == 4),
-                     (i != 0) && (i != 4));
+    CHECK_LIST_NOTES(
+        ListObjectsOption::ListFavoritedElements,
+        "favorited",
+        (i == 0) || (i == 4),
+        (i != 0) && (i != 4));
 
     // 10) Test method listing dirty favorited notes with guid
-    CHECK_LIST_NOTES(LocalStorageManager::ListDirty |
-                     LocalStorageManager::ListElementsWithGuid |
-                     LocalStorageManager::ListFavoritedElements,
-                     "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_NOTES(
+        ListObjectsOption::ListDirty |
+        ListObjectsOption::ListElementsWithGuid |
+        ListObjectsOption::ListFavoritedElements,
+        "dirty, favorited, having guid",
+        i == 4,
+        i != 4);
 
     // 11) Test method listing local favorited notes
-    CHECK_LIST_NOTES(LocalStorageManager::ListLocal |
-                     LocalStorageManager::ListFavoritedElements,
-                     "local, favorited", i == 0, i != 0);
+    CHECK_LIST_NOTES(
+        ListObjectsOption::ListLocal |
+        ListObjectsOption::ListFavoritedElements,
+        "local, favorited",
+        i == 0,
+        i != 0);
 
     // 12) Test method listing notes per notebook and tag local uids
     // using notebook local uids only as a filter
     QStringList notebookLocalUids = QStringList() << notebook.localUid();
     QStringList tagLocalUids;
+
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
-        notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        notebookLocalUids,
+        tagLocalUids,
+        getNoteOptions,
+        errorMessage,
+        LocalStorageManager::ListObjectsOption::ListAll);
+
     numFoundNotes = foundNotes.size();
-    if (numFoundNotes != (numNotes-1)) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
-                                        "of LocalStorageManager::"
-                                        "ListNotesPerNotebooksAndTags (") +
-                         QString::number(numFoundNotes) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notes (") +
-                         QString::number(numNotes) + QStringLiteral(") ") +
-                         QStringLiteral("when only notebooks are present "
-                                        "within the filter")));
+    if (numFoundNotes != (numNotes-1))
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of notes in the result "
+                           "of LocalStorageManager::"
+                           "ListNotesPerNotebooksAndTags (") +
+            QString::number(numFoundNotes) +
+            QStringLiteral(") does not match the original number "
+                           "of added notes (") +
+            QString::number(numNotes) + QStringLiteral(") ") +
+            QStringLiteral("when only notebooks are present "
+                           "within the filter")));
     }
 
     for(int i = 0; i < numNotes; ++i)
@@ -1296,20 +1548,26 @@ void TestListNotes()
     // using tag local uids only as a filter
     notebookLocalUids.clear();
     tagLocalUids << firstTestTag.localUid();
+
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
-        notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        notebookLocalUids,
+        tagLocalUids,
+        getNoteOptions,
+        errorMessage,
+        LocalStorageManager::ListObjectsOption::ListAll);
+
     numFoundNotes = foundNotes.size();
-    if (numFoundNotes != 3) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
-                                        "of LocalStorageManager::"
-                                        "ListNotesPerNotebooksAndTags (") +
-                         QString::number(numFoundNotes) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notes per tag (") +
-                         QString::number(3) + QStringLiteral(") ") +
-                         QStringLiteral("when only tags are present "
-                                        "within the filter")));
+    if (numFoundNotes != 3)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of notes in the result "
+                           "of LocalStorageManager::"
+                           "ListNotesPerNotebooksAndTags (") +
+            QString::number(numFoundNotes) +
+            QStringLiteral(") does not match the original number "
+                           "of added notes per tag (") +
+            QString::number(3) + QStringLiteral(") ") +
+            QStringLiteral("when only tags are present within the filter")));
     }
 
     for(int i = 0; i < numNotes; ++i)
@@ -1331,20 +1589,27 @@ void TestListNotes()
     notebookLocalUids << secondNotebook.localUid();
     tagLocalUids.clear();
     tagLocalUids << secondTestTag.localUid();
+
     foundNotes = localStorageManager.listNotesPerNotebooksAndTags(
-        notebookLocalUids, tagLocalUids, getNoteOptions, errorMessage,
-        LocalStorageManager::ListAll);
+        notebookLocalUids,
+        tagLocalUids,
+        getNoteOptions,
+        errorMessage,
+        LocalStorageManager::ListObjectsOption::ListAll);
+
     numFoundNotes = foundNotes.size();
-    if (numFoundNotes != 1) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of notes in the result "
-                                        "of LocalStorageManager::"
-                                        "ListNotesPerNotebooksAndTags (") +
-                         QString::number(numFoundNotes) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notes per tag (") +
-                         QString::number(1) + QStringLiteral(") ") +
-                         QStringLiteral("when both notebooks and tags are present "
-                                        "within the filter")));
+    if (numFoundNotes != 1)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of notes in the result "
+                           "of LocalStorageManager::"
+                           "ListNotesPerNotebooksAndTags (") +
+            QString::number(numFoundNotes) +
+            QStringLiteral(") does not match the original number "
+                           "of added notes per tag (") +
+            QString::number(1) + QStringLiteral(") ") +
+            QStringLiteral("when both notebooks and tags are present "
+                           "within the filter")));
     }
 
     if (foundNotes[0] != notes[3]) {
@@ -1362,22 +1627,32 @@ void TestListNotes()
     }
 
     errorMessage.clear();
-    foundNotes = localStorageManager.listNotesByLocalUids(noteLocalUids,
-                                                          getNoteOptions,
-                                                          errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
-    QVERIFY2(foundNotes.size() == noteLocalUids.size(),
-             qPrintable(QString::fromUtf8("Unexpected number of notes found by "
-                                          "method listing notes by local uids: "
-                                          "expected %1 notes, got %2")
-                        .arg(noteLocalUids.size(), foundNotes.size())));
+
+    foundNotes = localStorageManager.listNotesByLocalUids(
+        noteLocalUids,
+        getNoteOptions,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        foundNotes.size() == noteLocalUids.size(),
+        qPrintable(QString::fromUtf8(
+            "Unexpected number of notes found by "
+            "method listing notes by local uids: "
+            "expected %1 notes, got %2")
+            .arg(noteLocalUids.size(), foundNotes.size())));
+
     for(auto it = foundNotes.constBegin(),
         end = foundNotes.constEnd(); it != end; ++it)
     {
-        QVERIFY2(noteLocalUids.contains(it->localUid()),
-                 "Detected note returned by method listing notes by local uids "
-                 "which local uid is not present within the original list of "
-                 "local uids");
+        QVERIFY2(
+            noteLocalUids.contains(it->localUid()),
+            "Detected note returned by method listing notes by local uids "
+            "which local uid is not present within the original list of "
+            "local uids");
     }
 
     // 16) Test method listing notes by note local uids when the list of note
@@ -1387,30 +1662,41 @@ void TestListNotes()
     noteLocalUids << UidGenerator::Generate();
 
     errorMessage.clear();
-    foundNotes = localStorageManager.listNotesByLocalUids(noteLocalUids,
-                                                          getNoteOptions,
-                                                          errorMessage);
-    QVERIFY2(errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
-    QVERIFY2(foundNotes.size() == originalNoteLocalUidsSize,
-             qPrintable(QString::fromUtf8("Unexpected number of notes found by "
-                                          "method listing notes by local uids: "
-                                          "expected %1 notes, got %2")
-                        .arg(originalNoteLocalUidsSize, foundNotes.size())));
+    foundNotes = localStorageManager.listNotesByLocalUids(
+        noteLocalUids,
+        getNoteOptions,
+        errorMessage);
+
+    QVERIFY2(
+        errorMessage.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        foundNotes.size() == originalNoteLocalUidsSize,
+        qPrintable(QString::fromUtf8(
+            "Unexpected number of notes found by "
+            "method listing notes by local uids: "
+            "expected %1 notes, got %2")
+            .arg(originalNoteLocalUidsSize, foundNotes.size())));
+
     for(auto it = foundNotes.constBegin(),
         end = foundNotes.constEnd(); it != end; ++it)
     {
-        QVERIFY2(noteLocalUids.contains(it->localUid()),
-                 "Detected note returned by method listing notes by local uids "
-                 "which local uid is not present within the original list of "
-                 "local uids");
+        QVERIFY2(
+            noteLocalUids.contains(it->localUid()),
+            "Detected note returned by method listing notes by local uids "
+            "which local uid is not present within the original list of "
+            "local uids");
     }
 }
 
 void TestListNotebooks()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     ErrorString errorMessage;
@@ -1424,29 +1710,40 @@ void TestListNotebooks()
         Notebook & notebook = notebooks.back();
 
         if (i > 1) {
-            notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                             QString::number(i+1));
+            notebook.setGuid(
+                QStringLiteral("00000000-0000-0000-c000-00000000000") +
+                QString::number(i + 1));
         }
 
-        notebook.setUpdateSequenceNumber(i+1);
-        notebook.setName(QStringLiteral("Fake notebook name #") + QString::number(i+1));
-        notebook.setCreationTimestamp(i+1);
-        notebook.setModificationTimestamp(i+1);
+        notebook.setUpdateSequenceNumber(i + 1);
+
+        notebook.setName(
+            QStringLiteral("Fake notebook name #") + QString::number(i + 1));
+
+        notebook.setCreationTimestamp(i + 1);
+        notebook.setModificationTimestamp(i + 1);
 
         notebook.setDefaultNotebook(false);
         notebook.setLastUsed(false);
+
         notebook.setPublishingUri(
-            QStringLiteral("Fake publishing uri #") + QString::number(i+1));
+            QStringLiteral("Fake publishing uri #") + QString::number(i + 1));
+
         notebook.setPublishingOrder(1);
         notebook.setPublishingAscending(true);
+
         notebook.setPublishingPublicDescription(
             QStringLiteral("Fake public description"));
+
         notebook.setPublished(true);
         notebook.setStack(QStringLiteral("Fake notebook stack"));
+
         notebook.setBusinessNotebookDescription(
             QStringLiteral("Fake business notebook description"));
+
         notebook.setBusinessNotebookPrivilegeLevel(1);
         notebook.setBusinessNotebookRecommended(true);
+
         // NotebookRestrictions
         notebook.setCanReadNotes(true);
         notebook.setCanCreateNotes(true);
@@ -1490,22 +1787,28 @@ void TestListNotebooks()
             notebook.setFavorited(false);
         }
 
-        if (i > 1) {
+        if (i > 1)
+        {
             SharedNotebook sharedNotebook;
-            sharedNotebook.setId(i+1);
-            sharedNotebook.setUserId(i+1);
+            sharedNotebook.setId(i + 1);
+            sharedNotebook.setUserId(i + 1);
             sharedNotebook.setNotebookGuid(notebook.guid());
+
             sharedNotebook.setEmail(
                 QStringLiteral("Fake shared notebook email #") +
-                QString::number(i+1));
-            sharedNotebook.setCreationTimestamp(i+1);
-            sharedNotebook.setModificationTimestamp(i+1);
+                QString::number(i + 1));
+
+            sharedNotebook.setCreationTimestamp(i + 1);
+            sharedNotebook.setModificationTimestamp(i + 1);
+
             sharedNotebook.setGlobalId(
                 QStringLiteral("Fake shared notebook global id #") +
-                QString::number(i+1));
+                QString::number(i + 1));
+
             sharedNotebook.setUsername(
                 QStringLiteral("Fake shared notebook username #") +
-                QString::number(i+1));
+                QString::number(i + 1));
+
             sharedNotebook.setPrivilegeLevel(1);
             sharedNotebook.setReminderNotifyEmail(true);
             sharedNotebook.setReminderNotifyApp(false);
@@ -1519,17 +1822,23 @@ void TestListNotebooks()
 
     // 1) Test method listing all notebooks
 
-    QList<Notebook> foundNotebooks = localStorageManager.listAllNotebooks(errorMessage);
-    QVERIFY2(!foundNotebooks.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
+    QList<Notebook> foundNotebooks = localStorageManager.listAllNotebooks(
+        errorMessage);
+
+    QVERIFY2(
+        !foundNotebooks.isEmpty(),
+        qPrintable(errorMessage.nonLocalizedString()));
 
     int numFoundNotebooks = foundNotebooks.size();
-    if (numFoundNotebooks != numNotebooks) {
-        QFAIL(qPrintable(QStringLiteral("Error: number of notebooks in the result "
-                                        "of LocalStorageManager::ListAllNotebooks (") +
-                         QString::number(numFoundNotebooks) +
-                         QStringLiteral(") does not match the original number "
-                                        "of added notebooks (") +
-                         QString::number(numNotebooks) + QStringLiteral(")")));
+    if (numFoundNotebooks != numNotebooks)
+    {
+        QFAIL(qPrintable(
+            QStringLiteral("Error: number of notebooks in the result "
+                           "of LocalStorageManager::ListAllNotebooks (") +
+            QString::number(numFoundNotebooks) +
+            QStringLiteral(") does not match the original number "
+                           "of added notebooks (") +
+            QString::number(numNotebooks) + QStringLiteral(")")));
     }
 
     for(int i = 0; i < numFoundNotebooks; ++i)
@@ -1537,15 +1846,17 @@ void TestListNotebooks()
         const Notebook & foundNotebook = foundNotebooks.at(i);
         if (!notebooks.contains(foundNotebook)) {
             QFAIL("One of notebooks from the result of LocalStorageManager::"
-                  "ListAllNotebooks was not found in the list of original notebooks");
+                  "ListAllNotebooks was not found in the list of original "
+                  "notebooks");
         }
     }
 
 #define CHECK_LIST_NOTEBOOKS(flag, name, true_cond, false_cond)                \
     errorMessage.clear();                                                      \
     foundNotebooks = localStorageManager.listNotebooks(flag, errorMessage);    \
-    QVERIFY2(errorMessage.isEmpty(),                                           \
-             qPrintable(errorMessage.nonLocalizedString()));                   \
+    QVERIFY2(                                                                  \
+        errorMessage.isEmpty(),                                                \
+        qPrintable(errorMessage.nonLocalizedString()));                        \
     for(int i = 0; i < numNotebooks; ++i)                                      \
     {                                                                          \
         const Notebook & notebook = notebooks.at(i);                           \
@@ -1563,52 +1874,76 @@ void TestListNotebooks()
     }                                                                          \
 // CHECK_LIST_NOTEBOOKS
 
+    using ListObjectsOption = LocalStorageManager::ListObjectsOption;
+
     // 2) Test method listing only dirty notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty, "dirty", i > 2, i <= 2);
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListDirty, "dirty", i > 2, i <= 2);
 
     // 3) Test method listing only local notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal, "local", i < 3, i >= 3);
+    CHECK_LIST_NOTEBOOKS(ListObjectsOption::ListLocal, "local", i < 3, i >= 3);
 
     // 4) Test method listing only notebooks without guid
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListElementsWithoutGuid,
-                         "guidless", i <= 1, i > 1);
+    CHECK_LIST_NOTEBOOKS(
+        ListObjectsOption::ListElementsWithoutGuid,
+        "guidless",
+        i <= 1,
+        i > 1);
 
     // 5) Test method listing only favorited notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListFavoritedElements,
-                         "favorited", (i == 0) || (i == 4),
-                         (i != 0) && (i != 4));
+    CHECK_LIST_NOTEBOOKS(
+        ListObjectsOption::ListFavoritedElements,
+        "favorited",
+        (i == 0) || (i == 4),
+        (i != 0) && (i != 4));
 
     // 6) Test method listing dirty favorited notebooks with guid
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListDirty |
-                         LocalStorageManager::ListElementsWithGuid |
-                         LocalStorageManager::ListFavoritedElements,
-                         "dirty, favorited, having guid", i == 4, i != 4);
+    CHECK_LIST_NOTEBOOKS(
+        ListObjectsOption::ListDirty |
+        ListObjectsOption::ListElementsWithGuid |
+        ListObjectsOption::ListFavoritedElements,
+        "dirty, favorited, having guid",
+        i == 4,
+        i != 4);
 
     // 7) Test method listing local favorited notebooks
-    CHECK_LIST_NOTEBOOKS(LocalStorageManager::ListLocal |
-                         LocalStorageManager::ListFavoritedElements,
-                         "local, favorited", i == 0, i != 0);
+    CHECK_LIST_NOTEBOOKS(
+        ListObjectsOption::ListLocal |
+        ListObjectsOption::ListFavoritedElements,
+        "local, favorited",
+        i == 0,
+        i != 0);
 }
 
 void TestExpungeNotelessTagsFromLinkedNotebooks()
 {
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
     LinkedNotebook linkedNotebook;
-    linkedNotebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000001"));
+
+    linkedNotebook.setGuid(
+        QStringLiteral("00000000-0000-0000-c000-000000000001"));
+
     linkedNotebook.setUpdateSequenceNumber(1);
     linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
     linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
     linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
+
     linkedNotebook.setSharedNotebookGlobalId(
         QStringLiteral("Linked notebook shared notebook global id"));
+
     linkedNotebook.setUri(QStringLiteral("Linked notebook uri"));
-    linkedNotebook.setNoteStoreUrl(QStringLiteral("Linked notebook note store url"));
+
+    linkedNotebook.setNoteStoreUrl(
+        QStringLiteral("Linked notebook note store url"));
+
     linkedNotebook.setWebApiUrlPrefix(
         QStringLiteral("Linked notebook web api url prefix"));
+
     linkedNotebook.setStack(QStringLiteral("Linked notebook stack"));
     linkedNotebook.setBusinessId(1);
 
@@ -1632,7 +1967,10 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
     note.setNotebookLocalUid(notebook.localUid());
 
     ErrorString errorMessage;
-    bool res = localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage);
+    bool res = localStorageManager.addLinkedNotebook(
+        linkedNotebook,
+        errorMessage);
+
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
     errorMessage.clear();
@@ -1651,8 +1989,10 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
         tags.push_back(Tag());
         Tag & tag = tags.back();
 
-        tag.setGuid(QStringLiteral("00000000-0000-0000-c000-00000000000") +
-                    QString::number(i+1));
+        tag.setGuid(
+            QStringLiteral("00000000-0000-0000-c000-00000000000") +
+            QString::number(i + 1));
+
         tag.setUpdateSequenceNumber(i);
         tag.setName(QStringLiteral("Tag name #") + QString::number(i));
 
@@ -1671,8 +2011,12 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
 
         LocalStorageManager::UpdateNoteOptions updateNoteOptions(
             LocalStorageManager::UpdateNoteOption::UpdateTags);
-        res = localStorageManager.updateNote(note, updateNoteOptions,
-                                             errorMessage);
+
+        res = localStorageManager.updateNote(
+            note,
+            updateNoteOptions,
+            errorMessage);
+
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
     }
 
@@ -1681,7 +2025,10 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
     errorMessage.clear();
-    res = localStorageManager.expungeNotelessTagsFromLinkedNotebooks(errorMessage);
+
+    res = localStorageManager.expungeNotelessTagsFromLinkedNotebooks(
+        errorMessage);
+
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
     QList<Tag> foundTags;
@@ -1696,15 +2043,21 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
     {
         const Tag & tag = tags[i];
 
-        if ((i > 2) && foundTags.contains(tag)) {
-            errorMessage.setBase("Found tag from linked notebook which "
-                                 "should have been expunged");
+        if ((i > 2) && foundTags.contains(tag))
+        {
+            errorMessage.setBase(
+                "Found tag from linked notebook which "
+                "should have been expunged");
+
             QNWARNING(errorMessage);
             QFAIL(qPrintable(errorMessage.nonLocalizedString()));
         }
-        else if ((i <= 2) && !foundTags.contains(tag)) {
-            errorMessage.setBase("Could not find tag which should have "
-                                 "remained in the local storage");
+        else if ((i <= 2) && !foundTags.contains(tag))
+        {
+            errorMessage.setBase(
+                "Could not find tag which should have "
+                "remained in the local storage");
+
             QNWARNING(errorMessage);
             QFAIL(qPrintable(errorMessage.nonLocalizedString()));
         }

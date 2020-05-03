@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,10 +20,12 @@
 #define LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDICES_DATA_H
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
+
 #include "ResourceRecognitionIndexItemData.h"
-#include <QString>
+
 #include <QByteArray>
 #include <QSharedData>
+#include <QString>
 
 QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 
@@ -32,12 +34,10 @@ namespace quentier {
 class Q_DECL_HIDDEN ResourceRecognitionIndicesData: public QSharedData
 {
 public:
-    ResourceRecognitionIndicesData();
-
     bool isValid() const;
     bool setData(const QByteArray & rawRecognitionIndicesData);
 
-    bool        m_isNull;
+    bool        m_isNull = true;
 
     QString     m_objectId;
     QString     m_objectType;
@@ -45,8 +45,9 @@ public:
     QString     m_engineVersion;
     QString     m_docType;
     QString     m_lang;
-    int         m_objectHeight;
-    int         m_objectWidth;
+
+    int         m_objectHeight = -1;
+    int         m_objectWidth = -1;
 
     QVector<ResourceRecognitionIndexItem>   m_items;
 
@@ -55,18 +56,26 @@ private:
     void restoreFrom(const ResourceRecognitionIndicesData & data);
 
     void parseRecoIndexAttributes(const QXmlStreamAttributes & attributes);
-    void parseCommonItemAttributes(const QXmlStreamAttributes & attributes,
-                                   ResourceRecognitionIndexItem & item) const;
-    void parseTextItemAttributesAndData(const QXmlStreamAttributes & attributes,
-                                        const QString & data,
-                                        ResourceRecognitionIndexItem & item) const;
-    void parseObjectItemAttributes(const QXmlStreamAttributes & attributes,
-                                   ResourceRecognitionIndexItem & item) const;
-    void parseShapeItemAttributes(const QXmlStreamAttributes & attributes,
-                                  ResourceRecognitionIndexItem & item) const;
-    void parseBarcodeItemAttributesAndData(const QXmlStreamAttributes & attributes,
-                                           const QString & data,
-                                           ResourceRecognitionIndexItem & item) const;
+
+    void parseCommonItemAttributes(
+        const QXmlStreamAttributes & attributes,
+        ResourceRecognitionIndexItem & item) const;
+
+    void parseTextItemAttributesAndData(
+        const QXmlStreamAttributes & attributes, const QString & data,
+        ResourceRecognitionIndexItem & item) const;
+
+    void parseObjectItemAttributes(
+        const QXmlStreamAttributes & attributes,
+        ResourceRecognitionIndexItem & item) const;
+
+    void parseShapeItemAttributes(
+        const QXmlStreamAttributes & attributes,
+        ResourceRecognitionIndexItem & item) const;
+
+    void parseBarcodeItemAttributesAndData(
+        const QXmlStreamAttributes & attributes,
+        const QString & data, ResourceRecognitionIndexItem & item) const;
 };
 
 } // namespace quentier

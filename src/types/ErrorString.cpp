@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,7 +17,9 @@
  */
 
 #include <quentier/types/ErrorString.h>
+
 #include "data/ErrorStringData.h"
+
 #include <QApplication>
 
 namespace quentier {
@@ -121,8 +123,8 @@ void ErrorString::setDetails(const char * error)
 bool ErrorString::isEmpty() const
 {
     return d->m_base.isEmpty() &&
-           d->m_details.isEmpty() &&
-           d->m_additionalBases.isEmpty();
+        d->m_details.isEmpty() &&
+        d->m_additionalBases.isEmpty();
 }
 
 void ErrorString::clear()
@@ -144,16 +146,16 @@ QString ErrorString::localizedString() const
     }
 
     QString additionalBasesStr;
-    for(auto it = d->m_additionalBases.constBegin(),
-        end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for(const auto & additionalBase: qAsConst(d->m_additionalBases))
     {
-        const QString & additionalBase = *it;
         if (additionalBase.isEmpty()) {
             continue;
         }
 
-        QString translatedStr =
-            qApp->translate("", additionalBase.toLocal8Bit().constData());
+        QString translatedStr = qApp->translate(
+            "",
+            additionalBase.toLocal8Bit().constData());
+
         if (additionalBasesStr.isEmpty()) {
             additionalBasesStr = translatedStr;
         }
@@ -210,10 +212,8 @@ QString ErrorString::nonLocalizedString() const
 {
     QString result = d->m_base;
 
-    for(auto it = d->m_additionalBases.constBegin(),
-        end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for(const auto & additionalBase: qAsConst(d->m_additionalBases))
     {
-        const QString & additionalBase = *it;
         if (additionalBase.isEmpty()) {
             continue;
         }

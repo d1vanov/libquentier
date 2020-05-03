@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 
 #include <quentier_private/synchronization/IUserStore.h>
+
 #include <quentier/utility/Macros.h>
 
 namespace quentier {
@@ -46,13 +47,13 @@ public:
 
     virtual IUserStore * create(const QString & host) const override;
 
-    virtual bool checkVersion(const QString & clientName,
-                              qint16 edamVersionMajor,
-                              qint16 edamVersionMinor,
-                              ErrorString & errorDescription) override;
+    virtual bool checkVersion(
+        const QString & clientName, qint16 edamVersionMajor,
+        qint16 edamVersionMinor, ErrorString & errorDescription) override;
 
-    virtual qint32 getUser(User & user, ErrorString & errorDescription,
-                           qint32 & rateLimitSeconds) override;
+    virtual qint32 getUser(
+        User & user, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) override;
 
     virtual qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
@@ -71,8 +72,8 @@ private:
         qint32 & rateLimitSeconds) const;
 
 private:
-    UserStore(const UserStore & other)  = delete;
-    UserStore & operator=(const UserStore & other)  = delete;
+    UserStore(const UserStore & other) = delete;
+    UserStore & operator=(const UserStore & other) = delete;
 };
 
 } // namespace quentier

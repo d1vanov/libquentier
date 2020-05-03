@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,7 +45,8 @@ public:
     virtual ~ILocalStoragePatch();
 
     /**
-     * @return      Version of local storage to which the patch needs to be applied
+     * @return      Version of local storage to which the patch needs to be
+     *              applied
      */
     virtual int fromVersion() const = 0;
 
@@ -88,7 +89,8 @@ public:
      * @return                      True if local storage was successfully
      *                              restored from backup, false otherwise
      */
-    virtual bool restoreLocalStorageFromBackup(ErrorString & errorDescription) = 0;
+    virtual bool restoreLocalStorageFromBackup(
+        ErrorString & errorDescription) = 0;
 
     /**
      * Remove the previously made backup of local storage, presumably

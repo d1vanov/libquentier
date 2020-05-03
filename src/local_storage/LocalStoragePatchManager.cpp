@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,26 +37,26 @@ LocalStoragePatchManager::LocalStoragePatchManager(
     m_sqlDatabase(database)
 {}
 
-QVector<QSharedPointer<ILocalStoragePatch> >
+QVector<std::shared_ptr<ILocalStoragePatch> >
 LocalStoragePatchManager::patchesForCurrentVersion()
 {
-    QVector<QSharedPointer<ILocalStoragePatch> > result;
+    QVector<std::shared_ptr<ILocalStoragePatch> > result;
 
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
     if (version <= 0) {
         QNWARNING("LocalStoragePatchManager::"
-                  "patchInfoForCurrentLocalStorageVersion: "
-                  "unable to determine the current local "
-                  "storage version");
+            << "patchInfoForCurrentLocalStorageVersion: "
+            << "unable to determine the current local storage version");
         return result;
     }
 
-    if (version == 1) {
-        result.append(QSharedPointer<ILocalStoragePatch>(
-                new LocalStoragePatch1To2(m_account,
-                                          m_localStorageManager,
-                                          m_sqlDatabase)));
+    if (version == 1)
+    {
+        result.append(std::make_shared<LocalStoragePatch1To2>(
+            m_account,
+            m_localStorageManager,
+            m_sqlDatabase));
     }
 
     return result;

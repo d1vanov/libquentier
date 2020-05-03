@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,7 @@
 
 #include <quentier/utility/Macros.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QSharedData>
 
@@ -45,8 +41,8 @@ public:
     int                     m_indexInNote;
 
 private:
-    SharedNoteData & operator=(const SharedNoteData & other)  = delete;
-    SharedNoteData & operator=(SharedNoteData && other)  = delete;
+    SharedNoteData & operator=(const SharedNoteData & other) = delete;
+    SharedNoteData & operator=(SharedNoteData && other) = delete;
 };
 
 } // namespace quentier

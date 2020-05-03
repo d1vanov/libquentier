@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,13 +20,10 @@
 #define LIB_QUENTIER_TYPES_DATA_NOTE_DATA_H
 
 #include "FavoritableDataElementData.h"
+
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 #include <QByteArray>
 
@@ -39,7 +36,7 @@ public:
     NoteData(const NoteData & other);
     NoteData(NoteData && other);
     NoteData(const qevercloud::Note & other);
-    virtual ~NoteData();
+    virtual ~NoteData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -76,8 +73,8 @@ public:
     QByteArray                      m_thumbnailData;
 
 private:
-    NoteData & operator=(const NoteData & other)  = delete;
-    NoteData & operator=(NoteData && other)  = delete;
+    NoteData & operator=(const NoteData & other) = delete;
+    NoteData & operator=(NoteData && other) = delete;
 };
 
 } // namespace quentier

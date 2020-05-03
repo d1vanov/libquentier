@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,22 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
-#define LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
-
-#include <quentier/exception/IQuentierException.h>
+#include <quentier/exception/DatabaseRequestException.h>
 
 namespace quentier {
 
-class QUENTIER_EXPORT DatabaseSqlErrorException: public IQuentierException
+DatabaseRequestException::DatabaseRequestException(const ErrorString & message) :
+    IQuentierException(message)
+{}
+
+const QString DatabaseRequestException::exceptionDisplayName() const
 {
-public:
-    explicit DatabaseSqlErrorException(const ErrorString & message);
-
-protected:
-    virtual const QString exceptionDisplayName() const override;
-};
-
+    return QStringLiteral("DatabaseRequestException");
 }
 
-#endif // LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
+} // namespace quentier

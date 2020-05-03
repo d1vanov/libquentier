@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,12 +19,15 @@
 #ifndef LIB_QUENTIER_UTILITY_FILE_COPIER_H
 #define LIB_QUENTIER_UTILITY_FILE_COPIER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QString>
+
+QT_FORWARD_DECLARE_CLASS(QDebug)
+QT_FORWARD_DECLARE_CLASS(QTextStream)
 
 namespace quentier {
 
@@ -36,17 +39,17 @@ class QUENTIER_EXPORT FileCopier: public QObject
 public:
     explicit FileCopier(QObject * parent = nullptr);
 
-    struct State
+    enum class State
     {
-        enum type
-        {
-            Idle = 0,
-            Copying,
-            Cancelling
-        };
+        Idle = 0,
+        Copying,
+        Cancelling
     };
 
-    State::type state() const;
+    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QTextStream & operator<<(QTextStream & strm, const State state);
+
+    State state() const;
 
     QString sourceFilePath() const;
     QString destinationFilePath() const;

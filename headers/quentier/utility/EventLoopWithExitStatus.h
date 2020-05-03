@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,11 +19,14 @@
 #ifndef LIB_QUENTIER_UTILITY_EVENT_LOOP_WITH_EXIT_STATUS_H
 #define LIB_QUENTIER_UTILITY_EVENT_LOOP_WITH_EXIT_STATUS_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 #include <QEventLoop>
+
+QT_FORWARD_DECLARE_CLASS(QDebug)
+QT_FORWARD_DECLARE_CLASS(QTextStream)
 
 namespace quentier {
 
@@ -33,16 +36,19 @@ class QUENTIER_EXPORT EventLoopWithExitStatus : public QEventLoop
 public:
     explicit EventLoopWithExitStatus(QObject * parent = nullptr);
 
-    struct ExitStatus
+    enum class ExitStatus
     {
-        enum type {
-            Success,
-            Failure,
-            Timeout
-        };
+        Success,
+        Failure,
+        Timeout
     };
 
-    ExitStatus::type exitStatus() const;
+    friend QDebug & operator<<(QDebug & dbg, const ExitStatus status);
+
+    friend QTextStream & operator<<(
+        QTextStream & strm, const ExitStatus status);
+
+    ExitStatus exitStatus() const;
     const ErrorString & errorDescription() const;
 
 public Q_SLOTS:
@@ -53,8 +59,8 @@ public Q_SLOTS:
     void exitAsTimeout();
 
 private:
-    ExitStatus::type    m_exitStatus;
-    ErrorString         m_errorDescription;
+    ExitStatus      m_exitStatus;
+    ErrorString     m_errorDescription;
 };
 
 } // namespace quentier

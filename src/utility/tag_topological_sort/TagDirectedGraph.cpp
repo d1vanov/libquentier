@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,8 +39,8 @@ void TagDirectedGraph::clear()
     m_childTagIdsByParentTagId.clear();
 }
 
-void TagDirectedGraph::addChild(const QString & parentTagId,
-                                const QString & childTagId)
+void TagDirectedGraph::addChild(
+    const QString & parentTagId, const QString & childTagId)
 {
     QStringList & childTagIds = m_childTagIdsByParentTagId[parentTagId];
     if (!childTagIds.contains(childTagId)) {

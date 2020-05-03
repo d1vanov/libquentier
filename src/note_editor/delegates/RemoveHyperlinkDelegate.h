@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -55,7 +55,7 @@ private:
     void removeHyperlink(const quint64 hyperlinkId);
 
 private:
-    typedef JsResultCallbackFunctor<RemoveHyperlinkDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<RemoveHyperlinkDelegate>;
 
 private:
     NoteEditorPrivate &     m_noteEditor;

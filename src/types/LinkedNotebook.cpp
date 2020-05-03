@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "data/LinkedNotebookData.h"
+
 #include <quentier/types/LinkedNotebook.h>
 
 namespace quentier {
@@ -53,7 +54,8 @@ LinkedNotebook & LinkedNotebook::operator=(LinkedNotebook && other)
     return *this;
 }
 
-LinkedNotebook::LinkedNotebook(const qevercloud::LinkedNotebook & linkedNotebook) :
+LinkedNotebook::LinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook) :
     d(new LinkedNotebookData(linkedNotebook))
 {}
 
@@ -76,8 +78,8 @@ qevercloud::LinkedNotebook & LinkedNotebook::qevercloudLinkedNotebook()
 
 bool LinkedNotebook::operator==(const LinkedNotebook & other) const
 {
-    return ((isDirty() == other.isDirty()) &&
-            (d->m_qecLinkedNotebook == other.d->m_qecLinkedNotebook));
+    return (isDirty() == other.isDirty()) &&
+        (d->m_qecLinkedNotebook == other.d->m_qecLinkedNotebook);
 }
 
 bool LinkedNotebook::operator!=(const LinkedNotebook & other) const
@@ -200,7 +202,8 @@ const QString & LinkedNotebook::sharedNotebookGlobalId() const
     return d->m_qecLinkedNotebook.sharedNotebookGlobalId.ref();
 }
 
-void LinkedNotebook::setSharedNotebookGlobalId(const QString & sharedNotebookGlobalId)
+void LinkedNotebook::setSharedNotebookGlobalId(
+    const QString & sharedNotebookGlobalId)
 {
     if (!sharedNotebookGlobalId.isEmpty()) {
         d->m_qecLinkedNotebook.sharedNotebookGlobalId = sharedNotebookGlobalId;

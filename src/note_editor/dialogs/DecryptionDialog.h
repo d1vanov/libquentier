@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,13 +19,14 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_DECRYPTION_DIALOG_H
 #define LIB_QUENTIER_NOTE_EDITOR_DECRYPTION_DIALOG_H
 
+#include <quentier/types/Account.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Account.h>
 
 #include <QDialog>
-#include <QSharedPointer>
+
+#include <memory>
 
 namespace Ui {
 QT_FORWARD_DECLARE_CLASS(DecryptionDialog)
@@ -42,9 +43,10 @@ public:
     explicit DecryptionDialog(
         const QString & encryptedText, const QString & cipher,
         const QString & hint, const size_t keyLength, const Account & account,
-        QSharedPointer<EncryptionManager> encryptionManager,
-        QSharedPointer<DecryptedTextManager> decryptedTextManager,
+        std::shared_ptr<EncryptionManager> encryptionManager,
+        std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
+
     virtual ~DecryptionDialog();
 
     QString passphrase() const;
@@ -54,9 +56,10 @@ public:
     QString decryptedText() const;
 
 Q_SIGNALS:
-    void accepted(QString cipher, size_t keyLength, QString encryptedText,
-                  QString passphrase, QString decryptedText,
-                  bool rememberPassphrase, bool decryptPermanently);
+    void accepted(
+        QString cipher, size_t keyLength, QString encryptedText,
+        QString passphrase, QString decryptedText,
+        bool rememberPassphrase, bool decryptPermanently);
 
 private Q_SLOTS:
     void setHint(const QString & hint);
@@ -81,8 +84,8 @@ private:
 
     Account                                 m_account;
 
-    QSharedPointer<EncryptionManager>       m_encryptionManager;
-    QSharedPointer<DecryptedTextManager>    m_decryptedTextManager;
+    std::shared_ptr<EncryptionManager>      m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
 
     size_t                                  m_keyLength;
 };

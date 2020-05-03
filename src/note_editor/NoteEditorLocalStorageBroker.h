@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,8 +23,8 @@
 #include <quentier/types/Note.h>
 #include <quentier/utility/LRUCache.hpp>
 
-#include <QObject>
 #include <QHash>
+#include <QObject>
 #include <QSet>
 #include <QVector>
 
@@ -34,23 +34,26 @@ class NoteEditorLocalStorageBroker: public QObject
 {
     Q_OBJECT
 private:
-    explicit NoteEditorLocalStorageBroker();
+    explicit NoteEditorLocalStorageBroker(QObject * parent = nullptr);
 
 public:
     static NoteEditorLocalStorageBroker & instance();
 
     LocalStorageManagerAsync * localStorageManager();
+
     void setLocalStorageManager(
         LocalStorageManagerAsync & localStorageManagerAsync);
 
 Q_SIGNALS:
     void noteSavedToLocalStorage(QString noteLocalUid);
-    void failedToSaveNoteToLocalStorage(QString noteLocalUid,
-                                        ErrorString errorDescription);
+
+    void failedToSaveNoteToLocalStorage(
+        QString noteLocalUid, ErrorString errorDescription);
 
     void foundNoteAndNotebook(Note note, Notebook notebook);
-    void failedToFindNoteOrNotebook(QString noteLocalUid,
-                                    ErrorString errorDescription);
+
+    void failedToFindNoteOrNotebook(
+        QString noteLocalUid, ErrorString errorDescription);
 
     void noteUpdated(Note note);
     void notebookUpdated(Notebook);
@@ -58,23 +61,28 @@ Q_SIGNALS:
     void notebookDeleted(QString notebookLocalUid);
 
     void foundResourceData(Resource resource);
-    void failedToFindResourceData(QString resourceLocalUid,
-                                  ErrorString errorDescription);
+
+    void failedToFindResourceData(
+        QString resourceLocalUid, ErrorString errorDescription);
 
 // private signals
-    void updateNote(Note note,
-                    LocalStorageManager::UpdateNoteOptions options,
-                    QUuid requestId);
+    void updateNote(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
+
     void addResource(Resource resource, QUuid requestId);
     void updateResource(Resource resource, QUuid requestId);
     void expungeResource(Resource resource, QUuid requestId);
-    void findNote(Note note,
-                  LocalStorageManager::GetNoteOptions options,
-                  QUuid requestId);
+
+    void findNote(
+        Note note, LocalStorageManager::GetNoteOptions options,
+        QUuid requestId);
+
     void findNotebook(Notebook notebook, QUuid requestId);
-    void findResource(Resource resource,
-                      LocalStorageManager::GetResourceOptions options,
-                      QUuid requestId);
+
+    void findResource(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        QUuid requestId);
 
 public Q_SLOTS:
     void saveNoteToLocalStorage(const Note & note);
@@ -82,52 +90,60 @@ public Q_SLOTS:
     void findResourceData(const QString & resourceLocalUid);
 
 private Q_SLOTS:
-    void onUpdateNoteComplete(Note note,
-                              LocalStorageManager::UpdateNoteOptions options,
-                              QUuid requestId);
-    void onUpdateNoteFailed(Note note,
-                            LocalStorageManager::UpdateNoteOptions options,
-                            ErrorString errorDescription, QUuid requestId);
+    void onUpdateNoteComplete(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
+
+    void onUpdateNoteFailed(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        ErrorString errorDescription, QUuid requestId);
+
     void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
 
-    void onFindNoteComplete(Note foundNote,
-                            LocalStorageManager::GetNoteOptions options,
-                            QUuid requestId);
-    void onFindNoteFailed(Note note, LocalStorageManager::GetNoteOptions options,
-                          ErrorString errorDescription, QUuid requestId);
+    void onFindNoteComplete(
+        Note foundNote, LocalStorageManager::GetNoteOptions options,
+        QUuid requestId);
+
+    void onFindNoteFailed(
+        Note note, LocalStorageManager::GetNoteOptions options,
+        ErrorString errorDescription, QUuid requestId);
+
     void onFindNotebookComplete(Notebook foundNotebook, QUuid requestId);
-    void onFindNotebookFailed(Notebook notebook,
-                              ErrorString errorDescription,
-                              QUuid requestId);
+
+    void onFindNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
     void onAddResourceComplete(Resource resource, QUuid requestId);
-    void onAddResourceFailed(Resource resource,
-                             ErrorString errorDescription,
-                             QUuid requestId);
+
+    void onAddResourceFailed(
+        Resource resource, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateResourceComplete(Resource resource, QUuid requestId);
-    void onUpdateResourceFailed(Resource resource,
-                                ErrorString errorDescription,
-                                QUuid requestId);
+
+    void onUpdateResourceFailed(
+        Resource resource, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeResourceComplete(Resource resource, QUuid requestId);
-    void onExpungeResourceFailed(Resource resource,
-                                 ErrorString errorDescription, QUuid requestId);
+
+    void onExpungeResourceFailed(
+        Resource resource, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeNoteComplete(Note note, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
 
-    void onFindResourceComplete(Resource resource,
-                                LocalStorageManager::GetResourceOptions options,
-                                QUuid requestId);
-    void onFindResourceFailed(Resource resource,
-                              LocalStorageManager::GetResourceOptions options,
-                              ErrorString errorDescription, QUuid requestId);
+    void onFindResourceComplete(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        QUuid requestId);
+
+    void onFindResourceFailed(
+        Resource resource, LocalStorageManager::GetResourceOptions options,
+        ErrorString errorDescription, QUuid requestId);
 
     void onSwitchUserComplete(Account account, QUuid requestId);
 
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManagerAsync);
+
     void disconnectFromLocalStorage(
         LocalStorageManagerAsync & localStorageManagerAsync);
 
@@ -140,42 +156,34 @@ private:
     void emitFindNotebookForNoteByGuidRequest(
         const QString & notebookGuid, const Note & note);
 
-    typedef QHash<QString, Note> NotesHash;
-    typedef QHash<QString, NotesHash> NotesPendingNotebookFindingHash;
+    using NotesHash = QHash<QString, Note>;
+    using NotesPendingNotebookFindingHash = QHash<QString, NotesHash>;
+
     void emitFindNotebookForNoteRequest(
-        const Notebook & notebook,
-        const Note & note,
+        const Notebook & notebook, const Note & note,
         NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
 
-
-    void saveNoteToLocalStorageImpl(const Note & previousNoteVersion,
-                                    const Note & updatedNoteVersion);
+    void saveNoteToLocalStorageImpl(
+        const Note & previousNoteVersion, const Note & updatedNoteVersion);
 
     class SaveNoteInfo: public Printable
     {
     public:
-        SaveNoteInfo() :
-            m_notePendingSaving(),
-            m_pendingAddResourceRequests(0),
-            m_pendingUpdateResourceRequests(0),
-            m_pendingExpungeResourceRequests(0)
-        {}
-
         virtual QTextStream & print(QTextStream & strm) const override;
 
         bool hasPendingResourceOperations() const;
 
         Note        m_notePendingSaving;
-        quint32     m_pendingAddResourceRequests;
-        quint32     m_pendingUpdateResourceRequests;
-        quint32     m_pendingExpungeResourceRequests;
+        quint32     m_pendingAddResourceRequests = 0;
+        quint32     m_pendingUpdateResourceRequests = 0;
+        quint32     m_pendingExpungeResourceRequests = 0;
     };
 
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
 private:
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
+    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
 
     QSet<QUuid>     m_findNoteRequestIds;
     QSet<QUuid>     m_findNotebookRequestIds;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,15 +24,13 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    NoteEditorPage * page =                                                    \
-        qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());             \
+    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
     if (Q_UNLIKELY(!page))                                                     \
     {                                                                          \
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("AddHyperlinkUndoCommand",                       \
                               "Can't undo/redo adding the hyperlink "          \
-                              "to the selected text: no note editor "          \
-                              "page"));                                        \
+                              "to the selected text: no note editor page"));   \
         QNWARNING(error);                                                      \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -66,8 +64,9 @@ void AddHyperlinkUndoCommand::redoImpl()
     QNDEBUG("AddHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.redo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.redo();"),
+        m_callback);
 }
 
 void AddHyperlinkUndoCommand::undoImpl()
@@ -75,8 +74,9 @@ void AddHyperlinkUndoCommand::undoImpl()
     QNDEBUG("AddHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
-    page->executeJavaScript(QStringLiteral("hyperlinkManager.undo();"),
-                            m_callback);
+    page->executeJavaScript(
+        QStringLiteral("hyperlinkManager.undo();"),
+        m_callback);
 }
 
 } // namespace quentier

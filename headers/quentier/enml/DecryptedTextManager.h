@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_H
 
 #include <quentier/utility/Linkage.h>
+
 #include <QtGlobal>
 
 namespace quentier {
@@ -32,21 +33,22 @@ public:
     DecryptedTextManager();
     virtual ~DecryptedTextManager();
 
-    void addEntry(const QString & hash, const QString & decryptedText,
-                  const bool rememberForSession, const QString & passphrase,
-                  const QString & cipher, const size_t keyLength);
+    void addEntry(
+        const QString & hash, const QString & decryptedText,
+        const bool rememberForSession, const QString & passphrase,
+        const QString & cipher, const size_t keyLength);
 
     void removeEntry(const QString & hash);
 
     void clearNonRememberedForSessionEntries();
 
-    bool findDecryptedTextByEncryptedText(const QString & encryptedText,
-                                          QString & decryptedText,
-                                          bool & rememberForSession) const;
+    bool findDecryptedTextByEncryptedText(
+        const QString & encryptedText, QString & decryptedText,
+        bool & rememberForSession) const;
 
-    bool modifyDecryptedText(const QString & originalEncryptedText,
-                             const QString & newDecryptedText,
-                             QString & newEncryptedText);
+    bool modifyDecryptedText(
+        const QString & originalEncryptedText, const QString & newDecryptedText,
+        QString & newEncryptedText);
 
 private:
     Q_DISABLE_COPY(DecryptedTextManager)

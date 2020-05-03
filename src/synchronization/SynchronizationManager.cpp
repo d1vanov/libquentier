@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,131 +28,144 @@ SynchronizationManager::SynchronizationManager(
         LocalStorageManagerAsync & localStorageManagerAsync,
         IAuthenticationManager & authenticationManager,
         SynchronizationManagerDependencyInjector * pInjector) :
-    d_ptr(new SynchronizationManagerPrivate(host, localStorageManagerAsync,
-                                            authenticationManager, pInjector, this))
+    d_ptr(new SynchronizationManagerPrivate(
+        host,
+        localStorageManagerAsync,
+        authenticationManager,
+        pInjector,
+        this))
 {
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,notifyStart),
-                     this,
-                     QNSIGNAL(SynchronizationManager,started));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,notifyStop),
-                     this,
-                     QNSIGNAL(SynchronizationManager,stopped));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              notifyError,ErrorString),
-                     this,
-                     QNSIGNAL(SynchronizationManager,failed,ErrorString));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,notifyFinish,
-                              Account,bool,bool),
-                     this,
-                     QNSIGNAL(SynchronizationManager,finished,Account,bool,bool));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,syncChunksDownloaded),
-                     this,
-                     QNSIGNAL(SynchronizationManager,syncChunksDownloaded));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              syncChunksDownloadProgress,qint32,qint32,qint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              syncChunksDownloadProgress,qint32,qint32,qint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              linkedNotebookSyncChunksDownloadProgress,
-                              qint32,qint32,qint32,LinkedNotebook),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              linkedNotebookSyncChunksDownloadProgress,
-                              qint32,qint32,qint32,LinkedNotebook));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              linkedNotebooksSyncChunksDownloaded),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              linkedNotebooksSyncChunksDownloaded));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              notesDownloadProgress,quint32,quint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              notesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              linkedNotebooksNotesDownloadProgress,quint32,quint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              linkedNotebooksNotesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              resourcesDownloadProgress,quint32,quint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              resourcesDownloadProgress,quint32,quint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              linkedNotebooksResourcesDownloadProgress,
-                              quint32,quint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              linkedNotebooksResourcesDownloadProgress,
-                              quint32,quint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              preparedDirtyObjectsForSending),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              preparedDirtyObjectsForSending));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              preparedLinkedNotebooksDirtyObjectsForSending),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              preparedLinkedNotebooksDirtyObjectsForSending));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,authenticationFinished,
-                              bool,ErrorString,Account),
-                     this,
-                     QNSIGNAL(SynchronizationManager,authenticationFinished,
-                              bool,ErrorString,Account));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,authenticationRevoked,
-                              bool,ErrorString,qevercloud::UserID),
-                     this,
-                     QNSIGNAL(SynchronizationManager,authenticationRevoked,
-                              bool,ErrorString,qevercloud::UserID));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,remoteToLocalSyncStopped),
-                     this,
-                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncStopped));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,sendLocalChangesStopped),
-                     this,
-                     QNSIGNAL(SynchronizationManager,sendLocalChangesStopped));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              willRepeatRemoteToLocalSyncAfterSendingChanges),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              willRepeatRemoteToLocalSyncAfterSendingChanges));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              detectedConflictDuringLocalChangesSending),
-                     this,
-                     QNSIGNAL(SynchronizationManager,
-                              detectedConflictDuringLocalChangesSending));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              rateLimitExceeded,qint32),
-                     this,
-                     QNSIGNAL(SynchronizationManager,rateLimitExceeded,qint32));
-    QObject::connect(d_ptr,
-                     QNSIGNAL(SynchronizationManagerPrivate,
-                              notifyRemoteToLocalSyncDone,bool),
-                     this,
-                     QNSIGNAL(SynchronizationManager,remoteToLocalSyncDone,bool));
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notifyStart,
+        this,
+        &SynchronizationManager::started);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notifyStop,
+        this,
+        &SynchronizationManager::stopped);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notifyError,
+        this,
+        &SynchronizationManager::failed);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notifyFinish,
+        this,
+        &SynchronizationManager::finished);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::syncChunksDownloaded,
+        this,
+        &SynchronizationManager::syncChunksDownloaded);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::syncChunksDownloadProgress,
+        this,
+        &SynchronizationManager::syncChunksDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::linkedNotebookSyncChunksDownloadProgress,
+        this,
+        &SynchronizationManager::linkedNotebookSyncChunksDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::linkedNotebooksSyncChunksDownloaded,
+        this,
+        &SynchronizationManager::linkedNotebooksSyncChunksDownloaded);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notesDownloadProgress,
+        this,
+        &SynchronizationManager::notesDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::linkedNotebooksNotesDownloadProgress,
+        this,
+        &SynchronizationManager::linkedNotebooksNotesDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::resourcesDownloadProgress,
+        this,
+        &SynchronizationManager::resourcesDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::linkedNotebooksResourcesDownloadProgress,
+        this,
+        &SynchronizationManager::linkedNotebooksResourcesDownloadProgress);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::preparedDirtyObjectsForSending,
+        this,
+        &SynchronizationManager::preparedDirtyObjectsForSending);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::preparedLinkedNotebooksDirtyObjectsForSending,
+        this,
+        &SynchronizationManager::preparedLinkedNotebooksDirtyObjectsForSending);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::authenticationFinished,
+        this,
+        &SynchronizationManager::authenticationFinished);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::authenticationRevoked,
+        this,
+        &SynchronizationManager::authenticationRevoked);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::remoteToLocalSyncStopped,
+        this,
+        &SynchronizationManager::remoteToLocalSyncStopped);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::sendLocalChangesStopped,
+        this,
+        &SynchronizationManager::sendLocalChangesStopped);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::willRepeatRemoteToLocalSyncAfterSendingChanges,
+        this,
+        &SynchronizationManager::willRepeatRemoteToLocalSyncAfterSendingChanges);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::detectedConflictDuringLocalChangesSending,
+        this,
+        &SynchronizationManager::detectedConflictDuringLocalChangesSending);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::rateLimitExceeded,
+        this,
+        &SynchronizationManager::rateLimitExceeded);
+
+    QObject::connect(
+        d_ptr,
+        &SynchronizationManagerPrivate::notifyRemoteToLocalSyncDone,
+        this,
+        &SynchronizationManager::remoteToLocalSyncDone);
 }
 
 SynchronizationManager::~SynchronizationManager()
@@ -202,7 +215,8 @@ void SynchronizationManager::stop()
     d->stop();
 }
 
-void SynchronizationManager::revokeAuthentication(const qevercloud::UserID userId)
+void SynchronizationManager::revokeAuthentication(
+    const qevercloud::UserID userId)
 {
     Q_D(SynchronizationManager);
     d->revokeAuthentication(userId);

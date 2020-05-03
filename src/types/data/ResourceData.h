@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,7 @@
 
 #include "NoteStoreDataElementData.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -37,15 +33,15 @@ public:
     ResourceData(ResourceData && other);
     ResourceData(const qevercloud::Resource & other);
     ResourceData(qevercloud::Resource && other);
-    virtual ~ResourceData();
+    virtual ~ResourceData() override;
 
     qevercloud::Resource            m_qecResource;
     int                             m_indexInNote;
     qevercloud::Optional<QString>   m_noteLocalUid;
 
 private:
-    ResourceData & operator=(const ResourceData & other)  = delete;
-    ResourceData & operator=(ResourceData && other)  = delete;
+    ResourceData & operator=(const ResourceData & other) = delete;
+    ResourceData & operator=(ResourceData && other) = delete;
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,12 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT NoteEditorPluginInitializationException: public IQuentierException
+class QUENTIER_EXPORT NoteEditorPluginInitializationException:
+    public IQuentierException
 {
 public:
-    explicit NoteEditorPluginInitializationException(const ErrorString & message);
+    explicit NoteEditorPluginInitializationException(
+        const ErrorString & message);
 
 protected:
     virtual const QString exceptionDisplayName() const override;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,15 +47,13 @@ NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand()
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {
-    QNDEBUG("NoteEditorContentEditUndoCommand::redoImpl ("
-            << text() << ")");
+    QNDEBUG("NoteEditorContentEditUndoCommand::redoImpl (" << text() << ")");
     m_noteEditorPrivate.redoPageAction();
 }
 
 void NoteEditorContentEditUndoCommand::undoImpl()
 {
-    QNDEBUG("NoteEditorContentEditUndoCommand::undoImpl ("
-            << text() << ")");
+    QNDEBUG("NoteEditorContentEditUndoCommand::undoImpl (" << text() << ")");
     m_noteEditorPrivate.undoPageAction();
     m_noteEditorPrivate.setNoteResources(m_resources);
 }

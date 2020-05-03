@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,7 +49,7 @@ public:
     explicit Note(const qevercloud::Note & other);
     Note & operator=(const qevercloud::Note & other);
 
-    virtual ~Note();
+    virtual ~Note() override;
 
     bool operator==(const Note & other) const;
     bool operator!=(const Note & other) const;
@@ -165,8 +165,8 @@ public:
     QString plainText(ErrorString * pErrorMessage = nullptr) const;
     QStringList listOfWords(ErrorString * pErrorMessage = nullptr) const;
 
-    std::pair<QString, QStringList>
-    plainTextAndListOfWords(ErrorString * pErrorMessage = nullptr) const;
+    std::pair<QString, QStringList> plainTextAndListOfWords(
+        ErrorString * pErrorMessage = nullptr) const;
 
     bool containsCheckedTodo() const;
     bool containsUncheckedTodo() const;

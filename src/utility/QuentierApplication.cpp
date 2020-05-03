@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/QuentierApplication.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/SysInfo.h>
+#include <quentier/utility/QuentierApplication.h>
+
 #include <exception>
 
 namespace quentier {
@@ -40,7 +41,7 @@ bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
     {
         SysInfo sysInfo;
         QNERROR("Caught unhandled exception: " << e.what()
-                << ", backtrace: " << sysInfo.stackTrace());
+            << ", backtrace: " << sysInfo.stackTrace());
         return false;
     }
 }

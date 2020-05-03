@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "data/SharedNotebookData.h"
+
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/utility/Utility.h>
 
@@ -36,7 +37,8 @@ SharedNotebook::SharedNotebook(SharedNotebook && other) :
     d(std::move(other.d))
 {}
 
-SharedNotebook::SharedNotebook(const qevercloud::SharedNotebook & qecSharedNotebook) :
+SharedNotebook::SharedNotebook(
+        const qevercloud::SharedNotebook & qecSharedNotebook) :
     Printable(),
     d(new SharedNotebookData(qecSharedNotebook))
 {}
@@ -81,7 +83,8 @@ bool SharedNotebook::operator!=(const SharedNotebook & other) const
     return !(*this == other);
 }
 
-const qevercloud::SharedNotebook & SharedNotebook::qevercloudSharedNotebook() const
+const qevercloud::SharedNotebook &
+SharedNotebook::qevercloudSharedNotebook() const
 {
     return d->m_qecSharedNotebook;
 }
@@ -236,12 +239,14 @@ bool SharedNotebook::hasPrivilegeLevel() const
     return d->m_qecSharedNotebook.privilege.isSet();
 }
 
-SharedNotebook::SharedNotebookPrivilegeLevel SharedNotebook::privilegeLevel() const
+SharedNotebook::SharedNotebookPrivilegeLevel
+SharedNotebook::privilegeLevel() const
 {
     return d->m_qecSharedNotebook.privilege;
 }
 
-void SharedNotebook::setPrivilegeLevel(const SharedNotebookPrivilegeLevel privilegeLevel)
+void SharedNotebook::setPrivilegeLevel(
+    const SharedNotebookPrivilegeLevel privilegeLevel)
 {
     d->m_qecSharedNotebook.privilege = privilegeLevel;
 }
@@ -253,7 +258,8 @@ void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
             qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS))
     {
         d->m_qecSharedNotebook.privilege =
-            static_cast<qevercloud::SharedNotebookPrivilegeLevel>(privilegeLevel);
+            static_cast<qevercloud::SharedNotebookPrivilegeLevel>(
+                privilegeLevel);
     }
     else
     {
@@ -291,7 +297,7 @@ bool SharedNotebook::hasReminderNotifyApp() const
 {
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
     return sharedNotebook.recipientSettings.isSet() &&
-           sharedNotebook.recipientSettings->reminderNotifyInApp.isSet();
+        sharedNotebook.recipientSettings->reminderNotifyInApp.isSet();
 }
 
 bool SharedNotebook::reminderNotifyApp() const
@@ -416,8 +422,8 @@ QTextStream & SharedNotebook::print(QTextStream & strm) const
 {
     strm << "SharedNotebook {\n";
     strm << "  index in notebook: "
-         << QString::number(d->m_indexInNotebook)
-         << ";\n";
+        << QString::number(d->m_indexInNotebook)
+        << ";\n";
 
     const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
     strm << sharedNotebook;
@@ -426,4 +432,3 @@ QTextStream & SharedNotebook::print(QTextStream & strm) const
 }
 
 } // namespace quentier
-

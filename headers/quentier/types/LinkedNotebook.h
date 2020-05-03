@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,7 +44,7 @@ public:
     explicit LinkedNotebook(const qevercloud::LinkedNotebook & linkedNotebook);
     explicit LinkedNotebook(qevercloud::LinkedNotebook && linkedNotebook);
 
-    virtual ~LinkedNotebook();
+    virtual ~LinkedNotebook() override;
 
     const qevercloud::LinkedNotebook & qevercloudLinkedNotebook() const;
     qevercloud::LinkedNotebook & qevercloudLinkedNotebook();
@@ -103,7 +103,7 @@ public:
     virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
-    // hide useless methods inherited from the base class from the public interface
+    // hide useless methods inherited from the base class from public interface
     virtual const QString localUid() const override { return QString(); }
     virtual void setLocalUid(const QString &) override {}
     virtual void unsetLocalUid() override {}
@@ -111,6 +111,7 @@ private:
     virtual bool isLocal() const override { return false; }
     virtual void setLocal(const bool) override {}
 
+private:
     QSharedDataPointer<LinkedNotebookData> d;
 };
 

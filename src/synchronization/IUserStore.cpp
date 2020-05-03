@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include <quentier_private/synchronization/IUserStore.h>
+
 #include <quentier/types/User.h>
 
 namespace quentier {
@@ -45,6 +46,16 @@ QString IUserStore::authenticationToken() const
 void IUserStore::setAuthenticationToken(const QString & authToken)
 {
     m_authenticationToken = authToken;
+}
+
+QList<QNetworkCookie> IUserStore::cookies() const
+{
+    return m_cookies;
+}
+
+void IUserStore::setCookies(QList<QNetworkCookie> cookies)
+{
+    m_cookies = std::move(cookies);
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,7 +51,7 @@ public:
     explicit SavedSearch(const qevercloud::SavedSearch & search);
     explicit SavedSearch(qevercloud::SavedSearch && search);
 
-    virtual ~SavedSearch();
+    virtual ~SavedSearch() override;
 
     const qevercloud::SavedSearch & qevercloudSavedSearch() const;
     qevercloud::SavedSearch & qevercloudSavedSearch();
@@ -92,11 +92,15 @@ public:
 
     bool hasIncludePersonalLinkedNotebooks() const;
     bool includePersonalLinkedNotebooks() const;
-    void setIncludePersonalLinkedNotebooks(const bool includePersonalLinkedNotebooks);
+
+    void setIncludePersonalLinkedNotebooks(
+        const bool includePersonalLinkedNotebooks);
 
     bool hasIncludeBusinessLinkedNotebooks() const;
     bool includeBusinessLinkedNotebooks() const;
-    void setIncludeBusinessLinkedNotebooks(const bool includeBusinessLinkedNotebooks);
+
+    void setIncludeBusinessLinkedNotebooks(
+        const bool includeBusinessLinkedNotebooks);
 
     virtual QTextStream & print(QTextStream & strm) const override;
 

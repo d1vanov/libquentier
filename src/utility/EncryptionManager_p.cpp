@@ -17,7 +17,9 @@
  */
 
 #include "EncryptionManager_p.h"
+
 #include <quentier/logging/QuentierLogger.h>
+
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -26,7 +28,11 @@
 #include <openssl/hmac.h>
 #include <openssl/conf.h>
 #include <openssl/evp.h>
+
 #include <QCryptographicHash>
+#include <QDebug>
+#include <QTextStream>
+
 #include <stdlib.h>
 
 namespace quentier {
@@ -34,6 +40,25 @@ namespace quentier {
 #ifdef _MSC_VER
 #pragma warning(disable:4351)
 #endif
+
+#define PRINT_SALT_KIND(strm, kind)                                            \
+    using SaltKind = EncryptionManagerPrivate::SaltKind;                       \
+    switch(kind)                                                               \
+    {                                                                          \
+    case SaltKind::SALT:                                                       \
+        strm << "SALT";                                                        \
+        break;                                                                 \
+    case SaltKind::SALTMAC:                                                    \
+        strm << "SALTMAC";                                                     \
+        break;                                                                 \
+    case SaltKind::IV:                                                         \
+        strm << "IV";                                                          \
+        break;                                                                 \
+    default:                                                                   \
+        strm << "Unknown (" << static_cast<qint64>(kind) << ")";               \
+        break;                                                                 \
+    }                                                                          \
+// PRINT_SALT_KIND
 
 EncryptionManagerPrivate::EncryptionManagerPrivate() :
     m_salt(),
@@ -61,52 +86,59 @@ EncryptionManagerPrivate::~EncryptionManagerPrivate()
 #endif
 }
 
-bool EncryptionManagerPrivate::decrypt(const QString & encryptedText,
-                                       const QString & passphrase,
-                                       const QString & cipher,
-                                       const size_t keyLength,
-                                       QString & decryptedText,
-                                       ErrorString & errorDescription)
+bool EncryptionManagerPrivate::decrypt(
+    const QString & encryptedText, const QString & passphrase,
+    const QString & cipher, const size_t keyLength,
+    QString & decryptedText, ErrorString & errorDescription)
 {
     if (cipher == QStringLiteral("RC2"))
     {
         if (keyLength != 64)
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                       "invalid key length for "
-                                                       "PS2 decryption method, "
-                                                       "should be 64"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "EncryptionManagerPrivate",
+                "invalid key length for PS2 decryption method, should be 64"));
+
             QNWARNING(errorDescription);
             return false;
         }
 
-        bool res = decryptRc2(encryptedText, passphrase,
-                              decryptedText, errorDescription);
+        bool res = decryptRc2(
+            encryptedText,
+            passphrase,
+            decryptedText,
+            errorDescription);
         if (!res) {
             QNWARNING(errorDescription);
             return false;
         }
 
         QByteArray decryptedByteArray = decryptedText.toUtf8();
-        decryptedText = QString::fromUtf8(decryptedByteArray.constData(),
-                                          decryptedByteArray.size());
+
+        decryptedText = QString::fromUtf8(
+            decryptedByteArray.constData(),
+            decryptedByteArray.size());
+
         return true;
     }
     else if (cipher == QStringLiteral("AES"))
     {
         if (keyLength != 128)
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                       "invalid key length for "
-                                                       "AES decryption method, "
-                                                       "should be 128"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "EncryptionManagerPrivate",
+                "invalid key length for AES decryption method, should be 128"));
+
             QNWARNING(errorDescription);
             return false;
         }
 
         QByteArray decryptedByteArray;
-        bool res = decryptAes(encryptedText, passphrase,
-                              decryptedByteArray, errorDescription);
+        bool res = decryptAes(
+            encryptedText,
+            passphrase,
+            decryptedByteArray,
+            errorDescription);
         if (!res) {
             return false;
         }
@@ -116,18 +148,19 @@ bool EncryptionManagerPrivate::decrypt(const QString & encryptedText,
     }
     else
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "unsupported decryption method"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "unsupported decryption method"));
+
         QNWARNING(errorDescription);
         return false;
     }
 }
 
-bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt,
-                                       const QString & passphrase,
-                                       QString & cipher, size_t & keyLength,
-                                       QString & encryptedText,
-                                       ErrorString & errorDescription)
+bool EncryptionManagerPrivate::encrypt(
+    const QString & textToEncrypt, const QString & passphrase,
+    QString & cipher, size_t & keyLength, QString & encryptedText,
+    ErrorString & errorDescription)
 {
     QByteArray encryptedTextData(EN_IDENT, 4);
 
@@ -153,9 +186,17 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt,
         return false;
     }
 
-    encryptedTextData.append(reinterpret_cast<const char*>(m_salt), EN_AES_KEYSIZE);
-    encryptedTextData.append(reinterpret_cast<const char*>(m_saltmac), EN_AES_KEYSIZE);
-    encryptedTextData.append(reinterpret_cast<const char*>(m_iv), EN_AES_KEYSIZE);
+    encryptedTextData.append(
+        reinterpret_cast<const char*>(m_salt),
+        EN_AES_KEYSIZE);
+
+    encryptedTextData.append(
+        reinterpret_cast<const char*>(m_saltmac),
+        EN_AES_KEYSIZE);
+
+    encryptedTextData.append(
+        reinterpret_cast<const char*>(m_iv),
+        EN_AES_KEYSIZE);
 
     QByteArray passphraseData = passphrase.toUtf8();
 
@@ -171,8 +212,12 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt,
         return false;
     }
 
-    res = calculateHmac(passphraseData, m_saltmac, encryptedTextData,
-                        EN_AES_KEYSIZE, errorDescription);
+    res = calculateHmac(
+        passphraseData,
+        m_saltmac,
+        encryptedTextData,
+        EN_AES_KEYSIZE,
+        errorDescription);
     if (!res) {
         return false;
     }
@@ -187,7 +232,7 @@ bool EncryptionManagerPrivate::encrypt(const QString & textToEncrypt,
 }
 
 bool EncryptionManagerPrivate::generateSalt(
-    const EncryptionManagerPrivate::SaltKind::type saltKind,
+    const EncryptionManagerPrivate::SaltKind saltKind,
     const size_t saltSize, ErrorString & errorDescription)
 {
     unsigned char * salt = nullptr;
@@ -209,124 +254,143 @@ bool EncryptionManagerPrivate::generateSalt(
         break;
     default:
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                       "detected incorrect salt "
-                                                       "kind for cryptographic "
-                                                       "key generation"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "EncryptionManagerPrivate",
+                "detected incorrect salt kind for cryptographic key "
+                "generation"));
+
             QNERROR(errorDescription);
             return false;
         }
     }
 
     int res = RAND_bytes(salt, static_cast<int>(saltSize));
-    if (res != 1) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't generate "
-                                                   "cryptographically strong "
-                                                   "bytes for encryption"));
+    if (res != 1)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't generate cryptographically strong bytes for encryption"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription << "; " << saltText << ": lib: " << errorLib
-                  << "; func: " << errorFunc << ", reason: " << errorReason);
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         return false;
     }
 
     return true;
 }
 
-bool EncryptionManagerPrivate::generateKey(const QByteArray & passphraseData,
-                                           const unsigned char * salt,
-                                           const size_t keySize,
-                                           ErrorString & errorDescription)
+bool EncryptionManagerPrivate::generateKey(
+    const QByteArray & passphraseData, const unsigned char * salt,
+    const size_t keySize, ErrorString & errorDescription)
 {
     const char * rawPassphraseData = passphraseData.constData();
 
-    int res = PKCS5_PBKDF2_HMAC(rawPassphraseData, passphraseData.size(),
-                                salt, static_cast<int>(keySize), EN_ITERATIONS,
-                                EVP_sha256(), static_cast<int>(keySize), m_key);
-    if (res != 1) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't generate cryptographic key"));
+    int res = PKCS5_PBKDF2_HMAC(
+        rawPassphraseData,
+        passphraseData.size(),
+        salt,
+        static_cast<int>(keySize),
+        EN_ITERATIONS,
+        EVP_sha256(),
+        static_cast<int>(keySize),
+        m_key);
+
+    if (res != 1)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't generate cryptographic key"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl PKCS5_PBKDF2_HMAC failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl PKCS5_PBKDF2_HMAC failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         return false;
     }
 
     return true;
 }
 
-bool EncryptionManagerPrivate::calculateHmac(const QByteArray & passphraseData,
-                                             const unsigned char * salt,
-                                             const QByteArray & encryptedTextData,
-                                             const size_t keySize,
-                                             ErrorString & errorDescription)
+bool EncryptionManagerPrivate::calculateHmac(
+    const QByteArray & passphraseData, const unsigned char * salt,
+    const QByteArray & encryptedTextData, const size_t keySize,
+    ErrorString & errorDescription)
 {
     bool res = generateKey(passphraseData, salt, keySize, errorDescription);
     if (!res) {
         return false;
     }
 
-    const unsigned char * data =
-        reinterpret_cast<const unsigned char*>(encryptedTextData.constData());
+    const unsigned char * data = reinterpret_cast<const unsigned char*>(
+        encryptedTextData.constData());
 
-    unsigned char * digest = HMAC(EVP_sha256(), m_key, static_cast<int>(keySize), data,
-                                  static_cast<size_t>(encryptedTextData.size()),
-                                  NULL, NULL);
+    unsigned char * digest = HMAC(
+        EVP_sha256(),
+        m_key,
+        static_cast<int>(keySize),
+        data,
+        static_cast<size_t>(encryptedTextData.size()),
+        NULL,
+        NULL);
 
     for(int i = 0; i < EN_AES_HMACSIZE; ++i) {
         m_hmac[i] = digest[i];
     }
+
     return true;
 }
 
-bool EncryptionManagerPrivate::encyptWithAes(const QByteArray & textToEncryptData,
-                                             QByteArray & encryptedTextData,
-                                             ErrorString & errorDescription)
+bool EncryptionManagerPrivate::encyptWithAes(
+    const QByteArray & textToEncryptData, QByteArray & encryptedTextData,
+    ErrorString & errorDescription)
 {
     const unsigned char * rawTextToEncrypt =
         reinterpret_cast<const unsigned char*>(textToEncryptData.constData());
 
     int rawTextToEncryptSize = textToEncryptData.size();
 
-    unsigned char * cipherText =
-        reinterpret_cast<unsigned char*>(malloc(static_cast<size_t>(
-                    rawTextToEncryptSize + MAX_PADDING_LEN)));
+    unsigned char * cipherText = reinterpret_cast<unsigned char*>(
+        malloc(static_cast<size_t>(rawTextToEncryptSize + MAX_PADDING_LEN)));
 
     int bytesWritten = 0;
     int cipherTextSize = 0;
 
     EVP_CIPHER_CTX * pContext = EVP_CIPHER_CTX_new();
     int res = EVP_EncryptInit(pContext, EVP_aes_128_cbc(), m_key, m_iv);
-    if (res != 1) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't encrypt the text using "
-                                                   "AES algorithm"));
+    if (res != 1)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't encrypt the text using AES algorithm"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_EnryptInit failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_EnryptInit failed: "
+            << ": lib: " << errorLib
+            << "; func: " << errorFunc
+            << ", reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
     }
 
-    res = EVP_EncryptUpdate(pContext, cipherText, &bytesWritten,
-                            rawTextToEncrypt, rawTextToEncryptSize);
-    if (res != 1) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't encrypt the text using "
-                                                   "AES algorithm"));
+    res = EVP_EncryptUpdate(
+        pContext,
+        cipherText,
+        &bytesWritten,
+        rawTextToEncrypt,
+        rawTextToEncryptSize);
+    if (res != 1)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't encrypt the text using AES algorithm"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_CipherUpdate failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_CipherUpdate failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
@@ -335,16 +399,16 @@ bool EncryptionManagerPrivate::encyptWithAes(const QByteArray & textToEncryptDat
     cipherTextSize += bytesWritten;
 
     res = EVP_EncryptFinal(pContext, cipherText + bytesWritten, &bytesWritten);
-    if (res != 1) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't encrypt the text using "
-                                                   "AES algorithm"));
+    if (res != 1)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't encrypt the text using AES algorithm"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_CipherFinal failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_CipherFinal failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
@@ -352,24 +416,28 @@ bool EncryptionManagerPrivate::encyptWithAes(const QByteArray & textToEncryptDat
 
     cipherTextSize += bytesWritten;
 
-    encryptedTextData.append(reinterpret_cast<const char*>(cipherText),
-                             cipherTextSize);
+    encryptedTextData.append(
+        reinterpret_cast<const char*>(cipherText),
+        cipherTextSize);
 
     free(cipherText);
     EVP_CIPHER_CTX_free(pContext);
     return true;
 }
 
-bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
-                                          const QString & passphrase,
-                                          QByteArray & decryptedText,
-                                          ErrorString & errorDescription)
+bool EncryptionManagerPrivate::decryptAes(
+    const QString & encryptedText, const QString & passphrase,
+    QByteArray & decryptedText, ErrorString & errorDescription)
 {
     QNDEBUG("EncryptionManagerPrivate::decryptAes");
 
     QByteArray cipherText;
-    bool bres = splitEncryptedData(encryptedText, EN_AES_KEYSIZE, EN_AES_HMACSIZE,
-                                   cipherText, errorDescription);
+    bool bres = splitEncryptedData(
+        encryptedText,
+        EN_AES_KEYSIZE,
+        EN_AES_HMACSIZE,
+        cipherText,
+        errorDescription);
     if (!bres) {
         return false;
     }
@@ -384,12 +452,19 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
         parsedHmac[i] = m_hmac[i];
     }
 
-    QByteArray saltWithCipherText = QByteArray::fromBase64(encryptedText.toUtf8());
-    saltWithCipherText.remove(saltWithCipherText.size() - EN_AES_HMACSIZE,
-                              EN_AES_HMACSIZE);
+    QByteArray saltWithCipherText = QByteArray::fromBase64(
+        encryptedText.toUtf8());
 
-    bres = calculateHmac(passphraseData, m_saltmac, saltWithCipherText,
-                         EN_AES_KEYSIZE, errorDescription);
+    saltWithCipherText.remove(
+        saltWithCipherText.size() - EN_AES_HMACSIZE,
+        EN_AES_HMACSIZE);
+
+    bres = calculateHmac(
+        passphraseData,
+        m_saltmac,
+        saltWithCipherText,
+        EN_AES_KEYSIZE,
+        errorDescription);
     if (!bres) {
         return false;
     }
@@ -398,22 +473,30 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
     {
         if (parsedHmac[i] != m_hmac[i])
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                       "can't decrypt text: "
-                                                       "invalid checksum"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "EncryptionManagerPrivate",
+                "can't decrypt text: invalid checksum"));
+
             QNWARNING(errorDescription << ", parsed hmac: "
-                      << QByteArray(reinterpret_cast<const char*>(parsedHmac),
-                                    EN_AES_HMACSIZE).toHex()
-                      << ", expected hmac: "
-                      << QByteArray(reinterpret_cast<const char*>(m_hmac),
-                                    EN_AES_HMACSIZE).toHex());
+                << QByteArray(
+                    reinterpret_cast<const char*>(parsedHmac),
+                    EN_AES_HMACSIZE).toHex()
+                << ", expected hmac: "
+                << QByteArray(
+                    reinterpret_cast<const char*>(m_hmac),
+                    EN_AES_HMACSIZE).toHex());
+
             return false;
         }
     }
 
     QNTRACE("Successfully validated hmac");
 
-    bres = generateKey(passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription);
+    bres = generateKey(
+        passphraseData,
+        m_salt,
+        EN_AES_KEYSIZE,
+        errorDescription);
     if (!bres) {
         return false;
     }
@@ -422,9 +505,8 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
     const unsigned char * rawCipherText =
         reinterpret_cast<const unsigned char*>(cipherText.constData());
 
-    unsigned char * decipheredText =
-        reinterpret_cast<unsigned char*>(malloc(
-                static_cast<size_t>(rawCipherTextSize)));
+    unsigned char * decipheredText = reinterpret_cast<unsigned char*>(
+        malloc(static_cast<size_t>(rawCipherTextSize)));
 
     int bytesWritten = 0;
     int decipheredTextSize = 0;
@@ -433,31 +515,35 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
     int res = EVP_DecryptInit(pContext, EVP_aes_128_cbc(), m_key, m_iv);
     if (res != 1)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't decrypt the text"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't decrypt the text"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_DecryptInit failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_DecryptInit failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
     }
 
-    res = EVP_DecryptUpdate(pContext, decipheredText, &bytesWritten,
-                            rawCipherText, rawCipherTextSize);
+    res = EVP_DecryptUpdate(
+        pContext,
+        decipheredText,
+        &bytesWritten,
+        rawCipherText,
+        rawCipherTextSize);
     if (res != 1)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't decrypt the text"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't decrypt the text"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_DecryptUpdate failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_DecryptUpdate failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
@@ -465,50 +551,54 @@ bool EncryptionManagerPrivate::decryptAes(const QString & encryptedText,
 
     decipheredTextSize += bytesWritten;
 
-    res = EVP_DecryptFinal(pContext, decipheredText + bytesWritten, &bytesWritten);
+    res = EVP_DecryptFinal(
+        pContext,
+        decipheredText + bytesWritten,
+        &bytesWritten);
     if (res != 1)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "can't decrypt the text"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "can't decrypt the text"));
+
         GET_OPENSSL_ERROR;
         QNWARNING(errorDescription
-                  << ", openssl EVP_DecryptFinal failed: "
-                  << ": lib: " << errorLib
-                  << "; func: " << errorFunc
-                  << ", reason: " << errorReason);
+            << ", openssl EVP_DecryptFinal failed: " << ": lib: " << errorLib
+            << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
         EVP_CIPHER_CTX_free(pContext);
         return false;
     }
 
     decipheredTextSize += bytesWritten;
-    decryptedText = QByteArray(reinterpret_cast<const char*>(decipheredText),
-                               decipheredTextSize);
+    decryptedText = QByteArray(
+        reinterpret_cast<const char*>(decipheredText),
+        decipheredTextSize);
 
     free(decipheredText);
     EVP_CIPHER_CTX_free(pContext);
     return true;
 }
 
-bool EncryptionManagerPrivate::splitEncryptedData(const QString & encryptedData,
-                                                  const size_t saltSize,
-                                                  const size_t hmacSize,
-                                                  QByteArray & encryptedText,
-                                                  ErrorString & errorDescription)
+bool EncryptionManagerPrivate::splitEncryptedData(
+    const QString & encryptedData, const size_t saltSize,
+    const size_t hmacSize, QByteArray & encryptedText,
+    ErrorString & errorDescription)
 {
-    QByteArray decodedEncryptedData = QByteArray::fromBase64(encryptedData.toUtf8());
+    QByteArray decodedEncryptedData = QByteArray::fromBase64(
+        encryptedData.toUtf8());
 
     const int minLength = static_cast<int>(4 + 3 * saltSize + hmacSize);
 
     const int encryptedDataSize = decodedEncryptedData.size();
     if (encryptedDataSize <= minLength)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "encrypted data is too short "
-                                                   "for being valid"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "encrypted data is too short for being valid"));
+
         QNWARNING(errorDescription << ": " << encryptedDataSize
-                  << " bytes while should be at least "
-                  << minLength << " bytes");
+            << " bytes while should be at least " << minLength << " bytes");
         return false;
     }
 
@@ -532,8 +622,13 @@ bool EncryptionManagerPrivate::splitEncryptedData(const QString & encryptedData,
 
     cursor += saltSize;
     encryptedText.resize(0);
-    int encryptedDataWithoutHmacSize = encryptedDataSize - static_cast<int>(hmacSize);
-    for(int i = static_cast<int>(cursor); i < encryptedDataWithoutHmacSize; ++i) {
+
+    int encryptedDataWithoutHmacSize =
+        encryptedDataSize - static_cast<int>(hmacSize);
+
+    for(int i = static_cast<int>(cursor);
+        i < encryptedDataWithoutHmacSize; ++i)
+    {
         encryptedText += decodedEncryptedData.at(i);
     }
 
@@ -545,14 +640,16 @@ bool EncryptionManagerPrivate::splitEncryptedData(const QString & encryptedData,
     return true;
 }
 
-// WARNING: the implementation was ported from JavaScript taken from Evernote site
-// so it contains dangerous magic. Don't touch that unless you know what you're doing!
-bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText,
-                                          const QString & passphrase,
-                                          QString & decryptedText,
-                                          ErrorString & errorDescription)
+// WARNING: the implementation was ported from JavaScript taken from Evernote
+// site so it contains dangerous magic. Don't touch that unless you know what
+// you're doing!
+bool EncryptionManagerPrivate::decryptRc2(
+    const QString & encryptedText, const QString & passphrase,
+    QString & decryptedText, ErrorString & errorDescription)
 {
-    QByteArray encryptedTextData = QByteArray::fromBase64(encryptedText.toUtf8());
+    QByteArray encryptedTextData = QByteArray::fromBase64(
+        encryptedText.toUtf8());
+
     decryptedText.resize(0);
 
     rc2KeyCodesFromPassphrase(passphrase);
@@ -569,7 +666,7 @@ bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText,
         decryptedText += decryptedChunk;
     }
 
-    // First 4 chars of the string is the HEX-representation of the upper-byte
+    // First 4 chars of the string is a HEX-representation of the upper-byte
     // of the CRC32 of the string. If CRC32 is valid, we return the decoded
     // string, otherwise return with error
     QString crc = decryptedText.left(4);
@@ -587,8 +684,10 @@ bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText,
 
     if (realCrcStr != crc)
     {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("EncryptionManagerPrivate",
-                                                   "CRC32 checksum mismatch"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "EncryptionManagerPrivate",
+            "CRC32 checksum mismatch"));
+
         errorDescription.details() = QStringLiteral("Decrypted string has ");
         errorDescription.details() += crc;
         errorDescription.details() += QStringLiteral(", calculated CRC32 is ");
@@ -598,7 +697,8 @@ bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText,
 
     // Get rid of zero symbols at the end of the string, if any
     while((decryptedText.size() > 0) &&
-          (decryptedText.at(decryptedText.size() - 1) == QChar::fromLatin1(char(0))))
+          (decryptedText.at(decryptedText.size() - 1) ==
+           QChar::fromLatin1(char(0))))
     {
         decryptedText.remove(decryptedText.size() - 1, 1);
     }
@@ -606,10 +706,13 @@ bool EncryptionManagerPrivate::decryptRc2(const QString & encryptedText,
     return true;
 }
 
-void EncryptionManagerPrivate::rc2KeyCodesFromPassphrase(const QString & passphrase) const
+void EncryptionManagerPrivate::rc2KeyCodesFromPassphrase(
+    const QString & passphrase) const
 {
-    QByteArray keyData = QCryptographicHash::hash(passphrase.toUtf8(),
-                                                  QCryptographicHash::Md5);
+    QByteArray keyData = QCryptographicHash::hash(
+        passphrase.toUtf8(),
+        QCryptographicHash::Md5);
+
     const int keyDataSize = keyData.size();
 
     // 256-entry permutation table, probably derived somehow from pi
@@ -668,8 +771,8 @@ void EncryptionManagerPrivate::rc2KeyCodesFromPassphrase(const QString & passphr
     } while (i--);
 }
 
-QString EncryptionManagerPrivate::decryptRc2Chunk(const QByteArray & inputCharCodes,
-                                                  const QVector<int> & key) const
+QString EncryptionManagerPrivate::decryptRc2Chunk(
+    const QByteArray & inputCharCodes, const QVector<int> & key) const
 {
     int x76, x54, x32, x10, i;
 
@@ -682,10 +785,17 @@ QString EncryptionManagerPrivate::decryptRc2Chunk(const QByteArray & inputCharCo
         }
     }
 
-    x76 = (m_decrypt_rc2_chunk_key_codes[7] << 8) + m_decrypt_rc2_chunk_key_codes[6];
-    x54 = (m_decrypt_rc2_chunk_key_codes[5] << 8) + m_decrypt_rc2_chunk_key_codes[4];
-    x32 = (m_decrypt_rc2_chunk_key_codes[3] << 8) + m_decrypt_rc2_chunk_key_codes[2];
-    x10 = (m_decrypt_rc2_chunk_key_codes[1] << 8) + m_decrypt_rc2_chunk_key_codes[0];
+    x76 = (m_decrypt_rc2_chunk_key_codes[7] << 8) +
+        m_decrypt_rc2_chunk_key_codes[6];
+
+    x54 = (m_decrypt_rc2_chunk_key_codes[5] << 8) +
+        m_decrypt_rc2_chunk_key_codes[4];
+
+    x32 = (m_decrypt_rc2_chunk_key_codes[3] << 8) +
+        m_decrypt_rc2_chunk_key_codes[2];
+
+    x10 = (m_decrypt_rc2_chunk_key_codes[1] << 8) +
+        m_decrypt_rc2_chunk_key_codes[0];
 
     i = 15;
     do {
@@ -735,8 +845,9 @@ QString EncryptionManagerPrivate::decryptRc2Chunk(const QByteArray & inputCharCo
     return out;
 }
 
-// WARNING: the implementation was ported from JavaScript taken from Evernote site
-// so it contains dangerous magic. Don't touch that unless you know what you're doing!
+// WARNING: the implementation was ported from JavaScript taken from Evernote
+// site so it contains dangerous magic. Don't touch that unless you know what
+// you're doing!
 qint32 EncryptionManagerPrivate::crc32(const QString & str) const
 {
     const QString crc32table =
@@ -820,10 +931,11 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
         x_str = crc32table.mid(y * 9, 8);
         bool conversionResult = false;
         x = static_cast<qint32>(x_str.toUInt(&conversionResult, 16));
-        if (Q_UNLIKELY(!conversionResult)) {
+        if (Q_UNLIKELY(!conversionResult))
+        {
             QNERROR("Can't convert string representation of hex "
-                    << "number " << x_str
-                    << " to unsigned int!");
+                << "number " << x_str
+                << " to unsigned int!");
             crc = 0;
             return crc;
         }
@@ -835,6 +947,19 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
     }
 
     return (crc ^ (-1));
+}
+
+QDebug & operator<<(QDebug & dbg, const EncryptionManagerPrivate::SaltKind kind)
+{
+    PRINT_SALT_KIND(dbg, kind)
+    return dbg;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const EncryptionManagerPrivate::SaltKind kind)
+{
+    PRINT_SALT_KIND(strm, kind)
+    return strm;
 }
 
 } // namespace quentier

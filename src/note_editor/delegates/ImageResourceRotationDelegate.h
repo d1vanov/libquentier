@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_DELEGATES_IMAGE_RESOURCE_ROTATION_DELEGATE_H
 
 #include "../NoteEditor_p.h"
+
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/Resource.h>
@@ -34,30 +35,34 @@ class Q_DECL_HIDDEN ImageResourceRotationDelegate: public QObject
 public:
     explicit ImageResourceRotationDelegate(
         const QByteArray & resourceHashBefore,
-        const INoteEditorBackend::Rotation::type rotationDirection,
+        const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
         ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
+
     void start();
 
 Q_SIGNALS:
-    void finished(QByteArray resourceDataBefore, QByteArray resourceHashBefore,
-                  QByteArray resourceRecognitionDataBefore,
-                  QByteArray resourceRecognitionDataHashBefore,
-                  QSize resourceImageSizeBefore, Resource resourceAfter,
-                  INoteEditorBackend::Rotation::type rotationDirection);
+    void finished(
+        QByteArray resourceDataBefore, QByteArray resourceHashBefore,
+        QByteArray resourceRecognitionDataBefore,
+        QByteArray resourceRecognitionDataHashBefore,
+        QSize resourceImageSizeBefore, Resource resourceAfter,
+        INoteEditorBackend::Rotation rotationDirection);
+
     void notifyError(ErrorString error);
 
 // private signals
-    void saveResourceDataToTemporaryFile(QString noteLocalUid,
-                                         QString resourceLocalUid, QByteArray data,
-                                         QByteArray dataHash,
-                                         QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(
+        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
-    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash,
-                                            ErrorString errorDescription);
+
+    void onResourceDataSavedToTemporaryFile(
+        QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
+
     void onResourceTagHashUpdated(const QVariant & data);
     void onResourceTagSrcUpdated(const QVariant & data);
 
@@ -65,7 +70,7 @@ private:
     void rotateImageResource();
 
 private:
-    typedef JsResultCallbackFunctor<ImageResourceRotationDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<ImageResourceRotationDelegate>;
 
 private:
     NoteEditorPrivate &             m_noteEditor;
@@ -73,9 +78,9 @@ private:
     ResourceDataInTemporaryFileStorageManager &    m_resourceDataInTemporaryFileStorageManager;
     QHash<QString, QString> &       m_resourceFileStoragePathsByLocalUid;
 
-    INoteEditorBackend::Rotation::type  m_rotationDirection;
+    INoteEditorBackend::Rotation    m_rotationDirection;
 
-    Note *                          m_pNote;
+    Note *                          m_pNote = nullptr;
 
     QByteArray                      m_resourceDataBefore;
     QByteArray                      m_resourceHashBefore;
