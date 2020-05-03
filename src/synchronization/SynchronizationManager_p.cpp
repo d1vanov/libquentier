@@ -268,8 +268,23 @@ void SynchronizationManagerPrivate::stop()
 
     tryUpdateLastSyncStatus();
 
-    Q_EMIT stopRemoteToLocalSync();
-    Q_EMIT stopSendingLocalChanges();
+    m_pNoteStore->stop();
+
+    for(auto it = m_noteStoresByLinkedNotebookGuids.begin(),
+        end = m_noteStoresByLinkedNotebookGuids.end(); it != end; ++it)
+    {
+        INoteStore * pNoteStore = it.value();
+        pNoteStore->stop();
+    }
+
+    if (!m_pRemoteToLocalSyncManager->active() &&
+        !m_pSendLocalChangesManager->active())
+    {
+        Q_EMIT notifyStop();
+    }
+
+    m_pRemoteToLocalSyncManager->stop();
+    m_pSendLocalChangesManager->stop();
 }
 
 void SynchronizationManagerPrivate::revokeAuthentication(
@@ -836,9 +851,8 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(
     QNDEBUG("SynchronizationManagerPrivate::onRemoteToLocalSyncFailure: "
         << errorDescription);
 
-    Q_EMIT stopRemoteToLocalSync();
-    Q_EMIT stopSendingLocalChanges();
     Q_EMIT notifyError(errorDescription);
+    stop();
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSynchronizedContentFromUsersOwnAccount(
@@ -1121,13 +1135,6 @@ void SynchronizationManagerPrivate::createConnections(
 
     QObject::connect(
         this,
-        &SynchronizationManagerPrivate::stopRemoteToLocalSync,
-        m_pRemoteToLocalSyncManager,
-        &RemoteToLocalSynchronizationManager::stop,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        this,
         &SynchronizationManagerPrivate::sendAuthenticationTokenAndShardId,
         m_pRemoteToLocalSyncManager,
         &RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived,
@@ -1223,13 +1230,6 @@ void SynchronizationManagerPrivate::createConnections(
         &SynchronizationManagerPrivate::sendAuthenticationTokensForLinkedNotebooks,
         m_pSendLocalChangesManager,
         &SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        this,
-        &SynchronizationManagerPrivate::stopSendingLocalChanges,
-        m_pSendLocalChangesManager,
-        &SendLocalChangesManager::stop,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
