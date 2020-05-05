@@ -148,7 +148,7 @@ install:
 # Boost
   - if %qt%==mingw492_32 set BOOST_ROOT=C:\Libraries\boost
 # Small patch is required to get compilation with MinGW to work
-  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/Libraries/boost/include/boost/interprocess/detail && sed -i -e \"s/return FunctionAddresses/return (void*)FunctionAddresses/g\" win32_api.hpp"
+  - if %qt%==mingw492_32 C:\msys64\usr\bin\bash -lc "cd /c/Libraries/boost/boost/interprocess/detail && sed -i -e \"s/return FunctionAddresses/return (void*)FunctionAddresses/g\" win32_api.hpp"
   - if not %qt%==mingw492_32 set BOOST_ROOT=C:\Libraries\boost_1_69_0
 # OpenSSL
   - if not exist c:\dev\openssl (set SHOULD_DOWNLOAD_OPENSSL=1) else (set SHOULD_DOWNLOAD_OPENSSL=0)
