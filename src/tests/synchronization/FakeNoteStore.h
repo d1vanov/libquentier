@@ -29,8 +29,12 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Macros.h>
 
-// NOTE: Workaround a bug in Qt4 which may prevent building with some boost versions
-#ifndef Q_MOC_RUN
+// Silence GCC warning from boost headers
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -38,6 +42,9 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/global_fun.hpp>
 #include <boost/bimap.hpp>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
 #endif
 
 #include <QSharedPointer>

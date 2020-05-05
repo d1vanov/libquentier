@@ -27,7 +27,7 @@ namespace quentier {
 NoteSearchQueryData::NoteSearchQueryData() = default;
 
 NoteSearchQueryData::NoteSearchQueryData(
-    const NoteSearchQueryData & other) = default;
+    const NoteSearchQueryData & /* other */) = default;
 
 void NoteSearchQueryData::clear()
 {
