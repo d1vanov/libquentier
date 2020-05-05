@@ -20,25 +20,21 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 
 #include <quentier/utility/Printable.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QString>
 #include <QVector>
 
-// Silence some GCC warnings from boost headers
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 #define SYNCHRONIZATION_PERSISTENCE_NAME                                       \
     QStringLiteral("SynchronizationPersistence")                               \

@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 
 #include <quentier/utility/Macros.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QObject>
 #include <QQueue>
@@ -30,17 +31,12 @@
 #include <QWebView>
 #endif
 
-// Silence GCC warning from boost header
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 #include <boost/function.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 namespace quentier {
 

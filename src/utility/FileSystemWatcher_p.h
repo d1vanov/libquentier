@@ -20,21 +20,17 @@
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
 
 #include <quentier/utility/FileSystemWatcher.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QFileSystemWatcher>
 #include <QSet>
 
-// Silence GCC warning from boost header
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 #include <boost/bimap.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 namespace quentier {
 

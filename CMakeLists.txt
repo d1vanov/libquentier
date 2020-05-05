@@ -150,6 +150,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/LRUCache.hpp
     headers/quentier/utility/ShortcutManager.h
     headers/quentier/utility/StringUtils.h
+    headers/quentier/utility/SuppressWarnings.h
     headers/quentier/utility/SysInfo.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h

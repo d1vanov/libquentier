@@ -18,25 +18,21 @@
 
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QBuffer>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
-// Silence GCC warning from tidy headers
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wignored-qualifiers)
 
 #include <tidy.h>
 #include <tidybuffio.h>
 #include <tidyenum.h>
 #include <tidyplatform.h>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 #include <errno.h>
 #include <stdio.h>
