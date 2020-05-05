@@ -20,22 +20,20 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/utility/SuppressWarnings.h>
+
+#include <QHash>
 #include <QObject>
 #include <QHash>
 #include <QSet>
 #include <QUuid>
 
-// Silence GCC warning from boost header
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 #include <boost/bimap.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 namespace quentier {
 

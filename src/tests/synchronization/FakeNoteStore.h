@@ -28,12 +28,10 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/Macros.h>
+#include <quentier/utility/SuppressWarnings.h>
 
-// Silence GCC warning from boost headers
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
+SAVE_WARNINGS
+GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
@@ -43,9 +41,7 @@
 #include <boost/multi_index/global_fun.hpp>
 #include <boost/bimap.hpp>
 
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+RESTORE_WARNINGS
 
 #include <QSharedPointer>
 #include <QSet>
