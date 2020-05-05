@@ -39,7 +39,18 @@
 // Prevent boost::interprocess from automatic linkage to boost::datetime
 #define BOOST_DATE_TIME_NO_LIB
 
+// Silence some GCC warnings from boost header
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+
 #include <boost/interprocess/sync/file_lock.hpp>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 namespace quentier {
 

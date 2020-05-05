@@ -26,15 +26,15 @@ NoteSearchQuery::NoteSearchQuery() :
     d(new NoteSearchQueryData)
 {}
 
-NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & other) = default;
+NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & /* other */) = default;
 
-NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && other) = default;
-
-NoteSearchQuery & NoteSearchQuery::operator=(
-    const NoteSearchQuery & other) = default;
+NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && /* other */) = default;
 
 NoteSearchQuery & NoteSearchQuery::operator=(
-    NoteSearchQuery && other) = default;
+    const NoteSearchQuery & /* other */) = default;
+
+NoteSearchQuery & NoteSearchQuery::operator=(
+    NoteSearchQuery && /* other */) = default;
 
 NoteSearchQuery::~NoteSearchQuery() = default;
 

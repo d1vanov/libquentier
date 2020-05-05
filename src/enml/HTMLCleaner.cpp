@@ -23,10 +23,20 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
+// Silence GCC warning from tidy headers
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
+
 #include <tidy.h>
 #include <tidybuffio.h>
 #include <tidyenum.h>
 #include <tidyplatform.h>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <errno.h>
 #include <stdio.h>

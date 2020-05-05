@@ -26,9 +26,19 @@
 #include <QString>
 #include <QVector>
 
+// Silence some GCC warnings from boost headers
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #define SYNCHRONIZATION_PERSISTENCE_NAME                                       \
     QStringLiteral("SynchronizationPersistence")                               \
