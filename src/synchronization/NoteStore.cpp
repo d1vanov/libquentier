@@ -77,7 +77,7 @@ void NoteStore::stop()
 
     m_noteRequestDataById.clear();
 
-    for(const auto & it:qevercloud::toRange(m_resourceRequestDataById))
+    for(const auto & it: qevercloud::toRange(m_resourceRequestDataById))
     {
         const auto & requestData = it.value();
         if (!requestData.m_asyncResult.isNull()) {

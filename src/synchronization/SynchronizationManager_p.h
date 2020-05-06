@@ -134,9 +134,6 @@ Q_SIGNALS:
         QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
-    void stopRemoteToLocalSync();
-    void stopSendingLocalChanges();
-
 private:
     // NOTE: this is required for Qt4 connection syntax, it won't properly
     // understand IKeychainService::ErrorCode::type
