@@ -26,6 +26,7 @@
 
 SAVE_WARNINGS
 GCC_SUPPRESS_WARNING(-Wignored-qualifiers)
+CLANG_SUPPRESS_WARNING(-Wignored-qualifiers)
 
 #include <tidy.h>
 #include <tidybuffio.h>
