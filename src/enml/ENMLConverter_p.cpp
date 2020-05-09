@@ -84,8 +84,7 @@ void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
 {
     QNDEBUG("xmlValidationErrorFunc");
 
-    QString currentError;
-    currentError.asprintf(msg, args);
+    QString currentError = QString::asprintf(msg, args);
 
     QString * pErrorString = reinterpret_cast<QString*>(ctx);
     *pErrorString += currentError;
