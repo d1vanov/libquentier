@@ -9161,20 +9161,6 @@ void NoteEditorPrivate::setTagIds(
 
     if (!tagLocalUids.isEmpty() && !tagGuids.isEmpty())
     {
-        if (tagLocalUids.size() != tagGuids.size())
-        {
-            ErrorString error(
-                QT_TR_NOOP("Can't set tags to the note: the number of tag "
-                           "local uids is different from the number of tag "
-                           "guids"));
-            QNWARNING(error << ", tag local uids: "
-                << tagLocalUids.join(QStringLiteral(", "))
-                << "; tag guids: "
-                << tagGuids.join(QStringLiteral(", ")));
-            Q_EMIT notifyError(error);
-            return;
-        }
-
         if ((tagLocalUids == previousTagLocalUids) &&
             (tagGuids == previousTagGuids))
         {
