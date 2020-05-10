@@ -74,6 +74,11 @@ public:
         QThread * pBackgroundJobsThread = nullptr);
 
     /**
+     * @return the pointer to the note editor's backend
+     */
+    INoteEditorBackend * backend();
+
+    /**
      * This method can be used to set the backend to the note editor;
      * the note editor has the default backend so this method is not obligatory
      * to be called

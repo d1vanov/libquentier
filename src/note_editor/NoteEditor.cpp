@@ -16,12 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/note_editor/NoteEditor.h>
+
 #include "NoteEditor_p.h"
 
-#include <quentier/note_editor/NoteEditor.h>
-#include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/note_editor/INoteEditorBackend.h>
 
+#include <QCoreApplication>
 #include <QUndoStack>
 #include <QFont>
 #include <QColor>
@@ -53,6 +55,11 @@ void NoteEditor::initialize(
         spellChecker,
         account,
         pBackgroundJobsThread);
+}
+
+INoteEditorBackend * NoteEditor::backend()
+{
+    return m_backend;
 }
 
 void NoteEditor::setBackend(INoteEditorBackend * backend)
