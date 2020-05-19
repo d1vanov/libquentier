@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,41 +67,28 @@ public:
             Contains
         };
 
-        SkipHtmlElementRule() :
-            m_elementNameToSkip(),
-            m_elementNameComparisonRule(Equals),
-            m_elementNameCaseSensitivity(Qt::CaseSensitive),
-            m_attributeNameToSkip(),
-            m_attributeNameComparisonRule(Equals),
-            m_attributeNameCaseSensitivity(Qt::CaseSensitive),
-            m_attributeValueToSkip(),
-            m_attributeValueComparisonRule(Equals),
-            m_attributeValueCaseSensitivity(Qt::CaseSensitive),
-            m_includeElementContents(false)
-        {}
-
         virtual QTextStream & print(QTextStream & strm) const override;
 
         QString             m_elementNameToSkip;
-        ComparisonRule      m_elementNameComparisonRule;
-        Qt::CaseSensitivity m_elementNameCaseSensitivity;
+        ComparisonRule      m_elementNameComparisonRule = ComparisonRule::Equals;
+        Qt::CaseSensitivity m_elementNameCaseSensitivity = Qt::CaseSensitive;
 
         QString             m_attributeNameToSkip;
-        ComparisonRule      m_attributeNameComparisonRule;
-        Qt::CaseSensitivity m_attributeNameCaseSensitivity;
+        ComparisonRule      m_attributeNameComparisonRule = ComparisonRule::Equals;
+        Qt::CaseSensitivity m_attributeNameCaseSensitivity = Qt::CaseSensitive;
 
         QString             m_attributeValueToSkip;
-        ComparisonRule      m_attributeValueComparisonRule;
-        Qt::CaseSensitivity m_attributeValueCaseSensitivity;
+        ComparisonRule      m_attributeValueComparisonRule = ComparisonRule::Equals;
+        Qt::CaseSensitivity m_attributeValueCaseSensitivity = Qt::CaseSensitive;
 
-        bool                m_includeElementContents;
+        bool                m_includeElementContents = false;
     };
 
-    bool htmlToNoteContent(const QString & html, QString & noteContent,
-                           DecryptedTextManager & decryptedTextManager,
-                           ErrorString & errorDescription,
-                           const QVector<SkipHtmlElementRule> & skipRules =
-                           QVector<SkipHtmlElementRule>()) const;
+    bool htmlToNoteContent(
+        const QString & html, QString & noteContent,
+        DecryptedTextManager & decryptedTextManager,
+        ErrorString & errorDescription,
+        const QVector<SkipHtmlElementRule> & skipRules = {}) const;
 
     /**
      * @brief cleanupExternalHtml method cleans up a piece of HTML coming from
@@ -116,8 +103,9 @@ public:
      *
      * @return true in case of successful conversion, false otherwise
      */
-    bool cleanupExternalHtml(const QString & inputHtml, QString & cleanedUpHtml,
-                             ErrorString & errorDescription) const;
+    bool cleanupExternalHtml(
+        const QString & inputHtml, QString & cleanedUpHtml,
+        ErrorString & errorDescription) const;
 
     /**
      * Converts the passed in HTML into its simplified form acceptable by
@@ -132,71 +120,66 @@ public:
      *
      * @return true in case of successful conversion, false otherwise
      */
-    bool htmlToQTextDocument(const QString & html, QTextDocument & doc,
-                             ErrorString & errorDescription,
-                             const QVector<SkipHtmlElementRule> & skipRules =
-                             QVector<SkipHtmlElementRule>()) const;
+    bool htmlToQTextDocument(
+        const QString & html, QTextDocument & doc,
+        ErrorString & errorDescription,
+        const QVector<SkipHtmlElementRule> & skipRules = {}) const;
 
     struct NoteContentToHtmlExtraData
     {
-        quint64     m_numEnToDoNodes;
-        quint64     m_numHyperlinkNodes;
-        quint64     m_numEnCryptNodes;
-        quint64     m_numEnDecryptedNodes;
+        quint64     m_numEnToDoNodes = 0;
+        quint64     m_numHyperlinkNodes = 0;
+        quint64     m_numEnCryptNodes = 0;
+        quint64     m_numEnDecryptedNodes = 0;
     };
 
-    bool noteContentToHtml(const QString & noteContent, QString & html,
-                           ErrorString & errorDescription,
-                           DecryptedTextManager & decryptedTextManager,
-                           NoteContentToHtmlExtraData & extraData) const;
+    bool noteContentToHtml(
+        const QString & noteContent, QString & html,
+        ErrorString & errorDescription,
+        DecryptedTextManager & decryptedTextManager,
+        NoteContentToHtmlExtraData & extraData) const;
 
-    bool validateEnml(const QString & enml, ErrorString & errorDescription) const;
+    bool validateEnml(
+        const QString & enml, ErrorString & errorDescription) const;
 
-    bool validateAndFixupEnml(QString & enml, ErrorString & errorDescription) const;
+    bool validateAndFixupEnml(
+        QString & enml, ErrorString & errorDescription) const;
 
-    static bool noteContentToPlainText(const QString & noteContent,
-                                       QString & plainText,
-                                       ErrorString & errorMessage);
+    static bool noteContentToPlainText(
+        const QString & noteContent, QString & plainText,
+        ErrorString & errorMessage);
 
-    static bool noteContentToListOfWords(const QString & noteContent,
-                                         QStringList & listOfWords,
-                                         ErrorString & errorMessage,
-                                         QString * plainText = nullptr);
+    static bool noteContentToListOfWords(
+        const QString & noteContent, QStringList & listOfWords,
+        ErrorString & errorMessage, QString * plainText = nullptr);
 
     static QStringList plainTextToListOfWords(const QString & plainText);
 
     static QString toDoCheckboxHtml(const bool checked, const quint64 idNumber);
 
-    static QString encryptedTextHtml(const QString & encryptedText,
-                                     const QString & hint,
-                                     const QString & cipher,
-                                     const size_t keyLength,
-                                     const quint64 enCryptIndex);
+    static QString encryptedTextHtml(
+        const QString & encryptedText, const QString & hint,
+        const QString & cipher, const size_t keyLength,
+        const quint64 enCryptIndex);
 
-    static QString decryptedTextHtml(const QString & decryptedText,
-                                     const QString & encryptedText,
-                                     const QString & hint,
-                                     const QString & cipher,
-                                     const size_t keyLength,
-                                     const quint64 enDecryptedIndex);
+    static QString decryptedTextHtml(
+        const QString & decryptedText, const QString & encryptedText,
+        const QString & hint, const QString & cipher,
+        const size_t keyLength, const quint64 enDecryptedIndex);
 
-    static QString resourceHtml(const Resource & resource,
-                                ErrorString & errorDescription);
+    static QString resourceHtml(
+        const Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify = true);
 
     /**
-     * @brief The EnexExportTags struct is a C++98 style scoped enum which allows
-     * to specify whether export of note(s) to ENEX should include the names
-     * of note's tags
+     * @brief The EnexExportTags enum allows to specify whether export of note(s)
+     * to ENEX should include the names of note's tags
      */
-    struct EnexExportTags
+    enum class EnexExportTags
     {
-        enum type
-        {
-            Yes = 0,
-            No
-        };
+        Yes = 0,
+        No
     };
 
     /**
@@ -225,11 +208,12 @@ public:
      * @return                          True if the export completed successfully,
      *                                  false otherwise
      */
-    bool exportNotesToEnex(const QVector<Note> & notes,
-                           const QHash<QString, QString> & tagNamesByTagLocalUids,
-                           const EnexExportTags::type exportTagsOption,
-                           QString & enex, ErrorString & errorDescription,
-                           const QString & version = QString()) const;
+    bool exportNotesToEnex(
+        const QVector<Note> & notes,
+        const QHash<QString, QString> & tagNamesByTagLocalUids,
+        const EnexExportTags exportTagsOption,
+        QString & enex, ErrorString & errorDescription,
+        const QString & version = {}) const;
 
     /**
      * @brief importEnex reads the content of input ENEX file and converts it
@@ -250,9 +234,10 @@ public:
      *                                  into a set of notes and tag names successfully,
      *                                  false otherwise
      */
-    bool importEnex(const QString & enex, QVector<Note> & notes,
-                    QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-                    ErrorString & errorDescription) const;
+    bool importEnex(
+        const QString & enex, QVector<Note> & notes,
+        QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+        ErrorString & errorDescription) const;
 
 private:
     Q_DISABLE_COPY(ENMLConverter)

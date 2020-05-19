@@ -9,7 +9,7 @@ SET_POLICIES()
 project(libquentier VERSION 0.5.0)
 
 set(PROJECT_VENDOR "Dmitry Ivanov")
-set(PROJECT_COPYRIGHT_YEAR "2018")
+set(PROJECT_COPYRIGHT_YEAR "2020")
 set(PROJECT_DOMAIN_FIRST "quentier")
 set(PROJECT_DOMAIN_SECOND "org")
 set(PROJECT_DOMAIN "${PROJECT_DOMAIN_FIRST}.${PROJECT_DOMAIN_SECOND}")
@@ -28,7 +28,7 @@ include(LibquentierFindBoost)
 include(LibquentierFindHunspell)
 include(LibquentierFindQtKeychain)
 include(LibquentierFindQEverCloud)
-include(LibquentierFindLibTidyHtml5)
+include(LibquentierFindTidyHtml5)
 include(LibquentierSetupDoxygen)
 include(PrependPath)
 
@@ -38,7 +38,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
                     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(THIRDPARTY_LIBS ${QEVERCLOUD_LIBRARIES})
-list(APPEND THIRDPARTY_LIBS ${LIB_TIDY_LIBRARIES})
+list(APPEND THIRDPARTY_LIBS ${TIDY_HTML5_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${QTKEYCHAIN_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${OPENSSL_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${LIBXML2_LIBRARIES})
@@ -57,7 +57,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 
 set(THIRDPARTY_LIB_DIRS ${QEVERCLOUD_LIB_DIR})
-list(APPEND THIRDPARTY_LIB_DIRS ${TIDY_LIB_DIR})
+list(APPEND THIRDPARTY_LIB_DIRS ${TIDY_HTML5_LIB_DIR})
 list(APPEND THIRDPARTY_LIB_DIRS ${QTKEYCHAIN_LIB_DIR})
 list(APPEND THIRDPARTY_LIB_DIRS ${OPENSSL_LIB_DIRS})
 list(APPEND THIRDPARTY_LIB_DIRS ${LIBXML2_LIB_DIR})
@@ -127,7 +127,7 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/DatabaseLockedException.h
     headers/quentier/exception/DatabaseLockFailedException.h
     headers/quentier/exception/DatabaseOpeningException.h
-    headers/quentier/exception/DatabaseSqlErrorException.h
+    headers/quentier/exception/DatabaseRequestException.h
     headers/quentier/exception/EmptyDataElementException.h
     headers/quentier/exception/IQuentierException.h
     headers/quentier/exception/LocalStorageCacheManagerException.h
@@ -256,7 +256,6 @@ if(BUILD_WITH_NOTE_EDITOR)
        src/note_editor/dialogs/EditHyperlinkDialog.h
        src/note_editor/dialogs/RenameResourceDialog.h
        src/note_editor/delegates/JsResultCallbackFunctor.hpp
-       src/note_editor/delegates/HtmlCallbackFunctor.hpp
        src/note_editor/delegates/InsertHtmlDelegate.h
        src/note_editor/delegates/ImageResourceRotationDelegate.h
        src/note_editor/delegates/AddResourceDelegate.h
@@ -406,7 +405,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/DatabaseLockedException.cpp
     src/exception/DatabaseLockFailedException.cpp
     src/exception/DatabaseOpeningException.cpp
-    src/exception/DatabaseSqlErrorException.cpp
+    src/exception/DatabaseRequestException.cpp
     src/exception/IQuentierException.cpp
     src/exception/NoteEditorInitializationException.cpp
     src/exception/NoteEditorPluginInitializationException.cpp
@@ -947,7 +946,7 @@ install(EXPORT Libquentier-${LIBQUENTIER_QT_VERSION}LibraryDepends DESTINATION $
 install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindPackageWrapperMacro.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindHunspell.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/hunspell_new_api_check.cpp DESTINATION ${INSTALL_CMAKE_DIR})
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindLibTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/LibquentierFindTidyHtml5.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindQtDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}FindOtherDependencies.cmake DESTINATION ${INSTALL_CMAKE_DIR})
 install(FILES ${PROJECT_BINARY_DIR}/Libquentier-${LIBQUENTIER_QT_VERSION}Config.cmake DESTINATION ${INSTALL_CMAKE_DIR})

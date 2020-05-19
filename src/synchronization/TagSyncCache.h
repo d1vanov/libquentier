@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,9 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <QObject>
+
 #include <QHash>
+#include <QObject>
 #include <QUuid>
 
 namespace quentier {
@@ -30,9 +31,9 @@ class Q_DECL_HIDDEN TagSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    TagSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                 const QString & linkedNotebookGuid,
-                 QObject * parent = nullptr);
+    TagSyncCache(
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        QString linkedNotebookGuid, QObject * parent = nullptr);
 
     void clear();
 
@@ -43,16 +44,24 @@ public:
     bool isFilled() const;
 
     const QHash<QString,QString> & nameByLocalUidHash() const
-    { return m_tagNameByLocalUid; }
+    {
+        return m_tagNameByLocalUid;
+    }
 
     const QHash<QString,QString> & nameByGuidHash() const
-    { return m_tagNameByGuid; }
+    {
+        return m_tagNameByGuid;
+    }
 
     const QHash<QString,QString> & guidByNameHash() const
-    { return m_tagGuidByName; }
+    {
+        return m_tagGuidByName;
+    }
 
     const QHash<QString,Tag> & dirtyTagsByGuidHash() const
-    { return m_dirtyTagsByGuid; }
+    {
+        return m_dirtyTagsByGuid;
+    }
 
     const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
 
@@ -61,11 +70,12 @@ Q_SIGNALS:
     void failure(ErrorString errorDescription);
 
 // private signals
-    void listTags(LocalStorageManager::ListObjectsOptions flag,
-                  size_t limit, size_t offset,
-                  LocalStorageManager::ListTagsOrder::type order,
-                  LocalStorageManager::OrderDirection::type orderDirection,
-                  QString linkedNotebookGuid, QUuid requestId);
+    void listTags(
+        LocalStorageManager::ListObjectsOptions flag,
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
 
 public Q_SLOTS:
     /**
@@ -80,23 +90,24 @@ private Q_SLOTS:
     void onListTagsComplete(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListTagsOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QList<Tag> foundTags,
         QUuid requestId);
 
     void onListTagsFailed(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListTagsOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onUpdateTagComplete(Tag tag, QUuid requestId);
-    void onExpungeTagComplete(Tag tag, QStringList expungedChildTagLocalUids,
-                              QUuid requestId);
+
+    void onExpungeTagComplete(
+        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
 
 private:
     void connectToLocalStorage();
@@ -109,7 +120,7 @@ private:
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
-    bool                                m_connectedToLocalStorage;
+    bool                                m_connectedToLocalStorage = false;
 
     QString                             m_linkedNotebookGuid;
 
@@ -120,8 +131,8 @@ private:
     QHash<QString,Tag>                  m_dirtyTagsByGuid;
 
     QUuid                               m_listTagsRequestId;
-    size_t                              m_limit;
-    size_t                              m_offset;
+    size_t                              m_limit = 50;
+    size_t                              m_offset = 0;
 };
 
 } // namespace quentier

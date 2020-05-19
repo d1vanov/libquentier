@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
 
 #include <quentier/utility/EncryptionManager.h>
+
 #include <QtGlobal>
 #include <QHash>
 
@@ -28,51 +29,43 @@ namespace quentier {
 class Q_DECL_HIDDEN DecryptedTextManagerPrivate
 {
 public:
-    DecryptedTextManagerPrivate();
+    DecryptedTextManagerPrivate() = default;
 
-    void addEntry(const QString & hash, const QString & decryptedText,
-                  const bool rememberForSession, const QString & passphrase,
-                  const QString & cipher, const size_t keyLength);
+    void addEntry(
+        const QString & hash, const QString & decryptedText,
+        const bool rememberForSession, const QString & passphrase,
+        const QString & cipher, const size_t keyLength);
 
     void removeEntry(const QString & hash);
 
     void clearNonRememberedForSessionEntries();
 
-    bool findDecryptedTextByEncryptedText(const QString & encryptedText,
-                                          QString & decryptedText,
-                                          bool & rememberForSession) const;
+    bool findDecryptedTextByEncryptedText(
+        const QString & encryptedText, QString & decryptedText,
+        bool & rememberForSession) const;
 
-    bool modifyDecryptedText(const QString & originalHash,
-                             const QString & newDecryptedText,
-                             QString & newEncryptedText);
+    bool modifyDecryptedText(
+        const QString & originalHash, const QString & newDecryptedText,
+        QString & newEncryptedText);
 
 private:
     Q_DISABLE_COPY(DecryptedTextManagerPrivate)
 
 private:
-    class Data
+    struct Data
     {
-    public:
-        Data() :
-            m_decryptedText(),
-            m_passphrase(),
-            m_cipher(),
-            m_keyLength(0),
-            m_rememberForSession(false)
-        {}
-
         QString m_decryptedText;
         QString m_passphrase;
         QString m_cipher;
-        size_t  m_keyLength;
-        bool    m_rememberForSession;
+        size_t  m_keyLength = 0;
+        bool    m_rememberForSession = false;
     };
 
-    typedef QHash<QString, Data> DataHash;
+    using DataHash = QHash<QString, Data>;
+
+private:
     DataHash    m_dataHash;
-
     DataHash    m_staleDataHash;
-
     EncryptionManager   m_encryptionManager;
 };
 

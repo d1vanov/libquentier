@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,13 +39,13 @@ namespace quentier {
  * @return                  True if the sorting was performed successfully,
  *                          false otherwise
  */
-bool QUENTIER_EXPORT sortTagsByParentChildRelations(QList<qevercloud::Tag> & tagList,
-                                                    ErrorString & errorDescription);
+bool QUENTIER_EXPORT sortTagsByParentChildRelations(
+    QList<qevercloud::Tag> & tagList, ErrorString & errorDescription);
 
 /**
- * Sorts the tags within the passed in list in such a manner that all parent tags
- * go before their child tags. NOTE: the sorting logics uses guids and parent
- * tag guids, not local uids and parent tag local uids!
+ * Sorts the tags within the passed in list in such a manner that all parent
+ * tags go before their child tags. NOTE: the sorting logics uses guids and
+ * parent tag guids, not local uids and parent tag local uids!
  *
  * @param tagList           The input-output list of tags to be sorted by
  *                          parent-child relations
@@ -54,8 +54,8 @@ bool QUENTIER_EXPORT sortTagsByParentChildRelations(QList<qevercloud::Tag> & tag
  * @return                  True if the sorting was performed successfully,
  *                          false otherwise
  */
-bool QUENTIER_EXPORT sortTagsByParentChildRelations(QList<Tag> & tagList,
-                                                    ErrorString errorDescription);
+bool QUENTIER_EXPORT sortTagsByParentChildRelations(
+    QList<Tag> & tagList, ErrorString errorDescription);
 
 } // namespace quentier
 

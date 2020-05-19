@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_UTILITY_APPLICATION_SETTINGS_H
 
 #include <quentier/types/Account.h>
+
 #include <QSettings>
 
 namespace quentier {
@@ -29,8 +30,8 @@ namespace quentier {
  * in particular it simplifies the way of working with either application-wide
  * or account-specific settings
  */
-class QUENTIER_EXPORT ApplicationSettings: public QSettings,
-                                           public Printable
+class QUENTIER_EXPORT ApplicationSettings:
+    public QSettings, public Printable
 {
     Q_OBJECT
 public:
@@ -50,8 +51,8 @@ public:
      *                      otherwise they would be stored in the default
      *                      settings file for the account
      */
-    ApplicationSettings(const Account & account,
-                        const QString & settingsName = QString());
+    ApplicationSettings(
+        const Account & account, const QString & settingsName = {});
 
     /**
      * Destructor

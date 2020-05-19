@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -86,7 +86,8 @@ private:
     QSet<QString>       m_watchedFiles;
     QSet<QString>       m_watchedDirectories;
 
-    typedef boost::bimap<QString, int> PathWithTimerId;
+    using PathWithTimerId = boost::bimap<QString, int>;
+
     PathWithTimerId     m_justRemovedFilePathsWithPostRemovalTimerIds;
     PathWithTimerId     m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
 };

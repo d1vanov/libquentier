@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ public:
     explicit Resource(const qevercloud::Resource & resource);
     Resource & operator=(const Resource & other);
     Resource & operator=(Resource && other);
-    virtual ~Resource();
+    virtual ~Resource() override;
 
     bool operator==(const Resource & other) const;
     bool operator!=(const Resource & other) const;
@@ -56,7 +56,9 @@ public:
 
     virtual bool hasUpdateSequenceNumber() const override;
     virtual qint32 updateSequenceNumber() const override;
-    virtual void setUpdateSequenceNumber(const qint32 updateSequenceNumber) override;
+
+    virtual void setUpdateSequenceNumber(
+        const qint32 updateSequenceNumber) override;
 
     virtual bool checkParameters(ErrorString & errorDescription) const override;
 
@@ -133,7 +135,10 @@ public:
     bool hasResourceAttributes() const;
     const qevercloud::ResourceAttributes & resourceAttributes() const;
     qevercloud::ResourceAttributes & resourceAttributes();
-    void setResourceAttributes(const qevercloud::ResourceAttributes & attributes);
+
+    void setResourceAttributes(
+        const qevercloud::ResourceAttributes & attributes);
+
     void setResourceAttributes(qevercloud::ResourceAttributes && attributes);
 
     friend class Note;

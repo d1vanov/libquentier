@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,15 +17,19 @@
  */
 
 #include <quentier/utility/SysInfo.h>
+
 #include "../SysInfo_p.h"
+
 #include "StackTrace.h"
+
 #include <unistd.h>
-#include <QString>
-#include <QFile>
-#include <QByteArray>
-#include <QMutexLocker>
-#include <QDir>
+
 #include <QApplication>
+#include <QByteArray>
+#include <QDir>
+#include <QFile>
+#include <QMutexLocker>
+#include <QString>
 
 namespace quentier {
 
@@ -44,7 +48,8 @@ QString SysInfo::stackTrace()
     QString tmpFile = QDir::tempPath();
     QString appName = QApplication::applicationName();
 
-    tmpFile += QStringLiteral("/Quentier_") + appName + QStringLiteral("_StackTrace.txt");
+    tmpFile += QStringLiteral("/Quentier_") + appName +
+        QStringLiteral("_StackTrace.txt");
 
     // flush existing stderr and reopen it as file
     fflush(stderr);

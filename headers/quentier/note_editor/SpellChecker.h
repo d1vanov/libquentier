@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,30 +19,32 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_H
 #define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QVector>
-#include <QPair>
+
+#include <utility>
 
 namespace quentier {
 
+QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 QT_FORWARD_DECLARE_CLASS(SpellCheckerPrivate)
-QT_FORWARD_DECLARE_CLASS(Account)
 
 class QUENTIER_EXPORT SpellChecker : public QObject
 {
     Q_OBJECT
 public:
-    SpellChecker(FileIOProcessorAsync * pFileIOProcessorAsync,
-                 const Account & account, QObject * parent = nullptr,
-                 const QString & userDictionaryPath = QString());
+    SpellChecker(
+        FileIOProcessorAsync * pFileIOProcessorAsync,
+        const Account & account, QObject * parent = nullptr,
+        const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<QPair<QString,bool> > listAvailableDictionaries() const;
+    QVector<std::pair<QString,bool>> listAvailableDictionaries() const;
 
     void setAccount(const Account & account);
 
@@ -50,7 +52,10 @@ public:
     void disableDictionary(const QString & language);
 
     bool checkSpell(const QString & word) const;
-    QStringList spellCorrectionSuggestions(const QString & misSpelledWord) const;
+
+    QStringList spellCorrectionSuggestions(
+        const QString & misSpelledWord) const;
+
     void addToUserWordlist(const QString & word);
     void removeFromUserWordList(const QString & word);
     void ignoreWord(const QString & word);

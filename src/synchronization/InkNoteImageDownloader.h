@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,15 +19,15 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_INK_NOTE_IMAGE_DOWNLOADER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_INK_NOTE_IMAGE_DOWNLOADER_H
 
-#include <QObject>
-#include <QRunnable>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Macros.h>
 
+#include <QObject>
+#include <QRunnable>
+
 namespace quentier {
 
-class Q_DECL_HIDDEN InkNoteImageDownloader: public QObject,
-                                            public QRunnable
+class Q_DECL_HIDDEN InkNoteImageDownloader: public QObject, public QRunnable
 {
     Q_OBJECT
 public:
@@ -41,8 +41,9 @@ public:
     virtual void run() override;
 
 Q_SIGNALS:
-    void finished(bool status, QString resourceGuid,
-                  QString noteGuid, ErrorString errorDescription);
+    void finished(
+        bool status, QString resourceGuid, QString noteGuid,
+        ErrorString errorDescription);
 
 private:
     QString     m_host;

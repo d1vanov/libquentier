@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,13 +20,10 @@
 #define LIB_QUENTIER_TYPES_DATA_SAVED_SEARCH_DATA_H
 
 #include "FavoritableDataElementData.h"
+
 #include <quentier/types/ErrorString.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
 namespace quentier {
 
@@ -38,7 +35,7 @@ public:
     SavedSearchData(SavedSearchData && other);
     SavedSearchData(const qevercloud::SavedSearch & other);
     SavedSearchData(qevercloud::SavedSearch && other);
-    virtual ~SavedSearchData();
+    virtual ~SavedSearchData() override;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -49,8 +46,8 @@ public:
     qevercloud::SavedSearch     m_qecSearch;
 
 private:
-    SavedSearchData & operator=(const SavedSearchData & other)  = delete;
-    SavedSearchData & operator=(SavedSearchData && other)  = delete;
+    SavedSearchData & operator=(const SavedSearchData & other) = delete;
+    SavedSearchData & operator=(SavedSearchData && other) = delete;
 };
 
 } // namespace quentier

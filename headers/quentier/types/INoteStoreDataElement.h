@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,15 +20,18 @@
 #define LIB_QUENTIER_TYPES_I_NOTE_STORE_DATA_ELEMENT_H
 
 #include "ILocalStorageDataElement.h"
-#include <quentier/utility/Printable.h>
+
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Printable.h>
+
 #include <QtGlobal>
 #include <QUuid>
 
 namespace quentier {
 
-class QUENTIER_EXPORT INoteStoreDataElement: public ILocalStorageDataElement,
-                                             public Printable
+class QUENTIER_EXPORT INoteStoreDataElement:
+    public ILocalStorageDataElement,
+    public Printable
 {
 public:
     virtual void clear() = 0;

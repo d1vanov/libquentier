@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,10 @@
 #define LIB_QUENTIER_UTILITY_STRING_UTILS_H
 
 #include <quentier/utility/Linkage.h>
+
+#include <QSet>
 #include <QString>
 #include <QVector>
-#include <QSet>
 
 namespace quentier {
 
@@ -34,9 +35,9 @@ public:
     StringUtils();
     virtual ~StringUtils();
 
-    void removePunctuation(QString & str,
-                           const QVector<QChar> & charactersToPreserve =
-                           QVector<QChar>()) const;
+    void removePunctuation(
+        QString & str, const QVector<QChar> & charactersToPreserve = {}) const;
+
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;
 

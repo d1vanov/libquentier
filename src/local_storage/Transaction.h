@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_TRANSACTION_H
 
 #include <quentier/types/ErrorString.h>
+
 #include <QSqlDatabase>
 
 namespace quentier {
@@ -29,18 +30,21 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 class Q_DECL_HIDDEN Transaction
 {
 public:
-    enum TransactionType
+    enum class Type
     {
         Default = 0,
-        // transaction type for speeding-up selection queries via holding the shared lock
+        // transaction type for speeding-up selection queries via holding
+        // the shared lock
         Selection,
         Immediate,
         Exclusive
     };
 
-    Transaction(const QSqlDatabase & db,
-                const LocalStorageManagerPrivate & localStorageManager,
-                TransactionType type = Default);
+    Transaction(
+        const QSqlDatabase & db,
+        const LocalStorageManagerPrivate & localStorageManager,
+        Type type = Type::Default);
+
     virtual ~Transaction();
 
     bool commit(ErrorString & errorDescription);
@@ -56,7 +60,7 @@ private:
     const LocalStorageManagerPrivate & m_localStorageManager;
 
 private:
-    TransactionType m_type;
+    Type m_type;
     bool m_committed;
     bool m_rolledBack;
     bool m_ended;

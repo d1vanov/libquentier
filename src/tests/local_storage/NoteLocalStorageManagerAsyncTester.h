@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -58,8 +58,8 @@ Q_SIGNALS:
                                      LocalStorageManager::GetNoteOptions options,
                                      LocalStorageManager::ListObjectsOptions flag,
                                      size_t limit, size_t offset,
-                                     LocalStorageManager::ListNotesOrder::type order,
-                                     LocalStorageManager::OrderDirection::type orderDirection,
+                                     LocalStorageManager::ListNotesOrder order,
+                                     LocalStorageManager::OrderDirection orderDirection,
                                      QUuid requestId);
     void expungeNoteRequest(Note note, QUuid requestId);
 
@@ -89,15 +89,15 @@ private Q_SLOTS:
                                          LocalStorageManager::GetNoteOptions options,
                                          LocalStorageManager::ListObjectsOptions flag,
                                          size_t limit, size_t offset,
-                                         LocalStorageManager::ListNotesOrder::type order,
-                                         LocalStorageManager::OrderDirection::type orderDirection,
+                                         LocalStorageManager::ListNotesOrder order,
+                                         LocalStorageManager::OrderDirection orderDirection,
                                          QList<Note> notes, QUuid requestId);
     void onListNotesPerNotebookFailed(Notebook notebook,
                                       LocalStorageManager::GetNoteOptions options,
                                       LocalStorageManager::ListObjectsOptions flag,
                                       size_t limit, size_t offset,
-                                      LocalStorageManager::ListNotesOrder::type order,
-                                      LocalStorageManager::OrderDirection::type orderDirection,
+                                      LocalStorageManager::ListNotesOrder order,
+                                      LocalStorageManager::OrderDirection orderDirection,
                                       ErrorString errorDescription, QUuid requestId);
     void onExpungeNoteCompleted(Note note, QUuid requestId);
     void onExpungeNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);

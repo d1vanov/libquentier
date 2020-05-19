@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,27 +20,26 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_LISTS_H
 
 #include <QVector>
-#include <QSharedPointer>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(User)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(SharedNotebook)
 QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
 QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Tag)
+QT_FORWARD_DECLARE_CLASS(Notebook)
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(SavedSearch)
+QT_FORWARD_DECLARE_CLASS(SharedNotebook)
+QT_FORWARD_DECLARE_CLASS(Tag)
+QT_FORWARD_DECLARE_CLASS(User)
 
-typedef QList<User>                   UserList;
-typedef QList<Notebook>               NotebookList;
-typedef QList<SharedNotebook>         SharedNotebookList;
-typedef QList<LinkedNotebook>         LinkedNotebookList;
-typedef QList<Note>                   NoteList;
-typedef QList<Tag>                    TagList;
-typedef QList<Resource>               ResourceList;
-typedef QList<SavedSearch>            SavedSearchList;
+using LinkedNotebookList = QList<LinkedNotebook>;
+using NoteList = QList<Note>;
+using NotebookList = QList<Notebook>;
+using ResourceList = QList<Resource>;
+using SavedSearchList = QList<SavedSearch>;
+using SharedNotebookList = QList<SharedNotebook>;
+using TagList = QList<Tag>;
+using UserList = QList<User>;
 
 } // namespace quentier
 

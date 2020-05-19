@@ -28,7 +28,7 @@ include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindOtherD
 
 # The following libraries are found via ad-hoc processing and don't have find_package scripts, processing them specifically
 include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindHunspell.cmake")
-include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindLibTidyHtml5.cmake")
+include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindTidyHtml5.cmake")
 
 # These are IMPORTED targets created by Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake
 set(LIBQUENTIER_LIBRARIES "lib@LIBQUENTIER_QT_VERSION@quentier@LIBQUENTIER_LIBNAME_SUFFIX@")

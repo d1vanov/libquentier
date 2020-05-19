@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,35 +26,17 @@ NoteSearchQuery::NoteSearchQuery() :
     d(new NoteSearchQueryData)
 {}
 
-NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & other) :
-    Printable(),
-    d(other.d)
-{}
+NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & /* other */) = default;
 
-NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && other) :
-    d(std::move(other.d))
-{}
+NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && /* other */) = default;
 
-NoteSearchQuery & NoteSearchQuery::operator=(const NoteSearchQuery & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+NoteSearchQuery & NoteSearchQuery::operator=(
+    const NoteSearchQuery & /* other */) = default;
 
-    return *this;
-}
+NoteSearchQuery & NoteSearchQuery::operator=(
+    NoteSearchQuery && /* other */) = default;
 
-NoteSearchQuery & NoteSearchQuery::operator=(NoteSearchQuery && other)
-{
-    if (this != &other) {
-        d = std::move(other.d);
-    }
-
-    return *this;
-}
-
-NoteSearchQuery::~NoteSearchQuery()
-{}
+NoteSearchQuery::~NoteSearchQuery() = default;
 
 bool NoteSearchQuery::isEmpty() const
 {
@@ -71,8 +53,8 @@ const QString NoteSearchQuery::queryString() const
     return d->m_queryString;
 }
 
-bool NoteSearchQuery::setQueryString(const QString & queryString,
-                                     ErrorString & error)
+bool NoteSearchQuery::setQueryString(
+    const QString & queryString, ErrorString & error)
 {
     d->clear();
     return d->parseQueryString(queryString, error);
@@ -501,7 +483,7 @@ const QStringList & NoteSearchQuery::negatedContentSearchTerms() const
 bool NoteSearchQuery::hasAnyContentSearchTerms() const
 {
     return !d->m_contentSearchTerms.isEmpty() ||
-           !d->m_negatedContentSearchTerms.isEmpty();
+        !d->m_negatedContentSearchTerms.isEmpty();
 }
 
 bool NoteSearchQuery::isMatcheable() const

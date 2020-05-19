@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,18 +22,17 @@
 
 namespace quentier {
 
-void ResourceInfo::cacheResourceInfo(const QByteArray & resourceHash,
-                                     const QString & resourceDisplayName,
-                                     const QString & resourceDisplaySize,
-                                     const QString & resourceLocalFilePath,
-                                     const QSize & resourceImageSize)
+void ResourceInfo::cacheResourceInfo(
+    const QByteArray & resourceHash, const QString & resourceDisplayName,
+    const QString & resourceDisplaySize, const QString & resourceLocalFilePath,
+    const QSize & resourceImageSize)
 {
     QNDEBUG("ResourceInfo::cacheResourceInfo: resource hash = "
-            << resourceHash.toHex()
-            << ", resource display name = " << resourceDisplayName
-            << ", resource display size = " << resourceDisplaySize
-            << ", resource local file path = " << resourceLocalFilePath
-            << ", resource image size = " << resourceImageSize);
+        << resourceHash.toHex()
+        << ", resource display name = " << resourceDisplayName
+        << ", resource display size = " << resourceDisplaySize
+        << ", resource local file path = " << resourceLocalFilePath
+        << ", resource image size = " << resourceImageSize);
 
     Info & info = m_resourceInfoHash[resourceHash];
     info.m_resourceDisplayName = resourceDisplayName;
@@ -48,14 +47,13 @@ bool ResourceInfo::contains(const QByteArray & resourceHash) const
     return (it != m_resourceInfoHash.end());
 }
 
-bool ResourceInfo::findResourceInfo(const QByteArray & resourceHash,
-                                    QString & resourceDisplayName,
-                                    QString & resourceDisplaySize,
-                                    QString & resourceLocalFilePath,
-                                    QSize & resourceImageSize) const
+bool ResourceInfo::findResourceInfo(
+    const QByteArray & resourceHash, QString & resourceDisplayName,
+    QString & resourceDisplaySize, QString & resourceLocalFilePath,
+    QSize & resourceImageSize) const
 {
     QNDEBUG("ResourceInfo::findResourceInfo: resource hash = "
-            << resourceHash.toHex());
+        << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
@@ -70,16 +68,16 @@ bool ResourceInfo::findResourceInfo(const QByteArray & resourceHash,
     resourceImageSize = info.m_resourceImageSize;
 
     QNTRACE("Found resource info: name = " << resourceDisplayName
-            << ", display size = " << resourceDisplaySize
-            << ", local file path = " << resourceLocalFilePath
-            << ", image size = " << resourceImageSize);
+        << ", display size = " << resourceDisplaySize
+        << ", local file path = " << resourceLocalFilePath
+        << ", image size = " << resourceImageSize);
     return true;
 }
 
 bool ResourceInfo::removeResourceInfo(const QByteArray & resourceHash)
 {
     QNDEBUG("ResourceInfo::removeResourceInfo: resource hash = "
-            << resourceHash.toHex());
+        << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {

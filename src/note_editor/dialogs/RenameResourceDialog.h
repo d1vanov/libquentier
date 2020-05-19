@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,8 +33,9 @@ class Q_DECL_HIDDEN RenameResourceDialog: public QDialog
 {
     Q_OBJECT
 public:
-    explicit RenameResourceDialog(const QString & initialResourceName,
-                                  QWidget * parent = nullptr);
+    explicit RenameResourceDialog(
+        const QString & initialResourceName, QWidget * parent = nullptr);
+
     virtual ~RenameResourceDialog();
 
 Q_SIGNALS:

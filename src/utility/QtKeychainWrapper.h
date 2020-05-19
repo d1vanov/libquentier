@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,13 @@
 #ifndef LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 #define LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 
-#include <QObject>
-#include <QUuid>
-#include <QHash>
 #include <quentier_private/utility/IKeychainService.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5keychain/keychain.h>
-#else
-#include <qtkeychain/keychain.h>
-#endif
+
+#include <QHash>
+#include <QObject>
+#include <QUuid>
 
 namespace quentier {
 

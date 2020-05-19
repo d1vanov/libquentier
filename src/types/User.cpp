@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,8 +17,10 @@
  */
 
 #include "data/UserData.h"
+
 #include <quentier/types/User.h>
 #include <quentier/utility/Utility.h>
+
 #include <QRegExp>
 
 namespace quentier {
@@ -131,7 +133,8 @@ bool User::checkParameters(ErrorString & errorDescription) const
     const auto & enUser = d->m_qecUser;
 
     if (!enUser.id.isSet()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP("User", "User id is not set"));
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP("User", "User id is not set"));
         return false;
     }
 
@@ -143,9 +146,9 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (usernameSize > qevercloud::EDAM_USER_USERNAME_LEN_MAX) ||
              (usernameSize < qevercloud::EDAM_USER_USERNAME_LEN_MIN) )
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's name has invalid "
-                                                       "size"));
+            errorDescription.setBase(
+                QT_TRANSLATE_NOOP("User", "User's name has invalid size"));
+
             errorDescription.details() = username;
             return false;
         }
@@ -153,17 +156,17 @@ bool User::checkParameters(ErrorString & errorDescription) const
         QRegExp usernameRegExp(qevercloud::EDAM_USER_USERNAME_REGEX);
         if (usernameRegExp.indexIn(username) < 0)
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's name can contain "
-                                                       "only \"a-z\" or \"0-9\""
-                                                       "or \"-\" but should not "
-                                                       "start or end with \"-\""));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "User",
+                "User's name can contain only \"a-z\" or \"0-9\""
+                "or \"-\" but should not start or end with \"-\""));
+
             return false;
         }
     }
 
-    // NOTE: ignore everything about email because "Third party applications that
-    // authenticate using OAuth do not have access to this field"
+    // NOTE: ignore everything about email because "Third party applications
+    // that authenticate using OAuth do not have access to this field"
 
     if (enUser.name.isSet())
     {
@@ -173,21 +176,22 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (nameSize > qevercloud::EDAM_USER_NAME_LEN_MAX) ||
              (nameSize < qevercloud::EDAM_USER_NAME_LEN_MIN) )
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's displayed name "
-                                                       "has invalid size"));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "User",
+                "User's displayed name has invalid size"));
+
             errorDescription.details() = name;
             return false;
         }
 
         QRegExp nameRegExp(qevercloud::EDAM_USER_NAME_REGEX);
-        if (nameRegExp.indexIn(name) < 0) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's displayed name "
-                                                       "doesn't match its regular "
-                                                       "expression. Consider "
-                                                       "removing any special "
-                                                       "characters"));
+        if (nameRegExp.indexIn(name) < 0)
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "User",
+                "User's displayed name doesn't match its regular expression. "
+                "Consider removing any special characters"));
+
             return false;
         }
     }
@@ -200,9 +204,9 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if ( (timezoneSize > qevercloud::EDAM_TIMEZONE_LEN_MAX) ||
              (timezoneSize < qevercloud::EDAM_TIMEZONE_LEN_MIN) )
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's timezone has "
-                                                       "invalid size"));
+            errorDescription.setBase(
+                QT_TRANSLATE_NOOP("User", "User's timezone has invalid size"));
+
             errorDescription.details() = timezone;
             return false;
         }
@@ -210,14 +214,12 @@ bool User::checkParameters(ErrorString & errorDescription) const
         QRegExp timezoneRegExp(qevercloud::EDAM_TIMEZONE_REGEX);
         if (timezoneRegExp.indexIn(timezone) < 0)
         {
-            errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                       "User's timezone doesn't "
-                                                       "match its regular "
-                                                       "expression. It must be "
-                                                       "encoded as a standard "
-                                                       "zone ID such as "
-                                                       "\"America/Los_Angeles\" "
-                                                       "or \"GMT+08:00\"."));
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "User",
+                "User's timezone doesn't match its regular expression. It must "
+                "be encoded as a standard zone ID such as "
+                "\"America/Los_Angeles\" or \"GMT+08:00\"."));
+
             return false;
         }
     }
@@ -234,9 +236,10 @@ bool User::checkParameters(ErrorString & errorDescription) const
             if ( (defaultLocationNameSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (defaultLocationNameSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                           "User's default location "
-                                                           "name has invalid size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "User",
+                    "User's default location name has invalid size"));
+
                 errorDescription.details() = defaultLocationName;
                 return false;
             }
@@ -245,16 +248,16 @@ bool User::checkParameters(ErrorString & errorDescription) const
         if (attributes.viewedPromotions.isSet())
         {
             const QStringList & viewedPromotions = attributes.viewedPromotions;
-            foreach(const QString & viewedPromotion, viewedPromotions)
+            for(const auto & viewedPromotion: qAsConst(viewedPromotions))
             {
                 int viewedPromotionSize = viewedPromotion.size();
                 if ( (viewedPromotionSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                      (viewedPromotionSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                               "User's viewed "
-                                                               "promotion has "
-                                                               "invalid size"));
+                    errorDescription.setBase(QT_TRANSLATE_NOOP(
+                        "User",
+                        "User's viewed promotion has invalid size"));
+
                     errorDescription.details() = viewedPromotion;
                     return false;
                 }
@@ -263,16 +266,18 @@ bool User::checkParameters(ErrorString & errorDescription) const
 
         if (attributes.incomingEmailAddress.isSet())
         {
-            const QString & incomingEmailAddress = attributes.incomingEmailAddress;
+            const QString & incomingEmailAddress =
+                attributes.incomingEmailAddress;
+
             int incomingEmailAddressSize = incomingEmailAddress.size();
 
             if ( (incomingEmailAddressSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (incomingEmailAddressSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                           "User's incoming email "
-                                                           "address has invalid "
-                                                           "size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "User",
+                    "User's incoming email address has invalid size"));
+
                 errorDescription.details() = incomingEmailAddress;
                 return false;
             }
@@ -280,29 +285,37 @@ bool User::checkParameters(ErrorString & errorDescription) const
 
         if (attributes.recentMailedAddresses.isSet())
         {
-            const QStringList & recentMailedAddresses = attributes.recentMailedAddresses;
+            const QStringList & recentMailedAddresses =
+                attributes.recentMailedAddresses;
+
             int numRecentMailedAddresses = recentMailedAddresses.size();
 
-            if (numRecentMailedAddresses > qevercloud::EDAM_USER_RECENT_MAILED_ADDRESSES_MAX)
+            if (numRecentMailedAddresses >
+                qevercloud::EDAM_USER_RECENT_MAILED_ADDRESSES_MAX)
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                           "User recent mailed "
-                                                           "addresses size is "
-                                                           "invalid"));
-                errorDescription.details() = QString::number(numRecentMailedAddresses);
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "User",
+                    "User recent mailed addresses size is invalid"));
+
+                errorDescription.details() = QString::number(
+                    numRecentMailedAddresses);
+
                 return false;
             }
 
-            foreach(const QString & recentMailedAddress, recentMailedAddresses)
+            for(const auto & recentMailedAddress:
+                qAsConst(recentMailedAddresses))
             {
                 int recentMailedAddressSize = recentMailedAddress.size();
-                if ( (recentMailedAddressSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
-                     (recentMailedAddressSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
+                if ( (recentMailedAddressSize >
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
+                     (recentMailedAddressSize <
+                      qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
                 {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                               "User's recent "
-                                                               "emailed address "
-                                                               "has invalid size"));
+                    errorDescription.setBase(QT_TRANSLATE_NOOP(
+                        "User",
+                        "User's recent emailed address has invalid size"));
+
                     errorDescription.details() = recentMailedAddress;
                     return false;
                 }
@@ -317,9 +330,10 @@ bool User::checkParameters(ErrorString & errorDescription) const
             if ( (commentsSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) ||
                  (commentsSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) )
             {
-                errorDescription.setBase(QT_TRANSLATE_NOOP("User",
-                                                           "User's comments have "
-                                                           "invalid size"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "User",
+                    "User's comments have invalid size"));
+
                 errorDescription.details() = QString::number(commentsSize);
                 return false;
             }
@@ -661,12 +675,14 @@ void User::setAccountLimits(qevercloud::AccountLimits && limits)
 QTextStream & User::print(QTextStream & strm) const
 {
     strm << "User { \n";
+
     strm << "isDirty = "
-         << (d->m_isDirty ? "true" : "false")
-         << "; \n";
+        << (d->m_isDirty ? "true" : "false")
+        << "; \n";
+
     strm << "isLocal = "
-         << (d->m_isLocal ? "true" : "false")
-         << "; \n";
+        << (d->m_isLocal ? "true" : "false")
+        << "; \n";
 
     const auto & enUser = d->m_qecUser;
 
@@ -721,7 +737,7 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.created.isSet()) {
         strm << "created = "
-             << printableDateTimeFromTimestamp(enUser.created) << "; \n";
+            << printableDateTimeFromTimestamp(enUser.created) << "; \n";
     }
     else {
         strm << "created is not set; \n";
@@ -729,7 +745,7 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.updated.isSet()) {
         strm << "updated = "
-             << printableDateTimeFromTimestamp(enUser.updated) << "; \n";
+            << printableDateTimeFromTimestamp(enUser.updated) << "; \n";
     }
     else {
         strm << "updated is not set; \n";
@@ -737,7 +753,7 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.deleted.isSet()) {
         strm << "deleted = "
-             << printableDateTimeFromTimestamp(enUser.deleted) << "; \n";
+            << printableDateTimeFromTimestamp(enUser.deleted) << "; \n";
     }
     else {
         strm << "deleted is not set; \n";
@@ -745,8 +761,8 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.active.isSet()) {
         strm << "active = "
-             << (enUser.active ? "true" : "false")
-             << "; \n";
+            << (enUser.active ? "true" : "false")
+            << "; \n";
     }
     else {
         strm << "active is not set; \n";
@@ -775,7 +791,7 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.photoUrl.isSet()) {
         strm << "photo url = "
-             << enUser.photoUrl << "; \n";
+            << enUser.photoUrl << "; \n";
     }
     else {
         strm << "photo url is not set; \n";
@@ -783,8 +799,8 @@ QTextStream & User::print(QTextStream & strm) const
 
     if (enUser.photoLastUpdated.isSet()) {
         strm << "photo url last updated = "
-             << printableDateTimeFromTimestamp(enUser.photoLastUpdated)
-             << "; \n";
+            << printableDateTimeFromTimestamp(enUser.photoLastUpdated)
+            << "; \n";
     }
     else {
         strm << "photo url last updates is not set; \n";

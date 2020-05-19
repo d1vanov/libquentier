@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,14 +22,10 @@
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/SuppressWarnings.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <qt5qevercloud/QEverCloud.h>
-#else
-#include <qt4qevercloud/QEverCloud.h>
-#endif
 
-#include <QVector>
 #include <QString>
+#include <QVector>
 
 SAVE_WARNINGS
 GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
@@ -125,11 +121,10 @@ class Q_DECL_HIDDEN LinkedNotebookAuthData: public Printable
 {
 public:
     LinkedNotebookAuthData();
-    LinkedNotebookAuthData(const QString & guid,
-                           const QString & shardId,
-                           const QString & sharedNotebookGlobalId,
-                           const QString & uri,
-                           const QString & noteStoreUrl);
+
+    LinkedNotebookAuthData(
+        QString guid, QString shardId, QString sharedNotebookGlobalId,
+        QString uri, QString noteStoreUrl);
 
     virtual QTextStream & print(QTextStream & strm) const override;
 
@@ -144,8 +139,9 @@ template <typename T>
 class OptionalComparator
 {
 public:
-    bool operator()(const qevercloud::Optional<T> & lhs,
-                    const qevercloud::Optional<T> & rhs) const
+    bool operator()(
+        const qevercloud::Optional<T> & lhs,
+        const qevercloud::Optional<T> & rhs) const
     {
         if (!lhs.isSet() && !rhs.isSet()) {
             return false;
@@ -165,8 +161,9 @@ public:
 class OptionalStringCaseInsensitiveComparator
 {
 public:
-    bool operator()(const qevercloud::Optional<QString> & lhs,
-                    const qevercloud::Optional<QString> & rhs) const
+    bool operator()(
+        const qevercloud::Optional<QString> & lhs,
+        const qevercloud::Optional<QString> & rhs) const
     {
         if (!lhs.isSet() && !rhs.isSet()) {
             return false;
@@ -187,29 +184,35 @@ struct ByGuid{};
 struct ByName{};
 struct ByParentTagGuid{};
 
-typedef boost::multi_index_container<
+using TagsContainer = boost::multi_index_container<
     qevercloud::Tag,
     boost::multi_index::indexed_by<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<ByGuid>,
             boost::multi_index::member<
-                qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::guid>,
+                qevercloud::Tag,
+                qevercloud::Optional<QString>,
+                &qevercloud::Tag::guid>,
             OptionalComparator<QString>
         >,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByName>,
             boost::multi_index::member<
-                qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::name>,
+                qevercloud::Tag,
+                qevercloud::Optional<QString>,
+                &qevercloud::Tag::name>,
             OptionalStringCaseInsensitiveComparator
         >,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByParentTagGuid>,
             boost::multi_index::member<
-            qevercloud::Tag,qevercloud::Optional<QString>,&qevercloud::Tag::parentGuid>,
+                qevercloud::Tag,
+                qevercloud::Optional<QString>,
+                &qevercloud::Tag::parentGuid>,
             OptionalComparator<QString>
         >
     >
-> TagsContainer;
+>;
 
 } // namespace quentier
 

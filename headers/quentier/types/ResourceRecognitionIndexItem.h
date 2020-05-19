@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,6 +21,7 @@
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
+
 #include <QByteArray>
 #include <QSharedDataPointer>
 
@@ -33,8 +34,11 @@ class QUENTIER_EXPORT ResourceRecognitionIndexItem: public Printable
 public:
     explicit ResourceRecognitionIndexItem();
     ResourceRecognitionIndexItem(const ResourceRecognitionIndexItem & other);
-    ResourceRecognitionIndexItem & operator=(const ResourceRecognitionIndexItem & other);
-    virtual ~ResourceRecognitionIndexItem();
+
+    ResourceRecognitionIndexItem & operator=(
+        const ResourceRecognitionIndexItem & other);
+
+    virtual ~ResourceRecognitionIndexItem() override;
 
     bool isValid() const;
 
@@ -68,13 +72,13 @@ public:
 
     struct TextItem
     {
-        TextItem() : m_text(), m_weight(-1) {}
-
         bool operator==(const TextItem & other) const
-        { return (m_text == other.m_text) && (m_weight == other.m_weight); }
+        {
+            return (m_text == other.m_text) && (m_weight == other.m_weight);
+        }
 
         QString     m_text;
-        int         m_weight;
+        int         m_weight = -1;
     };
 
     QVector<TextItem> textItems() const;
@@ -89,19 +93,23 @@ public:
 
     struct ObjectItem
     {
-        ObjectItem() : m_objectType(), m_weight(-1) {}
-
         bool operator==(const ObjectItem & other) const
-        { return (m_objectType == other.m_objectType) && (m_weight == other.m_weight); }
+        {
+            return (m_objectType == other.m_objectType) &&
+                (m_weight == other.m_weight);
+        }
 
         QString     m_objectType;
-        int         m_weight;
+        int         m_weight = -1;
     };
 
     QVector<ObjectItem> objectItems() const;
     int numObjectItems() const;
     bool objectItemAt(const int objectItemIndex, ObjectItem & objectItem) const;
-    bool setObjectItemAt(const int objectItemIndex, const ObjectItem & objectItem);
+
+    bool setObjectItemAt(
+        const int objectItemIndex, const ObjectItem & objectItem);
+
     void setObjectItems(const QVector<ObjectItem> & objectItems);
     void reserveObjectItemsSpace(const int numItems);
     void addObjectItem(const ObjectItem & item);
@@ -110,13 +118,14 @@ public:
 
     struct ShapeItem
     {
-        ShapeItem() : m_shapeType(), m_weight(-1) {}
-
         bool operator==(const ShapeItem & other) const
-        { return (m_shapeType == other.m_shapeType) && (m_weight == other.m_weight); }
+        {
+            return (m_shapeType == other.m_shapeType) &&
+                (m_weight == other.m_weight);
+        }
 
         QString     m_shapeType;
-        int         m_weight;
+        int         m_weight = -1;
     };
 
     QVector<ShapeItem> shapeItems() const;
@@ -131,19 +140,25 @@ public:
 
     struct BarcodeItem
     {
-        BarcodeItem() : m_barcode(), m_weight(-1) {}
-
         bool operator==(const BarcodeItem & other) const
-        { return (m_barcode == other.m_barcode) && (m_weight == other.m_weight); }
+        {
+            return (m_barcode == other.m_barcode) &&
+                (m_weight == other.m_weight);
+        }
 
         QString     m_barcode;
-        int         m_weight;
+        int         m_weight = -1;
     };
 
     QVector<BarcodeItem> barcodeItems() const;
     int numBarcodeItems() const;
-    bool barcodeItemAt(const int barcodeItemIndex, BarcodeItem & barcodeItem) const;
-    bool setBarcodeItemAt(const int barcodeItemIndex, const BarcodeItem & barcodeItem);
+
+    bool barcodeItemAt(
+        const int barcodeItemIndex, BarcodeItem & barcodeItem) const;
+
+    bool setBarcodeItemAt(
+        const int barcodeItemIndex, const BarcodeItem & barcodeItem);
+
     void setBarcodeItems(const QVector<BarcodeItem> & barcodeItems);
     void reserveBarcodeItemsSpace(const int numItems);
     void addBarcodeItem(const BarcodeItem & item);

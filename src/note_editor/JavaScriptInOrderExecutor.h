@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -44,26 +44,29 @@ class Q_DECL_HIDDEN JavaScriptInOrderExecutor: public QObject
 {
     Q_OBJECT
 private:
-    typedef
+    using WebView =
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QWebEngineView
+    QWebEngineView;
 #else
-    QWebView
+    QWebView;
 #endif
-    WebView;
 
 public:
-    typedef boost::function<void (const QVariant&)> Callback;
+    using Callback = boost::function<void (const QVariant&)>;
 
-    explicit JavaScriptInOrderExecutor(WebView & view,
-                                       QObject * parent = nullptr);
+    explicit JavaScriptInOrderExecutor(
+        WebView & view, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = 0);
+
     int size() const { return m_javaScriptsQueue.size(); }
+
     bool empty() const { return m_javaScriptsQueue.empty(); }
+
     void clear() { m_javaScriptsQueue.clear(); }
 
     void start();
+
     bool inProgress() const { return m_inProgress; }
 
 Q_SIGNALS:
@@ -89,7 +92,7 @@ private:
 
 private:
     WebView &                           m_view;
-    QQueue<QPair<QString, Callback> >   m_javaScriptsQueue;
+    QQueue<QPair<QString, Callback>>    m_javaScriptsQueue;
     Callback                            m_currentPendingCallback;
     bool                                m_inProgress;
 };

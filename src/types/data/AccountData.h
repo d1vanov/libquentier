@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,10 @@
 #define LIB_QUENTIER_TYPES_DATA_ACCOUNT_DATA_H
 
 #include <quentier/types/Account.h>
+
 #include <QSharedData>
+
+#include <limits>
 
 namespace quentier {
 
@@ -34,26 +37,33 @@ public:
     AccountData(AccountData && other);
 
     void switchEvernoteAccountType(
-        const Account::EvernoteAccountType::type evernoteAccountType);
+        const Account::EvernoteAccountType evernoteAccountType);
+
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
 
-    QString                             m_name;
-    QString                             m_displayName;
-    Account::Type::type                 m_accountType;
-    Account::EvernoteAccountType::type  m_evernoteAccountType;
-    qevercloud::UserID                  m_userId;
-    QString                             m_evernoteHost;
-    QString                             m_shardId;
-    qint32                              m_mailLimitDaily;
-    qint64                              m_noteSizeMax;
-    qint64                              m_resourceSizeMax;
-    qint32                              m_linkedNotebookMax;
-    qint32                              m_noteCountMax;
-    qint32                              m_notebookCountMax;
-    qint32                              m_tagCountMax;
-    qint32                              m_noteTagCountMax;
-    qint32                              m_savedSearchCountMax;
-    qint32                              m_noteResourceCountMax;
+    QString     m_name;
+    QString     m_displayName;
+
+    Account::Type   m_accountType = Account::Type::Local;
+
+    Account::EvernoteAccountType    m_evernoteAccountType =
+        Account::EvernoteAccountType::Free;
+
+    qevercloud::UserID  m_userId = -1;
+
+    QString     m_evernoteHost;
+    QString     m_shardId;
+
+    qint32      m_mailLimitDaily = std::numeric_limits<qint32>::max();
+    qint64      m_noteSizeMax = std::numeric_limits<qint64>::max();
+    qint64      m_resourceSizeMax = std::numeric_limits<qint64>::max();
+    qint32      m_linkedNotebookMax = std::numeric_limits<qint32>::max();
+    qint32      m_noteCountMax = std::numeric_limits<qint32>::max();
+    qint32      m_notebookCountMax = std::numeric_limits<qint32>::max();
+    qint32      m_tagCountMax = std::numeric_limits<qint32>::max();
+    qint32      m_noteTagCountMax = std::numeric_limits<qint32>::max();
+    qint32      m_savedSearchCountMax = std::numeric_limits<qint32>::max();
+    qint32      m_noteResourceCountMax = std::numeric_limits<qint32>::max();
 
     qint32 mailLimitDaily() const;
     qint64 noteSizeMax() const;

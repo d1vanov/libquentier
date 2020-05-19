@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,24 +21,24 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/utility/Macros.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
 
-#include <QObject>
+#include <QHash>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QObject>
 #include <QSet>
-#include <QHash>
 #include <QUuid>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ENMLConverter)
+QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
@@ -57,21 +57,23 @@ public:
     void start();
 
 Q_SIGNALS:
-    void finished(QList<Resource> addedResources,
-                  QStringList resourceFileStoragePaths);
+    void finished(
+        QList<Resource> addedResources,
+        QStringList resourceFileStoragePaths);
+
     void notifyError(ErrorString error);
 
     // private signals:
-    void saveResourceDataToTemporaryFile(QString noteLocalUid,
-                                         QString resourceLocalUid,
-                                         QByteArray data, QByteArray dataHash,
-                                         QUuid requestId, bool isImage);
+    void saveResourceDataToTemporaryFile(
+        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
-    void onResourceDataSavedToTemporaryFile(QUuid requestId, QByteArray dataHash,
-                                            ErrorString errorDescription);
+
+    void onResourceDataSavedToTemporaryFile(
+        QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
 
     void onHtmlInserted(const QVariant & responseData);
 
@@ -86,7 +88,7 @@ private:
     void removeAddedResourcesFromNote();
 
 private:
-    typedef JsResultCallbackFunctor<InsertHtmlDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<InsertHtmlDelegate>;
 
 private:
     NoteEditorPrivate &             m_noteEditor;

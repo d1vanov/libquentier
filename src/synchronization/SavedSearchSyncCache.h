@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,9 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <QObject>
+
 #include <QHash>
+#include <QObject>
 #include <QUuid>
 
 namespace quentier {
@@ -30,8 +31,9 @@ class Q_DECL_HIDDEN SavedSearchSyncCache: public QObject
 {
     Q_OBJECT
 public:
-    SavedSearchSyncCache(LocalStorageManagerAsync & localStorageManagerAsync,
-                         QObject * parent = nullptr);
+    SavedSearchSyncCache(
+        LocalStorageManagerAsync & localStorageManagerAsync,
+        QObject * parent = nullptr);
 
     void clear();
 
@@ -42,16 +44,24 @@ public:
     bool isFilled() const;
 
     const QHash<QString,QString> & nameByLocalUidHash() const
-    { return m_savedSearchNameByLocalUid; }
+    {
+        return m_savedSearchNameByLocalUid;
+    }
 
     const QHash<QString,QString> & nameByGuidHash() const
-    { return m_savedSearchNameByGuid; }
+    {
+        return m_savedSearchNameByGuid;
+    }
 
     const QHash<QString,QString> & guidByNameHash() const
-    { return m_savedSearchGuidByName; }
+    {
+        return m_savedSearchGuidByName;
+    }
 
     const QHash<QString,SavedSearch> & dirtySavedSearchesByGuid() const
-    { return m_dirtySavedSearchesByGuid; }
+    {
+        return m_dirtySavedSearchesByGuid;
+    }
 
 Q_SIGNALS:
     void filled();
@@ -61,8 +71,8 @@ Q_SIGNALS:
     void listSavedSearches(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListSavedSearchesOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListSavedSearchesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QUuid requestId);
 
 public Q_SLOTS:
@@ -78,15 +88,15 @@ private Q_SLOTS:
     void onListSavedSearchesComplete(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListSavedSearchesOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListSavedSearchesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         QList<SavedSearch> foundSearches, QUuid requestId);
 
     void onListSavedSearchesFailed(
         LocalStorageManager::ListObjectsOptions flag,
         size_t limit, size_t offset,
-        LocalStorageManager::ListSavedSearchesOrder::type order,
-        LocalStorageManager::OrderDirection::type orderDirection,
+        LocalStorageManager::ListSavedSearchesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
     void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
@@ -104,7 +114,7 @@ private:
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
-    bool                                m_connectedToLocalStorage;
+    bool                                m_connectedToLocalStorage = false;
 
     QHash<QString,QString>              m_savedSearchNameByLocalUid;
     QHash<QString,QString>              m_savedSearchNameByGuid;
@@ -113,8 +123,8 @@ private:
     QHash<QString,SavedSearch>          m_dirtySavedSearchesByGuid;
 
     QUuid                               m_listSavedSearchesRequestId;
-    size_t                              m_limit;
-    size_t                              m_offset;
+    size_t                              m_limit = 50;
+    size_t                              m_offset = 0;
 };
 
 } // namespace quentier

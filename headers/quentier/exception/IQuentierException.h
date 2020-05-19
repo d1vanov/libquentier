@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,8 +33,8 @@ namespace quentier {
  * IQuentierException based exceptions can provide both localized and non-localized
  * error messages.
  */
-class QUENTIER_EXPORT IQuentierException: public Printable,
-                                          public std::exception
+class QUENTIER_EXPORT IQuentierException:
+    public Printable, public std::exception
 {
 public:
     explicit IQuentierException(const ErrorString & message);

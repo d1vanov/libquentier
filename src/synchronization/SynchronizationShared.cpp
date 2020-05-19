@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,37 +20,31 @@
 
 namespace quentier {
 
-LinkedNotebookAuthData::LinkedNotebookAuthData() :
-    m_guid(),
-    m_shardId(),
-    m_sharedNotebookGlobalId(),
-    m_uri(),
-    m_noteStoreUrl()
-{}
+LinkedNotebookAuthData::LinkedNotebookAuthData() = default;
 
 LinkedNotebookAuthData::LinkedNotebookAuthData(
-        const QString & guid,
-        const QString & shardId,
-        const QString & sharedNotebookGlobalId,
-        const QString & uri,
-        const QString & noteStoreUrl) :
-    m_guid(guid),
-    m_shardId(shardId),
-    m_sharedNotebookGlobalId(sharedNotebookGlobalId),
-    m_uri(uri),
-    m_noteStoreUrl(noteStoreUrl)
+        QString guid,
+        QString shardId,
+        QString sharedNotebookGlobalId,
+        QString uri,
+        QString noteStoreUrl) :
+    m_guid(std::move(guid)),
+    m_shardId(std::move(shardId)),
+    m_sharedNotebookGlobalId(std::move(sharedNotebookGlobalId)),
+    m_uri(std::move(uri)),
+    m_noteStoreUrl(std::move(noteStoreUrl))
 {}
 
 QTextStream & LinkedNotebookAuthData::print(QTextStream & strm) const
 {
     strm << "LinkedNotebookAuthData: {\n"
-         << "    guid = " << m_guid << "\n"
-         << "    shard id = " << m_shardId << "\n"
-         << "    shared notebook global id = "
-         << m_sharedNotebookGlobalId << "\n"
-         << "    uri = " << m_uri << "\n"
-         << "    note store url = " << m_noteStoreUrl
-         << "\n" << "};\n";
+        << "    guid = " << m_guid << "\n"
+        << "    shard id = " << m_shardId << "\n"
+        << "    shared notebook global id = "
+        << m_sharedNotebookGlobalId << "\n"
+        << "    uri = " << m_uri << "\n"
+        << "    note store url = " << m_noteStoreUrl
+        << "\n" << "};\n";
 
     return strm;
 }

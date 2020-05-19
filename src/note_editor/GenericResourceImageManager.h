@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,13 +19,14 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
 #define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QUuid>
-#include <QScopedPointer>
+
+#include <memory>
 
 namespace quentier {
 
@@ -45,20 +46,17 @@ public:
     void setStorageFolderPath(const QString & storageFolderPath);
 
 Q_SIGNALS:
-    void genericResourceImageWriteReply(bool success,
-                                        QByteArray resourceHash,
-                                        QString filePath,
-                                        ErrorString errorDescription,
-                                        QUuid requestId);
+    void genericResourceImageWriteReply(
+        bool success, QByteArray resourceHash, QString filePath,
+        ErrorString errorDescription, QUuid requestId);
 
 public Q_SLOTS:
-    void onGenericResourceImageWriteRequest(QString noteLocalUid,
-                                            QString resourceLocalUid,
-                                            QByteArray resourceImageData,
-                                            QString resourceFileSuffix,
-                                            QByteArray resourceActualHash,
-                                            QString resourceDisplayName,
-                                            QUuid requestId);
+    void onGenericResourceImageWriteRequest(
+        QString noteLocalUid, QString resourceLocalUid,
+        QByteArray resourceImageData, QString resourceFileSuffix,
+        QByteArray resourceActualHash, QString resourceDisplayName,
+        QUuid requestId);
+
     void onCurrentNoteChanged(Note note);
 
 private:
@@ -66,7 +64,7 @@ private:
 
 private:
     QString                 m_storageFolderPath;
-    QScopedPointer<Note>    m_pCurrentNote;
+    std::unique_ptr<Note>   m_pCurrentNote;
 };
 
 } // namespace quentier

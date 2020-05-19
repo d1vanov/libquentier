@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,31 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUTE_NOTE_NOTE_EDITOR_DELEGATES_HTML_CALLBACK_FUNCTOR_HPP
-#define LIB_QUTE_NOTE_NOTE_EDITOR_DELEGATES_HTML_CALLBACK_FUNCTOR_HPP
+#ifndef LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
+#define LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H
 
-#include <QVariant>
+#include <quentier/exception/IQuentierException.h>
 
-namespace qute_note {
+namespace quentier {
 
-template <class T>
-class Q_DECL_HIDDEN HtmlCallbackFunctor
+/**
+ * @brief The DatabaseRequestException is thrown when the local storage
+ * database encounters some internal error during the attemt to serve a request
+ */
+class QUENTIER_EXPORT DatabaseRequestException: public IQuentierException
 {
 public:
-    typedef void (T::*Method)(const QString &);
+    explicit DatabaseRequestException(const ErrorString & message);
 
-    HtmlCallbackFunctor(T & object, Method method) :
-        m_object(object),
-        m_method(method)
-    {}
-
-    void operator()(const QString & html) { (m_object.*m_method)(html); }
-
-private:
-    T &         m_object;
-    Method      m_method;
+protected:
+    virtual const QString exceptionDisplayName() const override;
 };
 
-} // namespace qute_note
+}
 
-#endif // LIB_QUTE_NOTE_NOTE_EDITOR_DELEGATES_HTML_CALLBACK_FUNCTOR_HPP
+#endif // LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H

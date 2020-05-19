@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,8 +23,9 @@
 
 namespace quentier {
 
-RenameResourceDialog::RenameResourceDialog(const QString & initialResourceName,
-                                           QWidget * parent) :
+RenameResourceDialog::RenameResourceDialog(
+        const QString & initialResourceName,
+        QWidget * parent) :
     QDialog(parent),
     m_pUI(new Ui::RenameResourceDialog)
 {

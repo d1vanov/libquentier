@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include <quentier/logging/QuentierLogger.h>
+
 #include "QuentierLogger_p.h"
 
 #include <qt5qevercloud/Log.h>
@@ -29,23 +30,23 @@ namespace quentier {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-LogLevel::type QEverCloudLogLevelToQuentierLogLevel(
+LogLevel QEverCloudLogLevelToQuentierLogLevel(
     const qevercloud::LogLevel logLevel)
 {
     switch(logLevel)
     {
     case qevercloud::LogLevel::Trace:
-        return LogLevel::TraceLevel;
+        return LogLevel::Trace;
     case qevercloud::LogLevel::Debug:
-        return LogLevel::DebugLevel;
+        return LogLevel::Debug;
     case qevercloud::LogLevel::Info:
-        return LogLevel::InfoLevel;
+        return LogLevel::Info;
     case qevercloud::LogLevel::Warn:
-        return LogLevel::WarnLevel;
+        return LogLevel::Warning;
     case qevercloud::LogLevel::Error:
-        return LogLevel::ErrorLevel;
+        return LogLevel::Error;
     default:
-        return LogLevel::InfoLevel;
+        return LogLevel::Info;
     }
 }
 
@@ -91,15 +92,15 @@ public:
         auto logLevel = QuentierMinLogLevel();
         switch(logLevel)
         {
-        case LogLevel::TraceLevel:
+        case LogLevel::Trace:
             return qevercloud::LogLevel::Trace;
-        case LogLevel::DebugLevel:
+        case LogLevel::Debug:
             return qevercloud::LogLevel::Debug;
-        case LogLevel::InfoLevel:
+        case LogLevel::Info:
             return qevercloud::LogLevel::Info;
-        case LogLevel::WarnLevel:
+        case LogLevel::Warning:
             return qevercloud::LogLevel::Warn;
-        case LogLevel::ErrorLevel:
+        case LogLevel::Error:
             return qevercloud::LogLevel::Error;
         default:
             return qevercloud::LogLevel::Info;
@@ -117,8 +118,9 @@ void QuentierInitializeLogging()
     qevercloud::setLogger(std::make_shared<QEverCloudLogger>());
 }
 
-void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLineNumber,
-                         const QString & message, const LogLevel::type logLevel)
+void QuentierAddLogEntry(
+    const QString & sourceFileName, const int sourceFileLineNumber,
+    const QString & message, const LogLevel logLevel)
 {
     QString relativeSourceFileName = sourceFileName;
 
@@ -136,7 +138,8 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     {
         relativeSourceFileName.remove(0, prefixIndex);
     }
-    else {
+    else
+    {
         QString appName = QCoreApplication::applicationName().toLower();
         prefixIndex = relativeSourceFileName.indexOf(
             appName,
@@ -154,24 +157,25 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
 
     switch(logLevel)
     {
-    case LogLevel::TraceLevel:
+    case LogLevel::Trace:
         logEntry += QStringLiteral("Trace]: ");
         break;
-    case LogLevel::DebugLevel:
+    case LogLevel::Debug:
         logEntry += QStringLiteral("Debug]: ");
         break;
-    case LogLevel::InfoLevel:
+    case LogLevel::Info:
         logEntry += QStringLiteral("Info]: ");
         break;
-    case LogLevel::WarnLevel:
+    case LogLevel::Warning:
         logEntry += QStringLiteral("Warn]: ");
         break;
-    case LogLevel::ErrorLevel:
+    case LogLevel::Error:
         logEntry += QStringLiteral("Error]: ");
         break;
     default:
         logEntry += QStringLiteral("Unknown log level: ") +
-            QString::number(logLevel) + QStringLiteral("]: ");
+            QString::number(static_cast<qint64>(logLevel)) +
+            QStringLiteral("]: ");
         break;
     }
 
@@ -181,19 +185,19 @@ void QuentierAddLogEntry(const QString & sourceFileName, const int sourceFileLin
     logger.write(logEntry);
 }
 
-LogLevel::type QuentierMinLogLevel()
+LogLevel QuentierMinLogLevel()
 {
     QuentierLogger & logger = QuentierLogger::instance();
     return logger.minLogLevel();
 }
 
-void QuentierSetMinLogLevel(const LogLevel::type logLevel)
+void QuentierSetMinLogLevel(const LogLevel logLevel)
 {
     QuentierLogger & logger = QuentierLogger::instance();
     logger.setMinLogLevel(logLevel);
 }
 
-bool QuentierIsLogLevelActive(const LogLevel::type logLevel)
+bool QuentierIsLogLevelActive(const LogLevel logLevel)
 {
     return (QuentierLogger::instance().minLogLevel() <= logLevel);
 }
@@ -213,6 +217,35 @@ void QuentierRestartLogging()
 {
     QuentierLogger & logger = QuentierLogger::instance();
     logger.restartLogging();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+QDebug & operator<<(QDebug & dbg, const LogLevel logLevel)
+{
+    switch(logLevel)
+    {
+    case LogLevel::Trace:
+        dbg << "Trace";
+        break;
+    case LogLevel::Debug:
+        dbg << "Debug";
+        break;
+    case LogLevel::Info:
+        dbg << "Info";
+        break;
+    case LogLevel::Warning:
+        dbg << "Warning";
+        break;
+    case LogLevel::Error:
+        dbg << "Error";
+        break;
+    default:
+        dbg << "Unknown (" << static_cast<qint64>(logLevel) << ")";
+        break;
+    }
+
+    return dbg;
 }
 
 } // namespace quentier

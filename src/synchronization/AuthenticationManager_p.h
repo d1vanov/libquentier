@@ -27,21 +27,16 @@ class Q_DECL_HIDDEN AuthenticationManagerPrivate: public QObject
 {
     Q_OBJECT
 public:
-    explicit AuthenticationManagerPrivate(const QString & consumerKey,
-                                          const QString & consumerSecret,
-                                          const QString & host,
-                                          QObject * parent = nullptr);
+    explicit AuthenticationManagerPrivate(
+        const QString & consumerKey, const QString & consumerSecret,
+        const QString & host, QObject * parent = nullptr);
 
 Q_SIGNALS:
-    void sendAuthenticationResult(bool success,
-                                  qevercloud::UserID userId,
-                                  QString authToken,
-                                  qevercloud::Timestamp authTokenExpirationTime,
-                                  QString shardId,
-                                  QString noteStoreUrl,
-                                  QString webApiUrlPrefix,
-                                  QList<QNetworkCookie> cookies,
-                                  ErrorString errorDescription);
+    void sendAuthenticationResult(
+        bool success, qevercloud::UserID userId, QString authToken,
+        qevercloud::Timestamp authTokenExpirationTime, QString shardId,
+        QString noteStoreUrl, QString webApiUrlPrefix,
+        QList<QNetworkCookie> cookies, ErrorString errorDescription);
 
 public Q_SLOTS:
     void onAuthenticationRequest();

@@ -21,23 +21,21 @@
 
 namespace quentier {
 
-AuthenticationManager::AuthenticationManager(const QString & consumerKey,
-                                             const QString & consumerSecret,
-                                             const QString & host,
-                                             QObject * parent) :
+AuthenticationManager::AuthenticationManager(
+        const QString & consumerKey, const QString & consumerSecret,
+        const QString & host, QObject * parent) :
     IAuthenticationManager(parent),
-    d_ptr(new AuthenticationManagerPrivate(consumerKey, consumerSecret, host, this))
+    d_ptr(new AuthenticationManagerPrivate(
+        consumerKey,
+        consumerSecret,
+        host,
+        this))
 {
-    QObject::connect(d_ptr,
-                     QNSIGNAL(AuthenticationManagerPrivate,
-                              sendAuthenticationResult,
-                              bool,qevercloud::UserID,QString,qevercloud::Timestamp,
-                              QString,QString,QString,QList<QNetworkCookie>,ErrorString),
-                     this,
-                     QNSIGNAL(AuthenticationManager,
-                              sendAuthenticationResult,bool,qevercloud::UserID,
-                              QString,qevercloud::Timestamp,QString,QString,
-                              QString,QList<QNetworkCookie>,ErrorString));
+    QObject::connect(
+        d_ptr,
+        &AuthenticationManagerPrivate::sendAuthenticationResult,
+        this,
+        &AuthenticationManager::sendAuthenticationResult);
 }
 
 AuthenticationManager::~AuthenticationManager()

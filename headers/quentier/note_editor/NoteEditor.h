@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,16 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
 
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/types/ErrorString.h>
+#include <quentier/utility/Macros.h>
 
-#include <QWidget>
 #include <QPrinter>
 #include <QStringList>
 #include <QThread>
+#include <QWidget>
 
 QT_FORWARD_DECLARE_CLASS(QUndoStack)
 
@@ -36,8 +36,8 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Account)
 QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
-QT_FORWARD_DECLARE_CLASS(SpellChecker)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+QT_FORWARD_DECLARE_CLASS(SpellChecker)
 
 /**
  * @brief The NoteEditor class is a widget encapsulating all the functionality
@@ -56,21 +56,27 @@ public:
      * processing these can't be passed right inside the constructor,
      * hence here's a special initialization method
      *
-     * @param localStorageManager           The reference to LocalStorageManagerAsync,
-     *                                      to set up signal-slot connections with it
+     * @param localStorageManager           The reference to
+     *                                      LocalStorageManagerAsync, to set up
+     *                                      signal-slot connections with it
      * @param spellChecker                  The spell checker to be used by note
      *                                      editor for, well, spell-checking
      * @param account                       Currently active account
      * @param pBackgroundJobsThread         Pointer to the thread to be used for
      *                                      scheduling of background jobs
      *                                      of NoteEditor; if null, NoteEditor's
-     *                                      background jobs would take place in GUI
-     *                                      thread
+     *                                      background jobs would take place in
+     *                                      GUI thread
      */
     void initialize(
         LocalStorageManagerAsync & localStorageManager,
         SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread = nullptr);
+
+    /**
+     * @return the pointer to the note editor's backend
+     */
+    INoteEditorBackend * backend();
 
     /**
      * This method can be used to set the backend to the note editor;
@@ -100,8 +106,8 @@ public:
     void setInitialPageHtml(const QString & html);
 
     /**
-     * Set the html to be displayed when the note attempted to be set to the editor
-     * was not found within the local storage
+     * Set the html to be displayed when the note attempted to be set to
+     * the editor was not found within the local storage
      */
     void setNoteNotFoundPageHtml(const QString & html);
 
@@ -154,6 +160,13 @@ public:
      * loaded already, false otherwise
      */
     bool isNoteLoaded() const;
+
+    /**
+     * @return the number of milliseconds since the last user's interaction
+     * with the note editor or -1 if there was no interaction or if no note
+     * is loaded at the moment
+     */
+    qint64 idleTime() const;
 
     /**
      * Sets the focus to the backend note editor widget
@@ -236,15 +249,15 @@ Q_SIGNALS:
     void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
 
     /**
-     * inAppNoteLinkPasteRequested signal is emitted when the note editor detects
-     * the attempt to paste the in-app note link into the note editor; the link
-     * would not be inserted right away, instead this signal would be emitted.
-     * Whatever party managing the note editor is expected to connect some slot
-     * to this signal and provide the optionally amended link information to
-     * the note editor by sending the signal connected to its insertInAppNoteLink
-     * slot - this slot accepts both the URL of the link and the link text and
-     * performs the actual link insertion into the note. If the link text is empty,
-     * the URL itself is used as the link text.
+     * inAppNoteLinkPasteRequested signal is emitted when the note editor
+     * detects the attempt to paste the in-app note link into the note editor;
+     * the link would not be inserted right away, instead this signal would be
+     * emitted. Whatever party managing the note editor is expected to connect
+     * some slot to this signal and provide the optionally amended link
+     * information to the note editor by sending the signal connected to its
+     * insertInAppNoteLink slot - this slot accepts both the URL of the link and
+     * the link text and performs the actual link insertion into the note.
+     * If the link text is empty, the URL itself is used as the link text.
      */
     void inAppNoteLinkPasteRequested(
         QString url, QString userId, QString shardId, QString noteGuid);
@@ -335,7 +348,8 @@ public Q_SLOTS:
      * @param tagLocalUids      The list of tag local uids for the note
      * @param tagGuids          The list of tag guids for the note
      */
-    void setTagIds(const QStringList & tagLocalUids, const QStringList & tagGuids);
+    void setTagIds(
+        const QStringList & tagLocalUids, const QStringList & tagGuids);
 
     void undo();
     void redo();
@@ -363,13 +377,11 @@ public Q_SLOTS:
     void findPrevious(const QString & text, const bool matchCase) const;
 
     void replace(
-        const QString & textToReplace,
-        const QString & replacementText,
+        const QString & textToReplace, const QString & replacementText,
         const bool matchCase);
 
     void replaceAll(
-        const QString & textToReplace,
-        const QString & replacementText,
+        const QString & textToReplace, const QString & replacementText,
         const bool matchCase);
 
     void insertToDoCheckbox();

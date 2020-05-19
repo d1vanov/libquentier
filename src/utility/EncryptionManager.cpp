@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include <quentier/utility/EncryptionManager.h>
+
 #include "EncryptionManager_p.h"
 
 namespace quentier {
@@ -31,53 +32,69 @@ EncryptionManager::~EncryptionManager()
     delete d_ptr;
 }
 
-bool EncryptionManager::decrypt(const QString & encryptedText,
-                                const QString & passphrase,
-                                const QString & cipher,
-                                const size_t keyLength,
-                                QString & decryptedText,
-                                ErrorString & errorDescription)
+bool EncryptionManager::decrypt(
+    const QString & encryptedText, const QString & passphrase,
+    const QString & cipher, const size_t keyLength,
+    QString & decryptedText, ErrorString & errorDescription)
 {
     Q_D(EncryptionManager);
-    return d->decrypt(encryptedText, passphrase, cipher,
-                      keyLength, decryptedText, errorDescription);
+    return d->decrypt(
+        encryptedText,
+        passphrase,
+        cipher,
+        keyLength,
+        decryptedText,
+        errorDescription);
 }
 
-bool EncryptionManager::encrypt(const QString & textToEncrypt,
-                                const QString & passphrase,
-                                QString & cipher,
-                                size_t & keyLength,
-                                QString & encryptedText,
-                                ErrorString & errorDescription)
+bool EncryptionManager::encrypt(
+    const QString & textToEncrypt, const QString & passphrase,
+    QString & cipher, size_t & keyLength,
+    QString & encryptedText, ErrorString & errorDescription)
 {
     Q_D(EncryptionManager);
-    return d->encrypt(textToEncrypt, passphrase, cipher,
-                      keyLength, encryptedText, errorDescription);
+    return d->encrypt(
+        textToEncrypt,
+        passphrase,
+        cipher,
+        keyLength,
+        encryptedText,
+        errorDescription);
 }
 
-void EncryptionManager::onDecryptTextRequest(QString encryptedText,
-                                             QString passphrase,
-                                             QString cipher,
-                                             size_t keyLength,
-                                             QUuid requestId)
+void EncryptionManager::onDecryptTextRequest(
+    QString encryptedText, QString passphrase,
+    QString cipher, size_t keyLength, QUuid requestId)
 {
     QString decrypted;
     ErrorString errorDescription;
-    bool res = decrypt(encryptedText, passphrase, cipher,
-                       keyLength, decrypted, errorDescription);
+
+    bool res = decrypt(
+        encryptedText,
+        passphrase,
+        cipher,
+        keyLength,
+        decrypted,
+        errorDescription);
+
     Q_EMIT decryptedText(decrypted, res, errorDescription, requestId);
 }
 
-void EncryptionManager::onEncryptTextRequest(QString textToEncrypt,
-                                             QString passphrase,
-                                             QString cipher,
-                                             size_t keyLength,
-                                             QUuid requestId)
+void EncryptionManager::onEncryptTextRequest(
+    QString textToEncrypt, QString passphrase, QString cipher,
+    size_t keyLength, QUuid requestId)
 {
     QString encrypted;
     ErrorString errorDescription;
-    bool res = encrypt(textToEncrypt, passphrase, cipher,
-                       keyLength, encrypted, errorDescription);
+
+    bool res = encrypt(
+        textToEncrypt,
+        passphrase,
+        cipher,
+        keyLength,
+        encrypted,
+        errorDescription);
+
     Q_EMIT encryptedText(encrypted, res, errorDescription, requestId);
 }
 

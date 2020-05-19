@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,25 +17,72 @@
  */
 
 #include <quentier/utility/FileCopier.h>
+
 #include "FileCopier_p.h"
 
+#include <QDebug>
+#include <QTextStream>
+
 namespace quentier {
+
+namespace {
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+void printState(T & t, const FileCopier::State state)
+{
+    switch(state)
+    {
+    case FileCopier::State::Idle:
+        t << "Idle";
+        break;
+    case FileCopier::State::Copying:
+        t << "Copying";
+        break;
+    case FileCopier::State::Cancelling:
+        t << "Cancelling";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(state) << ")";
+        break;
+    }
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
 
 FileCopier::FileCopier(QObject * parent) :
     QObject(parent),
     d_ptr(new FileCopierPrivate(this))
 {
-    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,progressUpdate,double),
-                     this, QNSIGNAL(FileCopier,progressUpdate,double));
-    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,finished,QString,QString),
-                     this, QNSIGNAL(FileCopier,finished,QString,QString));
-    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,cancelled,QString,QString),
-                     this, QNSIGNAL(FileCopier,cancelled,QString,QString));
-    QObject::connect(d_ptr, QNSIGNAL(FileCopierPrivate,notifyError,ErrorString),
-                     this, QNSIGNAL(FileCopier,notifyError,ErrorString));
+    QObject::connect(
+        d_ptr,
+        &FileCopierPrivate::progressUpdate,
+        this,
+        &FileCopier::progressUpdate);
+
+    QObject::connect(
+        d_ptr,
+        &FileCopierPrivate::finished,
+        this,
+        &FileCopier::finished);
+
+    QObject::connect(
+        d_ptr,
+        &FileCopierPrivate::cancelled,
+        this,
+        &FileCopier::cancelled);
+
+    QObject::connect(
+        d_ptr,
+        &FileCopierPrivate::notifyError,
+        this,
+        &FileCopier::notifyError);
 }
 
-FileCopier::State::type FileCopier::state() const
+FileCopier::State FileCopier::state() const
 {
     Q_D(const FileCopier);
 
@@ -78,6 +125,20 @@ void FileCopier::cancel()
 {
     Q_D(FileCopier);
     d->cancel();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+QDebug & operator<<(QDebug & dbg, const FileCopier::State state)
+{
+    printState(dbg, state);
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const FileCopier::State state)
+{
+    printState(strm, state);
+    return strm;
 }
 
 } // namespace quentier

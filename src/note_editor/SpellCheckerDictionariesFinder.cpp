@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,9 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#include <QStringList>
-#include <QFileInfo>
 #include <QDirIterator>
+#include <QFileInfo>
+#include <QStringList>
 
 namespace quentier {
 
@@ -31,9 +31,9 @@ namespace quentier {
 // WRAP
 
 SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
-        const QSharedPointer<QAtomicInt> & pStopFlag, QObject * parent) :
+        std::shared_ptr<QAtomicInt> pStopFlag, QObject * parent) :
     QObject(parent),
-    m_pStopFlag(pStopFlag),
+    m_pStopFlag(std::move(pStopFlag)),
     m_files(),
     m_localeList(QSet<QString>()
 #include "localeList.inl"
@@ -51,7 +51,7 @@ void SpellCheckerDictionariesFinder::run()
     fileFilters << QStringLiteral("*.dic") << QStringLiteral("*.aff");
 
 #define CHECK_AND_STOP()                                                       \
-    if (!m_pStopFlag.isNull() && (m_pStopFlag->loadAcquire() != 0)) {          \
+    if (m_pStopFlag && (m_pStopFlag->loadAcquire() != 0)) {                    \
         QNDEBUG("Aborting the operation as stop flag is non-zero");            \
         return;                                                                \
     }                                                                          \
@@ -70,8 +70,12 @@ void SpellCheckerDictionariesFinder::run()
             continue;
         }
 
-        QDirIterator it(rootDirInfo.absolutePath(), fileFilters,
-                        QDir::Files, QDirIterator::Subdirectories);
+        QDirIterator it(
+            rootDirInfo.absolutePath(),
+            fileFilters,
+            QDir::Files,
+            QDirIterator::Subdirectories);
+
         while(it.hasNext())
         {
             CHECK_AND_STOP()
@@ -82,36 +86,37 @@ void SpellCheckerDictionariesFinder::run()
             QFileInfo fileInfo = it.fileInfo();
             if (!fileInfo.isReadable()) {
                 QNTRACE("Skipping non-readable file "
-                        << fileInfo.absoluteFilePath());
+                    << fileInfo.absoluteFilePath());
                 continue;
             }
 
             QString fileNameSuffix = fileInfo.completeSuffix();
             bool isDicFile = false;
-            if (fileNameSuffix == QStringLiteral("dic")) {
+            if (fileNameSuffix == QStringLiteral("dic"))
+            {
                 isDicFile = true;
             }
-            else if (fileNameSuffix != QStringLiteral("aff")) {
+            else if (fileNameSuffix != QStringLiteral("aff"))
+            {
                 QNTRACE("Skipping file not actually matching the filter: "
-                        << fileInfo.absoluteFilePath());
+                    << fileInfo.absoluteFilePath());
                 continue;
             }
 
             QString dictionaryName = fileInfo.baseName();
-            if (!m_localeList.contains(dictionaryName.toUpper())) {
-                QNTRACE("Skipping dictionary which doesn't appear to correspond "
-                        "to any locale: " << dictionaryName);
+            if (!m_localeList.contains(dictionaryName.toUpper()))
+            {
+                QNTRACE("Skipping dictionary which doesn't appear to "
+                    << "correspond to any locale: " << dictionaryName);
                 continue;
             }
 
-            QPair<QString, QString> & pair = m_files[dictionaryName];
-            if (isDicFile)
-            {
+            auto & pair = m_files[dictionaryName];
+            if (isDicFile) {
                 QNTRACE("Adding dic file " << fileInfo.absoluteFilePath());
                 pair.first = fileInfo.absoluteFilePath();
             }
-            else
-            {
+            else {
                 QNTRACE("Adding aff file " << fileInfo.absoluteFilePath());
                 pair.second = fileInfo.absoluteFilePath();
             }
@@ -123,12 +128,11 @@ void SpellCheckerDictionariesFinder::run()
     {
         CHECK_AND_STOP()
 
-        const QPair<QString, QString> & pair = it.value();
-        if (pair.first.isEmpty() || pair.second.isEmpty())
-        {
+        const auto & pair = it.value();
+        if (pair.first.isEmpty() || pair.second.isEmpty()) {
             QNTRACE("Skipping the incomplete pair of dic/aff files: "
-                    << "dic file path = " << pair.first
-                    << "; aff file path = " << pair.second);
+                << "dic file path = " << pair.first
+                << "; aff file path = " << pair.second);
             it = m_files.erase(it);
             continue;
         }
