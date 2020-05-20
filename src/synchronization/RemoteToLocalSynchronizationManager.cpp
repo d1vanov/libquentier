@@ -90,41 +90,34 @@
 #define THIRTY_DAYS_IN_MSEC (2592000000)
 
 #define SET_ITEM_TYPE_TO_ERROR()                                               \
-    errorDescription.details() = QStringLiteral("item type = ");               \
-    errorDescription.details() += typeName                                     \
+    errorDescription.appendBase(QT_TRANSLATE_NOOP(                             \
+        "RemoteToLocalSynchronizationManager",                                 \
+        "item type is"));                                                      \
+    errorDescription.details() += typeName;                                    \
 // SET_ITEM_TYPE_TO_ERROR
 
-#define SET_CANT_FIND_BY_NAME_ERROR()                                          \
-    ErrorString errorDescription(                                              \
-        QT_TRANSLATE_NOOP("RemoteToLocalSynchronizationManager",               \
-                          "Found a data item with empty "                      \
-                          "name in the local storage"));                       \
-    SET_ITEM_TYPE_TO_ERROR();                                                  \
-    QNWARNING(errorDescription << ": " << element)                             \
-// SET_CANT_FIND_BY_NAME_ERROR
-
 #define SET_CANT_FIND_BY_GUID_ERROR()                                          \
-    ErrorString errorDescription(                                              \
-        QT_TRANSLATE_NOOP("RemoteToLocalSynchronizationManager",               \
-                          "Found a data item with empty guid"));               \
+    ErrorString errorDescription(QT_TRANSLATE_NOOP(                            \
+        "RemoteToLocalSynchronizationManager",                                 \
+        "Internal error: can't find data item from sync chunks "               \
+        "by guid: data item has no guid"));                                    \
     SET_ITEM_TYPE_TO_ERROR();                                                  \
     QNWARNING(errorDescription << ": " << element)                             \
 // SET_CANT_FIND_BY_GUID_ERROR
 
 #define SET_EMPTY_PENDING_LIST_ERROR()                                         \
-    ErrorString errorDescription(                                              \
-        QT_TRANSLATE_NOOP("RemoteToLocalSynchronizationManager",               \
-                          "Detected attempt to find a data item within "       \
-                          "the list of remote items waiting for "              \
-                          "processing but that list is empty"));               \
+    ErrorString errorDescription(QT_TRANSLATE_NOOP(                            \
+        "RemoteToLocalSynchronizationManager",                                 \
+        "Detected attempt to find a data item within the list of remote items "\
+        "waiting for processing but that list is empty"));                     \
     QNWARNING(errorDescription << ": " << element)                             \
 // SET_EMPTY_PENDING_LIST_ERROR
 
 #define SET_CANT_FIND_IN_PENDING_LIST_ERROR()                                  \
-    ErrorString errorDescription(                                              \
-        QT_TRANSLATE_NOOP("RemoteToLocalSynchronizationManager",               \
-                          "can't find the data item within the list of remote "\
-                          "elements waiting for processing"));                 \
+    ErrorString errorDescription(QT_TRANSLATE_NOOP(                            \
+        "RemoteToLocalSynchronizationManager",                                 \
+        "Can't find the data item within the list of remote elements waiting " \
+        "for processing"));                                                    \
     SET_ITEM_TYPE_TO_ERROR();                                                  \
     QNWARNING(errorDescription << ": " << element)                             \
 // SET_CANT_FIND_IN_PENDING_LIST_ERROR
@@ -5808,7 +5801,7 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync(
     {
         const auto & element = *it;
         if (!element.guid.isSet()) {
-            SET_CANT_FIND_BY_GUID_ERROR();
+            SET_CANT_FIND_BY_GUID_ERROR()
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -11347,8 +11340,20 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
     QNDEBUG("RemoteToLocalSynchronizationManager::findItemByName<"
         << typeName << ">");
 
-    if (!element.hasName()) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    if (Q_UNLIKELY(!element.hasName()))
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find data item from sync chunks by name: "
+            "data item has no name"));
+
+        errorDescription.appendBase(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "item type is"));
+
+        errorDescription.details() += typeName;
+
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return container.end();
     }
@@ -11383,7 +11388,7 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
 
     Q_UNUSED(typeName)
 
-    if (!element.hasName())
+    if (Q_UNLIKELY(!element.hasName()))
     {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
@@ -11465,7 +11470,7 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
         return tagsContainer.end();
     }
 
-    TagsContainer::iterator cit = tagsContainer.project<0>(it);
+    auto cit = tagsContainer.project<0>(it);
     if (cit == tagsContainer.end())
     {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
@@ -11560,10 +11565,10 @@ typename ContainerType::iterator RemoteToLocalSynchronizationManager::findItemBy
     ContainerType & container, const ElementType & element, const QString & typeName)
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::findItemByGuid<"
-            << typeName << ">");
+        << typeName << ">");
 
-    if (!element.hasGuid()) {
-        SET_CANT_FIND_BY_GUID_ERROR();
+    if (Q_UNLIKELY(!element.hasGuid())) {
+        SET_CANT_FIND_BY_GUID_ERROR()
         Q_EMIT failure(errorDescription);
         return container.end();
     }
@@ -11596,8 +11601,16 @@ RemoteToLocalSynchronizationManager::findItemByGuid<TagsContainer, Tag>(
     QNDEBUG("RemoteToLocalSynchronizationManager::"
         << "findItemByGuid<TagsContainer, Tag>");
 
-    if (!element.hasGuid()) {
-        SET_CANT_FIND_BY_GUID_ERROR();
+    Q_UNUSED(typeName)
+
+    if (Q_UNLIKELY(!element.hasGuid()))
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by guid, tag has "
+            "no guid"));
+
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
@@ -11610,15 +11623,28 @@ RemoteToLocalSynchronizationManager::findItemByGuid<TagsContainer, Tag>(
 
     auto & tagIndexByGuid = tagsContainer.get<ByGuid>();
     auto it = tagIndexByGuid.find(element.guid());
-    if (it == tagIndexByGuid.end()) {
-        SET_CANT_FIND_BY_GUID_ERROR();
+    if (it == tagIndexByGuid.end())
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by guid"));
+
+        QNWARNING(errorDescription << ": " << element
+            << "\n" << dumpTagsContainer(tagsContainer));
+
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
 
     auto cit = tagsContainer.project<0>(it);
-    if (cit == tagsContainer.end()) {
-        SET_CANT_FIND_BY_GUID_ERROR();
+    if (cit == tagsContainer.end())
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by guid, failed "
+            "to project tags container iterator"));
+
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
