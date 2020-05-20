@@ -131,6 +131,50 @@
 
 namespace quentier {
 
+namespace {
+
+////////////////////////////////////////////////////////////////////////////////
+
+QString dumpTagsContainer(const TagsContainer & tagsContainer)
+{
+    const auto & tagIndexByName = tagsContainer.get<ByName>();
+
+    QString tagsDump;
+    QTextStream strm(&tagsDump);
+    strm << "Tags parsed from sync chunks:\n";
+
+    for(const auto & tag: tagIndexByName) {
+        strm << "    guid = "
+            << (tag.guid.isSet() ? tag.guid.ref() : QStringLiteral("<not set>"))
+            << ", name = "
+            << (tag.name.isSet() ? tag.name.ref() : QStringLiteral("<not set>"))
+            << "\n";
+    }
+
+    strm.flush();
+    return tagsDump;
+}
+
+QString dumpLinkedNotebookGuidsByTagGuids(
+    const QHash<QString, QString> & linkedNotebookGuidsByTagGuids)
+{
+    QString info;
+    QTextStream strm(&info);
+
+    strm << "Linked notebook guids by tag guids:\n";
+
+    for(const auto & it: qevercloud::toRange(linkedNotebookGuidsByTagGuids)) {
+        strm << "    " << it.key() << " -> " << it.value() << "\n";
+    }
+
+    strm.flush();
+    return info;
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 class NoteSyncConflictResolverManager: public NoteSyncConflictResolver::IManager
 {
 public:
@@ -11368,7 +11412,10 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
             "Internal error: can't find tag from sync chunks by name"));
 
         errorDescription.details() = optName;
-        QNWARNING(errorDescription << ": " << element);
+
+        QNWARNING(errorDescription << ": " << element
+            << "\n" << dumpTagsContainer(tagsContainer));
+
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
@@ -11409,7 +11456,10 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
 
         errorDescription.details() = optName;
         QNWARNING(errorDescription << ", linked notebook guid = "
-            << targetLinkedNotebookGuid << ", tag: " << element);
+            << targetLinkedNotebookGuid << ", tag: " << element
+            << "\n" << dumpTagsContainer(tagsContainer)
+            << "\n" << dumpLinkedNotebookGuidsByTagGuids(
+                m_linkedNotebookGuidsByTagGuids));
 
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
