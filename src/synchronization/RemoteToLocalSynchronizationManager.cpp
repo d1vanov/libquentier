@@ -1205,8 +1205,11 @@ void RemoteToLocalSynchronizationManager::onFindTagFailed(
     }
 
     Q_UNUSED(onNoDuplicateByName(
-        tag, requestId, errorDescription,
-        QStringLiteral("Tag"), m_tags,
+        tag,
+        requestId,
+        errorDescription,
+        QStringLiteral("Tag"),
+        m_tags,
         m_findTagByNameRequestIds))
 }
 
@@ -11334,8 +11337,16 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::findItemByName<Tag>");
 
-    if (!element.hasName()) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    Q_UNUSED(typeName)
+
+    if (!element.hasName())
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by name, tag has "
+            "no name"));
+
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
@@ -11350,8 +11361,14 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
     qevercloud::Optional<QString> optName;
     optName = element.name();
     auto range = tagIndexByName.equal_range(optName);
-    if (range.first == range.second) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    if (range.first == range.second)
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by name"));
+
+        errorDescription.details() = optName;
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
@@ -11367,25 +11384,47 @@ RemoteToLocalSynchronizationManager::findItemByName<TagsContainer, Tag>(
 
         auto linkedNotebookGuidIt = m_linkedNotebookGuidsByTagGuids.find(
             tag.guid.ref());
-        if ( ((linkedNotebookGuidIt == m_linkedNotebookGuidsByTagGuids.end()) &&
-              targetLinkedNotebookGuid.isEmpty()) ||
-             ((linkedNotebookGuidIt != m_linkedNotebookGuidsByTagGuids.end()) &&
-              (linkedNotebookGuidIt.value() == targetLinkedNotebookGuid)) )
+
+        if (targetLinkedNotebookGuid.isEmpty() &&
+            (linkedNotebookGuidIt == m_linkedNotebookGuidsByTagGuids.end()))
+        {
+            foundMatchingTag = true;
+            break;
+        }
+
+        if ((linkedNotebookGuidIt != m_linkedNotebookGuidsByTagGuids.end()) &&
+            (linkedNotebookGuidIt.value() == targetLinkedNotebookGuid))
         {
             foundMatchingTag = true;
             break;
         }
     }
 
-    if (Q_UNLIKELY(!foundMatchingTag)) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    if (Q_UNLIKELY(!foundMatchingTag))
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by name, failed "
+            "to find tag matching by linked notebook guid"));
+
+        errorDescription.details() = optName;
+        QNWARNING(errorDescription << ", linked notebook guid = "
+            << targetLinkedNotebookGuid << ", tag: " << element);
+
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
 
     TagsContainer::iterator cit = tagsContainer.project<0>(it);
-    if (cit == tagsContainer.end()) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    if (cit == tagsContainer.end())
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find tag from sync chunks by name, failed "
+            "to project tags container iterator"));
+
+        errorDescription.details() = optName;
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return tagsContainer.end();
     }
@@ -11402,11 +11441,16 @@ RemoteToLocalSynchronizationManager::findItemByName
 {
     QNDEBUG("RemoteToLocalSynchronizationManager::findItemByName<Notebook>");
 
-    // Attempt to find this data element by name within the list of elements
-    // waiting for processing; first simply try the front element from the list
-    // to avoid the costly lookup
-    if (!element.hasName()) {
-        SET_CANT_FIND_BY_NAME_ERROR();
+    Q_UNUSED(typeName)
+
+    if (!element.hasName())
+    {
+        ErrorString errorDescription(QT_TRANSLATE_NOOP(
+            "RemoteToLocalSynchronizationManager",
+            "Internal error: can't find notebook from sync chunks by name, "
+            "notebook has no name"));
+
+        QNWARNING(errorDescription << ": " << element);
         Q_EMIT failure(errorDescription);
         return container.end();
     }
