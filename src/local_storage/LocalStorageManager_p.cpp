@@ -978,8 +978,8 @@ bool LocalStorageManagerPrivate::findNotebook(
     }
     else if (notebook.hasName())
     {
-        column = QStringLiteral("notebookNameUpper");
-        value = notebook.name().toUpper();
+        column = QStringLiteral("notebookName");
+        value = notebook.name();
         searchingByName = true;
     }
     else if (notebook.hasLinkedNotebookGuid())
@@ -3713,8 +3713,8 @@ bool LocalStorageManagerPrivate::findTag(
             return false;
         }
 
-        column = QStringLiteral("nameLower");
-        value = tag.name().toLower();
+        column = QStringLiteral("name");
+        value = tag.name();
         searchingByName = true;
     }
     else
