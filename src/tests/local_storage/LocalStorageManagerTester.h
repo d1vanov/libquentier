@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {
@@ -39,11 +40,14 @@ private Q_SLOTS:
     void localStorageManagerNoteSearchQueryTest();
 
     void localStorageManagerIndividualSavedSearchTest();
+    void localStorageManagerFindSavedSearchByNameWithDiacriticsTest();
     void localStorageManagerIndividualLinkedNotebookTest();
     void localStorageManagerIndividualTagTest();
+    void localStorageManagerFindTagByNameWithDiacriticsTest();
     void localStorageManagerIndividualResourceTest();
     void localStorageManagedIndividualNoteTest();
     void localStorageManagerIndividualNotebookTest();
+    void localStorageManagerFindNotebookByNameWithDiacriticsTest();
     void localStorageManagedIndividualUserTest();
 
     void localStorageManagerSequentialUpdatesTest();

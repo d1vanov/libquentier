@@ -1427,7 +1427,7 @@ public:
      * If "remote" Evernote service's guid for the tag is set, it would be used
      * to identify the tag in the local storage database. Otherwise the local
      * uid would be used. If neither guid nor local uid are set, tag's name
-     * would * be used. If the name is also not set, the search would fail.
+     * would be used. If the name is also not set, the search would fail.
      *
      * Important! Due to the fact that the tag name is only unique within
      * the users's own account as well as within each linked notebook, the
@@ -1833,15 +1833,17 @@ public:
     bool updateSavedSearch(SavedSearch & search, ErrorString & errorDescription);
 
     /**
-     * @brief findSavedSearch attempts to find SavedSearch in the local storage
-     * database.
+     * @brief findSavedSearch attempts to find and fill the fields of passed in
+     * saved search object.
+     *
+     * If "remote" Evernote services's guid for the saved search is set, it
+     * would be used to identify the saved search in the local storage.
+     * Otherwise the local uid would be used. If neither guid not local uid are
+     * set, saved search's name would be used. If the name is also not set,
+     * the search for saved search would fail.
      *
      * @param search                    SavedSearch to be found in the local
-     *                                  storage database. If it has "remote"
-     *                                  Evernote service's guid set, it is used
-     *                                  to identify the search in the local
-     *                                  storage database. Otherwise its local
-     *                                  uid is used.
+     *                                  storage database
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be found
      * @return                          True if SavedSearch was found, false

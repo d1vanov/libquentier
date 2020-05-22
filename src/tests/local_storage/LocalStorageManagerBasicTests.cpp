@@ -165,6 +165,64 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
             "different from the expected one (0)").arg(count));
 }
 
+void TestFindSavedSearchByNameWithDiacritics()
+{
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
+
+    Account account(
+        QStringLiteral("TestFindSavedSearchByNameWithDiacriticsFakeUser"),
+        Account::Type::Local);
+
+    LocalStorageManager localStorageManager(account, startupOptions);
+
+    SavedSearch search1;
+    search1.setGuid(UidGenerator::Generate());
+    search1.setUpdateSequenceNumber(1);
+    search1.setName(QStringLiteral("search"));
+
+    SavedSearch search2;
+    search2.setGuid(UidGenerator::Generate());
+    search2.setUpdateSequenceNumber(2);
+    search2.setName(QStringLiteral("séarch"));
+
+    ErrorString errorMessage;
+
+    QVERIFY2(
+        localStorageManager.addSavedSearch(search1, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        localStorageManager.addSavedSearch(search2, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    SavedSearch searchToFind;
+    searchToFind.unsetLocalUid();
+    searchToFind.setName(search1.name());
+
+    QVERIFY2(
+        localStorageManager.findSavedSearch(searchToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        searchToFind == search1,
+        "Found wrong saved search by name: expected saved search: " << search1
+        << "\nActually found search: " << searchToFind);
+
+    searchToFind = SavedSearch();
+    searchToFind.unsetLocalUid();
+    searchToFind.setName(search2.name());
+
+    QVERIFY2(
+        localStorageManager.findSavedSearch(searchToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        searchToFind == search2,
+        "Found wrong saved search by name: expected saved search: " << search2
+        << "\nActually found search: " << searchToFind);
+}
+
 void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
 {
     LocalStorageManager::StartupOptions startupOptions(
@@ -489,6 +547,64 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
         << "been expunged from the local storage"
         << ": Tag expunged from the local storage: " << modifiedTag
         << "\nTag found in the local storage: " << foundTag);
+}
+
+void TestFindTagByNameWithDiacritics()
+{
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
+
+    Account account(
+        QStringLiteral("TestFindTagByNameWithDiacriticsFakeUser"),
+        Account::Type::Local);
+
+    LocalStorageManager localStorageManager(account, startupOptions);
+
+    Tag tag1;
+    tag1.setGuid(UidGenerator::Generate());
+    tag1.setUpdateSequenceNumber(1);
+    tag1.setName(QStringLiteral("tag"));
+
+    Tag tag2;
+    tag2.setGuid(UidGenerator::Generate());
+    tag2.setUpdateSequenceNumber(2);
+    tag2.setName(QStringLiteral("tāg"));
+
+    ErrorString errorMessage;
+
+    QVERIFY2(
+        localStorageManager.addTag(tag1, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        localStorageManager.addTag(tag2, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    Tag tagToFind;
+    tagToFind.unsetLocalUid();
+    tagToFind.setName(tag1.name());
+
+    QVERIFY2(
+        localStorageManager.findTag(tagToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        tagToFind == tag1,
+        "Found wrong tag by name: expected tag: " << tag1
+        << "\nActually found tag: " << tagToFind);
+
+    tagToFind = Tag();
+    tagToFind.unsetLocalUid();
+    tagToFind.setName(tag2.name());
+
+    QVERIFY2(
+        localStorageManager.findTag(tagToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        tagToFind == tag2,
+        "Found wrong tag by name: expected tag: " << tag2
+        << "\nActually found tag: " << tagToFind);
 }
 
 void TestResourceAddFindUpdateExpungeInLocalStorage()
@@ -2015,6 +2131,68 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(QString::fromUtf8(
             "notebookCount returned result %1 different "
             "from the expected one (0)").arg(count)));
+}
+
+void TestFindNotebookByNameWithDiacritics()
+{
+    LocalStorageManager::StartupOptions startupOptions(
+        LocalStorageManager::StartupOption::ClearDatabase);
+
+    Account account(
+        QStringLiteral("TestFindNotebookByNameWithDiacriticsFakeUser"),
+        Account::Type::Local);
+
+    LocalStorageManager localStorageManager(account, startupOptions);
+
+    Notebook notebook1;
+    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setUpdateSequenceNumber(1);
+    notebook1.setName(QStringLiteral("notebook"));
+    notebook1.setDefaultNotebook(false);
+    notebook1.setLastUsed(false);
+
+    Notebook notebook2;
+    notebook2.setGuid(UidGenerator::Generate());
+    notebook2.setUpdateSequenceNumber(2);
+    notebook2.setName(QStringLiteral("notébook"));
+    notebook2.setDefaultNotebook(false);
+    notebook2.setLastUsed(false);
+
+    ErrorString errorMessage;
+
+    QVERIFY2(
+        localStorageManager.addNotebook(notebook1, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    QVERIFY2(
+        localStorageManager.addNotebook(notebook2, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    Notebook notebookToFind;
+    notebookToFind.unsetLocalUid();
+    notebookToFind.setName(notebook1.name());
+
+    QVERIFY2(
+        localStorageManager.findNotebook(notebookToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        notebookToFind == notebook1,
+        "Found wrong notebook by name: expected notebook: " << notebook1
+        << "\nActually found notebook: " << notebookToFind);
+
+    notebookToFind = Notebook();
+    notebookToFind.unsetLocalUid();
+    notebookToFind.setName(notebook2.name());
+
+    QVERIFY2(
+        localStorageManager.findNotebook(notebookToFind, errorMessage),
+        qPrintable(errorMessage.nonLocalizedString()));
+
+    VERIFY2(
+        notebookToFind == notebook2,
+        "Found wrong notebook by name: expected notebook: " << notebook2
+        << "\nActually found notebook: " << notebookToFind);
 }
 
 void TestUserAddFindUpdateDeleteExpungeInLocalStorage()

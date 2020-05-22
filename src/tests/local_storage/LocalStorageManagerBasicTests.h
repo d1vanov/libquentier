@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,15 +24,21 @@ namespace test {
 
 void TestSavedSearchAddFindUpdateExpungeInLocalStorage();
 
+void TestFindSavedSearchByNameWithDiacritics();
+
 void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage();
 
 void TestTagAddFindUpdateExpungeInLocalStorage();
+
+void TestFindTagByNameWithDiacritics();
 
 void TestResourceAddFindUpdateExpungeInLocalStorage();
 
 void TestNoteAddFindUpdateDeleteExpungeInLocalStorage();
 
 void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage();
+
+void TestFindNotebookByNameWithDiacritics();
 
 void TestUserAddFindUpdateDeleteExpungeInLocalStorage();
 

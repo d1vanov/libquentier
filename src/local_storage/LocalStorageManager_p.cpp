@@ -978,8 +978,8 @@ bool LocalStorageManagerPrivate::findNotebook(
     }
     else if (notebook.hasName())
     {
-        column = QStringLiteral("notebookName");
-        value = notebook.name();
+        column = QStringLiteral("notebookNameUpper");
+        value = notebook.name().toUpper();
         searchingByName = true;
     }
     else if (notebook.hasLinkedNotebookGuid())
@@ -1068,7 +1068,6 @@ bool LocalStorageManagerPrivate::findNotebook(
     }
 
     if (!counter) {
-        QNDEBUG(errorDescription);
         return false;
     }
 
@@ -3713,8 +3712,9 @@ bool LocalStorageManagerPrivate::findTag(
             return false;
         }
 
-        column = QStringLiteral("name");
-        value = tag.name();
+        column = QStringLiteral("nameLower");
+        value = tag.name().toLower();
+        m_stringUtils.removeDiacritics(value);
         searchingByName = true;
     }
     else
@@ -3754,28 +3754,37 @@ bool LocalStorageManagerPrivate::findTag(
     bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
 
-    if (!query.next()) {
-        QNDEBUG(errorDescription);
-        return false;
-    }
+    bool foundTag = false;
 
-    QSqlRecord record = query.record();
-
-    Tag result;
-    ErrorString error;
-    res = fillTagFromSqlRecord(record, result, error);
-    if (!res)
+    while(query.next())
     {
-        errorDescription.base() = errorPrefix.base();
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING(errorDescription << ", tag: " << tag);
-        return false;
+        QSqlRecord record = query.record();
+
+        Tag result;
+        ErrorString error;
+        res = fillTagFromSqlRecord(record, result, error);
+        if (!res)
+        {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(errorDescription << ", tag: " << tag);
+            return false;
+        }
+
+        if (searchingByName && result.hasName() &&
+            (result.name().toLower() != tag.name().toLower()))
+        {
+            continue;
+        }
+
+        tag = result;
+        foundTag = true;
+        break;
     }
 
-    tag = result;
-    return true;
+    return foundTag;
 }
 
 QList<Tag> LocalStorageManagerPrivate::listAllTagsPerNote(

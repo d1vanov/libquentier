@@ -110,6 +110,15 @@ void LocalStorageManagerTester::localStorageManagerIndividualSavedSearchTest()
     CATCH_EXCEPTION();
 }
 
+void LocalStorageManagerTester::localStorageManagerFindSavedSearchByNameWithDiacriticsTest()
+{
+    try
+    {
+        TestFindSavedSearchByNameWithDiacritics();
+    }
+    CATCH_EXCEPTION();
+}
+
 void LocalStorageManagerTester::localStorageManagerIndividualLinkedNotebookTest()
 {
     try
@@ -124,6 +133,15 @@ void LocalStorageManagerTester::localStorageManagerIndividualTagTest()
     try
     {
         TestTagAddFindUpdateExpungeInLocalStorage();
+    }
+    CATCH_EXCEPTION();
+}
+
+void LocalStorageManagerTester::localStorageManagerFindTagByNameWithDiacriticsTest()
+{
+    try
+    {
+        TestFindTagByNameWithDiacritics();
     }
     CATCH_EXCEPTION();
 }
@@ -151,6 +169,15 @@ void LocalStorageManagerTester::localStorageManagerIndividualNotebookTest()
     try
     {
         TestNotebookAddFindUpdateDeleteExpungeInLocalStorage();
+    }
+    CATCH_EXCEPTION();
+}
+
+void LocalStorageManagerTester::localStorageManagerFindNotebookByNameWithDiacriticsTest()
+{
+    try
+    {
+        TestFindNotebookByNameWithDiacritics();
     }
     CATCH_EXCEPTION();
 }
