@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,44 +17,40 @@
  */
 
 #include "LocalStorageManagerTester.h"
+
 #include "LocalStorageManagerAsyncTests.h"
 #include "LocalStorageManagerBasicTests.h"
 #include "LocalStorageManagerListTests.h"
-#include "NoteSearchQueryParsingTest.h"
 #include "LocalStorageManagerNoteSearchQueryTest.h"
+#include "NoteSearchQueryParsingTest.h"
+
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/utility/SysInfo.h>
+
 #include <QTextStream>
 #include <QtTest/QTest>
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
 
-#define CATCH_EXCEPTION() \
-    catch(const std::exception & exception) { \
-        SysInfo sysInfo; \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") + \
-                         QString::fromUtf8(exception.what()) + \
-                         QStringLiteral(", backtrace: ") + sysInfo.stackTrace())); \
-    }
+#define CATCH_EXCEPTION()                                                      \
+    catch(const std::exception & exception) {                                  \
+        SysInfo sysInfo;                                                       \
+        QFAIL(                                                                 \
+            qPrintable(                                                        \
+                QStringLiteral("Caught exception: ") +                         \
+                QString::fromUtf8(exception.what()) +                          \
+                QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));      \
+    }                                                                          \
+// CATCH_EXCEPTION
 
-#if QT_VERSION >= 0x050000
-inline void nullMessageHandler(QtMsgType type,
-                               const QMessageLogContext &,
-                               const QString & message)
+inline void nullMessageHandler(
+    QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
-#else
-inline void nullMessageHandler(QtMsgType type, const char * message)
-{
-    if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << QStringLiteral("\n");
-    }
-}
-#endif
 
 namespace quentier {
 namespace test {
@@ -69,12 +65,7 @@ LocalStorageManagerTester::~LocalStorageManagerTester()
 void LocalStorageManagerTester::init()
 {
     registerMetatypes();
-
-#if QT_VERSION >= 0x050000
     qInstallMessageHandler(nullMessageHandler);
-#else
-    qInstallMsgHandler(nullMessageHandler);
-#endif
 }
 
 void LocalStorageManagerTester::noteSearchQueryTest()
