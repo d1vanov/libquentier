@@ -19,10 +19,10 @@
 #ifndef LIB_QUENTIER_TESTS_TAG_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 #define LIB_QUENTIER_TESTS_TAG_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Tag.h>
+#include <quentier/utility/Macros.h>
 
 namespace quentier {
 
@@ -49,11 +49,13 @@ Q_SIGNALS:
     void addTagRequest(Tag tag, QUuid requestId);
     void updateTagRequest(Tag tag, QUuid requestId);
     void findTagRequest(Tag tag, QUuid requestId);
-    void listAllTagsRequest(size_t limit, size_t offset,
-                            LocalStorageManager::ListTagsOrder order,
-                            LocalStorageManager::OrderDirection orderDirection,
-                            QString linkedNotebookGuid,
-                            QUuid requestId);
+
+    void listAllTagsRequest(
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, QUuid requestId);
+
     void expungeTagRequest(Tag tag, QUuid requestId);
 
 private Q_SLOTS:
@@ -63,23 +65,33 @@ private Q_SLOTS:
     void onAddTagCompleted(Tag tag, QUuid requestId);
     void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onUpdateTagCompleted(Tag tag, QUuid requestId);
-    void onUpdateTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
     void onFindTagCompleted(Tag tag, QUuid requestId);
-    void onFindTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onListAllTagsCompleted(size_t limit, size_t offset,
-                                LocalStorageManager::ListTagsOrder order,
-                                LocalStorageManager::OrderDirection orderDirection,
-                                QString linkedNotebookGuid,
-                                QList<Tag> tags, QUuid requestId);
-    void onListAllTagsFailed(size_t limit, size_t offset,
-                             LocalStorageManager::ListTagsOrder order,
-                             LocalStorageManager::OrderDirection orderDirection,
-                             QString linkedNotebookGuid,
-                             ErrorString errorDescription, QUuid requestId);
-    void onExpungeTagCompleted(Tag tag,
-                               QStringList expungedChildTagLocalUids,
-                               QUuid requestId);
-    void onExpungeTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onFindTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onListAllTagsCompleted(
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId);
+
+    void onListAllTagsFailed(
+        size_t limit, size_t offset,
+        LocalStorageManager::ListTagsOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QString linkedNotebookGuid, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onExpungeTagCompleted(
+        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+
+    void onExpungeTagFailed(
+        Tag tag, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -103,10 +115,10 @@ private:
         STATE_SENT_LIST_TAGS_REQUEST
     };
 
-    State m_state;
+    State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
-    QThread *                   m_pLocalStorageManagerThread;
+    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
+    QThread *                   m_pLocalStorageManagerThread = nullptr;
 
     Tag         m_initialTag;
     Tag         m_foundTag;
