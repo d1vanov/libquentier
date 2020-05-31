@@ -2672,7 +2672,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncStateAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetUserOwnSyncStateAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2715,7 +2715,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncStateAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetLinkedNotebookSyncStateAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2758,7 +2758,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetUserOwnSyncChunkAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetUserOwnSyncChunkAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2801,7 +2801,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetLinkedNotebookSyncChunkAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetLinkedNotebookSyncChunkAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2845,7 +2845,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2897,7 +2897,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -2955,7 +2955,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3014,7 +3014,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3072,7 +3072,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3124,7 +3124,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     setModifiedLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3179,7 +3179,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     setNewResourcesInExistingNotesFromLinkedNotebooksToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3234,7 +3234,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     setModifiedLinkedNotebookResourcesOnlyToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
+        FakeNoteStore::APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3287,7 +3287,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateSaved
     setNewUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateSavedSearchAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateSavedSearchAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3338,7 +3338,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateSaved
     setModifiedUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateSavedSearchAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateSavedSearchAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3389,7 +3389,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     setNewUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateTagAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateTagAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3440,7 +3440,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     setModifiedUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateTagAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateTagAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3492,7 +3492,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateTagIn
     setNewLinkedNotebookItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateTagAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateTagAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3544,7 +3544,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateTagIn
     setModifiedLinkedNotebookItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateTagAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateTagAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3595,7 +3595,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteb
     setNewUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNotebookAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateNotebookAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3646,7 +3646,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteb
     setModifiedUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNotebookAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateNotebookAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3697,7 +3697,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     setNewUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNoteAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateNoteAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3748,7 +3748,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     setModifiedUserOwnItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNoteAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateNoteAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3800,7 +3800,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteI
     setNewLinkedNotebookItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnCreateNoteAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnCreateNoteAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3852,7 +3852,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteI
     setModifiedLinkedNotebookItemsToLocalStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnUpdateNoteAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnUpdateNoteAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
@@ -3904,7 +3904,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnAuthenticat
     setNewLinkedNotebookItemsToRemoteStorage();
 
     m_pFakeNoteStore->setAPIRateLimitsExceedingTrigger(
-        FakeNoteStore::WhenToTriggerAPIRateLimitsExceeding::OnAuthenticateToSharedNotebookAttempt);
+        FakeNoteStore::APIRateLimitsTrigger::OnAuthenticateToSharedNotebookAttempt);
 
     SynchronizationManagerSignalsCatcher catcher(*m_pLocalStorageManagerAsync,
                                                  *m_pSynchronizationManager,
