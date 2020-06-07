@@ -47,7 +47,14 @@ class QUENTIER_EXPORT NoteEditor: public QWidget
 {
     Q_OBJECT
 public:
-    explicit NoteEditor(QWidget * parent = nullptr, Qt::WindowFlags flags = 0);
+    explicit NoteEditor(
+        QWidget * parent = nullptr,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        Qt::WindowFlags flags = {});
+#else
+        Qt::WindowFlags flags = 0);
+#endif
+
     virtual ~NoteEditor() override;
 
     /**

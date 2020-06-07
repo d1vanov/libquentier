@@ -107,7 +107,12 @@ public:
      * @param parent            Parent QObject
      */
     explicit LocalStorageManager(
-        const Account & account, const StartupOptions options = 0,
+        const Account & account,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        const StartupOptions options = {},
+#else
+        const StartupOptions options = 0,
+#endif
         QObject * parent = nullptr);
 
     virtual ~LocalStorageManager() override;
