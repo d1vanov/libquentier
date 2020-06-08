@@ -182,7 +182,13 @@ public:
      * @param options           Startup options for the local storage, none
      *                          enabled by default
      */
-    void switchUser(const Account & account, const StartupOptions options = 0);
+    void switchUser(
+        const Account & account,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        const StartupOptions options = {});
+#else
+        const StartupOptions options = 0);
+#endif
 
     /**
      * isLocalStorageVersionTooHigh method checks whether the existing local
