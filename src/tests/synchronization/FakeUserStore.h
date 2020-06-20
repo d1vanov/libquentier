@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -67,16 +67,11 @@ public:
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
-    qint16      m_edamVersionMajor;
-    qint16      m_edamVersionMinor;
+    qint16      m_edamVersionMajor = 0;
+    qint16      m_edamVersionMinor = 0;
 
-    typedef QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>
-        AccountLimitsByServiceLevel;
-
-    AccountLimitsByServiceLevel     m_accountLimits;
-
-    typedef QHash<qint32, User> UsersById;
-    UsersById   m_users;
+    QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>  m_accountLimits;
+    QHash<qint32, User>     m_users;
 };
 
 } // namespace quentier
