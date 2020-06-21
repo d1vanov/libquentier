@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,21 +19,24 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_TESTER_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_TESTER_H
 
-#include "FakeNoteStore.h"
-#include "FakeUserStore.h"
 #include "FakeAuthenticationManager.h"
 #include "FakeKeychainService.h"
-#include <quentier/utility/Macros.h>
-#include <quentier/types/Account.h>
+#include "FakeNoteStore.h"
+#include "FakeUserStore.h"
+
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/synchronization/SynchronizationManager.h>
+#include <quentier/types/Account.h>
+#include <quentier/utility/Macros.h>
+
 #include <QObject>
-#include <QScopedPointer>
+
+#include <memory>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
+QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 namespace test {
 
@@ -179,109 +182,146 @@ private:
     void setModifiedUserOwnItemsToLocalStorage();
     void setModifiedLinkedNotebookItemsToLocalStorage();
 
-    struct ConflictingItemsUsnOption
+    enum class ConflictingItemsUsnOption
     {
-        enum type
-        {
-            SameUsn = 0,
-            LargerRemoteUsn
-        };
+        SameUsn = 0,
+        LargerRemoteUsn
     };
 
-    void setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    friend QDebug & operator<<(
+        QDebug & dbg,
+        const ConflictingItemsUsnOption option);
 
-    void setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
-    void setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
 
-    void setConflictingTagsToLocalAndRemoteStoragesImpl(const QStringList & sourceTagGuids,
-                                                        const ConflictingItemsUsnOption::type usnOption,
-                                                        const bool shouldHaveLinkedNotebookGuid);
-    void setConflictingNotebooksToLocalAndRemoteStoragesImpl(const QStringList & sourceNotebookGuids,
-                                                             const ConflictingItemsUsnOption::type usnOption,
-                                                             const bool shouldHaveLinkedNotebookGuid);
-    void setConflictingNotesToLocalAndRemoteStoragesImpl(const QStringList & sourceNoteGuids,
-                                                         const ConflictingItemsUsnOption::type usnOption);
+    void setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
+        const ConflictingItemsUsnOption usnOption);
+
+    void setConflictingTagsToLocalAndRemoteStoragesImpl(
+        const QStringList & sourceTagGuids,
+        const ConflictingItemsUsnOption usnOption,
+        const bool shouldHaveLinkedNotebookGuid);
+
+    void setConflictingNotebooksToLocalAndRemoteStoragesImpl(
+        const QStringList & sourceNotebookGuids,
+        const ConflictingItemsUsnOption usnOption,
+        const bool shouldHaveLinkedNotebookGuid);
+
+    void setConflictingNotesToLocalAndRemoteStoragesImpl(
+        const QStringList & sourceNoteGuids,
+        const ConflictingItemsUsnOption usnOption);
 
     void copyRemoteItemsToLocalStorage();
 
     void setRemoteStorageSyncStateToPersistentSyncSettings();
 
-    void checkProgressNotificationsOrder(const SynchronizationManagerSignalsCatcher & catcher);
+    void checkProgressNotificationsOrder(
+        const SynchronizationManagerSignalsCatcher & catcher);
+
     void checkIdentityOfLocalAndRemoteItems();
     void checkPersistentSyncState();
     void checkExpectedNamesOfConflictingItemsAfterSync();
     void checkLocalCopiesOfConflictingNotesWereCreated();
     void checkNoConflictingNotesWereCreated();
 
-    void checkSyncStatePersistedRightAfterAPIRateLimitBreach(const SynchronizationManagerSignalsCatcher & catcher,
-                                                             const int numExpectedSyncStateEntries,
-                                                             const int rateLimitTriggeredSyncStateEntryIndex);
+    void checkSyncStatePersistedRightAfterAPIRateLimitBreach(
+        const SynchronizationManagerSignalsCatcher & catcher,
+        const int numExpectedSyncStateEntries,
+        const int rateLimitTriggeredSyncStateEntryIndex);
 
     // List stuff from local storage
-    void listSavedSearchesFromLocalStorage(const qint32 afterUSN,
-                                           QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
+    void listSavedSearchesFromLocalStorage(
+        const qint32 afterUSN,
+        QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
 
-    void listTagsFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                  QHash<QString, qevercloud::Tag> & tags) const;
+    void listTagsFromLocalStorage(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Tag> & tags) const;
 
-    void listNotebooksFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                       QHash<QString, qevercloud::Notebook> & notebooks) const;
+    void listNotebooksFromLocalStorage(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Notebook> & notebooks) const;
 
-    void listNotesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                   QHash<QString, qevercloud::Note> & notes) const;
+    void listNotesFromLocalStorage(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Note> & notes) const;
 
-    void listResourcesFromLocalStorage(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                       QHash<QString, qevercloud::Resource> & resources) const;
+    void listResourcesFromLocalStorage(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Resource> & resources) const;
 
-    void listLinkedNotebooksFromLocalStorage(const qint32 afterUSN,
-                                             QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
+    void listLinkedNotebooksFromLocalStorage(
+        const qint32 afterUSN,
+        QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
 
     // List stuff from fake note store
-    void listSavedSearchesFromFakeNoteStore(const qint32 afterUSN,
-                                            QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
+    void listSavedSearchesFromFakeNoteStore(
+        const qint32 afterUSN,
+        QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
 
-    void listTagsFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                   QHash<QString, qevercloud::Tag> & tags) const;
+    void listTagsFromFakeNoteStore(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Tag> & tags) const;
 
-    void listNotebooksFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                        QHash<QString, qevercloud::Notebook> & notebooks) const;
+    void listNotebooksFromFakeNoteStore(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Notebook> & notebooks) const;
 
-    void listNotesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                    QHash<QString, qevercloud::Note> & notes) const;
+    void listNotesFromFakeNoteStore(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Note> & notes) const;
 
-    void listResourcesFromFakeNoteStore(const qint32 afterUSN, const QString & linkedNotebookGuid,
-                                        QHash<QString, qevercloud::Resource> & resources) const;
+    void listResourcesFromFakeNoteStore(
+        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        QHash<QString, qevercloud::Resource> & resources) const;
 
-    void listLinkedNotebooksFromFakeNoteStore(const qint32 afterUSN,
-                                              QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
+    void listLinkedNotebooksFromFakeNoteStore(
+        const qint32 afterUSN,
+        QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
 
-    // Print stuff from both local storage and fake note store into a warning level log entry
-    void printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(const QString & prefix = QString(),
-                                                              const QString & linkedNotebookGuid = QString());
+    // Print stuff from both local storage and fake note store into a warning
+    // level log entry
+    void printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(
+        const QString & prefix = {},
+        const QString & linkedNotebookGuid = {});
 
     void runTest(SynchronizationManagerSignalsCatcher & catcher);
 
 private:
     Account                         m_testAccount;
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync;
-    FakeNoteStore *                 m_pFakeNoteStore;
-    FakeUserStore *                 m_pFakeUserStore;
-    FakeAuthenticationManager *     m_pFakeAuthenticationManager;
-    FakeKeychainService *           m_pFakeKeychainService;
-    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager;
-    SynchronizationManager *        m_pSynchronizationManager;
-    bool                            m_detectedTestFailure;
+    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
+    FakeNoteStore *                 m_pFakeNoteStore = nullptr;
+    FakeUserStore *                 m_pFakeUserStore = nullptr;
+    FakeAuthenticationManager *     m_pFakeAuthenticationManager = nullptr;
+    FakeKeychainService *           m_pFakeKeychainService = nullptr;
+    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager = nullptr;
+    SynchronizationManager *        m_pSynchronizationManager = nullptr;
+    bool                            m_detectedTestFailure = false;
 
     /**
      * Struct containing a collection of guids of data items (remote or local)
      * which are to be used in incremental sync tests checking how the sync
-     * handles modifications or expunging of existing data items on local or remote side.
-     * Using the particular set of items to modify/expunge is important for making
-     * the tests reproducible.
+     * handles modifications or expunging of existing data items on local or
+     * remote side.
+     *
+     * Using the particular set of items to modify/expunge is important for
+     * making the tests reproducible.
      */
     struct GuidsOfItemsUsedForSyncTest
     {
