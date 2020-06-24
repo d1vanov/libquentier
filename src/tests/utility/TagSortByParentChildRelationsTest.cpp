@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,8 +17,11 @@
  */
 
 #include "TagSortByParentChildRelationsTest.h"
+
 #include "../../utility/TagSortByParentChildRelationsHelpers.hpp"
+
 #include <quentier/utility/UidGenerator.h>
+
 #include <QSet>
 #include <QTextStream>
 
@@ -30,31 +33,31 @@ bool checkTagsOrder(const QList<T> & tags, QString & error)
 {
     QSet<QString> encounteredTagGuids;
 
-    for(auto it = tags.constBegin(), end = tags.constEnd(); it != end; ++it)
+    for(const auto & tag: ::qAsConst(tags))
     {
-        if (Q_UNLIKELY(!tagHasGuid(*it))) {
+        if (Q_UNLIKELY(!tagHasGuid(tag))) {
             continue;
         }
 
-        QString guid = tagGuid(*it);
+        QString guid = tagGuid(tag);
         Q_UNUSED(encounteredTagGuids.insert(guid))
 
-        QString parentGuid = tagParentGuid(*it);
+        QString parentGuid = tagParentGuid(tag);
         if (parentGuid.isEmpty()) {
             continue;
         }
 
         if (Q_UNLIKELY(guid == parentGuid)) {
             QTextStream strm(&error);
-            strm << QStringLiteral("Found tag which guid matches its parent guid: ");
-            strm << *it;
+            strm << "Found tag which guid matches its parent guid: ";
+            strm << tag;
             return false;
         }
 
         if (!encounteredTagGuids.contains(parentGuid)) {
             QTextStream strm(&error);
-            strm << QStringLiteral("Found a child tag before its parent: ");
-            strm << *it;
+            strm << "Found a child tag before its parent: ";
+            strm << tag;
             return false;
         }
     }
@@ -62,16 +65,14 @@ bool checkTagsOrder(const QList<T> & tags, QString & error)
     return true;
 }
 
-void tagListToQEverCloudTagList(const QList<Tag> & inputTags,
-                                QList<qevercloud::Tag> & outputTags)
+void tagListToQEverCloudTagList(
+    const QList<Tag> & inputTags, QList<qevercloud::Tag> & outputTags)
 {
     outputTags.clear();
     outputTags.reserve(inputTags.size());
 
-    for(auto it = inputTags.constBegin(),
-        end = inputTags.constEnd(); it != end; ++it)
-    {
-        outputTags << it->qevercloudTag();
+    for(const auto & tag: ::qAsConst(inputTags)) {
+        outputTags << tag.qevercloudTag();
     }
 }
 
@@ -331,7 +332,8 @@ bool tagSortByParentChildRelationsTest(QString & error)
         return false;
     }
 
-    // Check the list of two tags of which one is a parent and the other one - child
+    // Check the list of two tags of which one is a parent and the other one
+    // is a child
     tags.clear();
     tags << firstTag;
     tags << fourthTag;

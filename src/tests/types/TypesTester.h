@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TESTS_TYPES_TYPES_TESTER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
 
 #include <quentier/utility/Macros.h>
+
 #include <QObject>
 
 namespace quentier {
@@ -44,9 +45,7 @@ private Q_SLOTS:
     void lruCacheTests();
 
 private:
-    UtilityTester(const UtilityTester & other)  = delete;
-    UtilityTester & operator=(const UtilityTester & other)  = delete;
-
+    Q_DISABLE_COPY(UtilityTester)
 };
 
 } // namespace test

@@ -44,7 +44,7 @@
     }                                                                          \
 // CATCH_EXCEPTION
 
-inline void nullMessageHandler(
+inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
@@ -65,7 +65,7 @@ LocalStorageManagerTester::~LocalStorageManagerTester()
 void LocalStorageManagerTester::init()
 {
     registerMetatypes();
-    qInstallMessageHandler(nullMessageHandler);
+    qInstallMessageHandler(messageHandler);
 }
 
 void LocalStorageManagerTester::noteSearchQueryTest()

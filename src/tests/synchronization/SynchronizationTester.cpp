@@ -56,7 +56,7 @@
     }                                                                          \
 // CATCH_EXCEPTION
 
-inline void nullMessageHandler(
+inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
@@ -201,11 +201,7 @@ void SynchronizationTester::cleanup()
 
 void SynchronizationTester::initTestCase()
 {
-#if QT_VERSION >= 0x050000
-    qInstallMessageHandler(nullMessageHandler);
-#else
-    qInstallMsgHandler(nullMessageHandler);
-#endif
+    qInstallMessageHandler(messageHandler);
 }
 
 void SynchronizationTester::cleanupTestCase()

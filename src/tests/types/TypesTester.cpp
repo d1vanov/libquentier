@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,42 +17,37 @@
  */
 
 #include "TypesTester.h"
+
 #include "ResourceRecognitionIndicesParsingTest.h"
-#include <quentier/types/Resource.h>
+
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/Resource.h>
 #include <quentier/utility/SysInfo.h>
+
 #include <QApplication>
 #include <QTextStream>
 #include <QtTest/QTest>
 
 #define CATCH_EXCEPTION()                                                      \
-    catch(const std::exception & exception) {                                  \
+    catch(const std::exception & exception)                                    \
+    {                                                                          \
         SysInfo sysInfo;                                                       \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +                \
-                         QString::fromUtf8(exception.what()) +                 \
-                         QStringLiteral(", backtrace: ") +                     \
-                         sysInfo.stackTrace()));                               \
+        QFAIL(qPrintable(                                                      \
+            QStringLiteral("Caught exception: ") +                             \
+            QString::fromUtf8(exception.what()) +                              \
+            QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
     }                                                                          \
 // CATCH_EXCEPTION
 
-#if QT_VERSION >= 0x050000
-inline void nullMessageHandler(QtMsgType type, const QMessageLogContext &,
-                               const QString & message)
+inline void messageHandler(
+    QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
     }
 }
-#else
-inline void nullMessageHandler(QtMsgType type, const char * message)
-{
-    if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << "\n";
-    }
-}
-#endif
 
 namespace quentier {
 namespace test {
@@ -67,57 +62,64 @@ TypesTester::~TypesTester()
 void TypesTester::init()
 {
     registerMetatypes();
-
-#if QT_VERSION >= 0x050000
-    qInstallMessageHandler(nullMessageHandler);
-#else
-    qInstallMsgHandler(nullMessageHandler);
-#endif
+    qInstallMessageHandler(messageHandler);
 }
 
 void TypesTester::noteContainsToDoTest()
 {
     try
     {
-        QString noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1>"
-                                             "<en-todo checked = \"true\"/>"
-                                             "Completed item<en-todo/>Not yet "
-                                             "completed item</en-note>");
+        QString noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1>"
+            "<en-todo checked = \"true\"/>"
+            "Completed item<en-todo/>Not yet "
+            "completed item</en-note>");
+
         Note note;
         note.setContent(noteContent);
 
-        QString error = QStringLiteral("Wrong result of Note's containsToDo method");
+        QString error = QStringLiteral(
+            "Wrong result of Note's containsToDo method");
+
         QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsTodo(), qPrintable(error));
 
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1>"
-                                     "<en-todo checked = \"true\"/>"
-                                     "Completed item</en-note>");
+        noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1>"
+            "<en-todo checked = \"true\"/>"
+            "Completed item</en-note>");
+
         note.setContent(noteContent);
 
         QVERIFY2(note.containsCheckedTodo(), qPrintable(error));
         QVERIFY2(!note.containsUncheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsTodo(), qPrintable(error));
 
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1><en-todo/>"
-                                     "Not yet completed item</en-note>");
+        noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1><en-todo/>"
+            "Not yet completed item</en-note>");
+
         note.setContent(noteContent);
 
         QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsTodo(), qPrintable(error));
 
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1>"
-                                     "<en-todo checked = \"false\"/>"
-                                     "Not yet completed item</en-note>");
+        noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1>"
+            "<en-todo checked = \"false\"/>"
+            "Not yet completed item</en-note>");
+
         note.setContent(noteContent);
 
         QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsUncheckedTodo(), qPrintable(error));
         QVERIFY2(note.containsTodo(), qPrintable(error));
 
-        noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
+        noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1></en-note>");
+
         note.setContent(noteContent);
 
         QVERIFY2(!note.containsCheckedTodo(), qPrintable(error));
@@ -131,21 +133,23 @@ void TypesTester::noteContainsEncryptionTest()
 {
     try
     {
-        QString noteContent = QStringLiteral("<en-note><h1>Hello, world!</h1>"
-                                             "<en-crypt hint = \"the hint\" "
-                                             "cipher = \"RC2\" length = \"64\">"
-                                             "NKLHX5yK1MlpzemJQijAN6C4545s2EODx"
-                                             "Q8Bg1r==</en-crypt></en-note>");
+        QString noteContent = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1><en-crypt hint = \"the hint\" "
+            "cipher = \"RC2\" length = \"64\">"
+            "NKLHX5yK1MlpzemJQijAN6C4545s2EODx"
+            "Q8Bg1r==</en-crypt></en-note>");
 
         Note note;
         note.setContent(noteContent);
 
-        QString error = QStringLiteral("Wrong result of Note's "
-                                       "containsEncryption method");
+        QString error = QStringLiteral(
+            "Wrong result of Note's containsEncryption method");
+
         QVERIFY2(note.containsEncryption(), qPrintable(error));
 
-        QString noteContentWithoutEncryption =
-            QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
+        QString noteContentWithoutEncryption = QStringLiteral(
+            "<en-note><h1>Hello, world!</h1></en-note>");
+
         note.setContent(noteContentWithoutEncryption);
 
         QVERIFY2(!note.containsEncryption(), qPrintable(error));
@@ -170,7 +174,7 @@ void TypesTester::resourceRecognitionIndicesParsingTest()
     {
         QString error;
         bool res = parseResourceRecognitionIndicesAndItemsTest(error);
-        QVERIFY2(res == true, qPrintable(error));
+        QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
 }

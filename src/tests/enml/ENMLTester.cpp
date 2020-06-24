@@ -39,22 +39,13 @@
     }                                                                          \
 // CATCH_EXCEPTION
 
-#if QT_VERSION >= 0x050000
-inline void nullMessageHandler(
+inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
     }
 }
-#else
-inline void nullMessageHandler(QtMsgType type, const char * message)
-{
-    if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << "\n";
-    }
-}
-#endif
 
 namespace quentier {
 namespace test {
@@ -69,12 +60,7 @@ ENMLTester::~ENMLTester()
 void ENMLTester::init()
 {
     registerMetatypes();
-
-#if QT_VERSION >= 0x050000
-    qInstallMessageHandler(nullMessageHandler);
-#else
-    qInstallMsgHandler(nullMessageHandler);
-#endif
+    qInstallMessageHandler(messageHandler);
 }
 
 void ENMLTester::enmlConverterSimpleTest()
