@@ -30,19 +30,22 @@ namespace quentier {
 class Q_DECL_HIDDEN SharedNoteData: public QSharedData
 {
 public:
-    SharedNoteData();
-    SharedNoteData(const SharedNoteData & other);
-    SharedNoteData(SharedNoteData && other);
+    SharedNoteData() = default;
+    SharedNoteData(const SharedNoteData & other) = default;
+    SharedNoteData(SharedNoteData && other) = default;
+
     SharedNoteData(const qevercloud::SharedNote & other);
-    virtual ~SharedNoteData();
+    SharedNoteData(qevercloud::SharedNote && other);
 
-    QString                 m_noteGuid;
-    qevercloud::SharedNote  m_qecSharedNote;
-    int                     m_indexInNote;
-
-private:
     SharedNoteData & operator=(const SharedNoteData & other) = delete;
     SharedNoteData & operator=(SharedNoteData && other) = delete;
+
+    virtual ~SharedNoteData() = default;
+
+public:
+    QString                 m_noteGuid;
+    qevercloud::SharedNote  m_qecSharedNote;
+    int                     m_indexInNote = -1;
 };
 
 } // namespace quentier

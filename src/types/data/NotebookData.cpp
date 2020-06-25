@@ -24,32 +24,14 @@
 namespace quentier {
 
 NotebookData::NotebookData() :
-    FavoritableDataElementData(),
-    m_qecNotebook(),
-    m_isLastUsed(false),
-    m_linkedNotebookGuid()
+    FavoritableDataElementData()
 {
     m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
 }
 
-NotebookData::NotebookData(const NotebookData & other) :
-    FavoritableDataElementData(other),
-    m_qecNotebook(other.m_qecNotebook),
-    m_isLastUsed(other.m_isLastUsed),
-    m_linkedNotebookGuid(other.m_linkedNotebookGuid)
-{}
-
-NotebookData::NotebookData(NotebookData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecNotebook(std::move(other.m_qecNotebook)),
-    m_isLastUsed(std::move(other.m_isLastUsed)),
-    m_linkedNotebookGuid(std::move(other.m_linkedNotebookGuid))
-{}
-
 NotebookData::NotebookData(const qevercloud::Notebook & other) :
     FavoritableDataElementData(),
     m_qecNotebook(other),
-    m_isLastUsed(false),
     m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
@@ -60,16 +42,12 @@ NotebookData::NotebookData(const qevercloud::Notebook & other) :
 NotebookData::NotebookData(qevercloud::Notebook && other) :
     FavoritableDataElementData(),
     m_qecNotebook(std::move(other)),
-    m_isLastUsed(false),
     m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
         m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
     }
 }
-
-NotebookData::~NotebookData()
-{}
 
 void NotebookData::clear()
 {
@@ -119,17 +97,9 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
 
     if (m_qecNotebook.sharedNotebooks.isSet())
     {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         for(const auto & sharedNotebook:
-            qAsConst(m_qecNotebook.sharedNotebooks.ref()))
+            ::qAsConst(m_qecNotebook.sharedNotebooks.ref()))
         {
-#else
-        for(auto it = m_qecNotebook.sharedNotebooks.ref().constBegin(),
-            end = m_qecNotebook.sharedNotebooks.ref().constEnd();
-            it != end; ++it)
-        {
-            const auto & sharedNotebook = *it;
-#endif
             if (!sharedNotebook.id.isSet())
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(

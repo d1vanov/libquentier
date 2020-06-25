@@ -163,7 +163,7 @@ void ResourceRecognitionIndexItem::addStroke(const int stroke)
 
 bool ResourceRecognitionIndexItem::removeStroke(const int stroke)
 {
-    const QVector<int> & strokeList = d.constData()->m_strokeList;
+    const auto & strokeList = d.constData()->m_strokeList;
     int index = strokeList.indexOf(stroke);
     if (index < 0) {
         return false;
@@ -175,7 +175,7 @@ bool ResourceRecognitionIndexItem::removeStroke(const int stroke)
 
 bool ResourceRecognitionIndexItem::removeStrokeAt(const int strokeIndex)
 {
-    const QVector<int> & strokeList = d.constData()->m_strokeList;
+    const auto & strokeList = d.constData()->m_strokeList;
     if (strokeList.size() <= strokeIndex) {
         return false;
     }
@@ -237,7 +237,7 @@ void ResourceRecognitionIndexItem::addTextItem(const TextItem & item)
 
 bool ResourceRecognitionIndexItem::removeTextItem(const TextItem & item)
 {
-    const QVector<TextItem> & textItems = d.constData()->m_textItems;
+    const auto & textItems = d.constData()->m_textItems;
     int index = textItems.indexOf(item);
     if (index < 0) {
         return false;
@@ -249,7 +249,7 @@ bool ResourceRecognitionIndexItem::removeTextItem(const TextItem & item)
 
 bool ResourceRecognitionIndexItem::removeTextItemAt(const int textItemIndex)
 {
-    const QVector<TextItem> & textItems = d.constData()->m_textItems;
+    const auto & textItems = d.constData()->m_textItems;
     if (textItems.size() <= textItemIndex) {
         return false;
     }
@@ -313,7 +313,7 @@ void ResourceRecognitionIndexItem::addObjectItem(const ObjectItem & item)
 
 bool ResourceRecognitionIndexItem::removeObjectItem(const ObjectItem & item)
 {
-    const QVector<ObjectItem> & objectItems = d.constData()->m_objectItems;
+    const auto & objectItems = d.constData()->m_objectItems;
     int index = objectItems.indexOf(item);
     if (index < 0) {
         return false;
@@ -325,7 +325,7 @@ bool ResourceRecognitionIndexItem::removeObjectItem(const ObjectItem & item)
 
 bool ResourceRecognitionIndexItem::removeObjectItemAt(const int objectItemIndex)
 {
-    const QVector<ObjectItem> & objectItems = d.constData()->m_objectItems;
+    const auto & objectItems = d.constData()->m_objectItems;
     if (objectItems.size() <= objectItemIndex) {
         return false;
     }
@@ -387,7 +387,7 @@ void ResourceRecognitionIndexItem::addShapeItem(const ShapeItem & item)
 
 bool ResourceRecognitionIndexItem::removeShapeItem(const ShapeItem & item)
 {
-    const QVector<ShapeItem> & shapeItems = d.constData()->m_shapeItems;
+    const auto & shapeItems = d.constData()->m_shapeItems;
     int index = shapeItems.indexOf(item);
     if (index < 0) {
         return false;
@@ -399,7 +399,7 @@ bool ResourceRecognitionIndexItem::removeShapeItem(const ShapeItem & item)
 
 bool ResourceRecognitionIndexItem::removeShapeItemAt(const int shapeItemIndex)
 {
-    const QVector<ShapeItem> & shapeItems = d.constData()->m_shapeItems;
+    const auto & shapeItems = d.constData()->m_shapeItems;
     if (shapeItems.size() <= shapeItemIndex) {
         return false;
     }
@@ -463,7 +463,7 @@ void ResourceRecognitionIndexItem::addBarcodeItem(const BarcodeItem & item)
 
 bool ResourceRecognitionIndexItem::removeBarcodeItem(const BarcodeItem & item)
 {
-    const QVector<BarcodeItem> & barcodeItems = d.constData()->m_barcodeItems;
+    const auto & barcodeItems = d.constData()->m_barcodeItems;
     int index = barcodeItems.indexOf(item);
     if (index < 0) {
         return false;
@@ -476,7 +476,7 @@ bool ResourceRecognitionIndexItem::removeBarcodeItem(const BarcodeItem & item)
 bool ResourceRecognitionIndexItem::removeBarcodeItemAt(
     const int barcodeItemIndex)
 {
-    const QVector<BarcodeItem> & barcodeItems = d.constData()->m_barcodeItems;
+    const auto & barcodeItems = d.constData()->m_barcodeItems;
     if (barcodeItems.size() <= barcodeItemIndex) {
         return false;
     }

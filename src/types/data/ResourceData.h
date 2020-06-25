@@ -28,20 +28,22 @@ namespace quentier {
 class Q_DECL_HIDDEN ResourceData: public NoteStoreDataElementData
 {
 public:
-    ResourceData();
-    ResourceData(const ResourceData & other);
-    ResourceData(ResourceData && other);
+    ResourceData() = default;
+    ResourceData(const ResourceData & other) = default;
+    ResourceData(ResourceData && other) = default;
+
     ResourceData(const qevercloud::Resource & other);
     ResourceData(qevercloud::Resource && other);
-    virtual ~ResourceData() override;
 
-    qevercloud::Resource            m_qecResource;
-    int                             m_indexInNote;
-    qevercloud::Optional<QString>   m_noteLocalUid;
-
-private:
     ResourceData & operator=(const ResourceData & other) = delete;
     ResourceData & operator=(ResourceData && other) = delete;
+
+    virtual ~ResourceData() override;
+
+public:
+    qevercloud::Resource            m_qecResource;
+    int                             m_indexInNote = -1;
+    qevercloud::Optional<QString>   m_noteLocalUid;
 };
 
 } // namespace quentier

@@ -66,9 +66,8 @@ SharedNotebook::~SharedNotebook()
 
 bool SharedNotebook::operator==(const SharedNotebook & other) const
 {
-    const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
-    const qevercloud::SharedNotebook & otherSharedNotebook =
-        other.d->m_qecSharedNotebook;
+    const auto & sharedNotebook = d->m_qecSharedNotebook;
+    const auto & otherSharedNotebook = other.d->m_qecSharedNotebook;
 
     return (sharedNotebook == otherSharedNotebook);
 
@@ -269,9 +268,10 @@ void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
 
 bool SharedNotebook::hasReminderNotifyEmail() const
 {
-    const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
+    const auto & sharedNotebook = d->m_qecSharedNotebook;
+
     return sharedNotebook.recipientSettings.isSet() &&
-           sharedNotebook.recipientSettings->reminderNotifyEmail.isSet();
+        sharedNotebook.recipientSettings->reminderNotifyEmail.isSet();
 }
 
 bool SharedNotebook::reminderNotifyEmail() const
@@ -295,7 +295,8 @@ void SharedNotebook::setReminderNotifyEmail(const bool notifyEmail)
 
 bool SharedNotebook::hasReminderNotifyApp() const
 {
-    const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
+    const auto & sharedNotebook = d->m_qecSharedNotebook;
+
     return sharedNotebook.recipientSettings.isSet() &&
         sharedNotebook.recipientSettings->reminderNotifyInApp.isSet();
 }
@@ -420,12 +421,12 @@ void SharedNotebook::setAssignmentTimestamp(const qint64 timestamp)
 
 QTextStream & SharedNotebook::print(QTextStream & strm) const
 {
-    strm << "SharedNotebook {\n";
-    strm << "  index in notebook: "
+    strm << "SharedNotebook {\n"
+        << "  index in notebook: "
         << QString::number(d->m_indexInNotebook)
         << ";\n";
 
-    const qevercloud::SharedNotebook & sharedNotebook = d->m_qecSharedNotebook;
+    const auto & sharedNotebook = d->m_qecSharedNotebook;
     strm << sharedNotebook;
     strm << "};\n";
     return strm;

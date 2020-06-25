@@ -23,35 +23,14 @@
 
 namespace quentier {
 
-TagData::TagData() :
-    FavoritableDataElementData(),
-    m_qecTag(),
-    m_linkedNotebookGuid(),
-    m_parentLocalUid()
-{}
-
-TagData::TagData(const TagData & other) :
-    FavoritableDataElementData(other),
-    m_qecTag(other.m_qecTag),
-    m_linkedNotebookGuid(other.m_linkedNotebookGuid),
-    m_parentLocalUid(other.m_parentLocalUid)
-{}
-
-TagData::TagData(TagData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecTag(std::move(other.m_qecTag)),
-    m_linkedNotebookGuid(std::move(other.m_linkedNotebookGuid)),
-    m_parentLocalUid(std::move(other.m_parentLocalUid))
-{}
-
 TagData::TagData(const qevercloud::Tag & other) :
     FavoritableDataElementData(),
-    m_qecTag(other),
-    m_linkedNotebookGuid(),
-    m_parentLocalUid()
+    m_qecTag(other)
 {}
 
-TagData::~TagData()
+TagData::TagData(qevercloud::Tag && other) :
+    FavoritableDataElementData(),
+    m_qecTag(std::move(other))
 {}
 
 void TagData::clear()

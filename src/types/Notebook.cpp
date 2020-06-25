@@ -123,7 +123,8 @@ void Notebook::clear()
     d->clear();
 }
 
-bool Notebook::validateName(const QString & name, ErrorString * pErrorDescription)
+bool Notebook::validateName(
+    const QString & name, ErrorString * pErrorDescription)
 {
     if (name != name.trimmed())
     {
@@ -328,7 +329,7 @@ void Notebook::setPublishingUri(const QString & uri)
 bool Notebook::hasPublishingOrder() const
 {
     return d->m_qecNotebook.publishing.isSet() &&
-           d->m_qecNotebook.publishing->order.isSet();
+        d->m_qecNotebook.publishing->order.isSet();
 }
 
 qint8 Notebook::publishingOrder() const
@@ -438,14 +439,11 @@ QList<SharedNotebook> Notebook::sharedNotebooks() const
         return notebooks;
     }
 
-    const QList<qevercloud::SharedNotebook> & sharedNotebooks =
-        d->m_qecNotebook.sharedNotebooks;
+    const auto & sharedNotebooks = d->m_qecNotebook.sharedNotebooks.ref();
     int numSharedNotebooks = sharedNotebooks.size();
     notebooks.reserve(qMax(numSharedNotebooks, 0));
-    for(int i = 0; i < numSharedNotebooks; ++i)
-    {
-        const qevercloud::SharedNotebook & qecSharedNotebook =
-            sharedNotebooks[i];
+    for(int i = 0; i < numSharedNotebooks; ++i) {
+        const auto & qecSharedNotebook = sharedNotebooks[i];
         SharedNotebook sharedNotebook(qecSharedNotebook);
         notebooks << sharedNotebook;
         notebooks.back().setIndexInNotebook(i);
@@ -480,8 +478,7 @@ void Notebook::addSharedNotebook(const SharedNotebook & sharedNotebook)
         d->m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
     }
 
-    QList<qevercloud::SharedNotebook> & sharedNotebooks =
-        d->m_qecNotebook.sharedNotebooks;
+    auto & sharedNotebooks = d->m_qecNotebook.sharedNotebooks.ref();
     const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
     if (sharedNotebooks.indexOf(enSharedNotebook) != -1) {
@@ -700,7 +697,8 @@ bool Notebook::canSendMessageToRecipients() const
         d->m_qecNotebook.restrictions->noSendMessageToRecipients);
 }
 
-void Notebook::setCanSendMessageToRecipients(const bool canSendMessageToRecipients)
+void Notebook::setCanSendMessageToRecipients(
+    const bool canSendMessageToRecipients)
 {
     CHECK_AND_SET_NOTEBOOK_RESTRICTIONS;
     d->m_qecNotebook.restrictions->noSendMessageToRecipients =
@@ -743,7 +741,8 @@ bool Notebook::canSetDefaultNotebook() const
 void Notebook::setCanSetDefaultNotebook(const bool canSetDefaultNotebook)
 {
     CHECK_AND_SET_NOTEBOOK_RESTRICTIONS;
-    d->m_qecNotebook.restrictions->noSetDefaultNotebook = !canSetDefaultNotebook;
+    d->m_qecNotebook.restrictions->noSetDefaultNotebook =
+        !canSetDefaultNotebook;
 }
 
 bool Notebook::canSetNotebookStack() const

@@ -31,16 +31,32 @@ class Q_DECL_HIDDEN AccountData: public QSharedData
 {
 public:
     explicit AccountData();
-    virtual ~AccountData();
 
-    AccountData(const AccountData & other);
-    AccountData(AccountData && other);
+    AccountData(const AccountData & other) = default;
+    AccountData(AccountData && other) = default;
+
+    virtual ~AccountData() = default;
+
+    AccountData & operator=(const AccountData & other) = delete;
+    AccountData & operator=(AccountData && other) = delete;
 
     void switchEvernoteAccountType(
         const Account::EvernoteAccountType evernoteAccountType);
 
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
 
+    qint32 mailLimitDaily() const;
+    qint64 noteSizeMax() const;
+    qint64 resourceSizeMax() const;
+    qint32 linkedNotebookMax() const;
+    qint32 noteCountMax() const;
+    qint32 notebookCountMax() const;
+    qint32 tagCountMax() const;
+    qint32 noteTagCountMax() const;
+    qint32 savedSearchCountMax() const;
+    qint32 noteResourceCountMax() const;
+
+public:
     QString     m_name;
     QString     m_displayName;
 
@@ -64,21 +80,6 @@ public:
     qint32      m_noteTagCountMax = std::numeric_limits<qint32>::max();
     qint32      m_savedSearchCountMax = std::numeric_limits<qint32>::max();
     qint32      m_noteResourceCountMax = std::numeric_limits<qint32>::max();
-
-    qint32 mailLimitDaily() const;
-    qint64 noteSizeMax() const;
-    qint64 resourceSizeMax() const;
-    qint32 linkedNotebookMax() const;
-    qint32 noteCountMax() const;
-    qint32 notebookCountMax() const;
-    qint32 tagCountMax() const;
-    qint32 noteTagCountMax() const;
-    qint32 savedSearchCountMax() const;
-    qint32 noteResourceCountMax() const;
-
-private:
-    AccountData & operator=(const AccountData & other)  = delete;
-    AccountData & operator=(AccountData && other)  = delete;
 };
 
 } // namespace quentier

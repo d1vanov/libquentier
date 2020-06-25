@@ -293,10 +293,6 @@ QTextStream & Tag::print(QTextStream & strm) const
 {
     strm << "Tag { \n";
 
-#define INSERT_DELIMITER                                                       \
-    strm << "; \n"                                                             \
-// INSERT_DELIMITER
-
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
         strm << "localUid: " << localUid_;
@@ -304,7 +300,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "localUid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_parentLocalUid.isSet()) {
         strm << "parent local uid: " << d->m_parentLocalUid.ref();
@@ -312,7 +308,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "parent local uid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.guid.isSet()) {
         strm << "guid: " << d->m_qecTag.guid;
@@ -320,7 +316,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "guid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_linkedNotebookGuid.isSet()) {
         strm << "linked notebook guid: " << d->m_linkedNotebookGuid;
@@ -328,7 +324,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "linked notebook guid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.name.isSet()) {
         strm << "name: " << d->m_qecTag.name;
@@ -336,7 +332,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "name is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.parentGuid.isSet()) {
         strm << "parentGuid: " << d->m_qecTag.parentGuid;
@@ -344,7 +340,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "parentGuid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.updateSequenceNum.isSet()) {
         strm << "updateSequenceNumber: "
@@ -353,16 +349,16 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "updateSequenceNumber is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isDirty: " << (isDirty() ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isLocal: " << (d->m_isLocal ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isFavorited = " << (isFavorited() ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "}; \n";
     return strm;

@@ -29,6 +29,8 @@ namespace quentier {
 
 namespace {
 
+////////////////////////////////////////////////////////////////////////////////
+
 void initListFields(qevercloud::Note & note)
 {
     note.tagGuids = QList<qevercloud::Guid>();
@@ -38,37 +40,13 @@ void initListFields(qevercloud::Note & note)
 
 } // namespace
 
+////////////////////////////////////////////////////////////////////////////////
+
 NoteData::NoteData() :
-    FavoritableDataElementData(),
-    m_qecNote(),
-    m_resourcesAdditionalInfo(),
-    m_notebookLocalUid(),
-    m_tagLocalUids(),
-    m_thumbnailData()
+    FavoritableDataElementData()
 {
     initListFields(m_qecNote);
 }
-
-NoteData::NoteData(const NoteData & other) :
-    FavoritableDataElementData(other),
-    m_qecNote(other.m_qecNote),
-    m_resourcesAdditionalInfo(other.m_resourcesAdditionalInfo),
-    m_notebookLocalUid(other.m_notebookLocalUid),
-    m_tagLocalUids(other.m_tagLocalUids),
-    m_thumbnailData(other.m_thumbnailData)
-{}
-
-NoteData::NoteData(NoteData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecNote(std::move(other.m_qecNote)),
-    m_resourcesAdditionalInfo(std::move(other.m_resourcesAdditionalInfo)),
-    m_notebookLocalUid(std::move(other.m_notebookLocalUid)),
-    m_tagLocalUids(std::move(other.m_tagLocalUids)),
-    m_thumbnailData(std::move(other.m_thumbnailData))
-{}
-
-NoteData::~NoteData()
-{}
 
 NoteData::NoteData(const qevercloud::Note & other) :
     FavoritableDataElementData(),
@@ -348,8 +326,8 @@ bool NoteData::checkParameters(ErrorString & errorDescription) const
 
             if (applicationData.keysOnly.isSet())
             {
-                const QSet<QString> & keysOnly = applicationData.keysOnly;
-                foreach(const QString & key, keysOnly) {
+                for(const auto & key: qAsConst(applicationData.keysOnly.ref()))
+                {
                     int keySize = key.size();
                     if ( (keySize <
                           qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
@@ -369,9 +347,8 @@ bool NoteData::checkParameters(ErrorString & errorDescription) const
 
             if (applicationData.fullMap.isSet())
             {
-                const QMap<QString, QString> & fullMap =
-                    applicationData.fullMap;
-                for(auto it = fullMap.constBegin(); it != fullMap.constEnd(); ++it)
+                for(const auto & it:
+                    qevercloud::toRange(qAsConst(applicationData.fullMap.ref())))
                 {
                     int keySize = it.key().size();
                     if ( (keySize <
@@ -437,10 +414,12 @@ QString NoteData::plainText(ErrorString * pErrorMessage) const
 
     QString plainText;
     ErrorString error;
+
     bool res = ENMLConverter::noteContentToPlainText(
         m_qecNote.content.ref(),
         plainText,
         error);
+
     if (!res)
     {
         QNWARNING(error);
@@ -458,10 +437,12 @@ QStringList NoteData::listOfWords(ErrorString * pErrorMessage) const
 {
     QStringList result;
     ErrorString error;
+
     bool res = ENMLConverter::noteContentToListOfWords(
         m_qecNote.content.ref(),
         result,
         error);
+
     if (!res)
     {
         QNWARNING(error);
@@ -469,23 +450,24 @@ QStringList NoteData::listOfWords(ErrorString * pErrorMessage) const
             *pErrorMessage = error;
         }
 
-        return QStringList();
+        return {};
     }
 
     return result;
 }
 
-std::pair<QString, QStringList>
-NoteData::plainTextAndListOfWords(ErrorString * pErrorMessage) const
+std::pair<QString, QStringList> NoteData::plainTextAndListOfWords(
+    ErrorString * pErrorMessage) const
 {
     std::pair<QString, QStringList> result;
-
     ErrorString error;
+
     bool res = ENMLConverter::noteContentToListOfWords(
         m_qecNote.content.ref(),
         result.second,
         error,
         &result.first);
+
     if (!res)
     {
         QNWARNING(error);
@@ -493,7 +475,7 @@ NoteData::plainTextAndListOfWords(ErrorString * pErrorMessage) const
             *pErrorMessage = error;
         }
 
-        return std::pair<QString, QStringList>();
+        return {};
     }
 
     return result;

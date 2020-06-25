@@ -66,11 +66,11 @@ SharedNote::~SharedNote()
 
 bool SharedNote::operator==(const SharedNote & other) const
 {
-    const qevercloud::SharedNote & enSharedNote = d->m_qecSharedNote;
-    const qevercloud::SharedNote & otherEnSharedNote = other.d->m_qecSharedNote;
+    const auto & enSharedNote = d->m_qecSharedNote;
+    const auto & otherEnSharedNote = other.d->m_qecSharedNote;
 
     return (enSharedNote == otherEnSharedNote) &&
-           (d->m_noteGuid == other.d->m_noteGuid);
+        (d->m_noteGuid == other.d->m_noteGuid);
 
     // NOTE: m_indexInNote does not take any part in comparison
     // as it is by nature a helper parameter intended to preserve sorting of
@@ -325,7 +325,8 @@ void SharedNote::setRecipientIdentityContactPhotoUrl(
         }
 
         if (!d->m_qecSharedNote.recipientIdentity->contact.isSet()) {
-            d->m_qecSharedNote.recipientIdentity->contact = qevercloud::Contact();
+            d->m_qecSharedNote.recipientIdentity->contact =
+                qevercloud::Contact();
         }
 
         d->m_qecSharedNote.recipientIdentity->contact->photoUrl =

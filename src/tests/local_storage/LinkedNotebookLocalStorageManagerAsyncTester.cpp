@@ -469,7 +469,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onListAllLinkedNotebooksCompl
         return;
     }
 
-    foreach(const LinkedNotebook & notebook, m_initialLinkedNotebooks)
+    for(const auto & notebook: qAsConst(m_initialLinkedNotebooks))
     {
         if (!linkedNotebooks.contains(notebook))
         {

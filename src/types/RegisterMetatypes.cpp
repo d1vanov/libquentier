@@ -22,10 +22,10 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Resource.h>
-#include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/RegisterMetatypes.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/SharedNotebook.h>
@@ -37,7 +37,6 @@
 #include <QList>
 #include <QMetaType>
 #include <QNetworkCookie>
-#include <QSqlError>
 #include <QSharedPointer>
 #include <QSqlError>
 #include <QVector>

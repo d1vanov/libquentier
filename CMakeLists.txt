@@ -345,10 +345,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/User.cpp
     src/types/RegisterMetatypes.cpp
     src/types/data/AccountData.cpp
-    src/types/data/FavoritableDataElementData.cpp
-    src/types/data/LocalStorageDataElementData.cpp
     src/types/data/LinkedNotebookData.cpp
-    src/types/data/NoteStoreDataElementData.cpp
     src/types/data/NoteData.cpp
     src/types/data/NotebookData.cpp
     src/types/data/ResourceData.cpp

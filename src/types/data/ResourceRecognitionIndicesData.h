@@ -37,20 +37,6 @@ public:
     bool isValid() const;
     bool setData(const QByteArray & rawRecognitionIndicesData);
 
-    bool        m_isNull = true;
-
-    QString     m_objectId;
-    QString     m_objectType;
-    QString     m_recoType;
-    QString     m_engineVersion;
-    QString     m_docType;
-    QString     m_lang;
-
-    int         m_objectHeight = -1;
-    int         m_objectWidth = -1;
-
-    QVector<ResourceRecognitionIndexItem>   m_items;
-
 private:
     void clear();
     void restoreFrom(const ResourceRecognitionIndicesData & data);
@@ -76,6 +62,21 @@ private:
     void parseBarcodeItemAttributesAndData(
         const QXmlStreamAttributes & attributes,
         const QString & data, ResourceRecognitionIndexItem & item) const;
+
+public:
+    bool        m_isNull = true;
+
+    QString     m_objectId;
+    QString     m_objectType;
+    QString     m_recoType;
+    QString     m_engineVersion;
+    QString     m_docType;
+    QString     m_lang;
+
+    int         m_objectHeight = -1;
+    int         m_objectWidth = -1;
+
+    QVector<ResourceRecognitionIndexItem>   m_items;
 };
 
 } // namespace quentier

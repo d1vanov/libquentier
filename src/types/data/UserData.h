@@ -30,19 +30,22 @@ namespace quentier {
 class Q_DECL_HIDDEN UserData: public QSharedData
 {
 public:
-    UserData();
-    UserData(const UserData & other);
-    UserData(UserData && other);
+    UserData() = default;
+    UserData(const UserData & other) = default;
+    UserData(UserData && other) = default;
+
     UserData(const qevercloud::User & user);
-    virtual ~UserData();
+    UserData(qevercloud::User && user);
 
-    qevercloud::User    m_qecUser;
-    bool                m_isLocal;
-    bool                m_isDirty;
-
-private:
     UserData & operator=(const UserData & other) = delete;
     UserData & operator=(UserData && other) = delete;
+
+    virtual ~UserData() = default;
+
+public:
+    qevercloud::User    m_qecUser;
+    bool                m_isLocal = true;
+    bool                m_isDirty = true;
 };
 
 } // namespace quentier

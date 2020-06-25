@@ -152,17 +152,21 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
 {
     const qevercloud::Resource & enResource = d->m_qecResource;
 
-    if (localUid().isEmpty() && !enResource.guid.isSet()) {
+    if (localUid().isEmpty() && !enResource.guid.isSet())
+    {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "Resource",
             "Both resource's local and remote guids are empty"));
+
         return false;
     }
 
-    if (enResource.guid.isSet() && !checkGuid(enResource.guid.ref())) {
+    if (enResource.guid.isSet() && !checkGuid(enResource.guid.ref()))
+    {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "Resource",
             "Resource's guid is invalid"));
+
         errorDescription.details() = enResource.guid.ref();
         return false;
     }
@@ -192,7 +196,9 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
 
     if (enResource.data.isSet() && enResource.data->bodyHash.isSet())
     {
-        qint32 hashSize = static_cast<qint32>(enResource.data->bodyHash->size());
+        qint32 hashSize = static_cast<qint32>(
+            enResource.data->bodyHash->size());
+
         if (hashSize != qevercloud::EDAM_HASH_LEN)
         {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -263,8 +269,9 @@ bool Resource::checkParameters(ErrorString & errorDescription) const
     {
         if (enResource.attributes->sourceURL.isSet())
         {
-            int32_t sourceURLSize =
-                static_cast<int32_t>(enResource.attributes->sourceURL->size());
+            int32_t sourceURLSize = static_cast<int32_t>(
+                enResource.attributes->sourceURL->size());
+
             if ( (sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
                  (sourceURLSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX) )
             {
@@ -339,7 +346,7 @@ QString Resource::displayName() const
 
 void Resource::setDisplayName(const QString & displayName)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
     if (!enResource.attributes.isSet()) {
         enResource.attributes = qevercloud::ResourceAttributes();
     }
@@ -349,7 +356,8 @@ void Resource::setDisplayName(const QString & displayName)
 
 QString Resource::preferredFileSuffix() const
 {
-    const qevercloud::Resource & enResource = d->m_qecResource;
+    const auto & enResource = d->m_qecResource;
+
     if (enResource.attributes.isSet() &&
         enResource.attributes->fileName.isSet())
     {
@@ -441,7 +449,7 @@ const QByteArray & Resource::dataHash() const
 
 void Resource::setDataHash(const QByteArray & hash)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.data.isSet())
     {
@@ -482,7 +490,7 @@ qint32 Resource::dataSize() const
 
 void Resource::setDataSize(const qint32 size)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.data.isSet())
     {
@@ -526,9 +534,9 @@ const QByteArray & Resource::dataBody() const
 void Resource::setDataBody(const QByteArray & body)
 {
     QNTRACE("Resource::setDataBody: body to set is "
-            << (body.isEmpty() ? "empty" : "not empty"));
+        << (body.isEmpty() ? "empty" : "not empty"));
 
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.data.isSet())
     {
@@ -631,7 +639,7 @@ const QByteArray & Resource::recognitionDataHash() const
 
 void Resource::setRecognitionDataHash(const QByteArray & hash)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.recognition.isSet())
     {
@@ -674,7 +682,7 @@ qint32 Resource::recognitionDataSize() const
 
 void Resource::setRecognitionDataSize(const qint32 size)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.recognition.isSet())
     {
@@ -717,7 +725,7 @@ const QByteArray & Resource::recognitionDataBody() const
 
 void Resource::setRecognitionDataBody(const QByteArray & body)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.recognition.isSet())
     {
@@ -765,7 +773,7 @@ const QByteArray & Resource::alternateDataHash() const
 
 void Resource::setAlternateDataHash(const QByteArray & hash)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.alternateData.isSet())
     {
@@ -808,7 +816,7 @@ qint32 Resource::alternateDataSize() const
 
 void Resource::setAlternateDataSize(const qint32 size)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.alternateData.isSet())
     {
@@ -851,7 +859,7 @@ const QByteArray & Resource::alternateDataBody() const
 
 void Resource::setAlternateDataBody(const QByteArray & body)
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
 
     if (!enResource.alternateData.isSet())
     {
@@ -890,7 +898,7 @@ const qevercloud::ResourceAttributes & Resource::resourceAttributes() const
 
 qevercloud::ResourceAttributes & Resource::resourceAttributes()
 {
-    qevercloud::Resource & enResource = d->m_qecResource;
+    auto & enResource = d->m_qecResource;
     if (!enResource.attributes.isSet()) {
         enResource.attributes = qevercloud::ResourceAttributes();
     }
@@ -912,7 +920,7 @@ void Resource::setResourceAttributes(
 
 QTextStream & Resource::print(QTextStream & strm) const
 {
-    const qevercloud::Resource & enResource = d->m_qecResource;
+    const auto & enResource = d->m_qecResource;
 
     strm << "Resource: { \n";
 

@@ -92,6 +92,7 @@ bool Note::operator==(const Note & other) const
         (isDirty() == other.isDirty()) &&
         (isLocal() == other.isLocal()) &&
         (isFavorited() == other.isFavorited());
+
     // NOTE: thumbnail doesn't take part in comparison because it's merely
     // a helper for note displaying widget, nothing more
 }
@@ -425,12 +426,12 @@ void Note::setTagGuids(const QStringList & guids)
         d->m_qecNote.tagGuids = QList<QString>();
     }
 
-    QList<QString> & tagGuids = d->m_qecNote.tagGuids;
+    auto & tagGuids = d->m_qecNote.tagGuids.ref();
     tagGuids.clear();
 
     tagGuids.reserve(numTagGuids);
-    for(auto it = guids.begin(), end = guids.end(); it != end; ++it) {
-        tagGuids << *it;
+    for(const auto & guid: qAsConst(guids)) {
+        tagGuids << guid;
     }
 
     QNTRACE("Added " << numTagGuids << " tag guids to note");
@@ -552,9 +553,7 @@ QList<Resource> Note::resources() const
 
     QString noteLocalUid = localUid();
 
-    const QList<qevercloud::Resource> & noteResources =
-        d->m_qecNote.resources.ref();
-
+    const auto & noteResources = d->m_qecNote.resources.ref();
     int numResources = noteResources.size();
     int numResourceAdditionalInfoEntries = d->m_resourcesAdditionalInfo.size();
 
@@ -668,7 +667,7 @@ bool Note::removeResource(const Resource & resource)
         return false;
     }
 
-    QList<qevercloud::Resource> & resources = d->m_qecNote.resources.ref();
+    auto & resources = d->m_qecNote.resources.ref();
     const int numResources = resources.size();
 
     int targetResourceIndex = -1;
@@ -738,15 +737,8 @@ QList<SharedNote> Note::sharedNotes() const
 
     int noteIndex = 0;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-    for(auto it = d->m_qecNote.sharedNotes->constBegin(),
-        end = d->m_qecNote.sharedNotes->constEnd(); it != end; ++it)
+    for(const auto & qecSharedNote: ::qAsConst(d->m_qecNote.sharedNotes.ref()))
     {
-        const auto & qecSharedNote = *it;
-#else
-    for(const auto & qecSharedNote: qAsConst(d->m_qecNote.sharedNotes.ref()))
-    {
-#endif
         SharedNote sharedNote(qecSharedNote);
         if (hasGuid()) {
             sharedNote.setNoteGuid(guid());
@@ -896,7 +888,7 @@ bool Note::isInkNote() const
         return false;
     }
 
-    const QList<qevercloud::Resource> & resources = d->m_qecNote.resources.ref();
+    const auto & resources = d->m_qecNote.resources.ref();
 
     // NOTE: it is not known for sure how many resources there might be within
     // an ink note. Probably just one in most cases.
@@ -907,7 +899,7 @@ bool Note::isInkNote() const
 
     for(int i = 0; i < numResources; ++i)
     {
-        const qevercloud::Resource & resource = resources[i];
+        const auto & resource = resources[i];
         if (!resource.mime.isSet()) {
             return false;
         }
@@ -931,8 +923,8 @@ QStringList Note::listOfWords(ErrorString * pErrorMessage) const
     return d->listOfWords(pErrorMessage);
 }
 
-std::pair<QString, QStringList>
-Note::plainTextAndListOfWords(ErrorString * pErrorMessage) const
+std::pair<QString, QStringList> Note::plainTextAndListOfWords(
+    ErrorString * pErrorMessage) const
 {
     return d->plainTextAndListOfWords(pErrorMessage);
 }
@@ -961,10 +953,6 @@ QTextStream & Note::print(QTextStream & strm) const
 {
     strm << "Note: { \n";
 
-#define INSERT_DELIMITER                                                       \
-    strm << "; \n"                                                             \
-// INSERT_DELIMITER
-
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
         strm << "localUid: " << localUid_;
@@ -972,7 +960,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "localUid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.guid.isSet()) {
         strm << "guid: " << d->m_qecNote.guid;
@@ -980,7 +968,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "guid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.updateSequenceNum.isSet()) {
         strm << "updateSequenceNumber: "
@@ -989,7 +977,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "updateSequenceNumber is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.title.isSet()) {
         strm << "title: " << d->m_qecNote.title;
@@ -997,7 +985,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "title is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.content.isSet()) {
         strm << "content: " << d->m_qecNote.content;
@@ -1005,7 +993,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "content is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.contentHash.isSet()) {
         strm << "contentHash: "
@@ -1014,7 +1002,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "contentHash is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.contentLength.isSet()) {
         strm << "contentLength: "
@@ -1023,7 +1011,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "contentLength is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.created.isSet()) {
         strm << "creationTimestamp: " << d->m_qecNote.created
@@ -1033,7 +1021,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "creationTimestamp is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.updated.isSet()) {
         strm << "modificationTimestamp: " << d->m_qecNote.updated
@@ -1043,7 +1031,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "modificationTimestamp is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.deleted.isSet()) {
         strm << "deletionTimestamp: " << d->m_qecNote.deleted
@@ -1053,7 +1041,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "deletionTimestamp is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.active.isSet()) {
         strm << "active: " << (d->m_qecNote.active ? "true" : "false");
@@ -1061,7 +1049,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "active is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.notebookGuid.isSet()) {
         strm << "notebookGuid: " << d->m_qecNote.notebookGuid;
@@ -1069,7 +1057,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "notebookGuid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_notebookLocalUid.isSet()) {
         strm << "notebookLocalUid: " << d->m_notebookLocalUid;
@@ -1077,7 +1065,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "notebookLocalUid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.tagGuids.isSet())
     {
@@ -1091,7 +1079,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "tagGuids are not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (!d->m_tagLocalUids.isEmpty())
     {
@@ -1105,11 +1093,11 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "tagLocalUids are not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "thumbnail is "
          << (d->m_thumbnailData.isEmpty() ? "null" : "non-null");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.resources.isSet())
     {
@@ -1121,15 +1109,8 @@ QTextStream & Note::print(QTextStream & strm) const
         int resourceIndex = 0;
         int resourcesAdditionalInfoSize = d->m_resourcesAdditionalInfo.size();
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-        for(auto it = resources.constBegin(), end = resources.constEnd();
-            it != end; ++it)
+        for(const auto & resource: ::qAsConst(resources))
         {
-            const auto & resource = *it;
-#else
-        for(const auto & resource: qAsConst(resources))
-        {
-#endif
             strm << resource << "; \n";
 
             if (resourceIndex < resourcesAdditionalInfoSize) {
@@ -1148,7 +1129,7 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "resources are not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.attributes.isSet()) {
         strm << "attributes: " << d->m_qecNote.attributes;
@@ -1156,20 +1137,15 @@ QTextStream & Note::print(QTextStream & strm) const
     else {
         strm << "attributes are not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecNote.sharedNotes.isSet())
     {
         strm << "shared notes:\n";
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-        for(auto it = d->m_qecNote.sharedNotes->constBegin(),
-            end = d->m_qecNote.sharedNotes->constEnd(); it != end; ++it)
+        for(const auto & sharedNote:
+            ::qAsConst(d->m_qecNote.sharedNotes.ref()))
         {
-            const auto & sharedNote = *it;
-#else
-        for(const auto & sharedNote: qAsConst(d->m_qecNote.sharedNotes.ref())) {
-#endif
             strm << sharedNote << "\n";
         }
     }
@@ -1177,18 +1153,16 @@ QTextStream & Note::print(QTextStream & strm) const
     {
         strm << "shared notes are not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isDirty: " << (isDirty() ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isLocal: " << (d->m_isLocal ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isFavorited = " << (isFavorited() ? "true" : "false");
-    INSERT_DELIMITER;
-
-#undef INSERT_DELIMITER
+    strm << "; \n";
 
     strm << "}; \n";
     return strm;

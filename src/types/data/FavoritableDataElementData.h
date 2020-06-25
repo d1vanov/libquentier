@@ -28,20 +28,24 @@ namespace quentier {
 class Q_DECL_HIDDEN FavoritableDataElementData: public NoteStoreDataElementData
 {
 public:
-    FavoritableDataElementData();
-    virtual ~FavoritableDataElementData();
+    FavoritableDataElementData() = default;
 
-    FavoritableDataElementData(const FavoritableDataElementData & other);
-    FavoritableDataElementData(FavoritableDataElementData && other);
+    FavoritableDataElementData(
+        const FavoritableDataElementData & other) = default;
 
-    bool    m_isFavorited;
+    FavoritableDataElementData(
+        FavoritableDataElementData && other) = default;
 
-private:
-    FavoritableDataElementData &
-    operator=(const FavoritableDataElementData & other) = delete;
+    FavoritableDataElementData & operator=(
+        const FavoritableDataElementData & other) = delete;
 
-    FavoritableDataElementData &
-    operator=(FavoritableDataElementData && other) = delete;
+    FavoritableDataElementData & operator=(
+        FavoritableDataElementData && other) = delete;
+
+    virtual ~FavoritableDataElementData() override = default;
+
+public:
+    bool    m_isFavorited = false;
 };
 
 } // namespace quentier

@@ -30,24 +30,26 @@ namespace quentier {
 class Q_DECL_HIDDEN SavedSearchData: public FavoritableDataElementData
 {
 public:
-    SavedSearchData();
-    SavedSearchData(const SavedSearchData & other);
-    SavedSearchData(SavedSearchData && other);
+    SavedSearchData() = default;
+    SavedSearchData(const SavedSearchData & other) = default;
+    SavedSearchData(SavedSearchData && other) = default;
+
     SavedSearchData(const qevercloud::SavedSearch & other);
     SavedSearchData(qevercloud::SavedSearch && other);
-    virtual ~SavedSearchData() override;
 
-    void clear();
-    bool checkParameters(ErrorString & errorDescription) const;
+    SavedSearchData & operator=(const SavedSearchData & other) = delete;
+    SavedSearchData & operator=(SavedSearchData && other) = delete;
 
     bool operator==(const SavedSearchData & other) const;
     bool operator!=(const SavedSearchData & other) const;
 
-    qevercloud::SavedSearch     m_qecSearch;
+    virtual ~SavedSearchData() override = default;
 
-private:
-    SavedSearchData & operator=(const SavedSearchData & other) = delete;
-    SavedSearchData & operator=(SavedSearchData && other) = delete;
+    void clear();
+    bool checkParameters(ErrorString & errorDescription) const;
+
+public:
+    qevercloud::SavedSearch     m_qecSearch;
 };
 
 } // namespace quentier

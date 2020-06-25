@@ -23,22 +23,6 @@
 
 namespace quentier {
 
-SavedSearchData::SavedSearchData() :
-    FavoritableDataElementData(),
-    m_qecSearch()
-{
-}
-
-SavedSearchData::SavedSearchData(const SavedSearchData & other) :
-    FavoritableDataElementData(other),
-    m_qecSearch(other.m_qecSearch)
-{}
-
-SavedSearchData::SavedSearchData(SavedSearchData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecSearch(std::move(other.m_qecSearch))
-{}
-
 SavedSearchData::SavedSearchData(const qevercloud::SavedSearch & other) :
     FavoritableDataElementData(),
     m_qecSearch(other)
@@ -47,9 +31,6 @@ SavedSearchData::SavedSearchData(const qevercloud::SavedSearch & other) :
 SavedSearchData::SavedSearchData(qevercloud::SavedSearch && other) :
     FavoritableDataElementData(),
     m_qecSearch(std::move(other))
-{}
-
-SavedSearchData::~SavedSearchData()
 {}
 
 void SavedSearchData::clear()

@@ -30,25 +30,28 @@ namespace quentier {
 class Q_DECL_HIDDEN TagData : public FavoritableDataElementData
 {
 public:
-    TagData();
-    TagData(const TagData & other);
-    TagData(TagData && other);
-    TagData(const qevercloud::Tag & other);
-    virtual ~TagData();
+    TagData() = default;
+    TagData(const TagData & other) = default;
+    TagData(TagData && other) = default;
 
-    void clear();
-    bool checkParameters(ErrorString & errorDescription) const;
+    TagData(const qevercloud::Tag & other);
+    TagData(qevercloud::Tag && other);
+
+    TagData & operator=(const TagData & other) = delete;
+    TagData & operator=(TagData && other) = delete;
 
     bool operator==(const TagData & other) const;
     bool operator!=(const TagData & other) const;
 
+    virtual ~TagData() override = default;
+
+    void clear();
+    bool checkParameters(ErrorString & errorDescription) const;
+
+public:
     qevercloud::Tag                 m_qecTag;
     qevercloud::Optional<QString>   m_linkedNotebookGuid;
     qevercloud::Optional<QString>   m_parentLocalUid;
-
-private:
-    TagData & operator=(const TagData & other) = delete;
-    TagData & operator=(TagData && other) = delete;
 };
 
 } // namespace quentier

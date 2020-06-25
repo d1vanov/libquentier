@@ -280,7 +280,7 @@ void SavedSearch::setQueryFormat(const qint8 queryFormat)
 bool SavedSearch::hasIncludeAccount() const
 {
     return d->m_qecSearch.scope.isSet() &&
-           d->m_qecSearch.scope->includeAccount.isSet();
+        d->m_qecSearch.scope->includeAccount.isSet();
 }
 
 bool SavedSearch::includeAccount() const
@@ -297,7 +297,7 @@ void SavedSearch::setIncludeAccount(const bool includeAccount)
 bool SavedSearch::hasIncludePersonalLinkedNotebooks() const
 {
     return d->m_qecSearch.scope.isSet() &&
-           d->m_qecSearch.scope->includePersonalLinkedNotebooks.isSet();
+        d->m_qecSearch.scope->includePersonalLinkedNotebooks.isSet();
 }
 
 bool SavedSearch::includePersonalLinkedNotebooks() const
@@ -316,7 +316,7 @@ void SavedSearch::setIncludePersonalLinkedNotebooks(
 bool SavedSearch::hasIncludeBusinessLinkedNotebooks() const
 {
     return d->m_qecSearch.scope.isSet() &&
-           d->m_qecSearch.scope->includeBusinessLinkedNotebooks.isSet();
+        d->m_qecSearch.scope->includeBusinessLinkedNotebooks.isSet();
 }
 
 bool SavedSearch::includeBusinessLinkedNotebooks() const

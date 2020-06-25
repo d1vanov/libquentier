@@ -33,10 +33,16 @@ class Q_DECL_HIDDEN NoteData: public FavoritableDataElementData
 {
 public:
     NoteData();
-    NoteData(const NoteData & other);
-    NoteData(NoteData && other);
+
+    NoteData(const NoteData & other) = default;
+    NoteData(NoteData && other) = default;
+
     NoteData(const qevercloud::Note & other);
-    virtual ~NoteData() override;
+
+    NoteData & operator=(const NoteData & other) = delete;
+    NoteData & operator=(NoteData && other) = delete;
+
+    virtual ~NoteData() override = default;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -44,37 +50,29 @@ public:
     QString plainText(ErrorString * pErrorMessage) const;
     QStringList listOfWords(ErrorString * pErrorMessage) const;
 
-    std::pair<QString, QStringList>
-    plainTextAndListOfWords(ErrorString * pErrorMessage) const;
+    std::pair<QString, QStringList> plainTextAndListOfWords(
+        ErrorString * pErrorMessage) const;
 
     bool containsToDoImpl(const bool checked) const;
     bool containsEncryption() const;
 
     void setContent(const QString & content);
 
-    qevercloud::Note m_qecNote;
-
+public:
     struct Q_DECL_HIDDEN ResourceAdditionalInfo
     {
-        ResourceAdditionalInfo() :
-            localUid(),
-            isDirty(false)
-        {}
-
         QString  localUid;
-        bool     isDirty;
+        bool     isDirty = false;
 
         bool operator==(const ResourceAdditionalInfo & other) const;
     };
 
+public:
+    qevercloud::Note                m_qecNote;
     QList<ResourceAdditionalInfo>   m_resourcesAdditionalInfo;
     qevercloud::Optional<QString>   m_notebookLocalUid;
     QStringList                     m_tagLocalUids;
     QByteArray                      m_thumbnailData;
-
-private:
-    NoteData & operator=(const NoteData & other) = delete;
-    NoteData & operator=(NoteData && other) = delete;
 };
 
 } // namespace quentier

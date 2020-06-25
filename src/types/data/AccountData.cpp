@@ -29,13 +29,6 @@ AccountData::AccountData()
     }
 }
 
-AccountData::~AccountData()
-{}
-
-AccountData::AccountData(const AccountData & /* other */) = default;
-
-AccountData::AccountData(AccountData && /* other */) = default;
-
 void AccountData::switchEvernoteAccountType(
     const Account::EvernoteAccountType evernoteAccountType)
 {

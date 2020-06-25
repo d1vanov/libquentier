@@ -40,8 +40,8 @@ ResourceRecognitionIndices::ResourceRecognitionIndices(
     d->setData(rawRecognitionIndicesData);
 }
 
-ResourceRecognitionIndices &
-ResourceRecognitionIndices::operator=(const ResourceRecognitionIndices & other)
+ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(
+    const ResourceRecognitionIndices & other)
 {
     if (this != &other) {
         d = other.d;

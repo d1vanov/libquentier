@@ -17,41 +17,20 @@
  */
 
 #include "LinkedNotebookData.h"
+
 #include <quentier/utility/Utility.h>
 
 namespace quentier {
 
-LinkedNotebookData::LinkedNotebookData() :
+LinkedNotebookData::LinkedNotebookData(
+        const qevercloud::LinkedNotebook & other) :
     QSharedData(),
-    m_qecLinkedNotebook(),
-    m_isDirty(true)
-{}
-
-LinkedNotebookData::LinkedNotebookData(const LinkedNotebookData & other) :
-    QSharedData(other),
-    m_qecLinkedNotebook(other.m_qecLinkedNotebook),
-    m_isDirty(other.m_isDirty)
-{}
-
-LinkedNotebookData::LinkedNotebookData(LinkedNotebookData && other) :
-    QSharedData(std::move(other)),
-    m_qecLinkedNotebook(std::move(other.m_qecLinkedNotebook)),
-    m_isDirty(std::move(other.m_isDirty))
-{}
-
-LinkedNotebookData::LinkedNotebookData(const qevercloud::LinkedNotebook & other) :
-    QSharedData(),
-    m_qecLinkedNotebook(other),
-    m_isDirty(true)
+    m_qecLinkedNotebook(other)
 {}
 
 LinkedNotebookData::LinkedNotebookData(qevercloud::LinkedNotebook && other) :
     QSharedData(),
-    m_qecLinkedNotebook(std::move(other)),
-    m_isDirty(true)
-{}
-
-LinkedNotebookData::~LinkedNotebookData()
+    m_qecLinkedNotebook(std::move(other))
 {}
 
 void LinkedNotebookData::clear()

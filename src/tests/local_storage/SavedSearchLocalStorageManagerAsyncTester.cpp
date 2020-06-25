@@ -438,7 +438,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
         return;
     }
 
-    foreach(const SavedSearch & search, m_initialSavedSearches)
+    for(const auto & search: qAsConst(m_initialSavedSearches))
     {
         if (!searches.contains(search))
         {

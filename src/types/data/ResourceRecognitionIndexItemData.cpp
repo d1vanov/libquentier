@@ -17,6 +17,7 @@
  */
 
 #include "ResourceRecognitionIndexItemData.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 namespace quentier {
