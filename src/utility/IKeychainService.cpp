@@ -18,12 +18,16 @@
 
 #include <quentier_private/utility/IKeychainService.h>
 
+#include <quentier/utility/Printable.h>
+
+#include <QDebug>
+
 namespace quentier {
 
 QTextStream & operator<<(
-    QTextStream & strm, const IKeychainService::ErrorCode::type errorCode)
+    QTextStream & strm, const IKeychainService::ErrorCode errorCode)
 {
-    typedef IKeychainService::ErrorCode ErrorCode;
+    using ErrorCode = IKeychainService::ErrorCode;
 
     switch(errorCode)
     {
@@ -57,6 +61,12 @@ QTextStream & operator<<(
     }
 
     return strm;
+}
+
+QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
+{
+    dbg << ToString(errorCode);
+    return dbg;
 }
 
 } // namespace quentier

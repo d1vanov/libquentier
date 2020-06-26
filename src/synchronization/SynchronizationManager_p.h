@@ -154,11 +154,6 @@ Q_SIGNALS:
         QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
         QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
-private:
-    // NOTE: this is required for Qt4 connection syntax, it won't properly
-    // understand IKeychainService::ErrorCode::type
-    using ErrorCode = IKeychainService::ErrorCode;
-
 private Q_SLOTS:
     void onOAuthResult(
         bool success, qevercloud::UserID userId,
@@ -167,14 +162,16 @@ private Q_SLOTS:
         QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
     void onWritePasswordJobFinished(
-        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
+        QUuid jobId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription);
 
     void onReadPasswordJobFinished(
-        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription,
-        QString password);
+        QUuid jobId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription, QString password);
 
     void onDeletePasswordJobFinished(
-        QUuid jobId, ErrorCode::type errorCode, ErrorString errorDescription);
+        QUuid jobId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription);
 
     void onRequestAuthenticationToken();
     void onRequestAuthenticationTokensForLinkedNotebooks(
@@ -252,28 +249,28 @@ private:
     void authenticateToLinkedNotebooks();
 
     void onReadAuthTokenFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & password);
 
     void onReadShardIdFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & password);
 
     void onWriteAuthTokenFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription);
 
     void onWriteShardIdFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription);
 
     void onDeleteAuthTokenFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const qevercloud::UserID userId,
         const ErrorString & errorDescription);
 
     void onDeleteShardIdFinished(
-        const IKeychainService::ErrorCode::type errorCode,
+        const IKeychainService::ErrorCode errorCode,
         const qevercloud::UserID userId,
         const ErrorString & errorDescription);
 

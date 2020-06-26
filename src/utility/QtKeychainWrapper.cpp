@@ -229,7 +229,7 @@ void QtKeychainWrapper::onDeletePasswordJobFinished(QKeychain::Job * pJob)
     Q_EMIT deletePasswordJobFinished(jobId, errorCode, errorDescription);
 }
 
-IKeychainService::ErrorCode::type QtKeychainWrapper::translateErrorCode(
+IKeychainService::ErrorCode QtKeychainWrapper::translateErrorCode(
     const QKeychain::Error errorCode) const
 {
     using ErrorCode = IKeychainService::ErrorCode;

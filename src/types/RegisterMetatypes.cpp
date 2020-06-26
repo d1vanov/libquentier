@@ -126,7 +126,7 @@ void registerMetatypes()
         "QHash<QString,std::pair<QString,QString> >");
 
     using ErrorCode = IKeychainService::ErrorCode;
-    qRegisterMetaType<ErrorCode::type>("ErrorCode::type");
+    qRegisterMetaType<ErrorCode>("ErrorCode");
 
     qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
 }

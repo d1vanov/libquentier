@@ -443,7 +443,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
 }
 
 void SynchronizationManagerPrivate::onWritePasswordJobFinished(
-    QUuid jobId, IKeychainService::ErrorCode::type errorCode,
+    QUuid jobId, IKeychainService::ErrorCode errorCode,
     ErrorString errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::"
@@ -595,7 +595,7 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
 }
 
 void SynchronizationManagerPrivate::onReadPasswordJobFinished(
-    QUuid jobId, IKeychainService::ErrorCode::type errorCode,
+    QUuid jobId, IKeychainService::ErrorCode errorCode,
     ErrorString errorDescription, QString password)
 {
     QNDEBUG("SynchronizationManagerPrivate::onReadPasswordJobFinished: "
@@ -717,7 +717,7 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
 }
 
 void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
-    QUuid jobId, IKeychainService::ErrorCode::type errorCode,
+    QUuid jobId, IKeychainService::ErrorCode errorCode,
     ErrorString errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onDeletePasswordJobFinished: "
@@ -2306,7 +2306,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 }
 
 void SynchronizationManagerPrivate::onReadAuthTokenFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const ErrorString & errorDescription, const QString & password)
 {
     QNDEBUG("SynchronizationManagerPrivate::onReadAuthTokenFinished: "
@@ -2340,7 +2340,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
 }
 
 void SynchronizationManagerPrivate::onReadShardIdFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const ErrorString & errorDescription, const QString & password)
 {
     QNDEBUG("SynchronizationManagerPrivate::onReadShardIdFinished: "
@@ -2374,7 +2374,7 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(
 }
 
 void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const ErrorString & errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onWriteAuthTokenFinished: "
@@ -2404,7 +2404,7 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
 }
 
 void SynchronizationManagerPrivate::onWriteShardIdFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const ErrorString & errorDescription)
 {
     QNDEBUG("SynchronizationManagerPrivate::onWriteShardIdFinished: "
@@ -2434,7 +2434,7 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
 }
 
 void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const qevercloud::UserID userId,
     const ErrorString & errorDescription)
 {
@@ -2474,7 +2474,7 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
 }
 
 void SynchronizationManagerPrivate::onDeleteShardIdFinished(
-    const IKeychainService::ErrorCode::type errorCode,
+    const IKeychainService::ErrorCode errorCode,
     const qevercloud::UserID userId,
     const ErrorString & errorDescription)
 {

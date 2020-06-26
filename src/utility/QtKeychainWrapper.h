@@ -52,15 +52,15 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void writePasswordJobFinished(
-        QUuid requestId, IKeychainService::ErrorCode::type errorCode,
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription);
 
     void readPasswordJobFinished(
-        QUuid requestId, IKeychainService::ErrorCode::type errorCode,
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription, QString password);
 
     void deletePasswordJobFinished(
-        QUuid requestId, IKeychainService::ErrorCode::type errorCode,
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription);
 
 private Q_SLOTS:
@@ -71,7 +71,7 @@ private Q_SLOTS:
     void onDeletePasswordJobFinished(QKeychain::Job * pJob);
 
 private:
-    IKeychainService::ErrorCode::type translateErrorCode(
+    IKeychainService::ErrorCode translateErrorCode(
         const QKeychain::Error errorCode) const;
 
 private:

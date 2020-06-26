@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,17 +30,10 @@ namespace quentier {
 class QUENTIER_EXPORT SynchronizationManagerDependencyInjector
 {
 public:
-    SynchronizationManagerDependencyInjector() :
-        m_pNoteStore(nullptr),
-        m_pUserStore(nullptr),
-        m_pKeychainService(nullptr),
-        m_pSyncStatePersistenceManager(nullptr)
-    {}
-
-    INoteStore *        m_pNoteStore;
-    IUserStore *        m_pUserStore;
-    IKeychainService *  m_pKeychainService;
-    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager;
+    INoteStore *        m_pNoteStore = nullptr;
+    IUserStore *        m_pUserStore = nullptr;
+    IKeychainService *  m_pKeychainService = nullptr;
+    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager = nullptr;
 };
 
 } // namespace quentier
