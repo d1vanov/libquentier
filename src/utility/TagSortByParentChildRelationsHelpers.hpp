@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -132,8 +132,8 @@ template <class T>
 class Q_DECL_HIDDEN CompareItemByGuid
 {
 public:
-    CompareItemByGuid(const QString & guid) :
-        m_guid(guid)
+    CompareItemByGuid(QString guid) :
+        m_guid(std::move(guid))
     {}
 
     bool operator()(const T & tag) const
@@ -153,8 +153,8 @@ template <class T>
 class Q_DECL_HIDDEN CompareItemByLocalUid
 {
 public:
-    CompareItemByLocalUid(const QString & localUid) :
-        m_localUid(localUid)
+    CompareItemByLocalUid(QString localUid) :
+        m_localUid(std::move(localUid))
     {}
 
     bool operator()(const T & tag) const

@@ -79,14 +79,15 @@ private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)
 
 private:
+    using PathWithTimerId = boost::bimap<QString, int>;
+
+private:
     FileSystemWatcher & m_parent;
     QFileSystemWatcher  m_watcher;
     int                 m_removalTimeoutMSec;
 
     QSet<QString>       m_watchedFiles;
     QSet<QString>       m_watchedDirectories;
-
-    using PathWithTimerId = boost::bimap<QString, int>;
 
     PathWithTimerId     m_justRemovedFilePathsWithPostRemovalTimerIds;
     PathWithTimerId     m_justRemovedDirectoryPathsWithPostRemovalTimerIds;

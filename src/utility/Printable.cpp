@@ -29,19 +29,13 @@ const QString Printable::toString() const
     return str;
 }
 
-Printable::Printable()
-{}
+Printable::Printable() = default;
 
-Printable::Printable(const Printable &)
-{}
+Printable::Printable(const Printable &) = default;
 
-Printable & Printable::operator=(const Printable &)
-{
-    return *this;
-}
+Printable & Printable::operator=(const Printable &) = default;
 
-Printable::~Printable()
-{}
+Printable::~Printable() = default;
 
 QDebug & operator <<(QDebug & debug, const Printable & printable)
 {

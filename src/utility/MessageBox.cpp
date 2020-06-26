@@ -20,6 +20,8 @@
 
 #include <QApplication>
 
+#include <memory>
+
 namespace quentier {
 
 int messageBoxImplementation(
@@ -27,7 +29,7 @@ int messageBoxImplementation(
     const QString & briefText, const QString & detailedText,
     QMessageBox::StandardButtons buttons)
 {
-    QScopedPointer<QMessageBox> pMessageBox(new QMessageBox(parent));
+    auto pMessageBox = std::make_unique<QMessageBox>(parent);
     if (parent) {
         pMessageBox->setWindowModality(Qt::WindowModal);
     }

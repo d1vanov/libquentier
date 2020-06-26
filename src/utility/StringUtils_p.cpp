@@ -24,9 +24,7 @@
 
 namespace quentier {
 
-StringUtilsPrivate::StringUtilsPrivate() :
-    m_diacriticLetters(),
-    m_noDiacriticLetters()
+StringUtilsPrivate::StringUtilsPrivate()
 {
     initialize();
 }
@@ -57,7 +55,7 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
     for(int i = 0; i < str.length(); ++i)
     {
         QChar currentCharacter = str[i];
-        QChar::Category category = currentCharacter.category();
+        auto category = currentCharacter.category();
         if ( (category == QChar::Mark_NonSpacing) ||
              (category == QChar::Mark_SpacingCombining) ||
              (category == QChar::Mark_Enclosing) )
@@ -85,10 +83,12 @@ void StringUtilsPrivate::removeNewlines(QString & str) const
 
 void StringUtilsPrivate::initialize()
 {
-    m_diacriticLetters =
-        QString::fromUtf8("ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæ"
-                          "çèéêëìíîïðñòóôõöøùúûüýÿ");
+    m_diacriticLetters = QString::fromUtf8(
+        "ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæ"
+        "çèéêëìíîïðñòóôõöøùúûüýÿ");
+
     m_noDiacriticLetters.reserve(m_diacriticLetters.size());
+
     m_noDiacriticLetters
         << QStringLiteral("S") << QStringLiteral("OE") << QStringLiteral("Z")
         << QStringLiteral("s") << QStringLiteral("oe") << QStringLiteral("z")

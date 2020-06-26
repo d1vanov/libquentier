@@ -26,7 +26,7 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
         const TagDirectedGraph & graph) :
     m_graph(graph)
 {
-    QStringList allTagIds = m_graph.allTagIds();
+    auto allTagIds = m_graph.allTagIds();
     for(const auto & tagId: qAsConst(allTagIds))
     {
         if (!reached(tagId)) {
@@ -63,7 +63,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
     m_tagIdsInPreOrder.enqueue(sourceTagId);
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
-    QStringList childTagIds = m_graph.childTagIds(sourceTagId);
+    auto childTagIds = m_graph.childTagIds(sourceTagId);
     for(const auto & childTagId: qAsConst(childTagIds))
     {
         if (hasCycle()) {
@@ -92,6 +92,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
 
                 cycledId = pit.value();
             }
+
             m_cycle.push(sourceTagId);
             m_cycle.push(childTagId);
         }

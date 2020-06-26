@@ -52,7 +52,7 @@ QKeySequence ShortcutManagerPrivate::shortcut(
     QNDEBUG("ShortcutManagerPrivate::shortcut: key = " << key
         << ", context = " << context << ", account: " << account.name());
 
-    QKeySequence userKeySequence = userShortcut(key, account, context);
+    auto userKeySequence = userShortcut(key, account, context);
     if (!userKeySequence.isEmpty()) {
         return userKeySequence;
     }
@@ -69,10 +69,11 @@ QKeySequence ShortcutManagerPrivate::shortcut(
         << nonStandardKey << ", context = " << context
         << ", account: " << account.name());
 
-    QKeySequence userKeySequence = userShortcut(
+    auto userKeySequence = userShortcut(
         nonStandardKey,
         account,
         context);
+
     if (!userKeySequence.isEmpty()) {
         return userKeySequence;
     }
@@ -139,7 +140,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         << account.name());
 
     if (Q_UNLIKELY(nonStandardKey.isEmpty())) {
-        return QKeySequence();
+        return {};
     }
 
     ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
@@ -178,7 +179,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         << account.name());
 
     if (Q_UNLIKELY(keyString.isEmpty())) {
-        return QKeySequence();
+        return {};
     }
 
     ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
@@ -232,7 +233,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
     if (!value.isValid()) {
         QNTRACE("Couldn't find user shortcut for non-standard key "
             << nonStandardKey);
-        return QKeySequence();
+        return {};
     }
 
     QKeySequence keySequence = QKeySequence(
@@ -491,7 +492,7 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
             {
                 QNDEBUG("The key " << key << " doesn't correspond to any of "
                     << "QKeySequence::StandardKey items");
-                return QString();
+                return {};
             }
         }
     }
@@ -576,7 +577,7 @@ QString ShortcutManagerPrivate::keyToString(const int key) const
         {
             QNDEBUG("The key " << key << " doesn't correspond to any of "
                 << "ShortcutManager::QuentierShortcutKey items");
-            return QString();
+            return {};
         }
     }
 

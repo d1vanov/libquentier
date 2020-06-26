@@ -110,11 +110,11 @@ ApplicationSettings::~ApplicationSettings()
 
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
-    QStringList allStoredKeys = QSettings::allKeys();
+    auto allStoredKeys = QSettings::allKeys();
 
     for(const auto & key: qAsConst(allStoredKeys))
     {
-        QVariant value = QSettings::value(key);
+        auto value = QSettings::value(key);
         strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
             << value.toString() << QStringLiteral("\n;");
     }

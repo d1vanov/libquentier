@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,8 @@
 
 namespace quentier {
 
-QTextStream & operator<<(QTextStream & strm,
-                         const IKeychainService::ErrorCode::type errorCode)
+QTextStream & operator<<(
+    QTextStream & strm, const IKeychainService::ErrorCode::type errorCode)
 {
     typedef IKeychainService::ErrorCode ErrorCode;
 

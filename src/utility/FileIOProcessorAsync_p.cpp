@@ -29,9 +29,7 @@
 namespace quentier {
 
 FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
-    QObject(parent),
-    m_idleTimePeriodSeconds(30),
-    m_postOperationTimerId(0)
+    QObject(parent)
 {}
 
 void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)

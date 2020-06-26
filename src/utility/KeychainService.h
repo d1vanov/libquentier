@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,12 +25,13 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
-class KeychainService: public IKeychainService
+class Q_DECL_HIDDEN KeychainService: public IKeychainService
 {
     Q_OBJECT
 public:
     explicit KeychainService(QObject * parent = nullptr);
-    virtual ~KeychainService();
+
+    virtual ~KeychainService() override;
 
     virtual QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -49,7 +50,8 @@ Q_SIGNALS:
 
     void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
 
-    void notifyStartDeletePasswordJob(QUuid jobId, QString service, QString key);
+    void notifyStartDeletePasswordJob(
+        QUuid jobId, QString service, QString key);
 
 private:
     QtKeychainWrapper * m_pQtKeychainWrapper;

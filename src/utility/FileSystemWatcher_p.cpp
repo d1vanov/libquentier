@@ -29,12 +29,7 @@ FileSystemWatcherPrivate::FileSystemWatcherPrivate(
         FileSystemWatcher & parent, const int removalTimeoutMSec) :
     QObject(&parent),
     m_parent(parent),
-    m_watcher(),
-    m_removalTimeoutMSec(removalTimeoutMSec),
-    m_watchedFiles(),
-    m_watchedDirectories(),
-    m_justRemovedFilePathsWithPostRemovalTimerIds(),
-    m_justRemovedDirectoryPathsWithPostRemovalTimerIds()
+    m_removalTimeoutMSec(removalTimeoutMSec)
 {
     createConnections();
 }
@@ -45,10 +40,7 @@ FileSystemWatcherPrivate::FileSystemWatcherPrivate(
     QObject(&parent),
     m_parent(parent),
     m_watcher(paths),
-    m_removalTimeoutMSec(removalTimeoutMSec),
-    m_watchedFiles(),
-    m_justRemovedFilePathsWithPostRemovalTimerIds(),
-    m_justRemovedDirectoryPathsWithPostRemovalTimerIds()
+    m_removalTimeoutMSec(removalTimeoutMSec)
 {
     createConnections();
 }

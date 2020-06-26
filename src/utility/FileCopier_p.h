@@ -27,19 +27,36 @@
 
 namespace quentier {
 
-class FileCopierPrivate: public QObject
+class Q_DECL_HIDDEN FileCopierPrivate: public QObject
 {
     Q_OBJECT
 public:
     explicit FileCopierPrivate(QObject * parent = nullptr);
 
-    bool isIdle() const { return m_idle; }
-    bool isCancelled() const { return m_cancelled; }
+    bool isIdle() const
+    {
+        return m_idle;
+    }
 
-    const QString & sourceFilePath() const { return m_sourcePath; }
-    const QString & destinationFilePath() const { return m_destPath; }
+    bool isCancelled() const
+    {
+        return m_cancelled;
+    }
 
-    double currentProgress() const { return m_currentProgress; }
+    const QString & sourceFilePath() const
+    {
+        return m_sourcePath;
+    }
+
+    const QString & destinationFilePath() const
+    {
+        return m_destPath;
+    }
+
+    double currentProgress() const
+    {
+        return m_currentProgress;
+    }
 
     void copyFile(const QString & sourcePath, const QString & destPath);
     void cancel();

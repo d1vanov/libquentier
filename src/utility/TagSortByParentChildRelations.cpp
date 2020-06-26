@@ -34,14 +34,7 @@ bool sortTagsByParentChildRelationsImpl(
         QTextStream strm(&log);
         strm << "Tags list before performing the topological sort: ";
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-        for(const auto & tag: qAsConst(tagList)) {
-#else
-        for(auto it = tagList.constBegin(), end = tagList.constEnd();
-            it != end; ++it)
-        {
-            const auto & tag = *it;
-#endif
+        for(const auto & tag: ::qAsConst(tagList)) {
             strm << tag << ", ";
         }
         strm.flush();
@@ -60,15 +53,8 @@ bool sortTagsByParentChildRelationsImpl(
 
     bool allTagsHaveGuids = true;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-    for(const auto & tag: qAsConst(tagList))
+    for(const auto & tag: ::qAsConst(tagList))
     {
-#else
-    for(auto it = tagList.constBegin(), end = tagList.constEnd();
-        it != end; ++it)
-    {
-        const auto & tag = *it;
-#endif
         if (!tagHasGuid(tag)) {
             allTagsHaveGuids = false;
             QNDEBUG("Not all tags have guids, won't use guids to track "
@@ -81,15 +67,8 @@ bool sortTagsByParentChildRelationsImpl(
     {
         bool allTagsHaveLocalUids = true;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-        for(const auto & tag: qAsConst(tagList))
+        for(const auto & tag: ::qAsConst(tagList))
         {
-#else
-        for(auto it = tagList.constBegin(), end = tagList.constEnd();
-            it != end; ++it)
-        {
-            const auto & tag = *it;
-#endif
             if (!tagHasLocalUid(tag)) {
                 allTagsHaveLocalUids = false;
                 break;
@@ -103,21 +82,15 @@ bool sortTagsByParentChildRelationsImpl(
                 "Can't synchronize tags: all tags must have "
                 "either guids or local uids to be sorted by "
                 "parent-child relations"));
+
             return false;
         }
     }
 
     TagDirectedGraph graph;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-    for(const auto & tag: qAsConst(tagList))
+    for(const auto & tag: ::qAsConst(tagList))
     {
-#else
-    for(auto it = tagList.constBegin(), end = tagList.constEnd();
-        it != end; ++it)
-    {
-        const auto & tag = *it;
-#endif
         if (allTagsHaveGuids && tagHasGuid(tag))
         {
             QString guid = tagGuid(tag);
@@ -148,7 +121,7 @@ bool sortTagsByParentChildRelationsImpl(
             "parent-child relations between tags"));
 
         errorDescription.details() = QStringLiteral("cycled tag guids: ");
-        QStack<QString> stack = dfs.cycle();
+        auto stack = dfs.cycle();
         while(!stack.isEmpty()) {
             errorDescription.details() += stack.pop() + QStringLiteral(", ");
             stack.pop();
@@ -204,14 +177,7 @@ bool sortTagsByParentChildRelationsImpl(
         QTextStream strm(&log);
         strm << "Tags list after performing the topological sort: ";
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-        for(const auto & tag: qAsConst(tagList)) {
-#else
-        for(auto it = tagList.constBegin(), end = tagList.constEnd();
-            it != end; ++it)
-        {
-            const auto & tag = *it;
-#endif
+        for(const auto & tag: ::qAsConst(tagList)) {
             strm << tag << "\n";
         }
         strm.flush();
