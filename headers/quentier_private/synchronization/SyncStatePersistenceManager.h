@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,15 @@
 #ifndef LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_SYNC_STATE_PERSISTENCE_MANAGER_H
 #define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_SYNC_STATE_PERSISTENCE_MANAGER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/Linkage.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
-#include <QObject>
 #include <QHash>
+#include <QObject>
 #include <QString>
-
 
 namespace quentier {
 
@@ -39,23 +38,23 @@ public:
     explicit SyncStatePersistenceManager(QObject * parent = nullptr);
 
     void getPersistentSyncState(
-            const Account & account, qint32 & userOwnDataUpdateCount,
-            qevercloud::Timestamp & userOwnDataSyncTime,
-            QHash<QString,qint32> & linkedNotebookUpdateCountsByLinkedNotebookGuid,
-            QHash<QString,qevercloud::Timestamp> & linkedNotebookSyncTimesByLinkedNotebookGuid);
+        const Account & account, qint32 & userOwnDataUpdateCount,
+        qevercloud::Timestamp & userOwnDataSyncTime,
+        QHash<QString,qint32> & linkedNotebookUpdateCountsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> & linkedNotebookSyncTimesByLinkedNotebookGuid);
 
     void persistSyncState(
-            const Account & account, const qint32 userOwnDataUpdateCount,
-            const qevercloud::Timestamp userOwnDataSyncTime,
-            const QHash<QString,qint32> & linkedNotebookUpdateCountsByLinkedNotebookGuid,
-            const QHash<QString,qevercloud::Timestamp> & linkedNotebookSyncTimesByLinkedNotebookGuid);
+        const Account & account, const qint32 userOwnDataUpdateCount,
+        const qevercloud::Timestamp userOwnDataSyncTime,
+        const QHash<QString,qint32> & linkedNotebookUpdateCountsByLinkedNotebookGuid,
+        const QHash<QString,qevercloud::Timestamp> & linkedNotebookSyncTimesByLinkedNotebookGuid);
 
 Q_SIGNALS:
     void notifyPersistentSyncStateUpdated(
-            Account account, qint32 userOwnDataUpdateCount,
-            qevercloud::Timestamp userOwnDataSyncTime,
-            QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
-            QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid);
+        Account account, qint32 userOwnDataUpdateCount,
+        qevercloud::Timestamp userOwnDataSyncTime,
+        QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
+        QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid);
 
 private:
     Q_DISABLE_COPY(SyncStatePersistenceManager);
