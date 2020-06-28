@@ -27,16 +27,16 @@
 
 namespace quentier {
 
-UserStore::UserStore(const qevercloud::IUserStorePtr & pQecUserStore) :
-    IUserStore(pQecUserStore)
+UserStore::UserStore(QString evernoteHost)
 {
-    QUENTIER_CHECK_PTR(m_pQecUserStore)
+    m_pUserStore.reset(qevercloud::newUserStore(std::move(evernoteHost)));
 }
 
-IUserStore * UserStore::create(const QString & host) const
+void UserStore::setAuthData(
+    QString authenticationToken, QList<QNetworkCookie> cookies)
 {
-    return new UserStore(qevercloud::IUserStorePtr(
-        qevercloud::newUserStore(host + QStringLiteral("/edam/user"))));
+    m_authenticationToken = std::move(authenticationToken);
+    m_cookies = std::move(cookies);
 }
 
 bool UserStore::checkVersion(
@@ -53,7 +53,7 @@ bool UserStore::checkVersion(
             qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
             m_cookies);
 
-        return m_pQecUserStore->checkVersion(
+        return m_pUserStore->checkVersion(
             clientName,
             edamVersionMajor,
             edamVersionMinor,
@@ -77,7 +77,7 @@ qint32 UserStore::getUser(
             qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
             m_cookies);
 
-        user.qevercloudUser() = m_pQecUserStore->getUser(ctx);
+        user.qevercloudUser() = m_pUserStore->getUser(ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -113,7 +113,7 @@ qint32 UserStore::getAccountLimits(
             qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
             m_cookies);
 
-        limits = m_pQecUserStore->getAccountLimits(serviceLevel, ctx);
+        limits = m_pUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)

@@ -101,10 +101,8 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         (pInjector && pInjector->m_pUserStore)
         ? pInjector->m_pUserStore
         : new UserStore(
-            qevercloud::IUserStorePtr(
-            qevercloud::newUserStore(
-                QStringLiteral("https://") + m_host +
-                QStringLiteral("/edam/user"))))),
+            QStringLiteral("https://") + m_host +
+            QStringLiteral("/edam/user"))),
     m_pRemoteToLocalSyncManagerController(
         new RemoteToLocalSynchronizationManagerController(
             localStorageManagerAsync,
@@ -398,9 +396,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         m_host);
 
     m_pRemoteToLocalSyncManager->setAccount(newAccount);
-
-    m_pUserStore->setAuthenticationToken(authToken);
-    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
+    m_pUserStore->setAuthData(authToken, m_OAuthResult.m_cookies);
 
     ErrorString error;
     bool res = m_pRemoteToLocalSyncManager->syncUser(
@@ -1486,8 +1482,10 @@ void SynchronizationManagerPrivate::launchSync()
 
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
     m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
+
+    m_pUserStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
 
     if (m_lastUpdateCount <= 0) {
         QNDEBUG("The client has never synchronized with "

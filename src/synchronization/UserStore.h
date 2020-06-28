@@ -18,8 +18,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 
-#include <quentier_private/synchronization/IUserStore.h>
-
+#include <quentier/synchronization/IUserStore.h>
 #include <quentier/utility/Macros.h>
 
 namespace quentier {
@@ -40,12 +39,18 @@ namespace quentier {
  * in QEverCloud's UserStore so only the small subset of original UserStore's
  * API is wrapped at the moment.
  */
-class Q_DECL_HIDDEN UserStore: public IUserStore
+class Q_DECL_HIDDEN UserStore final: public IUserStore
 {
 public:
-    UserStore(const qevercloud::IUserStorePtr & pQecUserStore);
+    UserStore(QString evernoteHost);
 
-    virtual IUserStore * create(const QString & host) const override;
+    virtual ~UserStore() override = default;
+
+public:
+    // IUserStore interface
+
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) override;
 
     virtual bool checkVersion(
         const QString & clientName, qint16 edamVersionMajor,
@@ -72,8 +77,12 @@ private:
         qint32 & rateLimitSeconds) const;
 
 private:
-    UserStore(const UserStore & other) = delete;
-    UserStore & operator=(const UserStore & other) = delete;
+    Q_DISABLE_COPY(UserStore)
+
+private:
+    qevercloud::IUserStorePtr   m_pUserStore;
+    QString                     m_authenticationToken;
+    QList<QNetworkCookie>       m_cookies;
 };
 
 } // namespace quentier

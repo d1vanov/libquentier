@@ -29,6 +29,7 @@
 #include "SynchronizationShared.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/synchronization/IUserStore.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -41,7 +42,6 @@
 #include <quentier/utility/Macros.h>
 
 #include <quentier_private/synchronization/INoteStore.h>
-#include <quentier_private/synchronization/IUserStore.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 

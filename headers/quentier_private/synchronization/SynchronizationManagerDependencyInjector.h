@@ -20,8 +20,8 @@
 #define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_DEPENDENCY_INJECTOR_H
 
 #include "INoteStore.h"
-#include "IUserStore.h"
 
+#include <quentier/synchronization/IUserStore.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 
 #include <quentier_private/utility/IKeychainService.h>

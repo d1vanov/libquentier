@@ -16,46 +16,15 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier_private/synchronization/IUserStore.h>
+#include <quentier/synchronization/IUserStore.h>
 
-#include <quentier/types/User.h>
+#include "UserStore.h"
 
 namespace quentier {
 
-IUserStore::IUserStore(
-        const qevercloud::IUserStorePtr & pQecUserStore) :
-    m_pQecUserStore(pQecUserStore)
-{}
-
-qevercloud::IUserStorePtr IUserStore::getQecUserStore() const
+IUserStore * newUserStore(QString evernoteHost)
 {
-    return m_pQecUserStore;
-}
-
-void IUserStore::setQecUserStore(
-    const qevercloud::IUserStorePtr & pQecUserStore)
-{
-    m_pQecUserStore = pQecUserStore;
-}
-
-QString IUserStore::authenticationToken() const
-{
-    return m_authenticationToken;
-}
-
-void IUserStore::setAuthenticationToken(const QString & authToken)
-{
-    m_authenticationToken = authToken;
-}
-
-QList<QNetworkCookie> IUserStore::cookies() const
-{
-    return m_cookies;
-}
-
-void IUserStore::setCookies(QList<QNetworkCookie> cookies)
-{
-    m_cookies = std::move(cookies);
+    return new UserStore(std::move(evernoteHost));
 }
 
 } // namespace quentier
