@@ -68,7 +68,7 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
     {
         bool conversionResult = false;
 
-        int userDataLastSyncTime = lastSyncTimeVar.toLongLong(
+        qevercloud::Timestamp userDataLastSyncTime = lastSyncTimeVar.toLongLong(
             &conversionResult);
 
         if (conversionResult) {
@@ -195,9 +195,7 @@ void SyncStateStorage::setSyncState(
     QNTRACE("Wrote " << counter
         << " last sync params entries for linked notebooks");
 
-    Q_EMIT notifySyncStateUpdated(
-        account,
-        syncState);
+    Q_EMIT notifySyncStateUpdated(account, syncState);
 }
 
 } // namespace quentier

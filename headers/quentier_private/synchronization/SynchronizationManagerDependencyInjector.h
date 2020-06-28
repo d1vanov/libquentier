@@ -21,7 +21,8 @@
 
 #include "INoteStore.h"
 #include "IUserStore.h"
-#include "SyncStatePersistenceManager.h"
+
+#include <quentier/synchronization/ISyncStateStorage.h>
 
 #include <quentier_private/utility/IKeychainService.h>
 
@@ -33,7 +34,7 @@ public:
     INoteStore *        m_pNoteStore = nullptr;
     IUserStore *        m_pUserStore = nullptr;
     IKeychainService *  m_pKeychainService = nullptr;
-    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager = nullptr;
+    ISyncStateStorage * m_pSyncStateStorage = nullptr;
 };
 
 } // namespace quentier

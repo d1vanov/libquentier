@@ -18,9 +18,11 @@
 
 #include "SynchronizationManager_p.h"
 
-#include "SynchronizationShared.h"
 #include "NoteStore.h"
+#include "SynchronizationShared.h"
+#include "SyncStateStorage.h"
 #include "UserStore.h"
+
 #include "../utility/KeychainService.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -87,10 +89,10 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         QObject * parent) :
     QObject(parent),
     m_host(host),
-    m_pSyncStatePersistenceManager(
-        (pInjector && pInjector->m_pSyncStatePersistenceManager)
-         ? pInjector->m_pSyncStatePersistenceManager
-         : new SyncStatePersistenceManager(this)),
+    m_pSyncStateStorage(
+        (pInjector && pInjector->m_pSyncStateStorage)
+         ? pInjector->m_pSyncStateStorage
+         : new SyncStateStorage(this)),
     m_pNoteStore(
         (pInjector && pInjector->m_pNoteStore)
         ? pInjector->m_pNoteStore
@@ -137,8 +139,8 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
             m_pKeychainService->setParent(this);
         }
 
-        if (pInjector->m_pSyncStatePersistenceManager) {
-            m_pSyncStatePersistenceManager->setParent(this);
+        if (pInjector->m_pSyncStateStorage) {
+            m_pSyncStateStorage->setParent(this);
         }
     }
 
@@ -1237,12 +1239,17 @@ void SynchronizationManagerPrivate::readLastSyncParameters()
 {
     QNDEBUG("SynchronizationManagerPrivate::readLastSyncParameters");
 
-    m_pSyncStatePersistenceManager->getPersistentSyncState(
-        m_pRemoteToLocalSyncManager->account(),
-        m_lastUpdateCount,
-        m_lastSyncTime,
-        m_cachedLinkedNotebookLastUpdateCountByGuid,
-        m_cachedLinkedNotebookLastSyncTimeByGuid);
+    auto syncState = m_pSyncStateStorage->getSyncState(
+        m_pRemoteToLocalSyncManager->account());
+
+    m_lastUpdateCount = syncState->userDataUpdateCount();
+    m_lastSyncTime = syncState->userDataLastSyncTime();
+
+    m_cachedLinkedNotebookLastUpdateCountByGuid =
+        syncState->linkedNotebookUpdateCounts();
+
+    m_cachedLinkedNotebookLastSyncTimeByGuid =
+        syncState->linkedNotebookLastSyncTimes();
 
     m_previousUpdateCount = m_lastUpdateCount;
     m_onceReadLastSyncParams = true;
@@ -2631,12 +2638,20 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
 {
     QNDEBUG("SynchronizationManagerPrivate::updatePersistentSyncSettings");
 
-    m_pSyncStatePersistenceManager->persistSyncState(
+    auto syncState = std::make_shared<SyncStateStorage::SyncState>();
+
+    syncState->m_userDataUpdateCount = m_lastUpdateCount;
+    syncState->m_userDataLastSyncTime = m_lastSyncTime;
+
+    syncState->m_updateCountsByLinkedNotebookGuid =
+        m_cachedLinkedNotebookLastUpdateCountByGuid;
+
+    syncState->m_lastSyncTimesByLinkedNotebookGuid =
+        m_cachedLinkedNotebookLastSyncTimeByGuid;
+
+    m_pSyncStateStorage->setSyncState(
         m_pRemoteToLocalSyncManager->account(),
-        m_lastUpdateCount,
-        m_lastSyncTime,
-        m_cachedLinkedNotebookLastUpdateCountByGuid,
-        m_cachedLinkedNotebookLastSyncTimeByGuid);
+        syncState);
 }
 
 INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(

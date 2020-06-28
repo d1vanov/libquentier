@@ -80,6 +80,9 @@ Q_SIGNALS:
     void notifySyncStateUpdated(Account account, ISyncStatePtr syncState);
 };
 
+QUENTIER_EXPORT ISyncStateStorage * newSyncStateStorage(
+    QObject * parent = nullptr);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H

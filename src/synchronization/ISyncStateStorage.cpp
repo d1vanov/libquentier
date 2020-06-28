@@ -17,6 +17,9 @@
  */
 
 #include <quentier/synchronization/ISyncStateStorage.h>
+
+#include "SyncStateStorage.h"
+
 #include <quentier/utility/Utility.h>
 
 namespace quentier {
@@ -56,6 +59,11 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
 
     strm << "}\n";
     return strm;
+}
+
+ISyncStateStorage * newSyncStateStorage(QObject * parent)
+{
+    return new SyncStateStorage(parent);
 }
 
 } // namespace quentier

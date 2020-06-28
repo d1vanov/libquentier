@@ -39,9 +39,9 @@ QT_FORWARD_DECLARE_CLASS(QDebug)
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(INoteStore)
+QT_FORWARD_DECLARE_CLASS(ISyncStateStorage)
 QT_FORWARD_DECLARE_CLASS(IUserStore)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
-QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
 {
@@ -307,7 +307,7 @@ private:
 private:
     QString                                 m_host;
 
-    SyncStatePersistenceManager *           m_pSyncStatePersistenceManager;
+    ISyncStateStorage *                     m_pSyncStateStorage;
     qint32                                  m_previousUpdateCount = -1;
     qint32                                  m_lastUpdateCount = -1;
     qevercloud::Timestamp                   m_lastSyncTime = -1;

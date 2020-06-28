@@ -144,13 +144,13 @@ void SynchronizationTester::init()
 
     m_pFakeKeychainService = new FakeKeychainService(this);
 
-    m_pSyncStatePersistenceManager = new SyncStatePersistenceManager(this);
+    m_pSyncStateStorage = newSyncStateStorage(this);
 
     SynchronizationManagerDependencyInjector injector;
     injector.m_pNoteStore = m_pFakeNoteStore;
     injector.m_pUserStore = m_pFakeUserStore;
     injector.m_pKeychainService = m_pFakeKeychainService;
-    injector.m_pSyncStatePersistenceManager = m_pSyncStatePersistenceManager;
+    injector.m_pSyncStateStorage = m_pSyncStateStorage;
 
     m_pSynchronizationManager = new SynchronizationManager(
         QStringLiteral("www.evernote.com"),
@@ -183,9 +183,9 @@ void SynchronizationTester::cleanup()
     // it is owned by SynchronizationManager
     m_pFakeKeychainService = nullptr;
 
-    // NOTE: not deleting SyncStatePersistenceManager intentionally,
+    // NOTE: not deleting FakeSyncStateStorage intentionally,
     // it is owned by SynchronizationManager
-    m_pSyncStatePersistenceManager = nullptr;
+    m_pSyncStateStorage = nullptr;
 
     delete m_pLocalStorageManagerAsync;
     m_pLocalStorageManagerAsync = nullptr;
@@ -215,7 +215,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithUserOwnDataOnly()
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -252,7 +252,7 @@ void SynchronizationTester::testRemoteToLocalFullSyncWithLinkedNotebooks()
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -292,7 +292,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -333,7 +333,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromLinkedNoteb
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -375,7 +375,7 @@ void SynchronizationTester::testIncrementalSyncWithNewRemoteItemsFromUserOwnData
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -415,7 +415,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -462,7 +462,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromLinked
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -509,7 +509,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedRemoteItemsFromUserOw
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -555,7 +555,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -602,7 +602,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -651,7 +651,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -696,7 +696,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -737,7 +737,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromLinkedNotebo
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -779,7 +779,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalItemsFromUserOwnDataA
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -819,7 +819,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -860,7 +860,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromLinkedN
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -902,7 +902,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalItemsFromUserOwn
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -943,7 +943,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -985,7 +985,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromL
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1029,7 +1029,7 @@ void SynchronizationTester::testIncrementalSyncWithNewAndModifiedLocalItemsFromU
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1070,7 +1070,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1112,7 +1112,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1156,7 +1156,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndNewRemoteItemsFrom
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1197,7 +1197,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1239,7 +1239,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1283,7 +1283,7 @@ void SynchronizationTester::testIncrementalSyncWithNewLocalAndModifiedRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1324,7 +1324,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1366,7 +1366,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1410,7 +1410,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndNewRemoteItem
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1451,7 +1451,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1493,7 +1493,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1537,7 +1537,7 @@ void SynchronizationTester::testIncrementalSyncWithModifiedLocalAndModifiedRemot
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1577,7 +1577,7 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromUsersO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1618,7 +1618,7 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromLinked
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1660,7 +1660,7 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteItemsFromUsersO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1702,7 +1702,7 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1750,7 +1750,7 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1801,7 +1801,7 @@ void SynchronizationTester::testIncrementalSyncWithNewModifiedAndExpungedRemoteI
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1847,7 +1847,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1889,7 +1889,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1931,7 +1931,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -1973,7 +1973,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2019,7 +2019,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingSavedSearchesFromU
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2061,7 +2061,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2103,7 +2103,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2145,7 +2145,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2191,7 +2191,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromLinkedNote
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2234,7 +2234,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromLinke
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2277,7 +2277,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromLinkedNot
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2324,7 +2324,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromLinkedNote
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2367,7 +2367,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromLinke
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2410,7 +2410,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromLinkedNot
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2460,7 +2460,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2506,7 +2506,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2552,7 +2552,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2602,7 +2602,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingTagsFromUserOwnDat
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2648,7 +2648,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotebooksFromUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2694,7 +2694,7 @@ void SynchronizationTester::testIncrementalSyncWithConflictingNotesFromUserOwnDa
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2740,7 +2740,7 @@ void SynchronizationTester::testIncrementalSyncWithExpungedRemoteLinkedNotebookN
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2788,7 +2788,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2833,7 +2833,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2878,7 +2878,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetUserOwnS
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2923,7 +2923,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetLinkedNo
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -2969,7 +2969,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3026,7 +3026,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3090,7 +3090,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3155,7 +3155,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3218,7 +3218,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewNoteA
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3275,7 +3275,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3335,7 +3335,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetNewResou
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3395,7 +3395,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnGetModified
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3453,7 +3453,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateSaved
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3508,7 +3508,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateSaved
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3563,7 +3563,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3618,7 +3618,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3674,7 +3674,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateTagIn
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3730,7 +3730,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateTagIn
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3785,7 +3785,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteb
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3840,7 +3840,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteb
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3895,7 +3895,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -3950,7 +3950,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateUserO
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -4006,7 +4006,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnCreateNoteI
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -4062,7 +4062,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnUpdateNoteI
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
@@ -4118,7 +4118,7 @@ void SynchronizationTester::testIncrementalSyncWithRateLimitsBreachOnAuthenticat
     SynchronizationManagerSignalsCatcher catcher(
         *m_pLocalStorageManagerAsync,
         *m_pSynchronizationManager,
-        *m_pSyncStatePersistenceManager);
+        *m_pSyncStateStorage);
 
     runTest(catcher);
 
