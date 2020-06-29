@@ -96,7 +96,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     m_pNoteStore(
         (pInjector && pInjector->m_pNoteStore)
         ? pInjector->m_pNoteStore
-        : new NoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()))),
+        : new NoteStore()),
     m_pUserStore(
         (pInjector && pInjector->m_pUserStore)
         ? pInjector->m_pUserStore
@@ -1481,7 +1481,10 @@ void SynchronizationManagerPrivate::launchSync()
     Q_EMIT notifyStart();
 
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
-    m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
+
+    m_pNoteStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
 
     m_pUserStore->setAuthData(
         m_OAuthResult.m_authToken,
@@ -2119,8 +2122,11 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             return;
         }
 
-        pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
         pNoteStore->setNoteStoreUrl(noteStoreUrl);
+
+        pNoteStore->setAuthData(
+            m_OAuthResult.m_authToken,
+            m_OAuthResult.m_cookies);
 
         qint32 errorCode = pNoteStore->authenticateToSharedNotebook(
             sharedNotebookGlobalId,
@@ -2708,7 +2714,10 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     INoteStore * pNoteStore = m_pNoteStore->create();
     pNoteStore->setParent(this);
 
-    pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
+    pNoteStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
+
     m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
     return pNoteStore;
 }

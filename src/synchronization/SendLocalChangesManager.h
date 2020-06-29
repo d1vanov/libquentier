@@ -29,7 +29,7 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/utility/Macros.h>
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #include <QObject>
 

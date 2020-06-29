@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
@@ -222,43 +222,50 @@ public:
     // INoteStore interface
     virtual INoteStore * create() const override;
 
+    virtual QString noteStoreUrl() const override;
+
+    virtual void setNoteStoreUrl(QString noteStoreUrl) override;
+
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) override;
+
     virtual void stop() override;
 
     virtual qint32 createNotebook(
         Notebook & notebook,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNotebook(
         Notebook & notebook,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createNote(
         Note & note,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNote(
         Note & note,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createTag(
         Tag & tag,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateTag(
         Tag & tag,
         ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createSavedSearch(
         SavedSearch & savedSearch,
@@ -928,6 +935,8 @@ private:
 
         qint32                  m_maxUsnForUserOwnDataBeforeRateLimitBreach = 0;
         QHash<QString,qint32>   m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach;
+
+        QString                 m_noteStoreUrl;
 
         QString                 m_authenticationToken;
         QHash<QString,QString>  m_linkedNotebookAuthTokens;

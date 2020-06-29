@@ -23,7 +23,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Utility.h>
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #include <QTimerEvent>
 

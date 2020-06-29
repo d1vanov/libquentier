@@ -114,6 +114,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/SynchronizationManager.h
     headers/quentier/synchronization/IAuthenticationManager.h
     headers/quentier/synchronization/ISyncStateStorage.h
+    headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/IUserStore.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
@@ -173,7 +174,6 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
-    headers/quentier_private/synchronization/INoteStore.h
     headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
     headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h

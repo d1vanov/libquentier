@@ -21,7 +21,6 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 
 #define USER_STORE_REQUEST_TIMEOUT_MSEC (-1)
 

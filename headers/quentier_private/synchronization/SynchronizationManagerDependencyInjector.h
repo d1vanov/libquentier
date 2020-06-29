@@ -19,8 +19,7 @@
 #ifndef LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_DEPENDENCY_INJECTOR_H
 #define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_DEPENDENCY_INJECTOR_H
 
-#include "INoteStore.h"
-
+#include <quentier/synchronization/INoteStore.h>
 #include <quentier/synchronization/IUserStore.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 
