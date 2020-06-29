@@ -16,13 +16,17 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier_private/utility/IKeychainService.h>
-
+#include <quentier/utility/IKeychainService.h>
 #include <quentier/utility/Printable.h>
 
 #include <QDebug>
+#include <QTextStream>
 
 namespace quentier {
+
+IKeychainService::IKeychainService(QObject * parent) :
+    QObject(parent)
+{}
 
 QTextStream & operator<<(
     QTextStream & strm, const IKeychainService::ErrorCode errorCode)

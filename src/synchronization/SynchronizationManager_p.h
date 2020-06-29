@@ -24,8 +24,7 @@
 
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/types/Account.h>
-
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <boost/bimap.hpp>
 

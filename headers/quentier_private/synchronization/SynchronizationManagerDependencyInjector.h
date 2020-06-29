@@ -22,8 +22,7 @@
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/synchronization/IUserStore.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
-
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 namespace quentier {
 

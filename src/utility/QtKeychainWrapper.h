@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 #define LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <qt5keychain/keychain.h>
 

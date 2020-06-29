@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <QHash>
 

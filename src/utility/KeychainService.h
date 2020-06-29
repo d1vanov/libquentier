@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
 #define LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 namespace quentier {
 

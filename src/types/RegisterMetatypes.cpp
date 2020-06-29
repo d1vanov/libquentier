@@ -32,8 +32,7 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
-
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <QList>
 #include <QMetaType>
