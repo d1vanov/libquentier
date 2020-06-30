@@ -20,11 +20,14 @@
 #define LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/ForwardDeclarations.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QUuid>
+
+#include <memory>
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
 
@@ -184,6 +187,9 @@ Q_SIGNALS:
 private:
     Q_DISABLE_COPY(IKeychainService);
 };
+
+QUENTIER_EXPORT IKeychainServicePtr newKeychainService(
+    QObject * parent = nullptr);
 
 } // namespace quentier
 

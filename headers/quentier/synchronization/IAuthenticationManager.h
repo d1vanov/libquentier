@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
@@ -30,6 +31,8 @@
 #include <QNetworkCookie>
 #include <QObject>
 #include <QVector>
+
+#include <memory>
 
 namespace quentier {
 

@@ -17,6 +17,9 @@
  */
 
 #include <quentier/utility/IKeychainService.h>
+
+#include "KeychainService.h"
+
 #include <quentier/utility/Printable.h>
 
 #include <QDebug>
@@ -71,6 +74,11 @@ QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
 {
     dbg << ToString(errorCode);
     return dbg;
+}
+
+IKeychainServicePtr newKeychainService(QObject * parent)
+{
+    return std::make_shared<KeychainService>(parent);
 }
 
 } // namespace quentier

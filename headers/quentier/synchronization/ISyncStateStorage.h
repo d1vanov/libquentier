@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
@@ -80,7 +81,7 @@ Q_SIGNALS:
     void notifySyncStateUpdated(Account account, ISyncStatePtr syncState);
 };
 
-QUENTIER_EXPORT ISyncStateStorage * newSyncStateStorage(
+QUENTIER_EXPORT ISyncStateStoragePtr newSyncStateStorage(
     QObject * parent = nullptr);
 
 } // namespace quentier

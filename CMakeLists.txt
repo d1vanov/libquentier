@@ -111,6 +111,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
+    headers/quentier/synchronization/ForwardDeclarations.h
     headers/quentier/synchronization/IAuthenticationManager.h
     headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/ISyncStateStorage.h
@@ -137,7 +138,8 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/LoggerInitializationException.h
     headers/quentier/exception/NoteEditorInitializationException.h
     headers/quentier/exception/NoteEditorPluginInitializationException.h
-    headers/quentier/exception/NullPtrException.h)
+    headers/quentier/exception/NullPtrException.h
+    headers/quentier/exception/SynchronizationManagerInitializationException.h)
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
@@ -146,6 +148,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystemWatcher.h
+    headers/quentier/utility/ForwardDeclarations.h
     headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
@@ -175,7 +178,6 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
-    headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
@@ -411,6 +413,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/exception/SynchronizationManagerInitializationException.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp

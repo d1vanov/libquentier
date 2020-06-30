@@ -28,8 +28,6 @@
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/Utility.h>
 
-#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
-
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
@@ -117,7 +115,7 @@ void SynchronizationTester::init()
 
     m_pLocalStorageManagerAsync->init();
 
-    m_pFakeUserStore = new FakeUserStore;
+    m_pFakeUserStore = std::make_shared<FakeUserStore>();
     m_pFakeUserStore->setEdamVersionMajor(qevercloud::EDAM_VERSION_MAJOR);
     m_pFakeUserStore->setEdamVersionMinor(qevercloud::EDAM_VERSION_MINOR);
 
@@ -135,28 +133,28 @@ void SynchronizationTester::init()
 
     QString authToken = UidGenerator::Generate();
 
-    m_pFakeNoteStore = new FakeNoteStore(this);
+    m_pFakeNoteStore = std::make_shared<FakeNoteStore>(this);
     m_pFakeNoteStore->setAuthToken(authToken);
 
-    m_pFakeAuthenticationManager = new FakeAuthenticationManager(this);
+    m_pFakeAuthenticationManager = std::make_shared<FakeAuthenticationManager>(
+        this);
+
     m_pFakeAuthenticationManager->setUserId(m_testAccount.id());
     m_pFakeAuthenticationManager->setAuthToken(authToken);
 
-    m_pFakeKeychainService = new FakeKeychainService(this);
+    m_pFakeKeychainService = std::make_shared<FakeKeychainService>(this);
 
     m_pSyncStateStorage = newSyncStateStorage(this);
-
-    SynchronizationManagerDependencyInjector injector;
-    injector.m_pNoteStore = m_pFakeNoteStore;
-    injector.m_pUserStore = m_pFakeUserStore;
-    injector.m_pKeychainService = m_pFakeKeychainService;
-    injector.m_pSyncStateStorage = m_pSyncStateStorage;
 
     m_pSynchronizationManager = new SynchronizationManager(
         QStringLiteral("www.evernote.com"),
         *m_pLocalStorageManagerAsync,
-        *m_pFakeAuthenticationManager,
-        &injector);
+        this,
+        m_pFakeAuthenticationManager,
+        m_pFakeNoteStore,
+        m_pFakeUserStore,
+        m_pFakeKeychainService,
+        m_pSyncStateStorage);
 
     m_pSynchronizationManager->setAccount(m_testAccount);
 }
@@ -167,25 +165,11 @@ void SynchronizationTester::cleanup()
     m_pSynchronizationManager->deleteLater();
     m_pSynchronizationManager = nullptr;
 
-    m_pFakeNoteStore->disconnect();
-    m_pFakeNoteStore->deleteLater();
-    m_pFakeNoteStore = nullptr;
-
-    // NOTE: not deleting FakeUserStore intentionally,
-    // it is owned by SynchronizationManager
-    m_pFakeUserStore = nullptr;
-
-    m_pFakeAuthenticationManager->disconnect();
-    m_pFakeAuthenticationManager->deleteLater();
-    m_pFakeAuthenticationManager = nullptr;
-
-    // NOTE: not deleting FakeKeychainService intentionally,
-    // it is owned by SynchronizationManager
-    m_pFakeKeychainService = nullptr;
-
-    // NOTE: not deleting FakeSyncStateStorage intentionally,
-    // it is owned by SynchronizationManager
-    m_pSyncStateStorage = nullptr;
+    m_pFakeNoteStore.reset();
+    m_pFakeUserStore.reset();
+    m_pFakeAuthenticationManager.reset();
+    m_pFakeKeychainService.reset();
+    m_pSyncStateStorage.reset();
 
     delete m_pLocalStorageManagerAsync;
     m_pLocalStorageManagerAsync = nullptr;

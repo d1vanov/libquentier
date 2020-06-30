@@ -950,6 +950,8 @@ private:
     std::shared_ptr<Data>    m_data;
 };
 
+using FakeNoteStorePtr = std::shared_ptr<FakeNoteStore>;
+
 } // namespace quentier
 
 inline size_t hash_value(const QString & str) { return qHash(str); }

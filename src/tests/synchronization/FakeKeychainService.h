@@ -54,6 +54,8 @@ private:
     QHash<int, std::pair<QUuid, bool>>      m_deletePasswordRequestIdByTimerId;
 };
 
+using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H

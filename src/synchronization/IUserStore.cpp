@@ -22,9 +22,9 @@
 
 namespace quentier {
 
-IUserStore * newUserStore(QString evernoteHost)
+IUserStorePtr newUserStore(QString evernoteHost)
 {
-    return new UserStore(std::move(evernoteHost));
+    return std::make_shared<UserStore>(std::move(evernoteHost));
 }
 
 } // namespace quentier

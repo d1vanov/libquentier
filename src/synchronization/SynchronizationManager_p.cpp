@@ -25,15 +25,24 @@
 
 #include "../utility/KeychainService.h"
 
+#include <quentier/exception/SynchronizationManagerInitializationException.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+
+#include <quentier/synchronization/IAuthenticationManager.h>
+#include <quentier/synchronization/INoteStore.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
+#include <quentier/synchronization/IUserStore.h>
+
+#if LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER
+#include <quentier/synchronization/AuthenticationManager.h>
+#endif
+
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
-
-#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -82,27 +91,20 @@ private:
 };
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(
-        const QString & host,
+        QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
-        IAuthenticationManager & authenticationManager,
-        SynchronizationManagerDependencyInjector * pInjector,
-        QObject * parent) :
+        QObject * parent,
+        IAuthenticationManagerPtr pAuthenticationManager,
+        INoteStorePtr pNoteStore,
+        IUserStorePtr pUserStore,
+        IKeychainServicePtr pKeychainService,
+        ISyncStateStoragePtr pSyncStateStorage) :
     QObject(parent),
-    m_host(host),
-    m_pSyncStateStorage(
-        (pInjector && pInjector->m_pSyncStateStorage)
-         ? pInjector->m_pSyncStateStorage
-         : new SyncStateStorage(this)),
-    m_pNoteStore(
-        (pInjector && pInjector->m_pNoteStore)
-        ? pInjector->m_pNoteStore
-        : new NoteStore()),
-    m_pUserStore(
-        (pInjector && pInjector->m_pUserStore)
-        ? pInjector->m_pUserStore
-        : new UserStore(
-            QStringLiteral("https://") + m_host +
-            QStringLiteral("/edam/user"))),
+    m_host(std::move(host)),
+    m_pAuthenticationManager(std::move(pAuthenticationManager)),
+    m_pSyncStateStorage(std::move(pSyncStateStorage)),
+    m_pNoteStore(std::move(pNoteStore)),
+    m_pUserStore(std::move(pUserStore)),
     m_pRemoteToLocalSyncManagerController(
         new RemoteToLocalSynchronizationManagerController(
             localStorageManagerAsync,
@@ -120,29 +122,49 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         new SendLocalChangesManager(
             *m_pSendLocalChangesManagerController,
             this)),
-    m_pKeychainService(
-        (pInjector && pInjector->m_pKeychainService)
-         ? pInjector->m_pKeychainService
-         : (new KeychainService(this)))
+    m_pKeychainService(std::move(pKeychainService))
 {
     m_OAuthResult.m_userId = -1;
 
-    if (pInjector)
-    {
-        if (pInjector->m_pNoteStore) {
-            m_pNoteStore->setParent(this);
-        }
-
-        if (pInjector->m_pKeychainService) {
-            m_pKeychainService->setParent(this);
-        }
-
-        if (pInjector->m_pSyncStateStorage) {
-            m_pSyncStateStorage->setParent(this);
-        }
+    if (!m_pAuthenticationManager) {
+#if LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER
+        m_pAuthenticationManager = std::make_shared<AuthenticationManager>(this);
+#else
+        throw SynchronizationManagerInitializationException(
+            ErrorString(QT_TR_NOOP("No IAuthenticationManager instance was "
+                                   "provided to SynhronizationManager and "
+                                   "there is no default one")));
+#endif
     }
 
-    createConnections(authenticationManager);
+    if (!m_pNoteStore) {
+        m_pNoteStore = newNoteStore(this);
+    }
+    else {
+        m_pNoteStore->setParent(this);
+    }
+
+    if (!m_pUserStore) {
+        m_pUserStore = newUserStore(
+            QStringLiteral("https://") + m_host +
+            QStringLiteral("/edam/user"));
+    }
+
+    if (!m_pKeychainService) {
+        m_pKeychainService = newKeychainService(this);
+    }
+    else {
+        m_pKeychainService->setParent(this);
+    }
+
+    if (!m_pSyncStateStorage) {
+        m_pSyncStateStorage = newSyncStateStorage(this);
+    }
+    else {
+        m_pSyncStateStorage->setParent(this);
+    }
+
+    createConnections();
 }
 
 SynchronizationManagerPrivate::~SynchronizationManagerPrivate()
@@ -151,7 +173,7 @@ SynchronizationManagerPrivate::~SynchronizationManagerPrivate()
 bool SynchronizationManagerPrivate::active() const
 {
     return m_pRemoteToLocalSyncManager->active() ||
-           m_pSendLocalChangesManager->active();
+        m_pSendLocalChangesManager->active();
 }
 
 bool SynchronizationManagerPrivate::downloadNoteThumbnailsOption() const
@@ -978,19 +1000,18 @@ void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
     Q_EMIT rateLimitExceeded(secondsToWait);
 }
 
-void SynchronizationManagerPrivate::createConnections(
-    IAuthenticationManager & authenticationManager)
+void SynchronizationManagerPrivate::createConnections()
 {
     // Connections with authentication manager
     QObject::connect(
         this,
         &SynchronizationManagerPrivate::requestAuthentication,
-        &authenticationManager,
+        m_pAuthenticationManager.get(),
         &IAuthenticationManager::onAuthenticationRequest,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        &authenticationManager,
+        m_pAuthenticationManager.get(),
         &IAuthenticationManager::sendAuthenticationResult,
         this,
         &SynchronizationManagerPrivate::onOAuthResult,
@@ -998,21 +1019,21 @@ void SynchronizationManagerPrivate::createConnections(
 
     // Connections with keychain service
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::writePasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onWritePasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::readPasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onReadPasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::deletePasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onDeletePasswordJobFinished,

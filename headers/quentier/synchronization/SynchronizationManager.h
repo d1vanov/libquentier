@@ -19,10 +19,11 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
-#include <quentier/synchronization/IAuthenticationManager.h>
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
+#include <quentier/utility/ForwardDeclarations.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 
@@ -30,11 +31,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(IKeychainService)
-QT_FORWARD_DECLARE_CLASS(INoteStore)
-QT_FORWARD_DECLARE_CLASS(IUserStore)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
 
 /**
@@ -53,21 +50,42 @@ public:
      *                                  www.evernote.com but could also be
      *                                  sandbox.evernote.com or some other one
      * @param localStorageManagerAsync  Local storage manager
-     * @param authenticationManager     Authentication manager (particular
-     *                                  implementation of IAuthenticationManager
-     *                                  abstract class)
-     * @param pInjector                 Opaque pointer to the internal class
-     *                                  which is a part of libquentier's private
-     *                                  API and which is used for testing of
-     *                                  SynchronizationManager; for clients of
-     *                                  the library this pointer should stay
-     *                                  nullptr
+     * @param pAuthenticationManager    Pointer to an object implementing
+     *                                  IAuthenticationManager interface; if
+     *                                  nullptr, SynchronizationManager would
+     *                                  create and use its own instance
+     * @param pNoteStore                Pointer to an object implementing
+     *                                  INoteStore interface; if nullptr,
+     *                                  SynchronizatrionManager would create and
+     *                                  use its own instance; otherwise
+     *                                  SynchronizationManager would set itself
+     *                                  as the parent of the passed in object
+     * @param pUserStore                Pointer to an object implementing
+     *                                  IUserStore interface; if nullptr,
+     *                                  SynchronizationManager would create and
+     *                                  use its own instance
+     * @param pKeychainService          Pointer to an object implementing
+     *                                  IKeychainService interface; if nullptr,
+     *                                  SynchronizationManager would create and
+     *                                  use its own instance; otherwise
+     *                                  SynchronizationManager would set itself
+     *                                  as the parent of the passed in object
+     * @param pSyncStateStorage         Pointer to an object implementing
+     *                                  ISyncStateStorage interface; if nullptr,
+     *                                  SynchronizationManager would create and
+     *                                  use its own instance; otherwise
+     *                                  SynchronizationManager would set itself
+     *                                  as the parent of the passed in object
      */
     SynchronizationManager(
-        const QString & host,
+        QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
-        IAuthenticationManager & authenticationManager,
-        SynchronizationManagerDependencyInjector * pInjector = nullptr);
+        QObject * parent = nullptr,
+        IAuthenticationManagerPtr pAuthenticationManager = {},
+        INoteStorePtr pNoteStore = {},
+        IUserStorePtr pUserStore = {},
+        IKeychainServicePtr pKeychainService = {},
+        ISyncStateStoragePtr pSyncStateStorage = {});
 
     virtual ~SynchronizationManager();
 

@@ -77,6 +77,8 @@ private:
     QHash<qint32, User>     m_users;
 };
 
+using FakeUserStorePtr = std::shared_ptr<FakeUserStore>;
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H

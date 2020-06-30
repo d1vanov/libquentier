@@ -19,14 +19,16 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QList>
 #include <QNetworkCookie>
-#include <QSharedPointer>
 
 #include <qt5qevercloud/QEverCloud.h>
+
+#include <memory>
 
 namespace quentier {
 
@@ -118,7 +120,7 @@ public:
         qint32 & rateLimitSeconds) = 0;
 };
 
-QUENTIER_EXPORT IUserStore * newUserStore(QString evernoteHost);
+QUENTIER_EXPORT IUserStorePtr newUserStore(QString evernoteHost);
 
 } // namespace quentier
 

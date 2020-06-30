@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
@@ -30,7 +31,8 @@
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QObject>
-#include <QSharedPointer>
+
+#include <memory>
 
 namespace quentier {
 
@@ -587,6 +589,8 @@ Q_SIGNALS:
 private:
     Q_DISABLE_COPY(INoteStore)
 };
+
+QUENTIER_EXPORT INoteStorePtr newNoteStore(QObject * parent = nullptr);
 
 } // namespace quentier
 

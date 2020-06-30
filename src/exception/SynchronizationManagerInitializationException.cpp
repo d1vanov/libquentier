@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,19 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/INoteStore.h>
-
-#include "NoteStore.h"
+#include <quentier/exception/SynchronizationManagerInitializationException.h>
 
 namespace quentier {
 
-INoteStore::INoteStore(QObject * parent) :
-    QObject(parent)
+SynchronizationManagerInitializationException::SynchronizationManagerInitializationException(
+        const ErrorString & message) :
+    IQuentierException(message)
 {}
 
-INoteStorePtr newNoteStore(QObject * parent)
+const QString SynchronizationManagerInitializationException::exceptionDisplayName() const
 {
-    return std::make_shared<NoteStore>(parent);
+    return QStringLiteral("SynchronizationManagerInitializationException");
 }
 
 } // namespace quentier

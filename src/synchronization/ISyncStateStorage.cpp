@@ -61,9 +61,9 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
     return strm;
 }
 
-ISyncStateStorage * newSyncStateStorage(QObject * parent)
+ISyncStateStoragePtr newSyncStateStorage(QObject * parent)
 {
-    return new SyncStateStorage(parent);
+    return std::make_shared<SyncStateStorage>(parent);
 }
 
 } // namespace quentier
