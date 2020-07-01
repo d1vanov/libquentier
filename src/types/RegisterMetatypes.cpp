@@ -128,6 +128,9 @@ void registerMetatypes()
     using ErrorCode = IKeychainService::ErrorCode;
     qRegisterMetaType<ErrorCode>("ErrorCode");
 
+    qRegisterMetaType<IKeychainService::ErrorCode>(
+        "IKeychainService::ErrorCode");
+
     qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
 }
 
