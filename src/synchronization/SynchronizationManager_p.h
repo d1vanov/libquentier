@@ -44,8 +44,8 @@ public:
     SynchronizationManagerPrivate(
         QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
         QObject * parent,
-        IAuthenticationManagerPtr pAuthenticationManager,
         INoteStorePtr pNoteStore,
         IUserStorePtr pUserStore,
         IKeychainServicePtr pKeychainService,
@@ -200,7 +200,7 @@ private Q_SLOTS:
     void onRateLimitExceeded(qint32 secondsToWait);
 
 private:
-    void createConnections();
+    void createConnections(IAuthenticationManager & authenticationManager);
 
     void readLastSyncParameters();
 
@@ -303,8 +303,6 @@ private:
 
 private:
     QString                                 m_host;
-
-    IAuthenticationManagerPtr               m_pAuthenticationManager;
 
     ISyncStateStoragePtr                    m_pSyncStateStorage;
 

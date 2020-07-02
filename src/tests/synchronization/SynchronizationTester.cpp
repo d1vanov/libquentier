@@ -149,8 +149,8 @@ void SynchronizationTester::init()
     m_pSynchronizationManager = new SynchronizationManager(
         QStringLiteral("www.evernote.com"),
         *m_pLocalStorageManagerAsync,
+        *m_pFakeAuthenticationManager,
         this,
-        m_pFakeAuthenticationManager,
         m_pFakeNoteStore,
         m_pFakeUserStore,
         m_pFakeKeychainService,

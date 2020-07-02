@@ -50,10 +50,12 @@ public:
      *                                  www.evernote.com but could also be
      *                                  sandbox.evernote.com or some other one
      * @param localStorageManagerAsync  Local storage manager
-     * @param pAuthenticationManager    Pointer to an object implementing
-     *                                  IAuthenticationManager interface; if
-     *                                  nullptr, SynchronizationManager would
-     *                                  create and use its own instance
+     * @param authenticationManager     Reference to an object implementing
+     *                                  IAuthenticationManager interface;
+     *                                  SynchronizationManager does not store
+     *                                  this reference, it only connects to
+     *                                  the object via signals and slots
+     *                                  during construction
      * @param pNoteStore                Pointer to an object implementing
      *                                  INoteStore interface; if nullptr,
      *                                  SynchronizatrionManager would create and
@@ -80,8 +82,8 @@ public:
     SynchronizationManager(
         QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
         QObject * parent = nullptr,
-        IAuthenticationManagerPtr pAuthenticationManager = {},
         INoteStorePtr pNoteStore = {},
         IUserStorePtr pUserStore = {},
         IKeychainServicePtr pKeychainService = {},

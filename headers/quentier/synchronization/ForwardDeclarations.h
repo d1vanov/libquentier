@@ -24,7 +24,6 @@
 namespace quentier {
 
 class IAuthenticationManager;
-using IAuthenticationManagerPtr = std::shared_ptr<IAuthenticationManager>;
 
 class INoteStore;
 using INoteStorePtr = std::shared_ptr<INoteStore>;

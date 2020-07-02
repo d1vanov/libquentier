@@ -25,8 +25,8 @@ namespace quentier {
 SynchronizationManager::SynchronizationManager(
         QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
         QObject * parent,
-        IAuthenticationManagerPtr pAuthenticationManager,
         INoteStorePtr pNoteStore,
         IUserStorePtr pUserStore,
         IKeychainServicePtr pKeychainService,
@@ -35,8 +35,8 @@ SynchronizationManager::SynchronizationManager(
     d_ptr(new SynchronizationManagerPrivate(
         std::move(host),
         localStorageManagerAsync,
+        authenticationManager,
         this,
-        std::move(pAuthenticationManager),
         std::move(pNoteStore),
         std::move(pUserStore),
         std::move(pKeychainService),

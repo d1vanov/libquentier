@@ -93,15 +93,14 @@ private:
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
+        IAuthenticationManager & authenticationManager,
         QObject * parent,
-        IAuthenticationManagerPtr pAuthenticationManager,
         INoteStorePtr pNoteStore,
         IUserStorePtr pUserStore,
         IKeychainServicePtr pKeychainService,
         ISyncStateStoragePtr pSyncStateStorage) :
     QObject(parent),
     m_host(std::move(host)),
-    m_pAuthenticationManager(std::move(pAuthenticationManager)),
     m_pSyncStateStorage(std::move(pSyncStateStorage)),
     m_pNoteStore(std::move(pNoteStore)),
     m_pUserStore(std::move(pUserStore)),
@@ -125,17 +124,6 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     m_pKeychainService(std::move(pKeychainService))
 {
     m_OAuthResult.m_userId = -1;
-
-    if (!m_pAuthenticationManager) {
-#if LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER
-        m_pAuthenticationManager = std::make_shared<AuthenticationManager>(this);
-#else
-        throw SynchronizationManagerInitializationException(
-            ErrorString(QT_TR_NOOP("No IAuthenticationManager instance was "
-                                   "provided to SynhronizationManager and "
-                                   "there is no default one")));
-#endif
-    }
 
     if (!m_pNoteStore) {
         m_pNoteStore = newNoteStore(this);
@@ -164,7 +152,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         m_pSyncStateStorage->setParent(this);
     }
 
-    createConnections();
+    createConnections(authenticationManager);
 }
 
 SynchronizationManagerPrivate::~SynchronizationManagerPrivate()
@@ -1000,18 +988,19 @@ void SynchronizationManagerPrivate::onRateLimitExceeded(qint32 secondsToWait)
     Q_EMIT rateLimitExceeded(secondsToWait);
 }
 
-void SynchronizationManagerPrivate::createConnections()
+void SynchronizationManagerPrivate::createConnections(
+    IAuthenticationManager & authenticationManager)
 {
     // Connections with authentication manager
     QObject::connect(
         this,
         &SynchronizationManagerPrivate::requestAuthentication,
-        m_pAuthenticationManager.get(),
+        &authenticationManager,
         &IAuthenticationManager::onAuthenticationRequest,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        m_pAuthenticationManager.get(),
+        &authenticationManager,
         &IAuthenticationManager::sendAuthenticationResult,
         this,
         &SynchronizationManagerPrivate::onOAuthResult,
