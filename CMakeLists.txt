@@ -138,8 +138,7 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/LoggerInitializationException.h
     headers/quentier/exception/NoteEditorInitializationException.h
     headers/quentier/exception/NoteEditorPluginInitializationException.h
-    headers/quentier/exception/NullPtrException.h
-    headers/quentier/exception/SynchronizationManagerInitializationException.h)
+    headers/quentier/exception/NullPtrException.h)
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
@@ -413,7 +412,6 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
-    src/exception/SynchronizationManagerInitializationException.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp

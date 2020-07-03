@@ -25,7 +25,6 @@
 
 #include "../utility/KeychainService.h"
 
-#include <quentier/exception/SynchronizationManagerInitializationException.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 
