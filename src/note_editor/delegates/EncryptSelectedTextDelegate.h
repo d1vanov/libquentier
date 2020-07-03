@@ -41,7 +41,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * encryption considering the details of wrapping this action around the undo
  * stack
  */
-class Q_DECL_HIDDEN EncryptSelectedTextDelegate: public QObject
+class Q_DECL_HIDDEN EncryptSelectedTextDelegate final: public QObject
 {
     Q_OBJECT
 public:

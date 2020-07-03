@@ -41,7 +41,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * the note editor's page considering the details of wrapping this action
  * around undo stack
  */
-class Q_DECL_HIDDEN RenameResourceDelegate: public QObject
+class Q_DECL_HIDDEN RenameResourceDelegate final: public QObject
 {
     Q_OBJECT
 public:

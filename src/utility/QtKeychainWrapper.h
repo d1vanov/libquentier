@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 #define LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <qt5keychain/keychain.h>
 
@@ -35,7 +35,7 @@ namespace quentier {
  * and is not intended to be moved into any thread past creation. The
  * communication with this wrapper object occurs via signals and slots.
  */
-class Q_DECL_HIDDEN QtKeychainWrapper: public QObject
+class Q_DECL_HIDDEN QtKeychainWrapper final: public QObject
 {
     Q_OBJECT
 public:

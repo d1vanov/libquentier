@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceRecognitionIndexItemData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndexItemData final: public QSharedData
 {
 public:
     bool isValid() const;

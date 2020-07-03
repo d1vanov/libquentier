@@ -26,7 +26,6 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 
 namespace quentier {
 
@@ -45,12 +44,10 @@ namespace quentier {
 
 #define NOTE_STORE_REQUEST_TIMEOUT_MSEC (-1)
 
-NoteStore::NoteStore(
-        const qevercloud::INoteStorePtr & pQecNoteStore, QObject * parent) :
-    INoteStore(pQecNoteStore, parent)
-{
-    QUENTIER_CHECK_PTR(m_pQecNoteStore)
-}
+NoteStore::NoteStore(QObject * parent) :
+    INoteStore(parent),
+    m_pNoteStore(qevercloud::newNoteStore())
+{}
 
 NoteStore::~NoteStore()
 {
@@ -59,7 +56,24 @@ NoteStore::~NoteStore()
 
 INoteStore * NoteStore::create() const
 {
-    return new NoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()));
+    return new NoteStore;
+}
+
+QString NoteStore::noteStoreUrl() const
+{
+    return m_pNoteStore->noteStoreUrl();
+}
+
+void NoteStore::setNoteStoreUrl(QString noteStoreUrl)
+{
+    m_pNoteStore->setNoteStoreUrl(std::move(noteStoreUrl));
+}
+
+void NoteStore::setAuthData(
+    QString authenticationToken, QList<QNetworkCookie> cookies)
+{
+    Q_UNUSED(cookies)
+    m_authenticationToken = std::move(authenticationToken);
 }
 
 void NoteStore::stop()
@@ -99,7 +113,7 @@ void NoteStore::stop()
 
 qint32 NoteStore::createNotebook(
     Notebook & notebook, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -110,7 +124,7 @@ qint32 NoteStore::createNotebook(
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
         notebook.qevercloudNotebook() =
-            m_pQecNoteStore->createNotebook(notebook.qevercloudNotebook(), ctx);
+            m_pNoteStore->createNotebook(notebook.qevercloudNotebook(), ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -136,7 +150,7 @@ qint32 NoteStore::createNotebook(
 
 qint32 NoteStore::updateNotebook(
     Notebook & notebook, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -146,7 +160,7 @@ qint32 NoteStore::updateNotebook(
             : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        qint32 usn = m_pQecNoteStore->updateNotebook(
+        qint32 usn = m_pNoteStore->updateNotebook(
             notebook.qevercloudNotebook(), ctx);
         notebook.setUpdateSequenceNumber(usn);
         return 0;
@@ -178,7 +192,7 @@ qint32 NoteStore::updateNotebook(
 
 qint32 NoteStore::createNote(
     Note & note, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -188,7 +202,7 @@ qint32 NoteStore::createNote(
             : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        qevercloud::Note noteMetadata = m_pQecNoteStore->createNote(
+        qevercloud::Note noteMetadata = m_pNoteStore->createNote(
             note.qevercloudNote(), ctx);
 
         QNDEBUG("Note metadata returned from createNote method: "
@@ -227,7 +241,7 @@ qint32 NoteStore::createNote(
 
 qint32 NoteStore::updateNote(
     Note & note, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -237,7 +251,7 @@ qint32 NoteStore::updateNote(
             : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        qevercloud::Note noteMetadata = m_pQecNoteStore->updateNote(
+        qevercloud::Note noteMetadata = m_pNoteStore->updateNote(
             note.qevercloudNote(), ctx);
 
         QNDEBUG("Note metadata returned from updateNote method: "
@@ -280,7 +294,7 @@ qint32 NoteStore::updateNote(
 
 qint32 NoteStore::createTag(
     Tag & tag, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -290,7 +304,7 @@ qint32 NoteStore::createTag(
             : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        tag.qevercloudTag() = m_pQecNoteStore->createTag(
+        tag.qevercloudTag() = m_pNoteStore->createTag(
             tag.qevercloudTag(), ctx);
         return 0;
     }
@@ -317,7 +331,7 @@ qint32 NoteStore::createTag(
 
 qint32 NoteStore::updateTag(
     Tag & tag, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     try
     {
@@ -327,7 +341,7 @@ qint32 NoteStore::updateTag(
             : linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        qint32 usn = m_pQecNoteStore->updateTag(tag.qevercloudTag(), ctx);
+        qint32 usn = m_pNoteStore->updateTag(tag.qevercloudTag(), ctx);
         tag.setUpdateSequenceNumber(usn);
         return 0;
     }
@@ -366,7 +380,7 @@ qint32 NoteStore::createSavedSearch(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        savedSearch.qevercloudSavedSearch() = m_pQecNoteStore->createSearch(
+        savedSearch.qevercloudSavedSearch() = m_pNoteStore->createSearch(
             savedSearch.qevercloudSavedSearch(),
             ctx);
         return 0;
@@ -402,7 +416,7 @@ qint32 NoteStore::updateSavedSearch(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        qint32 usn = m_pQecNoteStore->updateSearch(
+        qint32 usn = m_pNoteStore->updateSearch(
             savedSearch.qevercloudSavedSearch(),
             ctx);
 
@@ -444,7 +458,7 @@ qint32 NoteStore::getSyncState(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        syncState = m_pQecNoteStore->getSyncState(ctx);
+        syncState = m_pNoteStore->getSyncState(ctx);
         return 0;
     }
     catch(const qevercloud::EDAMUserException & userException)
@@ -482,7 +496,7 @@ qint32 NoteStore::getSyncChunk(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        syncChunk = m_pQecNoteStore->getFilteredSyncChunk(
+        syncChunk = m_pNoteStore->getFilteredSyncChunk(
             afterUSN,
             maxEntries,
             filter,
@@ -521,7 +535,7 @@ qint32 NoteStore::getLinkedNotebookSyncState(
             authToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        syncState = m_pQecNoteStore->getLinkedNotebookSyncState(
+        syncState = m_pNoteStore->getLinkedNotebookSyncState(
             linkedNotebook,
             ctx);
         return 0;
@@ -577,7 +591,7 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
             linkedNotebookAuthToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        syncChunk = m_pQecNoteStore->getLinkedNotebookSyncChunk(
+        syncChunk = m_pNoteStore->getLinkedNotebookSyncChunk(
             linkedNotebook,
             afterUSN,
             maxEntries,
@@ -680,7 +694,7 @@ qint32 NoteStore::getNote(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        note.qevercloudNote() = m_pQecNoteStore->getNote(
+        note.qevercloudNote() = m_pNoteStore->getNote(
             note.guid(),
             withContent,
             withResourcesData,
@@ -806,7 +820,7 @@ bool NoteStore::getNoteAsync(
         NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
     qevercloud::AsyncResult * pAsyncResult =
-        m_pQecNoteStore->getNoteWithResultSpecAsync(
+        m_pNoteStore->getNoteWithResultSpecAsync(
             noteGuid,
             noteResultSpec,
             ctx);
@@ -876,7 +890,7 @@ qint32 NoteStore::getResource(
             authToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        resource.qevercloudResource() = m_pQecNoteStore->getResource(
+        resource.qevercloudResource() = m_pNoteStore->getResource(
             resource.guid(),
             withDataBody,
             withRecognitionDataBody,
@@ -947,7 +961,7 @@ bool NoteStore::getResourceAsync(
         authToken,
         NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-    qevercloud::AsyncResult * pAsyncResult = m_pQecNoteStore->getResourceAsync(
+    qevercloud::AsyncResult * pAsyncResult = m_pNoteStore->getResourceAsync(
         resourceGuid,
         withDataBody,
         withRecognitionDataBody,
@@ -987,7 +1001,7 @@ qint32 NoteStore::authenticateToSharedNotebook(
             m_authenticationToken,
             NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-        authResult = m_pQecNoteStore->authenticateToSharedNotebook(
+        authResult = m_pNoteStore->authenticateToSharedNotebook(
             shareKey,
             ctx);
         return 0;

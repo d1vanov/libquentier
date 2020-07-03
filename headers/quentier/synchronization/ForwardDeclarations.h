@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,19 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/INoteStore.h>
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
+#define LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
 
-#include "NoteStore.h"
+#include <memory>
 
 namespace quentier {
 
-INoteStore::INoteStore(QObject * parent) :
-    QObject(parent)
-{}
+class IAuthenticationManager;
 
-INoteStorePtr newNoteStore(QObject * parent)
-{
-    return std::make_shared<NoteStore>(parent);
-}
+class INoteStore;
+using INoteStorePtr = std::shared_ptr<INoteStore>;
+
+class ISyncStateStorage;
+using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
+
+class IUserStore;
+using IUserStorePtr = std::shared_ptr<IUserStore>;
 
 } // namespace quentier
+
+#endif // LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H

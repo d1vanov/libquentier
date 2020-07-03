@@ -16,9 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_NOTE_STORE_H
-#define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_NOTE_STORE_H
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
+#define LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
@@ -30,50 +31,49 @@
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QObject>
-#include <QSharedPointer>
+
+#include <memory>
 
 namespace quentier {
 
 /**
- * @brief INoteStore is the interface for NoteStore used by
- * SynchronizationManager: it provides signatures of methods
- * required for the implementation of Evernote EDAM sync protocol
- *
- * By default SynchronizationManager within libquentier uses its own
- * private implementation of INoteStore interface but another implementation
- * can be injected at SynchronizationManager construction time. For one thing,
- * such injection is used for testing of libquentier's synchronization
- * logic, for other things, it can be used to implement custom synchronization
- * with some alternative backends.
+ * @brief INoteStore is the interface which provides methods
+ * required for the implementation of NoteStore part of Evernote EDAM sync
+ * protocol
  */
 class QUENTIER_EXPORT INoteStore: public QObject
 {
     Q_OBJECT
 protected:
-    explicit INoteStore(
-        const qevercloud::INoteStorePtr & pQecNoteStore,
-        QObject * parent = nullptr);
+    explicit INoteStore(QObject * parent = nullptr);
 
 public:
-    virtual ~INoteStore();
+    virtual ~INoteStore() = default;
 
-    qevercloud::INoteStorePtr getQecNoteStore();
-    void setQecNoteStore(const qevercloud::INoteStorePtr & pQecNoteStore);
-
-    QString noteStoreUrl() const;
-    void setNoteStoreUrl(const QString & noteStoreUrl);
-
-    QString authenticationToken() const;
-    void setAuthenticationToken(const QString & authToken);
-
-public:
-    /**
+    /*
      * Factory method, create a new INoteStore subclass object
      */
     virtual INoteStore * create() const = 0;
 
     /**
-     * Stop the asynchronous queries for note or resource running at the moment
+     * Provide note store URL used by this INoteStore instance
+     */
+    virtual QString noteStoreUrl() const = 0;
+
+    /**
+     * Set note store URL to be used by this INoteStore instance
+     */
+    virtual void setNoteStoreUrl(QString noteStoreUrl) = 0;
+
+    /**
+     * Set authentication data to be used by this INoteStore instance
+     */
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) = 0;
+
+    /**
+     * Stop asynchronous queries for notes or resources which might be running
+     * at the moment
      */
     virtual void stop() = 0;
 
@@ -103,7 +103,7 @@ public:
     virtual qint32 createNotebook(
         Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update notebook
@@ -129,7 +129,7 @@ public:
     virtual qint32 updateNotebook(
         Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create note
@@ -153,7 +153,7 @@ public:
      */
     virtual qint32 createNote(
         Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update note
@@ -178,7 +178,7 @@ public:
      */
     virtual qint32 updateNote(
         Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create tag
@@ -203,7 +203,7 @@ public:
      */
     virtual qint32 createTag(
         Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update tag
@@ -228,7 +228,7 @@ public:
      */
     virtual qint32 updateTag(
         Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = {}) = 0;
+        QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create saved search
@@ -588,12 +588,10 @@ Q_SIGNALS:
 
 private:
     Q_DISABLE_COPY(INoteStore)
-
-protected:
-    qevercloud::INoteStorePtr   m_pQecNoteStore;
-    QString     m_authenticationToken;
 };
+
+QUENTIER_EXPORT INoteStorePtr newNoteStore(QObject * parent = nullptr);
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_NOTE_STORE_H
+#endif // LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H

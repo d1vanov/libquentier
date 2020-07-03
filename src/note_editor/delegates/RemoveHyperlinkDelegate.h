@@ -33,7 +33,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * required for proper implementation of removing a hyperlink under cursor
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN RemoveHyperlinkDelegate: public QObject
+class Q_DECL_HIDDEN RemoveHyperlinkDelegate final: public QObject
 {
     Q_OBJECT
 public:

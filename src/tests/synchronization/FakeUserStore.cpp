@@ -20,11 +20,6 @@
 
 namespace quentier {
 
-FakeUserStore::FakeUserStore() :
-    IUserStore(qevercloud::IUserStorePtr(
-        qevercloud::newUserStore(QStringLiteral("127.0.0.1/edam/user"))))
-{}
-
 qint16 FakeUserStore::edamVersionMajor() const
 {
     return m_edamVersionMajor;
@@ -78,10 +73,11 @@ void FakeUserStore::setUser(const qint32 id, const User & user)
     m_users[id] = user;
 }
 
-IUserStore * FakeUserStore::create(const QString & host) const
+void FakeUserStore::setAuthData(
+    QString authenticationToken, QList<QNetworkCookie> cookies)
 {
-    Q_UNUSED(host)
-    return new FakeUserStore;
+    m_authenticationToken = std::move(authenticationToken);
+    m_cookies = std::move(cookies);
 }
 
 bool FakeUserStore::checkVersion(

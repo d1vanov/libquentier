@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <QHash>
 
@@ -53,6 +53,8 @@ private:
     QHash<int, std::pair<QUuid, QString>>   m_readPasswordRequestIdWithPasswordByTimerId;
     QHash<int, std::pair<QUuid, bool>>      m_deletePasswordRequestIdByTimerId;
 };
+
+using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;
 
 } // namespace quentier
 

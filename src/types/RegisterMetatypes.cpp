@@ -20,6 +20,7 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -31,13 +32,11 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
-
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <QList>
 #include <QMetaType>
 #include <QNetworkCookie>
-#include <QSharedPointer>
 #include <QSqlError>
 #include <QVector>
 
@@ -132,6 +131,9 @@ void registerMetatypes()
         "IKeychainService::ErrorCode");
 
     qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
+
+    using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
+    qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");
 }
 
 } // namespace quentier

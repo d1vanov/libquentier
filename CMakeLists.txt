@@ -111,8 +111,12 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
-    headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/IAuthenticationManager.h)
+    headers/quentier/synchronization/ForwardDeclarations.h
+    headers/quentier/synchronization/IAuthenticationManager.h
+    headers/quentier/synchronization/INoteStore.h
+    headers/quentier/synchronization/ISyncStateStorage.h
+    headers/quentier/synchronization/IUserStore.h
+    headers/quentier/synchronization/SynchronizationManager.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND SYNCHRONIZATION_HEADERS
@@ -138,25 +142,27 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
-    headers/quentier/utility/MessageBox.h
-    headers/quentier/utility/StandardPaths.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystemWatcher.h
+    headers/quentier/utility/ForwardDeclarations.h
+    headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
-    headers/quentier/utility/ShortcutManager.h
-    headers/quentier/utility/StringUtils.h
-    headers/quentier/utility/SuppressWarnings.h
-    headers/quentier/utility/SysInfo.h
+    headers/quentier/utility/Macros.h
+    headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h
     headers/quentier/utility/QuentierCheckPtr.h
     headers/quentier/utility/QuentierUndoCommand.h
-    headers/quentier/utility/Macros.h
+    headers/quentier/utility/ShortcutManager.h
+    headers/quentier/utility/StandardPaths.h
+    headers/quentier/utility/StringUtils.h
+    headers/quentier/utility/SuppressWarnings.h
+    headers/quentier/utility/SysInfo.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
     headers/quentier/utility/Utility.h)
@@ -171,11 +177,6 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
-    headers/quentier_private/synchronization/INoteStore.h
-    headers/quentier_private/synchronization/IUserStore.h
-    headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
-    headers/quentier_private/synchronization/SyncStatePersistenceManager.h
-    headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
@@ -211,6 +212,7 @@ set(PRIVATE_HEADERS
     src/synchronization/SendLocalChangesManager.h
     src/synchronization/SynchronizationShared.h
     src/synchronization/SynchronizationManager_p.h
+    src/synchronization/SyncStateStorage.h
     src/synchronization/NotebookSyncConflictResolver.h
     src/synchronization/NotebookSyncCache.h
     src/synchronization/TagSyncConflictResolver.h
@@ -378,6 +380,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
+    src/synchronization/ISyncStateStorage.cpp
     src/synchronization/IUserStore.cpp
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
@@ -385,7 +388,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SynchronizationShared.cpp
     src/synchronization/SynchronizationManager.cpp
     src/synchronization/SynchronizationManager_p.cpp
-    src/synchronization/SyncStatePersistenceManager.cpp
+    src/synchronization/SyncStateStorage.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
     src/synchronization/NotebookSyncCache.cpp

@@ -29,6 +29,8 @@
 #include "SynchronizationShared.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
+#include <quentier/synchronization/INoteStore.h>
+#include <quentier/synchronization/IUserStore.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -39,9 +41,6 @@
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/Macros.h>
-
-#include <quentier_private/synchronization/INoteStore.h>
-#include <quentier_private/synchronization/IUserStore.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -55,7 +54,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
 
-class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
+class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager final: public QObject
 {
     Q_OBJECT
 public:

@@ -16,55 +16,39 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H
-#define LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
+#define LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QList>
 #include <QNetworkCookie>
-#include <QSharedPointer>
 
 #include <qt5qevercloud/QEverCloud.h>
+
+#include <memory>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(User)
 
 /**
- * @brief IUserStore is the interface for UserStore used by
- * SynchronizationManager: it provides signatures of methods
- * required for the implementation of Evernote EDAM sync protocol
- *
- * By default SynchronizationManager within libquentier uses its own
- * private implementation of IUSerStore interface but another implementation
- * can be injected at SynchronizationManager construction time. For one thing,
- * such injection is used for testing of libquentier's synchronization logic,
- * for other things, it can be used to implement custom synchronization
- * with some alternative backends.
+ * @brief IUserStore is the interface which provides methods
+ * required for the implementation of UserStore part of Evernote EDAM sync
+ * protocol
  */
 class QUENTIER_EXPORT IUserStore
 {
-protected:
-    IUserStore(const qevercloud::IUserStorePtr & pQecUserStore);
-
 public:
-    virtual ~IUserStore() {}
-
-    qevercloud::IUserStorePtr getQecUserStore() const;
-    void setQecUserStore(const qevercloud::IUserStorePtr & pQecUserStore);
-
-    QString authenticationToken() const;
-    void setAuthenticationToken(const QString & authToken);
-
-    QList<QNetworkCookie> cookies() const;
-    void setCookies(QList<QNetworkCookie> cookies);
+    virtual ~IUserStore() = default;
 
     /**
-     * Factory method, create a new IUserStore subclass object
+     * Set authentication data to be used by this IUserStore instance
      */
-    virtual IUserStore * create(const QString & host) const = 0;
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) = 0;
 
     /**
      * Check the version of EDAM protocol
@@ -134,13 +118,10 @@ public:
         const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
-
-protected:
-    qevercloud::IUserStorePtr   m_pQecUserStore;
-    QString                     m_authenticationToken;
-    QList<QNetworkCookie>       m_cookies;
 };
+
+QUENTIER_EXPORT IUserStorePtr newUserStore(QString evernoteHost);
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_PRIVATE_SYNCHRONIZATION_I_USER_STORE_H
+#endif // LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H

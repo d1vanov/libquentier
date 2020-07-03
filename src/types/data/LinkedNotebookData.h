@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LinkedNotebookData : public QSharedData
+class Q_DECL_HIDDEN LinkedNotebookData final: public QSharedData
 {
 public:
     LinkedNotebookData() = default;

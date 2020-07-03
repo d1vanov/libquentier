@@ -28,7 +28,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
-class Q_DECL_HIDDEN LocalStoragePatch1To2: public ILocalStoragePatch
+class Q_DECL_HIDDEN LocalStoragePatch1To2 final: public ILocalStoragePatch
 {
     Q_OBJECT
 public:

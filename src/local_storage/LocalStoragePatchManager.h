@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
  * applied to the local storage when its schema/structure needs to be changed
  * (with upgrades of libquentier)
  */
-class Q_DECL_HIDDEN LocalStoragePatchManager: public QObject
+class Q_DECL_HIDDEN LocalStoragePatchManager final: public QObject
 {
     Q_OBJECT
 public:

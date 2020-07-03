@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN DecryptUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN DecryptUndoCommand final: public INoteEditorUndoCommand
 {
     Q_OBJECT
     using Callback = NoteEditorPage::Callback;

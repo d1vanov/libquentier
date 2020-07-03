@@ -93,7 +93,7 @@ private:
  * It features the automatic rotation of the log file by its max size and
  * ensures not more than just a handful of previous log files are stored around
  */
-class Q_DECL_HIDDEN QuentierFileLogWriter: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierFileLogWriter final: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -122,7 +122,7 @@ private:
     int         m_currentOldLogFilesCount;
 };
 
-class Q_DECL_HIDDEN QuentierConsoleLogWriter: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierConsoleLogWriter final: public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -134,7 +134,7 @@ public Q_SLOTS:
 
 QT_FORWARD_DECLARE_CLASS(QuentierLoggerImpl)
 
-class Q_DECL_HIDDEN QuentierLogger: public QObject
+class Q_DECL_HIDDEN QuentierLogger final: public QObject
 {
     Q_OBJECT
 public:
@@ -164,7 +164,7 @@ private:
     QuentierLoggerImpl * m_pImpl;
 };
 
-class Q_DECL_HIDDEN QuentierLoggerImpl: public QObject
+class Q_DECL_HIDDEN QuentierLoggerImpl final: public QObject
 {
     Q_OBJECT
 public:

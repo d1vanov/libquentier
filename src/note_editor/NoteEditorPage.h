@@ -41,7 +41,7 @@ using WebPage =
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN NoteEditorPage: public WebPage
+class Q_DECL_HIDDEN NoteEditorPage final: public WebPage
 {
     Q_OBJECT
 public:

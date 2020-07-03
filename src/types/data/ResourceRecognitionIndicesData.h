@@ -31,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceRecognitionIndicesData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndicesData final: public QSharedData
 {
 public:
     bool isValid() const;

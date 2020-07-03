@@ -98,7 +98,7 @@ QT_FORWARD_DECLARE_CLASS(HyperlinkClickJavaScriptHandler)
 QT_FORWARD_DECLARE_CLASS(WebSocketWaiter)
 #endif
 
-class Q_DECL_HIDDEN NoteEditorPrivate:
+class Q_DECL_HIDDEN NoteEditorPrivate final:
     public WebView, public INoteEditorBackend
 {
     Q_OBJECT

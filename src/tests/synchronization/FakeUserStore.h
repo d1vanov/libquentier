@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_USER_STORE_H
 
-#include <quentier_private/synchronization/IUserStore.h>
+#include <quentier/synchronization/IUserStore.h>
 
 #include <quentier/types/User.h>
 #include <quentier/utility/Macros.h>
@@ -28,11 +28,9 @@
 
 namespace quentier {
 
-class FakeUserStore: public IUserStore
+class FakeUserStore final: public IUserStore
 {
 public:
-    FakeUserStore();
-
     qint16 edamVersionMajor() const;
     void setEdamVersionMajor(const qint16 edamVersionMajor);
 
@@ -51,7 +49,9 @@ public:
 
 public:
     // IUserStore interface
-    virtual IUserStore * create(const QString & host) const override;
+
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) override;
 
     virtual bool checkVersion(
         const QString & clientName, qint16 edamVersionMajor,
@@ -67,12 +67,17 @@ public:
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
+    QString                     m_authenticationToken;
+    QList<QNetworkCookie>       m_cookies;
+
     qint16      m_edamVersionMajor = 0;
     qint16      m_edamVersionMinor = 0;
 
     QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>  m_accountLimits;
     QHash<qint32, User>     m_users;
 };
+
+using FakeUserStorePtr = std::shared_ptr<FakeUserStore>;
 
 } // namespace quentier
 

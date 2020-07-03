@@ -58,7 +58,7 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
  * presented as new data items to the service. That happens during sending
  * the local changes to Evernote service.
  */
-class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger: public QObject
+class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger final: public QObject
 {
     Q_OBJECT
 public:

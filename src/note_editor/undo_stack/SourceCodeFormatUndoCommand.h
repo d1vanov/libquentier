@@ -24,10 +24,13 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SourceCodeFormatUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN SourceCodeFormatUndoCommand final:
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     SourceCodeFormatUndoCommand(
         NoteEditorPrivate & noteEditor, const Callback & callback,

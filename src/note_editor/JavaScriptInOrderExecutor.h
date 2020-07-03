@@ -40,7 +40,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN JavaScriptInOrderExecutor: public QObject
+class Q_DECL_HIDDEN JavaScriptInOrderExecutor final: public QObject
 {
     Q_OBJECT
 private:

@@ -37,7 +37,7 @@ namespace quentier {
  * It would also listen to the current note changes and remove stale generic
  * resource images as appropriate.
  */
-class Q_DECL_HIDDEN GenericResourceImageManager: public QObject
+class Q_DECL_HIDDEN GenericResourceImageManager final: public QObject
 {
     Q_OBJECT
 public:

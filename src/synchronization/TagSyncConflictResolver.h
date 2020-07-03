@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
  * resolution might involve changes in other tags, seemingly unrelated
  * to the currently conflicting ones
  */
-class Q_DECL_HIDDEN TagSyncConflictResolver: public QObject
+class Q_DECL_HIDDEN TagSyncConflictResolver final: public QObject
 {
     Q_OBJECT
 public:

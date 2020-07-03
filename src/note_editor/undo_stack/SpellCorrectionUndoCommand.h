@@ -24,10 +24,13 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SpellCorrectionUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN SpellCorrectionUndoCommand final:
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     SpellCorrectionUndoCommand(
         NoteEditorPrivate & noteEditor, const Callback & callback,

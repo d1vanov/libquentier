@@ -40,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * callbacks required for proper implementation of decryption for encrypted text
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN DecryptEncryptedTextDelegate: public QObject
+class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final: public QObject
 {
     Q_OBJECT
 public:

@@ -33,12 +33,12 @@
 namespace quentier {
 
 FakeNoteStore::FakeNoteStore(QObject * parent) :
-    INoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()), parent),
+    INoteStore(parent),
     m_data(new Data)
 {}
 
 FakeNoteStore::FakeNoteStore(std::shared_ptr<Data> data) :
-    INoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore())),
+    INoteStore(),
     m_data(std::move(data))
 {}
 
@@ -1654,6 +1654,23 @@ INoteStore * FakeNoteStore::create() const
     return new FakeNoteStore(m_data);
 }
 
+QString FakeNoteStore::noteStoreUrl() const
+{
+    return m_data->m_noteStoreUrl;
+}
+
+void FakeNoteStore::setNoteStoreUrl(QString noteStoreUrl)
+{
+    m_data->m_noteStoreUrl = std::move(noteStoreUrl);
+}
+
+void FakeNoteStore::setAuthData(
+    QString authenticationToken, QList<QNetworkCookie> cookies)
+{
+    Q_UNUSED(cookies)
+    m_data->m_authenticationToken = std::move(authenticationToken);
+}
+
 void FakeNoteStore::stop()
 {
     for(auto timerId: qAsConst(m_data->m_getNoteAsyncDelayTimerIds)) {
@@ -1669,7 +1686,7 @@ void FakeNoteStore::stop()
 
 qint32 FakeNoteStore::createNotebook(
     Notebook & notebook, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnCreateNotebookAttempt)
@@ -1760,7 +1777,7 @@ qint32 FakeNoteStore::createNotebook(
 
 qint32 FakeNoteStore::updateNotebook(
     Notebook & notebook, ErrorString & errorDescription,
-    qint32 & rateLimitSeconds, const QString & linkedNotebookAuthToken)
+    qint32 & rateLimitSeconds, QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnUpdateNotebookAttempt)
@@ -1870,7 +1887,7 @@ qint32 FakeNoteStore::updateNotebook(
 
 qint32 FakeNoteStore::createNote(
     Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-    const QString & linkedNotebookAuthToken)
+    QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnCreateNoteAttempt)
@@ -1983,7 +2000,7 @@ qint32 FakeNoteStore::createNote(
 
 qint32 FakeNoteStore::updateNote(
     Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-    const QString & linkedNotebookAuthToken)
+    QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnUpdateNoteAttempt)
@@ -2104,7 +2121,7 @@ qint32 FakeNoteStore::updateNote(
 
 qint32 FakeNoteStore::createTag(
     Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-    const QString & linkedNotebookAuthToken)
+    QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnCreateTagAttempt)
@@ -2183,7 +2200,7 @@ qint32 FakeNoteStore::createTag(
 
 qint32 FakeNoteStore::updateTag(
     Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-    const QString & linkedNotebookAuthToken)
+    QString linkedNotebookAuthToken)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnUpdateTagAttempt)

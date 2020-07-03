@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceData: public NoteStoreDataElementData
+class Q_DECL_HIDDEN ResourceData final: public NoteStoreDataElementData
 {
 public:
     ResourceData() = default;

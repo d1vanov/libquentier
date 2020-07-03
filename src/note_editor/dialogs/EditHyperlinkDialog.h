@@ -30,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(EditHyperlinkDialog)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN EditHyperlinkDialog: public QDialog
+class Q_DECL_HIDDEN EditHyperlinkDialog final: public QDialog
 {
     Q_OBJECT
 public:

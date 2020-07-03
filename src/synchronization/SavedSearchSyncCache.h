@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SavedSearchSyncCache: public QObject
+class Q_DECL_HIDDEN SavedSearchSyncCache final: public QObject
 {
     Q_OBJECT
 public:

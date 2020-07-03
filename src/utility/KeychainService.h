@@ -19,13 +19,13 @@
 #ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
 #define LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
-class Q_DECL_HIDDEN KeychainService: public IKeychainService
+class Q_DECL_HIDDEN KeychainService final: public IKeychainService
 {
     Q_OBJECT
 public:

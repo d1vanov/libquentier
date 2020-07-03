@@ -18,20 +18,30 @@
 
 #include "SynchronizationManager_p.h"
 
-#include "SynchronizationShared.h"
 #include "NoteStore.h"
+#include "SynchronizationShared.h"
+#include "SyncStateStorage.h"
 #include "UserStore.h"
+
 #include "../utility/KeychainService.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+
+#include <quentier/synchronization/IAuthenticationManager.h>
+#include <quentier/synchronization/INoteStore.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
+#include <quentier/synchronization/IUserStore.h>
+
+#if LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER
+#include <quentier/synchronization/AuthenticationManager.h>
+#endif
+
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>
-
-#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -42,7 +52,9 @@
 
 namespace quentier {
 
-class SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController:
+////////////////////////////////////////////////////////////////////////////////
+
+class SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController final:
     public RemoteToLocalSynchronizationManager::IManager
 {
 public:
@@ -61,7 +73,9 @@ private:
     SynchronizationManagerPrivate &     m_syncManager;
 };
 
-class SynchronizationManagerPrivate::SendLocalChangesManagerController:
+////////////////////////////////////////////////////////////////////////////////
+
+class SynchronizationManagerPrivate::SendLocalChangesManagerController final:
     public SendLocalChangesManager::IManager
 {
 public:
@@ -79,30 +93,22 @@ private:
     SynchronizationManagerPrivate &     m_syncManager;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(
-        const QString & host,
+        QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
         IAuthenticationManager & authenticationManager,
-        SynchronizationManagerDependencyInjector * pInjector,
-        QObject * parent) :
+        QObject * parent,
+        INoteStorePtr pNoteStore,
+        IUserStorePtr pUserStore,
+        IKeychainServicePtr pKeychainService,
+        ISyncStateStoragePtr pSyncStateStorage) :
     QObject(parent),
-    m_host(host),
-    m_pSyncStatePersistenceManager(
-        (pInjector && pInjector->m_pSyncStatePersistenceManager)
-         ? pInjector->m_pSyncStatePersistenceManager
-         : new SyncStatePersistenceManager(this)),
-    m_pNoteStore(
-        (pInjector && pInjector->m_pNoteStore)
-        ? pInjector->m_pNoteStore
-        : new NoteStore(qevercloud::INoteStorePtr(qevercloud::newNoteStore()))),
-    m_pUserStore(
-        (pInjector && pInjector->m_pUserStore)
-        ? pInjector->m_pUserStore
-        : new UserStore(
-            qevercloud::IUserStorePtr(
-            qevercloud::newUserStore(
-                QStringLiteral("https://") + m_host +
-                QStringLiteral("/edam/user"))))),
+    m_host(std::move(host)),
+    m_pSyncStateStorage(std::move(pSyncStateStorage)),
+    m_pNoteStore(std::move(pNoteStore)),
+    m_pUserStore(std::move(pUserStore)),
     m_pRemoteToLocalSyncManagerController(
         new RemoteToLocalSynchronizationManagerController(
             localStorageManagerAsync,
@@ -120,26 +126,35 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         new SendLocalChangesManager(
             *m_pSendLocalChangesManagerController,
             this)),
-    m_pKeychainService(
-        (pInjector && pInjector->m_pKeychainService)
-         ? pInjector->m_pKeychainService
-         : (new KeychainService(this)))
+    m_pKeychainService(std::move(pKeychainService))
 {
     m_OAuthResult.m_userId = -1;
 
-    if (pInjector)
-    {
-        if (pInjector->m_pNoteStore) {
-            m_pNoteStore->setParent(this);
-        }
+    if (!m_pNoteStore) {
+        m_pNoteStore = newNoteStore(this);
+    }
+    else {
+        m_pNoteStore->setParent(this);
+    }
 
-        if (pInjector->m_pKeychainService) {
-            m_pKeychainService->setParent(this);
-        }
+    if (!m_pUserStore) {
+        m_pUserStore = newUserStore(
+            QStringLiteral("https://") + m_host +
+            QStringLiteral("/edam/user"));
+    }
 
-        if (pInjector->m_pSyncStatePersistenceManager) {
-            m_pSyncStatePersistenceManager->setParent(this);
-        }
+    if (!m_pKeychainService) {
+        m_pKeychainService = newKeychainService(this);
+    }
+    else {
+        m_pKeychainService->setParent(this);
+    }
+
+    if (!m_pSyncStateStorage) {
+        m_pSyncStateStorage = newSyncStateStorage(this);
+    }
+    else {
+        m_pSyncStateStorage->setParent(this);
     }
 
     createConnections(authenticationManager);
@@ -151,7 +166,7 @@ SynchronizationManagerPrivate::~SynchronizationManagerPrivate()
 bool SynchronizationManagerPrivate::active() const
 {
     return m_pRemoteToLocalSyncManager->active() ||
-           m_pSendLocalChangesManager->active();
+        m_pSendLocalChangesManager->active();
 }
 
 bool SynchronizationManagerPrivate::downloadNoteThumbnailsOption() const
@@ -396,9 +411,7 @@ void SynchronizationManagerPrivate::onOAuthResult(
         m_host);
 
     m_pRemoteToLocalSyncManager->setAccount(newAccount);
-
-    m_pUserStore->setAuthenticationToken(authToken);
-    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
+    m_pUserStore->setAuthData(authToken, m_OAuthResult.m_cookies);
 
     ErrorString error;
     bool res = m_pRemoteToLocalSyncManager->syncUser(
@@ -1000,21 +1013,21 @@ void SynchronizationManagerPrivate::createConnections(
 
     // Connections with keychain service
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::writePasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onWritePasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::readPasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onReadPasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        m_pKeychainService,
+        m_pKeychainService.get(),
         &IKeychainService::deletePasswordJobFinished,
         this,
         &SynchronizationManagerPrivate::onDeletePasswordJobFinished,
@@ -1237,12 +1250,17 @@ void SynchronizationManagerPrivate::readLastSyncParameters()
 {
     QNDEBUG("SynchronizationManagerPrivate::readLastSyncParameters");
 
-    m_pSyncStatePersistenceManager->getPersistentSyncState(
-        m_pRemoteToLocalSyncManager->account(),
-        m_lastUpdateCount,
-        m_lastSyncTime,
-        m_cachedLinkedNotebookLastUpdateCountByGuid,
-        m_cachedLinkedNotebookLastSyncTimeByGuid);
+    auto syncState = m_pSyncStateStorage->getSyncState(
+        m_pRemoteToLocalSyncManager->account());
+
+    m_lastUpdateCount = syncState->userDataUpdateCount();
+    m_lastSyncTime = syncState->userDataLastSyncTime();
+
+    m_cachedLinkedNotebookLastUpdateCountByGuid =
+        syncState->linkedNotebookUpdateCounts();
+
+    m_cachedLinkedNotebookLastSyncTimeByGuid =
+        syncState->linkedNotebookLastSyncTimes();
 
     m_previousUpdateCount = m_lastUpdateCount;
     m_onceReadLastSyncParams = true;
@@ -1478,9 +1496,14 @@ void SynchronizationManagerPrivate::launchSync()
     Q_EMIT notifyStart();
 
     m_pNoteStore->setNoteStoreUrl(m_OAuthResult.m_noteStoreUrl);
-    m_pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_pUserStore->setAuthenticationToken(m_OAuthResult.m_authToken);
-    m_pUserStore->setCookies(m_OAuthResult.m_cookies);
+
+    m_pNoteStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
+
+    m_pUserStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
 
     if (m_lastUpdateCount <= 0) {
         QNDEBUG("The client has never synchronized with "
@@ -2114,8 +2137,11 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             return;
         }
 
-        pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
         pNoteStore->setNoteStoreUrl(noteStoreUrl);
+
+        pNoteStore->setAuthData(
+            m_OAuthResult.m_authToken,
+            m_OAuthResult.m_cookies);
 
         qint32 errorCode = pNoteStore->authenticateToSharedNotebook(
             sharedNotebookGlobalId,
@@ -2631,12 +2657,20 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
 {
     QNDEBUG("SynchronizationManagerPrivate::updatePersistentSyncSettings");
 
-    m_pSyncStatePersistenceManager->persistSyncState(
+    auto syncState = std::make_shared<SyncStateStorage::SyncState>();
+
+    syncState->m_userDataUpdateCount = m_lastUpdateCount;
+    syncState->m_userDataLastSyncTime = m_lastSyncTime;
+
+    syncState->m_updateCountsByLinkedNotebookGuid =
+        m_cachedLinkedNotebookLastUpdateCountByGuid;
+
+    syncState->m_lastSyncTimesByLinkedNotebookGuid =
+        m_cachedLinkedNotebookLastSyncTimeByGuid;
+
+    m_pSyncStateStorage->setSyncState(
         m_pRemoteToLocalSyncManager->account(),
-        m_lastUpdateCount,
-        m_lastSyncTime,
-        m_cachedLinkedNotebookLastUpdateCountByGuid,
-        m_cachedLinkedNotebookLastSyncTimeByGuid);
+        syncState);
 }
 
 INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebook(
@@ -2695,7 +2729,10 @@ INoteStore * SynchronizationManagerPrivate::noteStoreForLinkedNotebookGuid(
     INoteStore * pNoteStore = m_pNoteStore->create();
     pNoteStore->setParent(this);
 
-    pNoteStore->setAuthenticationToken(m_OAuthResult.m_authToken);
+    pNoteStore->setAuthData(
+        m_OAuthResult.m_authToken,
+        m_OAuthResult.m_cookies);
+
     m_noteStoresByLinkedNotebookGuids[guid] = pNoteStore;
     return pNoteStore;
 }

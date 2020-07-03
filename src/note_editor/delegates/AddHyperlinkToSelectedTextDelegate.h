@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * the currently selected text considering the details of wrapping this action
  * around undo stack and necessary switching of note editor page during the process
  */
-class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate: public QObject
+class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate final: public QObject
 {
     Q_OBJECT
 public:

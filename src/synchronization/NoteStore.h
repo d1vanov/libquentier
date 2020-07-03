@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_STORE_H
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Macros.h>
@@ -56,45 +56,50 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * in QEverCloud's NoteStore so only the small subset of original NoteStore's
  * API is wrapped here at the moment.
  */
-class Q_DECL_HIDDEN NoteStore: public INoteStore
+class Q_DECL_HIDDEN NoteStore final: public INoteStore
 {
     Q_OBJECT
 public:
-    explicit NoteStore(
-        const qevercloud::INoteStorePtr & pQecNoteStore,
-        QObject * parent = nullptr);
+    explicit NoteStore(QObject * parent = nullptr);
 
     virtual ~NoteStore() override;
 
     virtual INoteStore * create() const override;
+
+    virtual QString noteStoreUrl() const override;
+
+    virtual void setNoteStoreUrl(QString noteStoreUrl) override;
+
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) override;
 
     virtual void stop() override;
 
     virtual qint32 createNotebook(
         Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNotebook(
         Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createNote(
         Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNote(
         Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createTag(
         Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateTag(
         Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createSavedSearch(
         SavedSearch & savedSearch, ErrorString & errorDescription,
@@ -237,6 +242,9 @@ private:
     Q_DISABLE_COPY(NoteStore)
 
 private:
+    qevercloud::INoteStorePtr   m_pNoteStore;
+    QString     m_authenticationToken;
+
     struct RequestData
     {
         QString     m_guid;

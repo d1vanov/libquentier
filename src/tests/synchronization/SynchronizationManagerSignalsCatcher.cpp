@@ -22,8 +22,6 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 
-#include <quentier_private/synchronization/SyncStatePersistenceManager.h>
-
 #include <QtTest/QtTest>
 
 namespace quentier {
@@ -31,14 +29,14 @@ namespace quentier {
 SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
-        SyncStatePersistenceManager & syncStatePersistenceManager,
+        ISyncStateStorage & syncStateStorage,
         QObject * parent) :
     QObject(parent)
 {
     createConnections(
         localStorageManagerAsync,
         synchronizationManager,
-        syncStatePersistenceManager);
+        syncStateStorage);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
@@ -290,20 +288,15 @@ void SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsF
 }
 
 void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(
-    Account account, qint32 userOwnDataUpdateCount,
-    qevercloud::Timestamp userOwnDataSyncTime,
-    QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
-    QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid)
+    Account account, ISyncStateStorage::ISyncStatePtr syncState)
 {
     Q_UNUSED(account)
-    Q_UNUSED(userOwnDataSyncTime)
-    Q_UNUSED(linkedNotebookSyncTimesByLinkedNotebookGuid)
 
     PersistedSyncStateUpdateCounts data;
-    data.m_userOwnUpdateCount = userOwnDataUpdateCount;
+    data.m_userOwnUpdateCount = syncState->userDataUpdateCount();
 
     data.m_linkedNotebookUpdateCountsByLinkedNotebookGuid =
-        linkedNotebookUpdateCountsByLinkedNotebookGuid;
+        syncState->linkedNotebookUpdateCounts();
 
     m_persistedSyncStateUpdateCounts << data;
 }
@@ -329,7 +322,7 @@ void SynchronizationManagerSignalsCatcher::onNoteTagListChanged(
 void SynchronizationManagerSignalsCatcher::createConnections(
     LocalStorageManagerAsync & localStorageManagerAsync,
     SynchronizationManager & synchronizationManager,
-    SyncStatePersistenceManager & syncStatePersistenceManager)
+    ISyncStateStorage & syncStateStorage)
 {
     QObject::connect(
         &localStorageManagerAsync,
@@ -470,8 +463,8 @@ void SynchronizationManagerSignalsCatcher::createConnections(
         &SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsForSending);
 
     QObject::connect(
-        &syncStatePersistenceManager,
-        &SyncStatePersistenceManager::notifyPersistentSyncStateUpdated,
+        &syncStateStorage,
+        &ISyncStateStorage::notifySyncStateUpdated,
         this,
         &SynchronizationManagerSignalsCatcher::onSyncStatePersisted);
 }

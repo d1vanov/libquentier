@@ -22,10 +22,9 @@
 #include "RemoteToLocalSynchronizationManager.h"
 #include "SendLocalChangesManager.h"
 
-#include <quentier/synchronization/IAuthenticationManager.h>
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/Account.h>
-
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <boost/bimap.hpp>
 
@@ -38,21 +37,19 @@ QT_FORWARD_DECLARE_CLASS(QDebug)
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(INoteStore)
-QT_FORWARD_DECLARE_CLASS(IUserStore)
-QT_FORWARD_DECLARE_CLASS(SynchronizationManagerDependencyInjector)
-QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
-
-class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
+class Q_DECL_HIDDEN SynchronizationManagerPrivate final: public QObject
 {
     Q_OBJECT
 public:
     SynchronizationManagerPrivate(
-        const QString & host,
+        QString host,
         LocalStorageManagerAsync & localStorageManagerAsync,
         IAuthenticationManager & authenticationManager,
-        SynchronizationManagerDependencyInjector * pInjector,
-        QObject * parent);
+        QObject * parent,
+        INoteStorePtr pNoteStore,
+        IUserStorePtr pUserStore,
+        IKeychainServicePtr pKeychainService,
+        ISyncStateStoragePtr pSyncStateStorage);
 
     virtual ~SynchronizationManagerPrivate();
 
@@ -307,7 +304,8 @@ private:
 private:
     QString                                 m_host;
 
-    SyncStatePersistenceManager *           m_pSyncStatePersistenceManager;
+    ISyncStateStoragePtr                    m_pSyncStateStorage;
+
     qint32                                  m_previousUpdateCount = -1;
     qint32                                  m_lastUpdateCount = -1;
     qevercloud::Timestamp                   m_lastSyncTime = -1;
@@ -315,8 +313,8 @@ private:
     QHash<QString,qevercloud::Timestamp>    m_cachedLinkedNotebookLastSyncTimeByGuid;
     bool                                    m_onceReadLastSyncParams = false;
 
-    INoteStore *                            m_pNoteStore;
-    std::unique_ptr<IUserStore>             m_pUserStore;
+    INoteStorePtr                           m_pNoteStore;
+    IUserStorePtr                           m_pUserStore;
 
     AuthContext                             m_authContext = AuthContext::Blank;
 
@@ -344,7 +342,7 @@ private:
 
     int                                     m_authenticateToLinkedNotebooksPostponeTimerId = -1;
 
-    IKeychainService *                      m_pKeychainService;
+    IKeychainServicePtr                     m_pKeychainService;
 
     KeychainJobIdWithUserId                 m_readAuthTokenJobIdsWithUserIds;
     KeychainJobIdWithUserId                 m_readShardIdJobIdsWithUserIds;

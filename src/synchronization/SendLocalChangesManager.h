@@ -29,7 +29,7 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/utility/Macros.h>
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
 #include <QObject>
 
@@ -39,7 +39,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
-class Q_DECL_HIDDEN SendLocalChangesManager: public QObject
+class Q_DECL_HIDDEN SendLocalChangesManager final: public QObject
 {
     Q_OBJECT
 public:

@@ -19,10 +19,9 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_SIGNALS_CATCHER_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_SIGNALS_CATCHER_H
 
-#include <quentier/types/Account.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
-#include <quentier/utility/Macros.h>
 
 #include <QHash>
 #include <QObject>
@@ -32,7 +31,6 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManager)
-QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 class SynchronizationManagerSignalsCatcher: public QObject
 {
@@ -41,7 +39,7 @@ public:
     SynchronizationManagerSignalsCatcher(
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
-        SyncStatePersistenceManager & syncStatePersistenceManager,
+        ISyncStateStorage & syncStateStorage,
         QObject * parent = nullptr);
 
     bool receivedStartedSignal() const
@@ -315,10 +313,7 @@ private Q_SLOTS:
     void onPreparedLinkedNotebookDirtyObjectsForSending();
 
     void onSyncStatePersisted(
-        Account account, qint32 userOwnDataUpdateCount,
-        qevercloud::Timestamp userOwnDataSyncTime,
-        QHash<QString,qint32> linkedNotebookUpdateCountsByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> linkedNotebookSyncTimesByLinkedNotebookGuid);
+        Account account, ISyncStateStorage::ISyncStatePtr syncState);
 
     void onNoteMovedToAnotherNotebook(
         QString noteLocalUid, QString previousNotebookLocalUid,
@@ -332,7 +327,7 @@ private:
     void createConnections(
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
-        SyncStatePersistenceManager & syncStatePersistenceManager);
+        ISyncStateStorage & syncStateStorage);
 
     bool checkSyncChunkDownloadProgressOrderImpl(
         const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,

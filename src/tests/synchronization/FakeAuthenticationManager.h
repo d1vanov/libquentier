@@ -52,6 +52,8 @@ private:
     QList<QNetworkCookie>   m_userStoreCookies;
 };
 
+using FakeAuthenticationManagerPtr = std::shared_ptr<FakeAuthenticationManager>;
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_AUTHENTICATION_MANAGER_H

@@ -25,6 +25,7 @@
 #include "FakeUserStore.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Macros.h>
@@ -36,7 +37,6 @@
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
-QT_FORWARD_DECLARE_CLASS(SyncStatePersistenceManager)
 
 namespace test {
 
@@ -306,11 +306,13 @@ private:
 private:
     Account                         m_testAccount;
     LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
-    FakeNoteStore *                 m_pFakeNoteStore = nullptr;
-    FakeUserStore *                 m_pFakeUserStore = nullptr;
-    FakeAuthenticationManager *     m_pFakeAuthenticationManager = nullptr;
-    FakeKeychainService *           m_pFakeKeychainService = nullptr;
-    SyncStatePersistenceManager *   m_pSyncStatePersistenceManager = nullptr;
+
+    FakeNoteStorePtr                m_pFakeNoteStore;
+    FakeUserStorePtr                m_pFakeUserStore;
+    FakeAuthenticationManagerPtr    m_pFakeAuthenticationManager;
+    FakeKeychainServicePtr          m_pFakeKeychainService;
+    ISyncStateStoragePtr            m_pSyncStateStorage;
+
     SynchronizationManager *        m_pSynchronizationManager = nullptr;
     bool                            m_detectedTestFailure = false;
 

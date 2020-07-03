@@ -24,10 +24,12 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddHyperlinkUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN AddHyperlinkUndoCommand final: public INoteEditorUndoCommand
 {
     Q_OBJECT
+public:
     using Callback = NoteEditorPage::Callback;
+
 public:
     AddHyperlinkUndoCommand(
         NoteEditorPrivate & noteEditor, const Callback & callback,
