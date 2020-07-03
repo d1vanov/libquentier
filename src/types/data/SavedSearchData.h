@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SavedSearchData: public FavoritableDataElementData
+class Q_DECL_HIDDEN SavedSearchData final: public FavoritableDataElementData
 {
 public:
     SavedSearchData() = default;

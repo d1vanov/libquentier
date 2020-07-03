@@ -29,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(RenameResourceDialog)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RenameResourceDialog: public QDialog
+class Q_DECL_HIDDEN RenameResourceDialog final: public QDialog
 {
     Q_OBJECT
 public:

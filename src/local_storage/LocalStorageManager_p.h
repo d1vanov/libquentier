@@ -53,7 +53,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStoragePatchManager)
 QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
 
-class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
+class Q_DECL_HIDDEN LocalStorageManagerPrivate final: public QObject
 {
     Q_OBJECT
 public:

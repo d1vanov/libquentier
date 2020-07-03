@@ -44,7 +44,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
  * i.e. "not yet synchronized with Evernote" note and the remote note would be
  * treated as a new note coming from Evernote
  */
-class Q_DECL_HIDDEN NoteSyncConflictResolver: public QObject
+class Q_DECL_HIDDEN NoteSyncConflictResolver final: public QObject
 {
     Q_OBJECT
 public:

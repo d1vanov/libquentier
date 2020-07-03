@@ -44,7 +44,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LocalStorageCacheManagerPrivate: public Printable
+class Q_DECL_HIDDEN LocalStorageCacheManagerPrivate final: public Printable
 {
     Q_DECLARE_PUBLIC(LocalStorageCacheManager)
 public:

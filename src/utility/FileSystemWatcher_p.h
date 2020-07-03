@@ -34,7 +34,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileSystemWatcherPrivate: public QObject
+class Q_DECL_HIDDEN FileSystemWatcherPrivate final: public QObject
 {
     Q_OBJECT
 public:

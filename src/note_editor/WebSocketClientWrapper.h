@@ -24,7 +24,7 @@
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(WebSocketTransport)
 
-class Q_DECL_HIDDEN WebSocketClientWrapper: public QObject
+class Q_DECL_HIDDEN WebSocketClientWrapper final: public QObject
 {
     Q_OBJECT
 public:

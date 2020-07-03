@@ -36,7 +36,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN GenericResourceDisplayWidget: public QWidget
+class Q_DECL_HIDDEN GenericResourceDisplayWidget final: public QWidget
 {
     Q_OBJECT
 public:

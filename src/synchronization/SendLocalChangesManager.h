@@ -39,7 +39,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
-class Q_DECL_HIDDEN SendLocalChangesManager: public QObject
+class Q_DECL_HIDDEN SendLocalChangesManager final: public QObject
 {
     Q_OBJECT
 public:

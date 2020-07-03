@@ -36,7 +36,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteSyncCache: public QObject
+class Q_DECL_HIDDEN NoteSyncCache final: public QObject
 {
     Q_OBJECT
 public:

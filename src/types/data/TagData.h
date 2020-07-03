@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TagData : public FavoritableDataElementData
+class Q_DECL_HIDDEN TagData final: public FavoritableDataElementData
 {
 public:
     TagData() = default;

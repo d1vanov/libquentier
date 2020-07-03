@@ -34,7 +34,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN RemoveResourceDelegate: public QObject
+class Q_DECL_HIDDEN RemoveResourceDelegate final: public QObject
 {
     Q_OBJECT
 public:

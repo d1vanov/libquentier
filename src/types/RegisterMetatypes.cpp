@@ -37,7 +37,6 @@
 #include <QList>
 #include <QMetaType>
 #include <QNetworkCookie>
-#include <QSharedPointer>
 #include <QSqlError>
 #include <QVector>
 

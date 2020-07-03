@@ -46,7 +46,8 @@ QT_FORWARD_DECLARE_CLASS(Resource)
  * existence and actuality and also to make it possible to move all the resource
  * file IO into a separate thread.
  */
-class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager: public QObject
+class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager final:
+    public QObject
 {
     Q_OBJECT
 public:

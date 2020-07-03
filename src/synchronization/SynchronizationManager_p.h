@@ -37,7 +37,7 @@ QT_FORWARD_DECLARE_CLASS(QDebug)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SynchronizationManagerPrivate: public QObject
+class Q_DECL_HIDDEN SynchronizationManagerPrivate final: public QObject
 {
     Q_OBJECT
 public:

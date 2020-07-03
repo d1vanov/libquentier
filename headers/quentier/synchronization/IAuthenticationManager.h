@@ -32,8 +32,6 @@
 #include <QObject>
 #include <QVector>
 
-#include <memory>
-
 namespace quentier {
 
 class QUENTIER_EXPORT IAuthenticationManager: public QObject

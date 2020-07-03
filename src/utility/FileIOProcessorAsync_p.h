@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate: public QObject
+class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate final: public QObject
 {
     Q_OBJECT
 public:

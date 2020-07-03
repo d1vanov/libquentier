@@ -26,7 +26,8 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteSearchQueryData: public QSharedData, public Printable
+class Q_DECL_HIDDEN NoteSearchQueryData final:
+    public QSharedData, public Printable
 {
 public:
     NoteSearchQueryData();

@@ -53,7 +53,9 @@
 
 namespace quentier {
 
-class SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController:
+////////////////////////////////////////////////////////////////////////////////
+
+class SynchronizationManagerPrivate::RemoteToLocalSynchronizationManagerController final:
     public RemoteToLocalSynchronizationManager::IManager
 {
 public:
@@ -72,7 +74,9 @@ private:
     SynchronizationManagerPrivate &     m_syncManager;
 };
 
-class SynchronizationManagerPrivate::SendLocalChangesManagerController:
+////////////////////////////////////////////////////////////////////////////////
+
+class SynchronizationManagerPrivate::SendLocalChangesManagerController final:
     public SendLocalChangesManager::IManager
 {
 public:
@@ -89,6 +93,8 @@ private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
     SynchronizationManagerPrivate &     m_syncManager;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 SynchronizationManagerPrivate::SynchronizationManagerPrivate(
         QString host,

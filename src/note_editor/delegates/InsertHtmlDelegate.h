@@ -42,7 +42,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
-class Q_DECL_HIDDEN InsertHtmlDelegate: public QObject
+class Q_DECL_HIDDEN InsertHtmlDelegate final: public QObject
 {
     Q_OBJECT
 public:

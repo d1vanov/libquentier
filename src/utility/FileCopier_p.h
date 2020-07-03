@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileCopierPrivate: public QObject
+class Q_DECL_HIDDEN FileCopierPrivate final: public QObject
 {
     Q_OBJECT
 public:

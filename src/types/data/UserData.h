@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN UserData: public QSharedData
+class Q_DECL_HIDDEN UserData final: public QSharedData
 {
 public:
     UserData() = default;

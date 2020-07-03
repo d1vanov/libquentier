@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TagSyncCache: public QObject
+class Q_DECL_HIDDEN TagSyncCache final: public QObject
 {
     Q_OBJECT
 public:

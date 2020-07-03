@@ -54,7 +54,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
 
-class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager: public QObject
+class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager final: public QObject
 {
     Q_OBJECT
 public:

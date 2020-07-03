@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
  * The conflict resolution might involve changes in other notebooks, seemingly
  * unrelated to the currently conflicting ones
  */
-class Q_DECL_HIDDEN NotebookSyncConflictResolver: public QObject
+class Q_DECL_HIDDEN NotebookSyncConflictResolver final: public QObject
 {
     Q_OBJECT
 public:

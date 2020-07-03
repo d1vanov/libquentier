@@ -41,7 +41,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 
-class Q_DECL_HIDDEN SpellCheckerPrivate: public QObject
+class Q_DECL_HIDDEN SpellCheckerPrivate final: public QObject
 {
     Q_OBJECT
 public:

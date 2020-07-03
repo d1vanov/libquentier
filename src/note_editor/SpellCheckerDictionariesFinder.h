@@ -32,7 +32,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SpellCheckerDictionariesFinder:
+class Q_DECL_HIDDEN SpellCheckerDictionariesFinder final:
     public QObject, public QRunnable
 {
     Q_OBJECT

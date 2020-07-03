@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN ShouldSkipElementResult: public Printable
+class Q_DECL_HIDDEN ShouldSkipElementResult final: public Printable
 {
 public:
     enum type
@@ -53,7 +53,7 @@ public:
     virtual QTextStream & print(QTextStream & strm) const override;
 };
 
-class Q_DECL_HIDDEN ENMLConverterPrivate: public QObject
+class Q_DECL_HIDDEN ENMLConverterPrivate final: public QObject
 {
     Q_OBJECT
 public:

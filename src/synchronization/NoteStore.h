@@ -56,7 +56,7 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * in QEverCloud's NoteStore so only the small subset of original NoteStore's
  * API is wrapped here at the moment.
  */
-class Q_DECL_HIDDEN NoteStore: public INoteStore
+class Q_DECL_HIDDEN NoteStore final: public INoteStore
 {
     Q_OBJECT
 public:

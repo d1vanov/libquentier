@@ -24,10 +24,12 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ReplaceAllUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ReplaceAllUndoCommand final: public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     ReplaceAllUndoCommand(
         const QString & textToReplace, const bool matchCase,

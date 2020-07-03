@@ -117,7 +117,7 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LinkedNotebookAuthData: public Printable
+class Q_DECL_HIDDEN LinkedNotebookAuthData final: public Printable
 {
 public:
     LinkedNotebookAuthData();
