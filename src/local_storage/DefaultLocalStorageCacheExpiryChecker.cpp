@@ -82,18 +82,18 @@ QTextStream & DefaultLocalStorageCacheExpiryChecker::print(
 {
     const char * indent = "  ";
 
-    strm << "DefaultLocalStorageCacheExpiryChecker: {\n";
-    strm << indent << "max notes to store: "
-         << MAX_NOTES_TO_STORE << ";\n";
-    strm << indent << "max notebooks to store: "
-         << MAX_NOTEBOOKS_TO_STORE << ";\n";
-    strm << indent << "max tags to store: "
-         << MAX_TAGS_TO_STORE << ";\n";
-    strm << indent << "max linked notebooks to store: "
-         << MAX_LINKED_NOTEBOOKS_TO_STORE << ";\n";
-    strm << indent << "max saved searches to store: "
-         << MAX_SAVED_SEARCHES_TO_STORE << "\n";
-    strm << "};\n";
+    strm << "DefaultLocalStorageCacheExpiryChecker: {\n"
+        << indent << "max notes to store: "
+        << MAX_NOTES_TO_STORE << ";\n"
+        << indent << "max notebooks to store: "
+        << MAX_NOTEBOOKS_TO_STORE << ";\n"
+        << indent << "max tags to store: "
+        << MAX_TAGS_TO_STORE << ";\n"
+        << indent << "max linked notebooks to store: "
+        << MAX_LINKED_NOTEBOOKS_TO_STORE << ";\n"
+        << indent << "max saved searches to store: "
+        << MAX_SAVED_SEARCHES_TO_STORE << "\n"
+        << "};\n";
 
     return strm;
 }

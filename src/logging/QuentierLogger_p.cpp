@@ -40,12 +40,8 @@ QuentierFileLogWriter::QuentierFileLogWriter(
         const MaxOldLogFilesCount & maxOldLogFilesCount,
         QObject * parent) :
     IQuentierLogWriter(parent),
-    m_logFile(),
-    m_pStream(),
     m_maxSizeBytes(maxSizeBytes.size()),
-    m_maxOldLogFilesCount(maxOldLogFilesCount.count()),
-    m_currentLogFileSize(0),
-    m_currentOldLogFilesCount(0)
+    m_maxOldLogFilesCount(maxOldLogFilesCount.count())
 {
     QString logFileDirPath = QuentierLogger::logFilesDirPath();
 
@@ -69,6 +65,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(
     bool opened = m_logFile.open(
         QIODevice::WriteOnly | QIODevice::Append |
         QIODevice::Unbuffered | QIODevice::Text);
+
     if (Q_UNLIKELY(!opened))
     {
         ErrorString error(
@@ -120,7 +117,7 @@ void QuentierFileLogWriter::write(QString message)
         rotate();
     }
 
-    if (Q_UNLIKELY(m_pStream.isNull())) {
+    if (Q_UNLIKELY(!m_pStream)) {
         m_pStream.reset(new QTextStream);
         m_pStream->setDevice(&m_logFile);
         m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
@@ -173,7 +170,7 @@ void QuentierFileLogWriter::rotate()
 {
     QString logFileDirPath = QFileInfo(m_logFile).absolutePath();
 
-    // 1) Rename all the existing old log files
+    // 1) Rename all existing old log files
     for(int i = m_currentOldLogFilesCount; i >= 1; --i)
     {
         const QString previousLogFilePath =
@@ -311,7 +308,7 @@ QuentierLogger::QuentierLogger(QObject * parent) :
         addLogWriter(
             new QuentierFileLogWriter(
                 MaxSizeBytes(104857600),
-                MaxOldLogFilesCount(2)));
+                MaxOldLogFilesCount(5)));
     }
 }
 

@@ -43,6 +43,7 @@ void QUENTIER_EXPORT QuentierInitializeLogging();
 void QUENTIER_EXPORT QuentierAddLogEntry(
     const QString & sourceFileName,
     const int sourceFileLineNumber,
+    const QString & component,
     const QString & message,
     const LogLevel logLevel);
 
@@ -60,43 +61,41 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 
 } // namespace quentier
 
-#define __QNLOG_QDEBUG_HELPER()                                                \
-    dbg.nospace();                                                             \
-    dbg.noquote()                                                              \
-// __QNLOG_QDEBUG_HELPER
-
-#define __QNLOG_BASE(message, level)                                           \
+#define __QNLOG_BASE(component, message, level)                                \
     if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level))         \
     {                                                                          \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
-        __QNLOG_QDEBUG_HELPER();                                               \
+        dbg.nospace();                                                         \
+        dbg.noquote();                                                         \
         dbg << message;                                                        \
         quentier::QuentierAddLogEntry(                                         \
             QStringLiteral(__FILE__),                                          \
-            __LINE__, msg,                                                     \
+            __LINE__,                                                          \
+            component,                                                         \
+            msg,                                                               \
             quentier::LogLevel::level);                                        \
     }                                                                          \
 // __QNLOG_BASE
 
-#define QNTRACE(message)                                                       \
-    __QNLOG_BASE(message, Trace)                                               \
+#define QNTRACE(component, message)                                            \
+    __QNLOG_BASE(component, message, Trace)                                    \
 // QNTRACE
 
-#define QNDEBUG(message)                                                       \
-    __QNLOG_BASE(message, Debug)                                               \
+#define QNDEBUG(component, message)                                            \
+    __QNLOG_BASE(component, message, Debug)                                    \
 // QNDEBUG
 
-#define QNINFO(message)                                                        \
-    __QNLOG_BASE(message, Info)                                                \
+#define QNINFO(component, message)                                             \
+    __QNLOG_BASE(component, message, Info)                                     \
 // QNINFO
 
-#define QNWARNING(message)                                                     \
-    __QNLOG_BASE(message, Warning)                                             \
+#define QNWARNING(component, message)                                          \
+    __QNLOG_BASE(component, message, Warning)                                  \
 // QNWARNING
 
-#define QNERROR(message)                                                       \
-    __QNLOG_BASE(message, Error)                                               \
+#define QNERROR(component, message)                                            \
+    __QNLOG_BASE(component, message, Error)                                    \
 // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \

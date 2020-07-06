@@ -75,6 +75,7 @@ public:
         QuentierAddLogEntry(
             QString::fromUtf8(fileName),
             static_cast<int>(lineNumber),
+            QLatin1String(component),
             message,
             QEverCloudLogLevelToQuentierLogLevel(level));
     }
@@ -120,7 +121,7 @@ void QuentierInitializeLogging()
 
 void QuentierAddLogEntry(
     const QString & sourceFileName, const int sourceFileLineNumber,
-    const QString & message, const LogLevel logLevel)
+    const QString & component, const QString & message, const LogLevel logLevel)
 {
     QString relativeSourceFileName = sourceFileName;
 
@@ -158,26 +159,30 @@ void QuentierAddLogEntry(
     switch(logLevel)
     {
     case LogLevel::Trace:
-        logEntry += QStringLiteral("Trace]: ");
+        logEntry += QStringLiteral("Trace]");
         break;
     case LogLevel::Debug:
-        logEntry += QStringLiteral("Debug]: ");
+        logEntry += QStringLiteral("Debug]");
         break;
     case LogLevel::Info:
-        logEntry += QStringLiteral("Info]: ");
+        logEntry += QStringLiteral("Info]");
         break;
     case LogLevel::Warning:
-        logEntry += QStringLiteral("Warn]: ");
+        logEntry += QStringLiteral("Warn]");
         break;
     case LogLevel::Error:
-        logEntry += QStringLiteral("Error]: ");
+        logEntry += QStringLiteral("Error]");
         break;
     default:
         logEntry += QStringLiteral("Unknown log level: ") +
             QString::number(static_cast<qint64>(logLevel)) +
-            QStringLiteral("]: ");
+            QStringLiteral("]");
         break;
     }
+
+    logEntry += QStringLiteral(" [");
+    logEntry += component;
+    logEntry += QStringLiteral("]: ");
 
     logEntry += message;
 
