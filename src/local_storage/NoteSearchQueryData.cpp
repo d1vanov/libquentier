@@ -1202,7 +1202,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(
                                             "Datetime processed from query "
                                             "string is invalid"));
             error.details() = dateTimeString;
-            QNWARNING(error);
+            QNWARNING("local_storage", error);
             return false;
         }
 
@@ -1218,7 +1218,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(
                                         "Invalid query string: cannot parse "
                                         "datetime value"));
         error.details() = dateTimeString;
-        QNDEBUG(error);
+        QNDEBUG("local_storage", error);
         return false;
     }
 

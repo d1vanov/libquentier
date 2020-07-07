@@ -45,7 +45,7 @@ LocalStoragePatchManager::patchesForCurrentVersion()
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
     if (version <= 0) {
-        QNWARNING("LocalStoragePatchManager::"
+        QNWARNING("local_storage", "LocalStoragePatchManager::"
             << "patchInfoForCurrentLocalStorageVersion: "
             << "unable to determine the current local storage version");
         return result;

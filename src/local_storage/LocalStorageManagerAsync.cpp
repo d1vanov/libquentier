@@ -206,8 +206,11 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getUserCountFailed(error, requestId);
     }
 }
@@ -268,8 +271,11 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addUserFailed(user, error, requestId);
     }
 }
@@ -298,9 +304,13 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
         ErrorString error(
             QT_TR_NOOP("Can't update user within the local "
                        "storage: caught exception"));
+
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateUserFailed(user, error, requestId);
     }
 }
@@ -328,8 +338,11 @@ void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findUserFailed(user, error, requestId);
     }
 }
@@ -355,9 +368,13 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
         ErrorString error(
             QT_TR_NOOP("Can't mark user as deleted in the local "
                        "storage: caught exception"));
+
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT deleteUserFailed(user, error, requestId);
     }
 }
@@ -388,8 +405,11 @@ void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeUserFailed(user, error, requestId);
     }
 }
@@ -416,8 +436,11 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getNotebookCountFailed(error, requestId);
     }
 }
@@ -453,8 +476,11 @@ void LocalStorageManagerAsync::onAddNotebookRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addNotebookFailed(notebook, error, requestId);
     }
 }
@@ -490,8 +516,11 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateNotebookFailed(notebook, error, requestId);
     }
 }
@@ -564,9 +593,13 @@ void LocalStorageManagerAsync::onFindNotebookRequest(
         ErrorString error(
             QT_TR_NOOP("Can't find notebook within the local storage: "
                        "caught exception"));
+
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findNotebookFailed(notebook, error, requestId);
     }
 }
@@ -602,8 +635,11 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findDefaultNotebookFailed(notebook, error, requestId);
     }
 }
@@ -639,8 +675,11 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findLastUsedNotebookFailed(notebook, error, requestId);
     }
 }
@@ -676,8 +715,11 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(
                        "within the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findDefaultOrLastUsedNotebookFailed(notebook, error, requestId);
     }
 }
@@ -737,8 +779,10 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listAllNotebooksFailed(
             limit,
@@ -774,8 +818,11 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT listAllSharedNotebooksFailed(error, requestId);
     }
 }
@@ -839,8 +886,10 @@ void LocalStorageManagerAsync::onListNotebooksRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotebooksFailed(
             flag,
@@ -888,8 +937,10 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
                        "from the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listSharedNotebooksPerNotebookGuidFailed(
             notebookGuid,
@@ -929,8 +980,11 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeNotebookFailed(notebook, error, requestId);
     }
 }
@@ -958,8 +1012,11 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getLinkedNotebookCountFailed(error, requestId);
     }
 }
@@ -999,8 +1056,11 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
@@ -1040,8 +1100,11 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
@@ -1092,8 +1155,11 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
@@ -1151,8 +1217,10 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listAllLinkedNotebooksFailed(
             limit,
@@ -1221,8 +1289,10 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listLinkedNotebooksFailed(
             flag,
@@ -1271,8 +1341,11 @@ void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeLinkedNotebookFailed(linkedNotebook, error, requestId);
     }
 }
@@ -1303,8 +1376,11 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getNoteCountFailed(error, options, requestId);
     }
 }
@@ -1347,8 +1423,10 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT getNoteCountPerNotebookFailed(
             error,
@@ -1395,8 +1473,11 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getNoteCountPerTagFailed(error, tag, options, requestId);
     }
 }
@@ -1438,8 +1519,11 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getNoteCountsPerAllTagsFailed(error, options, requestId);
     }
 }
@@ -1485,8 +1569,10 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
                        "tags from the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT getNoteCountPerNotebooksAndTagsFailed(
             error,
@@ -1535,8 +1621,11 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addNoteFailed(note, error, requestId);
     }
 }
@@ -1708,7 +1797,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
             if (notebookChanged)
             {
-                QNDEBUG("Notebook change detected for note "
+                QNDEBUG("local_storage", "Notebook change detected for note "
                     << note.localUid() << ": moved from notebook "
                     << previousNoteVersion.notebookLocalUid()
                     << " to notebook " << note.notebookLocalUid());
@@ -1743,7 +1832,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
             if (tagListUpdated)
             {
-                QNDEBUG("Tags list update detected for note "
+                QNDEBUG("local_storage", "Tags list update detected for note "
                     << note.localUid() << ": previous tag local uids: "
                     << previousTagLocalUids.join(QStringLiteral(", "))
                     << "; updated tag local uids: "
@@ -1763,8 +1852,11 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateNoteFailed(note, options, error, requestId);
     }
 }
@@ -1898,8 +1990,11 @@ void LocalStorageManagerAsync::onFindNoteRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findNoteFailed(note, options, error, requestId);
     }
 }
@@ -1961,8 +2056,10 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotesPerNotebookFailed(
             notebook,
@@ -2033,8 +2130,10 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotesPerTagFailed(
             tag,
@@ -2109,8 +2208,10 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
                        "from the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotesPerNotebooksAndTagsFailed(
             notebookLocalUids,
@@ -2182,8 +2283,10 @@ void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotesByLocalUidsFailed(
             noteLocalUids,
@@ -2255,8 +2358,10 @@ void LocalStorageManagerAsync::onListNotesRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listNotesFailed(
             flag,
@@ -2305,8 +2410,10 @@ void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(
                        "within the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT findNoteLocalUidsWithSearchQueryFailed(
             noteSearchQuery,
@@ -2351,8 +2458,11 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeNoteFailed(note, error, requestId);
     }
 }
@@ -2379,8 +2489,11 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getTagCountFailed(error, requestId);
     }
 }
@@ -2412,8 +2525,11 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addTagFailed(tag, error, requestId);
     }
 }
@@ -2445,8 +2561,11 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateTagFailed(tag, error, requestId);
     }
 }
@@ -2513,8 +2632,11 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findTagFailed(tag, error, requestId);
     }
 }
@@ -2578,8 +2700,10 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listAllTagsPerNoteFailed(
             note,
@@ -2648,8 +2772,10 @@ void LocalStorageManagerAsync::onListAllTagsRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listAllTagsFailed(
             limit,
@@ -2719,8 +2845,10 @@ void LocalStorageManagerAsync::onListTagsRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listTagsFailed(
             flag,
@@ -2794,8 +2922,10 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listTagsWithNoteLocalUidsFailed(
             flag,
@@ -2849,8 +2979,11 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeTagFailed(tag, error, requestId);
     }
 }
@@ -2889,8 +3022,11 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(error, requestId);
     }
 }
@@ -2917,8 +3053,11 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getResourceCountFailed(error, requestId);
     }
 }
@@ -2954,8 +3093,11 @@ void LocalStorageManagerAsync::onAddResourceRequest(
                        "caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addResourceFailed(resource, error, requestId);
     }
 }
@@ -2991,8 +3133,11 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateResourceFailed(resource, error, requestId);
     }
 }
@@ -3065,8 +3210,11 @@ void LocalStorageManagerAsync::onFindResourceRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findResourceFailed(resource, options, error, requestId);
     }
 }
@@ -3102,8 +3250,11 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeResourceFailed(resource, error, requestId);
     }
 }
@@ -3131,8 +3282,11 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT getSavedSearchCountFailed(error, requestId);
     }
 }
@@ -3168,8 +3322,11 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT addSavedSearchFailed(search, error, requestId);
     }
 }
@@ -3205,8 +3362,11 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT updateSavedSearchFailed(search, error, requestId);
     }
 }
@@ -3275,8 +3435,11 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(
                        "storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT findSavedSearchFailed(search, error, requestId);
     }
 }
@@ -3333,8 +3496,10 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listAllSavedSearchesFailed(
             limit,
@@ -3403,8 +3568,10 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
 
         Q_EMIT listSavedSearchesFailed(
             flag,
@@ -3452,8 +3619,11 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT expungeSavedSearchFailed(search, error, requestId);
     }
 }
@@ -3492,8 +3662,11 @@ void LocalStorageManagerAsync::onAccountHighUsnRequest(
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
+
         SysInfo sysInfo;
-        QNERROR(error << "; backtrace: " << sysInfo.stackTrace());
+        QNERROR("local_storage", error << "; backtrace: "
+            << sysInfo.stackTrace());
+
         Q_EMIT accountHighUsnFailed(linkedNotebookGuid, error, requestId);
     }
 }
