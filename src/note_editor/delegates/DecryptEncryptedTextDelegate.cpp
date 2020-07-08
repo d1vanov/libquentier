@@ -37,7 +37,7 @@ namespace quentier {
 
 #define CHECK_NOTE_EDITOR()                                                    \
     if (Q_UNLIKELY(m_pNoteEditor.isNull())) {                                  \
-        QNDEBUG("Note editor is null");                                        \
+        QNDEBUG("note_editor:delegate", "Note editor is null");                \
         return;                                                                \
     }                                                                          \
 // CHECK_NOTE_EDITOR
@@ -50,7 +50,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate",                  \
                               "Can't decrypt the encrypted text: "             \
                               "no account is set to the note editor"));        \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -65,7 +65,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("DecryptEncryptedTextDelegate",                  \
                               "Can't decrypt the encrypted text: "             \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -103,7 +103,7 @@ DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
 
 void DecryptEncryptedTextDelegate::start()
 {
-    QNDEBUG("DecryptEncryptedTextDelegate::start");
+    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate::start");
 
     CHECK_NOTE_EDITOR()
 
@@ -113,7 +113,7 @@ void DecryptEncryptedTextDelegate::start()
             QT_TR_NOOP("Can't decrypt the encrypted text: "
                        "can't convert the encryption key "
                        "length from string to number"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -136,7 +136,8 @@ void DecryptEncryptedTextDelegate::start()
 
 void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     CHECK_NOTE_EDITOR()
 
@@ -153,7 +154,8 @@ void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(Note note)
 
 void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 {
-    QNDEBUG("DecryptEncryptedTextDelegate::raiseDecryptionDialog");
+    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate"
+        << "::raiseDecryptionDialog");
 
     CHECK_ACCOUNT()
 
@@ -179,7 +181,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
         this,
         &DecryptEncryptedTextDelegate::onEncryptedTextDecrypted);
 
-    QNTRACE("Will exec decryption dialog now");
+    QNTRACE("note_editor:delegate", "Will exec decryption dialog now");
     int res = pDecryptionDialog->exec();
     if (res == QDialog::Rejected) {
         Q_EMIT cancelled();
@@ -192,8 +194,8 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
     QString passphrase, QString decryptedText, bool rememberForSession,
     bool decryptPermanently)
 {
-    QNDEBUG("DecryptEncryptedTextDelegate::onEncryptedTextDecrypted: "
-        << "encrypted text = " << encryptedText
+    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate"
+        << "::onEncryptedTextDecrypted: encrypted text = " << encryptedText
         << ", remember for session = "
         << (rememberForSession ? "true" : "false")
         << ", decrypt permanently = "
@@ -240,8 +242,8 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
 void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
     const QVariant & data)
 {
-    QNDEBUG("DecryptEncryptedTextDelegate::onDecryptionScriptFinished: "
-        << data);
+    QNDEBUG("note_editor:delegate", "DecryptEncryptedTextDelegate"
+        << "::onDecryptionScriptFinished: " << data);
 
     auto resultMap = data.toMap();
 
@@ -251,7 +253,7 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of text decryption "
                        "script from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -274,7 +276,7 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }

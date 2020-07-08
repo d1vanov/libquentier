@@ -40,7 +40,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("ImageResourceRotationDelegate",                 \
                               "Can't rotate the image attachment: "            \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -62,7 +62,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
 
 void ImageResourceRotationDelegate::start()
 {
-    QNDEBUG("ImageResourceRotationDelegate::start");
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -82,7 +82,8 @@ void ImageResourceRotationDelegate::start()
 
 void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("ImageResourceRotationDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -97,14 +98,15 @@ void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(Note note)
 
 void ImageResourceRotationDelegate::rotateImageResource()
 {
-    QNDEBUG("ImageResourceRotationDelegate::rotateImageResource");
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate"
+        << "::rotateImageResource");
 
     ErrorString error(QT_TR_NOOP("Can't rotate the image attachment"));
 
     m_pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!m_pNote)) {
         error.appendBase(QT_TR_NOOP("No note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -123,7 +125,8 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
         if (Q_UNLIKELY(!resource.hasMime())) {
             error.appendBase(QT_TR_NOOP("The mime type is missing"));
-            QNWARNING(error << ", resource: " << resource);
+            QNWARNING("note_editor:delegate", error << ", resource: "
+                << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -133,7 +136,8 @@ void ImageResourceRotationDelegate::rotateImageResource()
             error.appendBase(
                 QT_TR_NOOP("The mime type indicates the attachment "
                            "is not an image"));
-            QNWARNING(error << ", resource: " << resource);
+            QNWARNING("note_editor:delegate", error << ", resource: "
+                << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -146,7 +150,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
     {
         error.appendBase(
             QT_TR_NOOP("Can't find the attachment within the note"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -154,7 +158,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
     m_rotatedResource = qAsConst(resources)[targetResourceIndex];
     if (Q_UNLIKELY(!m_rotatedResource.hasDataBody())) {
         error.appendBase(QT_TR_NOOP("The data body is missing"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -177,7 +181,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
     {
         error.appendBase(
             QT_TR_NOOP("Can't load the resource data as an image"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -211,7 +215,8 @@ void ImageResourceRotationDelegate::rotateImageResource()
 
     int height = resourceImage.height();
     int width = resourceImage.width();
-    QNTRACE("Rotated resource's height = " << height << ", width = " << width);
+    QNTRACE("note_editor:delegate", "Rotated resource's height = " << height
+        << ", width = " << width);
 
     if ((height > 0) && (height <= std::numeric_limits<qint16>::max()) &&
         (width > 0) && (width <= std::numeric_limits<qint16>::max()))
@@ -261,7 +266,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         return;
     }
 
-    QNDEBUG("ImageResourceRotationDelegate::"
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate::"
         << "onResourceDataSavedToTemporaryFile: hash = "
         << dataHash.toHex() << ", error description = "
         << errorDescription);
@@ -274,7 +279,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -286,7 +291,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
             QT_TR_NOOP("Can't rotate the image attachment: "
                        "note was changed during the processing "
                        "of image rotation"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -324,12 +329,12 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         errorDescription.details() += QString::number(
             rotatedImageResourceFile.error());
 
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
 
-    QNTRACE("Created a link to the original file ("
+    QNTRACE("note_editor:delegate", "Created a link to the original file ("
         << QDir::toNativeSeparators(fileStoragePath)
         << "): " << QDir::toNativeSeparators(linkFilePath));
 
@@ -345,7 +350,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
             QT_TR_NOOP("Can't rotate the image attachment: "
                        "can't find path to the attachment "
                        "file before the rotation"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -381,13 +386,13 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
                 // NOTE: there appears to be a bug in Qt for Windows,
                 // QFile::remove returns false for any *.lnk files even though
                 // the files are actually getting removed
-                QNDEBUG("Skipping the reported failure at removing the .lnk "
-                    << "file");
+                QNDEBUG("note_editor:delegate", "Skipping the reported failure "
+                    << "at removing the .lnk file");
             }
             else {
 #endif
 
-            QNWARNING("Can't remove stale resource file "
+            QNWARNING("note_editor:delegate", "Can't remove stale resource file "
                 << m_resourceFileStoragePathBefore);
 
 #ifdef Q_OS_WIN
@@ -414,7 +419,8 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
 void ImageResourceRotationDelegate::onResourceTagHashUpdated(
     const QVariant & data)
 {
-    QNDEBUG("ImageResourceRotationDelegate::onResourceTagHashUpdated");
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate"
+        << "::onResourceTagHashUpdated");
 
     Q_UNUSED(data)
 
@@ -443,7 +449,8 @@ void ImageResourceRotationDelegate::onResourceTagHashUpdated(
 void ImageResourceRotationDelegate::onResourceTagSrcUpdated(
     const QVariant & data)
 {
-    QNDEBUG("ImageResourceRotationDelegate::onResourceTagSrcUpdated");
+    QNDEBUG("note_editor:delegate", "ImageResourceRotationDelegate"
+        << "::onResourceTagSrcUpdated");
 
     Q_UNUSED(data)
 
