@@ -32,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("DecryptUndoCommand",                            \
                               "Can't undo/redo the encrypted text "            \
                               "decryption: no note editor page"));             \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -67,7 +67,7 @@ DecryptUndoCommand::~DecryptUndoCommand()
 
 void DecryptUndoCommand::redoImpl()
 {
-    QNDEBUG("DecryptUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "DecryptUndoCommand::redoImpl");
 
     GET_PAGE()
 
@@ -89,7 +89,7 @@ void DecryptUndoCommand::redoImpl()
 
 void DecryptUndoCommand::undoImpl()
 {
-    QNDEBUG("DecryptUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "DecryptUndoCommand::undoImpl");
 
     GET_PAGE()
 

@@ -3979,6 +3979,7 @@ void NoteEditorPrivate::pushNoteContentEditUndoCommand()
     QNDEBUG("NoteEditorPrivate::pushNoteTextEditUndoCommand");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         m_pUndoStack,
         QStringLiteral("Undo stack for note editor wasn't initialized"));
 
@@ -6124,6 +6125,7 @@ void NoteEditorPrivate::setupSpellChecker()
     QNDEBUG("NoteEditorPrivate::setupSpellChecker");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         m_pSpellChecker,
         QStringLiteral("no spell checker was passed to note editor"));
 
@@ -8410,6 +8412,7 @@ void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
     QNDEBUG("NoteEditorPrivate::setUndoStack");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         pUndoStack,
         QStringLiteral("null undo stack passed to note editor"));
 

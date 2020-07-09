@@ -17,10 +17,11 @@
  */
 
 #include "SpellCheckIgnoreWordUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
-#include <quentier/note_editor/SpellChecker.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/note_editor/SpellChecker.h>
 
 namespace quentier {
 
@@ -48,10 +49,10 @@ SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand()
 
 void SpellCheckIgnoreWordUndoCommand::redoImpl()
 {
-    QNDEBUG("SpellCheckIgnoreWordUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "SpellCheckIgnoreWordUndoCommand::redoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE("No spell checker");
+        QNTRACE("note_editor:undo", "No spell checker");
         return;
     }
 
@@ -65,10 +66,10 @@ void SpellCheckIgnoreWordUndoCommand::redoImpl()
 
 void SpellCheckIgnoreWordUndoCommand::undoImpl()
 {
-    QNDEBUG("SpellCheckIgnoreWordUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "SpellCheckIgnoreWordUndoCommand::undoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE("No spell checker");
+        QNTRACE("note_editor:undo", "No spell checker");
         return;
     }
 

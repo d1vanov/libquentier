@@ -17,6 +17,7 @@
  */
 
 #include "TableActionUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("TableActionUndoCommand",                        \
                               "Can't table action: can't get "                 \
                               "note editor page"));                            \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +59,7 @@ TableActionUndoCommand::~TableActionUndoCommand()
 
 void TableActionUndoCommand::redoImpl()
 {
-    QNDEBUG("TableActionUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "TableActionUndoCommand::redoImpl");
 
     GET_PAGE()
 
@@ -68,7 +69,7 @@ void TableActionUndoCommand::redoImpl()
 
 void TableActionUndoCommand::undoImpl()
 {
-    QNDEBUG("TableActionUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "TableActionUndoCommand::undoImpl");
 
     GET_PAGE()
 

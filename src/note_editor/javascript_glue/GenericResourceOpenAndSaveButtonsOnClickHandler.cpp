@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,16 +30,18 @@ GenericResourceOpenAndSaveButtonsOnClickHandler::GenericResourceOpenAndSaveButto
 void GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed(
     const QString & resourceHash)
 {
-    QNDEBUG("GenericResourceOpenAndSaveButtonsOnClickHandler::"
-            << "onOpenResourceButtonPressed: " << resourceHash);
+    QNDEBUG("note_editor:js_glue", "GenericResourceOpenAndSaveButtonsOnClickHandler"
+        << "::onOpenResourceButtonPressed: " << resourceHash);
+
     Q_EMIT openResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed(
     const QString & resourceHash)
 {
-    QNDEBUG("GenericResourceOpenAndSaveButtonsOnClickHandler::"
-            << "onSaveResourceButtonPressed: " << resourceHash);
+    QNDEBUG("note_editor:js_glue", "GenericResourceOpenAndSaveButtonsOnClickHandler"
+        << "::onSaveResourceButtonPressed: " << resourceHash);
+
     Q_EMIT saveResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,17 +31,19 @@ GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
     QByteArray resourceHash)
 {
-    QNDEBUG("GenericResourceImageJavaScriptHandler::"
-            << "findGenericResourceImage: resource hash = "
-            << resourceHash);
+    QNDEBUG("note_editor:js_glue", "GenericResourceImageJavaScriptHandler"
+        << "::findGenericResourceImage: resource hash = "
+        << resourceHash);
 
     auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
-        QNTRACE("Found generic resouce image, path is " << it.value());
+        QNTRACE("note_editor:js_glue", "Found generic resouce image, path is "
+            << it.value());
         Q_EMIT genericResourceImageFound(resourceHash, it.value());
     }
     else {
-        QNINFO("Can't find generic resource image for hash " << resourceHash);
+        QNINFO("note_editor:js_glue", "Can't find generic resource image for "
+            << "hash " << resourceHash);
     }
 }
 

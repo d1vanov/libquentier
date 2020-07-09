@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,8 +25,8 @@ EnCryptElementOnClickHandler::EnCryptElementOnClickHandler(QObject * parent) :
 {}
 
 void EnCryptElementOnClickHandler::onEnCryptElementClicked(
-    QString encryptedText, QString cipher,
-    QString length, QString hint, QString enCryptIndex)
+    QString encryptedText, QString cipher, QString length, QString hint,
+    QString enCryptIndex)
 {
     Q_EMIT decrypt(encryptedText, cipher, length, hint, enCryptIndex, nullptr);
 }

@@ -35,7 +35,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     m_parent(&parent),
     m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
 {
-    QUENTIER_CHECK_PTR(m_parent);
+    QUENTIER_CHECK_PTR("note_editor", m_parent);
 
     QObject::connect(
         this,

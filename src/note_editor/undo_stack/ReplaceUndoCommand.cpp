@@ -17,6 +17,7 @@
  */
 
 #include "ReplaceUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("ReplaceUndoCommand",                            \
                               "Can't undo/redo text replacement: "             \
                               "can't get note editor page"));                  \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -64,7 +65,7 @@ ReplaceUndoCommand::~ReplaceUndoCommand()
 
 void ReplaceUndoCommand::redoImpl()
 {
-    QNDEBUG("ReplaceUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ReplaceUndoCommand::redoImpl");
 
     GET_PAGE()
 
@@ -81,7 +82,7 @@ void ReplaceUndoCommand::redoImpl()
 
 void ReplaceUndoCommand::undoImpl()
 {
-    QNDEBUG("ReplaceUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ReplaceUndoCommand::undoImpl");
 
     GET_PAGE()
 

@@ -17,6 +17,7 @@
  */
 
 #include "InsertHtmlUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -36,7 +37,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("InsertHtmlUndoCommand",                         \
                               "Can't undo/redo the html insertion: "           \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -84,7 +85,7 @@ InsertHtmlUndoCommand::~InsertHtmlUndoCommand()
 
 void InsertHtmlUndoCommand::undoImpl()
 {
-    QNDEBUG("InsertHtmlUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::undoImpl");
 
     const QList<Resource> & addedResources = m_addedResources;
     int numResources = addedResources.size();
@@ -95,10 +96,12 @@ void InsertHtmlUndoCommand::undoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataHash()))
         {
-            QNDEBUG("One of added resources has no data hash: " << *pResource);
+            QNDEBUG("note_editor:undo", "One of added resources has no data "
+                << "hash: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG("This resource has no data body as well, skipping it");
+                QNDEBUG("note_editor:undo", "This resource has no data body "
+                    << "as well, skipping it");
                 continue;
             }
 
@@ -132,7 +135,7 @@ void InsertHtmlUndoCommand::undoImpl()
 
 void InsertHtmlUndoCommand::redoImpl()
 {
-    QNDEBUG("InsertHtmlUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "InsertHtmlUndoCommand::redoImpl");
 
     const QList<Resource> & addedResources = m_addedResources;
     int numResources = addedResources.size();
@@ -150,26 +153,31 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!mimeType.isValid()))
         {
-            QNDEBUG("Could not deduce the resource data's mime type from the "
-                << "mime type name or resource has no declared mime type");
+            QNDEBUG("note_editor:undo", "Could not deduce the resource data's "
+                << "mime type from the mime type name or resource has "
+                << "no declared mime type");
+
             if (pResource->hasDataBody()) {
-                QNDEBUG("Trying to deduce the mime type from the resource data");
+                QNDEBUG("note_editor:undo", "Trying to deduce the mime type "
+                    << "from the resource data");
                 mimeType = mimeDatabase.mimeTypeForData(pResource->dataBody());
             }
         }
 
         if (Q_UNLIKELY(!mimeType.isValid())) {
-            QNDEBUG("All attempts to deduce the correct mime type "
-                << "have failed, fallback to mime type of image/png");
+            QNDEBUG("note_editor:undo", "All attempts to deduce the correct "
+                << "mime type have failed, fallback to mime type of image/png");
             mimeType = mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
         }
 
         if (Q_UNLIKELY(!pResource->hasMime()))
         {
-            QNDEBUG("One of added resources has no mime type: " << *pResource);
+            QNDEBUG("note_editor:undo", "One of added resources has no mime "
+                << "type: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG("This resource has no data body as well, skipping it");
+                QNDEBUG("note_editor:undo", "This resource has no data body "
+                    << "as well, skipping it");
                 continue;
             }
 
@@ -182,10 +190,12 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataHash()))
         {
-            QNDEBUG("One of added resources has no data hash: " << *pResource);
+            QNDEBUG("note_editor:undo", "One of added resources has no data "
+                << "hash: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG("This resource has no data body as well, skipping it");
+                QNDEBUG("note_editor:undo", "This resource has no data body "
+                    << "as well, skipping it");
                 continue;
             }
 
@@ -199,14 +209,18 @@ void InsertHtmlUndoCommand::redoImpl()
 
         if (Q_UNLIKELY(!pResource->hasDataSize()))
         {
-            QNDEBUG("One of added resources has no data size: " << *pResource);
+            QNDEBUG("note_editor:undo", "One of added resources has no data "
+                << "size: " << *pResource);
 
             if (!pResource->hasDataBody()) {
-                QNDEBUG("This resource has no data body as well, skipping it");
+                QNDEBUG("note_editor:undo", "This resource has no data body "
+                    << "as well, skipping it");
                 continue;
             }
 
-            m_addedResources[i].setDataSize(m_addedResources[i].dataBody().size());
+            m_addedResources[i].setDataSize(
+                m_addedResources[i].dataBody().size());
+
             // This might have caused resize, need to update the pointer
             // to the resource
             pResource = &(addedResources.at(i));
@@ -232,8 +246,8 @@ void InsertHtmlUndoCommand::redoImpl()
         }
         else
         {
-            QNWARNING("Can't restore the resource file storage path "
-                << "for one of resources: the number of "
+            QNWARNING("note_editor:undo", "Can't restore the resource file "
+                << "storage path for one of resources: the number of "
                 << "resource file storage path is less than "
                 << "or equal to the index: paths = "
                 << m_resourceFileStoragePaths.join(QStringLiteral(", "))

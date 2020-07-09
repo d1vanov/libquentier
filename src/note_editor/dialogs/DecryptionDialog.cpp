@@ -45,7 +45,7 @@ DecryptionDialog::DecryptionDialog(
     m_keyLength(keyLength)
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(m_encryptionManager.get())
+    QUENTIER_CHECK_PTR("note_editor:dialog", m_encryptionManager.get())
 
     m_pUI->decryptPermanentlyCheckBox->setChecked(decryptPermanentlyFlag);
 
@@ -134,8 +134,8 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
     if (!appSettings.isWritable())
     {
-        QNINFO("Can't persist remember passphrase for session "
-            << "setting: settings are not writable");
+        QNINFO("note_editor:dialog", "Can't persist remember passphrase for "
+            << "session setting: settings are not writable");
     }
     else
     {
@@ -173,8 +173,8 @@ void DecryptionDialog::accept()
 
     if (!res && (m_cipher == QStringLiteral("AES")) && (m_keyLength == 128))
     {
-        QNDEBUG("The initial attempt to decrypt the text using "
-            << "AES cipher and 128 bit key has failed; checking "
+        QNDEBUG("note_editor:dialog", "The initial attempt to decrypt the text "
+            << "using AES cipher and 128 bit key has failed; checking "
             << "whether it is old encrypted text area using RC2 "
             << "encryption and 64 bit key");
 
@@ -208,7 +208,7 @@ void DecryptionDialog::accept()
         m_cipher,
         m_keyLength);
 
-    QNTRACE("Cached decrypted text for encryptedText: "
+    QNTRACE("note_editor:dialog", "Cached decrypted text for encryptedText: "
         << m_encryptedText << "; remember for session = "
         << (rememberForSession ? "true" : "false")
         << "; decrypt permanently = "

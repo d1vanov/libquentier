@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,8 @@ SpellCheckerDynamicHelper::SpellCheckerDynamicHelper(QObject * parent) :
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 void SpellCheckerDynamicHelper::setLastEnteredWords(QVariant words)
 {
-    QNDEBUG("SpellCheckerDynamicHelper::setLastEnteredWords: " << words);
+    QNDEBUG("note_editor:js_glue", "SpellCheckerDynamicHelper"
+        << "::setLastEnteredWords: " << words);
 
     QStringList wordsList = words.toStringList();
     Q_EMIT lastEnteredWords(wordsList);
@@ -37,13 +38,16 @@ void SpellCheckerDynamicHelper::setLastEnteredWords(QVariant words)
 #else
 void SpellCheckerDynamicHelper::setLastEnteredWords(QVariantList words)
 {
-    QNDEBUG("SpellCheckerDynamicHelper::setLastEnteredWords: " << words);
+    QNDEBUG("note_editor:js_glue", "SpellCheckerDynamicHelper"
+        << "::setLastEnteredWords: " << words);
 
     QStringList wordsList;
-    for(auto it = words.begin(), end = words.end(); it != end; ++it) {
-        const QVariant & word = *it;
+    wordsList.reserve(words.size());
+
+    for(const auto & word: qAsConst(words)) {
         wordsList << word.toString();
     }
+
     Q_EMIT lastEnteredWords(wordsList);
 }
 #endif

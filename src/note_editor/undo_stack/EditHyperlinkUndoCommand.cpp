@@ -31,7 +31,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("EditHyperlinkUndoCommand",                      \
                               "Can't undo/redo hyperlink edit: "               \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +58,7 @@ EditHyperlinkUndoCommand::~EditHyperlinkUndoCommand()
 
 void EditHyperlinkUndoCommand::redoImpl()
 {
-    QNDEBUG("EditHyperlinkUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "EditHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -68,7 +68,7 @@ void EditHyperlinkUndoCommand::redoImpl()
 
 void EditHyperlinkUndoCommand::undoImpl()
 {
-    QNDEBUG("EditHyperlinkUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "EditHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

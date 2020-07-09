@@ -17,6 +17,7 @@
  */
 
 #include "RemoveHyperlinkUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("RemoveHyperlinkUndoCommand",                    \
                               "Can't undo/redo hyperlink removal: "            \
                               "no note editor's page"));                       \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +59,7 @@ RemoveHyperlinkUndoCommand::~RemoveHyperlinkUndoCommand()
 
 void RemoveHyperlinkUndoCommand::redoImpl()
 {
-    QNDEBUG("RemoveHyperlinkUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "RemoveHyperlinkUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -68,7 +69,7 @@ void RemoveHyperlinkUndoCommand::redoImpl()
 
 void RemoveHyperlinkUndoCommand::undoImpl()
 {
-    QNDEBUG("RemoveHyperlinkUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "RemoveHyperlinkUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

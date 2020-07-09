@@ -17,6 +17,7 @@
  */
 
 #include "ToDoCheckboxAutomaticInsertionUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("ToDoCheckboxAutomaticInsertionUndoCommand",     \
                               "Can't undo/redo the automatic insertion "       \
                               "of a TODO checkbox: no note editor page"));     \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +59,8 @@ ToDoCheckboxAutomaticInsertionUndoCommand::~ToDoCheckboxAutomaticInsertionUndoCo
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 {
-    QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ToDoCheckboxAutomaticInsertionUndoCommand"
+        << "::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -68,7 +70,8 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
 {
-    QNDEBUG("ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ToDoCheckboxAutomaticInsertionUndoCommand"
+        << "::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

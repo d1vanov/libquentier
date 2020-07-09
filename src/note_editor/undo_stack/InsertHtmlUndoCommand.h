@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_INSERT_HTML_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 #include <quentier/utility/Macros.h>

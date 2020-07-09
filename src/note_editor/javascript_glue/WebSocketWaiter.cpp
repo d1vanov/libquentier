@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@ WebSocketWaiter::WebSocketWaiter(QObject * parent) :
 
 void WebSocketWaiter::onReady()
 {
-    QNDEBUG("WebSocketWaiter::onReady");
+    QNDEBUG("note_editor:js_glue", "WebSocketWaiter::onReady");
     Q_EMIT ready();
 }
 

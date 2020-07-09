@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_HIDE_DECRYPTED_TEXT_UNDO_COMMAND
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 namespace quentier {

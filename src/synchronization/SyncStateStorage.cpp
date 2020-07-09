@@ -128,7 +128,7 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
 void SyncStateStorage::setSyncState(
     const Account & account, ISyncStatePtr syncState)
 {
-    QUENTIER_CHECK_PTR(syncState.get())
+    QUENTIER_CHECK_PTR("synchronization", syncState.get())
 
     ApplicationSettings appSettings(account, SYNCHRONIZATION_PERSISTENCE_NAME);
 

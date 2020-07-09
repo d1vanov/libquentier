@@ -17,6 +17,7 @@
  */
 
 #include "NoteEditorContentEditUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -47,13 +48,17 @@ NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand()
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {
-    QNDEBUG("NoteEditorContentEditUndoCommand::redoImpl (" << text() << ")");
+    QNDEBUG("note_editor:undo", "NoteEditorContentEditUndoCommand::redoImpl ("
+        << text() << ")");
+
     m_noteEditorPrivate.redoPageAction();
 }
 
 void NoteEditorContentEditUndoCommand::undoImpl()
 {
-    QNDEBUG("NoteEditorContentEditUndoCommand::undoImpl (" << text() << ")");
+    QNDEBUG("note_editor:undo", "NoteEditorContentEditUndoCommand::undoImpl ("
+        << text() << ")");
+
     m_noteEditorPrivate.undoPageAction();
     m_noteEditorPrivate.setNoteResources(m_resources);
 }

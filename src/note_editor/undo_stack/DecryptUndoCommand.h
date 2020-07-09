@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_DECRYPT_UNDO_COMMAND_H
 
 #include "EncryptDecryptUndoCommandInfo.h"
+
 #include "INoteEditorUndoCommand.h"
 
 #include "../NoteEditorPage.h"

@@ -75,12 +75,12 @@ ImageResourceRotationUndoCommand::~ImageResourceRotationUndoCommand()
 
 void ImageResourceRotationUndoCommand::redoImpl()
 {
-    QNDEBUG("ImageResourceRotationUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ImageResourceRotationUndoCommand::redoImpl");
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG("Can't redo image resource rotation: no note "
-            << "is set to the editor");
+        QNDEBUG("note_editor:undo", "Can't redo image resource rotation: "
+            << "no note is set to the editor");
         return;
     }
 
@@ -92,12 +92,12 @@ void ImageResourceRotationUndoCommand::redoImpl()
 
 void ImageResourceRotationUndoCommand::undoImpl()
 {
-    QNDEBUG("ImageResourceRotationUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ImageResourceRotationUndoCommand::undoImpl");
 
     const Note * pNote = m_noteEditorPrivate.notePtr();
     if (Q_UNLIKELY(!pNote)) {
-        QNDEBUG("Can't undo image resource rotation: no note "
-                "is set to the editor");
+        QNDEBUG("note_editor:undo", "Can't undo image resource rotation: "
+            << "no note is set to the editor");
         return;
     }
 

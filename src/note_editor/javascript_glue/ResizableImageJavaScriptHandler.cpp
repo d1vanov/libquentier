@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,11 +20,13 @@
 
 namespace quentier {
 
-ResizableImageJavaScriptHandler::ResizableImageJavaScriptHandler(QObject * parent) :
+ResizableImageJavaScriptHandler::ResizableImageJavaScriptHandler(
+        QObject * parent) :
     QObject(parent)
 {}
 
-void ResizableImageJavaScriptHandler::notifyImageResourceResized(bool pushUndoCommand)
+void ResizableImageJavaScriptHandler::notifyImageResourceResized(
+    bool pushUndoCommand)
 {
     Q_EMIT imageResourceResized(pushUndoCommand);
 }
