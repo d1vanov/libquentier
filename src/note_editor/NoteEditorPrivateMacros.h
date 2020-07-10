@@ -22,7 +22,9 @@
 #define GET_PAGE()                                                             \
     NoteEditorPage * page = qobject_cast<NoteEditorPage*>(this->page());       \
     if (Q_UNLIKELY(!page)) {                                                   \
-        QNERROR("Can't get access to note editor's underlying page!");         \
+        QNERROR(                                                               \
+            "note_editor",                                                     \
+            "Can't get access to note editor's underlying page!");             \
         return;                                                                \
     }                                                                          \
 // GET_PAGE
@@ -33,7 +35,7 @@
         ErrorString error(message);                                            \
         error.appendBase(                                                      \
             QT_TRANSLATE_NOOP("NoteEditorPrivate", "Note is not editable"));   \
-        QNINFO(error << ", note: "                                             \
+        QNINFO("note_editor", error << ", note: "                              \
             << (m_pNote                                                        \
                 ? m_pNote->toString()                                          \
                 : QStringLiteral("<null>"))                                    \
@@ -53,7 +55,7 @@
         error.appendBase(                                                      \
             QT_TRANSLATE_NOOP("NoteEditorPrivate",                             \
                               "No account is set to the note editor"));        \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor", error);                                       \
         Q_EMIT notifyError(error);                                             \
         return __VA_ARGS__;                                                    \
     }                                                                          \

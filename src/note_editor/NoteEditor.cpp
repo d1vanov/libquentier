@@ -23,12 +23,12 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 
-#include <QCoreApplication>
-#include <QUndoStack>
-#include <QFont>
 #include <QColor>
-#include <QVBoxLayout>
+#include <QCoreApplication>
 #include <QDragMoveEvent>
+#include <QFont>
+#include <QUndoStack>
+#include <QVBoxLayout>
 
 namespace quentier {
 
