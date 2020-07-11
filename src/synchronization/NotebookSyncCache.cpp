@@ -22,11 +22,16 @@
 
 #define __NCLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(message, level);                                          \
+        __QNLOG_BASE(                                                          \
+            "synchronization:notebook_cache",                                  \
+            message,                                                           \
+            level);                                                            \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid << "]: "      \
-            << message, level);                                                \
+        __QNLOG_BASE(                                                          \
+            "synchronization:notebook_cache",                                  \
+            "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
+            level);                                                            \
     }                                                                          \
 // __NCLOG_BASE
 
@@ -49,10 +54,7 @@ NotebookSyncCache::NotebookSyncCache(
         const QString & linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
-    m_connectedToLocalStorage(false),
-    m_linkedNotebookGuid(linkedNotebookGuid),
-    m_limit(20),
-    m_offset(0)
+    m_linkedNotebookGuid(linkedNotebookGuid)
 {}
 
 void NotebookSyncCache::clear()

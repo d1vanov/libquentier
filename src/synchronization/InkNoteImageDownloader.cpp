@@ -53,8 +53,8 @@ InkNoteImageDownloader::InkNoteImageDownloader(
 
 void InkNoteImageDownloader::run()
 {
-    QNDEBUG("InkNoteImageDownloader::run: host = " << m_host
-        << ", resource guid = " << m_resourceGuid
+    QNDEBUG("synchronization:ink_note", "InkNoteImageDownloader::run: host = "
+        << m_host << ", resource guid = " << m_resourceGuid
         << ", note guid = " << m_noteGuid
         << ", storage folder path = " << m_storageFolderPath);
 

@@ -28,11 +28,16 @@
 
 #define __FELOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(message, level);                                          \
+        __QNLOG_BASE(                                                          \
+            "synchronization:full_sync_stale_expunge",                         \
+            message,                                                           \
+            level);                                                            \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-            << "]: " << message, level);                                       \
+        __QNLOG_BASE(                                                          \
+            "synchronization:full_sync_stale_expunge",                         \
+            "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
+            level);                                                            \
     }                                                                          \
 // __FELOG_BASE
 
