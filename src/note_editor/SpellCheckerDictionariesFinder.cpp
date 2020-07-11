@@ -44,7 +44,7 @@ SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
 
 void SpellCheckerDictionariesFinder::run()
 {
-    QNDEBUG("SpellCheckerDictionariesFinder::run");
+    QNDEBUG("note_editor", "SpellCheckerDictionariesFinder::run");
 
     m_files.clear();
     QStringList fileFilters;
@@ -52,7 +52,8 @@ void SpellCheckerDictionariesFinder::run()
 
 #define CHECK_AND_STOP()                                                       \
     if (m_pStopFlag && (m_pStopFlag->loadAcquire() != 0)) {                    \
-        QNDEBUG("Aborting the operation as stop flag is non-zero");            \
+        QNDEBUG("note_editor", "Aborting the operation as stop flag is "       \
+            << "non-zero");                                                    \
         return;                                                                \
     }                                                                          \
 // CHECK_AND_STOP
@@ -66,7 +67,8 @@ void SpellCheckerDictionariesFinder::run()
         const QFileInfo & rootDirInfo = rootDirs[i];
 
         if (Q_UNLIKELY(!rootDirInfo.isDir())) {
-            QNTRACE("Skipping non-dir " << rootDirInfo.absoluteDir());
+            QNTRACE("note_editor", "Skipping non-dir "
+                << rootDirInfo.absoluteDir());
             continue;
         }
 
@@ -81,11 +83,11 @@ void SpellCheckerDictionariesFinder::run()
             CHECK_AND_STOP()
 
             QString nextDirName = it.next();
-            QNTRACE("Next dir name = " << nextDirName);
+            QNTRACE("note_editor", "Next dir name = " << nextDirName);
 
             QFileInfo fileInfo = it.fileInfo();
             if (!fileInfo.isReadable()) {
-                QNTRACE("Skipping non-readable file "
+                QNTRACE("note_editor", "Skipping non-readable file "
                     << fileInfo.absoluteFilePath());
                 continue;
             }
@@ -98,26 +100,29 @@ void SpellCheckerDictionariesFinder::run()
             }
             else if (fileNameSuffix != QStringLiteral("aff"))
             {
-                QNTRACE("Skipping file not actually matching the filter: "
-                    << fileInfo.absoluteFilePath());
+                QNTRACE("note_editor", "Skipping file not actually matching "
+                    << "the filter: " << fileInfo.absoluteFilePath());
                 continue;
             }
 
             QString dictionaryName = fileInfo.baseName();
             if (!m_localeList.contains(dictionaryName.toUpper()))
             {
-                QNTRACE("Skipping dictionary which doesn't appear to "
-                    << "correspond to any locale: " << dictionaryName);
+                QNTRACE("note_editor", "Skipping dictionary which doesn't "
+                    << "appear to correspond to any locale: "
+                    << dictionaryName);
                 continue;
             }
 
             auto & pair = m_files[dictionaryName];
             if (isDicFile) {
-                QNTRACE("Adding dic file " << fileInfo.absoluteFilePath());
+                QNTRACE("note_editor", "Adding dic file "
+                    << fileInfo.absoluteFilePath());
                 pair.first = fileInfo.absoluteFilePath();
             }
             else {
-                QNTRACE("Adding aff file " << fileInfo.absoluteFilePath());
+                QNTRACE("note_editor", "Adding aff file "
+                    << fileInfo.absoluteFilePath());
                 pair.second = fileInfo.absoluteFilePath();
             }
         }
@@ -130,8 +135,8 @@ void SpellCheckerDictionariesFinder::run()
 
         const auto & pair = it.value();
         if (pair.first.isEmpty() || pair.second.isEmpty()) {
-            QNTRACE("Skipping the incomplete pair of dic/aff files: "
-                << "dic file path = " << pair.first
+            QNTRACE("note_editor", "Skipping the incomplete pair of dic/aff "
+                << "files: dic file path = " << pair.first
                 << "; aff file path = " << pair.second);
             it = m_files.erase(it);
             continue;
@@ -140,7 +145,7 @@ void SpellCheckerDictionariesFinder::run()
         ++it;
     }
 
-    QNDEBUG("Found " << m_files.size() << " valid dictionaries");
+    QNDEBUG("note_editor", "Found " << m_files.size() << " valid dictionaries");
     Q_EMIT foundDictionaries(m_files);
 }
 

@@ -27,7 +27,7 @@ void ResourceInfo::cacheResourceInfo(
     const QString & resourceDisplaySize, const QString & resourceLocalFilePath,
     const QSize & resourceImageSize)
 {
-    QNDEBUG("ResourceInfo::cacheResourceInfo: resource hash = "
+    QNDEBUG("note_editor", "ResourceInfo::cacheResourceInfo: resource hash = "
         << resourceHash.toHex()
         << ", resource display name = " << resourceDisplayName
         << ", resource display size = " << resourceDisplaySize
@@ -52,12 +52,12 @@ bool ResourceInfo::findResourceInfo(
     QString & resourceDisplaySize, QString & resourceLocalFilePath,
     QSize & resourceImageSize) const
 {
-    QNDEBUG("ResourceInfo::findResourceInfo: resource hash = "
+    QNDEBUG("note_editor", "ResourceInfo::findResourceInfo: resource hash = "
         << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
-        QNTRACE("Resource info was not found");
+        QNTRACE("note_editor", "Resource info was not found");
         return false;
     }
 
@@ -67,7 +67,7 @@ bool ResourceInfo::findResourceInfo(
     resourceLocalFilePath = info.m_resourceLocalFilePath;
     resourceImageSize = info.m_resourceImageSize;
 
-    QNTRACE("Found resource info: name = " << resourceDisplayName
+    QNTRACE("note_editor", "Found resource info: name = " << resourceDisplayName
         << ", display size = " << resourceDisplaySize
         << ", local file path = " << resourceLocalFilePath
         << ", image size = " << resourceImageSize);
@@ -76,12 +76,12 @@ bool ResourceInfo::findResourceInfo(
 
 bool ResourceInfo::removeResourceInfo(const QByteArray & resourceHash)
 {
-    QNDEBUG("ResourceInfo::removeResourceInfo: resource hash = "
+    QNDEBUG("note_editor", "ResourceInfo::removeResourceInfo: resource hash = "
         << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
-        QNTRACE("Resource info was not found hence not removed");
+        QNTRACE("note_editor", "Resource info was not found hence not removed");
         return false;
     }
 
@@ -91,7 +91,7 @@ bool ResourceInfo::removeResourceInfo(const QByteArray & resourceHash)
 
 void ResourceInfo::clear()
 {
-    QNDEBUG("ResourceInfo::clear");
+    QNDEBUG("note_editor", "ResourceInfo::clear");
     m_resourceInfoHash.clear();
 }
 

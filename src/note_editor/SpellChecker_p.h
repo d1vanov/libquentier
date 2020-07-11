@@ -161,12 +161,12 @@ private:
 
     // Hashed by the language code
     QHash<QString, Dictionary>  m_systemDictionaries;
-    bool                        m_systemDictionariesReady;
+    bool                        m_systemDictionariesReady = false;
 
     QUuid                       m_readUserDictionaryRequestId;
     QString                     m_userDictionaryPath;
     QStringList                 m_userDictionary;
-    bool                        m_userDictionaryReady;
+    bool                        m_userDictionaryReady = false;
 
     QStringList                 m_userDictionaryPartPendingWriting;
     QUuid                       m_appendUserDictionaryPartToFileRequestId;
