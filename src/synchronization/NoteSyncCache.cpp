@@ -17,15 +17,21 @@
  */
 
 #include "NoteSyncCache.h"
+
 #include <quentier/logging/QuentierLogger.h>
 
 #define __NSLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(message, level);                                          \
+        __QNLOG_BASE(                                                          \
+            "synchronization:note_cache",                                      \
+            message,                                                           \
+            level);                                                            \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-            << "]: " << message, level);                                       \
+        __QNLOG_BASE(                                                          \
+            "synchronization:note_cache",                                      \
+            "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
+            level);                                                            \
     }                                                                          \
 // __NSLOG_BASE
 
@@ -48,14 +54,7 @@ NoteSyncCache::NoteSyncCache(
         const QString & linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
-    m_connectedToLocalStorage(false),
-    m_linkedNotebookGuid(linkedNotebookGuid),
-    m_noteGuidToLocalUidBimap(),
-    m_dirtyNotesByGuid(),
-    m_notebookGuidByNoteGuid(),
-    m_listNotesRequestId(),
-    m_limit(40),
-    m_offset(0)
+    m_linkedNotebookGuid(linkedNotebookGuid)
 {}
 
 void NoteSyncCache::clear()

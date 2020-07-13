@@ -44,13 +44,15 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 
 void NoteThumbnailDownloader::start()
 {
-    QNDEBUG("NoteThumbnailDownloader::start: host = " << m_host
-        << ", note guid = " << m_noteGuid << ", is public = "
-        << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
+    QNDEBUG(
+        "synchronization:thumbnail",
+        "NoteThumbnailDownloader::start: host = " << m_host
+            << ", note guid = " << m_noteGuid << ", is public = "
+            << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
 
 #define SET_ERROR(error)                                                       \
     ErrorString errorDescription(error);                                       \
-    QNDEBUG(errorDescription);                                                 \
+    QNDEBUG("synchronization:thumbnail", errorDescription);                    \
     Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);        \
     return                                                                     \
 // SET_ERROR
@@ -104,7 +106,9 @@ void NoteThumbnailDownloader::onDownloadFinished(
     EverCloudExceptionDataPtr exceptionData,
     IRequestContextPtr ctx)
 {
-    QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
+    QNDEBUG(
+        "synchronization:thumbnail",
+        "NoteThumbnailDownloader::onDownloadFinished");
 
     Q_UNUSED(ctx)
 
@@ -120,7 +124,7 @@ void NoteThumbnailDownloader::onDownloadFinished(
         ErrorString errorDescription(
             QT_TR_NOOP("failed to download the note thumbnail"));
         errorDescription.details() = exceptionData->errorMessage;
-        QNDEBUG(errorDescription);
+        QNDEBUG("synchronization:thumbnail", errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;
     }
