@@ -58,8 +58,9 @@ void SendLocalChangesManager::start(
     const qint32 updateCount,
     QHash<QString,qint32> updateCountByLinkedNotebookGuid)
 {
-    QNDEBUG("SendLocalChangesManager::start: update count = "
-        << updateCount << ", update count by linked notebook guid = "
+    QNDEBUG("synchronization:send_changes", "SendLocalChangesManager::start: "
+        << "update count = " << updateCount
+        << ", update count by linked notebook guid = "
         << updateCountByLinkedNotebookGuid);
 
     clear();
@@ -72,10 +73,10 @@ void SendLocalChangesManager::start(
 
 void SendLocalChangesManager::stop()
 {
-    QNDEBUG("SendLocalChangesManager::stop");
+    QNDEBUG("synchronization:send_changes", "SendLocalChangesManager::stop");
 
     if (!m_active) {
-        QNDEBUG("Already stopped");
+        QNDEBUG("synchronization:send_changes", "Already stopped");
         return;
     }
 
@@ -89,12 +90,14 @@ void SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived(
     QHash<QString,std::pair<QString,QString>> authTokensByLinkedNotebookGuid,
     QHash<QString,qevercloud::Timestamp> authTokenExpirationByLinkedNotebookGuid)
 {
-    QNDEBUG("SendLocalChangesManager::"
-        << "onAuthenticationTokensForLinkedNotebooksReceived");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onAuthenticationTokensForLinkedNotebooksReceived");
 
     if (!m_pendingAuthenticationTokensForLinkedNotebooks) {
-        QNDEBUG("Authentication tokens for linked notebooks were "
-            << "not requested by this object, won't do anything");
+        QNDEBUG("synchronization:send_changes", "Authentication tokens for "
+            << "linked notebooks were not requested by this object, won't do "
+            << "anything");
         return;
     }
 
@@ -125,22 +128,25 @@ void SendLocalChangesManager::onListDirtyTagsCompleted(
     if (userTagsListCompleted ||
         (it != m_listDirtyTagsFromLinkedNotebooksRequestIds.end()))
     {
-        QNDEBUG("SendLocalChangesManager::onListDirtyTagsCompleted: "
-            << "flag = " << flag << ", limit = " << limit << ", offset = "
-            << offset << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linked notebook guid = "
-            << linkedNotebookGuid << ", requestId = " << requestId
-            << ", " << tags.size() << " tags listed");
+        QNDEBUG(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyTagsCompleted: flag = "
+                << flag << ", limit = " << limit << ", offset = "
+                << offset << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linked notebook guid = "
+                << linkedNotebookGuid << ", requestId = " << requestId
+                << ", " << tags.size() << " tags listed");
 
         m_tags << tags;
 
         if (userTagsListCompleted) {
-            QNTRACE("User's tags list is completed: " << m_tags.size()
-                << " tags");
+            QNTRACE("synchronization:send_changes", "User's tags list is "
+                << "completed: " << m_tags.size() << " tags");
             m_listDirtyTagsRequestId = QUuid();
         }
         else {
-            QNTRACE("Tags list is completed for one of linked notebooks");
+            QNTRACE("synchronization:send_changes", "Tags list is completed "
+                << "for one of linked notebooks");
             Q_UNUSED(m_listDirtyTagsFromLinkedNotebooksRequestIds.erase(it));
         }
 
@@ -164,12 +170,14 @@ void SendLocalChangesManager::onListDirtyTagsFailed(
     if (userTagsListCompleted ||
         (it != m_listDirtyTagsFromLinkedNotebooksRequestIds.end()))
     {
-        QNWARNING("SendLocalChangesManager::onListDirtyTagsFailed: "
-            << "flag = " << flag << ", limit = " << limit << ", offset = "
-            << offset << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linked notebook guid = "
-            << linkedNotebookGuid << ", error description = "
-            << errorDescription << ", requestId = " << requestId);
+        QNWARNING(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyTagsFailed: flag = "
+                << flag << ", limit = " << limit << ", offset = "
+                << offset << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linked notebook guid = "
+                << linkedNotebookGuid << ", error description = "
+                << errorDescription << ", requestId = " << requestId);
 
         if (userTagsListCompleted) {
             m_listDirtyTagsRequestId = QUuid();
@@ -198,17 +206,20 @@ void SendLocalChangesManager::onListDirtySavedSearchesCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onListDirtySavedSearchesCompleted: "
-        << "flag = " << flag << ", limit = " << limit << ", offset = "
-        << offset << ", order = " << order << ", orderDirection = "
-        << orderDirection << ", requestId = " << requestId << ", "
-        << savedSearches.size() << " saved searches listed");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onListDirtySavedSearchesCompleted: flag = "
+            << flag << ", limit = " << limit << ", offset = "
+            << offset << ", order = " << order << ", orderDirection = "
+            << orderDirection << ", requestId = " << requestId << ", "
+            << savedSearches.size() << " saved searches listed");
 
     m_savedSearches << savedSearches;
-    QNTRACE("Total " << m_savedSearches.size() << " dirty saved searches");
+
+    QNTRACE("synchronization:send_changes", "Total " << m_savedSearches.size()
+        << " dirty saved searches");
 
     m_listDirtySavedSearchesRequestId = QUuid();
-
     checkListLocalStorageObjectsCompletion();
 }
 
@@ -219,18 +230,22 @@ void SendLocalChangesManager::onListDirtySavedSearchesFailed(
     LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
-    QNTRACE("SendLocalChangesManager::onListDirtySavedSearchesFailed: "
-        << "request id = " << requestId << ", error: " << errorDescription);
+    QNTRACE(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onListDirtySavedSearchesFailed: request id = "
+            << requestId << ", error: " << errorDescription);
 
     if (requestId != m_listDirtySavedSearchesRequestId) {
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onListDirtySavedSearchesFailed: "
-        << "flag = " << flag << ", limit = " << limit << ", offset = "
-        << offset << ", order = " << order << ", orderDirection = "
-        << orderDirection << ", errorDescription = " << errorDescription
-        << ", requestId = " << requestId);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onListDirtySavedSearchesFailed: flag = "
+            << flag << ", limit = " << limit << ", offset = " << offset
+            << ", order = " << order << ", orderDirection = "
+            << orderDirection << ", errorDescription = " << errorDescription
+            << ", requestId = " << requestId);
 
     m_listDirtySavedSearchesRequestId = QUuid();
 
@@ -258,18 +273,20 @@ void SendLocalChangesManager::onListDirtyNotebooksCompleted(
     if (userNotebooksListCompleted ||
         (it != m_listDirtyNotebooksFromLinkedNotebooksRequestIds.end()))
     {
-        QNDEBUG("SendLocalChangesManager::onListDirtyNotebooksCompleted: "
-            << "flag = " << flag << ", limit = " << limit << ", offset = "
-            << offset << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linkedNotebookGuid = "
-            << linkedNotebookGuid << ", requestId = " << requestId << ", "
-            << notebooks.size() << " notebooks listed");
+        QNDEBUG(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyNotebooksCompleted: flag = "
+                << flag << ", limit = " << limit << ", offset = " << offset
+                << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linkedNotebookGuid = "
+                << linkedNotebookGuid << ", requestId = " << requestId << ", "
+                << notebooks.size() << " notebooks listed");
 
         m_notebooks << notebooks;
 
         if (userNotebooksListCompleted) {
-            QNTRACE("User's notebooks list is completed: "
-                << m_notebooks.size() << " notebooks");
+            QNTRACE("synchronization:send_changes", "User's notebooks list is "
+                << "completed: " << m_notebooks.size() << " notebooks");
             m_listDirtyNotebooksRequestId = QUuid();
         }
         else {
@@ -289,6 +306,7 @@ void SendLocalChangesManager::onListDirtyNotebooksFailed(
 {
     bool userNotebooksListCompleted =
         (requestId == m_listDirtyNotebooksRequestId);
+
     auto it = m_listDirtyNotebooksFromLinkedNotebooksRequestIds.end();
     if (!userNotebooksListCompleted) {
         it = m_listDirtyNotebooksFromLinkedNotebooksRequestIds.find(requestId);
@@ -297,12 +315,14 @@ void SendLocalChangesManager::onListDirtyNotebooksFailed(
     if (userNotebooksListCompleted ||
         (it != m_listDirtyNotebooksFromLinkedNotebooksRequestIds.end()))
     {
-        QNWARNING("SendLocalChangesManager::onListDirtyNotebooksFailed: "
-            << "flag = " << flag << ", limit = " << limit << ", offset = "
-            << offset << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linkedNotebookGuid = "
-            << linkedNotebookGuid << ", errorDescription = "
-            << errorDescription);
+        QNWARNING(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyNotebooksFailed: flag = "
+                << flag << ", limit = " << limit << ", offset = " << offset
+                << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linkedNotebookGuid = "
+                << linkedNotebookGuid << ", errorDescription = "
+                << errorDescription);
 
         if (userNotebooksListCompleted) {
             m_listDirtyNotebooksRequestId = QUuid();
@@ -336,20 +356,22 @@ void SendLocalChangesManager::onListDirtyNotesCompleted(
     if (userNotesListCompleted ||
         (it != m_listDirtyNotesFromLinkedNotebooksRequestIds.end()))
     {
-        QNDEBUG("SendLocalChangesManager::onListDirtyNotesCompleted: "
-            << "flag = " << flag << ", with resource metadata = "
-            << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
-                ? "true"
-                : "false")
-            << ", with resource binary data = "
-            << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
-                ? "true"
-                : "false")
-            << ", limit = " << limit << ", offset = " << offset
-            << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linked notebook guid = "
-            << linkedNotebookGuid << ", requestId = " << requestId << ", "
-            << notes.size() << " notes listed");
+        QNDEBUG(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyNotesCompleted: flag = "
+                << flag << ", with resource metadata = "
+                << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                    ? "true"
+                    : "false")
+                << ", with resource binary data = "
+                << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                    ? "true"
+                    : "false")
+                << ", limit = " << limit << ", offset = " << offset
+                << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linked notebook guid = "
+                << linkedNotebookGuid << ", requestId = " << requestId << ", "
+                << notes.size() << " notes listed");
 
         m_notes << notes;
 
@@ -381,19 +403,21 @@ void SendLocalChangesManager::onListDirtyNotesFailed(
     if (userNotesListCompleted ||
         (it != m_listDirtyNotesFromLinkedNotebooksRequestIds.end()))
     {
-        QNWARNING("SendLocalChangesManager::onListDirtyNotesFailed: "
-            << "flag = " << flag << ", with resource metadata = "
-            << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
-                ? "true"
-                : "false")
-            << ", with resource binary data = "
-            << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
-                ? "true"
-                : "false")
-            << ", limit = " << limit << ", offset = " << offset
-            << ", order = " << order << ", orderDirection = "
-            << orderDirection << ", linked notebook guid = "
-            << linkedNotebookGuid << ", requestId = " << requestId);
+        QNWARNING(
+            "synchronization:send_changes",
+            "SendLocalChangesManager::onListDirtyNotesFailed: flag = "
+                << flag << ", with resource metadata = "
+                << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
+                    ? "true"
+                    : "false")
+                << ", with resource binary data = "
+                << ((options & LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                    ? "true"
+                    : "false")
+                << ", limit = " << limit << ", offset = " << offset
+                << ", order = " << order << ", orderDirection = "
+                << orderDirection << ", linked notebook guid = "
+                << linkedNotebookGuid << ", requestId = " << requestId);
 
         if (userNotesListCompleted) {
             m_listDirtyNotesRequestId = QUuid();
@@ -422,11 +446,13 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onListLinkedNotebooksCompleted: "
-        << "flag = " << flag << ", limit = " << limit << ", offset = "
-        << offset << ", order = " << order << ", orderDirection = "
-        << orderDirection << ", requestId = " << requestId << ", "
-        << " linked notebooks listed");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onListLinkedNotebooksCompleted: flag = "
+            << flag << ", limit = " << limit << ", offset = " << offset
+            << ", order = " << order << ", orderDirection = "
+            << orderDirection << ", requestId = " << requestId << ", "
+            << " linked notebooks listed");
 
     const int numLinkedNotebooks = linkedNotebooks.size();
     m_linkedNotebookAuthData.reserve(std::max(numLinkedNotebooks, 0));
@@ -448,7 +474,8 @@ void SendLocalChangesManager::onListLinkedNotebooksCompleted(
             }
 
             Q_EMIT failure(error);
-            QNWARNING(error << ", linked notebook: " << linkedNotebook);
+            QNWARNING("synchronization:send_changes", error
+                << ", linked notebook: " << linkedNotebook);
             return;
         }
 
@@ -495,11 +522,13 @@ void SendLocalChangesManager::onListLinkedNotebooksFailed(
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onListLinkedNotebooksFailed: "
-        <<  "flag = " << flag << ", limit = " << limit << ", offset = "
-        << offset << ", order = " << order << ", orderDirection = "
-        << orderDirection << ", errorDescription = " << errorDescription
-        << ", requestId = " << requestId);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onListLinkedNotebooksFailed: flag = "
+            << flag << ", limit = " << limit << ", offset = " << offset
+            << ", order = " << order << ", orderDirection = "
+            << orderDirection << ", errorDescription = " << errorDescription
+            << ", requestId = " << requestId);
 
     m_listLinkedNotebooksRequestId = QUuid();
 
@@ -519,8 +548,11 @@ void SendLocalChangesManager::onUpdateTagCompleted(Tag tag, QUuid requestId)
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onUpdateTagCompleted: tag = "
-        << tag << "\nRequest id = " << requestId);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateTagCompleted: tag = " << tag
+            << "\nRequest id = " << requestId);
+
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
     if (m_tags.isEmpty() && m_updateTagRequestIds.isEmpty()) {
@@ -536,9 +568,11 @@ void SendLocalChangesManager::onUpdateTagFailed(
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onUpdateTagFailed: tag = "
-        << tag << "\nRequest id = " << requestId
-        << ", error description = " << errorDescription);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateTagFailed: tag = " << tag
+            << "\nRequest id = " << requestId
+            << ", error description = " << errorDescription);
 
     Q_UNUSED(m_updateTagRequestIds.erase(it));
 
@@ -557,8 +591,11 @@ void SendLocalChangesManager::onUpdateSavedSearchCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onUpdateSavedSearchCompleted: "
-        << "search = " << savedSearch << "\nRequest id = " << requestId);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateSavedSearchCompleted: search = "
+            << savedSearch << "\nRequest id = " << requestId);
+
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
     if (m_savedSearches.isEmpty() && m_updateSavedSearchRequestIds.isEmpty()) {
@@ -574,10 +611,11 @@ void SendLocalChangesManager::onUpdateSavedSearchFailed(
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onUpdateSavedSearchFailed: "
-        << "saved search = " << savedSearch
-        << "\nRequest id = " << requestId
-        << ", error description = " << errorDescription);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateSavedSearchFailed: saved search = "
+            << savedSearch << "\nRequest id = " << requestId
+            << ", error description = " << errorDescription);
 
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it));
 
@@ -597,9 +635,11 @@ void SendLocalChangesManager::onUpdateNotebookCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onUpdateNotebookCompleted: "
-        << "notebook = " << notebook
-        << "\nRequest id = " << requestId);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateNotebookCompleted: notebook = "
+            << notebook << "\nRequest id = " << requestId);
+
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
     if (m_notebooks.isEmpty() && m_updateNotebookRequestIds.isEmpty()) {
@@ -615,10 +655,11 @@ void SendLocalChangesManager::onUpdateNotebookFailed(
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onUpdateNotebookFailed: "
-        << "notebook = " << notebook
-        << "\nRequest id = " << requestId
-        << ", error description = " << errorDescription);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateNotebookFailed: notebook = "
+            << notebook << "\nRequest id = " << requestId
+            << ", error description = " << errorDescription);
 
     Q_UNUSED(m_updateNotebookRequestIds.erase(it));
 
@@ -640,8 +681,11 @@ void SendLocalChangesManager::onUpdateNoteCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onUpdateNoteCompleted: note = "
-        << note << "\nRequest id = " << requestId);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateNoteCompleted: note = " << note
+            << "\nRequest id = " << requestId);
+
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
     if (m_notes.isEmpty() && m_updateNoteRequestIds.isEmpty()) {
@@ -660,9 +704,11 @@ void SendLocalChangesManager::onUpdateNoteFailed(
         return;
     }
 
-    QNWARNING("SendLocalChangesManager::onUpdateNoteFailed: note = "
-        << note << "\nRequest id = " << requestId
-        << ", error description = " << errorDescription);
+    QNWARNING(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onUpdateNoteFailed: note = " << note
+            << "\nRequest id = " << requestId
+            << ", error description = " << errorDescription);
 
     Q_UNUSED(m_updateNoteRequestIds.erase(it));
 
@@ -681,8 +727,10 @@ void SendLocalChangesManager::onFindNotebookCompleted(
         return;
     }
 
-    QNDEBUG("SendLocalChangesManager::onFindNotebookCompleted: "
-        << "notebook = " << notebook << "\nRequest id = " << requestId);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::onFindNotebookCompleted: " << "notebook = "
+            << notebook << "\nRequest id = " << requestId);
 
     if (!notebook.hasGuid())
     {
@@ -693,7 +741,8 @@ void SendLocalChangesManager::onFindNotebookCompleted(
             errorDescription.details() = notebook.name();
         }
 
-        QNWARNING(errorDescription << ", notebook: " << notebook);
+        QNWARNING("synchronization:send_changes", errorDescription
+            << ", notebook: " << notebook);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -716,26 +765,29 @@ void SendLocalChangesManager::onFindNotebookFailed(
 
     Q_UNUSED(m_findNotebookRequestIds.erase(it));
 
-    QNWARNING(errorDescription << "; notebook: " << notebook);
+    QNWARNING("synchronization:send_changes", errorDescription << "; notebook: "
+        << notebook);
     Q_EMIT failure(errorDescription);
 }
 
 void SendLocalChangesManager::timerEvent(QTimerEvent * pEvent)
 {
-    QNDEBUG("SendLocalChangesManager::timerEvent");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::timerEvent");
 
     if (Q_UNLIKELY(!pEvent))
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
-        QNWARNING(errorDescription);
+        QNWARNING("synchronization:send_changes", errorDescription);
         Q_EMIT failure(errorDescription);
         return;
     }
 
     int timerId = pEvent->timerId();
     killTimer(timerId);
-    QNDEBUG("Killed timer with id " << timerId);
+    QNDEBUG("synchronization:send_changes", "Killed timer with id " << timerId);
 
     if (timerId == m_sendTagsPostponeTimerId)
     {
@@ -761,15 +813,17 @@ void SendLocalChangesManager::timerEvent(QTimerEvent * pEvent)
 
 void SendLocalChangesManager::connectToLocalStorage()
 {
-    QNDEBUG("SendLocalChangesManager::connectToLocalStorage");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::connectToLocalStorage");
 
     if (m_connectedToLocalStorage) {
-        QNDEBUG("Already connected to local storage");
+        QNDEBUG("synchronization:send_changes", "Already connected to "
+            << "the local storage");
         return;
     }
 
-    LocalStorageManagerAsync & localStorageManagerAsync =
-        m_manager.localStorageManagerAsync();
+    auto & localStorageManagerAsync = m_manager.localStorageManagerAsync();
 
     // Connect local signals with localStorageManagerAsync's slots
     QObject::connect(
@@ -981,15 +1035,17 @@ void SendLocalChangesManager::connectToLocalStorage()
 
 void SendLocalChangesManager::disconnectFromLocalStorage()
 {
-    QNDEBUG("SendLocalChangesManager::disconnectFromLocalStorage");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::disconnectFromLocalStorage");
 
     if (!m_connectedToLocalStorage) {
-        QNDEBUG("Not connected to local storage at the moment");
+        QNDEBUG("synchronization:send_changes", "Not connected to the local "
+            << "storage at the moment");
         return;
     }
 
-    LocalStorageManagerAsync & localStorageManagerAsync =
-        m_manager.localStorageManagerAsync();
+    auto & localStorageManagerAsync = m_manager.localStorageManagerAsync();
 
     // Disconnect local signals from localStorageManagerAsync's slots
     QObject::disconnect(
@@ -1179,10 +1235,12 @@ void SendLocalChangesManager::disconnectFromLocalStorage()
 bool SendLocalChangesManager::requestStuffFromLocalStorage(
     const QString & linkedNotebookGuid)
 {
-    QNDEBUG("SendLocalChangesManager::requestStuffFromLocalStorage: "
-        << "linked notebook guid = " << linkedNotebookGuid << " (empty = "
-        << (linkedNotebookGuid.isEmpty() ? "true" : "false") << ", null = "
-        << (linkedNotebookGuid.isNull() ? "true" : "false") << ")");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::requestStuffFromLocalStorage: "
+            << "linked notebook guid = " << linkedNotebookGuid << " (empty = "
+            << (linkedNotebookGuid.isEmpty() ? "true" : "false") << ", null = "
+            << (linkedNotebookGuid.isNull() ? "true" : "false") << ")");
 
     bool emptyLinkedNotebookGuid = linkedNotebookGuid.isEmpty();
     if (!emptyLinkedNotebookGuid)
@@ -1190,10 +1248,11 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
         auto it =
             m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.find(
                 linkedNotebookGuid);
+
         if (it != m_linkedNotebookGuidsForWhichStuffWasRequestedFromLocalStorage.end()) {
-            QNDEBUG("The stuff has already been requested from "
-                << "the local storage for linked notebook guid "
-                << linkedNotebookGuid);
+            QNDEBUG("synchronization:send_changes", "The stuff has already "
+                << "been requested from the local storage for linked notebook "
+                << "guid " << linkedNotebookGuid);
             return false;
         }
     }
@@ -1220,8 +1279,8 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
             listDirtyTagsRequestId));
     }
 
-    QNTRACE("Emitting the request to fetch unsynchronized tags "
-        << "from the local storage: request id = "
+    QNTRACE("synchronization:send_changes", "Emitting the request to fetch "
+        << "unsynchronized tags from the local storage: request id = "
         << listDirtyTagsRequestId);
 
     Q_EMIT requestLocalUnsynchronizedTags(
@@ -1240,9 +1299,9 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
 
         m_listDirtySavedSearchesRequestId = QUuid::createUuid();
 
-        QNTRACE("Emitting the request to fetch unsynchronized "
-            << "saved searches from the local storage: request id = "
-            << m_listDirtySavedSearchesRequestId);
+        QNTRACE("synchronization:send_changes", "Emitting the request to fetch "
+            << "unsynchronized saved searches from the local storage: request "
+            << "id = " << m_listDirtySavedSearchesRequestId);
 
         Q_EMIT requestLocalUnsynchronizedSavedSearches(
             listDirtyObjectsFlag,
@@ -1264,14 +1323,17 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
             listDirtyNotebooksRequestId));
     }
 
-    QNTRACE("Emitting the request to fetch unsynchronized notebooks "
-        << "from the local storage: request id = "
+    QNTRACE("synchronization:send_changes", "Emitting the request to fetch "
+        << "unsynchronized notebooks from the local storage: request id = "
         << listDirtyNotebooksRequestId);
 
     Q_EMIT requestLocalUnsynchronizedNotebooks(
-        listDirtyObjectsFlag, limit,
-        offset, notebooksOrder,
-        orderDirection, linkedNotebookGuid,
+        listDirtyObjectsFlag,
+        limit,
+        offset,
+        notebooksOrder,
+        orderDirection,
+        linkedNotebookGuid,
         listDirtyNotebooksRequestId);
 
     LocalStorageManager::ListNotesOrder notesOrder =
@@ -1285,8 +1347,9 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
         Q_UNUSED(m_listDirtyNotesFromLinkedNotebooksRequestIds.insert(
             listDirtyNotesRequestId));
     }
-    QNTRACE("Emitting the request to fetch unsynchronized notes "
-        << "from the local storage: request id = "
+
+    QNTRACE("synchronization:send_changes", "Emitting the request to fetch "
+        << "unsynchronized notes from the local storage: request id = "
         << listDirtyNotesRequestId);
 
     LocalStorageManager::GetNoteOptions getNoteOptions(
@@ -1313,9 +1376,9 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
 
         m_listLinkedNotebooksRequestId = QUuid::createUuid();
 
-        QNTRACE("Emitting the request to fetch unsynchronized "
-            << "linked notebooks from the local storage: request id = "
-            << m_listLinkedNotebooksRequestId);
+        QNTRACE("synchronization:send_changes", "Emitting the request to fetch "
+            << "unsynchronized linked notebooks from the local storage: "
+            << "request id = " << m_listLinkedNotebooksRequestId);
 
         Q_EMIT requestLinkedNotebooksList(
             linkedNotebooksListOption,
@@ -1336,45 +1399,46 @@ bool SendLocalChangesManager::requestStuffFromLocalStorage(
 
 void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
 {
-    QNDEBUG("SendLocalChangesManager::"
-        << "checkListLocalStorageObjectsCompletion");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::checkListLocalStorageObjectsCompletion");
 
     if (!m_listDirtyTagsRequestId.isNull()) {
-        QNTRACE("The last request for the list of new and dirty "
-            << "tags was not processed yet");
+        QNTRACE("synchronization:send_changes", "The last request for the list "
+            << "of new and dirty tags was not processed yet");
         return;
     }
 
     if (!m_listDirtySavedSearchesRequestId.isNull()) {
-        QNTRACE("The last request for the list of new and dirty "
-            << "saved searches was not processed yet");
+        QNTRACE("synchronization:send_changes", "The last request for the list "
+            << "of new and dirty saved searches was not processed yet");
         return;
     }
 
     if (!m_listDirtyNotebooksRequestId.isNull()) {
-        QNTRACE("The last request for the list of new and dirty "
-            << "notebooks was not processed yet");
+        QNTRACE("synchronization:send_changes", "The last request for the list "
+            << "of new and dirty notebooks was not processed yet");
         return;
     }
 
     if (!m_listDirtyNotesRequestId.isNull()) {
-        QNTRACE("The last request for the list of new and dirty "
-            << "notes was not processed yet");
+        QNTRACE("synchronization:send_changes", "The last request for the list "
+            << "of new and dirty notes was not processed yet");
         return;
     }
 
     if (!m_listLinkedNotebooksRequestId.isNull()) {
-        QNTRACE("The last request for the list of linked notebooks "
-            << "was not processed yet");
+        QNTRACE("synchronization:send_changes", "The last request for the list "
+            << "of linked notebooks was not processed yet");
         return;
     }
 
     if (!m_receivedDirtyLocalStorageObjectsFromUsersAccount)
     {
         m_receivedDirtyLocalStorageObjectsFromUsersAccount = true;
-        QNTRACE("Received all dirty objects from user's own account "
-            << "from the local storage: " << m_tags.size()
-            << " tags, " << m_savedSearches.size()
+        QNTRACE("synchronization:send_changes", "Received all dirty objects "
+            << "from user's own account from the local storage: "
+            << m_tags.size() << " tags, " << m_savedSearches.size()
             << " saved searches, " << m_notebooks.size()
             << " notebooks and " << m_notes.size() << " notes");
 
@@ -1387,7 +1451,8 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
 
     if (!m_linkedNotebookAuthData.isEmpty())
     {
-        QNTRACE("There are " << m_linkedNotebookAuthData.size()
+        QNTRACE("synchronization:send_changes", "There are "
+            << m_linkedNotebookAuthData.size()
             << " linked notebook guids, need to check if there "
             << "are those for which there is no pending request "
             << "to list stuff from the local storage yet");
@@ -1401,35 +1466,40 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
         }
 
         if (requestedStuffForSomeLinkedNotebook) {
-            QNDEBUG("Sent one or more list stuff from linked "
-                << "notebooks from the local storage request ids");
+            QNDEBUG("synchronization:send_changes", "Sent one or more list "
+                << "stuff from linked notebooks from the local storage request "
+                << "ids");
             return;
         }
 
         if (!m_listDirtyTagsFromLinkedNotebooksRequestIds.isEmpty()) {
-            QNTRACE("There are pending requests to list tags from "
-                << "linked notebooks from the local storage: "
+            QNTRACE("synchronization:send_changes", "There are pending "
+                << "requests to list tags from linked notebooks from the local "
+                << "storage: "
                 << m_listDirtyTagsFromLinkedNotebooksRequestIds.size());
             return;
         }
 
         if (!m_listDirtyNotebooksFromLinkedNotebooksRequestIds.isEmpty()) {
-            QNTRACE("There are pending requests to list notebooks "
-                << "from linked notebooks from the local storage: "
+            QNTRACE("synchronization:send_changes", "There are pending "
+                << "requests to list notebooks from linked notebooks from "
+                << "the local storage: "
                 << m_listDirtyNotebooksFromLinkedNotebooksRequestIds.size());
             return;
         }
 
         if (!m_listDirtyNotesFromLinkedNotebooksRequestIds.isEmpty()) {
-            QNTRACE("There are pending requests to list notes from "
-                << "linked notebooks from the local storage: "
+            QNTRACE("synchronization:send_changes", "There are pending "
+                << "requests to list notes from linked notebooks from "
+                << "the local storage: "
                 << m_listDirtyNotesFromLinkedNotebooksRequestIds.size());
             return;
         }
     }
 
     m_receivedAllDirtyLocalStorageObjects = true;
-    QNTRACE("All relevant objects from the local storage have been listed");
+    QNTRACE("synchronization:send_changes", "All relevant objects from "
+        << "the local storage have been listed");
 
     if (!m_tags.isEmpty() || !m_savedSearches.isEmpty() ||
         !m_notebooks.isEmpty() || !m_notes.isEmpty())
@@ -1442,15 +1512,18 @@ void SendLocalChangesManager::checkListLocalStorageObjectsCompletion()
     }
     else
     {
-        QNINFO("No modified or new synchronizable objects were found "
-            << "in the local storage, nothing to send to Evernote service");
+        QNINFO("synchronization:send_changes", "No modified or new "
+            << "synchronizable objects were found in the local storage, "
+            << "nothing to send to Evernote service");
         finalize();
     }
 }
 
 void SendLocalChangesManager::sendLocalChanges()
 {
-    QNDEBUG("SendLocalChangesManager::sendLocalChanges");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::sendLocalChanges");
 
     if (!checkAndRequestAuthenticationTokensForLinkedNotebooks()) {
         return;
@@ -1489,10 +1562,13 @@ void SendLocalChangesManager::sendLocalChanges()
 
 void SendLocalChangesManager::sendTags()
 {
-    QNDEBUG("SendLocalChangesManager::sendTags");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::sendTags");
 
     if (m_sendingTags) {
-        QNDEBUG("Sending tags is already in progress");
+        QNDEBUG( "synchronization:send_changes", "Sending tags is already in "
+            << "progress");
         return;
     }
 
@@ -1501,7 +1577,7 @@ void SendLocalChangesManager::sendTags()
     ErrorString errorDescription;
     bool res = sortTagsByParentChildRelations(m_tags, errorDescription);
     if (Q_UNLIKELY(!res)) {
-        QNWARNING(errorDescription);
+        QNWARNING("synchronization:send_changes", errorDescription);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -1543,7 +1619,8 @@ void SendLocalChangesManager::sendTags()
                     errorDescription.details() = tag.name();
                 }
 
-                QNWARNING(errorDescription << ", tag: " << tag);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", tag: " << tag);
 
                 auto sit = std::find_if(
                     m_linkedNotebookAuthData.begin(),
@@ -1552,9 +1629,10 @@ void SendLocalChangesManager::sendTags()
                         tag.linkedNotebookGuid()));
 
                 if (sit == m_linkedNotebookAuthData.end()) {
-                    QNWARNING("The linked notebook the tag refers to was not "
-                        << "found within the list of linked notebooks "
-                        << "received from the local storage!");
+                    QNWARNING("synchronization:send_changes", "The linked "
+                        << "notebook the tag refers to was not found within "
+                        << "the list of linked notebooks received from "
+                        << "the local storage!");
                 }
 
                 Q_EMIT failure(errorDescription);
@@ -1581,7 +1659,8 @@ void SendLocalChangesManager::sendTags()
                     errorDescription.details() = tag.name();
                 }
 
-                QNWARNING(errorDescription << ", tag: " << tag);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", tag: " << tag);
 
                 Q_EMIT failure(errorDescription);
                 return;
@@ -1602,8 +1681,8 @@ void SendLocalChangesManager::sendTags()
                 errorDescription.setBase(
                     QT_TR_NOOP("Can't send new or modified tag: can't find or "
                                "create a note store for the linked notebook"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
-                    << tag.linkedNotebookGuid());
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = " << tag.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1613,8 +1692,8 @@ void SendLocalChangesManager::sendTags()
                 ErrorString errorDescription(
                     QT_TR_NOOP("Internal error: empty note store url for "
                                "the linked notebook's note store"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
-                    << tag.linkedNotebookGuid());
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = " << tag.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1627,7 +1706,7 @@ void SendLocalChangesManager::sendTags()
         bool creatingTag = !tag.hasUpdateSequenceNumber();
         if (creatingTag)
         {
-            QNTRACE("Sending new tag: " << tag);
+            QNTRACE("synchronization:send_changes", "Sending new tag: " << tag);
             errorCode = pNoteStore->createTag(
                 tag,
                 errorDescription,
@@ -1636,7 +1715,9 @@ void SendLocalChangesManager::sendTags()
         }
         else
         {
-            QNTRACE("Sending modified tag: " << tag);
+            QNTRACE("synchronization:send_changes", "Sending modified tag: "
+                << tag);
+
             errorCode = pNoteStore->updateTag(
                 tag,
                 errorDescription,
@@ -1653,7 +1734,7 @@ void SendLocalChangesManager::sendTags()
                     QT_TR_NOOP("Rate limit reached but the number of seconds "
                                "to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1665,18 +1746,19 @@ void SendLocalChangesManager::sendTags()
                     QT_TR_NOOP("Failed to start a timer to postpone "
                                "the Evernote API call due to rate limit "
                                "exceeding"));
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendTagsPostponeTimerId = timerId;
 
-            QNINFO("Encountered API rate limits exceeding during "
-                << "the attempt to send new or modified tag, "
-                << ", will need to wait for " << rateLimitSeconds
+            QNINFO("synchronization:send_changes", "Encountered API rate "
+                << "limits exceeding during the attempt to send new or "
+                << "modified tag, will need to wait for " << rateLimitSeconds
                 << " seconds");
-            QNDEBUG("Send tags postpone timer id = " << timerId);
+            QNDEBUG("synchronization:send_changes", "Send tags postpone timer "
+                << "id = " << timerId);
 
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
@@ -1697,7 +1779,8 @@ void SendLocalChangesManager::sendTags()
                     errorDescription.setBase(
                         QT_TR_NOOP("Couldn't find the expiration time of "
                                    "a linked notebook's authentication token"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << tag.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -1707,7 +1790,8 @@ void SendLocalChangesManager::sendTags()
                         QT_TR_NOOP("Unexpected AUTH_EXPIRED error: "
                                    "authentication tokens for all linked "
                                    "notebooks are still valid"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << tag.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -1718,10 +1802,10 @@ void SendLocalChangesManager::sendTags()
         else if (errorCode ==
                  static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
-            QNINFO("Encountered DATA_CONFLICT exception while trying to send "
-                << "new and/or modified tags, it means the incremental sync "
-                << "should be repeated before sending the changes to Evernote "
-                << "service");
+            QNINFO("synchronization:send_changes", "Encountered DATA_CONFLICT "
+                << "exception while trying to send new and/or modified tags, "
+                << "it means the incremental sync should be repeated before "
+                << "sending the changes to Evernote service");
             Q_EMIT conflictDetected();
             stop();
             return;
@@ -1734,12 +1818,13 @@ void SendLocalChangesManager::sendTags()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
-            QNWARNING(error);
+            QNWARNING("synchronization:send_changes", error);
             Q_EMIT failure(error);
             return;
         }
 
-        QNDEBUG("Successfully sent the tag to Evernote");
+        QNDEBUG("synchronization:send_changes", "Successfully sent the tag to "
+            << "Evernote");
 
         // Now the tag should have obtained guid, need to set this guid
         // as parent tag guid for child tags
@@ -1748,9 +1833,11 @@ void SendLocalChangesManager::sendTags()
         {
             ErrorString error(
                 QT_TR_NOOP("The tag just sent to Evernote has no guid"));
+
             if (tag.hasName()) {
                 error.details() = tag.name();
             }
+
             Q_EMIT failure(error);
             return;
         }
@@ -1759,7 +1846,7 @@ void SendLocalChangesManager::sendTags()
         ++nextTagIt;
         for(auto nit = nextTagIt; nit != m_tags.end(); ++nit)
         {
-            Tag & otherTag = *nit;
+            auto & otherTag = *nit;
             if (otherTag.hasParentLocalUid() &&
                 (otherTag.parentLocalUid() == tag.localUid()))
             {
@@ -1772,14 +1859,17 @@ void SendLocalChangesManager::sendTags()
         tag.setDirty(false);
         QUuid updateTagRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateTagRequestIds.insert(updateTagRequestId))
-        QNTRACE("Emitting the request to update tag "
-            << "(remove dirty flag from it): request id = "
+
+        QNTRACE("synchronization:send_changes", "Emitting the request to "
+            << "update tag (remove dirty flag from it): request id = "
             << updateTagRequestId << ", tag: " << tag);
+
         Q_EMIT updateTag(tag, updateTagRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
-            QNTRACE("Checking if we are still in sync with the remote service");
+            QNTRACE("synchronization:send_changes", "Checking if we are still "
+                << "in sync with Evernote");
 
             if (!tag.hasUpdateSequenceNumber())
             {
@@ -1794,15 +1884,18 @@ void SendLocalChangesManager::sendTags()
             if (!tag.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
-                QNTRACE("Current tag does not belong to linked notebook");
+                QNTRACE("synchronization:send_changes", "Current tag does not "
+                    << "belong to a linked notebook");
             }
             else
             {
-                QNTRACE("Current tag belongs to linked notebook with guid "
+                QNTRACE("synchronization:send_changes", "Current tag belongs "
+                    << "to a linked notebook with guid "
                     << tag.linkedNotebookGuid());
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(
                     tag.linkedNotebookGuid());
+
                 if (lit == m_lastUpdateCountByLinkedNotebookGuid.end())
                 {
                     errorDescription.setBase(
@@ -1819,14 +1912,15 @@ void SendLocalChangesManager::sendTags()
 
             if (tag.updateSequenceNumber() == *pLastUpdateCount + 1) {
                 *pLastUpdateCount = tag.updateSequenceNumber();
-                QNTRACE("The client is in sync with the service; "
-                    << "updated corresponding last update count to "
-                    << *pLastUpdateCount);
+                QNTRACE("synchronization:send_changes", "The client is in sync "
+                    << "with the service; updated corresponding last update "
+                    << "count to " << *pLastUpdateCount);
             }
             else {
                 m_shouldRepeatIncrementalSync = true;
                 Q_EMIT shouldRepeatIncrementalSync();
-                QNTRACE("The client is not in sync with the service");
+                QNTRACE("synchronization:send_changes", "The client is not in "
+                    << "sync with the service");
             }
         }
 
@@ -1835,11 +1929,12 @@ void SendLocalChangesManager::sendTags()
     }
 
     if (numSentTags != 0) {
-        QNINFO("Sent " << numSentTags
+        QNINFO("synchronization:send_changes", "Sent " << numSentTags
             << " locally added/updated tags to Evernote");
     }
     else {
-        QNINFO("Found no locally added/modified tags to send to Evernote");
+        QNINFO("synchronization:send_changes", "Found no locally "
+            << "added/modified tags to send to Evernote");
     }
 
     // Need to set tag guids for all dirty notes which have the corresponding
@@ -1885,10 +1980,13 @@ void SendLocalChangesManager::sendTags()
 
 void SendLocalChangesManager::sendSavedSearches()
 {
-    QNDEBUG("SendLocalChangesManager::sendSavedSearches");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::sendSavedSearches");
 
     if (m_sendingSavedSearches) {
-        QNDEBUG("Sending saved searches is already in progress");
+        QNDEBUG("synchronization:send_changes", "Sending saved searches is "
+            << "already in progress");
         return;
     }
 
@@ -1910,7 +2008,9 @@ void SendLocalChangesManager::sendSavedSearches()
         bool creatingSearch = !search.hasUpdateSequenceNumber();
         if (creatingSearch)
         {
-            QNTRACE("Sending new saved search: " << search);
+            QNTRACE("synchronization:send_changes", "Sending new saved search: "
+                << search);
+
             errorCode = noteStore.createSavedSearch(
                 search,
                 errorDescription,
@@ -1918,7 +2018,9 @@ void SendLocalChangesManager::sendSavedSearches()
         }
         else
         {
-            QNTRACE("Sending modified saved search: " << search);
+            QNTRACE("synchronization:send_changes", "Sending modified saved "
+                << "search: " << search);
+
             errorCode = noteStore.updateSavedSearch(
                 search,
                 errorDescription,
@@ -1934,7 +2036,7 @@ void SendLocalChangesManager::sendSavedSearches()
                     QT_TR_NOOP("Rate limit reached but the number of seconds "
                                "to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -1946,18 +2048,19 @@ void SendLocalChangesManager::sendSavedSearches()
                     QT_TR_NOOP("Failed to start a timer to postpone "
                                "the Evernote API call due to rate limit "
                                "exceeding"));
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendSavedSearchesPostponeTimerId = timerId;
 
-            QNINFO("Encountered API rate limits exceeding during "
-                << "the attempt to send new or modified saved "
-                << "search, will need to wait for " << rateLimitSeconds
-                << " seconds");
-            QNDEBUG("Send saved searches postpone timer id = " << timerId);
+            QNINFO("synchronization:send_changes", "Encountered API rate "
+                << "limits exceeding during the attempt to send new or "
+                << "modified saved search, will need to wait for "
+                << rateLimitSeconds << " seconds");
+            QNDEBUG("synchronization:send_changes", "Send saved searches "
+                << "postpone timer id = " << timerId);
 
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
@@ -1971,10 +2074,11 @@ void SendLocalChangesManager::sendSavedSearches()
         else if (errorCode ==
                  static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
-            QNINFO("Encountered DATA_CONFLICT exception while "
-                << "trying to send new and/or modified saved searches, "
-                << "it means the incremental sync should be repeated "
+            QNINFO("synchronization:send_changes", "Encountered DATA_CONFLICT "
+                << "exception while trying to send new and/or modified saved "
+                << "searches, it means the incremental sync should be repeated "
                 << "before sending the changes to the service");
+
             Q_EMIT conflictDetected();
             stop();
             return;
@@ -1987,26 +2091,31 @@ void SendLocalChangesManager::sendSavedSearches()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
-            QNWARNING(error);
+            QNWARNING("synchronization:send_changes", error);
             Q_EMIT failure(error);
             return;
         }
 
-        QNDEBUG("Successfully sent the saved search to Evernote");
+        QNDEBUG("synchronization:send_changes", "Successfully sent the saved "
+            << "search to Evernote");
 
         search.setDirty(false);
         QUuid updateSavedSearchRequestId = QUuid::createUuid();
+
         Q_UNUSED(m_updateSavedSearchRequestIds.insert(
             updateSavedSearchRequestId))
-        QNTRACE("Emitting the request to update saved search "
-            << "(remove the dirty flag from it): request id = "
-            << updateSavedSearchRequestId << ", saved search: "
+
+        QNTRACE("synchronization:send_changes", "Emitting the request to "
+            << "update saved search (remove the dirty flag from it): request "
+            << "id = " << updateSavedSearchRequestId << ", saved search: "
             << search);
+
         Q_EMIT updateSavedSearch(search, updateSavedSearchRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
-            QNTRACE("Checking if we are still in sync with the remote service");
+            QNTRACE("synchronization:send_changes", "Checking if we are still "
+                << "in sync with Evernote");
 
             if (!search.hasUpdateSequenceNumber())
             {
@@ -2014,19 +2123,21 @@ void SendLocalChangesManager::sendSavedSearches()
                     QT_TR_NOOP("Internal error: saved search's update sequence "
                                "number is not set after sending it to Evernote "
                                "service"));
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             if (search.updateSequenceNumber() == m_lastUpdateCount + 1) {
                 m_lastUpdateCount = search.updateSequenceNumber();
-                QNDEBUG("The client is in sync with the service; "
-                    << "updated last update count to " << m_lastUpdateCount);
+                QNDEBUG("synchronization:send_changes", "The client is in sync "
+                    << "with the service; updated last update count to "
+                    << m_lastUpdateCount);
             }
             else {
                 m_shouldRepeatIncrementalSync = true;
-                QNDEBUG("The client is not in sync with the service");
+                QNDEBUG("synchronization:send_changes", "The client is not in "
+                    << "sync with the service");
                 Q_EMIT shouldRepeatIncrementalSync();
             }
         }
@@ -2036,12 +2147,12 @@ void SendLocalChangesManager::sendSavedSearches()
     }
 
     if (numSentSavedSearches != 0) {
-        QNINFO("Sent " << numSentSavedSearches
+        QNINFO("synchronization:send_changes", "Sent " << numSentSavedSearches
             << " locally added/updated saved searches to Evernote");
     }
     else {
-        QNINFO("Found no locally added/modified saved searches "
-            << "to send to Evernote");
+        QNINFO("synchronization:send_changes", "Found no locally "
+            << "added/modified saved searches to send to Evernote");
     }
 
     /**
@@ -2058,10 +2169,13 @@ void SendLocalChangesManager::sendSavedSearches()
 
 void SendLocalChangesManager::sendNotebooks()
 {
-    QNDEBUG("SendLocalChangesManager::sendNotebooks");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::sendNotebooks");
 
     if (m_sendingNotebooks) {
-        QNDEBUG("Sending notebooks is already in progress");
+        QNDEBUG("synchronization:send_changes", "Sending notebooks is already "
+            << "in progress");
         return;
     }
 
@@ -2106,7 +2220,8 @@ void SendLocalChangesManager::sendNotebooks()
                     errorDescription.details() = notebook.name();
                 }
 
-                QNWARNING(errorDescription << ", notebook: " << notebook);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", notebook: " << notebook);
 
                 auto sit = std::find_if(
                     m_linkedNotebookAuthData.begin(),
@@ -2115,9 +2230,10 @@ void SendLocalChangesManager::sendNotebooks()
                         notebook.linkedNotebookGuid()));
 
                 if (sit == m_linkedNotebookAuthData.end()) {
-                    QNWARNING("The linked notebook the notebook refers to was "
-                        << "not found within the list of linked notebooks "
-                        << "received from the local storage");
+                    QNWARNING("synchronization:send_changes", "The linked "
+                        << "notebook the notebook refers to was not found "
+                        << "within the list of linked notebooks received from "
+                        << "the local storage");
                 }
 
                 Q_EMIT failure(errorDescription);
@@ -2144,7 +2260,8 @@ void SendLocalChangesManager::sendNotebooks()
                     errorDescription.details() = notebook.name();
                 }
 
-                QNWARNING(errorDescription << ", notebook: " << notebook);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", notebook: " << notebook);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -2165,7 +2282,8 @@ void SendLocalChangesManager::sendNotebooks()
                     QT_TR_NOOP("Can't send new or modified notebook: can't "
                                "find or create a note store for the linked "
                                "notebook"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = "
                     << notebook.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
@@ -2176,7 +2294,8 @@ void SendLocalChangesManager::sendNotebooks()
                 ErrorString errorDescription(
                     QT_TR_NOOP("Internal error: empty note store url for "
                                "the linked notebook's note store"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = "
                     << notebook.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
@@ -2190,7 +2309,9 @@ void SendLocalChangesManager::sendNotebooks()
         bool creatingNotebook = !notebook.hasUpdateSequenceNumber();
         if (creatingNotebook)
         {
-            QNTRACE("Sending new notebook: " << notebook);
+            QNTRACE("synchronization:send_changes", "Sending new notebook: "
+                << notebook);
+
             errorCode = pNoteStore->createNotebook(
                 notebook,
                 errorDescription,
@@ -2199,7 +2320,9 @@ void SendLocalChangesManager::sendNotebooks()
         }
         else
         {
-            QNTRACE("Sending modified notebook: " << notebook);
+            QNTRACE("synchronization:send_changes", "Sending modified "
+                << "notebook: " << notebook);
+
             errorCode = pNoteStore->updateNotebook(
                 notebook,
                 errorDescription,
@@ -2216,7 +2339,7 @@ void SendLocalChangesManager::sendNotebooks()
                     QT_TR_NOOP("Rate limit reached but the number of seconds "
                                "to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -2227,18 +2350,20 @@ void SendLocalChangesManager::sendNotebooks()
                 errorDescription.setBase(
                     QT_TR_NOOP("Failed to start a timer to postpone the "
                                "Evernote API call due to rate limit exceeding"));
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendNotebooksPostponeTimerId = timerId;
 
-            QNINFO("Encountered API rate limits exceeding during "
-                << "the attempt to send new or modified notebook, "
-                << ", will need to wait for " << rateLimitSeconds
-                << " seconds");
-            QNDEBUG("Send notebooks postpone timer id = " << timerId);
+            QNINFO("synchronization:send_changes", "Encountered API rate "
+                << "limits exceeding during the attempt to send new or "
+                << "modified notebook, will need to wait for "
+                << rateLimitSeconds << " seconds");
+
+            QNDEBUG("synchronization:send_changes", "Send notebooks postpone "
+                << "timer id = " << timerId);
 
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
@@ -2259,7 +2384,8 @@ void SendLocalChangesManager::sendNotebooks()
                     errorDescription.setBase(
                         QT_TR_NOOP("Couldn't find the linked notebook auth "
                                    "token's expiration time"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << notebook.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -2269,7 +2395,8 @@ void SendLocalChangesManager::sendNotebooks()
                         QT_TR_NOOP("Unexpected AUTH_EXPIRED error: "
                                    "authentication tokens for all linked "
                                    "notebooks are still valid"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << notebook.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -2280,10 +2407,10 @@ void SendLocalChangesManager::sendNotebooks()
         else if (errorCode ==
                  static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT))
         {
-            QNINFO("Encountered DATA_CONFLICT exception while "
-                << "trying to send new and/or modified notebooks, "
-                << "it means the incremental sync should be repeated "
-                << "before sending the changes to the service");
+            QNINFO("synchronization:send_changes", "Encountered DATA_CONFLICT "
+                << "exception while trying to send new and/or modified "
+                << "notebooks, it means the incremental sync should be "
+                << "repeated before sending the changes to the service");
             Q_EMIT conflictDetected();
             stop();
             return;
@@ -2296,12 +2423,13 @@ void SendLocalChangesManager::sendNotebooks()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
-            QNWARNING(error);
+            QNWARNING("synchronization:send_changes", error);
             Q_EMIT failure(error);
             return;
         }
 
-        QNDEBUG("Successfully sent the notebook to Evernote");
+        QNDEBUG("synchronization:send_changes", "Successfully sent "
+            << "the notebook to Evernote");
 
         if (Q_UNLIKELY(!notebook.hasGuid()))
         {
@@ -2319,14 +2447,17 @@ void SendLocalChangesManager::sendNotebooks()
         notebook.setDirty(false);
         QUuid updateNotebookRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateNotebookRequestIds.insert(updateNotebookRequestId))
-        QNTRACE("Emitting the request to update notebook "
-            << "(remove dirty flag from it): request id = "
+
+        QNTRACE("synchronization:send_changes", "Emitting the request to "
+            << "update notebook (remove dirty flag from it): request id = "
             << updateNotebookRequestId << ", notebook: " << notebook);
+
         Q_EMIT updateNotebook(notebook, updateNotebookRequestId);
 
         if (!m_shouldRepeatIncrementalSync)
         {
-            QNTRACE("Checking if we are still in sync with the remote service");
+            QNTRACE("synchronization:send_changes", "Checking if we are still "
+                << "in sync with Evernote");
 
             if (!notebook.hasUpdateSequenceNumber())
             {
@@ -2345,15 +2476,18 @@ void SendLocalChangesManager::sendNotebooks()
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
-                QNTRACE("Current notebook does not belong to linked notebook");
+                QNTRACE("synchronization:send_changes", "Current notebook does "
+                    << "not belong to a linked notebook");
             }
             else
             {
-                QNTRACE("Current notebook belongs to linked notebook "
-                    << "with guid " << notebook.linkedNotebookGuid());
+                QNTRACE("synchronization:send_changes", "Current notebook "
+                    << "belongs to a linked notebook with guid "
+                    << notebook.linkedNotebookGuid());
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(
                     notebook.linkedNotebookGuid());
+
                 if (lit == m_lastUpdateCountByLinkedNotebookGuid.end())
                 {
                     errorDescription.setBase(
@@ -2371,14 +2505,16 @@ void SendLocalChangesManager::sendNotebooks()
             if (notebook.updateSequenceNumber() == *pLastUpdateCount + 1)
             {
                 *pLastUpdateCount = notebook.updateSequenceNumber();
-                QNTRACE("The client is in sync with the service; "
-                    << "updated last update count to " << *pLastUpdateCount);
+                QNTRACE("synchronization:send_changes", "The client is in sync "
+                    << "with the service; updated last update count to "
+                    << *pLastUpdateCount);
             }
             else
             {
                 m_shouldRepeatIncrementalSync = true;
                 Q_EMIT shouldRepeatIncrementalSync();
-                QNTRACE("The client is not in sync with the service");
+                QNTRACE("synchronization:send_changes", "The client is not in "
+                    << "sync with the service");
             }
         }
 
@@ -2387,11 +2523,12 @@ void SendLocalChangesManager::sendNotebooks()
     }
 
     if (numSentNotebooks != 0) {
-        QNINFO("Sent " << numSentNotebooks
+        QNINFO("synchronization:send_changes", "Sent " << numSentNotebooks
             << " locally added/updated notebooks to Evernote");
     }
     else {
-        QNINFO("Found no locally added/modified notebooks to send to Evernote");
+        QNINFO("synchronization:send_changes", "Found no locally "
+            << "added/modified notebooks to send to Evernote");
     }
 
     // Need to set notebook guids for all dirty notes which have the
@@ -2399,8 +2536,9 @@ void SendLocalChangesManager::sendNotebooks()
     for(auto & note: m_notes)
     {
         if (note.hasNotebookGuid()) {
-            QNDEBUG("Dirty note with local uid " << note.localUid()
-                    << " already has notebook guid: " << note.notebookGuid());
+            QNDEBUG("synchronization:send_changes", "Dirty note with local uid "
+                << note.localUid() << " already has notebook guid: "
+                << note.notebookGuid());
             continue;
         }
 
@@ -2410,7 +2548,8 @@ void SendLocalChangesManager::sendNotebooks()
                 QT_TR_NOOP("Detected note which doesn't have neither "
                            "notebook guid not notebook local uid"));
             APPEND_NOTE_DETAILS(error, note);
-            QNWARNING(errorDescription << ", note: " << note);
+            QNWARNING("synchronization:send_changes", errorDescription
+                << ", note: " << note);
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -2421,7 +2560,8 @@ void SendLocalChangesManager::sendNotebooks()
             ErrorString error(
                 QT_TR_NOOP("Can't find the notebook guid for one of notes"));
             APPEND_NOTE_DETAILS(error, note);
-            QNWARNING(errorDescription << ", note: " << note);
+            QNWARNING("synchronization:send_changes", errorDescription
+                << ", note: " << note);
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -2442,7 +2582,9 @@ void SendLocalChangesManager::sendNotebooks()
 
 void SendLocalChangesManager::checkAndSendNotes()
 {
-    QNDEBUG("SendLocalChangesManager::checkAndSendNotes");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::checkAndSendNotes");
 
     if (m_tags.isEmpty() && m_notebooks.isEmpty() &&
         m_findNotebookRequestIds.isEmpty())
@@ -2453,10 +2595,13 @@ void SendLocalChangesManager::checkAndSendNotes()
 
 void SendLocalChangesManager::sendNotes()
 {
-    QNDEBUG("SendLocalChangesManager::sendNotes");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::sendNotes");
 
     if (m_sendingNotes) {
-        QNDEBUG("Sending notes is already in progress");
+        QNDEBUG("synchronization:send_changes", "Sending notes is already in "
+            << "progress");
         return;
     }
 
@@ -2479,7 +2624,8 @@ void SendLocalChangesManager::sendNotes()
             errorDescription.setBase(
                 QT_TR_NOOP("Found a note without notebook guid"));
             APPEND_NOTE_DETAILS(errorDescription, note)
-            QNWARNING(errorDescription << ", note: " << note);
+            QNWARNING("synchronization:send_changes", errorDescription
+                << ", note: " << note);
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -2491,8 +2637,8 @@ void SendLocalChangesManager::sendNotes()
                 QT_TR_NOOP("Can't find the notebook for one of notes about to "
                            "be sent to Evernote service"));
             APPEND_NOTE_DETAILS(errorDescription, note)
-
-            QNWARNING(errorDescription << ", note: " << note);
+            QNWARNING("synchronization:send_changes", errorDescription
+                << ", note: " << note);
             Q_EMIT failure(errorDescription);
             return;
         }
@@ -2507,6 +2653,7 @@ void SendLocalChangesManager::sendNotes()
         {
             auto cit = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(
                 notebook.linkedNotebookGuid());
+
             if (cit != m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())
             {
                 linkedNotebookAuthToken = cit.value().first;
@@ -2518,7 +2665,8 @@ void SendLocalChangesManager::sendNotes()
                     QT_TR_NOOP("Couldn't find the auth token for a linked "
                                "notebook when attempting to create or "
                                "update a note from that notebook"));
-                QNWARNING(errorDescription << ", notebook: " << notebook);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", notebook: " << notebook);
 
                 auto sit = std::find_if(
                     m_linkedNotebookAuthData.begin(),
@@ -2527,9 +2675,10 @@ void SendLocalChangesManager::sendNotes()
                         notebook.linkedNotebookGuid()));
 
                 if (sit == m_linkedNotebookAuthData.end()) {
-                    QNWARNING("The linked notebook the notebook refers to was "
-                        << "not found within the list of linked notebooks "
-                        << "received from the local storage");
+                    QNWARNING("synchronization:send_changes", "The linked "
+                        << "notebook the notebook refers to was not found "
+                        << "within the list of linked notebooks received from "
+                        << "the local storage");
                 }
 
                 Q_EMIT failure(errorDescription);
@@ -2556,7 +2705,8 @@ void SendLocalChangesManager::sendNotes()
                     errorDescription.details() = notebook.name();
                 }
 
-                QNWARNING(errorDescription << ", notebook: " << notebook);
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", notebook: " << notebook);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -2576,7 +2726,8 @@ void SendLocalChangesManager::sendNotes()
                 errorDescription.setBase(
                     QT_TR_NOOP("Can't send new or modified note: can't find or "
                                "create a note store for the linked notebook"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = "
                     << notebook.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
@@ -2587,7 +2738,8 @@ void SendLocalChangesManager::sendNotes()
                 ErrorString errorDescription(
                     QT_TR_NOOP("Internal error: empty note store url for "
                                "the linked notebook's note store"));
-                QNWARNING(errorDescription << ", linked notebook guid = "
+                QNWARNING("synchronization:send_changes", errorDescription
+                    << ", linked notebook guid = "
                     << notebook.linkedNotebookGuid());
                 Q_EMIT failure(errorDescription);
                 return;
@@ -2660,7 +2812,9 @@ void SendLocalChangesManager::sendNotes()
         bool creatingNote = !note.hasUpdateSequenceNumber();
         if (creatingNote)
         {
-            QNTRACE("Sending new note: " << note);
+            QNTRACE("synchronization:send_changes", "Sending new note: "
+                << note);
+
             errorCode = pNoteStore->createNote(
                 note,
                 errorDescription,
@@ -2669,7 +2823,9 @@ void SendLocalChangesManager::sendNotes()
         }
         else
         {
-            QNTRACE("Sending modified note: " << note);
+            QNTRACE("synchronization:send_changes", "Sending modified note: "
+                << note);
+
             errorCode = pNoteStore->updateNote(
                 note,
                 errorDescription,
@@ -2686,7 +2842,7 @@ void SendLocalChangesManager::sendNotes()
                     QT_TR_NOOP("Rate limit reached but the number of seconds "
                                "to wait is incorrect"));
                 errorDescription.details() = QString::number(rateLimitSeconds);
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
@@ -2697,18 +2853,20 @@ void SendLocalChangesManager::sendNotes()
                 errorDescription.setBase(
                     QT_TR_NOOP("Failed to start a timer to postpone the "
                                "Evernote API call due to rate limit exceeding"));
-                QNWARNING(errorDescription);
+                QNWARNING("synchronization:send_changes", errorDescription);
                 Q_EMIT failure(errorDescription);
                 return;
             }
 
             m_sendNotesPostponeTimerId = timerId;
 
-            QNINFO("Encountered API rate limits exceeding during "
-                << "the attempt to send new or modified note, "
-                << ", will need to wait for " << rateLimitSeconds
+            QNINFO("synchronization:send_changes", "Encountered API rate "
+                << "limits exceeding during the attempt to send new or "
+                << "modified note, will need to wait for " << rateLimitSeconds
                 << " seconds");
-            QNDEBUG("Send notes postpone timer id = " << timerId);
+
+            QNDEBUG("synchronization:send_changes", "Send notes postpone timer "
+                << "id = " << timerId);
 
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
@@ -2728,7 +2886,8 @@ void SendLocalChangesManager::sendNotes()
                     errorDescription.setBase(
                         QT_TR_NOOP("Couldn't find the linked notebook auth "
                                    "token's expiration time"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << notebook.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -2738,7 +2897,8 @@ void SendLocalChangesManager::sendNotes()
                         QT_TR_NOOP("Unexpected AUTH_EXPIRED error: "
                                    "authentication tokens for all linked "
                                    "notebooks are still valid"));
-                    QNWARNING(errorDescription << ", linked notebook guid = "
+                    QNWARNING("synchronization:send_changes", errorDescription
+                        << ", linked notebook guid = "
                         << notebook.linkedNotebookGuid());
                     Q_EMIT failure(errorDescription);
                 }
@@ -2754,18 +2914,20 @@ void SendLocalChangesManager::sendNotes()
             error.additionalBases().append(errorDescription.base());
             error.additionalBases().append(errorDescription.additionalBases());
             error.details() = errorDescription.details();
-            QNWARNING(error);
+            QNWARNING("synchronization:send_changes", error);
             Q_EMIT failure(error);
             return;
         }
 
-        QNDEBUG("Successfully sent the note to Evernote");
+        QNDEBUG("synchronization:send_changes", "Successfully sent the note "
+            << "to Evernote");
 
         note.setDirty(false);
         QUuid updateNoteRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
-        QNTRACE("Emitting the request to update note (remove "
-            << "the dirty flag from it): request id = "
+
+        QNTRACE("synchronization:send_changes", "Emitting the request to "
+            << "update note (remove the dirty flag from it): request id = "
             << updateNoteRequestId << ", note: " << note);
 
         /**
@@ -2784,7 +2946,8 @@ void SendLocalChangesManager::sendNotes()
 
         if (!m_shouldRepeatIncrementalSync)
         {
-            QNTRACE("Checking if we are still in sync with Evernote service");
+            QNTRACE("synchronization:send_changes", "Checking if we are still "
+                << "in sync with Evernote");
 
             if (!note.hasUpdateSequenceNumber())
             {
@@ -2799,11 +2962,13 @@ void SendLocalChangesManager::sendNotes()
             if (!notebook.hasLinkedNotebookGuid())
             {
                 pLastUpdateCount = &m_lastUpdateCount;
-                QNTRACE("Current note does not belong to any linked notebook");
+                QNTRACE("synchronization:send_changes", "Current note does not "
+                    << "belong to any linked notebook");
             }
             else
             {
-                QNTRACE("Current note belongs to linked notebook with guid "
+                QNTRACE("synchronization:send_changes", "Current note belongs "
+                    << "to linked notebook with guid "
                     << notebook.linkedNotebookGuid());
 
                 auto lit = m_lastUpdateCountByLinkedNotebookGuid.find(
@@ -2825,18 +2990,20 @@ void SendLocalChangesManager::sendNotes()
             if (note.updateSequenceNumber() == *pLastUpdateCount + 1)
             {
                 *pLastUpdateCount = note.updateSequenceNumber();
-                QNTRACE("The client is in sync with the service; "
-                    << "updated last update count to " << *pLastUpdateCount);
+                QNTRACE("synchronization:send_changes", "The client is in sync "
+                    << "with the service; updated last update count to "
+                    << *pLastUpdateCount);
             }
             else
             {
                 m_shouldRepeatIncrementalSync = true;
                 Q_EMIT shouldRepeatIncrementalSync();
-                QNTRACE("The client is not in sync with the service: "
-                    << "last update count = " << *pLastUpdateCount
-                    << ", note's update sequence number is "
-                    << note.updateSequenceNumber()
-                    << ", whole note: " << note);
+
+                QNTRACE("synchronization:send_changes", "The client is not in "
+                    << "sync with the service: last update count = "
+                    << *pLastUpdateCount << ", note's update sequence number "
+                    << "is " << note.updateSequenceNumber() << ", whole note: "
+                    << note);
             }
         }
 
@@ -2845,11 +3012,12 @@ void SendLocalChangesManager::sendNotes()
     }
 
     if (numSentNotes != 0) {
-        QNINFO("Sent " << numSentNotes
+        QNINFO("synchronization:send_changes", "Sent " << numSentNotes
             << " locally added/updated notes to Evernote");
     }
     else {
-        QNINFO("Found no locally added/modified notes to send to Evernote");
+        QNINFO("synchronization:send_changes", "Found no locally "
+            << "added/modified notes to send to Evernote");
     }
 
     /**
@@ -2864,7 +3032,9 @@ void SendLocalChangesManager::sendNotes()
 
 void SendLocalChangesManager::findNotebooksForNotes()
 {
-    QNDEBUG("SendLocalChangesManager::findNotebooksForNotes");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::findNotebooksForNotes");
 
     m_findNotebookRequestIds.clear();
     QSet<QString> notebookGuids;
@@ -2894,8 +3064,9 @@ void SendLocalChangesManager::findNotebooksForNotes()
             Q_EMIT findNotebook(dummyNotebook, requestId);
             Q_UNUSED(m_findNotebookRequestIds.insert(requestId));
 
-            QNTRACE("Sent find notebook request for notebook guid "
-                << notebookGuid << ", request id = " << requestId);
+            QNTRACE("synchronization:send_changes", "Sent find notebook "
+                << "request for notebook guid " << notebookGuid
+                << ", request id = " << requestId);
         }
     }
     else
@@ -2907,15 +3078,17 @@ void SendLocalChangesManager::findNotebooksForNotes()
 bool SendLocalChangesManager::rateLimitIsActive() const
 {
     return ( (m_sendTagsPostponeTimerId > 0) ||
-             (m_sendSavedSearchesPostponeTimerId > 0) ||
-             (m_sendNotebooksPostponeTimerId > 0) ||
-             (m_sendNotesPostponeTimerId > 0) );
+        (m_sendSavedSearchesPostponeTimerId > 0) ||
+        (m_sendNotebooksPostponeTimerId > 0) ||
+        (m_sendNotesPostponeTimerId > 0) );
 }
 
 void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize()
 {
-    QNDEBUG("SendLocalChangesManager::"
-        << "checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager"
+            << "::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesAndFinalize");
 
     if (m_tags.isEmpty() && m_savedSearches.isEmpty() &&
         m_notebooks.isEmpty() && m_notes.isEmpty())
@@ -2924,7 +3097,7 @@ void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesA
         return;
     }
 
-    QNDEBUG("Still have " << m_tags.size()
+    QNDEBUG("synchronization:send_changes", "Still have " << m_tags.size()
         << " not yet sent tags, "
         << m_savedSearches.size() << " not yet sent saved searches, "
         << m_notebooks.size() << " not yet sent notebooks and "
@@ -2935,43 +3108,49 @@ void SendLocalChangesManager::checkSendLocalChangesAndDirtyFlagsRemovingUpdatesA
 
 void SendLocalChangesManager::checkDirtyFlagRemovingUpdatesAndFinalize()
 {
-    QNDEBUG("SendLocalChangesManager::"
-        << "checkDirtyFlagRemovingUpdatesAndFinalize");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::checkDirtyFlagRemovingUpdatesAndFinalize");
 
     if (!m_updateTagRequestIds.isEmpty()) {
-        QNDEBUG("Still pending " << m_updateTagRequestIds.size()
-            << " update tag requests");
+        QNDEBUG("synchronization:send_changes", "Still pending "
+            << m_updateTagRequestIds.size() << " update tag requests");
         return;
     }
 
     if (!m_updateSavedSearchRequestIds.isEmpty()) {
-        QNDEBUG("Still pending " << m_updateSavedSearchRequestIds.size()
+        QNDEBUG("synchronization:send_changes", "Still pending "
+            << m_updateSavedSearchRequestIds.size()
             << " update saved search requests");
         return;
     }
 
     if (!m_updateNotebookRequestIds.isEmpty()) {
-        QNDEBUG("Still pending " << m_updateNotebookRequestIds.size()
+        QNDEBUG("synchronization:send_changes", "Still pending "
+            << m_updateNotebookRequestIds.size()
             << " update notebook requests");
         return;
     }
 
     if (!m_updateNoteRequestIds.isEmpty()) {
-        QNDEBUG("Still pending " << m_updateNoteRequestIds.size()
+        QNDEBUG("synchronization:send_changes", "Still pending "
+            << m_updateNoteRequestIds.size()
             << " update note requests");
         return;
     }
 
-    QNDEBUG("Found no pending update requests");
+    QNDEBUG("synchronization:send_changes", "Found no pending update requests");
     finalize();
 }
 
 void SendLocalChangesManager::finalize()
 {
-    QNDEBUG("SendLocalChangesManager::finalize: last update count = "
-        << m_lastUpdateCount
-        << ", last update count by linked notebook guid = "
-        << m_lastUpdateCountByLinkedNotebookGuid);
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::finalize: last update count = "
+            << m_lastUpdateCount
+            << ", last update count by linked notebook guid = "
+            << m_lastUpdateCountByLinkedNotebookGuid);
 
     Q_EMIT finished(m_lastUpdateCount, m_lastUpdateCountByLinkedNotebookGuid);
     clear();
@@ -2980,7 +3159,7 @@ void SendLocalChangesManager::finalize()
 
 void SendLocalChangesManager::clear()
 {
-    QNDEBUG("SendLocalChangesManager::clear");
+    QNDEBUG("synchronization:send_changes", "SendLocalChangesManager::clear");
 
     disconnectFromLocalStorage();
 
@@ -3034,7 +3213,9 @@ void SendLocalChangesManager::clear()
 
 void SendLocalChangesManager::killAllTimers()
 {
-    QNDEBUG("SendLocalChangesManager::killAllTimers");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::killAllTimers");
 
     if (m_sendTagsPostponeTimerId > 0) {
         killTimer(m_sendTagsPostponeTimerId);
@@ -3059,11 +3240,14 @@ void SendLocalChangesManager::killAllTimers()
 
 bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebooks()
 {
-    QNDEBUG("SendLocalChangesManager::"
-        << "checkAndRequestAuthenticationTokensForLinkedNotebooks");
+    QNDEBUG(
+        "synchronization:send_changes",
+        "SendLocalChangesManager"
+            << "::checkAndRequestAuthenticationTokensForLinkedNotebooks");
 
     if (m_linkedNotebookAuthData.isEmpty()) {
-        QNDEBUG("The list of linked notebook guids and share keys is empty");
+        QNDEBUG("synchronization:send_changes", "The list of linked notebook "
+            << "guids and share keys is empty");
         return true;
     }
 
@@ -3078,44 +3262,53 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
                 QT_TR_NOOP("Found empty linked notebook guid within "
                            "the list of linked notebook guids and "
                            "shared notebook global ids"));
-            QNWARNING(error);
+            QNWARNING("synchronization:send_changes", error);
             Q_EMIT failure(error);
             return false;
         }
 
         auto it = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(
             guid);
+
         if (it == m_authenticationTokensAndShardIdsByLinkedNotebookGuid.end())
         {
-            QNDEBUG("Authentication token for linked notebook with guid "
-                << guid << " was not found; will request authentication "
-                << "tokens for all linked notebooks at once");
+            QNDEBUG("synchronization:send_changes", "Authentication token for "
+                << "linked notebook with guid " << guid << " was not found; "
+                << "will request authentication tokens for all linked "
+                << "notebooks at once");
+
             m_pendingAuthenticationTokensForLinkedNotebooks = true;
+
             Q_EMIT requestAuthenticationTokensForLinkedNotebooks(
                 m_linkedNotebookAuthData);
+
             return false;
         }
 
         auto eit = m_authenticationTokenExpirationTimesByLinkedNotebookGuid.find(
             guid);
+
         if (eit == m_authenticationTokenExpirationTimesByLinkedNotebookGuid.end())
         {
             ErrorString error(
                 QT_TR_NOOP("Can't find the cached expiration time "
                            "of a linked notebook's authentication token"));
-            QNWARNING(error << ", linked notebook guid = " << guid);
+            QNWARNING("synchronization:send_changes", error
+                << ", linked notebook guid = " << guid);
             Q_EMIT failure(error);
             return false;
         }
 
         const qevercloud::Timestamp & expirationTime = eit.value();
+
         const qevercloud::Timestamp currentTime =
             QDateTime::currentMSecsSinceEpoch();
+
         if ((expirationTime - currentTime) < HALF_AN_HOUR_IN_MSEC)
         {
-            QNDEBUG("Authentication token for linked notebook with guid "
-                << guid << " is too close to expiration: its "
-                << "expiration time is "
+            QNDEBUG("synchronization:send_changes", "Authentication token for "
+                << "linked notebook with guid " << guid
+                << " is too close to expiration: its expiration time is "
                 << printableDateTimeFromTimestamp(expirationTime)
                 << ", current time is "
                 << printableDateTimeFromTimestamp(currentTime)
@@ -3131,15 +3324,18 @@ bool SendLocalChangesManager::checkAndRequestAuthenticationTokensForLinkedNotebo
         }
     }
 
-    QNDEBUG("Got authentication tokens for all linked notebooks, "
-        << "can proceed with their synchronization");
+    QNDEBUG("synchronization:send_changes", "Got authentication tokens for all "
+        << "linked notebooks, can proceed with their synchronization");
 
     return true;
 }
 
 void SendLocalChangesManager::handleAuthExpiration()
 {
-    QNINFO("SendLocalChangesManager::handleAuthExpiration");
+    QNINFO(
+        "synchronization:send_changes",
+        "SendLocalChangesManager::handleAuthExpiration");
+
     Q_EMIT requestAuthenticationToken();
 }
 
