@@ -30,12 +30,12 @@ namespace test {
 
 bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 {
-    QNDEBUG("parseResourceRecognitionIndicesAndItemsTest");
+    QNDEBUG("tests:types", "parseResourceRecognitionIndicesAndItemsTest");
 
     QFile resource(QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
     if (!resource.open(QIODevice::ReadOnly)) {
         error = QStringLiteral("Can't open test file ") + resource.fileName();
-        QNWARNING(error << ", error: " << resource.errorString()
+        QNWARNING("tests:types", error << ", error: " << resource.errorString()
             << " (error code " << resource.error() << ")");
         return false;
     }
@@ -57,7 +57,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("Incorrectly parsed reco indices " property ": "    \
                            "expected \"" expected "\", got \"") +              \
             recoIndices.accessor() + QStringLiteral("\"");                     \
-        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);  \
         return false;                                                          \
     }                                                                          \
 // CHECK_INDICES_PROPERTY
@@ -78,7 +78,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed reco indices object ") +
             QStringLiteral("height: expected 2592, got ") +
             QString::number(recoIndices.objectHeight());
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -86,7 +86,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed reco indices object ") +
             QStringLiteral("width: expected 1936, got ") +
             QString::number(recoIndices.objectWidth());
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
         error = QStringLiteral("Incorrectly parsed reco indices items: ") +
             QStringLiteral("expected 2 items, got ") +
             QString::number(numItems);
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -108,7 +108,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
                            property ": expected ") +                           \
             QString::number(expected) +                                        \
             QStringLiteral(", got ") + QString::number(item.accessor());       \
-        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);  \
         return false;                                                          \
     }                                                                          \
 // CHECK_ITEM_PROPERTY
@@ -127,7 +127,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected none of them, got ") +
             QString::number(objectItems0.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -139,7 +139,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected none of them, got ") +
             QString::number(shapeItems0.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -151,7 +151,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected none of them, got ") +
             QString::number(barcodeItems0.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -163,7 +163,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected 4 text items, got ") +
             QString::number(textItems0.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -176,7 +176,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
                            "item's text: expected ") +                         \
             QStringLiteral(expected) + QStringLiteral(", got ") +              \
             item##_textItem##index.m_text;                                     \
-        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);  \
         return false;                                                          \
     }                                                                          \
 // CHECK_TEXT_ITEM_TEXT
@@ -188,7 +188,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("Incorrectly parsed recognition item's text "       \
                            "item's text: expected " #expected ", got ") +      \
             QString::number(item##_textItem##index.m_weight);                  \
-        QNWARNING(error << "; reco indices: " << recoIndices);                 \
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);  \
         return false;                                                          \
     }                                                                          \
 // CHECK_TEXT_ITEM_WEIGHT
@@ -221,7 +221,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("list: expected 5 items in the list, got ") +
             QString::number(strokeList.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -236,7 +236,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("list: not all expected numbers are found within ") +
             QStringLiteral("the list");
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -248,7 +248,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected 4, got ") +
             QString::number(objectItems1.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -260,7 +260,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected 4, got ") +
             QString::number(shapeItems1.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -272,7 +272,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected 3, got ") +
             QString::number(barcodeItems1.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -284,7 +284,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
             QStringLiteral("items: expected 11, got ") +
             QString::number(textItems1.size());
 
-        QNWARNING(error << "; reco indices: " << recoIndices);
+        QNWARNING("tests:types", error << "; reco indices: " << recoIndices);
         return false;
     }
 
@@ -298,7 +298,8 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
                                #type " " #property ": expected ") +            \
                 QString(__VA_ARGS__(expected)) + QStringLiteral(", got ") +    \
                 __VA_ARGS__(checkedItem.property);                             \
-            QNWARNING(error << "; reco indices: " << recoIndices);             \
+            QNWARNING("tests:types", error << "; reco indices: "               \
+                << recoIndices);                                               \
             return false;                                                      \
         }                                                                      \
     }                                                                          \

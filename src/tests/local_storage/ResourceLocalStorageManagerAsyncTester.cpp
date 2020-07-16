@@ -92,8 +92,8 @@ void ResourceLocalStorageManagerAsyncTester::initialize()
 
     ErrorString errorDescription;
     if (!m_notebook.checkParameters(errorDescription)) {
-        QNWARNING("Found invalid notebook: " << m_notebook
-            << ", error: " << errorDescription);
+        QNWARNING("tests:local_storage", "Found invalid notebook: "
+            << m_notebook << ", error: " << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -116,7 +116,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
             "Internal error in "                                               \
             "ResourceLocalStorageManagerAsyncTester: "                         \
             "found wrong state");                                              \
-        QNWARNING(errorDescription << ": " << m_state);                        \
+        QNWARNING("tests:local_storage", errorDescription << ": " << m_state); \
         Q_EMIT failure(errorDescription.nonLocalizedString());                 \
     }                                                                          \
 // HANDLE_WRONG_STATE
@@ -130,7 +130,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
                 "notebook in onAddNotebookCompleted slot "
                 "doesn't match the original Notebook");
 
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -158,8 +158,9 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Notebook: " << notebook);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Notebook: " << notebook);
+
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -179,7 +180,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
                 "note in onAddNoteCompleted slot doesn't "
                 "match the original Note");
 
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -272,8 +273,9 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddNoteFailed(
     Note note, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Note: " << note);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Note: " << note);
+
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -293,7 +295,7 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
                 "from the expected one (1)");
 
             errorDescription.details() = QString::number(count);
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -310,7 +312,7 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
                 "from the expected one (0)");
 
             errorDescription.details() = QString::number(count);
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -323,7 +325,9 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
 void ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId);
+
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -342,7 +346,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
                 "resource in onAddResourceCompleted doesn't "
                 "match the original Resource");
 
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -366,8 +370,9 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Resource: " << resource);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Resource: " << resource);
+
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -387,7 +392,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
                 "resource in onUpdateResourceCompleted "
                 "doesn't match the original Resource");
 
-            QNWARNING(errorDescription);
+            QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -409,8 +414,9 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Resource: " << resource);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Resource: " << resource);
+
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -432,7 +438,7 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
                 "Added and found resources in the local "
                 "storage don't match");
 
-            QNWARNING(errorDescription
+            QNWARNING("tests:local_storage", errorDescription
                 << ": Resource added to the local storage: "
                 << m_initialResource
                 << "\nResource found in the local storage: " << resource);
@@ -470,7 +476,7 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
             errorDescription.setBase(
                 "Updated and found resources in the local storage don't match");
 
-            QNWARNING(errorDescription
+            QNWARNING("tests:local_storage", errorDescription
                 << ": Resource updated in the local storage: "
                 << m_modifiedResource
                 << "\nResource found in the local storage: " << resource);
@@ -488,7 +494,7 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
             "Found resource which should have been expunged "
             "from the local storage");
 
-        QNWARNING(errorDescription
+        QNWARNING("tests:local_storage", errorDescription
             << ": Resource expunged from the local storage: "
             << m_modifiedResource
             << "\nResource fond in the local storage: " << resource);
@@ -509,8 +515,8 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
         return;
     }
 
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Resource: " << resource
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Resource: " << resource
         << ", withBinaryData = "
         << ((options & LocalStorageManager::GetResourceOption::WithBinaryData)
              ? "true"
@@ -532,7 +538,7 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
             "resource in onExpungeResourceCompleted slot "
             "doesn't match the original expunged Resource");
 
-        QNWARNING(errorDescription);
+        QNWARNING("tests:local_storage", errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -548,8 +554,8 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING(errorDescription << ", requestId = " << requestId
-        << ", Resource: " << resource);
+    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
+        << requestId << ", Resource: " << resource);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 

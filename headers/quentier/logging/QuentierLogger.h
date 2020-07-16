@@ -72,7 +72,7 @@ void QUENTIER_EXPORT QuentierRestartLogging();
         quentier::QuentierAddLogEntry(                                         \
             QStringLiteral(__FILE__),                                          \
             __LINE__,                                                          \
-            component,                                                         \
+            QStringLiteral(component),                                         \
             msg,                                                               \
             quentier::LogLevel::level);                                        \
     }                                                                          \

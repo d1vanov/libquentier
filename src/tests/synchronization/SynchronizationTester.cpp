@@ -7411,7 +7411,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             strm << it.value() << "\n";
         }
 
-        QNWARNING(error);
+        QNWARNING("tests:synchronization", error);
     }
 
     QVERIFY2(
@@ -7526,8 +7526,9 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         }
 
         if (rit.value() != it.value()) {
-            QNWARNING("Found mismatch between local and remote notes: local one: "
-                << it.value() << "\nRemote one: " << rit.value());
+            QNWARNING("tests:synchronization", "Found mismatch between local "
+                << "and remote notes: local one: " << it.value()
+                << "\nRemote one: " << rit.value());
         }
 
         QVERIFY2(
@@ -8636,7 +8637,7 @@ void SynchronizationTester::printContentsOfLocalStorageAndFakeNoteStoreToWarnLog
         PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(remoteLinkedNotebooks);
     }
 
-    QNWARNING(message);
+    QNWARNING("tests:synchronization", message);
 }
 
 void SynchronizationTester::runTest(

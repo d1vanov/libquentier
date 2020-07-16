@@ -60,7 +60,7 @@ bool decryptAesTest(QString & error)
 
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -70,7 +70,7 @@ bool decryptAesTest(QString & error)
             QStringLiteral("original text = ") + originalText +
             QStringLiteral("; decrypted text = ") + decryptedText;
 
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -99,7 +99,7 @@ bool encryptDecryptTest(QString & error)
 
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -116,7 +116,7 @@ bool encryptDecryptTest(QString & error)
 
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -125,7 +125,7 @@ bool encryptDecryptTest(QString & error)
         error = QStringLiteral("Decrypted text differs from the original ") +
             QStringLiteral("(\"Very-very secret\"): ") + decryptedText;
 
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -162,7 +162,7 @@ bool decryptRc2Test(QString & error)
 
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -172,7 +172,7 @@ bool decryptRc2Test(QString & error)
             QStringLiteral("original text = ") + originalText +
             QStringLiteral("; decrypted text = ") + decryptedText;
 
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 

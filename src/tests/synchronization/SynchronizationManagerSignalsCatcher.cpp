@@ -197,11 +197,12 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDownloaded(
 void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
     qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn)
 {
-    QNDEBUG("SynchronizationManagerSignalsCatcher::"
-        << "onSyncChunkDownloadProgress: highest downloaded USN = "
-        << highestDownloadedUsn << ", highest server USN = "
-        << highestServerUsn << ", last previous USN = "
-        << lastPreviousUsn);
+    QNDEBUG(
+        "tests:synchronization",
+        "SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress: "
+            << "highest downloaded USN = " << highestDownloadedUsn
+            << ", highest server USN = " << highestServerUsn
+            << ", last previous USN = " << lastPreviousUsn);
 
     SyncChunkDownloadProgress progress;
     progress.m_highestDownloadedUsn = highestDownloadedUsn;
@@ -215,13 +216,14 @@ void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProg
     qint32 highestDownloadedUsn, qint32 highestServerUsn,
     qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
 {
-    QNDEBUG("SynchronizationManagerSignalsCatcher::"
-        << "onLinkedNotebookSyncChunkDownloadProgress: "
-        << "highest downloaded USN = "
-        << highestDownloadedUsn << ", highest server USN = "
-        << highestServerUsn << ", last previous USN = "
-        << lastPreviousUsn << ", linked notebook: "
-        << linkedNotebook);
+    QNDEBUG(
+        "tests:synchronization",
+        "SynchronizationManagerSignalsCatcher"
+            << "::onLinkedNotebookSyncChunkDownloadProgress: "
+            << "highest downloaded USN = " << highestDownloadedUsn
+            << ", highest server USN = " << highestServerUsn
+            << ", last previous USN = " << lastPreviousUsn
+            << ", linked notebook: " << linkedNotebook);
 
     QVERIFY2(
         linkedNotebook.hasGuid(),
@@ -663,8 +665,9 @@ bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImp
             currentProgress.m_resourcesDownloaded)
         {
             errorDescription.setBase(
-                QStringLiteral("Found non-increasing downloaded resources "
-                               "count"));
+                "Found non-increasing downloaded resources "
+                "count");
+
             return false;
         }
 
@@ -672,8 +675,9 @@ bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImp
             currentProgress.m_totalResourcesToDownload)
         {
             errorDescription.setBase(
-                QStringLiteral("The total number of resources to download has "
-                               "changed between two progresses"));
+                "The total number of resources to download has "
+                "changed between two progresses");
+
             return false;
         }
     }
@@ -687,8 +691,9 @@ bool SynchronizationManagerSignalsCatcher::checkSingleResourceDownloadProgress(
 {
     if (progress.m_resourcesDownloaded > progress.m_totalResourcesToDownload) {
         errorDescription.setBase(
-            QStringLiteral("The number of downloaded resources is greater than "
-                           "the total number of resources to download"));
+            "The number of downloaded resources is greater than "
+            "the total number of resources to download");
+
         return false;
     }
 

@@ -178,7 +178,7 @@ QHash<QString,qevercloud::Tag> FakeNoteStore::tags() const
 
 bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
 {
-    QNDEBUG("FakeNoteStore::setTag: tag = " << tag);
+    QNDEBUG("tests:synchronization", "FakeNoteStore::setTag: tag = " << tag);
 
     if (!tag.hasGuid()) {
         errorDescription.setBase("Can't set tag without guid");
@@ -255,7 +255,7 @@ bool FakeNoteStore::setTag(Tag & tag, ErrorString & errorDescription)
         Q_UNUSED(tagGuidIndex.replace(tagIt, tag))
     }
 
-    QNDEBUG("Tag with complemented fields: " << tag);
+    QNDEBUG("tests:synchronization", "Tag with complemented fields: " << tag);
     return true;
 }
 
@@ -304,8 +304,9 @@ bool FakeNoteStore::removeTag(const QString & guid)
     {
         tagIt = index.find(guid);
         if (Q_UNLIKELY(tagIt == index.end())) {
-            QNWARNING("Tag to be removed is not not found after "
-                << "the removal of its child tags: guid = " << guid);
+            QNWARNING("tests:synchronization", "Tag to be removed is not not "
+                << "found after the removal of its child tags: guid = "
+                << guid);
             return false;
         }
     }
@@ -601,7 +602,7 @@ bool FakeNoteStore::setNote(Note & note, ErrorString & errorDescription)
         Q_UNUSED(removeExpungedNoteGuid(note.guid()))
     }
 
-    NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     auto noteIt = noteGuidIndex.find(note.guid());
     if (noteIt == noteGuidIndex.end()) {
         auto insertResult = noteGuidIndex.insert(note);
@@ -667,7 +668,7 @@ bool FakeNoteStore::removeNote(const QString & guid)
         return false;
     }
 
-    const Note & note = *it;
+    const auto & note = *it;
     if (note.hasResources())
     {
         QList<Resource> resources = note.resources();
@@ -834,8 +835,8 @@ bool FakeNoteStore::removeResource(const QString & guid)
         Q_UNUSED(noteGuidIndex.replace(noteIt, note))
     }
     else {
-        QNWARNING("Found no note corresponding to the removed resource: "
-            << *it);
+        QNWARNING("tests:synchronization", "Found no note corresponding to "
+            << "the removed resource: " << *it);
     }
 
     Q_UNUSED(index.erase(it))
@@ -1059,8 +1060,10 @@ void FakeNoteStore::setLinkedNotebookSyncState(
     const QString & linkedNotebookOwner,
     const qevercloud::SyncState & syncState)
 {
-    QNDEBUG("FakeNoteStore::setLinkedNotebookSyncState: linked notebook owner: "
-        << linkedNotebookOwner << ", sync state: " << syncState);
+    QNDEBUG(
+        "tests:synchronization",
+        "FakeNoteStore::setLinkedNotebookSyncState: linked notebook owner: "
+            << linkedNotebookOwner << ", sync state: " << syncState);
 
     m_data->m_linkedNotebookSyncStates[linkedNotebookOwner] = syncState;
 }
@@ -1084,7 +1087,9 @@ const QString & FakeNoteStore::authToken() const
 
 void FakeNoteStore::setAuthToken(const QString & authToken)
 {
-    QNDEBUG("FakeNoteStore::setAuthToken: " << authToken);
+    QNDEBUG("tests:synchronization", "FakeNoteStore::setAuthToken: "
+        << authToken);
+
     m_data->m_authenticationToken = authToken;
 }
 
@@ -1103,8 +1108,10 @@ void FakeNoteStore::setLinkedNotebookAuthToken(
     const QString & linkedNotebookOwner,
     const QString & linkedNotebookAuthToken)
 {
-    QNDEBUG("FakeNoteStore::setLinkedNotebookAuthToken: owner = "
-        << linkedNotebookOwner << ", token = " << linkedNotebookAuthToken);
+    QNDEBUG(
+        "tests:synchronization",
+        "FakeNoteStore::setLinkedNotebookAuthToken: owner = "
+            << linkedNotebookOwner << ", token = " << linkedNotebookAuthToken);
 
     m_data->m_linkedNotebookAuthTokens[linkedNotebookOwner] =
         linkedNotebookAuthToken;
@@ -1124,8 +1131,8 @@ bool FakeNoteStore::removeLinkedNotebookAuthToken(
 
 qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
 {
-    QNDEBUG("FakeNoteStore::currentMaxUsn: linked notebook guid = "
-        << linkedNotebookGuid);
+    QNDEBUG("tests:synchronization", "FakeNoteStore::currentMaxUsn: linked "
+        << "notebook guid = " << linkedNotebookGuid);
 
     qint32 maxUsn = 0;
 
@@ -1136,11 +1143,13 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
     {
         auto lastSavedSearchIt = savedSearchUsnIndex.end();
         --lastSavedSearchIt;
-        QNTRACE("Examing saved search " << *lastSavedSearchIt);
+
+        QNTRACE("tests:synchronization", "Examing saved search "
+            << *lastSavedSearchIt);
 
         if (lastSavedSearchIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastSavedSearchIt->updateSequenceNumber();
-            QNTRACE("Updated max USN to " << maxUsn
+            QNTRACE("tests:synchronization", "Updated max USN to " << maxUsn
                 << " from saved search: " << *lastSavedSearchIt);
         }
     }
@@ -1154,7 +1163,7 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
         for(size_t tagCounter = 0, numTags = tagUsnIndex.size();
             tagCounter < numTags; ++tagCounter, --tagIt)
         {
-            QNTRACE("Examing tag: " << *tagIt);
+            QNTRACE("tests:synchronization", "Examing tag: " << *tagIt);
 
             bool matchesByLinkedNotebook =
                 ( ( !linkedNotebookGuid.isEmpty() &&
@@ -1165,18 +1174,18 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
                    !tagIt->hasLinkedNotebookGuid()) );
 
             if (!matchesByLinkedNotebook) {
-                QNTRACE("Skipping tag " << *tagIt
+                QNTRACE("tests:synchronization", "Skipping tag " << *tagIt
                     << "\nAs it doesn't match by linked notebook");
                 continue;
             }
 
             if (tagIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = tagIt->updateSequenceNumber();
-                QNTRACE("Updated max USN to " << maxUsn
+                QNTRACE("tests:synchronization", "Updated max USN to " << maxUsn
                     << " from tag: " << *tagIt);
             }
             else {
-                QNTRACE("Skipping tag " << *tagIt
+                QNTRACE("tests:synchronization", "Skipping tag " << *tagIt
                     << "\nAs its USN is no greater than "
                     << "max USN " << maxUsn);
             }
@@ -1192,7 +1201,8 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
         for(size_t notebookCounter = 0, numNotebooks = notebookUsnIndex.size();
             notebookCounter < numNotebooks; ++notebookCounter, --notebookIt)
         {
-            QNTRACE("Examing notebook: " << *notebookIt);
+            QNTRACE("tests:synchronization", "Examing notebook: "
+                << *notebookIt);
 
             bool matchesByLinkedNotebook =
                 ( ( !linkedNotebookGuid.isEmpty() &&
@@ -1203,19 +1213,21 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
                    !notebookIt->hasLinkedNotebookGuid()) );
 
             if (!matchesByLinkedNotebook) {
-                QNTRACE("Skipping notebook " << *notebookIt
-                    << "\nAs it doesn't match by linked notebook");
+                QNTRACE("tests:synchronization", "Skipping notebook "
+                    << *notebookIt << "\nAs it doesn't match by linked "
+                    << "notebook");
                 continue;
             }
 
             if (notebookIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = notebookIt->updateSequenceNumber();
-                QNTRACE("Updated max USN to " << maxUsn
+                QNTRACE("tests:synchronization", "Updated max USN to " << maxUsn
                     << " from notebook: " << *notebookIt);
             }
             else {
-                QNTRACE("Skipping notebook " << *notebookIt
-                    << "\nAs its USN is no greater than max USN " << maxUsn);
+                QNTRACE("tests:synchronization", "Skipping notebook "
+                    << *notebookIt << "\nAs its USN is no greater than max USN "
+                    << maxUsn);
             }
         }
     }
@@ -1232,7 +1244,7 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
         for(size_t noteCounter = 0, numNotes = noteUsnIndex.size();
             noteCounter < numNotes; ++noteCounter, --noteIt)
         {
-            QNTRACE("Examing note: " << *noteIt);
+            QNTRACE("tests:synchronization", "Examing note: " << *noteIt);
 
             bool matchesByLinkedNotebook = false;
 
@@ -1250,18 +1262,18 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
             }
 
             if (!matchesByLinkedNotebook) {
-                QNTRACE("Skipping note " << *noteIt
+                QNTRACE("tests:synchronization", "Skipping note " << *noteIt
                     << "\nAs it doesn't match by linked notebook");
                 continue;
             }
 
             if (noteIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = noteIt->updateSequenceNumber();
-                QNTRACE("Updated max USN to " << maxUsn
+                QNTRACE("tests:synchronization", "Updated max USN to " << maxUsn
                     << " from note: " << *noteIt);
             }
             else {
-                QNTRACE("Skipping note " << *noteIt
+                QNTRACE("tests:synchronization", "Skipping note " << *noteIt
                     << "\nAs its USN is no greater than max USN " << maxUsn);
             }
         }
@@ -1282,7 +1294,8 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
         for(size_t resourceCounter = 0, numResources = resourceUsnIndex.size();
             resourceCounter < numResources; ++resourceCounter, --resourceIt)
         {
-            QNTRACE("Examing resource: " << *resourceIt);
+            QNTRACE("tests:synchronization", "Examing resource: "
+                << *resourceIt);
 
             bool matchesByLinkedNotebook = false;
             auto noteIt = noteGuidIndex.find(resourceIt->noteGuid());
@@ -1305,19 +1318,21 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
             }
 
             if (!matchesByLinkedNotebook) {
-                QNTRACE("Skipping resource " << *resourceIt
-                    << "\nAs it doesn't match by linked notebook");
+                QNTRACE("tests:synchronization", "Skipping resource "
+                    << *resourceIt << "\nAs it doesn't match by linked "
+                    << "notebook");
                 continue;
             }
 
             if (resourceIt->updateSequenceNumber() > maxUsn) {
                 maxUsn = resourceIt->updateSequenceNumber();
-                QNTRACE("Updated max USN to " << maxUsn
+                QNTRACE("tests:synchronization", "Updated max USN to " << maxUsn
                     << " from resource: " << *resourceIt);
             }
             else {
-                QNTRACE("Skipping resource " << *resourceIt
-                    << "\nAs its USN is no greater than max USN " << maxUsn);
+                QNTRACE("tests:synchronization", "Skipping resource "
+                    << *resourceIt << "\nAs its USN is no greater than max USN "
+                    << maxUsn);
             }
         }
     }
@@ -1330,14 +1345,17 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
         auto lastLinkedNotebookIt = linkedNotebookUsnIndex.end();
         --lastLinkedNotebookIt;
 
-        QNTRACE("Examing linked notebook " << *lastLinkedNotebookIt);
+        QNTRACE("tests:synchronization", "Examing linked notebook "
+            << *lastLinkedNotebookIt);
+
         if (lastLinkedNotebookIt->updateSequenceNumber() > maxUsn) {
             maxUsn = lastLinkedNotebookIt->updateSequenceNumber();
-            QNTRACE("Updated max USN from linked notebook to " << maxUsn);
+            QNTRACE("tests:synchronization", "Updated max USN from linked "
+                << "notebook to " << maxUsn);
         }
     }
 
-    QNDEBUG("Overall max USN = " << maxUsn);
+    QNDEBUG("tests:synchronization", "Overall max USN = " << maxUsn);
     return maxUsn;
 }
 
@@ -1368,9 +1386,11 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreach()
 qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
     const QString & linkedNotebookGuid) const
 {
-    QNDEBUG("FakeNoteStore::"
-        << "smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach: "
-        << "linked notebook guid = " << linkedNotebookGuid);
+    QNDEBUG(
+        "tests:synchronization",
+        "FakeNoteStore"
+            << "::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach: "
+            << "linked notebook guid = " << linkedNotebookGuid);
 
     auto git = m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid.end();
     if (!linkedNotebookGuid.isEmpty())
@@ -1397,21 +1417,23 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
 
         for(const auto & savedSearch: savedSearchUsnIndex)
         {
-            QNTRACE("Processing saved search: " << savedSearch);
+            QNTRACE("tests:synchronization", "Processing saved search: "
+                << savedSearch);
 
             auto guidIt = guidsOfCompleteSentItems.m_savedSearchGuids.find(
                 savedSearch.guid());
 
             if (guidIt == guidsOfCompleteSentItems.m_savedSearchGuids.end())
             {
-                QNTRACE("Encountered first notebook not within "
-                    << "the list of sent items");
+                QNTRACE("tests:synchronization", "Encountered first notebook "
+                    << "not within the list of sent items");
 
                 if ((smallestUsn < 0) ||
                     (smallestUsn > savedSearch.updateSequenceNumber()))
                 {
                     smallestUsn = savedSearch.updateSequenceNumber();
-                    QNTRACE("Updated smallest USN to " << smallestUsn);
+                    QNTRACE("tests:synchronization", "Updated smallest USN to "
+                        << smallestUsn);
                 }
 
                 break;
@@ -1423,33 +1445,34 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     for(const auto & notebook: notebookUsnIndex)
     {
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
-            QNTRACE("Skipping notebook not matching by linked "
-                << "notebook criteria: " << notebook);
+            QNTRACE("tests:synchronization", "Skipping notebook not matching "
+                << "by linked notebook criteria: " << notebook);
             continue;
         }
         if (notebook.hasLinkedNotebookGuid() &&
             (notebook.linkedNotebookGuid() != linkedNotebookGuid))
         {
-            QNTRACE("Skipping notebook not matching by linked "
-                << "notebook criteria: " << notebook);
+            QNTRACE("tests:synchronization", "Skipping notebook not matching "
+                << "by linked notebook criteria: " << notebook);
             continue;
         }
 
-        QNTRACE("Processing notebook: " << notebook);
+        QNTRACE("tests:synchronization", "Processing notebook: " << notebook);
 
         auto guidIt = guidsOfCompleteSentItems.m_notebookGuids.find(
             notebook.guid());
 
         if (guidIt == guidsOfCompleteSentItems.m_notebookGuids.end())
         {
-            QNTRACE("Encountered first notebook not within "
-                << "the list of sent items");
+            QNTRACE("tests:synchronization", "Encountered first notebook not "
+                << "within the list of sent items");
 
             if ((smallestUsn < 0) ||
                 (smallestUsn > notebook.updateSequenceNumber()))
             {
                 smallestUsn = notebook.updateSequenceNumber();
-                QNTRACE("Updated smallest USN to " << smallestUsn);
+                QNTRACE("tests:synchronization", "Updated smallest USN to "
+                    << smallestUsn);
             }
 
             break;
@@ -1460,30 +1483,32 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     for(const auto & tag: tagUsnIndex)
     {
         if (linkedNotebookGuid.isEmpty() == tag.hasLinkedNotebookGuid()) {
-            QNTRACE("Skipping tag not matching by linked notebook "
-                << "criteria: " << tag);
+            QNTRACE("tests:synchronization", "Skipping tag not matching by "
+                << "linked notebook criteria: " << tag);
             continue;
         }
         if (tag.hasLinkedNotebookGuid() &&
             (tag.linkedNotebookGuid() != linkedNotebookGuid))
         {
-            QNTRACE("Skipping tag not matching by linked notebook "
-                << "criteria: " << tag);
+            QNTRACE("tests:synchronization", "Skipping tag not matching by "
+                << "linked notebook criteria: " << tag);
             continue;
         }
 
-        QNTRACE("Processing tag: " << tag);
+        QNTRACE("tests:synchronization", "Processing tag: " << tag);
 
         auto guidIt = guidsOfCompleteSentItems.m_tagGuids.find(tag.guid());
         if (guidIt == guidsOfCompleteSentItems.m_tagGuids.end())
         {
-            QNTRACE("Encountered first tag not within the list of sent items");
+            QNTRACE("tests:synchronization", "Encountered first tag not within "
+                << "the list of sent items");
 
             if ((smallestUsn < 0) ||
                 (smallestUsn > tag.updateSequenceNumber()))
             {
                 smallestUsn = tag.updateSequenceNumber();
-                QNTRACE("Updated smallest USN to " << smallestUsn);
+                QNTRACE("tests:synchronization", "Updated smallest USN to "
+                    << smallestUsn);
             }
 
             break;
@@ -1497,21 +1522,23 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
 
         for(const auto & linkedNotebook: linkedNotebookUsnIndex)
         {
-            QNTRACE("Processing linked notebook: " << linkedNotebook);
+            QNTRACE("tests:synchronization", "Processing linked notebook: "
+                << linkedNotebook);
 
             auto guidIt = guidsOfCompleteSentItems.m_linkedNotebookGuids.find(
                 linkedNotebook.guid());
 
             if (guidIt == guidsOfCompleteSentItems.m_linkedNotebookGuids.end())
             {
-                QNTRACE("Encountered first linked notebook not "
-                    << "within the list of sent items");
+                QNTRACE("tests:synchronization", "Encountered first linked "
+                    << "notebook not within the list of sent items");
 
                 if ((smallestUsn < 0) ||
                     (smallestUsn > linkedNotebook.updateSequenceNumber()))
                 {
                     smallestUsn = linkedNotebook.updateSequenceNumber();
-                    QNTRACE("Updated smallest USN to " << smallestUsn);
+                    QNTRACE("tests:synchronization", "Updated smallest USN to "
+                        << smallestUsn);
                 }
 
                 break;
@@ -1525,15 +1552,15 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     {
         auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
-            QNWARNING("Skipping note for which no notebook was found: "
-                << note);
+            QNWARNING("tests:synchronization", "Skipping note for which no "
+                << "notebook was found: " << note);
             continue;
         }
 
         const auto & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
-            QNTRACE("Skipping note as its notebook doesn't match "
-                << "by linked notebook criteria: " << note
+            QNTRACE("tests:synchronization", "Skipping note as its notebook "
+                << "doesn't match by linked notebook criteria: " << note
                 << "\nNotebook: " << notebook);
             continue;
         }
@@ -1541,25 +1568,26 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
         if (notebook.hasLinkedNotebookGuid() &&
             (notebook.linkedNotebookGuid() != linkedNotebookGuid))
         {
-            QNTRACE("Skipping note as its notebook doesn't match "
-                << "by linked notebook criteria: " << note
+            QNTRACE("tests:synchronization", "Skipping note as its notebook "
+                << "doesn't match by linked notebook criteria: " << note
                 << "\nNotebook: " << notebook);
             continue;
         }
 
-        QNTRACE("Processing note: " << note);
+        QNTRACE("tests:synchronization", "Processing note: " << note);
 
         auto guidIt = guidsOfCompleteSentItems.m_noteGuids.find(note.guid());
         if (guidIt == guidsOfCompleteSentItems.m_noteGuids.end())
         {
-            QNTRACE("Encountered first note not within the list "
-                << "of sent items");
+            QNTRACE("tests:synchronization", "Encountered first note not "
+                << "within the list of sent items");
 
             if ((smallestUsn < 0) ||
                 (smallestUsn > note.updateSequenceNumber()))
             {
                 smallestUsn = note.updateSequenceNumber();
-                QNTRACE("Updated smallest USN to " << smallestUsn);
+                QNTRACE("tests:synchronization", "Updated smallest USN to "
+                    << smallestUsn);
             }
 
             break;
@@ -1572,60 +1600,63 @@ qint32 FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreac
     {
         auto noteIt = noteGuidIndex.find(resource.noteGuid());
         if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
-            QNWARNING("Skipping resource for which no note was found: "
-                << resource);
+            QNWARNING("tests:synchronization", "Skipping resource for which "
+                << "no note was found: " << resource);
             continue;
         }
 
         const auto & note = *noteIt;
         auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
-            QNWARNING("Skipping resource for which note "
-                << "no notebook was found: " << note);
+            QNWARNING("tests:synchronization", "Skipping resource for which "
+                << "note no notebook was found: " << note);
             continue;
         }
 
         const auto & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid())
         {
-            QNTRACE("Skipping resource as its note's notebook "
-                << "doesn't match by linked notebook criteria: " << resource
-                << "\nNote: " << note << "\nNotebook: " << notebook);
+            QNTRACE("tests:synchronization", "Skipping resource as its note's "
+                << "notebook doesn't match by linked notebook criteria: "
+                << resource << "\nNote: " << note << "\nNotebook: "
+                << notebook);
             continue;
         }
 
         if (notebook.hasLinkedNotebookGuid() &&
             (notebook.linkedNotebookGuid() != linkedNotebookGuid))
         {
-            QNTRACE("Skipping resource as its note's notebook "
-                << "doesn't match by linked notebook criteria: " << resource
-                << "\nNote: " << note << "\nNotebook: " << notebook);
+            QNTRACE("tests:synchronization", "Skipping resource as its note's "
+                << "notebook doesn't match by linked notebook criteria: "
+                << resource << "\nNote: " << note << "\nNotebook: "
+                << notebook);
             continue;
         }
 
-        QNTRACE("Processing resource: " << resource);
+        QNTRACE("tests:synchronization", "Processing resource: " << resource);
 
         auto guidIt = guidsOfCompleteSentItems.m_resourceGuids.find(
             resource.guid());
 
         if (guidIt == guidsOfCompleteSentItems.m_resourceGuids.end())
         {
-            QNTRACE("Encountered first resource not within "
-                << "the list of sent items");
+            QNTRACE("tests:synchronization", "Encountered first resource not "
+                << "within the list of sent items");
 
             if ((smallestUsn < 0) ||
                 (smallestUsn > resource.updateSequenceNumber()))
             {
                 smallestUsn = resource.updateSequenceNumber();
-                QNTRACE("Updated smallest USN to " << smallestUsn);
+                QNTRACE("tests:synchronization", "Updated smallest USN to "
+                    << smallestUsn);
             }
 
             break;
         }
     }
 
-    QNDEBUG("Smallest USN of not completely sent data item is "
-        << smallestUsn << " (linked notebook guid = "
+    QNDEBUG("tests:synchronization", "Smallest USN of not completely sent data "
+        << "item is " << smallestUsn << " (linked notebook guid = "
         << linkedNotebookGuid << ")");
     return smallestUsn;
 }
@@ -1992,7 +2023,8 @@ qint32 FakeNoteStore::createNote(
         // the input-output note
         note.setResources(originalResources);
 
-        QNTRACE("Note after FakeNoteStore::createNote: " << note);
+        QNTRACE("tests:synchronization", "Note after "
+            << "FakeNoteStore::createNote: " << note);
     }
 
     return 0;
@@ -2113,7 +2145,8 @@ qint32 FakeNoteStore::updateNote(
         // the input-output note
         note.setResources(originalResources);
 
-        QNTRACE("Note after FakeNoteStore::updateNote: " << note);
+        QNTRACE("tests:synchronization", "Note after "
+            << "FakeNoteStore::updateNote: " << note);
     }
 
     return 0;
@@ -2408,9 +2441,9 @@ qint32 FakeNoteStore::updateSavedSearch(
     return 0;
 }
 
-qint32 FakeNoteStore::getSyncState(qevercloud::SyncState & syncState,
-                                   ErrorString & errorDescription,
-                                   qint32 & rateLimitSeconds)
+qint32 FakeNoteStore::getSyncState(
+    qevercloud::SyncState & syncState, ErrorString & errorDescription,
+    qint32 & rateLimitSeconds)
 {
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnGetUserOwnSyncStateAttempt)
@@ -2428,29 +2461,36 @@ qint32 FakeNoteStore::getSyncState(qevercloud::SyncState & syncState,
     return 0;
 }
 
-qint32 FakeNoteStore::getSyncChunk(const qint32 afterUSN, const qint32 maxEntries,
-                                   const qevercloud::SyncChunkFilter & filter,
-                                   qevercloud::SyncChunk & syncChunk,
-                                   ErrorString & errorDescription,
-                                   qint32 & rateLimitSeconds)
+qint32 FakeNoteStore::getSyncChunk(
+    const qint32 afterUSN, const qint32 maxEntries,
+    const qevercloud::SyncChunkFilter & filter,
+    qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
+    qint32 & rateLimitSeconds)
 {
-    QNDEBUG("FakeNoteStore::getSyncChunk: after USN = " << afterUSN
-            << ", max entries = " << maxEntries
-            << ", filter = " << filter);
+    QNDEBUG("tests:synchronization", "FakeNoteStore::getSyncChunk: after USN = "
+        << afterUSN << ", max entries = " << maxEntries << ", filter = "
+        << filter);
 
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnGetUserOwnSyncChunkAttempt)
     {
-        m_data->m_APIRateLimitsTrigger =
-            APIRateLimitsTrigger::Never;
+        m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+        return static_cast<qint32>(
+            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
-    return getSyncChunkImpl(afterUSN, maxEntries, (afterUSN == 0), QString(),
-                            filter, syncChunk, errorDescription);
+    return getSyncChunkImpl(
+        afterUSN,
+        maxEntries,
+        (afterUSN == 0),
+        QString(),
+        filter,
+        syncChunk,
+        errorDescription);
 }
 
 qint32 FakeNoteStore::getLinkedNotebookSyncState(
@@ -2461,33 +2501,42 @@ qint32 FakeNoteStore::getLinkedNotebookSyncState(
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnGetLinkedNotebookSyncStateAttempt)
     {
-        m_data->m_APIRateLimitsTrigger =
-            APIRateLimitsTrigger::Never;
+        m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+        return static_cast<qint32>(
+            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     if (m_data->m_authenticationToken != authToken) {
         errorDescription.setBase("Wrong authentication token");
-        return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
+        return static_cast<qint32>(
+            qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
-    qint32 checkRes = checkLinkedNotebookFields(linkedNotebook, errorDescription);
+    qint32 checkRes = checkLinkedNotebookFields(
+        linkedNotebook,
+        errorDescription);
+
     if (checkRes != 0) {
         return checkRes;
     }
 
-    auto it = m_data->m_linkedNotebookSyncStates.find(linkedNotebook.username.ref());
+    auto it = m_data->m_linkedNotebookSyncStates.find(
+        linkedNotebook.username.ref());
+
     if (it == m_data->m_linkedNotebookSyncStates.end())
     {
-        QNWARNING("Failed to find linked notebook sync state for "
-                  << "linked notebook: " << linkedNotebook
-                  << "\nLinked notebook sync states: "
-                  << m_data->m_linkedNotebookSyncStates);
-        errorDescription.setBase("Found no sync state for the given "
-                                 "linked notebook owner");
+        QNWARNING("tests:synchronization", "Failed to find linked notebook "
+            << "sync state for " << "linked notebook: " << linkedNotebook
+            << "\nLinked notebook sync states: "
+            << m_data->m_linkedNotebookSyncStates);
+
+        errorDescription.setBase(
+            "Found no sync state for the given linked notebook owner");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
@@ -2502,9 +2551,10 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(
     qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
     qint32 & rateLimitSeconds)
 {
-    QNDEBUG("FakeNoteStore::getLinkedNotebookSyncChunk: linked "
-            << "notebook = " << linkedNotebook
-            << "\nAfter USN = " << afterUSN
+    QNDEBUG(
+        "tests:synchronization",
+        "FakeNoteStore::getLinkedNotebookSyncChunk: linked notebook = "
+            << linkedNotebook << "\nAfter USN = " << afterUSN
             << ", max entries = " << maxEntries
             << ", linked notebook auth token = "
             << linkedNotebookAuthToken << ", full sync only = "
@@ -2513,27 +2563,35 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(
     if (m_data->m_APIRateLimitsTrigger ==
         APIRateLimitsTrigger::OnGetLinkedNotebookSyncChunkAttempt)
     {
-        m_data->m_APIRateLimitsTrigger =
-            APIRateLimitsTrigger::Never;
+        m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
         rateLimitSeconds = 0;
         storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
         m_data->m_onceAPIRateLimitExceedingTriggered = true;
-        return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+        return static_cast<qint32>(
+            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
     m_data->m_onceGetLinkedNotebookSyncChunkCalled = true;
 
-    qint32 checkRes = checkLinkedNotebookFields(linkedNotebook, errorDescription);
+    qint32 checkRes = checkLinkedNotebookFields(
+        linkedNotebook,
+        errorDescription);
+
     if (checkRes != 0) {
         return checkRes;
     }
 
-    const LinkedNotebookDataByUsername & linkedNotebookUsernameIndex =
+    const auto & linkedNotebookUsernameIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByUsername>();
-    auto linkedNotebookIt = linkedNotebookUsernameIndex.find(linkedNotebook.username.ref());
+
+    auto linkedNotebookIt = linkedNotebookUsernameIndex.find(
+        linkedNotebook.username.ref());
+
     if (linkedNotebookIt == linkedNotebookUsernameIndex.end()) {
-        errorDescription.setBase("Found no existing linked notebook "
-                                 "by username");
+        errorDescription.setBase(
+            "Found no existing linked notebook by username");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
@@ -2556,28 +2614,33 @@ qint32 FakeNoteStore::getLinkedNotebookSyncChunk(
         filter.includeResourceApplicationDataFullMap = true;
     }
 
-    return getSyncChunkImpl(afterUSN, maxEntries, fullSyncOnly,
-                            linkedNotebook.guid.ref(), filter,
-                            syncChunk, errorDescription);
+    return getSyncChunkImpl(
+        afterUSN,
+        maxEntries,
+        fullSyncOnly,
+        linkedNotebook.guid.ref(),
+        filter,
+        syncChunk,
+        errorDescription);
 }
 
-qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesData,
-                              const bool withResourcesRecognition,
-                              const bool withResourcesAlternateData,
-                              Note & note, ErrorString & errorDescription,
-                              qint32 & rateLimitSeconds)
+qint32 FakeNoteStore::getNote(
+    const bool withContent, const bool withResourcesData,
+    const bool withResourcesRecognition, const bool withResourcesAlternateData,
+    Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
     if (m_data->m_onceGetLinkedNotebookSyncChunkCalled)
     {
         if (m_data->m_APIRateLimitsTrigger ==
             APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks)
         {
-            m_data->m_APIRateLimitsTrigger =
-                APIRateLimitsTrigger::Never;
+            m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
     else
@@ -2585,12 +2648,13 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
         if (m_data->m_APIRateLimitsTrigger ==
             APIRateLimitsTrigger::OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks)
         {
-            m_data->m_APIRateLimitsTrigger =
-                APIRateLimitsTrigger::Never;
+            m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
 
@@ -2599,7 +2663,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
-    const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     auto noteIt = noteGuidIndex.find(note.guid());
     if (noteIt == noteGuidIndex.end()) {
         errorDescription.setBase("Note was not found");
@@ -2608,7 +2672,7 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
 
     note = *noteIt;
 
-    const Notebook * pNotebook = findNotebook(note.notebookGuid());
+    const auto * pNotebook = findNotebook(note.notebookGuid());
     if (Q_UNLIKELY(!pNotebook)) {
         errorDescription.setBase("No notebook was found for note");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
@@ -2620,12 +2684,13 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
 
     if (note.hasResources())
     {
-        const ResourceDataByGuid & resourceGuidIndex =
+        const auto & resourceGuidIndex =
             m_data->m_resources.get<ResourceByGuid>();
-        QList<Resource> resources = note.resources();
+
+        auto resources = note.resources();
         for(auto it = resources.begin(); it != resources.end(); )
         {
-            Resource & resource = *it;
+            auto & resource = *it;
             if (Q_UNLIKELY(!resource.hasGuid())) {
                 it = resources.erase(it);
                 continue;
@@ -2663,16 +2728,18 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
             (pNotebook->hasLinkedNotebookGuid()
              ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[pNotebook->linkedNotebookGuid()]
              : m_data->m_guidsOfUserOwnCompleteSentItems);
+
         Q_UNUSED(guidsOfCompleteSentItems.m_noteGuids.insert(note.guid()))
 
         if (note.hasResources())
         {
-            QList<Resource> resources = note.resources();
+            auto resources = note.resources();
             for(auto it = resources.constBegin(),
                 end = resources.constEnd(); it != end; ++it)
             {
                 Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(it->guid()))
-                QNTRACE("Marked resource as processed: " << *it);
+                QNTRACE("tests:synchronization", "Marked resource as "
+                    << "processed: " << *it);
             }
         }
     }
@@ -2680,17 +2747,13 @@ qint32 FakeNoteStore::getNote(const bool withContent, const bool withResourcesDa
     return 0;
 }
 
-bool FakeNoteStore::getNoteAsync(const bool withContent,
-                                 const bool withResourcesData,
-                                 const bool withResourcesRecognition,
-                                 const bool withResourcesAlternateData,
-                                 const bool withSharedNotes,
-                                 const bool withNoteAppDataValues,
-                                 const bool withResourceAppDataValues,
-                                 const bool withNoteLimits,
-                                 const QString & noteGuid,
-                                 const QString & authToken,
-                                 ErrorString & errorDescription)
+bool FakeNoteStore::getNoteAsync(
+    const bool withContent, const bool withResourcesData,
+    const bool withResourcesRecognition, const bool withResourcesAlternateData,
+    const bool withSharedNotes, const bool withNoteAppDataValues,
+    const bool withResourceAppDataValues, const bool withNoteLimits,
+    const QString & noteGuid, const QString & authToken,
+    ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(noteGuid.isEmpty())) {
         errorDescription.setBase("Note guid is empty");
@@ -2712,33 +2775,32 @@ bool FakeNoteStore::getNoteAsync(const bool withContent,
     m_data->m_getNoteAsyncRequests.enqueue(request);
 
     int timerId = startTimer(0);
-    QNDEBUG("Started timer to postpone the get note result, "
-            << "timer id = " << timerId);
+
+    QNDEBUG("tests:synchronization", "Started timer to postpone the get note "
+        << "result, timer id = " << timerId);
 
     Q_UNUSED(m_data->m_getNoteAsyncDelayTimerIds.insert(timerId))
     return true;
 }
 
-qint32 FakeNoteStore::getResource(const bool withDataBody,
-                                  const bool withRecognitionDataBody,
-                                  const bool withAlternateDataBody,
-                                  const bool withAttributes,
-                                  const QString & authToken,
-                                  Resource & resource,
-                                  ErrorString & errorDescription,
-                                  qint32 & rateLimitSeconds)
+qint32 FakeNoteStore::getResource(
+    const bool withDataBody, const bool withRecognitionDataBody,
+    const bool withAlternateDataBody, const bool withAttributes,
+    const QString & authToken, Resource & resource,
+    ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
     if (m_data->m_onceGetLinkedNotebookSyncChunkCalled)
     {
         if (m_data->m_APIRateLimitsTrigger ==
             APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks)
         {
-            m_data->m_APIRateLimitsTrigger =
-                APIRateLimitsTrigger::Never;
+            m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
     else
@@ -2746,12 +2808,13 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
         if (m_data->m_APIRateLimitsTrigger ==
             APIRateLimitsTrigger::OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks)
         {
-            m_data->m_APIRateLimitsTrigger =
-                APIRateLimitsTrigger::Never;
+            m_data->m_APIRateLimitsTrigger = APIRateLimitsTrigger::Never;
             rateLimitSeconds = 0;
             storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach();
             m_data->m_onceAPIRateLimitExceedingTriggered = true;
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
         }
     }
 
@@ -2760,8 +2823,9 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
-    const ResourceDataByGuid & resourceGuidIndex =
+    const auto & resourceGuidIndex =
         m_data->m_resources.get<ResourceByGuid>();
+
     auto resourceIt = resourceGuidIndex.find(resource.guid());
     if (resourceIt == resourceGuidIndex.end()) {
         errorDescription.setBase("Resource was not found");
@@ -2774,7 +2838,7 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
     }
 
     const QString & noteGuid = resourceIt->noteGuid();
-    const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     auto noteIt = noteGuidIndex.find(noteGuid);
     if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
         errorDescription.setBase("Found no note containing the resource");
@@ -2787,20 +2851,22 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
     }
 
     const QString & notebookGuid = noteIt->notebookGuid();
-    const NotebookDataByGuid & notebookGuidIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
     auto notebookIt = notebookGuidIndex.find(notebookGuid);
     if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
-        errorDescription.setBase("Found no notebook containing "
-                                 "the note with the resource");
+        errorDescription.setBase(
+            "Found no notebook containing the note with the resource");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::INTERNAL_ERROR);
     }
 
     if (notebookIt->hasLinkedNotebookGuid())
     {
-        qint32 checkRes = checkLinkedNotebookAuthTokenForNotebook(notebookGuid,
-                                                                  authToken,
-                                                                  errorDescription);
+        qint32 checkRes = checkLinkedNotebookAuthTokenForNotebook(
+            notebookGuid,
+            authToken,
+            errorDescription);
+
         if (checkRes != 0) {
             return checkRes;
         }
@@ -2830,20 +2896,22 @@ qint32 FakeNoteStore::getResource(const bool withDataBody,
             (notebookIt->hasLinkedNotebookGuid()
              ? m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[notebookIt->linkedNotebookGuid()]
              : m_data->m_guidsOfUserOwnCompleteSentItems);
-        Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(resource.guid()))
-        QNTRACE("Marked resource as processed: " << resource);
+
+        Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(
+            resource.guid()))
+
+        QNTRACE("tests:synchronization", "Marked resource as processed: "
+            << resource);
     }
 
     return 0;
 }
 
-bool FakeNoteStore::getResourceAsync(const bool withDataBody,
-                                     const bool withRecognitionDataBody,
-                                     const bool withAlternateDataBody,
-                                     const bool withAttributes,
-                                     const QString & resourceGuid,
-                                     const QString & authToken,
-                                     ErrorString & errorDescription)
+bool FakeNoteStore::getResourceAsync(
+    const bool withDataBody, const bool withRecognitionDataBody,
+    const bool withAlternateDataBody, const bool withAttributes,
+    const QString & resourceGuid, const QString & authToken,
+    ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(resourceGuid.isEmpty())) {
         errorDescription.setBase("Resource guid is empty");
@@ -2861,8 +2929,9 @@ bool FakeNoteStore::getResourceAsync(const bool withDataBody,
 
     m_data->m_getResourceAsyncRequests.enqueue(request);
     int timerId = startTimer(0);
-    QNDEBUG("Started timer to postpone the get resource result, "
-            << "timer id = " << timerId);
+
+    QNDEBUG("tests:synchronization", "Started timer to postpone the get "
+        << "resource result, timer id = " << timerId);
 
     Q_UNUSED(m_data->m_getResourceAsyncDelayTimerIds.insert(timerId))
     return true;
@@ -2882,18 +2951,22 @@ qint32 FakeNoteStore::authenticateToSharedNotebook(
         return static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED);
     }
 
-    const LinkedNotebookDataBySharedNotebookGlobalId & index =
+    const auto & index =
         m_data->m_linkedNotebooks.get<LinkedNotebookBySharedNotebookGlobalId>();
+
     auto it = index.find(shareKey);
     if (it == index.end()) {
-        errorDescription.setBase("Found no linked notebook corresponding "
-                                 "to share key");
+        errorDescription.setBase(
+            "Found no linked notebook corresponding to share key");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
     }
 
-    const LinkedNotebook & linkedNotebook = *it;
-    auto authTokenIt =
-        m_data->m_linkedNotebookAuthTokens.find(linkedNotebook.username());
+    const auto & linkedNotebook = *it;
+
+    auto authTokenIt = m_data->m_linkedNotebookAuthTokens.find(
+        linkedNotebook.username());
+
     if (authTokenIt == m_data->m_linkedNotebookAuthTokens.end()) {
         errorDescription.setBase("No valid authentication token was provided");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
@@ -2916,89 +2989,111 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
     auto noteIt = m_data->m_getNoteAsyncDelayTimerIds.find(pEvent->timerId());
     if (noteIt != m_data->m_getNoteAsyncDelayTimerIds.end())
     {
-        QNDEBUG("getNoteAsync delay timer event, timer id = " << pEvent->timerId());
+        QNDEBUG("tests:synchronization", "getNoteAsync delay timer event, "
+            << "timer id = " << pEvent->timerId());
 
         Q_UNUSED(m_data->m_getNoteAsyncDelayTimerIds.erase(noteIt))
         killTimer(pEvent->timerId());
 
         if (!m_data->m_getNoteAsyncRequests.isEmpty())
         {
-            GetNoteAsyncRequest request = m_data->m_getNoteAsyncRequests.dequeue();
+            auto request = m_data->m_getNoteAsyncRequests.dequeue();
 
             qint32 rateLimitSeconds = 0;
             ErrorString errorDescription;
             Note note;
             note.setGuid(request.m_noteGuid);
-            qint32 res = getNote(request.m_withContent, request.m_withResourcesData,
-                                 request.m_withResourcesRecognition,
-                                 request.m_withResourcesAlternateData,
-                                 note, errorDescription, rateLimitSeconds);
+
+            qint32 res = getNote(
+                request.m_withContent,
+                request.m_withResourcesData,
+                request.m_withResourcesRecognition,
+                request.m_withResourcesAlternateData,
+                note,
+                errorDescription,
+                rateLimitSeconds);
+
             if ((res == 0) && (note.hasNotebookGuid()))
             {
-                const Notebook * pNotebook = findNotebook(note.notebookGuid());
+                const auto * pNotebook = findNotebook(note.notebookGuid());
                 if (Q_UNLIKELY(!pNotebook)) {
                     errorDescription.setBase("No notebook was found for note");
-                    res = static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
+                    res = static_cast<qint32>(
+                        qevercloud::EDAMErrorCode::DATA_CONFLICT);
                 }
                 else if (pNotebook->hasLinkedNotebookGuid())
                 {
-                    res = checkLinkedNotebookAuthTokenForNotebook(note.notebookGuid(),
-                                                                  request.m_authToken,
-                                                                  errorDescription);
+                    res = checkLinkedNotebookAuthTokenForNotebook(
+                        note.notebookGuid(),
+                        request.m_authToken,
+                        errorDescription);
                 }
                 else if (!request.m_authToken.isEmpty() &&
                          (request.m_authToken != m_data->m_authenticationToken))
                 {
-                    errorDescription.setBase("Note's notebook doesn't "
-                                             "belong to a linked "
-                                             "notebook but linked "
-                                             "notebook auth token "
-                                             "is not empty");
-                    res = static_cast<qint32>(qevercloud::EDAMErrorCode::INVALID_AUTH);
+                    errorDescription.setBase(
+                        "Note's notebook doesn't belong to a linked notebook "
+                        "but linked notebook auth token is not empty");
+
+                    res = static_cast<qint32>(
+                        qevercloud::EDAMErrorCode::INVALID_AUTH);
                 }
             }
 
-            Q_EMIT getNoteAsyncFinished(res, note.qevercloudNote(),
-                                        rateLimitSeconds, errorDescription);
+            Q_EMIT getNoteAsyncFinished(
+                res,
+                note.qevercloudNote(),
+                rateLimitSeconds,
+                errorDescription);
         }
         else
         {
-            QNWARNING("Get note async requests queue is empty");
+            QNWARNING("tests:synchronization", "Get note async requests queue "
+                << "is empty");
         }
 
         return;
     }
 
-    auto resourceIt = m_data->m_getResourceAsyncDelayTimerIds.find(pEvent->timerId());
+    auto resourceIt = m_data->m_getResourceAsyncDelayTimerIds.find(
+        pEvent->timerId());
+
     if (resourceIt != m_data->m_getResourceAsyncDelayTimerIds.end())
     {
-        QNDEBUG("getResourceAsync delay timer event, timer id = "
-                << pEvent->timerId());
+        QNDEBUG("tests:synchronization", "getResourceAsync delay timer event, "
+            << "timer id = " << pEvent->timerId());
 
         Q_UNUSED(m_data->m_getResourceAsyncDelayTimerIds.erase(resourceIt))
         killTimer(pEvent->timerId());
 
         if (!m_data->m_getResourceAsyncRequests.isEmpty())
         {
-            GetResourceAsyncRequest request =
-                m_data->m_getResourceAsyncRequests.dequeue();
+            auto request = m_data->m_getResourceAsyncRequests.dequeue();
 
             qint32 rateLimitSeconds = 0;
             ErrorString errorDescription;
             Resource resource;
             resource.setGuid(request.m_resourceGuid);
-            qint32 res = getResource(request.m_withDataBody,
-                                     request.m_withRecognitionDataBody,
-                                     request.m_withAlternateDataBody,
-                                     request.m_withAttributes,
-                                     request.m_authToken, resource,
-                                     errorDescription, rateLimitSeconds);
-            Q_EMIT getResourceAsyncFinished(res, resource.qevercloudResource(),
-                                            rateLimitSeconds, errorDescription);
+
+            qint32 res = getResource(
+                request.m_withDataBody,
+                request.m_withRecognitionDataBody,
+                request.m_withAlternateDataBody,
+                request.m_withAttributes,
+                request.m_authToken,
+                resource,
+                errorDescription, rateLimitSeconds);
+
+            Q_EMIT getResourceAsyncFinished(
+                res,
+                resource.qevercloudResource(),
+                rateLimitSeconds,
+                errorDescription);
         }
         else
         {
-            QNWARNING("Get resource async requests queue is empty");
+            QNWARNING("tests:synchronization", "Get resource async requests "
+                << "queue is empty");
         }
 
         return;
@@ -3007,8 +3102,8 @@ void FakeNoteStore::timerEvent(QTimerEvent * pEvent)
     INoteStore::timerEvent(pEvent);
 }
 
-qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
-                                          ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkNotebookFields(
+    const Notebook & notebook, ErrorString & errorDescription) const
 {
     if (!notebook.hasName()) {
         errorDescription.setBase("Notebook name is not set");
@@ -3027,8 +3122,9 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
     }
 
     if (notebookName != notebookName.trimmed()) {
-        errorDescription.setBase("Notebook name cannot begin or "
-                                 "end with whitespace");
+        errorDescription.setBase(
+            "Notebook name cannot begin or end with whitespace");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
@@ -3042,21 +3138,26 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         const QString & notebookStack = notebook.stack();
 
         if (notebookStack.size() < qevercloud::EDAM_NOTEBOOK_STACK_LEN_MIN) {
-            errorDescription.setBase("Notebook stack's length "
-                                     "is too small");
+            errorDescription.setBase(
+                "Notebook stack's length is too small");
+
             return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (notebookStack.size() > qevercloud::EDAM_NOTEBOOK_STACK_LEN_MAX) {
-            errorDescription.setBase("Notebook stack's length "
-                                     "is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Notebook stack's length is too large");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (notebookStack != notebookStack.trimmed()) {
-            errorDescription.setBase("Notebook stack should not "
-                                     "begin or end with whitespace");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Notebook stack should not begin or end with whitespace");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         // NOTE: tried to use qevercloud::EDAM_NOTEBOOK_STACK_REGEX to check
@@ -3071,15 +3172,18 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
         const QString & publishingUri = notebook.publishingUri();
 
         if (publishingUri.size() < qevercloud::EDAM_PUBLISHING_URI_LEN_MIN) {
-            errorDescription.setBase("Notebook publishing uri "
-                                     "length is too small");
+            errorDescription.setBase(
+                "Notebook publishing uri length is too small");
+
             return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (publishingUri.size() > qevercloud::EDAM_PUBLISHING_URI_LEN_MAX) {
-            errorDescription.setBase("Notebook publising uri "
-                                     "length is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Notebook publising uri length is too large");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         for(auto it = qevercloud::EDAM_PUBLISHING_URI_PROHIBITED.begin(),
@@ -3087,17 +3191,21 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
             it != end; ++it)
         {
             if (publishingUri == *it) {
-                errorDescription.setBase("Prohibited publishing "
-                                         "URI value is set");
-                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+                errorDescription.setBase(
+                    "Prohibited publishing URI value is set");
+
+                return static_cast<qint32>(
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
         }
 
         QRegExp publishingUriRegExp(qevercloud::EDAM_PUBLISHING_URI_REGEX);
         if (!publishingUriRegExp.exactMatch(publishingUri)) {
-            errorDescription.setBase("Publishing URI doesn't match "
-                                     "the mandatory regex");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Publishing URI doesn't match the mandatory regex");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
@@ -3105,40 +3213,51 @@ qint32 FakeNoteStore::checkNotebookFields(const Notebook & notebook,
     {
         const QString & description = notebook.publishingPublicDescription();
 
-        if (description.size() < qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MIN) {
-            errorDescription.setBase("Publishing description length "
-                                     "is too small");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+        if (description.size() <
+            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MIN)
+        {
+            errorDescription.setBase(
+                "Publishing description length is too small");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
-        if (description.size() > qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MAX) {
-            errorDescription.setBase("Publishing description length "
-                                     "is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+        if (description.size() >
+            qevercloud::EDAM_PUBLISHING_DESCRIPTION_LEN_MAX)
+        {
+            errorDescription.setBase(
+                "Publishing description length is too large");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
-        QRegExp publishingDescriptionRegExp(qevercloud::EDAM_PUBLISHING_DESCRIPTION_REGEX);
+        QRegExp publishingDescriptionRegExp(
+            qevercloud::EDAM_PUBLISHING_DESCRIPTION_REGEX);
+
         if (!publishingDescriptionRegExp.exactMatch(description)) {
-            errorDescription.setBase("Notebook description doesn't "
-                                     "match the mandatory regex");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Notebook description doesn't match the mandatory regex");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
     return 0;
 }
 
-qint32 FakeNoteStore::checkNoteFields(const Note & note,
-                                      const CheckNoteFieldsPurpose::type purpose,
-                                      ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkNoteFields(
+    const Note & note, const CheckNoteFieldsPurpose::type purpose,
+    ErrorString & errorDescription) const
 {
     if (!note.hasNotebookGuid()) {
         errorDescription.setBase("Note has no notebook guid set");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
-    const NotebookDataByGuid & notebookIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & notebookIndex = m_data->m_notebooks.get<NotebookByGuid>();
     auto notebookIt = notebookIndex.find(note.notebookGuid());
     if (notebookIt == notebookIndex.end()) {
         errorDescription.setBase("Note.notebookGuid");
@@ -3149,17 +3268,21 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
     if (purpose == CheckNoteFieldsPurpose::CreateNote)
     {
         if (!notebook.canCreateNotes()) {
-            errorDescription.setBase("No permission to create "
-                                     "notes within this notebook");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
+            errorDescription.setBase(
+                "No permission to create notes within this notebook");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::PERMISSION_DENIED);
         }
     }
     else if (purpose == CheckNoteFieldsPurpose::UpdateNote)
     {
         if (!notebook.canUpdateNotes()) {
-            errorDescription.setBase("No permission to update notes "
-                                     "within this notebook");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
+            errorDescription.setBase(
+                "No permission to update notes within this notebook");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::PERMISSION_DENIED);
         }
     }
 
@@ -3169,18 +3292,23 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 
         if (title.size() < qevercloud::EDAM_NOTE_TITLE_LEN_MIN) {
             errorDescription.setBase("Note title length is too small");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (title.size() > qevercloud::EDAM_NOTE_TITLE_LEN_MAX) {
             errorDescription.setBase("Note title length is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
-        // NOTE: tried to use qevercloud::EDAM_NOTE_TITLE_REGEX to check the name
-        // correctness but it appears that regex is too perlish for QRegExp
-        // to handle i.e. QRegExp doesn't recognize the regexp in its full entirety
-        // and hence doesn't match the text which should actually match
+        // NOTE: tried to use qevercloud::EDAM_NOTE_TITLE_REGEX to check
+        // the name correctness but it appears that regex is too perlish for
+        // QRegExp to handle i.e. QRegExp doesn't recognize the regexp in its
+        // full entirety and hence doesn't match the text which should actually
+        // match
     }
 
     if (note.hasContent())
@@ -3189,22 +3317,26 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 
         if (content.size() < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) {
             errorDescription.setBase("Note content length is too small");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (content.size() > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX) {
             errorDescription.setBase("Note content length is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
     if (note.hasResources())
     {
-        QList<Resource> resources = note.resources();
+        auto resources = note.resources();
         for(auto it = resources.constBegin(),
             end = resources.constEnd(); it != end; ++it)
         {
-            const Resource & resource = *it;
+            const auto & resource = *it;
             qint32 checkRes = checkResourceFields(resource, errorDescription);
             if (checkRes != 0) {
                 return checkRes;
@@ -3250,8 +3382,10 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
 
         if (attributes.applicationData.isSet())
         {
-            qint32 res = checkAppData(attributes.applicationData.ref(),
-                                      errorDescription);
+            qint32 res = checkAppData(
+                attributes.applicationData.ref(),
+                errorDescription);
+
             if (res != 0) {
                 return res;
             }
@@ -3261,37 +3395,42 @@ qint32 FakeNoteStore::checkNoteFields(const Note & note,
     return 0;
 }
 
-qint32 FakeNoteStore::checkResourceFields(const Resource & resource,
-                                          ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkResourceFields(
+    const Resource & resource, ErrorString & errorDescription) const
 {
     if (resource.hasMime())
     {
         const QString & mime = resource.mime();
 
         if (mime.size() < qevercloud::EDAM_MIME_LEN_MIN) {
-            errorDescription.setBase("Note's resource mime type "
-                                     "length is too small");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Note's resource mime type length is too small");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         if (mime.size() > qevercloud::EDAM_MIME_LEN_MAX) {
-            errorDescription.setBase("Note's resource mime type "
-                                     "length is too large");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Note's resource mime type length is too large");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
         QRegExp mimeRegExp(qevercloud::EDAM_MIME_REGEX);
         if (!mimeRegExp.exactMatch(mime)) {
-            errorDescription.setBase("Note's resource mime type doesn't match "
-                                     "the mandatory regex");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            errorDescription.setBase(
+                "Note's resource mime type doesn't match the mandatory regex");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
     }
 
     if (resource.hasResourceAttributes())
     {
-        const qevercloud::ResourceAttributes & attributes =
-            resource.resourceAttributes();
+        const auto & attributes = resource.resourceAttributes();
 
         CHECK_STRING_ATTRIBUTE(sourceURL)
         CHECK_STRING_ATTRIBUTE(cameraMake)
@@ -3299,8 +3438,10 @@ qint32 FakeNoteStore::checkResourceFields(const Resource & resource,
 
         if (attributes.applicationData.isSet())
         {
-            qint32 res = checkAppData(attributes.applicationData.ref(),
-                                      errorDescription);
+            qint32 res = checkAppData(
+                attributes.applicationData.ref(),
+                errorDescription);
+
             if (res != 0) {
                 return res;
             }
@@ -3330,13 +3471,14 @@ qint32 FakeNoteStore::checkTagFields(
     }
 
     // NOTE: tried to use qevercloud::EDAM_TAG_NAME_REGEX to check the name
-    // correctness but it appears that regex is too perlish for QRegExp to handle
-    // i.e. QRegExp doesn't recognize the regexp in its full entirety and hence
-    // doesn't match the text which should actually match
+    // correctness but it appears that regex is too perlish for QRegExp to
+    // handle i.e. QRegExp doesn't recognize the regexp in its full entirety
+    // and hence doesn't match the text which should actually match
 
     if (tagName != tagName.trimmed()) {
-        errorDescription.setBase("Tag name shouldn't start or "
-                                 "end with whitespace");
+        errorDescription.setBase(
+            "Tag name shouldn't start or end with whitespace");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
@@ -3383,8 +3525,9 @@ qint32 FakeNoteStore::checkSavedSearchFields(
     // and hence doesn't match the text which should actually match
 
     if (savedSearchName != savedSearchName.trimmed()) {
-        errorDescription.setBase("Saved search name shouldn't "
-                                 "start or end with whitespace");
+        errorDescription.setBase(
+            "Saved search name shouldn't start or end with whitespace");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
@@ -3400,9 +3543,9 @@ qint32 FakeNoteStore::checkSavedSearchFields(
     }
 
     // NOTE: tried to use qevercloud::EDAM_SEARCH_QUERY_REGEX to check the name
-    // correctness but it appears that regex is too perlish for QRegExp to handle
-    // i.e. QRegExp doesn't recognize the regexp in its full entirety and hence
-    // doesn't match the text which should actually match
+    // correctness but it appears that regex is too perlish for QRegExp to
+    // handle i.e. QRegExp doesn't recognize the regexp in its full entirety
+    // and hence doesn't match the text which should actually match
 
     return 0;
 }
@@ -3417,17 +3560,20 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
     }
 
     if (!linkedNotebook.shardId.isSet() && !linkedNotebook.uri.isSet()) {
-        errorDescription.setBase("Neither linked notebook's shard "
-                                 "id nor uri is set");
+        errorDescription.setBase(
+            "Neither linked notebook's shard id nor uri is set");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
-    const LinkedNotebookDataByUsername & usernameIndex =
+    const auto & usernameIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByUsername>();
+
     auto linkedNotebookIt = usernameIndex.find(linkedNotebook.username.ref());
     if (linkedNotebookIt == usernameIndex.end()) {
-        errorDescription.setBase("Found no linked notebook "
-                                 "corresponding to the owner");
+        errorDescription.setBase(
+            "Found no linked notebook corresponding to the owner");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
     }
 
@@ -3435,37 +3581,45 @@ qint32 FakeNoteStore::checkLinkedNotebookFields(
     if (linkedNotebook.shardId.isSet())
     {
         if (!existingLinkedNotebook.hasShardId()) {
-            errorDescription.setBase("Linked notebook belonging "
-                                     "to this owner has no shard id");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
+            errorDescription.setBase(
+                "Linked notebook belonging to this owner has no shard id");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
 
         if (existingLinkedNotebook.shardId() != linkedNotebook.shardId.ref()) {
-            errorDescription.setBase("Linked notebook belonging to "
-                                     "this owner has another shard id");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
+            errorDescription.setBase(
+                "Linked notebook belonging to this owner has another shard id");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
     }
     else if (linkedNotebook.uri.isSet())
     {
         if (!existingLinkedNotebook.hasUri()) {
-            errorDescription.setBase("Linked notebook belonging to "
-                                     "this owner has no uri");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
+            errorDescription.setBase(
+                "Linked notebook belonging to this owner has no uri");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
 
         if (existingLinkedNotebook.uri() != linkedNotebook.uri.ref()) {
-            errorDescription.setBase("Linked notebook belonging to "
-                                     "this owner has another uri");
-            return static_cast<qint32>(qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
+            errorDescription.setBase(
+                "Linked notebook belonging to this owner has another uri");
+
+            return static_cast<qint32>(
+                qevercloud::EDAMErrorCode::SHARD_UNAVAILABLE);
         }
     }
 
     return 0;
 }
 
-qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData,
-                                   ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkAppData(
+    const qevercloud::LazyMap & appData, ErrorString & errorDescription) const
 {
     QRegExp keyRegExp(qevercloud::EDAM_APPLICATIONDATA_NAME_REGEX);
     QRegExp valueRegExp(qevercloud::EDAM_APPLICATIONDATA_VALUE_REGEX);
@@ -3500,20 +3654,28 @@ qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData,
                 errorDescription.setBase(
                     QStringLiteral("Resource app data value ") +
                     QStringLiteral("length is too small: ") + value);
-                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+                return static_cast<qint32>(
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
 
-            if (value.size() > qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX) {
+            if (value.size() > qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX)
+            {
                 errorDescription.setBase(
                     QStringLiteral("Resource app data value ") +
                     QStringLiteral("length is too large: ") + value);
-                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+
+                return static_cast<qint32>(
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
 
-            if (!valueRegExp.exactMatch(value)) {
-                errorDescription.setBase("Resource app data value doesn't "
-                                         "match the mandatory regex");
-                return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
+            if (!valueRegExp.exactMatch(value))
+            {
+                errorDescription.setBase(
+                    "Resource app data value doesn't match the mandatory regex");
+
+                return static_cast<qint32>(
+                    qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
             }
         }
     }
@@ -3521,14 +3683,15 @@ qint32 FakeNoteStore::checkAppData(const qevercloud::LazyMap & appData,
     return 0;
 }
 
-qint32 FakeNoteStore::checkAppDataKey(const QString & key,
-                                      const QRegExp & keyRegExp,
-                                      ErrorString & errorDescription) const
+qint32 FakeNoteStore::checkAppDataKey(
+    const QString & key, const QRegExp & keyRegExp,
+    ErrorString & errorDescription) const
 {
     if (key.size() < qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) {
         errorDescription.setBase(
             QStringLiteral("Resource app data key length ") +
             QStringLiteral("is too small: ") + key);
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
@@ -3536,12 +3699,14 @@ qint32 FakeNoteStore::checkAppDataKey(const QString & key,
         errorDescription.setBase(
             QStringLiteral("Resource app data key length ") +
             QStringLiteral("is too large: ") + key);
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
     if (!keyRegExp.exactMatch(key)) {
-        errorDescription.setBase("Resource app data key doesn't "
-                                 "match the mandatory regex");
+        errorDescription.setBase(
+            "Resource app data key doesn't match the mandatory regex");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
     }
 
@@ -3555,19 +3720,23 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthToken(
 {
     const QString & username = linkedNotebook.username();
     auto authTokenIt = m_data->m_linkedNotebookAuthTokens.find(username);
+
     if (authTokenIt == m_data->m_linkedNotebookAuthTokens.end()) {
-        errorDescription.setBase("Found no auth token for the given "
-                                 "linked notebook");
+        errorDescription.setBase(
+            "Found no auth token for the given linked notebook");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const QString & expectedLinkedNotebookAuthToken = authTokenIt.value();
-    if (linkedNotebookAuthToken != expectedLinkedNotebookAuthToken) {
+    if (linkedNotebookAuthToken != expectedLinkedNotebookAuthToken)
+    {
         errorDescription.setBase("Wrong linked notebook auth token");
-        QNWARNING(errorDescription << ", expected: "
-                  << expectedLinkedNotebookAuthToken
-                  << ", got: " << linkedNotebookAuthToken
-                  << ", linked notebook: " << linkedNotebook);
+        QNWARNING("tests:synchronization", errorDescription << ", expected: "
+            << expectedLinkedNotebookAuthToken << ", got: "
+            << linkedNotebookAuthToken << ", linked notebook: "
+            << linkedNotebook);
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
@@ -3579,41 +3748,45 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForNotebook(
     const QString & linkedNotebookAuthToken,
     ErrorString & errorDescription) const
 {
-    const NotebookDataByGuid & notebookGuidIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
     auto notebookIt = notebookGuidIndex.find(notebookGuid);
     if (notebookIt == notebookGuidIndex.end()) {
         errorDescription.setBase("No notebook with specified guid was found");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
-    const Notebook & notebook = *notebookIt;
+    const auto & notebook = *notebookIt;
     if (!notebook.hasLinkedNotebookGuid()) {
-        errorDescription.setBase("Notebook doesn't belong to "
-                                 "a linked notebook");
+        errorDescription.setBase(
+            "Notebook doesn't belong to a linked notebook");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     if (linkedNotebookAuthToken.isEmpty()) {
-        errorDescription.setBase("Notebook belongs to a linked "
-                                 "notebook but linked notebook "
-                                 "auth token is empty");
+        errorDescription.setBase(
+            "Notebook belongs to a linked notebook but linked notebook "
+            "auth token is empty");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
     const QString & linkedNotebookGuid = notebook.linkedNotebookGuid();
-    const LinkedNotebookDataByGuid & linkedNotebookGuidIndex =
+
+    const auto & linkedNotebookGuidIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+
     auto linkedNotebookIt = linkedNotebookGuidIndex.find(linkedNotebookGuid);
     if (linkedNotebookIt == linkedNotebookGuidIndex.end()) {
-        errorDescription.setBase("Found no linked notebook "
-                                 "corresponding to the notebook");
+        errorDescription.setBase(
+            "Found no linked notebook corresponding to the notebook");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
-    return checkLinkedNotebookAuthToken(*linkedNotebookIt,
-                                        linkedNotebookAuthToken,
-                                        errorDescription);
+    return checkLinkedNotebookAuthToken(
+        *linkedNotebookIt,
+        linkedNotebookAuthToken,
+        errorDescription);
 }
 
 qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(
@@ -3632,22 +3805,28 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(
     }
 
     if (linkedNotebookAuthToken.isEmpty()) {
-        errorDescription.setBase("Tag belongs to a linked notebook "
-                                 "but linked notebook auth token is empty");
+        errorDescription.setBase(
+            "Tag belongs to a linked notebook "
+            "but linked notebook auth token is empty");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
-    const LinkedNotebookDataByGuid & linkedNotebookGuidIndex =
+    const auto & linkedNotebookGuidIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+
     auto it = linkedNotebookGuidIndex.find(tag.linkedNotebookGuid());
     if (it == linkedNotebookGuidIndex.end()) {
-        errorDescription.setBase("Tag belongs to a linked notebook "
-                                 "but it was not found by guid");
+        errorDescription.setBase(
+            "Tag belongs to a linked notebook but it was not found by guid");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::PERMISSION_DENIED);
     }
 
-    return checkLinkedNotebookAuthToken(*it, linkedNotebookAuthToken,
-                                        errorDescription);
+    return checkLinkedNotebookAuthToken(
+        *it,
+        linkedNotebookAuthToken,
+        errorDescription);
 }
 
 QString FakeNoteStore::nextName(const QString & name) const
@@ -3692,26 +3871,28 @@ qint32 FakeNoteStore::getSyncChunkImpl(
     if (filter.notebookGuids.isSet() && !filter.notebookGuids.ref().isEmpty() &&
         filter.includeExpunged.isSet() && filter.includeExpunged.ref())
     {
-        errorDescription.setBase("Can't set notebook guids along "
-                                 "with include expunged");
+        errorDescription.setBase(
+            "Can't set notebook guids along with include expunged");
+
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
     }
 
-    const SavedSearchDataByUSN & savedSearchUsnIndex =
+    const auto & savedSearchUsnIndex =
         m_data->m_savedSearches.get<SavedSearchByUSN>();
-    const TagDataByUSN & tagUsnIndex = m_data->m_tags.get<TagByUSN>();
-    const NotebookDataByUSN & notebookUsnIndex =
-        m_data->m_notebooks.get<NotebookByUSN>();
-    const NoteDataByUSN & noteUsnIndex = m_data->m_notes.get<NoteByUSN>();
-    const ResourceDataByUSN & resourceUsnIndex =
-        m_data->m_resources.get<ResourceByUSN>();
-    const LinkedNotebookDataByUSN & linkedNotebookUsnIndex =
+
+    const auto & tagUsnIndex = m_data->m_tags.get<TagByUSN>();
+    const auto & notebookUsnIndex = m_data->m_notebooks.get<NotebookByUSN>();
+    const auto & noteUsnIndex = m_data->m_notes.get<NoteByUSN>();
+    const auto & resourceUsnIndex = m_data->m_resources.get<ResourceByUSN>();
+
+    const auto & linkedNotebookUsnIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByUSN>();
 
     syncChunk.updateCount = currentMaxUsn(linkedNotebookGuid);
-    QNDEBUG("Sync chunk update count = " << syncChunk.updateCount);
+    QNDEBUG("tests:synchronization", "Sync chunk update count = "
+        << syncChunk.updateCount);
 
-    GuidsOfCompleteSentItems & guidsOfCompleteSentItems =
+    auto & guidsOfCompleteSentItems =
         (linkedNotebookGuid.isEmpty()
          ? m_data->m_guidsOfUserOwnCompleteSentItems
          : m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[linkedNotebookGuid]);
@@ -3721,34 +3902,49 @@ qint32 FakeNoteStore::getSyncChunkImpl(
         filter.includeSearches.isSet() &&
         filter.includeSearches.ref())
     {
-        savedSearchIt = std::upper_bound(savedSearchUsnIndex.begin(),
-                                         savedSearchUsnIndex.end(),
-                                         afterUSN, CompareByUSN<SavedSearch>());
+        savedSearchIt = std::upper_bound(
+            savedSearchUsnIndex.begin(),
+            savedSearchUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<SavedSearch>());
     }
 
     auto tagIt = tagUsnIndex.end();
     if (filter.includeTags.isSet() && filter.includeTags.ref())
     {
-        tagIt = std::upper_bound(tagUsnIndex.begin(), tagUsnIndex.end(),
-                                 afterUSN, CompareByUSN<Tag>());
+        tagIt = std::upper_bound(
+            tagUsnIndex.begin(),
+            tagUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<Tag>());
+
         tagIt = advanceIterator(tagIt, tagUsnIndex, linkedNotebookGuid);
     }
 
     auto notebookIt = notebookUsnIndex.end();
     if (filter.includeNotebooks.isSet() && filter.includeNotebooks.ref())
     {
-        notebookIt = std::upper_bound(notebookUsnIndex.begin(),
-                                      notebookUsnIndex.end(),
-                                      afterUSN, CompareByUSN<Notebook>());
-        notebookIt = advanceIterator(notebookIt, notebookUsnIndex,
-                                     linkedNotebookGuid);
+        notebookIt = std::upper_bound(
+            notebookUsnIndex.begin(),
+            notebookUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<Notebook>());
+
+        notebookIt = advanceIterator(
+            notebookIt,
+            notebookUsnIndex,
+            linkedNotebookGuid);
     }
 
     auto noteIt = noteUsnIndex.end();
     if (filter.includeNotes.isSet() && filter.includeNotes.ref())
     {
-        noteIt = std::upper_bound(noteUsnIndex.begin(), noteUsnIndex.end(),
-                                  afterUSN, CompareByUSN<Note>());
+        noteIt = std::upper_bound(
+            noteUsnIndex.begin(),
+            noteUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<Note>());
+
         noteIt = nextNoteByUsnIterator(noteIt, linkedNotebookGuid);
     }
 
@@ -3757,9 +3953,12 @@ qint32 FakeNoteStore::getSyncChunkImpl(
         filter.includeResources.isSet() &&
         filter.includeResources.ref())
     {
-        resourceIt = std::upper_bound(resourceUsnIndex.begin(),
-                                      resourceUsnIndex.end(),
-                                      afterUSN, CompareByUSN<Resource>());
+        resourceIt = std::upper_bound(
+            resourceUsnIndex.begin(),
+            resourceUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<Resource>());
+
         resourceIt = nextResourceByUsnIterator(resourceIt, linkedNotebookGuid);
     }
 
@@ -3768,9 +3967,11 @@ qint32 FakeNoteStore::getSyncChunkImpl(
         filter.includeLinkedNotebooks.isSet() &&
         filter.includeLinkedNotebooks.ref())
     {
-        linkedNotebookIt = std::upper_bound(linkedNotebookUsnIndex.begin(),
-                                            linkedNotebookUsnIndex.end(),
-                                            afterUSN, CompareByUSN<LinkedNotebook>());
+        linkedNotebookIt = std::upper_bound(
+            linkedNotebookUsnIndex.begin(),
+            linkedNotebookUsnIndex.end(),
+            afterUSN,
+            CompareByUSN<LinkedNotebook>());
     }
 
     while(true)
@@ -3780,94 +3981,101 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
         if (savedSearchIt != savedSearchUsnIndex.end())
         {
-            const SavedSearch & nextSearch = *savedSearchIt;
-            QNDEBUG("Checking saved search for the possibility "
-                    << "to include it into the sync chunk: "
-                    << nextSearch.qevercloudSavedSearch());
+            const auto & nextSearch = *savedSearchIt;
+            QNDEBUG("tests:synchronization", "Checking saved search for "
+                << "the possibility to include it into the sync chunk: "
+                << nextSearch.qevercloudSavedSearch());
 
             qint32 usn = nextSearch.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::SavedSearch;
-                QNDEBUG("Will include saved search into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include saved search "
+                    << "into the sync chunk");
             }
         }
 
-        if ((nextItemType == NextItemType::None) && (tagIt != tagUsnIndex.end()))
+        if ((nextItemType == NextItemType::None) &&
+            (tagIt != tagUsnIndex.end()))
         {
-            const Tag & nextTag = *tagIt;
-            QNDEBUG("Checking tag for the possibility to include "
-                    << "it into the sync chunk: "
-                    << nextTag.qevercloudTag());
+            const auto & nextTag = *tagIt;
+            QNDEBUG("tests:synchronization", "Checking tag for the possibility "
+                << "to include it into the sync chunk: "
+                << nextTag.qevercloudTag());
 
             qint32 usn = nextTag.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Tag;
-                QNDEBUG("Will include tag into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include tag into "
+                    << "the sync chunk");
             }
         }
 
         if ((nextItemType == NextItemType::None) &&
             (notebookIt != notebookUsnIndex.end()))
         {
-            const Notebook & nextNotebook = *notebookIt;
-            QNDEBUG("Checking notebook for the possibility to "
-                    << "include it into the sync chunk: "
-                    << nextNotebook.qevercloudNotebook());
+            const auto & nextNotebook = *notebookIt;
+            QNDEBUG("tests:synchronization", "Checking notebook for "
+                << "the possibility to include it into the sync chunk: "
+                << nextNotebook.qevercloudNotebook());
 
             qint32 usn = nextNotebook.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Notebook;
-                QNDEBUG("Will include notebook into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include notebook into "
+                    << "the sync chunk");
             }
         }
 
         if ((nextItemType == NextItemType::None) && (noteIt != noteUsnIndex.end()))
         {
-            const Note & nextNote = *noteIt;
-            QNDEBUG("Checking note for the possibility to include "
-                    << "it into the sync chunk: "
-                    << nextNote.qevercloudNote());
+            const auto & nextNote = *noteIt;
+            QNDEBUG("tests:synchronization", "Checking note for "
+                << "the possibility to include it into the sync chunk: "
+                << nextNote.qevercloudNote());
 
             qint32 usn = nextNote.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Note;
-                QNDEBUG("Will include note into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include note into "
+                    << "the sync chunk");
             }
         }
 
         if ((nextItemType == NextItemType::None) &&
             (resourceIt != resourceUsnIndex.end()))
         {
-            const Resource & nextResource = *resourceIt;
-            QNDEBUG("Checking resource for the possibility to "
-                    << "include it into the sync chunk: "
-                    << nextResource.qevercloudResource());
+            const auto & nextResource = *resourceIt;
+            QNDEBUG("tests:synchronization", "Checking resource for "
+                << "the possibility to include it into the sync chunk: "
+                << nextResource.qevercloudResource());
 
             qint32 usn = nextResource.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::Resource;
-                QNDEBUG("Will include resource into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include resource into "
+                    << "the sync chunk");
             }
         }
 
         if ((nextItemType == NextItemType::None) &&
             (linkedNotebookIt != linkedNotebookUsnIndex.end()))
         {
-            const LinkedNotebook & nextLinkedNotebook = *linkedNotebookIt;
-            QNDEBUG("Checking linked notebook for the possibility "
-                    << "to include it into the sync chunk: "
-                    << nextLinkedNotebook.qevercloudLinkedNotebook());
+            const auto & nextLinkedNotebook = *linkedNotebookIt;
+            QNDEBUG("tests:synchronization", "Checking linked notebook for "
+                << "the possibility to include it into the sync chunk: "
+                << nextLinkedNotebook.qevercloudLinkedNotebook());
 
             qint32 usn = nextLinkedNotebook.updateSequenceNumber();
             if (usn < lastItemUsn) {
                 lastItemUsn = usn;
                 nextItemType = NextItemType::LinkedNotebook;
-                QNDEBUG("Will include linked notebook into the sync chunk");
+                QNDEBUG("tests:synchronization", "Will include linked notebook "
+                    << "into the sync chunk");
             }
         }
 
@@ -3885,14 +4093,14 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.searches->append(savedSearchIt->qevercloudSavedSearch());
                 syncChunk.chunkHighUSN = savedSearchIt->updateSequenceNumber();
-                QNDEBUG("Added saved search to sync chunk: "
-                        << savedSearchIt->qevercloudSavedSearch()
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+                QNDEBUG("tests:synchronization", "Added saved search to sync "
+                    << "chunk: " << savedSearchIt->qevercloudSavedSearch()
+                    << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
 
                 if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
                     Q_UNUSED(guidsOfCompleteSentItems.m_savedSearchGuids.insert(
-                            savedSearchIt->guid()))
+                        savedSearchIt->guid()))
                 }
 
                 ++savedSearchIt;
@@ -3906,12 +4114,14 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.tags->append(tagIt->qevercloudTag());
                 syncChunk.chunkHighUSN = tagIt->updateSequenceNumber();
-                QNDEBUG("Added tag to sync chunk: " << tagIt->qevercloudTag()
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+                QNDEBUG("tests:synchronization", "Added tag to sync chunk: "
+                    << tagIt->qevercloudTag()
+                    << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
 
                 if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
-                    Q_UNUSED(guidsOfCompleteSentItems.m_tagGuids.insert(tagIt->guid()))
+                    Q_UNUSED(guidsOfCompleteSentItems.m_tagGuids.insert(
+                        tagIt->guid()))
                 }
 
                 ++tagIt;
@@ -3926,10 +4136,11 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.notebooks->append(notebookIt->qevercloudNotebook());
                 syncChunk.chunkHighUSN = notebookIt->updateSequenceNumber();
-                QNDEBUG("Added notebook to sync chunk: "
-                        << notebookIt->qevercloudNotebook()
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+
+                QNDEBUG("tests:synchronization", "Added notebook to sync chunk: "
+                    << notebookIt->qevercloudNotebook()
+                    << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
 
                 if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
                     Q_UNUSED(guidsOfCompleteSentItems.m_notebookGuids.insert(
@@ -3937,8 +4148,11 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                 }
 
                 ++notebookIt;
-                notebookIt = advanceIterator(notebookIt, notebookUsnIndex,
-                                             linkedNotebookGuid);
+
+                notebookIt = advanceIterator(
+                    notebookIt,
+                    notebookUsnIndex,
+                    linkedNotebookGuid);
             }
             break;
         case NextItemType::Note:
@@ -4017,9 +4231,11 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.notes->append(qecNote);
                 syncChunk.chunkHighUSN = noteIt->updateSequenceNumber();
-                QNDEBUG("Added note to sync chunk: " << qecNote
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+
+                QNDEBUG("tests:synchronization", "Added note to sync chunk: "
+                    << qecNote << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
+
                 ++noteIt;
                 noteIt = nextNoteByUsnIterator(noteIt, linkedNotebookGuid);
             }
@@ -4056,12 +4272,17 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.resources->append(qecResource);
                 syncChunk.chunkHighUSN = resourceIt->updateSequenceNumber();
-                QNDEBUG("Added resource to sync chunk: " << qecResource
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+
+                QNDEBUG("tests:synchronization", "Added resource to sync "
+                    << "chunk: " << qecResource
+                    << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
+
                 ++resourceIt;
-                resourceIt = nextResourceByUsnIterator(resourceIt,
-                                                       linkedNotebookGuid);
+
+                resourceIt = nextResourceByUsnIterator(
+                    resourceIt,
+                    linkedNotebookGuid);
             }
             break;
         case NextItemType::LinkedNotebook:
@@ -4072,11 +4293,14 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
                 syncChunk.linkedNotebooks->append(
                     linkedNotebookIt->qevercloudLinkedNotebook());
+
                 syncChunk.chunkHighUSN = linkedNotebookIt->updateSequenceNumber();
-                QNDEBUG("Added linked notebook to sync chunk: "
-                        << linkedNotebookIt->qevercloudLinkedNotebook()
-                        << "\nSync chunk high USN updated to "
-                        << syncChunk.chunkHighUSN);
+
+                QNDEBUG("tests:synchronization", "Added linked notebook to "
+                    << "sync chunk: "
+                    << linkedNotebookIt->qevercloudLinkedNotebook()
+                    << "\nSync chunk high USN updated to "
+                    << syncChunk.chunkHighUSN);
 
                 if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
                     Q_UNUSED(guidsOfCompleteSentItems.m_linkedNotebookGuids.insert(
@@ -4087,15 +4311,16 @@ qint32 FakeNoteStore::getSyncChunkImpl(
             }
             break;
         default:
-            QNWARNING("Unexpected next item type: " << nextItemType);
+            QNWARNING("tests:synchronization", "Unexpected next item type: "
+                << nextItemType);
             break;
         }
     }
 
     if (!syncChunk.chunkHighUSN.isSet()) {
         syncChunk.chunkHighUSN = syncChunk.updateCount;
-        QNDEBUG("Sync chunk's high USN was still not set, set it "
-                << "to the update count: " << syncChunk.updateCount);
+        QNDEBUG("tests:synchronization", "Sync chunk's high USN was still not "
+            << "set, set it to the update count: " << syncChunk.updateCount);
     }
 
     if (fullSyncOnly) {
@@ -4191,30 +4416,34 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
     const QString & linkedNotebookGuid)
 {
-    QNDEBUG("FakeNoteStore::"
-            << "considerAllExistingDataItemsSentBeforeRateLimitBreachImpl: "
-            << "linked notebook guid = "
-            << linkedNotebookGuid);
+    QNDEBUG(
+        "tests:synchronization",
+        "FakeNoteStore"
+            << "::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl: "
+            << "linked notebook guid = " << linkedNotebookGuid);
 
-    GuidsOfCompleteSentItems & guidsOfCompleteSentItems =
+    auto & guidsOfCompleteSentItems =
         (linkedNotebookGuid.isEmpty()
          ? m_data->m_guidsOfUserOwnCompleteSentItems
          : m_data->m_guidsOfCompleteSentItemsByLinkedNotebookGuid[linkedNotebookGuid]);
 
     if (linkedNotebookGuid.isEmpty())
     {
-        const SavedSearchDataByGuid & savedSearchGuidIndex =
+        const auto & savedSearchGuidIndex =
             m_data->m_savedSearches.get<SavedSearchByGuid>();
+
         for(auto it = savedSearchGuidIndex.begin(),
             end = savedSearchGuidIndex.end(); it != end; ++it)
         {
-            Q_UNUSED(guidsOfCompleteSentItems.m_savedSearchGuids.insert(it->guid()))
-            QNTRACE("Marked saved search as processed: " << *it);
+            Q_UNUSED(guidsOfCompleteSentItems.m_savedSearchGuids.insert(
+                it->guid()))
+
+            QNTRACE("tests:synchronization", "Marked saved search as "
+                << "processed: " << *it);
         }
     }
 
-    const NotebookDataByGuid & notebookGuidIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
     for(auto it = notebookGuidIndex.begin(),
         end = notebookGuidIndex.end(); it != end; ++it)
     {
@@ -4229,14 +4458,18 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
             continue;
         }
 
-        Q_UNUSED(guidsOfCompleteSentItems.m_notebookGuids.insert(notebook.guid()))
-        QNTRACE("Marked notebook as processed: " << notebook);
+        Q_UNUSED(guidsOfCompleteSentItems.m_notebookGuids.insert(
+            notebook.guid()))
+
+        QNTRACE("tests:synchronization", "Marked notebook as processed: "
+            << notebook);
     }
 
-    const TagDataByGuid & tagGuidIndex = m_data->m_tags.get<TagByGuid>();
-    for(auto it = tagGuidIndex.begin(), end = tagGuidIndex.end(); it != end; ++it)
+    const auto & tagGuidIndex = m_data->m_tags.get<TagByGuid>();
+    for(auto it = tagGuidIndex.begin(), end = tagGuidIndex.end();
+        it != end; ++it)
     {
-        const Tag & tag = *it;
+        const auto & tag = *it;
         if (linkedNotebookGuid.isEmpty() == tag.hasLinkedNotebookGuid()) {
             continue;
         }
@@ -4248,34 +4481,38 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
         }
 
         Q_UNUSED(guidsOfCompleteSentItems.m_tagGuids.insert(tag.guid()))
-        QNTRACE("Marked tag as processed: " << tag);
+        QNTRACE("tests:synchronization", "Marked tag as processed: " << tag);
     }
 
     if (linkedNotebookGuid.isEmpty())
     {
-        const LinkedNotebookDataByGuid & linkedNotebookGuidIndex =
+        const auto & linkedNotebookGuidIndex =
             m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+
         for(auto it = linkedNotebookGuidIndex.begin(),
             end = linkedNotebookGuidIndex.end(); it != end; ++it)
         {
             Q_UNUSED(guidsOfCompleteSentItems.m_linkedNotebookGuids.insert(
                 it->guid()))
-            QNTRACE("Marked linked notebook as processed: " << *it);
+
+            QNTRACE("tests:synchronization", "Marked linked notebook as "
+                << "processed: " << *it);
         }
     }
 
-    const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     for(auto it = noteGuidIndex.begin(),
         end = noteGuidIndex.end(); it != end; ++it)
     {
-        const Note & note = *it;
+        const auto & note = *it;
         auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
-            QNWARNING("Skipping note for which no notebook was found: " << note);
+            QNWARNING("tests:synchronization", "Skipping note for which no "
+                << "notebook was found: " << note);
             continue;
         }
 
-        const Notebook & notebook = *notebookIt;
+        const auto & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
             continue;
         }
@@ -4287,31 +4524,30 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
         }
 
         Q_UNUSED(guidsOfCompleteSentItems.m_noteGuids.insert(note.guid()))
-        QNTRACE("Marked note as processed: " << note);
+        QNTRACE("tests:synchronization", "Marked note as processed: " << note);
     }
 
-    const ResourceDataByGuid & resourceGuidIndex =
-        m_data->m_resources.get<ResourceByGuid>();
+    const auto & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
     for(auto it = resourceGuidIndex.begin(),
         end = resourceGuidIndex.end(); it != end; ++it)
     {
-        const Resource & resource = *it;
+        const auto & resource = *it;
         auto noteIt = noteGuidIndex.find(resource.noteGuid());
         if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
-            QNWARNING("Skipping resource for which no note was found: "
-                << resource);
+            QNWARNING("tests:synchronization", "Skipping resource for which no "
+                << "note was found: " << resource);
             continue;
         }
 
-        const Note & note = *noteIt;
+        const auto & note = *noteIt;
         auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
-            QNWARNING("Skipping resource for which note no notebook was found: "
-                << note);
+            QNWARNING("tests:synchronization", "Skipping resource for which "
+                << "note no notebook was found: " << note);
             continue;
         }
 
-        const Notebook & notebook = *notebookIt;
+        const auto & notebook = *notebookIt;
         if (linkedNotebookGuid.isEmpty() == notebook.hasLinkedNotebookGuid()) {
             continue;
         }
@@ -4322,8 +4558,11 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
             continue;
         }
 
-        Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(resource.guid()))
-        QNTRACE("Marked resource as processed: " << resource);
+        Q_UNUSED(guidsOfCompleteSentItems.m_resourceGuids.insert(
+            resource.guid()))
+
+        QNTRACE("tests:synchronization", "Marked resource as processed: "
+            << resource);
     }
 }
 
@@ -4331,8 +4570,9 @@ void FakeNoteStore::storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach()
 {
     storeCurrentMaxUsnAsThatBeforeRateLimitBreachImpl();
 
-    const LinkedNotebookDataByGuid & linkedNotebookGuidIndex =
+    const auto & linkedNotebookGuidIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
+
     for(auto it = linkedNotebookGuidIndex.begin(),
         end = linkedNotebookGuidIndex.end(); it != end; ++it)
     {
@@ -4347,13 +4587,15 @@ void FakeNoteStore::storeCurrentMaxUsnAsThatBeforeRateLimitBreachImpl(
 
     if (linkedNotebookGuid.isEmpty()) {
         m_data->m_maxUsnForUserOwnDataBeforeRateLimitBreach = maxUsn;
-        QNTRACE("Max USN for user own data before rate limit breach: "
-                << maxUsn);
+        QNTRACE("tests:synchronization", "Max USN for user own data before "
+            << "rate limit breach: " << maxUsn);
     }
     else {
-        m_data->m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach[linkedNotebookGuid] = maxUsn;
-        QNTRACE("Max USN for linked notebook with guid " << linkedNotebookGuid
-            << " is " << maxUsn);
+        m_data->m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach[linkedNotebookGuid] =
+            maxUsn;
+
+        QNTRACE("tests:synchronization", "Max USN for linked notebook with "
+            << "guid " << linkedNotebookGuid << " is " << maxUsn);
     }
 }
 
@@ -4392,9 +4634,8 @@ FakeNoteStore::nextNoteByUsnIterator(
     NoteDataByUSN::const_iterator it,
     const QString & targetLinkedNotebookGuid) const
 {
-    const NoteDataByUSN & noteUsnIndex = m_data->m_notes.get<NoteByUSN>();
-    const NotebookDataByGuid & notebookGuidIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & noteUsnIndex = m_data->m_notes.get<NoteByUSN>();
+    const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
 
     while(it != noteUsnIndex.end())
     {
@@ -4402,13 +4643,13 @@ FakeNoteStore::nextNoteByUsnIterator(
         auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
         if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end()))
         {
-            QNWARNING("Found note which notebook guid doesn't "
-                      << "correspond to any existing notebook: " << *it);
+            QNWARNING("tests:synchronization", "Found note which notebook guid "
+                << "doesn't correspond to any existing notebook: " << *it);
             ++it;
             continue;
         }
 
-        const Notebook & notebook = *noteNotebookIt;
+        const auto & notebook = *noteNotebookIt;
         if (notebook.hasLinkedNotebookGuid() &&
             (targetLinkedNotebookGuid.isEmpty() ||
              (notebook.linkedNotebookGuid() != targetLinkedNotebookGuid)))
@@ -4434,11 +4675,9 @@ FakeNoteStore::nextResourceByUsnIterator(
     ResourceDataByUSN::const_iterator it,
     const QString & targetLinkedNotebookGuid) const
 {
-    const ResourceDataByUSN & resourceUsnIndex =
-        m_data->m_resources.get<ResourceByUSN>();
-    const NoteDataByGuid & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
-    const NotebookDataByGuid & notebookGuidIndex =
-        m_data->m_notebooks.get<NotebookByGuid>();
+    const auto & resourceUsnIndex = m_data->m_resources.get<ResourceByUSN>();
+    const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
+    const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
     while(it != resourceUsnIndex.end())
     {
         const QString & noteGuid = it->noteGuid();
@@ -4446,24 +4685,24 @@ FakeNoteStore::nextResourceByUsnIterator(
         auto resourceNoteIt = noteGuidIndex.find(noteGuid);
         if (Q_UNLIKELY(resourceNoteIt == noteGuidIndex.end()))
         {
-            QNWARNING("Found resource which note guid doesn't "
-                      << "correspond to any existing note: " << *it);
+            QNWARNING("tests:synchronization", "Found resource which note guid "
+                << "doesn't correspond to any existing note: " << *it);
             ++it;
             continue;
         }
 
-        const Note & note = *resourceNoteIt;
+        const auto & note = *resourceNoteIt;
         const QString & notebookGuid = note.notebookGuid();
         auto noteNotebookIt = notebookGuidIndex.find(notebookGuid);
         if (Q_UNLIKELY(noteNotebookIt == notebookGuidIndex.end()))
         {
-            QNWARNING("Found note which notebook guid doesn't "
-                      << "correspond to any existing notebook: " << note);
+            QNWARNING("tests:synchronization", "Found note which notebook guid "
+                << "doesn't correspond to any existing notebook: " << note);
             ++it;
             continue;
         }
 
-        const Notebook & notebook = *noteNotebookIt;
+        const auto & notebook = *noteNotebookIt;
         if (notebook.hasLinkedNotebookGuid() &&
             (targetLinkedNotebookGuid.isEmpty() ||
              (notebook.linkedNotebookGuid() != targetLinkedNotebookGuid)))
