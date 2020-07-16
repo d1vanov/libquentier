@@ -36,11 +36,11 @@ FileCopierPrivate::FileCopierPrivate(QObject * parent) :
 void FileCopierPrivate::copyFile(
     const QString & sourcePath, const QString & destPath)
 {
-    QNDEBUG("FileCopierPrivate::copyFile: source path = " << sourcePath
-        << ", dest path = " << destPath);
+    QNDEBUG("utility:file_copier", "FileCopierPrivate::copyFile: source path = "
+        << sourcePath << ", dest path = " << destPath);
 
     if ((m_sourcePath == sourcePath) && (m_destPath == destPath)) {
-        QNDEBUG("Paths haven't changed, nothing to do");
+        QNDEBUG("utility:file_copier", "Paths haven't changed, nothing to do");
         return;
     }
 
@@ -145,13 +145,10 @@ void FileCopierPrivate::copyFile(
         m_currentProgress =
             static_cast<double>(totalBytesWritten) / fromFileSize;
 
-        QNTRACE("File copying progress update: progress = "
-            << m_currentProgress
-            << ", total bytes written = "
-            << totalBytesWritten
-            << ", source file size = " << fromFileSize
-            << ", source path = " << sourcePath
-            << ", dest path = " << destPath);
+        QNTRACE("utility:file_copier", "File copying progress update: "
+            << "progress = " << m_currentProgress << ", total bytes written = "
+            << totalBytesWritten << ", source file size = " << fromFileSize
+            << ", source path = " << sourcePath << ", dest path = " << destPath);
 
         Q_EMIT progressUpdate(m_currentProgress);
 
@@ -160,7 +157,7 @@ void FileCopierPrivate::copyFile(
         }
     }
 
-    QNDEBUG("File copying is complete: source path = "
+    QNDEBUG("utility:file_copier", "File copying is complete: source path = "
         << sourcePath << ", dest path = " << destPath);
 
     clear();
@@ -169,10 +166,10 @@ void FileCopierPrivate::copyFile(
 
 void FileCopierPrivate::cancel()
 {
-    QNDEBUG("FileCopierPrivate::cancel");
+    QNDEBUG("utility:file_copier", "FileCopierPrivate::cancel");
 
     if (m_idle) {
-        QNDEBUG("Idle, nothing to cancel");
+        QNDEBUG("utility:file_copier", "Idle, nothing to cancel");
         return;
     }
 
@@ -181,7 +178,7 @@ void FileCopierPrivate::cancel()
 
 void FileCopierPrivate::clear()
 {
-    QNDEBUG("FileCopierPrivate::clear");
+    QNDEBUG("utility:file_copier", "FileCopierPrivate::clear");
 
     m_sourcePath.clear();
     m_destPath.clear();

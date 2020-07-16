@@ -17,6 +17,7 @@
  */
 
 #include <quentier/types/Account.h>
+
 #include "data/AccountData.h"
 
 namespace quentier {
@@ -265,29 +266,29 @@ QTextStream & Account::print(QTextStream & strm) const
     strm << ";\n";
 
     strm << "    Evernote host = "
-         << d->m_evernoteHost << ";\n";
+        << d->m_evernoteHost << ";\n";
     strm << "    shard id = "
-         << d->m_shardId << ";\n";
+        << d->m_shardId << ";\n";
     strm << "    mail limit daily = "
-         << d->m_mailLimitDaily << ";\n";
+        << d->m_mailLimitDaily << ";\n";
     strm << "    note size max = "
-         << d->m_noteSizeMax << ";\n";
+        << d->m_noteSizeMax << ";\n";
     strm << "    resource size max = "
-         << d->m_resourceSizeMax << ";\n";
+        << d->m_resourceSizeMax << ";\n";
     strm << "    linked notebook max = "
-         << d->m_linkedNotebookMax << ";\n";
+        << d->m_linkedNotebookMax << ";\n";
     strm << "    note count max = "
-         << d->m_noteCountMax << ";\n";
+        << d->m_noteCountMax << ";\n";
     strm << "    notebook count max = "
-         << d->m_notebookCountMax << ";\n";
+        << d->m_notebookCountMax << ";\n";
     strm << "    tag count max = "
-         << d->m_tagCountMax << ";\n";
+        << d->m_tagCountMax << ";\n";
     strm << "    note tag count max = "
-         << d->m_noteTagCountMax << ";\n";
+        << d->m_noteTagCountMax << ";\n";
     strm << "    saved search count max = "
-         << d->m_savedSearchCountMax << ";\n";
+        << d->m_savedSearchCountMax << ";\n";
     strm << "    note resource count max = "
-         << d->m_noteResourceCountMax << ";\n";
+        << d->m_noteResourceCountMax << ";\n";
     strm << "};\n";
 
     return strm;

@@ -533,7 +533,7 @@ const QByteArray & Resource::dataBody() const
 
 void Resource::setDataBody(const QByteArray & body)
 {
-    QNTRACE("Resource::setDataBody: body to set is "
+    QNTRACE("types:resource", "Resource::setDataBody: body to set is "
         << (body.isEmpty() ? "empty" : "not empty"));
 
     auto & enResource = d->m_qecResource;

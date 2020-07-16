@@ -422,7 +422,7 @@ QString NoteData::plainText(ErrorString * pErrorMessage) const
 
     if (!res)
     {
-        QNWARNING(error);
+        QNWARNING("types:data", error);
         if (pErrorMessage) {
             *pErrorMessage = error;
         }
@@ -445,7 +445,7 @@ QStringList NoteData::listOfWords(ErrorString * pErrorMessage) const
 
     if (!res)
     {
-        QNWARNING(error);
+        QNWARNING("types:data", error);
         if (pErrorMessage) {
             *pErrorMessage = error;
         }
@@ -470,7 +470,7 @@ std::pair<QString, QStringList> NoteData::plainTextAndListOfWords(
 
     if (!res)
     {
-        QNWARNING(error);
+        QNWARNING("types:data", error);
         if (pErrorMessage) {
             *pErrorMessage = error;
         }

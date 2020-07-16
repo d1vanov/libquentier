@@ -40,7 +40,7 @@ bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
     catch(const std::exception & e)
     {
         SysInfo sysInfo;
-        QNERROR("Caught unhandled exception: " << e.what()
+        QNERROR("utility:app", "Caught unhandled exception: " << e.what()
             << ", backtrace: " << sysInfo.stackTrace());
         return false;
     }

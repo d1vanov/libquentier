@@ -38,7 +38,7 @@ bool sortTagsByParentChildRelationsImpl(
             strm << tag << ", ";
         }
         strm.flush();
-        QNTRACE(log);
+        QNTRACE("utility:tar_sort", log);
     }
 
     if (tagList.isEmpty() || (tagList.size() == 1)) {
@@ -57,8 +57,8 @@ bool sortTagsByParentChildRelationsImpl(
     {
         if (!tagHasGuid(tag)) {
             allTagsHaveGuids = false;
-            QNDEBUG("Not all tags have guids, won't use guids to track "
-                << "parent-child relations");
+            QNDEBUG("utility:tar_sort", "Not all tags have guids, won't use "
+                << "guids to track parent-child relations");
             break;
         }
     }
@@ -101,14 +101,15 @@ bool sortTagsByParentChildRelationsImpl(
         {
             QString localUid = tagLocalUid(tag);
             QString parentTagLocalUid = tagParentLocalUid(tag);
-            QNTRACE("Adding tag local uid " << localUid
+            QNTRACE("utility:tar_sort", "Adding tag local uid " << localUid
                 << " and tag parent local uid " << parentTagLocalUid
                 << " to the graph");
             graph.addChild(parentTagLocalUid, localUid);
         }
         else
         {
-            QNTRACE("Skipping tag without either guid or local uid: " << tag);
+            QNTRACE("utility:tar_sort", "Skipping tag without either guid or "
+                << "local uid: " << tag);
         }
     }
 
@@ -158,8 +159,8 @@ bool sortTagsByParentChildRelationsImpl(
 
         if (Q_UNLIKELY(it == tagList.end()))
         {
-            QNDEBUG("Skipping the tag guid or local uid not found "
-                << "within the original set (probably the guid of "
+            QNDEBUG("utility:tar_sort", "Skipping the tag guid or local uid "
+                << "not found within the original set (probably the guid of "
                 << "some parent tag not present within the sorted subset): "
                 << id);
             continue;
@@ -181,7 +182,7 @@ bool sortTagsByParentChildRelationsImpl(
             strm << tag << "\n";
         }
         strm.flush();
-        QNTRACE(log);
+        QNTRACE("utility:tar_sort", log);
     }
 
     return true;

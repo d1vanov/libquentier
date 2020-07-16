@@ -232,7 +232,7 @@ const QString getExistingFolderDialog(
 const QString relativePathFromAbsolutePath(
     const QString & absolutePath, const QString & relativePathRootFolder)
 {
-    QNDEBUG("relativePathFromAbsolutePath: " << absolutePath);
+    QNDEBUG("utility", "relativePathFromAbsolutePath: " << absolutePath);
 
     int position = absolutePath.indexOf(
         relativePathRootFolder,
@@ -244,9 +244,9 @@ const QString relativePathFromAbsolutePath(
 #endif
         );
     if (position < 0) {
-        QNINFO("Can't find folder " << relativePathRootFolder << " within path "
-            << absolutePath);
-        return QString();
+        QNINFO("utility", "Can't find folder " << relativePathRootFolder
+            << " within path " << absolutePath);
+        return {};
     }
 
     // NOTE: additional symbol for slash
@@ -255,7 +255,7 @@ const QString relativePathFromAbsolutePath(
 
 const QString getCurrentUserName()
 {
-    QNDEBUG("getCurrentUserName");
+    QNDEBUG("utility", "getCurrentUserName");
 
     QString userName;
 
@@ -275,8 +275,8 @@ const QString getCurrentUserName()
 
     if (userName.isEmpty())
     {
-        QNTRACE("Native platform API failed to provide the username, "
-            << "trying environment variables fallback");
+        QNTRACE("utility", "Native platform API failed to provide "
+            << "the username, trying environment variables fallback");
 
         userName = QString::fromLocal8Bit(qgetenv("USER"));
         if (userName.isEmpty()) {
@@ -284,13 +284,13 @@ const QString getCurrentUserName()
         }
     }
 
-    QNTRACE("Username = " << userName);
+    QNTRACE("utility", "Username = " << userName);
     return userName;
 }
 
 const QString getCurrentUserFullName()
 {
-    QNDEBUG("getCurrentUserFullName");
+    QNDEBUG("utility", "getCurrentUserFullName");
 
     QString userFullName;
 
@@ -344,19 +344,19 @@ const QString getCurrentUserFullName()
 
 void openUrl(const QUrl & url)
 {
-    QNDEBUG("openUrl: " << url);
+    QNDEBUG("utility", "openUrl: " << url);
     QDesktopServices::openUrl(url);
 }
 
 bool removeFile(const QString & filePath)
 {
-    QNDEBUG("removeFile: " << filePath);
+    QNDEBUG("utility", "removeFile: " << filePath);
 
     QFile file(filePath);
     file.close();   // NOTE: this line seems to be mandatory on Windows
     bool res = file.remove();
     if (res) {
-        QNTRACE("Successfully removed file " << filePath);
+        QNTRACE("utility", "Successfully removed file " << filePath);
         return true;
     }
 
@@ -373,7 +373,7 @@ bool removeFile(const QString & filePath)
     }
 #endif
 
-    QNWARNING("Cannot remove file " << filePath
+    QNWARNING("utility", "Cannot remove file " << filePath
         << ": " << file.errorString() << ", error code " << file.error());
     return false;
 }

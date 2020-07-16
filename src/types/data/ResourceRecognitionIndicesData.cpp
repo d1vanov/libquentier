@@ -31,13 +31,15 @@ namespace quentier {
 bool ResourceRecognitionIndicesData::isValid() const
 {
     if (m_objectId.isEmpty()) {
-        QNTRACE("Resource recognition indices' object id is not set");
+        QNTRACE("types:data", "Resource recognition indices' object id is not "
+            << "set");
         return false;
     }
 
     if (m_objectType.isEmpty())
     {
-        QNTRACE("Resource recognition indices' object type is not set");
+        QNTRACE("types:data", "Resource recognition indices' object type is "
+            << "not set");
         return false;
     }
     else if ((m_objectType != QStringLiteral("image")) &&
@@ -46,25 +48,29 @@ bool ResourceRecognitionIndicesData::isValid() const
              (m_objectType != QStringLiteral("video")) &&
              (m_objectType != QStringLiteral("document")))
     {
-        QNTRACE("Resource recognition indices' object type is not valid");
+        QNTRACE("types:data", "Resource recognition indices' object type is "
+            << "not valid");
         return false;
     }
 
     if (m_recoType.isEmpty())
     {
-        QNTRACE("Resource recognition indices' recognition type is not set");
+        QNTRACE("types:data", "Resource recognition indices' recognition type "
+            << "is not set");
         return false;
     }
     else if ((m_recoType != QStringLiteral("service")) &&
              (m_recoType != QStringLiteral("client")))
     {
-        QNTRACE("Resource recognition indices' recognition type is not valid");
+        QNTRACE("types:data", "Resource recognition indices' recognition type "
+            << "is not valid");
         return false;
     }
 
     if (m_docType.isEmpty())
     {
-        QNTRACE("Resource recognition indices' doc type is not set");
+        QNTRACE("types:data", "Resource recognition indices' doc type is not "
+            << "set");
         return false;
     }
     else if ((m_docType != QStringLiteral("printed")) &&
@@ -73,7 +79,8 @@ bool ResourceRecognitionIndicesData::isValid() const
              (m_docType != QStringLiteral("picture")) &&
              (m_docType != QStringLiteral("unknown")))
     {
-        QNTRACE("Resource recognition indices' doc type is not valid");
+        QNTRACE("types:data", "Resource recognition indices' doc type is not "
+            << "valid");
         return false;
     }
 
@@ -83,11 +90,11 @@ bool ResourceRecognitionIndicesData::isValid() const
 bool ResourceRecognitionIndicesData::setData(
     const QByteArray & rawRecognitionIndicesData)
 {
-    QNTRACE("ResourceRecognitionIndicesData::setData: "
+    QNTRACE("types:data", "ResourceRecognitionIndicesData::setData: "
         << rawRecognitionIndicesData);
 
     if (rawRecognitionIndicesData.isEmpty()) {
-        QNTRACE("Recognition data is empty");
+        QNTRACE("types:data", "Recognition data is empty");
         clear();
         return true;
     }
@@ -185,7 +192,7 @@ bool ResourceRecognitionIndicesData::setData(
     }
 
     if (reader.hasError()) {
-        QNWARNING("Failed to parse resource recognition indices "
+        QNWARNING("types:data", "Failed to parse resource recognition indices "
             << "data: " << reader.errorString()
             << " (error code " << reader.error()
             << ", original raw data: " << rawRecognitionIndicesData);
@@ -194,13 +201,13 @@ bool ResourceRecognitionIndicesData::setData(
     }
 
     m_isNull = false;
-    QNTRACE("Successfully parsed ResourceRecognitionIndicesData");
+    QNTRACE("types:data", "Successfully parsed ResourceRecognitionIndicesData");
     return true;
 }
 
 void ResourceRecognitionIndicesData::clear()
 {
-    QNTRACE("ResourceRecognitionIndicesData::clear");
+    QNTRACE("types:data", "ResourceRecognitionIndicesData::clear");
 
     m_objectId.resize(0);
     m_objectType.resize(0);
@@ -218,7 +225,7 @@ void ResourceRecognitionIndicesData::clear()
 void ResourceRecognitionIndicesData::restoreFrom(
     const ResourceRecognitionIndicesData & data)
 {
-    QNTRACE("ResourceRecognitionIndicesData::restoreFrom");
+    QNTRACE("types:data", "ResourceRecognitionIndicesData::restoreFrom");
 
     m_isNull = data.m_isNull;
 
@@ -236,7 +243,9 @@ void ResourceRecognitionIndicesData::restoreFrom(
 void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
     const QXmlStreamAttributes & attributes)
 {
-    QNTRACE("ResourceRecognitionIndicesData::parseRecoIndexAttributes");
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseRecoIndexAttributes");
 
     for(const auto & attribute: qAsConst(attributes))
     {
@@ -284,8 +293,9 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
     const QXmlStreamAttributes & attributes,
     ResourceRecognitionIndexItem & item) const
 {
-    QNTRACE("ResourceRecognitionIndicesData::"
-        << "parseCommonItemAttributes");
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseCommonItemAttributes");
 
     for(const auto & attribute: qAsConst(attributes))
     {
@@ -363,8 +373,10 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
     const QXmlStreamAttributes & attributes, const QString & data,
     ResourceRecognitionIndexItem & item) const
 {
-    QNTRACE("ResourceRecognitionIndicesData::"
-        << "parseTextItemAttributesAndData: data = " << data);
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseTextItemAttributesAndData: "
+            << "data = " << data);
 
     int weight = -1;
 
@@ -392,7 +404,7 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
     textItem.m_text = data;
     item.addTextItem(textItem);
 
-    QNTRACE("Added text item: text = " << data
+    QNTRACE("types:data", "Added text item: text = " << data
         << "; weight = " << weight);
 }
 
@@ -400,8 +412,9 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     const QXmlStreamAttributes & attributes,
     ResourceRecognitionIndexItem & item) const
 {
-    QNTRACE("ResourceRecognitionIndicesData::"
-        << "parseObjectItemAttributes");
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseObjectItemAttributes");
 
     QString objectType;
     int weight = -1;
@@ -434,7 +447,7 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
     objectItem.m_weight = weight;
     item.addObjectItem(objectItem);
 
-    QNTRACE("Added object item: type = " << objectType
+    QNTRACE("types:data", "Added object item: type = " << objectType
         << ", weight = " << weight);
 }
 
@@ -442,7 +455,9 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
     const QXmlStreamAttributes & attributes,
     ResourceRecognitionIndexItem & item) const
 {
-    QNTRACE("ResourceRecognitionIndicesData::parseShapeItemAttributes");
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseShapeItemAttributes");
 
     QString shapeType;
     int weight = -1;
@@ -475,16 +490,18 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
     shapeItem.m_weight = weight;
     item.addShapeItem(shapeItem);
 
-    QNTRACE("Added shape item: type = " << shapeType << ", weight = "
-        << weight);
+    QNTRACE("types:data", "Added shape item: type = " << shapeType
+        << ", weight = " << weight);
 }
 
 void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
     const QXmlStreamAttributes & attributes, const QString & data,
     ResourceRecognitionIndexItem & item) const
 {
-    QNTRACE("ResourceRecognitionIndicesData::"
-        << "parseBarcodeItemAttributesAndData: " << data);
+    QNTRACE(
+        "types:data",
+        "ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData: "
+            << data);
 
     int weight = -1;
 
@@ -512,8 +529,8 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
     barcodeItem.m_barcode = data;
     item.addBarcodeItem(barcodeItem);
 
-    QNTRACE("Added barcode item: barcode = " << data << "; weight = "
-        << weight);
+    QNTRACE("types:data", "Added barcode item: barcode = " << data
+        << "; weight = " << weight);
 }
 
 } // namespace quentier

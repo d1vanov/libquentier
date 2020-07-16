@@ -48,9 +48,9 @@ void StringUtilsPrivate::removePunctuation(
 
 void StringUtilsPrivate::removeDiacritics(QString & str) const
 {
-    QNTRACE("str before normalizing by KD form: " << str);
+    QNTRACE("utility:string", "str before normalizing by KD form: " << str);
     str = str.normalized(QString::NormalizationForm_KD);
-    QNTRACE("str after normalizing by KD form: " << str);
+    QNTRACE("utility:string", "str after normalizing by KD form: " << str);
 
     for(int i = 0; i < str.length(); ++i)
     {
@@ -73,7 +73,7 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
         str.replace(i, 1, replacement);
     }
 
-    QNTRACE("str after removing diacritics: " << str);
+    QNTRACE("utility:string", "str after removing diacritics: " << str);
 }
 
 void StringUtilsPrivate::removeNewlines(QString & str) const

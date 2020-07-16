@@ -34,8 +34,10 @@ FileIOProcessorAsyncPrivate::FileIOProcessorAsyncPrivate(QObject * parent) :
 
 void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
 {
-    QNDEBUG("FileIOProcessorAsyncPrivate::setIdleTimePeriod: seconds = "
-        << seconds);
+    QNDEBUG(
+        "utility:file_async",
+        "FileIOProcessorAsyncPrivate::setIdleTimePeriod: seconds = "
+            << seconds);
 
     m_idleTimePeriodSeconds = seconds;
 }
@@ -45,17 +47,18 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
         killTimer(m_postOperationTimerId);                                     \
     }                                                                          \
     m_postOperationTimerId = startTimer(SEC_TO_MSEC(m_idleTimePeriodSeconds)); \
-    QNTRACE("FileIOProcessorAsyncPrivate: started post operation "             \
-        << "timer with id " << m_postOperationTimerId)                         \
+    QNTRACE("utility:file_async", "FileIOProcessorAsyncPrivate: started post " \
+        << "operation timer with id " << m_postOperationTimerId)               \
 // RESTART_TIMER
 
 void FileIOProcessorAsyncPrivate::onWriteFileRequest(
     QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
 {
-    QNDEBUG("FileIOProcessorAsyncPrivate::onWriteFileRequest: "
-        << "file path = " << absoluteFilePath
-        << ", request id = " << requestId
-        << ", append = " << (append ? "true" : "false"));
+    QNDEBUG(
+        "utility:file_async",
+        "FileIOProcessorAsyncPrivate::onWriteFileRequest: file path = "
+            << absoluteFilePath << ", request id = " << requestId
+            << ", append = " << (append ? "true" : "false"));
 
     QFileInfo fileInfo(absoluteFilePath);
     QDir folder = fileInfo.absoluteDir();
@@ -68,7 +71,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
                 QT_TR_NOOP("can't create folder to write file into"));
 
             error.details() = absoluteFilePath;
-            QNWARNING(error);
+            QNWARNING("utility:file_async", error);
             Q_EMIT writeFileRequestProcessed(false, error, requestId);
             RESTART_TIMER();
             return;
@@ -89,7 +92,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
     if (Q_UNLIKELY(!open)) {
         ErrorString error(QT_TR_NOOP("can't open file for writing/appending"));
         error.details() = absoluteFilePath;
-        QNWARNING(error);
+        QNWARNING("utility:file_async", error);
         Q_EMIT writeFileRequestProcessed(false, error, requestId);
         RESTART_TIMER();
         return;
@@ -99,14 +102,17 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
     if (Q_UNLIKELY(writtenBytes < data.size())) {
         ErrorString error(QT_TR_NOOP("can't write the whole data to file"));
         error.details() = absoluteFilePath;
-        QNWARNING(error);
+        QNWARNING("utility:file_async", error);
         Q_EMIT writeFileRequestProcessed(false, error, requestId);
         RESTART_TIMER();
         return;
     }
 
     file.close();
-    QNDEBUG("Successfully wrote file " << absoluteFilePath);
+
+    QNDEBUG("utility:file_async", "Successfully wrote file "
+        << absoluteFilePath);
+
     Q_EMIT writeFileRequestProcessed(true, ErrorString(), requestId);
     RESTART_TIMER();
 }
@@ -114,15 +120,16 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
 void FileIOProcessorAsyncPrivate::onReadFileRequest(
     QString absoluteFilePath, QUuid requestId)
 {
-    QNDEBUG("FileIOProcessorAsyncPrivate::onReadFileRequest: "
-        << "file path = " << absoluteFilePath
-        << ", request id = " << requestId);
+    QNDEBUG(
+        "utility:file_async",
+        "FileIOProcessorAsyncPrivate::onReadFileRequest: file path = "
+            << absoluteFilePath << ", request id = " << requestId);
 
     QFile file(absoluteFilePath);
     if (!file.exists())
     {
-        QNTRACE("The file to read does not exist, sending empty data in "
-            << "return");
+        QNTRACE("utility:file_async", "The file to read does not exist, "
+            << "sending empty data in return");
 
         Q_EMIT readFileRequestProcessed(
             true,
@@ -138,7 +145,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
     if (!open) {
         ErrorString error(QT_TR_NOOP("can't open file for reading"));
         error.details() = absoluteFilePath;
-        QNDEBUG(error);
+        QNDEBUG("utility:file_async", error);
         Q_EMIT readFileRequestProcessed(false, error, QByteArray(), requestId);
         RESTART_TIMER();
         return;
@@ -152,15 +159,15 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
 void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
 {
     if (!pEvent) {
-        QNWARNING("Detected null pointer to QTimerEvent in "
-            << "FileIOProcessorAsyncPrivate");
+        QNWARNING("utility:file_async", "Detected null pointer to QTimerEvent "
+            << "in FileIOProcessorAsyncPrivate");
         return;
     }
 
     qint32 timerId = pEvent->timerId();
 
     if (timerId != m_postOperationTimerId) {
-        QNTRACE("Received unidentified timer event for "
+        QNTRACE("utility:file_async", "Received unidentified timer event for "
             << "FileIOProcessorAsyncPrivate");
         return;
     }

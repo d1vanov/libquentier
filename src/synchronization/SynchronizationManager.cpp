@@ -17,7 +17,9 @@
  */
 
 #include <quentier/synchronization/SynchronizationManager.h>
+
 #include "SynchronizationManager_p.h"
+
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 
 namespace quentier {

@@ -99,7 +99,7 @@ bool EncryptionManagerPrivate::decrypt(
                 "EncryptionManagerPrivate",
                 "invalid key length for PS2 decryption method, should be 64"));
 
-            QNWARNING(errorDescription);
+            QNWARNING("utility:encryption", errorDescription);
             return false;
         }
 
@@ -109,7 +109,7 @@ bool EncryptionManagerPrivate::decrypt(
             decryptedText,
             errorDescription);
         if (!res) {
-            QNWARNING(errorDescription);
+            QNWARNING("utility:encryption", errorDescription);
             return false;
         }
 
@@ -129,7 +129,7 @@ bool EncryptionManagerPrivate::decrypt(
                 "EncryptionManagerPrivate",
                 "invalid key length for AES decryption method, should be 128"));
 
-            QNWARNING(errorDescription);
+            QNWARNING("utility:encryption", errorDescription);
             return false;
         }
 
@@ -152,7 +152,7 @@ bool EncryptionManagerPrivate::decrypt(
             "EncryptionManagerPrivate",
             "unsupported decryption method"));
 
-        QNWARNING(errorDescription);
+        QNWARNING("utility:encryption", errorDescription);
         return false;
     }
 }
@@ -261,7 +261,7 @@ bool EncryptionManagerPrivate::generateSalt(
                 "detected incorrect salt kind for cryptographic key "
                 "generation"));
 
-            QNERROR(errorDescription);
+            QNERROR("utility:encryption", errorDescription);
             return false;
         }
     }
@@ -274,8 +274,9 @@ bool EncryptionManagerPrivate::generateSalt(
             "can't generate cryptographically strong bytes for encryption"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription << "; " << saltText << ": lib: " << errorLib
-            << "; func: " << errorFunc << ", reason: " << errorReason);
+        QNWARNING("utility:encryption", errorDescription << "; " << saltText
+            << ": lib: " << errorLib << "; func: " << errorFunc << ", reason: "
+            << errorReason);
         return false;
     }
 
@@ -305,7 +306,7 @@ bool EncryptionManagerPrivate::generateKey(
             "can't generate cryptographic key"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl PKCS5_PBKDF2_HMAC failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         return false;
@@ -367,10 +368,10 @@ bool EncryptionManagerPrivate::encyptWithAes(
             "can't encrypt the text using AES algorithm"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_EnryptInit failed: "
-            << ": lib: " << errorLib
-            << "; func: " << errorFunc
+            << ": lib: " << errorLib << "; func: " << errorFunc
             << ", reason: " << errorReason);
         free(cipherText);
         EVP_CIPHER_CTX_free(pContext);
@@ -391,7 +392,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
             "can't encrypt the text using AES algorithm"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_CipherUpdate failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         free(cipherText);
@@ -409,7 +411,8 @@ bool EncryptionManagerPrivate::encyptWithAes(
             "can't encrypt the text using AES algorithm"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_CipherFinal failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         free(cipherText);
@@ -432,7 +435,7 @@ bool EncryptionManagerPrivate::decryptAes(
     const QString & encryptedText, const QString & passphrase,
     QByteArray & decryptedText, ErrorString & errorDescription)
 {
-    QNDEBUG("EncryptionManagerPrivate::decryptAes");
+    QNDEBUG("utility:encryption", "EncryptionManagerPrivate::decryptAes");
 
     QByteArray cipherText;
 
@@ -450,7 +453,7 @@ bool EncryptionManagerPrivate::decryptAes(
     QByteArray passphraseData = passphrase.toUtf8();
 
     // Validate HMAC
-    QNTRACE("Validating hmac");
+    QNTRACE("utility:encryption", "Validating hmac");
 
     unsigned char parsedHmac[EN_AES_HMACSIZE];
     for(int i = 0; i < EN_AES_HMACSIZE; ++i) {
@@ -483,7 +486,8 @@ bool EncryptionManagerPrivate::decryptAes(
                 "EncryptionManagerPrivate",
                 "can't decrypt text: invalid checksum"));
 
-            QNWARNING(errorDescription << ", parsed hmac: "
+            QNWARNING("utility:encryption", errorDescription
+                << ", parsed hmac: "
                 << QByteArray(
                     reinterpret_cast<const char*>(parsedHmac),
                     EN_AES_HMACSIZE).toHex()
@@ -496,7 +500,7 @@ bool EncryptionManagerPrivate::decryptAes(
         }
     }
 
-    QNTRACE("Successfully validated hmac");
+    QNTRACE("utility:encryption", "Successfully validated hmac");
 
     bres = generateKey(
         passphraseData,
@@ -527,7 +531,8 @@ bool EncryptionManagerPrivate::decryptAes(
             "can't decrypt the text"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_DecryptInit failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
@@ -549,7 +554,8 @@ bool EncryptionManagerPrivate::decryptAes(
             "can't decrypt the text"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_DecryptUpdate failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
@@ -571,7 +577,8 @@ bool EncryptionManagerPrivate::decryptAes(
             "can't decrypt the text"));
 
         GET_OPENSSL_ERROR;
-        QNWARNING(errorDescription
+
+        QNWARNING("utility:encryption", errorDescription
             << ", openssl EVP_DecryptFinal failed: " << ": lib: " << errorLib
             << "; func: " << errorFunc << ", reason: " << errorReason);
         free(decipheredText);
@@ -606,8 +613,9 @@ bool EncryptionManagerPrivate::splitEncryptedData(
             "EncryptionManagerPrivate",
             "encrypted data is too short for being valid"));
 
-        QNWARNING(errorDescription << ": " << encryptedDataSize
-            << " bytes while should be at least " << minLength << " bytes");
+        QNWARNING("utility:encryption", errorDescription << ": "
+            << encryptedDataSize << " bytes while should be at least "
+            << minLength << " bytes");
         return false;
     }
 
@@ -942,9 +950,8 @@ qint32 EncryptionManagerPrivate::crc32(const QString & str) const
         x = static_cast<qint32>(x_str.toUInt(&conversionResult, 16));
         if (Q_UNLIKELY(!conversionResult))
         {
-            QNERROR("Can't convert string representation of hex "
-                << "number " << x_str
-                << " to unsigned int!");
+            QNERROR("utility:encryption", "Can't convert string representation "
+                << "of hex number " << x_str << " to unsigned int!");
             crc = 0;
             return crc;
         }
