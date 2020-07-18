@@ -398,7 +398,7 @@ void QuentierLogger::restartLogging()
 LogLevel QuentierLogger::minLogLevel() const
 {
     return static_cast<LogLevel>(
-        m_pImpl->m_minLogLevel.load());
+        m_pImpl->m_minLogLevel.loadAcquire());
 }
 
 QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
