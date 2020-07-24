@@ -24,6 +24,7 @@
 
 #include <QDebug>
 #include <QString>
+#include <QTextStream>
 
 namespace quentier {
 
@@ -37,6 +38,9 @@ enum class LogLevel
 };
 
 QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const LogLevel logLevel);
+
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm, const LogLevel logLevel);
 
 void QUENTIER_EXPORT QuentierInitializeLogging();
 

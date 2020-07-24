@@ -228,29 +228,41 @@ void QuentierRestartLogging()
 
 QDebug & operator<<(QDebug & dbg, const LogLevel logLevel)
 {
+    QString str;
+    QTextStream strm(&str);
+
+    strm << logLevel;
+    strm.flush();
+
+    dbg << str;
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const LogLevel logLevel)
+{
     switch(logLevel)
     {
     case LogLevel::Trace:
-        dbg << "Trace";
+        strm << "Trace";
         break;
     case LogLevel::Debug:
-        dbg << "Debug";
+        strm << "Debug";
         break;
     case LogLevel::Info:
-        dbg << "Info";
+        strm << "Info";
         break;
     case LogLevel::Warning:
-        dbg << "Warning";
+        strm << "Warning";
         break;
     case LogLevel::Error:
-        dbg << "Error";
+        strm << "Error";
         break;
     default:
-        dbg << "Unknown (" << static_cast<qint64>(logLevel) << ")";
+        strm << "Unknown (" << static_cast<qint64>(logLevel) << ")";
         break;
     }
 
-    return dbg;
+    return strm;
 }
 
 } // namespace quentier
