@@ -194,22 +194,9 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(
     m_tagSyncCache(m_manager.localStorageManagerAsync(), QLatin1String("")),
     m_savedSearchSyncCache(m_manager.localStorageManagerAsync()),
     m_notebookSyncCache(m_manager.localStorageManagerAsync(), QLatin1String("")),
-    m_pNoteSyncConflictResolverManager(new NoteSyncConflictResolverManager(*this))
-{
-    QObject::connect(
-        &(m_manager.noteStore()),
-        &INoteStore::getNoteAsyncFinished,
-        this,
-        &RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        &(m_manager.noteStore()),
-        &INoteStore::getResourceAsyncFinished,
-        this,
-        &RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-}
+    m_pNoteSyncConflictResolverManager(
+        new NoteSyncConflictResolverManager(*this))
+{}
 
 RemoteToLocalSynchronizationManager::~RemoteToLocalSynchronizationManager()
 {}
@@ -10749,6 +10736,21 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
             << ", using the note store for user's own account");
 
         pNoteStore = &(m_manager.noteStore());
+
+        QObject::connect(
+            pNoteStore,
+            &INoteStore::getNoteAsyncFinished,
+            this,
+            &RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished,
+            Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+        QObject::connect(
+            pNoteStore,
+            &INoteStore::getResourceAsyncFinished,
+            this,
+            &RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished,
+            Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
         authToken = m_authenticationToken;
         return pNoteStore;
     }
