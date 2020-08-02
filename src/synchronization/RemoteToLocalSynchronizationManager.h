@@ -822,7 +822,9 @@ private:
 
     INoteStore * noteStoreForNote(
         const Note & note, QString & authToken,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription);
+
+    void connectToUserOwnNoteStore(INoteStore * pNoteStore);
 
     void checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(
         const QString & linkedNotebookGuid, const TagSyncCache & tagSyncCache);
@@ -927,6 +929,8 @@ private:
 private:
     IManager &      m_manager;
     bool            m_connectedToLocalStorage = false;
+
+    mutable bool            m_connectedToUserOwnNoteStore = false;
 
     QString         m_host;
 
