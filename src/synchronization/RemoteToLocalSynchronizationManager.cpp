@@ -8636,6 +8636,7 @@ void RemoteToLocalSynchronizationManager::getFullResourceDataAsync(
             << "the resource with guid " << resource.guid()
             << ", using the note store for the user's own account");
         pNoteStore = &(m_manager.noteStore());
+        connectToUserOwnNoteStore(pNoteStore);
         authToken = m_authenticationToken;
     }
     else
@@ -10691,7 +10692,7 @@ void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(
 
 INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
     const Note & note, QString & authToken,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription)
 {
     authToken.resize(0);
 
@@ -10736,21 +10737,7 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
             << ", using the note store for user's own account");
 
         pNoteStore = &(m_manager.noteStore());
-
-        QObject::connect(
-            pNoteStore,
-            &INoteStore::getNoteAsyncFinished,
-            this,
-            &RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished,
-            Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-        QObject::connect(
-            pNoteStore,
-            &INoteStore::getResourceAsyncFinished,
-            this,
-            &RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished,
-            Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
+        connectToUserOwnNoteStore(pNoteStore);
         authToken = m_authenticationToken;
         return pNoteStore;
     }
@@ -10831,6 +10818,34 @@ INoteStore * RemoteToLocalSynchronizationManager::noteStoreForNote(
         << pNoteStore->noteStoreUrl());
     return pNoteStore;
 }
+
+void RemoteToLocalSynchronizationManager::connectToUserOwnNoteStore(
+    INoteStore * pNoteStore)
+{
+    // Apparently QObject::connect takes long enough when called multiple
+    // times for the same signal-slot pair so need to ensure it is done only
+    // once
+    if (m_connectedToUserOwnNoteStore) {
+        return;
+    }
+
+    QObject::connect(
+        pNoteStore,
+        &INoteStore::getNoteAsyncFinished,
+        this,
+        &RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+    QObject::connect(
+        pNoteStore,
+        &INoteStore::getResourceAsyncFinished,
+        this,
+        &RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+    m_connectedToUserOwnNoteStore = true;
+}
+
 
 void RemoteToLocalSynchronizationManager::checkAndRemoveInaccessibleParentTagGuidsForTagsFromLinkedNotebook(
     const QString & linkedNotebookGuid, const TagSyncCache & tagSyncCache)
