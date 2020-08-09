@@ -390,6 +390,18 @@ void QuentierLogger::setMinLogLevel(const LogLevel minLogLevel)
         static_cast<int>(minLogLevel)))
 }
 
+QRegularExpression QuentierLogger::componentFilterRegex()
+{
+    QReadLocker lock(&m_pImpl->m_componentFilterLock);
+    return m_pImpl->m_componentFilterRegex;
+}
+
+void QuentierLogger::setComponentFilterRegex(const QRegularExpression & filter)
+{
+    QWriteLocker lock(&m_pImpl->m_componentFilterLock);
+    m_pImpl->m_componentFilterRegex = filter;
+}
+
 void QuentierLogger::restartLogging()
 {
     Q_EMIT sendRestartLoggingRequest();

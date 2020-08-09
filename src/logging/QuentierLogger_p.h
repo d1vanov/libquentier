@@ -26,6 +26,8 @@
 #include <QFile>
 #include <QObject>
 #include <QPointer>
+#include <QReadWriteLock>
+#include <QRegularExpression>
 #include <QString>
 #include <QTextStream>
 #include <QThread>
@@ -151,6 +153,9 @@ public:
     LogLevel minLogLevel() const;
     void setMinLogLevel(const LogLevel minLogLevel);
 
+    QRegularExpression componentFilterRegex();
+    void setComponentFilterRegex(const QRegularExpression & filter);
+
     void restartLogging();
 
 Q_SIGNALS:
@@ -174,6 +179,9 @@ public:
     QVector<QPointer<IQuentierLogWriter>>   m_logWriterPtrs;
     QAtomicInt          m_minLogLevel;
     QThread *           m_pLogWriteThread;
+
+    QReadWriteLock      m_componentFilterLock;
+    QRegularExpression  m_componentFilterRegex;
 };
 
 } // namespace quentier

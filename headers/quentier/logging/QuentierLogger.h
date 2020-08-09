@@ -23,6 +23,7 @@
 #include <quentier/utility/Macros.h>
 
 #include <QDebug>
+#include <QRegularExpression>
 #include <QString>
 #include <QTextStream>
 
@@ -98,6 +99,17 @@ QString QUENTIER_EXPORT QuentierLogFilesDirPath();
  * Clear logs accumulated within the existing log file
  */
 void QUENTIER_EXPORT QuentierRestartLogging();
+
+/**
+ * Current filter specified for log components
+ */
+QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
+
+/**
+ * Change the current filter for log components
+ */
+void QUENTIER_EXPORT QuentierSetLogComponentFilter(
+    const QRegularExpression & filter);
 
 } // namespace quentier
 

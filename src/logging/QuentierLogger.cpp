@@ -123,6 +123,14 @@ void QuentierAddLogEntry(
     const QString & sourceFileName, const int sourceFileLineNumber,
     const QString & component, const QString & message, const LogLevel logLevel)
 {
+    auto componentFilter = QuentierLogComponentFilter();
+
+    if (componentFilter.isValid() && !component.isEmpty() &&
+        !componentFilter.match(component).hasMatch())
+    {
+        return;
+    }
+
     QString relativeSourceFileName = sourceFileName;
 
     int prefixIndex = relativeSourceFileName.indexOf(
@@ -222,6 +230,16 @@ void QuentierRestartLogging()
 {
     QuentierLogger & logger = QuentierLogger::instance();
     logger.restartLogging();
+}
+
+QRegularExpression QuentierLogComponentFilter()
+{
+    return QuentierLogger::instance().componentFilterRegex();
+}
+
+void QuentierSetLogComponentFilter(const QRegularExpression & filter)
+{
+    QuentierLogger::instance().setComponentFilterRegex(filter);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
