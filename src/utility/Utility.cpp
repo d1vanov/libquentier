@@ -368,7 +368,8 @@ bool removeFile(const QString & filePath)
          * returns false for any *.lnk files even though the files are actually
          * getting removed
          */
-        QNTRACE("Skipping the reported failure at removing the .lnk file");
+        QNTRACE("utility", "Skipping the reported failure at removing "
+            << "the .lnk file");
         return true;
     }
 #endif
