@@ -41,15 +41,4 @@ void qAsConst(const T &&)  = delete;
 
 #endif
 
-#ifdef QNSIGNAL
-#undef QNSIGNAL
-#endif
-
-#ifdef QNSLOT
-#undef QNSLOT
-#endif
-
-#define QNSIGNAL(className, methodName, ...) &className::methodName
-#define QNSLOT(className, methodName, ...) &className::methodName
-
 #endif // LIB_QUENTIER_UTILITY_MACROS_H
