@@ -140,12 +140,14 @@ void TestListSavedSearches()
         const SavedSearch & search = searches.at(i);                           \
         bool res = foundSearches.contains(search);                             \
         if ((true_cond) && !res) {                                             \
-            QNWARNING("Not found saved search: " << search);                   \
+            QNWARNING("tests:local_storage", "Not found saved search: "        \
+                << search);                                                    \
             QFAIL("One of " name " SavedSearches was not found by "            \
                   "LocalStorageManager::ListSavedSearches");                   \
         }                                                                      \
         else if ((false_cond) && res) {                                        \
-            QNWARNING("Found irrelevant saved search: " << search);            \
+            QNWARNING("tests:local_storage", "Found irrelevant saved search: " \
+                << search);                                                    \
             QFAIL("LocalStorageManager::ListSavedSearches with flag " name     \
                   " returned incorrect saved search");                         \
         }                                                                      \
@@ -387,12 +389,14 @@ void TestListLinkedNotebooks()
         const LinkedNotebook & linkedNotebook = linkedNotebooks.at(i);
         bool res = foundLinkedNotebooks.contains(linkedNotebook);
         if ((i > 2) && !res) {
-            QNWARNING("Not found linked notebook: " << linkedNotebook);
+            QNWARNING("tests:local_storage", "Not found linked notebook: "
+                << linkedNotebook);
             QFAIL("One of dirty linked notebooks was not found by "
                   "LocalStorageManager::ListLinkedNotebooks");
         }
         else if ((i <= 2) && res) {
-            QNWARNING("Found irrelevant linked notebook: " << linkedNotebook);
+            QNWARNING("tests:local_storage", "Found irrelevant linked notebook: "
+                << linkedNotebook);
             QFAIL("LocalStorageManager::ListLinkedNotebooks with flag "
                   "ListDirty returned incorrect linked notebook");
         }
@@ -498,12 +502,12 @@ void TestListTags()
         const Tag & tag = tags.at(i);                                          \
         bool res = foundTags.contains(tag);                                    \
         if ((true_cond) && !res) {                                             \
-            QNWARNING("Not found tag: " << tag);                               \
+            QNWARNING("tests:local_storage", "Not found tag: " << tag);        \
             QFAIL("One of " name " Tags was not found by "                     \
                   "LocalStorageManager::ListTags");                            \
         }                                                                      \
         else if ((false_cond) && res) {                                        \
-            QNWARNING("Found irrelevant tag: " << tag);                        \
+            QNWARNING("tests:local_storage", "Found irrelevant tag: " << tag); \
             QFAIL("LocalStorageManager::ListTags with flag " name              \
                   " returned incorrect tag");                                  \
         }                                                                      \
@@ -718,12 +722,12 @@ void TestListTagsWithNoteLocalUids()
             }                                                                  \
         }                                                                      \
         if ((true_cond) && !res) {                                             \
-            QNWARNING("Not found tag: " << tag);                               \
+            QNWARNING("tests:local_storage", "Not found tag: " << tag);        \
             QFAIL("One of " name " Tags was not found by "                     \
                   "LocalStorageManager::ListTags");                            \
         }                                                                      \
         else if ((false_cond) && res) {                                        \
-            QNWARNING("Found irrelevant tag: " << tag);                        \
+            QNWARNING("tests:local_storage", "Found irrelevant tag: " << tag); \
             QFAIL("LocalStorageManager::ListTags with flag " name              \
                   " returned incorrect tag");                                  \
         }                                                                      \
@@ -732,8 +736,8 @@ void TestListTagsWithNoteLocalUids()
             if (noteIt == noteLocalUidsByTagLocalUid.end() &&                  \
                 !foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())        \
             {                                                                  \
-                QNWARNING("Found irrelevant list of note local "               \
-                    << "uids for a tag: "                                      \
+                QNWARNING("tests:local_storage", "Found irrelevant list of "   \
+                    << "note local uids for a tag: "                           \
                     << foundTagsWithNoteLocalUids[tagIndex].second             \
                        .join(QStringLiteral(", ")));                           \
                 QFAIL("LocalStorageManager::ListTags with flag " name          \
@@ -743,8 +747,8 @@ void TestListTagsWithNoteLocalUids()
             {                                                                  \
                 if (foundTagsWithNoteLocalUids[tagIndex].second.isEmpty())     \
                 {                                                              \
-                    QNWARNING("Found empty list of note local "                \
-                        << "uids for a tag for which they "                    \
+                    QNWARNING("tests:local_storage", "Found empty list of "    \
+                        << "note local uids for a tag for which they "         \
                         << "were expected: "                                   \
                         << noteIt.value().join(QStringLiteral(", ")));         \
                     QFAIL("LocalStorageManager::ListTags with flag " name      \
@@ -753,8 +757,8 @@ void TestListTagsWithNoteLocalUids()
                 else if (foundTagsWithNoteLocalUids[tagIndex].second.size() != \
                          noteIt.value().size())                                \
                 {                                                              \
-                    QNWARNING("Found list of note local uids "                 \
-                        << "for a tag with incorrect list size: "              \
+                    QNWARNING("tests:local_storage", "Found list of note "     \
+                        << "local uids for a tag with incorrect list size: "   \
                         << foundTagsWithNoteLocalUids[tagIndex].second.join(   \
                             QStringLiteral(", ")));                            \
                     QFAIL("LocalStorageManager::ListTags with flag " name      \
@@ -770,8 +774,8 @@ void TestListTagsWithNoteLocalUids()
                                 foundTagsWithNoteLocalUids[tagIndex]           \
                                 .second[j]))                                   \
                         {                                                      \
-                            QNWARNING("Found incorrect list of "               \
-                                << "note local uids for a tag: "               \
+                            QNWARNING("tests:local_storage", "Found incorrect "\
+                                << "list of note local uids for a tag: "       \
                                 << foundTagsWithNoteLocalUids[tagIndex]        \
                                    .second.join(QStringLiteral(", ")));        \
                             QFAIL("LocalStorageManager::ListTags with flag "   \
@@ -1452,12 +1456,13 @@ void TestListNotes()
         const Note & note = notes[i];                                          \
         bool res = foundNotes.contains(note);                                  \
         if ((true_cond) && !res) {                                             \
-            QNWARNING("Not found note: " << note);                             \
+            QNWARNING("tests:local_storage", "Not found note: " << note);      \
             QFAIL("One of " name " notes was not found by "                    \
                   "LocalStorageManager::ListNotes");                           \
         }                                                                      \
         else if ((false_cond) && res) {                                        \
-            QNWARNING("Found irrelevant note: " << note);                      \
+            QNWARNING("tests:local_storage", "Found irrelevant note: "         \
+                << note);                                                      \
             QFAIL("LocalStorageManager::ListNotes with flag " name             \
                   " returned incorrect note");                                 \
         }                                                                      \
@@ -1862,12 +1867,14 @@ void TestListNotebooks()
         const Notebook & notebook = notebooks.at(i);                           \
         bool res = foundNotebooks.contains(notebook);                          \
         if ((true_cond) && !res) {                                             \
-            QNWARNING("Not found notebook: " << notebook);                     \
+            QNWARNING("tests:local_storage", "Not found notebook: "            \
+                << notebook);                                                  \
             QFAIL("One of " name " notebooks was not found by "                \
                   "LocalStorageManager::ListNotebooks");                       \
         }                                                                      \
         else if ((false_cond) && res) {                                        \
-            QNWARNING("Found irrelevant notebook: " << notebook);              \
+            QNWARNING("tests:local_storage", "Found irrelevant notebook: "     \
+                << notebook);                                                  \
             QFAIL("LocalStorageManager::ListNotebooks with flag " name         \
                   " returned incorrect notebook");                             \
         }                                                                      \
@@ -2049,7 +2056,7 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
                 "Found tag from linked notebook which "
                 "should have been expunged");
 
-            QNWARNING(errorMessage);
+            QNWARNING("tests:local_storage", errorMessage);
             QFAIL(qPrintable(errorMessage.nonLocalizedString()));
         }
         else if ((i <= 2) && !foundTags.contains(tag))
@@ -2058,7 +2065,7 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
                 "Could not find tag which should have "
                 "remained in the local storage");
 
-            QNWARNING(errorMessage);
+            QNWARNING("tests:local_storage", errorMessage);
             QFAIL(qPrintable(errorMessage.nonLocalizedString()));
         }
     }

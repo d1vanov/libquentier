@@ -227,10 +227,6 @@ NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
         new TextCursorPositionJavaScriptHandler(this)),
     m_encryptionManager(new EncryptionManager),
     m_decryptedTextManager(new DecryptedTextManager),
-    m_enmlCachedMemory(),
-    m_htmlCachedMemory(),
-    m_errorCachedMemory(),
-    m_skipRulesForHtmlToEnmlConversion(),
     m_pFileIOProcessorAsync(new FileIOProcessorAsync),
     m_pResourceInfoJavaScriptHandler(
         new ResourceInfoJavaScriptHandler(m_resourceInfo, this)),
@@ -256,7 +252,7 @@ NoteEditorPrivate::~NoteEditorPrivate()
 
 void NoteEditorPrivate::setInitialPageHtml(const QString & html)
 {
-    QNDEBUG("NoteEditorPrivate::setInitialPageHtml: " << html);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setInitialPageHtml: " << html);
 
     m_initialPageHtml = html;
 
@@ -267,7 +263,8 @@ void NoteEditorPrivate::setInitialPageHtml(const QString & html)
 
 void NoteEditorPrivate::setNoteNotFoundPageHtml(const QString & html)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteNotFoundPageHtml: " << html);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteNotFoundPageHtml: "
+        << html);
 
     m_noteNotFoundPageHtml = html;
 
@@ -278,7 +275,8 @@ void NoteEditorPrivate::setNoteNotFoundPageHtml(const QString & html)
 
 void NoteEditorPrivate::setNoteDeletedPageHtml(const QString & html)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteDeletedPageHtml: " << html);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteDeletedPageHtml: "
+        << html);
 
     m_noteDeletedPageHtml = html;
 
@@ -289,7 +287,9 @@ void NoteEditorPrivate::setNoteDeletedPageHtml(const QString & html)
 
 void NoteEditorPrivate::setNoteLoadingPageHtml(const QString & html)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteLoadingPageHtml: " << html);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteLoadingPageHtml: "
+        << html);
+
     m_noteLoadingPageHtml = html;
 }
 
@@ -315,11 +315,11 @@ qint64 NoteEditorPrivate::idleTime() const
 
 void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 {
-    QNDEBUG("NoteEditorPrivate::onNoteLoadFinished: ok = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNoteLoadFinished: ok = "
         << (ok ? "true" : "false"));
 
     if (!ok) {
-        QNDEBUG("Note page was not loaded successfully");
+        QNDEBUG("note_editor", "Note page was not loaded successfully");
         // NOTE: most of the times this callback fires with ok = false shortly
         // before it fires with ok = true,
         // so settling with just a debug log entry here
@@ -329,13 +329,13 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     m_pendingNotePageLoad = false;
 
     if (Q_UNLIKELY(!m_pNote))  {
-        QNDEBUG("No note is set to the editor");
+        QNDEBUG("note_editor", "No note is set to the editor");
         setPageEditable(false);
         return;
     }
 
     if (Q_UNLIKELY(!m_pNotebook)) {
-        QNDEBUG("No notebook is set to the editor");
+        QNDEBUG("note_editor", "No notebook is set to the editor");
         setPageEditable(false);
         return;
     }
@@ -347,11 +347,13 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     bool editable = true;
     if (m_pNote->hasActive() && !m_pNote->active()) {
-        QNDEBUG("Current note is not active, setting it to read-only state");
+        QNDEBUG("note_editor", "Current note is not active, setting it to "
+            << "read-only state");
         editable = false;
     }
     else if (m_pNote->isInkNote()) {
-        QNDEBUG("Current note is an ink note, setting it to read-only state");
+        QNDEBUG("note_editor", "Current note is an ink note, setting it to "
+            << "read-only state");
         editable = false;
     }
     else if (m_pNotebook->hasRestrictions())
@@ -360,8 +362,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         if (restrictions.noUpdateNotes.isSet() &&
             restrictions.noUpdateNotes.ref())
         {
-            QNDEBUG("Notebook restrictions forbid the note modification, "
-                << "setting note's content to read-only state");
+            QNDEBUG("note_editor", "Notebook restrictions forbid the note "
+                << "modification, setting note's content to read-only state");
             editable = false;
         }
     }
@@ -369,8 +371,8 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
              m_pNote->noteAttributes().contentClass.isSet() &&
              !m_pNote->noteAttributes().contentClass->isEmpty())
     {
-        QNDEBUG("Current note has non-empty content class, setting it to "
-            << "read-only state");
+        QNDEBUG("note_editor", "Current note has non-empty content class, "
+            << "setting it to read-only state");
         editable = false;
     }
 
@@ -447,7 +449,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
 
     if (!m_webSocketReady)
     {
-        QNDEBUG("Waiting for web socket connection");
+        QNDEBUG("note_editor", "Waiting for web socket connection");
 
         page->executeJavaScript(
             QStringLiteral("(function(){window.websocketserverport = ") +
@@ -498,7 +500,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     page->executeJavaScript(m_setFontSizeJs);
 
     if (m_isPageEditable) {
-        QNTRACE("Note page is editable");
+        QNTRACE("note_editor", "Note page is editable");
         page->executeJavaScript(m_setupEnToDoTagsJs);
         page->executeJavaScript(m_flipEnToDoCheckboxStateJs);
         page->executeJavaScript(m_toDoCheckboxAutomaticInsertionJs);
@@ -538,19 +540,21 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
         applySpellCheck();
     }
 
-    QNTRACE("Sent commands to execute all the page's necessary scripts");
+    QNTRACE("note_editor", "Sent commands to execute all the page's necessary "
+        << "scripts");
+
     page->startJavaScriptAutoExecution();
 }
 
 void NoteEditorPrivate::onContentChanged()
 {
-    QNTRACE("NoteEditorPrivate::onContentChanged");
+    QNTRACE("note_editor", "NoteEditorPrivate::onContentChanged");
 
     if (m_pendingNotePageLoad ||
         m_pendingIndexHtmlWritingToFile ||
         m_pendingJavaScriptExecution)
     {
-        QNTRACE("Skipping the content change as the note page "
+        QNTRACE("note_editor", "Skipping the content change as the note page "
             << "has not fully loaded yet");
         return;
     }
@@ -558,8 +562,8 @@ void NoteEditorPrivate::onContentChanged()
     if (m_skipPushingUndoCommandOnNextContentChange)
     {
         m_skipPushingUndoCommandOnNextContentChange = false;
-        QNTRACE("Skipping the push of edit undo command on this content "
-            << "change");
+        QNTRACE("note_editor", "Skipping the push of edit undo command on this "
+            << "content change");
     }
     else
     {
@@ -579,8 +583,8 @@ void NoteEditorPrivate::onContentChanged()
     m_watchingForContentChange = true;
     m_contentChangedSinceWatchingStart = false;
 
-    QNTRACE("Started timer to postpone note editor page's content "
-        << "to ENML conversion: timer id = "
+    QNTRACE("note_editor", "Started timer to postpone note editor page's "
+        << "content to ENML conversion: timer id = "
         << m_pageToNoteContentPostponeTimerId);
 }
 
@@ -588,7 +592,7 @@ void NoteEditorPrivate::onResourceFileChanged(
     QString resourceLocalUid, QString fileStoragePath, QByteArray resourceData,
     QByteArray resourceDataHash)
 {
-    QNDEBUG("NoteEditorPrivate::onResourceFileChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onResourceFileChanged: "
         << "resource local uid = " << resourceLocalUid
         << ", file storage path: " << fileStoragePath
         << ", new resource data size = "
@@ -597,7 +601,7 @@ void NoteEditorPrivate::onResourceFileChanged(
         << ", resource data hash = " << resourceDataHash.toHex());
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNDEBUG("Can't process resource file change: no note is "
+        QNDEBUG("note_editor", "Can't process resource file change: no note is "
             << "set to the editor");
         return;
     }
@@ -615,7 +619,7 @@ void NoteEditorPrivate::onResourceFileChanged(
     }
 
     if (Q_UNLIKELY(targetResourceIndex < 0)) {
-        QNDEBUG("Can't process resource file change: can't find "
+        QNDEBUG("note_editor", "Can't process resource file change: can't find "
             << "the resource by local uid within note's resources");
         return;
     }
@@ -625,15 +629,17 @@ void NoteEditorPrivate::onResourceFileChanged(
     QByteArray previousResourceHash =
         (resource.hasDataHash() ? resource.dataHash() : QByteArray());
 
-    QNTRACE("Previous resource hash = " << previousResourceHash.toHex());
+    QNTRACE("note_editor", "Previous resource hash = "
+        << previousResourceHash.toHex());
 
     if (!previousResourceHash.isEmpty() &&
         (previousResourceHash == resourceDataHash) &&
         resource.hasDataSize() &&
         (resource.dataSize() == resourceData.size()))
     {
-        QNDEBUG("Neither resource hash nor binary data size has changed -> "
-            << "the resource data has not actually changed, nothing to do");
+        QNDEBUG("note_editor", "Neither resource hash nor binary data size has "
+            << "changed -> the resource data has not actually changed, "
+            << "nothing to do");
         return;
     }
 
@@ -654,9 +660,10 @@ void NoteEditorPrivate::onResourceFileChanged(
     QString resourceDisplaySize =
         humanReadableSize(static_cast<quint64>(resourceData.size()));
 
-    QNTRACE("Updating the resource within the note: " << resource);
-    Q_UNUSED(m_pNote->updateResource(resource))
+    QNTRACE("note_editor", "Updating the resource within the note: "
+        << resource);
 
+    Q_UNUSED(m_pNote->updateResource(resource))
     setModified();
 
     if (!previousResourceHash.isEmpty() &&
@@ -691,7 +698,7 @@ void NoteEditorPrivate::onResourceFileChanged(
             errorDescription);
 
         if (linkFilePath.isEmpty()) {
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -745,8 +752,8 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
     bool success, QByteArray resourceActualHash, QString filePath,
     ErrorString errorDescription, QUuid requestId)
 {
-    QNDEBUG("NoteEditorPrivate::onGenericResourceImageSaved: success = "
-        << (success ? "true" : "false")
+    QNDEBUG("note_editor", "NoteEditorPrivate::onGenericResourceImageSaved: "
+        << "success = " << (success ? "true" : "false")
         << ", resource actual hash = " << resourceActualHash.toHex()
         << ", file path = " << filePath
         << ", error description = " << errorDescription
@@ -754,7 +761,7 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
 
     auto it = m_saveGenericResourceImageToFileRequestIds.find(requestId);
     if (it == m_saveGenericResourceImageToFileRequestIds.end()) {
-        QNDEBUG("Haven't found request id in the cache");
+        QNDEBUG("note_editor", "Haven't found request id in the cache");
         return;
     }
 
@@ -775,8 +782,8 @@ void NoteEditorPrivate::onGenericResourceImageSaved(
     m_genericResourceImageFilePathsByResourceHash[resourceActualHash] =
         filePath;
 
-    QNDEBUG("Cached generic resource image file path " << filePath
-        << " for resource hash " << resourceActualHash.toHex());
+    QNDEBUG("note_editor", "Cached generic resource image file path "
+        << filePath << " for resource hash " << resourceActualHash.toHex());
 
     if (m_saveGenericResourceImageToFileRequestIds.empty()) {
         provideSrcForGenericResourceImages();
@@ -791,7 +798,7 @@ void NoteEditorPrivate::onHyperlinkClicked(QString url)
 
 void NoteEditorPrivate::onWebSocketReady()
 {
-    QNDEBUG("NoteEditorPrivate::onWebSocketReady");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onWebSocketReady");
 
     m_webSocketReady = true;
     onNoteLoadFinished(true);
@@ -808,12 +815,11 @@ void NoteEditorPrivate::onHyperlinkClicked(QUrl url)
 
 void NoteEditorPrivate::onToDoCheckboxClicked(quint64 enToDoCheckboxId)
 {
-    QNDEBUG("NoteEditorPrivate::onToDoCheckboxClicked: " << enToDoCheckboxId);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onToDoCheckboxClicked: "
+        << enToDoCheckboxId);
 
     setModified();
-
-    ToDoCheckboxUndoCommand * pCommand =
-        new ToDoCheckboxUndoCommand(enToDoCheckboxId, *this);
+    auto * pCommand = new ToDoCheckboxUndoCommand(enToDoCheckboxId, *this);
 
     QObject::connect(
         pCommand,
@@ -826,7 +832,9 @@ void NoteEditorPrivate::onToDoCheckboxClicked(quint64 enToDoCheckboxId)
 
 void NoteEditorPrivate::onToDoCheckboxClickHandlerError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onToDoCheckboxClickHandlerError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onToDoCheckboxClickHandlerError: " << error);
+
     Q_EMIT notifyError(error);
 }
 
@@ -834,7 +842,8 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onToDoCheckboxInserted: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onToDoCheckboxInserted: "
+        << data);
 
     Q_UNUSED(extraData)
 
@@ -846,7 +855,7 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of ToDo checkbox "
                        "insertion undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -867,17 +876,16 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    ToDoCheckboxAutomaticInsertionUndoCommand * pCommand =
-        new ToDoCheckboxAutomaticInsertionUndoCommand(
-            *this,
-            NoteEditorCallbackFunctor<QVariant>(
-                this,
-                &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
+    auto * pCommand = new ToDoCheckboxAutomaticInsertionUndoCommand(
+        *this,
+        NoteEditorCallbackFunctor<QVariant>(
+            this,
+            &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
 
     QObject::connect(
         pCommand,
@@ -892,14 +900,14 @@ void NoteEditorPrivate::onToDoCheckboxInserted(
 
 void NoteEditorPrivate::onToDoCheckboxAutomaticInsertion()
 {
-    QNDEBUG("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onToDoCheckboxAutomaticInsertion");
 
-    ToDoCheckboxAutomaticInsertionUndoCommand * pCommand =
-        new ToDoCheckboxAutomaticInsertionUndoCommand(
-            *this,
-            NoteEditorCallbackFunctor<QVariant>(
-                this,
-                &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
+    auto * pCommand = new ToDoCheckboxAutomaticInsertionUndoCommand(
+        *this,
+        NoteEditorCallbackFunctor<QVariant>(
+            this,
+            &NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished));
 
     QObject::connect(
         pCommand,
@@ -917,8 +925,8 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onToDoCheckboxAutomaticInsertion"
-        << "UndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onToDoCheckboxAutomaticInsertionUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -930,7 +938,7 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of ToDo checkbox "
                        "automatic insertion undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -953,7 +961,7 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -963,18 +971,18 @@ void NoteEditorPrivate::onToDoCheckboxAutomaticInsertionUndoRedoFinished(
 
 void NoteEditorPrivate::onJavaScriptLoaded()
 {
-    QNDEBUG("NoteEditorPrivate::onJavaScriptLoaded");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onJavaScriptLoaded");
 
     NoteEditorPage * pSenderPage = qobject_cast<NoteEditorPage*>(sender());
     if (Q_UNLIKELY(!pSenderPage)) {
-        QNWARNING("Can't get the pointer to NoteEditor page from "
-            << "which the event of JavaScrupt loading came in");
+        QNWARNING("note_editor", "Can't get the pointer to NoteEditor page "
+            << "from which the event of JavaScrupt loading came in");
         return;
     }
 
     GET_PAGE()
     if (page != pSenderPage) {
-        QNDEBUG("Skipping JavaScript loaded event from page "
+        QNDEBUG("note_editor", "Skipping JavaScript loaded event from page "
             << "which is not the currently set one");
         return;
     }
@@ -984,13 +992,13 @@ void NoteEditorPrivate::onJavaScriptLoaded()
         m_pendingJavaScriptExecution = false;
 
         if (Q_UNLIKELY(!m_pNote)) {
-            QNDEBUG("No note is set to the editor, won't retrieve "
-                << "the editor content's html");
+            QNDEBUG("note_editor", "No note is set to the editor, won't "
+                << "retrieve the editor content's html");
             return;
         }
 
         if (Q_UNLIKELY(!m_pNotebook)) {
-            QNDEBUG("No notebook is set to the editor, won't "
+            QNDEBUG("note_editor", "No notebook is set to the editor, won't "
                 << "retrieve the editor content's html");
             return;
         }
@@ -1005,7 +1013,7 @@ void NoteEditorPrivate::onJavaScriptLoaded()
                 &NoteEditorPrivate::onPageHtmlReceived));
 #endif
 
-        QNTRACE("Emitting noteLoaded signal");
+        QNTRACE("note_editor", "Emitting noteLoaded signal");
         Q_EMIT noteLoaded();
     }
 
@@ -1017,7 +1025,7 @@ void NoteEditorPrivate::onJavaScriptLoaded()
 
 void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::onOpenResourceRequest: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onOpenResourceRequest: "
         << resourceHash.toHex());
 
     if (Q_UNLIKELY(!m_pNote))
@@ -1025,7 +1033,8 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("Can't open the resource: no note is set "
                        "to the editor"));
-        QNWARNING(error << ", resource hash = " << resourceHash.toHex());
+        QNWARNING("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         Q_EMIT notifyError(error);
         return;
     }
@@ -1034,11 +1043,12 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
 
     QList<Resource> resources = m_pNote->resources();
     int resourceIndex = resourceIndexByHash(resources, resourceHash);
-    if (Q_UNLIKELY(resourceIndex < 0)) {
+    if (Q_UNLIKELY(resourceIndex < 0))
+    {
         ErrorString error(
             QT_TR_NOOP("The resource to be opened was not found "
                        "within the note"));
-        QNWARNING(error << ", resource hash = " << resourceHash);
+        QNWARNING("note_editor", error << ", resource hash = " << resourceHash);
         Q_EMIT notifyError(error);
         return;
     }
@@ -1062,6 +1072,7 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
             /* max = */ 100,
             this,
             Qt::Dialog);
+
         pProgressDialog->setWindowModality(Qt::WindowModal);
         pProgressDialog->setMinimumDuration(2000);
 
@@ -1069,14 +1080,14 @@ void NoteEditorPrivate::onOpenResourceRequest(const QByteArray & resourceHash)
             std::make_pair(resourceLocalUid, pProgressDialog));
     }
 
-    QNTRACE("Emitting the request to open resource with local uid "
-        << resourceLocalUid);
+    QNTRACE("note_editor", "Emitting the request to open resource with "
+        << "local uid " << resourceLocalUid);
     Q_EMIT openResourceFile(resourceLocalUid);
 }
 
 void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::onSaveResourceRequest: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSaveResourceRequest: "
         << resourceHash.toHex());
 
     if (Q_UNLIKELY(!m_pNote))
@@ -1084,7 +1095,8 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("Can't save the resource to file: no note "
                        "is set to the editor"));
-        QNINFO(error << ", resource hash = " << resourceHash.toHex());
+        QNINFO("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         Q_EMIT notifyError(error);
         return;
     }
@@ -1096,7 +1108,8 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("The resource to be saved was not found "
                        "within the note"));
-        QNINFO(error << ", resource hash = " << resourceHash.toHex());
+        QNINFO("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         return;
     }
 
@@ -1104,7 +1117,7 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
 
     if (!resource.hasDataBody() && !resource.hasAlternateDataBody())
     {
-        QNTRACE("The resource meant to be saved to a local file "
+        QNTRACE("note_editor", "The resource meant to be saved to a local file "
             << "has neither data body nor alternate data body, "
             << "need to request these from the local storage");
         Q_UNUSED(m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.insert(
@@ -1118,10 +1131,10 @@ void NoteEditorPrivate::onSaveResourceRequest(const QByteArray & resourceHash)
 
 void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
 {
-    QNTRACE("NoteEditorPrivate::contextMenuEvent");
+    QNTRACE("note_editor", "NoteEditorPrivate::contextMenuEvent");
 
     if (Q_UNLIKELY(!pEvent)) {
-        QNINFO("detected null pointer to context menu event");
+        QNINFO("note_editor", "detected null pointer to context menu event");
         return;
     }
 
@@ -1130,7 +1143,7 @@ void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
         m_pendingJavaScriptExecution ||
         m_pendingNoteImageResourceTemporaryFiles)
     {
-        QNINFO("Ignoring context menu event for now, "
+        QNINFO("note_editor", "Ignoring context menu event for now, "
             << "until the note is fully loaded...");
         return;
     }
@@ -1138,7 +1151,7 @@ void NoteEditorPrivate::contextMenuEvent(QContextMenuEvent * pEvent)
     m_lastContextMenuEventGlobalPos = pEvent->globalPos();
     m_lastContextMenuEventPagePos = pEvent->pos();
 
-    QNTRACE("Context menu event's global pos: x = "
+    QNTRACE("note_editor", "Context menu event's global pos: x = "
         << m_lastContextMenuEventGlobalPos.x()
         << ", y = " << m_lastContextMenuEventGlobalPos.y()
         << "; pos relative to child widget: x = "
@@ -1154,7 +1167,7 @@ void NoteEditorPrivate::onContextMenuEventReply(
     QString contentType, QString selectedHtml, bool insideDecryptedTextFragment,
     QStringList extraData, quint64 sequenceNumber)
 {
-    QNDEBUG("NoteEditorPrivate::onContextMenuEventReply: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onContextMenuEventReply: "
         << "content type = " << contentType
         << ", selected html = " << selectedHtml
         << ", inside decrypted text fragment = "
@@ -1165,7 +1178,8 @@ void NoteEditorPrivate::onContextMenuEventReply(
         << "], sequence number = " << sequenceNumber);
 
     if (!checkContextMenuSequenceNumber(sequenceNumber)) {
-        QNTRACE("Sequence number is not valid, not doing anything");
+        QNTRACE("note_editor", "Sequence number is not valid, not doing "
+            << "anything");
         return;
     }
 
@@ -1190,7 +1204,7 @@ void NoteEditorPrivate::onContextMenuEventReply(
             ErrorString error(
                 QT_TR_NOOP("Can't display the resource context menu: "
                            "the extra data from JavaScript is empty"));
-            QNWARNING(error);
+            QNWARNING("note_editor", error);
             Q_EMIT notifyError(error);
             return;
         }
@@ -1201,7 +1215,7 @@ void NoteEditorPrivate::onContextMenuEventReply(
                 QT_TR_NOOP("Can't display the resource context menu: "
                            "the extra data from JavaScript has wrong size"));
             error.details() = QString::number(extraData.size());
-            QNWARNING(error);
+            QNWARNING("note_editor", error);
             Q_EMIT notifyError(error);
             return;
         }
@@ -1228,6 +1242,7 @@ void NoteEditorPrivate::onContextMenuEventReply(
             hint,
             id,
             error);
+
         if (Q_UNLIKELY(!res))
         {
             ErrorString errorDescription(
@@ -1235,7 +1250,7 @@ void NoteEditorPrivate::onContextMenuEventReply(
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -1249,14 +1264,15 @@ void NoteEditorPrivate::onContextMenuEventReply(
     }
     else
     {
-        QNWARNING("Unknown content type on context menu event reply: "
-            << contentType << ", sequence number " << sequenceNumber);
+        QNWARNING("note_editor", "Unknown content type on context menu event "
+            << "reply: " << contentType << ", sequence number "
+            << sequenceNumber);
     }
 }
 
 void NoteEditorPrivate::onTextCursorPositionChange()
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorPositionChange");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTextCursorPositionChange");
 
     if (!m_pendingIndexHtmlWritingToFile &&
         !m_pendingNotePageLoad &&
@@ -1268,7 +1284,7 @@ void NoteEditorPrivate::onTextCursorPositionChange()
 
 void NoteEditorPrivate::onTextCursorBoldStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorBoldStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTextCursorBoldStateChanged: "
         << (state ? "bold" : "not bold"));
 
     m_currentTextFormattingState.m_bold = state;
@@ -1277,7 +1293,7 @@ void NoteEditorPrivate::onTextCursorBoldStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorItalicStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorItalicStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTextCursorItalicStateChanged: "
         << (state ? "italic" : "not italic"));
 
     m_currentTextFormattingState.m_italic = state;
@@ -1286,7 +1302,8 @@ void NoteEditorPrivate::onTextCursorItalicStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorUnderlineStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorUnderlineStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorUnderlineStateChanged: "
         << (state ? "underline" : "not underline"));
 
     m_currentTextFormattingState.m_underline = state;
@@ -1295,7 +1312,8 @@ void NoteEditorPrivate::onTextCursorUnderlineStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorStrikethgouthStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorStrikethgouthStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorStrikethgouthStateChanged: "
         << (state ? "strikethrough" : "not strikethrough"));
 
     m_currentTextFormattingState.m_strikethrough = state;
@@ -1304,7 +1322,8 @@ void NoteEditorPrivate::onTextCursorStrikethgouthStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorAlignLeftStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorAlignLeftStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorAlignLeftStateChanged: "
         << (state ? "true" : "false"));
 
     if (state) {
@@ -1316,7 +1335,8 @@ void NoteEditorPrivate::onTextCursorAlignLeftStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorAlignCenterStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorAlignCenterStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorAlignCenterStateChanged: "
         << (state ? "true" : "false"));
 
     if (state) {
@@ -1328,7 +1348,8 @@ void NoteEditorPrivate::onTextCursorAlignCenterStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorAlignRightStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorAlignRightStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorAlignRightStateChanged: "
         << (state ? "true" : "false"));
 
     if (state) {
@@ -1340,7 +1361,8 @@ void NoteEditorPrivate::onTextCursorAlignRightStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorAlignFullStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorAlignFullStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorAlignFullStateChanged: "
         << (state ? "true" : "false"));
 
     if (state) {
@@ -1352,7 +1374,8 @@ void NoteEditorPrivate::onTextCursorAlignFullStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorInsideOrderedListStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorInsideOrderedListStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorInsideOrderedListStateChanged: "
         << (state ? "true" : "false"));
 
     m_currentTextFormattingState.m_insideOrderedList = state;
@@ -1361,7 +1384,8 @@ void NoteEditorPrivate::onTextCursorInsideOrderedListStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorInsideUnorderedListStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorInsideUnorderedListStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorInsideUnorderedListStateChanged: "
         << (state ? "true" : "false"));
 
     m_currentTextFormattingState.m_insideUnorderedList = state;
@@ -1370,7 +1394,8 @@ void NoteEditorPrivate::onTextCursorInsideUnorderedListStateChanged(bool state)
 
 void NoteEditorPrivate::onTextCursorInsideTableStateChanged(bool state)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorInsideTableStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorInsideTableStateChanged: "
         << (state ? "true" : "false"));
 
     m_currentTextFormattingState.m_insideTable = state;
@@ -1380,7 +1405,8 @@ void NoteEditorPrivate::onTextCursorInsideTableStateChanged(bool state)
 void NoteEditorPrivate::onTextCursorOnImageResourceStateChanged(
     bool state, QByteArray resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorOnImageResourceStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorOnImageResourceStateChanged: "
         << (state ? "yes" : "no") << ", resource hash = "
         << resourceHash.toHex());
 
@@ -1394,7 +1420,8 @@ void NoteEditorPrivate::onTextCursorOnImageResourceStateChanged(
 void NoteEditorPrivate::onTextCursorOnNonImageResourceStateChanged(
     bool state, QByteArray resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorOnNonImageResourceStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorOnNonImageResourceStateChanged: "
         << (state ? "yes" : "no")
         << ", resource hash = " << resourceHash.toHex());
 
@@ -1408,7 +1435,8 @@ void NoteEditorPrivate::onTextCursorOnNonImageResourceStateChanged(
 void NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged(
     bool state, QString encryptedText, QString cipher, QString length)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onTextCursorOnEnCryptTagStateChanged: "
         << (state ? "yes" : "no") << ", encrypted text = " << encryptedText
         << ", cipher = " << cipher << ", length = " << length);
 
@@ -1422,14 +1450,14 @@ void NoteEditorPrivate::onTextCursorOnEnCryptTagStateChanged(
 
 void NoteEditorPrivate::onTextCursorFontNameChanged(QString fontName)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorFontNameChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTextCursorFontNameChanged: "
         << "font name = " << fontName);
     Q_EMIT textFontFamilyChanged(fontName);
 }
 
 void NoteEditorPrivate::onTextCursorFontSizeChanged(int fontSize)
 {
-    QNDEBUG("NoteEditorPrivate::onTextCursorFontSizeChanged: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTextCursorFontSizeChanged: "
         << "font size = " << fontSize);
     Q_EMIT textFontSizeChanged(fontSize);
 }
@@ -1439,7 +1467,7 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
 {
     if (requestId == m_writeNoteHtmlToFileRequestId)
     {
-        QNDEBUG("Write note html to file completed: success = "
+        QNDEBUG("note_editor", "Write note html to file completed: success = "
             << (success ? "true" : "false") << ", request id = " << requestId);
 
         m_writeNoteHtmlToFileRequestId = QUuid();
@@ -1457,13 +1485,13 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
         }
 
         QUrl url = QUrl::fromLocalFile(noteEditorPagePath());
-        QNDEBUG("URL to use for page loading: " << url);
+        QNDEBUG("note_editor", "URL to use for page loading: " << url);
 
         m_pendingNextPageUrl = url;
 
         if (m_pendingNotePageLoadMethodExit) {
-            QNDEBUG("Already loading something into the editor, need to wait "
-                << "for the previous note load to complete");
+            QNDEBUG("note_editor", "Already loading something into the editor, "
+                << "need to wait for the previous note load to complete");
             return;
         }
 
@@ -1477,7 +1505,8 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
              * how it works
              */
 
-            QNDEBUG("Setting the pending url: " << m_pendingNextPageUrl);
+            QNDEBUG("note_editor", "Setting the pending url: "
+                << m_pendingNextPageUrl);
 
             url = m_pendingNextPageUrl;
             m_pendingNotePageLoad = true;
@@ -1488,8 +1517,8 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
             page()->mainFrame()->setUrl(url);
 #endif
             m_pendingNotePageLoadMethodExit = false;
-            QNDEBUG("After having started to load the url into the page: "
-                << url);
+            QNDEBUG("note_editor", "After having started to load the url "
+                << "into the page: " << url);
 
             /**
              * Check that while we were within setUrl method, the next URL to be
@@ -1508,11 +1537,12 @@ void NoteEditorPrivate::onWriteFileRequestProcessed(
     if (manualSaveResourceIt != m_manualSaveResourceToFileRequestIds.end())
     {
         if (success) {
-            QNDEBUG("Successfully saved resource to file for request id "
-                << requestId);
+            QNDEBUG("note_editor", "Successfully saved resource to file for "
+                << "request id " << requestId);
         }
         else {
-            QNWARNING("Could not save resource to file: " << errorDescription);
+            QNWARNING("note_editor", "Could not save resource to file: "
+                << errorDescription);
         }
 
         Q_UNUSED(m_manualSaveResourceToFileRequestIds.erase(
@@ -1525,7 +1555,7 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
     const QVariant & response,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSelectionFormattedAsSourceCode");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSelectionFormattedAsSourceCode");
 
     Q_UNUSED(extraData)
     QMap<QString,QVariant> resultMap = response.toMap();
@@ -1536,7 +1566,7 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
         ErrorString error(
             QT_TR_NOOP("Can't find the status within the result "
                        "of selection formatting as source code"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -1562,7 +1592,7 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
                     QT_TR_NOOP("Internal error: can't format "
                                "the selection as source code"));
                 error.details() = errorValue;
-                QNWARNING(error);
+                QNWARNING("note_editor", error);
                 Q_EMIT notifyError(error);
             }
             else
@@ -1578,11 +1608,11 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
                     error.setBase(
                         QT_TR_NOOP("Internal error: can't format the selection "
                                    "as source code, unknown error"));
-                    QNWARNING(error);
+                    QNWARNING("note_editor", error);
                     Q_EMIT notifyError(error);
                 }
                 else {
-                    QNDEBUG(feedback);
+                    QNDEBUG("note_editor", feedback);
                 }
             }
         }
@@ -1590,11 +1620,11 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
         return;
     }
 
-    SourceCodeFormatUndoCommand * pCommand =
-        new SourceCodeFormatUndoCommand(
-            *this,
-            NoteEditorCallbackFunctor<QVariant>(
-                this, &NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished));
+    auto * pCommand = new SourceCodeFormatUndoCommand(
+        *this,
+        NoteEditorCallbackFunctor<QVariant>(
+            this,
+            &NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished));
 
     QObject::connect(
         pCommand,
@@ -1612,16 +1642,16 @@ void NoteEditorPrivate::onSelectionFormattedAsSourceCode(
 void NoteEditorPrivate::onAddResourceDelegateFinished(
     Resource addedResource, QString resourceFileStoragePath)
 {
-    QNDEBUG("NoteEditorPrivate::onAddResourceDelegateFinished: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onAddResourceDelegateFinished: "
         << "resource file storage path = " << resourceFileStoragePath);
 
-    QNTRACE(addedResource);
+    QNTRACE("note_editor", addedResource);
 
     if (Q_UNLIKELY(!addedResource.hasDataHash()))
     {
         ErrorString error(
             QT_TR_NOOP("The added resource doesn't contain the data hash"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         removeResourceFromNote(addedResource);
         Q_EMIT notifyError(error);
         return;
@@ -1631,7 +1661,7 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(
     {
         ErrorString error(
             QT_TR_NOOP("The added resource doesn't contain the data size"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         removeResourceFromNote(addedResource);
         Q_EMIT notifyError(error);
         return;
@@ -1659,7 +1689,7 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(
 
     provideSrcForResourceImgTags();
 
-    AddResourceUndoCommand * pCommand = new AddResourceUndoCommand(
+    auto * pCommand = new AddResourceUndoCommand(
         addedResource,
         NoteEditorCallbackFunctor<QVariant>(
             this,
@@ -1687,7 +1717,8 @@ void NoteEditorPrivate::onAddResourceDelegateFinished(
 
 void NoteEditorPrivate::onAddResourceDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onAddResourceDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onAddResourceDelegateError: "
+        << error);
 
     Q_EMIT notifyError(error);
 
@@ -1701,7 +1732,8 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onAddResourceUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onAddResourceUndoRedoFinished: "
+        << data);
 
     Q_UNUSED(extraData);
 
@@ -1714,7 +1746,7 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of new resource "
                        "html insertion undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -1739,7 +1771,7 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -1751,9 +1783,9 @@ void NoteEditorPrivate::onAddResourceUndoRedoFinished(
 void NoteEditorPrivate::onRemoveResourceDelegateFinished(
     Resource removedResource, bool reversible)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveResourceDelegateFinished: "
-        << "removed resource = " << removedResource
-        << "\nReversible: " << reversible);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRemoveResourceDelegateFinished: removed resource = "
+        << removedResource << "\nReversible: " << reversible);
 
     if (reversible)
     {
@@ -1789,8 +1821,9 @@ void NoteEditorPrivate::onRemoveResourceDelegateFinished(
 void NoteEditorPrivate::onRemoveResourceDelegateCancelled(
     QString resourceLocalUid)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveResourceDelegateCancelled: "
-        << "resource local uid = " << resourceLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRemoveResourceDelegateCancelled: resource local uid = "
+        << resourceLocalUid);
 
     auto * delegate = qobject_cast<RemoveResourceDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -1800,7 +1833,9 @@ void NoteEditorPrivate::onRemoveResourceDelegateCancelled(
 
 void NoteEditorPrivate::onRemoveResourceDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveResourceDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onRemoveResourceDelegateError: "
+        << error);
+
     Q_EMIT notifyError(error);
 
     auto * delegate = qobject_cast<RemoveResourceDelegate*>(sender());
@@ -1813,7 +1848,8 @@ void NoteEditorPrivate::onRemoveResourceUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveResourceUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRemoveResourceUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -1833,11 +1869,12 @@ void NoteEditorPrivate::onRenameResourceDelegateFinished(
     QString oldResourceName, QString newResourceName, Resource resource,
     bool performingUndo)
 {
-    QNDEBUG("NoteEditorPrivate::onRenameResourceDelegateFinished: "
-        << "old resource name = " << oldResourceName
-        << ", new resource name = " << newResourceName
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRenameResourceDelegateFinished: old resource name = "
+        << oldResourceName << ", new resource name = " << newResourceName
         << ", performing undo = " << (performingUndo ? "true" : "false"));
-    QNTRACE("Resource: " << resource);
+
+    QNTRACE("note_editor", "Resource: " << resource);
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     if (m_pPluginFactory) {
@@ -1876,7 +1913,8 @@ void NoteEditorPrivate::onRenameResourceDelegateFinished(
 
 void NoteEditorPrivate::onRenameResourceDelegateCancelled()
 {
-    QNDEBUG("NoteEditorPrivate::onRenameResourceDelegateCancelled");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRenameResourceDelegateCancelled");
 
     auto * delegate = qobject_cast<RenameResourceDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -1886,7 +1924,8 @@ void NoteEditorPrivate::onRenameResourceDelegateCancelled()
 
 void NoteEditorPrivate::onRenameResourceDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onRenameResourceDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onRenameResourceDelegateError: "
+        << error);
 
     Q_EMIT notifyError(error);
 
@@ -1903,7 +1942,8 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(
     QSize resourceImageSizeBefore, Resource resourceAfter,
     INoteEditorBackend::Rotation rotationDirection)
 {
-    QNDEBUG("NoteEditorPrivate::onImageResourceRotationDelegateFinished: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onImageResourceRotationDelegateFinished: "
         << "previous resource hash = " << resourceHashBefore.toHex()
         << ", resource local uid = " << resourceAfter.localUid()
         << ", rotation direction = " << rotationDirection);
@@ -1947,7 +1987,9 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(
 
 void NoteEditorPrivate::onImageResourceRotationDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onImageResourceRotationDelegateError");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onImageResourceRotationDelegateError");
+
     Q_EMIT notifyError(error);
 
     auto * delegate = qobject_cast<ImageResourceRotationDelegate*>(sender());
@@ -1960,7 +2002,8 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onHideDecryptedTextFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onHideDecryptedTextFinished: "
+        << data);
 
     Q_UNUSED(extraData)
 
@@ -1972,7 +2015,7 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of decrypted text "
                        "hiding from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -1995,7 +2038,7 @@ void NoteEditorPrivate::onHideDecryptedTextFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2025,7 +2068,8 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onHideDecryptedTextUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2037,7 +2081,7 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of decrypted text "
                        "hiding undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2061,7 +2105,7 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2073,7 +2117,8 @@ void NoteEditorPrivate::onHideDecryptedTextUndoRedoFinished(
 
 void NoteEditorPrivate::onEncryptSelectedTextDelegateFinished()
 {
-    QNDEBUG("NoteEditorPrivate::onEncryptSelectedTextDelegateFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEncryptSelectedTextDelegateFinished");
 
     auto * pCommand = new EncryptUndoCommand(
         *this,
@@ -2106,7 +2151,8 @@ void NoteEditorPrivate::onEncryptSelectedTextDelegateFinished()
 
 void NoteEditorPrivate::onEncryptSelectedTextDelegateCancelled()
 {
-    QNDEBUG("NoteEditorPrivate::onEncryptSelectedTextDelegateCancelled");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEncryptSelectedTextDelegateCancelled");
 
     auto * delegate = qobject_cast<EncryptSelectedTextDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -2116,7 +2162,9 @@ void NoteEditorPrivate::onEncryptSelectedTextDelegateCancelled()
 
 void NoteEditorPrivate::onEncryptSelectedTextDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onEncryptSelectedTextDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEncryptSelectedTextDelegateError: " << error);
+
     Q_EMIT notifyError(error);
 
     auto * delegate = qobject_cast<EncryptSelectedTextDelegate*>(sender());
@@ -2129,8 +2177,8 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished: "
-        << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEncryptSelectedTextUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2144,7 +2192,7 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of encryption "
                        "undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2168,7 +2216,7 @@ void NoteEditorPrivate::onEncryptSelectedTextUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2186,7 +2234,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
     QString decryptedText, QString passphrase, bool rememberForSession,
     bool decryptPermanently)
 {
-    QNDEBUG("NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onDecryptEncryptedTextDelegateFinished");
 
     setModified();
 
@@ -2235,7 +2284,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateFinished(
 
 void NoteEditorPrivate::onDecryptEncryptedTextDelegateCancelled()
 {
-    QNDEBUG("NoteEditorPrivate::onDecryptEncryptedTextDelegateCancelled");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onDecryptEncryptedTextDelegateCancelled");
 
     auto * delegate = qobject_cast<DecryptEncryptedTextDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -2245,7 +2295,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextDelegateCancelled()
 
 void NoteEditorPrivate::onDecryptEncryptedTextDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onDecryptEncryptedTextDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onDecryptEncryptedTextDelegateError: " << error);
 
     Q_EMIT notifyError(error);
 
@@ -2259,8 +2310,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished: "
-        << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onDecryptEncryptedTextUndoRedoFinished: " << data);
 
     setModified();
 
@@ -2271,7 +2322,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of encrypted text "
                        "decryption undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2295,7 +2346,7 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2317,7 +2368,8 @@ void NoteEditorPrivate::onDecryptEncryptedTextUndoRedoFinished(
 
 void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateFinished()
 {
-    QNDEBUG("NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onAddHyperlinkToSelectedTextDelegateFinished");
 
     auto * pCommand = new AddHyperlinkUndoCommand(
         *this,
@@ -2347,7 +2399,8 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateFinished()
 
 void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateCancelled()
 {
-    QNDEBUG("NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateCancelled");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onAddHyperlinkToSelectedTextDelegateCancelled");
 
     auto * delegate =
         qobject_cast<AddHyperlinkToSelectedTextDelegate*>(sender());
@@ -2359,7 +2412,9 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateCancelled()
 void NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateError(
     ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onAddHyperlinkToSelectedTextDelegateError");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onAddHyperlinkToSelectedTextDelegateError");
+
     Q_EMIT notifyError(error);
 
     auto * delegate =
@@ -2373,8 +2428,8 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished: "
-        << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onAddHyperlinkToSelectedTextUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2387,7 +2442,7 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink "
                        "addition undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2410,7 +2465,7 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2421,7 +2476,7 @@ void NoteEditorPrivate::onAddHyperlinkToSelectedTextUndoRedoFinished(
 
 void NoteEditorPrivate::onEditHyperlinkDelegateFinished()
 {
-    QNDEBUG("NoteEditorPrivate::onEditHyperlinkDelegateFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onEditHyperlinkDelegateFinished");
 
     setModified();
 
@@ -2450,7 +2505,8 @@ void NoteEditorPrivate::onEditHyperlinkDelegateFinished()
 
 void NoteEditorPrivate::onEditHyperlinkDelegateCancelled()
 {
-    QNDEBUG("NoteEditorPrivate::onEditHyperlinkDelegateCancelled");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEditHyperlinkDelegateCancelled");
 
     auto * delegate = qobject_cast<EditHyperlinkDelegate*>(sender());
     if (Q_LIKELY(delegate)) {
@@ -2460,7 +2516,8 @@ void NoteEditorPrivate::onEditHyperlinkDelegateCancelled()
 
 void NoteEditorPrivate::onEditHyperlinkDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onEditHyperlinkDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEditHyperlinkDelegateError: " << error);
 
     Q_EMIT notifyError(error);
 
@@ -2474,7 +2531,8 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onEditHyperlinkUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onEditHyperlinkUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2487,7 +2545,7 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink "
                        "edit undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2510,7 +2568,7 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2521,7 +2579,8 @@ void NoteEditorPrivate::onEditHyperlinkUndoRedoFinished(
 
 void NoteEditorPrivate::onRemoveHyperlinkDelegateFinished()
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveHyperlinkDelegateFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRemoveHyperlinkDelegateFinished");
 
     setModified();
 
@@ -2550,7 +2609,9 @@ void NoteEditorPrivate::onRemoveHyperlinkDelegateFinished()
 
 void NoteEditorPrivate::onRemoveHyperlinkDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveHyperlinkDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onRemoveHyperlinkDelegateError: "
+        << error);
+
     Q_EMIT notifyError(error);
 
     auto * delegate = qobject_cast<RemoveHyperlinkDelegate*>(sender());
@@ -2563,7 +2624,8 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onRemoveHyperlinkUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2576,7 +2638,7 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink "
                        "removal undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2599,7 +2661,7 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2611,21 +2673,21 @@ void NoteEditorPrivate::onRemoveHyperlinkUndoRedoFinished(
 void NoteEditorPrivate::onInsertHtmlDelegateFinished(
     QList<Resource> addedResources, QStringList resourceFileStoragePaths)
 {
-    QNDEBUG("NoteEditorPrivate::onInsertHtmlDelegateFinished: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onInsertHtmlDelegateFinished: "
         << "num added resources = " << addedResources.size());
 
     setModified();
 
     if (QuentierIsLogLevelActive(LogLevel::Trace))
     {
-        QNTRACE("Added resources: ");
+        QNTRACE("note_editor", "Added resources: ");
         for(const auto & resource: qAsConst(addedResources)) {
-            QNTRACE(resource);
+            QNTRACE("note_editor", resource);
         }
 
-        QNTRACE("Resource file storage paths: ");
+        QNTRACE("note_editor", "Resource file storage paths: ");
         for(const auto & path: qAsConst(resourceFileStoragePaths)) {
-            QNTRACE(path);
+            QNTRACE("note_editor", path);
         }
     }
 
@@ -2641,7 +2703,8 @@ void NoteEditorPrivate::onInsertHtmlDelegateFinished(
 
 void NoteEditorPrivate::onInsertHtmlDelegateError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onInsertHtmlDelegateError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onInsertHtmlDelegateError: "
+        << error);
 
     Q_EMIT notifyError(error);
 
@@ -2655,7 +2718,8 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onInsertHtmlUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onInsertHtmlUndoRedoFinished: "
+        << data);
 
     Q_UNUSED(extraData);
 
@@ -2668,7 +2732,7 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of html insertion "
                        "undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2693,7 +2757,7 @@ void NoteEditorPrivate::onInsertHtmlUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2706,7 +2770,8 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSourceCodeFormatUndoRedoFinished: " << data);
 
     Q_UNUSED(extraData)
 
@@ -2719,7 +2784,7 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of source code "
                        "formatting undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2743,7 +2808,7 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -2754,13 +2819,14 @@ void NoteEditorPrivate::onSourceCodeFormatUndoRedoFinished(
 
 void NoteEditorPrivate::onUndoCommandError(ErrorString error)
 {
-    QNDEBUG("NoteEditorPrivate::onUndoCommandError: " << error);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onUndoCommandError: " << error);
     Q_EMIT notifyError(error);
 }
 
 void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSpellCheckerDictionaryEnabledOrDisabled: "
         << "checked = " << (checked ? "true" : "false"));
 
     auto * pAction = qobject_cast<QAction*>(sender());
@@ -2770,7 +2836,7 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
             QT_TR_NOOP("Can't change the enabled/disabled state of a spell "
                        "checker dictionary: internal error, can't cast "
                        "the slot invoker to QAction"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -2781,7 +2847,7 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
             QT_TR_NOOP("Can't change the enabled/disabled state of a spell "
                        "checker dictionary: internal error, the spell checker "
                        "is not set up for the note editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -2797,8 +2863,8 @@ void NoteEditorPrivate::onSpellCheckerDictionaryEnabledOrDisabled(bool checked)
     }
 
     if (!m_spellCheckerEnabled) {
-        QNDEBUG("The spell checker is not enabled at the moment, "
-            << "won't refresh it");
+        QNDEBUG("note_editor", "The spell checker is not enabled at "
+            << "the moment, won't refresh it");
         return;
     }
 
@@ -2811,7 +2877,8 @@ void NoteEditorPrivate::onPageHtmlReceivedForPrinting(
     const QString & html,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onPageHtmlReceivedForPrinting: " << html);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onPageHtmlReceivedForPrinting: "
+        << html);
 
     Q_UNUSED(extraData)
     m_htmlForPrinting = html;
@@ -2821,13 +2888,16 @@ void NoteEditorPrivate::onPageHtmlReceivedForPrinting(
 
 void NoteEditorPrivate::clearCurrentNoteInfo()
 {
-    QNDEBUG("NoteEditorPrivate::clearCurrentNoteInfo");
+    QNDEBUG("note_editor", "NoteEditorPrivate::clearCurrentNoteInfo");
 
     // Remove the no longer needed html file with the note editor page
     if (m_pNote)
     {
         QFileInfo noteEditorPageFileInfo(noteEditorPagePath());
-        if (noteEditorPageFileInfo.exists() && noteEditorPageFileInfo.isFile()) {
+
+        if (noteEditorPageFileInfo.exists() &&
+            noteEditorPageFileInfo.isFile())
+        {
             Q_UNUSED(removeFile(noteEditorPageFileInfo.absoluteFilePath()))
         }
     }
@@ -2877,10 +2947,11 @@ void NoteEditorPrivate::clearCurrentNoteInfo()
 
 void NoteEditorPrivate::reloadCurrentNote()
 {
-    QNDEBUG("NoteEditorPrivate::reloadCurrentNote");
+    QNDEBUG("note_editor", "NoteEditorPrivate::reloadCurrentNote");
 
     if (Q_UNLIKELY(m_noteLocalUid.isEmpty())) {
-        QNWARNING("Can't reload current note - no note is set to the editor");
+        QNWARNING("note_editor", "Can't reload current note - no note is set "
+            << "to the editor");
         return;
     }
 
@@ -2899,7 +2970,8 @@ void NoteEditorPrivate::reloadCurrentNote()
 
 void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
 {
-    QNDEBUG("NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::clearPrepareNoteImageResourcesProgressDialog");
 
     if (!m_pPrepareNoteImageResourcesProgressDialog) {
         return;
@@ -2913,7 +2985,8 @@ void NoteEditorPrivate::clearPrepareNoteImageResourcesProgressDialog()
 void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
     const QString & resourceLocalUid)
 {
-    QNDEBUG("NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::clearPrepareResourceForOpeningProgressDialog: "
         << "resource local uid = " << resourceLocalUid);
 
     auto it = std::find_if(
@@ -2924,7 +2997,8 @@ void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
         });
 
     if (Q_UNLIKELY(it == m_prepareResourceForOpeningProgressDialogs.end())) {
-        QNDEBUG("Haven't found QProgressDialog for this resource");
+        QNDEBUG("note_editor", "Haven't found QProgressDialog for this "
+            << "resource");
         return;
     }
 
@@ -2937,13 +3011,13 @@ void NoteEditorPrivate::clearPrepareResourceForOpeningProgressDialog(
 
 void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
 {
-    QNDEBUG("NoteEditorPrivate::timerEvent: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::timerEvent: "
         << (pEvent
             ? QString::number(pEvent->timerId())
             : QStringLiteral("<null>")));
 
     if (Q_UNLIKELY(!pEvent)) {
-        QNINFO("Detected null pointer to timer event");
+        QNINFO("note_editor", "Detected null pointer to timer event");
         return;
     }
 
@@ -2951,16 +3025,16 @@ void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
     {
         if (m_contentChangedSinceWatchingStart)
         {
-            QNTRACE("Note editor page's content has been changed "
-                << "lately, the editing is most likely in progress "
+            QNTRACE("note_editor", "Note editor page's content has been "
+                << "changed lately, the editing is most likely in progress "
                 << "now, postponing the conversion to ENML");
             m_contentChangedSinceWatchingStart = false;
             return;
         }
 
         ErrorString error;
-        QNTRACE("Looks like the note editing has stopped for a while, "
-            << "will convert the note editor page's content to ENML");
+        QNTRACE("note_editor", "Looks like the note editing has stopped for "
+            << "a while, will convert the note editor page's content to ENML");
         bool res = htmlToNoteContent(error);
         if (!res) {
             Q_EMIT notifyError(error);
@@ -2977,13 +3051,13 @@ void NoteEditorPrivate::timerEvent(QTimerEvent * pEvent)
 void NoteEditorPrivate::dragMoveEvent(QDragMoveEvent * pEvent)
 {
     if (Q_UNLIKELY(!pEvent)) {
-        QNINFO("Detected null pointer to drag move event");
+        QNINFO("note_editor", "Detected null pointer to drag move event");
         return;
     }
 
     const auto * pMimeData = pEvent->mimeData();
     if (Q_UNLIKELY(!pMimeData)) {
-        QNWARNING("Null pointer to mime data from drag move "
+        QNWARNING("note_editor", "Null pointer to mime data from drag move "
             << "event was detected");
         return;
     }
@@ -3004,7 +3078,7 @@ void NoteEditorPrivate::dropEvent(QDropEvent * pEvent)
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 void NoteEditorPrivate::getHtmlForPrinting()
 {
-    QNDEBUG("NoteEditorPrivate::getHtmlForPrinting");
+    QNDEBUG("note_editor", "NoteEditorPrivate::getHtmlForPrinting");
 
     GET_PAGE()
 
@@ -3022,17 +3096,18 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
     auto sit =
         m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.find(
             resourceLocalUid);
+
     if (sit != m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.end())
     {
-        QNDEBUG("NoteEditorPrivate::onFoundResourceData: resource local uid = "
-            << resourceLocalUid);
-        QNTRACE(resource);
+        QNDEBUG("note_editor", "NoteEditorPrivate::onFoundResourceData: "
+            << "resource local uid = " << resourceLocalUid);
+        QNTRACE("note_editor", resource);
 
         Q_UNUSED(m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.erase(
             sit))
 
         if (Q_UNLIKELY(!m_pNote)) {
-            QNDEBUG("No note is set to the editor");
+            QNDEBUG("note_editor", "No note is set to the editor");
             return;
         }
 
@@ -3053,13 +3128,13 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
                 QT_TR_NOOP("Can't save attachment data to a file: "
                            "the attachment to be saved was not found "
                            "within the note"));
-            QNWARNING(errorDescription << ", resource local uid = "
-                << resourceLocalUid);
+            QNWARNING("note_editor", errorDescription
+                << ", resource local uid = " << resourceLocalUid);
             Q_EMIT notifyError(errorDescription);
             return;
         }
 
-        QNTRACE("Updating the resource within the note");
+        QNTRACE("note_editor", "Updating the resource within the note");
         resources[resourceIndex] = resource;
         m_pNote->setResources(resources);
         Q_EMIT currentNoteChanged(*m_pNote);
@@ -3071,16 +3146,16 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
         resourceLocalUid);
     if (iit != m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.end())
     {
-        QNDEBUG("NoteEditorPrivate::onFoundResourceData: "
+        QNDEBUG("note_editor", "NoteEditorPrivate::onFoundResourceData: "
             << "resource local uid = " << resourceLocalUid);
-        QNTRACE(resource);
+        QNTRACE("note_editor", resource);
 
         Rotation rotationDirection = iit.value();
         Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.erase(
             iit))
 
         if (Q_UNLIKELY(!m_pNote)) {
-            QNDEBUG("No note is set to the editor");
+            QNDEBUG("note_editor", "No note is set to the editor");
             return;
         }
 
@@ -3089,7 +3164,8 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
             ErrorString errorDescription(
                 QT_TR_NOOP("Can't rotate image attachment: the image "
                            "attachment has neither data nor data hash"));
-            QNWARNING(errorDescription << ", resource: " << resource);
+            QNWARNING("note_editor", errorDescription << ", resource: "
+                << resource);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -3098,7 +3174,7 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
         int resourceIndex = -1;
         for(int i = 0, size = resources.size(); i < size; ++i)
         {
-            const Resource & currentResource = qAsConst(resources)[i];
+            const auto & currentResource = qAsConst(resources)[i];
             if (currentResource.localUid() == resourceLocalUid) {
                 resourceIndex = i;
                 break;
@@ -3110,8 +3186,8 @@ void NoteEditorPrivate::onFoundResourceData(Resource resource)
             ErrorString errorDescription(
                 QT_TR_NOOP("Can't rotate image attachment: the attachment to "
                            "be rotated was not found within the note"));
-            QNWARNING(errorDescription << ", resource local uid = "
-                << resourceLocalUid);
+            QNWARNING("note_editor", errorDescription
+                << ", resource local uid = " << resourceLocalUid);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -3137,14 +3213,14 @@ void NoteEditorPrivate::onFailedToFindResourceData(
             resourceLocalUid);
     if (sit != m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.end())
     {
-        QNDEBUG("NoteEditorPrivate::onFailedToFindResourceData: "
+        QNDEBUG("note_editor", "NoteEditorPrivate::onFailedToFindResourceData: "
             << "resource local uid = " << resourceLocalUid);
 
         Q_UNUSED(m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile.erase(
             sit))
 
         if (Q_UNLIKELY(!m_pNote)) {
-            QNDEBUG("No note is set to the editor");
+            QNDEBUG("note_editor", "No note is set to the editor");
             return;
         }
 
@@ -3154,23 +3230,25 @@ void NoteEditorPrivate::onFailedToFindResourceData(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error << ", resource local uid = " << resourceLocalUid);
+        QNWARNING("note_editor", error << ", resource local uid = "
+            << resourceLocalUid);
         Q_EMIT notifyError(error);
     }
 
     auto iit =
         m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.find(
             resourceLocalUid);
+
     if (iit != m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.end())
     {
-        QNDEBUG("NoteEditorPrivate::onFailedToFindResourceData: "
+        QNDEBUG("note_editor", "NoteEditorPrivate::onFailedToFindResourceData: "
             << "resource local uid = " << resourceLocalUid);
 
         Q_UNUSED(m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage.erase(
             iit))
 
         if (Q_UNLIKELY(!m_pNote)) {
-            QNDEBUG("No note is set to the editor");
+            QNDEBUG("note_editor", "No note is set to the editor");
             return;
         }
 
@@ -3180,7 +3258,8 @@ void NoteEditorPrivate::onFailedToFindResourceData(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error << ", resource local uid = " << resourceLocalUid);
+        QNWARNING("note_editor", error << ", resource local uid = "
+            << resourceLocalUid);
         Q_EMIT notifyError(error);
     }
 }
@@ -3192,9 +3271,9 @@ void NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onFailedToPutResourceDataInTemporaryFile: "
-        << "resource local uid = " << resourceLocalUid
-        << ", note local uid = " << noteLocalUid
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onFailedToPutResourceDataInTemporaryFile: resource local uid = "
+        << resourceLocalUid << ", note local uid = " << noteLocalUid
         << ", error description: " << errorDescription);
 
     Q_EMIT notifyError(errorDescription);
@@ -3207,12 +3286,13 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationProgress: "
-        << "progress = " << progress << ", note local uid = " << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onNoteResourceTemporaryFilesPreparationProgress: progress = "
+        << progress << ", note local uid = " << noteLocalUid);
 
     if (Q_UNLIKELY(!m_pPrepareNoteImageResourcesProgressDialog)) {
-        QNDEBUG("Unexpectedly missing prepare note image resources "
-            << "progress dialog, won't do anything");
+        QNDEBUG("note_editor", "Unexpectedly missing prepare note image "
+            << "resources progress dialog, won't do anything");
         return;
     }
 
@@ -3232,9 +3312,9 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteResourceTemporaryFilesPreparationError: "
-        << "note local uid = " << noteLocalUid
-        << ", error description: " << errorDescription);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onNoteResourceTemporaryFilesPreparationError: note local uid = "
+        << noteLocalUid << ", error description: " << errorDescription);
 
     clearPrepareNoteImageResourcesProgressDialog();
     Q_EMIT notifyError(errorDescription);
@@ -3246,8 +3326,9 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteResourceTemporaryFilesReady: "
-        << "note local uid = " << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onNoteResourceTemporaryFilesReady: note local uid = "
+        << noteLocalUid);
 
     /**
      * All note's image resources (if any) were written to temporary files so
@@ -3267,12 +3348,13 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
     QString imageResourceMimePrefix = QStringLiteral("image/");
     for(const auto & resource: qAsConst(resources))
     {
-        QNTRACE("Processing resource: " << resource);
+        QNTRACE("note_editor", "Processing resource: " << resource);
 
         if (!resource.hasMime() ||
             !resource.mime().startsWith(imageResourceMimePrefix))
         {
-            QNTRACE("Skipping the resource with inappropriate mime type: "
+            QNTRACE("note_editor", "Skipping the resource with inappropriate "
+                << "mime type: "
                 << (resource.hasMime()
                     ? resource.mime()
                     : QStringLiteral("<not set>")));
@@ -3280,12 +3362,12 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
         }
 
         if (Q_UNLIKELY(!resource.hasDataHash())) {
-            QNTRACE("Skipping the resource without data hash");
+            QNTRACE("note_editor", "Skipping the resource without data hash");
             continue;
         }
 
         if (Q_UNLIKELY(!resource.hasDataSize())) {
-            QNTRACE("Skipping the resource without data size");
+            QNTRACE("note_editor", "Skipping the resource without data size");
             continue;
         }
 
@@ -3302,7 +3384,7 @@ void NoteEditorPrivate::onNoteResourceTemporaryFilesReady(QString noteLocalUid)
             resourceLocalUid,
             errorDescription);
         if (Q_UNLIKELY(linkFilePath.isEmpty())) {
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             // Since the proper way has failed, use the improper one as a fallback
             linkFilePath = fileStoragePath;
         }
@@ -3345,9 +3427,9 @@ void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress: "
-        << "progress = " << progress
-        << ", resource local uid = " << resourceLocalUid
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onOpenResourceInExternalEditorPreparationProgress: progress = "
+        << progress << ", resource local uid = " << resourceLocalUid
         << ", note local uid = " << noteLocalUid);
 
     auto it = std::find_if(
@@ -3358,7 +3440,8 @@ void NoteEditorPrivate::onOpenResourceInExternalEditorPreparationProgress(
         });
 
     if (Q_UNLIKELY(it == m_prepareResourceForOpeningProgressDialogs.end())) {
-        QNDEBUG("Haven't found QProgressDialog for this resource");
+        QNDEBUG("note_editor", "Haven't found QProgressDialog for this "
+            << "resource");
         return;
     }
 
@@ -3380,9 +3463,9 @@ void NoteEditorPrivate::onFailedToOpenResourceInExternalEditor(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onFailedToOpenResourceInExternalEditor: "
-        << "resource local uid = " << resourceLocalUid
-        << ", note local uid = " << noteLocalUid
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onFailedToOpenResourceInExternalEditor: resource local uid = "
+        << resourceLocalUid << ", note local uid = " << noteLocalUid
         << ", error description = " << errorDescription);
 
     clearPrepareResourceForOpeningProgressDialog(resourceLocalUid);
@@ -3396,16 +3479,16 @@ void NoteEditorPrivate::onOpenedResourceInExternalEditor(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onOpenedResourceInExternalEditor: "
-        << "resource local uid = " << resourceLocalUid
-        << ", note local uid = " << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onOpenedResourceInExternalEditor: resource local uid = "
+        << resourceLocalUid << ", note local uid = " << noteLocalUid);
 
     clearPrepareResourceForOpeningProgressDialog(resourceLocalUid);
 }
 
 void NoteEditorPrivate::init()
 {
-    QNDEBUG("NoteEditorPrivate::init");
+    QNDEBUG("note_editor", "NoteEditorPrivate::init");
 
     CHECK_ACCOUNT(QT_TR_NOOP("Can't initialize the note editor"))
 
@@ -3415,7 +3498,7 @@ void NoteEditorPrivate::init()
         ErrorString error(
             QT_TR_NOOP("Can't initialize the note editor: account "
                        "name is empty"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -3426,7 +3509,7 @@ void NoteEditorPrivate::init()
         ErrorString error(
             QT_TR_NOOP("Can't initialize the note editor: account "
                        "persistent storage path is empty"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -3454,8 +3537,8 @@ void NoteEditorPrivate::onNoteSavedToLocalStorage(QString noteLocalUid)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteSavedToLocalStorage: note local uid = "
-        << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNoteSavedToLocalStorage: "
+        << "note local uid = " << noteLocalUid);
 
     m_needSavingNoteInLocalStorage = false;
     m_pendingNoteSavingInLocalStorage = false;
@@ -3484,9 +3567,9 @@ void NoteEditorPrivate::onFailedToSaveNoteToLocalStorage(
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onFailedToSaveNoteToLocalStorage: "
-        << "note local uid = " << noteLocalUid
-        << ", error description: " << errorDescription);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onFailedToSaveNoteToLocalStorage: note local uid = "
+        << noteLocalUid << ", error description: " << errorDescription);
 
     m_pendingNoteSavingInLocalStorage = false;
     m_shouldRepeatSavingNoteInLocalStorage = false;
@@ -3500,7 +3583,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onFoundNoteAndNotebook: note = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onFoundNoteAndNotebook: note = "
         << note << "\nNotebook = " << notebook);
 
     m_pNotebook.reset(new Notebook(notebook));
@@ -3530,7 +3613,8 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
         m_pPluginFactory->setNote(*m_pNote);
 
         if (missingPluginFactory) {
-            QNDEBUG("Setting note editor plugin factory to the page");
+            QNDEBUG("note_editor", "Setting note editor plugin factory to "
+                << "the page");
             pNoteEditorPage->setPluginFactory(m_pPluginFactory);
         }
     }
@@ -3578,7 +3662,7 @@ void NoteEditorPrivate::onFoundNoteAndNotebook(Note note, Notebook notebook)
 
     Q_EMIT currentNoteChanged(*m_pNote);
     noteToEditorContent();
-    QNTRACE("Done setting the current note and notebook");
+    QNTRACE("note_editor", "Done setting the current note and notebook");
 }
 
 void NoteEditorPrivate::onFailedToFindNoteOrNotebook(
@@ -3588,7 +3672,7 @@ void NoteEditorPrivate::onFailedToFindNoteOrNotebook(
         return;
     }
 
-    QNWARNING("NoteEditorPrivate::onFailedToFindNoteOrNotebook: "
+    QNWARNING("note_editor", "NoteEditorPrivate::onFailedToFindNoteOrNotebook: "
         << "note local uid = " << noteLocalUid
         << ", error description: " << errorDescription);
 
@@ -3605,21 +3689,21 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteUpdated: " << note);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNoteUpdated: " << note);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         if (m_pNotebook)
         {
-            QNDEBUG("Current note is unexpectedly empty on note "
+            QNDEBUG("note_editor", "Current note is unexpectedly empty on note "
                 << "update, acting as if the note has just been found");
             Notebook notebook = *m_pNotebook;
             onFoundNoteAndNotebook(note, notebook);
         }
         else
         {
-            QNWARNING("Can't handle the update of note: note editor "
-                << "contains neither note nor notebook");
+            QNWARNING("note_editor", "Can't handle the update of note: "
+                << "note editor contains neither note nor notebook");
             // Trying to recover through re-requesting note and notebook
             // from the local storage
             m_noteLocalUid.clear();
@@ -3630,16 +3714,16 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
     }
 
     if (Q_UNLIKELY(!note.hasNotebookLocalUid())) {
-        QNWARNING("Can't handle the update of a note: the updated "
-            << "note has no notebook local uid: " << note);
+        QNWARNING("note_editor", "Can't handle the update of a note: "
+            << "the updated note has no notebook local uid: " << note);
         return;
     }
 
     if (Q_UNLIKELY(!m_pNotebook) ||
         (m_pNotebook->localUid() != note.notebookLocalUid()))
     {
-        QNDEBUG("Note's notebook has changed: new notebook local uid = "
-            << note.notebookLocalUid());
+        QNDEBUG("note_editor", "Note's notebook has changed: new notebook "
+            << "local uid = " << note.notebookLocalUid());
 
         // Re-requesting both note and notebook from
         // NoteEditorLocalStorageBroker
@@ -3687,8 +3771,8 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
     }
 
     if (!noteChanged) {
-        QNDEBUG("Haven't found the updates within the note which "
-            << "would be sufficient enough to reload the note editor");
+        QNDEBUG("note_editor", "Haven't found the updates within the note "
+            << "which would be sufficient enough to reload the note editor");
         *m_pNote = note;
         return;
     }
@@ -3696,7 +3780,8 @@ void NoteEditorPrivate::onNoteUpdated(Note note)
     // FIXME: if the note was modified, need to let the user choose what to do -
     // either continue to edit the note or reload it
 
-    QNDEBUG("Note has changed substantially, need to reload the editor");
+    QNDEBUG("note_editor", "Note has changed substantially, need to reload "
+        << "the editor");
     *m_pNote = note;
     reloadCurrentNote();
 }
@@ -3707,7 +3792,7 @@ void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNotebookUpdated");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNotebookUpdated");
 
     bool restrictionsChanged = false;
     if (m_pNotebook->hasRestrictions() != notebook.hasRestrictions())
@@ -3732,12 +3817,12 @@ void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
     *m_pNotebook = notebook;
 
     if (!restrictionsChanged) {
-        QNDEBUG("Detected no change of notebook restrictions");
+        QNDEBUG("note_editor", "Detected no change of notebook restrictions");
         return;
     }
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNWARNING("Note editor has notebook but no note");
+        QNWARNING("note_editor", "Note editor has notebook but no note");
         return;
     }
 
@@ -3751,7 +3836,7 @@ void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
     }
 
     if (!canUpdateNote && m_isPageEditable) {
-        QNDEBUG("Note has become non-editable");
+        QNDEBUG("note_editor", "Note has become non-editable");
         setPageEditable(false);
         return;
     }
@@ -3759,18 +3844,18 @@ void NoteEditorPrivate::onNotebookUpdated(Notebook notebook)
     if (canUpdateNote && !m_isPageEditable)
     {
         if (m_pNote->hasActive() && !m_pNote->active()) {
-            QNDEBUG("Notebook no longer restricts the update of "
+            QNDEBUG("note_editor", "Notebook no longer restricts the update of "
                 << "a note but the note is not active");
             return;
         }
 
         if (m_pNote->isInkNote()) {
-            QNDEBUG("Notebook no longer restricts the update of "
+            QNDEBUG("note_editor", "Notebook no longer restricts the update of "
                 << "a note but the note is an ink note");
             return;
         }
 
-        QNDEBUG("Note has become editable");
+        QNDEBUG("note_editor", "Note has become editable");
         setPageEditable(true);
         return;
     }
@@ -3782,7 +3867,8 @@ void NoteEditorPrivate::onNoteDeleted(QString noteLocalUid)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNoteDeleted: " << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNoteDeleted: "
+        << noteLocalUid);
 
     Q_EMIT noteDeleted(m_noteLocalUid);
 
@@ -3805,7 +3891,7 @@ void NoteEditorPrivate::onNotebookDeleted(QString notebookLocalUid)
         return;
     }
 
-    QNDEBUG("NoteEditorPrivate::onNotebookDeleted: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::onNotebookDeleted: "
         << notebookLocalUid);
 
     Q_EMIT noteDeleted(m_noteLocalUid);
@@ -3826,7 +3912,9 @@ void NoteEditorPrivate::onNotebookDeleted(QString notebookLocalUid)
 void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
 {
     QString urlString = url.toString();
-    QNDEBUG("NoteEditorPrivate::handleHyperlinkClicked: " << urlString);
+
+    QNDEBUG("note_editor", "NoteEditorPrivate::handleHyperlinkClicked: "
+        << urlString);
 
     if (urlString.startsWith(QStringLiteral("evernote:///"))) {
         handleInAppLinkClicked(urlString);
@@ -3838,7 +3926,8 @@ void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
 
 void NoteEditorPrivate::handleInAppLinkClicked(const QString & urlString)
 {
-    QNDEBUG("NoteEditorPrivate::handleInAppLinkClicked: " << urlString);
+    QNDEBUG("note_editor", "NoteEditorPrivate::handleInAppLinkClicked: "
+        << urlString);
 
     QString userId, shardId, noteGuid;
     ErrorString errorDescription;
@@ -3848,14 +3937,15 @@ void NoteEditorPrivate::handleInAppLinkClicked(const QString & urlString)
         shardId,
         noteGuid,
         errorDescription);
+
     if (!res) {
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
 
-    QNTRACE("Parsed in-app note link: user id = " << userId << ", shard id = "
-        << shardId << ", note guid = " << noteGuid);
+    QNTRACE("note_editor", "Parsed in-app note link: user id = " << userId
+        << ", shard id = " << shardId << ", note guid = " << noteGuid);
 
     Q_EMIT inAppNoteLinkClicked(userId, shardId, noteGuid);
 }
@@ -3872,6 +3962,7 @@ bool NoteEditorPrivate::parseInAppLink(
 
     QRegExp regex(
         QStringLiteral("evernote:///view/([^/]+)/([^/]+)/([^/]+)(/.*)?"));
+
     int pos = regex.indexIn(urlString);
     if (pos < 0)
     {
@@ -3909,28 +4000,28 @@ bool NoteEditorPrivate::parseInAppLink(
 bool NoteEditorPrivate::checkNoteSize(
     const QString & newNoteContent, ErrorString & errorDescription) const
 {
-    QNDEBUG("NoteEditorPrivate::checkNoteSize");
+    QNDEBUG("note_editor", "NoteEditorPrivate::checkNoteSize");
 
     if (Q_UNLIKELY(!m_pNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Internal error: can't check the note size on note "
                        "editor update: no note is set to the editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
     qint64 noteSize = noteResourcesSize();
     noteSize += newNoteContent.size();
 
-    QNTRACE("New note content size = " << newNoteContent.size()
+    QNTRACE("note_editor", "New note content size = " << newNoteContent.size()
         << ", total note size = " << noteSize);
 
     if (m_pNote->hasNoteLimits())
     {
         const qevercloud::NoteLimits & noteLimits = m_pNote->noteLimits();
-        QNTRACE("Note has its own limits, will use them to check "
-            << "the note size: " << noteLimits);
+        QNTRACE("note_editor", "Note has its own limits, will use them to "
+            << "check the note size: " << noteLimits);
 
         if (noteLimits.noteSizeMax.isSet() &&
             (Q_UNLIKELY(noteLimits.noteSizeMax.ref() < noteSize)))
@@ -3940,13 +4031,13 @@ bool NoteEditorPrivate::checkNoteSize(
                            "exceeds the allowed maximum"));
             errorDescription.details() = humanReadableSize(
                 static_cast<quint64>(noteLimits.noteSizeMax.ref()));
-            QNINFO(errorDescription);
+            QNINFO("note_editor", errorDescription);
             return false;
         }
     }
     else
     {
-        QNTRACE("Note has no its own limits, will use "
+        QNTRACE("note_editor", "Note has no its own limits, will use "
             << "the account-wise limits to check the note size");
 
         if (Q_UNLIKELY(!m_pAccount))
@@ -3955,7 +4046,7 @@ bool NoteEditorPrivate::checkNoteSize(
                 QT_TR_NOOP("Internal error: can't check the note size on note "
                            "editor update: no account info is set to "
                            "the editor"));
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             return false;
         }
 
@@ -3966,7 +4057,7 @@ bool NoteEditorPrivate::checkNoteSize(
                            "exceeds the allowed maximum"));
             errorDescription.details() = humanReadableSize(
                 static_cast<quint64>(m_pAccount->noteSizeMax()));
-            QNINFO(errorDescription);
+            QNINFO("note_editor", errorDescription);
             return false;
         }
     }
@@ -3976,14 +4067,16 @@ bool NoteEditorPrivate::checkNoteSize(
 
 void NoteEditorPrivate::pushNoteContentEditUndoCommand()
 {
-    QNDEBUG("NoteEditorPrivate::pushNoteTextEditUndoCommand");
+    QNDEBUG("note_editor", "NoteEditorPrivate::pushNoteTextEditUndoCommand");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         m_pUndoStack,
         QStringLiteral("Undo stack for note editor wasn't initialized"));
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNINFO("Ignoring the content changed signal as the note pointer is null");
+        QNINFO("note_editor", "Ignoring the content changed signal as the note "
+            << "pointer is null");
         return;
     }
 
@@ -4042,7 +4135,8 @@ void NoteEditorPrivate::onManagedPageActionFinished(
     const QVariant & result,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onManagedPageActionFinished: " << result);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onManagedPageActionFinished: "
+        << result);
     Q_UNUSED(extraData)
 
     auto resultMap = result.toMap();
@@ -4053,7 +4147,7 @@ void NoteEditorPrivate::onManagedPageActionFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of managed page "
                        "action execution attempt"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -4069,7 +4163,7 @@ void NoteEditorPrivate::onManagedPageActionFinished(
 
         ErrorString error(QT_TR_NOOP("Can't execute the page action"));
         error.details() = errorMessage;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -4081,7 +4175,7 @@ void NoteEditorPrivate::onManagedPageActionFinished(
 
 void NoteEditorPrivate::updateJavaScriptBindings()
 {
-    QNDEBUG("NoteEditorPrivate::updateJavaScriptBindings");
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateJavaScriptBindings");
 
     updateColResizableTableBindings();
 
@@ -4100,12 +4194,12 @@ void NoteEditorPrivate::updateJavaScriptBindings()
 
 void NoteEditorPrivate::changeFontSize(const bool increase)
 {
-    QNDEBUG("NoteEditorPrivate::changeFontSize: increase = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::changeFontSize: increase = "
         << (increase ? "true" : "false"));
 
     int fontSize = m_font.pointSize();
     if (fontSize < 0) {
-        QNTRACE("Font size is negative which most likely means "
+        QNTRACE("note_editor", "Font size is negative which most likely means "
             << "the font is not set yet, nothing to do. "
             << "Current font: " << m_font);
         return;
@@ -4116,7 +4210,7 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
         m_font.family(),
         m_font.styleName());
     if (fontSizes.isEmpty()) {
-        QNTRACE("Coulnd't find point sizes for font family "
+        QNTRACE("note_editor", "Coulnd't find point sizes for font family "
             << m_font.family() << ", will use standard sizes instead");
         fontSizes = fontDatabase.standardSizes();
     }
@@ -4124,7 +4218,7 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
     int fontSizeIndex = fontSizes.indexOf(fontSize);
     if (fontSizeIndex < 0)
     {
-        QNTRACE("Couldn't find font size " << fontSize
+        QNTRACE("note_editor", "Couldn't find font size " << fontSize
             << " within the available sizes, will take "
             << "the closest one instead");
         const int numFontSizes = fontSizes.size();
@@ -4138,7 +4232,7 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
             if (currentSmallestDiscrepancy > discrepancy) {
                 currentSmallestDiscrepancy = discrepancy;
                 currentClosestIndex = i;
-                QNTRACE("Updated current closest index to " << i
+                QNTRACE("note_editor", "Updated current closest index to " << i
                     << ": font size = " << value);
             }
         }
@@ -4157,15 +4251,15 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
             fontSize = fontSizes.at(fontSizeIndex - 1);
         }
         else {
-            QNTRACE("Can't " << (increase ? "increase" : "decrease")
-                << " the font size: hit the boundary of "
-                << "available font sizes");
+            QNTRACE("note_editor", "Can't "
+                << (increase ? "increase" : "decrease")
+                << " the font size: hit the boundary of available font sizes");
             return;
         }
     }
     else
     {
-        QNTRACE("Wasn't able to find even the closest font size "
+        QNTRACE("note_editor", "Wasn't able to find even the closest font size "
             << "within the available ones, will simply "
             << (increase ? "increase" : "decrease")
             << " the given font size by 1 pt and see what happens");
@@ -4187,7 +4281,7 @@ void NoteEditorPrivate::changeFontSize(const bool increase)
 
 void NoteEditorPrivate::changeIndentation(const bool increase)
 {
-    QNDEBUG("NoteEditorPrivate::changeIndentation: increase = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::changeIndentation: increase = "
         << (increase ? "true" : "false"));
 
     execJavascriptCommand(
@@ -4200,7 +4294,7 @@ void NoteEditorPrivate::findText(
     const QString & textToFind, const bool matchCase,
     const bool searchBackward, NoteEditorPage::Callback callback) const
 {
-    QNDEBUG("NoteEditorPrivate::findText: " << textToFind
+    QNDEBUG("note_editor", "NoteEditorPrivate::findText: " << textToFind
         << "; match case = "
         << (matchCase ? "true" : "false")
         << ", search backward = "
@@ -4256,7 +4350,7 @@ bool NoteEditorPrivate::searchHighlightEnabled() const
 void NoteEditorPrivate::setSearchHighlight(
     const QString & textToFind, const bool matchCase, const bool force) const
 {
-    QNDEBUG("NoteEditorPrivate::setSearchHighlight: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setSearchHighlight: "
         << textToFind << "; match case = "
         << (matchCase ? "true" : "false")
         << "; force = " << (force ? "true" : "false"));
@@ -4269,7 +4363,7 @@ void NoteEditorPrivate::setSearchHighlight(
              : Qt::CaseInsensitive)) == 0) &&
          (m_lastSearchHighlightedTextCaseSensitivity == matchCase) )
     {
-        QNTRACE("The text to find matches the one highlighted "
+        QNTRACE("note_editor", "The text to find matches the one highlighted "
             << "the last time as well as its case sensitivity");
         return;
     }
@@ -4295,14 +4389,14 @@ void NoteEditorPrivate::setSearchHighlight(
 void NoteEditorPrivate::highlightRecognizedImageAreas(
     const QString & textToFind, const bool matchCase) const
 {
-    QNDEBUG("NoteEditorPrivate::highlightRecognizedImageAreas");
+    QNDEBUG("note_editor", "NoteEditorPrivate::highlightRecognizedImageAreas");
 
     GET_PAGE()
     page->executeJavaScript(
         QStringLiteral("imageAreasHilitor.clearImageHilitors();"));
 
     if (m_lastSearchHighlightedText.isEmpty()) {
-        QNTRACE("Last search highlighted text is empty");
+        QNTRACE("note_editor", "Last search highlighted text is empty");
         return;
     }
 
@@ -4310,7 +4404,7 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
     escapeStringForJavaScript(escapedTextToFind);
 
     if (escapedTextToFind.isEmpty()) {
-        QNTRACE("Escaped search highlighted text is empty");
+        QNTRACE("note_editor", "Escaped search highlighted text is empty");
         return;
     }
 
@@ -4318,7 +4412,7 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
     {
         const QByteArray & resourceHash = it.key();
         const ResourceRecognitionIndices & recoIndices = it.value();
-        QNTRACE("Processing recognition data for resource hash "
+        QNTRACE("note_editor", "Processing recognition data for resource hash "
             << resourceHash.toHex());
 
         auto recoIndexItems = recoIndices.items();
@@ -4339,8 +4433,8 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
                          ? Qt::CaseSensitive
                          : Qt::CaseInsensitive)))
                 {
-                    QNTRACE("Found text item matching with the text to find: "
-                        << textItem.m_text);
+                    QNTRACE("note_editor", "Found text item matching with "
+                        << "the text to find: " << textItem.m_text);
                     matchFound = true;
                 }
             }
@@ -4362,8 +4456,8 @@ void NoteEditorPrivate::highlightRecognizedImageAreas(
 void NoteEditorPrivate::clearEditorContent(
     const BlankPageKind kind, const ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::clearEditorContent: blank page kind = "
-        << kind << ", error description = " << errorDescription);
+    QNDEBUG("note_editor", "NoteEditorPrivate::clearEditorContent: blank page "
+        << "kind = " << kind << ", error description = " << errorDescription);
 
     if (m_pageToNoteContentPostponeTimerId != 0) {
         killTimer(m_pageToNoteContentPostponeTimerId);
@@ -4413,10 +4507,10 @@ void NoteEditorPrivate::clearEditorContent(
 
 void NoteEditorPrivate::noteToEditorContent()
 {
-    QNDEBUG("NoteEditorPrivate::noteToEditorContent");
+    QNDEBUG("note_editor", "NoteEditorPrivate::noteToEditorContent");
 
     if (!m_pNote) {
-        QNDEBUG("No note has been set yet");
+        QNDEBUG("note_editor", "No note has been set yet");
         clearEditorContent();
         return;
     }
@@ -4431,8 +4525,8 @@ void NoteEditorPrivate::noteToEditorContent()
         noteContent = m_pNote->content();
     }
     else {
-        QNDEBUG("Note without content was inserted into the NoteEditor, "
-            << "setting up the empty note content");
+        QNDEBUG("note_editor", "Note without content was inserted into "
+            << "the NoteEditor, setting up the empty note content");
         noteContent = QStringLiteral("<en-note><div></div></en-note>");
     }
 
@@ -4446,11 +4540,12 @@ void NoteEditorPrivate::noteToEditorContent()
         error,
         *m_decryptedTextManager,
         extraData);
+
     if (!res)
     {
         ErrorString error(QT_TR_NOOP("Can't convert note's content to HTML"));
         error.details() = m_errorCachedMemory;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
         return;
@@ -4467,8 +4562,8 @@ void NoteEditorPrivate::noteToEditorContent()
         ErrorString error(
             QT_TR_NOOP("Can't find <body> tag in the result of note "
                        "to HTML conversion"));
-        QNWARNING(error << ", note content: " << m_pNote->content()
-            << ", html: " << m_htmlCachedMemory);
+        QNWARNING("note_editor", error << ", note content: "
+            << m_pNote->content() << ", html: " << m_htmlCachedMemory);
         clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
         return;
@@ -4484,8 +4579,8 @@ void NoteEditorPrivate::noteToEditorContent()
         error.setBase(
             QT_TR_NOOP("Can't find </body> tag in the result of note "
                        "to HTML conversion"));
-        QNWARNING(error << ", note content: " << m_pNote->content()
-            << ", html: " << m_htmlCachedMemory);
+        QNWARNING("note_editor", error << ", note content: "
+            << m_pNote->content() << ", html: " << m_htmlCachedMemory);
         clearEditorContent(BlankPageKind::InternalError, error);
         Q_EMIT notifyError(error);
         return;
@@ -4500,13 +4595,13 @@ void NoteEditorPrivate::noteToEditorContent()
         QStringLiteral("<br></br>"),
         QStringLiteral("</br>"));
 
-    QNTRACE("Note page HTML: " << m_htmlCachedMemory);
+    QNTRACE("note_editor", "Note page HTML: " << m_htmlCachedMemory);
     writeNotePageFile(m_htmlCachedMemory);
 }
 
 void NoteEditorPrivate::updateColResizableTableBindings()
 {
-    QNDEBUG("NoteEditorPrivate::updateColResizableTableBindings");
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateColResizableTableBindings");
 
     bool readOnly = !isPageEditable();
 
@@ -4526,7 +4621,7 @@ void NoteEditorPrivate::updateColResizableTableBindings()
 
 void NoteEditorPrivate::inkNoteToEditorContent()
 {
-    QNDEBUG("NoteEditorPrivate::inkNoteToEditorContent");
+    QNDEBUG("note_editor", "NoteEditorPrivate::inkNoteToEditorContent");
 
     m_lastFreeEnToDoIdNumber = 1;
     m_lastFreeHyperlinkIdNumber = 1;
@@ -4545,7 +4640,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
         const Resource & resource = qAsConst(resources).at(i);
 
         if (!resource.hasGuid()) {
-            QNWARNING("Detected ink note which has at least one "
+            QNWARNING("note_editor", "Detected ink note which has at least one "
                 << "resource without guid: note = " << *m_pNote
                 << "\nResource: " << resource);
             problemDetected = true;
@@ -4553,7 +4648,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
         }
 
         if (!resource.hasDataHash()) {
-            QNWARNING("Detected ink note which has at least one "
+            QNWARNING("note_editor", "Detected ink note which has at least one "
                 << "resource without data hash: note = " << *m_pNote
                 << "\nResource: " << resource);
             problemDetected = true;
@@ -4569,7 +4664,7 @@ void NoteEditorPrivate::inkNoteToEditorContent()
             !inkNoteImageFileInfo.isFile() ||
             !inkNoteImageFileInfo.isReadable())
         {
-            QNWARNING("Detected broken or nonexistent ink note "
+            QNWARNING("note_editor", "Detected broken or nonexistent ink note "
                 << "image file, check file at path "
                 << inkNoteImageFileInfo.absoluteFilePath());
             problemDetected = true;
@@ -4580,8 +4675,8 @@ void NoteEditorPrivate::inkNoteToEditorContent()
         escapeStringForJavaScript(inkNoteImageFilePath);
         if (Q_UNLIKELY(inkNoteImageFilePath.isEmpty()))
         {
-            QNWARNING("Unable to escape the ink note image file path: "
-                << inkNoteImageFileInfo.absoluteFilePath());
+            QNWARNING("note_editor", "Unable to escape the ink note image "
+                << "file path: " << inkNoteImageFileInfo.absoluteFilePath());
             problemDetected = true;
             break;
         }
@@ -4615,17 +4710,17 @@ void NoteEditorPrivate::inkNoteToEditorContent()
         inkNoteHtml += QStringLiteral("</div></body></html>");
     }
 
-    QNTRACE("Ink note html: " << inkNoteHtml);
+    QNTRACE("note_editor", "Ink note html: " << inkNoteHtml);
     writeNotePageFile(inkNoteHtml);
 }
 
 bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::htmlToNoteContent");
+    QNDEBUG("note_editor", "NoteEditorPrivate::htmlToNoteContent");
 
     if (!m_pNote) {
         errorDescription.setBase(QT_TR_NOOP("No note was set to note editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT cantConvertToNote(errorDescription);
         return false;
     }
@@ -4636,7 +4731,7 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
             QT_TR_NOOP("Current note is marked as read-only, "
                        "the changes won't be saved"));
 
-        QNINFO(errorDescription << ", note: local uid = "
+        QNINFO("note_editor", errorDescription << ", note: local uid = "
             << m_pNote->localUid() << ", guid = "
             << (m_pNote->hasGuid()
                 ? m_pNote->guid()
@@ -4660,7 +4755,7 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
                            "allow notes modification, the changes won't be "
                            "saved"));
 
-            QNINFO(errorDescription << ", note: local uid = "
+            QNINFO("note_editor", errorDescription << ", note: local uid = "
                 << m_pNote->localUid() << ", guid = " << (m_pNote->hasGuid()
                    ? m_pNote->guid()
                    : QStringLiteral("<null>"))
@@ -4698,8 +4793,8 @@ bool NoteEditorPrivate::htmlToNoteContent(ErrorString & errorDescription)
 void NoteEditorPrivate::updateHashForResourceTag(
     const QByteArray & oldResourceHash, const QByteArray & newResourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::updateHashForResourceTag: old hash = "
-        << oldResourceHash.toHex() << ", new hash = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateHashForResourceTag: "
+        << "old hash = " << oldResourceHash.toHex() << ", new hash = "
         << newResourceHash.toHex());
 
     GET_PAGE()
@@ -4713,7 +4808,7 @@ void NoteEditorPrivate::updateHashForResourceTag(
 
 void NoteEditorPrivate::provideSrcForResourceImgTags()
 {
-    QNDEBUG("NoteEditorPrivate::provideSrcForResourceImgTags");
+    QNDEBUG("note_editor", "NoteEditorPrivate::provideSrcForResourceImgTags");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("provideSrcForResourceImgTags();"));
@@ -4721,14 +4816,14 @@ void NoteEditorPrivate::provideSrcForResourceImgTags()
 
 void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::manualSaveResourceToFile");
+    QNDEBUG("note_editor", "NoteEditorPrivate::manualSaveResourceToFile");
 
     if (Q_UNLIKELY(!resource.hasDataBody() && !resource.hasAlternateDataBody()))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save resource to file: resource has "
                        "neither data body nor alternate data body"));
-        QNINFO(error << ", resource: " << resource);
+        QNINFO("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -4738,7 +4833,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
         ErrorString error(
             QT_TR_NOOP("Can't save resource to file: resource has "
                        "no mime type"));
-        QNINFO(error << ", resource: " << resource);
+        QNINFO("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -4766,7 +4861,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
             ErrorString error(
                 QT_TR_NOOP("Can't save resource to file: can't "
                            "identify resource's mime type"));
-            QNINFO(error << ", mime type name: " << mimeTypeName);
+            QNINFO("note_editor", error << ", mime type name: "
+                << mimeTypeName);
             Q_EMIT notifyError(error);
             return;
         }
@@ -4823,8 +4919,8 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
             childGroups.indexOf(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
         if (attachmentsSaveLocGroupIndex >= 0)
         {
-            QNTRACE("Found cached attachment save location group "
-                << "within application settings");
+            QNTRACE("note_editor", "Found cached attachment save location "
+                << "group within application settings");
 
             appSettings.beginGroup(NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY);
             auto cachedFileSuffixes = appSettings.childKeys();
@@ -4834,37 +4930,39 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
                 preferredSuffix = preferredSuffixes[i];
                 int indexInCache = cachedFileSuffixes.indexOf(preferredSuffix);
                 if (indexInCache < 0) {
-                    QNTRACE("Haven't found cached attachment save "
-                        << "directory for file suffix " << preferredSuffix);
+                    QNTRACE("note_editor", "Haven't found cached attachment "
+                        << "save directory for file suffix "
+                        << preferredSuffix);
                     continue;
                 }
 
                 QVariant dirValue = appSettings.value(preferredSuffix);
                 if (dirValue.isNull() || !dirValue.isValid()) {
-                    QNTRACE("Found inappropriate attachment save "
-                        << "directory for file suffix " << preferredSuffix);
+                    QNTRACE("note_editor", "Found inappropriate attachment "
+                        << "save directory for file suffix "
+                        << preferredSuffix);
                     continue;
                 }
 
                 QFileInfo dirInfo(dirValue.toString());
                 if (!dirInfo.exists())
                 {
-                    QNTRACE("Cached attachment save directory for "
-                        << "file suffix " << preferredSuffix
+                    QNTRACE("note_editor", "Cached attachment save directory "
+                        << "for file suffix " << preferredSuffix
                         << " does not exist: " << dirInfo.absolutePath());
                     continue;
                 }
                 else if (!dirInfo.isDir())
                 {
-                    QNTRACE("Cached attachment save directory for "
-                        << "file suffix " << preferredSuffix
+                    QNTRACE("note_editor", "Cached attachment save directory "
+                        << "for file suffix " << preferredSuffix
                         << " is not a directory: " << dirInfo.absolutePath());
                     continue;
                 }
                 else if (!dirInfo.isWritable())
                 {
-                    QNTRACE("Cached attachment save directory for "
-                        << "file suffix " << preferredSuffix
+                    QNTRACE("note_editor", "Cached attachment save directory "
+                        << "for file suffix " << preferredSuffix
                         << " is not writable: " << dirInfo.absolutePath());
                     continue;
                 }
@@ -4891,7 +4989,7 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
         filterString,
         pSelectedFilter);
     if (absoluteFilePath.isEmpty()) {
-        QNINFO("User cancelled saving resource to file");
+        QNINFO("note_editor", "User cancelled saving resource to file");
         return;
     }
 
@@ -4926,14 +5024,14 @@ void NoteEditorPrivate::manualSaveResourceToFile(const Resource & resource)
         saveResourceToFileRequestId,
         /* append = */ false);
 
-    QNDEBUG("Sent request to manually save resource to file, request id = "
-        << saveResourceToFileRequestId << ", resource local uid = "
-        << resource.localUid());
+    QNDEBUG("note_editor", "Sent request to manually save resource to file, "
+        << "request id = " << saveResourceToFileRequestId
+        << ", resource local uid = " << resource.localUid());
 }
 
 QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::buildGenericResourceImage: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::buildGenericResourceImage: "
         << "resource local uid = " << resource.localUid());
 
     QString resourceDisplayName = resource.displayName();
@@ -4941,7 +5039,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
         resourceDisplayName = tr("Attachment");
     }
 
-    QNTRACE("Resource display name = " << resourceDisplayName);
+    QNTRACE("note_editor", "Resource display name = " << resourceDisplayName);
 
     QFont font = m_font;
     font.setPointSize(10);
@@ -4999,8 +5097,8 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 
     if (!smartReplaceWorked)
     {
-        QNTRACE("Wasn't able to shorten the resource name nicely, "
-            << "will try to shorten it just somehow");
+        QNTRACE("note_editor", "Wasn't able to shorten the resource name "
+            << "nicely, will try to shorten it just somehow");
 
         width = fontMetricsWidth(fontMetrics, originalResourceDisplayName);
         int widthOverflow = width - maxResourceDisplayNameWidth;
@@ -5020,7 +5118,7 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
         }
     }
 
-    QNTRACE("(possibly) shortened resource display name: "
+    QNTRACE("note_editor", "(possibly) shortened resource display name: "
         << resourceDisplayName << ", width = "
         << fontMetricsWidth(fontMetrics, resourceDisplayName));
 
@@ -5045,14 +5143,14 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
         {
             resourceIcon = QIcon::fromTheme(mimeType.genericIconName());
             if (resourceIcon.isNull()) {
-                QNTRACE("Can't get icon from theme by name "
+                QNTRACE("note_editor", "Can't get icon from theme by name "
                     << mimeType.genericIconName());
                 useFallbackGenericResourceIcon = true;
             }
         }
         else
         {
-            QNTRACE("Can't get valid mime type for name "
+            QNTRACE("note_editor", "Can't get valid mime type for name "
                 << resourceMimeTypeName
                 << ", will use fallback generic resource icon");
             useFallbackGenericResourceIcon = true;
@@ -5060,8 +5158,10 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
     }
     else
     {
-        QNINFO("Found resource without mime type set: " << resource);
-        QNTRACE("Will use fallback generic resource icon");
+        QNINFO("note_editor", "Found resource without mime type set: "
+            << resource);
+
+        QNTRACE("note_editor", "Will use fallback generic resource icon");
         useFallbackGenericResourceIcon = true;
     }
 
@@ -5108,15 +5208,15 @@ QImage NoteEditorPrivate::buildGenericResourceImage(const Resource & resource)
 void NoteEditorPrivate::saveGenericResourceImage(
     const Resource & resource, const QImage & image)
 {
-    QNDEBUG("NoteEditorPrivate::saveGenericResourceImage: "
-            << "resource local uid = " << resource.localUid());
+    QNDEBUG("note_editor", "NoteEditorPrivate::saveGenericResourceImage: "
+        << "resource local uid = " << resource.localUid());
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't save the generic resource image: "
                        "no note is set to the editor"));
-        QNWARNING(error << ", resource: " << resource);
+        QNWARNING("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5126,7 +5226,7 @@ void NoteEditorPrivate::saveGenericResourceImage(
         ErrorString error(
             QT_TR_NOOP("Can't save generic resource image: resource has "
                        "neither data hash nor alternate data hash"));
-        QNWARNING(error << ", resource: " << resource);
+        QNWARNING("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5139,7 +5239,7 @@ void NoteEditorPrivate::saveGenericResourceImage(
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_saveGenericResourceImageToFileRequestIds.insert(requestId));
 
-    QNDEBUG("Emitting request to write generic resource image "
+    QNDEBUG("note_editor", "Emitting request to write generic resource image "
         << "for resource with local uid "
         << resource.localUid() << ", request id " << requestId);
 
@@ -5157,10 +5257,11 @@ void NoteEditorPrivate::saveGenericResourceImage(
 
 void NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags()
 {
-    QNDEBUG("NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::provideSrcAndOnClickScriptForImgEnCryptTags");
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNTRACE("No note is set for the editor");
+        QNTRACE("note_editor", "No note is set for the editor");
         return;
     }
 
@@ -5177,15 +5278,15 @@ void NoteEditorPrivate::provideSrcAndOnClickScriptForImgEnCryptTags()
 
 void NoteEditorPrivate::setupGenericResourceImages()
 {
-    QNDEBUG("NoteEditorPrivate::setupGenericResourceImages");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupGenericResourceImages");
 
     if (!m_pNote) {
-        QNDEBUG("No note to build generic resource images for");
+        QNDEBUG("note_editor", "No note to build generic resource images for");
         return;
     }
 
     if (!m_pNote->hasResources()) {
-        QNDEBUG("Note has no resources, nothing to do");
+        QNDEBUG("note_editor", "Note has no resources, nothing to do");
         return;
     }
 
@@ -5202,7 +5303,7 @@ void NoteEditorPrivate::setupGenericResourceImages()
         {
             mimeTypeName = resource.mime();
             if (mimeTypeName.startsWith(QStringLiteral("image/"))) {
-                QNTRACE("Skipping image resource " << resource);
+                QNTRACE("note_editor", "Skipping image resource " << resource);
                 continue;
             }
         }
@@ -5214,18 +5315,18 @@ void NoteEditorPrivate::setupGenericResourceImages()
     }
 
     if (resourceImagesCounter == 0) {
-        QNDEBUG("No generic resources requiring building custom images were "
-            << "found");
+        QNDEBUG("note_editor", "No generic resources requiring building "
+            << "custom images were found");
         return;
     }
 
     if (shouldWaitForResourceImagesToSave) {
-        QNTRACE("Some generic resource images are being saved to files, "
-            << "waiting");
+        QNTRACE("note_editor", "Some generic resource images are being saved "
+            << "to files, waiting");
         return;
     }
 
-    QNTRACE("All generic resource images are ready");
+    QNTRACE("note_editor", "All generic resource images are ready");
     provideSrcForGenericResourceImages();
     setupGenericResourceOnClickHandler();
 }
@@ -5233,14 +5334,15 @@ void NoteEditorPrivate::setupGenericResourceImages()
 bool NoteEditorPrivate::findOrBuildGenericResourceImage(
     const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::findOrBuildGenericResourceImage: " << resource);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::findOrBuildGenericResourceImage: " << resource);
 
     if (!resource.hasDataHash() && !resource.hasAlternateDataHash())
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Found resource without either data hash or alternate "
                        "data hash"));
-        QNWARNING(errorDescription << ": " << resource);
+        QNWARNING("note_editor", errorDescription << ": " << resource);
         Q_EMIT notifyError(errorDescription);
         return true;
     }
@@ -5252,12 +5354,12 @@ bool NoteEditorPrivate::findOrBuildGenericResourceImage(
          ? resource.dataHash()
          : resource.alternateDataHash());
 
-    QNTRACE("Looking for existing generic resource image file "
+    QNTRACE("note_editor", "Looking for existing generic resource image file "
         << "for resource with hash " << resourceHash.toHex());
 
     auto it = m_genericResourceImageFilePathsByResourceHash.find(resourceHash);
     if (it != m_genericResourceImageFilePathsByResourceHash.end()) {
-        QNTRACE("Found generic resource image file path "
+        QNTRACE("note_editor", "Found generic resource image file path "
             << "for resource with hash " << resourceHash.toHex()
             << " and local uid " << localUid << ": " << it.value());
         return false;
@@ -5265,7 +5367,7 @@ bool NoteEditorPrivate::findOrBuildGenericResourceImage(
 
     QImage img = buildGenericResourceImage(resource);
     if (img.isNull()) {
-        QNDEBUG("Can't build generic resource image");
+        QNDEBUG("note_editor", "Can't build generic resource image");
         return true;
     }
 
@@ -5275,7 +5377,8 @@ bool NoteEditorPrivate::findOrBuildGenericResourceImage(
 
 void NoteEditorPrivate::provideSrcForGenericResourceImages()
 {
-    QNDEBUG("NoteEditorPrivate::provideSrcForGenericResourceImages");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::provideSrcForGenericResourceImages");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -5284,7 +5387,8 @@ void NoteEditorPrivate::provideSrcForGenericResourceImages()
 
 void NoteEditorPrivate::setupGenericResourceOnClickHandler()
 {
-    QNDEBUG("NoteEditorPrivate::setupGenericResourceOnClickHandler");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupGenericResourceOnClickHandler");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -5293,24 +5397,25 @@ void NoteEditorPrivate::setupGenericResourceOnClickHandler()
 
 void NoteEditorPrivate::setupWebSocketServer()
 {
-    QNDEBUG("NoteEditorPrivate::setupWebSocketServer");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupWebSocketServer");
 
     if (m_pWebSocketServer->isListening()) {
         m_pWebSocketServer->close();
-        QNDEBUG("Closed the already established web socket server");
+        QNDEBUG("note_editor", "Closed the already established web socket "
+            << "server");
         m_webSocketReady = false;
     }
 
     if (!m_pWebSocketServer->listen(QHostAddress::LocalHost, 0)) {
         ErrorString error(QT_TR_NOOP("Can't open web socket server"));
         error.details() = m_pWebSocketServer->errorString();
-        QNERROR(error);
+        QNERROR("note_editor", error);
         throw NoteEditorInitializationException(error);
     }
 
     m_webSocketServerPort = m_pWebSocketServer->serverPort();
-    QNDEBUG("Using automatically selected websocket server port "
-            << m_webSocketServerPort);
+    QNDEBUG("note_editor", "Using automatically selected websocket server port "
+        << m_webSocketServerPort);
 
     QObject::connect(
         m_pWebSocketClientWrapper,
@@ -5322,7 +5427,7 @@ void NoteEditorPrivate::setupWebSocketServer()
 
 void NoteEditorPrivate::setupJavaScriptObjects()
 {
-    QNDEBUG("NoteEditorPrivate::setupJavaScriptObjects");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupJavaScriptObjects");
 
     QObject::connect(
         m_pEnCryptElementClickHandler,
@@ -5426,14 +5531,14 @@ void NoteEditorPrivate::setupJavaScriptObjects()
         QStringLiteral("spellCheckerDynamicHelper"),
         m_pSpellCheckerDynamicHandler);
 
-    QNDEBUG("Registered objects exposed to JavaScript");
+    QNDEBUG("note_editor", "Registered objects exposed to JavaScript");
 
     m_setUpJavaScriptObjects = true;
 }
 
 void NoteEditorPrivate::setupTextCursorPositionTracking()
 {
-    QNDEBUG("NoteEditorPrivate::setupTextCursorPositionTracking");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupTextCursorPositionTracking");
 
     QString javascript = QStringLiteral("setupTextCursorPositionTracking();");
 
@@ -5448,8 +5553,8 @@ void NoteEditorPrivate::updateResource(
     const QByteArray & previousResourceHash,
     Resource updatedResource)
 {
-    QNDEBUG("NoteEditorPrivate::updateResource: resource local uid = "
-        << resourceLocalUid << ", previous hash = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateResource: resource local "
+        << "uid = " << resourceLocalUid << ", previous hash = "
         << previousResourceHash.toHex() << ", updated resource: "
         << updatedResource);
 
@@ -5458,7 +5563,8 @@ void NoteEditorPrivate::updateResource(
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: no note "
                        "is set to the editor"));
-        QNWARNING(error << ", updated resource: " << updatedResource);
+        QNWARNING("note_editor", error << ", updated resource: "
+            << updatedResource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5468,7 +5574,8 @@ void NoteEditorPrivate::updateResource(
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: the updated "
                        "resource has no note local uid"));
-        QNWARNING(error << ", updated resource: " << updatedResource);
+        QNWARNING("note_editor", error << ", updated resource: "
+            << updatedResource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5478,7 +5585,8 @@ void NoteEditorPrivate::updateResource(
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: the updated "
                        "resource has no mime type"));
-        QNWARNING(error << ", updated resource: " << updatedResource);
+        QNWARNING("note_editor", error << ", updated resource: "
+            << updatedResource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5488,7 +5596,8 @@ void NoteEditorPrivate::updateResource(
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: the updated "
                        "resource contains no data body"));
-        QNWARNING(error << ", updated resource: " << updatedResource);
+        QNWARNING("note_editor", error << ", updated resource: "
+            << updatedResource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5499,13 +5608,13 @@ void NoteEditorPrivate::updateResource(
             updatedResource.dataBody(),
             QCryptographicHash::Md5));
 
-        QNDEBUG("Set updated resource's data hash to "
+        QNDEBUG("note_editor", "Set updated resource's data hash to "
             << updatedResource.dataHash().toHex());
     }
 
     if (!updatedResource.hasDataSize()) {
         updatedResource.setDataSize(updatedResource.dataBody().size());
-        QNDEBUG("Set updated resource's data size to "
+        QNDEBUG("note_editor", "Set updated resource's data size to "
             << updatedResource.dataSize());
     }
 
@@ -5516,8 +5625,8 @@ void NoteEditorPrivate::updateResource(
             QT_TR_NOOP("Can't update the resource: resource to be "
                        "updated was not found within the note"));
 
-        QNWARNING(error << ", updated resource: " << updatedResource
-            << "\nNote: " << *m_pNote);
+        QNWARNING("note_editor", error << ", updated resource: "
+            << updatedResource << "\nNote: " << *m_pNote);
         Q_EMIT notifyError(error);
         return;
     }
@@ -5547,7 +5656,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
     const QStringList & extraData, const QString & selectedHtml,
     bool insideDecryptedTextFragment)
 {
-    QNDEBUG("NoteEditorPrivate::setupGenericTextContextMenu: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupGenericTextContextMenu: "
         << "selected html = " << selectedHtml
         << "; inside decrypted text fragment = "
         << (insideDecryptedTextFragment ? "true" : "false"));
@@ -5661,7 +5770,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -5827,7 +5936,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
 void NoteEditorPrivate::setupImageResourceContextMenu(
     const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::setupImageResourceContextMenu: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupImageResourceContextMenu: "
         << "resource hash = " << resourceHash.toHex());
 
     m_currentContextMenuExtraData.m_resourceHash = resourceHash;
@@ -5891,8 +6000,9 @@ void NoteEditorPrivate::setupImageResourceContextMenu(
 void NoteEditorPrivate::setupNonImageResourceContextMenu(
     const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::setupNonImageResourceContextMenu: "
-        << "resource hash = " << resourceHash.toHex());
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupNonImageResourceContextMenu: resource hash = "
+        << resourceHash.toHex());
 
     m_currentContextMenuExtraData.m_resourceHash = resourceHash;
 
@@ -5928,7 +6038,8 @@ void NoteEditorPrivate::setupNonImageResourceContextMenu(
     QClipboard * pClipboard = QApplication::clipboard();
     if (pClipboard && pClipboard->mimeData(QClipboard::Clipboard))
     {
-        QNTRACE("Clipboard buffer has something, adding paste action");
+        QNTRACE("note_editor", "Clipboard buffer has something, adding paste "
+            << "action");
 
         ADD_ACTION_WITH_SHORTCUT(
             QKeySequence::Paste,
@@ -5946,7 +6057,7 @@ void NoteEditorPrivate::setupEncryptedTextContextMenu(
     const QString & encryptedText, const QString & hint,
     const QString & id)
 {
-    QNDEBUG("NoteEditorPrivate::setupEncryptedTextContextMenu: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupEncryptedTextContextMenu: "
         << "cipher = " << cipher << ", key length = " << keyLength
         << ", encrypted text = " << encryptedText << ", hint = " << hint
         << ", en-crypt-id = " << id);
@@ -5974,7 +6085,7 @@ void NoteEditorPrivate::setupActionShortcut(
     const int key, const QString & context, QAction & action)
 {
     if (Q_UNLIKELY(!m_pAccount)) {
-        QNDEBUG("Can't set shortcut to the action: no account "
+        QNDEBUG("note_editor", "Can't set shortcut to the action: no account "
             << "is set to the note editor");
         return;
     }
@@ -5982,7 +6093,7 @@ void NoteEditorPrivate::setupActionShortcut(
     ShortcutManager shortcutManager;
     QKeySequence shortcut = shortcutManager.shortcut(key, *m_pAccount, context);
     if (!shortcut.isEmpty()) {
-        QNTRACE("Setting shortcut " << shortcut
+        QNTRACE("note_editor", "Setting shortcut " << shortcut
             << " for action " << action.objectName()
             << " (" << action.text() << ")");
         action.setShortcut(shortcut);
@@ -5991,7 +6102,7 @@ void NoteEditorPrivate::setupActionShortcut(
 
 void NoteEditorPrivate::setupFileIO()
 {
-    QNDEBUG("NoteEditorPrivate::setupFileIO");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupFileIO");
 
     QObject::connect(
         this,
@@ -6121,9 +6232,10 @@ void NoteEditorPrivate::setupFileIO()
 
 void NoteEditorPrivate::setupSpellChecker()
 {
-    QNDEBUG("NoteEditorPrivate::setupSpellChecker");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupSpellChecker");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         m_pSpellChecker,
         QStringLiteral("no spell checker was passed to note editor"));
 
@@ -6143,7 +6255,7 @@ void NoteEditorPrivate::setupSpellChecker()
 
 void NoteEditorPrivate::setupScripts()
 {
-    QNDEBUG("NoteEditorPrivate::setupScripts");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupScripts");
 
     initNoteEditorResources();
 
@@ -6349,7 +6461,8 @@ void NoteEditorPrivate::setupScripts()
 
 void NoteEditorPrivate::setupGeneralSignalSlotConnections()
 {
-    QNDEBUG("NoteEditorPrivate::setupGeneralSignalSlotConnections");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupGeneralSignalSlotConnections");
 
     QObject::connect(
         m_pTableResizeJavaScriptHandler,
@@ -6621,7 +6734,7 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
 
 void NoteEditorPrivate::setupNoteEditorPage()
 {
-    QNDEBUG("NoteEditorPrivate::setupNoteEditorPage");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupNoteEditorPage");
 
     NoteEditorPage * page = new NoteEditorPage(*this);
 
@@ -6693,7 +6806,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
         m_pPluginFactory->setNote(*m_pNote);
     }
 
-    QNDEBUG("Setting note editor plugin factory to the page");
+    QNDEBUG("note_editor", "Setting note editor plugin factory to the page");
     page->setPluginFactory(m_pPluginFactory);
 
 #endif // QUENTIER_USE_QT_WEB_ENGINE
@@ -6701,12 +6814,12 @@ void NoteEditorPrivate::setupNoteEditorPage()
     setupNoteEditorPageConnections(page);
     setPage(page);
 
-    QNTRACE("Done setting up new note editor page");
+    QNTRACE("note_editor", "Done setting up new note editor page");
 }
 
 void NoteEditorPrivate::setupNoteEditorPageConnections(NoteEditorPage * page)
 {
-    QNDEBUG("NoteEditorPrivate::setupNoteEditorPageConnections");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setupNoteEditorPageConnections");
 
     QObject::connect(
         page,
@@ -6775,7 +6888,8 @@ void NoteEditorPrivate::setupNoteEditorPageConnections(NoteEditorPage * page)
 
 void NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections()
 {
-    QNDEBUG("NoteEditorPrivate::setupTextCursorPositionJavaScriptHandlerConnections");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupTextCursorPositionJavaScriptHandlerConnections");
 
     // Connect JavaScript glue object's signals to slots
     QObject::connect(
@@ -7041,7 +7155,8 @@ void NoteEditorPrivate::appendDefaultFontInfoToCss(QTextStream& strm) const
 
 void NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion()
 {
-    QNDEBUG("NoteEditorPrivate::setupSkipRulesForHtmlToEnmlConversion");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupSkipRulesForHtmlToEnmlConversion");
 
     m_skipRulesForHtmlToEnmlConversion.reserve(7);
 
@@ -7224,7 +7339,8 @@ QString NoteEditorPrivate::composeBlankPageHtml(const QString & rawText) const
 
 void NoteEditorPrivate::determineStatesForCurrentTextCursorPosition()
 {
-    QNDEBUG("NoteEditorPrivate::determineStatesForCurrentTextCursorPosition");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::determineStatesForCurrentTextCursorPosition");
 
     QString javascript = QStringLiteral(
         "if (typeof window[\"determineStatesForCurrentTextCursorPosition\"]"
@@ -7237,7 +7353,7 @@ void NoteEditorPrivate::determineStatesForCurrentTextCursorPosition()
 
 void NoteEditorPrivate::determineContextMenuEventTarget()
 {
-    QNDEBUG("NoteEditorPrivate::determineContextMenuEventTarget");
+    QNDEBUG("note_editor", "NoteEditorPrivate::determineContextMenuEventTarget");
 
     QString javascript =
         QStringLiteral("determineContextMenuEventTarget(") +
@@ -7254,7 +7370,7 @@ void NoteEditorPrivate::determineContextMenuEventTarget()
 
 void NoteEditorPrivate::setPageEditable(const bool editable)
 {
-    QNDEBUG("NoteEditorPrivate::setPageEditable: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setPageEditable: "
         << (editable ? "true" : "false"));
 
     GET_PAGE()
@@ -7270,7 +7386,7 @@ void NoteEditorPrivate::setPageEditable(const bool editable)
         QStringLiteral("'; void 0;");
 
     page->executeJavaScript(javascript);
-    QNTRACE("Queued javascript to make page "
+    QNTRACE("note_editor", "Queued javascript to make page "
         << (editable ? "editable" : "non-editable")
         << ": " << javascript);
 #endif
@@ -7288,7 +7404,7 @@ void NoteEditorPrivate::onPageHtmlReceived(
     const QString & html,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onPageHtmlReceived");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onPageHtmlReceived");
     Q_UNUSED(extraData)
 
     Q_EMIT noteEditorHtmlUpdated(html);
@@ -7314,8 +7430,11 @@ void NoteEditorPrivate::onPageHtmlReceived(
     if (Q_UNLIKELY(m_pNote->isInkNote()))
     {
         m_pendingConversionToNote = false;
-        QNINFO("Currently selected note is an ink note, it's not editable "
-            << "hence won't respond to the unexpected change of its HTML");
+
+        QNINFO("note_editor", "Currently selected note is an ink note, it's "
+            << "not editable hence won't respond to the unexpected change of "
+            << "its HTML");
+
         Q_EMIT convertedToNote(*m_pNote);
 
         if (m_pendingConversionToNoteForSavingInLocalStorage) {
@@ -7399,7 +7518,7 @@ void NoteEditorPrivate::onSelectedTextEncryptionDone(
     const QVariant & dummy,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSelectedTextEncryptionDone");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSelectedTextEncryptionDone");
 
     Q_UNUSED(dummy);
     Q_UNUSED(extraData);
@@ -7423,7 +7542,7 @@ void NoteEditorPrivate::onTableActionDone(
     const QVariant & dummy,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onTableActionDone");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTableActionDone");
 
     Q_UNUSED(dummy);
     Q_UNUSED(extraData);
@@ -7435,7 +7554,7 @@ void NoteEditorPrivate::onTableActionDone(
 int NoteEditorPrivate::resourceIndexByHash(
     const QList<Resource> & resources, const QByteArray & resourceHash) const
 {
-    QNDEBUG("NoteEditorPrivate::resourceIndexByHash: hash = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::resourceIndexByHash: hash = "
         << resourceHash.toHex());
 
     const int numResources = resources.size();
@@ -7456,8 +7575,8 @@ void NoteEditorPrivate::writeNotePageFile(const QString & html)
     m_pendingIndexHtmlWritingToFile = true;
     QString pagePath = noteEditorPagePath();
 
-    QNTRACE("Emitting the request to write note html to file: request id = "
-         << m_writeNoteHtmlToFileRequestId);
+    QNTRACE("note_editor", "Emitting the request to write note html to file: "
+        << "request id = " << m_writeNoteHtmlToFileRequestId);
 
     Q_EMIT writeNoteHtmlToFile(
         pagePath,
@@ -7503,10 +7622,11 @@ bool NoteEditorPrivate::parseEncryptedTextContextMenuExtraData(
 
 void NoteEditorPrivate::setupPasteGenericTextMenuActions()
 {
-    QNDEBUG("NoteEditorPrivate::setupPasteGenericTextMenuActions");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupPasteGenericTextMenuActions");
 
     if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
-        QNDEBUG("No generic text context menu, nothing to do");
+        QNDEBUG("note_editor", "No generic text context menu, nothing to do");
         return;
     }
 
@@ -7537,7 +7657,8 @@ void NoteEditorPrivate::setupPasteGenericTextMenuActions()
     if (clipboardHasHtml || clipboardHasText ||
         clipboardHasImage || clipboardHasUrls)
     {
-        QNTRACE("Clipboard buffer has something, adding paste action");
+        QNTRACE("note_editor", "Clipboard buffer has something, adding paste "
+            << "action");
 
         ADD_ACTION_WITH_SHORTCUT(
             QKeySequence::Paste,
@@ -7549,7 +7670,8 @@ void NoteEditorPrivate::setupPasteGenericTextMenuActions()
 
     if (clipboardHasHtml)
     {
-        QNTRACE("Clipboard buffer has html, adding paste unformatted action");
+        QNTRACE("note_editor", "Clipboard buffer has html, adding paste "
+            << "unformatted action");
 
         ADD_ACTION_WITH_SHORTCUT(
             ShortcutManager::PasteUnformatted,
@@ -7565,16 +7687,17 @@ void NoteEditorPrivate::setupPasteGenericTextMenuActions()
 void NoteEditorPrivate::setupParagraphSubMenuForGenericTextMenu(
     const QString & selectedHtml)
 {
-    QNDEBUG("NoteEditorPrivate::setupParagraphSubMenuForGenericTextMenu: "
-        << "selected html = " << selectedHtml);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupParagraphSubMenuForGenericTextMenu: selected html = "
+        << selectedHtml);
 
     if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
-        QNDEBUG("No generic text context menu, nothing to do");
+        QNDEBUG("note_editor", "No generic text context menu, nothing to do");
         return;
     }
 
     if (!isPageEditable()) {
-        QNDEBUG("Note is not editable, no paragraph sub-menu "
+        QNDEBUG("note_editor", "Note is not editable, no paragraph sub-menu "
             << "actions are allowed");
         return;
     }
@@ -7656,15 +7779,17 @@ void NoteEditorPrivate::setupParagraphSubMenuForGenericTextMenu(
 
 void NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu()
 {
-    QNDEBUG("NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupStyleSubMenuForGenericTextMenu");
 
     if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
-        QNDEBUG("No generic text context menu, nothing to do");
+        QNDEBUG("note_editor", "No generic text context menu, nothing to do");
         return;
     }
 
     if (!isPageEditable()) {
-        QNDEBUG("Note is not editable, no style sub-menu actions are allowed");
+        QNDEBUG("note_editor", "Note is not editable, no style sub-menu "
+            << "actions are allowed");
         return;
     }
 
@@ -7708,27 +7833,27 @@ void NoteEditorPrivate::setupStyleSubMenuForGenericTextMenu()
 
 void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
 {
-    QNDEBUG("NoteEditorPrivate::"
-        << "setupSpellCheckerDictionariesSubMenuForGenericTextMenu");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::setupSpellCheckerDictionariesSubMenuForGenericTextMenu");
 
     if (Q_UNLIKELY(!m_pGenericTextContextMenu)) {
-        QNDEBUG("No generic text context menu, nothing to do");
+        QNDEBUG("note_editor", "No generic text context menu, nothing to do");
         return;
     }
 
     if (Q_UNLIKELY(!m_pSpellChecker)) {
-        QNWARNING("No spell checker was set up for the note editor");
+        QNWARNING("note_editor", "No spell checker was set up for "
+            << "the note editor");
         return;
     }
 
-    QVector<std::pair<QString,bool>> availableDictionaries =
-        m_pSpellChecker->listAvailableDictionaries();
+    auto availableDictionaries = m_pSpellChecker->listAvailableDictionaries();
     if (Q_UNLIKELY(availableDictionaries.isEmpty())) {
-        QNDEBUG("The list of available dictionaries is empty");
+        QNDEBUG("note_editor", "The list of available dictionaries is empty");
         return;
     }
 
-    QMenu * pSpellCheckerDictionariesSubMenu =
+    auto * pSpellCheckerDictionariesSubMenu =
         m_pGenericTextContextMenu->addMenu(tr("Spell checker dictionaries"));
 
     for(const auto & pair: qAsConst(availableDictionaries))
@@ -7752,17 +7877,17 @@ void NoteEditorPrivate::setupSpellCheckerDictionariesSubMenuForGenericTextMenu()
 
 void NoteEditorPrivate::rebuildRecognitionIndicesCache()
 {
-    QNDEBUG("NoteEditorPrivate::rebuildRecognitionIndicesCache");
+    QNDEBUG("note_editor", "NoteEditorPrivate::rebuildRecognitionIndicesCache");
 
     m_recognitionIndicesByResourceHash.clear();
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNTRACE("No note is set");
+        QNTRACE("note_editor", "No note is set");
         return;
     }
 
     if (!m_pNote->hasResources()) {
-        QNTRACE("The note has no resources");
+        QNTRACE("note_editor", "The note has no resources");
         return;
     }
 
@@ -7772,19 +7897,21 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
     {
         const Resource & resource = qAsConst(resources).at(i);
         if (Q_UNLIKELY(!resource.hasDataHash())) {
-            QNDEBUG("Skipping the resource without the data hash: "
-                << resource);
+            QNDEBUG("note_editor", "Skipping the resource without the data "
+                << "hash: " << resource);
             continue;
         }
 
         if (!resource.hasRecognitionDataBody()) {
-            QNTRACE("Skipping the resource without recognition data body");
+            QNTRACE("note_editor", "Skipping the resource without recognition "
+                << "data body");
             continue;
         }
 
         ResourceRecognitionIndices recoIndices(resource.recognitionDataBody());
         if (recoIndices.isNull() || !recoIndices.isValid()) {
-            QNTRACE("Skipping null/invalid resource recognition indices");
+            QNTRACE("note_editor", "Skipping null/invalid resource recognition "
+                << "indices");
             continue;
         }
 
@@ -7794,10 +7921,10 @@ void NoteEditorPrivate::rebuildRecognitionIndicesCache()
 
 void NoteEditorPrivate::enableSpellCheck()
 {
-    QNDEBUG("NoteEditorPrivate::enableSpellCheck");
+    QNDEBUG("note_editor", "NoteEditorPrivate::enableSpellCheck");
 
     if (!m_pSpellChecker->isReady()) {
-        QNTRACE("Spell checker is not ready");
+        QNTRACE("note_editor", "Spell checker is not ready");
         Q_EMIT spellCheckerNotReady();
         return;
     }
@@ -7809,7 +7936,7 @@ void NoteEditorPrivate::enableSpellCheck()
 
 void NoteEditorPrivate::disableSpellCheck()
 {
-    QNDEBUG("NoteEditorPrivate::disableSpellCheck");
+    QNDEBUG("note_editor", "NoteEditorPrivate::disableSpellCheck");
 
     m_currentNoteMisSpelledWords.clear();
     removeSpellCheck();
@@ -7818,10 +7945,10 @@ void NoteEditorPrivate::disableSpellCheck()
 
 void NoteEditorPrivate::refreshMisSpelledWordsList()
 {
-    QNDEBUG("NoteEditorPrivate::refreshMisSpelledWordsList");
+    QNDEBUG("note_editor", "NoteEditorPrivate::refreshMisSpelledWordsList");
 
     if (!m_pNote) {
-        QNDEBUG("No note is set to the editor");
+        QNDEBUG("note_editor", "No note is set to the editor");
         return;
     }
 
@@ -7836,27 +7963,28 @@ void NoteEditorPrivate::refreshMisSpelledWordsList()
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
 
     for(const auto & originalWord: qAsConst(words))
     {
-        QNTRACE("Checking word \"" << originalWord << "\"");
+        QNTRACE("note_editor", "Checking word \"" << originalWord << "\"");
 
         QString word = originalWord;
 
         bool conversionResult = false;
         qint32 integerNumber = word.toInt(&conversionResult);
         if (conversionResult) {
-            QNTRACE("Skipping the integer number " << word);
+            QNTRACE("note_editor", "Skipping the integer number " << word);
             continue;
         }
 
         qint64 longIntegerNumber = word.toLongLong(&conversionResult);
         if (conversionResult) {
-            QNTRACE("Skipping the long long integer number " << word);
+            QNTRACE("note_editor", "Skipping the long long integer number "
+                << word);
             continue;
         }
 
@@ -7865,36 +7993,36 @@ void NoteEditorPrivate::refreshMisSpelledWordsList()
 
         m_stringUtils.removePunctuation(word);
         if (word.isEmpty()) {
-            QNTRACE("Skipping the word which becomes empty after "
-                << "stripping off the punctuation: "
-                << originalWord);
+            QNTRACE("note_editor", "Skipping the word which becomes empty "
+                << "after stripping off the punctuation: " << originalWord);
             continue;
         }
 
         word = word.trimmed();
 
-        QNTRACE("Checking the spelling of \"adjusted\" word " << word);
+        QNTRACE("note_editor", "Checking the spelling of \"adjusted\" word "
+            << word);
 
         if (!m_pSpellChecker->checkSpell(word))
         {
-            QNTRACE("Misspelled word: \"" << word << "\"");
+            QNTRACE("note_editor", "Misspelled word: \"" << word << "\"");
             word = originalWord;
             m_stringUtils.removePunctuation(word);
             word = word.trimmed();
             Q_UNUSED(m_currentNoteMisSpelledWords.insert(word))
-            QNTRACE("Word added to the list: " << word);
+            QNTRACE("note_editor", "Word added to the list: " << word);
         }
     }
 }
 
 void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
 {
-    QNDEBUG("NoteEditorPrivate::applySpellCheck: apply to selection = "
-        << (applyToSelection ? "true" : "false"));
+    QNDEBUG("note_editor", "NoteEditorPrivate::applySpellCheck: "
+        << "apply to selection = " << (applyToSelection ? "true" : "false"));
 
     if (m_currentNoteMisSpelledWords.isEmpty()) {
-        QNDEBUG("The list of current note misspelled words is empty, "
-            << "nothing to apply");
+        QNDEBUG("note_editor", "The list of current note misspelled words is "
+            << "empty, nothing to apply");
         return;
     }
 
@@ -7914,7 +8042,7 @@ void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
     javascript.chop(3);     // Remove trailing ", '";
     javascript += QStringLiteral("); }");
 
-    QNTRACE("Script: " << javascript);
+    QNTRACE("note_editor", "Script: " << javascript);
 
     GET_PAGE()
     page->executeJavaScript(
@@ -7926,7 +8054,7 @@ void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
 
 void NoteEditorPrivate::removeSpellCheck()
 {
-    QNDEBUG("NoteEditorPrivate::removeSpellCheck");
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeSpellCheck");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral(
@@ -7939,7 +8067,7 @@ void NoteEditorPrivate::removeSpellCheck()
 
 void NoteEditorPrivate::enableDynamicSpellCheck()
 {
-    QNDEBUG("NoteEditorPrivate::enableDynamicSpellCheck");
+    QNDEBUG("note_editor", "NoteEditorPrivate::enableDynamicSpellCheck");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral(
@@ -7949,7 +8077,7 @@ void NoteEditorPrivate::enableDynamicSpellCheck()
 
 void NoteEditorPrivate::disableDynamicSpellCheck()
 {
-    QNDEBUG("NoteEditorPrivate::disableDynamicSpellCheck");
+    QNDEBUG("note_editor", "NoteEditorPrivate::disableDynamicSpellCheck");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral(
@@ -7961,7 +8089,7 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
     const QVariant & dummy,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckSetOrCleared");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSpellCheckSetOrCleared");
 
     Q_UNUSED(dummy)
     Q_UNUSED(extraData)
@@ -7980,13 +8108,13 @@ void NoteEditorPrivate::onSpellCheckSetOrCleared(
 
 void NoteEditorPrivate::updateBodyStyle()
 {
-    QNDEBUG("NoteEditorPrivate::updateBodyStyle");
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateBodyStyle");
 
     QString css = bodyStyleCss();
     escapeStringForJavaScript(css);
 
     QString javascript = QString::fromUtf8("replaceStyle('%1');").arg(css);
-    QNTRACE("Script: " << javascript);
+    QNTRACE("note_editor", "Script: " << javascript);
 
     GET_PAGE()
     page->executeJavaScript(
@@ -8000,7 +8128,7 @@ void NoteEditorPrivate::onBodyStyleUpdated(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onBodyStyleUpdated: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onBodyStyleUpdated: " << data);
 
     Q_UNUSED(extraData)
 
@@ -8012,7 +8140,7 @@ void NoteEditorPrivate::onBodyStyleUpdated(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of body "
                        "style replacement from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8035,7 +8163,7 @@ void NoteEditorPrivate::onBodyStyleUpdated(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8045,7 +8173,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onFontFamilyUpdated: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onFontFamilyUpdated: " << data);
 
     auto resultMap = data.toMap();
 
@@ -8055,7 +8183,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of font family "
                        "update from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8078,7 +8206,7 @@ void NoteEditorPrivate::onFontFamilyUpdated(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8095,8 +8223,8 @@ void NoteEditorPrivate::onFontFamilyUpdated(
 
     if (Q_UNLIKELY(extraData.empty()))
     {
-        QNWARNING("No font family in extra data in JavaScript callback after "
-            << "setting font family");
+        QNWARNING("note_editor", "No font family in extra data in JavaScript "
+            << "callback after setting font family");
         setModified();
         pushNoteContentEditUndoCommand();
         return;
@@ -8108,15 +8236,17 @@ void NoteEditorPrivate::onFontFamilyUpdated(
     auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
     if (appliedToIt == resultMap.end())
     {
-        QNWARNING("Can't figure out whether font family was applied to "
-            << "body style or to selection, assuming the latter option");
+        QNWARNING("note_editor", "Can't figure out whether font family was "
+            << "applied to body style or to selection, assuming the latter "
+            << "option");
+
         setModified();
         pushNoteContentEditUndoCommand();
         return;
     }
 
     if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
-        QNDEBUG("Font family was set to the default body style");
+        QNDEBUG("note_editor", "Font family was set to the default body style");
         return;
     }
 
@@ -8128,7 +8258,7 @@ void NoteEditorPrivate::onFontHeightUpdated(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onFontHeightUpdated: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onFontHeightUpdated: " << data);
 
     auto resultMap = data.toMap();
 
@@ -8138,7 +8268,7 @@ void NoteEditorPrivate::onFontHeightUpdated(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of font height "
                        "update from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8161,7 +8291,7 @@ void NoteEditorPrivate::onFontHeightUpdated(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -8177,8 +8307,8 @@ void NoteEditorPrivate::onFontHeightUpdated(
 #endif
 
     if (Q_UNLIKELY(extraData.empty())) {
-        QNWARNING("No font height in extra data in JavaScript callback after "
-            << "setting font height");
+        QNWARNING("note_editor", "No font height in extra data in JavaScript "
+            << "callback after setting font height");
         setModified();
         pushInsertHtmlUndoCommand();
         return;
@@ -8190,15 +8320,17 @@ void NoteEditorPrivate::onFontHeightUpdated(
     auto appliedToIt = resultMap.find(QStringLiteral("appliedTo"));
     if (appliedToIt == resultMap.end())
     {
-        QNWARNING("Can't figure out whether font height was applied to "
-            << "body style or to selection, assuming the latter option");
+        QNWARNING("note_editor", "Can't figure out whether font height was "
+            << "applied to body style or to selection, assuming the latter "
+            << "option");
+
         setModified();
         pushInsertHtmlUndoCommand();
         return;
     }
 
     if (appliedToIt.value().toString() == QStringLiteral("bodyStyle")) {
-        QNDEBUG("Font height was set to the default body style");
+        QNDEBUG("note_editor", "Font height was set to the default body style");
         return;
     }
 
@@ -8208,10 +8340,10 @@ void NoteEditorPrivate::onFontHeightUpdated(
 
 bool NoteEditorPrivate::isNoteReadOnly() const
 {
-    QNDEBUG("NoteEditorPrivate::isNoteReadOnly");
+    QNDEBUG("note_editor", "NoteEditorPrivate::isNoteReadOnly");
 
     if (!m_pNote) {
-        QNTRACE("No note is set to the editor");
+        QNTRACE("note_editor", "No note is set to the editor");
         return true;
     }
 
@@ -8221,18 +8353,19 @@ bool NoteEditorPrivate::isNoteReadOnly() const
         if (noteRestrictions.noUpdateContent.isSet() &&
             noteRestrictions.noUpdateContent.ref())
         {
-            QNTRACE("Note has noUpdateContent restriction set to true");
+            QNTRACE("note_editor", "Note has noUpdateContent restriction set "
+                << "to true");
             return true;
         }
     }
 
     if (!m_pNotebook) {
-        QNTRACE("No notebook is set to the editor");
+        QNTRACE("note_editor", "No notebook is set to the editor");
         return true;
     }
 
     if (!m_pNotebook->hasRestrictions()) {
-        QNTRACE("Notebook has no restrictions");
+        QNTRACE("note_editor", "Notebook has no restrictions");
         return false;
     }
 
@@ -8240,7 +8373,7 @@ bool NoteEditorPrivate::isNoteReadOnly() const
     if (restrictions.noUpdateNotes.isSet() &&
         restrictions.noUpdateNotes.ref())
     {
-        QNTRACE("Restriction on note updating applies");
+        QNTRACE("note_editor", "Restriction on note updating applies");
         return true;
     }
 
@@ -8289,7 +8422,7 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(
     QString javascript =                                                       \
         QString::fromUtf8("managedPageAction(\"%1\", null)")                   \
         .arg(escapedCommand);                                                  \
-    QNDEBUG("JS command: " << javascript)                                      \
+    QNDEBUG("note_editor", "JS command: " << javascript)                       \
 // COMMAND_TO_JS
 
 #define COMMAND_WITH_ARGS_TO_JS(command, args)                                 \
@@ -8300,7 +8433,7 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(
     QString javascript =                                                       \
         QString::fromUtf8("managedPageAction('%1', '%2')")                     \
         .arg(escapedCommand,escapedArgs);                                      \
-    QNDEBUG("JS command: " << javascript)                                      \
+    QNDEBUG("note_editor", "JS command: " << javascript)                       \
 // COMMAND_WITH_ARGS_TO_JS
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
@@ -8310,7 +8443,7 @@ QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
     COMMAND_TO_JS(command);
     QWebFrame * frame = page()->mainFrame();
     QVariant result = frame->evaluateJavaScript(javascript);
-    QNTRACE("Executed javascript command: " << javascript
+    QNTRACE("note_editor", "Executed javascript command: " << javascript
         << ", result = " << result.toString());
     return result;
 }
@@ -8321,7 +8454,7 @@ QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
     COMMAND_WITH_ARGS_TO_JS(command, args);
     QWebFrame * frame = page()->mainFrame();
     QVariant result = frame->evaluateJavaScript(javascript);
-    QNTRACE("Executed javascript command: " << javascript
+    QNTRACE("note_editor", "Executed javascript command: " << javascript
         << ", result = " << result.toString());
     return result;
 }
@@ -8329,7 +8462,8 @@ QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
 
 void NoteEditorPrivate::execJavascriptCommand(const QString & command)
 {
-    QNDEBUG("NoteEditorPrivate::execJavascriptCommand: " << command);
+    QNDEBUG("note_editor", "NoteEditorPrivate::execJavascriptCommand: "
+        << command);
 
     COMMAND_TO_JS(command);
     GET_PAGE()
@@ -8344,8 +8478,8 @@ void NoteEditorPrivate::execJavascriptCommand(const QString & command)
 void NoteEditorPrivate::execJavascriptCommand(
     const QString & command, const QString & args)
 {
-    QNDEBUG("NoteEditorPrivate::execJavascriptCommand: " << command
-        << "; args: " << args);
+    QNDEBUG("note_editor", "NoteEditorPrivate::execJavascriptCommand: "
+        << command << "; args: " << args);
 
     COMMAND_WITH_ARGS_TO_JS(command, args);
     GET_PAGE()
@@ -8362,7 +8496,7 @@ void NoteEditorPrivate::initialize(
     SpellChecker & spellChecker, const Account & account,
     QThread * pBackgroundJobsThread)
 {
-    QNDEBUG("NoteEditorPrivate::initialize");
+    QNDEBUG("note_editor", "NoteEditorPrivate::initialize");
 
     auto & noteEditorLocalStorageBroker =
         NoteEditorLocalStorageBroker::instance();
@@ -8380,14 +8514,14 @@ void NoteEditorPrivate::initialize(
 
 void NoteEditorPrivate::setAccount(const Account & account)
 {
-    QNDEBUG("NoteEditorPrivate::setAccount: " << account.name());
+    QNDEBUG("note_editor", "NoteEditorPrivate::setAccount: " << account.name());
 
     if (m_pAccount && (m_pAccount->type() == account.type()) &&
         (m_pAccount->name() == account.name()) &&
         (m_pAccount->id() == account.id()))
     {
-        QNDEBUG("The account's type, name and id were not updated "
-            << "so it's the update for the account currently set "
+        QNDEBUG("note_editor", "The account's type, name and id were not "
+            << "updated so it's the update for the account currently set "
             << "to the note editor");
         *m_pAccount = account;
         return;
@@ -8407,9 +8541,10 @@ void NoteEditorPrivate::setAccount(const Account & account)
 
 void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
 {
-    QNDEBUG("NoteEditorPrivate::setUndoStack");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setUndoStack");
 
     QUENTIER_CHECK_PTR(
+        "note_editor",
         pUndoStack,
         QStringLiteral("null undo stack passed to note editor"));
 
@@ -8419,13 +8554,13 @@ void NoteEditorPrivate::setUndoStack(QUndoStack * pUndoStack)
 bool NoteEditorPrivate::print(
     QPrinter & printer, ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::print");
+    QNDEBUG("note_editor", "NoteEditorPrivate::print");
 
     if (Q_UNLIKELY(!m_pNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: no note is set to the editor"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8437,7 +8572,7 @@ bool NoteEditorPrivate::print(
             QT_TR_NOOP("Can't print note: the note has not "
                        "been fully loaded into the editor yet, "
                        "please try again in a few seconds"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8450,7 +8585,7 @@ bool NoteEditorPrivate::print(
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: internal error, "
                        "no note editor page"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
@@ -8460,7 +8595,7 @@ bool NoteEditorPrivate::print(
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: internal error, no main frame was "
                        "found within the note editor page"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
@@ -8481,17 +8616,18 @@ bool NoteEditorPrivate::print(
         initialHtml,
         initialXml,
         htmlToXmlError);
+
     if (Q_UNLIKELY(!htmlToXmlRes))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: failed to convert "
                        "the note editor's HTML to XML"));
         errorDescription.details() = htmlToXmlError;
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
-    QList<Resource> resources = m_pNote->resources();
+    auto resources = m_pNote->resources();
 
     QString preprocessedHtml;
     QXmlStreamReader reader(initialXml);
@@ -8523,7 +8659,7 @@ bool NoteEditorPrivate::print(
             ++writeElementCounter;
 
             QString elementName = reader.name().toString();
-            QXmlStreamAttributes elementAttributes = reader.attributes();
+            auto elementAttributes = reader.attributes();
 
             if (!elementAttributes.hasAttribute(QStringLiteral("en-tag"))) {
                 writer.writeStartElement(elementName);
@@ -8552,20 +8688,20 @@ bool NoteEditorPrivate::print(
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't print note: found generic resource "
                                    "image without hash attribute"));
-                    QNWARNING(errorDescription);
+                    QNWARNING("note_editor", errorDescription);
                     return false;
                 }
 
                 QByteArray hashAttrByteArray = QByteArray::fromHex(
                     hashAttr.toLocal8Bit());
 
-                QNTRACE("Will look for resource with hash "
+                QNTRACE("note_editor", "Will look for resource with hash "
                     << hashAttrByteArray);
 
                 const Resource * pTargetResource = nullptr;
                 for(const auto & resource: qAsConst(resources))
                 {
-                    QNTRACE("Examining resource: data hash = "
+                    QNTRACE("note_editor", "Examining resource: data hash = "
                         << (resource.hasDataHash()
                             ? QString::fromLocal8Bit(resource.dataHash())
                             : QStringLiteral("<null>")));
@@ -8586,7 +8722,7 @@ bool NoteEditorPrivate::print(
                                    "within the actual note's resources"));
                     errorDescription.details() = QStringLiteral("hash = ");
                     errorDescription.details() += hashAttr;
-                    QNWARNING(errorDescription);
+                    QNWARNING("note_editor", errorDescription);
                     return false;
                 }
 
@@ -8598,7 +8734,7 @@ bool NoteEditorPrivate::print(
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't print note: could not generate the "
                                    "generic resource image"));
-                    QNWARNING(errorDescription);
+                    QNWARNING("note_editor", errorDescription);
                     return false;
                 }
 
@@ -8679,11 +8815,13 @@ bool NoteEditorPrivate::print(
 
             if (reader.isCDATA()) {
                 writer.writeCDATA(reader.text().toString());
-                QNTRACE("Wrote CDATA: " << reader.text().toString());
+                QNTRACE("note_editor", "Wrote CDATA: "
+                    << reader.text().toString());
             }
             else {
                 writer.writeCharacters(reader.text().toString());
-                QNTRACE("Wrote characters: " << reader.text().toString());
+                QNTRACE("note_editor", "Wrote characters: "
+                    << reader.text().toString());
             }
         }
 
@@ -8701,18 +8839,20 @@ bool NoteEditorPrivate::print(
         errorDescription.details() = reader.errorString();
         errorDescription.details() += QStringLiteral("; error code = ");
         errorDescription.details() += QString::number(reader.error());
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
-    int bodyOpeningTagStartIndex = preprocessedHtml.indexOf(QStringLiteral("<body"));
+    int bodyOpeningTagStartIndex = preprocessedHtml.indexOf(
+        QStringLiteral("<body"));
+
     if (Q_UNLIKELY(bodyOpeningTagStartIndex < 0))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: can't find the body tag within the "
                        "preprocessed HTML prepared for conversion to "
                        "QTextDocument"));
-        QNWARNING(errorDescription << "; preprocessed HTML: "
+        QNWARNING("note_editor", errorDescription << "; preprocessed HTML: "
             << preprocessedHtml);
         return false;
     }
@@ -8720,13 +8860,14 @@ bool NoteEditorPrivate::print(
     int bodyOpeningTagEndIndex = preprocessedHtml.indexOf(
         QStringLiteral(">"),
         bodyOpeningTagStartIndex);
+
     if (Q_UNLIKELY(bodyOpeningTagEndIndex < 0))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: can't find the end of the body tag "
                        "within the preprocessed HTML prepared for conversion "
                        "to QTextDocument"));
-        QNWARNING(errorDescription << "; preprocessed HTML: "
+        QNWARNING("note_editor", errorDescription << "; preprocessed HTML: "
             << preprocessedHtml);
         return false;
     }
@@ -8742,7 +8883,7 @@ bool NoteEditorPrivate::print(
             QT_TR_NOOP("Can't print note: can't find the enclosing body tag "
                        "within the preprocessed HTML prepared for conversion "
                        "to QTextDocument"));
-        QNWARNING(errorDescription << "; preprocessed HTML: "
+        QNWARNING("note_editor", errorDescription << "; preprocessed HTML: "
             << preprocessedHtml);
         return false;
     }
@@ -8789,7 +8930,7 @@ bool NoteEditorPrivate::print(
         errorDescription.setBase(
             QT_TR_NOOP("Can't print note: failed to get the note editor page's "
                        "HTML in time"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 #endif // QUENTIER_USE_QT_WEB_ENGINE
@@ -8806,7 +8947,7 @@ bool NoteEditorPrivate::print(
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
@@ -8817,14 +8958,15 @@ bool NoteEditorPrivate::print(
 bool NoteEditorPrivate::exportToPdf(
     const QString & absoluteFilePath, ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::exportToPdf: " << absoluteFilePath);
+    QNDEBUG("note_editor", "NoteEditorPrivate::exportToPdf: "
+        << absoluteFilePath);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't export note to pdf: no note "
                        "is set to the editor"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8836,7 +8978,7 @@ bool NoteEditorPrivate::exportToPdf(
             QT_TR_NOOP("Can't export note to pdf: the note has not been fully "
                        "loaded into the editor yet, please try again in a few "
                        "seconds"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8852,7 +8994,7 @@ bool NoteEditorPrivate::exportToPdf(
             QT_TR_NOOP("Can't export note to pdf: the output pdf file already "
                        "exists and it is not writable"));
         errorDescription.details() = filePath;
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8863,7 +9005,7 @@ bool NoteEditorPrivate::exportToPdf(
         errorDescription.setBase(
             QT_TR_NOOP("Can't export note to pdf: internal error, no note "
                        "editor page"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         return false;
     }
 
@@ -8886,14 +9028,14 @@ bool NoteEditorPrivate::exportToEnex(
     const QStringList & tagNames, QString & enex,
     ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::exportToEnex");
+    QNDEBUG("note_editor", "NoteEditorPrivate::exportToEnex");
 
     if (Q_UNLIKELY(!m_pNote))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't export note to enex: no note "
                        "is set to the editor"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8905,7 +9047,7 @@ bool NoteEditorPrivate::exportToEnex(
             QT_TR_NOOP("Can't export note to enex: the note has not been fully "
                        "loaded into the editor yet, please try again in a few "
                        "seconds"));
-        QNDEBUG(errorDescription);
+        QNDEBUG("note_editor", errorDescription);
         return false;
     }
 
@@ -8946,18 +9088,18 @@ bool NoteEditorPrivate::exportToEnex(
             errorDescription.setBase(
                 QT_TR_NOOP("Can't export note to enex: failed to save "
                            "the edited note in time"));
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             return false;
         }
         else if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't export note to enex: failed to save "
                            "the edited note"));
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             return false;
         }
 
-        QNDEBUG("Successfully saved the edited note");
+        QNDEBUG("note_editor", "Successfully saved the edited note");
     }
 
     QVector<Note> notes;
@@ -8994,11 +9136,11 @@ QString NoteEditorPrivate::currentNoteLocalUid() const
 
 void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
 {
-    QNDEBUG("NoteEditorPrivate::setCurrentNoteLocalUid: note local uid = "
-        << noteLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setCurrentNoteLocalUid: "
+        << "note local uid = " << noteLocalUid);
 
     if (m_noteLocalUid == noteLocalUid) {
-        QNDEBUG("Already have this note local uid set");
+        QNDEBUG("note_editor", "Already have this note local uid set");
         return;
     }
 
@@ -9014,7 +9156,7 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
         : BlankPageKind::NoteLoading);
 
     if (!m_noteLocalUid.isEmpty()) {
-        QNTRACE("Emitting the request to find note and notebook "
+        QNTRACE("note_editor", "Emitting the request to find note and notebook "
             << "for note local uid " << m_noteLocalUid);
         Q_EMIT findNoteAndNotebook(m_noteLocalUid);
     }
@@ -9022,7 +9164,7 @@ void NoteEditorPrivate::setCurrentNoteLocalUid(const QString & noteLocalUid)
 
 void NoteEditorPrivate::clear()
 {
-    QNDEBUG("NoteEditorPrivate::clear");
+    QNDEBUG("note_editor", "NoteEditorPrivate::clear");
 
     m_pNote.reset(nullptr);
     m_pNotebook.reset(nullptr);
@@ -9032,10 +9174,10 @@ void NoteEditorPrivate::clear()
 
 void NoteEditorPrivate::convertToNote()
 {
-    QNDEBUG("NoteEditorPrivate::convertToNote");
+    QNDEBUG("note_editor", "NoteEditorPrivate::convertToNote");
 
     if (m_pendingConversionToNote) {
-        QNDEBUG("Already pending the conversion of "
+        QNDEBUG("note_editor", "Already pending the conversion of "
             << "note editor page to HTML");
         return;
     }
@@ -9051,35 +9193,36 @@ void NoteEditorPrivate::convertToNote()
 
 void NoteEditorPrivate::saveNoteToLocalStorage()
 {
-    QNDEBUG("NoteEditorPrivate::saveNoteToLocalStorage");
+    QNDEBUG("note_editor", "NoteEditorPrivate::saveNoteToLocalStorage");
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString errorDescription(
             QT_TR_NOOP("Can't save note to local storage: "
                        "no note is loaded to the editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor", errorDescription);
         Q_EMIT failedToSaveNoteToLocalStorage(errorDescription, m_noteLocalUid);
         return;
     }
 
     if (Q_UNLIKELY(m_pNote->isInkNote())) {
-        QNDEBUG("Ink notes are read-only so won't save it to the local "
-            << "storage, will just pretend it was saved");
+        QNDEBUG("note_editor", "Ink notes are read-only so won't save it to "
+            << "the local storage, will just pretend it was saved");
         Q_EMIT noteSavedToLocalStorage(m_noteLocalUid);
         return;
     }
 
     if (m_pendingNoteSavingInLocalStorage)
     {
-        QNDEBUG("Note is already being saved to local storage");
+        QNDEBUG("note_editor", "Note is already being saved to local storage");
 
         if (m_needConversionToNote)
         {
-            QNDEBUG("It appears the note editor content has been changed since "
-                << "save note request was last issued; will repeat the "
-                << "attempt to save the note after the current attemtp is "
-                << "finished");
+            QNDEBUG("note_editor", "It appears the note editor content has "
+                << "been changed since save note request was last issued; will "
+                << "repeat the attempt to save the note after the current "
+                << "attempt is finished");
+
             m_shouldRepeatSavingNoteInLocalStorage = true;
         }
 
@@ -9093,32 +9236,36 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
     }
 
     m_pendingNoteSavingInLocalStorage = true;
-    QNDEBUG("Emitting the request to save the note in local storage");
-    QNTRACE(*m_pNote);
+
+    QNDEBUG("note_editor", "Emitting the request to save the note in the local "
+        << "storage");
+
+    QNTRACE("note_editor", *m_pNote);
+
     Q_EMIT saveNoteToLocalStorageRequest(*m_pNote);
 }
 
 void NoteEditorPrivate::setNoteTitle(const QString & noteTitle)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteTitle: " << noteTitle);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteTitle: " << noteTitle);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't set title to the note: no note "
                        "is set to the editor"));
-        QNWARNING(error << ", title to set: " << noteTitle);
+        QNWARNING("note_editor", error << ", title to set: " << noteTitle);
         Q_EMIT notifyError(error);
         return;
     }
 
     if (!m_pNote->hasTitle() && noteTitle.isEmpty()) {
-        QNDEBUG("Note title is still empty, nothing to do");
+        QNDEBUG("note_editor", "Note title is still empty, nothing to do");
         return;
     }
 
     if (m_pNote->hasTitle() && (m_pNote->title() == noteTitle)) {
-        QNDEBUG("Note title hasn't changed, nothing to do");
+        QNDEBUG("note_editor", "Note title hasn't changed, nothing to do");
         return;
     }
 
@@ -9135,7 +9282,7 @@ void NoteEditorPrivate::setNoteTitle(const QString & noteTitle)
 void NoteEditorPrivate::setTagIds(
     const QStringList & tagLocalUids, const QStringList & tagGuids)
 {
-    QNDEBUG("NoteEditorPrivate::setTagIds: tag local uids: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setTagIds: tag local uids: "
         << tagLocalUids.join(QStringLiteral(", "))
         << "; tag guids: "
         << tagGuids.join(QStringLiteral(", ")));
@@ -9145,7 +9292,7 @@ void NoteEditorPrivate::setTagIds(
         ErrorString error(
             QT_TR_NOOP("Can't set tags to the note: no note "
                        "is set to the editor"));
-        QNWARNING(error << ", tag local uids: "
+        QNWARNING("note_editor", error << ", tag local uids: "
             << tagLocalUids.join(QStringLiteral(", "))
             << "; tag guids: "
             << tagGuids.join(QStringLiteral(", ")));
@@ -9164,7 +9311,8 @@ void NoteEditorPrivate::setTagIds(
         if ((tagLocalUids == previousTagLocalUids) &&
             (tagGuids == previousTagGuids))
         {
-            QNDEBUG("The list of tag ids hasn't changed, nothing to do");
+            QNDEBUG("note_editor", "The list of tag ids hasn't changed, "
+                << "nothing to do");
             return;
         }
 
@@ -9178,7 +9326,8 @@ void NoteEditorPrivate::setTagIds(
     if (!tagLocalUids.isEmpty())
     {
         if (tagLocalUids == previousTagLocalUids) {
-            QNDEBUG("The list of tag local uids hasn't changed, nothing to do");
+            QNDEBUG("note_editor", "The list of tag local uids hasn't changed, "
+                << "nothing to do");
             return;
         }
 
@@ -9192,7 +9341,8 @@ void NoteEditorPrivate::setTagIds(
     if (!tagGuids.isEmpty())
     {
         if (tagGuids == previousTagGuids) {
-            QNDEBUG("The list of tag guids hasn't changed, nothing to do");
+            QNDEBUG("note_editor", "The list of tag guids hasn't changed, "
+                << "nothing to do");
             return;
         }
 
@@ -9204,8 +9354,8 @@ void NoteEditorPrivate::setTagIds(
     }
 
     if (previousTagLocalUids.isEmpty() && previousTagGuids.isEmpty()) {
-        QNDEBUG("Tag local uids and/or guids were empty and are still empty, "
-            << "nothing to do");
+        QNDEBUG("note_editor", "Tag local uids and/or guids were empty and are "
+            << "still empty, nothing to do");
         return;
     }
 
@@ -9216,13 +9366,13 @@ void NoteEditorPrivate::setTagIds(
 
 void NoteEditorPrivate::updateFromNote()
 {
-    QNDEBUG("NoteEditorPrivate::updateFromNote");
+    QNDEBUG("note_editor", "NoteEditorPrivate::updateFromNote");
     noteToEditorContent();
 }
 
 void NoteEditorPrivate::setNoteHtml(const QString & html)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteHtml");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteHtml");
 
     m_pendingConversionToNote = true;
     onPageHtmlReceived(html);
@@ -9232,15 +9382,15 @@ void NoteEditorPrivate::setNoteHtml(const QString & html)
 
 void NoteEditorPrivate::addResourceToNote(const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::addResourceToNote");
-    QNTRACE(resource);
+    QNDEBUG("note_editor", "NoteEditorPrivate::addResourceToNote");
+    QNTRACE("note_editor", resource);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't add the resource to note: no note "
                        "is set to the editor"));
-        QNWARNING(error << ", resource to add: " << resource);
+        QNWARNING("note_editor", error << ", resource to add: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -9253,7 +9403,7 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
             m_recognitionIndicesByResourceHash[resource.dataHash()] =
                 recoIndices;
 
-            QNDEBUG("Set recognition indices for new resource: "
+            QNDEBUG("note_editor", "Set recognition indices for new resource: "
                 << recoIndices);
         }
     }
@@ -9264,15 +9414,15 @@ void NoteEditorPrivate::addResourceToNote(const Resource & resource)
 
 void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::removeResourceFromNote");
-    QNTRACE(resource);
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeResourceFromNote");
+    QNTRACE("note_editor", resource);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't remove the resource from note: "
                        "no note is set to the editor"));
-        QNWARNING(error << ", resource to remove: " << resource);
+        QNWARNING("note_editor", error << ", resource to remove: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -9302,15 +9452,16 @@ void NoteEditorPrivate::removeResourceFromNote(const Resource & resource)
 
 void NoteEditorPrivate::replaceResourceInNote(const Resource & resource)
 {
-    QNDEBUG("NoteEditorPrivate::replaceResourceInNote");
-    QNTRACE(resource);
+    QNDEBUG("note_editor", "NoteEditorPrivate::replaceResourceInNote");
+    QNTRACE("note_editor", resource);
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "no note is set to the editor"));
-        QNWARNING(error << ", replacement resource: " << resource);
+        QNWARNING("note_editor", error << ", replacement resource: "
+            << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -9320,17 +9471,18 @@ void NoteEditorPrivate::replaceResourceInNote(const Resource & resource)
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "note has no resources"));
-        QNWARNING(error << ", replacement resource: " << resource);
+        QNWARNING("note_editor", error << ", replacement resource: "
+            << resource);
         Q_EMIT notifyError(error);
         return;
     }
 
-    QList<Resource> resources = m_pNote->resources();
+    auto resources = m_pNote->resources();
     int resourceIndex = -1;
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
     {
-        const Resource & currentResource = qAsConst(resources).at(i);
+        const auto & currentResource = qAsConst(resources).at(i);
         if (currentResource.localUid() == resource.localUid()) {
             resourceIndex = i;
             break;
@@ -9342,12 +9494,13 @@ void NoteEditorPrivate::replaceResourceInNote(const Resource & resource)
         ErrorString error(
             QT_TR_NOOP("Can't replace the resource within note: "
                        "can't find the resource to be replaced"));
-        QNWARNING(error << ", replacement resource: " << resource);
+        QNWARNING("note_editor", error << ", replacement resource: "
+            << resource);
         Q_EMIT notifyError(error);
         return;
     }
 
-    const Resource & targetResource = qAsConst(resources).at(resourceIndex);
+    const auto & targetResource = qAsConst(resources).at(resourceIndex);
     QByteArray previousResourceHash;
     if (targetResource.hasDataHash()) {
         previousResourceHash = targetResource.dataHash();
@@ -9358,14 +9511,14 @@ void NoteEditorPrivate::replaceResourceInNote(const Resource & resource)
 
 void NoteEditorPrivate::setNoteResources(const QList<Resource> & resources)
 {
-    QNDEBUG("NoteEditorPrivate::setNoteResources");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setNoteResources");
 
     if (Q_UNLIKELY(!m_pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't set the resources to the note: "
                        "no note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -9388,16 +9541,16 @@ bool NoteEditorPrivate::isEditorPageModified() const
 
 void NoteEditorPrivate::setFocusToEditor()
 {
-    QNDEBUG("NoteEditorPrivate::setFocusToEditor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setFocusToEditor");
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 #if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-    QNDEBUG("Working around Qt bug "
+    QNDEBUG("note_editor", "Working around Qt bug "
         << "https://bugreports.qt.io/browse/QTBUG-58515");
 
     QWidget * pFocusWidget = qApp->focusWidget();
     if (pFocusWidget) {
-        QNDEBUG("Removing focus from widget: " << pFocusWidget);
+        QNDEBUG("note_editor", "Removing focus from widget: " << pFocusWidget);
         pFocusWidget->clearFocus();
     }
 #endif
@@ -9422,7 +9575,7 @@ void NoteEditorPrivate::setFocusToEditor()
         Qt::NoModifier,
         Qt::MouseEventNotSynthesized);
 
-    QNDEBUG("Sending QMouseEvent to the note editor: point x = "
+    QNDEBUG("note_editor", "Sending QMouseEvent to the note editor: point x = "
         << bottomRight.x() << ", y = " << bottomRight.y());
 
     QApplication::sendEvent(this, &event);
@@ -9432,10 +9585,10 @@ void NoteEditorPrivate::setFocusToEditor()
 
 void NoteEditorPrivate::setModified()
 {
-    QNDEBUG("NoteEditorPrivate::setModified");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setModified");
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNDEBUG("No note is set to the editor");
+        QNDEBUG("note_editor", "No note is set to the editor");
         return;
     }
 
@@ -9444,17 +9597,17 @@ void NoteEditorPrivate::setModified()
     if (!m_needConversionToNote && !m_needSavingNoteInLocalStorage ) {
         m_needConversionToNote = true;
         m_needSavingNoteInLocalStorage = true;
-        QNTRACE("Emitting noteModified signal");
+        QNTRACE("note_editor", "Emitting noteModified signal");
         Q_EMIT noteModified();
     }
 }
 
 QString NoteEditorPrivate::noteEditorPagePath() const
 {
-    QNDEBUG("NoteEditorPrivate::noteEditorPagePath");
+    QNDEBUG("note_editor", "NoteEditorPrivate::noteEditorPagePath");
 
     if (!m_pNote) {
-        QNDEBUG("No note is set to the editor");
+        QNDEBUG("note_editor", "No note is set to the editor");
         return m_noteEditorPageFolderPath + QStringLiteral("/index.html");
     }
 
@@ -9487,11 +9640,12 @@ void NoteEditorPrivate::setRenameResourceDelegateSubscriptions(
 void NoteEditorPrivate::removeSymlinksToImageResourceFile(
     const QString & resourceLocalUid)
 {
-    QNDEBUG("NoteEditorPrivate::removeSymlinksToImageResourceFile: "
-        << "resource local uid = " << resourceLocalUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::removeSymlinksToImageResourceFile: resource local uid = "
+        << resourceLocalUid);
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNDEBUG("Can't remove symlinks to resource image file: "
+        QNDEBUG("note_editor", "Can't remove symlinks to resource image file: "
             << "no note is set to the editor");
         return;
     }
@@ -9504,14 +9658,15 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(
         fileStorageDirPath + QStringLiteral("/") + resourceLocalUid;
 
     QDir dir(fileStorageDirPath);
-    QNTRACE("Resource file storage dir "
+    QNTRACE("note_editor", "Resource file storage dir "
         << (dir.exists() ? "exists" : "doesn't exist"));
 
     QFileInfoList entryList =
         dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
     const int numEntries = entryList.size();
-    QNTRACE("Found " << numEntries << " files in the image resources folder: "
+    QNTRACE("note_editor", "Found " << numEntries
+        << " files in the image resources folder: "
         << QDir::toNativeSeparators(fileStorageDirPath));
 
     QString entryFilePath;
@@ -9524,8 +9679,8 @@ void NoteEditorPrivate::removeSymlinksToImageResourceFile(
         }
 
         entryFilePath = entry.absoluteFilePath();
-        QNTRACE("See if we need to remove the symlink to resource image file "
-            << entryFilePath);
+        QNTRACE("note_editor", "See if we need to remove the symlink to "
+            << "resource image file " << entryFilePath);
 
         if (!entryFilePath.startsWith(fileStoragePathPrefix)) {
             continue;
@@ -9539,9 +9694,9 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(
     const QString & fileStoragePath, const QString & localUid,
     ErrorString & errorDescription)
 {
-    QNDEBUG("NoteEditorPrivate::createSymlinkToImageResourceFile: "
-        << "file storage path = " << fileStoragePath
-        << ", local uid = " << localUid);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::createSymlinkToImageResourceFile: file storage path = "
+        << fileStoragePath << ", local uid = " << localUid);
 
     QString linkFilePath = fileStoragePath;
     linkFilePath.remove(linkFilePath.size() - 4, 4);
@@ -9554,7 +9709,7 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(
     linkFilePath += QStringLiteral(".png");
 #endif
 
-    QNTRACE("Link file path = " << linkFilePath);
+    QNTRACE("note_editor", "Link file path = " << linkFilePath);
 
     removeSymlinksToImageResourceFile(localUid);
 
@@ -9568,7 +9723,7 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(
         errorDescription.details() = imageResourceFile.errorString();
         errorDescription.details() += QStringLiteral(", error code = ");
         errorDescription.details() += QString::number(imageResourceFile.error());
-        return QString();
+        return {};
     }
 
     return linkFilePath;
@@ -9576,29 +9731,28 @@ QString NoteEditorPrivate::createSymlinkToImageResourceFile(
 
 void NoteEditorPrivate::onDropEvent(QDropEvent * pEvent)
 {
-    QNDEBUG("NoteEditorPrivate::onDropEvent");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onDropEvent");
 
     if (Q_UNLIKELY(!pEvent)) {
-        QNWARNING("Null pointer to drop event was detected");
+        QNWARNING("note_editor", "Null pointer to drop event was detected");
         return;
     }
 
     const QMimeData * pMimeData = pEvent->mimeData();
     if (Q_UNLIKELY(!pMimeData)) {
-        QNWARNING("Null pointer to mime data from drop event was detected");
+        QNWARNING("note_editor", "Null pointer to mime data from drop event "
+            << "was detected");
         return;
     }
 
-    QList<QUrl> urls = pMimeData->urls();
-    typedef QList<QUrl>::iterator Iter;
-    Iter urlsEnd = urls.end();
-    for(Iter it = urls.begin(); it != urlsEnd; ++it)
+    auto urls = pMimeData->urls();
+    for(const auto & url: qAsConst(urls))
     {
-        if (Q_UNLIKELY(!it->isLocalFile())) {
+        if (Q_UNLIKELY(!url.isLocalFile())) {
             continue;
         }
 
-        QString filePath = it->toLocalFile();
+        QString filePath = url.toLocalFile();
         dropFile(filePath);
     }
 
@@ -9615,10 +9769,9 @@ const Resource NoteEditorPrivate::attachResourceToNote(
     const QMimeType & mimeType, const QString & filename,
     const QString & sourceUrl)
 {
-    QNDEBUG("NoteEditorPrivate::attachResourceToNote: hash = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::attachResourceToNote: hash = "
         << dataHash.toHex() << ", mime type = " << mimeType.name()
-        << ", filename = " << filename
-        << ", source url = " << sourceUrl);
+        << ", filename = " << filename << ", source url = " << sourceUrl);
 
     Resource resource;
     QString resourceLocalUid = resource.localUid();
@@ -9627,7 +9780,7 @@ const Resource NoteEditorPrivate::attachResourceToNote(
     resource.setLocalUid(QString());
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNINFO("Can't attach resource to note editor: no actual "
+        QNINFO("note_editor", "Can't attach resource to note editor: no actual "
             << "note was selected");
         return resource;
     }
@@ -9736,7 +9889,7 @@ QString NoteEditorPrivate::composeHtmlTable(
 
 void NoteEditorPrivate::undo()
 {
-    QNDEBUG("NoteEditorPrivate::undo");
+    QNDEBUG("note_editor", "NoteEditorPrivate::undo");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't perform undo"))
 
@@ -9748,7 +9901,7 @@ void NoteEditorPrivate::undo()
 
 void NoteEditorPrivate::redo()
 {
-    QNDEBUG("NoteEditorPrivate::redo");
+    QNDEBUG("note_editor", "NoteEditorPrivate::redo");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't perform redo"))
 
@@ -9760,7 +9913,7 @@ void NoteEditorPrivate::redo()
 
 void NoteEditorPrivate::undoPageAction()
 {
-    QNDEBUG("NoteEditorPrivate::undoPageAction");
+    QNDEBUG("note_editor", "NoteEditorPrivate::undoPageAction");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't undo page action"))
     GET_PAGE()
@@ -9772,7 +9925,7 @@ void NoteEditorPrivate::undoPageAction()
 
 void NoteEditorPrivate::redoPageAction()
 {
-    QNDEBUG("NoteEditorPrivate::redoPageAction");
+    QNDEBUG("note_editor", "NoteEditorPrivate::redoPageAction");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't redo page action"))
     GET_PAGE()
@@ -9784,7 +9937,8 @@ void NoteEditorPrivate::redoPageAction()
 
 void NoteEditorPrivate::flipEnToDoCheckboxState(const quint64 enToDoIdNumber)
 {
-    QNDEBUG("NoteEditorPrivate::flipEnToDoCheckboxState: " << enToDoIdNumber);
+    QNDEBUG("note_editor", "NoteEditorPrivate::flipEnToDoCheckboxState: "
+        << enToDoIdNumber);
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't flip the todo checkbox state"))
     GET_PAGE()
@@ -9804,15 +9958,15 @@ void NoteEditorPrivate::updateLastInteractionTimestamp()
 
 qint64 NoteEditorPrivate::noteResourcesSize() const
 {
-    QNTRACE("NoteEditorPrivate::noteResourcesSize");
+    QNTRACE("note_editor", "NoteEditorPrivate::noteResourcesSize");
 
     if (Q_UNLIKELY(!m_pNote)) {
-        QNTRACE("No note - returning zero");
+        QNTRACE("note_editor", "No note - returning zero");
         return qint64(0);
     }
 
     if (Q_UNLIKELY(!m_pNote->hasResources())) {
-        QNTRACE("Note has no resources - returning zero");
+        QNTRACE("note_editor", "Note has no resources - returning zero");
         return qint64(0);
     }
 
@@ -9820,7 +9974,8 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
     QList<Resource> resources = m_pNote->resources();
     for(const auto & resource: qAsConst(resources))
     {
-        QNTRACE("Computing size contributions for resource: " << resource);
+        QNTRACE("note_editor", "Computing size contributions for resource: "
+            << resource);
 
         if (resource.hasDataSize()) {
             size += resource.dataSize();
@@ -9835,7 +9990,7 @@ qint64 NoteEditorPrivate::noteResourcesSize() const
         }
     }
 
-    QNTRACE("Computed note resources size: " << size);
+    QNTRACE("note_editor", "Computed note resources size: " << size);
     return size;
 }
 
@@ -9859,10 +10014,10 @@ qint64 NoteEditorPrivate::noteSize() const
 
 void NoteEditorPrivate::onSpellCheckCorrectionAction()
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckCorrectionAction");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSpellCheckCorrectionAction");
 
     if (!m_spellCheckerEnabled) {
-        QNDEBUG("Not enabled, won't do anything");
+        QNDEBUG("note_editor", "Not enabled, won't do anything");
         return;
     }
 
@@ -9872,14 +10027,14 @@ void NoteEditorPrivate::onSpellCheckCorrectionAction()
         ErrorString error(
             QT_TR_NOOP("Can't get the action which has toggled "
                        "the spelling correction"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     QString correction = pAction->text();
     if (Q_UNLIKELY(correction.isEmpty())) {
-        QNWARNING("No correction specified");
+        QNWARNING("note_editor", "No correction specified");
         return;
     }
 
@@ -9896,15 +10051,15 @@ void NoteEditorPrivate::onSpellCheckCorrectionAction()
 
 void NoteEditorPrivate::onSpellCheckIgnoreWordAction()
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckIgnoreWordAction");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSpellCheckIgnoreWordAction");
 
     if (!m_spellCheckerEnabled) {
-        QNDEBUG("Not enabled, won't do anything");
+        QNDEBUG("note_editor", "Not enabled, won't do anything");
         return;
     }
 
     if (Q_UNLIKELY(!m_pSpellChecker)) {
-        QNDEBUG("Spell checker is null, won't do anything");
+        QNDEBUG("note_editor", "Spell checker is null, won't do anything");
         return;
     }
 
@@ -9928,15 +10083,16 @@ void NoteEditorPrivate::onSpellCheckIgnoreWordAction()
 
 void NoteEditorPrivate::onSpellCheckAddWordToUserDictionaryAction()
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckAddWordToUserDictionaryAction");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSpellCheckAddWordToUserDictionaryAction");
 
     if (!m_spellCheckerEnabled) {
-        QNDEBUG("Not enabled, won't do anything");
+        QNDEBUG("note_editor", "Not enabled, won't do anything");
         return;
     }
 
     if (Q_UNLIKELY(!m_pSpellChecker)) {
-        QNDEBUG("Spell checker is null, won't do anything");
+        QNDEBUG("note_editor", "Spell checker is null, won't do anything");
         return;
     }
 
@@ -9962,7 +10118,8 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckCorrectionActionDone: " << data);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSpellCheckCorrectionActionDone: " << data);
 
     Q_UNUSED(extraData)
 
@@ -9974,7 +10131,7 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of spelling "
                        "correction from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -9997,7 +10154,7 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10017,7 +10174,6 @@ void NoteEditorPrivate::onSpellCheckCorrectionActionDone(
     m_pUndoStack->push(pCommand);
 
     applySpellCheck();
-
     convertToNote();
 }
 
@@ -10025,7 +10181,8 @@ void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(
     const QVariant & data,
     const QVector<std::pair<QString,QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSpellCheckCorrectionUndoRedoFinished");
 
     Q_UNUSED(extraData)
 
@@ -10037,7 +10194,7 @@ void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of spelling "
                        "correction undo/redo from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10060,7 +10217,7 @@ void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10070,16 +10227,17 @@ void NoteEditorPrivate::onSpellCheckCorrectionUndoRedoFinished(
 
 void NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate(QStringList words)
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate: "
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::onSpellCheckerDynamicHelperUpdate: "
         << words.join(QStringLiteral(";")));
 
     if (!m_spellCheckerEnabled) {
-        QNTRACE("No spell checking is enabled, nothing to do");
+        QNTRACE("note_editor", "No spell checking is enabled, nothing to do");
         return;
     }
 
     if (Q_UNLIKELY(!m_pSpellChecker)) {
-        QNDEBUG("Spell checker is null, won't do anything");
+        QNDEBUG("note_editor", "Spell checker is null, won't do anything");
         return;
     }
 
@@ -10089,21 +10247,22 @@ void NoteEditorPrivate::onSpellCheckerDynamicHelperUpdate(QStringList words)
         m_stringUtils.removePunctuation(word);
 
         if (m_pSpellChecker->checkSpell(word)) {
-            QNTRACE("No misspelling detected");
+            QNTRACE("note_editor", "No misspelling detected");
             continue;
         }
 
         Q_UNUSED(m_currentNoteMisSpelledWords.insert(word))
     }
 
-    QNTRACE("Current note's misspelled words: " << m_currentNoteMisSpelledWords);
+    QNTRACE("note_editor", "Current note's misspelled words: "
+        << m_currentNoteMisSpelledWords);
 
     applySpellCheck(/* apply to selection = */ true);
 }
 
 void NoteEditorPrivate::onSpellCheckerReady()
 {
-    QNDEBUG("NoteEditorPrivate::onSpellCheckerReady");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onSpellCheckerReady");
 
     QObject::disconnect(
         m_pSpellChecker,
@@ -10123,8 +10282,8 @@ void NoteEditorPrivate::onSpellCheckerReady()
 
 void NoteEditorPrivate::onImageResourceResized(bool pushUndoCommand)
 {
-    QNDEBUG("NoteEditorPrivate::onImageResourceResized: push undo command = "
-        << (pushUndoCommand ? "true" : "false"));
+    QNDEBUG("note_editor", "NoteEditorPrivate::onImageResourceResized: "
+        << "push undo command = " << (pushUndoCommand ? "true" : "false"));
 
     if (pushUndoCommand)
     {
@@ -10144,23 +10303,22 @@ void NoteEditorPrivate::onImageResourceResized(bool pushUndoCommand)
 
 void NoteEditorPrivate::copy()
 {
-    QNDEBUG("NoteEditorPrivate::copy");
+    QNDEBUG("note_editor", "NoteEditorPrivate::copy");
     GET_PAGE()
     page->triggerAction(WebPage::Copy);
 }
 
 void NoteEditorPrivate::paste()
 {
-    QNDEBUG("NoteEditorPrivate::paste");
+    QNDEBUG("note_editor", "NoteEditorPrivate::paste");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't paste"))
-
     GET_PAGE()
 
     QClipboard * pClipboard = QApplication::clipboard();
     if (Q_UNLIKELY(!pClipboard))
     {
-        QNWARNING("Can't access the application clipboard "
+        QNWARNING("note_editor", "Can't access the application clipboard "
             << "to analyze the pasted content");
         execJavascriptCommand(QStringLiteral("insertText"));
         setModified();
@@ -10170,7 +10328,8 @@ void NoteEditorPrivate::paste()
     const QMimeData * pMimeData = pClipboard->mimeData(QClipboard::Clipboard);
     if (pMimeData)
     {
-        QNTRACE("Mime data to paste: " << pMimeData << "\nMime data has html: "
+        QNTRACE("note_editor", "Mime data to paste: " << pMimeData
+            << "\nMime data has html: "
             << (pMimeData->hasHtml() ? "true" : "false")
             << ", html: " << pMimeData->html() << ", mime data has text: "
             << (pMimeData->hasText() ? "true" : "false")
@@ -10185,7 +10344,7 @@ void NoteEditorPrivate::paste()
         if (pMimeData->hasHtml())
         {
             QString html = pMimeData->html();
-            QNDEBUG("HTML from mime data: " << html);
+            QNDEBUG("note_editor", "HTML from mime data: " << html);
 
             auto * pInsertHtmlDelegate = new InsertHtmlDelegate(
                 html,
@@ -10214,14 +10373,15 @@ void NoteEditorPrivate::paste()
     }
     else
     {
-        QNDEBUG("Unable to retrieve the mime data from the clipboard");
+        QNDEBUG("note_editor", "Unable to retrieve the mime data from "
+            << "the clipboard");
     }
 
     QString textToPaste = pClipboard->text();
-    QNTRACE("Text to paste: " << textToPaste);
+    QNTRACE("note_editor", "Text to paste: " << textToPaste);
 
     if (textToPaste.isEmpty()) {
-        QNDEBUG("The text to paste is empty");
+        QNDEBUG("note_editor", "The text to paste is empty");
         return;
     }
 
@@ -10239,7 +10399,7 @@ void NoteEditorPrivate::paste()
 
     if (!shouldBeHyperlink && !shouldBeAttachment && !shouldBeInAppLink)
     {
-        QNTRACE("The pasted text doesn't appear to be a url "
+        QNTRACE("note_editor", "The pasted text doesn't appear to be a url "
             << "of hyperlink or attachment");
         execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
         return;
@@ -10250,8 +10410,8 @@ void NoteEditorPrivate::paste()
     {
         if (!url.isValid())
         {
-            QNTRACE("The pasted text seemed like file url but the url isn't "
-                << "valid after all, fallback to simple paste");
+            QNTRACE("note_editor", "The pasted text seemed like file url but "
+                << "the url isn't valid after all, fallback to simple paste");
             execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
             setModified();
         }
@@ -10268,14 +10428,14 @@ void NoteEditorPrivate::paste()
     }
 
     if (!url.isValid()) {
-        QNDEBUG("It appears we don't paste a url");
+        QNDEBUG("note_editor", "It appears we don't paste a url");
         execJavascriptCommand(QStringLiteral("insertText"), textToPaste);
         setModified();
         return;
     }
 
-    QNDEBUG("Was able to create the url from pasted text, inserting "
-        << "a hyperlink");
+    QNDEBUG("note_editor", "Was able to create the url from pasted text, "
+        << "inserting a hyperlink");
 
     if (shouldBeInAppLink)
     {
@@ -10289,7 +10449,7 @@ void NoteEditorPrivate::paste()
             errorDescription);
 
         if (!res) {
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
@@ -10300,12 +10460,12 @@ void NoteEditorPrivate::paste()
                 QT_TR_NOOP("Can't insert in-app note link: "
                            "note guid is invalid"));
             errorDescription.details() = noteGuid;
-            QNWARNING(errorDescription);
+            QNWARNING("note_editor", errorDescription);
             Q_EMIT notifyError(errorDescription);
             return;
         }
 
-        QNTRACE("Parsed in-app note link: user id = " << userId
+        QNTRACE("note_editor", "Parsed in-app note link: user id = " << userId
             << ", shard id = " << shardId << ", note guid = " << noteGuid);
 
         Q_EMIT inAppNoteLinkPasteRequested(
@@ -10325,13 +10485,13 @@ void NoteEditorPrivate::paste()
 
 void NoteEditorPrivate::pasteUnformatted()
 {
-    QNDEBUG("NoteEditorPrivate::pasteUnformatted");
+    QNDEBUG("note_editor", "NoteEditorPrivate::pasteUnformatted");
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't paste the unformatted text"));
 
     QClipboard * pClipboard = QApplication::clipboard();
     if (Q_UNLIKELY(!pClipboard))
     {
-        QNWARNING("Can't access the application clipboard "
+        QNWARNING("note_editor", "Can't access the application clipboard "
             << "to analyze the pasted content");
 
         execJavascriptCommand(QStringLiteral("insertText"));
@@ -10340,7 +10500,7 @@ void NoteEditorPrivate::pasteUnformatted()
     }
 
     QString textToPaste = pClipboard->text();
-    QNTRACE("Text to paste: " << textToPaste);
+    QNTRACE("note_editor", "Text to paste: " << textToPaste);
     if (textToPaste.isEmpty()) {
         return;
     }
@@ -10351,14 +10511,16 @@ void NoteEditorPrivate::pasteUnformatted()
 
 void NoteEditorPrivate::selectAll()
 {
-    QNDEBUG("NoteEditorPrivate::selectAll");
+    QNDEBUG("note_editor", "NoteEditorPrivate::selectAll");
+
     GET_PAGE()
     page->triggerAction(WebPage::SelectAll);
 }
 
 void NoteEditorPrivate::formatSelectionAsSourceCode()
 {
-    QNDEBUG("NoteEditorPrivate::formatSelectionAsSourceCode");
+    QNDEBUG("note_editor", "NoteEditorPrivate::formatSelectionAsSourceCode");
+
     GET_PAGE()
     page->executeJavaScript(
         QStringLiteral("sourceCodeFormatter.format()"),
@@ -10369,7 +10531,7 @@ void NoteEditorPrivate::formatSelectionAsSourceCode()
 
 void NoteEditorPrivate::fontMenu()
 {
-    QNDEBUG("NoteEditorPrivate::fontMenu");
+    QNDEBUG("note_editor", "NoteEditorPrivate::fontMenu");
 
     bool fontWasChosen = false;
     QFont chosenFont = QFontDialog::getFont(&fontWasChosen, m_font, this);
@@ -10394,7 +10556,8 @@ void NoteEditorPrivate::fontMenu()
 
 void NoteEditorPrivate::cut()
 {
-    QNDEBUG("NoteEditorPrivate::cut");
+    QNDEBUG("note_editor", "NoteEditorPrivate::cut");
+
     GET_PAGE()
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't cut note content"))
 
@@ -10408,7 +10571,8 @@ void NoteEditorPrivate::cut()
 
 void NoteEditorPrivate::textBold()
 {
-    QNDEBUG("NoteEditorPrivate::textBold");
+    QNDEBUG("note_editor", "NoteEditorPrivate::textBold");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't toggle bold text"))
     execJavascriptCommand(QStringLiteral("bold"));
     setModified();
@@ -10416,7 +10580,8 @@ void NoteEditorPrivate::textBold()
 
 void NoteEditorPrivate::textItalic()
 {
-    QNDEBUG("NoteEditorPrivate::textItalic");
+    QNDEBUG("note_editor", "NoteEditorPrivate::textItalic");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't toggle italic text"))
     execJavascriptCommand(QStringLiteral("italic"));
     setModified();
@@ -10424,7 +10589,8 @@ void NoteEditorPrivate::textItalic()
 
 void NoteEditorPrivate::textUnderline()
 {
-    QNDEBUG("NoteEditorPrivate::textUnderline");
+    QNDEBUG("note_editor", "NoteEditorPrivate::textUnderline");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't toggle underline text"))
     execJavascriptCommand(QStringLiteral("underline"));
     setModified();
@@ -10432,7 +10598,8 @@ void NoteEditorPrivate::textUnderline()
 
 void NoteEditorPrivate::textStrikethrough()
 {
-    QNDEBUG("NoteEditorPrivate::textStrikethrough");
+    QNDEBUG("note_editor", "NoteEditorPrivate::textStrikethrough");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't toggle strikethrough text"))
     execJavascriptCommand(QStringLiteral("strikethrough"));
     setModified();
@@ -10440,7 +10607,7 @@ void NoteEditorPrivate::textStrikethrough()
 
 void NoteEditorPrivate::textHighlight()
 {
-    QNDEBUG("NoteEditorPrivate::textHighlight");
+    QNDEBUG("note_editor", "NoteEditorPrivate::textHighlight");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't highlight text"))
     setBackgroundColor(QColor(255, 255, 127));
@@ -10449,7 +10616,8 @@ void NoteEditorPrivate::textHighlight()
 
 void NoteEditorPrivate::alignLeft()
 {
-    QNDEBUG("NoteEditorPrivate::alignLeft");
+    QNDEBUG("note_editor", "NoteEditorPrivate::alignLeft");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't justify the text to the left"))
     execJavascriptCommand(QStringLiteral("justifyleft"));
     setModified();
@@ -10457,7 +10625,8 @@ void NoteEditorPrivate::alignLeft()
 
 void NoteEditorPrivate::alignCenter()
 {
-    QNDEBUG("NoteEditorPrivate::alignCenter");
+    QNDEBUG("note_editor", "NoteEditorPrivate::alignCenter");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't justify the text to the center"))
     execJavascriptCommand(QStringLiteral("justifycenter"));
     setModified();
@@ -10465,7 +10634,8 @@ void NoteEditorPrivate::alignCenter()
 
 void NoteEditorPrivate::alignRight()
 {
-    QNDEBUG("NoteEditorPrivate::alignRight");
+    QNDEBUG("note_editor", "NoteEditorPrivate::alignRight");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't justify the text to the right"))
     execJavascriptCommand(QStringLiteral("justifyright"));
     setModified();
@@ -10473,7 +10643,8 @@ void NoteEditorPrivate::alignRight()
 
 void NoteEditorPrivate::alignFull()
 {
-    QNDEBUG("NoteEditorPrivate::alignFull");
+    QNDEBUG("note_editor", "NoteEditorPrivate::alignFull");
+
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't do full text justification"))
     execJavascriptCommand(QStringLiteral("justifyfull"));
     setModified();
@@ -10492,7 +10663,7 @@ bool NoteEditorPrivate::hasSelection() const
 void NoteEditorPrivate::findNext(
     const QString & text, const bool matchCase) const
 {
-    QNDEBUG("NoteEditorPrivate::findNext: " << text
+    QNDEBUG("note_editor", "NoteEditorPrivate::findNext: " << text
         << "; match case = " << (matchCase ? "true" : "false"));
 
     findText(text, matchCase);
@@ -10501,7 +10672,7 @@ void NoteEditorPrivate::findNext(
 void NoteEditorPrivate::findPrevious(
     const QString & text, const bool matchCase) const
 {
-    QNDEBUG("NoteEditorPrivate::findPrevious: " << text
+    QNDEBUG("note_editor", "NoteEditorPrivate::findPrevious: " << text
         << "; match case = " << (matchCase ? "true" : "false"));
 
     findText(text, matchCase, /* search backward = */ true);
@@ -10511,7 +10682,7 @@ void NoteEditorPrivate::replace(
     const QString & textToReplace, const QString & replacementText,
     const bool matchCase)
 {
-    QNDEBUG("NoteEditorPrivate::replace: text to replace = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::replace: text to replace = "
         << textToReplace << "; replacement text = "
         << replacementText << "; match case = "
         << (matchCase ? "true" : "false"));
@@ -10554,7 +10725,7 @@ void NoteEditorPrivate::replaceAll(
     const QString & textToReplace, const QString & replacementText,
     const bool matchCase)
 {
-    QNDEBUG("NoteEditorPrivate::replaceAll: text to replace = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::replaceAll: text to replace = "
         << textToReplace << "; replacement text = "
         << replacementText << "; match case = "
         << (matchCase ? "true" : "false"));
@@ -10594,7 +10765,7 @@ void NoteEditorPrivate::replaceAll(
 
 void NoteEditorPrivate::onReplaceJavaScriptDone(const QVariant & data)
 {
-    QNDEBUG("NoteEditorPrivate::onReplaceJavaScriptDone");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onReplaceJavaScriptDone");
 
     Q_UNUSED(data)
 
@@ -10604,7 +10775,7 @@ void NoteEditorPrivate::onReplaceJavaScriptDone(const QVariant & data)
 
 void NoteEditorPrivate::insertToDoCheckbox()
 {
-    QNDEBUG("NoteEditorPrivate::insertToDoCheckbox");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertToDoCheckbox");
 
     GET_PAGE()
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert checkbox"))
@@ -10623,7 +10794,7 @@ void NoteEditorPrivate::insertInAppNoteLink(
     const QString & userId, const QString & shardId,
     const QString & noteGuid, const QString & linkText)
 {
-    QNDEBUG("NoteEditorPrivate::insertInAppNoteLink: user id = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertInAppNoteLink: user id = "
         << userId << ", shard id = " << shardId
         << ", note guid = " << noteGuid);
 
@@ -10638,11 +10809,11 @@ void NoteEditorPrivate::insertInAppNoteLink(
 
 void NoteEditorPrivate::setSpellcheck(const bool enabled)
 {
-    QNDEBUG("NoteEditorPrivate::setSpellcheck: enabled = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setSpellcheck: enabled = "
         << (enabled ? "true" : "false"));
 
     if (m_spellCheckerEnabled == enabled) {
-        QNTRACE("Spell checker enabled flag didn't change");
+        QNTRACE("note_editor", "Spell checker enabled flag didn't change");
         return;
     }
 
@@ -10662,13 +10833,13 @@ bool NoteEditorPrivate::spellCheckEnabled() const
 
 void NoteEditorPrivate::setFont(const QFont & font)
 {
-    QNDEBUG("NoteEditorPrivate::setFont: " << font.family()
+    QNDEBUG("note_editor", "NoteEditorPrivate::setFont: " << font.family()
         << ", point size = " << font.pointSize()
         << ", previous font family = " << m_font.family()
         << ", previous font point size = " << m_font.pointSize());
 
     if (m_font.family() == font.family()) {
-        QNTRACE("Font family hasn't changed, nothing to to do");
+        QNTRACE("note_editor", "Font family hasn't changed, nothing to to do");
         return;
     }
 
@@ -10680,7 +10851,7 @@ void NoteEditorPrivate::setFont(const QFont & font)
     QString javascript =
         QString::fromUtf8("setFontFamily('%1');").arg(fontFamily);
 
-    QNTRACE("Script: " << javascript);
+    QNTRACE("note_editor", "Script: " << javascript);
 
     QVector<std::pair<QString,QString>> extraData;
     extraData.push_back(std::make_pair(
@@ -10698,12 +10869,12 @@ void NoteEditorPrivate::setFont(const QFont & font)
 
 void NoteEditorPrivate::setFontHeight(const int height)
 {
-    QNDEBUG("NoteEditorPrivate::setFontHeight: " << height);
+    QNDEBUG("note_editor", "NoteEditorPrivate::setFontHeight: " << height);
 
     if (height <= 0) {
         ErrorString error(QT_TR_NOOP("Detected incorrect font size"));
         error.details() = QString::number(height);
-        QNINFO(error);
+        QNINFO("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10712,7 +10883,7 @@ void NoteEditorPrivate::setFontHeight(const int height)
 
     m_font.setPointSize(height);
     QString javascript = QString::fromUtf8("setFontSize('%1');").arg(height);
-    QNTRACE("Script: " << javascript);
+    QNTRACE("note_editor", "Script: " << javascript);
 
     QVector<std::pair<QString,QString>> extraData;
     extraData.push_back(std::make_pair(
@@ -10730,7 +10901,7 @@ void NoteEditorPrivate::setFontHeight(const int height)
 
 void NoteEditorPrivate::setFontColor(const QColor & color)
 {
-    QNDEBUG("NoteEditorPrivate::setFontColor: " << color.name()
+    QNDEBUG("note_editor", "NoteEditorPrivate::setFontColor: " << color.name()
         << ", rgb: " << QString::number(color.rgb(), 16));
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't set the font color"))
@@ -10738,7 +10909,7 @@ void NoteEditorPrivate::setFontColor(const QColor & color)
     if (!color.isValid()) {
         ErrorString error(QT_TR_NOOP("Detected invalid font color"));
         error.details() = color.name();
-        QNINFO(error);
+        QNINFO("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10752,7 +10923,7 @@ void NoteEditorPrivate::setFontColor(const QColor & color)
 
 void NoteEditorPrivate::setBackgroundColor(const QColor & color)
 {
-    QNDEBUG("NoteEditorPrivate::setBackgroundColor: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::setBackgroundColor: "
         << color.name() << ", rgb: "
         << QString::number(color.rgb(), 16));
 
@@ -10761,7 +10932,7 @@ void NoteEditorPrivate::setBackgroundColor(const QColor & color)
     if (!color.isValid()) {
         ErrorString error(QT_TR_NOOP("Detected invalid background color"));
         error.details() = color.name();
-        QNINFO(error);
+        QNINFO("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10807,7 +10978,7 @@ QPalette NoteEditorPrivate::defaultPalette() const
 
 void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
 {
-    QNDEBUG("NoteEditorPrivate::setDefaultPalette");
+    QNDEBUG("note_editor", "NoteEditorPrivate::setDefaultPalette");
 
     if (!m_pPalette)
     {
@@ -10816,7 +10987,7 @@ void NoteEditorPrivate::setDefaultPalette(const QPalette & pal)
     else
     {
         if (*m_pPalette == pal) {
-            QNTRACE("Palette did not change");
+            QNTRACE("note_editor", "Palette did not change");
             return;
         }
 
@@ -10844,10 +11015,11 @@ const QFont * NoteEditorPrivate::defaultFont() const
 
 void NoteEditorPrivate::setDefaultFont(const QFont & font)
 {
-    QNDEBUG("NoteEditorPrivate::setDefaultFont: " << font.toString());
+    QNDEBUG("note_editor", "NoteEditorPrivate::setDefaultFont: "
+        << font.toString());
 
     if (m_pDefaultFont && *m_pDefaultFont == font) {
-        QNDEBUG("Font is already set");
+        QNDEBUG("note_editor", "Font is already set");
         return;
     }
 
@@ -10874,7 +11046,7 @@ void NoteEditorPrivate::setDefaultFont(const QFont & font)
 
 void NoteEditorPrivate::insertHorizontalLine()
 {
-    QNDEBUG("NoteEditorPrivate::insertHorizontalLine");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertHorizontalLine");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a horizontal line"))
     execJavascriptCommand(QStringLiteral("insertHorizontalRule"));
@@ -10903,7 +11075,7 @@ void NoteEditorPrivate::decreaseIndentation()
 
 void NoteEditorPrivate::insertBulletedList()
 {
-    QNDEBUG("NoteEditorPrivate::insertBulletedList");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertBulletedList");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert an unordered list"))
     execJavascriptCommand(QStringLiteral("insertUnorderedList"));
@@ -10912,7 +11084,7 @@ void NoteEditorPrivate::insertBulletedList()
 
 void NoteEditorPrivate::insertNumberedList()
 {
-    QNDEBUG("NoteEditorPrivate::insertNumberedList");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertNumberedList");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a numbered list"))
     execJavascriptCommand(QStringLiteral("insertOrderedList"));
@@ -10921,7 +11093,7 @@ void NoteEditorPrivate::insertNumberedList()
 
 void NoteEditorPrivate::insertTableDialog()
 {
-    QNDEBUG("NoteEditorPrivate::insertTableDialog");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertTableDialog");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a table"))
     Q_EMIT insertTableDialogRequested();
@@ -10936,7 +11108,7 @@ void NoteEditorPrivate::insertTableDialog()
                               "table with negative or zero "                   \
                               "number of columns"));                           \
         error.details() = QString::number(columns);                            \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor", error);                                       \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -10951,7 +11123,7 @@ void NoteEditorPrivate::insertTableDialog()
                               "table with negative or zero "                   \
                               "number of rows"));                              \
         error.details() = QString::number(rows);                               \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor", error);                                       \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -10960,7 +11132,7 @@ void NoteEditorPrivate::insertTableDialog()
 void NoteEditorPrivate::insertFixedWidthTable(
     const int rows, const int columns, const int widthInPixels)
 {
-    QNDEBUG("NoteEditorPrivate::insertFixedWidthTable: rows = "
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertFixedWidthTable: rows = "
         << rows << ", columns = " << columns
         << ", width in pixels = " << widthInPixels);
 
@@ -10976,7 +11148,7 @@ void NoteEditorPrivate::insertFixedWidthTable(
             QT_TR_NOOP("Can't insert table, width is too large "
                        "(more than twice the page width)"));
         error.details() = QString::number(widthInPixels);
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10984,7 +11156,7 @@ void NoteEditorPrivate::insertFixedWidthTable(
     {
         ErrorString error(QT_TR_NOOP("Can't insert table, bad width"));
         error.details() = QString::number(widthInPixels);
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -10999,7 +11171,7 @@ void NoteEditorPrivate::insertFixedWidthTable(
         error.details() += QStringLiteral(", ");
         error.details() += QString::number(columns);
         error.details() += QStringLiteral("columns");
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11019,8 +11191,8 @@ void NoteEditorPrivate::insertFixedWidthTable(
 void NoteEditorPrivate::insertRelativeWidthTable(
     const int rows, const int columns, const double relativeWidth)
 {
-    QNDEBUG("NoteEditorPrivate::insertRelativeWidthTable: rows = "
-        << rows << ", columns = " << columns
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertRelativeWidthTable: "
+        << "rows = " << rows << ", columns = " << columns
         << ", relative width = " << relativeWidth);
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a relative width table"))
@@ -11034,7 +11206,7 @@ void NoteEditorPrivate::insertRelativeWidthTable(
             QT_TR_NOOP("Can't insert table, relative width is too small"));
         error.details() = QString::number(relativeWidth);
         error.details() += QStringLiteral("%");
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11044,7 +11216,7 @@ void NoteEditorPrivate::insertRelativeWidthTable(
             QT_TR_NOOP("Can't insert table, relative width is too large"));
         error.details() = QString::number(relativeWidth);
         error.details() += QStringLiteral("%");
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11065,7 +11237,7 @@ void NoteEditorPrivate::insertRelativeWidthTable(
 
 void NoteEditorPrivate::insertTableRow()
 {
-    QNDEBUG("NoteEditorPrivate::insertTableRow");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertTableRow");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a table row"))
 
@@ -11083,7 +11255,7 @@ void NoteEditorPrivate::insertTableRow()
 
 void NoteEditorPrivate::insertTableColumn()
 {
-    QNDEBUG("NoteEditorPrivate::insertTableColumn");
+    QNDEBUG("note_editor", "NoteEditorPrivate::insertTableColumn");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't insert a table column"))
 
@@ -11101,7 +11273,7 @@ void NoteEditorPrivate::insertTableColumn()
 
 void NoteEditorPrivate::removeTableRow()
 {
-    QNDEBUG("NoteEditorPrivate::removeTableRow");
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeTableRow");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't remove the table row"))
 
@@ -11119,7 +11291,7 @@ void NoteEditorPrivate::removeTableRow()
 
 void NoteEditorPrivate::removeTableColumn()
 {
-    QNDEBUG("NoteEditorPrivate::removeTableColumn");
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeTableColumn");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't remove the table column"))
 
@@ -11137,7 +11309,7 @@ void NoteEditorPrivate::removeTableColumn()
 
 void NoteEditorPrivate::addAttachmentDialog()
 {
-    QNDEBUG("NoteEditorPrivate::addAttachmentDialog");
+    QNDEBUG("note_editor", "NoteEditorPrivate::addAttachmentDialog");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't add an attachment"))
 
@@ -11152,18 +11324,19 @@ void NoteEditorPrivate::addAttachmentDialog()
     if (!lastAttachmentAddLocation.isNull() &&
         lastAttachmentAddLocation.isValid())
     {
-        QNTRACE("Found last attachment add location: "
+        QNTRACE("note_editor", "Found last attachment add location: "
                 << lastAttachmentAddLocation);
         QFileInfo lastAttachmentAddDirInfo(lastAttachmentAddLocation.toString());
         if (!lastAttachmentAddDirInfo.exists()) {
-            QNTRACE("Cached last attachment add directory does not exist");
+            QNTRACE("note_editor", "Cached last attachment add directory does "
+                << "not exist");
         }
         else if (!lastAttachmentAddDirInfo.isDir()) {
-            QNTRACE("Cached last attachment add directory path "
+            QNTRACE("note_editor", "Cached last attachment add directory path "
                 << "is not a directory really");
         }
         else if (!lastAttachmentAddDirInfo.isWritable()) {
-            QNTRACE("Cached last attachment add directory path "
+            QNTRACE("note_editor", "Cached last attachment add directory path "
                 << "is not writable");
         }
         else {
@@ -11178,11 +11351,12 @@ void NoteEditorPrivate::addAttachmentDialog()
         addAttachmentInitialFolderPath);
 
     if (absoluteFilePath.isEmpty()) {
-        QNTRACE("User cancelled adding the attachment");
+        QNTRACE("note_editor", "User cancelled adding the attachment");
         return;
     }
 
-    QNTRACE("Absolute file path of chosen attachment: " << absoluteFilePath);
+    QNTRACE("note_editor", "Absolute file path of chosen attachment: "
+        << absoluteFilePath);
 
     QFileInfo fileInfo(absoluteFilePath);
     QString absoluteDirPath = fileInfo.absoluteDir().absolutePath();
@@ -11191,7 +11365,9 @@ void NoteEditorPrivate::addAttachmentDialog()
         appSettings.setValue(
             NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY,
             absoluteDirPath);
-        QNTRACE("Updated last attachment add location to " << absoluteDirPath);
+
+        QNTRACE("note_editor", "Updated last attachment add location to "
+            << absoluteDirPath);
     }
 
     dropFile(absoluteFilePath);
@@ -11199,13 +11375,13 @@ void NoteEditorPrivate::addAttachmentDialog()
 
 void NoteEditorPrivate::saveAttachmentDialog(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::saveAttachmentDialog");
+    QNDEBUG("note_editor", "NoteEditorPrivate::saveAttachmentDialog");
     onSaveResourceRequest(resourceHash);
 }
 
 void NoteEditorPrivate::saveAttachmentUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::saveAttachmentUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::saveAttachmentUnderCursor");
 
     if ((m_currentContextMenuExtraData.m_contentType !=
          QStringLiteral("ImageResource")) &&
@@ -11215,7 +11391,7 @@ void NoteEditorPrivate::saveAttachmentUnderCursor()
         ErrorString error(
             QT_TR_NOOP("can't save attachment under cursor: wrong "
                        "current context menu extra data's content type"));
-        QNWARNING(error << ": content type = "
+        QNWARNING("note_editor", error << ": content type = "
             << m_currentContextMenuExtraData.m_contentType);
         Q_EMIT notifyError(error);
         return;
@@ -11228,7 +11404,7 @@ void NoteEditorPrivate::saveAttachmentUnderCursor()
 
 void NoteEditorPrivate::openAttachment(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::openAttachment");
+    QNDEBUG("note_editor", "NoteEditorPrivate::openAttachment");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't open the attachment"))
     onOpenResourceRequest(resourceHash);
@@ -11236,7 +11412,7 @@ void NoteEditorPrivate::openAttachment(const QByteArray & resourceHash)
 
 void NoteEditorPrivate::openAttachmentUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::openAttachmentUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::openAttachmentUnderCursor");
 
     if ((m_currentContextMenuExtraData.m_contentType !=
          QStringLiteral("ImageResource")) &&
@@ -11247,14 +11423,13 @@ void NoteEditorPrivate::openAttachmentUnderCursor()
             QT_TR_NOOP("Can't open attachment under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error << ": content type = "
+        QNWARNING("note_editor", error << ": content type = "
             << m_currentContextMenuExtraData.m_contentType);
         Q_EMIT notifyError(error);
         return;
     }
 
     openAttachment(m_currentContextMenuExtraData.m_resourceHash);
-
     m_currentContextMenuExtraData.m_contentType.resize(0);
 }
 
@@ -11265,7 +11440,7 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment: no note "
                        "is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11274,9 +11449,11 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
     int resourceIndex = resourceIndexByHash(resources, resourceHash);
     if (Q_UNLIKELY(resourceIndex < 0))
     {
-        ErrorString error(QT_TR_NOOP("The attachment to be copied was not found "
-                                     "within the note"));
-        QNWARNING(error << ", resource hash = " << resourceHash.toHex());
+        ErrorString error(
+            QT_TR_NOOP("The attachment to be copied was not found "
+                       "within the note"));
+        QNWARNING("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         Q_EMIT notifyError(error);
         return;
     }
@@ -11288,7 +11465,8 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment as it has neither "
                        "data body nor alternate data body"));
-        QNWARNING(error << ", resource hash = " << resourceHash.toHex());
+        QNWARNING("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         Q_EMIT notifyError(error);
         return;
     }
@@ -11297,7 +11475,8 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
     {
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment as it has no mime type"));
-        QNWARNING(error << ", resource hash = " << resourceHash.toHex());
+        QNWARNING("note_editor", error << ", resource hash = "
+            << resourceHash.toHex());
         Q_EMIT notifyError(error);
         return;
     }
@@ -11315,7 +11494,7 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
         ErrorString error(
             QT_TR_NOOP("Can't copy the attachment: can't get access "
                        "to clipboard"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11327,7 +11506,7 @@ void NoteEditorPrivate::copyAttachment(const QByteArray & resourceHash)
 
 void NoteEditorPrivate::copyAttachmentUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::copyAttachmentUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::copyAttachmentUnderCursor");
 
     if ((m_currentContextMenuExtraData.m_contentType !=
          QStringLiteral("ImageResource")) &&
@@ -11338,7 +11517,7 @@ void NoteEditorPrivate::copyAttachmentUnderCursor()
             QT_TR_NOOP("Can't copy the attachment under cursor: wrong current "
                        "context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11350,14 +11529,15 @@ void NoteEditorPrivate::copyAttachmentUnderCursor()
 
 void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::removeAttachment: hash = "
-            << resourceHash.toHex());
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeAttachment: hash = "
+        << resourceHash.toHex());
 
     if (Q_UNLIKELY(!m_pNote))
     {
-        ErrorString error(QT_TR_NOOP("Can't remove the attachment by hash: "
-                                     "no note is set to the editor"));
-        QNWARNING(error);
+        ErrorString error(
+            QT_TR_NOOP("Can't remove the attachment by hash: "
+                       "no note is set to the editor"));
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11385,7 +11565,7 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
                 ErrorString error(
                     QT_TR_NOOP("Can't remove the attachment: note "
                                "editor is not initialized properly"));
-                QNWARNING(error);
+                QNWARNING("note_editor", error);
                 Q_EMIT notifyError(error);
                 return;
             }
@@ -11426,14 +11606,14 @@ void NoteEditorPrivate::removeAttachment(const QByteArray & resourceHash)
             QT_TR_NOOP("Can't remove the attachment by hash: no resource with "
                        "such hash was found within the note"));
         error.details() = QString::fromUtf8(resourceHash.toHex());
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
     }
 }
 
 void NoteEditorPrivate::removeAttachmentUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::removeAttachmentUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeAttachmentUnderCursor");
 
     if ((m_currentContextMenuExtraData.m_contentType !=
          QStringLiteral("ImageResource")) &&
@@ -11444,19 +11624,18 @@ void NoteEditorPrivate::removeAttachmentUnderCursor()
             QT_TR_NOOP("Can't remove the attachment under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     removeAttachment(m_currentContextMenuExtraData.m_resourceHash);
-
     m_currentContextMenuExtraData.m_contentType.resize(0);
 }
 
 void NoteEditorPrivate::renameAttachmentUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::renameAttachmentUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::renameAttachmentUnderCursor");
 
     if (m_currentContextMenuExtraData.m_contentType !=
         QStringLiteral("NonImageResource"))
@@ -11465,20 +11644,19 @@ void NoteEditorPrivate::renameAttachmentUnderCursor()
             QT_TR_NOOP("Can't rename the attachment under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     renameAttachment(m_currentContextMenuExtraData.m_resourceHash);
-
     m_currentContextMenuExtraData.m_contentType.resize(0);
 }
 
 void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 {
-    QNDEBUG("NoteEditorPrivate::renameAttachment: resource hash = "
-        << resourceHash.toHex());
+    QNDEBUG("note_editor", "NoteEditorPrivate::renameAttachment: "
+        << "resource hash = " << resourceHash.toHex());
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't rename the attachment"));
     CHECK_NOTE_EDITABLE(errorPrefix)
@@ -11486,17 +11664,17 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
     if (Q_UNLIKELY(!m_pNote)) {
         ErrorString error = errorPrefix;
         error.appendBase(QT_TR_NOOP("No note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     int targetResourceIndex = -1;
-    QList<Resource> resources = m_pNote->resources();
+    auto resources = m_pNote->resources();
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
     {
-        const Resource & resource = qAsConst(resources).at(i);
+        const auto & resource = qAsConst(resources).at(i);
         if (!resource.hasDataHash() || (resource.dataHash() != resourceHash)) {
             continue;
         }
@@ -11510,24 +11688,28 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
         ErrorString error = errorPrefix;
         error.appendBase(
             QT_TR_NOOP("Can't find the corresponding resource in the note"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    Resource & resource = resources[targetResourceIndex];
-    if (Q_UNLIKELY(!resource.hasDataBody())) {
+    auto & resource = resources[targetResourceIndex];
+    if (Q_UNLIKELY(!resource.hasDataBody()))
+    {
         ErrorString error = errorPrefix;
-        error.appendBase(QT_TR_NOOP("The resource doesn't have the data body set"));
-        QNWARNING(error);
+        error.appendBase(
+            QT_TR_NOOP("The resource doesn't have the data body set"));
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    if (Q_UNLIKELY(!resource.hasDataHash())) {
+    if (Q_UNLIKELY(!resource.hasDataHash()))
+    {
         ErrorString error = errorPrefix;
-        error.appendBase(QT_TR_NOOP("The resource doesn't have the data hash set"));
-        QNWARNING(error << ", resource: " << resource);
+        error.appendBase(
+            QT_TR_NOOP("The resource doesn't have the data hash set"));
+        QNWARNING("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11545,8 +11727,8 @@ void NoteEditorPrivate::renameAttachment(const QByteArray & resourceHash)
 void NoteEditorPrivate::rotateImageAttachment(
     const QByteArray & resourceHash, const Rotation rotationDirection)
 {
-    QNDEBUG("NoteEditorPrivate::rotateImageAttachment: resource hash = "
-        << resourceHash.toHex() << ", rotation: "
+    QNDEBUG("note_editor", "NoteEditorPrivate::rotateImageAttachment: "
+        << "resource hash = " << resourceHash.toHex() << ", rotation: "
         << rotationDirection);
 
     ErrorString errorPrefix(QT_TR_NOOP("Can't rotate the image attachment"));
@@ -11555,17 +11737,17 @@ void NoteEditorPrivate::rotateImageAttachment(
     if (Q_UNLIKELY(!m_pNote)) {
         ErrorString error = errorPrefix;
         error.appendBase(QT_TR_NOOP("No note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     int targetResourceIndex = -1;
-    QList<Resource> resources = m_pNote->resources();
+    auto resources = m_pNote->resources();
     const int numResources = resources.size();
     for(int i = 0; i < numResources; ++i)
     {
-        const Resource & resource = qAsConst(resources)[i];
+        const auto & resource = qAsConst(resources)[i];
         if (!resource.hasDataHash() || (resource.dataHash() != resourceHash)) {
             continue;
         }
@@ -11576,7 +11758,7 @@ void NoteEditorPrivate::rotateImageAttachment(
             error.appendBase(
                 QT_TR_NOOP("The corresponding attachment's "
                            "mime type is not set"));
-            QNWARNING(error << ", resource: " << resource);
+            QNWARNING("note_editor", error << ", resource: " << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -11588,7 +11770,7 @@ void NoteEditorPrivate::rotateImageAttachment(
                 QT_TR_NOOP("The corresponding attachment's mime type "
                            "indicates it is not an image"));
             error.details() = resource.mime();
-            QNWARNING(error << ", resource: " << resource);
+            QNWARNING("note_editor", error << ", resource: " << resource);
             Q_EMIT notifyError(error);
             return;
         }
@@ -11603,27 +11785,32 @@ void NoteEditorPrivate::rotateImageAttachment(
         error.appendBase(
             QT_TR_NOOP("Can't find the corresponding attachment "
                        "within the note"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    Resource & resource = resources[targetResourceIndex];
+    auto & resource = resources[targetResourceIndex];
     if (!resource.hasDataBody())
     {
-        QNDEBUG("The resource to be rotated doesn't have data body "
-            << "set, requesting it from NoteEditorLocalStorageBroker");
+        QNDEBUG("note_editor", "The resource to be rotated doesn't have data "
+            << "body set, requesting it from NoteEditorLocalStorageBroker");
+
         QString resourceLocalUid = resource.localUid();
+
         m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage[resourceLocalUid] =
             rotationDirection;
+
         Q_EMIT findResourceData(resourceLocalUid);
         return;
     }
 
-    if (Q_UNLIKELY(!resource.hasDataHash())) {
+    if (Q_UNLIKELY(!resource.hasDataHash()))
+    {
         ErrorString error = errorPrefix;
-        error.appendBase(QT_TR_NOOP("The attachment doesn't have the data hash set"));
-        QNWARNING(error << ", resource: " << resource);
+        error.appendBase(
+            QT_TR_NOOP("The attachment doesn't have the data hash set"));
+        QNWARNING("note_editor", error << ", resource: " << resource);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11654,8 +11841,9 @@ void NoteEditorPrivate::rotateImageAttachment(
 void NoteEditorPrivate::rotateImageAttachmentUnderCursor(
     const Rotation rotationDirection)
 {
-    QNDEBUG("NoteEditorPrivate::rotateImageAttachmentUnderCursor: "
-        << "rotation: " << rotationDirection);
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::rotateImageAttachmentUnderCursor: rotation: "
+        << rotationDirection);
 
     if (m_currentContextMenuExtraData.m_contentType !=
         QStringLiteral("ImageResource"))
@@ -11664,7 +11852,7 @@ void NoteEditorPrivate::rotateImageAttachmentUnderCursor(
             QT_TR_NOOP("Can't rotate the image attachment under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11678,19 +11866,23 @@ void NoteEditorPrivate::rotateImageAttachmentUnderCursor(
 
 void NoteEditorPrivate::rotateImageAttachmentUnderCursorClockwise()
 {
-    QNDEBUG("NoteEditorPrivate::rotateImageAttachmentUnderCursorClockwise");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::rotateImageAttachmentUnderCursorClockwise");
+
     rotateImageAttachmentUnderCursor(Rotation::Clockwise);
 }
 
 void NoteEditorPrivate::rotateImageAttachmentUnderCursorCounterclockwise()
 {
-    QNDEBUG("NoteEditorPrivate::rotateImageAttachmentUnderCursorCounterclockwise");
+    QNDEBUG("note_editor", "NoteEditorPrivate"
+        << "::rotateImageAttachmentUnderCursorCounterclockwise");
+
     rotateImageAttachmentUnderCursor(Rotation::Counterclockwise);
 }
 
 void NoteEditorPrivate::encryptSelectedText()
 {
-    QNDEBUG("NoteEditorPrivate::encryptSelectedText");
+    QNDEBUG("note_editor", "NoteEditorPrivate::encryptSelectedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't encrypt the selected text"))
 
@@ -11722,7 +11914,7 @@ void NoteEditorPrivate::encryptSelectedText()
 
 void NoteEditorPrivate::decryptEncryptedTextUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::decryptEncryptedTextUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::decryptEncryptedTextUnderCursor");
 
     if (Q_UNLIKELY(m_currentContextMenuExtraData.m_contentType !=
         QStringLiteral("EncryptedText")))
@@ -11731,7 +11923,7 @@ void NoteEditorPrivate::decryptEncryptedTextUnderCursor()
             QT_TR_NOOP("Can't decrypt the encrypted text under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11750,7 +11942,7 @@ void NoteEditorPrivate::decryptEncryptedText(
     QString encryptedText, QString cipher, QString length, QString hint,
     QString enCryptIndex)
 {
-    QNDEBUG("NoteEditorPrivate::decryptEncryptedText");
+    QNDEBUG("note_editor", "NoteEditorPrivate::decryptEncryptedText");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't decrypt the encrypted text"))
 
@@ -11787,7 +11979,7 @@ void NoteEditorPrivate::decryptEncryptedText(
 
 void NoteEditorPrivate::hideDecryptedTextUnderCursor()
 {
-    QNDEBUG("NoteEditorPrivate::hideDecryptedTextUnderCursor");
+    QNDEBUG("note_editor", "NoteEditorPrivate::hideDecryptedTextUnderCursor");
 
     if (Q_UNLIKELY(m_currentContextMenuExtraData.m_contentType !=
         QStringLiteral("GenericText")))
@@ -11796,7 +11988,7 @@ void NoteEditorPrivate::hideDecryptedTextUnderCursor()
             QT_TR_NOOP("Can't hide the decrypted text under cursor: wrong "
                        "current context menu extra data's content type"));
         error.details() = m_currentContextMenuExtraData.m_contentType;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11807,7 +11999,7 @@ void NoteEditorPrivate::hideDecryptedTextUnderCursor()
             QT_TR_NOOP("Can't hide the decrypted text under cursor: "
                        "the cursor doesn't appear to be inside "
                        "the decrypted text area"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11827,7 +12019,7 @@ void NoteEditorPrivate::hideDecryptedText(
     QString encryptedText, QString decryptedText, QString cipher,
     QString keyLength, QString hint, QString id)
 {
-    QNDEBUG("NoteEditorPrivate::hideDecryptedText");
+    QNDEBUG("note_editor", "NoteEditorPrivate::hideDecryptedText");
 
     bool conversionResult = false;
     size_t keyLengthInt = static_cast<size_t>(
@@ -11838,7 +12030,7 @@ void NoteEditorPrivate::hideDecryptedText(
             QT_TR_NOOP("Can't hide the decrypted text: can't convert "
                        "the key length attribute to an integer"));
         error.details() = keyLength;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11852,7 +12044,7 @@ void NoteEditorPrivate::hideDecryptedText(
             rememberForSession);
     if (foundOriginalDecryptedText && (decryptedText != originalDecryptedText))
     {
-        QNDEBUG("The original decrypted text doesn't match "
+        QNDEBUG("note_editor", "The original decrypted text doesn't match "
             << "the newer one, will return-encrypt "
             << "the decrypted text");
         QString newEncryptedText;
@@ -11867,12 +12059,12 @@ void NoteEditorPrivate::hideDecryptedText(
                            "the decrypted text was modified "
                            "but it failed to get return-encrypted"));
             error.details() = keyLength;
-            QNWARNING(error);
+            QNWARNING("note_editor", error);
             Q_EMIT notifyError(error);
             return;
         }
 
-        QNDEBUG("Old encrypted text = " << encryptedText
+        QNDEBUG("note_editor", "Old encrypted text = " << encryptedText
             << ", new encrypted text = " << newEncryptedText);
         encryptedText = newEncryptedText;
     }
@@ -11902,7 +12094,7 @@ void NoteEditorPrivate::hideDecryptedText(
 
 void NoteEditorPrivate::editHyperlinkDialog()
 {
-    QNDEBUG("NoteEditorPrivate::editHyperlinkDialog");
+    QNDEBUG("note_editor", "NoteEditorPrivate::editHyperlinkDialog");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't edit the hyperlink"))
 
@@ -11923,7 +12115,7 @@ void NoteEditorPrivate::editHyperlinkDialog()
 
 void NoteEditorPrivate::copyHyperlink()
 {
-    QNDEBUG("NoteEditorPrivate::copyHyperlink");
+    QNDEBUG("note_editor", "NoteEditorPrivate::copyHyperlink");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -11935,7 +12127,7 @@ void NoteEditorPrivate::copyHyperlink()
 
 void NoteEditorPrivate::removeHyperlink()
 {
-    QNDEBUG("NoteEditorPrivate::removeHyperlink");
+    QNDEBUG("note_editor", "NoteEditorPrivate::removeHyperlink");
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't remove the hyperlink"))
 
@@ -11960,7 +12152,7 @@ void NoteEditorPrivate::onNoteLoadCancelled()
 {
     stop();
 
-    QNINFO("Note load has been cancelled");
+    QNINFO("note_editor", "Note load has been cancelled");
 
     // TODO: add some overlay widget for NoteEditor to properly indicate
     // visually that the note load has been cancelled
@@ -11968,7 +12160,7 @@ void NoteEditorPrivate::onNoteLoadCancelled()
 
 void NoteEditorPrivate::onTableResized()
 {
-    QNDEBUG("NoteEditorPrivate::onTableResized");
+    QNDEBUG("note_editor", "NoteEditorPrivate::onTableResized");
     convertToNote();
 }
 
@@ -11976,7 +12168,8 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
     const QVariant & hyperlinkData,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onFoundSelectedHyperlinkId: " << hyperlinkData);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onFoundSelectedHyperlinkId: "
+        << hyperlinkData);
     Q_UNUSED(extraData)
 
     auto resultMap = hyperlinkData.toMap();
@@ -11987,7 +12180,7 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of the attempt "
                        "to find the hyperlink data by id from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -11995,8 +12188,8 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
     bool res = statusIt.value().toBool();
     if (!res)
     {
-        QNTRACE("No hyperlink id under cursor was found, assuming "
-            << "we're adding the new hyperlink to the selected text");
+        QNTRACE("note_editor", "No hyperlink id under cursor was found, "
+            << "assuming we're adding the new hyperlink to the selected text");
 
         GET_PAGE()
 
@@ -12012,7 +12205,7 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
             QT_TR_NOOP("Can't parse the seemingly positive result of "
                        "the attempt to find the hyperlink data by id from "
                        "JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -12027,12 +12220,12 @@ void NoteEditorPrivate::onFoundSelectedHyperlinkId(
             QT_TR_NOOP("Can't add or edit hyperlink under cursor: "
                        "can't convert hyperlink id number to unsigned int"));
         error.details() = hyperlinkDataStr;
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
-    QNTRACE("Will edit the hyperlink with id " << hyperlinkId);
+    QNTRACE("note_editor", "Will edit the hyperlink with id " << hyperlinkId);
 
     auto * delegate = new EditHyperlinkDelegate(*this, hyperlinkId);
 
@@ -12061,12 +12254,14 @@ void NoteEditorPrivate::onFoundHyperlinkToCopy(
     const QVariant & hyperlinkData,
     const QVector<std::pair<QString, QString>> & extraData)
 {
-    QNDEBUG("NoteEditorPrivate::onFoundHyperlinkToCopy: " << hyperlinkData);
+    QNDEBUG("note_editor", "NoteEditorPrivate::onFoundHyperlinkToCopy: "
+        << hyperlinkData);
+
     Q_UNUSED(extraData);
 
     QStringList hyperlinkDataList = hyperlinkData.toStringList();
     if (hyperlinkDataList.isEmpty()) {
-        QNTRACE("Hyperlink data to copy was not found");
+        QNTRACE("note_editor", "Hyperlink data to copy was not found");
         return;
     }
 
@@ -12076,14 +12271,14 @@ void NoteEditorPrivate::onFoundHyperlinkToCopy(
             QT_TR_NOOP("Can't copy the hyperlink: can't get text "
                        "and hyperlink from JavaScript"));
         error.details() = hyperlinkDataList.join(QStringLiteral(","));
-        QNWARNING(error);
+        QNWARNING("note_editor", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     QClipboard * pClipboard = QApplication::clipboard();
     if (Q_UNLIKELY(!pClipboard)) {
-        QNWARNING("Unable to get window system clipboard");
+        QNWARNING("note_editor", "Unable to get window system clipboard");
     }
     else {
         pClipboard->setText(hyperlinkDataList[1]);
@@ -12092,7 +12287,7 @@ void NoteEditorPrivate::onFoundHyperlinkToCopy(
 
 void NoteEditorPrivate::dropFile(const QString & filePath)
 {
-    QNDEBUG("NoteEditorPrivate::dropFile: " << filePath);
+    QNDEBUG("note_editor", "NoteEditorPrivate::dropFile: " << filePath);
 
     CHECK_NOTE_EDITABLE(QT_TR_NOOP("Can't add the attachment via drag'n'drop"))
 
@@ -12121,7 +12316,7 @@ void NoteEditorPrivate::dropFile(const QString & filePath)
 
 void NoteEditorPrivate::pasteImageData(const QMimeData & mimeData)
 {
-    QNDEBUG("NoteEditorPrivate::pasteImageData");
+    QNDEBUG("note_editor", "NoteEditorPrivate::pasteImageData");
 
     QImage image = qvariant_cast<QImage>(mimeData.imageData());
     QByteArray data;
@@ -12221,5 +12416,5 @@ void initNoteEditorResources()
     Q_INIT_RESOURCE(scripts);
     Q_INIT_RESOURCE(hilitor);
 
-    QNDEBUG("Initialized NoteEditor's qrc resources");
+    QNDEBUG("note_editor", "Initialized NoteEditor's qrc resources");
 }

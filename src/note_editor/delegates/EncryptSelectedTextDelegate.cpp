@@ -27,7 +27,7 @@ namespace quentier {
 
 #define CHECK_NOTE_EDITOR()                                                    \
     if (Q_UNLIKELY(m_pNoteEditor.isNull())) {                                  \
-        QNDEBUG("Note editor is null");                                        \
+        QNDEBUG("note_editor:delegate", "Note editor is null");                \
         return;                                                                \
     }                                                                          \
 // CHECK_NOTE_EDITOR
@@ -40,7 +40,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate",                   \
                               "Can't encrypt the selected text: "              \
                               "no account is set to the note editor"));        \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -55,7 +55,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("EncryptSelectedTextDelegate",                   \
                               "Can't encrypt the selected text: "              \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -73,13 +73,13 @@ EncryptSelectedTextDelegate::EncryptSelectedTextDelegate(
 
 void EncryptSelectedTextDelegate::start(const QString & selectionHtml)
 {
-    QNDEBUG("EncryptSelectedTextDelegate::start: selection html = "
-        << selectionHtml);
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate::start: "
+        << "selection html = " << selectionHtml);
 
     CHECK_NOTE_EDITOR()
 
     if (Q_UNLIKELY(selectionHtml.isEmpty())) {
-        QNDEBUG("No selection html, nothing to encrypt");
+        QNDEBUG("note_editor:delegate", "No selection html, nothing to encrypt");
         Q_EMIT cancelled();
         return;
     }
@@ -91,7 +91,8 @@ void EncryptSelectedTextDelegate::start(const QString & selectionHtml)
 
 void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 {
-    QNDEBUG("EncryptSelectedTextDelegate::raiseEncryptionDialog");
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate"
+        << "::raiseEncryptionDialog");
 
     CHECK_ACCOUNT()
 
@@ -112,7 +113,7 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 
     int res = pEncryptionDialog->exec();
 
-    QNTRACE("Executed encryption dialog: "
+    QNTRACE("note_editor:delegate", "Executed encryption dialog: "
         << (res == QDialog::Accepted ? "accepted" : "rejected"));
 
     if (res == QDialog::Rejected) {
@@ -125,8 +126,8 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
     QString selectedText, QString encryptedText, QString cipher,
     size_t keyLength, QString hint, bool rememberForSession)
 {
-    QNDEBUG("EncryptSelectedTextDelegate::onSelectedTextEncrypted: "
-        << "encrypted text = " << encryptedText
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate"
+        << "::onSelectedTextEncrypted: encrypted text = " << encryptedText
         << ", hint = " << hint << ", remember for session = "
         << (rememberForSession ? "true" : "false"));
 
@@ -179,7 +180,8 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
 
 void EncryptSelectedTextDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("EncryptSelectedTextDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     CHECK_NOTE_EDITOR()
 
@@ -196,7 +198,8 @@ void EncryptSelectedTextDelegate::onOriginalPageConvertedToNote(Note note)
 
 void EncryptSelectedTextDelegate::encryptSelectedText()
 {
-    QNDEBUG("EncryptSelectedTextDelegate::encryptSelectedText");
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate"
+        << "::encryptSelectedText");
 
     GET_PAGE()
 
@@ -230,7 +233,8 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
 
 void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
 {
-    QNDEBUG("EncryptSelectedTextDelegate::onEncryptionScriptDone: " << data);
+    QNDEBUG("note_editor:delegate", "EncryptSelectedTextDelegate"
+        << "::onEncryptionScriptDone: " << data);
 
     auto resultMap = data.toMap();
 
@@ -240,7 +244,7 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of text encryption "
                        "script from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -263,7 +267,7 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }

@@ -224,7 +224,9 @@ private:
     const QSet<QString>     m_allowedEnMediaAttributes;
 
     mutable HTMLCleaner *   m_pHtmlCleaner;
-    mutable QString         m_cachedConvertedXml;   // Cached memory for the html converted to valid xml
+
+    // Cached memory for the html converted to valid xml
+    mutable QString         m_cachedConvertedXml;
 };
 
 } // namespace quentier

@@ -26,11 +26,14 @@
 #include <QFile>
 #include <QObject>
 #include <QPointer>
-#include <QScopedPointer>
+#include <QReadWriteLock>
+#include <QRegularExpression>
 #include <QString>
 #include <QTextStream>
 #include <QThread>
 #include <QVector>
+
+#include <memory>
 
 namespace quentier {
 
@@ -113,13 +116,13 @@ private:
 
 private:
     QFile       m_logFile;
-    QScopedPointer<QTextStream>     m_pStream;
+    std::unique_ptr<QTextStream>    m_pStream;
 
     qint64      m_maxSizeBytes;
     int         m_maxOldLogFilesCount;
 
-    qint64      m_currentLogFileSize;
-    int         m_currentOldLogFilesCount;
+    qint64      m_currentLogFileSize = 0;
+    int         m_currentOldLogFilesCount = 0;
 };
 
 class Q_DECL_HIDDEN QuentierConsoleLogWriter final: public IQuentierLogWriter
@@ -150,6 +153,9 @@ public:
     LogLevel minLogLevel() const;
     void setMinLogLevel(const LogLevel minLogLevel);
 
+    QRegularExpression componentFilterRegex();
+    void setComponentFilterRegex(const QRegularExpression & filter);
+
     void restartLogging();
 
 Q_SIGNALS:
@@ -173,6 +179,9 @@ public:
     QVector<QPointer<IQuentierLogWriter>>   m_logWriterPtrs;
     QAtomicInt          m_minLogLevel;
     QThread *           m_pLogWriteThread;
+
+    QReadWriteLock      m_componentFilterLock;
+    QRegularExpression  m_componentFilterRegex;
 };
 
 } // namespace quentier

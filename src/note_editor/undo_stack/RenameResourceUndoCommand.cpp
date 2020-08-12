@@ -17,8 +17,10 @@
  */
 
 #include "RenameResourceUndoCommand.h"
-#include "../NoteEditor_p.h"
+
 #include "../GenericResourceImageManager.h"
+#include "../NoteEditor_p.h"
+
 #include "../delegates/RenameResourceDelegate.h"
 
 namespace quentier {

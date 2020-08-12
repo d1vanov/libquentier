@@ -17,6 +17,7 @@
  */
 
 #include "ToDoCheckboxUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -44,13 +45,13 @@ ToDoCheckboxUndoCommand::~ToDoCheckboxUndoCommand()
 
 void ToDoCheckboxUndoCommand::redoImpl()
 {
-    QNDEBUG("ToDoCheckboxUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ToDoCheckboxUndoCommand::redoImpl");
     m_noteEditorPrivate.flipEnToDoCheckboxState(m_enToDoCheckboxId);
 }
 
 void ToDoCheckboxUndoCommand::undoImpl()
 {
-    QNDEBUG("ToDoCheckboxUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ToDoCheckboxUndoCommand::undoImpl");
     m_noteEditorPrivate.flipEnToDoCheckboxState(m_enToDoCheckboxId);
 }
 

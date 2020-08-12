@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "ResourceInfoJavaScriptHandler.h"
+
 #include "../ResourceInfo.h"
 
 namespace quentier {
@@ -27,7 +28,8 @@ ResourceInfoJavaScriptHandler::ResourceInfoJavaScriptHandler(
     m_resourceInfo(resourceInfo)
 {}
 
-void ResourceInfoJavaScriptHandler::findResourceInfo(const QString & resourceHash)
+void ResourceInfoJavaScriptHandler::findResourceInfo(
+    const QString & resourceHash)
 {
     QString resourceDisplayName;
     QString resourceDisplaySize;
@@ -36,15 +38,24 @@ void ResourceInfoJavaScriptHandler::findResourceInfo(const QString & resourceHas
 
     bool found = m_resourceInfo.findResourceInfo(
         QByteArray::fromHex(resourceHash.toLocal8Bit()),
-        resourceDisplayName, resourceDisplaySize,
-        resourceLocalFilePath, resourceImageSize);
-    if (found) {
+        resourceDisplayName,
+        resourceDisplaySize,
+        resourceLocalFilePath,
+        resourceImageSize);
+
+    if (found)
+    {
         bool resourceImageSizeValid = resourceImageSize.isValid();
         int height = resourceImageSizeValid ? resourceImageSize.height() : 0;
         int width = resourceImageSizeValid ? resourceImageSize.width() : 0;
-        Q_EMIT notifyResourceInfo(resourceHash, resourceLocalFilePath,
-                                  resourceDisplayName, resourceDisplaySize,
-                                  height, width);
+
+        Q_EMIT notifyResourceInfo(
+            resourceHash,
+            resourceLocalFilePath,
+            resourceDisplayName,
+            resourceDisplaySize,
+            height,
+            width);
     }
 }
 

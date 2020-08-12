@@ -67,8 +67,8 @@ void QtKeychainWrapper::onStartWritePasswordJob(
         this,
         &QtKeychainWrapper::onWritePasswordJobFinished);
 
-    QNDEBUG("Starting write password job for service " << service
-        << "; key = " << key << ", job id = " << jobId);
+    QNDEBUG("utiity:qtkeychain", "Starting write password job for service "
+        << service << "; key = " << key << ", job id = " << jobId);
 
     pJob->start();
 }
@@ -88,8 +88,8 @@ void QtKeychainWrapper::onStartReadPasswordJob(
         this,
         &QtKeychainWrapper::onReadPasswordJobFinished);
 
-    QNDEBUG("Starting read password job for service " << service
-        << "; key = " << key << ", job id = " << jobId);
+    QNDEBUG("utiity:qtkeychain", "Starting read password job for service "
+        << service << "; key = " << key << ", job id = " << jobId);
 
     pJob->start();
 }
@@ -109,20 +109,23 @@ void QtKeychainWrapper::onStartDeletePasswordJob(
         this,
         &QtKeychainWrapper::onDeletePasswordJobFinished);
 
-    QNDEBUG("Starting delete password job for service " << service
-            << "; key = " << key << ", job id = " << jobId);
+    QNDEBUG("utiity:qtkeychain", "Starting delete password job for service "
+        << service << "; key = " << key << ", job id = " << jobId);
 
     pJob->start();
 }
 
 void QtKeychainWrapper::onWritePasswordJobFinished(QKeychain::Job * pJob)
 {
-    QNDEBUG("QtKeychainWrapper::onWritePasswordJobFinished");
+    QNDEBUG(
+        "utiity:qtkeychain",
+        "QtKeychainWrapper::onWritePasswordJobFinished");
 
     auto * pWritePasswordJob = qobject_cast<QKeychain::WritePasswordJob*>(pJob);
     auto it = m_writePasswordJobs.find(pWritePasswordJob);
     if (Q_UNLIKELY(it == m_writePasswordJobs.end())) {
-        QNWARNING("Failed to find the write password job's corresponding id");
+        QNWARNING("utiity:qtkeychain", "Failed to find the write password "
+            << "job's corresponding id");
         return;
     }
 
@@ -139,7 +142,7 @@ void QtKeychainWrapper::onWritePasswordJobFinished(QKeychain::Job * pJob)
     pWritePasswordJob->deleteLater();
     m_writePasswordJobs.erase(it);
 
-    QNDEBUG("Finished write password job with id " << jobId
+    QNDEBUG("utiity:qtkeychain", "Finished write password job with id " << jobId
         << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
@@ -148,12 +151,15 @@ void QtKeychainWrapper::onWritePasswordJobFinished(QKeychain::Job * pJob)
 
 void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
 {
-    QNDEBUG("QtKeychainWrapper::onReadPasswordJobFinished");
+    QNDEBUG(
+        "utiity:qtkeychain",
+        "QtKeychainWrapper::onReadPasswordJobFinished");
 
     auto * pReadPasswordJob = qobject_cast<QKeychain::ReadPasswordJob*>(pJob);
     auto it = m_readPasswordJobs.find(pReadPasswordJob);
     if (Q_UNLIKELY(it == m_readPasswordJobs.end())) {
-        QNWARNING("Failed to find the read password job's corresponding id");
+        QNWARNING("utiity:qtkeychain", "Failed to find the read password job's "
+            << "corresponding id");
         return;
     }
 
@@ -185,7 +191,7 @@ void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
     pReadPasswordJob->deleteLater();
     m_readPasswordJobs.erase(it);
 
-    QNDEBUG("Finished read password job with id " << jobId
+    QNDEBUG("utiity:qtkeychain", "Finished read password job with id " << jobId
         << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
@@ -198,14 +204,17 @@ void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
 
 void QtKeychainWrapper::onDeletePasswordJobFinished(QKeychain::Job * pJob)
 {
-    QNDEBUG("QtKeychainWrapper::onDeletePasswordJobFinished");
+    QNDEBUG(
+        "utiity:qtkeychain",
+        "QtKeychainWrapper::onDeletePasswordJobFinished");
 
     auto * pDeletePasswordJob = qobject_cast<QKeychain::DeletePasswordJob*>(
         pJob);
 
     auto it = m_deletePasswordJobs.find(pDeletePasswordJob);
     if (Q_UNLIKELY(it == m_deletePasswordJobs.end())) {
-        QNWARNING("Failed to find the delete password job's corresponding id");
+        QNWARNING("utiity:qtkeychain", "Failed to find the delete password "
+            << "job's corresponding id");
         return;
     }
 
@@ -222,8 +231,8 @@ void QtKeychainWrapper::onDeletePasswordJobFinished(QKeychain::Job * pJob)
     pDeletePasswordJob->deleteLater();
     m_deletePasswordJobs.erase(it);
 
-    QNDEBUG("Finished delete password job with id " << jobId
-        << ", error code = " << errorCode
+    QNDEBUG("utiity:qtkeychain", "Finished delete password job with id "
+        << jobId << ", error code = " << errorCode
         << ", error description = " << errorDescription);
 
     Q_EMIT deletePasswordJobFinished(jobId, errorCode, errorDescription);

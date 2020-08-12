@@ -17,6 +17,7 @@
  */
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 namespace quentier {

@@ -23,7 +23,7 @@
 #include <quentier/logging/QuentierLogger.h>
 
 #ifndef QUENTIER_CHECK_PTR
-#define QUENTIER_CHECK_PTR(pointer, ...)                                       \
+#define QUENTIER_CHECK_PTR(component, pointer, ...)                            \
 {                                                                              \
     if (Q_UNLIKELY(!pointer))                                                  \
     {                                                                          \
@@ -36,7 +36,7 @@
         quentier_null_ptr_error.details() += QStringLiteral(") ");             \
         quentier_null_ptr_error.details() +=                                   \
             QString::fromUtf8("" #__VA_ARGS__ "");                             \
-        QNERROR(quentier_null_ptr_error);                                      \
+        QNERROR(component, quentier_null_ptr_error);                           \
         throw NullPtrException(quentier_null_ptr_error);                       \
     }                                                                          \
 }                                                                              \

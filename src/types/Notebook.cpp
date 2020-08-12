@@ -482,7 +482,7 @@ void Notebook::addSharedNotebook(const SharedNotebook & sharedNotebook)
     const auto & enSharedNotebook = sharedNotebook.qevercloudSharedNotebook();
 
     if (sharedNotebooks.indexOf(enSharedNotebook) != -1) {
-        QNDEBUG("Can't add shared notebook: this shared notebook "
+        QNDEBUG("types:note", "Can't add shared notebook: this shared notebook "
             << "already exists within the notebook");
         return;
     }
@@ -497,7 +497,7 @@ void Notebook::removeSharedNotebook(const SharedNotebook & sharedNotebook)
 
     int index = sharedNotebooks->indexOf(enSharedNotebook);
     if (index == -1) {
-        QNDEBUG("Can't remove shared notebook: this shared "
+        QNDEBUG("types:note", "Can't remove shared notebook: this shared "
             << "notebook doesn't exists within the notebook");
         return;
     }

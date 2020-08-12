@@ -17,6 +17,7 @@
  */
 
 #include "EncryptUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("EncryptUndoCommand",                            \
                               "Can't undo/redo the text encryption: "          \
                               "can't get note editor page"));                  \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -61,7 +62,7 @@ EncryptUndoCommand::~EncryptUndoCommand()
 
 void EncryptUndoCommand::redoImpl()
 {
-    QNDEBUG("EncryptUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "EncryptUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -71,7 +72,7 @@ void EncryptUndoCommand::redoImpl()
 
 void EncryptUndoCommand::undoImpl()
 {
-    QNDEBUG("EncryptUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "EncryptUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

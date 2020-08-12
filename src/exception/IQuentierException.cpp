@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,7 +76,8 @@ IQuentierException::IQuentierException(const IQuentierException & other) :
     INIT_WHAT_MESSAGE()
 }
 
-IQuentierException & IQuentierException::operator =(const IQuentierException & other)
+IQuentierException & IQuentierException::operator=(
+    const IQuentierException & other)
 {
     if (this != &other)
     {

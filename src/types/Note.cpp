@@ -434,7 +434,7 @@ void Note::setTagGuids(const QStringList & guids)
         tagGuids << guid;
     }
 
-    QNTRACE("Added " << numTagGuids << " tag guids to note");
+    QNTRACE("types:note", "Added " << numTagGuids << " tag guids to note");
 }
 
 void Note::addTagGuid(const QString & guid)
@@ -449,32 +449,33 @@ void Note::addTagGuid(const QString & guid)
 
     if (!d->m_qecNote.tagGuids->contains(guid)) {
         d->m_qecNote.tagGuids.ref() << guid;
-        QNDEBUG("Added tag guid " << guid << " to the note");
+        QNDEBUG("types:note", "Added tag guid " << guid << " to the note");
     }
 }
 
 void Note::removeTagGuid(const QString & guid)
 {
     if (guid.isEmpty()) {
-        QNDEBUG("Cannot remove empty tag guid from note " << d->m_localUid);
+        QNDEBUG("types:note", "Cannot remove empty tag guid from note "
+            << d->m_localUid);
         return;
     }
 
     if (!d->m_qecNote.tagGuids.isSet()) {
-        QNDEBUG("No tag guids are set, cannot remove one from note "
-            << d->m_localUid);
+        QNDEBUG("types:note", "No tag guids are set, cannot remove one from "
+            << "note " << d->m_localUid);
         return;
     }
 
     QList<qevercloud::Guid> & tagGuids = d->m_qecNote.tagGuids.ref();
     int removed = tagGuids.removeAll(guid);
     if (removed > 0) {
-        QNDEBUG("Removed tag guid " << guid << " (" << removed
+        QNDEBUG("types:note", "Removed tag guid " << guid << " (" << removed
             << " occurrences) from note " << d->m_localUid);
     }
     else {
-        QNDEBUG("Haven't removed tag guid " << guid << " from note "
-            << d->m_localUid
+        QNDEBUG("types:note", "Haven't removed tag guid " << guid
+            << " from note " << d->m_localUid
             << " because there was no such guid within the note's tag guids");
     }
 }
@@ -502,31 +503,33 @@ void Note::addTagLocalUid(const QString & tagLocalUid)
 
     if (!d->m_tagLocalUids.contains(tagLocalUid)) {
         d->m_tagLocalUids << tagLocalUid;
-        QNDEBUG("Added tag local uid " << tagLocalUid << " to the note");
+        QNDEBUG("types:note", "Added tag local uid " << tagLocalUid
+            << " to the note");
     }
 }
 
 void Note::removeTagLocalUid(const QString & tagLocalUid)
 {
     if (tagLocalUid.isEmpty()) {
-        QNDEBUG("Cannot remove empty tag local uid from note " << d->m_localUid);
+        QNDEBUG("types:note", "Cannot remove empty tag local uid from note "
+            << d->m_localUid);
         return;
     }
 
     if (d->m_tagLocalUids.isEmpty()) {
-        QNDEBUG("No tag local uids are set, cannot remove one from note "
-            << d->m_localUid);
+        QNDEBUG("types:note", "No tag local uids are set, cannot remove one "
+            << "from note " << d->m_localUid);
         return;
     }
 
     int removed = d->m_tagLocalUids.removeAll(tagLocalUid);
     if (removed > 0) {
-        QNDEBUG("Removed tag local uid " << tagLocalUid
+        QNDEBUG("types:note", "Removed tag local uid " << tagLocalUid
             << " (" << removed << " occurrences) from note "
             << d->m_localUid);
     }
     else {
-        QNDEBUG("Haven't removed tag local uid " << tagLocalUid
+        QNDEBUG("types:note", "Haven't removed tag local uid " << tagLocalUid
             << " from note " << d->m_localUid
             << " because there was no such uid within the note's tag local "
             << "uids");
@@ -608,8 +611,8 @@ void Note::addResource(const Resource & resource)
     }
 
     if (d->m_qecNote.resources->contains(resource.qevercloudResource())) {
-        QNDEBUG("Can't add resource to note: note " << d->m_localUid
-            << "already has resource " << resource.localUid());
+        QNDEBUG("types:note", "Can't add resource to note: note "
+            << d->m_localUid << "already has resource " << resource.localUid());
         return;
     }
 
@@ -619,14 +622,14 @@ void Note::addResource(const Resource & resource)
     info.isDirty = resource.isDirty();
     d->m_resourcesAdditionalInfo.push_back(info);
 
-    QNDEBUG("Added resource " << resource.localUid() << " to note "
-        << d->m_localUid);
+    QNDEBUG("types:note", "Added resource " << resource.localUid()
+        << " to note " << d->m_localUid);
 }
 
 bool Note::updateResource(const Resource & resource)
 {
     if (!d->m_qecNote.resources.isSet()) {
-        QNDEBUG("Can't update resource " << resource.localUid()
+        QNDEBUG("types:note", "Can't update resource " << resource.localUid()
             << " within note " << d->m_localUid
             << ": note has no attached resources");
         return false;
@@ -643,7 +646,7 @@ bool Note::updateResource(const Resource & resource)
     }
 
     if (targetResourceIndex < 0) {
-        QNDEBUG("Can't update resource " << resource.localUid()
+        QNDEBUG("types:note", "Can't update resource " << resource.localUid()
             << " within note " << d->m_localUid << ": can't find "
             << "the resource to update");
         return false;
@@ -661,7 +664,7 @@ bool Note::updateResource(const Resource & resource)
 bool Note::removeResource(const Resource & resource)
 {
     if (!d->m_qecNote.resources.isSet()) {
-        QNDEBUG("Can't remove resource " << resource.localUid()
+        QNDEBUG("types:note", "Can't remove resource " << resource.localUid()
             << " from note " << d->m_localUid
             << ": note has no attached resources");
         return false;
@@ -680,7 +683,7 @@ bool Note::removeResource(const Resource & resource)
     }
 
     if (targetResourceIndex < 0) {
-        QNDEBUG("Can't remove resource " << resource.localUid()
+        QNDEBUG("types:note", "Can't remove resource " << resource.localUid()
             << " from note " << d->m_localUid
             << ": can't find the resource to remove");
         return false;
@@ -689,7 +692,7 @@ bool Note::removeResource(const Resource & resource)
     resources.removeAt(targetResourceIndex);
     d->m_resourcesAdditionalInfo.removeAt(targetResourceIndex);
 
-    QNDEBUG("Removed resource from note: " << resource);
+    QNDEBUG("types:note", "Removed resource from note: " << resource);
     return true;
 }
 
@@ -782,7 +785,7 @@ void Note::addSharedNote(const SharedNote & sharedNote)
 
     const auto & qecSharedNote = sharedNote.qevercloudSharedNote();
     if (d->m_qecNote.sharedNotes->contains(qecSharedNote)) {
-        QNDEBUG("Can't add shared note: this note already "
+        QNDEBUG("types:note", "Can't add shared note: this note already "
             << "has this shared note");
         return;
     }

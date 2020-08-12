@@ -43,7 +43,7 @@ EncryptionDialog::EncryptionDialog(
     m_decryptedTextManager(std::move(decryptedTextManager))
 {
     m_pUI->setupUi(this);
-    QUENTIER_CHECK_PTR(m_encryptionManager.get())
+    QUENTIER_CHECK_PTR("note_editor:dialog", m_encryptionManager.get())
 
     bool rememberPassphraseForSessionDefault = false;
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
@@ -103,8 +103,8 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
     ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
     if (!appSettings.isWritable())
     {
-        QNINFO("Can't persist remember passphrase for session "
-            << "setting: settings are not writable");
+        QNINFO("note_editor:dialog", "Can't persist remember passphrase for "
+            << "session setting: settings are not writable");
     }
     else
     {
@@ -121,8 +121,8 @@ void EncryptionDialog::accept()
 
     if (passphrase.isEmpty())
     {
-        QNINFO("Attempted to press OK in EncryptionDialog without "
-            << "having a password set");
+        QNINFO("note_editor:dialog", "Attempted to press OK in "
+            << "EncryptionDialog without having a password set");
         ErrorString error(QT_TR_NOOP("Please choose the encryption password"));
         setError(error);
         return;
@@ -133,7 +133,7 @@ void EncryptionDialog::accept()
         ErrorString error(
             QT_TR_NOOP("Can't encrypt: password and repeated "
                        "password do not match"));
-        QNINFO(error);
+        QNINFO("note_editor:dialog", error);
         setError(error);
         return;
     }
@@ -152,7 +152,7 @@ void EncryptionDialog::accept()
         errorDescription);
 
     if (!res) {
-        QNINFO(errorDescription);
+        QNINFO("note_editor:dialog", errorDescription);
         setError(errorDescription);
         return;
     }

@@ -76,40 +76,55 @@ void registerMetatypes()
 
     qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
         "LocalStorageManager::ListObjectsOptions");
+
     qRegisterMetaType<LocalStorageManager::ListNotesOrder>(
         "LocalStorageManager::ListNotesOrder");
+
     qRegisterMetaType<LocalStorageManager::ListNotebooksOrder>(
         "LocalStorageManager::ListNotebooksOrder");
+
     qRegisterMetaType<LocalStorageManager::ListLinkedNotebooksOrder>(
         "LocalStorageManager::ListLinkedNotebooksOrder");
+
     qRegisterMetaType<LocalStorageManager::ListTagsOrder>(
         "LocalStorageManager::ListTagsOrder");
+
     qRegisterMetaType<LocalStorageManager::ListSavedSearchesOrder>(
         "LocalStorageManager::ListSavedSearchesOrder");
+
     qRegisterMetaType<LocalStorageManager::OrderDirection>(
         "LocalStorageManager::OrderDirection");
+
     qRegisterMetaType<LocalStorageManager::UpdateNoteOptions>(
         "LocalStorageManager::UpdateNoteOptions");
+
     qRegisterMetaType<LocalStorageManager::GetNoteOptions>(
         "LocalStorageManager::GetNoteOptions");
+
     qRegisterMetaType<LocalStorageManager::GetResourceOptions>(
         "LocalStorageManager::GetResourceOptions");
+
     qRegisterMetaType<LocalStorageManager::StartupOptions>(
         "LocalStorageManager::StartupOptions");
+
     qRegisterMetaType<LocalStorageManager::NoteCountOptions>(
         "LocalStorageManager::NoteCountOptions");
-    qRegisterMetaType<size_t>("size_t");
 
+    qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QUuid>("QUuid");
 
     qRegisterMetaType<QList<QPair<QString,QString> > >(
         "QList<QPair<QString,QString> >");
+
     qRegisterMetaType<QHash<QString, QPair<QString,QString> > >(
         "QHash<QString, QPair<QString,QString> >");
+
     qRegisterMetaType<QHash<QString,QString> >(
         "QHash<QString,QString>");
+
     qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >(
         "QHash<QString,qevercloud::Timestamp>");
+
     qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
     qRegisterMetaType<QHash<QString,int> >("QHash<QString,int>");
 

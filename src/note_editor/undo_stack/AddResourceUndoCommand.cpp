@@ -17,6 +17,7 @@
  */
 
 #include "AddResourceUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("AddResourceUndoCommand",                        \
                               "Can't undo/redo adding the attachment: "        \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -65,7 +66,7 @@ AddResourceUndoCommand::~AddResourceUndoCommand()
 
 void AddResourceUndoCommand::undoImpl()
 {
-    QNDEBUG("AddResourceUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "AddResourceUndoCommand::undoImpl");
 
     m_noteEditorPrivate.removeResourceFromNote(m_resource);
 
@@ -77,7 +78,7 @@ void AddResourceUndoCommand::undoImpl()
 
 void AddResourceUndoCommand::redoImpl()
 {
-    QNDEBUG("AddResourceUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "AddResourceUndoCommand::redoImpl");
 
     m_noteEditorPrivate.addResourceToNote(m_resource);
 

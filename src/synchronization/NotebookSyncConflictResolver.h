@@ -117,14 +117,14 @@ private:
 
     Notebook                    m_notebookToBeRenamed;
 
-    State                       m_state;
+    State                       m_state = State::Undefined;
 
     QUuid                       m_addNotebookRequestId;
     QUuid                       m_updateNotebookRequestId;
     QUuid                       m_findNotebookRequestId;
 
-    bool                        m_started;
-    bool                        m_pendingCacheFilling;
+    bool                        m_started = false;
+    bool                        m_pendingCacheFilling = false;
 };
 
 } // namespace quentier

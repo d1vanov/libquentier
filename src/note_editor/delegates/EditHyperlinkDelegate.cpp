@@ -44,14 +44,14 @@ EditHyperlinkDelegate::EditHyperlinkDelegate(
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("EditHyperlinkDelegate",                         \
                               "Can't edit hyperlink: no note editor page"));   \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }
 
 void EditHyperlinkDelegate::start()
 {
-    QNDEBUG("EditHyperlinkDelegate::start");
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -71,7 +71,8 @@ void EditHyperlinkDelegate::start()
 
 void EditHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("EditHyperlinkDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -86,7 +87,8 @@ void EditHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 
 void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 {
-    QNDEBUG("EditHyperlinkDelegate::onHyperlinkDataReceived: data = " << data);
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate"
+        << "::onHyperlinkDataReceived: data = " << data);
 
     auto resultMap = data.toMap();
 
@@ -96,7 +98,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink data "
                        "request from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -120,7 +122,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -130,7 +132,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
     {
         ErrorString error(
             QT_TR_NOOP("No hyperlink data received from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -151,7 +153,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
             QT_TR_NOOP("Can't edit hyperlink: can't parse hyperlink "
                        "text and link"));
 
-        QNWARNING(error << "; hyperlink data: "
+        QNWARNING("note_editor:delegate", error << "; hyperlink data: "
             << hyperlinkDataList.join(QStringLiteral(",")));
 
         Q_EMIT notifyError(error);
@@ -163,7 +165,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 
 void EditHyperlinkDelegate::doStart()
 {
-    QNDEBUG("EditHyperlinkDelegate::doStart");
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate::doStart");
 
     QString javascript =
         QStringLiteral("hyperlinkManager.getHyperlinkData(") +
@@ -178,7 +180,8 @@ void EditHyperlinkDelegate::doStart()
 void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
     const QString & startupHyperlinkText, const QString & startupHyperlinkUrl)
 {
-    QNDEBUG("EditHyperlinkDelegate::raiseEditHyperlinkDialog: original text = "
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate"
+        << "::raiseEditHyperlinkDialog: original text = "
         << startupHyperlinkText << ", original url: "
         << startupHyperlinkUrl);
 
@@ -195,11 +198,11 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
         this,
         &EditHyperlinkDelegate::onHyperlinkDataEdited);
 
-    QNTRACE("Will exec edit hyperlink dialog now");
+    QNTRACE("note_editor:delegate", "Will exec edit hyperlink dialog now");
 
     int res = pEditHyperlinkDialog->exec();
     if (res == QDialog::Rejected) {
-        QNTRACE("Cancelled editing the hyperlink");
+        QNTRACE("note_editor:delegate", "Cancelled editing the hyperlink");
         Q_EMIT cancelled();
         return;
     }
@@ -208,8 +211,9 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
 void EditHyperlinkDelegate::onHyperlinkDataEdited(
     QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
 {
-    QNDEBUG("EditHyperlinkDelegate::onHyperlinkDataEdited: text = "
-        << text << ", url = " << url << ", hyperlink id = " << hyperlinkId);
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate"
+        << "::onHyperlinkDataEdited: text = " << text << ", url = " << url
+        << ", hyperlink id = " << hyperlinkId);
 
     Q_UNUSED(hyperlinkId)
     Q_UNUSED(startupUrlWasEmpty)
@@ -230,7 +234,8 @@ void EditHyperlinkDelegate::onHyperlinkDataEdited(
 
 void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
 {
-    QNDEBUG("EditHyperlinkDelegate::onHyperlinkModified");
+    QNDEBUG("note_editor:delegate", "EditHyperlinkDelegate"
+        << "::onHyperlinkModified");
 
     auto resultMap = data.toMap();
 
@@ -240,7 +245,7 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink edit "
                        "from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -263,7 +268,7 @@ void EditHyperlinkDelegate::onHyperlinkModified(const QVariant & data)
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }

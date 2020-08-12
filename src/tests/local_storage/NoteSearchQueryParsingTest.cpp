@@ -1305,8 +1305,8 @@ bool NoteSearchQueryParsingTest(QString & error)
             "terms doesn't match the expected one after "
             "parsing the note search query");
 
-        QNWARNING(error << "; original content search terms: "
-            << contentSearchTerms.join(QStringLiteral("; "))
+        QNWARNING("tests:local_storage", error << "; original content search "
+            << "terms: " << contentSearchTerms.join(QStringLiteral("; "))
             << "; filtered content search terms: "
             << filteredContentSearchTerms.join(QStringLiteral("; "))
             << "; processed search query terms: "
@@ -1329,7 +1329,7 @@ bool NoteSearchQueryParsingTest(QString & error)
                 "Internal error: can't find one of original content search "
                 "terms after parsing the note search query");
 
-            QNWARNING(error
+            QNWARNING("tests:local_storage", error
                 << "; filtered original content search terms: "
                 << filteredContentSearchTerms.join(QStringLiteral("; "))
                 << "; parsed content search terms: "
@@ -1378,7 +1378,7 @@ bool NoteSearchQueryParsingTest(QString & error)
             "search terms doesn't match the expected one "
             "after parsing the note search query");
 
-        QNWARNING(error
+        QNWARNING("tests:local_storage", error
             << "; original negated content search terms: "
             << negatedContentSearchTerms.join(QStringLiteral(" "))
             << "; filtered negated content search terms: "
@@ -1403,7 +1403,7 @@ bool NoteSearchQueryParsingTest(QString & error)
                 "Internal error: can't find one of original negated content "
                 "search terms after parsing the note search query");
 
-            QNWARNING(error
+            QNWARNING("tests:local_storage", error
                 << "; filtered original negated content search terms: "
                 << filteredNegatedContentSearchTerms.join(QStringLiteral(" "))
                 << "; parsed negated content search terms: "

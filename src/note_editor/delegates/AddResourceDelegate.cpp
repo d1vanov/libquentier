@@ -48,7 +48,7 @@ namespace quentier {
         ErrorString error(                                                     \
             QT_TRANSLATE_NOOP("AddResourceDelegate",                           \
                               "Can't add attachment: no note editor page"));   \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -91,19 +91,20 @@ AddResourceDelegate::AddResourceDelegate(
 
     if (!m_resourceMimeType.isValid())
     {
-        QNDEBUG("Mime type deduced from the mime type name " << mimeType
-            << " is invalid, trying to deduce mime type from the raw data");
+        QNDEBUG("note_editor:delegate", "Mime type deduced from the mime type "
+            << "name " << mimeType << " is invalid, trying to deduce mime type "
+            << "from the raw data");
 
         m_resourceMimeType = mimeDatabase.mimeTypeForData(m_data);
 
-        QNDEBUG("Mime type deduced from the data is "
+        QNDEBUG("note_editor:delegate", "Mime type deduced from the data is "
             << (m_resourceMimeType.isValid() ? "valid" : "invalid"));
     }
 }
 
 void AddResourceDelegate::start()
 {
-    QNDEBUG("AddResourceDelegate::start");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -123,7 +124,8 @@ void AddResourceDelegate::start()
 
 void AddResourceDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("AddResourceDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -138,14 +140,14 @@ void AddResourceDelegate::onOriginalPageConvertedToNote(Note note)
 
 void AddResourceDelegate::doStart()
 {
-    QNDEBUG("AddResourceDelegate::doStart");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate::doStart");
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -155,7 +157,7 @@ void AddResourceDelegate::doStart()
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: the file path of the data to be "
                        "added is empty and the raw data is empty as well"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -164,7 +166,7 @@ void AddResourceDelegate::doStart()
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: the mime type of "
                        "the data to be added is invalid"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -174,8 +176,8 @@ void AddResourceDelegate::doStart()
     bool noteHasLimits = pNote->hasNoteLimits();
     if (noteHasLimits)
     {
-        QNTRACE("Note has its own limits, will use them to check "
-            << "the number of note resources");
+        QNTRACE("note_editor:delegate", "Note has its own limits, will use "
+            << "them to check the number of note resources");
 
         const auto & limits = pNote->noteLimits();
         if (limits.noteResourceCountMax.isSet() &&
@@ -191,8 +193,8 @@ void AddResourceDelegate::doStart()
     }
     else if (pAccount)
     {
-        QNTRACE("Note has no limits of its own, will use account-wise limits "
-            << "to check the number of note resources");
+        QNTRACE("note_editor:delegate", "Note has no limits of its own, will "
+            << "use account-wise limits to check the number of note resources");
 
         int numNoteResources = pNote->numResources();
         ++numNoteResources;
@@ -208,8 +210,8 @@ void AddResourceDelegate::doStart()
     }
     else
     {
-        QNINFO("No account when adding the resource to note, "
-            << "can't check account-wise note limits");
+        QNINFO("note_editor:delegate", "No account when adding the resource "
+            << "to note, can't check account-wise note limits");
     }
 
     if (!m_filePath.isEmpty()) {
@@ -222,20 +224,20 @@ void AddResourceDelegate::doStart()
 
 void AddResourceDelegate::doStartUsingFile()
 {
-    QNDEBUG("AddResourceDelegate::doStartUsingFile");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate::doStartUsingFile");
 
     QFileInfo fileInfo(m_filePath);
     if (!fileInfo.isFile())
     {
-        QNINFO("Detected attempt to drop something else rather than file: "
-            << m_filePath);
+        QNINFO("note_editor:delegate", "Detected attempt to drop something "
+            << "else rather than file: " << m_filePath);
         return;
     }
 
     if (!fileInfo.isReadable())
     {
-        QNINFO("Detected attempt to drop file which is not readable: "
-            << m_filePath);
+        QNINFO("note_editor:delegate", "Detected attempt to drop file which "
+            << "is not readable: " << m_filePath);
         return;
     }
 
@@ -244,7 +246,7 @@ void AddResourceDelegate::doStartUsingFile()
     {
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -293,8 +295,8 @@ void AddResourceDelegate::onResourceFileRead(
         return;
     }
 
-    QNDEBUG("AddResourceDelegate::onResourceFileRead: success = "
-        << (success ? "true" : "false"));
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate::onResourceFileRead: "
+        << "success = " << (success ? "true" : "false"));
 
     QObject::disconnect(
         this,
@@ -331,14 +333,14 @@ void AddResourceDelegate::onResourceFileRead(
 
 void AddResourceDelegate::doStartUsingData()
 {
-    QNDEBUG("AddResourceDelegate::doStartUsingData");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate::doStartUsingData");
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote))
     {
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: no note is set to the editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -353,7 +355,7 @@ void AddResourceDelegate::doStartUsingData()
             error.details() += mimeTypeName;
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -378,8 +380,9 @@ void AddResourceDelegate::doStartUsingData()
 void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
     const QByteArray & data, QString resourceName)
 {
-    QNDEBUG("AddResourceDelegate::doSaveResourceDataToTemporaryFile: "
-        << "resource name = " << resourceName);
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::doSaveResourceDataToTemporaryFile: resource name = "
+        << resourceName);
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote)
@@ -387,7 +390,7 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
         ErrorString errorDescription(
             QT_TR_NOOP("Can't save the added resource to a temporary file: "
                        "no note is set to the editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -406,7 +409,8 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
         m_resourceMimeType,
         resourceName);
 
-    QNTRACE("Attached resource to note: " << m_resource);
+    QNTRACE("note_editor:delegate", "Attached resource to note: "
+        << m_resource);
 
     QString resourceLocalUid = m_resource.localUid();
     if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
@@ -429,9 +433,9 @@ void AddResourceDelegate::doSaveResourceDataToTemporaryFile(
         this,
         &AddResourceDelegate::onResourceDataSavedToTemporaryFile);
 
-    QNTRACE("Emitting the request to save the dropped/pasted resource "
-        << "to a temporary file: generated local uid = "
-        << resourceLocalUid << ", data hash = " << dataHash.toHex()
+    QNTRACE("note_editor:delegate", "Emitting the request to save "
+        << "the dropped/pasted resource to a temporary file: generated local "
+        << "uid = " << resourceLocalUid << ", data hash = " << dataHash.toHex()
         << ", request id = "
         << m_saveResourceDataToTemporaryFileRequestId
         << ", mime type name = " << m_resourceMimeType.name());
@@ -452,8 +456,9 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
         return;
     }
 
-    QNDEBUG("AddResourceDelegate::onResourceDataSavedToTemporaryFile: "
-        << "error description = " << errorDescription);
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::onResourceDataSavedToTemporaryFile: error description = "
+        << errorDescription);
 
     const Note * pNote = m_noteEditor.notePtr();
     if (!pNote)
@@ -461,7 +466,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
         errorDescription.setBase(
             QT_TR_NOOP("Can't set up the image corresponding "
                        "to the resource: no note is set to the editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -493,7 +498,7 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         m_noteEditor.removeResourceFromNote(m_resource);
         Q_EMIT notifyError(error);
         return;
@@ -504,8 +509,8 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
         m_noteEditor.replaceResourceInNote(m_resource);
     }
 
-    QNTRACE("Done adding the image resource to the note, moving "
-        << "on to adding it to the page");
+    QNTRACE("note_editor:delegate", "Done adding the image resource to "
+        << "the note, moving on to adding it to the page");
 
     insertNewResourceHtml();
 }
@@ -531,14 +536,15 @@ void AddResourceDelegate::onGenericResourceImageSaved(
         this,
         &AddResourceDelegate::onGenericResourceImageSaved);
 
-    QNDEBUG("AddResourceDelegate::onGenericResourceImageSaved: success = "
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::onGenericResourceImageSaved: success = "
         << (success ? "true" : "false") << ", file path = " << filePath);
 
     m_genericResourceImageFilePathsByResourceHash[m_resource.dataHash()] =
         filePath;
 
-    QNDEBUG("Cached generic resource image file path " << filePath
-        << " for resource hash " << m_resource.dataHash().toHex());
+    QNDEBUG("note_editor:delegate", "Cached generic resource image file path "
+        << filePath << " for resource hash " << m_resource.dataHash().toHex());
 
     Q_UNUSED(resourceImageDataHash);
 
@@ -550,7 +556,7 @@ void AddResourceDelegate::onGenericResourceImageSaved(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         m_noteEditor.removeResourceFromNote(m_resource);
         Q_EMIT notifyError(error);
         return;
@@ -562,7 +568,8 @@ void AddResourceDelegate::onGenericResourceImageSaved(
 void AddResourceDelegate::doGenerateGenericResourceImage(
     const QByteArray & data, QString resourceName)
 {
-    QNDEBUG("AddResourceDelegate::doGenerateGenericResourceImage");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::doGenerateGenericResourceImage");
 
     const Note * pNote = m_noteEditor.notePtr();
     if (Q_UNLIKELY(!pNote))
@@ -570,7 +577,7 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
         ErrorString errorDescription(
             QT_TR_NOOP("Can't set up the image corresponding "
                        "to the resource: no note is set to the editor"));
-        QNWARNING(errorDescription);
+        QNWARNING("note_editor:delegate", errorDescription);
         Q_EMIT notifyError(errorDescription);
         return;
     }
@@ -623,8 +630,8 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
         this,
         &AddResourceDelegate::onGenericResourceImageSaved);
 
-    QNDEBUG("Emitting request to write generic resource image "
-        << "for new resource with local uid "
+    QNDEBUG("note_editor:delegate", "Emitting request to write generic "
+        << "resource image for new resource with local uid "
         << m_resource.localUid() << ", request id "
         << m_saveResourceImageRequestId << ", note local uid = "
         << pNote->localUid());
@@ -641,7 +648,8 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
 
 void AddResourceDelegate::insertNewResourceHtml()
 {
-    QNDEBUG("AddResourceDelegate::insertNewResourceHtml");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::insertNewResourceHtml");
 
     ErrorString errorDescription;
     QString resourceHtml = ENMLConverter::resourceHtml(
@@ -656,13 +664,13 @@ void AddResourceDelegate::insertNewResourceHtml()
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         error.details() = errorDescription.details();
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         m_noteEditor.removeResourceFromNote(m_resource);
         Q_EMIT notifyError(error);
         return;
     }
 
-    QNTRACE("Resource html: " << resourceHtml);
+    QNTRACE("note_editor:delegate", "Resource html: " << resourceHtml);
 
     GET_PAGE()
     page->executeJavaScript(
@@ -673,7 +681,8 @@ void AddResourceDelegate::insertNewResourceHtml()
 
 void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 {
-    QNDEBUG("AddResourceDelegate::onNewResourceHtmlInserted");
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::onNewResourceHtmlInserted");
 
     auto resultMap = data.toMap();
 
@@ -683,7 +692,7 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of new resource "
                        "html insertion from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -707,7 +716,7 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -718,7 +727,8 @@ void AddResourceDelegate::onNewResourceHtmlInserted(const QVariant & data)
 bool AddResourceDelegate::checkResourceDataSize(
     const Note & note, const Account * pAccount, const qint64 size)
 {
-    QNDEBUG("AddResourceDelegate::checkResourceDataSize: size = "
+    QNDEBUG("note_editor:delegate", "AddResourceDelegate"
+        << "::checkResourceDataSize: size = "
         << humanReadableSize(static_cast<quint64>(std::max(size, qint64(0)))));
 
     bool noteHasLimits = note.hasNoteLimits();

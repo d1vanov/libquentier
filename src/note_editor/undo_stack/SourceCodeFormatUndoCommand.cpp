@@ -17,6 +17,7 @@
  */
 
 #include "SourceCodeFormatUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("SourceCodeFormatUndoCommand",                   \
                               "Can't undo/redo source code "                   \
                               "formatting: no note editor page"));             \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +59,7 @@ SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand()
 
 void SourceCodeFormatUndoCommand::redoImpl()
 {
-    QNDEBUG("SourceCodeFormatUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "SourceCodeFormatUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -68,7 +69,7 @@ void SourceCodeFormatUndoCommand::redoImpl()
 
 void SourceCodeFormatUndoCommand::undoImpl()
 {
-    QNDEBUG("SourceCodeFormatUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "SourceCodeFormatUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

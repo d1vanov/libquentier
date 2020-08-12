@@ -35,7 +35,7 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
     m_parent(&parent),
     m_pJavaScriptInOrderExecutor(new JavaScriptInOrderExecutor(parent, this))
 {
-    QUENTIER_CHECK_PTR(m_parent);
+    QUENTIER_CHECK_PTR("note_editor", m_parent);
 
     QObject::connect(
         this,
@@ -52,12 +52,12 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
 
 NoteEditorPage::~NoteEditorPage()
 {
-    QNDEBUG("NoteEditorPage::~NoteEditorPage");
+    QNDEBUG("note_editor", "NoteEditorPage::~NoteEditorPage");
 }
 
 bool NoteEditorPage::javaScriptQueueEmpty() const
 {
-    QNDEBUG("NoteEditorPage::javaScriptQueueEmpty: "
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptQueueEmpty: "
         << (m_pJavaScriptInOrderExecutor->empty() ? "true" : "false"));
 
     return m_pJavaScriptInOrderExecutor->empty();
@@ -65,7 +65,7 @@ bool NoteEditorPage::javaScriptQueueEmpty() const
 
 void NoteEditorPage::setInactive()
 {
-    QNDEBUG("NoteEditorPage::setInactive");
+    QNDEBUG("note_editor", "NoteEditorPage::setInactive");
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     auto * pPluginFactory =
@@ -79,7 +79,7 @@ void NoteEditorPage::setInactive()
 
 void NoteEditorPage::setActive()
 {
-    QNDEBUG("NoteEditorPage::setActive");
+    QNDEBUG("note_editor", "NoteEditorPage::setActive");
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     auto * pPluginFactory =
@@ -93,13 +93,13 @@ void NoteEditorPage::setActive()
 
 void NoteEditorPage::stopJavaScriptAutoExecution()
 {
-    QNDEBUG("NoteEditorPage::stopJavaScriptAutoExecution");
+    QNDEBUG("note_editor", "NoteEditorPage::stopJavaScriptAutoExecution");
     m_javaScriptAutoExecution = false;
 }
 
 void NoteEditorPage::startJavaScriptAutoExecution()
 {
-    QNDEBUG("NoteEditorPage::startJavaScriptAutoExecution");
+    QNDEBUG("note_editor", "NoteEditorPage::startJavaScriptAutoExecution");
 
     m_javaScriptAutoExecution = true;
 
@@ -110,7 +110,7 @@ void NoteEditorPage::startJavaScriptAutoExecution()
 
 bool NoteEditorPage::shouldInterruptJavaScript()
 {
-    QNDEBUG("NoteEditorPage::shouldInterruptJavaScript");
+    QNDEBUG("note_editor", "NoteEditorPage::shouldInterruptJavaScript");
 
     QString title = tr("Note editor hanged");
 
@@ -126,12 +126,14 @@ bool NoteEditorPage::shouldInterruptJavaScript()
         QMessageBox::No);
 
     if (reply == QMessageBox::Yes) {
-        QNINFO("Note load was cancelled due to too long javascript evaluation");
+        QNINFO("note_editor", "Note load was cancelled due to too long "
+            << "javascript evaluation");
         Q_EMIT noteLoadCancelled();
         return true;
     }
     else {
-        QNINFO("Note load seems to hang but user wished to wait more");
+        QNINFO("note_editor", "Note load seems to hang but user wished to "
+            << "wait more");
         return false;
     }
 }
@@ -154,7 +156,7 @@ void NoteEditorPage::executeJavaScript(
 
 void NoteEditorPage::onJavaScriptQueueEmpty()
 {
-    QNDEBUG("NoteEditorPage::onJavaScriptQueueEmpty");
+    QNDEBUG("note_editor", "NoteEditorPage::onJavaScriptQueueEmpty");
     Q_EMIT javaScriptLoaded();
 }
 
@@ -162,21 +164,25 @@ void NoteEditorPage::onJavaScriptQueueEmpty()
 void NoteEditorPage::javaScriptAlert(
     QWebFrame * pFrame, const QString & message)
 {
-    QNDEBUG("NoteEditorPage::javaScriptAlert, message: " << message);
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptAlert, message: "
+        << message);
+
     QWebPage::javaScriptAlert(pFrame, message);
 }
 
 bool NoteEditorPage::javaScriptConfirm(
     QWebFrame * pFrame, const QString & message)
 {
-    QNDEBUG("NoteEditorPage::javaScriptConfirm, message: " << message);
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptConfirm, message: "
+        << message);
+
     return QWebPage::javaScriptConfirm(pFrame, message);
 }
 
 void NoteEditorPage::javaScriptConsoleMessage(
     const QString & message, int lineNumber, const QString & sourceID)
 {
-    QNDEBUG("NoteEditorPage::javaScriptConsoleMessage, message: "
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptConsoleMessage, message: "
         << message << ", line number: "
         << lineNumber << ", sourceID = " << sourceID);
 
@@ -186,14 +192,16 @@ void NoteEditorPage::javaScriptConsoleMessage(
 void NoteEditorPage::javaScriptAlert(
     const QUrl & securityOrigin, const QString & msg)
 {
-    QNDEBUG("NoteEditorPage::javaScriptAlert, message: " << msg);
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptAlert, message: " << msg);
     QWebEnginePage::javaScriptAlert(securityOrigin, msg);
 }
 
 bool NoteEditorPage::javaScriptConfirm(
     const QUrl & securityOrigin, const QString & msg)
 {
-    QNDEBUG("NoteEditorPage::javaScriptConfirm, message: " << msg);
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptConfirm, message: "
+        << msg);
+
     return QWebEnginePage::javaScriptConfirm(securityOrigin, msg);
 }
 
@@ -201,7 +209,7 @@ void NoteEditorPage::javaScriptConsoleMessage(
     QWebEnginePage::JavaScriptConsoleMessageLevel level,
     const QString & message, int lineNumber, const QString & sourceID)
 {
-    QNDEBUG("NoteEditorPage::javaScriptConsoleMessage, message: "
+    QNDEBUG("note_editor", "NoteEditorPage::javaScriptConsoleMessage, message: "
         << message << ", level = " << level << ", line number: "
         << lineNumber << ", sourceID = " << sourceID);
 
@@ -215,40 +223,40 @@ void NoteEditorPage::javaScriptConsoleMessage(
 
 void NoteEditorPage::triggerAction(WebPage::WebAction action, bool checked)
 {
-    QNDEBUG("NoteEditorPage::triggerAction: action = " << action
+    QNDEBUG("note_editor", "NoteEditorPage::triggerAction: action = " << action
         << ", checked = " << (checked ? "true" : "false"));
 
     if (action == WebPage::Back) {
-        QNDEBUG("Filtering back action away");
+        QNDEBUG("note_editor", "Filtering back action away");
         return;
     }
 
     if (action == WebPage::Paste) {
-        QNDEBUG("Filtering paste action");
+        QNDEBUG("note_editor", "Filtering paste action");
         Q_EMIT pasteActionRequested();
         return;
     }
 
     if (action == WebPage::PasteAndMatchStyle) {
-        QNDEBUG("Filtering paste and match style action");
+        QNDEBUG("note_editor", "Filtering paste and match style action");
         Q_EMIT pasteAndMatchStyleActionRequested();
         return;
     }
 
     if (action == WebPage::Cut) {
-        QNDEBUG("Filtering cut action");
+        QNDEBUG("note_editor", "Filtering cut action");
         Q_EMIT cutActionRequested();
         return;
     }
 
     if (action == WebPage::Undo) {
-        QNDEBUG("Filtering undo action");
+        QNDEBUG("note_editor", "Filtering undo action");
         Q_EMIT undoActionRequested();
         return;
     }
 
     if (action == WebPage::Redo) {
-        QNDEBUG("Filtering redo action");
+        QNDEBUG("note_editor", "Filtering redo action");
         Q_EMIT redoActionRequested();
         return;
     }

@@ -17,6 +17,7 @@
  */
 
 #include "ImageResizeUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("ImageResizeUndoCommand",                        \
                               "Can't undo/redo image resizing: "               \
                               "can't get note editor page"));                  \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -53,7 +54,7 @@ ImageResizeUndoCommand::~ImageResizeUndoCommand()
 
 void ImageResizeUndoCommand::redoImpl()
 {
-    QNDEBUG("ImageResizeUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ImageResizeUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resizableImageManager.redo();"));
@@ -61,7 +62,7 @@ void ImageResizeUndoCommand::redoImpl()
 
 void ImageResizeUndoCommand::undoImpl()
 {
-    QNDEBUG("ImageResizeUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ImageResizeUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resizableImageManager.undo();"));

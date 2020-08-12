@@ -82,7 +82,7 @@ const Type * LocalStorageCacheManager::find##Type(                             \
     case Guid:                                                                 \
         return d->find##Type##ByGuid(uid);                                     \
     default:                                                                   \
-        QNERROR("Detected incorrect local uid/remote guid "                    \
+        QNERROR("local_storage", "Detected incorrect local uid/remote guid "   \
             << "qualifier in local storage cache manager");                    \
         return nullptr;                                                        \
     }                                                                          \

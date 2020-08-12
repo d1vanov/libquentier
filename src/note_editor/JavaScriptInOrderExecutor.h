@@ -38,6 +38,8 @@ GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 
 RESTORE_WARNINGS
 
+#include <utility>
+
 namespace quentier {
 
 class Q_DECL_HIDDEN JavaScriptInOrderExecutor final: public QObject
@@ -91,10 +93,10 @@ private:
     void next(const QVariant & data);
 
 private:
-    WebView &                           m_view;
-    QQueue<QPair<QString, Callback>>    m_javaScriptsQueue;
-    Callback                            m_currentPendingCallback;
-    bool                                m_inProgress;
+    WebView &                               m_view;
+    QQueue<std::pair<QString, Callback>>    m_javaScriptsQueue;
+    Callback                                m_currentPendingCallback = 0;
+    bool                                    m_inProgress = false;
 };
 
 } // namespace quentier

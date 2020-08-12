@@ -22,11 +22,13 @@
 
 #define __TCLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(message, level);                                          \
+        __QNLOG_BASE("synchronization:tag_cache", message, level);             \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid << "]: "      \
-            << message, level);                                                \
+        __QNLOG_BASE(                                                          \
+            "synchronization:tag_cache",                                       \
+            "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
+            level);                                                            \
     }                                                                          \
 // __TCLOG_BASE
 

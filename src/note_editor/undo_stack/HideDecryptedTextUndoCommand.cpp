@@ -17,6 +17,7 @@
  */
 
 #include "HideDecryptedTextUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("HideDecryptedTextUndoCommand",                  \
                               "Can't undo/redo the decrypted text "            \
                               "hiding: can't get note editor page"));          \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -58,7 +59,7 @@ HideDecryptedTextUndoCommand::~HideDecryptedTextUndoCommand()
 
 void HideDecryptedTextUndoCommand::redoImpl()
 {
-    QNDEBUG("HideDecryptedTextUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "HideDecryptedTextUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -68,7 +69,7 @@ void HideDecryptedTextUndoCommand::redoImpl()
 
 void HideDecryptedTextUndoCommand::undoImpl()
 {
-    QNDEBUG("HideDecryptedTextUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "HideDecryptedTextUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

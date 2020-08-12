@@ -17,6 +17,7 @@
  */
 
 #include "UpdateResourceUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -49,7 +50,7 @@ UpdateResourceUndoCommand::~UpdateResourceUndoCommand()
 
 void UpdateResourceUndoCommand::undoImpl()
 {
-    QNDEBUG("UpdateResourceUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "UpdateResourceUndoCommand::undoImpl");
 
     m_noteEditorPrivate.replaceResourceInNote(m_resourceBefore);
     m_noteEditorPrivate.updateFromNote();
@@ -57,7 +58,7 @@ void UpdateResourceUndoCommand::undoImpl()
 
 void UpdateResourceUndoCommand::redoImpl()
 {
-    QNDEBUG("UpdateResourceUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "UpdateResourceUndoCommand::redoImpl");
 
     m_noteEditorPrivate.replaceResourceInNote(m_resourceAfter);
     m_noteEditorPrivate.updateFromNote();

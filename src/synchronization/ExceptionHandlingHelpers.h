@@ -35,7 +35,7 @@
         errorDescription.details() += QStringLiteral(": ");                    \
         errorDescription.details() +=                                          \
             QString::fromUtf8(thriftException.what());                         \
-        QNWARNING(errorDescription);                                           \
+        QNWARNING("synchronization", errorDescription);                        \
         __VA_ARGS__ ;                                                          \
     }                                                                          \
 // CATCH_THRIFT_EXCEPTION_IMPL
@@ -50,7 +50,7 @@
             errorDescription.details() =                                       \
                 evernoteException.exceptionData()->errorMessage;               \
         }                                                                      \
-        QNWARNING(errorDescription);                                           \
+        QNWARNING("synchronization", errorDescription);                        \
         __VA_ARGS__ ;                                                          \
     }                                                                          \
 // CATCH_EVERNOTE_EXCEPTION_IMPL
@@ -63,7 +63,7 @@
                               "QEverCloud exception"));                        \
         errorDescription.details() =                                           \
             QString::fromUtf8(everCloudException.what());                      \
-        QNWARNING(errorDescription);                                           \
+        QNWARNING("synchronization", errorDescription);                        \
         __VA_ARGS__ ;                                                          \
     }                                                                          \
 // CATCH_EVER_CLOUD_EXCEPTION_IMPL
@@ -75,7 +75,7 @@
             QT_TRANSLATE_NOOP("synchronization",                               \
                               "std::exception"));                              \
         errorDescription.details() = QString::fromUtf8(e.what());              \
-        QNWARNING(errorDescription);                                           \
+        QNWARNING("synchronization", errorDescription);                        \
         __VA_ARGS__ ;                                                          \
     }                                                                          \
 // CATCH_STD_EXCEPTION_IMPL

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,13 +28,13 @@ ActionsWatcher::ActionsWatcher(QObject * parent) :
 
 void ActionsWatcher::onCutActionToggled()
 {
-    QNDEBUG("ActionsWatcher::onCutActionToggled");
+    QNDEBUG("note_editor:js_glue", "ActionsWatcher::onCutActionToggled");
     Q_EMIT cutActionToggled();
 }
 
 void ActionsWatcher::onPasteActionToggled()
 {
-    QNDEBUG("ActionsWatcher::onPasteActionToggled");
+    QNDEBUG("note_editor:js_glue", "ActionsWatcher::onPasteActionToggled");
     Q_EMIT pasteActionToggled();
 }
 

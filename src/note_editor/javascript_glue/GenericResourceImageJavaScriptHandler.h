@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,8 @@
 
 #include <quentier/utility/Macros.h>
 
-#include <QObject>
 #include <QHash>
+#include <QObject>
 
 namespace quentier {
 
@@ -34,8 +34,8 @@ public:
         const QHash<QByteArray, QString> & cache, QObject * parent = nullptr);
 
 Q_SIGNALS:
-    void genericResourceImageFound(QByteArray resourceHash,
-                                   QString genericResourceImageFilePath);
+    void genericResourceImageFound(
+        QByteArray resourceHash, QString genericResourceImageFilePath);
 
 public Q_SLOTS:
     void findGenericResourceImage(QByteArray resourceHash);

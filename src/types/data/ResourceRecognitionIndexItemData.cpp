@@ -27,14 +27,14 @@ bool ResourceRecognitionIndexItemData::isValid() const
     if (m_textItems.isEmpty() && m_objectItems.isEmpty() &&
         m_shapeItems.isEmpty() && m_barcodeItems.isEmpty())
     {
-        QNTRACE("Resource recognition index item is empty");
+        QNTRACE("types:data", "Resource recognition index item is empty");
         return false;
     }
 
     for(const auto & textItem: qAsConst(m_textItems))
     {
         if (textItem.m_weight < 0) {
-            QNTRACE("Resource recognition index item contains "
+            QNTRACE("types:data", "Resource recognition index item contains "
                 << "text item with weight less than 0: "
                 << textItem.m_text << ", weight = "
                 << textItem.m_weight);
@@ -45,7 +45,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
     for(const auto & objectItem: qAsConst(m_objectItems))
     {
         if (objectItem.m_weight < 0) {
-            QNTRACE("Resource recognition index item contains "
+            QNTRACE("types:data", "Resource recognition index item contains "
                 << "object item with weight less than 0: "
                 << objectItem.m_objectType << ", weight = "
                 << objectItem.m_weight);
@@ -67,7 +67,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (objectItem.m_objectType != QStringLiteral("road")) &&
             (objectItem.m_objectType != QStringLiteral("car")))
         {
-            QNTRACE("Resource recognition index object item has "
+            QNTRACE("types:data", "Resource recognition index object item has "
                 << "invalid object type: " << objectItem.m_objectType);
             return false;
         }
@@ -76,7 +76,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
     for(const auto & shapeItem: qAsConst(m_shapeItems))
     {
         if (shapeItem.m_weight < 0) {
-            QNTRACE("Resource recognition index item contains "
+            QNTRACE("types:data", "Resource recognition index item contains "
                 << "shape item with weight less than 0: "
                 << shapeItem.m_shapeType << ", weight = "
                 << shapeItem.m_weight);
@@ -91,7 +91,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
             (shapeItem.m_shapeType != QStringLiteral("arrow")) &&
             (shapeItem.m_shapeType != QStringLiteral("polyline")))
         {
-            QNTRACE("Resource recognition index shape item has "
+            QNTRACE("types:data", "Resource recognition index shape item has "
                 << "invalid shape type: " << shapeItem.m_shapeType);
             return false;
         }
@@ -100,7 +100,7 @@ bool ResourceRecognitionIndexItemData::isValid() const
     for(const auto & barcodeItem: qAsConst(m_barcodeItems))
     {
         if (barcodeItem.m_weight < 0) {
-            QNTRACE("Resource recognition index item contains "
+            QNTRACE("types:data", "Resource recognition index item contains "
                 << "barcode item with weight less than 0: "
                 << barcodeItem.m_barcode << ", weight = "
                 << barcodeItem.m_weight);

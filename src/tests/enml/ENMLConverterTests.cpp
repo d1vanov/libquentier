@@ -344,7 +344,7 @@ bool convertNoteToHtmlAndBackImpl(
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
@@ -365,13 +365,13 @@ bool convertNoteToHtmlAndBackImpl(
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
     res = compareEnml(originalNoteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING("\n\nHTML: " << html);
+        QNWARNING("tests:enml", "\n\nHTML: " << html);
         return false;
     }
 
@@ -388,7 +388,7 @@ bool compareEnml(
     QXmlStreamReader readerProcessed(processedSimplified);
 
 #define PRINT_WARNING(err)                                                     \
-    QNWARNING(err << "\n\nContext in the original ENML: <"                     \
+    QNWARNING("tests:enml", err << "\n\nContext in the original ENML: <"       \
         << readerOriginal.name() << ">: "                                      \
         << readerOriginal.readElementText()                                    \
         << "\n\nContext in the processed ENML: <"                              \
@@ -595,10 +595,10 @@ bool compareEnml(
                         originalAttributes[i];
                     if (originalAttribute.name() == QStringLiteral("style"))
                     {
-                        QNTRACE("Won't compare the style attribute for td tag "
-                            << "as it's known to be slightly modified by "
-                            << "the web engine so it's just not easy to "
-                            << "compare it");
+                        QNTRACE("tests:enml", "Won't compare the style "
+                            << "attribute for td tag as it's known to be "
+                            << "slightly modified by the web engine so it's "
+                            << "just not easy to compare it");
 
                         continue;
                     }
@@ -610,7 +610,7 @@ bool compareEnml(
                             "the original and the processed "
                             "ENMLs do not match");
 
-                        QNWARNING(error
+                        QNWARNING("tests:enml", error
                             << ": the original attribute was not found "
                                "within the processed attributes; "
                                "original ENML: "
@@ -665,7 +665,7 @@ bool compareEnml(
                             "the original and the processed ENMLs do not "
                             "match");
 
-                        QNWARNING(error
+                        QNWARNING("tests:enml", error
                             << ": the original attribute "
                                "was not found within "
                                "the processed attributes; "
@@ -721,8 +721,9 @@ bool compareEnml(
                     "points to characters while the reader "
                     "of the processed ENML does not");
 
-                QNWARNING(error << "; original ENML: " << originalSimplified
-                    << "\nProcessed ENML: " << processedSimplified);
+                QNWARNING("tests:enml", error << "; original ENML: "
+                    << originalSimplified << "\nProcessed ENML: "
+                    << processedSimplified);
 
                 return false;
             }
@@ -736,8 +737,9 @@ bool compareEnml(
                         "ENML points to CDATA while the reader "
                         "of the processed ENML does not");
 
-                    QNWARNING(error << "; original ENML: " << originalSimplified
-                        << "\nProcessed ENML: " << processedSimplified);
+                    QNWARNING("tests:enml", error << "; original ENML: "
+                        << originalSimplified << "\nProcessed ENML: "
+                        << processedSimplified);
 
                     return false;
                 }
@@ -753,10 +755,11 @@ bool compareEnml(
                     "both the original ENML and the processed ENML does not "
                     "match");
 
-                QNWARNING(error << "; original ENML: " << originalSimplified
-                    << "\nProcessed ENML: " << processedSimplified
-                    << "\nOriginal element text: " << textOriginal
-                    << "\nProcessed element text: " << textProcessed);
+                QNWARNING("tests:enml", error << "; original ENML: "
+                    << originalSimplified << "\nProcessed ENML: "
+                    << processedSimplified << "\nOriginal element text: "
+                    << textOriginal << "\nProcessed element text: "
+                    << textProcessed);
 
                 return false;
             }
@@ -769,8 +772,9 @@ bool compareEnml(
                 "the end of the document while the reader of "
                 "the processed ENML is not");
 
-            QNWARNING(error << "; original ENML: " << originalSimplified
-                << "\nProcessed ENML: " << processedSimplified);
+            QNWARNING("tests:enml", error << "; original ENML: "
+                << originalSimplified << "\nProcessed ENML: "
+                << processedSimplified);
 
             return false;
         }
@@ -783,8 +787,9 @@ bool compareEnml(
             "the processed ENML have not both came to their "
             "ends after the checking loop");
 
-        QNWARNING(error << "; original ENML: " << originalSimplified
-            << "\nProcessed ENML: " << processedSimplified);
+        QNWARNING("tests:enml", error << "; original ENML: "
+            << originalSimplified << "\nProcessed ENML: "
+            << processedSimplified);
 
         return false;
     }
@@ -868,7 +873,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
@@ -914,13 +919,13 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
     res = compareEnml(processedENML, expectedReturnENML, error);
     if (!res) {
-        QNWARNING("\n\nHTML: " << html);
+        QNWARNING("tests:enml", "\n\nHTML: " << html);
         return false;
     }
 
@@ -975,13 +980,13 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
     res = compareEnml(noteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING("\n\nHTML: " << html);
+        QNWARNING("tests:enml", "\n\nHTML: " << html);
         return false;
     }
 
@@ -1044,13 +1049,13 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:enml", error);
         return false;
     }
 
     res = compareEnml(noteContent, processedNoteContent, error);
     if (!res) {
-        QNWARNING("\n\nHTML: " << html);
+        QNWARNING("tests:enml", "\n\nHTML: " << html);
         return false;
     }
 

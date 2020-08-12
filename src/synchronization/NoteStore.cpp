@@ -78,7 +78,7 @@ void NoteStore::setAuthData(
 
 void NoteStore::stop()
 {
-    QNDEBUG("NoteStore::stop");
+    QNDEBUG("synchronization:note_store", "NoteStore::stop");
 
     for(const auto & it: qevercloud::toRange(m_noteRequestDataById))
     {
@@ -205,8 +205,8 @@ qint32 NoteStore::createNote(
         qevercloud::Note noteMetadata = m_pNoteStore->createNote(
             note.qevercloudNote(), ctx);
 
-        QNDEBUG("Note metadata returned from createNote method: "
-            << noteMetadata);
+        QNDEBUG("synchronization:note_store", "Note metadata returned from "
+            << "createNote method: " << noteMetadata);
 
         if (noteMetadata.guid.isSet()) {
             note.setGuid(noteMetadata.guid.ref());
@@ -254,8 +254,8 @@ qint32 NoteStore::updateNote(
         qevercloud::Note noteMetadata = m_pNoteStore->updateNote(
             note.qevercloudNote(), ctx);
 
-        QNDEBUG("Note metadata returned from updateNote method: "
-            << noteMetadata);
+        QNDEBUG("synchronization:note_store", "Note metadata returned from "
+            << "updateNote method: " << noteMetadata);
 
         if (noteMetadata.guid.isSet()) {
             note.setGuid(noteMetadata.guid.ref());
@@ -486,7 +486,8 @@ qint32 NoteStore::getSyncChunk(
     qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
     qint32 & rateLimitSeconds)
 {
-    QNDEBUG("NoteStore::getSyncChunk: after USN = " << afterUSN
+    QNDEBUG("synchronization:note_store", "NoteStore::getSyncChunk: "
+        << "after USN = " << afterUSN
         << ", max entries = " << maxEntries
         << ", sync chunk filter = " << filter);
 
@@ -580,7 +581,8 @@ qint32 NoteStore::getLinkedNotebookSyncChunk(
     const bool fullSyncOnly, qevercloud::SyncChunk & syncChunk,
     ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    QNDEBUG("NoteStore::getLinkedNotebookSyncChunk: linked notebook: "
+    QNDEBUG("synchronization:note_store", "NoteStore"
+        << "::getLinkedNotebookSyncChunk: linked notebook: "
         << linkedNotebook << "\nAfter USN = " << afterUSN
         << ", max entries = " << maxEntries << ", full sync only = "
         << (fullSyncOnly ? "true" : "false"));
@@ -664,7 +666,7 @@ qint32 NoteStore::getNote(
     Note & note, ErrorString & errorDescription,
     qint32 & rateLimitSeconds)
 {
-    QNDEBUG("NoteStore::getNote: with content = "
+    QNDEBUG("synchronization:note_store", "NoteStore::getNote: with content = "
         << (withContent
             ? "true"
             : "false")
@@ -737,7 +739,8 @@ bool NoteStore::getNoteAsync(
     const QString & noteGuid, const QString & authToken,
     ErrorString & errorDescription)
 {
-    QNDEBUG("NoteStore::getNoteAsync: with content = "
+    QNDEBUG("synchronization:note_store", "NoteStore::getNoteAsync: "
+        << "with content = "
         << (withContent
             ? "true"
             : "false")
@@ -781,9 +784,10 @@ bool NoteStore::getNoteAsync(
 
     if (m_getNoteAsyncRequestCount >= m_getNoteAsyncRequestCountMax)
     {
-        QNDEBUG("Too many get note async requests are already in flight: "
-            << m_getNoteAsyncRequestCount << ", queueing the request to be "
-            << "executed later for note with guid " << noteGuid);
+        QNDEBUG("synchronization:note_store", "Too many get note async "
+            << "requests are already in flight: " << m_getNoteAsyncRequestCount
+            << ", queueing the request to be executed later for note with guid "
+            << noteGuid);
 
         GetNoteRequest request;
         request.m_guid = noteGuid;
@@ -798,8 +802,10 @@ bool NoteStore::getNoteAsync(
         request.m_withNoteLimits = withNoteLimits;
 
         m_pendingGetNoteRequests.enqueue(request);
-        QNDEBUG("Queue of pending get note async requests now has "
-            << m_pendingGetNoteRequests.size() << " items");
+
+        QNDEBUG("synchronization:note_store", "Queue of pending get note async "
+            << "requests now has " << m_pendingGetNoteRequests.size()
+            << " items");
 
         return true;
     }
@@ -813,7 +819,9 @@ bool NoteStore::getNoteAsync(
     noteResultSpec.includeNoteAppDataValues = withNoteAppDataValues;
     noteResultSpec.includeResourceAppDataValues = withResourceAppDataValues;
     noteResultSpec.includeAccountLimits = withNoteLimits;
-    QNTRACE("Note result spec: " << noteResultSpec);
+
+    QNTRACE("synchronization:note_store", "Note result spec: "
+        << noteResultSpec);
 
     auto ctx = qevercloud::newRequestContext(
         authToken,
@@ -855,7 +863,8 @@ qint32 NoteStore::getResource(
     const QString & authToken, Resource & resource,
     ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    QNDEBUG("NoteStore::getResource: with data body = "
+    QNDEBUG("synchronization:note_store", "NoteStore::getResource: "
+        << "with data body = "
         << (withDataBody
             ? "true"
             : "false")
@@ -931,7 +940,8 @@ bool NoteStore::getResourceAsync(
     const QString & resourceGuid, const QString & authToken,
     ErrorString & errorDescription)
 {
-    QNDEBUG("NoteStore::getResourceAsync: with data body = "
+    QNDEBUG("synchronization:note_store", "NoteStore::getResourceAsync: "
+        << "with data body = "
         << (withDataBody
             ? "true"
             : "false")
@@ -1092,14 +1102,14 @@ void NoteStore::onGetNoteAsyncFinished(
     EverCloudExceptionDataPtr exceptionData,
     IRequestContextPtr ctx)
 {
-    QNDEBUG("NoteStore::onGetNoteAsyncFinished");
+    QNDEBUG("synchronization:note_store", "NoteStore::onGetNoteAsyncFinished");
 
     --m_getNoteAsyncRequestCount;
 
     auto it = m_noteRequestDataById.find(ctx->requestId());
     if (Q_UNLIKELY(it == m_noteRequestDataById.end())) {
-        QNWARNING("Received getNoteAsyncFinished event for unidentified "
-            << "request id: " << ctx->requestId());
+        QNWARNING("synchronization:note_store", "Received getNoteAsyncFinished "
+            << "event for unidentified request id: " << ctx->requestId());
         processNextPendingGetNoteAsyncRequest();
         return;
     }
@@ -1119,7 +1129,8 @@ void NoteStore::onGetNoteAsyncFinished(
 
     if (exceptionData)
     {
-        QNDEBUG("Error: " << exceptionData->errorMessage);
+        QNDEBUG("synchronization:note_store", "Error: "
+            << exceptionData->errorMessage);
 
         try
         {
@@ -1172,12 +1183,14 @@ void NoteStore::onGetResourceAsyncFinished(
     QVariant result, EverCloudExceptionDataPtr exceptionData,
     IRequestContextPtr ctx)
 {
-    QNDEBUG("NoteStore::onGetResourceAsyncFinished");
+    QNDEBUG("synchronization:note_store", "NoteStore"
+        << "::onGetResourceAsyncFinished");
 
     auto it = m_resourceRequestDataById.find(ctx->requestId());
     if (Q_UNLIKELY(it == m_resourceRequestDataById.end())) {
-        QNWARNING("Received getResourceAsyncFinished event for unidentified "
-            << "request id: " << ctx->requestId());
+        QNWARNING("synchronization:note_store", "Received "
+            << "getResourceAsyncFinished event for unidentified request id: "
+            << ctx->requestId());
         return;
     }
 
@@ -1196,7 +1209,8 @@ void NoteStore::onGetResourceAsyncFinished(
 
     if (exceptionData)
     {
-        QNDEBUG("Error: " << exceptionData->errorMessage);
+        QNDEBUG("synchronization:note_store", "Error: "
+            << exceptionData->errorMessage);
 
         try
         {
@@ -1481,9 +1495,12 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
             {
                 errorDescription.appendBase(
                     QT_TR_NOOP("invalid length of saved search's query"));
+
                 errorDescription.details() = QString::number(
                     search.query().length());
-                QNWARNING(errorDescription << ", query: " << search.query());
+
+                QNWARNING("synchronization:note_store", errorDescription
+                    << ", query: " << search.query());
             }
             else
             {
@@ -2028,10 +2045,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             {
                 errorDescription.appendBase(
                     QT_TR_NOOP("invalid length for note's ENML content"));
+
                 errorDescription.details() = QString::number(
                     note.content().length());
-                QNWARNING(errorDescription << ", note's content: "
-                    << note.content());
+
+                QNWARNING("synchronization:note_store", errorDescription
+                    << ", note's content: " << note.content());
             }
             else
             {
@@ -2045,7 +2064,9 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             {
                 errorDescription.appendBase(
                     QT_TR_NOOP("invalid note attributes"));
-                QNWARNING(errorDescription << ": " << note.noteAttributes());
+
+                QNWARNING("synchronization:note_store", errorDescription
+                    << ": " << note.noteAttributes());
             }
             else
             {
@@ -2059,13 +2080,18 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("invalid resource attributes "
                            "for some of note's resources"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
-        else if (userException.parameter.ref() == QStringLiteral("Resource.mime"))
+        else if (userException.parameter.ref() ==
+                 QStringLiteral("Resource.mime"))
         {
             errorDescription.appendBase(
                 QT_TR_NOOP("invalid mime type for some of note's resources"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag.name"))
         {
@@ -2073,9 +2099,12 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                 QT_TR_NOOP("Note.tagNames was provided "
                            "and one of the specified tags "
                            "had invalid length or pattern"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
-        else {
+        else
+        {
             errorDescription.appendBase(QT_TR_NOOP("unexpected parameter"));
             errorDescription.details() = userException.parameter.ref();
         }
@@ -2148,7 +2177,9 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("data body for some of note's "
                            "resources is missing"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
         else
         {
@@ -2177,7 +2208,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         errorDescription.appendBase(
             QT_TR_NOOP("note's content doesn't validate against DTD"));
 
-        QNWARNING(errorDescription << ", note: " << note);
+        QNWARNING("synchronization:note_store", errorDescription << ", note: "
+            << note);
         // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode);
     }
@@ -2238,8 +2270,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("note attributes string is too large"));
             if (note.hasNoteAttributes()) {
-                QNWARNING(errorDescription << ", note attributes: "
-                    << note.noteAttributes());
+                QNWARNING("synchronization:note_store", errorDescription
+                    << ", note attributes: " << note.noteAttributes());
             }
         }
         else if (userException.parameter.ref().startsWith(
@@ -2248,14 +2280,18 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("one of note's resources has too large resource "
                            "attributes string"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
         else if (userException.parameter.ref() == QStringLiteral("Tag"))
         {
             errorDescription.appendBase(
                 QT_TR_NOOP("Note.tagNames was provided, and the required new "
                            "tags would exceed the maximum number per account"));
-            QNWARNING(errorDescription << ", note: " << note);
+
+            QNWARNING("synchronization:note_store", errorDescription
+                << ", note: " << note);
         }
         else
         {
@@ -2296,8 +2332,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
             errorDescription.appendBase(
                 QT_TR_NOOP("note's notebook is not owned by user"));
             if (note.hasNotebookGuid()) {
-                QNWARNING(errorDescription << ", notebook guid: "
-                          << note.notebookGuid());
+                QNWARNING("synchronization:note_store", errorDescription
+                    << ", notebook guid: " << note.notebookGuid());
             }
         }
         else if (!thrownOnCreation &&
@@ -2329,7 +2365,9 @@ qint32 NoteStore::processEdamUserExceptionForNote(
                            "the attempt to update a note"));
         }
 
-        errorDescription.appendBase(QT_TR_NOOP("note exceeds upload quota limit"));
+        errorDescription.appendBase(
+            QT_TR_NOOP("note exceeds upload quota limit"));
+
         // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode);
     }
@@ -2438,15 +2476,16 @@ void NoteStore::processEdamNotFoundException(
 
 void NoteStore::processNextPendingGetNoteAsyncRequest()
 {
-    QNDEBUG("NoteStore::processNextPendingGetNoteAsyncRequest");
+    QNDEBUG("synchronization:note_store", "NoteStore"
+        << "::processNextPendingGetNoteAsyncRequest");
 
     if (m_pendingGetNoteRequests.isEmpty()) {
-        QNDEBUG("No pending get note request");
+        QNDEBUG("synchronization:note_store", "No pending get note request");
         return;
     }
 
-    QNDEBUG("Queue of pending get note async requests is not empty, executing "
-        << "the next pending request");
+    QNDEBUG("synchronization:note_store", "Queue of pending get note async "
+        << "requests is not empty, executing the next pending request");
 
     auto request = m_pendingGetNoteRequests.dequeue();
     ErrorString errorDescription;
@@ -2480,8 +2519,9 @@ void NoteStore::processNextPendingGetNoteAsyncRequest()
         return;
     }
 
-    QNDEBUG("Queue of pending get note async requests now contains "
-        << m_pendingGetNoteRequests.size() << " items");
+    QNDEBUG("synchronization:note_store", "Queue of pending get note async "
+        << "requests now contains " << m_pendingGetNoteRequests.size()
+        << " items");
 }
 
 } // namespace quentier

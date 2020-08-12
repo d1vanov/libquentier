@@ -129,7 +129,7 @@ private:
 
 private:
     LocalStorageManagerAsync &          m_localStorageManagerAsync;
-    bool                                m_connectedToLocalStorage;
+    bool                                m_connectedToLocalStorage = false;
 
     QString                             m_linkedNotebookGuid;
 
@@ -138,8 +138,8 @@ private:
     QHash<QString,QString>              m_notebookGuidByNoteGuid;
 
     QUuid                               m_listNotesRequestId;
-    size_t                              m_limit;
-    size_t                              m_offset;
+    size_t                              m_limit = 40;
+    size_t                              m_offset = 0;
 };
 
 } // namespace quentier

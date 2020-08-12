@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,10 +34,14 @@ public:
 Q_SIGNALS:
     void textCursorPositionChanged();
 
-    void textCursorPositionOnImageResourceState(bool state, QByteArray resourceHash);
-    void textCursorPositionOnNonImageResourceState(bool state, QByteArray resourceHash);
-    void textCursorPositionOnEnCryptTagState(bool state, QString encryptedText,
-                                             QString cipher, QString length);
+    void textCursorPositionOnImageResourceState(
+        bool state, QByteArray resourceHash);
+
+    void textCursorPositionOnNonImageResourceState(
+        bool state, QByteArray resourceHash);
+
+    void textCursorPositionOnEnCryptTagState(
+        bool state, QString encryptedText, QString cipher, QString length);
 
     void textCursorPositionBoldState(bool bold);
     void textCursorPositionItalicState(bool italic);
@@ -62,8 +66,9 @@ public Q_SLOTS:
 
     void setOnImageResourceState(bool state, QString resourceHash);
     void setOnNonImageResourceState(bool state, QString resourceHash);
-    void setOnEnCryptTagState(bool state, QString encryptedText,
-                              QString cipher, QString length);
+
+    void setOnEnCryptTagState(
+        bool state, QString encryptedText, QString cipher, QString length);
 
     void setTextCursorPositionBoldState(bool bold);
     void setTextCursorPositionItalicState(bool italic);
@@ -76,7 +81,9 @@ public Q_SLOTS:
     void setTextCursorPositionAlignFullState(bool state);
 
     void setTextCursorPositionInsideOrderedListState(bool insideOrderedList);
-    void setTextCursorPositionInsideUnorderedListState(bool insideUnorderedList);
+
+    void setTextCursorPositionInsideUnorderedListState(
+        bool insideUnorderedList);
 
     void setTextCursorPositionInsideTableState(bool insideTable);
 

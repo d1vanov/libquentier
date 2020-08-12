@@ -41,7 +41,9 @@ AuthenticationManagerPrivate::AuthenticationManagerPrivate(
 
 void AuthenticationManagerPrivate::onAuthenticationRequest()
 {
-    QNDEBUG("AuthenticationManagerPrivate::onAuthenticationRequest");
+    QNDEBUG(
+        "synchronization:authentication",
+        "AuthenticationManagerPrivate::onAuthenticationRequest");
 
     QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
 

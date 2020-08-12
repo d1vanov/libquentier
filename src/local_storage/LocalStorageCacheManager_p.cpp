@@ -176,8 +176,8 @@ void cacheItem(
             if (Q_UNLIKELY(!res))
             {
                 auto latIndexBegin = latIndex.begin();
-                QNTRACE("Going to remove the object from the local "
-                    << "storage cache: " << *latIndexBegin);
+                QNTRACE("local_storage", "Going to remove the object from "
+                    << "the local storage cache: " << *latIndexBegin);
                 Q_UNUSED(latIndex.erase(latIndexBegin));
                 continue;
             }
@@ -193,8 +193,8 @@ void cacheItem(
     auto it = uniqueIndex.find(itemId(item));
     if (it != uniqueIndex.end()) {
         uniqueIndex.replace(it, holder);
-        QNTRACE("Updated " << itemTypeName << " in the local storage cache: "
-            << item);
+        QNTRACE("local_storage", "Updated " << itemTypeName
+            << " in the local storage cache: " << item);
         return;
     }
 
@@ -202,8 +202,8 @@ void cacheItem(
     auto insertionResult = cache.insert(holder);
     if (Q_UNLIKELY(!insertionResult.second))
     {
-        QNWARNING("Failed to insert " << itemTypeName << " into the cache of "
-            << "local storage manager: " << item);
+        QNWARNING("local_storage", "Failed to insert " << itemTypeName
+            << " into the cache of local storage manager: " << item);
         ErrorString error(
             QT_TRANSLATE_NOOP("LocalStorageCacheManagerPrivate",
                               "Unable to insert the data item into "
@@ -211,8 +211,8 @@ void cacheItem(
         error.details() = itemTypeName;
         throw LocalStorageCacheManagerException(error);
     }
-    QNTRACE("Added " << itemTypeName << " to the local storage cache: "
-        << item);
+    QNTRACE("local_storage", "Added " << itemTypeName
+        << " to the local storage cache: " << item);
 }
 
 } // namespace
@@ -321,7 +321,7 @@ void expungeItem(
         auto it = index.find(uid);
         if (it != index.end()) {
             index.erase(it);
-            QNDEBUG("Expunged " << itemTypeName
+            QNDEBUG("local_storage", "Expunged " << itemTypeName
                 << " from the local storage cache: " << item);
         }
     }
@@ -331,7 +331,7 @@ void expungeItem(
         auto it = index.find(uid);
         if (it != index.end()) {
             index.erase(it);
-            QNDEBUG("Expunged " << itemTypeName
+            QNDEBUG("local_storage", "Expunged " << itemTypeName
                 << " from the local storage cache: " << item);
         }
     }
@@ -390,8 +390,8 @@ void LocalStorageCacheManagerPrivate::expungeLinkedNotebook(
     auto it = index.find(guid);
     if (it != index.end()) {
         index.erase(it);
-        QNDEBUG("Expunged linked notebook from the local storage cache: "
-            << linkedNotebook);
+        QNDEBUG("local_storage", "Expunged linked notebook from the local "
+            << "storage cache: " << linkedNotebook);
     }
 }
 

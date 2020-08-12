@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,8 @@
 #include <quentier/utility/Macros.h>
 
 #include <QObject>
-#include <QString>
 #include <QSize>
+#include <QString>
 
 namespace quentier {
 
@@ -37,16 +37,15 @@ class ResourceInfoJavaScriptHandler: public QObject
 {
     Q_OBJECT
 public:
-    explicit ResourceInfoJavaScriptHandler(const ResourceInfo & resourceInfo,
-                                           QObject * parent = nullptr);
+    explicit ResourceInfoJavaScriptHandler(
+        const ResourceInfo & resourceInfo, QObject * parent = nullptr);
 
 Q_SIGNALS:
-    void notifyResourceInfo(const QString & resourceHash,
-                            const QString & resourceLocalFilePath,
-                            const QString & resourceDisplayName,
-                            const QString & resourceDisplaySize,
-                            const int resourceImageHeight,
-                            const int resourceImageWidth);
+    void notifyResourceInfo(
+        const QString & resourceHash, const QString & resourceLocalFilePath,
+        const QString & resourceDisplayName,
+        const QString & resourceDisplaySize, const int resourceImageHeight,
+        const int resourceImageWidth);
 
 public Q_SLOTS:
     void findResourceInfo(const QString & resourceHash);

@@ -57,7 +57,7 @@ QString accountApplicationStoragePath(
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty()))
     {
-        QNWARNING("Detected attempt to create ApplicationSettings "
+        QNWARNING("utility", "Detected attempt to create ApplicationSettings "
                   "for account with empty name");
         throw ApplicationSettingsInitializationException(
             ErrorString(QT_TRANSLATE_NOOP(

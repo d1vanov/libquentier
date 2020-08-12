@@ -17,6 +17,7 @@
  */
 
 #include "SpellCorrectionUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -31,7 +32,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("SpellCorrectionUndoCommand",                    \
                               "Can't undo/redo spelling correction: "          \
                               "can't get note editor's page"));                \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \

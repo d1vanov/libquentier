@@ -48,10 +48,11 @@ LocalStorageManagerAsync * NoteEditorLocalStorageBroker::localStorageManager()
 void NoteEditorLocalStorageBroker::setLocalStorageManager(
     LocalStorageManagerAsync & localStorageManagerAsync)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::setLocalStorageManager");
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::setLocalStorageManager");
 
     if (m_pLocalStorageManagerAsync == &localStorageManagerAsync) {
-        QNDEBUG("LocalStorageManagerAsync is already set");
+        QNDEBUG("note_editor", "LocalStorageManagerAsync is already set");
         return;
     }
 
@@ -65,20 +66,21 @@ void NoteEditorLocalStorageBroker::setLocalStorageManager(
 
 void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(const Note & note)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::saveNoteToLocalStorage: "
-        << "note local uid = " << note.localUid());
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::saveNoteToLocalStorage: note local uid = " << note.localUid());
 
     const Note * pCachedNote = m_notesCache.get(note.localUid());
     if (!pCachedNote)
     {
-        QNTRACE("Haven't found the note to be saved within the cache");
+        QNTRACE("note_editor", "Haven't found the note to be saved within "
+            << "the cache");
 
         QUuid requestId = QUuid::createUuid();
         m_notesPendingSavingByFindNoteRequestIds[requestId] = note;
         Note dummy;
         dummy.setLocalUid(note.localUid());
 
-        QNDEBUG("Emitting the request to find note for the sake "
+        QNDEBUG("note_editor", "Emitting the request to find note for the sake "
             << "of resource list updates resolution");
 
         LocalStorageManager::GetNoteOptions options(
@@ -94,12 +96,12 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorage(const Note & note)
 void NoteEditorLocalStorageBroker::findNoteAndNotebook(
     const QString & noteLocalUid)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::findNoteAndNotebook: "
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::findNoteAndNotebook: "
         << "note local uid = " << noteLocalUid);
 
     const Note * pCachedNote = m_notesCache.get(noteLocalUid);
     if (!pCachedNote) {
-        QNDEBUG("Note was not found within the cache, looking "
+        QNDEBUG("note_editor", "Note was not found within the cache, looking "
             << "it up in the local storage");
         emitFindNoteRequest(noteLocalUid);
         return;
@@ -109,8 +111,9 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(
         !pCachedNote->hasNotebookGuid()))
     {
         Q_UNUSED(m_notesCache.remove(noteLocalUid))
-        QNDEBUG("The note within the cache contained neither notebook local "
-            << "uid nor notebook guid, looking it up in the local storage");
+        QNDEBUG("note_editor", "The note within the cache contained neither "
+            << "notebook local uid nor notebook guid, looking it up in "
+            << "the local storage");
         emitFindNoteRequest(noteLocalUid);
         return;
     }
@@ -122,12 +125,12 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(
         const auto * pCachedNotebook = m_notebooksCache.get(notebookLocalUid);
         if (pCachedNotebook)
         {
-            QNDEBUG("Found both note and notebook within caches");
+            QNDEBUG("note_editor", "Found both note and notebook within caches");
             Q_EMIT foundNoteAndNotebook(*pCachedNote, *pCachedNotebook);
         }
         else
         {
-            QNDEBUG("Notebook was not found within the cache, "
+            QNDEBUG("note_editor", "Notebook was not found within the cache, "
                 << "looking it up in local storage");
 
             emitFindNotebookForNoteByLocalUidRequest(
@@ -146,23 +149,24 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(
 void NoteEditorLocalStorageBroker::findResourceData(
     const QString & resourceLocalUid)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::findResourceData: "
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::findResourceData: "
         << "resource local uid = " << resourceLocalUid);
 
     const auto * pCachedResource = m_resourcesCache.get(resourceLocalUid);
     if (pCachedResource) {
-        QNDEBUG("Found cached resource binary data");
+        QNDEBUG("note_editor", "Found cached resource binary data");
         Q_EMIT foundResourceData(*pCachedResource);
         return;
     }
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_findResourceRequestIds.insert(requestId))
+
     Resource resource;
     resource.setLocalUid(resourceLocalUid);
 
-    QNDEBUG("Emitting the request to find resource: request id = "
-        << requestId << ", resource local uid = "
+    QNDEBUG("note_editor", "Emitting the request to find resource: "
+        << "request id = " << requestId << ", resource local uid = "
         << resourceLocalUid);
 
     LocalStorageManager::GetResourceOptions options(
@@ -174,7 +178,7 @@ void NoteEditorLocalStorageBroker::findResourceData(
 void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
     Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::onUpdateNoteComplete: "
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::onUpdateNoteComplete: "
         << "request id = " << requestId << ", options = " << options
         << ", note: " << note);
 
@@ -186,7 +190,7 @@ void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
         }
         else
         {
-            QList<Resource> resources = note.resources();
+            auto resources = note.resources();
             for(auto & resource: resources) {
                 resource.setDataBody(QByteArray());
                 resource.setAlternateDataBody(QByteArray());
@@ -200,7 +204,8 @@ void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
 
     auto it = m_updateNoteRequestIds.find(requestId);
     if (it != m_updateNoteRequestIds.end()) {
-        QNDEBUG("Note was successfully saved within the local storage");
+        QNDEBUG("note_editor", "Note was successfully saved within "
+            << "the local storage");
         m_updateNoteRequestIds.erase(it);
         Q_EMIT noteSavedToLocalStorage(note.localUid());
         return;
@@ -218,8 +223,8 @@ void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
         return;
     }
 
-    QNWARNING("Failed to update the note within the local storage: "
-        << errorDescription << ", note: " << note
+    QNWARNING("note_editor", "Failed to update the note within "
+        << "the local storage: " << errorDescription << ", note: " << note
         << "\nUpdate options: " << options
         << ", request id = " << requestId);
 
@@ -247,8 +252,9 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
     auto it = m_findNoteRequestIds.find(requestId);
     if (it != m_findNoteRequestIds.end())
     {
-        QNDEBUG("NoteEditorLocalStorageBroker::onFindNoteComplete: "
-            << "request id = " << requestId << ", with resource metadata = "
+        QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+            << "::onFindNoteComplete: request id = " << requestId
+            << ", with resource metadata = "
             << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
                 ? "true"
                 : "false")
@@ -266,7 +272,8 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
                 QT_TR_NOOP("note doesn't belong to any notebook"));
 
             APPEND_NOTE_DETAILS(errorDescription, foundNote)
-            QNWARNING(errorDescription << ", note: " << foundNote);
+            QNWARNING("note_editor", errorDescription << ", note: "
+                << foundNote);
 
             Q_EMIT failedToFindNoteOrNotebook(
                 foundNote.localUid(),
@@ -280,16 +287,18 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
         {
             const QString & notebookLocalUid = foundNote.notebookLocalUid();
 
-            const auto * pCachedNotebook = m_notebooksCache.get(notebookLocalUid);
+            const auto * pCachedNotebook = m_notebooksCache.get(
+                notebookLocalUid);
+
             if (pCachedNotebook)
             {
-                QNDEBUG("Found notebook within the cache");
+                QNDEBUG("note_editor", "Found notebook within the cache");
                 Q_EMIT foundNoteAndNotebook(foundNote, *pCachedNotebook);
             }
             else
             {
-                QNDEBUG("Notebook was not found within the cache, "
-                    << "looking it up in local storage");
+                QNDEBUG("note_editor", "Notebook was not found within "
+                    << "the cache, looking it up in local storage");
 
                 emitFindNotebookForNoteByLocalUidRequest(
                     notebookLocalUid,
@@ -309,8 +318,9 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
     auto pit = m_notesPendingSavingByFindNoteRequestIds.find(requestId);
     if (pit != m_notesPendingSavingByFindNoteRequestIds.end())
     {
-        QNDEBUG("NoteEditorLocalStorageBroker::onFindNoteComplete: request id = "
-            << requestId << ", with resource metadata = "
+        QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+            << "::onFindNoteComplete: request id = " << requestId
+            << ", with resource metadata = "
             << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
                 ? "true"
                 : "false")
@@ -335,8 +345,8 @@ void NoteEditorLocalStorageBroker::onFindNoteFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onFindNoteFailed: request id = "
-        << requestId << ", with resource metadata = "
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker::onFindNoteFailed: "
+        << "request id = " << requestId << ", with resource metadata = "
         << ((options & LocalStorageManager::GetNoteOption::WithResourceMetadata)
             ? "true"
             : "false")
@@ -358,8 +368,9 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
         return;
     }
 
-    QNDEBUG("NoteEditorLocalStorageBroker::onFindNotebookComplete: "
-        << "request id = " << requestId << ", notebook: " << foundNotebook);
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onFindNotebookComplete: request id = " << requestId
+        << ", notebook: " << foundNotebook);
 
     m_findNotebookRequestIds.erase(it);
 
@@ -368,8 +379,10 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
 
     bool foundNotesPendingNotebookFinding = true;
     bool foundByNotebookGuid = false;
+
     auto pendingNotesIt =
         m_notesPendingNotebookFindingByNotebookLocalUid.find(notebookLocalUid);
+
     if (pendingNotesIt == m_notesPendingNotebookFindingByNotebookLocalUid.end())
     {
         // Maybe this notebook was searched by guid
@@ -395,15 +408,16 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
     }
 
     if (!foundNotesPendingNotebookFinding) {
-        QNWARNING("Found notebook but unable to detect which notes "
-            << "required its finding: notebook = " << foundNotebook);
+        QNWARNING("note_editor", "Found notebook but unable to detect which "
+            << "notes required its finding: notebook = " << foundNotebook);
         return;
     }
 
     const NotesHash & notes = pendingNotesIt.value();
     for(const auto & noteIt: qevercloud::toRange(notes)) {
-        QNTRACE("Found pending note, emitting foundNoteAndNotebook "
-            << "signal: note local uid = " << noteIt.value().localUid());
+        QNTRACE("note_editor", "Found pending note, emitting "
+            << "foundNoteAndNotebook signal: note local uid = "
+            << noteIt.value().localUid());
         Q_EMIT foundNoteAndNotebook(noteIt.value(), foundNotebook);
     }
 
@@ -423,9 +437,10 @@ void NoteEditorLocalStorageBroker::onFindNotebookFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onFindNotebookFailed: "
-        << "request id = " << requestId << ", error description: "
-        << errorDescription << ", notebook: " << notebook);
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onFindNotebookFailed: request id = " << requestId
+        << ", error description: " << errorDescription << ", notebook: "
+        << notebook);
 
     m_findNotebookRequestIds.erase(it);
 
@@ -461,12 +476,12 @@ void NoteEditorLocalStorageBroker::onFindNotebookFailed(
     }
 
     if (!foundNotesPendingNotebookFinding) {
-        QNDEBUG("Failed to find notebook and unable to determine "
+        QNDEBUG("note_editor", "Failed to find notebook and unable to determine "
             << "for which notes it was required - nothing left to do");
         return;
     }
 
-    const NotesHash & notes = pendingNotesIt.value();
+    const auto & notes = pendingNotesIt.value();
     for(const auto & noteIt: qevercloud::toRange(notes)) {
         Q_EMIT failedToFindNoteOrNotebook(
             noteIt.value().localUid(),
@@ -489,16 +504,17 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(
         return;
     }
 
-    QNDEBUG("NoteEditorLocalStorageBroker::onAddResourceComplete: "
-        << "request id = " << requestId << ", resource: " << resource);
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onAddResourceComplete: request id = " << requestId
+        << ", resource: " << resource);
 
     QString noteLocalUid = it.value();
     m_noteLocalUidsByAddResourceRequestIds.erase(it);
 
     auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
     if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
-        QNWARNING("Unable to find note for which the resource was "
-            << "added to the local storage: resource = " << resource);
+        QNWARNING("note_editor", "Unable to find note for which the resource "
+            << "was added to the local storage: resource = " << resource);
         return;
     }
 
@@ -510,7 +526,8 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
-        QNDEBUG("Still pending resource data saving: " << saveNoteInfo);
+        QNDEBUG("note_editor", "Still pending resource data saving: "
+            << saveNoteInfo);
         return;
     }
 
@@ -526,8 +543,8 @@ void NoteEditorLocalStorageBroker::onAddResourceFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onAddResourceFailed: "
-        << "request id = " << requestId
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onAddResourceFailed: request id = " << requestId
         << ", error description: " << errorDescription
         << ", resource: " << resource);
 
@@ -554,16 +571,17 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(
         return;
     }
 
-    QNDEBUG("NoteEditorLocalStorageBroker::onUpdateResourceComplete: "
-        << "request id = " << requestId << ", resource: " << resource);
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onUpdateResourceComplete: request id = " << requestId
+        << ", resource: " << resource);
 
     QString noteLocalUid = it.value();
     m_noteLocalUidsByUpdateResourceRequestIds.erase(it);
 
     auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
     if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
-        QNWARNING("Unable to find note for which the resource was "
-            << "updated in the local storage: note local uid = "
+        QNWARNING("note_editor", "Unable to find note for which the resource "
+            << "was updated in the local storage: note local uid = "
             << noteLocalUid << ", resource = " << resource);
         return;
     }
@@ -576,7 +594,8 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
-        QNDEBUG("Still pending resource data saving: " << saveNoteInfo);
+        QNDEBUG("note_editor", "Still pending resource data saving: "
+            << saveNoteInfo);
         return;
     }
 
@@ -592,8 +611,8 @@ void NoteEditorLocalStorageBroker::onUpdateResourceFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onUpdateResourceFailed: "
-        << "request id = " << requestId
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onUpdateResourceFailed: request id = " << requestId
         << ", error description: " << errorDescription
         << ", resource: " << resource);
 
@@ -618,15 +637,16 @@ void NoteEditorLocalStorageBroker::onExpungeResourceComplete(
         return;
     }
 
-    QNDEBUG("NoteEditorLocalStorageBroker::onExpungeResourceComplete");
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onExpungeResourceComplete");
 
     QString noteLocalUid = it.value();
     m_noteLocalUidsByExpungeResourceRequestIds.erase(it);
 
     auto saveNoteInfoIt = m_saveNoteInfoByNoteLocalUids.find(noteLocalUid);
     if (Q_UNLIKELY(saveNoteInfoIt == m_saveNoteInfoByNoteLocalUids.end())) {
-        QNWARNING("Unable to find note which resource was expunged "
-            << "from the local storage: resource = " << resource);
+        QNWARNING("note_editor", "Unable to find note which resource was "
+            << "expunged from the local storage: resource = " << resource);
         return;
     }
 
@@ -638,7 +658,8 @@ void NoteEditorLocalStorageBroker::onExpungeResourceComplete(
     }
 
     if (saveNoteInfo.hasPendingResourceOperations()) {
-        QNDEBUG("Still pending resource data saving: " << saveNoteInfo);
+        QNDEBUG("note_editor", "Still pending resource data saving: "
+            << saveNoteInfo);
         return;
     }
 
@@ -654,8 +675,8 @@ void NoteEditorLocalStorageBroker::onExpungeResourceFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onExpungeResourceFailed: "
-        << "request id = " << requestId
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onExpungeResourceFailed: request id = " << requestId
         << ", error description: " << errorDescription
         << ", resource: " << resource);
 
@@ -681,7 +702,7 @@ void NoteEditorLocalStorageBroker::onExpungeNoteComplete(
     for(const auto & pair: m_resourcesCache)
     {
         if (Q_UNLIKELY(!pair.second.hasNoteLocalUid())) {
-            QNTRACE("Detected resource without note local uid; "
+            QNTRACE("note_editor", "Detected resource without note local uid; "
                 << "will remove it from the cache: " << pair.second);
             resourceLocalUidsToRemoveFromCache << pair.first;
             continue;
@@ -710,7 +731,7 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(
     for(const auto & pair: m_notesCache)
     {
         if (Q_UNLIKELY(!pair.second.hasNotebookLocalUid())) {
-            QNTRACE("Detected note without notebook local uid; "
+            QNTRACE("note_editor", "Detected note without notebook local uid; "
                 << "will remove it from the cache: " << pair.second);
             noteLocalUidsToRemoveFromCache << pair.first;
             continue;
@@ -745,8 +766,8 @@ void NoteEditorLocalStorageBroker::onFindResourceComplete(
         return;
     }
 
-    QNDEBUG("NoteEditorLocalStorageBroker::onFindResourceComplete: "
-        << "request id = " << requestId
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onFindResourceComplete: request id = " << requestId
         << ", with binary data = "
         << ((options & LocalStorageManager::GetResourceOption::WithBinaryData)
             ? "true"
@@ -779,8 +800,9 @@ void NoteEditorLocalStorageBroker::onFindResourceFailed(
         return;
     }
 
-    QNWARNING("NoteEditorLocalStorageBroker::onFindResourceFailed: "
-        << "request id = " << requestId << ", with binary data = "
+    QNWARNING("note_editor", "NoteEditorLocalStorageBroker"
+        << "::onFindResourceFailed: request id = " << requestId
+        << ", with binary data = "
         << ((options & LocalStorageManager::GetResourceOption::WithBinaryData)
             ? "true"
             : "false")
@@ -794,7 +816,7 @@ void NoteEditorLocalStorageBroker::onFindResourceFailed(
 void NoteEditorLocalStorageBroker::onSwitchUserComplete(
     Account account, QUuid requestId)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::onSwitchUserComplete: "
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::onSwitchUserComplete: "
         << "account = " << account << "\nRequest id = " << requestId);
 
     m_findNoteRequestIds.clear();
@@ -819,7 +841,7 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(
 void NoteEditorLocalStorageBroker::createConnections(
     LocalStorageManagerAsync & localStorageManagerAsync)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::createConnections");
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::createConnections");
 
     // Local signals to LocalStorageManagerAsync's slots
     QObject::connect(
@@ -977,7 +999,8 @@ void NoteEditorLocalStorageBroker::createConnections(
 void NoteEditorLocalStorageBroker::disconnectFromLocalStorage(
     LocalStorageManagerAsync & localStorageManagerAsync)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::disconnectFromLocalStorage");
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::disconnectFromLocalStorage");
 
     // Disconnect local signals from LocalStorageManagerAsync's slots
     QObject::disconnect(
@@ -1140,7 +1163,7 @@ void NoteEditorLocalStorageBroker::emitFindNoteRequest(
     Note note;
     note.setLocalUid(noteLocalUid);
 
-    QNDEBUG("Emitting the request to find note: request id = "
+    QNDEBUG("note_editor", "Emitting the request to find note: request id = "
         << requestId << ", note local uid = " << noteLocalUid);
 
     LocalStorageManager::GetNoteOptions options(
@@ -1162,7 +1185,7 @@ void NoteEditorLocalStorageBroker::emitUpdateNoteRequest(const Note & note)
 
     QUuid requestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
-    QNDEBUG("Emitting the request to update note in the local "
+    QNDEBUG("note_editor", "Emitting the request to update note in the local "
         << "storage: request id = " << requestId << ", note: " << note);
 
     Q_EMIT updateNote(note, options, requestId);
@@ -1171,7 +1194,7 @@ void NoteEditorLocalStorageBroker::emitUpdateNoteRequest(const Note & note)
 void NoteEditorLocalStorageBroker::emitFindNotebookForNoteByLocalUidRequest(
     const QString & notebookLocalUid, const Note & note)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::"
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::"
         << "emitFindNotebookForNoteByLocalUidRequest: "
         << "notebook local uid = " << notebookLocalUid
         << ", note local uid = " << note.localUid());
@@ -1188,7 +1211,7 @@ void NoteEditorLocalStorageBroker::emitFindNotebookForNoteByLocalUidRequest(
 void NoteEditorLocalStorageBroker::emitFindNotebookForNoteByGuidRequest(
     const QString & notebookGuid, const Note & note)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::"
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::"
         << "emitFindNotebookForNoteByGuidRequest: "
         << "notebook guid = " << notebookGuid
         << ", note local uid = " << note.localUid());
@@ -1206,16 +1229,15 @@ void NoteEditorLocalStorageBroker::emitFindNotebookForNoteRequest(
     const Notebook & notebook, const Note & note,
     NotesPendingNotebookFindingHash & notesPendingNotebookFinding)
 {
-    const QString id = notebook.hasGuid()
-                       ? notebook.guid()
-                       : notebook.localUid();
+    const QString id =
+        notebook.hasGuid() ? notebook.guid() : notebook.localUid();
 
     const QString noteLocalUid = note.localUid();
 
     auto it = notesPendingNotebookFinding.find(id);
     if (it != notesPendingNotebookFinding.end())
     {
-        QNDEBUG("Adding note with local uid " << noteLocalUid
+        QNDEBUG("note_editor", "Adding note with local uid " << noteLocalUid
             << " to the list of those pending finding notebook with "
             << (notebook.hasGuid() ? "guid " : "local uid ") << id);
 
@@ -1230,8 +1252,8 @@ void NoteEditorLocalStorageBroker::emitFindNotebookForNoteRequest(
     NotesHash & notes = notesPendingNotebookFinding[id];
     notes[noteLocalUid] = note;
 
-    QNDEBUG("Emitting the request to find notebook: request id = "
-        << requestId << ", notebook: " << notebook);
+    QNDEBUG("note_editor", "Emitting the request to find notebook: "
+        << "request id = " << requestId << ", notebook: " << notebook);
 
     Q_EMIT findNotebook(notebook, requestId);
 }
@@ -1239,16 +1261,18 @@ void NoteEditorLocalStorageBroker::emitFindNotebookForNoteRequest(
 void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
     const Note & previousNoteVersion, const Note & updatedNoteVersion)
 {
-    QNDEBUG("NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl");
-    QNTRACE("Previous version of the note: " << previousNoteVersion
-        << "\nUpdated version of the note: " << updatedNoteVersion);
+    QNDEBUG("note_editor", "NoteEditorLocalStorageBroker"
+        << "::saveNoteToLocalStorageImpl");
 
-    QList<Resource> previousNoteResources = previousNoteVersion.resources();
+    QNTRACE("note_editor", "Previous note version: " << previousNoteVersion
+        << "\nUpdated note version: " << updatedNoteVersion);
+
+    auto previousNoteResources = previousNoteVersion.resources();
 
     QList<Resource> newResources;
     QList<Resource> updatedResources;
 
-    QList<Resource> resources = updatedNoteVersion.resources();
+    auto resources = updatedNoteVersion.resources();
     for(const auto & resource: qAsConst(resources))
     {
         if (!resource.hasDataBody()) {
@@ -1314,18 +1338,21 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         if (foundResourceInPreviousNoteVersion)
         {
             if (!resourceDataSizeOrHashChanged) {
-                QNTRACE("Resource with local uid " << resource.localUid()
+                QNTRACE("note_editor", "Resource with local uid "
+                    << resource.localUid()
                     << " has not changed since the previous note version");
                 continue;
             }
 
-            QNTRACE("Resource with local uid " << resource.localUid()
+            QNTRACE("note_editor", "Resource with local uid "
+                << resource.localUid()
                 << " has changed since the previous note version");
             updatedResources << resource;
         }
         else
         {
-            QNTRACE("Resource with local uid " << resource.localUid()
+            QNTRACE("note_editor", "Resource with local uid "
+                << resource.localUid()
                 << " did not appear in the previous note version");
             newResources << resource;
         }
@@ -1347,7 +1374,8 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         }
 
         if (!foundResource) {
-            QNTRACE("Resource with local uid " << previousNoteResourceLocalUid
+            QNTRACE("note_editor", "Resource with local uid "
+                << previousNoteResourceLocalUid
                 << " no longer appears within the new note version");
             expungedResourcesLocalUids << previousNoteResourceLocalUid;
         }
@@ -1379,16 +1407,17 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         static_cast<quint32>(std::max(numExpungeResourceRequests, 0));
 
     m_saveNoteInfoByNoteLocalUids[noteLocalUid] = info;
-    QNTRACE("Added pending save note info for note local uid " << noteLocalUid
-        << ": " << info);
+    QNTRACE("note_editor", "Added pending save note info for note local uid "
+        << noteLocalUid << ": " << info);
 
     for(const auto & resource: qAsConst(newResources))
     {
         QUuid requestId = QUuid::createUuid();
         m_noteLocalUidsByAddResourceRequestIds[requestId] = noteLocalUid;
 
-        QNDEBUG("Emitting the request to add resource to the local storage: "
-            << "request id = " << requestId << ", resource: " << resource);
+        QNDEBUG("note_editor", "Emitting the request to add resource to "
+            << "the local storage: request id = " << requestId << ", resource: "
+            << resource);
 
         Q_EMIT addResource(resource, requestId);
     }
@@ -1398,8 +1427,9 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         QUuid requestId = QUuid::createUuid();
         m_noteLocalUidsByUpdateResourceRequestIds[requestId] = noteLocalUid;
 
-        QNDEBUG("Emitting the request to update resource in the local storage: "
-            << "request id = " << requestId << ", resource: " << resource);
+        QNDEBUG("note_editor", "Emitting the request to update resource in "
+            << "the local storage: request id = " << requestId << ", resource: "
+            << resource);
 
         Q_EMIT updateResource(resource, requestId);
     }
@@ -1412,8 +1442,8 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         QUuid requestId = QUuid::createUuid();
         m_noteLocalUidsByExpungeResourceRequestIds[requestId] = noteLocalUid;
 
-        QNDEBUG("Emitting the request to expunge resource from the local "
-            << "storage: request id = " << requestId
+        QNDEBUG("note_editor", "Emitting the request to expunge resource from "
+            << "the local storage: request id = " << requestId
             << ", resource local uid = " << resourceLocalUid);
 
         Q_EMIT expungeResource(dummyResource, requestId);
@@ -1423,7 +1453,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         (numUpdateResourceRequests > 0) ||
         (numExpungeResourceRequests > 0))
     {
-        QNDEBUG("Pending note saving: " << info);
+        QNDEBUG("note_editor", "Pending note saving: " << info);
         return;
     }
 
@@ -1451,7 +1481,7 @@ bool NoteEditorLocalStorageBroker::SaveNoteInfo::hasPendingResourceOperations() 
          (m_pendingUpdateResourceRequests != 0) ||
          (m_pendingExpungeResourceRequests != 0) )
     {
-        QNDEBUG("Still pending for "
+        QNDEBUG("note_editor", "Still pending for "
             << m_pendingAddResourceRequests
             << " add resource requests and/or "
             << m_pendingUpdateResourceRequests

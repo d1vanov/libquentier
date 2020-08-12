@@ -40,7 +40,7 @@ namespace quentier {
             QT_TRANSLATE_NOOP("RemoveResourceDelegate",                        \
                               "Can't remove the attachment: "                  \
                               "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
     }                                                                          \
@@ -52,14 +52,12 @@ RemoveResourceDelegate::RemoveResourceDelegate(
         LocalStorageManagerAsync & localStorageManager) :
     m_noteEditor(noteEditor),
     m_localStorageManager(localStorageManager),
-    m_resource(resourceToRemove),
-    m_reversible(true),
-    m_findResourceRequestId()
+    m_resource(resourceToRemove)
 {}
 
 void RemoveResourceDelegate::start()
 {
-    QNDEBUG("RemoveResourceDelegate::start");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate::start");
 
     if (m_noteEditor.isEditorPageModified())
     {
@@ -78,7 +76,8 @@ void RemoveResourceDelegate::start()
 
 void RemoveResourceDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("RemoveResourceDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -99,8 +98,8 @@ void RemoveResourceDelegate::onFindResourceComplete(
         return;
     }
 
-    QNDEBUG("RemoveResourceDelegate::onFindResourceComplete: request id = "
-        << requestId);
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::onFindResourceComplete: request id = " << requestId);
 
     Q_UNUSED(options)
     m_findResourceRequestId = QUuid();
@@ -117,8 +116,9 @@ void RemoveResourceDelegate::onFindResourceFailed(
         return;
     }
 
-    QNDEBUG("RemoveResourceDelegate::onFindResourceFailed: request id = "
-        << requestId << ", error description: " << errorDescription);
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::onFindResourceFailed: request id = " << requestId
+        << ", error description: " << errorDescription);
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
@@ -129,13 +129,13 @@ void RemoveResourceDelegate::onFindResourceFailed(
 
 void RemoveResourceDelegate::doStart()
 {
-    QNDEBUG("RemoveResourceDelegate::doStart");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate::doStart");
 
     if (Q_UNLIKELY(!m_resource.hasDataHash()))
     {
         ErrorString error(
             QT_TR_NOOP("Can't remove the attachment: data hash is missing"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -146,7 +146,7 @@ void RemoveResourceDelegate::doStart()
         ErrorString error(
             QT_TR_NOOP("Can't remove the attachment: no account "
                        "is set to the note editor"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -163,8 +163,8 @@ void RemoveResourceDelegate::doStart()
         resourceDataSizeThreshold = threshold.toInt(&conversionResult);
         if (!conversionResult)
         {
-            QNWARNING("Failed to convert resource undo data size "
-                << "threshold from persistent settings to int: "
+            QNWARNING("note_editor:delegate", "Failed to convert resource "
+                << "undo data size threshold from persistent settings to int: "
                 << threshold);
             resourceDataSizeThreshold = -1;
         }
@@ -212,8 +212,8 @@ void RemoveResourceDelegate::doStart()
         connectToLocalStorage();
         m_findResourceRequestId = QUuid::createUuid();
 
-        QNDEBUG("Emitting the request to find resource within "
-            << "the local storage: request id = "
+        QNDEBUG("note_editor:delegate", "Emitting the request to find resource "
+            << "within the local storage: request id = "
             << m_findResourceRequestId << ", resource local uid = "
             << m_resource.localUid());
 
@@ -229,7 +229,8 @@ void RemoveResourceDelegate::doStart()
 
 void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 {
-    QNDEBUG("RemoveResourceDelegate::removeResourceFromNoteEditorPage");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::removeResourceFromNoteEditorPage");
 
     QString javascript =
         QStringLiteral("resourceManager.removeResource('") +
@@ -246,7 +247,8 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 
 void RemoveResourceDelegate::connectToLocalStorage()
 {
-    QNDEBUG("RemoveResourceDelegate::connectToLocalStorage");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::connectToLocalStorage");
 
     QObject::connect(
         this,
@@ -270,8 +272,8 @@ void RemoveResourceDelegate::connectToLocalStorage()
 void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
     const QVariant & data)
 {
-    QNDEBUG("RemoveResourceDelegate::"
-        << "onResourceReferenceRemovedFromNoteContent");
+    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
+        << "::onResourceReferenceRemovedFromNoteContent");
 
     auto resultMap = data.toMap();
 
@@ -281,7 +283,7 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of attachment "
                        "reference removal from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -306,7 +308,7 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
