@@ -1,0 +1,12 @@
+if(NOT CLANG_FORMAT_BINARY)
+  find_program(CLANG_FORMAT_BINARY clang-format)
+endif()
+
+if(CLANG_FORMAT_BINARY)
+  execute_process(COMMAND "${CLANG_FORMAT_BINARY}" "--version"
+    OUTPUT_VARIABLE CLANG_FORMAT_BINARY_VERSION)
+  string(STRIP ${CLANG_FORMAT_BINARY_VERSION} CLANG_FORMAT_BINARY_VERSION)
+  message(STATUS "Found clang-format: ${CLANG_FORMAT_BINARY_VERSION}")
+  add_custom_target(clang-format
+    COMMAND "${CLANG_FORMAT_BINARY} -style=file -i ${PROJECT_NAME}_SOURCES ${PROJECT_NAME}_HEADERS")
+endif()

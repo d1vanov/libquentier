@@ -34,8 +34,9 @@ include(PrependPath)
 
 find_package(Sanitizers)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
-                    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/headers
+  ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(THIRDPARTY_LIBS ${QEVERCLOUD_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${TIDY_HTML5_LIBRARIES})
@@ -680,6 +681,8 @@ if(MAJOR_VERSION_LIB_NAME_SUFFIX)
 endif()
 
 set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier${LIBQUENTIER_LIBNAME_SUFFIX}")
+
+include(SetupClangFormat)
 
 add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
