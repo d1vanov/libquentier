@@ -48,34 +48,30 @@
 // 25 Mb in bytes
 #define ENEX_MAX_RESOURCE_DATA_SIZE (26214400)
 
-#define ENEX_DATE_TIME_FORMAT "yyyyMMdd'T'HHmmss'Z'"
+#define ENEX_DATE_TIME_FORMAT          "yyyyMMdd'T'HHmmss'Z'"
 #define ENEX_DATE_TIME_FORMAT_STRFTIME "%Y%m%dT%H%M%SZ"
 
 namespace quentier {
 
-#define WRAP(x)                                                                \
-    << QStringLiteral(x)                                                       \
-// WRAP
+#define WRAP(x) << QStringLiteral(x)   // WRAP
 
 ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
-    QObject(parent),
-    m_forbiddenXhtmlTags(QSet<QString>()
+    QObject(parent), m_forbiddenXhtmlTags(QSet<QString>()
 #include "forbiddenXhtmlTags.inl"
-    ),
+                                              ),
     m_forbiddenXhtmlAttributes(QSet<QString>()
 #include "forbiddenXhtmlAttributes.inl"
-    ),
+                                   ),
     m_evernoteSpecificXhtmlTags(QSet<QString>()
 #include "evernoteSpecificXhtmlTags.inl"
-    ),
+                                    ),
     m_allowedXhtmlTags(QSet<QString>()
 #include "allowedXhtmlTags.inl"
-    ),
+                           ),
     m_allowedEnMediaAttributes(QSet<QString>()
 #include "allowedEnMediaAttributes.inl"
-    ),
-    m_pHtmlCleaner(nullptr),
-    m_cachedConvertedXml()
+                                   ),
+    m_pHtmlCleaner(nullptr), m_cachedConvertedXml()
 {}
 
 #undef WRAP
@@ -86,7 +82,7 @@ void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
 
     QString currentError = QString::asprintf(msg, args);
 
-    QString * pErrorString = reinterpret_cast<QString*>(ctx);
+    QString * pErrorString = reinterpret_cast<QString *>(ctx);
     *pErrorString += currentError;
     QNDEBUG("enml", "Error string: " << *pErrorString);
 }
@@ -101,8 +97,10 @@ bool ENMLConverterPrivate::htmlToNoteContent(
     QString & noteContent, DecryptedTextManager & decryptedTextManager,
     ErrorString & errorDescription) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::htmlToNoteContent: " << html
-        << "\nskip element rules: " << skipRules);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::htmlToNoteContent: "
+            << html << "\nskip element rules: " << skipRules);
 
     if (!m_pHtmlCleaner) {
         m_pHtmlCleaner = new HTMLCleaner;
@@ -111,8 +109,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
     QString error;
     m_cachedConvertedXml.resize(0);
     bool res = m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error);
-    if (!res)
-    {
+    if (!res) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to clean up the note's html"));
         errorDescription.details() = error;
@@ -126,8 +123,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
     noteContent.resize(0);
     QBuffer noteContentBuffer;
     res = noteContentBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to write the converted note "
                        "content into"));
@@ -145,8 +141,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
     ConversionState state;
 
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartDocument()) {
@@ -161,14 +156,9 @@ bool ENMLConverterPrivate::htmlToNoteContent(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             auto status = processElementForHtmlToNoteContentConversion(
-                skipRules,
-                state,
-                decryptedTextManager,
-                reader,
-                writer,
+                skipRules, state, decryptedTextManager, reader, writer,
                 errorDescription);
 
             if (status == ProcessElementStatus::Error) {
@@ -180,8 +170,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
             }
         }
 
-        if ((state.m_writeElementCounter > 0) && reader.isCharacters())
-        {
+        if ((state.m_writeElementCounter > 0) && reader.isCharacters()) {
             if (state.m_skippedElementNestingCounter) {
                 continue;
             }
@@ -206,8 +195,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
             }
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             if (state.m_skippedElementNestingCounter) {
                 --state.m_skippedElementNestingCounter;
                 continue;
@@ -235,13 +223,14 @@ bool ENMLConverterPrivate::htmlToNoteContent(
         }
     }
 
-    if (reader.hasError())
-    {
+    if (reader.hasError()) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't convert the note's html to ENML"));
         errorDescription.details() = reader.errorString();
-        QNWARNING("enml", "Error reading html: " << errorDescription
-            << ", HTML: " << html << "\nXML: " << m_cachedConvertedXml);
+        QNWARNING(
+            "enml",
+            "Error reading html: " << errorDescription << ", HTML: " << html
+                                   << "\nXML: " << m_cachedConvertedXml);
         return false;
     }
 
@@ -252,8 +241,10 @@ bool ENMLConverterPrivate::htmlToNoteContent(
     res = validateAndFixupEnml(noteContent, validationError);
     if (!res) {
         errorDescription = validationError;
-        QNWARNING("enml", errorDescription << ", ENML: " << noteContent
-            << "\nHTML: " << html);
+        QNWARNING(
+            "enml",
+            errorDescription << ", ENML: " << noteContent
+                             << "\nHTML: " << html);
         return false;
     }
 
@@ -286,8 +277,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
 
     QBuffer simplifiedHtmlBuffer;
     res = simplifiedHtmlBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to write "
                        "the simplified html into"));
@@ -309,8 +299,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
     size_t skippedElementNestingCounter = 0;
     size_t skippedElementWithPreservedContentsNestingCounter = 0;
 
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext())
 
         if (reader.isStartDocument()) {
@@ -325,11 +314,12 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             if (skippedElementNestingCounter) {
-                QNTRACE("enml", "Skipping everything inside element "
-                    << "skipped together with its contents");
+                QNTRACE(
+                    "enml",
+                    "Skipping everything inside element "
+                        << "skipped together with its contents");
                 ++skippedElementNestingCounter;
                 continue;
             }
@@ -338,51 +328,50 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             lastElementAttributes = reader.attributes();
 
             auto shouldSkip = shouldSkipElement(
-                lastElementName,
-                lastElementAttributes,
-                skipRules);
-            if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip)
-            {
-                QNTRACE("enml", "Skipping element " << lastElementName
-                    << " per skip rules; the contents would be "
-                    << (shouldSkip == ShouldSkipElementResult::SkipWithContents
-                        ? "skipped"
-                        : "preserved"));
+                lastElementName, lastElementAttributes, skipRules);
+            if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip) {
+                QNTRACE(
+                    "enml",
+                    "Skipping element "
+                        << lastElementName
+                        << " per skip rules; the contents would be "
+                        << (shouldSkip ==
+                                    ShouldSkipElementResult::SkipWithContents
+                                ? "skipped"
+                                : "preserved"));
 
-                if (shouldSkip == ShouldSkipElementResult::SkipWithContents)
-                {
+                if (shouldSkip == ShouldSkipElementResult::SkipWithContents) {
                     ++skippedElementNestingCounter;
                 }
-                else if (shouldSkip ==
-                         ShouldSkipElementResult::SkipButPreserveContents)
-                {
+                else if (
+                    shouldSkip ==
+                    ShouldSkipElementResult::SkipButPreserveContents) {
                     ++skippedElementWithPreservedContentsNestingCounter;
                 }
 
                 continue;
             }
 
-            if ( (lastElementName == QStringLiteral("map")) ||
-                 (lastElementName == QStringLiteral("area")) ||
-                 (lastElementName == QStringLiteral("bdo")) ||
-                 (lastElementName == QStringLiteral("caption")) ||
-                 (lastElementName == QStringLiteral("col")) ||
-                 (lastElementName == QStringLiteral("colgroup")) )
+            if ((lastElementName == QStringLiteral("map")) ||
+                (lastElementName == QStringLiteral("area")) ||
+                (lastElementName == QStringLiteral("bdo")) ||
+                (lastElementName == QStringLiteral("caption")) ||
+                (lastElementName == QStringLiteral("col")) ||
+                (lastElementName == QStringLiteral("colgroup")))
             {
                 QNTRACE("enml", "Skipping element " << lastElementName);
                 ++skippedElementNestingCounter;
                 continue;
             }
 
-            if (lastElementName == QStringLiteral("link"))
-            {
+            if (lastElementName == QStringLiteral("link")) {
                 lastElementAttributes = reader.attributes();
-                QStringRef relAttrRef = lastElementAttributes.value(
-                    QStringLiteral("rel"));
-                if (!relAttrRef.isEmpty())
-                {
-                    QNTRACE("enml", "Skipping CSS style element "
-                        << lastElementName);
+                QStringRef relAttrRef =
+                    lastElementAttributes.value(QStringLiteral("rel"));
+                if (!relAttrRef.isEmpty()) {
+                    QNTRACE(
+                        "enml",
+                        "Skipping CSS style element " << lastElementName);
                     ++skippedElementNestingCounter;
                     continue;
                 }
@@ -418,46 +407,41 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             }
             writer.writeStartElement(lastElementName);
 
-            if ( (lastElementName == QStringLiteral("div")) ||
-                 (lastElementName == QStringLiteral("p")) ||
-                 (lastElementName == QStringLiteral("dl")) ||
-                 (lastElementName == QStringLiteral("dt")) ||
-                 (lastElementName == QStringLiteral("h1")) ||
-                 (lastElementName == QStringLiteral("h2")) ||
-                 (lastElementName == QStringLiteral("h3")) ||
-                 (lastElementName == QStringLiteral("h4")) ||
-                 (lastElementName == QStringLiteral("h5")) ||
-                 (lastElementName == QStringLiteral("h6")) )
+            if ((lastElementName == QStringLiteral("div")) ||
+                (lastElementName == QStringLiteral("p")) ||
+                (lastElementName == QStringLiteral("dl")) ||
+                (lastElementName == QStringLiteral("dt")) ||
+                (lastElementName == QStringLiteral("h1")) ||
+                (lastElementName == QStringLiteral("h2")) ||
+                (lastElementName == QStringLiteral("h3")) ||
+                (lastElementName == QStringLiteral("h4")) ||
+                (lastElementName == QStringLiteral("h5")) ||
+                (lastElementName == QStringLiteral("h6")))
             {
                 QXmlStreamAttributes filteredAttributes;
 
-                QStringRef alignAttrRef = lastElementAttributes.value(
-                    QStringLiteral("align"));
-                if (!alignAttrRef.isEmpty())
-                {
+                QStringRef alignAttrRef =
+                    lastElementAttributes.value(QStringLiteral("align"));
+                if (!alignAttrRef.isEmpty()) {
                     QString alignAttr = alignAttrRef.toString();
-                    if ( (alignAttr == QStringLiteral("left")) ||
-                         (alignAttr == QStringLiteral("right")) ||
-                         (alignAttr == QStringLiteral("center")) ||
-                         (alignAttr == QStringLiteral("justify")) )
+                    if ((alignAttr == QStringLiteral("left")) ||
+                        (alignAttr == QStringLiteral("right")) ||
+                        (alignAttr == QStringLiteral("center")) ||
+                        (alignAttr == QStringLiteral("justify")))
                     {
                         filteredAttributes.append(
-                            QStringLiteral("align"),
-                            alignAttr);
+                            QStringLiteral("align"), alignAttr);
                     }
                 }
 
-                QStringRef dirAttrRef = lastElementAttributes.value(
-                    QStringLiteral("dir"));
-                if (!dirAttrRef.isEmpty())
-                {
+                QStringRef dirAttrRef =
+                    lastElementAttributes.value(QStringLiteral("dir"));
+                if (!dirAttrRef.isEmpty()) {
                     QString dirAttr = dirAttrRef.toString();
-                    if ( (dirAttr == QStringLiteral("ltr")) ||
-                         (dirAttr == QStringLiteral("rtl")) )
-                    {
+                    if ((dirAttr == QStringLiteral("ltr")) ||
+                        (dirAttr == QStringLiteral("rtl"))) {
                         filteredAttributes.append(
-                            QStringLiteral("dir"),
-                            dirAttr);
+                            QStringLiteral("dir"), dirAttr);
                     }
                 }
 
@@ -465,105 +449,96 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                     writer.writeAttributes(filteredAttributes);
                 }
             }
-            else if ( (lastElementName == QStringLiteral("ol")) ||
-                      (lastElementName == QStringLiteral("ul")) )
+            else if (
+                (lastElementName == QStringLiteral("ol")) ||
+                (lastElementName == QStringLiteral("ul")))
             {
                 QStringRef typeAttrRef =
                     lastElementAttributes.value(QStringLiteral("type"));
-                if (!typeAttrRef.isEmpty())
-                {
+                if (!typeAttrRef.isEmpty()) {
                     QString typeAttr = typeAttrRef.toString();
-                    if ( (typeAttr == QStringLiteral("1")) ||
-                         (typeAttr == QStringLiteral("a")) ||
-                         (typeAttr == QStringLiteral("A")) ||
-                         (typeAttr == QStringLiteral("square")) ||
-                         (typeAttr == QStringLiteral("disc")) ||
-                         (typeAttr == QStringLiteral("circle")) )
+                    if ((typeAttr == QStringLiteral("1")) ||
+                        (typeAttr == QStringLiteral("a")) ||
+                        (typeAttr == QStringLiteral("A")) ||
+                        (typeAttr == QStringLiteral("square")) ||
+                        (typeAttr == QStringLiteral("disc")) ||
+                        (typeAttr == QStringLiteral("circle")))
                     {
                         writer.writeAttribute(QStringLiteral("type"), typeAttr);
                     }
                 }
             }
-            else if ( (lastElementName == QStringLiteral("td")) ||
-                      (lastElementName == QStringLiteral("th")) )
+            else if (
+                (lastElementName == QStringLiteral("td")) ||
+                (lastElementName == QStringLiteral("th")))
             {
                 QXmlStreamAttributes filteredAttributes;
 
                 if (lastElementAttributes.hasAttribute(QStringLiteral("width")))
                 {
-                    QString widthAttr = lastElementAttributes.value(
-                        QStringLiteral("width")).toString();
+                    QString widthAttr =
+                        lastElementAttributes.value(QStringLiteral("width"))
+                            .toString();
 
-                    if ( widthAttr.isEmpty() ||
-                         (widthAttr == QStringLiteral("absolute")) ||
-                         (widthAttr == QStringLiteral("relative")) )
+                    if (widthAttr.isEmpty() ||
+                        (widthAttr == QStringLiteral("absolute")) ||
+                        (widthAttr == QStringLiteral("relative")))
                     {
                         filteredAttributes.append(
-                            QStringLiteral("width"),
-                            widthAttr);
+                            QStringLiteral("width"), widthAttr);
                     }
                 }
 
-                QStringRef bgcolorAttrRef = lastElementAttributes.value(
-                    QStringLiteral("bgcolor"));
+                QStringRef bgcolorAttrRef =
+                    lastElementAttributes.value(QStringLiteral("bgcolor"));
 
-                if (!bgcolorAttrRef.isEmpty())
-                {
+                if (!bgcolorAttrRef.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("bgcolor"),
-                        bgcolorAttrRef.toString());
+                        QStringLiteral("bgcolor"), bgcolorAttrRef.toString());
                 }
 
-                QStringRef colspanAttrRef = lastElementAttributes.value(
-                    QStringLiteral("colspan"));
+                QStringRef colspanAttrRef =
+                    lastElementAttributes.value(QStringLiteral("colspan"));
 
-                if (!colspanAttrRef.isEmpty())
-                {
+                if (!colspanAttrRef.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("colspan"),
-                        colspanAttrRef.toString());
+                        QStringLiteral("colspan"), colspanAttrRef.toString());
                 }
 
-                QStringRef rowspanAttrRef = lastElementAttributes.value(
-                    QStringLiteral("rowspan"));
+                QStringRef rowspanAttrRef =
+                    lastElementAttributes.value(QStringLiteral("rowspan"));
 
-                if (!rowspanAttrRef.isEmpty())
-                {
+                if (!rowspanAttrRef.isEmpty()) {
                     filteredAttributes.append(
-                        QStringLiteral("rowspan"),
-                        rowspanAttrRef.toString());
+                        QStringLiteral("rowspan"), rowspanAttrRef.toString());
                 }
 
-                QStringRef alignAttrRef = lastElementAttributes.value(
-                    QStringLiteral("align"));
+                QStringRef alignAttrRef =
+                    lastElementAttributes.value(QStringLiteral("align"));
 
-                if (!alignAttrRef.isEmpty())
-                {
+                if (!alignAttrRef.isEmpty()) {
                     QString alignAttr = alignAttrRef.toString();
-                    if ( (alignAttr == QStringLiteral("left")) ||
-                         (alignAttr == QStringLiteral("right")) ||
-                         (alignAttr == QStringLiteral("center")) ||
-                         (alignAttr == QStringLiteral("justify")) )
+                    if ((alignAttr == QStringLiteral("left")) ||
+                        (alignAttr == QStringLiteral("right")) ||
+                        (alignAttr == QStringLiteral("center")) ||
+                        (alignAttr == QStringLiteral("justify")))
                     {
                         filteredAttributes.append(
-                            QStringLiteral("align"),
-                            alignAttr);
+                            QStringLiteral("align"), alignAttr);
                     }
                 }
 
-                QStringRef valignAttrRef = lastElementAttributes.value(
-                    QStringLiteral("valign"));
+                QStringRef valignAttrRef =
+                    lastElementAttributes.value(QStringLiteral("valign"));
 
-                if (!valignAttrRef.isEmpty())
-                {
+                if (!valignAttrRef.isEmpty()) {
                     QString valignAttr = valignAttrRef.toString();
-                    if ( (valignAttr == QStringLiteral("top")) ||
-                         (valignAttr == QStringLiteral("middle")) ||
-                         (valignAttr == QStringLiteral("bottom")) )
+                    if ((valignAttr == QStringLiteral("top")) ||
+                        (valignAttr == QStringLiteral("middle")) ||
+                        (valignAttr == QStringLiteral("bottom")))
                     {
                         filteredAttributes.append(
-                            QStringLiteral("valign"),
-                            valignAttr);
+                            QStringLiteral("valign"), valignAttr);
                     }
                 }
 
@@ -571,13 +546,11 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                     writer.writeAttributes(filteredAttributes);
                 }
             }
-            else if (lastElementName == QStringLiteral("img"))
-            {
-                QStringRef srcAttrRef = lastElementAttributes.value(
-                    QStringLiteral("src"));
+            else if (lastElementName == QStringLiteral("img")) {
+                QStringRef srcAttrRef =
+                    lastElementAttributes.value(QStringLiteral("src"));
 
-                if (Q_UNLIKELY(srcAttrRef.isEmpty()))
-                {
+                if (Q_UNLIKELY(srcAttrRef.isEmpty())) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Found img tag without src or with empty "
                                    "src attribute"));
@@ -587,47 +560,44 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                 bool isGenericResourceImage = false;
                 bool isEnCryptTag = false;
 
-                QString enTag = lastElementAttributes.value(
-                    QStringLiteral("en-tag")).toString();
+                QString enTag =
+                    lastElementAttributes.value(QStringLiteral("en-tag"))
+                        .toString();
 
-                if (enTag == QStringLiteral("en-media"))
-                {
-                    QString typeAttr = lastElementAttributes.value(
-                        QStringLiteral("type")).toString();
+                if (enTag == QStringLiteral("en-media")) {
+                    QString typeAttr =
+                        lastElementAttributes.value(QStringLiteral("type"))
+                            .toString();
 
-                    if (!typeAttr.isEmpty())
-                    {
+                    if (!typeAttr.isEmpty()) {
                         if (!typeAttr.startsWith(QStringLiteral("image/"))) {
                             isGenericResourceImage = true;
                         }
                     }
                 }
-                else if (enTag == QStringLiteral("en-crypt"))
-                {
+                else if (enTag == QStringLiteral("en-crypt")) {
                     isEnCryptTag = true;
                 }
 
                 QImage img;
-                bool shouldOutlineImg = (isGenericResourceImage || isEnCryptTag);
+                bool shouldOutlineImg =
+                    (isGenericResourceImage || isEnCryptTag);
                 bool shouldAddImgAsResource = false;
 
                 QString srcAttr = srcAttrRef.toString();
 
                 QVariant existingDocImgData =
                     doc.resource(QTextDocument::ImageResource, QUrl(srcAttr));
-                if (existingDocImgData.isNull() || !existingDocImgData.isValid())
-                {
-                    if (srcAttr.startsWith(QStringLiteral("qrc:/")))
-                    {
+                if (existingDocImgData.isNull() ||
+                    !existingDocImgData.isValid()) {
+                    if (srcAttr.startsWith(QStringLiteral("qrc:/"))) {
                         QString srcAttrShortened = srcAttr;
                         srcAttrShortened.remove(0, 3);
                         img = QImage(srcAttrShortened, "PNG");
                     }
-                    else
-                    {
+                    else {
                         QFileInfo imgFileInfo(srcAttr);
-                        if (!imgFileInfo.exists())
-                        {
+                        if (!imgFileInfo.exists()) {
                             errorDescription.setBase(
                                 QT_TR_NOOP("Couldn't find the file "
                                            "corresponding to the src attribute "
@@ -641,27 +611,26 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
 
                     shouldAddImgAsResource = true;
                 }
-                else
-                {
-                    QNDEBUG("enml", "img tag with src = " << srcAttr
-                        << " already has some data associated with "
-                        << "the document");
+                else {
+                    QNDEBUG(
+                        "enml",
+                        "img tag with src = "
+                            << srcAttr
+                            << " already has some data associated with "
+                            << "the document");
                     img = existingDocImgData.value<QImage>();
                 }
 
-                if (shouldOutlineImg)
-                {
+                if (shouldOutlineImg) {
                     /** If the method is run by a GUI application *and* in a GUI
                      * (main) thread, we should add the outline to the image
                      */
-                    QApplication * pApp = qobject_cast<QApplication*>(
+                    QApplication * pApp = qobject_cast<QApplication *>(
                         QCoreApplication::instance());
 
-                    if (pApp)
-                    {
+                    if (pApp) {
                         QThread * pCurrentThread = QThread::currentThread();
-                        if (pApp->thread() == pCurrentThread)
-                        {
+                        if (pApp->thread() == pCurrentThread) {
                             QPixmap pixmap = QPixmap::fromImage(img);
 
                             QPainter painter(&pixmap);
@@ -678,26 +647,27 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
 
                             img = pixmap.toImage();
                         }
-                        else
-                        {
-                            QNTRACE("enml", "Won't add the outline to "
-                                << "the generic resource image: the method is "
-                                << "not run inside the main thread");
+                        else {
+                            QNTRACE(
+                                "enml",
+                                "Won't add the outline to "
+                                    << "the generic resource image: the method "
+                                       "is "
+                                    << "not run inside the main thread");
                         }
                     }
-                    else
-                    {
-                        QNTRACE("enml", "Won't add the outline to the generic "
-                            << "resource image: not running a QApplication");
+                    else {
+                        QNTRACE(
+                            "enml",
+                            "Won't add the outline to the generic "
+                                << "resource image: not running a "
+                                   "QApplication");
                     }
                 }
 
-                if (shouldOutlineImg || shouldAddImgAsResource)
-                {
+                if (shouldOutlineImg || shouldAddImgAsResource) {
                     doc.addResource(
-                        QTextDocument::ImageResource,
-                        QUrl(srcAttr),
-                        img);
+                        QTextDocument::ImageResource, QUrl(srcAttr), img);
                 }
 
                 QXmlStreamAttributes filteredAttributes;
@@ -710,8 +680,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             QNTRACE("enml", "Wrote element: name = " << lastElementName);
         }
 
-        if ((writeElementCounter > 0) && reader.isCharacters())
-        {
+        if ((writeElementCounter > 0) && reader.isCharacters()) {
             if (skippedElementNestingCounter) {
                 continue;
             }
@@ -728,8 +697,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             }
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             if (skippedElementNestingCounter) {
                 --skippedElementNestingCounter;
                 continue;
@@ -749,27 +717,28 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
         }
     }
 
-    if (reader.hasError())
-    {
+    if (reader.hasError()) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't convert the note's html to QTextDocument"));
         errorDescription.details() = reader.errorString();
-        QNWARNING("enml", "Error reading html: " << errorDescription
-            << ", HTML: " << html << "\nXML: " << m_cachedConvertedXml);
+        QNWARNING(
+            "enml",
+            "Error reading html: " << errorDescription << ", HTML: " << html
+                                   << "\nXML: " << m_cachedConvertedXml);
         return false;
     }
 
     QString simplifiedHtml = QString::fromUtf8(simplifiedHtmlBuffer.buffer());
 
     doc.setHtml(simplifiedHtml);
-    if (Q_UNLIKELY(doc.isEmpty()))
-    {
+    if (Q_UNLIKELY(doc.isEmpty())) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't convert the note's html to QTextDocument: the "
                        "document is empty after setting the simplified HTML"));
 
-        QNWARNING("enml", errorDescription << ", simplified HTML: "
-            << simplifiedHtml);
+        QNWARNING(
+            "enml",
+            errorDescription << ", simplified HTML: " << simplifiedHtml);
         return false;
     }
 
@@ -780,8 +749,10 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
     const QString & inputHtml, QString & cleanedUpHtml,
     ErrorString & errorDescription) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::cleanupExternalHtml: input HTML = "
-        << inputHtml);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::cleanupExternalHtml: input HTML = "
+            << inputHtml);
 
     if (!m_pHtmlCleaner) {
         m_pHtmlCleaner = new HTMLCleaner;
@@ -794,12 +765,9 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
     QString error;
     m_cachedConvertedXml.resize(0);
     bool res = m_pHtmlCleaner->htmlToXml(
-        supplementedHtml,
-        m_cachedConvertedXml,
-        error);
+        supplementedHtml, m_cachedConvertedXml, error);
 
-    if (!res)
-    {
+    if (!res) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to clean up the input HTML"));
         errorDescription.details() = error;
@@ -812,8 +780,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
 
     QBuffer outputSupplementedHtmlBuffer;
     res = outputSupplementedHtmlBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to write the clean html "
                        "into"));
@@ -829,8 +796,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
     QString lastElementName;
     QXmlStreamAttributes lastElementAttributes;
 
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext())
 
         if (reader.isStartDocument()) {
@@ -845,8 +811,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             lastElementName = reader.name().toString();
 
             QSet<QString>::const_iterator tagIt =
@@ -857,24 +822,26 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             }
 
             tagIt = m_allowedXhtmlTags.find(lastElementName);
-            if (tagIt == m_allowedXhtmlTags.end())
-            {
-                QNTRACE("enml", "Haven't found tag " << lastElementName
-                    << " within the list of allowed XHTML tags, skipping it");
+            if (tagIt == m_allowedXhtmlTags.end()) {
+                QNTRACE(
+                    "enml",
+                    "Haven't found tag " << lastElementName
+                                         << " within the list of allowed XHTML "
+                                            "tags, skipping it");
                 continue;
             }
 
             lastElementAttributes = reader.attributes();
 
             // Erasing forbidden attributes
-            for(auto it = lastElementAttributes.begin();
-                it != lastElementAttributes.end(); )
+            for (auto it = lastElementAttributes.begin();
+                 it != lastElementAttributes.end();)
             {
                 QStringRef attributeName = it->name();
-                if (isForbiddenXhtmlAttribute(attributeName.toString()))
-                {
-                    QNTRACE("enml", "Erasing forbidden attribute "
-                        << attributeName);
+                if (isForbiddenXhtmlAttribute(attributeName.toString())) {
+                    QNTRACE(
+                        "enml",
+                        "Erasing forbidden attribute " << attributeName);
                     it = lastElementAttributes.erase(it);
                     continue;
                 }
@@ -885,12 +852,13 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             writer.writeStartElement(lastElementName);
             writer.writeAttributes(lastElementAttributes);
             ++writeElementCounter;
-            QNTRACE("enml", "Wrote element: name = " << lastElementName
-                << " and its attributes");
+            QNTRACE(
+                "enml",
+                "Wrote element: name = " << lastElementName
+                                         << " and its attributes");
         }
 
-        if ((writeElementCounter > 0) && reader.isCharacters())
-        {
+        if ((writeElementCounter > 0) && reader.isCharacters()) {
             QString text = reader.text().toString();
 
             if (reader.isCDATA()) {
@@ -903,8 +871,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             }
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             if (writeElementCounter <= 0) {
                 continue;
             }
@@ -914,16 +881,17 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
         }
     }
 
-    if (reader.hasError())
-    {
+    if (reader.hasError()) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to clean up the input HTML"));
         errorDescription.details() = reader.errorString();
 
-        QNWARNING("enml", "Error reading the input HTML: " << errorDescription
-            << ", input HTML: " << inputHtml
-            << "\n\nSupplemented input HTML: " << supplementedHtml
-            << "\n\nHTML converted to XML: " << m_cachedConvertedXml);
+        QNWARNING(
+            "enml",
+            "Error reading the input HTML: "
+                << errorDescription << ", input HTML: " << inputHtml
+                << "\n\nSupplemented input HTML: " << supplementedHtml
+                << "\n\nHTML converted to XML: " << m_cachedConvertedXml);
         return false;
     }
 
@@ -934,8 +902,8 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
 }
 
 bool ENMLConverterPrivate::noteContentToHtml(
-    const QString & noteContent, QString & html,
-    ErrorString & errorDescription, DecryptedTextManager & decryptedTextManager,
+    const QString & noteContent, QString & html, ErrorString & errorDescription,
+    DecryptedTextManager & decryptedTextManager,
     NoteContentToHtmlExtraData & extraData) const
 {
     QNDEBUG("enml", "ENMLConverterPrivate::noteContentToHtml: " << noteContent);
@@ -949,8 +917,7 @@ bool ENMLConverterPrivate::noteContentToHtml(
     errorDescription.clear();
     QBuffer htmlBuffer;
     bool res = htmlBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to "
                        "write the html into"));
@@ -970,8 +937,7 @@ bool ENMLConverterPrivate::noteContentToHtml(
     QString lastElementName;
     QXmlStreamAttributes lastElementAttributes;
 
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartDocument()) {
@@ -986,23 +952,18 @@ bool ENMLConverterPrivate::noteContentToHtml(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             ++writeElementCounter;
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            if (lastElementName == QStringLiteral("en-note"))
-            {
+            if (lastElementName == QStringLiteral("en-note")) {
                 QNTRACE("enml", "Replacing en-note with \"body\" tag");
                 lastElementName = QStringLiteral("body");
             }
-            else if (lastElementName == QStringLiteral("en-media"))
-            {
+            else if (lastElementName == QStringLiteral("en-media")) {
                 bool res = resourceInfoToHtml(
-                    lastElementAttributes,
-                    writer,
-                    errorDescription);
+                    lastElementAttributes, writer, errorDescription);
 
                 if (!res) {
                     return false;
@@ -1010,20 +971,17 @@ bool ENMLConverterPrivate::noteContentToHtml(
 
                 continue;
             }
-            else if (lastElementName == QStringLiteral("en-crypt"))
-            {
+            else if (lastElementName == QStringLiteral("en-crypt")) {
                 insideEnCryptTag = true;
                 continue;
             }
-            else if (lastElementName == QStringLiteral("en-todo"))
-            {
+            else if (lastElementName == QStringLiteral("en-todo")) {
                 quint64 enToDoIndex = extraData.m_numEnToDoNodes + 1;
                 toDoTagsToHtml(reader, enToDoIndex, writer);
                 ++extraData.m_numEnToDoNodes;
                 continue;
             }
-            else if (lastElementName == QStringLiteral("a"))
-            {
+            else if (lastElementName == QStringLiteral("a")) {
                 quint64 hyperlinkIndex = extraData.m_numHyperlinkNodes + 1;
 
                 lastElementAttributes.append(
@@ -1039,25 +997,21 @@ bool ENMLConverterPrivate::noteContentToHtml(
             writer.writeStartElement(lastElementName);
             writer.writeAttributes(lastElementAttributes);
 
-            QNTRACE("enml", "Wrote start element: " << lastElementName
-                << " and its attributes");
+            QNTRACE(
+                "enml",
+                "Wrote start element: " << lastElementName
+                                        << " and its attributes");
         }
 
-        if ((writeElementCounter > 0) && reader.isCharacters())
-        {
-            if (insideEnCryptTag)
-            {
+        if ((writeElementCounter > 0) && reader.isCharacters()) {
+            if (insideEnCryptTag) {
                 quint64 enCryptIndex = extraData.m_numEnCryptNodes + 1;
                 quint64 enDecryptedIndex = extraData.m_numEnDecryptedNodes + 1;
                 bool convertedToEnCryptNode = false;
 
                 encryptedTextToHtml(
-                    lastElementAttributes,
-                    reader.text(),
-                    enCryptIndex,
-                    enDecryptedIndex,
-                    writer,
-                    decryptedTextManager,
+                    lastElementAttributes, reader.text(), enCryptIndex,
+                    enDecryptedIndex, writer, decryptedTextManager,
                     convertedToEnCryptNode);
 
                 if (convertedToEnCryptNode) {
@@ -1083,8 +1037,7 @@ bool ENMLConverterPrivate::noteContentToHtml(
             }
         }
 
-        if ((writeElementCounter > 0) && reader.isEndElement())
-        {
+        if ((writeElementCounter > 0) && reader.isEndElement()) {
             if (lastElementName != QStringLiteral("br")) {
                 // NOTE: the following trick seems to prevent the occurrence of
                 // self-closing empty XML tags which are sometimes
@@ -1111,9 +1064,7 @@ bool ENMLConverterPrivate::validateEnml(
 {
     QNDEBUG("enml", "ENMLConverterPrivate::validateEnml");
     return validateAgainstDtd(
-        enml,
-        QStringLiteral(":/enml2.dtd"),
-        errorDescription);
+        enml, QStringLiteral(":/enml2.dtd"), errorDescription);
 }
 
 bool ENMLConverterPrivate::validateAndFixupEnml(
@@ -1151,8 +1102,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
     QString elementPrefix = QStringLiteral("element ");
     int elementPrefixSize = elementPrefix.size();
 
-    while(true)
-    {
+    while (true) {
         int attributeNameIndex = error.indexOf(attributePrefix, lastIndex);
         if (attributeNameIndex < 0) {
             break;
@@ -1160,16 +1110,14 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
 
         attributeNameIndex += attributePrefixSize;
 
-        int attributeNameEndIndex = error.indexOf(
-            QStringLiteral(" "),
-            attributeNameIndex);
+        int attributeNameEndIndex =
+            error.indexOf(QStringLiteral(" "), attributeNameIndex);
         if (attributeNameEndIndex < 0) {
             break;
         }
 
-        int elementNameIndex = error.indexOf(
-            elementPrefix,
-            attributeNameEndIndex);
+        int elementNameIndex =
+            error.indexOf(elementPrefix, attributeNameEndIndex);
 
         if (elementNameIndex < 0) {
             break;
@@ -1177,9 +1125,8 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
 
         elementNameIndex += elementPrefixSize;
 
-        int elementNameIndexEnd = error.indexOf(
-            QStringLiteral("\n"),
-            elementNameIndex);
+        int elementNameIndexEnd =
+            error.indexOf(QStringLiteral("\n"), elementNameIndex);
 
         if (elementNameIndexEnd < 0) {
             break;
@@ -1188,12 +1135,10 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
         lastIndex = elementNameIndexEnd;
 
         QString elementName = error.mid(
-            elementNameIndex,
-            (elementNameIndexEnd - elementNameIndex));
+            elementNameIndex, (elementNameIndexEnd - elementNameIndex));
 
         QString attributeName = error.mid(
-            attributeNameIndex,
-            (attributeNameEndIndex - attributeNameIndex));
+            attributeNameIndex, (attributeNameEndIndex - attributeNameIndex));
 
         QStringList & attributesForElement =
             elementToForbiddenAttributes[elementName];
@@ -1202,11 +1147,10 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
         }
     }
 
-    if (QuentierIsLogLevelActive(LogLevel::Trace))
-    {
+    if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QNTRACE("enml", "Parsed forbidden attributes per element: ");
-        for(const auto & it:
-            qevercloud::toRange(qAsConst(elementToForbiddenAttributes)))
+        for (const auto & it:
+             qevercloud::toRange(qAsConst(elementToForbiddenAttributes)))
         {
             QNTRACE("enml", "[" << it.key() << "]: " << it.value());
         }
@@ -1214,8 +1158,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
 
     QBuffer fixedUpEnmlBuffer;
     res = fixedUpEnmlBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to write the fixed up note "
                        "content into"));
@@ -1235,8 +1178,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
     QXmlStreamAttributes lastElementAttributes;
 
     QXmlStreamReader reader(enml);
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartDocument()) {
@@ -1251,16 +1193,15 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
             auto it = elementToForbiddenAttributes.find(lastElementName);
-            if (it == elementToForbiddenAttributes.end())
-            {
-                QNTRACE("enml", "No forbidden attributes for element "
-                    << lastElementName);
+            if (it == elementToForbiddenAttributes.end()) {
+                QNTRACE(
+                    "enml",
+                    "No forbidden attributes for element " << lastElementName);
                 writer.writeStartElement(lastElementName);
                 writer.writeAttributes(lastElementAttributes);
                 continue;
@@ -1269,14 +1210,14 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
             const QStringList & forbiddenAttributes = it.value();
 
             // Erasing forbidden attributes
-            for(auto ait = lastElementAttributes.begin();
-                ait != lastElementAttributes.end(); )
+            for (auto ait = lastElementAttributes.begin();
+                 ait != lastElementAttributes.end();)
             {
                 QString attributeName = ait->name().toString();
-                if (forbiddenAttributes.contains(attributeName))
-                {
-                    QNTRACE("enml", "Erasing forbidden attribute "
-                        << attributeName);
+                if (forbiddenAttributes.contains(attributeName)) {
+                    QNTRACE(
+                        "enml",
+                        "Erasing forbidden attribute " << attributeName);
                     ait = lastElementAttributes.erase(ait);
                     continue;
                 }
@@ -1286,12 +1227,13 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
 
             writer.writeStartElement(lastElementName);
             writer.writeAttributes(lastElementAttributes);
-            QNTRACE("enml", "Wrote element: name = " << lastElementName
-                << " and its attributes");
+            QNTRACE(
+                "enml",
+                "Wrote element: name = " << lastElementName
+                                         << " and its attributes");
         }
 
-        if (reader.isCharacters())
-        {
+        if (reader.isCharacters()) {
             QString text = reader.text().toString();
 
             if (reader.isCDATA()) {
@@ -1310,8 +1252,10 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
     }
 
     if (Q_UNLIKELY(reader.hasError())) {
-        QNWARNING("enml", "Wasn't able to fixup the ENML as it is "
-            << "a malformed XML: " << reader.errorString());
+        QNWARNING(
+            "enml",
+            "Wasn't able to fixup the ENML as it is "
+                << "a malformed XML: " << reader.errorString());
         return false;
     }
 
@@ -1325,16 +1269,16 @@ bool ENMLConverterPrivate::noteContentToPlainText(
     const QString & noteContent, QString & plainText,
     ErrorString & errorMessage)
 {
-    QNTRACE("enml", "ENMLConverterPrivate::noteContentToPlainText: "
-        << noteContent);
+    QNTRACE(
+        "enml",
+        "ENMLConverterPrivate::noteContentToPlainText: " << noteContent);
 
     plainText.resize(0);
 
     QXmlStreamReader reader(noteContent);
 
     bool skipIteration = false;
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext());
 
         if (reader.isStartDocument()) {
@@ -1349,8 +1293,7 @@ bool ENMLConverterPrivate::noteContentToPlainText(
             break;
         }
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             const QStringRef element = reader.name();
             if ((element == QStringLiteral("en-media")) ||
                 (element == QStringLiteral("en-crypt")))
@@ -1361,8 +1304,7 @@ bool ENMLConverterPrivate::noteContentToPlainText(
             continue;
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             const QStringRef element = reader.name();
             if ((element == QStringLiteral("en-media")) ||
                 (element == QStringLiteral("en-crypt")))
@@ -1378,8 +1320,7 @@ bool ENMLConverterPrivate::noteContentToPlainText(
         }
     }
 
-    if (Q_UNLIKELY(reader.hasError()))
-    {
+    if (Q_UNLIKELY(reader.hasError())) {
         errorMessage.setBase(
             QT_TR_NOOP("Failed to convert the note content to plain text"));
         errorMessage.details() = reader.errorString();
@@ -1397,10 +1338,8 @@ bool ENMLConverterPrivate::noteContentToListOfWords(
     ErrorString & errorMessage, QString * plainText)
 {
     QString localPlainText;
-    bool res = noteContentToPlainText(
-        noteContent,
-        localPlainText,
-        errorMessage);
+    bool res =
+        noteContentToPlainText(noteContent, localPlainText, errorMessage);
     if (!res) {
         listOfWords.clear();
         return false;
@@ -1419,8 +1358,7 @@ QStringList ENMLConverterPrivate::plainTextToListOfWords(
 {
     // Simply remove all non-word characters from plain text
     return plainText.split(
-        QRegExp(QStringLiteral("\\W+")),
-        QString::SkipEmptyParts);
+        QRegExp(QStringLiteral("\\W+")), QString::SkipEmptyParts);
 }
 
 QString ENMLConverterPrivate::toDoCheckboxHtml(
@@ -1441,9 +1379,8 @@ QString ENMLConverterPrivate::toDoCheckboxHtml(
 }
 
 QString ENMLConverterPrivate::encryptedTextHtml(
-    const QString & encryptedText, const QString & hint,
-    const QString & cipher, const size_t keyLength,
-    const quint64 enCryptIndex)
+    const QString & encryptedText, const QString & hint, const QString & cipher,
+    const size_t keyLength, const quint64 enCryptIndex)
 {
     QString encryptedTextHtmlObject;
 
@@ -1458,17 +1395,16 @@ QString ENMLConverterPrivate::encryptedTextHtml(
     encryptedTextHtmlObject += QStringLiteral("\" length=\"");
     encryptedTextHtmlObject += QString::number(keyLength);
 
-    encryptedTextHtmlObject +=
-        QStringLiteral("\" class=\"en-crypt hvr-border-color\" "
-                       "encrypted_text=\"");
+    encryptedTextHtmlObject += QStringLiteral(
+        "\" class=\"en-crypt hvr-border-color\" "
+        "encrypted_text=\"");
 
     encryptedTextHtmlObject += encryptedText;
     encryptedTextHtmlObject += QStringLiteral("\" en-crypt-id=\"");
     encryptedTextHtmlObject += QString::number(enCryptIndex);
     encryptedTextHtmlObject += QStringLiteral("\" ");
 
-    if (!hint.isEmpty())
-    {
+    if (!hint.isEmpty()) {
         encryptedTextHtmlObject += QStringLiteral("hint=\"");
 
         QString hintWithEscapedDoubleQuotes = hint;
@@ -1481,9 +1417,9 @@ QString ENMLConverterPrivate::encryptedTextHtml(
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     encryptedTextHtmlObject += QStringLiteral(" />");
 #else
-    encryptedTextHtmlObject +=
-        QStringLiteral(">some fake characters to prevent self-enclosing html "
-                       "tag confusing webkit</object>");
+    encryptedTextHtmlObject += QStringLiteral(
+        ">some fake characters to prevent self-enclosing html "
+        "tag confusing webkit</object>");
 #endif
 
     return encryptedTextHtmlObject;
@@ -1498,12 +1434,7 @@ QString ENMLConverterPrivate::decryptedTextHtml(
     QXmlStreamWriter writer(&result);
 
     decryptedTextHtml(
-        decryptedText,
-        encryptedText,
-        hint,
-        cipher,
-        keyLength,
-        enDecryptedIndex,
+        decryptedText, encryptedText, hint, cipher, keyLength, enDecryptedIndex,
         writer);
 
     writer.writeEndElement();
@@ -1515,8 +1446,7 @@ QString ENMLConverterPrivate::resourceHtml(
 {
     QNDEBUG("enml", "ENMLConverterPrivate::resourceHtml");
 
-    if (Q_UNLIKELY(!resource.hasDataHash()))
-    {
+    if (Q_UNLIKELY(!resource.hasDataHash())) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no data hash is set"));
@@ -1524,8 +1454,7 @@ QString ENMLConverterPrivate::resourceHtml(
         return QString();
     }
 
-    if (Q_UNLIKELY(!resource.hasMime()))
-    {
+    if (Q_UNLIKELY(!resource.hasMime())) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no mime type is set"));
@@ -1541,8 +1470,7 @@ QString ENMLConverterPrivate::resourceHtml(
 
     QBuffer htmlBuffer;
     bool res = htmlBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html representation: "
                        "can't open the buffer to write the html into"));
@@ -1567,14 +1495,10 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
     QNTRACE("enml", "String before escaping: " << string);
 
     string.replace(
-        QStringLiteral("\'"),
-        QStringLiteral("\\x27"),
-        Qt::CaseInsensitive);
+        QStringLiteral("\'"), QStringLiteral("\\x27"), Qt::CaseInsensitive);
 
     string.replace(
-        QStringLiteral("\""),
-        QStringLiteral("\\x22"),
-        Qt::CaseInsensitive);
+        QStringLiteral("\""), QStringLiteral("\\x22"), Qt::CaseInsensitive);
 
     if (simplify) {
         string = string.simplified();
@@ -1585,17 +1509,17 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
 bool ENMLConverterPrivate::exportNotesToEnex(
     const QVector<Note> & notes,
     const QHash<QString, QString> & tagNamesByTagLocalUids,
-    const ENMLConverter::EnexExportTags exportTagsOption,
-    QString & enex, ErrorString & errorDescription,
-    const QString & version) const
+    const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
+    ErrorString & errorDescription, const QString & version) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::exportNotesToEnex: num notes = "
-        << notes.size() << ", num tag names by tag local uids = "
-        << tagNamesByTagLocalUids.size() << ", export tags option = "
-        << ((exportTagsOption == ENMLConverter::EnexExportTags::Yes)
-             ? "Yes"
-             : "No")
-        << ", version = " << version);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::exportNotesToEnex: num notes = "
+            << notes.size() << ", num tag names by tag local uids = "
+            << tagNamesByTagLocalUids.size() << ", export tags option = "
+            << ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) ? "Yes"
+                                                                         : "No")
+            << ", version = " << version);
 
     enex.resize(0);
 
@@ -1607,10 +1531,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     }
 
     bool foundNoteEligibleForExport = false;
-    for(const auto & note: qAsConst(notes))
-    {
-        if (!note.hasTitle() && !note.hasContent() &&
-            !note.hasResources() && !note.hasTagLocalUids())
+    for (const auto & note: qAsConst(notes)) {
+        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() &&
+            !note.hasTagLocalUids())
         {
             continue;
         }
@@ -1619,8 +1542,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
         break;
     }
 
-    if (!foundNoteEligibleForExport)
-    {
+    if (!foundNoteEligibleForExport) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't export note(s) to ENEX: "
                        "no notes eligible for export"));
@@ -1630,8 +1552,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
     QBuffer enexBuffer;
     bool res = enexBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res))
-    {
+    if (Q_UNLIKELY(!res)) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't export note(s) to ENEX: can't "
                        "open the buffer to write the ENEX into"));
@@ -1644,9 +1565,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
-    writer.writeDTD(
-        QStringLiteral("<!DOCTYPE en-export SYSTEM "
-                       "\"http://xml.evernote.com/pub/evernote-export3.dtd\">"));
+    writer.writeDTD(QStringLiteral(
+        "<!DOCTYPE en-export SYSTEM "
+        "\"http://xml.evernote.com/pub/evernote-export3.dtd\">"));
 
     writer.writeStartElement(QStringLiteral("en-export"));
     QXmlStreamAttributes enExportAttributes;
@@ -1657,26 +1578,25 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     enExportAttributes.append(
         QStringLiteral("export-date"),
         printableDateTimeFromTimestamp(
-            currentTimestamp,
-            dateTimePrintOptions,
+            currentTimestamp, dateTimePrintOptions,
             ENEX_DATE_TIME_FORMAT_STRFTIME));
 
     enExportAttributes.append(
-        QStringLiteral("application"),
-        QCoreApplication::applicationName());
+        QStringLiteral("application"), QCoreApplication::applicationName());
 
     enExportAttributes.append(QStringLiteral("version"), version);
 
     writer.writeAttributes(enExportAttributes);
 
-    for(const auto & note: qAsConst(notes))
-    {
+    for (const auto & note: qAsConst(notes)) {
         if (!note.hasTitle() && !note.hasContent() && !note.hasResources() &&
             ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) ||
              !note.hasTagLocalUids()))
         {
-            QNINFO("enml", "Skipping note without title, content, "
-                << "resources or tags in export to ENML");
+            QNINFO(
+                "enml",
+                "Skipping note without title, content, "
+                    << "resources or tags in export to ENML");
             continue;
         }
 
@@ -1696,23 +1616,18 @@ bool ENMLConverterPrivate::exportNotesToEnex(
         }
         writer.writeEndElement();   // content
 
-        if (note.hasCreationTimestamp())
-        {
+        if (note.hasCreationTimestamp()) {
             writer.writeStartElement(QStringLiteral("created"));
-            writer.writeCharacters(
-                printableDateTimeFromTimestamp(
-                    note.creationTimestamp(),
-                    dateTimePrintOptions,
-                    ENEX_DATE_TIME_FORMAT_STRFTIME));
+            writer.writeCharacters(printableDateTimeFromTimestamp(
+                note.creationTimestamp(), dateTimePrintOptions,
+                ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement();   // created
         }
 
-        if (note.hasModificationTimestamp())
-        {
+        if (note.hasModificationTimestamp()) {
             writer.writeStartElement(QStringLiteral("updated"));
-            writer.writeCharacters(
-                printableDateTimeFromTimestamp(note.modificationTimestamp(),
-                dateTimePrintOptions,
+            writer.writeCharacters(printableDateTimeFromTimestamp(
+                note.modificationTimestamp(), dateTimePrintOptions,
                 ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement();   // updated
         }
@@ -1721,12 +1636,12 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             note.hasTagLocalUids())
         {
             const QStringList & tagLocalUids = note.tagLocalUids();
-            for(auto tagIt = tagLocalUids.constBegin(),
-                tagEnd = tagLocalUids.constEnd(); tagIt != tagEnd; ++tagIt)
+            for (auto tagIt = tagLocalUids.constBegin(),
+                      tagEnd = tagLocalUids.constEnd();
+                 tagIt != tagEnd; ++tagIt)
             {
                 auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
-                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end()))
-                {
+                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end())) {
                     enex.clear();
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't export note(s) to ENEX: one of notes "
@@ -1738,8 +1653,11 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
                 const QString & tagName = tagNameIt.value();
                 if (Q_UNLIKELY(tagName.isEmpty())) {
-                    QNWARNING("enml", "Skipping tag with empty name, "
-                        << " tag local uid = " << *tagIt << ", note: " << note);
+                    QNWARNING(
+                        "enml",
+                        "Skipping tag with empty name, "
+                            << " tag local uid = " << *tagIt
+                            << ", note: " << note);
                     continue;
                 }
 
@@ -1749,8 +1667,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             }
         }
 
-        if (note.hasNoteAttributes())
-        {
+        if (note.hasNoteAttributes()) {
             const auto & noteAttributes = note.noteAttributes();
 
             if (noteAttributes.latitude.isSet() ||
@@ -1770,35 +1687,29 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             {
                 writer.writeStartElement(QStringLiteral("note-attributes"));
 
-                if (noteAttributes.subjectDate.isSet())
-                {
+                if (noteAttributes.subjectDate.isSet()) {
                     writer.writeStartElement(QStringLiteral("subject-date"));
-                    writer.writeCharacters(
-                        printableDateTimeFromTimestamp(
-                            noteAttributes.subjectDate.ref(),
-                            dateTimePrintOptions,
-                            ENEX_DATE_TIME_FORMAT_STRFTIME));
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        noteAttributes.subjectDate.ref(), dateTimePrintOptions,
+                        ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.latitude.isSet())
-                {
+                if (noteAttributes.latitude.isSet()) {
                     writer.writeStartElement(QStringLiteral("latitude"));
                     writer.writeCharacters(
                         QString::number(noteAttributes.latitude.ref()));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.longitude.isSet())
-                {
+                if (noteAttributes.longitude.isSet()) {
                     writer.writeStartElement(QStringLiteral("longitude"));
                     writer.writeCharacters(
                         QString::number(noteAttributes.longitude.ref()));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.altitude.isSet())
-                {
+                if (noteAttributes.altitude.isSet()) {
                     writer.writeStartElement(QStringLiteral("altitude"));
                     writer.writeCharacters(
                         QString::number(noteAttributes.altitude.ref()));
@@ -1823,8 +1734,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.sourceApplication.isSet())
-                {
+                if (noteAttributes.sourceApplication.isSet()) {
                     writer.writeStartElement(
                         QStringLiteral("source-application"));
 
@@ -1834,8 +1744,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderOrder.isSet())
-                {
+                if (noteAttributes.reminderOrder.isSet()) {
                     writer.writeStartElement(QStringLiteral("reminder-order"));
 
                     writer.writeCharacters(
@@ -1844,27 +1753,21 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderTime.isSet())
-                {
+                if (noteAttributes.reminderTime.isSet()) {
                     writer.writeStartElement(QStringLiteral("reminder-time"));
-                    writer.writeCharacters(
-                        printableDateTimeFromTimestamp(
-                            noteAttributes.reminderTime.ref(),
-                            dateTimePrintOptions,
-                            ENEX_DATE_TIME_FORMAT_STRFTIME));
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        noteAttributes.reminderTime.ref(), dateTimePrintOptions,
+                        ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderDoneTime.isSet())
-                {
+                if (noteAttributes.reminderDoneTime.isSet()) {
                     writer.writeStartElement(
                         QStringLiteral("reminder-done-time"));
 
-                    writer.writeCharacters(
-                        printableDateTimeFromTimestamp(
-                            noteAttributes.reminderDoneTime.ref(),
-                            dateTimePrintOptions,
-                            ENEX_DATE_TIME_FORMAT_STRFTIME));
+                    writer.writeCharacters(printableDateTimeFromTimestamp(
+                        noteAttributes.reminderDoneTime.ref(),
+                        dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
 
                     writer.writeEndElement();
                 }
@@ -1881,16 +1784,13 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.applicationData.isSet())
-                {
+                if (noteAttributes.applicationData.isSet()) {
                     const qevercloud::LazyMap & appData =
                         noteAttributes.applicationData.ref();
-                    if (appData.fullMap.isSet())
-                    {
+                    if (appData.fullMap.isSet()) {
                         const auto & fullMap = appData.fullMap.ref();
 
-                        for(const auto & mapIt: qevercloud::toRange(fullMap))
-                        {
+                        for (const auto & mapIt: qevercloud::toRange(fullMap)) {
                             writer.writeStartElement(
                                 QStringLiteral("application-data"));
                             writer.writeAttribute(
@@ -1905,43 +1805,43 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             }
         }
 
-        if (note.hasResources())
-        {
+        if (note.hasResources()) {
             QList<Resource> resources = note.resources();
 
-            for(const auto & resource: qAsConst(resources))
-            {
+            for (const auto & resource: qAsConst(resources)) {
                 if (!resource.hasDataBody()) {
-                    QNINFO("enml", "Skipping ENEX export of a resource "
-                        << "without data body: " << resource);
+                    QNINFO(
+                        "enml",
+                        "Skipping ENEX export of a resource "
+                            << "without data body: " << resource);
                     continue;
                 }
 
                 if (!resource.hasMime()) {
-                    QNINFO("enml", "Skipping ENEX export of a resource "
-                        << "without mime type: " << resource);
+                    QNINFO(
+                        "enml",
+                        "Skipping ENEX export of a resource "
+                            << "without mime type: " << resource);
                     continue;
                 }
 
                 writer.writeStartElement(QStringLiteral("resource"));
 
                 const QByteArray & resourceData = resource.dataBody();
-                if (resourceData.size() > ENEX_MAX_RESOURCE_DATA_SIZE)
-                {
+                if (resourceData.size() > ENEX_MAX_RESOURCE_DATA_SIZE) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't export note(s) to ENEX: found "
                                    "resource larger than 25 Mb"));
 
-                    QNINFO("enml", errorDescription << ", resource: "
-                        << resource);
+                    QNINFO(
+                        "enml", errorDescription << ", resource: " << resource);
                     return false;
                 }
 
                 writer.writeStartElement(QStringLiteral("data"));
 
                 writer.writeAttribute(
-                    QStringLiteral("encoding"),
-                    QStringLiteral("base64"));
+                    QStringLiteral("encoding"), QStringLiteral("base64"));
 
                 writer.writeCharacters(
                     QString::fromLocal8Bit(resourceData.toBase64()));
@@ -1964,17 +1864,14 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement();
                 }
 
-                if (resource.hasRecognitionDataBody())
-                {
+                if (resource.hasRecognitionDataBody()) {
                     const auto & recognitionData =
                         resource.recognitionDataBody();
 
                     ErrorString error;
                     bool res = validateRecoIndex(
-                        QString::fromUtf8(recognitionData),
-                        error);
-                    if (Q_UNLIKELY(!res))
-                    {
+                        QString::fromUtf8(recognitionData), error);
+                    if (Q_UNLIKELY(!res)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Can't export note(s) to ENEX: found "
                                        "invalid resource recognition index at "
@@ -1988,11 +1885,10 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
                     writer.writeStartElement(QStringLiteral("recognition"));
                     writer.writeCDATA(QString::fromUtf8(recognitionData));
-                    writer.writeEndElement();  // recognition
+                    writer.writeEndElement();   // recognition
                 }
 
-                if (resource.hasResourceAttributes())
-                {
+                if (resource.hasResourceAttributes()) {
                     const auto & resourceAttributes =
                         resource.resourceAttributes();
 
@@ -2010,8 +1906,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                         writer.writeStartElement(
                             QStringLiteral("resource-attributes"));
 
-                        if (resourceAttributes.sourceURL.isSet())
-                        {
+                        if (resourceAttributes.sourceURL.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("source-url"));
 
@@ -2021,8 +1916,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             writer.writeEndElement();   // source-url
                         }
 
-                        if (resourceAttributes.timestamp.isSet())
-                        {
+                        if (resourceAttributes.timestamp.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("timestamp"));
 
@@ -2035,44 +1929,37 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.latitude.isSet())
-                        {
+                        if (resourceAttributes.latitude.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("latitude"));
 
-                            writer.writeCharacters(
-                                QString::number(
-                                    resourceAttributes.latitude.ref()));
+                            writer.writeCharacters(QString::number(
+                                resourceAttributes.latitude.ref()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.longitude.isSet())
-                        {
+                        if (resourceAttributes.longitude.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("longitude"));
 
-                            writer.writeCharacters(
-                                QString::number(
-                                    resourceAttributes.longitude.ref()));
+                            writer.writeCharacters(QString::number(
+                                resourceAttributes.longitude.ref()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.altitude.isSet())
-                        {
+                        if (resourceAttributes.altitude.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("altitude"));
 
-                            writer.writeCharacters(
-                                QString::number(
-                                    resourceAttributes.altitude.ref()));
+                            writer.writeCharacters(QString::number(
+                                resourceAttributes.altitude.ref()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.cameraMake.isSet())
-                        {
+                        if (resourceAttributes.cameraMake.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("camera-make"));
 
@@ -2082,8 +1969,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.recoType.isSet())
-                        {
+                        if (resourceAttributes.recoType.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("reco-type"));
 
@@ -2093,8 +1979,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.fileName.isSet())
-                        {
+                        if (resourceAttributes.fileName.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("file-name"));
 
@@ -2104,37 +1989,32 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.attachment.isSet())
-                        {
+                        if (resourceAttributes.attachment.isSet()) {
                             writer.writeStartElement(
                                 QStringLiteral("attachment"));
 
                             writer.writeCharacters(
                                 resourceAttributes.attachment.ref()
-                                ? QStringLiteral("true")
-                                : QStringLiteral("false"));
+                                    ? QStringLiteral("true")
+                                    : QStringLiteral("false"));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.applicationData.isSet())
-                        {
+                        if (resourceAttributes.applicationData.isSet()) {
                             const auto & appData =
                                 resourceAttributes.applicationData.ref();
 
-                            if (appData.fullMap.isSet())
-                            {
+                            if (appData.fullMap.isSet()) {
                                 const auto & fullMap = appData.fullMap.ref();
 
-                                for(const auto & mapIt:
-                                    qevercloud::toRange(fullMap))
-                                {
+                                for (const auto & mapIt:
+                                     qevercloud::toRange(fullMap)) {
                                     writer.writeStartElement(
                                         QStringLiteral("application-data"));
 
                                     writer.writeAttribute(
-                                        QStringLiteral("key"),
-                                        mapIt.key());
+                                        QStringLiteral("key"), mapIt.key());
 
                                     writer.writeCharacters(mapIt.value());
                                     writer.writeEndElement();
@@ -2146,14 +2026,12 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     }
                 }
 
-                if (resource.hasAlternateDataBody())
-                {
+                if (resource.hasAlternateDataBody()) {
                     const auto & resourceAltData = resource.alternateDataBody();
                     writer.writeStartElement(QStringLiteral("alternate-data"));
 
                     writer.writeAttribute(
-                        QStringLiteral("encoding"),
-                        QStringLiteral("base64"));
+                        QStringLiteral("encoding"), QStringLiteral("base64"));
 
                     writer.writeCharacters(
                         QString::fromLocal8Bit(resourceAltData.toBase64()));
@@ -2174,8 +2052,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     enex = QString::fromUtf8(enexBuffer.buffer());
 
     res = validateEnex(enex, errorDescription);
-    if (!res)
-    {
+    if (!res) {
         ErrorString error(QT_TR_NOOP("Can't export note(s) to ENEX"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
@@ -2225,12 +2102,10 @@ bool ENMLConverterPrivate::importEnex(
     QByteArray currentResourceAlternateData;
 
     QXmlStreamReader reader(enex);
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         Q_UNUSED(reader.readNext())
 
-        if (reader.isStartElement())
-        {
+        if (reader.isStartElement()) {
             QStringRef elementName = reader.name();
 
             if (elementName == QStringLiteral("en-export")) {
@@ -2238,22 +2113,25 @@ bool ENMLConverterPrivate::importEnex(
             }
 
             if (elementName == QStringLiteral("export-date")) {
-                QNTRACE("enml", "export date: "
-                    << reader.readElementText(
+                QNTRACE(
+                    "enml",
+                    "export date: " << reader.readElementText(
                         QXmlStreamReader::SkipChildElements));
                 continue;
             }
 
             if (elementName == QStringLiteral("application")) {
-                QNTRACE("enml", "application: "
-                    << reader.readElementText(
+                QNTRACE(
+                    "enml",
+                    "application: " << reader.readElementText(
                         QXmlStreamReader::SkipChildElements));
                 continue;
             }
 
             if (elementName == QStringLiteral("version")) {
-                QNTRACE("enml", "version"
-                    << reader.readElementText(
+                QNTRACE(
+                    "enml",
+                    "version" << reader.readElementText(
                         QXmlStreamReader::SkipChildElements));
                 continue;
             }
@@ -2266,10 +2144,8 @@ bool ENMLConverterPrivate::importEnex(
                 continue;
             }
 
-            if (elementName == QStringLiteral("title"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("title")) {
+                if (insideNote) {
                     QString title = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -2284,8 +2160,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("content"))
-            {
+            if (elementName == QStringLiteral("content")) {
                 if (insideNote) {
                     QNTRACE("enml", "Start of note content");
                     insideNoteContent = true;
@@ -2300,22 +2175,19 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("created"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("created")) {
+                if (insideNote) {
                     QString creationDateTimeString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
-                    QNTRACE("enml", "Creation datetime: "
-                        << creationDateTimeString);
+                    QNTRACE(
+                        "enml",
+                        "Creation datetime: " << creationDateTimeString);
 
                     QDateTime creationDateTime = QDateTime::fromString(
-                        creationDateTimeString,
-                        dateTimeFormat);
+                        creationDateTimeString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!creationDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!creationDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the creation datetime "
                                        "from string"));
@@ -2337,22 +2209,20 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("updated"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("updated")) {
+                if (insideNote) {
                     QString modificationDateTimeString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
-                    QNTRACE("enml", "Modification datetime: "
-                        << modificationDateTimeString);
+                    QNTRACE(
+                        "enml",
+                        "Modification datetime: "
+                            << modificationDateTimeString);
 
                     QDateTime modificationDateTime = QDateTime::fromString(
-                        modificationDateTimeString,
-                        dateTimeFormat);
+                        modificationDateTimeString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!modificationDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!modificationDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the modification "
                                        "datetime from string"));
@@ -2361,12 +2231,12 @@ bool ENMLConverterPrivate::importEnex(
                         return false;
                     }
 
-                    qint64 timestamp = timestampFromDateTime(
-                        modificationDateTime);
+                    qint64 timestamp =
+                        timestampFromDateTime(modificationDateTime);
 
                     currentNote.setModificationTimestamp(timestamp);
-                    QNTRACE("enml", "Set modification timestamp to "
-                        << timestamp);
+                    QNTRACE(
+                        "enml", "Set modification timestamp to " << timestamp);
 
                     continue;
                 }
@@ -2377,10 +2247,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("tag"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("tag")) {
+                if (insideNote) {
                     QString tagName = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
                     QString noteLocalUid = currentNote.localUid();
@@ -2388,11 +2256,13 @@ bool ENMLConverterPrivate::importEnex(
                     QStringList & tagNames =
                         tagNamesByNoteLocalUid[noteLocalUid];
 
-                    if (!tagNames.contains(tagName))
-                    {
+                    if (!tagNames.contains(tagName)) {
                         tagNames << tagName;
-                        QNTRACE("enml", "Added tag name " << tagName
-                            << " for note local uid " << noteLocalUid);
+                        QNTRACE(
+                            "enml",
+                            "Added tag name " << tagName
+                                              << " for note local uid "
+                                              << noteLocalUid);
                     }
 
                     continue;
@@ -2404,8 +2274,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("note-attributes"))
-            {
+            if (elementName == QStringLiteral("note-attributes")) {
                 if (insideNote) {
                     QNTRACE("enml", "Start of note attributes");
                     insideNoteAttributes = true;
@@ -2418,17 +2287,14 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("latitude"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("latitude")) {
+                if (insideNote) {
                     QString latitude = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     bool conversionResult = false;
                     double latitudeNum = latitude.toDouble(&conversionResult);
-                    if (Q_UNLIKELY(!conversionResult))
-                    {
+                    if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse latitude"));
                         errorDescription.details() = latitude;
@@ -2436,21 +2302,19 @@ bool ENMLConverterPrivate::importEnex(
                         return false;
                     }
 
-                    if (insideNoteAttributes)
-                    {
+                    if (insideNoteAttributes) {
                         auto & noteAttributes = currentNote.noteAttributes();
                         noteAttributes.latitude = latitudeNum;
                         QNTRACE("enml", "Set note latitude to " << latitudeNum);
                         continue;
                     }
-                    else if (insideResourceAttributes)
-                    {
+                    else if (insideResourceAttributes) {
                         auto & resourceAttributes =
                             currentResource.resourceAttributes();
 
                         resourceAttributes.latitude = latitudeNum;
-                        QNTRACE("enml", "Set resource latitude to "
-                            << latitudeNum);
+                        QNTRACE(
+                            "enml", "Set resource latitude to " << latitudeNum);
                         continue;
                     }
 
@@ -2467,15 +2331,13 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("longitude"))
-            {
-                QString longitude = reader.readElementText(
-                    QXmlStreamReader::SkipChildElements);
+            if (elementName == QStringLiteral("longitude")) {
+                QString longitude =
+                    reader.readElementText(QXmlStreamReader::SkipChildElements);
 
                 bool conversionResult = false;
                 double longitudeNum = longitude.toDouble(&conversionResult);
-                if (Q_UNLIKELY(!conversionResult))
-                {
+                if (Q_UNLIKELY(!conversionResult)) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Failed to parse longitude"));
                     errorDescription.details() = longitude;
@@ -2483,24 +2345,22 @@ bool ENMLConverterPrivate::importEnex(
                     return false;
                 }
 
-                if (insideNote)
-                {
-                    if (insideNoteAttributes)
-                    {
+                if (insideNote) {
+                    if (insideNoteAttributes) {
                         auto & noteAttributes = currentNote.noteAttributes();
                         noteAttributes.longitude = longitudeNum;
-                        QNTRACE("enml", "Set note longitude to "
-                            << longitudeNum);
+                        QNTRACE(
+                            "enml", "Set note longitude to " << longitudeNum);
                         continue;
                     }
-                    else if (insideResourceAttributes)
-                    {
+                    else if (insideResourceAttributes) {
                         auto & resourceAttributes =
                             currentResource.resourceAttributes();
 
                         resourceAttributes.longitude = longitudeNum;
-                        QNTRACE("enml", "Set resource longitude to "
-                            << longitudeNum);
+                        QNTRACE(
+                            "enml",
+                            "Set resource longitude to " << longitudeNum);
                         continue;
                     }
 
@@ -2517,14 +2377,12 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("altitude"))
-            {
-                QString altitude = reader.readElementText(
-                    QXmlStreamReader::SkipChildElements);
+            if (elementName == QStringLiteral("altitude")) {
+                QString altitude =
+                    reader.readElementText(QXmlStreamReader::SkipChildElements);
                 bool conversionResult = false;
                 double altitudeNum = altitude.toDouble(&conversionResult);
-                if (Q_UNLIKELY(!conversionResult))
-                {
+                if (Q_UNLIKELY(!conversionResult)) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Failed to parse altitude"));
                     errorDescription.details() = altitude;
@@ -2532,23 +2390,20 @@ bool ENMLConverterPrivate::importEnex(
                     return false;
                 }
 
-                if (insideNote)
-                {
-                    if (insideNoteAttributes)
-                    {
+                if (insideNote) {
+                    if (insideNoteAttributes) {
                         auto & noteAttributes = currentNote.noteAttributes();
                         noteAttributes.altitude = altitudeNum;
                         QNTRACE("enml", "Set note altitude to " << altitudeNum);
                         continue;
                     }
-                    else if (insideResourceAttributes)
-                    {
+                    else if (insideResourceAttributes) {
                         auto & resourceAttributes =
                             currentResource.resourceAttributes();
 
                         resourceAttributes.altitude = altitudeNum;
-                        QNTRACE("enml", "Set resource altitude to "
-                            << altitudeNum);
+                        QNTRACE(
+                            "enml", "Set resource altitude to " << altitudeNum);
                         continue;
                     }
 
@@ -2565,10 +2420,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("author"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("author")) {
+                if (insideNote && insideNoteAttributes) {
                     QString author = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -2587,10 +2440,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("source"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("source")) {
+                if (insideNote && insideNoteAttributes) {
                     QString source = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
                     auto & noteAttributes = currentNote.noteAttributes();
@@ -2606,28 +2457,24 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("source-url"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("source-url")) {
+                if (insideNote) {
                     QString sourceUrl = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
-                    if (insideNoteAttributes)
-                    {
+                    if (insideNoteAttributes) {
                         auto & noteAttributes = currentNote.noteAttributes();
                         noteAttributes.sourceURL = sourceUrl;
                         QNTRACE("enml", "Set note source url to " << sourceUrl);
                         continue;
                     }
-                    else if (insideResource && insideResourceAttributes)
-                    {
+                    else if (insideResource && insideResourceAttributes) {
                         auto & resourceAttributes =
                             currentResource.resourceAttributes();
 
                         resourceAttributes.sourceURL = sourceUrl;
-                        QNTRACE("enml", "Set resource source url to "
-                            << sourceUrl);
+                        QNTRACE(
+                            "enml", "Set resource source url to " << sourceUrl);
                         continue;
                     }
 
@@ -2644,17 +2491,16 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("source-application"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("source-application")) {
+                if (insideNote && insideNoteAttributes) {
                     QString sourceApplication = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     auto & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.sourceApplication = sourceApplication;
-                    QNTRACE("enml", "Set source application to "
-                        << sourceApplication);
+                    QNTRACE(
+                        "enml",
+                        "Set source application to " << sourceApplication);
                     continue;
                 }
 
@@ -2665,18 +2511,15 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("reminder-order"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("reminder-order")) {
+                if (insideNote && insideNoteAttributes) {
                     QString reminderOrder = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     bool conversionResult = false;
-                    qint64 reminderOrderNum = reminderOrder.toLongLong(
-                        &conversionResult);
-                    if (Q_UNLIKELY(!conversionResult))
-                    {
+                    qint64 reminderOrderNum =
+                        reminderOrder.toLongLong(&conversionResult);
+                    if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse reminder order"));
                         errorDescription.details() = reminderOrder;
@@ -2686,8 +2529,9 @@ bool ENMLConverterPrivate::importEnex(
 
                     auto & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.reminderOrder = reminderOrderNum;
-                    QNTRACE("enml", "Set the reminder order to "
-                        << reminderOrderNum);
+                    QNTRACE(
+                        "enml",
+                        "Set the reminder order to " << reminderOrderNum);
 
                     continue;
                 }
@@ -2699,19 +2543,15 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("reminder-time"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("reminder-time")) {
+                if (insideNote && insideNoteAttributes) {
                     QString reminderTimeString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     QDateTime reminderTimeDateTime = QDateTime::fromString(
-                        reminderTimeString,
-                        dateTimeFormat);
+                        reminderTimeString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!reminderTimeDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!reminderTimeDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the reminder time from "
                                        "string"));
@@ -2720,8 +2560,8 @@ bool ENMLConverterPrivate::importEnex(
                         return false;
                     }
 
-                    qint64 timestamp = timestampFromDateTime(
-                        reminderTimeDateTime);
+                    qint64 timestamp =
+                        timestampFromDateTime(reminderTimeDateTime);
 
                     qevercloud::NoteAttributes & noteAttributes =
                         currentNote.noteAttributes();
@@ -2739,19 +2579,15 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("subject-date"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("subject-date")) {
+                if (insideNote && insideNoteAttributes) {
                     QString subjectDateString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     QDateTime subjectDateTime = QDateTime::fromString(
-                        subjectDateString,
-                        dateTimeFormat);
+                        subjectDateString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!subjectDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!subjectDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the subject date from "
                                        "string"));
@@ -2776,19 +2612,15 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("reminder-done-time"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("reminder-done-time")) {
+                if (insideNote && insideNoteAttributes) {
                     QString reminderDoneTimeString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     QDateTime reminderDoneTimeDateTime = QDateTime::fromString(
-                        reminderDoneTimeString,
-                        dateTimeFormat);
+                        reminderDoneTimeString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!reminderDoneTimeDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!reminderDoneTimeDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the reminder done time "
                                        "from string"));
@@ -2797,8 +2629,8 @@ bool ENMLConverterPrivate::importEnex(
                         return false;
                     }
 
-                    qint64 timestamp = timestampFromDateTime(
-                        reminderDoneTimeDateTime);
+                    qint64 timestamp =
+                        timestampFromDateTime(reminderDoneTimeDateTime);
 
                     auto & noteAttributes = currentNote.noteAttributes();
                     noteAttributes.reminderDoneTime = timestamp;
@@ -2814,10 +2646,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("place-name"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("place-name")) {
+                if (insideNote && insideNoteAttributes) {
                     QString placeName = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -2834,10 +2664,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("content-class"))
-            {
-                if (insideNote && insideNoteAttributes)
-                {
+            if (elementName == QStringLiteral("content-class")) {
+                if (insideNote && insideNoteAttributes) {
                     QString contentClass = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -2854,20 +2682,17 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("application-data"))
-            {
-                if (insideNote)
-                {
+            if (elementName == QStringLiteral("application-data")) {
+                if (insideNote) {
                     QXmlStreamAttributes appDataAttributes =
                         reader.attributes();
 
-                    if (insideNoteAttributes)
-                    {
+                    if (insideNoteAttributes) {
                         if (appDataAttributes.hasAttribute(
-                                QStringLiteral("key")))
-                        {
-                            QString key = appDataAttributes.value(
-                                QStringLiteral("key")).toString();
+                                QStringLiteral("key"))) {
+                            QString key =
+                                appDataAttributes.value(QStringLiteral("key"))
+                                    .toString();
 
                             QString value = reader.readElementText(
                                 QXmlStreamReader::SkipChildElements);
@@ -2892,13 +2717,15 @@ bool ENMLConverterPrivate::importEnex(
                             Q_UNUSED(appData->keysOnly.ref().insert(key));
                             appData->fullMap.ref()[key] = value;
 
-                            QNTRACE("enml", "Inserted note application data "
-                                << "entry: " << "key = " << key << ", value = "
-                                << value);
+                            QNTRACE(
+                                "enml",
+                                "Inserted note application data "
+                                    << "entry: "
+                                    << "key = " << key
+                                    << ", value = " << value);
                             continue;
                         }
-                        else
-                        {
+                        else {
                             errorDescription.setBase(
                                 QT_TR_NOOP("Failed to parse application-data "
                                            "tag for note: no key attribute"));
@@ -2906,13 +2733,12 @@ bool ENMLConverterPrivate::importEnex(
                             return false;
                         }
                     }
-                    else if (insideResourceAttributes)
-                    {
+                    else if (insideResourceAttributes) {
                         if (appDataAttributes.hasAttribute(
-                                QStringLiteral("key")))
-                        {
-                            QString key = appDataAttributes.value(
-                                QStringLiteral("key")).toString();
+                                QStringLiteral("key"))) {
+                            QString key =
+                                appDataAttributes.value(QStringLiteral("key"))
+                                    .toString();
 
                             QString value = reader.readElementText(
                                 QXmlStreamReader::SkipChildElements);
@@ -2937,13 +2763,14 @@ bool ENMLConverterPrivate::importEnex(
                             Q_UNUSED(appData->keysOnly.ref().insert(key));
                             appData->fullMap.ref()[key] = value;
 
-                            QNTRACE("enml", "Inserted resource application "
-                                << "data entry: key = " << key << ", value = "
-                                << value);
+                            QNTRACE(
+                                "enml",
+                                "Inserted resource application "
+                                    << "data entry: key = " << key
+                                    << ", value = " << value);
                             continue;
                         }
-                        else
-                        {
+                        else {
                             errorDescription.setBase(
                                 QT_TR_NOOP("Failed to parse application-data "
                                            "tag for resource: no key "
@@ -2968,8 +2795,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("resource"))
-            {
+            if (elementName == QStringLiteral("resource")) {
                 QNTRACE("enml", "Start of resource tag");
                 insideResource = true;
 
@@ -2983,8 +2809,7 @@ bool ENMLConverterPrivate::importEnex(
                 continue;
             }
 
-            if (elementName == QStringLiteral("data"))
-            {
+            if (elementName == QStringLiteral("data")) {
                 if (insideResource) {
                     QNTRACE("enml", "Start of resource data");
                     insideResourceData = true;
@@ -2997,10 +2822,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("mime"))
-            {
-                if (insideResource)
-                {
+            if (elementName == QStringLiteral("mime")) {
+                if (insideResource) {
                     QString mime = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -3015,17 +2838,14 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("width"))
-            {
-                if (insideResource)
-                {
+            if (elementName == QStringLiteral("width")) {
+                if (insideResource) {
                     QString width = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     bool conversionResult = false;
                     qint16 widthNum = width.toShort(&conversionResult);
-                    if (Q_UNLIKELY(!conversionResult))
-                    {
+                    if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse resource width "
                                        "from string"));
@@ -3045,17 +2865,14 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("height"))
-            {
-                if (insideResource)
-                {
+            if (elementName == QStringLiteral("height")) {
+                if (insideResource) {
                     QString height = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     bool conversionResult = false;
                     qint16 heightNum = height.toShort(&conversionResult);
-                    if (Q_UNLIKELY(!conversionResult))
-                    {
+                    if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse resource height from "
                                        "string"));
@@ -3075,8 +2892,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("recognition"))
-            {
+            if (elementName == QStringLiteral("recognition")) {
                 if (insideResource) {
                     QNTRACE("enml", "Start of resource recognition data");
                     insideResourceRecognitionData = true;
@@ -3089,8 +2905,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("resource-attributes"))
-            {
+            if (elementName == QStringLiteral("resource-attributes")) {
                 if (insideResource) {
                     QNTRACE("enml", "Start of resource attributes");
                     insideResourceAttributes = true;
@@ -3104,19 +2919,15 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("timestamp"))
-            {
-                if (insideResource && insideResourceAttributes)
-                {
+            if (elementName == QStringLiteral("timestamp")) {
+                if (insideResource && insideResourceAttributes) {
                     QString timestampString = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
-                    QDateTime timestampDateTime = QDateTime::fromString(
-                        timestampString,
-                        dateTimeFormat);
+                    QDateTime timestampDateTime =
+                        QDateTime::fromString(timestampString, dateTimeFormat);
 
-                    if (Q_UNLIKELY(!timestampDateTime.isValid()))
-                    {
+                    if (Q_UNLIKELY(!timestampDateTime.isValid())) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse the resource timestamp "
                                        "from string"));
@@ -3143,10 +2954,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("camera-make"))
-            {
-                if (insideResource && insideResourceAttributes)
-                {
+            if (elementName == QStringLiteral("camera-make")) {
+                if (insideResource && insideResourceAttributes) {
                     QString cameraMake = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -3165,10 +2974,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("reco-type"))
-            {
-                if (insideResource && insideResourceAttributes)
-                {
+            if (elementName == QStringLiteral("reco-type")) {
+                if (insideResource && insideResourceAttributes) {
                     QString recoType = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -3187,10 +2994,8 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("file-name"))
-            {
-                if (insideResource && insideResourceAttributes)
-                {
+            if (elementName == QStringLiteral("file-name")) {
+                if (insideResource && insideResourceAttributes) {
                     QString fileName = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
@@ -3209,28 +3014,23 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("attachment"))
-            {
-                if (insideResource && insideResourceAttributes)
-                {
+            if (elementName == QStringLiteral("attachment")) {
+                if (insideResource && insideResourceAttributes) {
                     QString attachment = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     auto & resourceAttributes =
                         currentResource.resourceAttributes();
 
-                    if (attachment == QStringLiteral("true"))
-                    {
+                    if (attachment == QStringLiteral("true")) {
                         resourceAttributes.attachment = true;
                         QNTRACE("enml", "Set attachment to true");
                     }
-                    else if (attachment == QStringLiteral("false"))
-                    {
+                    else if (attachment == QStringLiteral("false")) {
                         resourceAttributes.attachment = false;
                         QNTRACE("enml", "Set attachment to false");
                     }
-                    else
-                    {
+                    else {
                         errorDescription.setBase(
                             QT_TR_NOOP("Detected attachment tag with "
                                        "wrong value, must be true or false"));
@@ -3248,8 +3048,7 @@ bool ENMLConverterPrivate::importEnex(
                 return false;
             }
 
-            if (elementName == QStringLiteral("alternate-data"))
-            {
+            if (elementName == QStringLiteral("alternate-data")) {
                 if (insideResource) {
                     QNTRACE("enml", "Start of resource alternate data");
                     insideResourceAlternateData = true;
@@ -3264,29 +3063,24 @@ bool ENMLConverterPrivate::importEnex(
             }
         }
 
-        if (reader.isCharacters())
-        {
-            if (insideNote)
-            {
+        if (reader.isCharacters()) {
+            if (insideNote) {
                 if (insideNoteContent && reader.isCDATA()) {
                     currentNoteContent = reader.text().toString();
-                    QNTRACE("enml", "Current note content: "
-                        << currentNoteContent);
+                    QNTRACE(
+                        "enml", "Current note content: " << currentNoteContent);
                     continue;
                 }
 
-                if (insideResource)
-                {
-                    if (insideResourceData)
-                    {
+                if (insideResource) {
+                    if (insideResourceData) {
                         currentResourceData = QByteArray::fromBase64(
                             reader.text().toString().toLocal8Bit());
                         QNTRACE("enml", "Read resource data");
                         continue;
                     }
 
-                    if (insideResourceRecognitionData)
-                    {
+                    if (insideResourceRecognitionData) {
                         currentResourceRecognitionData =
                             reader.text().toString().toUtf8();
                         QNTRACE("enml", "Read resource recognition data");
@@ -3295,13 +3089,13 @@ bool ENMLConverterPrivate::importEnex(
                         bool res = validateRecoIndex(
                             QString::fromUtf8(currentResourceRecognitionData),
                             error);
-                        if (Q_UNLIKELY(!res))
-                        {
+                        if (Q_UNLIKELY(!res)) {
                             errorDescription.setBase(
                                 QT_TR_NOOP("Resource recognition index is "
                                            "invalid"));
                             errorDescription.appendBase(error.base());
-                            errorDescription.appendBase(error.additionalBases());
+                            errorDescription.appendBase(
+                                error.additionalBases());
                             errorDescription.details() = error.details();
                             QNWARNING("enml", errorDescription);
                             return false;
@@ -3310,8 +3104,7 @@ bool ENMLConverterPrivate::importEnex(
                         continue;
                     }
 
-                    if (insideResourceAlternateData)
-                    {
+                    if (insideResourceAlternateData) {
                         currentResourceAlternateData = QByteArray::fromBase64(
                             reader.text().toString().toLocal8Bit());
                         QNTRACE("enml", "Read resource alternate data");
@@ -3321,12 +3114,10 @@ bool ENMLConverterPrivate::importEnex(
             }
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             QStringRef elementName = reader.name();
 
-            if (elementName == QStringLiteral("content"))
-            {
+            if (elementName == QStringLiteral("content")) {
                 QNTRACE("enml", "End of note content: " << currentNoteContent);
                 currentNote.setContent(currentNoteContent);
                 insideNoteContent = false;
@@ -3345,32 +3136,26 @@ bool ENMLConverterPrivate::importEnex(
                 continue;
             }
 
-            if (elementName == QStringLiteral("data"))
-            {
+            if (elementName == QStringLiteral("data")) {
                 QNTRACE("enml", "End of resource data");
                 currentResource.setDataBody(currentResourceData);
 
-                currentResource.setDataHash(
-                    QCryptographicHash::hash(
-                        currentResourceData,
-                        QCryptographicHash::Md5));
+                currentResource.setDataHash(QCryptographicHash::hash(
+                    currentResourceData, QCryptographicHash::Md5));
 
                 currentResource.setDataSize(currentResourceData.size());
                 insideResourceData = false;
                 continue;
             }
 
-            if (elementName == QStringLiteral("recognition"))
-            {
+            if (elementName == QStringLiteral("recognition")) {
                 QNTRACE("enml", "End of resource recognition data");
 
                 currentResource.setRecognitionDataBody(
                     currentResourceRecognitionData);
 
-                currentResource.setRecognitionDataHash(
-                    QCryptographicHash::hash(
-                        currentResourceRecognitionData,
-                        QCryptographicHash::Md5));
+                currentResource.setRecognitionDataHash(QCryptographicHash::hash(
+                    currentResourceRecognitionData, QCryptographicHash::Md5));
 
                 currentResource.setRecognitionDataSize(
                     currentResourceRecognitionData.size());
@@ -3379,17 +3164,14 @@ bool ENMLConverterPrivate::importEnex(
                 continue;
             }
 
-            if (elementName == QStringLiteral("alternate-data"))
-            {
+            if (elementName == QStringLiteral("alternate-data")) {
                 QNTRACE("enml", "End of resource alternate data");
 
                 currentResource.setAlternateDataBody(
                     currentResourceAlternateData);
 
-                currentResource.setAlternateDataHash(
-                    QCryptographicHash::hash(
-                        currentResourceAlternateData,
-                        QCryptographicHash::Md5));
+                currentResource.setAlternateDataHash(QCryptographicHash::hash(
+                    currentResourceAlternateData, QCryptographicHash::Md5));
 
                 currentResource.setAlternateDataSize(
                     currentResourceAlternateData.size());
@@ -3398,45 +3180,44 @@ bool ENMLConverterPrivate::importEnex(
                 continue;
             }
 
-            if (elementName == QStringLiteral("resource"))
-            {
+            if (elementName == QStringLiteral("resource")) {
                 QNTRACE("enml", "End of resource");
 
-                if (Q_UNLIKELY(!currentResource.hasDataBody()))
-                {
+                if (Q_UNLIKELY(!currentResource.hasDataBody())) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Parsed resource without a data body"));
-                    QNWARNING("enml", errorDescription << ", resource: "
-                        << currentResource);
+                    QNWARNING(
+                        "enml",
+                        errorDescription << ", resource: " << currentResource);
                     return false;
                 }
 
-                if (Q_UNLIKELY(!currentResource.hasDataHash()))
-                {
+                if (Q_UNLIKELY(!currentResource.hasDataHash())) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Internal error: data hash is not computed "
                                    "for the resource"));
-                    QNWARNING("enml", errorDescription << ", resource: "
-                        << currentResource);
+                    QNWARNING(
+                        "enml",
+                        errorDescription << ", resource: " << currentResource);
                     return false;
                 }
 
-                if (Q_UNLIKELY(!currentResource.hasDataSize()))
-                {
+                if (Q_UNLIKELY(!currentResource.hasDataSize())) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Internal error: data size is not computed "
                                    "for the resource"));
-                    QNWARNING("enml", errorDescription << ", resource: "
-                        << currentResource);
+                    QNWARNING(
+                        "enml",
+                        errorDescription << ", resource: " << currentResource);
                     return false;
                 }
 
-                if (Q_UNLIKELY(!currentResource.hasMime()))
-                {
+                if (Q_UNLIKELY(!currentResource.hasMime())) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Parsed resource without a mime type"));
-                    QNWARNING("enml", errorDescription << ", resource: "
-                        << currentResource);
+                    QNWARNING(
+                        "enml",
+                        errorDescription << ", resource: " << currentResource);
                     return false;
                 }
 
@@ -3515,18 +3296,19 @@ void ENMLConverterPrivate::toDoTagsToHtml(
 
     QXmlStreamAttributes originalAttributes = reader.attributes();
     bool checked = false;
-    if (originalAttributes.hasAttribute(QStringLiteral("checked")))
-    {
-        QStringRef checkedStr = originalAttributes.value(
-            QStringLiteral("checked"));
+    if (originalAttributes.hasAttribute(QStringLiteral("checked"))) {
+        QStringRef checkedStr =
+            originalAttributes.value(QStringLiteral("checked"));
 
         if (checkedStr == QStringLiteral("true")) {
             checked = true;
         }
     }
 
-    QNTRACE("enml", "Converting "
-        << (checked ? "completed" : "not yet completed") << " ToDo item");
+    QNTRACE(
+        "enml",
+        "Converting " << (checked ? "completed" : "not yet completed")
+                      << " ToDo item");
 
     writer.writeStartElement(QStringLiteral("img"));
 
@@ -3534,39 +3316,36 @@ void ENMLConverterPrivate::toDoTagsToHtml(
     attributes.append(
         QStringLiteral("src"),
         QStringLiteral("qrc:/checkbox_icons/checkbox_") +
-        (checked
-         ? QStringLiteral("yes")
-         : QStringLiteral("no")) + QStringLiteral(".png"));
+            (checked ? QStringLiteral("yes") : QStringLiteral("no")) +
+            QStringLiteral(".png"));
 
     attributes.append(
         QStringLiteral("class"),
         QStringLiteral("checkbox_") +
-        (checked
-         ? QStringLiteral("checked")
-         : QStringLiteral("unchecked")));
+            (checked ? QStringLiteral("checked")
+                     : QStringLiteral("unchecked")));
+
+    attributes.append(QStringLiteral("en-tag"), QStringLiteral("en-todo"));
 
     attributes.append(
-        QStringLiteral("en-tag"),
-        QStringLiteral("en-todo"));
-
-    attributes.append(
-        QStringLiteral("en-todo-id"),
-        QString::number(enToDoIndex));
+        QStringLiteral("en-todo-id"), QString::number(enToDoIndex));
 
     writer.writeAttributes(attributes);
 }
 
 bool ENMLConverterPrivate::encryptedTextToHtml(
     const QXmlStreamAttributes & enCryptAttributes,
-    const QStringRef & encryptedTextCharacters,
-    const quint64 enCryptIndex, const quint64 enDecryptedIndex,
-    QXmlStreamWriter & writer, DecryptedTextManager & decryptedTextManager,
+    const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
+    const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
+    DecryptedTextManager & decryptedTextManager,
     bool & convertedToEnCryptNode) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::encryptedTextToHtml: "
-        << "encrypted text = " << encryptedTextCharacters
-        << ", en-crypt index = " << enCryptIndex
-        << ", en-decrypted index = " << enDecryptedIndex);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::encryptedTextToHtml: "
+            << "encrypted text = " << encryptedTextCharacters
+            << ", en-crypt index = " << enCryptIndex
+            << ", en-decrypted index = " << enDecryptedIndex);
 
     QString cipher;
     if (enCryptAttributes.hasAttribute(QStringLiteral("cipher"))) {
@@ -3587,36 +3366,32 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
     bool rememberForSession = false;
     bool foundDecryptedText =
         decryptedTextManager.findDecryptedTextByEncryptedText(
-            encryptedTextCharacters.toString(),
-            decryptedText,
+            encryptedTextCharacters.toString(), decryptedText,
             rememberForSession);
 
-    if (foundDecryptedText)
-    {
-        QNTRACE("enml", "Found encrypted text which has already been "
-            << "decrypted and cached; encrypted text = "
-            << encryptedTextCharacters);
+    if (foundDecryptedText) {
+        QNTRACE(
+            "enml",
+            "Found encrypted text which has already been "
+                << "decrypted and cached; encrypted text = "
+                << encryptedTextCharacters);
 
         size_t keyLength = 0;
-        if (!length.isEmpty())
-        {
+        if (!length.isEmpty()) {
             bool conversionResult = false;
             keyLength = static_cast<size_t>(length.toUInt(&conversionResult));
             if (!conversionResult) {
-                QNWARNING("enml", "Can't convert encryption key length "
-                    << "from string to unsigned integer: " << length);
+                QNWARNING(
+                    "enml",
+                    "Can't convert encryption key length "
+                        << "from string to unsigned integer: " << length);
                 keyLength = 0;
             }
         }
 
         decryptedTextHtml(
-            decryptedText,
-            encryptedTextCharacters.toString(),
-            hint,
-            cipher,
-            keyLength,
-            enDecryptedIndex,
-            writer);
+            decryptedText, encryptedTextCharacters.toString(), hint, cipher,
+            keyLength, enDecryptedIndex, writer);
 
         convertedToEnCryptNode = false;
         return true;
@@ -3637,8 +3412,7 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
     writer.writeAttribute(QStringLiteral("en-tag"), QStringLiteral("en-crypt"));
 
     writer.writeAttribute(
-        QStringLiteral("class"),
-        QStringLiteral("en-crypt hvr-border-color"));
+        QStringLiteral("class"), QStringLiteral("en-crypt hvr-border-color"));
 
     if (!hint.isEmpty()) {
         writer.writeAttribute(QStringLiteral("hint"), hint);
@@ -3653,13 +3427,11 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
     }
 
     writer.writeAttribute(
-        QStringLiteral("encrypted_text"),
-        encryptedTextCharacters.toString());
+        QStringLiteral("encrypted_text"), encryptedTextCharacters.toString());
     QNTRACE("enml", "Wrote element corresponding to en-crypt ENML tag");
 
     writer.writeAttribute(
-        QStringLiteral("en-crypt-id"),
-        QString::number(enCryptIndex));
+        QStringLiteral("en-crypt-id"), QString::number(enCryptIndex));
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     // Required for webkit, otherwise it can't seem to handle
@@ -3672,13 +3444,12 @@ bool ENMLConverterPrivate::encryptedTextToHtml(
 }
 
 bool ENMLConverterPrivate::resourceInfoToHtml(
-    const QXmlStreamAttributes & attributes,
-    QXmlStreamWriter & writer, ErrorString & errorDescription)
+    const QXmlStreamAttributes & attributes, QXmlStreamWriter & writer,
+    ErrorString & errorDescription)
 {
     QNDEBUG("enml", "ENMLConverterPrivate::resourceInfoToHtml");
 
-    if (!attributes.hasAttribute(QStringLiteral("hash")))
-    {
+    if (!attributes.hasAttribute(QStringLiteral("hash"))) {
         errorDescription.setBase(
             QT_TR_NOOP("Detected incorrect en-media tag missing hash "
                        "attribute"));
@@ -3686,8 +3457,7 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
         return false;
     }
 
-    if (!attributes.hasAttribute(QStringLiteral("type")))
-    {
+    if (!attributes.hasAttribute(QStringLiteral("type"))) {
         errorDescription.setBase(
             QT_TR_NOOP("Detected incorrect en-media tag missing type "
                        "attribute"));
@@ -3697,8 +3467,7 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
 
     QStringRef mimeType = attributes.value(QStringLiteral("type"));
     bool inlineImage = false;
-    if (mimeType.startsWith(QStringLiteral("image"), Qt::CaseInsensitive))
-    {
+    if (mimeType.startsWith(QStringLiteral("image"), Qt::CaseInsensitive)) {
         // TODO: consider some proper high-level interface for making it
         // possible to customize ENML <--> HTML conversion
         inlineImage = true;
@@ -3706,9 +3475,7 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
     writer.writeStartElement(
-        inlineImage
-        ? QStringLiteral("img")
-        : QStringLiteral("object"));
+        inlineImage ? QStringLiteral("img") : QStringLiteral("object"));
 #else
     writer.writeStartElement(QStringLiteral("img"));
 #endif
@@ -3720,15 +3487,12 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
 
     writer.writeAttribute(QStringLiteral("en-tag"), QStringLiteral("en-media"));
 
-    if (inlineImage)
-    {
+    if (inlineImage) {
         writer.writeAttributes(attributes);
         writer.writeAttribute(
-            QStringLiteral("class"),
-            QStringLiteral("en-media-image"));
+            QStringLiteral("class"), QStringLiteral("en-media-image"));
     }
-    else
-    {
+    else {
         writer.writeAttribute(
             QStringLiteral("class"),
             QStringLiteral("en-media-generic hvr-border-color"));
@@ -3739,8 +3503,7 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
             QStringLiteral("application/vnd.quentier.resource"));
 
         const int numAttributes = attributes.size();
-        for(int i = 0; i < numAttributes; ++i)
-        {
+        for (int i = 0; i < numAttributes; ++i) {
             const QXmlStreamAttribute & attribute = attributes[i];
             const QString qualifiedName = attribute.qualifiedName().toString();
             if (qualifiedName == QStringLiteral("en-tag")) {
@@ -3749,14 +3512,11 @@ bool ENMLConverterPrivate::resourceInfoToHtml(
 
             const QString value = attribute.value().toString();
 
-            if (qualifiedName == QStringLiteral("type"))
-            {
+            if (qualifiedName == QStringLiteral("type")) {
                 writer.writeAttribute(
-                    QStringLiteral("resource-mime-type"),
-                    value);
+                    QStringLiteral("resource-mime-type"), value);
             }
-            else
-            {
+            else {
                 writer.writeAttribute(qualifiedName, value);
             }
         }
@@ -3784,8 +3544,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
     QNDEBUG("enml", "ENMLConverterPrivate::decryptedTextToEnml");
 
     const QXmlStreamAttributes attributes = reader.attributes();
-    if (!attributes.hasAttribute(QStringLiteral("encrypted_text")))
-    {
+    if (!attributes.hasAttribute(QStringLiteral("encrypted_text"))) {
         errorDescription.setBase(
             QT_TR_NOOP("Missing encrypted text attribute "
                        "within en-decrypted div tag"));
@@ -3793,18 +3552,15 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
         return false;
     }
 
-    QString encryptedText = attributes.value(
-        QStringLiteral("encrypted_text")).toString();
+    QString encryptedText =
+        attributes.value(QStringLiteral("encrypted_text")).toString();
 
     QString storedDecryptedText;
     bool rememberForSession = false;
     bool res = decryptedTextManager.findDecryptedTextByEncryptedText(
-        encryptedText,
-        storedDecryptedText,
-        rememberForSession);
+        encryptedText, storedDecryptedText, rememberForSession);
 
-    if (!res)
-    {
+    if (!res) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't find the decrypted text by its encrypted text"));
         QNWARNING("enml", errorDescription);
@@ -3815,8 +3571,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
     QXmlStreamWriter decryptedTextWriter(&actualDecryptedText);
 
     int nestedElementsCounter = 0;
-    while(!reader.atEnd())
-    {
+    while (!reader.atEnd()) {
         reader.readNext();
 
         if (reader.isStartElement()) {
@@ -3829,8 +3584,7 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
             decryptedTextWriter.writeCharacters(reader.text().toString());
         }
 
-        if (reader.isEndElement())
-        {
+        if (reader.isEndElement()) {
             if (nestedElementsCounter > 0) {
                 decryptedTextWriter.writeEndElement();
                 --nestedElementsCounter;
@@ -3841,29 +3595,29 @@ bool ENMLConverterPrivate::decryptedTextToEnml(
         }
     }
 
-    if (reader.hasError())
-    {
+    if (reader.hasError()) {
         errorDescription.setBase(QT_TR_NOOP("Text decryption failed"));
         errorDescription.details() = reader.errorString();
-        QNWARNING("enml", "Couldn't read the nested contents of en-decrypted "
-            << "div, reader has error: " << errorDescription);
+        QNWARNING(
+            "enml",
+            "Couldn't read the nested contents of en-decrypted "
+                << "div, reader has error: " << errorDescription);
         return false;
     }
 
-    if (storedDecryptedText != actualDecryptedText)
-    {
+    if (storedDecryptedText != actualDecryptedText) {
         QNTRACE("enml", "Found modified decrypted text, need to re-encrypt");
 
         QString actualEncryptedText;
         res = decryptedTextManager.modifyDecryptedText(
-            encryptedText,
-            actualDecryptedText,
-            actualEncryptedText);
+            encryptedText, actualDecryptedText, actualEncryptedText);
 
         if (res) {
-            QNTRACE("enml", "Re-evaluated the modified decrypted text's "
-                << "encrypted text; was: " << encryptedText
-                << "; new: " << actualEncryptedText);
+            QNTRACE(
+                "enml",
+                "Re-evaluated the modified decrypted text's "
+                    << "encrypted text; was: " << encryptedText
+                    << "; new: " << actualEncryptedText);
             encryptedText = actualEncryptedText;
         }
     }
@@ -3906,14 +3660,12 @@ void ENMLConverterPrivate::decryptedTextHtml(
     writer.writeStartElement(QStringLiteral("div"));
 
     writer.writeAttribute(
-        QStringLiteral("en-tag"),
-        QStringLiteral("en-decrypted"));
+        QStringLiteral("en-tag"), QStringLiteral("en-decrypted"));
 
     writer.writeAttribute(QStringLiteral("encrypted_text"), encryptedText);
 
     writer.writeAttribute(
-        QStringLiteral("en-decrypted-id"),
-        QString::number(enDecryptedIndex));
+        QStringLiteral("en-decrypted-id"), QString::number(enDecryptedIndex));
 
     writer.writeAttribute(
         QStringLiteral("class"),
@@ -3925,8 +3677,7 @@ void ENMLConverterPrivate::decryptedTextHtml(
 
     if (keyLength != 0) {
         writer.writeAttribute(
-            QStringLiteral("length"),
-            QString::number(keyLength));
+            QStringLiteral("length"), QString::number(keyLength));
     }
 
     if (!hint.isEmpty()) {
@@ -3946,12 +3697,10 @@ void ENMLConverterPrivate::decryptedTextHtml(
     QXmlStreamReader decryptedTextReader(formattedDecryptedText);
     bool foundFormattedText = false;
 
-    while(!decryptedTextReader.atEnd())
-    {
+    while (!decryptedTextReader.atEnd()) {
         Q_UNUSED(decryptedTextReader.readNext());
 
-        if (decryptedTextReader.isStartElement())
-        {
+        if (decryptedTextReader.isStartElement()) {
             const auto attributes = decryptedTextReader.attributes();
             if (attributes.hasAttribute(QStringLiteral("id")) &&
                 (attributes.value(QStringLiteral("id")) ==
@@ -3964,20 +3713,22 @@ void ENMLConverterPrivate::decryptedTextHtml(
             writer.writeStartElement(decryptedTextReader.name().toString());
             writer.writeAttributes(attributes);
             foundFormattedText = true;
-            QNTRACE("enml", "Wrote start element from decrypted text: "
-                << decryptedTextReader.name());
+            QNTRACE(
+                "enml",
+                "Wrote start element from decrypted text: "
+                    << decryptedTextReader.name());
         }
 
-        if (decryptedTextReader.isCharacters())
-        {
+        if (decryptedTextReader.isCharacters()) {
             writer.writeCharacters(decryptedTextReader.text().toString());
             foundFormattedText = true;
-            QNTRACE("enml", "Wrote characters from decrypted text: "
-                << decryptedTextReader.text());
+            QNTRACE(
+                "enml",
+                "Wrote characters from decrypted text: "
+                    << decryptedTextReader.text());
         }
 
-        if (decryptedTextReader.isEndElement())
-        {
+        if (decryptedTextReader.isEndElement()) {
             const auto attributes = decryptedTextReader.attributes();
             if (attributes.hasAttribute(QStringLiteral("id")) &&
                 (attributes.value(QStringLiteral("id")) ==
@@ -3988,14 +3739,18 @@ void ENMLConverterPrivate::decryptedTextHtml(
             }
 
             writer.writeEndElement();
-            QNTRACE("enml", "Wrote end element from decrypted text: "
-                << decryptedTextReader.name());
+            QNTRACE(
+                "enml",
+                "Wrote end element from decrypted text: "
+                    << decryptedTextReader.name());
         }
     }
 
     if (decryptedTextReader.hasError()) {
-        QNWARNING("enml", "Decrypted text reader has error: "
-            << decryptedTextReader.errorString());
+        QNWARNING(
+            "enml",
+            "Decrypted text reader has error: "
+                << decryptedTextReader.errorString());
     }
 
     if (!foundFormattedText) {
@@ -4010,40 +3765,35 @@ bool ENMLConverterPrivate::validateEnex(
     QNDEBUG("enml", "ENMLConverterPrivate::validateEnex");
 
     return validateAgainstDtd(
-        enex,
-        QStringLiteral(":/evernote-export3.dtd"),
-        errorDescription);
+        enex, QStringLiteral(":/evernote-export3.dtd"), errorDescription);
 }
 
 bool ENMLConverterPrivate::validateRecoIndex(
-    const QString & recoIndex,
-    ErrorString & errorDescription) const
+    const QString & recoIndex, ErrorString & errorDescription) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::validateRecoIndex: reco index = "
-        << recoIndex);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::validateRecoIndex: reco index = " << recoIndex);
 
     return validateAgainstDtd(
-        recoIndex,
-        QStringLiteral(":/recoIndex.dtd"),
-        errorDescription);
+        recoIndex, QStringLiteral(":/recoIndex.dtd"), errorDescription);
 }
 
 bool ENMLConverterPrivate::validateAgainstDtd(
     const QString & input, const QString & dtdFilePath,
     ErrorString & errorDescription) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::validateAgainstDtd: dtd file "
-        << dtdFilePath);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::validateAgainstDtd: dtd file " << dtdFilePath);
 
     errorDescription.clear();
 
     QByteArray inputBuffer = input.toUtf8();
-    xmlDocPtr pDoc = xmlParseMemory(
-        inputBuffer.constData(),
-        inputBuffer.size());
+    xmlDocPtr pDoc =
+        xmlParseMemory(inputBuffer.constData(), inputBuffer.size());
 
-    if (!pDoc)
-    {
+    if (!pDoc) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't "
                        "parse the input into xml doc"));
@@ -4052,13 +3802,14 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     }
 
     QFile dtdFile(dtdFilePath);
-    if (!dtdFile.open(QIODevice::ReadOnly))
-    {
+    if (!dtdFile.open(QIODevice::ReadOnly)) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't "
                        "open the resource file with DTD"));
-        QNWARNING("enml", errorDescription << ": input = " << input
-            << ", DTD file path = " << dtdFilePath);
+        QNWARNING(
+            "enml",
+            errorDescription << ": input = " << input
+                             << ", DTD file path = " << dtdFilePath);
         xmlFreeDoc(pDoc);
         return false;
     }
@@ -4066,11 +3817,8 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     QByteArray dtdRawData = dtdFile.readAll();
 
     xmlParserInputBufferPtr pBuf = xmlParserInputBufferCreateMem(
-        dtdRawData.constData(),
-        dtdRawData.size(),
-        XML_CHAR_ENCODING_NONE);
-    if (!pBuf)
-    {
+        dtdRawData.constData(), dtdRawData.size(), XML_CHAR_ENCODING_NONE);
+    if (!pBuf) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't allocate the input "
                        "buffer for dtd validation"));
@@ -4080,8 +3828,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     }
 
     xmlDtdPtr pDtd = xmlIOParseDTD(NULL, pBuf, XML_CHAR_ENCODING_NONE);
-    if (!pDtd)
-    {
+    if (!pDtd) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, failed to parse DTD"));
         QNWARNING("enml", errorDescription);
@@ -4091,8 +3838,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     }
 
     xmlParserCtxtPtr pContext = xmlNewParserCtxt();
-    if (!pContext)
-    {
+    if (!pContext) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't allocate parser "
                        "context"));
@@ -4114,8 +3860,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     // should not attempt to free it manually
     xmlFreeDoc(pDoc);
 
-    if (!res)
-    {
+    if (!res) {
         errorDescription.setBase(QT_TR_NOOP("Document is invalid"));
 
         if (!errorString.isEmpty()) {
@@ -4146,8 +3891,10 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
     const QString & elementName, const QXmlStreamAttributes & attributes,
     const QVector<SkipHtmlElementRule> & skipRules) const
 {
-    QNDEBUG("enml", "ENMLConverterPrivate::shouldSkipElement: element name = "
-        << elementName << ", attributes = " << attributes);
+    QNDEBUG(
+        "enml",
+        "ENMLConverterPrivate::shouldSkipElement: element name = "
+            << elementName << ", attributes = " << attributes);
 
     if (skipRules.isEmpty()) {
         return ShouldSkipElementResult::ShouldNotSkip;
@@ -4157,8 +3904,7 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
     flags |= ShouldSkipElementResult::ShouldNotSkip;
 
 #define CHECK_IF_SHOULD_SKIP()                                                 \
-    if (shouldSkip)                                                            \
-    {                                                                          \
+    if (shouldSkip) {                                                          \
         if (rule.m_includeElementContents) {                                   \
             flags |= ShouldSkipElementResult::SkipButPreserveContents;         \
         }                                                                      \
@@ -4166,22 +3912,19 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
             return ShouldSkipElementResult::SkipWithContents;                  \
         }                                                                      \
     }                                                                          \
-// CHECK_IF_SHOULD_SKIP
+    // CHECK_IF_SHOULD_SKIP
 
     const int numAttributes = attributes.size();
 
     const int numSkipRules = skipRules.size();
-    for(int i = 0; i < numSkipRules; ++i)
-    {
+    for (int i = 0; i < numSkipRules; ++i) {
         const SkipHtmlElementRule & rule = skipRules[i];
 
-        if (!rule.m_elementNameToSkip.isEmpty())
-        {
+        if (!rule.m_elementNameToSkip.isEmpty()) {
             bool shouldSkip = false;
 
-            switch(rule.m_elementNameComparisonRule)
-            {
-            case SkipHtmlElementRule::Equals:
+            switch (rule.m_elementNameComparisonRule) {
+            case SkipHtmlElementRule::ComparisonRule::Equals:
             {
                 if (rule.m_elementNameCaseSensitivity == Qt::CaseSensitive) {
                     shouldSkip = (elementName == rule.m_elementNameToSkip);
@@ -4193,74 +3936,73 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
                 }
                 break;
             }
-            case SkipHtmlElementRule::StartsWith:
+            case SkipHtmlElementRule::ComparisonRule::StartsWith:
                 shouldSkip = elementName.startsWith(
                     rule.m_elementNameToSkip,
                     rule.m_elementNameCaseSensitivity);
                 break;
-            case SkipHtmlElementRule::EndsWith:
+            case SkipHtmlElementRule::ComparisonRule::EndsWith:
                 shouldSkip = elementName.endsWith(
                     rule.m_elementNameToSkip,
                     rule.m_elementNameCaseSensitivity);
                 break;
-            case SkipHtmlElementRule::Contains:
+            case SkipHtmlElementRule::ComparisonRule::Contains:
                 shouldSkip = elementName.contains(
                     rule.m_elementNameToSkip,
                     rule.m_elementNameCaseSensitivity);
                 break;
             default:
-                QNWARNING("enml", "Detected unhandled "
-                    << "SkipHtmlElementRule::ComparisonRule");
+                QNWARNING(
+                    "enml",
+                    "Detected unhandled "
+                        << "SkipHtmlElementRule::ComparisonRule");
                 break;
             }
 
             CHECK_IF_SHOULD_SKIP()
         }
 
-        if (!rule.m_attributeNameToSkip.isEmpty())
-        {
-            for(int j = 0; j < numAttributes; ++j)
-            {
+        if (!rule.m_attributeNameToSkip.isEmpty()) {
+            for (int j = 0; j < numAttributes; ++j) {
                 bool shouldSkip = false;
 
                 const QXmlStreamAttribute & attribute = attributes[j];
 
-                switch(rule.m_attributeNameComparisonRule)
-                {
-                case SkipHtmlElementRule::Equals:
+                switch (rule.m_attributeNameComparisonRule) {
+                case SkipHtmlElementRule::ComparisonRule::Equals:
                 {
                     if (rule.m_attributeNameCaseSensitivity ==
-                        Qt::CaseSensitive)
-                    {
+                        Qt::CaseSensitive) {
                         shouldSkip =
                             (attribute.name() == rule.m_attributeNameToSkip);
                     }
-                    else
-                    {
+                    else {
                         shouldSkip =
                             (attribute.name().toString().toUpper() ==
                              rule.m_attributeNameToSkip.toUpper());
                     }
                     break;
                 }
-                case SkipHtmlElementRule::StartsWith:
+                case SkipHtmlElementRule::ComparisonRule::StartsWith:
                     shouldSkip = attribute.name().startsWith(
                         rule.m_attributeNameToSkip,
                         rule.m_attributeNameCaseSensitivity);
                     break;
-                case SkipHtmlElementRule::EndsWith:
+                case SkipHtmlElementRule::ComparisonRule::EndsWith:
                     shouldSkip = attribute.name().endsWith(
                         rule.m_attributeNameToSkip,
                         rule.m_attributeNameCaseSensitivity);
                     break;
-                case SkipHtmlElementRule::Contains:
+                case SkipHtmlElementRule::ComparisonRule::Contains:
                     shouldSkip = attribute.name().contains(
                         rule.m_attributeNameToSkip,
                         rule.m_attributeNameCaseSensitivity);
                     break;
                 default:
-                    QNWARNING("enml", "Detected unhandled "
-                        << "SkipHtmlElementRule::ComparisonRule");
+                    QNWARNING(
+                        "enml",
+                        "Detected unhandled "
+                            << "SkipHtmlElementRule::ComparisonRule");
                     break;
                 }
 
@@ -4268,50 +4010,47 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
             }
         }
 
-        if (!rule.m_attributeValueToSkip.isEmpty())
-        {
-            for(int j = 0; j < numAttributes; ++j)
-            {
+        if (!rule.m_attributeValueToSkip.isEmpty()) {
+            for (int j = 0; j < numAttributes; ++j) {
                 bool shouldSkip = false;
 
                 const QXmlStreamAttribute & attribute = attributes[j];
 
-                switch(rule.m_attributeValueComparisonRule)
-                {
-                case SkipHtmlElementRule::Equals:
+                switch (rule.m_attributeValueComparisonRule) {
+                case SkipHtmlElementRule::ComparisonRule::Equals:
                 {
                     if (rule.m_attributeValueCaseSensitivity ==
-                        Qt::CaseSensitive)
-                    {
+                        Qt::CaseSensitive) {
                         shouldSkip =
                             (attribute.value() == rule.m_attributeValueToSkip);
                     }
-                    else
-                    {
+                    else {
                         shouldSkip =
                             (attribute.value().toString().toUpper() ==
                              rule.m_attributeValueToSkip.toUpper());
                     }
                     break;
                 }
-                case SkipHtmlElementRule::StartsWith:
+                case SkipHtmlElementRule::ComparisonRule::StartsWith:
                     shouldSkip = attribute.value().startsWith(
                         rule.m_attributeValueToSkip,
                         rule.m_attributeValueCaseSensitivity);
                     break;
-                case SkipHtmlElementRule::EndsWith:
+                case SkipHtmlElementRule::ComparisonRule::EndsWith:
                     shouldSkip = attribute.value().endsWith(
                         rule.m_attributeValueToSkip,
                         rule.m_attributeValueCaseSensitivity);
                     break;
-                case SkipHtmlElementRule::Contains:
+                case SkipHtmlElementRule::ComparisonRule::Contains:
                     shouldSkip = attribute.value().contains(
                         rule.m_attributeValueToSkip,
                         rule.m_attributeValueCaseSensitivity);
                     break;
                 default:
-                    QNWARNING("enml", "Detected unhandled "
-                        << "SkipHtmlElementRule::ComparisonRule");
+                    QNWARNING(
+                        "enml",
+                        "Detected unhandled "
+                            << "SkipHtmlElementRule::ComparisonRule");
                     break;
                 }
 
@@ -4334,8 +4073,10 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     QXmlStreamWriter & writer, ErrorString & errorDescription) const
 {
     if (state.m_skippedElementNestingCounter) {
-        QNTRACE("enml", "Skipping everything inside element skipped "
-            << "together with its contents by the rules");
+        QNTRACE(
+            "enml",
+            "Skipping everything inside element skipped "
+                << "together with its contents by the rules");
         ++state.m_skippedElementNestingCounter;
         return ProcessElementStatus::ProcessedFully;
     }
@@ -4358,28 +4099,32 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
 
     if (state.m_lastElementName == QStringLiteral("body")) {
         state.m_lastElementName = QStringLiteral("en-note");
-        QNTRACE("enml", "Found \"body\" HTML tag, will replace it "
-            << "with \"en-note\" tag for written ENML");
+        QNTRACE(
+            "enml",
+            "Found \"body\" HTML tag, will replace it "
+                << "with \"en-note\" tag for written ENML");
     }
 
     auto tagIt = m_forbiddenXhtmlTags.find(state.m_lastElementName);
     if ((tagIt != m_forbiddenXhtmlTags.constEnd()) &&
         (state.m_lastElementName != QStringLiteral("object")))
     {
-        QNTRACE("enml", "Skipping forbidden XHTML tag: "
-            << state.m_lastElementName);
+        QNTRACE(
+            "enml",
+            "Skipping forbidden XHTML tag: " << state.m_lastElementName);
         return ProcessElementStatus::ProcessedFully;
     }
 
     tagIt = m_allowedXhtmlTags.find(state.m_lastElementName);
-    if (tagIt == m_allowedXhtmlTags.end())
-    {
+    if (tagIt == m_allowedXhtmlTags.end()) {
         tagIt = m_evernoteSpecificXhtmlTags.find(state.m_lastElementName);
-        if (tagIt == m_evernoteSpecificXhtmlTags.end())
-        {
-            QNTRACE("enml", "Haven't found tag " << state.m_lastElementName
-                << " within the list of allowed XHTML tags or within "
-                << "Evernote-specific tags, skipping it");
+        if (tagIt == m_evernoteSpecificXhtmlTags.end()) {
+            QNTRACE(
+                "enml",
+                "Haven't found tag "
+                    << state.m_lastElementName
+                    << " within the list of allowed XHTML tags or within "
+                    << "Evernote-specific tags, skipping it");
             return ProcessElementStatus::ProcessedFully;
         }
     }
@@ -4387,24 +4132,22 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     state.m_lastElementAttributes = reader.attributes();
 
     auto shouldSkip = shouldSkipElement(
-        state.m_lastElementName,
-        state.m_lastElementAttributes,
-        skipRules);
+        state.m_lastElementName, state.m_lastElementAttributes, skipRules);
 
-    if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip)
-    {
-        QNTRACE("enml", "Skipping element " << state.m_lastElementName
-            << " per skip rules; the contents would be "
-            << (shouldSkip == ShouldSkipElementResult::SkipWithContents
-                ? "skipped"
-                : "preserved"));
+    if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip) {
+        QNTRACE(
+            "enml",
+            "Skipping element "
+                << state.m_lastElementName
+                << " per skip rules; the contents would be "
+                << (shouldSkip == ShouldSkipElementResult::SkipWithContents
+                        ? "skipped"
+                        : "preserved"));
 
-        if (shouldSkip == ShouldSkipElementResult::SkipWithContents)
-        {
+        if (shouldSkip == ShouldSkipElementResult::SkipWithContents) {
             ++state.m_skippedElementNestingCounter;
         }
-        else if (shouldSkip ==
-                 ShouldSkipElementResult::SkipButPreserveContents)
+        else if (shouldSkip == ShouldSkipElementResult::SkipButPreserveContents)
         {
             ++state.m_skippedElementWithPreservedContentsNestingCounter;
         }
@@ -4412,24 +4155,23 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
         return ProcessElementStatus::ProcessedFully;
     }
 
-    if ( ((state.m_lastElementName == QStringLiteral("img")) ||
-          (state.m_lastElementName == QStringLiteral("object")) ||
-          (state.m_lastElementName == QStringLiteral("div"))) &&
-         state.m_lastElementAttributes.hasAttribute(QStringLiteral("en-tag")) )
+    if (((state.m_lastElementName == QStringLiteral("img")) ||
+         (state.m_lastElementName == QStringLiteral("object")) ||
+         (state.m_lastElementName == QStringLiteral("div"))) &&
+        state.m_lastElementAttributes.hasAttribute(QStringLiteral("en-tag")))
     {
-        const QString enTag = state.m_lastElementAttributes.value(
-            QStringLiteral("en-tag")).toString();
+        const QString enTag =
+            state.m_lastElementAttributes.value(QStringLiteral("en-tag"))
+                .toString();
 
-        if (enTag == QStringLiteral("en-decrypted"))
-        {
-            QNTRACE("enml", "Found decrypted text area, need to "
-                << "convert it back to en-crypt form");
+        if (enTag == QStringLiteral("en-decrypted")) {
+            QNTRACE(
+                "enml",
+                "Found decrypted text area, need to "
+                    << "convert it back to en-crypt form");
 
             bool res = decryptedTextToEnml(
-                reader,
-                decryptedTextManager,
-                writer,
-                errorDescription);
+                reader, decryptedTextManager, writer, errorDescription);
 
             if (!res) {
                 return ProcessElementStatus::Error;
@@ -4438,62 +4180,50 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
             return ProcessElementStatus::ProcessedFully;
         }
 
-        if (enTag == QStringLiteral("en-todo"))
-        {
+        if (enTag == QStringLiteral("en-todo")) {
             if (!state.m_lastElementAttributes.hasAttribute(
-                    QStringLiteral("src")))
-            {
+                    QStringLiteral("src"))) {
                 QNWARNING("enml", "Found en-todo tag without src attribute");
                 return ProcessElementStatus::ProcessedFully;
             }
 
-            QStringRef srcValue = state.m_lastElementAttributes.value(
-                QStringLiteral("src"));
+            QStringRef srcValue =
+                state.m_lastElementAttributes.value(QStringLiteral("src"));
             if (srcValue.contains(
-                    QStringLiteral("qrc:/checkbox_icons/checkbox_no.png")))
-            {
+                    QStringLiteral("qrc:/checkbox_icons/checkbox_no.png"))) {
                 writer.writeStartElement(QStringLiteral("en-todo"));
                 ++state.m_writeElementCounter;
                 return ProcessElementStatus::ProcessedFully;
             }
 
             if (srcValue.contains(
-                    QStringLiteral("qrc:/checkbox_icons/checkbox_yes.png")))
-            {
+                    QStringLiteral("qrc:/checkbox_icons/checkbox_yes.png"))) {
                 writer.writeStartElement(QStringLiteral("en-todo"));
 
                 writer.writeAttribute(
-                    QStringLiteral("checked"),
-                    QStringLiteral("true"));
+                    QStringLiteral("checked"), QStringLiteral("true"));
 
                 ++state.m_writeElementCounter;
                 return ProcessElementStatus::ProcessedFully;
             }
         }
-        else if (enTag == QStringLiteral("en-crypt"))
-        {
+        else if (enTag == QStringLiteral("en-crypt")) {
             const QXmlStreamAttributes attributes = reader.attributes();
             QXmlStreamAttributes enCryptAttributes;
 
-            if (attributes.hasAttribute(QStringLiteral("cipher")))
-            {
+            if (attributes.hasAttribute(QStringLiteral("cipher"))) {
                 enCryptAttributes.append(
                     QStringLiteral("cipher"),
-                    attributes.value(
-                        QStringLiteral("cipher")).toString());
+                    attributes.value(QStringLiteral("cipher")).toString());
             }
 
-            if (attributes.hasAttribute(QStringLiteral("length")))
-            {
+            if (attributes.hasAttribute(QStringLiteral("length"))) {
                 enCryptAttributes.append(
                     QStringLiteral("length"),
-                    attributes.value(
-                        QStringLiteral("length")).toString());
+                    attributes.value(QStringLiteral("length")).toString());
             }
 
-            if (!attributes.hasAttribute(
-                    QStringLiteral("encrypted_text")))
-            {
+            if (!attributes.hasAttribute(QStringLiteral("encrypted_text"))) {
                 errorDescription.setBase(
                     QT_TR_NOOP("Found en-crypt tag without "
                                "encrypted_text attribute"));
@@ -4501,28 +4231,24 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
                 return ProcessElementStatus::Error;
             }
 
-            if (attributes.hasAttribute(QStringLiteral("hint")))
-            {
+            if (attributes.hasAttribute(QStringLiteral("hint"))) {
                 enCryptAttributes.append(
                     QStringLiteral("hint"),
-                    attributes.value(
-                        QStringLiteral("hint")).toString());
+                    attributes.value(QStringLiteral("hint")).toString());
             }
 
             writer.writeStartElement(QStringLiteral("en-crypt"));
             writer.writeAttributes(enCryptAttributes);
 
             writer.writeCharacters(
-                attributes.value(
-                    QStringLiteral("encrypted_text")).toString());
+                attributes.value(QStringLiteral("encrypted_text")).toString());
 
             ++state.m_writeElementCounter;
             QNTRACE("enml", "Started writing en-crypt tag");
             state.m_insideEnCryptElement = true;
             return ProcessElementStatus::ProcessedFully;
         }
-        else if (enTag == QStringLiteral("en-media"))
-        {
+        else if (enTag == QStringLiteral("en-media")) {
             bool isImage = (state.m_lastElementName == QStringLiteral("img"));
             state.m_lastElementName = QStringLiteral("en-media");
             writer.writeStartElement(state.m_lastElementName);
@@ -4531,48 +4257,37 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
             state.m_insideEnMediaElement = true;
 
             const int numAttributes = state.m_lastElementAttributes.size();
-            for(int i = 0; i < numAttributes; ++i)
-            {
+            for (int i = 0; i < numAttributes; ++i) {
                 const auto & attribute = state.m_lastElementAttributes[i];
 
                 const QString attributeQualifiedName =
                     attribute.qualifiedName().toString();
 
-                const QString attributeValue =
-                    attribute.value().toString();
+                const QString attributeValue = attribute.value().toString();
 
-                if (!isImage)
-                {
+                if (!isImage) {
                     if (attributeQualifiedName ==
-                        QStringLiteral("resource-mime-type"))
-                    {
+                        QStringLiteral("resource-mime-type")) {
                         state.m_enMediaAttributes.append(
-                            QStringLiteral("type"),
-                            attributeValue);
+                            QStringLiteral("type"), attributeValue);
                     }
-                    else
-                    {
-                        bool contains =
-                            m_allowedEnMediaAttributes.contains(
-                                attributeQualifiedName);
+                    else {
+                        bool contains = m_allowedEnMediaAttributes.contains(
+                            attributeQualifiedName);
 
                         if (contains &&
-                            (attributeQualifiedName !=
-                             QStringLiteral("type")))
+                            (attributeQualifiedName != QStringLiteral("type")))
                         {
                             state.m_enMediaAttributes.append(
-                                attributeQualifiedName,
-                                attributeValue);
+                                attributeQualifiedName, attributeValue);
                         }
                     }
                 }
                 else if (m_allowedEnMediaAttributes.contains(
-                        attributeQualifiedName))
-                {
+                             attributeQualifiedName)) {
                     // img
                     state.m_enMediaAttributes.append(
-                        attributeQualifiedName,
-                        attributeValue);
+                        attributeQualifiedName, attributeValue);
                 }
             }
 
@@ -4585,14 +4300,12 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     }
 
     // Erasing forbidden attributes
-    for(auto it = state.m_lastElementAttributes.begin();
-        it != state.m_lastElementAttributes.end(); )
+    for (auto it = state.m_lastElementAttributes.begin();
+         it != state.m_lastElementAttributes.end();)
     {
         QStringRef attributeName = it->name();
-        if (isForbiddenXhtmlAttribute(attributeName.toString()))
-        {
-            QNTRACE("enml", "Erasing forbidden attribute "
-                    << attributeName);
+        if (isForbiddenXhtmlAttribute(attributeName.toString())) {
+            QNTRACE("enml", "Erasing forbidden attribute " << attributeName);
             it = state.m_lastElementAttributes.erase(it);
             continue;
         }
@@ -4611,27 +4324,27 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     writer.writeStartElement(state.m_lastElementName);
     writer.writeAttributes(state.m_lastElementAttributes);
     ++state.m_writeElementCounter;
-    QNTRACE("enml", "Wrote element: name = " << state.m_lastElementName
-        << " and its attributes");
+    QNTRACE(
+        "enml",
+        "Wrote element: name = " << state.m_lastElementName
+                                 << " and its attributes");
 
     return ProcessElementStatus::ProcessedPartially;
 }
 
-} // namespace quentier
+}   // namespace quentier
 
 QTextStream & operator<<(
     QTextStream & strm, const QXmlStreamAttributes & attributes)
 {
     const int numAttributes = attributes.size();
 
-    strm << "QXmlStreamAttributes(" << numAttributes
-         << "): {\n";
+    strm << "QXmlStreamAttributes(" << numAttributes << "): {\n";
 
-    for(int i = 0; i < numAttributes; ++i) {
+    for (int i = 0; i < numAttributes; ++i) {
         const QXmlStreamAttribute & attribute = attributes[i];
-        strm << "  [" << i << "]: name = "
-            << attribute.name().toString() << ", value = "
-            << attribute.value().toString() << "\n";
+        strm << "  [" << i << "]: name = " << attribute.name().toString()
+             << ", value = " << attribute.value().toString() << "\n";
     }
 
     strm << "}\n";
@@ -4656,10 +4369,9 @@ QTextStream & operator<<(
 
     using SkipHtmlElementRule = quentier::ENMLConverter::SkipHtmlElementRule;
 
-    for(int i = 0; i < numRules; ++i) {
+    for (int i = 0; i < numRules; ++i) {
         const SkipHtmlElementRule & rule = rules[i];
-        strm << " [" << i << "]: "
-             << rule << "\n";
+        strm << " [" << i << "]: " << rule << "\n";
     }
 
     strm << "}\n";

@@ -21,8 +21,8 @@
 
 #include <quentier/utility/EncryptionManager.h>
 
-#include <QtGlobal>
 #include <QHash>
+#include <QtGlobal>
 
 namespace quentier {
 
@@ -57,18 +57,18 @@ private:
         QString m_decryptedText;
         QString m_passphrase;
         QString m_cipher;
-        size_t  m_keyLength = 0;
-        bool    m_rememberForSession = false;
+        size_t m_keyLength = 0;
+        bool m_rememberForSession = false;
     };
 
     using DataHash = QHash<QString, Data>;
 
 private:
-    DataHash    m_dataHash;
-    DataHash    m_staleDataHash;
-    EncryptionManager   m_encryptionManager;
+    DataHash m_dataHash;
+    DataHash m_staleDataHash;
+    EncryptionManager m_encryptionManager;
 };
 
-} // namespace quentier
+}   // namespace quentier
 
-#endif // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
+#endif   // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H

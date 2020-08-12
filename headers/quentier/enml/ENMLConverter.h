@@ -19,22 +19,22 @@
 #ifndef LIB_QUENTIER_ENML_ENML_CONVERTER_H
 #define LIB_QUENTIER_ENML_ENML_CONVERTER_H
 
-#include <quentier/utility/Printable.h>
-#include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
+#include <quentier/utility/Printable.h>
 
+#include <QHash>
 #include <QSet>
 #include <QString>
-#include <QHash>
 #include <QTextDocument>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(ENMLConverterPrivate)
+QT_FORWARD_DECLARE_CLASS(Resource)
 
 /**
  * @brief The ENMLConverter class encapsulates a set of methods
@@ -45,6 +45,7 @@ class QUENTIER_EXPORT ENMLConverter
 {
 public:
     ENMLConverter();
+
     virtual ~ENMLConverter();
 
     /**
@@ -57,31 +58,35 @@ public:
      * by ENML even without these rules conditionally preserving or skipping
      * the contents and nested elements of skipped elements
      */
-    class QUENTIER_EXPORT SkipHtmlElementRule: public Printable
+    class QUENTIER_EXPORT SkipHtmlElementRule : public Printable
     {
     public:
-        enum ComparisonRule {
+        enum class ComparisonRule
+        {
             Equals = 0,
             StartsWith,
             EndsWith,
             Contains
         };
 
+        friend QUENTIER_EXPORT QTextStream & operator<<(
+            QTextStream & strm, const ComparisonRule rule);
+
         virtual QTextStream & print(QTextStream & strm) const override;
 
-        QString             m_elementNameToSkip;
-        ComparisonRule      m_elementNameComparisonRule = ComparisonRule::Equals;
+        QString m_elementNameToSkip;
+        ComparisonRule m_elementNameComparisonRule = ComparisonRule::Equals;
         Qt::CaseSensitivity m_elementNameCaseSensitivity = Qt::CaseSensitive;
 
-        QString             m_attributeNameToSkip;
-        ComparisonRule      m_attributeNameComparisonRule = ComparisonRule::Equals;
+        QString m_attributeNameToSkip;
+        ComparisonRule m_attributeNameComparisonRule = ComparisonRule::Equals;
         Qt::CaseSensitivity m_attributeNameCaseSensitivity = Qt::CaseSensitive;
 
-        QString             m_attributeValueToSkip;
-        ComparisonRule      m_attributeValueComparisonRule = ComparisonRule::Equals;
+        QString m_attributeValueToSkip;
+        ComparisonRule m_attributeValueComparisonRule = ComparisonRule::Equals;
         Qt::CaseSensitivity m_attributeValueCaseSensitivity = Qt::CaseSensitive;
 
-        bool                m_includeElementContents = false;
+        bool m_includeElementContents = false;
     };
 
     bool htmlToNoteContent(
@@ -127,10 +132,10 @@ public:
 
     struct NoteContentToHtmlExtraData
     {
-        quint64     m_numEnToDoNodes = 0;
-        quint64     m_numHyperlinkNodes = 0;
-        quint64     m_numEnCryptNodes = 0;
-        quint64     m_numEnDecryptedNodes = 0;
+        quint64 m_numEnToDoNodes = 0;
+        quint64 m_numHyperlinkNodes = 0;
+        quint64 m_numEnCryptNodes = 0;
+        quint64 m_numEnDecryptedNodes = 0;
     };
 
     bool noteContentToHtml(
@@ -164,8 +169,8 @@ public:
 
     static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher,
-        const size_t keyLength, const quint64 enDecryptedIndex);
+        const QString & hint, const QString & cipher, const size_t keyLength,
+        const quint64 enDecryptedIndex);
 
     static QString resourceHtml(
         const Resource & resource, ErrorString & errorDescription);
@@ -173,8 +178,8 @@ public:
     static void escapeString(QString & string, const bool simplify = true);
 
     /**
-     * @brief The EnexExportTags enum allows to specify whether export of note(s)
-     * to ENEX should include the names of note's tags
+     * @brief The EnexExportTags enum allows to specify whether export of
+     * note(s) to ENEX should include the names of note's tags
      */
     enum class EnexExportTags
     {
@@ -192,28 +197,29 @@ public:
      *                                  note's tag local uids. In other words,
      *                                  if some note has no tag local uids,
      *                                  its corresponding fragment of ENEX won't
-     *                                  contain tag names associated with the note
+     *                                  contain tag names associated with the
+     * note
      * @param tagNamesByTagLocalUids    Tag names for all tag local uids across
      *                                  all passed in notes. The lack of any tag
      *                                  name for any tag local uid is considered
      *                                  an error and the overall export attempt
      *                                  fails
-     * @param exportTagsOption          Whether the export to ENEX should include
-     *                                  the names of notes' tags
+     * @param exportTagsOption          Whether the export to ENEX should
+     * include the names of notes' tags
      * @param enex                      The output of the method
-     * @param errorDescription          The textual description of the error, if any
+     * @param errorDescription          The textual description of the error, if
+     * any
      * @param version                   Optional "version" tag for the ENEX.
      *                                  If not set, the corresponding ENEX tag
      *                                  is set to empty value
-     * @return                          True if the export completed successfully,
-     *                                  false otherwise
+     * @return                          True if the export completed
+     * successfully, false otherwise
      */
     bool exportNotesToEnex(
         const QVector<Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalUids,
-        const EnexExportTags exportTagsOption,
-        QString & enex, ErrorString & errorDescription,
-        const QString & version = {}) const;
+        const EnexExportTags exportTagsOption, QString & enex,
+        ErrorString & errorDescription, const QString & version = {}) const;
 
     /**
      * @brief importEnex reads the content of input ENEX file and converts it
@@ -224,15 +230,14 @@ public:
      * @param tagNamesByNoteLocalUid    Tag names per each read note; it is
      *                                  the responsibility of the method caller
      *                                  to find the actual tags corresponding
-     *                                  to these names and set the tag local uids
-     *                                  and/or guids to the note
+     *                                  to these names and set the tag local
+     * uids and/or guids to the note
      * @param errorDescription          The textual descrition of the error if
      *                                  the ENEX file could not be read and
      *                                  converted into a set of notes and tag
      *                                  names for them
-     * @return                          True of the ENEX file was read and converted
-     *                                  into a set of notes and tag names successfully,
-     *                                  false otherwise
+     * @return                          True of the ENEX file was read and
+     * converted into a set of notes and tag names successfully, false otherwise
      */
     bool importEnex(
         const QString & enex, QVector<Note> & notes,
@@ -247,6 +252,6 @@ private:
     Q_DECLARE_PRIVATE(ENMLConverter)
 };
 
-} // namespace quentier
+}   // namespace quentier
 
-#endif // LIB_QUENTIER_ENML_ENML_CONVERTER_H
+#endif   // LIB_QUENTIER_ENML_ENML_CONVERTER_H

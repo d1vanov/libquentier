@@ -17,12 +17,12 @@
  */
 
 #include "ENMLConverterTests.h"
-#include <quentier/enml/ENMLConverter.h>
+#include <QFile>
+#include <QXmlStreamReader>
 #include <quentier/enml/DecryptedTextManager.h>
+#include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
-#include <QXmlStreamReader>
-#include <QFile>
 
 void initENMLConversionTestResources();
 
@@ -57,9 +57,7 @@ bool convertSimpleNoteToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
@@ -81,9 +79,7 @@ bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
@@ -197,8 +193,7 @@ bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
                        "\">Ok, here's a piece of text I'm going to encrypt "
                        "now</span>"),
         /* remember for session = */ true,
-        QStringLiteral("my_own_encryption_key_1988"),
-        QStringLiteral("RC2"),
+        QStringLiteral("my_own_encryption_key_1988"), QStringLiteral("RC2"),
         64);
 
     decryptedTextManager.addEntry(
@@ -209,14 +204,10 @@ bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
                        "xQ/6WeoQ7QDDHLSoUIXn"),
         QStringLiteral("Sample text said to be the decrypted one"),
         /* remember for session = */ true,
-        QStringLiteral("MyEncryptionPassword"),
-        QStringLiteral("AES"),
-        128);
+        QStringLiteral("MyEncryptionPassword"), QStringLiteral("AES"), 128);
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertNoteWithResourcesToHtmlAndBack(QString & error)
@@ -239,9 +230,7 @@ bool convertNoteWithResourcesToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertComplexNoteToHtmlAndBack(QString & error)
@@ -259,9 +248,7 @@ bool convertComplexNoteToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertComplexNote2ToHtmlAndBack(QString & error)
@@ -279,9 +266,7 @@ bool convertComplexNote2ToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertComplexNote3ToHtmlAndBack(QString & error)
@@ -299,12 +284,10 @@ bool convertComplexNote3ToHtmlAndBack(QString & error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
-bool convertComplexNote4ToHtmlAndBack(QString &error)
+bool convertComplexNote4ToHtmlAndBack(QString & error)
 {
     initENMLConversionTestResources();
 
@@ -319,9 +302,7 @@ bool convertComplexNote4ToHtmlAndBack(QString &error)
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
-        noteContent,
-        decryptedTextManager,
-        error);
+        noteContent, decryptedTextManager, error);
 }
 
 bool convertNoteToHtmlAndBackImpl(
@@ -336,10 +317,7 @@ bool convertNoteToHtmlAndBackImpl(
     ErrorString errorMessage;
 
     bool res = converter.noteContentToHtml(
-        originalNoteContent,
-        html,
-        errorMessage,
-        decryptedTextManager,
+        originalNoteContent, html, errorMessage, decryptedTextManager,
         extraData);
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
@@ -348,20 +326,20 @@ bool convertNoteToHtmlAndBackImpl(
         return false;
     }
 
-    html.prepend(QStringLiteral(
-        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
-        "\"http://www.w3.org/TR/html4/strict.dtd\">"
-        "<html><head>"
-        "<meta http-equiv=\"Content-Type\" "
-        "content=\"text/html\" charset=\"UTF-8\" />"
-        "<title></title></head>"));
+    html.prepend(
+        QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
+                       "\"http://www.w3.org/TR/html4/strict.dtd\">"
+                       "<html><head>"
+                       "<meta http-equiv=\"Content-Type\" "
+                       "content=\"text/html\" charset=\"UTF-8\" />"
+                       "<title></title></head>"));
 
     html.append(QStringLiteral("</html>"));
 
     QString processedNoteContent;
     errorMessage.clear();
-    res = converter.htmlToNoteContent(html, processedNoteContent,
-                                      decryptedTextManager, errorMessage);
+    res = converter.htmlToNoteContent(
+        html, processedNoteContent, decryptedTextManager, errorMessage);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
@@ -388,28 +366,24 @@ bool compareEnml(
     QXmlStreamReader readerProcessed(processedSimplified);
 
 #define PRINT_WARNING(err)                                                     \
-    QNWARNING("tests:enml", err << "\n\nContext in the original ENML: <"       \
-        << readerOriginal.name() << ">: "                                      \
-        << readerOriginal.readElementText()                                    \
-        << "\n\nContext in the processed ENML: <"                              \
-        << readerProcessed.name()                                              \
-        << ">: " << readerProcessed.readElementText()                          \
-        << "\n\nFull simplified original ENML: "                               \
-        << originalSimplified                                                  \
-        << "\n\nFull simplified processed ENML: "                              \
-        << processedSimplified)                                                \
-// PRINT_WARNING
+    QNWARNING(                                                                 \
+        "tests:enml",                                                          \
+        err << "\n\nContext in the original ENML: <" << readerOriginal.name()  \
+            << ">: " << readerOriginal.readElementText()                       \
+            << "\n\nContext in the processed ENML: <"                          \
+            << readerProcessed.name()                                          \
+            << ">: " << readerProcessed.readElementText()                      \
+            << "\n\nFull simplified original ENML: " << originalSimplified     \
+            << "\n\nFull simplified processed ENML: " << processedSimplified)  \
+    // PRINT_WARNING
 
-    while(!readerOriginal.atEnd() && !readerProcessed.atEnd())
-    {
+    while (!readerOriginal.atEnd() && !readerProcessed.atEnd()) {
         Q_UNUSED(readerOriginal.readNext());
         Q_UNUSED(readerProcessed.readNext());
 
         bool checkForEmptyCharacters = true;
-        while(checkForEmptyCharacters)
-        {
-            if (readerOriginal.isCharacters())
-            {
+        while (checkForEmptyCharacters) {
+            if (readerOriginal.isCharacters()) {
                 QString textOriginal = readerOriginal.readElementText();
                 if (textOriginal.simplified().isEmpty()) {
                     Q_UNUSED(readerOriginal.readNext());
@@ -421,10 +395,8 @@ bool compareEnml(
         }
 
         checkForEmptyCharacters = true;
-        while(checkForEmptyCharacters)
-        {
-            if (readerProcessed.isCharacters())
-            {
+        while (checkForEmptyCharacters) {
+            if (readerProcessed.isCharacters()) {
                 QString textProcessed = readerProcessed.readElementText();
                 if (textProcessed.simplified().isEmpty()) {
                     Q_UNUSED(readerProcessed.readNext());
@@ -436,8 +408,7 @@ bool compareEnml(
         }
 
         bool checkForEntityReference = true;
-        while(checkForEntityReference)
-        {
+        while (checkForEntityReference) {
             if (readerOriginal.isEntityReference()) {
                 Q_UNUSED(readerOriginal.readNext());
                 continue;
@@ -448,8 +419,7 @@ bool compareEnml(
         }
 
         if (readerOriginal.isStartDocument() &&
-            !readerProcessed.isStartDocument())
-        {
+            !readerProcessed.isStartDocument()) {
             error = QStringLiteral(
                 "QXmlStreamReader of the original ENML is "
                 "at the start of the document while the reader "
@@ -459,73 +429,49 @@ bool compareEnml(
             return false;
         }
 
-        if (readerOriginal.isStartElement())
-        {
-            if (!readerProcessed.isStartElement())
-            {
+        if (readerOriginal.isStartElement()) {
+            if (!readerProcessed.isStartElement()) {
                 error = QStringLiteral(
                     "QXmlStreamReader of the original ENML "
                     "is at the start of the element while "
                     "the reader of the processed ENML is not");
 
-                PRINT_WARNING(error
+                PRINT_WARNING(
+                    error
                     << "\n\nchecking the state of "
                        "processed ENML reader: isStartDocument: "
-                    << (readerProcessed.isStartDocument()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isStartDocument() ? "true" : "false")
                     << ", isDTD: "
-                    << (readerProcessed.isDTD()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isDTD() ? "true" : "false")
                     << ", isCDATA: "
-                    << (readerProcessed.isCDATA()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isCDATA() ? "true" : "false")
                     << ", isCharacters: "
-                    << (readerProcessed.isCharacters()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isCharacters() ? "true" : "false")
                     << ", isComment: "
-                    << (readerProcessed.isComment()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isComment() ? "true" : "false")
                     << ", isEndElement: "
-                    << (readerProcessed.isEndElement()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isEndElement() ? "true" : "false")
                     << ", isEndDocument: "
-                    << (readerProcessed.isEndDocument()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isEndDocument() ? "true" : "false")
                     << ", isEntityReference: "
-                    << (readerProcessed.isEntityReference()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isEntityReference() ? "true" : "false")
                     << ", isProcessingInstruction: "
-                    << (readerProcessed.isProcessingInstruction()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isProcessingInstruction() ? "true"
+                                                                  : "false")
                     << ", isStandaloneDocument: "
-                    << (readerProcessed.isStandaloneDocument()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isStandaloneDocument() ? "true"
+                                                               : "false")
                     << ", isStartDocument: "
-                    << (readerProcessed.isStartDocument()
-                        ? "true"
-                        : "false")
+                    << (readerProcessed.isStartDocument() ? "true" : "false")
                     << ", isWhitespace: "
-                    << (readerProcessed.isWhitespace()
-                        ? "true"
-                        : "false"));
+                    << (readerProcessed.isWhitespace() ? "true" : "false"));
 
                 return false;
             }
 
             QStringRef originalName = readerOriginal.name();
             QStringRef processedName = readerProcessed.name();
-            if (originalName != processedName)
-            {
+            if (originalName != processedName) {
                 error = QStringLiteral(
                     "Found a tag in the original ENML which name doesn't match "
                     "the name of the corresponding element in the processed "
@@ -541,8 +487,7 @@ bool compareEnml(
             QXmlStreamAttributes processedAttributes =
                 readerProcessed.attributes();
 
-            if (originalName == QStringLiteral("en-todo"))
-            {
+            if (originalName == QStringLiteral("en-todo")) {
                 bool originalChecked = false;
                 if (originalAttributes.hasAttribute(QStringLiteral("checked")))
                 {
@@ -563,8 +508,7 @@ bool compareEnml(
                     }
                 }
 
-                if (originalChecked != processedChecked)
-                {
+                if (originalChecked != processedChecked) {
                     error = QStringLiteral(
                         "Checked state of ToDo item from the original ENML "
                         "doesn't match the state of the item from "
@@ -574,130 +518,119 @@ bool compareEnml(
                     return false;
                 }
             }
-            else if (originalName == QStringLiteral("td"))
-            {
+            else if (originalName == QStringLiteral("td")) {
                 const int numOriginalAttributes = originalAttributes.size();
                 const int numProcessedAttributes = processedAttributes.size();
 
-                if (numOriginalAttributes != numProcessedAttributes)
-                {
+                if (numOriginalAttributes != numProcessedAttributes) {
                     error = QStringLiteral("The number of attributes in tag ") +
-                            originalName.toString() +
-                            QStringLiteral(" doesn't match in the original and "
-                                           "the processed ENMLs");
+                        originalName.toString() +
+                        QStringLiteral(
+                                " doesn't match in the original and "
+                                "the processed ENMLs");
                     PRINT_WARNING(error);
                     return false;
                 }
 
-                for(int i = 0; i < numOriginalAttributes; ++i)
-                {
+                for (int i = 0; i < numOriginalAttributes; ++i) {
                     const QXmlStreamAttribute & originalAttribute =
                         originalAttributes[i];
-                    if (originalAttribute.name() == QStringLiteral("style"))
-                    {
-                        QNTRACE("tests:enml", "Won't compare the style "
-                            << "attribute for td tag as it's known to be "
-                            << "slightly modified by the web engine so it's "
-                            << "just not easy to compare it");
+                    if (originalAttribute.name() == QStringLiteral("style")) {
+                        QNTRACE(
+                            "tests:enml",
+                            "Won't compare the style "
+                                << "attribute for td tag as it's known to be "
+                                << "slightly modified by the web engine so "
+                                   "it's "
+                                << "just not easy to compare it");
 
                         continue;
                     }
 
-                    if (!processedAttributes.contains(originalAttribute))
-                    {
+                    if (!processedAttributes.contains(originalAttribute)) {
                         error = QStringLiteral(
                             "The corresponding attributes within "
                             "the original and the processed "
                             "ENMLs do not match");
 
-                        QNWARNING("tests:enml", error
-                            << ": the original attribute was not found "
-                               "within the processed attributes; "
-                               "original ENML: "
-                            << originalSimplified
-                            << "\nProcessed ENML: "
-                            << processedSimplified
-                            << ", index within attributes = "
-                            << i
-                            << "\nOriginal attribute: name = "
-                            << originalAttribute.name()
-                            << ", namespace uri = "
-                            << originalAttribute.namespaceUri()
-                            << ", qualified name = "
-                            << originalAttribute.qualifiedName()
-                            << ", is default = "
-                            << (originalAttribute.isDefault()
-                                ? "true"
-                                : "false")
-                            << ", value = "
-                            << originalAttribute.value()
-                            << ", prefix = "
-                            << originalAttribute.prefix());
+                        QNWARNING(
+                            "tests:enml",
+                            error
+                                << ": the original attribute was not found "
+                                   "within the processed attributes; "
+                                   "original ENML: "
+                                << originalSimplified
+                                << "\nProcessed ENML: " << processedSimplified
+                                << ", index within attributes = " << i
+                                << "\nOriginal attribute: name = "
+                                << originalAttribute.name()
+                                << ", namespace uri = "
+                                << originalAttribute.namespaceUri()
+                                << ", qualified name = "
+                                << originalAttribute.qualifiedName()
+                                << ", is default = "
+                                << (originalAttribute.isDefault() ? "true"
+                                                                  : "false")
+                                << ", value = " << originalAttribute.value()
+                                << ", prefix = " << originalAttribute.prefix());
 
                         return false;
                     }
                 }
             }
-            else
-            {
+            else {
                 const int numOriginalAttributes = originalAttributes.size();
                 const int numProcessedAttributes = processedAttributes.size();
 
-                if (numOriginalAttributes != numProcessedAttributes)
-                {
+                if (numOriginalAttributes != numProcessedAttributes) {
                     error = QStringLiteral("The number of attributes in tag ") +
-                            originalName.toString() +
-                            QStringLiteral(" doesn't match in the original and "
-                                           "the processed ENMLs");
+                        originalName.toString() +
+                        QStringLiteral(
+                                " doesn't match in the original and "
+                                "the processed ENMLs");
                     PRINT_WARNING(error);
                     return false;
                 }
 
-                for(int i = 0; i < numOriginalAttributes; ++i)
-                {
+                for (int i = 0; i < numOriginalAttributes; ++i) {
                     const QXmlStreamAttribute & originalAttribute =
                         originalAttributes[i];
 
-                    if (!processedAttributes.contains(originalAttribute))
-                    {
+                    if (!processedAttributes.contains(originalAttribute)) {
                         error = QStringLiteral(
                             "The corresponding attributes within "
                             "the original and the processed ENMLs do not "
                             "match");
 
-                        QNWARNING("tests:enml", error
-                            << ": the original attribute "
-                               "was not found within "
-                               "the processed attributes; "
-                               "original ENML: "
-                            << originalSimplified
-                            << "\nProcessed ENML: "
-                            << processedSimplified
-                            << ", index within attributes = " << i
-                            << "\nOriginal attribute: name = "
-                            << originalAttribute.name()
-                            << ", namespace uri = "
-                            << originalAttribute.namespaceUri()
-                            << ", qualified name = "
-                            << originalAttribute.qualifiedName()
-                            << ", is default = "
-                            << (originalAttribute.isDefault()
-                                ? "true"
-                                : "false")
-                            << ", value = "
-                            << originalAttribute.value()
-                            << ", prefix = "
-                            << originalAttribute.prefix());
+                        QNWARNING(
+                            "tests:enml",
+                            error
+                                << ": the original attribute "
+                                   "was not found within "
+                                   "the processed attributes; "
+                                   "original ENML: "
+                                << originalSimplified
+                                << "\nProcessed ENML: " << processedSimplified
+                                << ", index within attributes = " << i
+                                << "\nOriginal attribute: name = "
+                                << originalAttribute.name()
+                                << ", namespace uri = "
+                                << originalAttribute.namespaceUri()
+                                << ", qualified name = "
+                                << originalAttribute.qualifiedName()
+                                << ", is default = "
+                                << (originalAttribute.isDefault() ? "true"
+                                                                  : "false")
+                                << ", value = " << originalAttribute.value()
+                                << ", prefix = " << originalAttribute.prefix());
 
                         return false;
-
                     }
                 }
             }
         }
 
-        if (readerOriginal.isEndElement() && !readerProcessed.isEndElement())
-        {
+        if (readerOriginal.isEndElement() && !readerProcessed.isEndElement()) {
             error = QStringLiteral(
                 "QXmlStreamReader of the original ENML is "
                 "at the end of the element while "
@@ -707,10 +640,8 @@ bool compareEnml(
             return false;
         }
 
-        if (readerOriginal.isCharacters())
-        {
-            if (!readerProcessed.isCharacters())
-            {
+        if (readerOriginal.isCharacters()) {
+            if (!readerProcessed.isCharacters()) {
                 QStringRef textOriginal = readerOriginal.text();
                 if (textOriginal.toString().simplified().isEmpty()) {
                     continue;
@@ -721,45 +652,47 @@ bool compareEnml(
                     "points to characters while the reader "
                     "of the processed ENML does not");
 
-                QNWARNING("tests:enml", error << "; original ENML: "
-                    << originalSimplified << "\nProcessed ENML: "
-                    << processedSimplified);
+                QNWARNING(
+                    "tests:enml",
+                    error << "; original ENML: " << originalSimplified
+                          << "\nProcessed ENML: " << processedSimplified);
 
                 return false;
             }
 
-            if (readerOriginal.isCDATA())
-            {
-                if (!readerProcessed.isCDATA())
-                {
+            if (readerOriginal.isCDATA()) {
+                if (!readerProcessed.isCDATA()) {
                     error = QStringLiteral(
                         "QXmlStreamReader of the original "
                         "ENML points to CDATA while the reader "
                         "of the processed ENML does not");
 
-                    QNWARNING("tests:enml", error << "; original ENML: "
-                        << originalSimplified << "\nProcessed ENML: "
-                        << processedSimplified);
+                    QNWARNING(
+                        "tests:enml",
+                        error << "; original ENML: " << originalSimplified
+                              << "\nProcessed ENML: " << processedSimplified);
 
                     return false;
                 }
             }
 
-            QString textOriginal = readerOriginal.text().toString().simplified();
-            QString textProcessed = readerProcessed.text().toString().simplified();
+            QString textOriginal =
+                readerOriginal.text().toString().simplified();
+            QString textProcessed =
+                readerProcessed.text().toString().simplified();
 
-            if (textOriginal != textProcessed)
-            {
+            if (textOriginal != textProcessed) {
                 error = QStringLiteral(
                     "The text extracted from the corresponding elements of "
                     "both the original ENML and the processed ENML does not "
                     "match");
 
-                QNWARNING("tests:enml", error << "; original ENML: "
-                    << originalSimplified << "\nProcessed ENML: "
-                    << processedSimplified << "\nOriginal element text: "
-                    << textOriginal << "\nProcessed element text: "
-                    << textProcessed);
+                QNWARNING(
+                    "tests:enml",
+                    error << "; original ENML: " << originalSimplified
+                          << "\nProcessed ENML: " << processedSimplified
+                          << "\nOriginal element text: " << textOriginal
+                          << "\nProcessed element text: " << textProcessed);
 
                 return false;
             }
@@ -772,24 +705,25 @@ bool compareEnml(
                 "the end of the document while the reader of "
                 "the processed ENML is not");
 
-            QNWARNING("tests:enml", error << "; original ENML: "
-                << originalSimplified << "\nProcessed ENML: "
-                << processedSimplified);
+            QNWARNING(
+                "tests:enml",
+                error << "; original ENML: " << originalSimplified
+                      << "\nProcessed ENML: " << processedSimplified);
 
             return false;
         }
     }
 
-    if (readerOriginal.atEnd() != readerProcessed.atEnd())
-    {
+    if (readerOriginal.atEnd() != readerProcessed.atEnd()) {
         error = QStringLiteral(
             "QXmlStreamReaders for the original ENML and "
             "the processed ENML have not both came to their "
             "ends after the checking loop");
 
-        QNWARNING("tests:enml", error << "; original ENML: "
-            << originalSimplified << "\nProcessed ENML: "
-            << processedSimplified);
+        QNWARNING(
+            "tests:enml",
+            error << "; original ENML: " << originalSimplified
+                  << "\nProcessed ENML: " << processedSimplified);
 
         return false;
     }
@@ -865,11 +799,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     ErrorString errorMessage;
 
     bool res = converter.noteContentToHtml(
-        originalENML,
-        html,
-        errorMessage,
-        decryptedTextManager,
-        extraData);
+        originalENML, html, errorMessage, decryptedTextManager, extraData);
     if (!res) {
         error = QStringLiteral("Unable to convert the note content to HTML: ");
         error += errorMessage.nonLocalizedString();
@@ -877,13 +807,13 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
         return false;
     }
 
-    html.prepend(QStringLiteral(
-        "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
-        "\"http://www.w3.org/TR/html4/strict.dtd\">"
-        "<html><head>"
-        "<meta http-equiv=\"Content-Type\" "
-        "content=\"text/html\" charset=\"UTF-8\" />"
-        "<title></title></head>"));
+    html.prepend(
+        QStringLiteral("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "
+                       "\"http://www.w3.org/TR/html4/strict.dtd\">"
+                       "<html><head>"
+                       "<meta http-equiv=\"Content-Type\" "
+                       "content=\"text/html\" charset=\"UTF-8\" />"
+                       "<title></title></head>"));
 
     html.append(QStringLiteral("</html>"));
 
@@ -912,10 +842,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
     QString processedENML;
     errorMessage.clear();
     res = converter.htmlToNoteContent(
-        html,
-        processedENML,
-        decryptedTextManager,
-        errorMessage);
+        html, processedENML, decryptedTextManager, errorMessage);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
         error += errorMessage.nonLocalizedString();
@@ -944,8 +871,8 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     QString noteContent = QString::fromLocal8Bit(file.readAll());
     file.close();
 
-    file.setFileName(QStringLiteral(
-        ":/tests/complexNoteHtmlWithHelperTags.txt"));
+    file.setFileName(
+        QStringLiteral(":/tests/complexNoteHtmlWithHelperTags.txt"));
 
     if (!file.open(QIODevice::ReadOnly)) {
         error = QStringLiteral(
@@ -963,7 +890,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     ENMLConverter::SkipHtmlElementRule skipRule;
     skipRule.m_attributeValueToSkip = QStringLiteral("JCLRgrip");
     skipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::StartsWith;
+        ENMLConverter::SkipHtmlElementRule::ComparisonRule::StartsWith;
     skipRule.m_attributeValueCaseSensitivity = Qt::CaseSensitive;
 
     QVector<ENMLConverter::SkipHtmlElementRule> skipRules;
@@ -972,10 +899,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
     QString processedNoteContent;
     ErrorString errorMessage;
     bool res = converter.htmlToNoteContent(
-        html,
-        processedNoteContent,
-        decryptedTextManager,
-        errorMessage,
+        html, processedNoteContent, decryptedTextManager, errorMessage,
         skipRules);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
@@ -1024,7 +948,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     ENMLConverter::SkipHtmlElementRule tableSkipRule;
     tableSkipRule.m_attributeValueToSkip = QStringLiteral("JCLRgrip");
     tableSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::StartsWith;
+        ENMLConverter::SkipHtmlElementRule::ComparisonRule::StartsWith;
     tableSkipRule.m_attributeValueCaseSensitivity = Qt::CaseSensitive;
 
     ENMLConverter::SkipHtmlElementRule hilitorSkipRule;
@@ -1032,7 +956,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     hilitorSkipRule.m_attributeValueToSkip = QStringLiteral("hilitorHelper");
     hilitorSkipRule.m_attributeValueCaseSensitivity = Qt::CaseInsensitive;
     hilitorSkipRule.m_attributeValueComparisonRule =
-        ENMLConverter::SkipHtmlElementRule::Contains;
+        ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
 
     QVector<ENMLConverter::SkipHtmlElementRule> skipRules;
     skipRules << tableSkipRule;
@@ -1041,10 +965,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     QString processedNoteContent;
     ErrorString errorMessage;
     bool res = converter.htmlToNoteContent(
-        html,
-        processedNoteContent,
-        decryptedTextManager,
-        errorMessage,
+        html, processedNoteContent, decryptedTextManager, errorMessage,
         skipRules);
     if (!res) {
         error = QStringLiteral("Unable to convert HTML to note content: ");
@@ -1062,11 +983,10 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+}   // namespace test
+}   // namespace quentier
 
 void initENMLConversionTestResources()
 {
     Q_INIT_RESOURCE(test_resources);
 }
-
