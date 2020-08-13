@@ -84,14 +84,15 @@ SpaceBeforeRangeBasedForLoopColon: 'false'
 SpaceBeforeSquareBrackets: 'false'
 SpaceInEmptyBlock: 'false'
 SpaceInEmptyParentheses: 'false'
-SpacesBeforeTrailingComments: '3'
+SpacesBeforeTrailingComments: '1'
 SpacesInAngles: 'false'
 SpacesInCStyleCastParentheses: 'false'
 SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
 Standard: c++14
-StatementMacros: ['Q_UNUSED', 'Q_OBJECT']
+StatementMacros: ['Q_UNUSED', 'Q_OBJECT', 'SAVE_WARNINGS', 'RESTORE_WARNINGS',
+    'GCC_SUPPRESS_WARNING', 'CLANG_SUPPRESS_WARNING']
 TabWidth: '4'
 UseTab: Never
 ---
