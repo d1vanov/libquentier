@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,11 +20,8 @@
 
 namespace quentier {
 
-ILocalStoragePatch::ILocalStoragePatch(QObject * parent) :
-    QObject(parent)
-{}
+ILocalStoragePatch::ILocalStoragePatch(QObject * parent) : QObject(parent) {}
 
-ILocalStoragePatch::~ILocalStoragePatch()
-{}
+ILocalStoragePatch::~ILocalStoragePatch() {}
 
 } // namespace quentier

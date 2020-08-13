@@ -28,7 +28,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
-class Q_DECL_HIDDEN LocalStoragePatch1To2 final: public ILocalStoragePatch
+class Q_DECL_HIDDEN LocalStoragePatch1To2 final : public ILocalStoragePatch
 {
     Q_OBJECT
 public:
@@ -37,14 +37,19 @@ public:
         LocalStorageManagerPrivate & localStorageManager,
         QSqlDatabase & database, QObject * parent = nullptr);
 
-    virtual int fromVersion() const override { return 1; }
-    virtual int toVersion() const override { return 2; }
+    virtual int fromVersion() const override
+    {
+        return 1;
+    }
+    virtual int toVersion() const override
+    {
+        return 2;
+    }
 
     virtual QString patchShortDescription() const override;
     virtual QString patchLongDescription() const override;
 
-    virtual bool backupLocalStorage(
-        ErrorString & errorDescription) override;
+    virtual bool backupLocalStorage(ErrorString & errorDescription) override;
 
     virtual bool restoreLocalStorageFromBackup(
         ErrorString & errorDescription) override;
@@ -54,7 +59,7 @@ public:
 
     virtual bool apply(ErrorString & errorDescription) override;
 
-// private
+    // private
 Q_SIGNALS:
     void copyDbFile(QString sourcePath, QString destPath);
 
@@ -69,18 +74,19 @@ private:
     void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
         QStringList & resourceLocalUids);
 
-    bool ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
+    bool
+    ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(LocalStoragePatch1To2)
 
 private:
-    Account                         m_account;
-    LocalStorageManagerPrivate &    m_localStorageManager;
-    QSqlDatabase &                  m_sqlDatabase;
+    Account m_account;
+    LocalStorageManagerPrivate & m_localStorageManager;
+    QSqlDatabase & m_sqlDatabase;
 
-    QString     m_backupDirPath;
+    QString m_backupDirPath;
 };
 
 } // namespace quentier
