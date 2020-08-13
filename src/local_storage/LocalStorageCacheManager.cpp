@@ -71,23 +71,24 @@ void LocalStorageCacheManager::clearAllNotes()
 }
 
 #define FIND_OBJECT(Type)                                                      \
-const Type * LocalStorageCacheManager::find##Type(                             \
-    const QString & uid,                                                       \
-    const LocalStorageCacheManager::WhichUid whichUid) const                   \
-{                                                                              \
-    Q_D(const LocalStorageCacheManager);                                       \
-    switch(whichUid) {                                                         \
-    case LocalUid:                                                             \
-        return d->find##Type##ByLocalUid(uid);                                 \
-    case Guid:                                                                 \
-        return d->find##Type##ByGuid(uid);                                     \
-    default:                                                                   \
-        QNERROR("local_storage", "Detected incorrect local uid/remote guid "   \
-            << "qualifier in local storage cache manager");                    \
-        return nullptr;                                                        \
-    }                                                                          \
-}                                                                              \
-// FIND_OBJECT
+    const Type * LocalStorageCacheManager::find##Type(                         \
+        const QString & uid,                                                   \
+        const LocalStorageCacheManager::WhichUid whichUid) const               \
+    {                                                                          \
+        Q_D(const LocalStorageCacheManager);                                   \
+        switch (whichUid) {                                                    \
+        case LocalUid:                                                         \
+            return d->find##Type##ByLocalUid(uid);                             \
+        case Guid:                                                             \
+            return d->find##Type##ByGuid(uid);                                 \
+        default:                                                               \
+            QNERROR(                                                           \
+                "local_storage",                                               \
+                "Detected incorrect local uid/remote guid "                    \
+                    << "qualifier in local storage cache manager");            \
+            return nullptr;                                                    \
+        }                                                                      \
+    }
 
 FIND_OBJECT(Note)
 FIND_OBJECT(Resource)
@@ -177,7 +178,7 @@ void LocalStorageCacheManager::cacheTag(const Tag & tag)
     d->cacheTag(tag);
 }
 
-void LocalStorageCacheManager::expungeTag(const Tag &tag)
+void LocalStorageCacheManager::expungeTag(const Tag & tag)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeTag(tag);

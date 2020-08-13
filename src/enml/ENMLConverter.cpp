@@ -24,8 +24,7 @@
 
 namespace quentier {
 
-ENMLConverter::ENMLConverter() : d_ptr(new ENMLConverterPrivate)
-{}
+ENMLConverter::ENMLConverter() : d_ptr(new ENMLConverterPrivate) {}
 
 ENMLConverter::~ENMLConverter()
 {
@@ -217,4 +216,4 @@ QTextStream & operator<<(
     return strm;
 }
 
-}   // namespace quentier
+} // namespace quentier

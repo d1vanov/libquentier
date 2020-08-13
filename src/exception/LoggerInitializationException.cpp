@@ -21,7 +21,7 @@
 namespace quentier {
 
 LoggerInitializationException::LoggerInitializationException(
-        const ErrorString & message) :
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

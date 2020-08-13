@@ -74,4 +74,4 @@ bool DecryptedTextManager::modifyDecryptedText(
         originalEncryptedText, newDecryptedText, newEncryptedText);
 }
 
-}   // namespace quentier
+} // namespace quentier

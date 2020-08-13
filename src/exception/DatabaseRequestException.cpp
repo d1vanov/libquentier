@@ -21,7 +21,7 @@
 namespace quentier {
 
 DatabaseRequestException::DatabaseRequestException(
-        const ErrorString & message) :
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

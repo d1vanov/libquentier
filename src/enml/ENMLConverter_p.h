@@ -222,11 +222,11 @@ private:
     mutable QString m_cachedConvertedXml;
 };
 
-}   // namespace quentier
+} // namespace quentier
 
 QUENTIER_DECLARE_PRINTABLE(QXmlStreamAttributes)
 
 QUENTIER_DECLARE_PRINTABLE(
     QVector<quentier::ENMLConverter::SkipHtmlElementRule>)
 
-#endif   // LIB_QUENTIER_ENML_ENML_CONVERTER_P_H
+#endif // LIB_QUENTIER_ENML_ENML_CONVERTER_P_H

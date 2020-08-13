@@ -184,4 +184,4 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     }
 }
 
-}   // namespace quentier
+} // namespace quentier

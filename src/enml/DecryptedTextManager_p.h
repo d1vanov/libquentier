@@ -69,6 +69,6 @@ private:
     EncryptionManager m_encryptionManager;
 };
 
-}   // namespace quentier
+} // namespace quentier
 
-#endif   // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
+#endif // LIB_QUENTIER_ENML_DECRYPTED_TEXT_MANAGER_P_H
