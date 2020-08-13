@@ -1,4 +1,5 @@
 ﻿---
+Language: Cpp
 BasedOnStyle: Mozilla
 AccessModifierOffset: -4
 AlignAfterOpenBracket: AlwaysBreak
@@ -70,9 +71,7 @@ IndentGotoLabels: 'false'
 IndentPPDirectives: None
 IndentWidth: '4'
 IndentWrappedFunctionNames: 'false'
-JavaScriptWrapImports: 'true'
 KeepEmptyLinesAtTheStartOfBlocks: 'false'
-Language: Cpp
 MaxEmptyLinesToKeep: '1'
 NamespaceIndentation: None
 PointerAlignment: Middle
@@ -88,6 +87,8 @@ SpaceBeforeCtorInitializerColon: 'true'
 SpaceBeforeInheritanceColon: 'true'
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: 'false'
+SpaceBeforeSquareBrackets: 'false'
+SpaceInEmptyBlock: 'false'
 SpaceInEmptyParentheses: 'false'
 SpacesBeforeTrailingComments: '3'
 SpacesInAngles: 'false'
@@ -96,7 +97,15 @@ SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
 Standard: c++14
+StatementMacros: Q_UNUSED,Q_OBJECT
 TabWidth: '4'
+UseTab: Never
+---
+Language: JavaScript
+JavaScriptQuotes: Double
+JavaScriptWrapImports: 'true'
+TabWidth: '4'
+IndentWidth: '4'
 UseTab: Never
 
 ...
