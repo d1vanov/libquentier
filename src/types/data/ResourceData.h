@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceData final: public NoteStoreDataElementData
+class Q_DECL_HIDDEN ResourceData final : public NoteStoreDataElementData
 {
 public:
     ResourceData() = default;
@@ -41,9 +41,9 @@ public:
     virtual ~ResourceData() override;
 
 public:
-    qevercloud::Resource            m_qecResource;
-    int                             m_indexInNote = -1;
-    qevercloud::Optional<QString>   m_noteLocalUid;
+    qevercloud::Resource m_qecResource;
+    int m_indexInNote = -1;
+    qevercloud::Optional<QString> m_noteLocalUid;
 };
 
 } // namespace quentier

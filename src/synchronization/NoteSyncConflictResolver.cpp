@@ -30,12 +30,10 @@
 namespace quentier {
 
 NoteSyncConflictResolver::NoteSyncConflictResolver(
-        IManager & manager, const qevercloud::Note & remoteNote,
-        const Note & localConflict, QObject * parent) :
+    IManager & manager, const qevercloud::Note & remoteNote,
+    const Note & localConflict, QObject * parent) :
     QObject(parent),
-    m_manager(manager),
-    m_remoteNote(remoteNote),
-    m_localConflict(localConflict)
+    m_manager(manager), m_remoteNote(remoteNote), m_localConflict(localConflict)
 {}
 
 void NoteSyncConflictResolver::start()
@@ -43,9 +41,8 @@ void NoteSyncConflictResolver::start()
     QNDEBUG(
         "synchronization:note_conflict",
         "NoteSyncConflictResolver::start: remote note guid = "
-            << (m_remoteNote.guid.isSet()
-                ? m_remoteNote.guid.ref()
-                : QStringLiteral("<not set>"))
+            << (m_remoteNote.guid.isSet() ? m_remoteNote.guid.ref()
+                                          : QStringLiteral("<not set>"))
             << ", local conflict local uid = " << m_localConflict.localUid());
 
     if (m_started) {
@@ -71,8 +68,10 @@ void NoteSyncConflictResolver::onAuthDataUpdated(
     Q_UNUSED(expirationTime)
 
     if (Q_UNLIKELY(!m_pendingAuthDataUpdate)) {
-        QNWARNING("synchronization:note_conflict", "NoteSyncConflictResolver: "
-            << "received unexpected auth data update, ignoring it");
+        QNWARNING(
+            "synchronization:note_conflict",
+            "NoteSyncConflictResolver: "
+                << "received unexpected auth data update, ignoring it");
         return;
     }
 
@@ -81,8 +80,10 @@ void NoteSyncConflictResolver::onAuthDataUpdated(
 }
 
 void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(
-    QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
-    QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid)
+    QHash<QString, std::pair<QString, QString>>
+        authTokensAndShardIdsByLinkedNotebookGuid,
+    QHash<QString, qevercloud::Timestamp>
+        authTokenExpirationTimesByLinkedNotebookGuid)
 {
     QNDEBUG(
         "synchronization:note_conflict",
@@ -92,9 +93,12 @@ void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(
     Q_UNUSED(authTokenExpirationTimesByLinkedNotebookGuid)
 
     if (Q_UNLIKELY(!m_pendingLinkedNotebookAuthDataUpdate)) {
-        QNWARNING("synchronization:note_conflict", "NoteSyncConflictResolver: "
-            << "received unexpected linked notebook auth data update, ignoring "
-            << "it");
+        QNWARNING(
+            "synchronization:note_conflict",
+            "NoteSyncConflictResolver: "
+                << "received unexpected linked notebook auth data update, "
+                   "ignoring "
+                << "it");
         return;
     }
 
@@ -115,23 +119,23 @@ void NoteSyncConflictResolver::onAddNoteComplete(Note note, QUuid requestId)
 
     m_addNoteRequestId = QUuid();
 
-    if (m_pendingRemoteNoteAdditionToLocalStorage)
-    {
-        QNDEBUG("synchronization:note_conflict", "Successfully added remote "
-            << "note as a new note to the local storage");
+    if (m_pendingRemoteNoteAdditionToLocalStorage) {
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "Successfully added remote "
+                << "note as a new note to the local storage");
         m_pendingRemoteNoteAdditionToLocalStorage = false;
         Q_EMIT finished(m_remoteNote);
     }
-    else
-    {
+    else {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: internal error, received "
                        "unidentified note addition acknowledge "
                        "event within the local storage"));
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
     }
 }
@@ -162,76 +166,90 @@ void NoteSyncConflictResolver::onUpdateNoteComplete(
 
     QNDEBUG(
         "synchronization:note_conflict",
-        "NoteSyncConflictResolver::onUpdateNoteComplete: note = " << note
-            << "\nRequest id = " << requestId << ", update resource metadata = "
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
-                ? "true"
-                : "false")
+        "NoteSyncConflictResolver::onUpdateNoteComplete: note = "
+            << note << "\nRequest id = " << requestId
+            << ", update resource metadata = "
+            << ((options &
+                 LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+                    ? "true"
+                    : "false")
             << ", update resource binary data = "
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
-                ? "true"
-                : "false")
+            << ((options &
+                 LocalStorageManager::UpdateNoteOption::
+                     UpdateResourceBinaryData)
+                    ? "true"
+                    : "false")
             << ", update tags = "
             << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags)
-                ? "true"
-                : "false"));
+                    ? "true"
+                    : "false"));
 
     m_updateNoteRequestId = QUuid();
 
-    if (m_pendingLocalConflictUpdateInLocalStorage)
-    {
-        QNDEBUG("synchronization:note_conflict", "Local conflicting note was "
-            << "successfully updated in the local storage");
+    if (m_pendingLocalConflictUpdateInLocalStorage) {
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "Local conflicting note was "
+                << "successfully updated in the local storage");
 
         m_pendingLocalConflictUpdateInLocalStorage = false;
 
         if (m_pendingFullRemoteNoteDataDownload) {
-            QNDEBUG("synchronization:note_conflict", "Still waiting for full "
-                << "remote note's data downloading");
+            QNDEBUG(
+                "synchronization:note_conflict",
+                "Still waiting for full "
+                    << "remote note's data downloading");
             return;
         }
 
         if (m_retryNoteDownloadingTimerId != 0) {
-            QNDEBUG("synchronization:note_conflict", "Retry full remote note "
-                << "data timer is active, hence the remote note data has not "
-                << "been fully downloaded yet");
+            QNDEBUG(
+                "synchronization:note_conflict",
+                "Retry full remote note "
+                    << "data timer is active, hence the remote note data has "
+                       "not "
+                    << "been fully downloaded yet");
             return;
         }
 
         if (m_pendingAuthDataUpdate) {
-            QNDEBUG("synchronization:note_conflict", "Remote note was not "
-                << "downloaded properly yet, pending auth token for full "
-                << "remote note data downloading");
+            QNDEBUG(
+                "synchronization:note_conflict",
+                "Remote note was not "
+                    << "downloaded properly yet, pending auth token for full "
+                    << "remote note data downloading");
             return;
         }
 
         if (m_manager.syncingLinkedNotebooksContent() &&
             m_pendingLinkedNotebookAuthDataUpdate)
         {
-            QNDEBUG("synchronization:note_conflict", "Remote note was not "
-                << "downloaded properly yet, pending linked notebook auth "
-                << "token for full remote note data downloading");
+            QNDEBUG(
+                "synchronization:note_conflict",
+                "Remote note was not "
+                    << "downloaded properly yet, pending linked notebook auth "
+                    << "token for full remote note data downloading");
             return;
         }
 
         addRemoteNoteToLocalStorageAsNewNote();
     }
-    else if (m_pendingRemoteNoteUpdateInLocalStorage)
-    {
-        QNDEBUG("synchronization:note_conflict", "Remote note was successfully "
-            << "updated in the local storage");
+    else if (m_pendingRemoteNoteUpdateInLocalStorage) {
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "Remote note was successfully "
+                << "updated in the local storage");
         m_pendingRemoteNoteUpdateInLocalStorage = false;
         Q_EMIT finished(m_remoteNote);
     }
-    else
-    {
+    else {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote and local "
                        "notes: internal error, received unidentified note "
                        "update acknowledge from the local storage"));
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
     }
 }
@@ -246,26 +264,28 @@ void NoteSyncConflictResolver::onUpdateNoteFailed(
 
     QNWARNING(
         "synchronization:note_conflict",
-        "NoteSyncConflictResolver::onUpdateNoteFailed: note = " << note
-            << "\nRequest id = " << requestId
+        "NoteSyncConflictResolver::onUpdateNoteFailed: note = "
+            << note << "\nRequest id = " << requestId
             << ", update resource metadata = "
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
-                ? "true"
-                : "false")
+            << ((options &
+                 LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+                    ? "true"
+                    : "false")
             << ", update resource binary data = "
-            << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
-                ? "true"
-                : "false")
+            << ((options &
+                 LocalStorageManager::UpdateNoteOption::
+                     UpdateResourceBinaryData)
+                    ? "true"
+                    : "false")
             << ", update tags = "
             << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags)
-                ? "true"
-                : "false")
+                    ? "true"
+                    : "false")
             << "; error description = " << errorDescription);
 
     m_updateNoteRequestId = QUuid();
 
-    if (m_pendingLocalConflictUpdateInLocalStorage)
-    {
+    if (m_pendingLocalConflictUpdateInLocalStorage) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: failed to update the local "
@@ -273,12 +293,11 @@ void NoteSyncConflictResolver::onUpdateNoteFailed(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
     }
-    else if (m_pendingRemoteNoteUpdateInLocalStorage)
-    {
+    else if (m_pendingRemoteNoteUpdateInLocalStorage) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: failed to update "
@@ -286,12 +305,11 @@ void NoteSyncConflictResolver::onUpdateNoteFailed(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
     }
-    else
-    {
+    else {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: internal error, received "
@@ -300,15 +318,15 @@ void NoteSyncConflictResolver::onUpdateNoteFailed(
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
     }
 }
 
 void NoteSyncConflictResolver::onGetNoteAsyncFinished(
-    qint32 errorCode, qevercloud::Note qecNote,
-    qint32 rateLimitSeconds, ErrorString errorDescription)
+    qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds,
+    ErrorString errorDescription)
 {
     if (!qecNote.guid.isSet() || !m_remoteNote.guid.isSet() ||
         (qecNote.guid.ref() != m_remoteNote.guid.ref()))
@@ -318,8 +336,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
 
     QNDEBUG(
         "synchronization:note_conflict",
-        "NoteSyncConflictResolver::onGetNoteAsyncFinished: " << "error code = "
-            << errorCode << ", note = " << qecNote
+        "NoteSyncConflictResolver::onGetNoteAsyncFinished: "
+            << "error code = " << errorCode << ", note = " << qecNote
             << "\nRate limit seconds = " << rateLimitSeconds
             << ", error description = " << errorDescription);
 
@@ -328,8 +346,7 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
     if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
     {
-        if (rateLimitSeconds < 0)
-        {
+        if (rateLimitSeconds < 0) {
             errorDescription.setBase(
                 QT_TR_NOOP("QEverCloud or Evernote protocol error: caught "
                            "RATE_LIMIT_REACHED "
@@ -342,8 +359,7 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
         }
 
         int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
-        if (Q_UNLIKELY(timerId == 0))
-        {
+        if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "
                            "API call due to rate limit exceeding"));
@@ -352,15 +368,18 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
             return;
         }
 
-        QNDEBUG("synchronization:note_conflict", "Started timer to retry "
-            << "downloading full note data: timer id = " << timerId
-            << ", need to wait for " << rateLimitSeconds << " seconds");
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "Started timer to retry "
+                << "downloading full note data: timer id = " << timerId
+                << ", need to wait for " << rateLimitSeconds << " seconds");
         m_retryNoteDownloadingTimerId = timerId;
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (errorCode ==
-             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
+    else if (
+        errorCode ==
+        static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         if (m_manager.syncingLinkedNotebooksContent()) {
             m_pendingLinkedNotebookAuthDataUpdate = true;
@@ -372,16 +391,14 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
         Q_EMIT notifyAuthExpiration();
         return;
     }
-    else if (errorCode != 0)
-    {
+    else if (errorCode != 0) {
         Q_EMIT failure(m_remoteNote, errorDescription);
         return;
     }
 
     m_remoteNoteAsLocalNote.qevercloudNote() = qecNote;
 
-    if (m_shouldOverrideLocalNoteWithRemoteNote)
-    {
+    if (m_shouldOverrideLocalNoteWithRemoteNote) {
         overrideLocalNoteWithRemoteChanges();
 
         m_pendingRemoteNoteUpdateInLocalStorage = true;
@@ -392,17 +409,21 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
             LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData |
             LocalStorageManager::UpdateNoteOption::UpdateTags);
 
-        QNDEBUG("synchronization:note_conflict", "Emitting the request to "
-            << "update the local conflict overridden by the remote note within "
-            << "the local storage: request id = " << m_updateNoteRequestId
-            << ", note: " << m_remoteNoteAsLocalNote);
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "Emitting the request to "
+                << "update the local conflict overridden by the remote note "
+                   "within "
+                << "the local storage: request id = " << m_updateNoteRequestId
+                << ", note: " << m_remoteNoteAsLocalNote);
         Q_EMIT updateNote(m_localConflict, options, m_updateNoteRequestId);
     }
-    else
-    {
+    else {
         if (m_pendingLocalConflictUpdateInLocalStorage) {
-            QNDEBUG("synchronization:note_conflict", "Still pending the update "
-                << "of local conflicting note in the local storage");
+            QNDEBUG(
+                "synchronization:note_conflict",
+                "Still pending the update "
+                    << "of local conflicting note in the local storage");
             return;
         }
 
@@ -420,41 +441,30 @@ void NoteSyncConflictResolver::connectToLocalStorage()
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(
-        this,
-        &NoteSyncConflictResolver::addNote,
-        &localStorageManagerAsync,
+        this, &NoteSyncConflictResolver::addNote, &localStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNoteRequest);
 
     QObject::connect(
-        this,
-        &NoteSyncConflictResolver::updateNote,
-        &localStorageManagerAsync,
+        this, &NoteSyncConflictResolver::updateNote, &localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNoteRequest);
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(
-        &localStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteComplete,
-        this,
-        &NoteSyncConflictResolver::onAddNoteComplete);
+        &localStorageManagerAsync, &LocalStorageManagerAsync::addNoteComplete,
+        this, &NoteSyncConflictResolver::onAddNoteComplete);
+
+    QObject::connect(
+        &localStorageManagerAsync, &LocalStorageManagerAsync::addNoteFailed,
+        this, &NoteSyncConflictResolver::onAddNoteFailed);
 
     QObject::connect(
         &localStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteFailed,
-        this,
-        &NoteSyncConflictResolver::onAddNoteFailed);
-
-    QObject::connect(
-        &localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteComplete,
-        this,
+        &LocalStorageManagerAsync::updateNoteComplete, this,
         &NoteSyncConflictResolver::onUpdateNoteComplete);
 
     QObject::connect(
-        &localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteFailed,
-        this,
-        &NoteSyncConflictResolver::onUpdateNoteFailed);
+        &localStorageManagerAsync, &LocalStorageManagerAsync::updateNoteFailed,
+        this, &NoteSyncConflictResolver::onUpdateNoteFailed);
 }
 
 void NoteSyncConflictResolver::processNotesConflictByGuid()
@@ -463,51 +473,47 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
         "synchronization:note_conflict",
         "NoteSyncConflictResolver::processNotesConflictByGuid");
 
-    if (Q_UNLIKELY(!m_remoteNote.guid.isSet()))
-    {
+    if (Q_UNLIKELY(!m_remoteNote.guid.isSet())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: the remote note has no guid set"));
         APPEND_NOTE_DETAILS(error, Note(m_remoteNote))
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
         return;
     }
 
-    if (Q_UNLIKELY(!m_remoteNote.updateSequenceNum.isSet()))
-    {
+    if (Q_UNLIKELY(!m_remoteNote.updateSequenceNum.isSet())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: the remote note has no "
                        "update sequence number set"));
         APPEND_NOTE_DETAILS(error, Note(m_remoteNote))
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNote);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_remoteNote);
         Q_EMIT failure(m_remoteNote, error);
         return;
     }
 
-    if (Q_UNLIKELY(!m_localConflict.hasGuid()))
-    {
+    if (Q_UNLIKELY(!m_localConflict.hasGuid())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local notes: the local note has no guid set"));
         APPEND_NOTE_DETAILS(error, m_localConflict)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_localConflict);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_localConflict);
         Q_EMIT failure(m_remoteNote, error);
         return;
     }
 
-    if (Q_UNLIKELY(m_remoteNote.guid.ref() != m_localConflict.guid()))
-    {
+    if (Q_UNLIKELY(m_remoteNote.guid.ref() != m_localConflict.guid())) {
         ErrorString error(
             QT_TR_NOOP("Note sync conflict resolution was applied "
                        "to notes which do not conflict by guid"));
         APPEND_NOTE_DETAILS(error, m_localConflict)
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_localConflict);
+        QNWARNING(
+            "synchronization:note_conflict", error << ": " << m_localConflict);
         Q_EMIT failure(m_remoteNote, error);
         return;
     }
@@ -516,9 +522,12 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
         (m_localConflict.updateSequenceNumber() >=
          m_remoteNote.updateSequenceNum.ref()))
     {
-        QNDEBUG("synchronization:note_conflict", "The local note has update "
-            << "sequence number equal to or greater than the remote note's one "
-            << "=> local note should override the remote one");
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "The local note has update "
+                << "sequence number equal to or greater than the remote note's "
+                   "one "
+                << "=> local note should override the remote one");
         Q_EMIT finished(m_remoteNote);
         return;
     }
@@ -530,16 +539,21 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
     }
 
     if (!m_localConflict.isDirty()) {
-        QNDEBUG("synchronization:note_conflict", "The local conflicting note "
-            << "is not dirty and thus should be overridden with the remote "
-            << "note");
+        QNDEBUG(
+            "synchronization:note_conflict",
+            "The local conflicting note "
+                << "is not dirty and thus should be overridden with the remote "
+                << "note");
         m_shouldOverrideLocalNoteWithRemoteNote = true;
         return;
     }
 
-    QNDEBUG("synchronization:note_conflict", "The local conflicting note has "
-        << "been marked as dirty one, need to clear Evernote-assigned fields "
-        << "from it");
+    QNDEBUG(
+        "synchronization:note_conflict",
+        "The local conflicting note has "
+            << "been marked as dirty one, need to clear Evernote-assigned "
+               "fields "
+            << "from it");
 
     m_localConflict.setGuid(QString());
     m_localConflict.setUpdateSequenceNumber(-1);
@@ -547,32 +561,27 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
         m_remoteNote.guid.ref();
 
     QString conflictingNoteTitle;
-    if (m_localConflict.hasTitle())
-    {
+    if (m_localConflict.hasTitle()) {
         conflictingNoteTitle =
             m_localConflict.title() + QStringLiteral(" - ") + tr("conflicting");
     }
-    else
-    {
+    else {
         QString previewText = m_localConflict.plainText();
-        if (!previewText.isEmpty())
-        {
+        if (!previewText.isEmpty()) {
             previewText.truncate(12);
             conflictingNoteTitle =
                 previewText + QStringLiteral("... - ") + tr("conflicting");
         }
-        else
-        {
+        else {
             conflictingNoteTitle = tr("Conflicting note");
         }
     }
 
     m_localConflict.setTitle(conflictingNoteTitle);
 
-    if (m_localConflict.hasResources())
-    {
+    if (m_localConflict.hasResources()) {
         auto resources = m_localConflict.resources();
-        for(auto & resource: resources) {
+        for (auto & resource: resources) {
             resource.setGuid({});
             resource.setNoteGuid({});
             resource.setUpdateSequenceNumber(-1);
@@ -588,10 +597,12 @@ void NoteSyncConflictResolver::processNotesConflictByGuid()
     LocalStorageManager::UpdateNoteOptions options(
         LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata);
 
-    QNDEBUG("synchronization:note_conflict", "Emitting the request to update "
-        << "the local conflicting note (after clearing Evernote assigned "
-        << "fields from it): request id = " << m_updateNoteRequestId
-        << ", note to update: " << m_localConflict);
+    QNDEBUG(
+        "synchronization:note_conflict",
+        "Emitting the request to update "
+            << "the local conflicting note (after clearing Evernote assigned "
+            << "fields from it): request id = " << m_updateNoteRequestId
+            << ", note to update: " << m_localConflict);
     Q_EMIT updateNote(m_localConflict, options, m_updateNoteRequestId);
 }
 
@@ -601,8 +612,10 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         "synchronization:note_conflict",
         "NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges");
 
-    QNTRACE("synchronization:note_conflict", "Local conflict: "
-        << m_localConflict << "\nRemote note: " << m_remoteNoteAsLocalNote);
+    QNTRACE(
+        "synchronization:note_conflict",
+        "Local conflict: " << m_localConflict
+                           << "\nRemote note: " << m_remoteNoteAsLocalNote);
 
     Note localNote(m_localConflict);
 
@@ -627,21 +640,18 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
     amendedResources.reserve(updatedResources.size());
 
     // First update those resources which were within the local note already
-    for(auto & resource: resources)
-    {
+    for (auto & resource: resources) {
         if (!resource.hasGuid()) {
             continue;
         }
 
         bool foundResource = false;
-        for(const auto & updatedResource: qAsConst(updatedResources))
-        {
+        for (const auto & updatedResource: qAsConst(updatedResources)) {
             if (!updatedResource.hasGuid()) {
                 continue;
             }
 
-            if (updatedResource.guid() == resource.guid())
-            {
+            if (updatedResource.guid() == resource.guid()) {
                 resource.qevercloudResource() =
                     updatedResource.qevercloudResource();
 
@@ -660,20 +670,19 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
     }
 
     // Then account for new resources
-    for(const auto & updatedResource: qAsConst(updatedResources))
-    {
+    for (const auto & updatedResource: qAsConst(updatedResources)) {
         if (Q_UNLIKELY(!updatedResource.hasGuid())) {
-            QNWARNING("synchronization:note_conflict", "Skipping resource from "
-                << "remote note without guid: " << updatedResource);
+            QNWARNING(
+                "synchronization:note_conflict",
+                "Skipping resource from "
+                    << "remote note without guid: " << updatedResource);
             continue;
         }
 
         const Resource * pExistingResource = nullptr;
-        for(const auto & resource: qAsConst(resources))
-        {
+        for (const auto & resource: qAsConst(resources)) {
             if (resource.hasGuid() &&
-                (resource.guid() == updatedResource.guid()))
-            {
+                (resource.guid() == updatedResource.guid())) {
                 pExistingResource = &resource;
                 break;
             }
@@ -692,8 +701,9 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
     }
 
     localNote.setResources(amendedResources);
-    QNTRACE("synchronization:note_conflict", "Local note after overriding: "
-        << localNote);
+    QNTRACE(
+        "synchronization:note_conflict",
+        "Local note after overriding: " << localNote);
 
     m_localConflict = localNote;
 }
@@ -707,9 +717,11 @@ void NoteSyncConflictResolver::addRemoteNoteToLocalStorageAsNewNote()
     m_pendingRemoteNoteAdditionToLocalStorage = true;
     m_addNoteRequestId = QUuid::createUuid();
 
-    QNDEBUG("synchronization:note_conflict", "Emitting the request to add note "
-        << "to the local storage: request id = " << m_addNoteRequestId
-        << ", note: " << m_remoteNoteAsLocalNote);
+    QNDEBUG(
+        "synchronization:note_conflict",
+        "Emitting the request to add note "
+            << "to the local storage: request id = " << m_addNoteRequestId
+            << ", note: " << m_remoteNoteAsLocalNote);
     Q_EMIT addNote(m_remoteNoteAsLocalNote, m_addNoteRequestId);
 }
 
@@ -722,28 +734,24 @@ bool NoteSyncConflictResolver::downloadFullRemoteNoteData()
     QString authToken;
     ErrorString errorDescription;
     INoteStore * pNoteStore = m_manager.noteStoreForNote(
-        m_remoteNoteAsLocalNote,
-        authToken,
-        errorDescription);
+        m_remoteNoteAsLocalNote, authToken, errorDescription);
 
-    if (Q_UNLIKELY(!pNoteStore))
-    {
+    if (Q_UNLIKELY(!pNoteStore)) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve sync conflict between notes: internal "
                        "error, failed to find note store for the remote note"));
         error.appendBase(errorDescription.base());
         error.appendBase(errorDescription.additionalBases());
         APPEND_NOTE_DETAILS(error, m_remoteNoteAsLocalNote);
-        QNWARNING("synchronization:note_conflict", error << ": "
-            << m_remoteNoteAsLocalNote);
+        QNWARNING(
+            "synchronization:note_conflict",
+            error << ": " << m_remoteNoteAsLocalNote);
         Q_EMIT failure(m_remoteNote, error);
         return false;
     }
 
     QObject::connect(
-        pNoteStore,
-        &INoteStore::getNoteAsyncFinished,
-        this,
+        pNoteStore, &INoteStore::getNoteAsyncFinished, this,
         &NoteSyncConflictResolver::onGetNoteAsyncFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -757,37 +765,31 @@ bool NoteSyncConflictResolver::downloadFullRemoteNoteData()
     bool withNoteLimits = m_manager.syncingLinkedNotebooksContent();
 
     bool res = pNoteStore->getNoteAsync(
-        withContent,
-        withResourceData,
-        withResourceRecognition,
-        withResourceAlternateData,
-        withSharedNotes,
-        withNoteAppDataValues,
-        withResourceAppDataValues,
-        withNoteLimits,
-        m_remoteNoteAsLocalNote.guid(),
-        authToken,
-        errorDescription);
+        withContent, withResourceData, withResourceRecognition,
+        withResourceAlternateData, withSharedNotes, withNoteAppDataValues,
+        withResourceAppDataValues, withNoteLimits,
+        m_remoteNoteAsLocalNote.guid(), authToken, errorDescription);
 
-    if (!res)
-    {
+    if (!res) {
         APPEND_NOTE_DETAILS(errorDescription, m_remoteNoteAsLocalNote)
-        QNWARNING("synchronization:note_conflict", errorDescription
-            << ", note: " << m_remoteNoteAsLocalNote);
+        QNWARNING(
+            "synchronization:note_conflict",
+            errorDescription << ", note: " << m_remoteNoteAsLocalNote);
         Q_EMIT failure(m_remoteNote, errorDescription);
         return false;
     }
 
     m_pendingFullRemoteNoteDataDownload = true;
-    QNDEBUG("synchronization:note_conflict", "Pending full remote note data "
-        << "downloading");
+    QNDEBUG(
+        "synchronization:note_conflict",
+        "Pending full remote note data "
+            << "downloading");
     return true;
 }
 
 void NoteSyncConflictResolver::timerEvent(QTimerEvent * pEvent)
 {
-    if (!pEvent)
-    {
+    if (!pEvent) {
         ErrorString errorDescription(
             QT_TR_NOOP("Qt error: detected null pointer to QTimerEvent"));
         QNWARNING("synchronization:note_conflict", errorDescription);
@@ -797,8 +799,8 @@ void NoteSyncConflictResolver::timerEvent(QTimerEvent * pEvent)
 
     int timerId = pEvent->timerId();
     killTimer(timerId);
-    QNDEBUG("synchronization:note_conflict", "Killed timer with id "
-        << timerId);
+    QNDEBUG(
+        "synchronization:note_conflict", "Killed timer with id " << timerId);
 
     if (timerId == m_retryNoteDownloadingTimerId) {
         QNDEBUG(

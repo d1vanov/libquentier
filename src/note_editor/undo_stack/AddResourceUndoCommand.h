@@ -28,7 +28,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddResourceUndoCommand final: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN AddResourceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -37,13 +37,12 @@ public:
 public:
     AddResourceUndoCommand(
         const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     AddResourceUndoCommand(
         const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text, QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        QUndoCommand * parent = nullptr);
 
     virtual ~AddResourceUndoCommand();
 
@@ -54,8 +53,8 @@ private:
     void init();
 
 private:
-    Resource     m_resource;
-    Callback     m_callback;
+    Resource m_resource;
+    Callback m_callback;
 };
 
 } // namespace quentier

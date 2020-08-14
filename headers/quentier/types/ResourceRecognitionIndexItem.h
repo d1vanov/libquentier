@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndexItemData)
 
-class QUENTIER_EXPORT ResourceRecognitionIndexItem: public Printable
+class QUENTIER_EXPORT ResourceRecognitionIndexItem : public Printable
 {
 public:
     explicit ResourceRecognitionIndexItem();
@@ -77,8 +77,8 @@ public:
             return (m_text == other.m_text) && (m_weight == other.m_weight);
         }
 
-        QString     m_text;
-        int         m_weight = -1;
+        QString m_text;
+        int m_weight = -1;
     };
 
     QVector<TextItem> textItems() const;
@@ -99,8 +99,8 @@ public:
                 (m_weight == other.m_weight);
         }
 
-        QString     m_objectType;
-        int         m_weight = -1;
+        QString m_objectType;
+        int m_weight = -1;
     };
 
     QVector<ObjectItem> objectItems() const;
@@ -124,8 +124,8 @@ public:
                 (m_weight == other.m_weight);
         }
 
-        QString     m_shapeType;
-        int         m_weight = -1;
+        QString m_shapeType;
+        int m_weight = -1;
     };
 
     QVector<ShapeItem> shapeItems() const;
@@ -146,8 +146,8 @@ public:
                 (m_weight == other.m_weight);
         }
 
-        QString     m_barcode;
-        int         m_weight = -1;
+        QString m_barcode;
+        int m_weight = -1;
     };
 
     QVector<BarcodeItem> barcodeItems() const;

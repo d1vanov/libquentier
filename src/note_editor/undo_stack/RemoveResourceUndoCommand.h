@@ -28,7 +28,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RemoveResourceUndoCommand final:
+class Q_DECL_HIDDEN RemoveResourceUndoCommand final :
     public INoteEditorUndoCommand
 {
     Q_OBJECT
@@ -38,8 +38,7 @@ public:
 public:
     RemoveResourceUndoCommand(
         const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     RemoveResourceUndoCommand(
         const Resource & resource, const Callback & callback,
@@ -52,8 +51,8 @@ public:
     virtual void redoImpl() override;
 
 private:
-    Resource     m_resource;
-    Callback     m_callback;
+    Resource m_resource;
+    Callback m_callback;
 };
 
 } // namespace quentier

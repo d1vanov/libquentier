@@ -53,7 +53,7 @@
 
 namespace quentier {
 
-#define WRAP(x) << QStringLiteral(x) // WRAP
+#define WRAP(x) << QStringLiteral(x)
 
 ENMLConverterPrivate::ENMLConverterPrivate(QObject * parent) :
     QObject(parent), m_forbiddenXhtmlTags(QSet<QString>()
@@ -3937,8 +3937,7 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
         else {                                                                 \
             return ShouldSkipElementResult::SkipWithContents;                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_IF_SHOULD_SKIP
+    }
 
     const int numAttributes = attributes.size();
 

@@ -40,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * callbacks required for proper implementation of decryption for encrypted text
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final: public QObject
+class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -55,9 +55,9 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString encryptedText, QString cipher, size_t length,
-        QString hint, QString decryptedText, QString passphrase,
-        bool rememberForSession, bool decryptPermanently);
+        QString encryptedText, QString cipher, size_t length, QString hint,
+        QString decryptedText, QString passphrase, bool rememberForSession,
+        bool decryptPermanently);
 
     void cancelled();
     void notifyError(ErrorString error);
@@ -79,19 +79,19 @@ private:
     typedef JsResultCallbackFunctor<DecryptEncryptedTextDelegate> JsCallback;
 
 private:
-    QString     m_encryptedTextId;
-    QString     m_encryptedText;
-    QString     m_cipher;
-    size_t      m_length = 0;
-    QString     m_hint;
-    QString     m_decryptedText;
-    QString     m_passphrase;
-    bool        m_rememberForSession = false;
-    bool        m_decryptPermanently = false;
+    QString m_encryptedTextId;
+    QString m_encryptedText;
+    QString m_cipher;
+    size_t m_length = 0;
+    QString m_hint;
+    QString m_decryptedText;
+    QString m_passphrase;
+    bool m_rememberForSession = false;
+    bool m_decryptPermanently = false;
 
-    QPointer<NoteEditorPrivate>             m_pNoteEditor;
-    std::shared_ptr<EncryptionManager>       m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager>    m_decryptedTextManager;
+    QPointer<NoteEditorPrivate> m_pNoteEditor;
+    std::shared_ptr<EncryptionManager> m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 };
 
 } // namespace quentier

@@ -29,8 +29,8 @@
 #include <QFlags>
 #include <QString>
 #include <QStyle>
-#include <QtGlobal>
 #include <QUrl>
+#include <QtGlobal>
 
 #include <cstdint>
 
@@ -79,8 +79,8 @@ bool checkGuid(const T & guid)
  * @return                      True if the passed in update sequence number
  *                              is valid, false otherwise
  */
-bool QUENTIER_EXPORT checkUpdateSequenceNumber(
-    const int32_t updateSequenceNumber);
+bool QUENTIER_EXPORT
+checkUpdateSequenceNumber(const int32_t updateSequenceNumber);
 
 /**
  * @brief The DateTimePrint class simply wraps the enum containing datetime
@@ -92,7 +92,8 @@ public:
     /**
      * Available printing options for datetime
      */
-    enum Option {
+    enum Option
+    {
         /**
          * Include the numeric representation of the timestamp into
          * the printed string
@@ -135,8 +136,7 @@ const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
     const qint64 timestamp,
     DateTimePrint::Options options = DateTimePrint::Options(
         DateTimePrint::IncludeNumericTimestamp |
-        DateTimePrint::IncludeMilliseconds |
-        DateTimePrint::IncludeTimezone),
+        DateTimePrint::IncludeMilliseconds | DateTimePrint::IncludeTimezone),
     const char * customFormat = nullptr);
 
 /**
@@ -230,8 +230,8 @@ bool QUENTIER_EXPORT removeDir(const QString & dirPath);
  * @return                  QByteArray with file's contents read into memory or
  *                          empty QByteArray in case of I/O error
  */
-QByteArray QUENTIER_EXPORT readFileContents(
-    const QString & filePath, ErrorString & errorDescription);
+QByteArray QUENTIER_EXPORT
+readFileContents(const QString & filePath, ErrorString & errorDescription);
 
 /**
  * renameFile renames file with absolute path "from" to file with absolute

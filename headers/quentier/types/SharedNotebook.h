@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SharedNotebookData)
 
-class QUENTIER_EXPORT SharedNotebook: public Printable
+class QUENTIER_EXPORT SharedNotebook : public Printable
 {
 public:
     using SharedNotebookPrivilegeLevel =

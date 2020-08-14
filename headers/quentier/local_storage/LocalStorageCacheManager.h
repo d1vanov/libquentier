@@ -35,7 +35,7 @@ QT_FORWARD_DECLARE_CLASS(Tag)
 QT_FORWARD_DECLARE_CLASS(ILocalStorageCacheExpiryChecker)
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManagerPrivate)
-class QUENTIER_EXPORT LocalStorageCacheManager: public Printable
+class QUENTIER_EXPORT LocalStorageCacheManager : public Printable
 {
 public:
     LocalStorageCacheManager();
@@ -55,8 +55,7 @@ public:
     void cacheNote(const Note & note);
     void expungeNote(const Note & note);
 
-    const Note * findNote(
-        const QString & uid, const WhichUid whichUid) const;
+    const Note * findNote(const QString & uid, const WhichUid whichUid) const;
 
     void clearAllNotes();
 

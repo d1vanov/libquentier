@@ -38,29 +38,28 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
  * applied to the local storage when its schema/structure needs to be changed
  * (with upgrades of libquentier)
  */
-class Q_DECL_HIDDEN LocalStoragePatchManager final: public QObject
+class Q_DECL_HIDDEN LocalStoragePatchManager final : public QObject
 {
     Q_OBJECT
 public:
     explicit LocalStoragePatchManager(
         const Account & account,
         LocalStorageManagerPrivate & localStorageManager,
-        QSqlDatabase & database,
-        QObject * parent = nullptr);
+        QSqlDatabase & database, QObject * parent = nullptr);
 
     /**
      * @return          The list of patches required to be applied to the
      *                  current version of local storage
      */
-    QVector<std::shared_ptr<ILocalStoragePatch> > patchesForCurrentVersion();
+    QVector<std::shared_ptr<ILocalStoragePatch>> patchesForCurrentVersion();
 
 private:
     Q_DISABLE_COPY(LocalStoragePatchManager)
 
 private:
-    Account                             m_account;
-    LocalStorageManagerPrivate &        m_localStorageManager;
-    QSqlDatabase &                      m_sqlDatabase;
+    Account m_account;
+    LocalStorageManagerPrivate & m_localStorageManager;
+    QSqlDatabase & m_sqlDatabase;
 };
 
 } // namespace quentier

@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AuthenticationManagerPrivate final: public QObject
+class Q_DECL_HIDDEN AuthenticationManagerPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -45,9 +45,9 @@ private:
     Q_DISABLE_COPY(AuthenticationManagerPrivate)
 
 private:
-    QString         m_consumerKey;
-    QString         m_consumerSecret;
-    QString         m_host;
+    QString m_consumerKey;
+    QString m_consumerSecret;
+    QString m_host;
 };
 
 } // namespace quentier

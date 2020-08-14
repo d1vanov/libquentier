@@ -252,6 +252,6 @@ private:
     Q_DECLARE_PRIVATE(ENMLConverter)
 };
 
-}   // namespace quentier
+} // namespace quentier
 
-#endif   // LIB_QUENTIER_ENML_ENML_CONVERTER_H
+#endif // LIB_QUENTIER_ENML_ENML_CONVERTER_H

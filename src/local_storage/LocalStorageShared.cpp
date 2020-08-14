@@ -28,10 +28,10 @@ namespace quentier {
 QString lastExecutedQuery(const QSqlQuery & query)
 {
     QString str = query.lastQuery();
-    QMap<QString,QVariant> boundValues = query.boundValues();
+    QMap<QString, QVariant> boundValues = query.boundValues();
 
-    for(auto it = boundValues.constBegin(),
-        end = boundValues.constEnd(); it != end; ++it)
+    for (auto it = boundValues.constBegin(), end = boundValues.constEnd();
+         it != end; ++it)
     {
         str.replace(it.key(), it.value().toString());
     }

@@ -45,20 +45,16 @@
 #undef CLANG_SUPPRESS_WARNING
 
 #define CLANG_SUPPRESS_WARNING(warning)                                        \
-    _Pragma( STRINGIFY( clang diagnostic ignored #warning ) )                  \
-// CLANG_IGNORE_WARNING
+    _Pragma(                                                                   \
+        STRINGIFY(clang diagnostic ignored #warning)) // CLANG_IGNORE_WARNING
 
 #undef SAVE_WARNINGS
 
-#define SAVE_WARNINGS                                                          \
-    _Pragma("clang diagnostic push")                                           \
-// SAVE_WARNINGS
+#define SAVE_WARNINGS _Pragma("clang diagnostic push") // SAVE_WARNINGS
 
 #undef RESTORE_WARNINGS
 
-#define RESTORE_WARNINGS                                                       \
-    _Pragma("clang diagnostic pop")                                            \
-// RESTORE_WARNINGS
+#define RESTORE_WARNINGS _Pragma("clang diagnostic pop") // RESTORE_WARNINGS
 
 #endif // clang
 
@@ -72,20 +68,15 @@
 #undef GCC_SUPPRESS_WARNING
 
 #define GCC_SUPPRESS_WARNING(warning)                                          \
-    _Pragma( STRINGIFY( GCC diagnostic ignored #warning ) )                    \
-// GCC_SUPPRESS_WARNING
+    _Pragma(STRINGIFY(GCC diagnostic ignored #warning)) // GCC_SUPPRESS_WARNING
 
 #undef SAVE_WARNINGS
 
-#define SAVE_WARNINGS                                                          \
-    _Pragma("GCC diagnostic push")                                             \
-// SAVE_WARNINGS
+#define SAVE_WARNINGS _Pragma("GCC diagnostic push") // SAVE_WARNINGS
 
 #undef RESTORE_WARNINGS
 
-#define RESTORE_WARNINGS                                                       \
-    _Pragma("GCC diagnostic pop")                                              \
-// RESTORE_WARNINGS
+#define RESTORE_WARNINGS _Pragma("GCC diagnostic pop") // RESTORE_WARNINGS
 
 #endif // GCC
 
@@ -98,20 +89,15 @@
 #undef MSVC_SUPPRESS_WARNING
 
 #define MSVC_SUPPRESS_WARNING(number)                                          \
-    __pragma(warning(disable:number))                                          \
-// MSVC_SUPPRESS_WARNING
+    __pragma(warning(disable : number)) // MSVC_SUPPRESS_WARNING
 
 #undef SAVE_WARNINGS
 
-#define SAVE_WARNINGS                                                          \
-    __pragma(warning(push))                                                    \
-// SAVE_WARNINGS
+#define SAVE_WARNINGS __pragma(warning(push)) // SAVE_WARNINGS
 
-#undef RESTORE_WARNINGS                                                        \
+#undef RESTORE_WARNINGS
 
-#define RESTORE_WARNINGS                                                       \
-    __pragma(warning(pop))                                                     \
-// RESTORE_WARNINGS
+#define RESTORE_WARNINGS __pragma(warning(pop)) // RESTORE_WARNINGS
 
 #endif // MSVC
 

@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT QuentierApplication: public QApplication
+class QUENTIER_EXPORT QuentierApplication : public QApplication
 {
     Q_OBJECT
 public:

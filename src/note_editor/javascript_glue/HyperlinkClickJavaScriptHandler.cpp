@@ -21,7 +21,7 @@
 namespace quentier {
 
 HyperlinkClickJavaScriptHandler::HyperlinkClickJavaScriptHandler(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 

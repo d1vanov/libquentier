@@ -127,8 +127,7 @@ qint32 FakeUserStore::getAccountLimits(
     Q_UNUSED(rateLimitSeconds)
 
     auto it = m_accountLimits.find(serviceLevel);
-    if (it == m_accountLimits.end())
-    {
+    if (it == m_accountLimits.end()) {
         errorDescription.setBase(
             QStringLiteral("Account limits were not found"));
 

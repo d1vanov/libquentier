@@ -374,8 +374,7 @@ bool compareEnml(
             << readerProcessed.name()                                          \
             << ">: " << readerProcessed.readElementText()                      \
             << "\n\nFull simplified original ENML: " << originalSimplified     \
-            << "\n\nFull simplified processed ENML: " << processedSimplified)  \
-    // PRINT_WARNING
+            << "\n\nFull simplified processed ENML: " << processedSimplified)
 
     while (!readerOriginal.atEnd() && !readerProcessed.atEnd()) {
         Q_UNUSED(readerOriginal.readNext());
@@ -983,8 +982,8 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     return true;
 }
 
-}   // namespace test
-}   // namespace quentier
+} // namespace test
+} // namespace quentier
 
 void initENMLConversionTestResources()
 {

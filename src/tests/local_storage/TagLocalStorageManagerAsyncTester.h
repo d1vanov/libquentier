@@ -30,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class TagLocalStorageManagerAsyncTester: public QObject
+class TagLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
@@ -44,15 +44,14 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getTagCountRequest(QUuid requestId);
     void addTagRequest(Tag tag, QUuid requestId);
     void updateTagRequest(Tag tag, QUuid requestId);
     void findTagRequest(Tag tag, QUuid requestId);
 
     void listAllTagsRequest(
-        size_t limit, size_t offset,
-        LocalStorageManager::ListTagsOrder order,
+        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QUuid requestId);
 
@@ -75,14 +74,12 @@ private Q_SLOTS:
         Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onListAllTagsCompleted(
-        size_t limit, size_t offset,
-        LocalStorageManager::ListTagsOrder order,
+        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId);
 
     void onListAllTagsFailed(
-        size_t limit, size_t offset,
-        LocalStorageManager::ListTagsOrder order,
+        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
@@ -117,13 +114,13 @@ private:
 
     State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Tag         m_initialTag;
-    Tag         m_foundTag;
-    Tag         m_modifiedTag;
-    QList<Tag>  m_initialTags;
+    Tag m_initialTag;
+    Tag m_foundTag;
+    Tag m_modifiedTag;
+    QList<Tag> m_initialTags;
 };
 
 } // namespace test

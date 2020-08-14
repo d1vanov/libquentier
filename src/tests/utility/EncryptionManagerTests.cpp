@@ -38,8 +38,8 @@ bool decryptAesTest(QString & error)
         "+Vem1pTWgRfYXF70mMduEmAd4xXy1JqV6XNUYDddW9iPpffWTZgD409LK9wIZM5C"
         "W2rbM2lwM/R0IEnoK7N5X8lCOzqkA9H/HF+8E=");
 
-    const QString passphrase = QStringLiteral(
-        "thisismyriflethisismygunthisisforfortunethisisforfun");
+    const QString passphrase =
+        QStringLiteral("thisismyriflethisismygunthisisforfortunethisisforfun");
 
     const QString originalText = QStringLiteral(
         "<span style=\"display: inline !important; float: none; \">"
@@ -51,11 +51,7 @@ bool decryptAesTest(QString & error)
     ErrorString errorMessage;
 
     bool res = manager.decrypt(
-        encryptedText,
-        passphrase,
-        QStringLiteral("AES"),
-        128,
-        decryptedText,
+        encryptedText, passphrase, QStringLiteral("AES"), 128, decryptedText,
         errorMessage);
 
     if (!res) {
@@ -64,8 +60,7 @@ bool decryptAesTest(QString & error)
         return false;
     }
 
-    if (decryptedText != originalText)
-    {
+    if (decryptedText != originalText) {
         error = QStringLiteral("Decrypted text differs from the original; ") +
             QStringLiteral("original text = ") + originalText +
             QStringLiteral("; decrypted text = ") + decryptedText;
@@ -90,11 +85,7 @@ bool encryptDecryptTest(QString & error)
     size_t keyLength = 0;
 
     bool res = manager.encrypt(
-        textToEncrypt,
-        passphrase,
-        cipher,
-        keyLength,
-        encryptedText,
+        textToEncrypt, passphrase, cipher, keyLength, encryptedText,
         errorMessage);
 
     if (!res) {
@@ -107,11 +98,7 @@ bool encryptDecryptTest(QString & error)
     QString decryptedText;
 
     res = manager.decrypt(
-        encryptedText,
-        passphrase,
-        cipher,
-        keyLength,
-        decryptedText,
+        encryptedText, passphrase, cipher, keyLength, decryptedText,
         errorMessage);
 
     if (!res) {
@@ -120,8 +107,7 @@ bool encryptDecryptTest(QString & error)
         return false;
     }
 
-    if (decryptedText != QStringLiteral("Very-very secret"))
-    {
+    if (decryptedText != QStringLiteral("Very-very secret")) {
         error = QStringLiteral("Decrypted text differs from the original ") +
             QStringLiteral("(\"Very-very secret\"): ") + decryptedText;
 
@@ -130,7 +116,6 @@ bool encryptDecryptTest(QString & error)
     }
 
     return true;
-
 }
 
 bool decryptRc2Test(QString & error)
@@ -153,11 +138,7 @@ bool decryptRc2Test(QString & error)
     QString decryptedText;
 
     bool res = manager.decrypt(
-        encryptedText,
-        passphrase,
-        QStringLiteral("RC2"),
-        64,
-        decryptedText,
+        encryptedText, passphrase, QStringLiteral("RC2"), 64, decryptedText,
         errorMessage);
 
     if (!res) {
@@ -166,8 +147,7 @@ bool decryptRc2Test(QString & error)
         return false;
     }
 
-    if (decryptedText != originalText)
-    {
+    if (decryptedText != originalText) {
         error = QStringLiteral("Decrypted text differs from the original; ") +
             QStringLiteral("original text = ") + originalText +
             QStringLiteral("; decrypted text = ") + decryptedText;

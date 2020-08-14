@@ -38,7 +38,7 @@ namespace quentier {
  * potentially asynchronous interaction with the keychain and signals intended
  * to notify listeners about the completion of asynchronous interactions.
  */
-class QUENTIER_EXPORT IKeychainService: public QObject
+class QUENTIER_EXPORT IKeychainService : public QObject
 {
     Q_OBJECT
 protected:
@@ -188,8 +188,8 @@ private:
     Q_DISABLE_COPY(IKeychainService);
 };
 
-QUENTIER_EXPORT IKeychainServicePtr newKeychainService(
-    QObject * parent = nullptr);
+QUENTIER_EXPORT IKeychainServicePtr
+newKeychainService(QObject * parent = nullptr);
 
 } // namespace quentier
 

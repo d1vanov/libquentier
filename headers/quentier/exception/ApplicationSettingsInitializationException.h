@@ -28,7 +28,7 @@ namespace quentier {
  * methods of ApplicationSettings class if it's unable to locate the file with
  * persistent settings
  */
-class QUENTIER_EXPORT ApplicationSettingsInitializationException:
+class QUENTIER_EXPORT ApplicationSettingsInitializationException :
     public IQuentierException
 {
 public:

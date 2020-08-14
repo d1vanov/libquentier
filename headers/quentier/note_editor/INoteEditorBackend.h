@@ -49,8 +49,8 @@ public:
         SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread) = 0;
 
-    virtual QObject * object() = 0;   // provide QObject interface
-    virtual QWidget * widget() = 0;   // provide QWidget interface
+    virtual QObject * object() = 0; // provide QObject interface
+    virtual QWidget * widget() = 0; // provide QWidget interface
 
     virtual void setAccount(const Account & account) = 0;
     virtual void setUndoStack(QUndoStack * pUndoStack) = 0;
@@ -68,8 +68,7 @@ public:
     virtual void setNoteTitle(const QString & noteTitle) = 0;
 
     virtual void setTagIds(
-        const QStringList & tagLocalUids,
-        const QStringList & tagGuids) = 0;
+        const QStringList & tagLocalUids, const QStringList & tagGuids) = 0;
 
     virtual void undo() = 0;
     virtual void redo() = 0;
@@ -178,8 +177,7 @@ public:
         QDebug & dbg, const Rotation rotation);
 
     virtual void rotateImageAttachment(
-        const QByteArray & resourceHash,
-        const Rotation rotationDirection) = 0;
+        const QByteArray & resourceHash, const Rotation rotationDirection) = 0;
 
     virtual void rotateImageAttachmentUnderCursor(
         const Rotation rotationDirection) = 0;
@@ -225,7 +223,7 @@ public:
 
 protected:
     INoteEditorBackend(NoteEditor * parent);
-    NoteEditor *    m_pNoteEditor;
+    NoteEditor * m_pNoteEditor;
 };
 
 } // namespace quentier

@@ -20,25 +20,18 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 
 #include <quentier/utility/Printable.h>
-#include <quentier/utility/SuppressWarnings.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QString>
 #include <QVector>
 
-SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-
-#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
-
-RESTORE_WARNINGS
+#include <boost/multi_index_container.hpp>
 
 #define SYNCHRONIZATION_PERSISTENCE_NAME                                       \
-    QStringLiteral("SynchronizationPersistence")                               \
-// SYNCHRONIZATION_PERSISTENCE_NAME
+    QStringLiteral("SynchronizationPersistence")
 
 #define HALF_AN_HOUR_IN_MSEC (1800000)
 
@@ -49,34 +42,27 @@ RESTORE_WARNINGS
 #define USER_STORE_COOKIE_KEY QStringLiteral("UserStoreCookie")
 
 #define LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX                        \
-    QStringLiteral("LinkedNotebookExpirationTimestamp_")                       \
-// LINKED_NOTEBOOK_EXPIRATION_TIMESTAMP_KEY_PREFIX
+    QStringLiteral("LinkedNotebookExpirationTimestamp_")
 
 #define LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART                                    \
-    QStringLiteral("_LinkedNotebookAuthToken_")                                \
-// LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART
+    QStringLiteral("_LinkedNotebookAuthToken_")
 
 #define LINKED_NOTEBOOK_SHARD_ID_KEY_PART                                      \
-    QStringLiteral("_LinkedNotebookShardId_")                                  \
-// LINKED_NOTEBOOK_SHARD_ID_KEY_PART
+    QStringLiteral("_LinkedNotebookShardId_")
 
 #define READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB                                    \
-    QStringLiteral("readLinkedNotebookAuthToken")                              \
-// READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB
+    QStringLiteral("readLinkedNotebookAuthToken")
 
 #define READ_LINKED_NOTEBOOK_SHARD_ID_JOB                                      \
-    QStringLiteral("readLinkedNotebookShardId")                                \
-// READ_LINKED_NOTEBOOK_SHARD_ID_JOB
+    QStringLiteral("readLinkedNotebookShardId")
 
 #define WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB                                   \
-    QStringLiteral("writeLinkedNotebookAuthToken")                             \
-// WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB
+    QStringLiteral("writeLinkedNotebookAuthToken")
 
 #define WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB                                     \
-    QStringLiteral("writeLinkedNotebookShardId")                               \
-// WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB
+    QStringLiteral("writeLinkedNotebookShardId")
 
-#define NOTE_STORE_URL_KEY QStringLiteral("NoteStoreUrl")
+#define NOTE_STORE_URL_KEY     QStringLiteral("NoteStoreUrl")
 #define WEB_API_URL_PREFIX_KEY QStringLiteral("WebApiUrlPrefix")
 
 #define LAST_SYNC_PARAMS_KEY_GROUP QStringLiteral("last_sync_params")
@@ -84,40 +70,34 @@ RESTORE_WARNINGS
 #define LAST_SYNC_TIME_KEY         QStringLiteral("last_sync_time")
 
 #define LAST_SYNC_LINKED_NOTEBOOKS_PARAMS                                      \
-    QStringLiteral("last_sync_linked_notebooks_params")                        \
-// LAST_SYNC_LINKED_NOTEBOOKS_PARAMS
+    QStringLiteral("last_sync_linked_notebooks_params")
 
 #define LINKED_NOTEBOOK_GUID_KEY QStringLiteral("linked_notebook_guid")
 
 #define LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY                                  \
-    QStringLiteral("linked_notebook_last_update_count")                        \
-// LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY
+    QStringLiteral("linked_notebook_last_update_count")
 
 #define LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY                                     \
-    QStringLiteral("linked_notebook_last_sync_time")                           \
-// LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY
+    QStringLiteral("linked_notebook_last_sync_time")
 
 #define AUTH_TOKEN_KEYCHAIN_KEY_PART QStringLiteral("_auth_token")
-#define SHARD_ID_KEYCHAIN_KEY_PART QStringLiteral("_shard_id")
+#define SHARD_ID_KEYCHAIN_KEY_PART   QStringLiteral("_shard_id")
 
 #define APPEND_NOTE_DETAILS(errorDescription, note)                            \
-   if (note.hasTitle())                                                        \
-   {                                                                           \
-       errorDescription.details() = note.title();                              \
-   }                                                                           \
-   else if (note.hasContent())                                                 \
-   {                                                                           \
-       QString previewText = note.plainText();                                 \
-       if (!previewText.isEmpty()) {                                           \
-           previewText.truncate(30);                                           \
-           errorDescription.details() = previewText;                           \
-       }                                                                       \
-   }                                                                           \
-// APPEND_NOTE_DETAILS
+    if (note.hasTitle()) {                                                     \
+        errorDescription.details() = note.title();                             \
+    }                                                                          \
+    else if (note.hasContent()) {                                              \
+        QString previewText = note.plainText();                                \
+        if (!previewText.isEmpty()) {                                          \
+            previewText.truncate(30);                                          \
+            errorDescription.details() = previewText;                          \
+        }                                                                      \
+    }
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LinkedNotebookAuthData final: public Printable
+class Q_DECL_HIDDEN LinkedNotebookAuthData final : public Printable
 {
 public:
     LinkedNotebookAuthData();
@@ -128,11 +108,11 @@ public:
 
     virtual QTextStream & print(QTextStream & strm) const override;
 
-    QString     m_guid;
-    QString     m_shardId;
-    QString     m_sharedNotebookGlobalId;
-    QString     m_uri;
-    QString     m_noteStoreUrl;
+    QString m_guid;
+    QString m_shardId;
+    QString m_sharedNotebookGlobalId;
+    QString m_uri;
+    QString m_noteStoreUrl;
 };
 
 template <typename T>
@@ -180,9 +160,12 @@ public:
     }
 };
 
-struct ByGuid{};
-struct ByName{};
-struct ByParentTagGuid{};
+struct ByGuid
+{};
+struct ByName
+{};
+struct ByParentTagGuid
+{};
 
 using TagsContainer = boost::multi_index_container<
     qevercloud::Tag,
@@ -190,29 +173,21 @@ using TagsContainer = boost::multi_index_container<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<ByGuid>,
             boost::multi_index::member<
-                qevercloud::Tag,
-                qevercloud::Optional<QString>,
+                qevercloud::Tag, qevercloud::Optional<QString>,
                 &qevercloud::Tag::guid>,
-            OptionalComparator<QString>
-        >,
+            OptionalComparator<QString>>,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByName>,
             boost::multi_index::member<
-                qevercloud::Tag,
-                qevercloud::Optional<QString>,
+                qevercloud::Tag, qevercloud::Optional<QString>,
                 &qevercloud::Tag::name>,
-            OptionalStringCaseInsensitiveComparator
-        >,
+            OptionalStringCaseInsensitiveComparator>,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByParentTagGuid>,
             boost::multi_index::member<
-                qevercloud::Tag,
-                qevercloud::Optional<QString>,
+                qevercloud::Tag, qevercloud::Optional<QString>,
                 &qevercloud::Tag::parentGuid>,
-            OptionalComparator<QString>
-        >
-    >
->;
+            OptionalComparator<QString>>>>;
 
 } // namespace quentier
 

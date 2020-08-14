@@ -19,12 +19,13 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_HYPERLINK_UNDO_COMMAND_H
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_HYPERLINK_UNDO_COMMAND_H
 
-#include "INoteEditorUndoCommand.h"
 #include "../NoteEditorPage.h"
+#include "INoteEditorUndoCommand.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddHyperlinkUndoCommand final: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN AddHyperlinkUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -45,7 +46,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    Callback    m_callback;
+    Callback m_callback;
 };
 
 } // namespace quentier

@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ImageResizeUndoCommand final: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ImageResizeUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:

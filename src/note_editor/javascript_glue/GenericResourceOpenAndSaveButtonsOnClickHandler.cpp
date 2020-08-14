@@ -22,25 +22,29 @@
 
 namespace quentier {
 
-GenericResourceOpenAndSaveButtonsOnClickHandler::GenericResourceOpenAndSaveButtonsOnClickHandler(
-        QObject * parent) :
+GenericResourceOpenAndSaveButtonsOnClickHandler::
+    GenericResourceOpenAndSaveButtonsOnClickHandler(QObject * parent) :
     QObject(parent)
 {}
 
-void GenericResourceOpenAndSaveButtonsOnClickHandler::onOpenResourceButtonPressed(
-    const QString & resourceHash)
+void GenericResourceOpenAndSaveButtonsOnClickHandler::
+    onOpenResourceButtonPressed(const QString & resourceHash)
 {
-    QNDEBUG("note_editor:js_glue", "GenericResourceOpenAndSaveButtonsOnClickHandler"
-        << "::onOpenResourceButtonPressed: " << resourceHash);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "GenericResourceOpenAndSaveButtonsOnClickHandler"
+            << "::onOpenResourceButtonPressed: " << resourceHash);
 
     Q_EMIT openResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
-void GenericResourceOpenAndSaveButtonsOnClickHandler::onSaveResourceButtonPressed(
-    const QString & resourceHash)
+void GenericResourceOpenAndSaveButtonsOnClickHandler::
+    onSaveResourceButtonPressed(const QString & resourceHash)
 {
-    QNDEBUG("note_editor:js_glue", "GenericResourceOpenAndSaveButtonsOnClickHandler"
-        << "::onSaveResourceButtonPressed: " << resourceHash);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "GenericResourceOpenAndSaveButtonsOnClickHandler"
+            << "::onSaveResourceButtonPressed: " << resourceHash);
 
     Q_EMIT saveResourceRequest(QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }

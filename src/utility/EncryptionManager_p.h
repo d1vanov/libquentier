@@ -24,12 +24,12 @@
 #include <QVector>
 
 // Evernote service defined constants
-#define EN_ITERATIONS (50000)
-#define EN_AES_KEYSIZE (16)
-#define EN_RC2_KEYSIZE (8)
+#define EN_ITERATIONS   (50000)
+#define EN_AES_KEYSIZE  (16)
+#define EN_RC2_KEYSIZE  (8)
 #define EN_AES_HMACSIZE (32)
 #define EN_RC2_HMACSIZE (16)
-#define EN_IDENT "ENC0"
+#define EN_IDENT        "ENC0"
 #define MAX_PADDING_LEN (16)
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
@@ -45,13 +45,13 @@ public:
 
     bool decrypt(
         const QString & encryptedText, const QString & passphrase,
-        const QString & cipher, const size_t keyLength,
-        QString & decryptedText, ErrorString & errorDescription);
+        const QString & cipher, const size_t keyLength, QString & decryptedText,
+        ErrorString & errorDescription);
 
     bool encrypt(
         const QString & textToEncrypt, const QString & passphrase,
-        QString & cipher, size_t & keyLength,
-        QString & encryptedText, ErrorString & errorDescription);
+        QString & cipher, size_t & keyLength, QString & encryptedText,
+        ErrorString & errorDescription);
 
 private:
     // AES encryption/decryption routines
@@ -113,10 +113,10 @@ private:
     unsigned char m_hmac[EN_AES_HMACSIZE];
 
     // Cache helpers
-    mutable QVector<int>        m_cached_xkey;
-    mutable QVector<int>        m_cached_key;
-    mutable int                 m_decrypt_rc2_chunk_key_codes[8];
-    mutable QString             m_rc2_chunk_out;
+    mutable QVector<int> m_cached_xkey;
+    mutable QVector<int> m_cached_key;
+    mutable int m_decrypt_rc2_chunk_key_codes[8];
+    mutable QString m_rc2_chunk_out;
 };
 
 } // namespace quentier

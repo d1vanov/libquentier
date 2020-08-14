@@ -37,7 +37,7 @@ QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsyncPrivate)
  * @brief The FileIOProcessorAsync class is a wrapper under simple file IO
  * operations, it is meant to be used for simple asynchronous IO
  */
-class QUENTIER_EXPORT FileIOProcessorAsync: public QObject
+class QUENTIER_EXPORT FileIOProcessorAsync : public QObject
 {
     Q_OBJECT
 public:

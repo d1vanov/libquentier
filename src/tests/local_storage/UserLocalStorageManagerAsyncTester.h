@@ -45,7 +45,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getUserCountRequest(QUuid requestId);
     void addUserRequest(User user, QUuid requestId);
     void updateUserRequest(User user, QUuid requestId);
@@ -102,14 +102,14 @@ private:
 
     State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    qint32                      m_userId = 3;
+    qint32 m_userId = 3;
 
-    User                 m_initialUser;
-    User                 m_foundUser;
-    User                 m_modifiedUser;
+    User m_initialUser;
+    User m_foundUser;
+    User m_modifiedUser;
 };
 
 } // namespace test

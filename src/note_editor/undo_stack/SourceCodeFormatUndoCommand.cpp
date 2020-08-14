@@ -25,22 +25,20 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("SourceCodeFormatUndoCommand",                   \
-                              "Can't undo/redo source code "                   \
-                              "formatting: no note editor page"));             \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "SourceCodeFormatUndoCommand",                                     \
+            "Can't undo/redo source code "                                     \
+            "formatting: no note editor page"));                               \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const Callback & callback,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
 {
@@ -48,14 +46,13 @@ SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
 }
 
 SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
-        const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const Callback & callback,
+    const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}
 
-SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand()
-{}
+SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand() {}
 
 void SourceCodeFormatUndoCommand::redoImpl()
 {
@@ -63,8 +60,7 @@ void SourceCodeFormatUndoCommand::redoImpl()
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("sourceCodeFormatter.redo();"),
-        m_callback);
+        QStringLiteral("sourceCodeFormatter.redo();"), m_callback);
 }
 
 void SourceCodeFormatUndoCommand::undoImpl()
@@ -73,8 +69,7 @@ void SourceCodeFormatUndoCommand::undoImpl()
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("sourceCodeFormatter.undo();"),
-        m_callback);
+        QStringLiteral("sourceCodeFormatter.undo();"), m_callback);
 }
 
 } // namespace quentier

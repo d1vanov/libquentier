@@ -30,7 +30,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ShortcutManagerPrivate)
 
-class QUENTIER_EXPORT ShortcutManager: public QObject
+class QUENTIER_EXPORT ShortcutManager : public QObject
 {
     Q_OBJECT
 public:
@@ -196,4 +196,3 @@ private:
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_H
-

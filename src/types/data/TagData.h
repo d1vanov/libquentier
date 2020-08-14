@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TagData final: public FavoritableDataElementData
+class Q_DECL_HIDDEN TagData final : public FavoritableDataElementData
 {
 public:
     TagData() = default;
@@ -49,9 +49,9 @@ public:
     bool checkParameters(ErrorString & errorDescription) const;
 
 public:
-    qevercloud::Tag                 m_qecTag;
-    qevercloud::Optional<QString>   m_linkedNotebookGuid;
-    qevercloud::Optional<QString>   m_parentLocalUid;
+    qevercloud::Tag m_qecTag;
+    qevercloud::Optional<QString> m_linkedNotebookGuid;
+    qevercloud::Optional<QString> m_parentLocalUid;
 };
 
 } // namespace quentier

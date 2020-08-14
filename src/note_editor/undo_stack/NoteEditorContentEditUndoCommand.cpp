@@ -25,8 +25,8 @@
 namespace quentier {
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditorPrivate, const QList<Resource> & resources,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resources(resources)
 {
@@ -34,30 +34,30 @@ NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
 }
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources,
-        const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditorPrivate, const QList<Resource> & resources,
+    const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_resources(resources)
 {
     init();
 }
 
-NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand()
-{}
+NoteEditorContentEditUndoCommand::~NoteEditorContentEditUndoCommand() {}
 
 void NoteEditorContentEditUndoCommand::redoImpl()
 {
-    QNDEBUG("note_editor:undo", "NoteEditorContentEditUndoCommand::redoImpl ("
-        << text() << ")");
+    QNDEBUG(
+        "note_editor:undo",
+        "NoteEditorContentEditUndoCommand::redoImpl (" << text() << ")");
 
     m_noteEditorPrivate.redoPageAction();
 }
 
 void NoteEditorContentEditUndoCommand::undoImpl()
 {
-    QNDEBUG("note_editor:undo", "NoteEditorContentEditUndoCommand::undoImpl ("
-        << text() << ")");
+    QNDEBUG(
+        "note_editor:undo",
+        "NoteEditorContentEditUndoCommand::undoImpl (" << text() << ")");
 
     m_noteEditorPrivate.undoPageAction();
     m_noteEditorPrivate.setNoteResources(m_resources);

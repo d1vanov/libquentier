@@ -21,7 +21,7 @@
 namespace quentier {
 
 ResizableImageJavaScriptHandler::ResizableImageJavaScriptHandler(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 

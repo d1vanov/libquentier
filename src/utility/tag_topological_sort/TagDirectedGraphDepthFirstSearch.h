@@ -58,15 +58,15 @@ private:
     void depthFirstSearch(const QString & sourceTagGuid);
 
 private:
-    TagDirectedGraph            m_graph;
-    std::set<QString>           m_reachedTagIds;
-    QHash<QString, QString>     m_parentTagIdByChildTagId;
-    QStack<QString>             m_cycle;
-    std::set<QString>           m_onStack;
+    TagDirectedGraph m_graph;
+    std::set<QString> m_reachedTagIds;
+    QHash<QString, QString> m_parentTagIdByChildTagId;
+    QStack<QString> m_cycle;
+    std::set<QString> m_onStack;
 
-    QQueue<QString>             m_tagIdsInPreOrder;
-    QQueue<QString>             m_tagIdsInPostOrder;
-    QStack<QString>             m_tagIdsInReversePostOrder;
+    QQueue<QString> m_tagIdsInPreOrder;
+    QQueue<QString> m_tagIdsInPostOrder;
+    QStack<QString> m_tagIdsInReversePostOrder;
 };
 
 } // namespace quentier

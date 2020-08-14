@@ -32,7 +32,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class LinkedNotebookLocalStorageManagerAsyncTester: public QObject
+class LinkedNotebookLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
@@ -48,7 +48,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getLinkedNotebookCountRequest(QUuid requestId);
     void addLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
     void updateLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
@@ -57,8 +57,7 @@ Q_SIGNALS:
     void listAllLinkedNotebooksRequest(
         size_t limit, size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
-        LocalStorageManager::OrderDirection orderDirection,
-        QUuid requestId);
+        LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
     void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
 
@@ -127,15 +126,15 @@ private:
     friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
-    State   m_state = State::STATE_UNINITIALIZED;
+    State m_state = State::STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
-    QThread *                       m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    LinkedNotebook          m_initialLinkedNotebook;
-    LinkedNotebook          m_foundLinkedNotebook;
-    LinkedNotebook          m_modifiedLinkedNotebook;
-    QList<LinkedNotebook>   m_initialLinkedNotebooks;
+    LinkedNotebook m_initialLinkedNotebook;
+    LinkedNotebook m_foundLinkedNotebook;
+    LinkedNotebook m_modifiedLinkedNotebook;
+    QList<LinkedNotebook> m_initialLinkedNotebooks;
 };
 
 } // namespace test

@@ -26,7 +26,7 @@
 namespace quentier {
 namespace test {
 
-class LocalStorageManagerTester: public QObject
+class LocalStorageManagerTester : public QObject
 {
     Q_OBJECT
 public:

@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NotebookData final: public FavoritableDataElementData
+class Q_DECL_HIDDEN NotebookData final : public FavoritableDataElementData
 {
 public:
     NotebookData();
@@ -50,9 +50,9 @@ public:
     bool operator!=(const NotebookData & other) const;
 
 public:
-    qevercloud::Notebook            m_qecNotebook;
-    bool                            m_isLastUsed = false;
-    qevercloud::Optional<QString>   m_linkedNotebookGuid;
+    qevercloud::Notebook m_qecNotebook;
+    bool m_isLastUsed = false;
+    qevercloud::Optional<QString> m_linkedNotebookGuid;
 };
 
 } // namespace quentier

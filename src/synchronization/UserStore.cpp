@@ -42,21 +42,15 @@ bool UserStore::checkVersion(
     const QString & clientName, qint16 edamVersionMajor,
     qint16 edamVersionMinor, ErrorString & errorDescription)
 {
-    try
-    {
+    try {
         auto ctx = qevercloud::newRequestContext(
-            m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
             qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
             qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
-            m_cookies);
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
 
         return m_pUserStore->checkVersion(
-            clientName,
-            edamVersionMajor,
-            edamVersionMinor,
-            ctx);
+            clientName, edamVersionMajor, edamVersionMinor, ctx);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
@@ -66,29 +60,22 @@ bool UserStore::checkVersion(
 qint32 UserStore::getUser(
     User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds)
 {
-    try
-    {
+    try {
         auto ctx = qevercloud::newRequestContext(
-            m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
             qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
             qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
-            m_cookies);
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
 
         user.qevercloudUser() = m_pUserStore->getUser(ctx);
         return 0;
     }
-    catch(const qevercloud::EDAMUserException & userException)
-    {
+    catch (const qevercloud::EDAMUserException & userException) {
         return processEdamUserException(userException, errorDescription);
     }
-    catch(const qevercloud::EDAMSystemException & systemException)
-    {
+    catch (const qevercloud::EDAMSystemException & systemException) {
         return processEdamSystemException(
-            systemException,
-            errorDescription,
-            rateLimitSeconds);
+            systemException, errorDescription, rateLimitSeconds);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
@@ -98,33 +85,25 @@ qint32 UserStore::getUser(
 
 qint32 UserStore::getAccountLimits(
     const qevercloud::ServiceLevel serviceLevel,
-    qevercloud::AccountLimits & limits,
-    ErrorString & errorDescription,
+    qevercloud::AccountLimits & limits, ErrorString & errorDescription,
     qint32 & rateLimitSeconds)
 {
-    try
-    {
+    try {
         auto ctx = qevercloud::newRequestContext(
-            m_authenticationToken,
-            USER_STORE_REQUEST_TIMEOUT_MSEC,
+            m_authenticationToken, USER_STORE_REQUEST_TIMEOUT_MSEC,
             qevercloud::DEFAULT_REQUEST_TIMEOUT_EXPONENTIAL_INCREASE,
             qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
-            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT,
-            m_cookies);
+            qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
 
         limits = m_pUserStore->getAccountLimits(serviceLevel, ctx);
         return 0;
     }
-    catch(const qevercloud::EDAMUserException & userException)
-    {
+    catch (const qevercloud::EDAMUserException & userException) {
         return processEdamUserException(userException, errorDescription);
     }
-    catch(const qevercloud::EDAMSystemException & systemException)
-    {
+    catch (const qevercloud::EDAMSystemException & systemException) {
         return processEdamSystemException(
-            systemException,
-            errorDescription,
-            rateLimitSeconds);
+            systemException, errorDescription, rateLimitSeconds);
     }
     CATCH_GENERIC_EXCEPTIONS_NO_RET()
 
@@ -136,8 +115,7 @@ qint32 UserStore::processEdamUserException(
     const qevercloud::EDAMUserException & userException,
     ErrorString & errorDescription) const
 {
-    switch(userException.errorCode)
-    {
+    switch (userException.errorCode) {
     case qevercloud::EDAMErrorCode::BAD_DATA_FORMAT:
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("UserStore", "BAD_DATA_FORMAT exception"));
@@ -163,8 +141,7 @@ qint32 UserStore::processEdamUserException(
             QT_TRANSLATE_NOOP("UserStore", "RATE_LIMIT_REACHED exception"));
         break;
     default:
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP("UserStore", "Error"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Error"));
 
         errorDescription.details() = QStringLiteral("error code = ");
         errorDescription.details() += ToString(userException.errorCode);
@@ -193,40 +170,34 @@ qint32 UserStore::processEdamSystemException(
 {
     rateLimitSeconds = -1;
 
-    if (systemException.errorCode == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
-    {
-        if (!systemException.rateLimitDuration.isSet())
-        {
+    if (systemException.errorCode ==
+        qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+        if (!systemException.rateLimitDuration.isSet()) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "UserStore",
                 "Evernote API rate limit exceeded but no rate limit duration "
                 "is available"));
         }
-        else
-        {
+        else {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "UserStore",
-                "Evernote API rate limit exceeded, retry in"));
+                "UserStore", "Evernote API rate limit exceeded, retry in"));
 
-            errorDescription.details() = QString::number(
-                systemException.rateLimitDuration.ref());
+            errorDescription.details() =
+                QString::number(systemException.rateLimitDuration.ref());
 
             errorDescription.details() += QStringLiteral(" sec");
             rateLimitSeconds = systemException.rateLimitDuration.ref();
         }
     }
-    else
-    {
+    else {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "UserStore",
-            "Caught EDAM system exception, error code "));
+            "UserStore", "Caught EDAM system exception, error code "));
 
         errorDescription.details() += QStringLiteral("error code = ");
         errorDescription.details() += ToString(systemException.errorCode);
 
         if (systemException.message.isSet() &&
-            !systemException.message->isEmpty())
-        {
+            !systemException.message->isEmpty()) {
             errorDescription.details() += QStringLiteral(", message: ");
             errorDescription.details() += systemException.message.ref();
         }

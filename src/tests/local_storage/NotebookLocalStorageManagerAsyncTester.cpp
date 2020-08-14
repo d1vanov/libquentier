@@ -27,11 +27,12 @@ namespace quentier {
 namespace test {
 
 NotebookLocalStorageManagerAsyncTester::NotebookLocalStorageManagerAsyncTester(
-        QObject *parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
-NotebookLocalStorageManagerAsyncTester::~NotebookLocalStorageManagerAsyncTester()
+NotebookLocalStorageManagerAsyncTester::
+    ~NotebookLocalStorageManagerAsyncTester()
 {
     clear();
 }
@@ -48,9 +49,8 @@ void NotebookLocalStorageManagerAsyncTester::onInitTestCase()
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(
-        account,
-        startupOptions);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(account, startupOptions);
 
     createConnections();
 
@@ -112,8 +112,10 @@ void NotebookLocalStorageManagerAsyncTester::initialize()
 
     ErrorString errorDescription;
     if (!m_initialNotebook.checkParameters(errorDescription)) {
-        QNWARNING("tests:local_storage", "Found invalid notebook: "
-            << m_initialNotebook << ", error: " << errorDescription);
+        QNWARNING(
+            "tests:local_storage",
+            "Found invalid notebook: " << m_initialNotebook
+                                       << ", error: " << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -137,13 +139,10 @@ void NotebookLocalStorageManagerAsyncTester::onGetNotebookCountCompleted(
             "found wrong state");                                              \
         QNWARNING("tests:local_storage", errorDescription << ": " << m_state); \
         Q_EMIT failure(errorDescription.nonLocalizedString());                 \
-    }                                                                          \
-// HANDLE_WRONG_STATE
+    }
 
-    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
-    {
-        if (count != 1)
-        {
+    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST) {
+        if (count != 1) {
             errorDescription.setBase(
                 "GetNotebookCount returned result "
                 "different from the expected one (1)");
@@ -157,10 +156,8 @@ void NotebookLocalStorageManagerAsyncTester::onGetNotebookCountCompleted(
         m_state = STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE;
         Q_EMIT findDefaultNotebookRequest(m_foundNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
-    {
-        if (count != 0)
-        {
+    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST) {
+        if (count != 0) {
             errorDescription.setBase(
                 "GetNotebookCount returned result different "
                 "from the expected one (0)");
@@ -261,8 +258,9 @@ void NotebookLocalStorageManagerAsyncTester::onGetNotebookCountCompleted(
 void NotebookLocalStorageManagerAsyncTester::onGetNotebookCountFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -274,18 +272,17 @@ void NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_ADD_REQUEST)
-    {
-        if (m_initialNotebook != notebook)
-        {
+    if (m_state == STATE_SENT_ADD_REQUEST) {
+        if (m_initialNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in "
                 "NotebookLocalStorageManagerAsyncTester: notebook in "
                 "onAddNotebookCompleted doesn't match the original Notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_initialNotebook
-                << "\nFound notebook: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_initialNotebook
+                                 << "\nFound notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -297,8 +294,7 @@ void NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted(
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
         Q_EMIT findNotebookRequest(m_foundNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_ONE_REQUEST)
-    {
+    else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_ONE_REQUEST) {
         m_initialNotebooks << notebook;
 
         Notebook extraNotebook;
@@ -358,8 +354,7 @@ void NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted(
         m_state = STATE_SENT_ADD_EXTRA_NOTEBOOK_TWO_REQUEST;
         Q_EMIT addNotebookRequest(extraNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_TWO_REQUEST)
-    {
+    else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_TWO_REQUEST) {
         m_initialNotebooks << notebook;
 
         m_state = STATE_SENT_LIST_NOTEBOOKS_REQUEST;
@@ -372,11 +367,7 @@ void NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted(
             LocalStorageManager::OrderDirection::Ascending;
 
         Q_EMIT listAllNotebooksRequest(
-            limit,
-            offset,
-            order,
-            orderDirection,
-            QString(),
+            limit, offset, order, orderDirection, QString(),
             QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
@@ -385,8 +376,10 @@ void NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 void NotebookLocalStorageManagerAsyncTester::onAddNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -398,10 +391,8 @@ void NotebookLocalStorageManagerAsyncTester::onUpdateNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_UPDATE_REQUEST)
-    {
-        if (m_modifiedNotebook != notebook)
-        {
+    if (m_state == STATE_SENT_UPDATE_REQUEST) {
+        if (m_modifiedNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook pointer in onUpdateNotebookCompleted slot doesn't "
@@ -421,8 +412,10 @@ void NotebookLocalStorageManagerAsyncTester::onUpdateNotebookCompleted(
 void NotebookLocalStorageManagerAsyncTester::onUpdateNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -434,18 +427,17 @@ void NotebookLocalStorageManagerAsyncTester::onFindNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
-    {
-        if (m_initialNotebook != notebook)
-        {
+    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST) {
+        if (m_initialNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook in onFindNotebookCompleted slot "
                 "doesn't match the original Notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_initialNotebook
-                << "\nFound notebook: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_initialNotebook
+                                 << "\nFound notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -459,18 +451,18 @@ void NotebookLocalStorageManagerAsyncTester::onFindNotebookCompleted(
         m_state = STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST;
         Q_EMIT findNotebookRequest(notebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST)
-    {
-        if (m_initialNotebook != notebook)
-        {
+    else if (m_state == STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST) {
+        if (m_initialNotebook != notebook) {
             errorDescription.setBase(
                 "Added and found by name notebooks in the local storage don't "
                 "match");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ": Notebook added to the local storage: "
-                << m_initialNotebook
-                << "\nNotebook found in the local storage: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << ": Notebook added to the local storage: "
+                    << m_initialNotebook
+                    << "\nNotebook found in the local storage: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -481,10 +473,8 @@ void NotebookLocalStorageManagerAsyncTester::onFindNotebookCompleted(
         m_state = STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_ADD;
         Q_EMIT findDefaultNotebookRequest(m_foundNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
-    {
-        if (m_modifiedNotebook != notebook)
-        {
+    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST) {
+        if (m_modifiedNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook pointer in onFindNotebookCompleted slot doesn't "
@@ -500,16 +490,17 @@ void NotebookLocalStorageManagerAsyncTester::onFindNotebookCompleted(
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
         Q_EMIT getNotebookCountRequest(QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
-    {
+    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         errorDescription.setBase(
             "Error: found notebook which should have been expunged from "
             "the local storage");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ": Notebook expunged from the local storage: "
-            << m_modifiedNotebook
-            << "\nNotebook found in the local storage: " << m_foundNotebook);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription << ": Notebook expunged from the local storage: "
+                             << m_modifiedNotebook
+                             << "\nNotebook found in the local storage: "
+                             << m_foundNotebook);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -526,8 +517,10 @@ void NotebookLocalStorageManagerAsyncTester::onFindNotebookFailed(
         return;
     }
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -539,10 +532,8 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_ADD)
-    {
-        if (m_foundNotebook != notebook)
-        {
+    if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_ADD) {
+        if (m_foundNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook pointer in onFindDefaultNotebookCompleted slot "
@@ -552,8 +543,7 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookCompleted(
             return;
         }
 
-        if (m_foundNotebook != m_initialNotebook)
-        {
+        if (m_foundNotebook != m_initialNotebook) {
             errorDescription.setBase(
                 "Added and found notebooks in the local storage don't match");
 
@@ -565,17 +555,17 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookCompleted(
         m_state = STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD;
 
         Q_EMIT findLastUsedNotebookRequest(
-            m_foundNotebook,
-            QUuid::createUuid());
+            m_foundNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE)
-    {
+    else if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE) {
         errorDescription.setBase(
             "Error: found default notebook which should not have been in "
             "the local storage");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ": Notebook found in the local storage: " << notebook);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription << ": Notebook found in the local storage: "
+                             << notebook);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -586,19 +576,19 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookCompleted(
 void NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE)
-    {
+    if (m_state == STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE) {
         m_state = STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_UPDATE;
 
         Q_EMIT findLastUsedNotebookRequest(
-            m_foundNotebook,
-            QUuid::createUuid());
+            m_foundNotebook, QUuid::createUuid());
 
         return;
     }
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -610,10 +600,8 @@ void NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_UPDATE)
-    {
-        if (m_foundNotebook != notebook)
-        {
+    if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_UPDATE) {
+        if (m_foundNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook pointer in onFindLastUsedNotebookCompleted slot "
@@ -624,8 +612,7 @@ void NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookCompleted(
             return;
         }
 
-        if (m_foundNotebook != m_modifiedNotebook)
-        {
+        if (m_foundNotebook != m_modifiedNotebook) {
             errorDescription.setBase(
                 "Updated and found notebooks in the local "
                 "storage don't match");
@@ -638,17 +625,17 @@ void NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookCompleted(
         m_state = STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_UPDATE;
 
         Q_EMIT findDefaultOrLastUsedNotebookRequest(
-            m_foundNotebook,
-            QUuid::createUuid());
+            m_foundNotebook, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD)
-    {
+    else if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD) {
         errorDescription.setBase(
             "Error: found last used notebook which should "
             "not have been in the local storage");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ": Notebook found in the local storage: " << notebook);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription << ": Notebook found in the local storage: "
+                             << notebook);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -658,25 +645,25 @@ void NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookCompleted(
 void NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD)
-    {
+    if (m_state == STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD) {
         m_state = STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_ADD;
 
         Q_EMIT findDefaultOrLastUsedNotebookRequest(
-            m_foundNotebook,
-            QUuid::createUuid());
+            m_foundNotebook, QUuid::createUuid());
 
         return;
     }
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookCompleted(
-    Notebook notebook, QUuid requestId)
+void NotebookLocalStorageManagerAsyncTester::
+    onFindDefaultOrLastUsedNotebookCompleted(Notebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -685,8 +672,7 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookComp
     if ((m_state == STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_ADD) ||
         (m_state == STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_UPDATE))
     {
-        if (m_foundNotebook != notebook)
-        {
+        if (m_foundNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in NotebookLocalStorageManagerAsyncTester: "
                 "notebook pointer in onFindDefaultOrLastUsedNotebookCompleted "
@@ -699,8 +685,7 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookComp
 
         if (m_state == STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_ADD)
         {
-            if (m_foundNotebook != m_initialNotebook)
-            {
+            if (m_foundNotebook != m_initialNotebook) {
                 errorDescription.setBase(
                     "Added and found notebooks in the local storage don't "
                     "match");
@@ -746,13 +731,10 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookComp
             m_state = STATE_SENT_UPDATE_REQUEST;
 
             Q_EMIT updateNotebookRequest(
-                m_modifiedNotebook,
-                QUuid::createUuid());
+                m_modifiedNotebook, QUuid::createUuid());
         }
-        else
-        {
-            if (m_foundNotebook != m_modifiedNotebook)
-            {
+        else {
+            if (m_foundNotebook != m_modifiedNotebook) {
                 errorDescription.setBase(
                     "Updated and found notebooks in the local storage don't "
                     "match");
@@ -765,25 +747,26 @@ void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookComp
             m_state = STATE_SENT_EXPUNGE_REQUEST;
 
             Q_EMIT expungeNotebookRequest(
-                m_modifiedNotebook,
-                QUuid::createUuid());
+                m_modifiedNotebook, QUuid::createUuid());
         }
     }
     HANDLE_WRONG_STATE();
 }
 
-void NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+void NotebookLocalStorageManagerAsyncTester::
+    onFindDefaultOrLastUsedNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void NotebookLocalStorageManagerAsyncTester::onListAllNotebooksCompleted(
-    size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder order,
+    size_t limit, size_t offset, LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QList<Notebook> notebooks, QUuid requestId)
 {
@@ -804,16 +787,16 @@ void NotebookLocalStorageManagerAsyncTester::onListAllNotebooksCompleted(
         return;
     }
 
-    for(const auto & notebook: qAsConst(m_initialNotebooks))
-    {
-        if (!notebooks.contains(notebook))
-        {
+    for (const auto & notebook: qAsConst(m_initialNotebooks)) {
+        if (!notebooks.contains(notebook)) {
             ErrorString errorDescription(
                 "One of initial notebooks is not found within "
                 "the listed notebooks");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", notebook which was not found: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", notebook which was not found: "
+                                 << notebook);
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
@@ -824,11 +807,9 @@ void NotebookLocalStorageManagerAsyncTester::onListAllNotebooksCompleted(
 }
 
 void NotebookLocalStorageManagerAsyncTester::onListAllNotebooksFailed(
-    size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder order,
+    size_t limit, size_t offset, LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid,
-    ErrorString errorDescription, QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -836,8 +817,9 @@ void NotebookLocalStorageManagerAsyncTester::onListAllNotebooksFailed(
     Q_UNUSED(orderDirection)
     Q_UNUSED(linkedNotebookGuid)
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -850,24 +832,24 @@ void NotebookLocalStorageManagerAsyncTester::onListAllSharedNotebooksCompleted(
     ErrorString errorDescription;
 
     if (m_allInitialSharedNotebooks.size() != sharedNotebooks.size()) {
-        errorDescription.setBase("Sizes of listed and reference shared notebooks "
-                                 "don't match");
+        errorDescription.setBase(
+            "Sizes of listed and reference shared notebooks "
+            "don't match");
         QNWARNING("tests:local_storage", errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
-    for(const auto & sharedNotebook: qAsConst(m_allInitialSharedNotebooks))
-    {
-        if (!sharedNotebooks.contains(sharedNotebook))
-        {
+    for (const auto & sharedNotebook: qAsConst(m_allInitialSharedNotebooks)) {
+        if (!sharedNotebooks.contains(sharedNotebook)) {
             errorDescription.setBase(
                 "One of initial shared notebooks is not "
                 "found within listed shared notebooks");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", shared notebook which was not found: "
-                << sharedNotebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", shared notebook which was not found: "
+                                 << sharedNotebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -884,44 +866,46 @@ void NotebookLocalStorageManagerAsyncTester::onListAllSharedNotebooksCompleted(
 void NotebookLocalStorageManagerAsyncTester::onListAllSharedNotebooksFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
-void NotebookLocalStorageManagerAsyncTester::onListSharedNotebooksPerNotebookGuidCompleted(
-    QString notebookGuid, QList<SharedNotebook> sharedNotebooks,
-    QUuid requestId)
+void NotebookLocalStorageManagerAsyncTester::
+    onListSharedNotebooksPerNotebookGuidCompleted(
+        QString notebookGuid, QList<SharedNotebook> sharedNotebooks,
+        QUuid requestId)
 {
     Q_UNUSED(requestId)
 
     ErrorString errorDescription;
 
-    if (m_initialSharedNotebooksPerNotebook.size() != sharedNotebooks.size())
-    {
+    if (m_initialSharedNotebooksPerNotebook.size() != sharedNotebooks.size()) {
         errorDescription.setBase(
             "Sizes of listed and reference shared notebooks don't match");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ", notebook guid = " << notebookGuid);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription << ", notebook guid = " << notebookGuid);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
 
-    for(const auto & sharedNotebook:
-        qAsConst(m_initialSharedNotebooksPerNotebook))
-    {
-        if (!sharedNotebooks.contains(sharedNotebook))
-        {
+    for (const auto & sharedNotebook:
+         qAsConst(m_initialSharedNotebooksPerNotebook)) {
+        if (!sharedNotebooks.contains(sharedNotebook)) {
             errorDescription.setBase(
                 "One of initial shared notebooks is not "
                 "found within the listed shared notebooks");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", shared notebook which was not found: " << sharedNotebook
-                << ", notebook guid = " << notebookGuid);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", shared notebook which was not found: "
+                                 << sharedNotebook
+                                 << ", notebook guid = " << notebookGuid);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -931,11 +915,14 @@ void NotebookLocalStorageManagerAsyncTester::onListSharedNotebooksPerNotebookGui
     Q_EMIT success();
 }
 
-void NotebookLocalStorageManagerAsyncTester::onListSharedNotebooksPerNotebookGuidFailed(
-    QString notebookGuid, ErrorString errorDescription, QUuid requestId)
+void NotebookLocalStorageManagerAsyncTester::
+    onListSharedNotebooksPerNotebookGuidFailed(
+        QString notebookGuid, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", notebook guid = " << notebookGuid);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", notebook guid = " << notebookGuid);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -947,8 +934,7 @@ void NotebookLocalStorageManagerAsyncTester::onExpungeNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_modifiedNotebook != notebook)
-    {
+    if (m_modifiedNotebook != notebook) {
         errorDescription.setBase(
             "Internal error in NotebookLocalStorageManagerAsyncTester: "
             "notebook pointer in onExpungeNotebookCompleted slot doesn't match "
@@ -966,8 +952,10 @@ void NotebookLocalStorageManagerAsyncTester::onExpungeNotebookCompleted(
 void NotebookLocalStorageManagerAsyncTester::onExpungeNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -975,39 +963,31 @@ void NotebookLocalStorageManagerAsyncTester::onExpungeNotebookFailed(
 void NotebookLocalStorageManagerAsyncTester::createConnections()
 {
     QObject::connect(
-        m_pLocalStorageManagerThread,
-        &QThread::finished,
-        m_pLocalStorageManagerThread,
-        &QThread::deleteLater);
+        m_pLocalStorageManagerThread, &QThread::finished,
+        m_pLocalStorageManagerThread, &QThread::deleteLater);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::initialized,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::initialize);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::initialized,
+        this, &NotebookLocalStorageManagerAsyncTester::initialize);
 
     // Request --> slot connections
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::getNotebookCountRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::getNotebookCountRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onGetNotebookCountRequest);
 
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::addNotebookRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::addNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNotebookRequest);
 
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::updateNotebookRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::updateNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNotebookRequest);
 
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::findNotebookRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::findNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onFindNotebookRequest);
 
@@ -1025,13 +1005,13 @@ void NotebookLocalStorageManagerAsyncTester::createConnections()
 
     QObject::connect(
         this,
-        &NotebookLocalStorageManagerAsyncTester::findDefaultOrLastUsedNotebookRequest,
+        &NotebookLocalStorageManagerAsyncTester::
+            findDefaultOrLastUsedNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest);
 
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::listAllNotebooksRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::listAllNotebooksRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onListAllNotebooksRequest);
 
@@ -1043,147 +1023,135 @@ void NotebookLocalStorageManagerAsyncTester::createConnections()
 
     QObject::connect(
         this,
-        &NotebookLocalStorageManagerAsyncTester::listSharedNotebooksPerNotebookRequest,
+        &NotebookLocalStorageManagerAsyncTester::
+            listSharedNotebooksPerNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest);
 
     QObject::connect(
-        this,
-        &NotebookLocalStorageManagerAsyncTester::expungeNotebookRequest,
+        this, &NotebookLocalStorageManagerAsyncTester::expungeNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeNotebookRequest);
 
     // Slot <-- result connections
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getNotebookCountComplete,
-        this,
+        &LocalStorageManagerAsync::getNotebookCountComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onGetNotebookCountCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getNotebookCountFailed,
-        this,
+        &LocalStorageManagerAsync::getNotebookCountFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onGetNotebookCountFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addNotebookComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onAddNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::addNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onAddNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onUpdateNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::updateNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onUpdateNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::findNotebookComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onFindNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::findNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onFindNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findDefaultNotebookComplete,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookCompleted);
+        &LocalStorageManagerAsync::findDefaultNotebookComplete, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onFindDefaultNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findDefaultNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::findDefaultNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onFindDefaultNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findLastUsedNotebookComplete,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookCompleted);
+        &LocalStorageManagerAsync::findLastUsedNotebookComplete, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onFindLastUsedNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findLastUsedNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::findLastUsedNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onFindLastUsedNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findDefaultOrLastUsedNotebookComplete,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookCompleted);
+        &LocalStorageManagerAsync::findDefaultOrLastUsedNotebookComplete, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onFindDefaultOrLastUsedNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findDefaultOrLastUsedNotebookFailed,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onFindDefaultOrLastUsedNotebookFailed);
+        &LocalStorageManagerAsync::findDefaultOrLastUsedNotebookFailed, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onFindDefaultOrLastUsedNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::listAllNotebooksComplete,
-        this,
+        &LocalStorageManagerAsync::listAllNotebooksComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onListAllNotebooksCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::listAllNotebooksFailed,
-        this,
+        &LocalStorageManagerAsync::listAllNotebooksFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onListAllNotebooksFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::listAllSharedNotebooksComplete,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onListAllSharedNotebooksCompleted);
+        &LocalStorageManagerAsync::listAllSharedNotebooksComplete, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onListAllSharedNotebooksCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::listAllSharedNotebooksFailed,
-        this,
-        &NotebookLocalStorageManagerAsyncTester::onListAllSharedNotebooksFailed);
+        &LocalStorageManagerAsync::listAllSharedNotebooksFailed, this,
+        &NotebookLocalStorageManagerAsyncTester::
+            onListAllSharedNotebooksFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::listSharedNotebooksPerNotebookGuidComplete,
         this,
-        &NotebookLocalStorageManagerAsyncTester::onListSharedNotebooksPerNotebookGuidCompleted);
+        &NotebookLocalStorageManagerAsyncTester::
+            onListSharedNotebooksPerNotebookGuidCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::listSharedNotebooksPerNotebookGuidFailed,
         this,
-        &NotebookLocalStorageManagerAsyncTester::onListSharedNotebooksPerNotebookGuidFailed);
+        &NotebookLocalStorageManagerAsyncTester::
+            onListSharedNotebooksPerNotebookGuidFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookComplete, this,
         &NotebookLocalStorageManagerAsyncTester::onExpungeNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookFailed, this,
         &NotebookLocalStorageManagerAsyncTester::onExpungeNotebookFailed);
 }
 
@@ -1206,5 +1174,5 @@ void NotebookLocalStorageManagerAsyncTester::clear()
 
 #undef HANDLE_WRONG_STATE
 
-} // namespace quentier
 } // namespace test
+} // namespace quentier

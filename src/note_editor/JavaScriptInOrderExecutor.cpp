@@ -27,18 +27,20 @@
 namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
-        WebView & view, QObject * parent) :
+    WebView & view, QObject * parent) :
     QObject(parent),
     m_view(view)
 {}
 
 void JavaScriptInOrderExecutor::append(
-    const QString &script, JavaScriptInOrderExecutor::Callback callback)
+    const QString & script, JavaScriptInOrderExecutor::Callback callback)
 {
     m_javaScriptsQueue.enqueue(std::make_pair(script, callback));
 
-    QNTRACE("note_editor", "JavaScriptInOrderExecutor: appended new script, "
-        << "there are " << m_javaScriptsQueue.size() << " to execute now");
+    QNTRACE(
+        "note_editor",
+        "JavaScriptInOrderExecutor: appended new script, "
+            << "there are " << m_javaScriptsQueue.size() << " to execute now");
 }
 
 void JavaScriptInOrderExecutor::start()
@@ -76,8 +78,10 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
         return;
     }
 
-    QNTRACE("note_editor", "JavaScriptInOrderExecutor: "
-        << m_javaScriptsQueue.size() << " more scripts to execute");
+    QNTRACE(
+        "note_editor",
+        "JavaScriptInOrderExecutor: " << m_javaScriptsQueue.size()
+                                      << " more scripts to execute");
     start();
 }
 

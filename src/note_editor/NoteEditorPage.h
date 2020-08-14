@@ -41,7 +41,7 @@ using WebPage =
 QT_FORWARD_DECLARE_CLASS(NoteEditor)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN NoteEditorPage final: public WebPage
+class Q_DECL_HIDDEN NoteEditorPage final : public WebPage
 {
     Q_OBJECT
 public:
@@ -127,9 +127,9 @@ private:
 #endif
 
 private:
-    NoteEditorPrivate *         m_parent;
+    NoteEditorPrivate * m_parent;
     JavaScriptInOrderExecutor * m_pJavaScriptInOrderExecutor;
-    bool                        m_javaScriptAutoExecution = true;
+    bool m_javaScriptAutoExecution = true;
 };
 
 } // namespace quentier

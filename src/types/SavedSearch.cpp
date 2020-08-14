@@ -28,17 +28,11 @@ QN_DEFINE_FAVORITED(SavedSearch)
 QN_DEFINE_LOCAL(SavedSearch)
 QN_DEFINE_LOCAL_UID(SavedSearch)
 
-SavedSearch::SavedSearch() :
-    d(new SavedSearchData)
-{}
+SavedSearch::SavedSearch() : d(new SavedSearchData) {}
 
-SavedSearch::SavedSearch(const SavedSearch & other) :
-    d(other.d)
-{}
+SavedSearch::SavedSearch(const SavedSearch & other) : d(other.d) {}
 
-SavedSearch::SavedSearch(SavedSearch && other) :
-    d(std::move(other.d))
-{}
+SavedSearch::SavedSearch(SavedSearch && other) : d(std::move(other.d)) {}
 
 SavedSearch & SavedSearch::operator=(SavedSearch && other)
 {
@@ -66,8 +60,7 @@ SavedSearch & SavedSearch::operator=(const SavedSearch & other)
     return *this;
 }
 
-SavedSearch::~SavedSearch()
-{}
+SavedSearch::~SavedSearch() {}
 
 const qevercloud::SavedSearch & SavedSearch::qevercloudSavedSearch() const
 {
@@ -111,10 +104,8 @@ void SavedSearch::clear()
 bool SavedSearch::validateName(
     const QString & name, ErrorString * pErrorDescription)
 {
-    if (name != name.trimmed())
-    {
-        if (pErrorDescription)
-        {
+    if (name != name.trimmed()) {
+        if (pErrorDescription) {
             pErrorDescription->setBase(QT_TRANSLATE_NOOP(
                 "SavedSearch",
                 "Saved search name cannot start or end with whitespace"));
@@ -126,13 +117,10 @@ bool SavedSearch::validateName(
     }
 
     int len = name.length();
-    if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN)
-    {
-        if (pErrorDescription)
-        {
+    if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
+        if (pErrorDescription) {
             pErrorDescription->setBase(QT_TRANSLATE_NOOP(
-                "SavedSearch",
-                "Saved search name's length is too small"));
+                "SavedSearch", "Saved search name's length is too small"));
 
             pErrorDescription->details() = name;
         }
@@ -140,13 +128,10 @@ bool SavedSearch::validateName(
         return false;
     }
 
-    if (len > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX)
-    {
-        if (pErrorDescription)
-        {
+    if (len > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
+        if (pErrorDescription) {
             pErrorDescription->setBase(QT_TRANSLATE_NOOP(
-                "SavedSearch",
-                "Saved search's name length is too large"));
+                "SavedSearch", "Saved search's name length is too large"));
 
             pErrorDescription->details() = name;
         }
@@ -199,8 +184,7 @@ void SavedSearch::setUpdateSequenceNumber(const qint32 usn)
 
 bool SavedSearch::checkParameters(ErrorString & errorDescription) const
 {
-    if (localUid().isEmpty() && !d->m_qecSearch.guid.isSet())
-    {
+    if (localUid().isEmpty() && !d->m_qecSearch.guid.isSet()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "SavedSearch",
             "Both saved search's local and remote guids are empty"));
@@ -274,8 +258,7 @@ void SavedSearch::setQueryFormat(const qint8 queryFormat)
 #define CHECK_AND_SET_SCOPE()                                                  \
     if (!d->m_qecSearch.scope.isSet()) {                                       \
         d->m_qecSearch.scope = SavedSearchScope();                             \
-    }                                                                          \
-// CHECK_AND_SET_SCOPE
+    }
 
 bool SavedSearch::hasIncludeAccount() const
 {
@@ -353,8 +336,7 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
 
     if (d->m_qecSearch.updateSequenceNum.isSet()) {
         strm << "updateSequenceNumber: "
-            << QString::number(d->m_qecSearch.updateSequenceNum)
-            << "; \n";
+             << QString::number(d->m_qecSearch.updateSequenceNum) << "; \n";
     }
     else {
         strm << "updateSequenceNumber is not set; \n";
@@ -381,47 +363,38 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
         strm << "queryFormat is not set; \n";
     }
 
-    if (d->m_qecSearch.scope.isSet())
-    {
+    if (d->m_qecSearch.scope.isSet()) {
         strm << "scope is set; \n";
 
         const SavedSearchScope & scope = d->m_qecSearch.scope;
 
-        if (scope.includeAccount.isSet())
-        {
+        if (scope.includeAccount.isSet()) {
             strm << "includeAccount: "
-                << (scope.includeAccount ? "true" : "false")
-                << "; \n";
+                 << (scope.includeAccount ? "true" : "false") << "; \n";
         }
-        else
-        {
+        else {
             strm << "includeAccount is not set; \n";
         }
 
-        if (scope.includePersonalLinkedNotebooks.isSet())
-        {
+        if (scope.includePersonalLinkedNotebooks.isSet()) {
             strm << "includePersonalLinkedNotebooks: "
-                << (scope.includePersonalLinkedNotebooks ? "true" : "false")
-                << ";\n";
+                 << (scope.includePersonalLinkedNotebooks ? "true" : "false")
+                 << ";\n";
         }
-        else
-        {
+        else {
             strm << "includePersonalLinkedNotebooks is not set;\n";
         }
 
-        if (scope.includeBusinessLinkedNotebooks.isSet())
-        {
+        if (scope.includeBusinessLinkedNotebooks.isSet()) {
             strm << "includeBusinessLinkedNotebooks: "
-                << (scope.includeBusinessLinkedNotebooks ? "true" : "false")
-                << "; \n";
+                 << (scope.includeBusinessLinkedNotebooks ? "true" : "false")
+                 << "; \n";
         }
-        else
-        {
+        else {
             strm << "includeBusinessLinkedNotebooks is not set;\n";
         }
     }
-    else
-    {
+    else {
         strm << "scope is not set; \n";
         return strm;
     }
@@ -434,4 +407,4 @@ QTextStream & SavedSearch::print(QTextStream & strm) const
 
 #undef CHECK_AND_SET_SCOPE
 
-} // namepace quentier
+} // namespace quentier

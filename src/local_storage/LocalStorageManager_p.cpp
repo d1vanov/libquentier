@@ -4635,7 +4635,7 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
 
 #define ADD_TABLE_AND_USN_COLUMN(tableName, usnColumnName)                     \
     tablesAndUsnColumns << HighUsnRequestData(                                 \
-        tableName, usnColumnName, queryCondition) // ADD_TABLE_AND_USN_COLUMN
+        tableName, usnColumnName, queryCondition)
 
     ADD_TABLE_AND_USN_COLUMN(
         QStringLiteral("Notebooks"), QStringLiteral("updateSequenceNumber"));
@@ -5983,7 +5983,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
         QStringLiteral(":" #name),                                             \
         (notebookRestrictions.name.isSet()                                     \
              ? (notebookRestrictions.name.ref() ? 1 : 0)                       \
-             : nullValue)) // BIND_RESTRICTION
+             : nullValue))
 
     BIND_RESTRICTION(noReadNotes);
     BIND_RESTRICTION(noCreateNotes);
@@ -6440,7 +6440,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccounting(
     query.bindValue(                                                           \
         QStringLiteral(":" #name),                                             \
         accounting.name.isSet() ? __VA_ARGS__(accounting.name.ref())           \
-                                : nullValue) // CHECK_AND_BIND_VALUE
+                                : nullValue)
 
     CHECK_AND_BIND_VALUE(uploadLimitEnd);
     CHECK_AND_BIND_VALUE(uploadLimitNextMonth);
@@ -6490,8 +6490,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceAccountLimits(
 #define CHECK_AND_BIND_VALUE(name)                                             \
     query.bindValue(                                                           \
         QStringLiteral(":" #name),                                             \
-        accountLimits.name.isSet() ? accountLimits.name.ref()                  \
-                                   : nullValue) // CHECK_AND_BIND_VALUE
+        accountLimits.name.isSet() ? accountLimits.name.ref() : nullValue)
 
     CHECK_AND_BIND_VALUE(userMailLimitDaily);
     CHECK_AND_BIND_VALUE(noteSizeMax);
@@ -6534,7 +6533,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
     query.bindValue(                                                           \
         QStringLiteral(":" #name),                                             \
         (attributes.name.isSet() ? __VA_ARGS__(attributes.name.ref())          \
-                                 : nullValue)) // CHECK_AND_BIND_VALUE
+                                 : nullValue))
 
         CHECK_AND_BIND_VALUE(defaultLocationName);
         CHECK_AND_BIND_VALUE(defaultLatitude);
@@ -6568,7 +6567,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
     query.bindValue(                                                           \
         QStringLiteral(":" #name),                                             \
         (attributes.name.isSet() ? (attributes.name.ref() ? 1 : 0)             \
-                                 : nullValue)) // CHECK_AND_BIND_BOOLEAN_VALUE
+                                 : nullValue))
 
         CHECK_AND_BIND_BOOLEAN_VALUE(preactivation);
         CHECK_AND_BIND_BOOLEAN_VALUE(clipFullPage);
@@ -8146,8 +8145,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 #define BIND_ATTRIBUTE(name)                                                   \
     query.bindValue(                                                           \
         QStringLiteral(":" #name),                                             \
-        (attributes.name.isSet() ? attributes.name.ref()                       \
-                                 : nullValue)) // BIND_ATTRIBUTE
+        (attributes.name.isSet() ? attributes.name.ref() : nullValue))
 
             BIND_ATTRIBUTE(subjectDate);
             BIND_ATTRIBUTE(latitude);
@@ -8285,7 +8283,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
         }
         else {
 #define BIND_NULL_ATTRIBUTE(name)                                              \
-    query.bindValue(QStringLiteral(":" #name), nullValue) // BIND_NULL_ATTRIBUTE
+    query.bindValue(QStringLiteral(":" #name), nullValue)
 
             BIND_NULL_ATTRIBUTE(subjectDate);
             BIND_NULL_ATTRIBUTE(latitude);
@@ -8700,7 +8698,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteRestrictions(
     query.bindValue(                                                           \
         QStringLiteral(":" #column),                                           \
         (noteRestrictions.name.isSet() ? (noteRestrictions.name.ref() ? 1 : 0) \
-                                       : nullValue)) // BIND_RESTRICTION
+                                       : nullValue))
 
     BIND_RESTRICTION(noUpdateNoteTitle, noUpdateTitle);
     BIND_RESTRICTION(noUpdateNoteContent, noUpdateContent);
@@ -8733,8 +8731,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteLimits(
 #define BIND_LIMIT(limit)                                                      \
     query.bindValue(                                                           \
         QStringLiteral(":" #limit),                                            \
-        (noteLimits.limit.isSet() ? noteLimits.limit.ref()                     \
-                                  : nullValue)) // BIND_LIMIT
+        (noteLimits.limit.isSet() ? noteLimits.limit.ref() : nullValue))
 
     BIND_LIMIT(noteResourceCountMax);
     BIND_LIMIT(uploadLimit);
@@ -9965,10 +9962,12 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
     if (Q_UNLIKELY(!resource.hasNoteLocalUid())) {
         errorDescription.setBase(
             QT_TR_NOOP("the resource has no note local uid set"));
+
         QString displayName = resource.displayName();
         if (!displayName.isEmpty()) {
             errorDescription.details() = displayName + QStringLiteral(", ");
         }
+
         errorDescription.details() += QStringLiteral("resource local uid = ");
         errorDescription.details() += resource.localUid();
         QNWARNING("local_storage", errorDescription);
@@ -9991,6 +9990,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
             if (resourceDataFileInfo.exists()) {
                 errorDescription.setBase(
                     QT_TR_NOOP("failed to delete resource data file"));
+
                 QString displayName = resource.displayName();
                 if (!displayName.isEmpty()) {
                     errorDescription.details() =
@@ -9999,6 +9999,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
 
                 errorDescription.details() +=
                     QStringLiteral("resource local uid = ");
+
                 errorDescription.details() += resource.localUid();
                 QNWARNING("local_storage", errorDescription);
                 return false;
@@ -10018,16 +10019,20 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
             // proper return code sometimes
             QFileInfo resourceAlternateDataFileInfo(
                 resourceAlternateDataFile.fileName());
+
             if (resourceAlternateDataFileInfo.exists()) {
                 errorDescription.setBase(QT_TR_NOOP(
                     "failed to delete resource alternate data file"));
+
                 QString displayName = resource.displayName();
                 if (!displayName.isEmpty()) {
                     errorDescription.details() =
                         displayName + QStringLiteral(", ");
                 }
+
                 errorDescription.details() +=
                     QStringLiteral("resource local uid = ");
+
                 errorDescription.details() += resource.localUid();
                 QNWARNING("local_storage", errorDescription);
                 return false;
@@ -10118,6 +10123,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFilesForNotebook(
         if (!removeResourceDataFilesForNote(noteLocalUid, error)) {
             errorDescription.setBase(QT_TR_NOOP(
                 "failed to remove resource data files for notebook"));
+
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -10172,6 +10178,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFilesForLinkedNotebook(
         if (!removeResourceDataFilesForNote(noteLocalUid, error)) {
             errorDescription.setBase(QT_TR_NOOP(
                 "failed to remove resource data files for notebook"));
+
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
@@ -10574,9 +10581,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceSavedSearch(
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
             QT_TR_NOOP("failed to prepare the SQL query"));
+
         QNWARNING(
             "local_storage",
             errorDescription << m_insertOrReplaceSavedSearchQuery.lastError());
+
         errorDescription.details() =
             m_insertOrReplaceSavedSearchQuery.lastError().text();
         return false;
@@ -10791,10 +10800,12 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
     if (Q_UNLIKELY(!resource.hasNoteLocalUid())) {
         errorDescription.setBase(
             QT_TR_NOOP("the resource has no note local uid set"));
+
         QString displayName = resource.displayName();
         if (!displayName.isEmpty()) {
             errorDescription.details() = displayName + QStringLiteral(", ");
         }
+
         errorDescription.details() += QStringLiteral("resource local uid = ");
         errorDescription.details() += resource.localUid();
         QNWARNING("local_storage", errorDescription);
@@ -10807,6 +10818,7 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
         auto status = readResourceBinaryDataFromFile(
             resource.localUid(), resource.noteLocalUid(),
             /* is alternate data body = */ false, dataBody, error);
+
         if (status != ReadResourceBinaryDataFromFileStatus::Success) {
             if (status == ReadResourceBinaryDataFromFileStatus::FileNotFound) {
                 errorDescription.setBase(
@@ -10820,8 +10832,10 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
             if (!displayName.isEmpty()) {
                 errorDescription.details() = displayName + QStringLiteral(", ");
             }
+
             errorDescription.details() +=
                 QStringLiteral("resource local uid = ");
+
             errorDescription.details() += resource.localUid();
             QNWARNING("local_storage", errorDescription);
             return false;
@@ -10851,8 +10865,10 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
             if (!displayName.isEmpty()) {
                 errorDescription.details() = displayName + QStringLiteral(", ");
             }
+
             errorDescription.details() +=
                 QStringLiteral("resource local uid = ");
+
             errorDescription.details() += resource.localUid();
             QNWARNING("local_storage", errorDescription);
             return false;
@@ -10921,6 +10937,7 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
                 int res = rename(
                     prevAlternateDataFilePath.toLocal8Bit().constData(),
                     newAlternateDataFilePath.toLocal8Bit().constData());
+
                 if (res != 0) {
                     QNWARNING(
                         "local_storage",
@@ -10947,10 +10964,12 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
     else if (isAlternateDataBody) {
         QFileInfo prevAlternateDataFileInfo(
             storagePath + QStringLiteral(".old"));
+
         if (prevAlternateDataFileInfo.exists() &&
             prevAlternateDataFileInfo.isFile()) {
             QString resourceDataStoragePath =
                 accountPersistentStoragePath(m_currentAccount);
+
             resourceDataStoragePath += QStringLiteral("/Resources/data/");
             resourceDataStoragePath += noteLocalUid;
             resourceDataStoragePath += QStringLiteral("/");
@@ -10959,6 +10978,7 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
 
             QFileInfo newResourceDataFileInfo(
                 resourceDataStoragePath + QStringLiteral(".new"));
+
             if (newResourceDataFileInfo.exists() &&
                 newResourceDataFileInfo.isFile()) {
                 QNDEBUG(
@@ -10973,12 +10993,14 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
 
                 QString prevAlternateDataFilePath = QDir::toNativeSeparators(
                     prevAlternateDataFileInfo.absoluteFilePath());
+
                 QString newAlternateDataFilePath =
                     QDir::toNativeSeparators(storagePath);
 
                 int res = rename(
                     prevAlternateDataFilePath.toLocal8Bit().constData(),
                     newAlternateDataFilePath.toLocal8Bit().constData());
+
                 if (res != 0) {
                     QNWARNING(
                         "local_storage",
@@ -11041,8 +11063,7 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
                     static_cast<localType>(qvariant_cast<type>(value)));       \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_RESOURCE_PROPERTY
+    }
 
     CHECK_AND_SET_RESOURCE_PROPERTY(
         resourceLocalUid, QString, QString, setLocalUid);
@@ -11118,8 +11139,7 @@ bool LocalStorageManagerPrivate::fillResourceAttributesFromSqlRecord(
                 hasSomething = true;                                           \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_RESOURCE_ATTRIBUTE
+    }
 
     CHECK_AND_SET_RESOURCE_ATTRIBUTE(
         resourceSourceURL, sourceURL, QString, QString);
@@ -11215,8 +11235,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesFromSqlRecord(
                     static_cast<localType>(qvariant_cast<type>(value));        \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_NOTE_ATTRIBUTE
+    }
 
     CHECK_AND_SET_NOTE_ATTRIBUTE(subjectDate, qint64, qevercloud::Timestamp);
     CHECK_AND_SET_NOTE_ATTRIBUTE(latitude, double, double);
@@ -11228,8 +11247,10 @@ void LocalStorageManagerPrivate::fillNoteAttributesFromSqlRecord(
     CHECK_AND_SET_NOTE_ATTRIBUTE(sourceApplication, QString, QString);
     CHECK_AND_SET_NOTE_ATTRIBUTE(shareDate, qint64, qevercloud::Timestamp);
     CHECK_AND_SET_NOTE_ATTRIBUTE(reminderOrder, qint64, qint64);
+
     CHECK_AND_SET_NOTE_ATTRIBUTE(
         reminderDoneTime, qint64, qevercloud::Timestamp);
+
     CHECK_AND_SET_NOTE_ATTRIBUTE(reminderTime, qint64, qevercloud::Timestamp);
     CHECK_AND_SET_NOTE_ATTRIBUTE(placeName, QString, QString);
     CHECK_AND_SET_NOTE_ATTRIBUTE(contentClass, QString, QString);
@@ -11333,11 +11354,13 @@ void LocalStorageManagerPrivate::
 
     QMap<QString, QString> & fullMap =
         attributes.applicationData->fullMap.ref();
+
     QStringList keysList, valuesList;
 
     QString keysString = keys.toString();
     int keysLength = keysString.length();
     keysList.reserve(keysLength / 2); // NOTE: just a wild guess
+
     bool insideQuotedText = false;
     QString currentKey;
     QChar wordSep = QChar::fromLatin1('\'');
@@ -11365,6 +11388,7 @@ void LocalStorageManagerPrivate::
     QString valuesString = values.toString();
     int valuesLength = valuesString.length();
     valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
+
     insideQuotedText = false;
     QString currentValue;
     for (int i = 0; i < (valuesLength - 1); ++i) {
@@ -11454,6 +11478,7 @@ void LocalStorageManagerPrivate::fillNoteAttributesClassificationsFromSqlRecord(
     QString valuesString = values.toString();
     int valuesLength = valuesString.length();
     valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
+
     insideQuotedText = false;
     QString currentValue;
     for (int i = 0; i < (valuesLength - 1); ++i) {
@@ -11506,8 +11531,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
             QNERROR("local_storage", errorDescription);                        \
             return false;                                                      \
         }                                                                      \
-    }                                                                          \
-    // FIND_AND_SET_USER_PROPERTY
+    }
 
     bool isRequired = true;
 
@@ -11605,8 +11629,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
                 foundSomeUserAttribute = true;                                 \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // FIND_AND_SET_USER_ATTRIBUTE
+    }
 
     FIND_AND_SET_USER_ATTRIBUTE(
         defaultLocationName, defaultLocationName, QString, QString);
@@ -11714,8 +11737,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
                 foundSomeAccountingProperty = true;                            \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // FIND_AND_SET_ACCOUNTING_PROPERTY
+    }
 
     FIND_AND_SET_ACCOUNTING_PROPERTY(
         uploadLimitEnd, uploadLimitEnd, qint64, qevercloud::Timestamp);
@@ -11793,8 +11815,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
                 foundSomeAccountLimit = true;                                  \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // FIND_AND_SET_ACCOUNT_LIMIT
+    }
 
     FIND_AND_SET_ACCOUNT_LIMIT(userMailLimitDaily, int, qint32)
     FIND_AND_SET_ACCOUNT_LIMIT(noteSizeMax, qint64, qint64)
@@ -11829,8 +11850,7 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
                 foundSomeBusinessUserInfoProperty = true;                      \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // FIND_AND_SET_BUSINESS_USER_INFO_PROPERTY
+    }
 
     FIND_AND_SET_BUSINESS_USER_INFO_PROPERTY(
         businessId, businessId, qint32, qint32);
@@ -11865,8 +11885,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
         if (!value.isNull()) {                                                 \
             note.setter(static_cast<localType>(qvariant_cast<type>(value)));   \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_NOTE_PROPERTY
+    }
 
     CHECK_AND_SET_NOTE_PROPERTY(isDirty, setDirty, int, bool);
     CHECK_AND_SET_NOTE_PROPERTY(isLocal, setLocal, int, bool);
@@ -11953,8 +11972,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
                 static_cast<bool>(qvariant_cast<qint32>(value));               \
             foundSomeNoteRestriction = true;                                   \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_NOTE_RESTRICTION
+    }
 
     CHECK_AND_SET_NOTE_RESTRICTION(noUpdateNoteTitle, noUpdateTitle)
     CHECK_AND_SET_NOTE_RESTRICTION(noUpdateNoteContent, noUpdateContent)
@@ -11980,8 +11998,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
                 static_cast<type>(qvariant_cast<columnType>(value));           \
             foundSomeNoteLimit = true;                                         \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_NOTE_LIMIT
+    }
 
     CHECK_AND_SET_NOTE_LIMIT(noteResourceCountMax, qint32, qint32)
     CHECK_AND_SET_NOTE_LIMIT(uploadLimit, qint64, qint64)
@@ -12025,8 +12042,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(
                     static_cast<localType>(qvariant_cast<type>(value)));       \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_SHARED_NOTE_PROPERTY
+    }
 
     CHECK_AND_SET_SHARED_NOTE_PROPERTY(
         sharedNoteNoteGuid, QString, QString, setNoteGuid)
@@ -12193,8 +12209,7 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
             errorDescription.details() = QStringLiteral(#attribute);           \
             return false;                                                      \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_NOTEBOOK_ATTRIBUTE
+    }
 
     bool isRequired = true;
 
@@ -12326,8 +12341,7 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
                 notebook.setter(qvariant_cast<int>(value) > 0 ? false : true); \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // SET_EN_NOTEBOOK_RESTRICTION
+    }
 
     SET_EN_NOTEBOOK_RESTRICTION(noReadNotes, setCanReadNotes);
     SET_EN_NOTEBOOK_RESTRICTION(noCreateNotes, setCanCreateNotes);
@@ -12402,8 +12416,7 @@ bool LocalStorageManagerPrivate::fillSharedNotebookFromSqlRecord(
                     static_cast<localType>(qvariant_cast<type>(value)));       \
             }                                                                  \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_SHARED_NOTEBOOK_PROPERTY
+    }
 
     CHECK_AND_SET_SHARED_NOTEBOOK_PROPERTY(
         sharedNotebookShareId, qint64, qint64, setId)
@@ -12504,8 +12517,7 @@ bool LocalStorageManagerPrivate::fillLinkedNotebookFromSqlRecord(
             QNERROR("local_storage", errorDescription);                        \
             return false;                                                      \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_LINKED_NOTEBOOK_PROPERTY
+    }
 
     bool isRequired = true;
     CHECK_AND_SET_LINKED_NOTEBOOK_PROPERTY(
@@ -12577,8 +12589,7 @@ bool LocalStorageManagerPrivate::fillSavedSearchFromSqlRecord(
             QNERROR("local_storage", errorDescription);                        \
             return false;                                                      \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_SAVED_SEARCH_PROPERTY
+    }
 
     bool isRequired = false;
     CHECK_AND_SET_SAVED_SEARCH_PROPERTY(
@@ -12649,8 +12660,7 @@ bool LocalStorageManagerPrivate::fillTagFromSqlRecord(
             QNERROR("local_storage", errorDescription);                        \
             return false;                                                      \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_SET_TAG_PROPERTY
+    }
 
     bool isRequired = false;
     CHECK_AND_SET_TAG_PROPERTY(guid, QString, QString, setGuid, isRequired);
@@ -13129,6 +13139,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
             ErrorString error;
             bool res = tagNamesToTagLocalUids(
                 negatedTagNames, tagNegatedLocalUids, error);
+
             if (!res) {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
@@ -13215,11 +13226,13 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
 
         const QStringList & resourceMimeTypes =
             noteSearchQuery.resourceMimeTypes();
+
         const int numResourceMimeTypes = resourceMimeTypes.size();
         if (!resourceMimeTypes.isEmpty()) {
             ErrorString error;
             bool res = resourceMimeTypesToResourceLocalUids(
                 resourceMimeTypes, resourceLocalUidsPerMime, error);
+
             if (!res) {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
@@ -13248,6 +13261,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
                     "localResource, COUNT(*) "
                     "FROM NoteResources WHERE "
                     "NoteResources.localResource IN ('");
+
                 for (const auto & resourceLocalUid:
                      qAsConst(resourceLocalUidsPerMime)) {
                     sql += sqlEscapeString(resourceLocalUid);
@@ -13273,6 +13287,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
                     "localNote FROM (SELECT localNote, "
                     "localResource FROM NoteResources WHERE "
                     "NoteResources.localResource IN ('");
+
                 for (const auto & resourceLocalUid:
                      qAsConst(resourceLocalUidsPerMime)) {
                     sql += sqlEscapeString(resourceLocalUid);
@@ -13290,12 +13305,14 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
 
         const auto & negatedResourceMimeTypes =
             noteSearchQuery.negatedResourceMimeTypes();
+
         const int numNegatedResourceMimeTypes = negatedResourceMimeTypes.size();
         if (!negatedResourceMimeTypes.isEmpty()) {
             ErrorString error;
             bool res = resourceMimeTypesToResourceLocalUids(
                 negatedResourceMimeTypes, resourceNegatedLocalUidsPerMime,
                 error);
+
             if (!res) {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
@@ -13314,6 +13331,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
                     "localResource, COUNT(*) "
                     "FROM NoteResources WHERE "
                     "NoteResources.localResource IN ('");
+
                 for (const auto & resourceLocalUid:
                      qAsConst(resourceNegatedLocalUidsPerMime)) {
                     sql += sqlEscapeString(resourceLocalUid);
@@ -13337,6 +13355,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
                     "localNote FROM (SELECT localNote, localResource "
                     "FROM NoteResources WHERE "
                     "NoteResources.localResource IN ('");
+
                 for (const auto & resourceLocalUid:
                      qAsConst(resourceNegatedLocalUidsPerMime)) {
                     sql += sqlEscapeString(resourceLocalUid);
@@ -13371,8 +13390,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
         sql += QStringLiteral("(NoteFTS." #column " IS NULL) ");               \
         sql += uniteOperator;                                                  \
         sql += QStringLiteral(" ");                                            \
-    }                                                                          \
-    // CHECK_AND_PROCESS_ANY_ITEM
+    }
 
 #define CHECK_AND_PROCESS_LIST(list, column, negated, ...)                     \
     const auto & noteSearchQuery##list##column = noteSearchQuery.list();       \
@@ -13396,8 +13414,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
         sql += QStringLiteral(")");                                            \
         sql += uniteOperator;                                                  \
         sql += QStringLiteral(" ");                                            \
-    }                                                                          \
-    // CHECK_AND_PROCESS_LIST
+    }
 
 #define CHECK_AND_PROCESS_NUMERIC_LIST(list, column, negated, ...)             \
     const auto & noteSearchQuery##list##column = noteSearchQuery.list();       \
@@ -13441,8 +13458,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
             sql += uniteOperator;                                              \
             sql += QStringLiteral(" ");                                        \
         }                                                                      \
-    }                                                                          \
-    // CHECK_AND_PROCESS_NUMERIC_LIST
+    }
 
 #define CHECK_AND_PROCESS_ITEM(                                                \
     list, negatedList, hasAnyItem, hasNegatedAnyItem, column, ...)             \
@@ -13450,8 +13466,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
     else {                                                                     \
         CHECK_AND_PROCESS_LIST(list, column, !negated, __VA_ARGS__);           \
         CHECK_AND_PROCESS_LIST(negatedList, column, negated, __VA_ARGS__);     \
-    }                                                                          \
-    // CHECK_AND_PROCESS_ITEM
+    }
 
 #define CHECK_AND_PROCESS_NUMERIC_ITEM(                                        \
     list, negatedList, hasAnyItem, hasNegatedAnyItem, column, ...)             \
@@ -13460,8 +13475,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
         CHECK_AND_PROCESS_NUMERIC_LIST(list, column, !negated, __VA_ARGS__);   \
         CHECK_AND_PROCESS_NUMERIC_LIST(                                        \
             negatedList, column, negated, __VA_ARGS__);                        \
-    }                                                                          \
-    // CHECK_AND_PROCESS_NUMERIC_ITEM
+    }
 
     bool negated = true;
     CHECK_AND_PROCESS_ITEM(
@@ -13709,9 +13723,11 @@ bool LocalStorageManagerPrivate::noteSearchQueryContentSearchTermsToSQL(
             m_stringUtils.removeDiacritics(currentSearchTerm);
 
             positiveSqlPart += QStringLiteral("(");
+
             contentSearchTermToSQLQueryPart(
                 frontSearchTermModifier, currentSearchTerm,
                 backSearchTermModifier, matchStatement);
+
             currentSearchTerm = sqlEscapeString(currentSearchTerm);
 
             positiveSqlPart +=
@@ -13748,13 +13764,17 @@ bool LocalStorageManagerPrivate::noteSearchQueryContentSearchTermsToSQL(
 
     const auto & negatedContentSearchTerms =
         noteSearchQuery.negatedContentSearchTerms();
+
     if (!negatedContentSearchTerms.isEmpty()) {
         const int numNegatedContentSearchTerms =
             negatedContentSearchTerms.size();
+
         for (int i = 0; i < numNegatedContentSearchTerms; ++i) {
             currentSearchTerm = negatedContentSearchTerms[i];
+
             m_stringUtils.removePunctuation(
                 currentSearchTerm, m_preservedAsterisk);
+
             if (currentSearchTerm.isEmpty()) {
                 continue;
             }
@@ -13762,9 +13782,11 @@ bool LocalStorageManagerPrivate::noteSearchQueryContentSearchTermsToSQL(
             m_stringUtils.removeDiacritics(currentSearchTerm);
 
             negatedSqlPart += QStringLiteral("(");
+
             contentSearchTermToSQLQueryPart(
                 frontSearchTermModifier, currentSearchTerm,
                 backSearchTermModifier, matchStatement);
+
             currentSearchTerm = sqlEscapeString(currentSearchTerm);
 
             negatedSqlPart +=
@@ -13989,6 +14011,7 @@ bool LocalStorageManagerPrivate::resourceMimeTypesToResourceLocalUids(
              * have to use brute-force "equal to X1 or equal to X2 or ... equal
              * to XN
              */
+
             queryString =
                 QStringLiteral("SELECT resourceLocalUid FROM Resources WHERE ");
 
@@ -14116,6 +14139,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
             "ResourceAttributesApplicationDataFullMap.resourceLocalUid "
             "WHERE noteLocalUid='%1'")
             .arg(sqlEscapeString(noteLocalUid));
+
     QSqlQuery query(m_sqlDatabase);
     bool res = query.exec(listNoteResourcesQueryString);
     DATABASE_CHECK_AND_SET_ERROR()
@@ -14176,8 +14200,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     changed = changed ||                                                       \
         ((resource.hasProperty() && previousNoteResource.hasProperty() &&      \
           (resource.property() != previousNoteResource.property())) ||         \
-         (resource.hasProperty() !=                                            \
-          previousNoteResource.hasProperty())) // COMPARE_RESOURCE_PROPERTY
+         (resource.hasProperty() != previousNoteResource.hasProperty()))
 
             COMPARE_RESOURCE_PROPERTY(hasGuid, guid);
             COMPARE_RESOURCE_PROPERTY(hasNoteGuid, noteGuid);
@@ -14323,6 +14346,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         res = insertOrReplaceResource(
             resource, error, updateResourceBinaryData,
             /* useSeparateTransaction = */ false);
+
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
@@ -14360,6 +14384,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
             resource, error,
             /* set resource binary data = */ true,
             /* useSeparateTransaction = */ false);
+
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
@@ -14537,6 +14562,7 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions(
 
     bool listElementsWithoutGuid =
         options.testFlag(ListObjectsOption::ListElementsWithoutGuid);
+
     bool listElementsWithGuid =
         options.testFlag(ListObjectsOption::ListElementsWithGuid);
 
@@ -14545,6 +14571,7 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions(
 
     bool listFavoritedElements =
         options.testFlag(ListObjectsOption::ListFavoritedElements);
+
     bool listNonFavoritedElements =
         options.testFlag(ListObjectsOption::ListNonFavoritedElements);
 

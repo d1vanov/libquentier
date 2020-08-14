@@ -30,8 +30,7 @@ namespace quentier {
  * in particular it simplifies the way of working with either application-wide
  * or account-specific settings
  */
-class QUENTIER_EXPORT ApplicationSettings:
-    public QSettings, public Printable
+class QUENTIER_EXPORT ApplicationSettings : public QSettings, public Printable
 {
     Q_OBJECT
 public:
@@ -47,9 +46,9 @@ public:
      *                      or read
      * @param settingsName  If not empty, the created application settings
      *                      would manage the settings stored in a file with
-     *                      a specific name within the account's settings storage;
-     *                      otherwise they would be stored in the default
-     *                      settings file for the account
+     *                      a specific name within the account's settings
+     * storage; otherwise they would be stored in the default settings file for
+     * the account
      */
     ApplicationSettings(
         const Account & account, const QString & settingsName = {});
@@ -66,9 +65,7 @@ public:
      */
     struct ArrayCloser
     {
-        ArrayCloser(ApplicationSettings & settings) :
-            m_settings(settings)
-        {}
+        ArrayCloser(ApplicationSettings & settings) : m_settings(settings) {}
 
         ~ArrayCloser()
         {
@@ -85,9 +82,7 @@ public:
      */
     struct GroupCloser
     {
-        GroupCloser(ApplicationSettings & settings) :
-            m_settings(settings)
-        {}
+        GroupCloser(ApplicationSettings & settings) : m_settings(settings) {}
 
         ~GroupCloser()
         {

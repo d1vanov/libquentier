@@ -30,15 +30,17 @@ public:
     typedef void (T::*Method)(const QVariant &);
 
     JsResultCallbackFunctor(T & object, Method method) :
-        m_object(object),
-        m_method(method)
+        m_object(object), m_method(method)
     {}
 
-    void operator()(const QVariant & data) { (m_object.*m_method)(data); }
+    void operator()(const QVariant & data)
+    {
+        (m_object.*m_method)(data);
+    }
 
 private:
-    T &         m_object;
-    Method      m_method;
+    T & m_object;
+    Method m_method;
 };
 
 } // namespace quentier

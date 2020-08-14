@@ -21,14 +21,13 @@
 namespace quentier {
 
 SharedNotebookData::SharedNotebookData(
-        const qevercloud::SharedNotebook & other) :
+    const qevercloud::SharedNotebook & other) :
     QSharedData(),
     m_qecSharedNotebook(other)
 {}
 
 SharedNotebookData::SharedNotebookData(qevercloud::SharedNotebook && other) :
-    QSharedData(),
-    m_qecSharedNotebook(std::move(other))
+    QSharedData(), m_qecSharedNotebook(std::move(other))
 {}
 
 } // namespace quentier

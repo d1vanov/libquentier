@@ -26,8 +26,8 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
 #include <quentier/types/RegisterMetatypes.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
@@ -61,18 +61,18 @@ void registerMetatypes()
     qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
     qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
 
-    qRegisterMetaType<QVector<LinkedNotebookAuthData> >(
+    qRegisterMetaType<QVector<LinkedNotebookAuthData>>(
         "QVector<LinkedNotebookAuthData>");
 
-    qRegisterMetaType< QList<Notebook> >("QList<Notebook>");
-    qRegisterMetaType< QList<Note> >("QList<Note>");
-    qRegisterMetaType< QList<Tag> >("QList<Tag>");
-    qRegisterMetaType< QList<Resource> >("QList<Resource>");
-    qRegisterMetaType< QList<User> >("QList<User>");
-    qRegisterMetaType< QList<LinkedNotebook> >("QList<LinkedNotebook>");
-    qRegisterMetaType< QList<SavedSearch> >("QList<SavedSearch>");
+    qRegisterMetaType<QList<Notebook>>("QList<Notebook>");
+    qRegisterMetaType<QList<Note>>("QList<Note>");
+    qRegisterMetaType<QList<Tag>>("QList<Tag>");
+    qRegisterMetaType<QList<Resource>>("QList<Resource>");
+    qRegisterMetaType<QList<User>>("QList<User>");
+    qRegisterMetaType<QList<LinkedNotebook>>("QList<LinkedNotebook>");
+    qRegisterMetaType<QList<SavedSearch>>("QList<SavedSearch>");
 
-    qRegisterMetaType< QList<SharedNotebook> >("QList<SharedNotebook>");
+    qRegisterMetaType<QList<SharedNotebook>>("QList<SharedNotebook>");
 
     qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
         "LocalStorageManager::ListObjectsOptions");
@@ -113,30 +113,29 @@ void registerMetatypes()
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QUuid>("QUuid");
 
-    qRegisterMetaType<QList<QPair<QString,QString> > >(
+    qRegisterMetaType<QList<QPair<QString, QString>>>(
         "QList<QPair<QString,QString> >");
 
-    qRegisterMetaType<QHash<QString, QPair<QString,QString> > >(
+    qRegisterMetaType<QHash<QString, QPair<QString, QString>>>(
         "QHash<QString, QPair<QString,QString> >");
 
-    qRegisterMetaType<QHash<QString,QString> >(
-        "QHash<QString,QString>");
+    qRegisterMetaType<QHash<QString, QString>>("QHash<QString,QString>");
 
-    qRegisterMetaType<QHash<QString,qevercloud::Timestamp> >(
+    qRegisterMetaType<QHash<QString, qevercloud::Timestamp>>(
         "QHash<QString,qevercloud::Timestamp>");
 
-    qRegisterMetaType<QHash<QString,qint32> >("QHash<QString,qint32>");
-    qRegisterMetaType<QHash<QString,int> >("QHash<QString,int>");
+    qRegisterMetaType<QHash<QString, qint32>>("QHash<QString,qint32>");
+    qRegisterMetaType<QHash<QString, int>>("QHash<QString,int>");
 
     qRegisterMetaType<NoteSearchQuery>("NoteSearchQuery");
 
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
 
-    qRegisterMetaType<QList<std::pair<Tag, QStringList> > >(
+    qRegisterMetaType<QList<std::pair<Tag, QStringList>>>(
         "QList<std::pair<Tag, QStringList> >");
 
-    qRegisterMetaType<QHash<QString,std::pair<QString,QString> > >(
+    qRegisterMetaType<QHash<QString, std::pair<QString, QString>>>(
         "QHash<QString,std::pair<QString,QString> >");
 
     using ErrorCode = IKeychainService::ErrorCode;
@@ -145,7 +144,7 @@ void registerMetatypes()
     qRegisterMetaType<IKeychainService::ErrorCode>(
         "IKeychainService::ErrorCode");
 
-    qRegisterMetaType<QList<QNetworkCookie> >("QList<QNeworkCookie>");
+    qRegisterMetaType<QList<QNetworkCookie>>("QList<QNeworkCookie>");
 
     using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
     qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");

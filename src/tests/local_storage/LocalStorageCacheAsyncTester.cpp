@@ -53,9 +53,8 @@ void LocalStorageCacheAsyncTester::onInitTestCase()
 
     Account account(username, Account::Type::Evernote, userId);
 
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(
-        account,
-        startupOptions);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(account, startupOptions);
 
     createConnections();
 
@@ -73,8 +72,7 @@ void LocalStorageCacheAsyncTester::initialize()
     m_pLocalStorageCacheManager =
         m_pLocalStorageManagerAsync->localStorageCacheManager();
 
-    if (!m_pLocalStorageCacheManager)
-    {
+    if (!m_pLocalStorageCacheManager) {
         QString error = QStringLiteral(
             "Local storage cache is not enabled by default for unknown reason");
 
@@ -99,20 +97,18 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
             "Internal error in LocalStorageCacheAsyncTester: wrong state");    \
         QNWARNING("tests:local_storage", errorDescription << ": " << m_state); \
         Q_EMIT failure(errorDescription.nonLocalizedString());                 \
-    }                                                                          \
-// HANDLE_WRONG_STATE
+    }
 
-    if (m_state == State::STATE_SENT_NOTEBOOK_ADD_REQUEST)
-    {
-        if (m_currentNotebook != notebook)
-        {
+    if (m_state == State::STATE_SENT_NOTEBOOK_ADD_REQUEST) {
+        if (m_currentNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: notebook in "
                 "onAddNotebookCompleted doesn't match the original notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_currentNotebook
-                << "\nFound notebook: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_currentNotebook
+                                 << "\nFound notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -127,44 +123,44 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
             m_secondNotebook = m_currentNotebook;
         }
 
-        if (m_addedNotebooksCount > MAX_NOTEBOOKS_TO_STORE)
-        {
-            const Notebook * pNotebook = m_pLocalStorageCacheManager->findNotebook(
-                m_firstNotebook.localUid(),
-                LocalStorageCacheManager::LocalUid);
+        if (m_addedNotebooksCount > MAX_NOTEBOOKS_TO_STORE) {
+            const Notebook * pNotebook =
+                m_pLocalStorageCacheManager->findNotebook(
+                    m_firstNotebook.localUid(),
+                    LocalStorageCacheManager::LocalUid);
 
-            if (pNotebook)
-            {
+            if (pNotebook) {
                 errorDescription.setBase(
                     "Found notebook which should not have "
                     "been present in the local storage cache");
 
-                QNWARNING("tests:local_storage", errorDescription << ": "
-                    << pNotebook->toString());
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ": " << pNotebook->toString());
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
             }
-            else
-            {
+            else {
                 updateNotebook();
             }
 
             return;
         }
-        else if (m_addedNotebooksCount > 1)
-        {
-            const Notebook * pNotebook = m_pLocalStorageCacheManager->findNotebook(
-                m_firstNotebook.localUid(),
-                LocalStorageCacheManager::LocalUid);
+        else if (m_addedNotebooksCount > 1) {
+            const Notebook * pNotebook =
+                m_pLocalStorageCacheManager->findNotebook(
+                    m_firstNotebook.localUid(),
+                    LocalStorageCacheManager::LocalUid);
 
-            if (!pNotebook)
-            {
+            if (!pNotebook) {
                 errorDescription.setBase(
                     "Notebook which should have been present in the local "
                     "storage cache was not found there");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first notebook: " << m_firstNotebook);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first notebook: "
+                                     << m_firstNotebook);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -179,8 +175,10 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
 void LocalStorageCacheAsyncTester::onAddNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -192,46 +190,45 @@ void LocalStorageCacheAsyncTester::onUpdateNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_NOTEBOOK_UPDATE_REQUEST)
-    {
-        if (m_secondNotebook != notebook)
-        {
+    if (m_state == State::STATE_SENT_NOTEBOOK_UPDATE_REQUEST) {
+        if (m_secondNotebook != notebook) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: notebook in "
-                "onUpdateNotebookCompleted doesn't match the original notebook");
+                "onUpdateNotebookCompleted doesn't match the original "
+                "notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_secondNotebook
-                << "\nFound notebook: " << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_secondNotebook
+                                 << "\nFound notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         const Notebook * pNotebook = m_pLocalStorageCacheManager->findNotebook(
-            notebook.localUid(),
-            LocalStorageCacheManager::LocalUid);
+            notebook.localUid(), LocalStorageCacheManager::LocalUid);
 
-        if (!pNotebook)
-        {
+        if (!pNotebook) {
             errorDescription.setBase(
                 "Updated notebook which should have been present in the local "
                 "storage cache was not found there");
 
-            QNWARNING("tests:local_storage", errorDescription << ", notebook: "
-                << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pNotebook != notebook)
-        {
+        else if (*pNotebook != notebook) {
             errorDescription.setBase(
                 "Updated notebook does not match the notebook stored in "
                 "the local storage cache");
 
-            QNWARNING("tests:local_storage", errorDescription << ", notebook: "
-                << notebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", notebook: " << notebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -246,8 +243,10 @@ void LocalStorageCacheAsyncTester::onUpdateNotebookCompleted(
 void LocalStorageCacheAsyncTester::onUpdateNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -259,32 +258,31 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_NOTE_ADD_REQUEST)
-    {
-        if (m_currentNote != note)
-        {
+    if (m_state == State::STATE_SENT_NOTE_ADD_REQUEST) {
+        if (m_currentNote != note) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: "
                 "note in onAddNoteCompleted doesn't match the original note");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original note: " << m_currentNote << "\nFound note: "
-                << note);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original note: " << m_currentNote
+                                 << "\nFound note: " << note);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
-        if (m_secondNotebook.localUid() != note.notebookLocalUid())
-        {
+        if (m_secondNotebook.localUid() != note.notebookLocalUid()) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: notebook in "
                 "onAddNoteCompleted doesn't match the original notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_secondNotebook
-                << "\nFound note's local notebook uid: "
-                << note.notebookLocalUid());
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_secondNotebook
+                                 << "\nFound note's local notebook uid: "
+                                 << note.notebookLocalUid());
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -299,14 +297,11 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
             m_secondNote = m_currentNote;
         }
 
-        if (m_addedNotesCount > MAX_NOTES_TO_STORE)
-        {
+        if (m_addedNotesCount > MAX_NOTES_TO_STORE) {
             const Note * pNote = m_pLocalStorageCacheManager->findNote(
-                m_firstNote.localUid(),
-                LocalStorageCacheManager::LocalUid);
+                m_firstNote.localUid(), LocalStorageCacheManager::LocalUid);
 
-            if (pNote)
-            {
+            if (pNote) {
                 errorDescription.setBase(
                     "Found note which should not have been "
                     "present in the local storage cache: ");
@@ -315,27 +310,24 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
                 QNWARNING("tests:local_storage", errorDescription);
                 Q_EMIT failure(errorDescription.nonLocalizedString());
             }
-            else
-            {
+            else {
                 updateNote();
             }
 
             return;
         }
-        else if (m_addedNotesCount > 1)
-        {
+        else if (m_addedNotesCount > 1) {
             const Note * pNote = m_pLocalStorageCacheManager->findNote(
-                m_firstNote.localUid(),
-                LocalStorageCacheManager::LocalUid);
+                m_firstNote.localUid(), LocalStorageCacheManager::LocalUid);
 
-            if (!pNote)
-            {
+            if (!pNote) {
                 errorDescription.setBase(
                     "Note which should have been present in the local storage "
                     "cache was not found there");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first note: " << m_firstNote);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first note: " << m_firstNote);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -350,8 +342,10 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
 void LocalStorageCacheAsyncTester::onAddNoteFailed(
     Note note, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", note: " << note);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", note: " << note);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -364,63 +358,59 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_NOTE_UPDATE_REQUEST)
-    {
-        if (m_secondNote != note)
-        {
+    if (m_state == State::STATE_SENT_NOTE_UPDATE_REQUEST) {
+        if (m_secondNote != note) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: note in "
                 "onUpdateNoteCompleted doesn't match the original note");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original note: " << m_secondNote << "\nFound note: "
-                << note);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original note: " << m_secondNote
+                                 << "\nFound note: " << note);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
-        if (m_secondNotebook.localUid() != note.notebookLocalUid())
-        {
+        if (m_secondNotebook.localUid() != note.notebookLocalUid()) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: "
                 "note's notebook local uid in onUpdateNoteCompleted doesn't "
                 "match the original notebook local uid");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original notebook: " << m_secondNotebook
-                << "\nUpdated note's notebook local uid: "
-                << note.notebookLocalUid());
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original notebook: " << m_secondNotebook
+                                 << "\nUpdated note's notebook local uid: "
+                                 << note.notebookLocalUid());
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         const Note * pNote = m_pLocalStorageCacheManager->findNote(
-            note.localUid(),
-            LocalStorageCacheManager::LocalUid);
+            note.localUid(), LocalStorageCacheManager::LocalUid);
 
-        if (!pNote)
-        {
+        if (!pNote) {
             errorDescription.setBase(
                 "Updated note which should have been "
                 "present in the local storage cache was "
                 "not found there");
 
-            QNWARNING("tests:local_storage", errorDescription << ", note: "
-                << note);
+            QNWARNING(
+                "tests:local_storage", errorDescription << ", note: " << note);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pNote != note)
-        {
+        else if (*pNote != note) {
             errorDescription.setBase(
                 "Updated note does not match the note "
                 "stored in the local storage cache");
 
-            QNWARNING("tests:local_storage", errorDescription << ", note: "
-                << note);
+            QNWARNING(
+                "tests:local_storage", errorDescription << ", note: " << note);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -438,8 +428,10 @@ void LocalStorageCacheAsyncTester::onUpdateNoteFailed(
 {
     Q_UNUSED(options)
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", note: " << note);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", note: " << note);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -450,17 +442,16 @@ void LocalStorageCacheAsyncTester::onAddTagCompleted(Tag tag, QUuid requestId)
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_TAG_ADD_REQUEST)
-    {
-        if (m_currentTag != tag)
-        {
+    if (m_state == State::STATE_SENT_TAG_ADD_REQUEST) {
+        if (m_currentTag != tag) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: "
                 "tag in onAddTagCompleted doesn't match the original tag");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original tag: " << m_currentTag << "\nFound tag: "
-                << tag);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original tag: " << m_currentTag
+                                 << "\nFound tag: " << tag);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -475,60 +466,54 @@ void LocalStorageCacheAsyncTester::onAddTagCompleted(Tag tag, QUuid requestId)
             m_secondTag = m_currentTag;
         }
 
-        if (m_addedTagsCount > MAX_TAGS_TO_STORE)
-        {
+        if (m_addedTagsCount > MAX_TAGS_TO_STORE) {
             const Tag * pTag = m_pLocalStorageCacheManager->findTag(
-                m_firstTag.localUid(),
-                LocalStorageCacheManager::LocalUid);
+                m_firstTag.localUid(), LocalStorageCacheManager::LocalUid);
 
-            if (pTag)
-            {
+            if (pTag) {
                 errorDescription.setBase(
                     "Found tag which should not have been "
                     "present in the local storage cache");
 
-                QNWARNING("tests:local_storage", errorDescription << ": "
-                    << *pTag);
+                QNWARNING(
+                    "tests:local_storage", errorDescription << ": " << *pTag);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
             }
-            else
-            {
+            else {
                 updateTag();
             }
 
             return;
         }
-        else if (m_addedTagsCount > 1)
-        {
+        else if (m_addedTagsCount > 1) {
             const Tag * pTag = m_pLocalStorageCacheManager->findTag(
-                m_firstTag.localUid(),
-                LocalStorageCacheManager::LocalUid);
+                m_firstTag.localUid(), LocalStorageCacheManager::LocalUid);
 
-            if (!pTag)
-            {
+            if (!pTag) {
                 errorDescription.setBase(
                     "Tag which should have been present in the local storage "
                     "cache was not found there");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first tag: " << m_firstTag);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first tag: " << m_firstTag);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
             }
 
             // Check that we can also find the tag by name in the cache
-            pTag = m_pLocalStorageCacheManager->findTagByName(
-                m_firstTag.name());
-            if (!pTag)
-            {
+            pTag =
+                m_pLocalStorageCacheManager->findTagByName(m_firstTag.name());
+            if (!pTag) {
                 errorDescription.setBase(
                     "Tag present in the local storage cache could not be "
                     "found by tag name");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first tag: " << m_firstTag);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first tag: " << m_firstTag);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -543,8 +528,9 @@ void LocalStorageCacheAsyncTester::onAddTagCompleted(Tag tag, QUuid requestId)
 void LocalStorageCacheAsyncTester::onAddTagFailed(
     Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", request id = "
-        << requestId << ", tag: " << tag);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", request id = " << requestId << ", tag: " << tag);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -556,45 +542,42 @@ void LocalStorageCacheAsyncTester::onUpdateTagCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_TAG_UPDATE_REQUEST)
-    {
-        if (m_secondTag != tag)
-        {
+    if (m_state == State::STATE_SENT_TAG_UPDATE_REQUEST) {
+        if (m_secondTag != tag) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: tag in "
                 "onUpdateTagCompleted doesn't match the original tag");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original tag: " << m_secondTag << "\nFound tag: " << tag);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << "; original tag: " << m_secondTag
+                                 << "\nFound tag: " << tag);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
 
         const Tag * pTag = m_pLocalStorageCacheManager->findTag(
-            tag.localUid(),
-            LocalStorageCacheManager::LocalUid);
+            tag.localUid(), LocalStorageCacheManager::LocalUid);
 
-        if (!pTag)
-        {
+        if (!pTag) {
             errorDescription.setBase(
                 "Updated tag which should have been present in the local "
                 "storage cache was not found there");
 
-            QNWARNING("tests:local_storage", errorDescription << ", tag: "
-                << tag);
+            QNWARNING(
+                "tests:local_storage", errorDescription << ", tag: " << tag);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pTag != tag)
-        {
+        else if (*pTag != tag) {
             errorDescription.setBase(
                 "Updated tag does not match the tag "
                 "stored in the local storage cache");
 
-            QNWARNING("tests:local_storage", errorDescription << ", tag: "
-                << tag);
+            QNWARNING(
+                "tests:local_storage", errorDescription << ", tag: " << tag);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -610,8 +593,9 @@ void LocalStorageCacheAsyncTester::onUpdateTagCompleted(
 void LocalStorageCacheAsyncTester::onUpdateTagFailed(
     Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", request id = "
-        << requestId << ", tag: " << tag);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", request id = " << requestId << ", tag: " << tag);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -623,18 +607,18 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_LINKED_NOTEBOOK_ADD_REQUEST)
-    {
-        if (m_currentLinkedNotebook != linkedNotebook)
-        {
+    if (m_state == State::STATE_SENT_LINKED_NOTEBOOK_ADD_REQUEST) {
+        if (m_currentLinkedNotebook != linkedNotebook) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: linked "
                 "notebook in onAddLinkedNotebookCompleted doesn't match "
                 "the original linked notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original linked notebook: " << m_currentLinkedNotebook
-                << "\nFound linked notebook: " << linkedNotebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << "; original linked notebook: " << m_currentLinkedNotebook
+                    << "\nFound linked notebook: " << linkedNotebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -649,44 +633,42 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted(
             m_secondLinkedNotebook = m_currentLinkedNotebook;
         }
 
-        if (m_addedLinkedNotebooksCount > MAX_LINKED_NOTEBOOKS_TO_STORE)
-        {
+        if (m_addedLinkedNotebooksCount > MAX_LINKED_NOTEBOOKS_TO_STORE) {
             const LinkedNotebook * pLinkedNotebook =
                 m_pLocalStorageCacheManager->findLinkedNotebook(
                     m_firstLinkedNotebook.guid());
 
-            if (pLinkedNotebook)
-            {
+            if (pLinkedNotebook) {
                 errorDescription.setBase(
                     "Found linked notebook which should not have been present "
                     "in the local storage cache");
 
-                QNWARNING("tests:local_storage", errorDescription << ": "
-                    << *pLinkedNotebook);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ": " << *pLinkedNotebook);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
             }
-            else
-            {
+            else {
                 updateLinkedNotebook();
             }
 
             return;
         }
-        else if (m_addedLinkedNotebooksCount > 1)
-        {
+        else if (m_addedLinkedNotebooksCount > 1) {
             const auto * pLinkedNotebook =
                 m_pLocalStorageCacheManager->findLinkedNotebook(
                     m_firstLinkedNotebook.guid());
 
-            if (!pLinkedNotebook)
-            {
+            if (!pLinkedNotebook) {
                 errorDescription.setBase(
                     "Linked notebook which should have been present in "
                     "the local storage cache was not found there");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first linked notebook: " << m_firstLinkedNotebook);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first linked notebook: "
+                                     << m_firstLinkedNotebook);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -702,8 +684,10 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookFailed(
     LinkedNotebook linkedNotebook, ErrorString errorDescription,
     QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", linked notebook: " << linkedNotebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", linked notebook: " << linkedNotebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -715,18 +699,18 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_LINKED_NOTEBOOK_UPDATE_REQUEST)
-    {
-        if (m_secondLinkedNotebook != linkedNotebook)
-        {
+    if (m_state == State::STATE_SENT_LINKED_NOTEBOOK_UPDATE_REQUEST) {
+        if (m_secondLinkedNotebook != linkedNotebook) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: linked "
                 "notebook in onUpdateLinkedNotebookCompleted doesn't match "
                 "the original linked notebook");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original linked notebook: " << m_secondLinkedNotebook
-                << "\nFound linked notebook: " << linkedNotebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << "; original linked notebook: " << m_secondLinkedNotebook
+                    << "\nFound linked notebook: " << linkedNotebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -736,26 +720,26 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted(
             m_pLocalStorageCacheManager->findLinkedNotebook(
                 linkedNotebook.guid());
 
-        if (!pLinkedNotebook)
-        {
+        if (!pLinkedNotebook) {
             errorDescription.setBase(
                 "Updated linked notebook which should have been present in "
                 "the local storage cache was not found there");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", linked notebook: " << linkedNotebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", linked notebook: " << linkedNotebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pLinkedNotebook != linkedNotebook)
-        {
+        else if (*pLinkedNotebook != linkedNotebook) {
             errorDescription.setBase(
                 "Updated linked notebook does not match the linked notebook "
                 "stored in the local storage cache");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", linked notebook: " << linkedNotebook);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", linked notebook: " << linkedNotebook);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -772,8 +756,10 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookFailed(
     LinkedNotebook linkedNotebook, ErrorString errorDescription,
     QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", linked notebook: " << linkedNotebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", linked notebook: " << linkedNotebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -785,18 +771,18 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_SAVED_SEARCH_ADD_REQUEST)
-    {
-        if (m_currentSavedSearch != search)
-        {
+    if (m_state == State::STATE_SENT_SAVED_SEARCH_ADD_REQUEST) {
+        if (m_currentSavedSearch != search) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: saved search "
                 "in onAddSavedSearchCompleted doesn't match the original saved "
                 "search");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original saved search: " << m_currentSavedSearch
-                << "\nFound saved search: " << search);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << "; original saved search: " << m_currentSavedSearch
+                    << "\nFound saved search: " << search);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -811,46 +797,44 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
             m_secondSavedSearch = m_currentSavedSearch;
         }
 
-        if (m_addedSavedSearchesCount > MAX_SAVED_SEARCHES_TO_STORE)
-        {
+        if (m_addedSavedSearchesCount > MAX_SAVED_SEARCHES_TO_STORE) {
             const auto * pSavedSearch =
                 m_pLocalStorageCacheManager->findSavedSearch(
                     m_firstSavedSearch.localUid(),
                     LocalStorageCacheManager::LocalUid);
 
-            if (pSavedSearch)
-            {
+            if (pSavedSearch) {
                 errorDescription.setBase(
                     "Found saved search which should not have been present "
                     "in the local storage cache");
 
-                QNWARNING("tests:local_storage", errorDescription << ": "
-                    << *pSavedSearch);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ": " << *pSavedSearch);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
             }
-            else
-            {
+            else {
                 updateSavedSearch();
             }
 
             return;
         }
-        else if (m_addedSavedSearchesCount > 1)
-        {
+        else if (m_addedSavedSearchesCount > 1) {
             const auto * pSavedSearch =
                 m_pLocalStorageCacheManager->findSavedSearch(
                     m_firstSavedSearch.localUid(),
                     LocalStorageCacheManager::LocalUid);
 
-            if (!pSavedSearch)
-            {
+            if (!pSavedSearch) {
                 errorDescription.setBase(
                     "Saved search which should have been present in the local "
                     "storage cache was not found there");
 
-                QNWARNING("tests:local_storage", errorDescription
-                    << ", first saved search: " << m_firstSavedSearch);
+                QNWARNING(
+                    "tests:local_storage",
+                    errorDescription << ", first saved search: "
+                                     << m_firstSavedSearch);
 
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -865,8 +849,10 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
 void LocalStorageCacheAsyncTester::onAddSavedSearchFailed(
     SavedSearch search, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", saved search: " << search);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", saved search: " << search);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -878,18 +864,18 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == State::STATE_SENT_SAVED_SEARCH_UPDATE_REQUEST)
-    {
-        if (m_secondSavedSearch != search)
-        {
+    if (m_state == State::STATE_SENT_SAVED_SEARCH_UPDATE_REQUEST) {
+        if (m_secondSavedSearch != search) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCachesyncTester: saved search "
                 "in onUpdateSavedSearchCompleted doesn't match the original "
                 "saved search");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << "; original saved search: " << m_secondSavedSearch
-                << "\nFound saved search: " << search);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << "; original saved search: " << m_secondSavedSearch
+                    << "\nFound saved search: " << search);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -897,29 +883,28 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
 
         const SavedSearch * pSavedSearch =
             m_pLocalStorageCacheManager->findSavedSearch(
-                search.localUid(),
-                LocalStorageCacheManager::LocalUid);
+                search.localUid(), LocalStorageCacheManager::LocalUid);
 
-        if (!pSavedSearch)
-        {
+        if (!pSavedSearch) {
             errorDescription.setBase(
                 "Updated saved search which should have been present in "
                 "the local storage cache was not found there");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", saved search: " << search);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", saved search: " << search);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pSavedSearch != search)
-        {
+        else if (*pSavedSearch != search) {
             errorDescription.setBase(
                 "Updated saved search does not match the saved search in "
                 "the local storage cache");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ", saved search: " << search);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription << ", saved search: " << search);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -935,8 +920,10 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
 void LocalStorageCacheAsyncTester::onUpdateSavedSearchFailed(
     SavedSearch search, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", saved search: " << search);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", saved search: " << search);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -944,198 +931,158 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchFailed(
 void LocalStorageCacheAsyncTester::createConnections()
 {
     QObject::connect(
-        m_pLocalStorageManagerThread,
-        &QThread::finished,
-        m_pLocalStorageManagerThread,
-        &LocalStorageManagerAsync::deleteLater);
+        m_pLocalStorageManagerThread, &QThread::finished,
+        m_pLocalStorageManagerThread, &LocalStorageManagerAsync::deleteLater);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::initialized,
-        this,
-        &LocalStorageCacheAsyncTester::initialize);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::initialized,
+        this, &LocalStorageCacheAsyncTester::initialize);
 
     // Request --> slot connections
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::addNotebookRequest,
+        this, &LocalStorageCacheAsyncTester::addNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNotebookRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::updateNotebookRequest,
+        this, &LocalStorageCacheAsyncTester::updateNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNotebookRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::addNoteRequest,
+        this, &LocalStorageCacheAsyncTester::addNoteRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNoteRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::updateNoteRequest,
+        this, &LocalStorageCacheAsyncTester::updateNoteRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNoteRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::addTagRequest,
+        this, &LocalStorageCacheAsyncTester::addTagRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddTagRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::updateTagRequest,
+        this, &LocalStorageCacheAsyncTester::updateTagRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateTagRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::addLinkedNotebookRequest,
+        this, &LocalStorageCacheAsyncTester::addLinkedNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddLinkedNotebookRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::updateLinkedNotebookRequest,
+        this, &LocalStorageCacheAsyncTester::updateLinkedNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateLinkedNotebookRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::addSavedSearchRequest,
+        this, &LocalStorageCacheAsyncTester::addSavedSearchRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddSavedSearchRequest);
 
     QObject::connect(
-        this,
-        &LocalStorageCacheAsyncTester::updateSavedSearchRequest,
+        this, &LocalStorageCacheAsyncTester::updateSavedSearchRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateSavedSearchRequest);
-
 
     // Slot <-- result connections
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addNotebookComplete, this,
         &LocalStorageCacheAsyncTester::onAddNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::addNotebookFailed, this,
         &LocalStorageCacheAsyncTester::onAddNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &LocalStorageCacheAsyncTester::onUpdateNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::updateNotebookFailed, this,
         &LocalStorageCacheAsyncTester::onUpdateNotebookFailed);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteComplete,
-        this,
-        &LocalStorageCacheAsyncTester::onAddNoteCompleted);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addNoteComplete,
+        this, &LocalStorageCacheAsyncTester::onAddNoteCompleted);
+
+    QObject::connect(
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addNoteFailed,
+        this, &LocalStorageCacheAsyncTester::onAddNoteFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteFailed,
-        this,
-        &LocalStorageCacheAsyncTester::onAddNoteFailed);
-
-    QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteComplete,
-        this,
+        &LocalStorageManagerAsync::updateNoteComplete, this,
         &LocalStorageCacheAsyncTester::onUpdateNoteCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteFailed,
-        this,
+        &LocalStorageManagerAsync::updateNoteFailed, this,
         &LocalStorageCacheAsyncTester::onUpdateNoteFailed);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addTagComplete,
-        this,
-        &LocalStorageCacheAsyncTester::onAddTagCompleted);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addTagComplete,
+        this, &LocalStorageCacheAsyncTester::onAddTagCompleted);
+
+    QObject::connect(
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addTagFailed,
+        this, &LocalStorageCacheAsyncTester::onAddTagFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addTagFailed,
-        this,
-        &LocalStorageCacheAsyncTester::onAddTagFailed);
-
-    QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagComplete,
-        this,
+        &LocalStorageManagerAsync::updateTagComplete, this,
         &LocalStorageCacheAsyncTester::onUpdateTagCompleted);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagFailed,
-        this,
-        &LocalStorageCacheAsyncTester::onUpdateTagFailed);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::updateTagFailed,
+        this, &LocalStorageCacheAsyncTester::onUpdateTagFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addLinkedNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addLinkedNotebookComplete, this,
         &LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addLinkedNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::addLinkedNotebookFailed, this,
         &LocalStorageCacheAsyncTester::onAddLinkedNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateLinkedNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateLinkedNotebookComplete, this,
         &LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateLinkedNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::updateLinkedNotebookFailed, this,
         &LocalStorageCacheAsyncTester::onUpdateLinkedNotebookFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::addSavedSearchComplete, this,
         &LocalStorageCacheAsyncTester::onAddSavedSearchCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::addSavedSearchFailed, this,
         &LocalStorageCacheAsyncTester::onAddSavedSearchFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchComplete, this,
         &LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchFailed, this,
         &LocalStorageCacheAsyncTester::onUpdateSavedSearchFailed);
 }
 
@@ -1153,7 +1100,6 @@ void LocalStorageCacheAsyncTester::clear()
     }
 
     m_state = State::STATE_UNINITIALIZED;
-
 }
 
 void LocalStorageCacheAsyncTester::addNotebook()
@@ -1277,8 +1223,7 @@ void LocalStorageCacheAsyncTester::addLinkedNotebook()
     m_state = State::STATE_SENT_LINKED_NOTEBOOK_ADD_REQUEST;
 
     Q_EMIT addLinkedNotebookRequest(
-        m_currentLinkedNotebook,
-        QUuid::createUuid());
+        m_currentLinkedNotebook, QUuid::createUuid());
 }
 
 void LocalStorageCacheAsyncTester::updateLinkedNotebook()
@@ -1289,8 +1234,7 @@ void LocalStorageCacheAsyncTester::updateLinkedNotebook()
     m_state = State::STATE_SENT_LINKED_NOTEBOOK_UPDATE_REQUEST;
 
     Q_EMIT updateLinkedNotebookRequest(
-        m_secondLinkedNotebook,
-        QUuid::createUuid());
+        m_secondLinkedNotebook, QUuid::createUuid());
 }
 
 void LocalStorageCacheAsyncTester::addSavedSearch()
@@ -1313,7 +1257,6 @@ void LocalStorageCacheAsyncTester::addSavedSearch()
 
     m_state = State::STATE_SENT_SAVED_SEARCH_ADD_REQUEST;
     Q_EMIT addSavedSearchRequest(m_currentSavedSearch, QUuid::createUuid());
-
 }
 
 void LocalStorageCacheAsyncTester::updateSavedSearch()
@@ -1330,8 +1273,7 @@ QDebug & operator<<(
 {
     using State = LocalStorageCacheAsyncTester::State;
 
-    switch(state)
-    {
+    switch (state) {
     case State::STATE_UNINITIALIZED:
         dbg << "Uninitialized";
         break;

@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SharedNoteData final: public QSharedData
+class Q_DECL_HIDDEN SharedNoteData final : public QSharedData
 {
 public:
     SharedNoteData() = default;
@@ -43,9 +43,9 @@ public:
     virtual ~SharedNoteData() = default;
 
 public:
-    QString                 m_noteGuid;
-    qevercloud::SharedNote  m_qecSharedNote;
-    int                     m_indexInNote = -1;
+    QString m_noteGuid;
+    qevercloud::SharedNote m_qecSharedNote;
+    int m_indexInNote = -1;
 };
 
 } // namespace quentier

@@ -23,22 +23,18 @@
 
 namespace quentier {
 
-SharedNotebook::SharedNotebook() :
-    d(new SharedNotebookData)
-{}
+SharedNotebook::SharedNotebook() : d(new SharedNotebookData) {}
 
 SharedNotebook::SharedNotebook(const SharedNotebook & other) :
-    Printable(),
-    d(other.d)
+    Printable(), d(other.d)
 {}
 
 SharedNotebook::SharedNotebook(SharedNotebook && other) :
-    Printable(),
-    d(std::move(other.d))
+    Printable(), d(std::move(other.d))
 {}
 
 SharedNotebook::SharedNotebook(
-        const qevercloud::SharedNotebook & qecSharedNotebook) :
+    const qevercloud::SharedNotebook & qecSharedNotebook) :
     Printable(),
     d(new SharedNotebookData(qecSharedNotebook))
 {}
@@ -61,8 +57,7 @@ SharedNotebook & SharedNotebook::operator=(SharedNotebook && other)
     return *this;
 }
 
-SharedNotebook::~SharedNotebook()
-{}
+SharedNotebook::~SharedNotebook() {}
 
 bool SharedNotebook::operator==(const SharedNotebook & other) const
 {
@@ -82,8 +77,8 @@ bool SharedNotebook::operator!=(const SharedNotebook & other) const
     return !(*this == other);
 }
 
-const qevercloud::SharedNotebook &
-SharedNotebook::qevercloudSharedNotebook() const
+const qevercloud::SharedNotebook & SharedNotebook::qevercloudSharedNotebook()
+    const
 {
     return d->m_qecSharedNotebook;
 }
@@ -238,8 +233,8 @@ bool SharedNotebook::hasPrivilegeLevel() const
     return d->m_qecSharedNotebook.privilege.isSet();
 }
 
-SharedNotebook::SharedNotebookPrivilegeLevel
-SharedNotebook::privilegeLevel() const
+SharedNotebook::SharedNotebookPrivilegeLevel SharedNotebook::privilegeLevel()
+    const
 {
     return d->m_qecSharedNotebook.privilege;
 }
@@ -260,8 +255,7 @@ void SharedNotebook::setPrivilegeLevel(const qint8 privilegeLevel)
             static_cast<qevercloud::SharedNotebookPrivilegeLevel>(
                 privilegeLevel);
     }
-    else
-    {
+    else {
         d->m_qecSharedNotebook.privilege.clear();
     }
 }
@@ -284,8 +278,7 @@ bool SharedNotebook::reminderNotifyEmail() const
     if (!sharedNotebook.recipientSettings.isSet()) {                           \
         sharedNotebook.recipientSettings =                                     \
             qevercloud::SharedNotebookRecipientSettings();                     \
-    }                                                                          \
-// CHECK_AND_SET_RECIPIENT_SETTINGS
+    }
 
 void SharedNotebook::setReminderNotifyEmail(const bool notifyEmail)
 {
@@ -422,9 +415,8 @@ void SharedNotebook::setAssignmentTimestamp(const qint64 timestamp)
 QTextStream & SharedNotebook::print(QTextStream & strm) const
 {
     strm << "SharedNotebook {\n"
-        << "  index in notebook: "
-        << QString::number(d->m_indexInNotebook)
-        << ";\n";
+         << "  index in notebook: " << QString::number(d->m_indexInNotebook)
+         << ";\n";
 
     const auto & sharedNotebook = d->m_qecSharedNotebook;
     strm << sharedNotebook;

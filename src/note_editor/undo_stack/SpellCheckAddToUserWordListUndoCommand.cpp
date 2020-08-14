@@ -26,31 +26,31 @@
 namespace quentier {
 
 SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
-        SpellChecker * pSpellChecker, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const QString & word,
+    SpellChecker * pSpellChecker, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_pSpellChecker(pSpellChecker),
-    m_word(word)
+    m_pSpellChecker(pSpellChecker), m_word(word)
 {
     setText(tr("Add to user word list"));
 }
 
 SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
-        SpellChecker * pSpellChecker, const QString & text,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const QString & word,
+    SpellChecker * pSpellChecker, const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_pSpellChecker(pSpellChecker),
-    m_word(word)
+    m_pSpellChecker(pSpellChecker), m_word(word)
 {}
 
-SpellCheckAddToUserWordListUndoCommand::~SpellCheckAddToUserWordListUndoCommand()
+SpellCheckAddToUserWordListUndoCommand::
+    ~SpellCheckAddToUserWordListUndoCommand()
 {}
 
 void SpellCheckAddToUserWordListUndoCommand::redoImpl()
 {
-    QNDEBUG("note_editor:undo", "SpellCheckAddToUserWordListUndoCommand"
-        << "::redoImpl");
+    QNDEBUG(
+        "note_editor:undo",
+        "SpellCheckAddToUserWordListUndoCommand"
+            << "::redoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
         QNTRACE("note_editor:undo", "No spell checker");
@@ -67,8 +67,10 @@ void SpellCheckAddToUserWordListUndoCommand::redoImpl()
 
 void SpellCheckAddToUserWordListUndoCommand::undoImpl()
 {
-    QNDEBUG("note_editor:undo", "SpellCheckAddToUserWordListUndoCommand"
-        << "::undoImpl");
+    QNDEBUG(
+        "note_editor:undo",
+        "SpellCheckAddToUserWordListUndoCommand"
+            << "::undoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
         QNTRACE("note_editor:undo", "No spell checker");

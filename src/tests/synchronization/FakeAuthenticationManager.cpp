@@ -28,8 +28,7 @@ FakeAuthenticationManager::FakeAuthenticationManager(QObject * parent) :
     IAuthenticationManager(parent)
 {}
 
-FakeAuthenticationManager::~FakeAuthenticationManager()
-{}
+FakeAuthenticationManager::~FakeAuthenticationManager() {}
 
 const QString & FakeAuthenticationManager::authToken() const
 {
@@ -69,34 +68,23 @@ void FakeAuthenticationManager::failNextRequest()
 
 void FakeAuthenticationManager::onAuthenticationRequest()
 {
-    if (m_failNextRequest)
-    {
+    if (m_failNextRequest) {
         m_failNextRequest = false;
 
         Q_EMIT sendAuthenticationResult(
-            false,
-            m_userId,
-            QString(),
-            qevercloud::Timestamp(0),
-            QString(),
-            QString(),
-            QString(),
-            QList<QNetworkCookie>(),
+            false, m_userId, QString(), qevercloud::Timestamp(0), QString(),
+            QString(), QString(), QList<QNetworkCookie>(),
             ErrorString("Artificial error"));
 
         return;
     }
 
     Q_EMIT sendAuthenticationResult(
-        true,
-        m_userId,
-        m_authToken,
+        true, m_userId, m_authToken,
         qevercloud::Timestamp(
             QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
-        UidGenerator::Generate(),
-        QStringLiteral("note_store_url"),
-        QStringLiteral("web_api_url_prefix"),
-        m_userStoreCookies,
+        UidGenerator::Generate(), QStringLiteral("note_store_url"),
+        QStringLiteral("web_api_url_prefix"), m_userStoreCookies,
         ErrorString());
 }
 

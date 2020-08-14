@@ -21,7 +21,7 @@
 namespace quentier {
 
 ContextMenuEventJavaScriptHandler::ContextMenuEventJavaScriptHandler(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
@@ -30,10 +30,7 @@ void ContextMenuEventJavaScriptHandler::setContextMenuContent(
     QStringList extraData, quint64 sequenceNumber)
 {
     Q_EMIT contextMenuEventReply(
-        contentType,
-        selectedHtml,
-        insideDecryptedTextFragment,
-        extraData,
+        contentType, selectedHtml, insideDecryptedTextFragment, extraData,
         sequenceNumber);
 }
 

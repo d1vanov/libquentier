@@ -23,14 +23,13 @@
 namespace quentier {
 
 LinkedNotebookData::LinkedNotebookData(
-        const qevercloud::LinkedNotebook & other) :
+    const qevercloud::LinkedNotebook & other) :
     QSharedData(),
     m_qecLinkedNotebook(other)
 {}
 
 LinkedNotebookData::LinkedNotebookData(qevercloud::LinkedNotebook && other) :
-    QSharedData(),
-    m_qecLinkedNotebook(std::move(other))
+    QSharedData(), m_qecLinkedNotebook(std::move(other))
 {}
 
 void LinkedNotebookData::clear()
@@ -40,51 +39,42 @@ void LinkedNotebookData::clear()
 
 bool LinkedNotebookData::checkParameters(ErrorString & errorDescription) const
 {
-    if (!m_qecLinkedNotebook.guid.isSet())
-    {
+    if (!m_qecLinkedNotebook.guid.isSet()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "LinkedNotebookData",
-            "Linked notebook's guid is not set"));
+            "LinkedNotebookData", "Linked notebook's guid is not set"));
 
         return false;
     }
-    else if (!checkGuid(m_qecLinkedNotebook.guid.ref()))
-    {
+    else if (!checkGuid(m_qecLinkedNotebook.guid.ref())) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "LinkedNotebookData",
-            "Linked notebook's guid is invalid"));
+            "LinkedNotebookData", "Linked notebook's guid is invalid"));
 
         errorDescription.details() = m_qecLinkedNotebook.guid.ref();
         return false;
     }
 
-    if (m_qecLinkedNotebook.shareName.isSet())
-    {
-        if (m_qecLinkedNotebook.shareName->isEmpty())
-        {
+    if (m_qecLinkedNotebook.shareName.isSet()) {
+        if (m_qecLinkedNotebook.shareName->isEmpty()) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "LinkedNotebookData",
                 "Linked notebook's custom name is empty"));
 
             return false;
         }
-        else
-        {
+        else {
             QLatin1Char spaceChar(' ');
             const QString & name = m_qecLinkedNotebook.shareName.ref();
             const int size = name.size();
 
             bool nonSpaceCharFound = false;
-            for(int i = 0; i < size; ++i)
-            {
+            for (int i = 0; i < size; ++i) {
                 if (name[i] != spaceChar) {
                     nonSpaceCharFound = true;
                     break;
                 }
             }
 
-            if (!nonSpaceCharFound)
-            {
+            if (!nonSpaceCharFound) {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
                     "LinkedNotebookData",
                     "Linked notebook's custom name must contain non-whitespace "

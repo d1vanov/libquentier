@@ -85,7 +85,7 @@ using OwnershipNamespace = QWebFrame;
 
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-#else   // QUENTIER_USE_QT_WEB_ENGINE
+#else // QUENTIER_USE_QT_WEB_ENGINE
 #include "javascript_glue/EnCryptElementOnClickHandler.h"
 #include "javascript_glue/GenericResourceImageJavaScriptHandler.h"
 #include "javascript_glue/GenericResourceOpenAndSaveButtonsOnClickHandler.h"
@@ -105,7 +105,7 @@ using OwnershipNamespace = QWebFrame;
 #include <QtWebChannel>
 #include <QtWebSockets/QWebSocketServer>
 typedef QWebEngineSettings WebSettings;
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/enml/HTMLCleaner.h>
@@ -151,7 +151,7 @@ typedef QWebEngineSettings WebSettings;
         "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" "                 \
         "\"http://www.w3.org/TR/html4/strict.dtd\"><html><head>"               \
         "<meta http-equiv=\"Content-Type\" content=\"text/html\" "             \
-        "charset=\"UTF-8\" />")   // NOTE_EDITOR_PAGE_HEADER
+        "charset=\"UTF-8\" />")
 
 #define NOTE_EDITOR_PAGE_CSS                                                   \
     QStringLiteral(                                                            \
@@ -176,7 +176,7 @@ typedef QWebEngineSettings WebSettings;
         "<link rel=\"stylesheet\" type=\"text/css\" "                          \
         "href=\"qrc:/css/misspell.css\">"                                      \
         "<link rel=\"stylesheet\" type=\"text/css\" "                          \
-        "href=\"qrc:/css/edit_cursor_trick.css\">")   // NOTE_EDITOR_PAGE_CSS
+        "href=\"qrc:/css/edit_cursor_trick.css\">")
 
 namespace quentier {
 
@@ -192,7 +192,7 @@ int fontMetricsWidth(
 #endif
 }
 
-}   // namespace
+} // namespace
 
 NoteEditorPrivate::NoteEditorPrivate(NoteEditor & noteEditor) :
     INoteEditorBackend(&noteEditor),
@@ -812,7 +812,7 @@ void NoteEditorPrivate::onHyperlinkClicked(QUrl url)
     handleHyperlinkClicked(url);
 }
 
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 void NoteEditorPrivate::onToDoCheckboxClicked(quint64 enToDoCheckboxId)
 {
@@ -3103,7 +3103,7 @@ void NoteEditorPrivate::getHtmlForPrinting()
     page->toHtml(NoteEditorCallbackFunctor<QString>(
         this, &NoteEditorPrivate::onPageHtmlReceivedForPrinting));
 }
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 void NoteEditorPrivate::onFoundResourceData(Resource resource)
 {
@@ -5591,7 +5591,7 @@ void NoteEditorPrivate::setupTextCursorPositionTracking()
     page->executeJavaScript(javascript);
 }
 
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 void NoteEditorPrivate::updateResource(
     const QString & resourceLocalUid, const QByteArray & previousResourceHash,
@@ -5721,8 +5721,7 @@ void NoteEditorPrivate::setupGenericTextContextMenu(
         QObject::connect(                                                      \
             action, &QAction::triggered, this, &NoteEditorPrivate::slot);      \
         menu->addAction(action);                                               \
-    }                                                                          \
-    // ADD_ACTION_WITH_SHORTCUT
+    }
 
     bool enabled = true;
 
@@ -6208,7 +6207,7 @@ void NoteEditorPrivate::setupScripts()
     file.setFileName(QStringLiteral(":/" scriptPathPart));                     \
     file.open(QIODevice::ReadOnly);                                            \
     scriptVarName = QString::fromUtf8(file.readAll());                         \
-    file.close()   // SETUP_SCRIPT
+    file.close()
 
     SETUP_SCRIPT("javascript/jquery/jquery-2.1.3.min.js", m_jQueryJs);
     SETUP_SCRIPT("javascript/jquery/jquery-ui.min.js", m_jQueryUiJs);
@@ -6338,7 +6337,7 @@ void NoteEditorPrivate::setupScripts()
 
     SETUP_SCRIPT(
         "javascript/scripts/qWebChannelSetup.js", m_qWebChannelSetupJs);
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     SETUP_SCRIPT("javascript/scripts/enToDoTagsSetup.js", m_setupEnToDoTagsJs);
 
@@ -6377,7 +6376,7 @@ void NoteEditorPrivate::setupScripts()
     SETUP_SCRIPT(
         "javascript/scripts/setupTextCursorPositionTracking.js",
         m_setupTextCursorPositionTrackingJs);
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
 #undef SETUP_SCRIPT
 }
@@ -6655,7 +6654,7 @@ void NoteEditorPrivate::setupNoteEditorPage()
     QNDEBUG("note_editor", "Setting note editor plugin factory to the page");
     page->setPluginFactory(m_pPluginFactory);
 
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     setupNoteEditorPageConnections(page);
     setPage(page);
@@ -7809,7 +7808,7 @@ void NoteEditorPrivate::applySpellCheck(const bool applyToSelection)
         javascript += word;
         javascript += QStringLiteral("', '");
     }
-    javascript.chop(3);   // Remove trailing ", '";
+    javascript.chop(3); // Remove trailing ", '";
     javascript += QStringLiteral("); }");
 
     QNTRACE("note_editor", "Script: " << javascript);
@@ -8167,8 +8166,7 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(
     escapeStringForJavaScript(escapedCommand);                                 \
     QString javascript = QString::fromUtf8("managedPageAction(\"%1\", null)")  \
                              .arg(escapedCommand);                             \
-    QNDEBUG("note_editor", "JS command: " << javascript)                       \
-    // COMMAND_TO_JS
+    QNDEBUG("note_editor", "JS command: " << javascript)
 
 #define COMMAND_WITH_ARGS_TO_JS(command, args)                                 \
     QString escapedCommand = command;                                          \
@@ -8177,8 +8175,7 @@ void NoteEditorPrivate::setupAddHyperlinkDelegate(
     escapeStringForJavaScript(escapedArgs);                                    \
     QString javascript = QString::fromUtf8("managedPageAction('%1', '%2')")    \
                              .arg(escapedCommand, escapedArgs);                \
-    QNDEBUG("note_editor", "JS command: " << javascript)                       \
-    // COMMAND_WITH_ARGS_TO_JS
+    QNDEBUG("note_editor", "JS command: " << javascript)
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 QVariant NoteEditorPrivate::execJavascriptCommandWithResult(
@@ -8623,7 +8620,7 @@ bool NoteEditorPrivate::print(
 
     m_htmlForPrinting = preprocessedHtml;
 
-#else    // QUENTIER_USE_QT_WEB_ENGINE
+#else  // QUENTIER_USE_QT_WEB_ENGINE
     m_htmlForPrinting.resize(0);
 
     QTimer * pConversionTimer = new QTimer(this);
@@ -8656,7 +8653,7 @@ bool NoteEditorPrivate::print(
         QNWARNING("note_editor", errorDescription);
         return false;
     }
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 
     ErrorString error;
     bool res = m_enmlConverter.htmlToQTextDocument(
@@ -8739,7 +8736,7 @@ bool NoteEditorPrivate::exportToPdf(
     printer.setPaperSize(QPrinter::A4);
     printer.setOutputFileName(filePath);
     return print(printer, errorDescription);
-#endif   // QUENTIER_USE_QT_WEB_ENGINE
+#endif // QUENTIER_USE_QT_WEB_ENGINE
 }
 
 bool NoteEditorPrivate::exportToEnex(
@@ -10801,8 +10798,7 @@ void NoteEditorPrivate::insertTableDialog()
         QNWARNING("note_editor", error);                                       \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-    // CHECK_NUM_COLUMNS
+    }
 
 #define CHECK_NUM_ROWS()                                                       \
     if (rows <= 0) {                                                           \
@@ -10815,8 +10811,7 @@ void NoteEditorPrivate::insertTableDialog()
         QNWARNING("note_editor", error);                                       \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-    // CHECK_NUM_ROWS
+    }
 
 void NoteEditorPrivate::insertFixedWidthTable(
     const int rows, const int columns, const int widthInPixels)
@@ -12009,7 +12004,7 @@ QDebug & operator<<(QDebug & dbg, const NoteEditorPrivate::BlankPageKind kind)
     return dbg;
 }
 
-}   // namespace quentier
+} // namespace quentier
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -20,9 +20,7 @@
 
 namespace quentier {
 
-PageMutationHandler::PageMutationHandler(QObject * parent) :
-    QObject(parent)
-{}
+PageMutationHandler::PageMutationHandler(QObject * parent) : QObject(parent) {}
 
 void PageMutationHandler::onPageMutation()
 {

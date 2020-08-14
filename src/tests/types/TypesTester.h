@@ -26,12 +26,12 @@
 namespace quentier {
 namespace test {
 
-class TypesTester: public QObject
+class TypesTester : public QObject
 {
     Q_OBJECT
 public:
     TypesTester(QObject * parent = nullptr);
-    virtual ~TypesTester();
+    virtual ~TypesTester() override;
 
 private Q_SLOTS:
     void init();

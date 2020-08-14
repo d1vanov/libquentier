@@ -22,16 +22,12 @@
 
 namespace quentier {
 
-Account::Account() :
-    d(new AccountData)
-{}
+Account::Account() : d(new AccountData) {}
 
 Account::Account(
-        QString name, const Type type,
-        const qevercloud::UserID userId,
-        const EvernoteAccountType evernoteAccountType,
-        QString evernoteHost,
-        QString shardId) :
+    QString name, const Type type, const qevercloud::UserID userId,
+    const EvernoteAccountType evernoteAccountType, QString evernoteHost,
+    QString shardId) :
     d(new AccountData)
 {
     d->m_name = std::move(name);
@@ -43,10 +39,7 @@ Account::Account(
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
-Account::Account(const Account & other) :
-    Printable(),
-    d(other.d)
-{}
+Account::Account(const Account & other) : Printable(), d(other.d) {}
 
 Account & Account::operator=(const Account & other)
 {
@@ -57,8 +50,7 @@ Account & Account::operator=(const Account & other)
     return *this;
 }
 
-Account::~Account()
-{}
+Account::~Account() {}
 
 bool Account::operator==(const Account & other) const
 {
@@ -225,13 +217,11 @@ QTextStream & Account::print(QTextStream & strm) const
 {
     strm << "Account: {\n";
     strm << "    name = " << d->m_name << ";\n";
-    strm << "    display name = " << d->m_displayName
-         << ";\n";
+    strm << "    display name = " << d->m_displayName << ";\n";
     strm << "    id = " << d->m_userId << ";\n";
 
     strm << "    type = ";
-    switch(d->m_accountType)
-    {
+    switch (d->m_accountType) {
     case Account::Type::Local:
         strm << "Local";
         break;
@@ -245,8 +235,7 @@ QTextStream & Account::print(QTextStream & strm) const
     strm << ";\n";
 
     strm << "    Evernote account type = ";
-    switch(d->m_evernoteAccountType)
-    {
+    switch (d->m_evernoteAccountType) {
     case Account::EvernoteAccountType::Free:
         strm << "Free";
         break;
@@ -265,30 +254,20 @@ QTextStream & Account::print(QTextStream & strm) const
     }
     strm << ";\n";
 
-    strm << "    Evernote host = "
-        << d->m_evernoteHost << ";\n";
-    strm << "    shard id = "
-        << d->m_shardId << ";\n";
-    strm << "    mail limit daily = "
-        << d->m_mailLimitDaily << ";\n";
-    strm << "    note size max = "
-        << d->m_noteSizeMax << ";\n";
-    strm << "    resource size max = "
-        << d->m_resourceSizeMax << ";\n";
-    strm << "    linked notebook max = "
-        << d->m_linkedNotebookMax << ";\n";
-    strm << "    note count max = "
-        << d->m_noteCountMax << ";\n";
-    strm << "    notebook count max = "
-        << d->m_notebookCountMax << ";\n";
-    strm << "    tag count max = "
-        << d->m_tagCountMax << ";\n";
-    strm << "    note tag count max = "
-        << d->m_noteTagCountMax << ";\n";
-    strm << "    saved search count max = "
-        << d->m_savedSearchCountMax << ";\n";
-    strm << "    note resource count max = "
-        << d->m_noteResourceCountMax << ";\n";
+    strm << "    Evernote host = " << d->m_evernoteHost << ";\n";
+    strm << "    shard id = " << d->m_shardId << ";\n";
+    strm << "    mail limit daily = " << d->m_mailLimitDaily << ";\n";
+    strm << "    note size max = " << d->m_noteSizeMax << ";\n";
+    strm << "    resource size max = " << d->m_resourceSizeMax << ";\n";
+    strm << "    linked notebook max = " << d->m_linkedNotebookMax << ";\n";
+    strm << "    note count max = " << d->m_noteCountMax << ";\n";
+    strm << "    notebook count max = " << d->m_notebookCountMax << ";\n";
+    strm << "    tag count max = " << d->m_tagCountMax << ";\n";
+    strm << "    note tag count max = " << d->m_noteTagCountMax << ";\n";
+    strm << "    saved search count max = " << d->m_savedSearchCountMax
+         << ";\n";
+    strm << "    note resource count max = " << d->m_noteResourceCountMax
+         << ";\n";
     strm << "};\n";
 
     return strm;
@@ -297,8 +276,7 @@ QTextStream & Account::print(QTextStream & strm) const
 template <typename T>
 void printAccountType(T & t, const Account::Type type)
 {
-    switch(type)
-    {
+    switch (type) {
     case Account::Type::Local:
         t << "Local";
         break;
@@ -326,8 +304,7 @@ QDebug & operator<<(QDebug & dbg, const Account::Type type)
 template <typename T>
 void printEvernoteAccountType(T & t, const Account::EvernoteAccountType type)
 {
-    switch(type)
-    {
+    switch (type) {
     case Account::EvernoteAccountType::Free:
         t << "Free";
         break;

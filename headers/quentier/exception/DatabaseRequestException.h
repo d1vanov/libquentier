@@ -27,7 +27,7 @@ namespace quentier {
  * @brief The DatabaseRequestException is thrown when the local storage
  * database encounters some internal error during the attemt to serve a request
  */
-class QUENTIER_EXPORT DatabaseRequestException: public IQuentierException
+class QUENTIER_EXPORT DatabaseRequestException : public IQuentierException
 {
 public:
     explicit DatabaseRequestException(const ErrorString & message);
@@ -36,6 +36,6 @@ protected:
     virtual const QString exceptionDisplayName() const override;
 };
 
-}
+} // namespace quentier
 
 #endif // LIB_QUENTIER_EXCEPTION_DATABASE_SQL_ERROR_EXCEPTION_H

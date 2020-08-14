@@ -34,7 +34,7 @@
 
 using namespace quentier::test;
 
-int main(int argc, char *argv[])
+int main(int argc, char * argv[])
 {
     quentier::QuentierApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("d1vanov"));
@@ -51,34 +51,29 @@ int main(int argc, char *argv[])
         quentier::applicationPersistentStoragePath();
 
     QDir libquentierTestsPersistenceDir(libquentierTestsPersistencePath);
-    if (libquentierTestsPersistenceDir.exists())
-    {
-        QString evernoteAccountsPath =
-            libquentierTestsPersistencePath +
+    if (libquentierTestsPersistenceDir.exists()) {
+        QString evernoteAccountsPath = libquentierTestsPersistencePath +
             QStringLiteral("/EvernoteAccounts");
 
         QDir evernoteAccountsDir(evernoteAccountsPath);
         if (evernoteAccountsDir.exists() &&
-            !quentier::removeDir(evernoteAccountsPath))
-        {
+            !quentier::removeDir(evernoteAccountsPath)) {
             qWarning() << "Failed to delete the directory with libquentier "
-                << "tests persistence for Evernote accounts: "
-                << QDir::toNativeSeparators(evernoteAccountsPath);
+                       << "tests persistence for Evernote accounts: "
+                       << QDir::toNativeSeparators(evernoteAccountsPath);
 
             return 1;
         }
 
         QString localAccountsPath =
-            libquentierTestsPersistencePath +
-            QStringLiteral("/LocalAccounts");
+            libquentierTestsPersistencePath + QStringLiteral("/LocalAccounts");
 
         QDir localAccountsDir(localAccountsPath);
         if (localAccountsDir.exists() &&
-            !quentier::removeDir(localAccountsPath))
-        {
+            !quentier::removeDir(localAccountsPath)) {
             qWarning() << "Failed to delete the directory with libquentier "
-                << "tests persistence for local accounts: "
-                << QDir::toNativeSeparators(evernoteAccountsPath);
+                       << "tests persistence for local accounts: "
+                       << QDir::toNativeSeparators(evernoteAccountsPath);
 
             return 1;
         }
@@ -90,8 +85,7 @@ int main(int argc, char *argv[])
     res = QTest::qExec(new tester);                                            \
     if (res != 0) {                                                            \
         return res;                                                            \
-    }                                                                          \
-// RUN_TESTS
+    }
 
     RUN_TESTS(TypesTester)
     RUN_TESTS(ENMLTester)

@@ -24,8 +24,7 @@
 namespace quentier {
 
 RenameResourceDialog::RenameResourceDialog(
-        const QString & initialResourceName,
-        QWidget * parent) :
+    const QString & initialResourceName, QWidget * parent) :
     QDialog(parent),
     m_pUI(new Ui::RenameResourceDialog)
 {
@@ -46,5 +45,3 @@ void RenameResourceDialog::accept()
 }
 
 } // namespace quentier
-
-

@@ -27,7 +27,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteSearchQueryData)
 
-class QUENTIER_EXPORT NoteSearchQuery: public Printable
+class QUENTIER_EXPORT NoteSearchQuery : public Printable
 {
 public:
     NoteSearchQuery();

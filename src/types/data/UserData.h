@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN UserData final: public QSharedData
+class Q_DECL_HIDDEN UserData final : public QSharedData
 {
 public:
     UserData() = default;
@@ -43,9 +43,9 @@ public:
     virtual ~UserData() = default;
 
 public:
-    qevercloud::User    m_qecUser;
-    bool                m_isLocal = true;
-    bool                m_isDirty = true;
+    qevercloud::User m_qecUser;
+    bool m_isLocal = true;
+    bool m_isDirty = true;
 };
 
 } // namespace quentier

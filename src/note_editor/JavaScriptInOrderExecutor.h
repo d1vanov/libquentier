@@ -32,7 +32,10 @@
 #endif
 
 SAVE_WARNINGS
+
+// clang-format off
 GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
+// clang-format on
 
 #include <boost/function.hpp>
 
@@ -42,34 +45,46 @@ RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN JavaScriptInOrderExecutor final: public QObject
+class Q_DECL_HIDDEN JavaScriptInOrderExecutor final : public QObject
 {
     Q_OBJECT
 private:
     using WebView =
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QWebEngineView;
+        QWebEngineView;
 #else
-    QWebView;
+        QWebView;
 #endif
 
 public:
-    using Callback = boost::function<void (const QVariant&)>;
+    using Callback = boost::function<void(const QVariant &)>;
 
     explicit JavaScriptInOrderExecutor(
         WebView & view, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = 0);
 
-    int size() const { return m_javaScriptsQueue.size(); }
+    int size() const
+    {
+        return m_javaScriptsQueue.size();
+    }
 
-    bool empty() const { return m_javaScriptsQueue.empty(); }
+    bool empty() const
+    {
+        return m_javaScriptsQueue.empty();
+    }
 
-    void clear() { m_javaScriptsQueue.clear(); }
+    void clear()
+    {
+        m_javaScriptsQueue.clear();
+    }
 
     void start();
 
-    bool inProgress() const { return m_inProgress; }
+    bool inProgress() const
+    {
+        return m_inProgress;
+    }
 
 Q_SIGNALS:
     void finished();
@@ -93,10 +108,10 @@ private:
     void next(const QVariant & data);
 
 private:
-    WebView &                               m_view;
-    QQueue<std::pair<QString, Callback>>    m_javaScriptsQueue;
-    Callback                                m_currentPendingCallback = 0;
-    bool                                    m_inProgress = false;
+    WebView & m_view;
+    QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
+    Callback m_currentPendingCallback = 0;
+    bool m_inProgress = false;
 };
 
 } // namespace quentier

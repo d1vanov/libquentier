@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class FakeKeychainService: public IKeychainService
+class FakeKeychainService : public IKeychainService
 {
     Q_OBJECT
 public:
@@ -49,9 +49,10 @@ private:
     virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
-    QHash<int, QUuid>                       m_writePasswordRequestIdByTimerId;
-    QHash<int, std::pair<QUuid, QString>>   m_readPasswordRequestIdWithPasswordByTimerId;
-    QHash<int, std::pair<QUuid, bool>>      m_deletePasswordRequestIdByTimerId;
+    QHash<int, QUuid> m_writePasswordRequestIdByTimerId;
+    QHash<int, std::pair<QUuid, QString>>
+        m_readPasswordRequestIdWithPasswordByTimerId;
+    QHash<int, std::pair<QUuid, bool>> m_deletePasswordRequestIdByTimerId;
 };
 
 using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;

@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SharedNotebookData final: public QSharedData
+class Q_DECL_HIDDEN SharedNotebookData final : public QSharedData
 {
 public:
     SharedNotebookData() = default;
@@ -41,8 +41,8 @@ public:
     virtual ~SharedNotebookData() = default;
 
 public:
-    qevercloud::SharedNotebook      m_qecSharedNotebook;
-    int                             m_indexInNotebook = -1;
+    qevercloud::SharedNotebook m_qecSharedNotebook;
+    int m_indexInNotebook = -1;
 };
 
 } // namespace quentier

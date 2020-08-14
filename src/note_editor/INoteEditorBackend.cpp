@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 #include <quentier/note_editor/NoteEditor.h>
-#include <quentier/logging/QuentierLogger.h>
 
 #include <QUndoStack>
 
@@ -31,8 +31,7 @@ namespace {
 template <typename T>
 T & printRotation(T & t, const INoteEditorBackend::Rotation rotation)
 {
-    switch(rotation)
-    {
+    switch (rotation) {
     case INoteEditorBackend::Rotation::Clockwise:
         t << "Clockwise";
         break;
@@ -51,23 +50,20 @@ T & printRotation(T & t, const INoteEditorBackend::Rotation rotation)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-INoteEditorBackend::~INoteEditorBackend()
-{}
+INoteEditorBackend::~INoteEditorBackend() {}
 
 INoteEditorBackend::INoteEditorBackend(NoteEditor * parent) :
     m_pNoteEditor(parent)
 {}
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const INoteEditorBackend::Rotation rotationDirection)
+    QTextStream & strm, const INoteEditorBackend::Rotation rotationDirection)
 {
     return printRotation(strm, rotationDirection);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const INoteEditorBackend::Rotation rotationDirection)
+    QDebug & dbg, const INoteEditorBackend::Rotation rotationDirection)
 {
     return printRotation(dbg, rotationDirection);
 }

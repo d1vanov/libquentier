@@ -27,35 +27,31 @@
 namespace quentier {
 
 SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
-        LocalStorageManagerAsync & localStorageManagerAsync,
-        SynchronizationManager & synchronizationManager,
-        ISyncStateStorage & syncStateStorage,
-        QObject * parent) :
+    LocalStorageManagerAsync & localStorageManagerAsync,
+    SynchronizationManager & synchronizationManager,
+    ISyncStateStorage & syncStateStorage, QObject * parent) :
     QObject(parent)
 {
     createConnections(
-        localStorageManagerAsync,
-        synchronizationManager,
-        syncStateStorage);
+        localStorageManagerAsync, synchronizationManager, syncStateStorage);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
     ErrorString & errorDescription) const
 {
     return checkSyncChunkDownloadProgressOrderImpl(
-        m_syncChunkDownloadProgress,
-        errorDescription);
+        m_syncChunkDownloadProgress, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunkDownloadProgressOrder(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkLinkedNotebookSyncChunkDownloadProgressOrder(
+        ErrorString & errorDescription) const
 {
-    for(const auto & it:
-        qevercloud::toRange(qAsConst(m_linkedNotebookSyncChunkDownloadProgress)))
+    for (const auto & it: qevercloud::toRange(
+             qAsConst(m_linkedNotebookSyncChunkDownloadProgress)))
     {
         bool res = checkSyncChunkDownloadProgressOrderImpl(
-            it.value(),
-            errorDescription);
+            it.value(), errorDescription);
 
         if (!res) {
             return false;
@@ -69,32 +65,30 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(
     ErrorString & errorDescription) const
 {
     return checkNoteDownloadProgressOrderImpl(
-        m_noteDownloadProgress,
-        errorDescription);
+        m_noteDownloadProgress, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookNoteDownloadProgressOrder(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkLinkedNotebookNoteDownloadProgressOrder(
+        ErrorString & errorDescription) const
 {
     return checkNoteDownloadProgressOrderImpl(
-        m_linkedNotebookNoteDownloadProgress,
-        errorDescription);
+        m_linkedNotebookNoteDownloadProgress, errorDescription);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrder(
     ErrorString & errorDescription) const
 {
     return checkResourceDownloadProgressOrderImpl(
-        m_resourceDownloadProgress,
-        errorDescription);
+        m_resourceDownloadProgress, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookResourceDownloadProgressOrder(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkLinkedNotebookResourceDownloadProgressOrder(
+        ErrorString & errorDescription) const
 {
     return checkResourceDownloadProgressOrderImpl(
-        m_linkedNotebookResourceDownloadProgress,
-        errorDescription);
+        m_linkedNotebookResourceDownloadProgress, errorDescription);
 }
 
 void SynchronizationManagerSignalsCatcher::onStart()
@@ -113,7 +107,7 @@ void SynchronizationManagerSignalsCatcher::onFailure(
     m_receivedFailedSignal = true;
     m_failureErrorDescription = errorDescription;
 
-    auto * pSyncManager = qobject_cast<SynchronizationManager*>(sender());
+    auto * pSyncManager = qobject_cast<SynchronizationManager *>(sender());
     if (pSyncManager) {
         pSyncManager->stop();
     }
@@ -160,12 +154,14 @@ void SynchronizationManagerSignalsCatcher::onSendLocalChangesStopped()
     m_receivedSendLocalChangesStopped = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges()
+void SynchronizationManagerSignalsCatcher::
+    onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges()
 {
     m_receivedWillRepeatRemoteToLocalSyncAfterSendingChanges = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onDetectedConflictDuringLocalChangesSending()
+void SynchronizationManagerSignalsCatcher::
+    onDetectedConflictDuringLocalChangesSending()
 {
     m_receivedDetectedConflictDuringLocalChangesSending = true;
 }
@@ -189,13 +185,15 @@ void SynchronizationManagerSignalsCatcher::onSyncChunksDownloaded()
     m_receivedSyncChunksDownloaded = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDownloaded()
+void SynchronizationManagerSignalsCatcher::
+    onLinkedNotebookSyncChunksDownloaded()
 {
     m_receivedLinkedNotebookSyncChunksDownloaded = true;
 }
 
 void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
-    qint32 highestDownloadedUsn, qint32 highestServerUsn, qint32 lastPreviousUsn)
+    qint32 highestDownloadedUsn, qint32 highestServerUsn,
+    qint32 lastPreviousUsn)
 {
     QNDEBUG(
         "tests:synchronization",
@@ -212,9 +210,10 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
     m_syncChunkDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress(
-    qint32 highestDownloadedUsn, qint32 highestServerUsn,
-    qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
+void SynchronizationManagerSignalsCatcher::
+    onLinkedNotebookSyncChunkDownloadProgress(
+        qint32 highestDownloadedUsn, qint32 highestServerUsn,
+        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
 {
     QNDEBUG(
         "tests:synchronization",
@@ -269,8 +268,9 @@ void SynchronizationManagerSignalsCatcher::onResourceDownloadProgress(
     m_resourceDownloadProgress << progress;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookResourceDownloadProgress(
-    quint32 resourcesDownloaded, quint32 totalResourcesToDownload)
+void SynchronizationManagerSignalsCatcher::
+    onLinkedNotebookResourceDownloadProgress(
+        quint32 resourcesDownloaded, quint32 totalResourcesToDownload)
 {
     ResourceDownloadProgress progress;
     progress.m_resourcesDownloaded = resourcesDownloaded;
@@ -284,7 +284,8 @@ void SynchronizationManagerSignalsCatcher::onPreparedDirtyObjectsForSending()
     m_receivedPreparedDirtyObjectsForSending = true;
 }
 
-void SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsForSending()
+void SynchronizationManagerSignalsCatcher::
+    onPreparedLinkedNotebookDirtyObjectsForSending()
 {
     m_receivedPreparedLinkedNotebookDirtyObjectsForSending = true;
 }
@@ -328,152 +329,129 @@ void SynchronizationManagerSignalsCatcher::createConnections(
 {
     QObject::connect(
         &localStorageManagerAsync,
-        &LocalStorageManagerAsync::noteMovedToAnotherNotebook,
-        this,
+        &LocalStorageManagerAsync::noteMovedToAnotherNotebook, this,
         &SynchronizationManagerSignalsCatcher::onNoteMovedToAnotherNotebook);
 
     QObject::connect(
         &localStorageManagerAsync,
-        &LocalStorageManagerAsync::noteTagListChanged,
-        this,
+        &LocalStorageManagerAsync::noteTagListChanged, this,
         &SynchronizationManagerSignalsCatcher::onNoteTagListChanged);
 
     QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::started,
-        this,
+        &synchronizationManager, &SynchronizationManager::started, this,
         &SynchronizationManagerSignalsCatcher::onStart);
 
     QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::stopped,
-        this,
+        &synchronizationManager, &SynchronizationManager::stopped, this,
         &SynchronizationManagerSignalsCatcher::onStop);
 
     QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::failed,
-        this,
+        &synchronizationManager, &SynchronizationManager::failed, this,
         &SynchronizationManagerSignalsCatcher::onFailure);
 
     QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::finished,
-        this,
+        &synchronizationManager, &SynchronizationManager::finished, this,
         &SynchronizationManagerSignalsCatcher::onFinish);
 
     QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::authenticationRevoked,
-        this,
-        &SynchronizationManagerSignalsCatcher::onAuthenticationRevoked);
+        &synchronizationManager, &SynchronizationManager::authenticationRevoked,
+        this, &SynchronizationManagerSignalsCatcher::onAuthenticationRevoked);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::authenticationFinished,
-        this,
+        &SynchronizationManager::authenticationFinished, this,
         &SynchronizationManagerSignalsCatcher::onAuthenticationFinished);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::remoteToLocalSyncStopped,
-        this,
+        &SynchronizationManager::remoteToLocalSyncStopped, this,
         &SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncStopped);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::sendLocalChangesStopped,
-        this,
+        &SynchronizationManager::sendLocalChangesStopped, this,
         &SynchronizationManagerSignalsCatcher::onSendLocalChangesStopped);
 
     QObject::connect(
         &synchronizationManager,
         &SynchronizationManager::willRepeatRemoteToLocalSyncAfterSendingChanges,
         this,
-        &SynchronizationManagerSignalsCatcher::onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges);
+        &SynchronizationManagerSignalsCatcher::
+            onWillRepeatRemoteToLocalSyncAfterSendingLocalChanges);
 
     QObject::connect(
         &synchronizationManager,
         &SynchronizationManager::detectedConflictDuringLocalChangesSending,
         this,
-        &SynchronizationManagerSignalsCatcher::onDetectedConflictDuringLocalChangesSending);
+        &SynchronizationManagerSignalsCatcher::
+            onDetectedConflictDuringLocalChangesSending);
+
+    QObject::connect(
+        &synchronizationManager, &SynchronizationManager::rateLimitExceeded,
+        this, &SynchronizationManagerSignalsCatcher::onRateLimitExceeded);
+
+    QObject::connect(
+        &synchronizationManager, &SynchronizationManager::remoteToLocalSyncDone,
+        this, &SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncDone);
+
+    QObject::connect(
+        &synchronizationManager, &SynchronizationManager::syncChunksDownloaded,
+        this, &SynchronizationManagerSignalsCatcher::onSyncChunksDownloaded);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::rateLimitExceeded,
-        this,
-        &SynchronizationManagerSignalsCatcher::onRateLimitExceeded);
+        &SynchronizationManager::linkedNotebooksSyncChunksDownloaded, this,
+        &SynchronizationManagerSignalsCatcher::
+            onLinkedNotebookSyncChunksDownloaded);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::remoteToLocalSyncDone,
-        this,
-        &SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncDone);
-
-    QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::syncChunksDownloaded,
-        this,
-        &SynchronizationManagerSignalsCatcher::onSyncChunksDownloaded);
-
-    QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::linkedNotebooksSyncChunksDownloaded,
-        this,
-        &SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDownloaded);
-
-    QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::syncChunksDownloadProgress,
-        this,
+        &SynchronizationManager::syncChunksDownloadProgress, this,
         &SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::linkedNotebookSyncChunksDownloadProgress,
-        this,
-        &SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunkDownloadProgress);
+        &SynchronizationManager::linkedNotebookSyncChunksDownloadProgress, this,
+        &SynchronizationManagerSignalsCatcher::
+            onLinkedNotebookSyncChunkDownloadProgress);
+
+    QObject::connect(
+        &synchronizationManager, &SynchronizationManager::notesDownloadProgress,
+        this, &SynchronizationManagerSignalsCatcher::onNoteDownloadProgress);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::notesDownloadProgress,
-        this,
-        &SynchronizationManagerSignalsCatcher::onNoteDownloadProgress);
+        &SynchronizationManager::linkedNotebooksNotesDownloadProgress, this,
+        &SynchronizationManagerSignalsCatcher::
+            onLinkedNotebookNoteDownloadProgress);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::linkedNotebooksNotesDownloadProgress,
-        this,
-        &SynchronizationManagerSignalsCatcher::onLinkedNotebookNoteDownloadProgress);
-
-    QObject::connect(
-        &synchronizationManager,
-        &SynchronizationManager::resourcesDownloadProgress,
-        this,
+        &SynchronizationManager::resourcesDownloadProgress, this,
         &SynchronizationManagerSignalsCatcher::onResourceDownloadProgress);
 
     QObject::connect(
         &synchronizationManager,
-        &SynchronizationManager::preparedDirtyObjectsForSending,
-        this,
-        &SynchronizationManagerSignalsCatcher::onPreparedDirtyObjectsForSending);
+        &SynchronizationManager::preparedDirtyObjectsForSending, this,
+        &SynchronizationManagerSignalsCatcher::
+            onPreparedDirtyObjectsForSending);
 
     QObject::connect(
         &synchronizationManager,
         &SynchronizationManager::preparedLinkedNotebooksDirtyObjectsForSending,
         this,
-        &SynchronizationManagerSignalsCatcher::onPreparedLinkedNotebookDirtyObjectsForSending);
+        &SynchronizationManagerSignalsCatcher::
+            onPreparedLinkedNotebookDirtyObjectsForSending);
 
     QObject::connect(
-        &syncStateStorage,
-        &ISyncStateStorage::notifySyncStateUpdated,
-        this,
+        &syncStateStorage, &ISyncStateStorage::notifySyncStateUpdated, this,
         &SynchronizationManagerSignalsCatcher::onSyncStatePersisted);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderImpl(
-    const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkSyncChunkDownloadProgressOrderImpl(
+        const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
+        ErrorString & errorDescription) const
 {
     if (syncChunkDownloadProgress.isEmpty()) {
         return true;
@@ -481,28 +459,23 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderIm
 
     if (syncChunkDownloadProgress.size() == 1) {
         return checkSingleSyncChunkDownloadProgress(
-            syncChunkDownloadProgress[0],
-            errorDescription);
+            syncChunkDownloadProgress[0], errorDescription);
     }
 
-    for(int i = 1, size = syncChunkDownloadProgress.size(); i < size; ++i)
-    {
+    for (int i = 1, size = syncChunkDownloadProgress.size(); i < size; ++i) {
         const auto & currentProgress = syncChunkDownloadProgress[i];
 
         bool res = checkSingleSyncChunkDownloadProgress(
-            currentProgress,
-            errorDescription);
+            currentProgress, errorDescription);
 
         if (!res) {
             return false;
         }
 
-        const auto & previousProgress = syncChunkDownloadProgress[i-1];
-        if (i == 1)
-        {
+        const auto & previousProgress = syncChunkDownloadProgress[i - 1];
+        if (i == 1) {
             res = checkSingleSyncChunkDownloadProgress(
-                previousProgress,
-                errorDescription);
+                previousProgress, errorDescription);
 
             if (!res) {
                 return false;
@@ -518,8 +491,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderIm
         }
 
         if (previousProgress.m_highestServerUsn !=
-            currentProgress.m_highestServerUsn)
-        {
+            currentProgress.m_highestServerUsn) {
             errorDescription.setBase(
                 QStringLiteral("Highest server USN changed between two sync "
                                "chunk download progresses"));
@@ -527,8 +499,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrderIm
         }
 
         if (previousProgress.m_lastPreviousUsn !=
-            currentProgress.m_lastPreviousUsn)
-        {
+            currentProgress.m_lastPreviousUsn) {
             errorDescription.setBase(
                 QStringLiteral("Last previous USN changed between two sync "
                                "chunk download progresses"));
@@ -570,27 +541,26 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(
 
     if (noteDownloadProgress.size() == 1) {
         return checkSingleNoteDownloadProgress(
-            noteDownloadProgress[0],
-            errorDescription);
+            noteDownloadProgress[0], errorDescription);
     }
 
-    for(int i = 1, size = noteDownloadProgress.size(); i < size; ++i)
-    {
+    for (int i = 1, size = noteDownloadProgress.size(); i < size; ++i) {
         const auto & currentProgress = noteDownloadProgress[i];
-        if (!checkSingleNoteDownloadProgress(currentProgress, errorDescription)) {
+        if (!checkSingleNoteDownloadProgress(currentProgress, errorDescription))
+        {
             return false;
         }
 
-        const auto & previousProgress = noteDownloadProgress[i-1];
+        const auto & previousProgress = noteDownloadProgress[i - 1];
         if ((i == 1) &&
-            !checkSingleNoteDownloadProgress(previousProgress, errorDescription))
+            !checkSingleNoteDownloadProgress(
+                previousProgress, errorDescription))
         {
             return false;
         }
 
         if (previousProgress.m_notesDownloaded >=
-            currentProgress.m_notesDownloaded)
-        {
+            currentProgress.m_notesDownloaded) {
             errorDescription.setBase(
                 QStringLiteral("Found non-increasing downloaded notes count"));
             return false;
@@ -612,8 +582,7 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(
 bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(
     const NoteDownloadProgress & progress, ErrorString & errorDescription) const
 {
-    if (progress.m_notesDownloaded > progress.m_totalNotesToDownload)
-    {
+    if (progress.m_notesDownloaded > progress.m_totalNotesToDownload) {
         errorDescription.setBase(
             QStringLiteral("The number of downloaded notes is greater than "
                            "the total number of notes to download"));
@@ -623,9 +592,10 @@ bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImpl(
-    const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkResourceDownloadProgressOrderImpl(
+        const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
+        ErrorString & errorDescription) const
 {
     if (resourceDownloadProgress.isEmpty()) {
         return true;
@@ -633,28 +603,23 @@ bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrderImp
 
     if (resourceDownloadProgress.size() == 1) {
         return checkSingleResourceDownloadProgress(
-            resourceDownloadProgress[0],
-            errorDescription);
+            resourceDownloadProgress[0], errorDescription);
     }
 
-    for(int i = 1, size = resourceDownloadProgress.size(); i < size; ++i)
-    {
+    for (int i = 1, size = resourceDownloadProgress.size(); i < size; ++i) {
         const auto & currentProgress = resourceDownloadProgress[i];
 
         bool res = checkSingleResourceDownloadProgress(
-            currentProgress,
-            errorDescription);
+            currentProgress, errorDescription);
 
         if (!res) {
             return false;
         }
 
-        const auto & previousProgress = resourceDownloadProgress[i-1];
-        if (i == 1)
-        {
+        const auto & previousProgress = resourceDownloadProgress[i - 1];
+        if (i == 1) {
             res = checkSingleResourceDownloadProgress(
-                previousProgress,
-                errorDescription);
+                previousProgress, errorDescription);
 
             if (!res) {
                 return false;

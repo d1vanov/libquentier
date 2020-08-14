@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LinkedNotebookData final: public QSharedData
+class Q_DECL_HIDDEN LinkedNotebookData final : public QSharedData
 {
 public:
     LinkedNotebookData() = default;
@@ -49,8 +49,8 @@ public:
     bool checkParameters(ErrorString & errorDescription) const;
 
 public:
-    qevercloud::LinkedNotebook    m_qecLinkedNotebook;
-    bool                          m_isDirty = true;
+    qevercloud::LinkedNotebook m_qecLinkedNotebook;
+    bool m_isDirty = true;
 };
 
 } // namespace quentier

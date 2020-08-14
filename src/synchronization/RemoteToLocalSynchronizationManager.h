@@ -24,9 +24,9 @@
 #include "NotebookSyncConflictResolver.h"
 #include "SavedSearchSyncCache.h"
 #include "SavedSearchSyncConflictResolver.h"
+#include "SynchronizationShared.h"
 #include "TagSyncCache.h"
 #include "TagSyncConflictResolver.h"
-#include "SynchronizationShared.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/synchronization/INoteStore.h>
@@ -34,8 +34,8 @@
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
@@ -54,7 +54,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
 
-class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager final: public QObject
+class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager final : public QObject
 {
     Q_OBJECT
 public:
@@ -88,10 +88,14 @@ public:
     const User & user() const;
 
     bool downloadedSyncChunks() const
-    { return m_syncChunksDownloaded; }
+    {
+        return m_syncChunksDownloaded;
+    }
 
     bool downloadedLinkedNotebooksSyncChunks() const
-    { return m_linkedNotebooksSyncChunksDownloaded; }
+    {
+        return m_linkedNotebooksSyncChunksDownloaded;
+    }
 
     bool shouldDownloadThumbnailsForNotes() const;
     bool shouldDownloadInkNoteImages() const;
@@ -102,8 +106,8 @@ Q_SIGNALS:
 
     void finished(
         qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
-        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+        QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid,
+        QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     /**
      * Signal notifying that the Evernote API rate limit was exceeded so that
@@ -158,25 +162,28 @@ public Q_SLOTS:
     void stop();
 
     void onAuthenticationInfoReceived(
-        QString authToken, QString shardId, qevercloud::Timestamp expirationTime);
+        QString authToken, QString shardId,
+        qevercloud::Timestamp expirationTime);
 
     void onAuthenticationTokensForLinkedNotebooksReceived(
-        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString, std::pair<QString, QString>>
+            authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString, qevercloud::Timestamp>
+            authTokenExpirationTimesByLinkedNotebookGuid);
 
     void onLastSyncParametersReceived(
         qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
-        QHash<QString,qint32> lastUpdateCountByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
+        QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid,
+        QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
     void setDownloadNoteThumbnails(const bool flag);
     void setDownloadInkNoteImages(const bool flag);
     void setInkNoteImagesStoragePath(const QString & path);
 
     void collectNonProcessedItemsSmallestUsns(
-        qint32 & usn, QHash<QString,qint32> & usnByLinkedNotebookGuid);
+        qint32 & usn, QHash<QString, qint32> & usnByLinkedNotebookGuid);
 
-// private signals
+    // private signals
 Q_SIGNALS:
     void addUser(User user, QUuid requestId);
     void updateUser(User user, QUuid requestId);
@@ -233,8 +240,10 @@ Q_SIGNALS:
         qevercloud::Timestamp expirationTime);
 
     void linkedNotebookAuthDataUpdated(
-        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString, std::pair<QString, QString>>
+            authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString, qevercloud::Timestamp>
+            authTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
     void onFindUserCompleted(User user, QUuid requestId);
@@ -566,7 +575,8 @@ private:
     template <class ElementType>
     void emitFindByGuidRequest(const ElementType & element);
 
-    template <class ElementType, class ContainerType, class PendingContainerType>
+    template <
+        class ElementType, class ContainerType, class PendingContainerType>
     bool onFoundDuplicateByGuid(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
@@ -584,7 +594,8 @@ private:
     void emitFindByNameRequest(
         const ElementType & elementToFind, const QString & linkedNotebookGuid);
 
-    template <class ContainerType, class PendingContainerType, class ElementType>
+    template <
+        class ContainerType, class PendingContainerType, class ElementType>
     bool onFoundDuplicateByName(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
@@ -625,7 +636,7 @@ private:
         const ErrorString & errorDescription, const QString & typeName,
         QSet<QUuid> & updateElementRequestIds);
 
-    template<class ElementType>
+    template <class ElementType>
     void performPostAddOrUpdateChecks(const ElementType & element);
 
     template <class ElementType>
@@ -766,7 +777,7 @@ private:
     qint32 findSmallestUsnOfNonSyncedItems(
         const QString & linkedNotebookGuid = {}) const;
 
-    QHash<QString,QString> linkedNotebookGuidByNoteGuidHash() const;
+    QHash<QString, QString> linkedNotebookGuidByNoteGuidHash() const;
 
     template <class T>
     QString findLinkedNotebookGuidForItem(const T & item) const;
@@ -810,8 +821,7 @@ private:
         const qevercloud::Note * pRemoteNote = nullptr) const;
 
     void overrideLocalNoteWithRemoteNote(
-        Note & localNote,
-        const qevercloud::Note & remoteNote) const;
+        Note & localNote, const qevercloud::Note & remoteNote) const;
 
     void processResourceConflictAsNoteConflict(
         Note & remoteNote, const Note & localConflictingNote,
@@ -821,8 +831,7 @@ private:
         FullSyncStaleDataItemsExpunger & expunger);
 
     INoteStore * noteStoreForNote(
-        const Note & note, QString & authToken,
-        ErrorString & errorDescription);
+        const Note & note, QString & authToken, ErrorString & errorDescription);
 
     void connectToUserOwnNoteStore(INoteStore * pNoteStore);
 
@@ -837,8 +846,7 @@ private:
     void removeNoteResourcesFromSyncChunks(const Note & note);
 
     void removeResourceFromSyncChunks(
-        const Resource & resource,
-        QVector<qevercloud::SyncChunk> & syncChunks);
+        const Resource & resource, QVector<qevercloud::SyncChunk> & syncChunks);
 
 private:
     template <class T>
@@ -877,18 +885,17 @@ private:
         InkNoteResourceData() = default;
 
         InkNoteResourceData(
-                const QString & resourceGuid, const QString & noteGuid,
-                int height, int width) :
+            const QString & resourceGuid, const QString & noteGuid, int height,
+            int width) :
             m_resourceGuid(resourceGuid),
-            m_noteGuid(noteGuid),
-            m_resourceHeight(height),
+            m_noteGuid(noteGuid), m_resourceHeight(height),
             m_resourceWidth(width)
         {}
 
-        QString     m_resourceGuid;
-        QString     m_noteGuid;
-        int         m_resourceHeight = 0;
-        int         m_resourceWidth = 0;
+        QString m_resourceGuid;
+        QString m_noteGuid;
+        int m_resourceHeight = 0;
+        int m_resourceWidth = 0;
     };
 
     /**
@@ -905,12 +912,12 @@ private:
      * So when the time comes, we can try to download the full resource data and
      * if it works out, resolve the resource sync conflict.
      */
-    class PostponedConflictingResourceData: public Printable
+    class PostponedConflictingResourceData : public Printable
     {
     public:
-        Note        m_remoteNote;
-        Note        m_localConflictingNote;
-        Resource    m_remoteNoteResourceWithoutFullData;
+        Note m_remoteNote;
+        Note m_localConflictingNote;
+        Resource m_remoteNoteResourceWithoutFullData;
 
         virtual QTextStream & print(QTextStream & strm) const override;
     };
@@ -927,166 +934,178 @@ private:
     friend class NoteSyncConflictResolverManager;
 
 private:
-    IManager &      m_manager;
-    bool            m_connectedToLocalStorage = false;
+    IManager & m_manager;
+    bool m_connectedToLocalStorage = false;
 
-    mutable bool            m_connectedToUserOwnNoteStore = false;
+    mutable bool m_connectedToUserOwnNoteStore = false;
 
-    QString         m_host;
+    QString m_host;
 
-    qint32          m_maxSyncChunksPerOneDownload = 50;
-    SyncMode        m_lastSyncMode = SyncMode::FullSync;
+    qint32 m_maxSyncChunksPerOneDownload = 50;
+    SyncMode m_lastSyncMode = SyncMode::FullSync;
 
-    qint32          m_lastUpdateCount = 0;
-    qevercloud::Timestamp       m_lastSyncTime = 0;
+    qint32 m_lastUpdateCount = 0;
+    qevercloud::Timestamp m_lastSyncTime = 0;
 
     // Denotes whether the full sync of stuff from user's own account
     // had been performed at least once in the past
-    bool            m_onceSyncDone = false;
+    bool m_onceSyncDone = false;
 
-    qint32          m_lastUsnOnStart = -1;
-    qint32          m_lastSyncChunksDownloadedUsn = -1;
+    qint32 m_lastUsnOnStart = -1;
+    qint32 m_lastSyncChunksDownloadedUsn = -1;
 
-    bool            m_syncChunksDownloaded = false;
-    bool            m_fullNoteContentsDownloaded = false;
-    bool            m_expungedFromServerToClient = false;
-    bool            m_linkedNotebooksSyncChunksDownloaded = false;
+    bool m_syncChunksDownloaded = false;
+    bool m_fullNoteContentsDownloaded = false;
+    bool m_expungedFromServerToClient = false;
+    bool m_linkedNotebooksSyncChunksDownloaded = false;
 
-    bool            m_active = false;
+    bool m_active = false;
 
-    bool            m_edamProtocolVersionChecked = false;
+    bool m_edamProtocolVersionChecked = false;
 
-    QVector<qevercloud::SyncChunk>  m_syncChunks;
-    QVector<qevercloud::SyncChunk>  m_linkedNotebookSyncChunks;
-    QSet<QString>   m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
+    QVector<qevercloud::SyncChunk> m_syncChunks;
+    QVector<qevercloud::SyncChunk> m_linkedNotebookSyncChunks;
+    QSet<QString> m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
 
-    qevercloud::AccountLimits   m_accountLimits;
+    qevercloud::AccountLimits m_accountLimits;
 
-    TagsContainer               m_tags;
-    TagsList                    m_tagsPendingProcessing;
-    TagsList                    m_tagsPendingAddOrUpdate;
-    QList<QString>              m_expungedTags;
-    QSet<QUuid>                 m_findTagByNameRequestIds;
-    QHash<QUuid, QString>       m_linkedNotebookGuidsByFindTagByNameRequestIds;
-    QSet<QUuid>                 m_findTagByGuidRequestIds;
-    QSet<QUuid>                 m_addTagRequestIds;
-    QSet<QUuid>                 m_updateTagRequestIds;
-    QSet<QUuid>                 m_expungeTagRequestIds;
-    bool                        m_pendingTagsSyncStart = false;
+    TagsContainer m_tags;
+    TagsList m_tagsPendingProcessing;
+    TagsList m_tagsPendingAddOrUpdate;
+    QList<QString> m_expungedTags;
+    QSet<QUuid> m_findTagByNameRequestIds;
+    QHash<QUuid, QString> m_linkedNotebookGuidsByFindTagByNameRequestIds;
+    QSet<QUuid> m_findTagByGuidRequestIds;
+    QSet<QUuid> m_addTagRequestIds;
+    QSet<QUuid> m_updateTagRequestIds;
+    QSet<QUuid> m_expungeTagRequestIds;
+    bool m_pendingTagsSyncStart = false;
 
-    TagSyncCache                m_tagSyncCache;
-    QMap<QString, TagSyncCache*>    m_tagSyncCachesByLinkedNotebookGuids;
-    QSet<QString>               m_linkedNotebookGuidsPendingTagSyncCachesFill;
+    TagSyncCache m_tagSyncCache;
+    QMap<QString, TagSyncCache *> m_tagSyncCachesByLinkedNotebookGuids;
+    QSet<QString> m_linkedNotebookGuidsPendingTagSyncCachesFill;
 
-    QHash<QString,QString>      m_linkedNotebookGuidsByTagGuids;
-    QUuid                       m_expungeNotelessTagsRequestId;
+    QHash<QString, QString> m_linkedNotebookGuidsByTagGuids;
+    QUuid m_expungeNotelessTagsRequestId;
 
-    SavedSearchesList           m_savedSearches;
-    SavedSearchesList           m_savedSearchesPendingAddOrUpdate;
-    QList<QString>              m_expungedSavedSearches;
-    QSet<QUuid>                 m_findSavedSearchByNameRequestIds;
-    QSet<QUuid>                 m_findSavedSearchByGuidRequestIds;
-    QSet<QUuid>                 m_addSavedSearchRequestIds;
-    QSet<QUuid>                 m_updateSavedSearchRequestIds;
-    QSet<QUuid>                 m_expungeSavedSearchRequestIds;
+    SavedSearchesList m_savedSearches;
+    SavedSearchesList m_savedSearchesPendingAddOrUpdate;
+    QList<QString> m_expungedSavedSearches;
+    QSet<QUuid> m_findSavedSearchByNameRequestIds;
+    QSet<QUuid> m_findSavedSearchByGuidRequestIds;
+    QSet<QUuid> m_addSavedSearchRequestIds;
+    QSet<QUuid> m_updateSavedSearchRequestIds;
+    QSet<QUuid> m_expungeSavedSearchRequestIds;
 
-    SavedSearchSyncCache        m_savedSearchSyncCache;
+    SavedSearchSyncCache m_savedSearchSyncCache;
 
-    LinkedNotebooksList         m_linkedNotebooks;
-    LinkedNotebooksList         m_linkedNotebooksPendingAddOrUpdate;
-    QList<QString>              m_expungedLinkedNotebooks;
-    QSet<QUuid>                 m_findLinkedNotebookRequestIds;
-    QSet<QUuid>                 m_addLinkedNotebookRequestIds;
-    QSet<QUuid>                 m_updateLinkedNotebookRequestIds;
-    QSet<QUuid>                 m_expungeLinkedNotebookRequestIds;
-    bool                        m_pendingLinkedNotebooksSyncStart = false;
+    LinkedNotebooksList m_linkedNotebooks;
+    LinkedNotebooksList m_linkedNotebooksPendingAddOrUpdate;
+    QList<QString> m_expungedLinkedNotebooks;
+    QSet<QUuid> m_findLinkedNotebookRequestIds;
+    QSet<QUuid> m_addLinkedNotebookRequestIds;
+    QSet<QUuid> m_updateLinkedNotebookRequestIds;
+    QSet<QUuid> m_expungeLinkedNotebookRequestIds;
+    bool m_pendingLinkedNotebooksSyncStart = false;
 
-    QList<LinkedNotebook>       m_allLinkedNotebooks;
-    QUuid                       m_listAllLinkedNotebooksRequestId;
-    bool                        m_allLinkedNotebooksListed = false;
+    QList<LinkedNotebook> m_allLinkedNotebooks;
+    QUuid m_listAllLinkedNotebooksRequestId;
+    bool m_allLinkedNotebooksListed = false;
 
-    QString                     m_authenticationToken;
-    QString                     m_shardId;
-    qevercloud::Timestamp       m_authenticationTokenExpirationTime = 0;
-    bool                        m_pendingAuthenticationTokenAndShardId= false;
+    QString m_authenticationToken;
+    QString m_shardId;
+    qevercloud::Timestamp m_authenticationTokenExpirationTime = 0;
+    bool m_pendingAuthenticationTokenAndShardId = false;
 
-    User        m_user;
-    QUuid       m_findUserRequestId;
-    QUuid       m_addOrUpdateUserRequestId;
-    bool        m_onceAddedOrUpdatedUserInLocalStorage = false;
+    User m_user;
+    QUuid m_findUserRequestId;
+    QUuid m_addOrUpdateUserRequestId;
+    bool m_onceAddedOrUpdatedUserInLocalStorage = false;
 
-    QHash<QString,std::pair<QString,QString>>   m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
-    QHash<QString,qevercloud::Timestamp>    m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
-    bool        m_pendingAuthenticationTokensForLinkedNotebooks = false;
+    QHash<QString, std::pair<QString, QString>>
+        m_authenticationTokensAndShardIdsByLinkedNotebookGuid;
+    QHash<QString, qevercloud::Timestamp>
+        m_authenticationTokenExpirationTimesByLinkedNotebookGuid;
+    bool m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
-    QHash<QString,qevercloud::SyncState>    m_syncStatesByLinkedNotebookGuid;
+    QHash<QString, qevercloud::SyncState> m_syncStatesByLinkedNotebookGuid;
 
-    QHash<QString,qint32>                   m_lastUpdateCountByLinkedNotebookGuid;
-    QHash<QString,qevercloud::Timestamp>    m_lastSyncTimeByLinkedNotebookGuid;
-    QSet<QString>       m_linkedNotebookGuidsForWhichFullSyncWasPerformed;
+    QHash<QString, qint32> m_lastUpdateCountByLinkedNotebookGuid;
+    QHash<QString, qevercloud::Timestamp> m_lastSyncTimeByLinkedNotebookGuid;
+    QSet<QString> m_linkedNotebookGuidsForWhichFullSyncWasPerformed;
 
     // Guids of linked notebooks for which full sync of stuff from these
     // linked notebooks had been performed at least once in the past
-    QSet<QString>       m_linkedNotebookGuidsOnceFullySynced;
+    QSet<QString> m_linkedNotebookGuidsOnceFullySynced;
 
-    NotebooksList       m_notebooks;
-    NotebooksList       m_notebooksPendingAddOrUpdate;
-    QList<QString>      m_expungedNotebooks;
-    QSet<QUuid>         m_findNotebookByNameRequestIds;
-    QHash<QUuid, QString>   m_linkedNotebookGuidsByFindNotebookByNameRequestIds;
-    QSet<QUuid>         m_findNotebookByGuidRequestIds;
-    QSet<QUuid>         m_addNotebookRequestIds;
-    QSet<QUuid>         m_updateNotebookRequestIds;
-    QSet<QUuid>         m_expungeNotebookRequestIds;
-    bool                m_pendingNotebooksSyncStart = false;
+    NotebooksList m_notebooks;
+    NotebooksList m_notebooksPendingAddOrUpdate;
+    QList<QString> m_expungedNotebooks;
+    QSet<QUuid> m_findNotebookByNameRequestIds;
+    QHash<QUuid, QString> m_linkedNotebookGuidsByFindNotebookByNameRequestIds;
+    QSet<QUuid> m_findNotebookByGuidRequestIds;
+    QSet<QUuid> m_addNotebookRequestIds;
+    QSet<QUuid> m_updateNotebookRequestIds;
+    QSet<QUuid> m_expungeNotebookRequestIds;
+    bool m_pendingNotebooksSyncStart = false;
 
-    NotebookSyncCache                       m_notebookSyncCache;
-    QMap<QString, NotebookSyncCache*>       m_notebookSyncCachesByLinkedNotebookGuids;
+    NotebookSyncCache m_notebookSyncCache;
+    QMap<QString, NotebookSyncCache *>
+        m_notebookSyncCachesByLinkedNotebookGuids;
 
-    QHash<QString,QString>      m_linkedNotebookGuidsByNotebookGuids;
-    QHash<QString,QString>      m_linkedNotebookGuidsByResourceGuids;
+    QHash<QString, QString> m_linkedNotebookGuidsByNotebookGuids;
+    QHash<QString, QString> m_linkedNotebookGuidsByResourceGuids;
 
-    NotesList                   m_notes;
-    NotesList                   m_notesPendingAddOrUpdate;
-    quint32                     m_originalNumberOfNotes;
-    quint32                     m_numNotesDownloaded;
-    QList<QString>              m_expungedNotes;
-    QSet<QUuid>                 m_findNoteByGuidRequestIds;
-    QSet<QUuid>                 m_addNoteRequestIds;
-    QSet<QUuid>                 m_updateNoteRequestIds;
-    QSet<QUuid>                 m_expungeNoteRequestIds;
-    QSet<QString>               m_guidsOfProcessedNonExpungedNotes;
+    NotesList m_notes;
+    NotesList m_notesPendingAddOrUpdate;
+    quint32 m_originalNumberOfNotes;
+    quint32 m_numNotesDownloaded;
+    QList<QString> m_expungedNotes;
+    QSet<QUuid> m_findNoteByGuidRequestIds;
+    QSet<QUuid> m_addNoteRequestIds;
+    QSet<QUuid> m_updateNoteRequestIds;
+    QSet<QUuid> m_expungeNoteRequestIds;
+    QSet<QString> m_guidsOfProcessedNonExpungedNotes;
 
-    using NoteDataPerFindNotebookRequestId = QHash<QUuid,std::pair<Note,QUuid>>;
-    NoteDataPerFindNotebookRequestId    m_notesWithFindRequestIdsPerFindNotebookRequestId;
+    using NoteDataPerFindNotebookRequestId =
+        QHash<QUuid, std::pair<Note, QUuid>>;
+    NoteDataPerFindNotebookRequestId
+        m_notesWithFindRequestIdsPerFindNotebookRequestId;
 
-    QScopedPointer<NoteSyncConflictResolverManager> m_pNoteSyncConflictResolverManager;
+    QScopedPointer<NoteSyncConflictResolverManager>
+        m_pNoteSyncConflictResolverManager;
 
-    QMap<std::pair<QString,QString>,Notebook>  m_notebooksPerNoteIds;
+    QMap<std::pair<QString, QString>, Notebook> m_notebooksPerNoteIds;
 
-    ResourcesList               m_resources;
-    ResourcesList               m_resourcesPendingAddOrUpdate;
-    quint32                     m_originalNumberOfResources;
-    quint32                     m_numResourcesDownloaded;
-    QSet<QUuid>                 m_findResourceByGuidRequestIds;
-    QSet<QUuid>                 m_addResourceRequestIds;
-    QSet<QUuid>                 m_updateResourceRequestIds;
-    QHash<QUuid, Resource>      m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
-    QHash<QUuid, Resource>      m_resourcesByFindNoteRequestIds;
+    ResourcesList m_resources;
+    ResourcesList m_resourcesPendingAddOrUpdate;
+    quint32 m_originalNumberOfResources;
+    quint32 m_numResourcesDownloaded;
+    QSet<QUuid> m_findResourceByGuidRequestIds;
+    QSet<QUuid> m_addResourceRequestIds;
+    QSet<QUuid> m_updateResourceRequestIds;
+    QHash<QUuid, Resource> m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
+    QHash<QUuid, Resource> m_resourcesByFindNoteRequestIds;
 
-    using InkNoteResourceDataPerFindNotebookRequestId = QHash<QUuid,InkNoteResourceData>;
-    InkNoteResourceDataPerFindNotebookRequestId     m_inkNoteResourceDataPerFindNotebookRequestId;
+    using InkNoteResourceDataPerFindNotebookRequestId =
+        QHash<QUuid, InkNoteResourceData>;
+    InkNoteResourceDataPerFindNotebookRequestId
+        m_inkNoteResourceDataPerFindNotebookRequestId;
 
-    using ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid = QMultiHash<QString,QString>;
-    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
+    using ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid =
+        QMultiHash<QString, QString>;
+    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid
+        m_resourceGuidsPendingInkNoteImageDownloadPerNoteGuid;
 
-    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid     m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid;
+    ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid
+        m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid;
 
-    QHash<QUuid,Note>           m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
-    QHash<QUuid,Note>           m_notesPendingThumbnailDownloadByFindNotebookRequestId;
+    QHash<QUuid, Note>
+        m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
+    QHash<QUuid, Note> m_notesPendingThumbnailDownloadByFindNotebookRequestId;
 
-    QHash<QString,Note>         m_notesPendingThumbnailDownloadByGuid;
-    QSet<QUuid>                 m_updateNoteWithThumbnailRequestIds;
+    QHash<QString, Note> m_notesPendingThumbnailDownloadByGuid;
+    QSet<QUuid> m_updateNoteWithThumbnailRequestIds;
 
     /**
      * This set contains the guids of resources found existing within
@@ -1094,37 +1113,46 @@ private:
      * to judge whether it should be added to the local storage or updated
      * within it
      */
-    QSet<QString>               m_guidsOfResourcesFoundWithinTheLocalStorage;
+    QSet<QString> m_guidsOfResourcesFoundWithinTheLocalStorage;
 
-    QSet<QString>               m_localUidsOfElementsAlreadyAttemptedToFindByName;
+    QSet<QString> m_localUidsOfElementsAlreadyAttemptedToFindByName;
 
-    QHash<QString,qevercloud::Note> m_notesPendingDownloadForAddingToLocalStorage;
-    QHash<QString,Note>             m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
+    QHash<QString, qevercloud::Note>
+        m_notesPendingDownloadForAddingToLocalStorage;
+    QHash<QString, Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
-    QHash<QString,std::pair<Resource,Note>> m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid;
-    QHash<QString,std::pair<Resource,Note>> m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
+    QHash<QString, std::pair<Resource, Note>>
+        m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid;
+    QHash<QString, std::pair<Resource, Note>>
+        m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 
-    FullSyncStaleDataItemsExpunger::SyncedGuids     m_fullSyncStaleDataItemsSyncedGuids;
-    FullSyncStaleDataItemsExpunger *                m_pFullSyncStaleDataItemsExpunger = nullptr;
-    QMap<QString, FullSyncStaleDataItemsExpunger*>  m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
+    FullSyncStaleDataItemsExpunger::SyncedGuids
+        m_fullSyncStaleDataItemsSyncedGuids;
+    FullSyncStaleDataItemsExpunger * m_pFullSyncStaleDataItemsExpunger =
+        nullptr;
+    QMap<QString, FullSyncStaleDataItemsExpunger *>
+        m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
-    QHash<int,Note>                 m_notesToAddPerAPICallPostponeTimerId;
-    QHash<int,Note>                 m_notesToUpdatePerAPICallPostponeTimerId;
+    QHash<int, Note> m_notesToAddPerAPICallPostponeTimerId;
+    QHash<int, Note> m_notesToUpdatePerAPICallPostponeTimerId;
 
-    QHash<int,std::pair<Resource,Note>> m_resourcesToAddWithNotesPerAPICallPostponeTimerId;
-    QHash<int,std::pair<Resource,Note>> m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId;
+    QHash<int, std::pair<Resource, Note>>
+        m_resourcesToAddWithNotesPerAPICallPostponeTimerId;
+    QHash<int, std::pair<Resource, Note>>
+        m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId;
 
-    QHash<int,PostponedConflictingResourceData> m_postponedConflictingResourceDataPerAPICallPostponeTimerId;
+    QHash<int, PostponedConflictingResourceData>
+        m_postponedConflictingResourceDataPerAPICallPostponeTimerId;
 
-    QHash<int,qint32>   m_afterUsnForSyncChunkPerAPICallPostponeTimerId;
+    QHash<int, qint32> m_afterUsnForSyncChunkPerAPICallPostponeTimerId;
 
-    int     m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId = 0;
-    int     m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId = 0;
-    int     m_getSyncStateBeforeStartAPICallPostponeTimerId = 0;
-    int     m_syncUserPostponeTimerId = 0;
-    int     m_syncAccountLimitsPostponeTimerId = 0;
+    int m_getLinkedNotebookSyncStateBeforeStartAPICallPostponeTimerId = 0;
+    int m_downloadLinkedNotebookSyncChunkAPICallPostponeTimerId = 0;
+    int m_getSyncStateBeforeStartAPICallPostponeTimerId = 0;
+    int m_syncUserPostponeTimerId = 0;
+    int m_syncAccountLimitsPostponeTimerId = 0;
 
-    bool    m_gotLastSyncParameters = false;
+    bool m_gotLastSyncParameters = false;
 };
 
 } // namespace quentier

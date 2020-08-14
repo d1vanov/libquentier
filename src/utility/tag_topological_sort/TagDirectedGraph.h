@@ -42,7 +42,7 @@ public:
     QStringList allTagIds() const;
 
 private:
-    QHash<QString,QStringList>  m_childTagIdsByParentTagId;
+    QHash<QString, QStringList> m_childTagIdsByParentTagId;
 };
 
 } // namespace quentier

@@ -22,9 +22,7 @@
 
 namespace quentier {
 
-INoteStore::INoteStore(QObject * parent) :
-    QObject(parent)
-{}
+INoteStore::INoteStore(QObject * parent) : QObject(parent) {}
 
 INoteStorePtr newNoteStore(QObject * parent)
 {

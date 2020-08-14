@@ -24,7 +24,6 @@ IAuthenticationManager::IAuthenticationManager(QObject * parent) :
     QObject(parent)
 {}
 
-IAuthenticationManager::~IAuthenticationManager()
-{}
+IAuthenticationManager::~IAuthenticationManager() {}
 
 } // namespace quentier

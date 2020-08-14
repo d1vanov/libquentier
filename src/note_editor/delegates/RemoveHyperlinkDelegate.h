@@ -21,8 +21,8 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/types/Note.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Note.h>
 
 namespace quentier {
 
@@ -33,7 +33,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * required for proper implementation of removing a hyperlink under cursor
  * considering the details of wrapping this action around the undo stack
  */
-class Q_DECL_HIDDEN RemoveHyperlinkDelegate final: public QObject
+class Q_DECL_HIDDEN RemoveHyperlinkDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -58,7 +58,7 @@ private:
     using JsCallback = JsResultCallbackFunctor<RemoveHyperlinkDelegate>;
 
 private:
-    NoteEditorPrivate &     m_noteEditor;
+    NoteEditorPrivate & m_noteEditor;
 };
 
 } // namespace quentier

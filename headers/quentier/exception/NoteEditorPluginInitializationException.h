@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT NoteEditorPluginInitializationException:
+class QUENTIER_EXPORT NoteEditorPluginInitializationException :
     public IQuentierException
 {
 public:

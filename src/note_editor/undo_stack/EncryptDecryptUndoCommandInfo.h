@@ -25,17 +25,16 @@ namespace quentier {
 
 struct Q_DECL_HIDDEN EncryptDecryptUndoCommandInfo
 {
-    QString     m_encryptedText;
-    QString     m_decryptedText;
-    QString     m_passphrase;
-    QString     m_cipher;
-    QString     m_hint;
-    size_t      m_keyLength = 0;
-    bool        m_rememberForSession = false;
-    bool        m_decryptPermanently = false;
+    QString m_encryptedText;
+    QString m_decryptedText;
+    QString m_passphrase;
+    QString m_cipher;
+    QString m_hint;
+    size_t m_keyLength = 0;
+    bool m_rememberForSession = false;
+    bool m_decryptPermanently = false;
 };
 
 } // namespace quentier
 
 #endif // LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ENCRYPT_DECRYPT_UNDO_COMMAND_INFO_H
-

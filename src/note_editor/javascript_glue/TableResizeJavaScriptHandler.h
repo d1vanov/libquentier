@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class TableResizeJavaScriptHandler: public QObject
+class TableResizeJavaScriptHandler : public QObject
 {
     Q_OBJECT
 public:

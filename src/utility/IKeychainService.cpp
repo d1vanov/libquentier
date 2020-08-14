@@ -27,17 +27,14 @@
 
 namespace quentier {
 
-IKeychainService::IKeychainService(QObject * parent) :
-    QObject(parent)
-{}
+IKeychainService::IKeychainService(QObject * parent) : QObject(parent) {}
 
 QTextStream & operator<<(
     QTextStream & strm, const IKeychainService::ErrorCode errorCode)
 {
     using ErrorCode = IKeychainService::ErrorCode;
 
-    switch(errorCode)
-    {
+    switch (errorCode) {
     case ErrorCode::NoError:
         strm << "No error";
         break;

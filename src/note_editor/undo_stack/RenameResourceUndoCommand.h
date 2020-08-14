@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
 
-class Q_DECL_HIDDEN RenameResourceUndoCommand final:
+class Q_DECL_HIDDEN RenameResourceUndoCommand final :
     public INoteEditorUndoCommand
 {
     Q_OBJECT
@@ -38,14 +38,16 @@ public:
         const Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash,
+        QHash<QByteArray, QString> &
+            genericResourceImageFilePathsByResourceHash,
         QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
         const Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash,
+        QHash<QByteArray, QString> &
+            genericResourceImageFilePathsByResourceHash,
         const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~RenameResourceUndoCommand();
@@ -54,11 +56,11 @@ public:
     virtual void redoImpl() override;
 
 private:
-    Resource                      m_resource;
-    QString                       m_previousResourceName;
-    QString                       m_newResourceName;
+    Resource m_resource;
+    QString m_previousResourceName;
+    QString m_newResourceName;
     GenericResourceImageManager * m_pGenericResourceImageManager;
-    QHash<QByteArray, QString> &  m_genericResourceImageFilePathsByResourceHash;
+    QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
 };
 
 } // namespace quentier

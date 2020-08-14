@@ -35,9 +35,9 @@ void StringUtilsPrivate::removePunctuation(
     QString filterStr =
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
 
-    for(const auto & chr: qAsConst(charactersToPreserve)) {
+    for (const auto & chr: qAsConst(charactersToPreserve)) {
         int pos = -1;
-        while((pos = filterStr.indexOf(chr)) >= 0) {
+        while ((pos = filterStr.indexOf(chr)) >= 0) {
             filterStr.remove(pos, 1);
         }
     }
@@ -52,13 +52,12 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
     str = str.normalized(QString::NormalizationForm_KD);
     QNTRACE("utility:string", "str after normalizing by KD form: " << str);
 
-    for(int i = 0; i < str.length(); ++i)
-    {
+    for (int i = 0; i < str.length(); ++i) {
         QChar currentCharacter = str[i];
         auto category = currentCharacter.category();
-        if ( (category == QChar::Mark_NonSpacing) ||
-             (category == QChar::Mark_SpacingCombining) ||
-             (category == QChar::Mark_Enclosing) )
+        if ((category == QChar::Mark_NonSpacing) ||
+            (category == QChar::Mark_SpacingCombining) ||
+            (category == QChar::Mark_Enclosing))
         {
             str.remove(i, 1);
             continue;

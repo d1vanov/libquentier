@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT EmptyDataElementException: public IQuentierException
+class QUENTIER_EXPORT EmptyDataElementException : public IQuentierException
 {
 public:
     explicit EmptyDataElementException(const ErrorString & message);
@@ -32,6 +32,6 @@ protected:
     virtual const QString exceptionDisplayName() const override;
 };
 
-}
+} // namespace quentier
 
 #endif // LIB_QUENTIER_EXCEPTION_EMPTY_DATA_ELEMENT_EXCEPTION_H

@@ -23,16 +23,13 @@
 
 namespace quentier {
 
-NotebookData::NotebookData() :
-    FavoritableDataElementData()
+NotebookData::NotebookData() : FavoritableDataElementData()
 {
     m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
 }
 
 NotebookData::NotebookData(const qevercloud::Notebook & other) :
-    FavoritableDataElementData(),
-    m_qecNotebook(other),
-    m_linkedNotebookGuid()
+    FavoritableDataElementData(), m_qecNotebook(other), m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
         m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
@@ -40,8 +37,7 @@ NotebookData::NotebookData(const qevercloud::Notebook & other) :
 }
 
 NotebookData::NotebookData(qevercloud::Notebook && other) :
-    FavoritableDataElementData(),
-    m_qecNotebook(std::move(other)),
+    FavoritableDataElementData(), m_qecNotebook(std::move(other)),
     m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
@@ -57,8 +53,7 @@ void NotebookData::clear()
 
 bool NotebookData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecNotebook.guid.isSet() && !checkGuid(m_qecNotebook.guid.ref()))
-    {
+    if (m_qecNotebook.guid.isSet() && !checkGuid(m_qecNotebook.guid.ref())) {
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("NotebookData", "Notebook's guid is invalid"));
 
@@ -69,8 +64,7 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
     if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref()))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "NotebookData",
-            "Notebook's linked notebook guid is invalid"));
+            "NotebookData", "Notebook's linked notebook guid is invalid"));
 
         errorDescription.details() = m_linkedNotebookGuid;
         return false;
@@ -80,11 +74,10 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         !checkUpdateSequenceNumber(m_qecNotebook.updateSequenceNum))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "NotebookData",
-            "Notebook's update sequence number is invalid"));
+            "NotebookData", "Notebook's update sequence number is invalid"));
 
-        errorDescription.details() = QString::number(
-            m_qecNotebook.updateSequenceNum);
+        errorDescription.details() =
+            QString::number(m_qecNotebook.updateSequenceNum);
 
         return false;
     }
@@ -95,13 +88,11 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         return false;
     }
 
-    if (m_qecNotebook.sharedNotebooks.isSet())
-    {
-        for(const auto & sharedNotebook:
-            ::qAsConst(m_qecNotebook.sharedNotebooks.ref()))
+    if (m_qecNotebook.sharedNotebooks.isSet()) {
+        for (const auto & sharedNotebook:
+             ::qAsConst(m_qecNotebook.sharedNotebooks.ref()))
         {
-            if (!sharedNotebook.id.isSet())
-            {
+            if (!sharedNotebook.id.isSet()) {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
                     "NotebookData",
                     "Notebook has shared notebook without share id set"));
@@ -122,17 +113,15 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         }
     }
 
-    if (m_qecNotebook.businessNotebook.isSet())
-    {
-        if (m_qecNotebook.businessNotebook->notebookDescription.isSet())
-        {
+    if (m_qecNotebook.businessNotebook.isSet()) {
+        if (m_qecNotebook.businessNotebook->notebookDescription.isSet()) {
             int businessNotebookDescriptionSize =
                 m_qecNotebook.businessNotebook->notebookDescription->size();
 
-            if ( (businessNotebookDescriptionSize <
-                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MIN) ||
-                 (businessNotebookDescriptionSize >
-                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX) )
+            if ((businessNotebookDescriptionSize <
+                 qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MIN) ||
+                (businessNotebookDescriptionSize >
+                 qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX))
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
                     "NotebookData",

@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT LocalStorageCacheManagerException:
+class QUENTIER_EXPORT LocalStorageCacheManagerException :
     public IQuentierException
 {
 public:

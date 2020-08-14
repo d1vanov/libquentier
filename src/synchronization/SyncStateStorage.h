@@ -23,18 +23,19 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SyncStateStorage final: public ISyncStateStorage
+class Q_DECL_HIDDEN SyncStateStorage final : public ISyncStateStorage
 {
     Q_OBJECT
 public:
-    class Q_DECL_HIDDEN SyncState final: public ISyncState
+    class Q_DECL_HIDDEN SyncState final : public ISyncState
     {
     public:
-        qint32  m_userDataUpdateCount = 0;
-        qevercloud::Timestamp   m_userDataLastSyncTime = 0;
+        qint32 m_userDataUpdateCount = 0;
+        qevercloud::Timestamp m_userDataLastSyncTime = 0;
 
-        QHash<QString,qint32>   m_updateCountsByLinkedNotebookGuid;
-        QHash<QString,qevercloud::Timestamp>    m_lastSyncTimesByLinkedNotebookGuid;
+        QHash<QString, qint32> m_updateCountsByLinkedNotebookGuid;
+        QHash<QString, qevercloud::Timestamp>
+            m_lastSyncTimesByLinkedNotebookGuid;
 
         virtual qint32 userDataUpdateCount() const override
         {
@@ -46,13 +47,14 @@ public:
             return m_userDataLastSyncTime;
         }
 
-        virtual QHash<QString,qint32> linkedNotebookUpdateCounts() const override
+        virtual QHash<QString, qint32> linkedNotebookUpdateCounts()
+            const override
         {
             return m_updateCountsByLinkedNotebookGuid;
         }
 
-        virtual QHash<QString,qevercloud::Timestamp>
-            linkedNotebookLastSyncTimes() const override
+        virtual QHash<QString, qevercloud::Timestamp>
+        linkedNotebookLastSyncTimes() const override
         {
             return m_lastSyncTimesByLinkedNotebookGuid;
         }

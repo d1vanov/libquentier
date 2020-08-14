@@ -33,8 +33,7 @@ bool checkTagsOrder(const QList<T> & tags, QString & error)
 {
     QSet<QString> encounteredTagGuids;
 
-    for(const auto & tag: ::qAsConst(tags))
-    {
+    for (const auto & tag: ::qAsConst(tags)) {
         if (Q_UNLIKELY(!tagHasGuid(tag))) {
             continue;
         }
@@ -71,7 +70,7 @@ void tagListToQEverCloudTagList(
     outputTags.clear();
     outputTags.reserve(inputTags.size());
 
-    for(const auto & tag: ::qAsConst(inputTags)) {
+    for (const auto & tag: ::qAsConst(inputTags)) {
         outputTags << tag.qevercloudTag();
     }
 }

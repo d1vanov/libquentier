@@ -25,28 +25,25 @@
 namespace quentier {
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
-        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
+    const Resource & resourceBefore, const Resource & resourceAfter,
+    NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resourceBefore(resourceBefore),
-    m_resourceAfter(resourceAfter)
+    m_resourceBefore(resourceBefore), m_resourceAfter(resourceAfter)
 {
     init();
 }
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
-        NoteEditorPrivate & noteEditorPrivate, const QString & text,
-        QUndoCommand * parent) :
+    const Resource & resourceBefore, const Resource & resourceAfter,
+    NoteEditorPrivate & noteEditorPrivate, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resourceBefore(resourceBefore),
-    m_resourceAfter(resourceAfter)
+    m_resourceBefore(resourceBefore), m_resourceAfter(resourceAfter)
 {
     init();
 }
 
-UpdateResourceUndoCommand::~UpdateResourceUndoCommand()
-{}
+UpdateResourceUndoCommand::~UpdateResourceUndoCommand() {}
 
 void UpdateResourceUndoCommand::undoImpl()
 {

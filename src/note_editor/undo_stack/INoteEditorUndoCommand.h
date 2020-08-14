@@ -25,7 +25,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN INoteEditorUndoCommand: public QuentierUndoCommand
+class Q_DECL_HIDDEN INoteEditorUndoCommand : public QuentierUndoCommand
 {
     Q_OBJECT
 public:
@@ -39,7 +39,7 @@ protected:
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    NoteEditorPrivate &    m_noteEditorPrivate;
+    NoteEditorPrivate & m_noteEditorPrivate;
 };
 
 } // namespace quentier

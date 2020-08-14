@@ -60,10 +60,8 @@ void QUENTIER_EXPORT QuentierInitializeLogging();
  * This function is used to add new log entry to logs written by libquentier
  */
 void QUENTIER_EXPORT QuentierAddLogEntry(
-    const QString & sourceFileName,
-    const int sourceFileLineNumber,
-    const QString & component,
-    const QString & message,
+    const QString & sourceFileName, const int sourceFileLineNumber,
+    const QString & component, const QString & message,
     const LogLevel logLevel);
 
 /**
@@ -108,59 +106,54 @@ QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
 /**
  * Change the current filter for log components
  */
-void QUENTIER_EXPORT QuentierSetLogComponentFilter(
-    const QRegularExpression & filter);
+void QUENTIER_EXPORT
+QuentierSetLogComponentFilter(const QRegularExpression & filter);
 
 } // namespace quentier
 
 #define __QNLOG_BASE(component, message, level)                                \
-    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level))         \
-    {                                                                          \
+    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level)) {       \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
         dbg.nospace();                                                         \
         dbg.noquote();                                                         \
         dbg << message;                                                        \
         quentier::QuentierAddLogEntry(                                         \
-            QStringLiteral(__FILE__),                                          \
-            __LINE__,                                                          \
-            QStringLiteral(component),                                         \
-            msg,                                                               \
-            quentier::LogLevel::level);                                        \
+            QStringLiteral(__FILE__), __LINE__, QStringLiteral(component),     \
+            msg, quentier::LogLevel::level);                                   \
     }                                                                          \
-// __QNLOG_BASE
+    // __QNLOG_BASE
 
 #define QNTRACE(component, message)                                            \
     __QNLOG_BASE(component, message, Trace)                                    \
-// QNTRACE
+    // QNTRACE
 
 #define QNDEBUG(component, message)                                            \
     __QNLOG_BASE(component, message, Debug)                                    \
-// QNDEBUG
+    // QNDEBUG
 
 #define QNINFO(component, message)                                             \
     __QNLOG_BASE(component, message, Info)                                     \
-// QNINFO
+    // QNINFO
 
 #define QNWARNING(component, message)                                          \
     __QNLOG_BASE(component, message, Warning)                                  \
-// QNWARNING
+    // QNWARNING
 
 #define QNERROR(component, message)                                            \
     __QNLOG_BASE(component, message, Error)                                    \
-// QNERROR
+    // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
-    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level)                \
-// QUENTIER_SET_MIN_LOG_LEVEL
+    quentier::QuentierSetMinLogLevel(                                          \
+        quentier::LogLevel::level) // QUENTIER_SET_MIN_LOG_LEVEL
 
 #define QUENTIER_INITIALIZE_LOGGING()                                          \
-    quentier::QuentierInitializeLogging()                                      \
-// QUENTIER_INITIALIZE_LOGGING
+    quentier::QuentierInitializeLogging() // QUENTIER_INITIALIZE_LOGGING
 
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION()                                  \
-    quentier::QuentierAddStdOutLogDestination()                                \
-// QUENTIER_ADD_STDOUT_LOG_DESTINATION
+    quentier::                                                                 \
+        QuentierAddStdOutLogDestination() // QUENTIER_ADD_STDOUT_LOG_DESTINATION
 
 #define QNLOG_FILE_LINENUMBER_DELIMITER ":"
 

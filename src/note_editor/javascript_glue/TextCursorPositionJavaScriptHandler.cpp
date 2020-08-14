@@ -21,7 +21,7 @@
 namespace quentier {
 
 TextCursorPositionJavaScriptHandler::TextCursorPositionJavaScriptHandler(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
@@ -47,8 +47,8 @@ void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(
 void TextCursorPositionJavaScriptHandler::setOnEnCryptTagState(
     bool state, QString encryptedText, QString cipher, QString length)
 {
-    Q_EMIT textCursorPositionOnEnCryptTagState(state, encryptedText,
-                                               cipher, length);
+    Q_EMIT textCursorPositionOnEnCryptTagState(
+        state, encryptedText, cipher, length);
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionBoldState(
@@ -69,8 +69,8 @@ void TextCursorPositionJavaScriptHandler::setTextCursorPositionUnderlineState(
     Q_EMIT textCursorPositionUnderlineState(underline);
 }
 
-void TextCursorPositionJavaScriptHandler::setTextCursorPositionStrikethroughState(
-    bool strikethrough)
+void TextCursorPositionJavaScriptHandler::
+    setTextCursorPositionStrikethroughState(bool strikethrough)
 {
     Q_EMIT textCursorPositionStrikethroughState(strikethrough);
 }
@@ -99,14 +99,14 @@ void TextCursorPositionJavaScriptHandler::setTextCursorPositionAlignFullState(
     Q_EMIT textCursorPositionAlignFullState(state);
 }
 
-void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideOrderedListState(
-    bool insideOrderedList)
+void TextCursorPositionJavaScriptHandler::
+    setTextCursorPositionInsideOrderedListState(bool insideOrderedList)
 {
     Q_EMIT textCursorPositionInsideOrderedListState(insideOrderedList);
 }
 
-void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideUnorderedListState(
-    bool insideUnorderedList)
+void TextCursorPositionJavaScriptHandler::
+    setTextCursorPositionInsideUnorderedListState(bool insideUnorderedList)
 {
     Q_EMIT textCursorPositionInsideUnorderedListState(insideUnorderedList);
 }

@@ -26,7 +26,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceData)
 
-class QUENTIER_EXPORT Resource: public INoteStoreDataElement
+class QUENTIER_EXPORT Resource : public INoteStoreDataElement
 {
 public:
     QN_DECLARE_LOCAL_UID

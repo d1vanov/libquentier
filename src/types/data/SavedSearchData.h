@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SavedSearchData final: public FavoritableDataElementData
+class Q_DECL_HIDDEN SavedSearchData final : public FavoritableDataElementData
 {
 public:
     SavedSearchData() = default;
@@ -49,7 +49,7 @@ public:
     bool checkParameters(ErrorString & errorDescription) const;
 
 public:
-    qevercloud::SavedSearch     m_qecSearch;
+    qevercloud::SavedSearch m_qecSearch;
 };
 
 } // namespace quentier

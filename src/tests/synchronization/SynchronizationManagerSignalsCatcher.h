@@ -32,15 +32,14 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(SynchronizationManager)
 
-class SynchronizationManagerSignalsCatcher: public QObject
+class SynchronizationManagerSignalsCatcher : public QObject
 {
     Q_OBJECT
 public:
     SynchronizationManagerSignalsCatcher(
         LocalStorageManagerAsync & localStorageManagerAsync,
         SynchronizationManager & synchronizationManager,
-        ISyncStateStorage & syncStateStorage,
-        QObject * parent = nullptr);
+        ISyncStateStorage & syncStateStorage, QObject * parent = nullptr);
 
     bool receivedStartedSignal() const
     {
@@ -184,7 +183,7 @@ public:
         return m_syncChunkDownloadProgress;
     }
 
-    const QHash<QString, QVector<SyncChunkDownloadProgress> > &
+    const QHash<QString, QVector<SyncChunkDownloadProgress>> &
     linkedNotebookSyncChunksDownloadProgress() const
     {
         return m_linkedNotebookSyncChunkDownloadProgress;
@@ -192,8 +191,8 @@ public:
 
     struct NoteDownloadProgress
     {
-        quint32     m_notesDownloaded = 0;
-        quint32     m_totalNotesToDownload = 0;
+        quint32 m_notesDownloaded = 0;
+        quint32 m_totalNotesToDownload = 0;
     };
 
     const QVector<NoteDownloadProgress> & noteDownloadProgress() const
@@ -201,15 +200,16 @@ public:
         return m_noteDownloadProgress;
     }
 
-    const QVector<NoteDownloadProgress> & linkedNotebookNoteDownloadProgress() const
+    const QVector<NoteDownloadProgress> & linkedNotebookNoteDownloadProgress()
+        const
     {
         return m_linkedNotebookNoteDownloadProgress;
     }
 
     struct ResourceDownloadProgress
     {
-        quint32     m_resourcesDownloaded = 0;
-        quint32     m_totalResourcesToDownload = 0;
+        quint32 m_resourcesDownloaded = 0;
+        quint32 m_totalResourcesToDownload = 0;
     };
 
     const QVector<ResourceDownloadProgress> & resourceDownloadProgress() const
@@ -235,8 +235,8 @@ public:
 
     struct PersistedSyncStateUpdateCounts
     {
-        qint32                  m_userOwnUpdateCount = 0;
-        QHash<QString,qint32>   m_linkedNotebookUpdateCountsByLinkedNotebookGuid;
+        qint32 m_userOwnUpdateCount = 0;
+        QHash<QString, qint32> m_linkedNotebookUpdateCountsByLinkedNotebookGuid;
     };
 
     const QVector<PersistedSyncStateUpdateCounts> &
@@ -354,54 +354,55 @@ private:
         ErrorString & errorDescription) const;
 
 private:
-    bool            m_receivedStartedSignal = false;
-    bool            m_receivedStoppedSignal = false;
+    bool m_receivedStartedSignal = false;
+    bool m_receivedStoppedSignal = false;
 
-    bool            m_receivedFailedSignal = false;
-    ErrorString     m_failureErrorDescription;
+    bool m_receivedFailedSignal = false;
+    ErrorString m_failureErrorDescription;
 
-    bool            m_receivedFinishedSignal = false;
-    Account         m_finishedAccount;
-    bool            m_finishedSomethingDownloaded = false;
-    bool            m_finishedSomethingSent = false;
+    bool m_receivedFinishedSignal = false;
+    Account m_finishedAccount;
+    bool m_finishedSomethingDownloaded = false;
+    bool m_finishedSomethingSent = false;
 
-    bool            m_receivedAuthenticationRevokedSignal = false;
-    bool            m_authenticationRevokeSuccess = false;
-    ErrorString     m_authenticationRevokeErrorDescription;
-    qevercloud::UserID  m_authenticationRevokeUserId = 0;
+    bool m_receivedAuthenticationRevokedSignal = false;
+    bool m_authenticationRevokeSuccess = false;
+    ErrorString m_authenticationRevokeErrorDescription;
+    qevercloud::UserID m_authenticationRevokeUserId = 0;
 
-    bool            m_receivedAuthenticationFinishedSignal = false;
-    bool            m_authenticationSuccess = false;
-    ErrorString     m_authenticationErrorDescription;
-    Account         m_authenticationAccount;
+    bool m_receivedAuthenticationFinishedSignal = false;
+    bool m_authenticationSuccess = false;
+    ErrorString m_authenticationErrorDescription;
+    Account m_authenticationAccount;
 
-    bool            m_receivedRemoteToLocalSyncStopped = false;
-    bool            m_receivedSendLocalChangesStopped = false;
-    bool            m_receivedWillRepeatRemoteToLocalSyncAfterSendingChanges = false;
-    bool            m_receivedDetectedConflictDuringLocalChangesSending = false;
+    bool m_receivedRemoteToLocalSyncStopped = false;
+    bool m_receivedSendLocalChangesStopped = false;
+    bool m_receivedWillRepeatRemoteToLocalSyncAfterSendingChanges = false;
+    bool m_receivedDetectedConflictDuringLocalChangesSending = false;
 
-    bool            m_receivedRateLimitExceeded = false;
-    qint32          m_rateLimitSeconds = 0;
+    bool m_receivedRateLimitExceeded = false;
+    qint32 m_rateLimitSeconds = 0;
 
-    bool            m_receivedRemoteToLocalSyncDone = false;
-    bool            m_remoteToLocalSyncDoneSomethingDownloaded = false;
+    bool m_receivedRemoteToLocalSyncDone = false;
+    bool m_remoteToLocalSyncDoneSomethingDownloaded = false;
 
-    bool            m_receivedSyncChunksDownloaded = false;
-    bool            m_receivedLinkedNotebookSyncChunksDownloaded = false;
+    bool m_receivedSyncChunksDownloaded = false;
+    bool m_receivedLinkedNotebookSyncChunksDownloaded = false;
 
-    QVector<SyncChunkDownloadProgress>      m_syncChunkDownloadProgress;
-    QHash<QString, QVector<SyncChunkDownloadProgress>>  m_linkedNotebookSyncChunkDownloadProgress;
+    QVector<SyncChunkDownloadProgress> m_syncChunkDownloadProgress;
+    QHash<QString, QVector<SyncChunkDownloadProgress>>
+        m_linkedNotebookSyncChunkDownloadProgress;
 
-    QVector<NoteDownloadProgress>           m_noteDownloadProgress;
-    QVector<NoteDownloadProgress>           m_linkedNotebookNoteDownloadProgress;
+    QVector<NoteDownloadProgress> m_noteDownloadProgress;
+    QVector<NoteDownloadProgress> m_linkedNotebookNoteDownloadProgress;
 
-    QVector<ResourceDownloadProgress>       m_resourceDownloadProgress;
-    QVector<ResourceDownloadProgress>       m_linkedNotebookResourceDownloadProgress;
+    QVector<ResourceDownloadProgress> m_resourceDownloadProgress;
+    QVector<ResourceDownloadProgress> m_linkedNotebookResourceDownloadProgress;
 
-    QVector<PersistedSyncStateUpdateCounts>     m_persistedSyncStateUpdateCounts;
+    QVector<PersistedSyncStateUpdateCounts> m_persistedSyncStateUpdateCounts;
 
-    bool            m_receivedPreparedDirtyObjectsForSending = false;
-    bool            m_receivedPreparedLinkedNotebookDirtyObjectsForSending = false;
+    bool m_receivedPreparedDirtyObjectsForSending = false;
+    bool m_receivedPreparedLinkedNotebookDirtyObjectsForSending = false;
 };
 
 } // namespace quentier

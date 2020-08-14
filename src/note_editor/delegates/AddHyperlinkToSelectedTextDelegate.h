@@ -36,9 +36,10 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * @brief The AddHyperlinkToSelectedTextDelegate class encapsulates a chain of
  * callbacks required for proper implementation of adding a hyperlink to
  * the currently selected text considering the details of wrapping this action
- * around undo stack and necessary switching of note editor page during the process
+ * around undo stack and necessary switching of note editor page during the
+ * process
  */
-class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate final: public QObject
+class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -76,13 +77,13 @@ private:
         JsResultCallbackFunctor<AddHyperlinkToSelectedTextDelegate>;
 
 private:
-    NoteEditorPrivate &     m_noteEditor;
+    NoteEditorPrivate & m_noteEditor;
 
-    bool                    m_shouldGetHyperlinkFromDialog = true;
-    QString                 m_presetHyperlink;
-    QString                 m_replacementLinkText;
+    bool m_shouldGetHyperlinkFromDialog = true;
+    QString m_presetHyperlink;
+    QString m_replacementLinkText;
 
-    const quint64           m_hyperlinkId;
+    const quint64 m_hyperlinkId;
 };
 
 } // namespace quentier

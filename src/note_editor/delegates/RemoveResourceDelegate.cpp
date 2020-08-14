@@ -18,8 +18,8 @@
 
 #include "RemoveResourceDelegate.h"
 
-#include "../NoteEditor_p.h"
 #include "../NoteEditorSettingsNames.h"
+#include "../NoteEditor_p.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -33,38 +33,31 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());          \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("RemoveResourceDelegate",                        \
-                              "Can't remove the attachment: "                  \
-                              "no note editor page"));                         \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());         \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "RemoveResourceDelegate",                                          \
+            "Can't remove the attachment: "                                    \
+            "no note editor page"));                                           \
         QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 RemoveResourceDelegate::RemoveResourceDelegate(
-        const Resource & resourceToRemove,
-        NoteEditorPrivate & noteEditor,
-        LocalStorageManagerAsync & localStorageManager) :
+    const Resource & resourceToRemove, NoteEditorPrivate & noteEditor,
+    LocalStorageManagerAsync & localStorageManager) :
     m_noteEditor(noteEditor),
-    m_localStorageManager(localStorageManager),
-    m_resource(resourceToRemove)
+    m_localStorageManager(localStorageManager), m_resource(resourceToRemove)
 {}
 
 void RemoveResourceDelegate::start()
 {
     QNDEBUG("note_editor:delegate", "RemoveResourceDelegate::start");
 
-    if (m_noteEditor.isEditorPageModified())
-    {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(
-            &m_noteEditor,
-            &NoteEditorPrivate::convertedToNote,
-            this,
+            &m_noteEditor, &NoteEditorPrivate::convertedToNote, this,
             &RemoveResourceDelegate::onOriginalPageConvertedToNote);
 
         m_noteEditor.convertToNote();
@@ -76,15 +69,15 @@ void RemoveResourceDelegate::start()
 
 void RemoveResourceDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::onOriginalPageConvertedToNote");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
     QObject::disconnect(
-        &m_noteEditor,
-        &NoteEditorPrivate::convertedToNote,
-        this,
+        &m_noteEditor, &NoteEditorPrivate::convertedToNote, this,
         &RemoveResourceDelegate::onOriginalPageConvertedToNote);
 
     doStart();
@@ -98,8 +91,10 @@ void RemoveResourceDelegate::onFindResourceComplete(
         return;
     }
 
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::onFindResourceComplete: request id = " << requestId);
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::onFindResourceComplete: request id = " << requestId);
 
     Q_UNUSED(options)
     m_findResourceRequestId = QUuid();
@@ -116,9 +111,11 @@ void RemoveResourceDelegate::onFindResourceFailed(
         return;
     }
 
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::onFindResourceFailed: request id = " << requestId
-        << ", error description: " << errorDescription);
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::onFindResourceFailed: request id = " << requestId
+            << ", error description: " << errorDescription);
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
@@ -131,8 +128,7 @@ void RemoveResourceDelegate::doStart()
 {
     QNDEBUG("note_editor:delegate", "RemoveResourceDelegate::doStart");
 
-    if (Q_UNLIKELY(!m_resource.hasDataHash()))
-    {
+    if (Q_UNLIKELY(!m_resource.hasDataHash())) {
         ErrorString error(
             QT_TR_NOOP("Can't remove the attachment: data hash is missing"));
         QNWARNING("note_editor:delegate", error);
@@ -141,8 +137,7 @@ void RemoveResourceDelegate::doStart()
     }
 
     const Account * pAccount = m_noteEditor.accountPtr();
-    if (Q_UNLIKELY(!pAccount))
-    {
+    if (Q_UNLIKELY(!pAccount)) {
         ErrorString error(
             QT_TR_NOOP("Can't remove the attachment: no account "
                        "is set to the note editor"));
@@ -154,18 +149,19 @@ void RemoveResourceDelegate::doStart()
     ApplicationSettings appSettings(*pAccount, NOTE_EDITOR_SETTINGS_NAME);
     int resourceDataSizeThreshold = -1;
     if (appSettings.contains(
-            NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD))
-    {
+            NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD)) {
         QVariant threshold = appSettings.value(
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD);
 
         bool conversionResult = false;
         resourceDataSizeThreshold = threshold.toInt(&conversionResult);
-        if (!conversionResult)
-        {
-            QNWARNING("note_editor:delegate", "Failed to convert resource "
-                << "undo data size threshold from persistent settings to int: "
-                << threshold);
+        if (!conversionResult) {
+            QNWARNING(
+                "note_editor:delegate",
+                "Failed to convert resource "
+                    << "undo data size threshold from persistent settings to "
+                       "int: "
+                    << threshold);
             resourceDataSizeThreshold = -1;
         }
     }
@@ -175,28 +171,25 @@ void RemoveResourceDelegate::doStart()
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_DEFAULT_THRESHOLD;
     }
 
-    if ( (!m_resource.hasDataBody() && m_resource.hasDataSize() &&
-          (m_resource.dataSize() > resourceDataSizeThreshold)) ||
-         (!m_resource.hasDataBody() && !m_resource.hasAlternateDataBody() &&
-          m_resource.hasAlternateDataSize() &&
-          (m_resource.alternateDataSize() > resourceDataSizeThreshold)) )
+    if ((!m_resource.hasDataBody() && m_resource.hasDataSize() &&
+         (m_resource.dataSize() > resourceDataSizeThreshold)) ||
+        (!m_resource.hasDataBody() && !m_resource.hasAlternateDataBody() &&
+         m_resource.hasAlternateDataSize() &&
+         (m_resource.alternateDataSize() > resourceDataSizeThreshold)))
     {
         int resourceDataSize =
-            (m_resource.hasDataSize()
-             ? m_resource.dataSize()
-             : m_resource.alternateDataSize());
+            (m_resource.hasDataSize() ? m_resource.dataSize()
+                                      : m_resource.alternateDataSize());
 
         int result = questionMessageBox(
-            &m_noteEditor,
-            tr("Confirm attachment removal"),
+            &m_noteEditor, tr("Confirm attachment removal"),
             tr("The attachment removal would be irreversible"),
             tr("Are you sure you want to remove this "
                "attachment? Due to its large size") +
-            QStringLiteral(" (") +
-            humanReadableSize(
-                static_cast<quint64>(std::max(resourceDataSize, 0))) +
-            QStringLiteral(") ") +
-            tr("its removal would be irreversible"));
+                QStringLiteral(" (") +
+                humanReadableSize(
+                    static_cast<quint64>(std::max(resourceDataSize, 0))) +
+                QStringLiteral(") ") + tr("its removal would be irreversible"));
 
         if (result != QMessageBox::Ok) {
             Q_EMIT cancelled(m_resource.localUid());
@@ -212,10 +205,12 @@ void RemoveResourceDelegate::doStart()
         connectToLocalStorage();
         m_findResourceRequestId = QUuid::createUuid();
 
-        QNDEBUG("note_editor:delegate", "Emitting the request to find resource "
-            << "within the local storage: request id = "
-            << m_findResourceRequestId << ", resource local uid = "
-            << m_resource.localUid());
+        QNDEBUG(
+            "note_editor:delegate",
+            "Emitting the request to find resource "
+                << "within the local storage: request id = "
+                << m_findResourceRequestId
+                << ", resource local uid = " << m_resource.localUid());
 
         LocalStorageManager::GetResourceOptions options(
             LocalStorageManager::GetResourceOption::WithBinaryData);
@@ -229,11 +224,12 @@ void RemoveResourceDelegate::doStart()
 
 void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 {
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::removeResourceFromNoteEditorPage");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::removeResourceFromNoteEditorPage");
 
-    QString javascript =
-        QStringLiteral("resourceManager.removeResource('") +
+    QString javascript = QStringLiteral("resourceManager.removeResource('") +
         QString::fromLocal8Bit(m_resource.dataHash().toHex()) +
         QStringLiteral("');");
 
@@ -242,44 +238,42 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
         javascript,
         JsCallback(
             *this,
-            &RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent));
+            &RemoveResourceDelegate::
+                onResourceReferenceRemovedFromNoteContent));
 }
 
 void RemoveResourceDelegate::connectToLocalStorage()
 {
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::connectToLocalStorage");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::connectToLocalStorage");
 
     QObject::connect(
-        this,
-        &RemoveResourceDelegate::findResource,
-        &m_localStorageManager,
+        this, &RemoveResourceDelegate::findResource, &m_localStorageManager,
         &LocalStorageManagerAsync::onFindResourceRequest);
 
     QObject::connect(
-        &m_localStorageManager,
-        &LocalStorageManagerAsync::findResourceComplete,
-        this,
-        &RemoveResourceDelegate::onFindResourceComplete);
+        &m_localStorageManager, &LocalStorageManagerAsync::findResourceComplete,
+        this, &RemoveResourceDelegate::onFindResourceComplete);
 
     QObject::connect(
-        &m_localStorageManager,
-        &LocalStorageManagerAsync::findResourceFailed,
-        this,
-        &RemoveResourceDelegate::onFindResourceFailed);
+        &m_localStorageManager, &LocalStorageManagerAsync::findResourceFailed,
+        this, &RemoveResourceDelegate::onFindResourceFailed);
 }
 
 void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
     const QVariant & data)
 {
-    QNDEBUG("note_editor:delegate", "RemoveResourceDelegate"
-        << "::onResourceReferenceRemovedFromNoteContent");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveResourceDelegate"
+            << "::onResourceReferenceRemovedFromNoteContent");
 
     auto resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end()))
-    {
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of attachment "
                        "reference removal from JavaScript"));
@@ -289,19 +283,16 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
     }
 
     bool res = statusIt.value().toBool();
-    if (!res)
-    {
+    if (!res) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
-        if (Q_UNLIKELY(errorIt == resultMap.end()))
-        {
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of attachment "
                            "reference removal from JavaScript"));
         }
-        else
-        {
+        else {
             error.setBase(
                 QT_TR_NOOP("Can't remove the attachment reference "
                            "from the note editor"));

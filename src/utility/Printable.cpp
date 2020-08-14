@@ -37,14 +37,13 @@ Printable & Printable::operator=(const Printable &) = default;
 
 Printable::~Printable() = default;
 
-QDebug & operator <<(QDebug & debug, const Printable & printable)
+QDebug & operator<<(QDebug & debug, const Printable & printable)
 {
     debug << printable.toString();
     return debug;
 }
 
-QTextStream & operator <<(
-    QTextStream & strm, const Printable & printable)
+QTextStream & operator<<(QTextStream & strm, const Printable & printable)
 {
     return printable.print(strm);
 }

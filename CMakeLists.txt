@@ -682,8 +682,6 @@ endif()
 
 set(LIBNAME "lib${LIBQUENTIER_QT_VERSION}quentier${LIBQUENTIER_LIBNAME_SUFFIX}")
 
-include(SetupClangFormat)
-
 add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_HEADERS}
             ${${PROJECT_NAME}_SOURCES}
@@ -828,6 +826,9 @@ add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
 target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
+
+# setup clang-format
+include(SetupClangFormat)
 
 # set Doxygen documentation properties
 set(DOXY_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/headers ${CMAKE_CURRENT_SOURCE_DIR}/README.md")

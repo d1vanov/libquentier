@@ -41,7 +41,7 @@ private:
     void initialize();
 
 private:
-    QString     m_diacriticLetters;
+    QString m_diacriticLetters;
     QStringList m_noDiacriticLetters;
 };
 

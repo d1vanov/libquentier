@@ -40,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(ErrorStringData)
  *    translatable strings; one translatable string is not always enough because
  *    the error message might be composed from different parts
  */
-class QUENTIER_EXPORT ErrorString: public Printable
+class QUENTIER_EXPORT ErrorString : public Printable
 {
 public:
     explicit ErrorString(const char * error = nullptr);
