@@ -4499,6 +4499,7 @@ QList<SavedSearch> LocalStorageManagerPrivate::listAllSavedSearches(
 {
     QNDEBUG(
         "local_storage", "LocalStorageManagerPrivate::listAllSavedSearches");
+
     return listSavedSearches(
         ListObjectsOption::ListAll, errorDescription, limit, offset, order,
         orderDirection);
@@ -4513,7 +4514,9 @@ QList<SavedSearch> LocalStorageManagerPrivate::listSavedSearches(
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::listSavedSearches: flag = " << flag);
+
     using ListSavedSearchesOrder = ListSavedSearchesOrder;
+
     return listObjects<SavedSearch, ListSavedSearchesOrder>(
         flag, errorDescription, limit, offset, order, orderDirection);
 }
@@ -4595,6 +4598,7 @@ bool LocalStorageManagerPrivate::expungeSavedSearch(
     QString queryString =
         QString::fromUtf8("DELETE FROM SavedSearches WHERE %1='%2'")
             .arg(column, uid);
+
     QSqlQuery query(m_sqlDatabase);
     res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
@@ -4698,6 +4702,7 @@ qint32 LocalStorageManagerPrivate::accountHighUsn(
         bool res = updateSequenceNumberFromTable(
             requestData.m_tableName, requestData.m_usnColumnName,
             requestData.m_queryCondition, usn, errorDescription);
+
         if (!res) {
             return -1;
         }
@@ -5085,6 +5090,7 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
 
     DATABASE_CHECK_AND_SET_ERROR()
     bool auxiliaryTableExists = query.next();
+
     QNDEBUG(
         "local_storage",
         "Auxiliary table "
@@ -6264,6 +6270,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
         ErrorString error;
         bool res = insertOrReplaceUserAttributes(
             user.id(), user.userAttributes(), error);
+
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -6325,6 +6332,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceUser(
     else {
         QString queryString =
             QString::fromUtf8("DELETE FROM Accounting WHERE id=%1").arg(userId);
+
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(queryString);
         DATABASE_CHECK_AND_SET_ERROR()
@@ -6620,14 +6628,17 @@ bool LocalStorageManagerPrivate::insertOrReplaceUserAttributes(
     if (attributes.recentMailedAddresses.isSet()) {
         bool res =
             checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
+
         QSqlQuery & query =
             m_insertOrReplaceUserAttributesRecentMailedAddressesQuery;
+
         DATABASE_CHECK_AND_SET_ERROR()
 
         query.bindValue(QStringLiteral(":id"), id);
 
         const auto & recentMailedAddresses =
             attributes.recentMailedAddresses.ref();
+
         for (const auto & recentMailedAddress: recentMailedAddresses) {
             query.bindValue(QStringLiteral(":address"), recentMailedAddress);
             res = query.exec();
@@ -6699,6 +6710,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceAccountingQuery()
             << "accounting");
 
     m_insertOrReplaceAccountingQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Accounting"
         "(id, uploadLimitEnd, uploadLimitNextMonth, "
@@ -6718,6 +6730,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceAccountingQuery()
         ":premiumSubscriptionNumber, :lastRequestedCharge, "
         ":currency, :unitPrice, :unitDiscount, :nextChargeDate, "
         ":availablePoints)");
+
     bool res = m_insertOrReplaceAccountingQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceAccountingQueryPrepared = true;
@@ -6739,6 +6752,7 @@ bool LocalStorageManagerPrivate::
             << "limits");
 
     m_insertOrReplaceAccountLimitsQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO AccountLimits"
         "(id, userMailLimitDaily, noteSizeMax, resourceSizeMax, "
@@ -6750,6 +6764,7 @@ bool LocalStorageManagerPrivate::
         ":userNoteCountMax, :userNotebookCountMax, "
         ":userTagCountMax, :noteTagCountMax, "
         ":userSavedSearchesMax, :noteResourceCountMax)");
+
     bool res = m_insertOrReplaceAccountLimitsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceAccountLimitsQueryPrepared = true;
@@ -6771,10 +6786,12 @@ bool LocalStorageManagerPrivate::
             << "business user info");
 
     m_insertOrReplaceBusinessUserInfoQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO BusinessUserInfo"
         "(id, businessId, businessName, role, businessInfoEmail) "
         "VALUES(:id, :businessId, :businessName, :role, :businessInfoEmail)");
+
     bool res = m_insertOrReplaceBusinessUserInfoQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceBusinessUserInfoQueryPrepared = true;
@@ -6796,6 +6813,7 @@ bool LocalStorageManagerPrivate::
             << "attributes");
 
     m_insertOrReplaceUserAttributesQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO UserAttributes"
         "(id, defaultLocationName, defaultLatitude, "
@@ -6828,6 +6846,7 @@ bool LocalStorageManagerPrivate::
         ":useEmailAutoFiling, :reminderEmailConfig, "
         ":emailAddressLastConfirmed, :passwordUpdated, "
         ":salesforcePushEnabled, :shouldLogClientEvent)");
+
     bool res = m_insertOrReplaceUserAttributesQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceUserAttributesQueryPrepared = true;
@@ -6858,6 +6877,7 @@ bool LocalStorageManagerPrivate::
 
     bool res = m_insertOrReplaceUserAttributesViewedPromotionsQuery.prepare(
         queryString);
+
     if (res) {
         m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = true;
     }
@@ -6889,6 +6909,7 @@ bool LocalStorageManagerPrivate::
     bool res =
         m_insertOrReplaceUserAttributesRecentMailedAddressesQuery.prepare(
             queryString);
+
     if (res) {
         m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared =
             true;
@@ -7079,6 +7100,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
         ErrorString error;
         bool res = insertOrReplaceNotebookRestrictions(
             localUid, notebook.restrictions(), error);
+
         if (!res) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -7109,7 +7131,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
         bool res = query.exec(queryString);
         DATABASE_CHECK_AND_SET_ERROR()
 
-        QList<SharedNotebook> sharedNotebooks = notebook.sharedNotebooks();
+        auto sharedNotebooks = notebook.sharedNotebooks();
         for (int i = 0, size = sharedNotebooks.size(); i < size; ++i) {
             const SharedNotebook & sharedNotebook = sharedNotebooks[i];
             if (!sharedNotebook.hasId()) {
@@ -7169,6 +7191,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNotebookQuery()
             << "notebook");
 
     m_insertOrReplaceNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Notebooks"
         "(localUid, guid, linkedNotebookGuid, "
@@ -7194,6 +7217,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNotebookQuery()
         ":recipientReminderNotifyEmail, "
         ":recipientReminderNotifyInApp, :recipientInMyList, "
         ":recipientStack)");
+
     bool res = m_insertOrReplaceNotebookQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNotebookQueryPrepared = true;
@@ -7215,6 +7239,7 @@ bool LocalStorageManagerPrivate::
             << "notebook restrictions");
 
     m_insertOrReplaceNotebookRestrictionsQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NotebookRestrictions"
         "(localUid, noReadNotes, noCreateNotes, noUpdateNotes, "
@@ -7236,6 +7261,7 @@ bool LocalStorageManagerPrivate::
         ":noSetParentTag, :noCreateSharedNotebooks, "
         ":updateWhichSharedNotebookRestrictions, "
         ":expungeWhichSharedNotebookRestrictions)");
+
     bool res = m_insertOrReplaceNotebookRestrictionsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNotebookRestrictionsQueryPrepared = true;
@@ -7257,6 +7283,7 @@ bool LocalStorageManagerPrivate::
             << "notebook");
 
     m_insertOrReplaceSharedNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO SharedNotebooks"
         "(sharedNotebookShareId, sharedNotebookUserId, "
@@ -7285,6 +7312,7 @@ bool LocalStorageManagerPrivate::
         ":sharedNotebookRecipientUserId, "
         ":sharedNotebookRecipientIdentityId, "
         ":sharedNotebookAssignmentTimestamp, :indexInNotebook) ");
+
     bool res = m_insertOrReplaceSharedNotebookQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceSharedNotebookQueryPrepared = true;
@@ -7405,6 +7433,7 @@ bool LocalStorageManagerPrivate::
             << "notebook");
 
     m_insertOrReplaceLinkedNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO LinkedNotebooks "
         "(guid, updateSequenceNumber, shareName, "
@@ -7415,6 +7444,7 @@ bool LocalStorageManagerPrivate::
         ":shardId, :sharedNotebookGlobalId, :uri, "
         ":noteStoreUrl, :webApiUrlPrefix, :stack, "
         ":businessId, :isDirty)");
+
     bool res = m_insertOrReplaceLinkedNotebookQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceLinkedNotebookQueryPrepared = true;
@@ -7646,6 +7676,7 @@ bool LocalStorageManagerPrivate::getNotebookGuidForNote(
     }
 
     notebookGuid = query.record().value(QStringLiteral("guid")).toString();
+
     QNTRACE(
         "local_storage",
         "Found notebook guid corresponding to local uid "
@@ -7885,6 +7916,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
                     ? "true"
                     : "false")
             << ", note local uid = " << note.localUid());
+
     QNTRACE("local_storage", note);
 
     // NOTE: this method expects to be called after the note is already checked
@@ -7896,18 +7928,21 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 
     QVariant nullValue;
     QString localUid = sqlEscapeString(note.localUid());
+
     QString notebookLocalUid =
         (note.hasNotebookLocalUid() ? sqlEscapeString(note.notebookLocalUid())
                                     : QString());
 
-    // Special logics needs to be applied if guid is being cleared from the
+    // Special logic needs to be applied if guid is being cleared from the
     // note; here the evaluation occurs whether guid clearance is meant to take
     // place
     bool noteGuidIsBeingCleared = false;
     if (!note.hasGuid()) {
         QString noteGuid;
+
         bool res =
             getNoteGuidForLocalUid(note.localUid(), noteGuid, errorDescription);
+
         if (!res) {
             return false;
         }
@@ -8049,6 +8084,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 
             QString listOfWords =
                 plainTextAndListOfWords.second.join(QStringLiteral(" "));
+
             m_stringUtils.removePunctuation(listOfWords);
             listOfWords = listOfWords.toLower();
             m_stringUtils.removeDiacritics(listOfWords);
@@ -8492,6 +8528,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             bool res = partialUpdateNoteResources(
                 localUid, note.resources(), updateResourceBinaryData,
                 errorDescription);
+
             if (!res) {
                 return false;
             }
@@ -8785,6 +8822,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
             << "the shared note");
 
     m_insertOrReplaceSharedNoteQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO SharedNotes ("
         "sharedNoteNoteGuid, "
@@ -8830,6 +8868,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
         ":sharedNoteModificationTimestamp, "
         ":sharedNoteAssignmentTimestamp, "
         ":indexInNote)");
+
     bool res = m_insertOrReplaceSharedNoteQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceSharedNoteQueryPrepared = true;
@@ -8851,6 +8890,7 @@ bool LocalStorageManagerPrivate::
             << "restrictions");
 
     m_insertOrReplaceNoteRestrictionsQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteRestrictions "
         "(noteLocalUid, noUpdateNoteTitle, noUpdateNoteContent, "
@@ -8858,6 +8898,7 @@ bool LocalStorageManagerPrivate::
         "VALUES(:noteLocalUid, :noUpdateNoteTitle, "
         ":noUpdateNoteContent, :noEmailNote, "
         ":noShareNote, :noShareNotePublicly)");
+
     bool res = m_insertOrReplaceNoteRestrictionsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteRestrictionsQueryPrepared = true;
@@ -8878,12 +8919,14 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteLimitsQuery()
             << "limits");
 
     m_insertOrReplaceNoteLimitsQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteLimits "
         "(noteLocalUid, noteResourceCountMax, uploadLimit, "
         "resourceSizeMax, noteSizeMax, uploaded) "
         "VALUES(:noteLocalUid, :noteResourceCountMax, "
         ":uploadLimit, :resourceSizeMax, :noteSizeMax, :uploaded)");
+
     bool res = m_insertOrReplaceNoteLimitsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteLimitsQueryPrepared = true;
@@ -8905,9 +8948,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanAddNoteToNotebookQuery()
             << "notebook restriction");
 
     m_canAddNoteToNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "SELECT noCreateNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
+
     bool res = m_canAddNoteToNotebookQuery.prepare(queryString);
     if (res) {
         m_canAddNoteToNotebookQueryPrepared = true;
@@ -8929,9 +8974,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanUpdateNoteInNotebookQuery()
             << "notebook restriction");
 
     m_canUpdateNoteInNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "SELECT noUpdateNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
+
     bool res = m_canUpdateNoteInNotebookQuery.prepare(queryString);
     if (res) {
         m_canUpdateNoteInNotebookQueryPrepared = true;
@@ -8953,9 +9000,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanExpungeNoteInNotebookQuery()
             << "notebook restriction");
 
     m_canExpungeNoteInNotebookQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "SELECT noExpungeNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
+
     bool res = m_canExpungeNoteInNotebookQuery.prepare(queryString);
     if (res) {
         m_canExpungeNoteInNotebookQueryPrepared = true;
@@ -8977,10 +9026,12 @@ bool LocalStorageManagerPrivate::
             << "into NoteTags table");
 
     m_insertOrReplaceNoteIntoNoteTagsQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteTags"
         "(localNote, note, localTag, tag, tagIndexInNote) "
         "VALUES(:localNote, :note, :localTag, :tag, :tagIndexInNote)");
+
     bool res = m_insertOrReplaceNoteIntoNoteTagsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = true;
@@ -9080,6 +9131,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceTagQuery()
     }
 
     m_insertOrReplaceTagQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Tags "
         "(localUid, guid, linkedNotebookGuid, updateSequenceNumber, "
@@ -9088,6 +9140,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceTagQuery()
         "VALUES(:localUid, :guid, :linkedNotebookGuid, "
         ":updateSequenceNumber, :name, :nameLower, "
         ":parentGuid, :parentLocalUid, :isDirty, :isLocal, :isFavorited)");
+
     bool res = m_insertOrReplaceTagQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceTagQueryPrepared = true;
@@ -9221,7 +9274,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
         if (res && recoIndices.isValid()) {
             QString recognitionData;
 
-            QVector<ResourceRecognitionIndexItem> items = recoIndices.items();
+            auto items = recoIndices.items();
             const int numItems = items.size();
             for (int i = 0; i < numItems; ++i) {
                 const ResourceRecognitionIndexItem & item = qAsConst(items)[i];
@@ -9239,8 +9292,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
             if (!recognitionData.isEmpty()) {
                 bool res =
                     checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
+
                 QSqlQuery & query =
                     m_insertOrReplaceIntoResourceRecognitionDataQuery;
+
                 DATABASE_CHECK_AND_SET_ERROR()
 
                 query.bindValue(
@@ -9273,8 +9328,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
     {
         bool res =
             checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery();
+
         QSqlQuery & query =
             m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery;
+
         DATABASE_CHECK_AND_SET_ERROR()
 
         query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalUid);
@@ -9287,8 +9344,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
     {
         bool res =
             checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataFullMapQuery();
+
         QSqlQuery & query =
             m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery;
+
         DATABASE_CHECK_AND_SET_ERROR()
 
         query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalUid);
@@ -9299,8 +9358,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
 
     if (resource.hasResourceAttributes()) {
         const auto & attributes = resource.resourceAttributes();
+
         bool res = insertOrReplaceResourceAttributes(
             resourceLocalUid, attributes, errorDescription);
+
         if (!res) {
             return false;
         }
@@ -9325,6 +9386,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
     const Resource & resource, ErrorString & errorDescription)
 {
     QString resourceLocalUid = resource.localUid();
+
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::writeResourceBinaryDataToFiles: "
@@ -9375,6 +9437,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
             resourceLocalUid, resource.noteLocalUid(), resource.dataBody(),
             /* is alternate data body = */ false, shouldReplaceOriginalFile,
             error);
+
         if (!res) {
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
@@ -9391,6 +9454,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
             resource.alternateDataBody(),
             /* is alternate data body = */ true, shouldReplaceOriginalFile,
             error);
+
         if (!res) {
             errorDescription = errorPrefix;
             errorDescription.appendBase(error.base());
@@ -9551,6 +9615,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(
     QFile resourceDataFile(
         storagePath + QStringLiteral("/") + resourceLocalUid +
         QStringLiteral(".dat.new"));
+
     if (!resourceDataFile.open(QIODevice::WriteOnly)) {
         errorDescription.setBase(
             QT_TR_NOOP("failed to open resource data file for writing"));
@@ -9698,8 +9763,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(
         if (attributes.applicationData->keysOnly.isSet()) {
             bool res =
                 checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataKeysOnlyQuery();
+
             QSqlQuery & query =
                 m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery;
+
             DATABASE_CHECK_AND_SET_ERROR()
 
             query.bindValue(QStringLiteral(":resourceLocalUid"), localUid);
@@ -9715,8 +9782,10 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(
         if (attributes.applicationData->fullMap.isSet()) {
             bool res =
                 checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataFullMapQuery();
+
             QSqlQuery & query =
                 m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery;
+
             DATABASE_CHECK_AND_SET_ERROR()
 
             query.bindValue(QStringLiteral(":resourceLocalUid"), localUid);
@@ -9872,7 +9941,7 @@ void LocalStorageManagerPrivate::setNoteIdsToNoteResources(Note & note) const
         return;
     }
 
-    QList<Resource> resources = note.resources();
+    auto resources = note.resources();
     for (auto & resource: resources) {
         resource.setNoteLocalUid(note.localUid());
         if (note.hasGuid()) {
@@ -9981,6 +10050,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFilesForNote(
 
     QString dataPath =
         accountPath + QStringLiteral("/Resources/data/") + noteLocalUid;
+
     if (!removeDir(dataPath)) {
         errorDescription.setBase(
             QT_TR_NOOP("failed to remove the folder containing "
@@ -10127,6 +10197,7 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceResourceMetadataWithDataPropertiesQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Resources (resourceGuid, "
         "noteGuid, noteLocalUid, dataSize, dataHash, mime, "
@@ -10140,8 +10211,10 @@ bool LocalStorageManagerPrivate::
         ":recognitionDataHash, :alternateDataSize, "
         ":alternateDataHash, :resourceUpdateSequenceNumber, "
         ":resourceIsDirty, :resourceIndexInNote, :resourceLocalUid)");
+
     bool res = m_insertOrReplaceResourceMetadataWithDataPropertiesQuery.prepare(
         queryString);
+
     if (res) {
         m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared = true;
     }
@@ -10163,6 +10236,7 @@ bool LocalStorageManagerPrivate::
 
     m_updateResourceMetadataWithoutDataPropertiesQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "UPDATE Resources SET resourceGuid = :resourceGuid, "
         "noteGuid = :noteGuid, noteLocalUid = :noteLocalUid, "
@@ -10174,8 +10248,10 @@ bool LocalStorageManagerPrivate::
         "resourceIsDirty = :resourceIsDirty, "
         "resourceIndexInNote = :resourceIndexInNote "
         "WHERE resourceLocalUid = :resourceLocalUid");
+
     bool res =
         m_updateResourceMetadataWithoutDataPropertiesQuery.prepare(queryString);
+
     if (res) {
         m_updateResourceMetadataWithoutDataPropertiesQueryPrepared = true;
     }
@@ -10196,10 +10272,12 @@ bool LocalStorageManagerPrivate::
             << "resource into NoteResources table");
 
     m_insertOrReplaceNoteResourceQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteResources "
         "(localNote, note, localResource, resource) "
         "VALUES(:localNote, :note, :localResource, :resource)");
+
     bool res = m_insertOrReplaceNoteResourceQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteResourceQueryPrepared = true;
@@ -10222,11 +10300,14 @@ bool LocalStorageManagerPrivate::
 
     m_deleteResourceFromResourceRecognitionTypesQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "DELETE FROM ResourceRecognitionData "
         "WHERE resourceLocalUid = :resourceLocalUid");
+
     bool res =
         m_deleteResourceFromResourceRecognitionTypesQuery.prepare(queryString);
+
     if (res) {
         m_deleteResourceFromResourceRecognitionTypesQueryPrepared = true;
     }
@@ -10248,12 +10329,15 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceIntoResourceRecognitionDataQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO ResourceRecognitionData"
         "(resourceLocalUid, noteLocalUid, recognitionData) "
         "VALUES(:resourceLocalUid, :noteLocalUid, :recognitionData)");
+
     bool res =
         m_insertOrReplaceIntoResourceRecognitionDataQuery.prepare(queryString);
+
     if (res) {
         m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = true;
     }
@@ -10274,9 +10358,11 @@ bool LocalStorageManagerPrivate::
             << "ResourceAttributes table");
 
     m_deleteResourceFromResourceAttributesQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "DELETE FROM ResourceAttributes WHERE "
         "resourceLocalUid = :resourceLocalUid");
+
     bool res = m_deleteResourceFromResourceAttributesQuery.prepare(queryString);
 
     if (res) {
@@ -10302,12 +10388,15 @@ bool LocalStorageManagerPrivate::
 
     m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "DELETE FROM ResourceAttributesApplicationDataKeysOnly "
         "WHERE resourceLocalUid = :resourceLocalUid");
+
     bool res =
         m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery
             .prepare(queryString);
+
     if (res) {
         m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared =
             true;
@@ -10332,11 +10421,14 @@ bool LocalStorageManagerPrivate::
 
     m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "DELETE FROM ResourceAttributesApplicationDataFullMap "
         "WHERE resourceLocalUid = :resourceLocalUid");
+
     bool res = m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery
                    .prepare(queryString);
+
     if (res) {
         m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared =
             true;
@@ -10358,6 +10450,7 @@ bool LocalStorageManagerPrivate::
             << "ResourceAttributes");
 
     m_insertOrReplaceResourceAttributesQuery = QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO ResourceAttributes"
         "(resourceLocalUid, resourceSourceURL, timestamp, "
@@ -10367,6 +10460,7 @@ bool LocalStorageManagerPrivate::
         ":resourceSourceURL, :timestamp, :resourceLatitude, "
         ":resourceLongitude, :resourceAltitude, :cameraMake, "
         ":cameraModel, :clientWillIndex, :fileName, :attachment)");
+
     bool res = m_insertOrReplaceResourceAttributesQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceResourceAttributesQueryPrepared = true;
@@ -10391,13 +10485,16 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO ResourceAttributesApplicationDataKeysOnly"
         "(resourceLocalUid, resourceKey) VALUES(:resourceLocalUid, "
         ":resourceKey)");
+
     bool res =
         m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery.prepare(
             queryString);
+
     if (res) {
         m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared =
             true;
@@ -10422,13 +10519,16 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery =
         QSqlQuery(m_sqlDatabase);
+
     QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO ResourceAttributesApplicationDataFullMap"
         "(resourceLocalUid, resourceMapKey, resourceValue) "
         "VALUES(:resourceLocalUid, :resourceMapKey, :resourceValue)");
+
     bool res =
         m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery.prepare(
             queryString);
+
     if (res) {
         m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared =
             true;
@@ -10733,9 +10833,11 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
     if (resource.hasAlternateData()) {
         QByteArray alternateDataBody;
         ErrorString error;
+
         auto status = readResourceBinaryDataFromFile(
             resource.localUid(), resource.noteLocalUid(),
             /* is alternate data body = */ true, alternateDataBody, error);
+
         if (status != ReadResourceBinaryDataFromFileStatus::Success) {
             if (status == ReadResourceBinaryDataFromFileStatus::FileNotFound) {
                 errorDescription.setBase(QT_TR_NOOP(
@@ -10785,6 +10887,7 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
 
     storagePath += noteLocalUid + QStringLiteral("/") + resourceLocalUid +
         QStringLiteral(".dat");
+
     QFile resourceDataFile(storagePath);
 
     /**
@@ -10803,6 +10906,7 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
         if (isAlternateDataBody) {
             QFileInfo prevAlternateDataFileInfo(
                 storagePath + QStringLiteral(".old"));
+
             if (prevAlternateDataFileInfo.exists() &&
                 prevAlternateDataFileInfo.isFile()) {
                 resourceDataFile.setFileName(
