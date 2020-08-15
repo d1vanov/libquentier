@@ -1,12 +1,23 @@
-This document outlines some coding style rules used in libquentier project. The consistent coding style is meant to make the codebase more readable and cohesive. Please adhere to these rules when making pull requests to ensure their successful adoption.
+Libquentier project uses clang-format tool for automatic formatting of source code. It is mandatory to run clang-format before contributing code fixes to libquentier. The version of clang-format tool must be at least 10. It is recommended to use prebuilt clang-format binaries from [here](https://github.com/muttleyxd/clang-format-static-binaries/releases).
 
-## Use common sense
+The simplest way to run clang-format over the entire libquentier's codebase is to trigger `clang-format` build target. For this ensure that you have `clang-format` binary in your `PATH` (e.g. `export PATH=<path-to-folder-with-clang-format-tool>:$PATH` for Linux/macOS or `set PATH="<path-to-folder-with-clang-format-tool>";%PATH%` for Windows) and then run `cmake --build . --target clang-format` in your build directory. See [building/installation guide](INSTALL.md) for more details about the build process.
 
-This is the absolute number one rule which *might* override any of the below mentioned rules should the need for that arise. Follow the rules mentioned below *unless* they don’t seem to play nice with some specific piece of code. You’d need common sense to identify such pieces of code.
+Alternatively you can run `clang-format` tool manually over the files you want to format:
+```
+clang-format -style=file -i <path-to-source-file-to-format>
+```
+The downside of this approach is that you need to run `clang-format` over every changed source file separately.
 
-Also note that some of these rules are not applied to some existing places of libquentier codebase due to various legacy reasons. Fixing the coding style in places where it improves code's readability is welcome.
+Clang-format can be integrated with various editors and IDEs. See [clang-format docs](https://clang.llvm.org/docs/ClangFormat.html) for reference. For vim it is recommended to use [this plugin](https://github.com/rhysd/vim-clang-format). Here are the options for it in `~/.vimrc` which are compatible with `libquentier` project:
+```
+let g:clang_format#command='<path-to-clang-format-binary>'
+let g:clang_format#enable_fallback_style=0
+let g:clang_format#auto_format=1
+let g:clang_format#auto_format_on_insert_leave=0
+let g:clang_format#detect_style_file=1
+```
 
-When in doubt about how to format some piece of code, look at the code around to try and find a similar piece to use as an example.
+Style used by libquentier project is formalized in [.clang-format](.clang-format) file within the repo. You can examine the formatting options in it and see their description in [this doc](https://clang.llvm.org/docs/ClangFormatStyleOptions.html). Some of these rules are outlined below for reference.
 
 ## Indentation
 
@@ -43,31 +54,7 @@ In order to avoid that, please **always** use curly braces to clearly define the
         b = c;
     }
 
-Another point about curly braces usage is where to put the opening curly brace: at the end of the first line of the conditional operator or loop operator or at the beginning of the next line. The best approach seems to be using both options as appropriate: for small enough operator bodies without inner indentation level changes it seems better to leave the opening curly brace at the end of the operator's first line as it makes the code be aligned more compactly while staying perfectly readable. However, if the operator's body involves many lines, say, more than 6 or 7, or has multiple inner indentation level changes within it, it looks better with the opening curly brace put at the beginning of the next line.
-
-Examples:
-
-    if (a > b) {
-        something(a, b);
-        somethingElse(a, b);
-    }
-
-    if (c > d)
-    {
-        thingOne(c);
-        thingTwo(d);
-        thingThree(c, d);
-        if (d > e) {
-            thingFour(d, e);
-        }
-    }
-
-    if (d > e)
-    {
-        if (f < e) {
-            thingFive(f, e);
-        }
-    }
+In libquentier project opening curly brace for operators is put at the end of the first line of the conditional operator or loop operator unless the operator body consists of multiple lines. In the latter case the opening curly brace is put at the beginning of the next line. In clang-format configuration it corresponds to option `BraceWrappingAfterControlStatementStyle` having the value of `MultiLine`. See [this ticket](https://reviews.llvm.org/D68296) for reference.
 
 In class declarations the opening curly brace should always be placed on the next line after the declaration:
 
@@ -107,16 +94,15 @@ but not this:
 
 ## Line length
 
-Try to lay out the code in such a way that any single line of code is no longer than 80 columns. It is a rather hard boundary and it's not always possible to satisfy this requirement. It is understandable but still *try* to stick to it. If 80 columns are absolutely not enough for some specific line, ok, let it take 85-90 columns. Maybe even 100 if there's no other way. The point is to have the majority of code written in a compact enough way.
+Lay out the source code in such a way that any single line of code is no longer than 80 columns. It is a rather hard boundary and it's not always possible to satisfy this requirement. Clang-format tool would try its best to satisfy this requirement though. The point is to have the majority of code written in a compact enough way.
 
 ## Separate multi-line statements with blank lines
 
 Multi-line statements generally read better when they are separated from other statements with blank lines. Example:
 
     bool res = myFunctionCall(
-        myFirstParam,
-        mySecondParam,
-        myThirdParam);
+        myFirstParam, mySecondParam, myThirdParam, myFourthParam,
+        myFifthParam);
 
     if (res) {
         // do something
@@ -124,11 +110,13 @@ Multi-line statements generally read better when they are separated from other s
 
 Note the blank line between the function call and the `if` operator. It's easier to grasp the boundary between the two when there is a blank line between them.
 
-Exceptions from this rule can be made for logging macros. For example:
+Exceptions from this rule can be made in certain cases, for example, for logging macros:
 
     QNDEBUG("Some long logging message which continues on the next line: "
         << someValueToLog);
     return true;
+
+Clang-format does not intervene with blank lines placement (other than ensuring no consequent blank lines) so it is up to the developer where to put blank lines. Use them to separate conceptually different code fragments as well as to improve the readability of code fragments.
 
 ## Grouping and sorting of includes
 
@@ -180,7 +168,7 @@ When *declaring* functions, methods, class constructors or operators their param
         const int paramThree, const bool paramFour);
 ```
 Same rules apply for functions, methods, class constructors and operators *definitions* i.e. implementations:
-
+```
     void myFunction(const QString & paramOne, const QString & param2)
     {
         // < function implementation contents >
@@ -192,21 +180,8 @@ Same rules apply for functions, methods, class constructors and operators *defin
     {
         // < function implementation contents >
     }
-
-However, when calling functions, methods or class constructors another rule applies: if the list of variables passed into the function/method/constructor doesn't fit into 80 columns, the list of parameters should start after a line break and each variable should occupy its own line besides the last one which is followed by closing paren and semicolon on the same line. Example:
-
-    QString myFunctionParam1 = QStringLiteral("param1");
-    QString myFunctionParam2 = QStringLiteral("param2");
-    int myFunctionParam3 = 1;
-    bool myFunctionParam4 = true;
-
-    myFunction(myFunctionParam1, myFunctionParams2);
-
-    myOtherFunction(
-        myFunctionParam1,
-        myFunctionParams2,
-        myFunctionParam3,
-        myFunctionParams4);
+```
+Similar rules apply when calling functions, methods or class constructors, only in those cases the rule applies to variable names, literals etc.
 
 ## Line endings
 
@@ -256,7 +231,6 @@ The first word in the name of a class method or a function should start from low
         void do();
         void doThis();
         void doThisAndThat();
-
     };
 
 The obvious exceptions from this rule are class constructors and destructors, since their names must match the class names in which the first word is capitalized.
@@ -308,7 +282,7 @@ Try to stick with the following layout of class declarations:
 
 Libquentier uses C++14 standard so usage of any features from that standard version is allowed. However, from practical perspective libquentier's code should be written in such a way that major supported compilers would have no problems building this code. At the time of this writing the oldest supported compilers are g++ 5.4.1 on Linux (the default compiler of Ubuntu Xenial, oldest still supported LTS release of Ubuntu) and Visual Studio 2017 on Windows.
 
-# Qt versions supported
+## Qt versions supported
 
 Libquentier supports building with Qt no older than 5.5.1. Be careful with features relevant only for the most recent versions of Qt which can break backward compatibility with older versions of the framework. Either don't use such bleeding edge features or use ifdefs to isolate the code using them. Example:
 
