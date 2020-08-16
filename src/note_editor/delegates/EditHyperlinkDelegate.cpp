@@ -183,8 +183,8 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
     pEditHyperlinkDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pEditHyperlinkDialog.get(), &EditHyperlinkDialog::accepted, this,
-        &EditHyperlinkDelegate::onHyperlinkDataEdited);
+        pEditHyperlinkDialog.get(), &EditHyperlinkDialog::editHyperlinkAccepted,
+        this, &EditHyperlinkDelegate::onHyperlinkDataEdited);
 
     QNTRACE("note_editor:delegate", "Will exec edit hyperlink dialog now");
 

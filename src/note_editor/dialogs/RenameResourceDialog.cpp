@@ -40,7 +40,7 @@ RenameResourceDialog::~RenameResourceDialog()
 void RenameResourceDialog::accept()
 {
     QNDEBUG("note_editor:dialog", "RenameResourceDialog::accept");
-    Q_EMIT accepted(m_pUI->lineEdit->text());
+    Q_EMIT renameAccepted(m_pUI->lineEdit->text());
     QDialog::accept();
 }
 

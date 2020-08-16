@@ -41,7 +41,7 @@ public:
     virtual ~EditHyperlinkDialog();
 
 Q_SIGNALS:
-    void accepted(
+    void editHyperlinkAccepted(
         QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:

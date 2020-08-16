@@ -55,7 +55,7 @@ public:
     QString hint() const;
 
 Q_SIGNALS:
-    void accepted(
+    void encryptionAccepted(
         QString textToEncrypt, QString encryptedText, QString cipher,
         size_t keyLength, QString hint, bool rememberForSession);
 

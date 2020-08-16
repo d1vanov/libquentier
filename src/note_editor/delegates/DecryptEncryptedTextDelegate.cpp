@@ -158,7 +158,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
     pDecryptionDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pDecryptionDialog.get(), &DecryptionDialog::accepted, this,
+        pDecryptionDialog.get(), &DecryptionDialog::decryptionAccepted, this,
         &DecryptEncryptedTextDelegate::onEncryptedTextDecrypted);
 
     QNTRACE("note_editor:delegate", "Will exec decryption dialog now");

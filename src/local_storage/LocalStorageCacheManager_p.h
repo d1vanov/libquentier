@@ -132,21 +132,30 @@ private:
     class NoteHolder : public Printable
     {
     public:
-        NoteHolder & operator=(const NoteHolder & other);
+        NoteHolder() = default;
+
+        NoteHolder(const NoteHolder & other) = default;
+        NoteHolder(NoteHolder && other) = default;
+
+        NoteHolder & operator=(const NoteHolder & other) = default;
+        NoteHolder & operator=(NoteHolder && other) = default;
 
         Note m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString localUid() const
         {
             return m_value.localUid();
         }
+
         const QString guid() const;
 
         struct ByLastAccessTimestamp
         {};
+
         struct ByLocalUid
         {};
+
         struct ByGuid
         {};
 
@@ -173,21 +182,30 @@ private:
     class ResourceHolder : public Printable
     {
     public:
-        ResourceHolder & operator=(const ResourceHolder & other);
+        ResourceHolder() = default;
+
+        ResourceHolder(const ResourceHolder & other) = default;
+        ResourceHolder(ResourceHolder && other) = default;
+
+        ResourceHolder & operator=(const ResourceHolder & other) = default;
+        ResourceHolder & operator=(ResourceHolder && other) = default;
 
         Resource m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString localUid() const
         {
             return m_value.localUid();
         }
+
         const QString guid() const;
 
         struct ByLastAccessTimestamp
         {};
+
         struct ByLocalUid
         {};
+
         struct ByGuid
         {};
 
@@ -215,10 +233,16 @@ private:
     class NotebookHolder : public Printable
     {
     public:
-        NotebookHolder & operator=(const NotebookHolder & other);
+        NotebookHolder() = default;
+
+        NotebookHolder(const NotebookHolder & other) = default;
+        NotebookHolder(NotebookHolder && other) = default;
+
+        NotebookHolder & operator=(const NotebookHolder & other) = default;
+        NotebookHolder & operator=(NotebookHolder && other) = default;
 
         Notebook m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString localUid() const
         {
@@ -275,10 +299,16 @@ private:
     class TagHolder : public Printable
     {
     public:
-        TagHolder & operator=(const TagHolder & other);
+        TagHolder() = default;
+
+        TagHolder(const TagHolder & other) = default;
+        TagHolder(TagHolder && other) = default;
+
+        TagHolder & operator=(const TagHolder & other) = default;
+        TagHolder & operator=(TagHolder && other) = default;
 
         Tag m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString localUid() const
         {
@@ -333,10 +363,19 @@ private:
     class LinkedNotebookHolder : public Printable
     {
     public:
-        LinkedNotebookHolder & operator=(const LinkedNotebookHolder & other);
+        LinkedNotebookHolder() = default;
+
+        LinkedNotebookHolder(const LinkedNotebookHolder & other) = default;
+        LinkedNotebookHolder(LinkedNotebookHolder && other) = default;
+
+        LinkedNotebookHolder & operator=(const LinkedNotebookHolder & other) =
+            default;
+
+        LinkedNotebookHolder & operator=(LinkedNotebookHolder && other) =
+            default;
 
         LinkedNotebook m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString guid() const;
 
@@ -367,10 +406,18 @@ private:
     class SavedSearchHolder : public Printable
     {
     public:
-        SavedSearchHolder & operator=(const SavedSearchHolder & other);
+        SavedSearchHolder() = default;
+
+        SavedSearchHolder(const SavedSearchHolder & other) = default;
+        SavedSearchHolder(SavedSearchHolder && other) = default;
+
+        SavedSearchHolder & operator=(const SavedSearchHolder & other) =
+            default;
+
+        SavedSearchHolder & operator=(SavedSearchHolder && other) = default;
 
         SavedSearch m_value;
-        qint64 m_lastAccessTimestamp;
+        qint64 m_lastAccessTimestamp = 0;
 
         const QString localUid() const
         {

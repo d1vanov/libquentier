@@ -8283,9 +8283,10 @@ void RemoteToLocalSynchronizationManager::clear()
     m_updateSavedSearchRequestIds.clear();
     m_expungeSavedSearchRequestIds.clear();
 
-    QList<SavedSearchSyncConflictResolver *> savedSearchSyncConflictResolvers =
+    auto savedSearchSyncConflictResolvers =
         findChildren<SavedSearchSyncConflictResolver *>();
-    for (auto * pResolver: savedSearchSyncConflictResolvers) {
+
+    for (auto * pResolver: qAsConst(savedSearchSyncConflictResolvers)) {
         if (Q_UNLIKELY(!pResolver)) {
             continue;
         }
@@ -8344,9 +8345,10 @@ void RemoteToLocalSynchronizationManager::clear()
     m_expungeNotebookRequestIds.clear();
     m_pendingNotebooksSyncStart = false;
 
-    QList<NotebookSyncConflictResolver *> notebookSyncConflictResolvers =
+    auto notebookSyncConflictResolvers =
         findChildren<NotebookSyncConflictResolver *>();
-    for (auto * pResolver: notebookSyncConflictResolvers) {
+
+    for (auto * pResolver: qAsConst(notebookSyncConflictResolvers)) {
         if (Q_UNLIKELY(!pResolver)) {
             continue;
         }
@@ -8514,9 +8516,8 @@ void RemoteToLocalSynchronizationManager::clear()
     // NOTE: not clearing m_gotLastSyncParameters: this information can be
     // reused in subsequent syncs
 
-    QList<NoteThumbnailDownloader *> noteThumbnailDownloaders =
-        findChildren<NoteThumbnailDownloader *>();
-    for (auto * pDownloader: noteThumbnailDownloaders) {
+    auto noteThumbnailDownloaders = findChildren<NoteThumbnailDownloader *>();
+    for (auto * pDownloader: qAsConst(noteThumbnailDownloaders)) {
         if (Q_UNLIKELY(!pDownloader)) {
             continue;
         }
@@ -8531,7 +8532,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
 
     auto inkNoteImagesDownloaders = findChildren<InkNoteImageDownloader *>();
-    for (auto * pDownloader: inkNoteImagesDownloaders) {
+    for (auto * pDownloader: qAsConst(inkNoteImagesDownloaders)) {
         if (Q_UNLIKELY(!pDownloader)) {
             continue;
         }

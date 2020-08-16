@@ -56,7 +56,7 @@ public:
     QString decryptedText() const;
 
 Q_SIGNALS:
-    void accepted(
+    void decryptionAccepted(
         QString cipher, size_t keyLength, QString encryptedText,
         QString passphrase, QString decryptedText, bool rememberPassphrase,
         bool decryptPermanently);

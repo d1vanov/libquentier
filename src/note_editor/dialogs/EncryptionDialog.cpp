@@ -157,7 +157,7 @@ void EncryptionDialog::accept()
         m_cachedEncryptedText, m_textToEncrypt, rememberForSession, passphrase,
         cipher, keyLength);
 
-    Q_EMIT accepted(
+    Q_EMIT encryptionAccepted(
         m_textToEncrypt, m_cachedEncryptedText, cipher, keyLength,
         m_pUI->hintLineEdit->text(), rememberForSession);
 

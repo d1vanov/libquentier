@@ -163,8 +163,8 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
     pRenameResourceDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pRenameResourceDialog.get(), &RenameResourceDialog::accepted, this,
-        &RenameResourceDelegate::onRenameResourceDialogFinished);
+        pRenameResourceDialog.get(), &RenameResourceDialog::renameAccepted,
+        this, &RenameResourceDelegate::onRenameResourceDialogFinished);
 
     QNTRACE("note_editor:delegate", "Will exec rename resource dialog now");
     int res = pRenameResourceDialog->exec();

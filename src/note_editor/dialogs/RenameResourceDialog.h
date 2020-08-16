@@ -39,7 +39,7 @@ public:
     virtual ~RenameResourceDialog();
 
 Q_SIGNALS:
-    void accepted(QString newResourceName);
+    void renameAccepted(QString newResourceName);
 
 private Q_SLOTS:
     virtual void accept() override;

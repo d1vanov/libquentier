@@ -1040,7 +1040,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
         }
 
         if (d->m_useCache) {
-            for (const auto & linkedNotebook: linkedNotebooks) {
+            for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
                 d->m_pLocalStorageCacheManager->cacheLinkedNotebook(
                     linkedNotebook);
             }
@@ -1086,7 +1086,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
         }
 
         if (d->m_useCache) {
-            for (const auto & linkedNotebook: linkedNotebooks) {
+            for (const auto & linkedNotebook: qAsConst(linkedNotebooks)) {
                 d->m_pLocalStorageCacheManager->cacheLinkedNotebook(
                     linkedNotebook);
             }

@@ -549,7 +549,7 @@ void SpellCheckerPrivate::scanSystemDictionaries()
         dir.setNameFilters(filter);
         QFileInfoList fileInfos = dir.entryInfoList(QDir::Files);
 
-        for (const auto & fileInfo: fileInfos) {
+        for (const auto & fileInfo: qAsConst(fileInfos)) {
             QString fileName = fileInfo.fileName();
             QNTRACE("note_editor", "Inspecting file name " << fileName);
 

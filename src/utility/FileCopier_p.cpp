@@ -135,8 +135,8 @@ void FileCopierPrivate::copyFile(
 
         totalBytesWritten += bytesWritten;
 
-        m_currentProgress =
-            static_cast<double>(totalBytesWritten) / fromFileSize;
+        m_currentProgress = static_cast<double>(totalBytesWritten) /
+            static_cast<double>(fromFileSize);
 
         QNTRACE(
             "utility:file_copier",

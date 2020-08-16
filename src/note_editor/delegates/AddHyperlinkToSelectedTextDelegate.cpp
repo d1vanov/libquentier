@@ -159,7 +159,8 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
     pEditHyperlinkDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pEditHyperlinkDialog.get(), &EditHyperlinkDialog::accepted, this,
+        pEditHyperlinkDialog.get(), &EditHyperlinkDialog::editHyperlinkAccepted,
+        this,
         &AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished);
 
     QNTRACE("note_editor:delegate", "Will exec add hyperlink dialog now");

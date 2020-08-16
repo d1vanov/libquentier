@@ -103,7 +103,7 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
     pEncryptionDialog->setWindowModality(Qt::WindowModal);
 
     QObject::connect(
-        pEncryptionDialog.get(), &EncryptionDialog::accepted, this,
+        pEncryptionDialog.get(), &EncryptionDialog::encryptionAccepted, this,
         &EncryptSelectedTextDelegate::onSelectedTextEncrypted);
 
     int res = pEncryptionDialog->exec();

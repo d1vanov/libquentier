@@ -194,7 +194,7 @@ void DecryptionDialog::accept()
             << "; decrypt permanently = "
             << (decryptPermanently ? "true" : "false"));
 
-    Q_EMIT accepted(
+    Q_EMIT decryptionAccepted(
         m_cipher, m_keyLength, m_encryptedText, passphrase,
         m_cachedDecryptedText, rememberForSession, decryptPermanently);
 

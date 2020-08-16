@@ -419,7 +419,7 @@ void LocalStorageManagerPrivate::switchUser(
         error.details() = QStringLiteral("Available SQL drivers: ");
 
         QStringList drivers = QSqlDatabase::drivers();
-        for (const auto & driver: drivers) {
+        for (const auto & driver: qAsConst(drivers)) {
             error.details() +=
                 QStringLiteral("{") + driver + QStringLiteral("} ");
         }
@@ -1285,7 +1285,7 @@ LocalStorageManagerPrivate::listSharedNotebooksPerNotebookGuid(
 
     sharedNotebooks.reserve(qMax(enSharedNotebooks.size(), 0));
 
-    for (const auto & sharedNotebook: enSharedNotebooks) {
+    for (const auto & sharedNotebook: ::qAsConst(enSharedNotebooks)) {
         sharedNotebooks << SharedNotebook(sharedNotebook);
     }
 
@@ -3215,7 +3215,7 @@ NoteList LocalStorageManagerPrivate::findNotesWithSearchQuery(
     }
 
     QString joinedLocalUids;
-    for (const auto & item: foundLocalUids) {
+    for (const auto & item: qAsConst(foundLocalUids)) {
         if (!joinedLocalUids.isEmpty()) {
             joinedLocalUids += QStringLiteral(", ");
         }
@@ -9277,7 +9277,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
                 const ResourceRecognitionIndexItem & item = qAsConst(items)[i];
 
                 auto textItems = item.textItems();
-                for (const auto & textItem: textItems) {
+                for (const auto & textItem: qAsConst(textItems)) {
                     recognitionData += textItem.m_text + QStringLiteral(" ");
                 }
             }

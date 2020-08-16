@@ -1296,7 +1296,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         bool foundResourceInPreviousNoteVersion = false;
         bool resourceDataSizeOrHashChanged = false;
 
-        for (const auto & prevResource: previousNoteResources) {
+        for (const auto & prevResource: qAsConst(previousNoteResources)) {
             if (prevResource.localUid() != resourceLocalUid) {
                 continue;
             }

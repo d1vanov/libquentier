@@ -67,7 +67,7 @@ void EditHyperlinkDialog::accept()
         return;
     }
 
-    Q_EMIT accepted(
+    Q_EMIT editHyperlinkAccepted(
         m_pUI->textLineEdit->text(), url, m_idNumber, m_startupUrlWasEmpty);
 
     QDialog::accept();
