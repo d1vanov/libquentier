@@ -66,7 +66,8 @@ install:
             chmod a+x /tmp/clang-format/git-clang-format &&
             export PATH=/tmp/clang-format:$PATH &&
             git clone --branch stable https://github.com/material-foundation/clang-format-ci.git /tmp/clang-format/clang-format-ci &&
-            ./tmp/clang-format/clang-format-ci/check-pull-request.sh --api_token "$GITHUB_TOKEN" --repo "$TRAVIS_PULL_REQUEST_SLUG" --pr "$TRAVIS_PULL_REQUEST" --commit "$TRAVIS_PULL_REQUEST_SHA" --target_branch "$TRAVIS_BRANCH"
+            cd /tmp/clang-format/clang-format-ci &&
+            ./check-pull-request.sh --api_token "$GITHUB_TOKEN" --repo "$TRAVIS_PULL_REQUEST_SLUG" --pr "$TRAVIS_PULL_REQUEST" --commit "$TRAVIS_PULL_REQUEST_SHA" --target_branch "$TRAVIS_BRANCH"
           fi
           travis_terminate 0
         else
