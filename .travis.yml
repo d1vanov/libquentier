@@ -191,7 +191,7 @@ script:
       fi
       make &&
       make check &&
-      if [ "{CLANG_FORMAT_CHECK}" = "1" ]; then
+      if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
         echo "Building clang-format target" &&
         make clang-format &&
         dirty=$(git ls-files --modified) &&
