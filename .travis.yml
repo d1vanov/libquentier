@@ -81,6 +81,7 @@ install:
         if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
           if [ -n "${TRAVIS_PULL_REQUEST_SLUG}" ]; then
             brew install clang-format &&
+            mkdir -p /tmp/clang-format &&
             curl -Ls "https://raw.githubusercontent.com/llvm/llvm-project/313b60742af1f567ef7d8e26eb5b1015a7b5c78f/clang/tools/clang-format/git-clang-format" -o "/tmp/clang-format/git-clang-format" &&
             chmod +x /tmp/clang-format/git-clang-format &&
             export PATH="/tmp/clang-format:$PATH" &&
