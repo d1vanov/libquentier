@@ -13,7 +13,8 @@ branches:
 
 matrix:
     include:
-        - os: linux
+        - os: osx
+          osx_image: xcode10
           env: CLANG_FORMAT_CHECK=1
 
         - os: linux
