@@ -80,28 +80,14 @@ install:
           export PATH=/tmp/clang-format:$PATH
         fi
       else
-        if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
-          if [ -n "${TRAVIS_PULL_REQUEST_SLUG}" ]; then
-            brew install clang-format &&
-            mkdir -p /tmp/clang-format &&
-            curl -Ls "https://raw.githubusercontent.com/llvm/llvm-project/313b60742af1f567ef7d8e26eb5b1015a7b5c78f/clang/tools/clang-format/git-clang-format" -o "/tmp/clang-format/git-clang-format" &&
-            chmod +x /tmp/clang-format/git-clang-format &&
-            export PATH="/tmp/clang-format:$PATH" &&
-            git clone --branch stable https://github.com/material-foundation/clang-format-ci.git /tmp/clang-format/clang-format-ci &&
-            cd /tmp/clang-format/clang-format-ci &&
-            ./check-pull-request.sh --api_token "$GITHUB_TOKEN" --repo "$TRAVIS_PULL_REQUEST_SLUG" --pr "$TRAVIS_PULL_REQUEST" --commit "$TRAVIS_PULL_REQUEST_SHA" --target_branch "$TRAVIS_BRANCH"
-          fi
-          travis_terminate 0
-        else
-          brew update &&
-          brew unlink cmake &&
-          brew install cmake &&
-          brew link cmake &&
-          brew install qt5 &&
-          chmod -R 755 /usr/local/opt/qt5/* &&
-          brew install hunspell &&
-          brew install p7zip
-        fi
+        brew update &&
+        brew unlink cmake &&
+        brew install cmake &&
+        brew link cmake &&
+        brew install qt5 &&
+        chmod -R 755 /usr/local/opt/qt5/* &&
+        brew install hunspell &&
+        brew install p7zip
       fi
     - export LIBQUENTIER_DIR=$(pwd) &&
       echo "LIBQUENTIER_DIR = $LIBQUENTIER_DIR"
@@ -206,6 +192,7 @@ script:
       make &&
       make check &&
       if [ "{CLANG_FORMAT_CHECK}" = "1" ]; then
+        echo "Building clang-format target" &&
         make clang-format &&
         dirty=$(git ls-files --modified) &&
         if [ ! -z $dirty ]; then
