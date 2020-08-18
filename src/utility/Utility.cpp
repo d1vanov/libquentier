@@ -126,17 +126,10 @@ const QString printableDateTimeFromTimestamp(
 #ifdef _MSC_VER
     // MSVC's localtime is thread-safe since MSVC 2005
     tm = std::localtime(&t);
-#else // ifdef _MSC_VER
-#ifdef __MINGW32__
-    // MinGW lacks localtime_r but uses MS's localtime instead which is told to
-    // be thread-safe but it's still not re-entrant.
-    // So, can at best hope it won't cause problems too often
-    tm = localtime(&t);
 #else // POSIX
     tm = &localTm;
     Q_UNUSED(localtime_r(&t, tm))
 #endif
-#endif // ifdef _MSC_VER
 
     if (Q_UNLIKELY(!tm)) {
         return QString::number(timestamp);
@@ -157,7 +150,7 @@ const QString printableDateTimeFromTimestamp(
             msecPart, 3, 10, QChar::fromLatin1('0'));
     }
 
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#ifndef _MSC_VER
     if (options & DateTimePrint::IncludeTimezone) {
         const char * timezone = tm->tm_zone;
         if (timezone) {
