@@ -58,11 +58,29 @@ install:
     - |
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         export DISPLAY=:99.0 &&
+        sudo apt-get -qq install cmake p7zip-full libxml2-dev libboost-dev libssl-dev libhunspell-dev coreutils curl &&
+        sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
+        if [ "${QT_BASE}" = "551" ]; then
+          echo "Building for Qt 5.5.1" &&
+          sudo apt-get -qq install qtbase5-dev qttools5-dev qttools5-dev-tools libqt5webkit5-dev libqt5sql5-sqlite &&
+          if [ "${COMPILER}" = "clang++" ]; then
+            export CXX="clang++" &&
+            export CC="clang"
+          fi
+        else
+          echo "Building for Qt 5.12.3" &&
+          sudo apt-add-repository -y ppa:beineri/opt-qt-5.12.3-xenial &&
+          sudo apt-get -qq update &&
+          sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations mesa-common-dev libgl1-mesa-dev &&
+          if [ "${COMPILER}" = "clang++" ]; then
+            export CXX="clang++" &&
+            export CC="clang"
+          fi
+        fi
+      else
         if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
           if [ -n "${TRAVIS_PULL_REQUEST_SLUG}" ]; then
-            mkdir /tmp/clang-format &&
-            curl -fsSL https://github.com/muttleyxd/clang-format-static-binaries/releases/download/master-5b56bb49/clang-format-10_linux-amd64 -o /tmp/clang-format/clang-format &&
-            chmod a+x /tmp/clang-format/clang-format &&
+            brew install clang-format &&
             curl -fsSL https://raw.githubusercontent.com/llvm/llvm-project/313b60742af1f567ef7d8e26eb5b1015a7b5c78f/clang/tools/clang-format/git-clang-format -o /tmp/clang-format/git-clang-format &&
             chmod a+x /tmp/clang-format/git-clang-format &&
             export PATH=/tmp/clang-format:$PATH &&
@@ -72,35 +90,15 @@ install:
           fi
           travis_terminate 0
         else
-          sudo apt-get -qq install cmake p7zip-full libxml2-dev libboost-dev libssl-dev libhunspell-dev coreutils curl &&
-          sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
-          if [ "${QT_BASE}" = "551" ]; then
-            echo "Building for Qt 5.5.1" &&
-            sudo apt-get -qq install qtbase5-dev qttools5-dev qttools5-dev-tools libqt5webkit5-dev libqt5sql5-sqlite &&
-            if [ "${COMPILER}" = "clang++" ]; then
-              export CXX="clang++" &&
-              export CC="clang"
-            fi
-          else
-            echo "Building for Qt 5.12.3" &&
-            sudo apt-add-repository -y ppa:beineri/opt-qt-5.12.3-xenial &&
-            sudo apt-get -qq update &&
-            sudo apt-get -qq install qt512tools qt512base qt512webchannel qt512webengine qt512websockets qt512xmlpatterns qt512translations mesa-common-dev libgl1-mesa-dev &&
-            if [ "${COMPILER}" = "clang++" ]; then
-              export CXX="clang++" &&
-              export CC="clang"
-            fi
-          fi
+          brew update &&
+          brew unlink cmake &&
+          brew install cmake &&
+          brew link cmake &&
+          brew install qt5 &&
+          chmod -R 755 /usr/local/opt/qt5/* &&
+          brew install hunspell &&
+          brew install p7zip
         fi
-      else
-        brew update &&
-        brew unlink cmake &&
-        brew install cmake &&
-        brew link cmake &&
-        brew install qt5 &&
-        chmod -R 755 /usr/local/opt/qt5/* &&
-        brew install hunspell &&
-        brew install p7zip
       fi
     - export LIBQUENTIER_DIR=$(pwd) &&
       echo "LIBQUENTIER_DIR = $LIBQUENTIER_DIR"
