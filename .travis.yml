@@ -73,7 +73,7 @@ install:
             export CC="clang"
           fi
         fi
-        if [ "{CLANG_FORMAT_CHECK}" = "1" ]; then
+        if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
           mkdir -p /tmp/clang-format &&
           curl -Ls "https://github.com/muttleyxd/clang-format-static-binaries/releases/download/master-5b56bb49/clang-format-10_linux-amd64" -o "/tmp/clang-format/clang-format" &&
           chmod +x /tmp/clang-format/clang-format &&
