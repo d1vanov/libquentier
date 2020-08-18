@@ -40,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
 
 namespace test {
 
-class SynchronizationTester: public QObject
+class SynchronizationTester : public QObject
 {
     Q_OBJECT
 public:
@@ -59,107 +59,165 @@ private Q_SLOTS:
 
     void testIncrementalSyncWithNewRemoteItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithNewRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
     void testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithModifiedRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
     void testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataOnly();
-    void testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithNewLocalItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithNewLocalItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks();
     void testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithModifiedLocalItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
     void testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataOnly();
-    void testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUsersOwnDataOnly();
-    void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly();
-    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly();
+    void
+    testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly();
-    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly();
+    void
+    testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly();
-    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly();
+    void
+    testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataOnly();
     void testIncrementalSyncWithExpungedRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataOnly();
-    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
-    void testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+    void
+    testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataOnly();
+    void
+    testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
+    void
+    testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
-    void testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithLargerRemoteUsn();
 
-    void testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithSameUsn();
     void testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithSameUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn();
-    void testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn();
 
-    void testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithLargerRemoteUsn();
 
-    void testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithSameUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithSameUsn();
-    void testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithSameUsn();
 
-    void testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
-    void testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
 
-    void testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithSameUsn();
-    void testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithSameUsn();
-    void testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+    void
+    testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithSameUsn();
 
-    void testIncrementalSyncWithExpungedRemoteLinkedNotebookNotesProducingNotelessTags();
+    void
+    testIncrementalSyncWithExpungedRemoteLinkedNotebookNotesProducingNotelessTags();
 
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncStateAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncStateAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncStateAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncChunkAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
 
-    void testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingUserOwnSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingUserOwnSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingUserOwnSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingUserOwnSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingUserOwnSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingUserOwnSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingUserOwnSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingUserOwnSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateSavedSearchAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateSavedSearchAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnTagAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnTagAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnCreateTagInLinkedNotebookAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnUpdateTagInLinkedNotebookAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnCreateTagInLinkedNotebookAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnUpdateTagInLinkedNotebookAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateNotebookAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateNotebookAttempt();
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnNoteAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnNoteAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnCreateNoteInLinkedNotebookAttempt();
-    void testIncrementalSyncWithRateLimitsBreachOnUpdateNoteInLinkedNotebookAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnCreateNoteInLinkedNotebookAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnUpdateNoteInLinkedNotebookAttempt();
 
-    void testIncrementalSyncWithRateLimitsBreachOnAuthenticateToLinkedNotebookAttempt();
+    void
+    testIncrementalSyncWithRateLimitsBreachOnAuthenticateToLinkedNotebookAttempt();
 
 private:
     void setUserOwnItemsToRemoteStorage();
@@ -174,7 +232,8 @@ private:
     void setModifiedLinkedNotebookResourcesOnlyToRemoteStorage();
     void setExpungedUserOwnItemsToRemoteStorage();
     void setExpungedLinkedNotebookItemsToRemoteStorage();
-    void setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
+    void
+    setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
     void expungeNotelessLinkedNotebookTagsFromRemoteStorage();
 
     void setNewUserOwnItemsToLocalStorage();
@@ -189,8 +248,7 @@ private:
     };
 
     friend QDebug & operator<<(
-        QDebug & dbg,
-        const ConflictingItemsUsnOption option);
+        QDebug & dbg, const ConflictingItemsUsnOption option);
 
     void setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(
         const ConflictingItemsUsnOption usnOption);
@@ -298,23 +356,22 @@ private:
     // Print stuff from both local storage and fake note store into a warning
     // level log entry
     void printContentsOfLocalStorageAndFakeNoteStoreToWarnLog(
-        const QString & prefix = {},
-        const QString & linkedNotebookGuid = {});
+        const QString & prefix = {}, const QString & linkedNotebookGuid = {});
 
     void runTest(SynchronizationManagerSignalsCatcher & catcher);
 
 private:
-    Account                         m_testAccount;
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
+    Account m_testAccount;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
 
-    FakeNoteStorePtr                m_pFakeNoteStore;
-    FakeUserStorePtr                m_pFakeUserStore;
-    FakeAuthenticationManagerPtr    m_pFakeAuthenticationManager;
-    FakeKeychainServicePtr          m_pFakeKeychainService;
-    ISyncStateStoragePtr            m_pSyncStateStorage;
+    FakeNoteStorePtr m_pFakeNoteStore;
+    FakeUserStorePtr m_pFakeUserStore;
+    FakeAuthenticationManagerPtr m_pFakeAuthenticationManager;
+    FakeKeychainServicePtr m_pFakeKeychainService;
+    ISyncStateStoragePtr m_pSyncStateStorage;
 
-    SynchronizationManager *        m_pSynchronizationManager = nullptr;
-    bool                            m_detectedTestFailure = false;
+    SynchronizationManager * m_pSynchronizationManager = nullptr;
+    bool m_detectedTestFailure = false;
 
     /**
      * Struct containing a collection of guids of data items (remote or local)
@@ -327,30 +384,31 @@ private:
      */
     struct GuidsOfItemsUsedForSyncTest
     {
-        QStringList     m_savedSearchGuids;
-        QStringList     m_linkedNotebookGuids;
-        QStringList     m_tagGuids;
-        QStringList     m_notebookGuids;
-        QStringList     m_noteGuids;
-        QStringList     m_resourceGuids;
+        QStringList m_savedSearchGuids;
+        QStringList m_linkedNotebookGuids;
+        QStringList m_tagGuids;
+        QStringList m_notebookGuids;
+        QStringList m_noteGuids;
+        QStringList m_resourceGuids;
     };
 
-    GuidsOfItemsUsedForSyncTest     m_guidsOfUsersOwnRemoteItemsToModify;
-    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToModify;
+    GuidsOfItemsUsedForSyncTest m_guidsOfUsersOwnRemoteItemsToModify;
+    GuidsOfItemsUsedForSyncTest m_guidsOfLinkedNotebookRemoteItemsToModify;
 
-    GuidsOfItemsUsedForSyncTest     m_guidsOfUserOwnLocalItemsToModify;
-    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookLocalItemsToModify;
+    GuidsOfItemsUsedForSyncTest m_guidsOfUserOwnLocalItemsToModify;
+    GuidsOfItemsUsedForSyncTest m_guidsOfLinkedNotebookLocalItemsToModify;
 
-    GuidsOfItemsUsedForSyncTest     m_guidsOfUserOwnRemoteItemsToExpunge;
-    GuidsOfItemsUsedForSyncTest     m_guidsOfLinkedNotebookRemoteItemsToExpunge;
+    GuidsOfItemsUsedForSyncTest m_guidsOfUserOwnRemoteItemsToExpunge;
+    GuidsOfItemsUsedForSyncTest m_guidsOfLinkedNotebookRemoteItemsToExpunge;
 
-    QHash<QString, QString>         m_expectedSavedSearchNamesByGuid;
-    QHash<QString, QString>         m_expectedTagNamesByGuid;
-    QHash<QString, QString>         m_expectedNotebookNamesByGuid;
-    QHash<QString, QString>         m_expectedNoteTitlesByGuid;
+    QHash<QString, QString> m_expectedSavedSearchNamesByGuid;
+    QHash<QString, QString> m_expectedTagNamesByGuid;
+    QHash<QString, QString> m_expectedNotebookNamesByGuid;
+    QHash<QString, QString> m_expectedNoteTitlesByGuid;
 
-    QSet<QString>                   m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags;
-    QSet<QString>                   m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged;
+    QSet<QString>
+        m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags;
+    QSet<QString> m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged;
 };
 
 } // namespace test

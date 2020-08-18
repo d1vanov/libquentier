@@ -24,12 +24,12 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Printable.h>
 
-#include <QtGlobal>
 #include <QUuid>
+#include <QtGlobal>
 
 namespace quentier {
 
-class QUENTIER_EXPORT INoteStoreDataElement:
+class QUENTIER_EXPORT INoteStoreDataElement :
     public ILocalStorageDataElement,
     public Printable
 {
@@ -57,63 +57,67 @@ public:
 
 #define DECLARE_IS_DIRTY                                                       \
     virtual bool isDirty() const override;                                     \
-// DECLARE_IS_DIRTY
+    // DECLARE_IS_DIRTY
 
 #define DECLARE_SET_DIRTY                                                      \
     virtual void setDirty(const bool isDirty) override;                        \
-// DECLARE_SET_DIRTY
+    // DECLARE_SET_DIRTY
 
 #define QN_DECLARE_DIRTY                                                       \
     DECLARE_IS_DIRTY                                                           \
     DECLARE_SET_DIRTY                                                          \
-// QN_DECLARE_DIRTY
+    // QN_DECLARE_DIRTY
 
 #define DEFINE_IS_DIRTY(type)                                                  \
-    bool type::isDirty() const {                                               \
+    bool type::isDirty() const                                                 \
+    {                                                                          \
         return d->m_isDirty;                                                   \
     }                                                                          \
-// DEFINE_IS_DIRTY
+    // DEFINE_IS_DIRTY
 
 #define DEFINE_SET_DIRTY(type)                                                 \
-    void type::setDirty(const bool dirty) {                                    \
+    void type::setDirty(const bool dirty)                                      \
+    {                                                                          \
         d->m_isDirty = dirty;                                                  \
     }                                                                          \
-// DEFINE_SET_DIRTY
+    // DEFINE_SET_DIRTY
 
 #define QN_DEFINE_DIRTY(type)                                                  \
     DEFINE_IS_DIRTY(type)                                                      \
     DEFINE_SET_DIRTY(type)                                                     \
-// QN_DEFINE_DIRTY
+    // QN_DEFINE_DIRTY
 
 #define DECLARE_IS_LOCAL                                                       \
     virtual bool isLocal() const override;                                     \
-// DECLARE_IS_LOCAL
+    // DECLARE_IS_LOCAL
 
 #define DECLARE_SET_LOCAL                                                      \
     virtual void setLocal(const bool isLocal) override;                        \
-// DECLARE_SET_LOCAL
+    // DECLARE_SET_LOCAL
 
 #define QN_DECLARE_LOCAL                                                       \
     DECLARE_IS_LOCAL                                                           \
     DECLARE_SET_LOCAL                                                          \
-// QN_DECLARE_LOCAL
+    // QN_DECLARE_LOCAL
 
 #define DEFINE_IS_LOCAL(type)                                                  \
-    bool type::isLocal() const {                                               \
+    bool type::isLocal() const                                                 \
+    {                                                                          \
         return d->m_isLocal;                                                   \
     }                                                                          \
-// DEFINE_IS_LOCAL
+    // DEFINE_IS_LOCAL
 
 #define DEFINE_SET_LOCAL(type)                                                 \
-    void type::setLocal(const bool local) {                                    \
+    void type::setLocal(const bool local)                                      \
+    {                                                                          \
         d->m_isLocal = local;                                                  \
     }                                                                          \
-// DEFINE_SET_LOCAL
+    // DEFINE_SET_LOCAL
 
 #define QN_DEFINE_LOCAL(type)                                                  \
     DEFINE_IS_LOCAL(type)                                                      \
     DEFINE_SET_LOCAL(type)                                                     \
-// QN_DEFINE_LOCAL
+    // QN_DEFINE_LOCAL
 
 } // namespace quentier
 

@@ -26,8 +26,8 @@
 
 #include <QFlag>
 #include <QStringList>
-#include <QtGlobal>
 #include <QXmlStreamAttributes>
+#include <QtGlobal>
 
 QT_FORWARD_DECLARE_CLASS(QXmlStreamReader)
 QT_FORWARD_DECLARE_CLASS(QXmlStreamWriter)
@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN ShouldSkipElementResult final: public Printable
+class Q_DECL_HIDDEN ShouldSkipElementResult final : public Printable
 {
 public:
     enum type
@@ -53,7 +53,7 @@ public:
     virtual QTextStream & print(QTextStream & strm) const override;
 };
 
-class Q_DECL_HIDDEN ENMLConverterPrivate final: public QObject
+class Q_DECL_HIDDEN ENMLConverterPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -93,8 +93,7 @@ public:
         QString & enml, ErrorString & errorDescription) const;
 
     static bool noteContentToPlainText(
-        const QString & noteContent,
-        QString & plainText,
+        const QString & noteContent, QString & plainText,
         ErrorString & errorMessage);
 
     static bool noteContentToListOfWords(
@@ -123,9 +122,8 @@ public:
     bool exportNotesToEnex(
         const QVector<Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalUids,
-        const ENMLConverter::EnexExportTags exportTagsOption,
-        QString & enex, ErrorString & errorDescription,
-        const QString & version) const;
+        const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
+        ErrorString & errorDescription, const QString & version) const;
 
     bool importEnex(
         const QString & enex, QVector<Note> & notes,
@@ -140,23 +138,20 @@ private:
 
     // convert <div> element with decrypted text to ENML <en-crypt> tag
     bool decryptedTextToEnml(
-        QXmlStreamReader & reader,
-        DecryptedTextManager & decryptedTextManager,
-        QXmlStreamWriter & writer,
-        ErrorString & errorDescription) const;
+        QXmlStreamReader & reader, DecryptedTextManager & decryptedTextManager,
+        QXmlStreamWriter & writer, ErrorString & errorDescription) const;
 
     // convert ENML en-crypt tag to HTML <object> tag
     bool encryptedTextToHtml(
         const QXmlStreamAttributes & enCryptAttributes,
-        const QStringRef & encryptedTextCharacters,
-        const quint64 enCryptIndex, const quint64 enDecryptedIndex,
-        QXmlStreamWriter & writer, DecryptedTextManager & decryptedTextManager,
+        const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
+        const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
+        DecryptedTextManager & decryptedTextManager,
         bool & convertedToEnCryptNode) const;
 
     // convert ENML <en-media> tag to HTML <object> tag
     static bool resourceInfoToHtml(
-        const QXmlStreamAttributes & attributes,
-        QXmlStreamWriter & writer,
+        const QXmlStreamAttributes & attributes, QXmlStreamWriter & writer,
         ErrorString & errorDescription);
 
     void toDoTagsToHtml(
@@ -165,9 +160,8 @@ private:
 
     static void decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher,
-        const size_t keyLength, const quint64 enDecryptedIndex,
-        QXmlStreamWriter & writer);
+        const QString & hint, const QString & cipher, const size_t keyLength,
+        const quint64 enDecryptedIndex, QXmlStreamWriter & writer);
 
     bool validateEnex(
         const QString & enex, ErrorString & errorDescription) const;
@@ -182,23 +176,22 @@ private:
     qint64 timestampFromDateTime(const QDateTime & dateTime) const;
 
     ShouldSkipElementResult::type shouldSkipElement(
-        const QString & elementName,
-        const QXmlStreamAttributes & attributes,
+        const QString & elementName, const QXmlStreamAttributes & attributes,
         const QVector<SkipHtmlElementRule> & skipRules) const;
 
     struct ConversionState
     {
-        int         m_writeElementCounter = 0;
-        QString     m_lastElementName;
-        QXmlStreamAttributes    m_lastElementAttributes;
+        int m_writeElementCounter = 0;
+        QString m_lastElementName;
+        QXmlStreamAttributes m_lastElementAttributes;
 
         bool m_insideEnCryptElement = false;
         bool m_insideEnMediaElement = false;
 
-        QXmlStreamAttributes    m_enMediaAttributes;
+        QXmlStreamAttributes m_enMediaAttributes;
 
-        size_t  m_skippedElementNestingCounter = 0;
-        size_t  m_skippedElementWithPreservedContentsNestingCounter = 0;
+        size_t m_skippedElementNestingCounter = 0;
+        size_t m_skippedElementWithPreservedContentsNestingCounter = 0;
     };
 
     enum class ProcessElementStatus
@@ -217,21 +210,23 @@ private:
     Q_DISABLE_COPY(ENMLConverterPrivate)
 
 private:
-    const QSet<QString>     m_forbiddenXhtmlTags;
-    const QSet<QString>     m_forbiddenXhtmlAttributes;
-    const QSet<QString>     m_evernoteSpecificXhtmlTags;
-    const QSet<QString>     m_allowedXhtmlTags;
-    const QSet<QString>     m_allowedEnMediaAttributes;
+    const QSet<QString> m_forbiddenXhtmlTags;
+    const QSet<QString> m_forbiddenXhtmlAttributes;
+    const QSet<QString> m_evernoteSpecificXhtmlTags;
+    const QSet<QString> m_allowedXhtmlTags;
+    const QSet<QString> m_allowedEnMediaAttributes;
 
-    mutable HTMLCleaner *   m_pHtmlCleaner;
+    mutable HTMLCleaner * m_pHtmlCleaner;
 
     // Cached memory for the html converted to valid xml
-    mutable QString         m_cachedConvertedXml;
+    mutable QString m_cachedConvertedXml;
 };
 
 } // namespace quentier
 
 QUENTIER_DECLARE_PRINTABLE(QXmlStreamAttributes)
-QUENTIER_DECLARE_PRINTABLE(QVector<quentier::ENMLConverter::SkipHtmlElementRule>)
+
+QUENTIER_DECLARE_PRINTABLE(
+    QVector<quentier::ENMLConverter::SkipHtmlElementRule>)
 
 #endif // LIB_QUENTIER_ENML_ENML_CONVERTER_P_H

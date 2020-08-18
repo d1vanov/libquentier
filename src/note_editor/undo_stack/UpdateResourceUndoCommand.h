@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN UpdateResourceUndoCommand final:
+class Q_DECL_HIDDEN UpdateResourceUndoCommand final :
     public INoteEditorUndoCommand
 {
     Q_OBJECT
@@ -48,8 +48,8 @@ private:
     void init();
 
 private:
-    Resource     m_resourceBefore;
-    Resource     m_resourceAfter;
+    Resource m_resourceBefore;
+    Resource m_resourceAfter;
 };
 
 } // namespace quentier

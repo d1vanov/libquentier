@@ -21,16 +21,13 @@
 namespace quentier {
 
 ResourceData::ResourceData(const qevercloud::Resource & other) :
-    NoteStoreDataElementData(),
-    m_qecResource(other)
+    NoteStoreDataElementData(), m_qecResource(other)
 {}
 
 ResourceData::ResourceData(qevercloud::Resource && other) :
-    NoteStoreDataElementData(),
-    m_qecResource(std::move(other))
+    NoteStoreDataElementData(), m_qecResource(std::move(other))
 {}
 
-ResourceData::~ResourceData()
-{}
+ResourceData::~ResourceData() {}
 
 } // namespace quentier

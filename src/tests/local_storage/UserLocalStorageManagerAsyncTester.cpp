@@ -27,7 +27,7 @@ namespace quentier {
 namespace test {
 
 UserLocalStorageManagerAsyncTester::UserLocalStorageManagerAsyncTester(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
@@ -48,9 +48,8 @@ void UserLocalStorageManagerAsyncTester::onInitTestCase()
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(
-        account,
-        startupOptions);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(account, startupOptions);
 
     createConnections();
 
@@ -80,8 +79,10 @@ void UserLocalStorageManagerAsyncTester::initialize()
 
     ErrorString errorDescription;
     if (!m_initialUser.checkParameters(errorDescription)) {
-        QNWARNING("tests:local_storage", "Found invalid user: " << m_initialUser
-            << ", error: " << errorDescription);
+        QNWARNING(
+            "tests:local_storage",
+            "Found invalid user: " << m_initialUser
+                                   << ", error: " << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -98,19 +99,15 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(
     ErrorString errorDescription;
 
 #define HANDLE_WRONG_STATE()                                                   \
-    else                                                                       \
-    {                                                                          \
+    else {                                                                     \
         errorDescription.setBase(                                              \
             "Internal error in UserLocalStorageManagerAsyncTester: "           \
             "found wrong state");                                              \
         Q_EMIT failure(errorDescription.nonLocalizedString());                 \
-    }                                                                          \
-// HANDLE_WRONG_STATE
+    }
 
-    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
-    {
-        if (count != 1)
-        {
+    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST) {
+        if (count != 1) {
             errorDescription.setBase(
                 "GetUserCount returned result different "
                 "from the expected one (1)");
@@ -125,10 +122,8 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(
         m_state = STATE_SENT_DELETE_REQUEST;
         Q_EMIT deleteUserRequest(m_modifiedUser, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
-    {
-        if (count != 0)
-        {
+    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST) {
+        if (count != 0) {
             errorDescription.setBase(
                 "GetUserCount returned result different "
                 "from the expected one (0)");
@@ -146,8 +141,9 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(
 void UserLocalStorageManagerAsyncTester::onGetUserCountFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -159,10 +155,8 @@ void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_ADD_REQUEST)
-    {
-        if (m_initialUser != user)
-        {
+    if (m_state == STATE_SENT_ADD_REQUEST) {
+        if (m_initialUser != user) {
             errorDescription.setBase(
                 "Internal error in UserLocalStorageManagerAsyncTester: "
                 "user in onAddUserCompleted doesn't match the original User");
@@ -184,8 +178,10 @@ void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
 void UserLocalStorageManagerAsyncTester::onAddUserFailed(
     User user, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", user: " << user);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", user: " << user);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -197,10 +193,8 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_UPDATE_REQUEST)
-    {
-        if (m_modifiedUser != user)
-        {
+    if (m_state == STATE_SENT_UPDATE_REQUEST) {
+        if (m_modifiedUser != user) {
             errorDescription.setBase(
                 "Internal error in UserLocalStorageManagerAsyncTester: "
                 "user in onUpdateUserCompleted slot doesn't match the original "
@@ -220,8 +214,10 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
 void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(
     User user, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", user: " << user);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", user: " << user);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -233,16 +229,16 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
-    {
-        if (user != m_initialUser)
-        {
+    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST) {
+        if (user != m_initialUser) {
             errorDescription.setBase(
                 "Added and found users in the local storage don't match");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ": User added to the local storage: " << m_initialUser
-                << "\nUserWrapper found in the local storage: " << user);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << ": User added to the local storage: " << m_initialUser
+                    << "\nUserWrapper found in the local storage: " << user);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -260,16 +256,16 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
         m_state = STATE_SENT_UPDATE_REQUEST;
         Q_EMIT updateUserRequest(m_modifiedUser, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
-    {
-        if (user != m_modifiedUser)
-        {
+    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST) {
+        if (user != m_modifiedUser) {
             errorDescription.setBase(
                 "Updated and found users in the local storage don't match");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ": User updated in the local storage: " << m_modifiedUser
-                << "\nUserWrapper found in the local storage: " << user);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << ": User updated in the local storage: " << m_modifiedUser
+                    << "\nUserWrapper found in the local storage: " << user);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -278,15 +274,16 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
         Q_EMIT getUserCountRequest(QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
-    {
+    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         errorDescription.setBase(
             "Error: found user which should have been "
             "expunged from local storage");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ": User expunged from the local storage: " << m_modifiedUser
-            << "\nUserWrapper found in the local storage: " << user);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription
+                << ": User expunged from the local storage: " << m_modifiedUser
+                << "\nUserWrapper found in the local storage: " << user);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -303,8 +300,10 @@ void UserLocalStorageManagerAsyncTester::onFindUserFailed(
         return;
     }
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", user: " << user);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", user: " << user);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -316,16 +315,16 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
 
     ErrorString errorDescription;
 
-    if (m_modifiedUser != user)
-    {
+    if (m_modifiedUser != user) {
         errorDescription.setBase(
             "Internal error in UserLocalStorageManagerAsyncTester: "
             "user in onDeleteUserCompleted slot doesn't "
             "match the original deleted User");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << "; original deleted user: " << m_modifiedUser << ", user: "
-            << user);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription << "; original deleted user: " << m_modifiedUser
+                             << ", user: " << user);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -339,8 +338,10 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
 void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(
     User user, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", user: " << user);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", user: " << user);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -352,8 +353,7 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
 
     ErrorString errorDescription;
 
-    if (m_modifiedUser != user)
-    {
+    if (m_modifiedUser != user) {
         errorDescription.setBase(
             "Internal error in UserLocalStorageManagerAsyncTester: "
             "user in onExpungeUserCompleted slot doesn't "
@@ -370,8 +370,10 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
 void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(
     User user, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", user: " << user);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", user: " << user);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -379,125 +381,100 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(
 void UserLocalStorageManagerAsyncTester::createConnections()
 {
     QObject::connect(
-        m_pLocalStorageManagerThread,
-        &QThread::finished,
-        m_pLocalStorageManagerThread,
-        &QThread::deleteLater);
+        m_pLocalStorageManagerThread, &QThread::finished,
+        m_pLocalStorageManagerThread, &QThread::deleteLater);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::initialized,
-        this,
-        &UserLocalStorageManagerAsyncTester::initialize);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::initialized,
+        this, &UserLocalStorageManagerAsyncTester::initialize);
 
     // Request --> slot connections
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::getUserCountRequest,
+        this, &UserLocalStorageManagerAsyncTester::getUserCountRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onGetUserCountRequest);
 
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::addUserRequest,
+        this, &UserLocalStorageManagerAsyncTester::addUserRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddUserRequest);
 
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::updateUserRequest,
+        this, &UserLocalStorageManagerAsyncTester::updateUserRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateUserRequest);
 
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::findUserRequest,
+        this, &UserLocalStorageManagerAsyncTester::findUserRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onFindUserRequest);
 
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::deleteUserRequest,
+        this, &UserLocalStorageManagerAsyncTester::deleteUserRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onDeleteUserRequest);
 
     QObject::connect(
-        this,
-        &UserLocalStorageManagerAsyncTester::expungeUserRequest,
+        this, &UserLocalStorageManagerAsyncTester::expungeUserRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeUserRequest);
 
     // Slot <-- result connections
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getUserCountComplete,
-        this,
+        &LocalStorageManagerAsync::getUserCountComplete, this,
         &UserLocalStorageManagerAsyncTester::onGetUserCountCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getUserCountFailed,
-        this,
+        &LocalStorageManagerAsync::getUserCountFailed, this,
         &UserLocalStorageManagerAsyncTester::onGetUserCountFailed);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addUserComplete,
-        this,
-        &UserLocalStorageManagerAsyncTester::onAddUserCompleted);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addUserComplete,
+        this, &UserLocalStorageManagerAsyncTester::onAddUserCompleted);
+
+    QObject::connect(
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addUserFailed,
+        this, &UserLocalStorageManagerAsyncTester::onAddUserFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addUserFailed,
-        this,
-        &UserLocalStorageManagerAsyncTester::onAddUserFailed);
-
-    QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateUserComplete,
-        this,
+        &LocalStorageManagerAsync::updateUserComplete, this,
         &UserLocalStorageManagerAsyncTester::onUpdateUserCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateUserFailed,
-        this,
+        &LocalStorageManagerAsync::updateUserFailed, this,
         &UserLocalStorageManagerAsyncTester::onUpdateUserFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findUserComplete,
-        this,
+        &LocalStorageManagerAsync::findUserComplete, this,
         &UserLocalStorageManagerAsyncTester::onFindUserCompleted);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findUserFailed,
-        this,
-        &UserLocalStorageManagerAsyncTester::onFindUserFailed);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::findUserFailed,
+        this, &UserLocalStorageManagerAsyncTester::onFindUserFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::deleteUserComplete,
-        this,
+        &LocalStorageManagerAsync::deleteUserComplete, this,
         &UserLocalStorageManagerAsyncTester::onDeleteUserCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::deleteUserFailed,
-        this,
+        &LocalStorageManagerAsync::deleteUserFailed, this,
         &UserLocalStorageManagerAsyncTester::onDeleteUserFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeUserComplete,
-        this,
+        &LocalStorageManagerAsync::expungeUserComplete, this,
         &UserLocalStorageManagerAsyncTester::onExpungeUserCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeUserFailed,
-        this,
+        &LocalStorageManagerAsync::expungeUserFailed, this,
         &UserLocalStorageManagerAsyncTester::onExpungeUserFailed);
 }
 
@@ -522,4 +499,3 @@ void UserLocalStorageManagerAsyncTester::clear()
 
 } // namespace test
 } // namespace quentier
-

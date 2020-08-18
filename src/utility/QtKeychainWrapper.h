@@ -35,7 +35,7 @@ namespace quentier {
  * and is not intended to be moved into any thread past creation. The
  * communication with this wrapper object occurs via signals and slots.
  */
-class Q_DECL_HIDDEN QtKeychainWrapper final: public QObject
+class Q_DECL_HIDDEN QtKeychainWrapper final : public QObject
 {
     Q_OBJECT
 public:
@@ -75,9 +75,9 @@ private:
         const QKeychain::Error errorCode) const;
 
 private:
-    QHash<QKeychain::ReadPasswordJob*, QUuid>   m_readPasswordJobs;
-    QHash<QKeychain::WritePasswordJob*, QUuid>  m_writePasswordJobs;
-    QHash<QKeychain::DeletePasswordJob*, QUuid> m_deletePasswordJobs;
+    QHash<QKeychain::ReadPasswordJob *, QUuid> m_readPasswordJobs;
+    QHash<QKeychain::WritePasswordJob *, QUuid> m_writePasswordJobs;
+    QHash<QKeychain::DeletePasswordJob *, QUuid> m_deletePasswordJobs;
 };
 
 } // namespace quentier

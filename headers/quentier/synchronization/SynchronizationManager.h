@@ -40,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
  * remote Evernote servers. The class also deals with authentication with
  * Evernote service through OAuth.
  */
-class QUENTIER_EXPORT SynchronizationManager: public QObject
+class QUENTIER_EXPORT SynchronizationManager : public QObject
 {
     Q_OBJECT
 public:
@@ -80,11 +80,9 @@ public:
      *                                  as the parent of the passed in object
      */
     SynchronizationManager(
-        QString host,
-        LocalStorageManagerAsync & localStorageManagerAsync,
+        QString host, LocalStorageManagerAsync & localStorageManagerAsync,
         IAuthenticationManager & authenticationManager,
-        QObject * parent = nullptr,
-        INoteStorePtr pNoteStore = {},
+        QObject * parent = nullptr, INoteStorePtr pNoteStore = {},
         IUserStorePtr pUserStore = {},
         IKeychainServicePtr pKeychainService = {},
         ISyncStateStoragePtr pSyncStateStorage = {});
@@ -491,7 +489,7 @@ Q_SIGNALS:
     void setInkNoteImagesStoragePathDone(QString path);
 
 private:
-    SynchronizationManager()  = delete;
+    SynchronizationManager() = delete;
     Q_DISABLE_COPY(SynchronizationManager)
 
     SynchronizationManagerPrivate * d_ptr;

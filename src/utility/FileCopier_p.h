@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileCopierPrivate final: public QObject
+class Q_DECL_HIDDEN FileCopierPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -74,12 +74,12 @@ private:
     Q_DISABLE_COPY(FileCopierPrivate)
 
 private:
-    QString     m_sourcePath;
-    QString     m_destPath;
+    QString m_sourcePath;
+    QString m_destPath;
 
-    bool        m_idle = true;
-    bool        m_cancelled = false;
-    double      m_currentProgress = 0.0;
+    bool m_idle = true;
+    bool m_cancelled = false;
+    double m_currentProgress = 0.0;
 };
 
 } // namespace quentier

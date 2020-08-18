@@ -25,24 +25,24 @@
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <QtTest/QTest>
 #include <QTimer>
+#include <QtTest/QTest>
 
 // 10 minutes should be enough
 #define MAX_ALLOWED_MILLISECONDS 600000
 
 // Local uids of base data items' notebooks
 #define FIRST_NOTEBOOK_LOCAL_UID                                               \
-    QStringLiteral("68b6df59-5e35-4850-a972-b5493dfead8a")                     \
-// FIRST_NOTEBOOK_LOCAL_UID
+    QStringLiteral(                                                            \
+        "68b6df59-5e35-4850-a972-b5493dfead8a") // FIRST_NOTEBOOK_LOCAL_UID
 
 #define SECOND_NOTEBOOK_LOCAL_UID                                              \
-    QStringLiteral("b5f6eb38-428b-4964-b4ca-b72007e11c4f")                     \
-// SECOND_NOTEBOOK_LOCAL_UID
+    QStringLiteral(                                                            \
+        "b5f6eb38-428b-4964-b4ca-b72007e11c4f") // SECOND_NOTEBOOK_LOCAL_UID
 
 #define THIRD_NOTEBOOK_LOCAL_UID                                               \
-    QStringLiteral("7d919756-e83d-4a02-b94f-f6eab8e12885")                     \
-// THIRD_NOTEBOOK_LOCAL_UID
+    QStringLiteral(                                                            \
+        "7d919756-e83d-4a02-b94f-f6eab8e12885") // THIRD_NOTEBOOK_LOCAL_UID
 
 namespace quentier {
 namespace test {
@@ -59,14 +59,13 @@ struct CompareItemByLocalUid
         return item.localUid() == m_targetLocalUid;
     }
 
-    QString     m_targetLocalUid;
+    QString m_targetLocalUid;
 };
 
 template <class T>
 struct CompareItemByGuid
 {
-    CompareItemByGuid(QString targetGuid) :
-        m_targetGuid(std::move(targetGuid))
+    CompareItemByGuid(QString targetGuid) : m_targetGuid(std::move(targetGuid))
     {}
 
     bool operator()(const T & item) const
@@ -74,50 +73,40 @@ struct CompareItemByGuid
         return (item.hasGuid() && (item.guid() == m_targetGuid));
     }
 
-    QString     m_targetGuid;
+    QString m_targetGuid;
 };
 
 FullSyncStaleDataItemsExpungerTester::FullSyncStaleDataItemsExpungerTester(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent),
     m_testAccount(
         QStringLiteral("FullSyncStaleDataItemsExpungerTesterFakeUser"),
         Account::Type::Evernote, qevercloud::UserID(1))
 {}
 
-FullSyncStaleDataItemsExpungerTester::~FullSyncStaleDataItemsExpungerTester()
-{}
+FullSyncStaleDataItemsExpungerTester::~FullSyncStaleDataItemsExpungerTester() {}
 
 void FullSyncStaleDataItemsExpungerTester::init()
 {
     m_testAccount = Account(
-        m_testAccount.name(),
-        Account::Type::Evernote,
-        m_testAccount.id() + 1);
+        m_testAccount.name(), Account::Type::Evernote, m_testAccount.id() + 1);
 
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(
-        m_testAccount,
-        startupOptions,
-        this);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(m_testAccount, startupOptions, this);
 
     m_pLocalStorageManagerAsync->init();
 
-    m_pNotebookSyncCache = new NotebookSyncCache(
-        *m_pLocalStorageManagerAsync,
-        QString(),
-        this);
+    m_pNotebookSyncCache =
+        new NotebookSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
 
-    m_pTagSyncCache = new TagSyncCache(
-        *m_pLocalStorageManagerAsync,
-        QString(),
-        this);
+    m_pTagSyncCache =
+        new TagSyncCache(*m_pLocalStorageManagerAsync, QString(), this);
 
-    m_pSavedSearchSyncCache = new SavedSearchSyncCache(
-        *m_pLocalStorageManagerAsync,
-        this);
+    m_pSavedSearchSyncCache =
+        new SavedSearchSyncCache(*m_pLocalStorageManagerAsync, this);
 }
 
 void FullSyncStaleDataItemsExpungerTester::cleanup()
@@ -143,21 +132,15 @@ void FullSyncStaleDataItemsExpungerTester::cleanup()
 void FullSyncStaleDataItemsExpungerTester::testEmpty()
 {
     doTest(
-        /* use base data items = */ false,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ false, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testNoStaleOrDirtyItems()
 {
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebook()
@@ -173,11 +156,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebook()
     nonSyncedNotebooks << staleNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleTag()
@@ -193,11 +173,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleTag()
     nonSyncedTags << staleTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearch()
@@ -214,11 +191,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearch()
     nonSyncedSavedSearches << staleSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleNote()
@@ -239,11 +213,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNote()
     nonSyncedNotes << staleNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleTag()
@@ -269,14 +240,12 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleTag()
     nonSyncedTags << staleTag;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
-void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleSavedSearch()
+void FullSyncStaleDataItemsExpungerTester::
+    testOneStaleNotebookAndOneStaleSavedSearch()
 {
     Notebook staleNotebook;
     staleNotebook.setName(QStringLiteral("Stale notebook"));
@@ -300,11 +269,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleSavedS
     nonSyncedSavedSearches << staleSearch;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleNote()
@@ -335,14 +301,12 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneStaleNote()
     nonSyncedNotes << staleNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
-void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneStaleSavedSearch()
+void FullSyncStaleDataItemsExpungerTester::
+    testOneStaleTagAndOneStaleSavedSearch()
 {
     Tag staleTag;
     staleTag.setName(QStringLiteral("Stale tag"));
@@ -366,11 +330,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneStaleSavedSearch
     nonSyncedSavedSearches << staleSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneStaleNote()
@@ -401,14 +362,12 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneStaleNote()
     nonSyncedNotes << staleNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
-void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearchAndOneStaleNote()
+void FullSyncStaleDataItemsExpungerTester::
+    testOneStaleSavedSearchAndOneStaleNote()
 {
     SavedSearch staleSearch;
     staleSearch.setName(QStringLiteral("Stale saved search"));
@@ -437,11 +396,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearchAndOneStaleNot
     nonSyncedNotes << staleNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleItemOfEachKind()
@@ -493,11 +449,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleItemOfEachKind()
     nonSyncedNotes << staleNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotebooks()
@@ -530,11 +483,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotebooks()
     nonSyncedNotebooks << thirdStaleNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralStaleTags()
@@ -567,11 +517,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleTags()
     nonSyncedTags << thirdStaleTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralStaleSavedSearches()
@@ -607,11 +554,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleSavedSearches()
     nonSyncedSavedSearches << thirdStaleSavedSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotes()
@@ -631,8 +575,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotes()
     Note secondStaleNote;
     secondStaleNote.setTitle(QStringLiteral("Second stale note"));
 
-    secondStaleNote.setContent(
-        QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setContent(QStringLiteral(
+        "<en-note><h1>Second stale note content</h1></en-note>"));
 
     secondStaleNote.setGuid(UidGenerator::Generate());
     secondStaleNote.setUpdateSequenceNumber(101);
@@ -659,11 +603,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotes()
     nonSyncedNotes << thirdStaleNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralStaleItemsOfEachKind()
@@ -749,8 +690,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleItemsOfEachKind()
     Note secondStaleNote;
     secondStaleNote.setTitle(QStringLiteral("Second stale note"));
 
-    secondStaleNote.setContent(
-        QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setContent(QStringLiteral(
+        "<en-note><h1>Second stale note content</h1></en-note>"));
 
     secondStaleNote.setGuid(UidGenerator::Generate());
     secondStaleNote.setUpdateSequenceNumber(110);
@@ -795,11 +736,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleItemsOfEachKind()
     nonSyncedNotes << thirdStaleNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneDirtyNotebook()
@@ -815,11 +753,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtyNotebook()
     nonSyncedNotebooks << dirtyNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneDirtyTag()
@@ -835,11 +770,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtyTag()
     nonSyncedTags << dirtyTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneDirtySavedSearch()
@@ -856,11 +788,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtySavedSearch()
     nonSyncedSavedSearches << dirtySavedSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneDirtyNote()
@@ -881,11 +810,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtyNote()
     nonSyncedNotes << dirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneDirtyItemOfEachKind()
@@ -937,11 +863,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneDirtyItemOfEachKind()
     nonSyncedNotes << dirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotebooks()
@@ -974,11 +897,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotebooks()
     nonSyncedNotebooks << thirdDirtyNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyTags()
@@ -1011,11 +931,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyTags()
     nonSyncedTags << thirdDirtyTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralDirtySavedSearches()
@@ -1051,11 +968,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtySavedSearches()
     nonSyncedSavedSearches << thirdDirtySavedSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotes()
@@ -1075,8 +989,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotes()
     Note secondDirtyNote;
     secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
 
-    secondDirtyNote.setContent(
-        QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setContent(QStringLiteral(
+        "<en-note><h1>Second dirty note content</h1></en-note>"));
 
     secondDirtyNote.setGuid(UidGenerator::Generate());
     secondDirtyNote.setUpdateSequenceNumber(101);
@@ -1103,11 +1017,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyNotes()
     nonSyncedNotes << thirdDirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyItemsOfEachKind()
@@ -1193,8 +1104,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyItemsOfEachKind()
     Note secondDirtyNote;
     secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
 
-    secondDirtyNote.setContent(
-        QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setContent(QStringLiteral(
+        "<en-note><h1>Second dirty note content</h1></en-note>"));
 
     secondDirtyNote.setGuid(UidGenerator::Generate());
     secondDirtyNote.setUpdateSequenceNumber(110);
@@ -1239,14 +1150,12 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralDirtyItemsOfEachKind()
     nonSyncedNotes << thirdDirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
-void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneDirtyNotebook()
+void FullSyncStaleDataItemsExpungerTester::
+    testOneStaleNotebookAndOneDirtyNotebook()
 {
     Notebook staleNotebook;
     staleNotebook.setName(QStringLiteral("Stale notebook"));
@@ -1268,11 +1177,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNotebookAndOneDirtyNotebo
     nonSyncedNotebooks << dirtyNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneDirtyTag()
@@ -1297,14 +1203,12 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleTagAndOneDirtyTag()
     nonSyncedTags << dirtyTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
-void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearchAndOneDirtySavedSearch()
+void FullSyncStaleDataItemsExpungerTester::
+    testOneStaleSavedSearchAndOneDirtySavedSearch()
 {
     SavedSearch staleSearch;
     staleSearch.setName(QStringLiteral("Stale saved search"));
@@ -1328,11 +1232,8 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleSavedSearchAndOneDirtySav
     nonSyncedSavedSearches << dirtySavedSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::testOneStaleNoteAndOneDirtyNote()
@@ -1367,14 +1268,12 @@ void FullSyncStaleDataItemsExpungerTester::testOneStaleNoteAndOneDirtyNote()
     nonSyncedNotes << dirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
-void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotebooksAndSeveralDirtyNotebooks()
+void FullSyncStaleDataItemsExpungerTester::
+    testSeveralStaleNotebooksAndSeveralDirtyNotebooks()
 {
     Notebook staleNotebook;
     staleNotebook.setName(QStringLiteral("Stale notebook"));
@@ -1428,14 +1327,12 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotebooksAndSeveralDi
     nonSyncedNotebooks << thirdDirtyNotebook;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), QList<Note>());
 }
 
-void FullSyncStaleDataItemsExpungerTester::testSeveralStaleTagsAndSeveralDirtyTags()
+void FullSyncStaleDataItemsExpungerTester::
+    testSeveralStaleTagsAndSeveralDirtyTags()
 {
     Tag staleTag;
     staleTag.setName(QStringLiteral("Stale tag"));
@@ -1489,14 +1386,12 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleTagsAndSeveralDirtyTa
     nonSyncedTags << thirdDirtyTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
-void FullSyncStaleDataItemsExpungerTester::testSeveralStaleSavedSearchesAndSeveralDirtySavedSearches()
+void FullSyncStaleDataItemsExpungerTester::
+    testSeveralStaleSavedSearchesAndSeveralDirtySavedSearches()
 {
     SavedSearch staleSearch;
     staleSearch.setName(QStringLiteral("Stale saved search"));
@@ -1556,14 +1451,12 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleSavedSearchesAndSever
     nonSyncedSavedSearches << thirdDirtySavedSearch;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        nonSyncedSavedSearches,
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        nonSyncedSavedSearches, QList<Note>());
 }
 
-void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotesAndSeveralDirtyNotes()
+void FullSyncStaleDataItemsExpungerTester::
+    testSeveralStaleNotesAndSeveralDirtyNotes()
 {
     Note staleNote;
     staleNote.setTitle(QStringLiteral("Stale note"));
@@ -1580,8 +1473,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotesAndSeveralDirtyN
     Note secondStaleNote;
     secondStaleNote.setTitle(QStringLiteral("Second stale note"));
 
-    secondStaleNote.setContent(
-        QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setContent(QStringLiteral(
+        "<en-note><h1>Second stale note content</h1></en-note>"));
 
     secondStaleNote.setGuid(UidGenerator::Generate());
     secondStaleNote.setUpdateSequenceNumber(101);
@@ -1616,8 +1509,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotesAndSeveralDirtyN
     Note secondDirtyNote;
     secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
 
-    secondDirtyNote.setContent(
-        QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setContent(QStringLiteral(
+        "<en-note><h1>Second dirty note content</h1></en-note>"));
 
     secondDirtyNote.setGuid(UidGenerator::Generate());
     secondDirtyNote.setUpdateSequenceNumber(101);
@@ -1647,14 +1540,12 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleNotesAndSeveralDirtyN
     nonSyncedNotes << thirdDirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, QList<Notebook>(), QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
-void FullSyncStaleDataItemsExpungerTester::testSeveralStaleAndDirtyItemsOfEachKind()
+void FullSyncStaleDataItemsExpungerTester::
+    testSeveralStaleAndDirtyItemsOfEachKind()
 {
     Notebook staleNotebook;
     staleNotebook.setName(QStringLiteral("Stale notebook"));
@@ -1803,8 +1694,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleAndDirtyItemsOfEachKi
     Note secondStaleNote;
     secondStaleNote.setTitle(QStringLiteral("Second stale note"));
 
-    secondStaleNote.setContent(
-        QStringLiteral("<en-note><h1>Second stale note content</h1></en-note>"));
+    secondStaleNote.setContent(QStringLiteral(
+        "<en-note><h1>Second stale note content</h1></en-note>"));
 
     secondStaleNote.setGuid(UidGenerator::Generate());
     secondStaleNote.setUpdateSequenceNumber(119);
@@ -1839,8 +1730,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleAndDirtyItemsOfEachKi
     Note secondDirtyNote;
     secondDirtyNote.setTitle(QStringLiteral("Second dirty note"));
 
-    secondDirtyNote.setContent(
-        QStringLiteral("<en-note><h1>Second dirty note content</h1></en-note>"));
+    secondDirtyNote.setContent(QStringLiteral(
+        "<en-note><h1>Second dirty note content</h1></en-note>"));
 
     secondDirtyNote.setGuid(UidGenerator::Generate());
     secondDirtyNote.setUpdateSequenceNumber(122);
@@ -1897,11 +1788,8 @@ void FullSyncStaleDataItemsExpungerTester::testSeveralStaleAndDirtyItemsOfEachKi
     nonSyncedNotes << thirdDirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        nonSyncedTags,
-        nonSyncedSavedSearches,
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, nonSyncedTags,
+        nonSyncedSavedSearches, nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testDirtyNoteWithStaleNotebook()
@@ -1932,11 +1820,8 @@ void FullSyncStaleDataItemsExpungerTester::testDirtyNoteWithStaleNotebook()
     nonSyncedNotes << dirtyNote;
 
     doTest(
-        /* use base data items = */ true,
-        nonSyncedNotebooks,
-        QList<Tag>(),
-        QList<SavedSearch>(),
-        nonSyncedNotes);
+        /* use base data items = */ true, nonSyncedNotebooks, QList<Tag>(),
+        QList<SavedSearch>(), nonSyncedNotes);
 }
 
 void FullSyncStaleDataItemsExpungerTester::testDirtyTagWithStaleParentTag()
@@ -1963,26 +1848,25 @@ void FullSyncStaleDataItemsExpungerTester::testDirtyTagWithStaleParentTag()
     nonSyncedTags << dirtyTag;
 
     doTest(
-        /* use base data items = */ true,
-        QList<Notebook>(),
-        nonSyncedTags,
-        QList<SavedSearch>(),
-        QList<Note>());
+        /* use base data items = */ true, QList<Notebook>(), nonSyncedTags,
+        QList<SavedSearch>(), QList<Note>());
 }
 
 void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
 {
     if (Q_UNLIKELY(!m_pLocalStorageManagerAsync)) {
-        QFAIL("Detected null pointer to LocalStorageManagerAsync while trying "
-              "to set up the base data items");
+        QFAIL(
+            "Detected null pointer to LocalStorageManagerAsync while trying "
+            "to set up the base data items");
         return;
     }
 
     LocalStorageManager * pLocalStorageManager =
         m_pLocalStorageManagerAsync->localStorageManager();
     if (Q_UNLIKELY(!pLocalStorageManager)) {
-        QFAIL("Detected null pointer to LocalStorageManager while trying "
-              "to set up the base data items");
+        QFAIL(
+            "Detected null pointer to LocalStorageManager while trying "
+            "to set up the base data items");
         return;
     }
 
@@ -2129,9 +2013,8 @@ void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
 
     ErrorString errorDescription;
 
-    bool res = pLocalStorageManager->addNotebook(
-        firstNotebook,
-        errorDescription);
+    bool res =
+        pLocalStorageManager->addNotebook(firstNotebook, errorDescription);
 
     QVERIFY2(res == true, qPrintable(errorDescription.nonLocalizedString()));
 
@@ -2204,8 +2087,7 @@ void FullSyncStaleDataItemsExpungerTester::setupBaseDataItems()
 }
 
 void FullSyncStaleDataItemsExpungerTester::doTest(
-    const bool useBaseDataItems,
-    const QList<Notebook> & nonSyncedNotebooks,
+    const bool useBaseDataItems, const QList<Notebook> & nonSyncedNotebooks,
     const QList<Tag> & nonSyncedTags,
     const QList<SavedSearch> & nonSyncedSavedSearches,
     const QList<Note> & nonSyncedNotes)
@@ -2229,17 +2111,16 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         setupBaseDataItems();
     }
 
-    for(auto notebook: qAsConst(nonSyncedNotebooks))
-    {
+    for (auto notebook: qAsConst(nonSyncedNotebooks)) {
         ErrorString errorDescription;
-        bool res = pLocalStorageManager->addNotebook(notebook, errorDescription);
+        bool res =
+            pLocalStorageManager->addNotebook(notebook, errorDescription);
         if (!res) {
             QFAIL(qPrintable(errorDescription.nonLocalizedString()));
         }
     }
 
-    for(auto tag: qAsConst(nonSyncedTags))
-    {
+    for (auto tag: qAsConst(nonSyncedTags)) {
         ErrorString errorDescription;
         bool res = pLocalStorageManager->addTag(tag, errorDescription);
         if (!res) {
@@ -2247,19 +2128,16 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         }
     }
 
-    for(auto search: qAsConst(nonSyncedSavedSearches))
-    {
+    for (auto search: qAsConst(nonSyncedSavedSearches)) {
         ErrorString errorDescription;
-        bool res = pLocalStorageManager->addSavedSearch(
-            search,
-            errorDescription);
+        bool res =
+            pLocalStorageManager->addSavedSearch(search, errorDescription);
         if (!res) {
             QFAIL(qPrintable(errorDescription.nonLocalizedString()));
         }
     }
 
-    for(auto note: qAsConst(nonSyncedNotes))
-    {
+    for (auto note: qAsConst(nonSyncedNotes)) {
         ErrorString errorDescription;
         bool res = pLocalStorageManager->addNote(note, errorDescription);
         if (!res) {
@@ -2268,12 +2146,8 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     }
 
     FullSyncStaleDataItemsExpunger expunger(
-        *m_pLocalStorageManagerAsync,
-        *m_pNotebookSyncCache,
-        *m_pTagSyncCache,
-        *m_pSavedSearchSyncCache,
-        m_syncedGuids,
-        QString());
+        *m_pLocalStorageManagerAsync, *m_pNotebookSyncCache, *m_pTagSyncCache,
+        *m_pSavedSearchSyncCache, m_syncedGuids, QString());
 
     EventLoopWithExitStatus::ExitStatus expungerTestStatus =
         EventLoopWithExitStatus::ExitStatus::Failure;
@@ -2285,21 +2159,15 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
-            &expunger,
-            &FullSyncStaleDataItemsExpunger::finished,
-            &loop,
+            &expunger, &FullSyncStaleDataItemsExpunger::finished, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
-            &expunger,
-            &FullSyncStaleDataItemsExpunger::failure,
-            &loop,
+            &expunger, &FullSyncStaleDataItemsExpunger::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithErrorString);
 
         QTimer slotInvokingTimer;
@@ -2308,21 +2176,18 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &expunger,
-            &FullSyncStaleDataItemsExpunger::start);
+            0, &expunger, &FullSyncStaleDataItemsExpunger::start);
 
         Q_UNUSED(loop.exec())
         expungerTestStatus = loop.exitStatus();
     }
 
-    if (expungerTestStatus == EventLoopWithExitStatus::ExitStatus::Failure)
-    {
-        QFAIL("Detected failure during the asynchronous loop processing "
-              "in FullSyncStaleDataItemsExpunger");
+    if (expungerTestStatus == EventLoopWithExitStatus::ExitStatus::Failure) {
+        QFAIL(
+            "Detected failure during the asynchronous loop processing "
+            "in FullSyncStaleDataItemsExpunger");
     }
-    else if (expungerTestStatus ==
-             EventLoopWithExitStatus::ExitStatus::Timeout)
+    else if (expungerTestStatus == EventLoopWithExitStatus::ExitStatus::Timeout)
     {
         QFAIL("FullSyncStaleDataItemsExpunger failed to finish in time");
     }
@@ -2334,79 +2199,79 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     ErrorString errorDescription;
 
     auto remainingNotebooks = pLocalStorageManager->listNotebooks(
-        LocalStorageManager::ListObjectsOption::ListAll,
-        errorDescription);
+        LocalStorageManager::ListObjectsOption::ListAll, errorDescription);
 
     if (remainingNotebooks.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    for(const auto & notebook: qAsConst(remainingNotebooks))
-    {
-        if (notebook.hasGuid())
-        {
-            auto guidIt = m_syncedGuids.m_syncedNotebookGuids.find(
-                notebook.guid());
+    for (const auto & notebook: qAsConst(remainingNotebooks)) {
+        if (notebook.hasGuid()) {
+            auto guidIt =
+                m_syncedGuids.m_syncedNotebookGuids.find(notebook.guid());
 
             if (guidIt != m_syncedGuids.m_syncedNotebookGuids.end()) {
                 continue;
             }
 
-            QFAIL("Found a non-synced notebook which survived the purge "
-                  "performed by FullSyncStaleDataItemsExpunger and kept its "
-                  "guid");
+            QFAIL(
+                "Found a non-synced notebook which survived the purge "
+                "performed by FullSyncStaleDataItemsExpunger and kept its "
+                "guid");
         }
 
         if (!notebook.isDirty()) {
-            QFAIL("Found a non-synced and non-dirty notebook which survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger");
+            QFAIL(
+                "Found a non-synced and non-dirty notebook which survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger");
         }
 
         auto extraNotebookIt = std::find_if(
-            nonSyncedNotebooks.constBegin(),
-            nonSyncedNotebooks.constEnd(),
+            nonSyncedNotebooks.constBegin(), nonSyncedNotebooks.constEnd(),
             CompareItemByLocalUid<Notebook>(notebook.localUid()));
 
         if (extraNotebookIt == nonSyncedNotebooks.constEnd()) {
-            QFAIL("Found a notebook which survived the purge performed by "
-                  "FullSyncStaleDataItemsExpunger but has no guid "
-                  "and is not contained within the list of extra notebooks");
+            QFAIL(
+                "Found a notebook which survived the purge performed by "
+                "FullSyncStaleDataItemsExpunger but has no guid "
+                "and is not contained within the list of extra notebooks");
         }
     }
 
-    for(const auto & notebook: qAsConst(nonSyncedNotebooks))
-    {
+    for (const auto & notebook: qAsConst(nonSyncedNotebooks)) {
         auto remainingNotebookIt = std::find_if(
-            remainingNotebooks.constBegin(),
-            remainingNotebooks.constEnd(),
+            remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
             CompareItemByLocalUid<Notebook>(notebook.localUid()));
 
         if ((remainingNotebookIt == remainingNotebooks.constEnd()) &&
             notebook.isDirty())
         {
-            QFAIL("One of extra notebooks which was dirty has not survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be preserved");
+            QFAIL(
+                "One of extra notebooks which was dirty has not survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be preserved");
         }
-        else if ((remainingNotebookIt != remainingNotebooks.constEnd()) &&
-                 !notebook.isDirty())
+        else if (
+            (remainingNotebookIt != remainingNotebooks.constEnd()) &&
+            !notebook.isDirty())
         {
-            QFAIL("One of etxra notebooks which was not dirty has survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be expunged");
+            QFAIL(
+                "One of etxra notebooks which was not dirty has survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be expunged");
         }
     }
 
-    for(const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedNotebookGuids))
+    for (const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedNotebookGuids))
     {
         auto remainingNotebookIt = std::find_if(
-            remainingNotebooks.constBegin(),
-            remainingNotebooks.constEnd(),
+            remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
             CompareItemByGuid<Notebook>(syncedGuid));
 
         if (remainingNotebookIt == remainingNotebooks.constEnd()) {
-            QFAIL("Could not find a notebook within the remaining ones which "
-                  "guid was marked as synced");
+            QFAIL(
+                "Could not find a notebook within the remaining ones which "
+                "guid was marked as synced");
         }
     }
 
@@ -2417,76 +2282,71 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     errorDescription.clear();
 
     auto remainingTags = pLocalStorageManager->listTags(
-        LocalStorageManager::ListObjectsOption::ListAll,
-        errorDescription);
+        LocalStorageManager::ListObjectsOption::ListAll, errorDescription);
 
     if (remainingTags.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    for(const auto & tag: qAsConst(remainingTags))
-    {
-        if (tag.hasGuid())
-        {
+    for (const auto & tag: qAsConst(remainingTags)) {
+        if (tag.hasGuid()) {
             auto guidIt = m_syncedGuids.m_syncedTagGuids.find(tag.guid());
             if (guidIt != m_syncedGuids.m_syncedTagGuids.end()) {
                 continue;
             }
 
-            QFAIL("Found a non-synced tag which survived the purge performed "
-                  "by FullSyncStaleDataItemsExpunger and kept its guid");
+            QFAIL(
+                "Found a non-synced tag which survived the purge performed "
+                "by FullSyncStaleDataItemsExpunger and kept its guid");
         }
 
         if (!tag.isDirty()) {
-            QFAIL("Found a non-synced and non-dirty tag which survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger");
+            QFAIL(
+                "Found a non-synced and non-dirty tag which survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger");
         }
 
         auto extraTagIt = std::find_if(
-            nonSyncedTags.constBegin(),
-            nonSyncedTags.constEnd(),
+            nonSyncedTags.constBegin(), nonSyncedTags.constEnd(),
             CompareItemByLocalUid<Tag>(tag.localUid()));
 
         if (extraTagIt == nonSyncedTags.constEnd()) {
-            QFAIL("Found a tag which survived the purge performed by "
-                  "FullSyncStaleDataItemsExpunger but has no guid "
-                  "and is not contained within the list of extra tags");
+            QFAIL(
+                "Found a tag which survived the purge performed by "
+                "FullSyncStaleDataItemsExpunger but has no guid "
+                "and is not contained within the list of extra tags");
         }
     }
 
-    for(const auto & tag: qAsConst(nonSyncedTags))
-    {
+    for (const auto & tag: qAsConst(nonSyncedTags)) {
         auto remainingTagIt = std::find_if(
-            remainingTags.constBegin(),
-            remainingTags.constEnd(),
+            remainingTags.constBegin(), remainingTags.constEnd(),
             CompareItemByLocalUid<Tag>(tag.localUid()));
 
-        if ((remainingTagIt == remainingTags.constEnd()) &&
-            tag.isDirty())
-        {
-            QFAIL("One of extra tags which was dirty has not survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be preserved");
+        if ((remainingTagIt == remainingTags.constEnd()) && tag.isDirty()) {
+            QFAIL(
+                "One of extra tags which was dirty has not survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be preserved");
         }
-        else if ((remainingTagIt != remainingTags.constEnd()) &&
-                 !tag.isDirty())
+        else if ((remainingTagIt != remainingTags.constEnd()) && !tag.isDirty())
         {
-            QFAIL("One of extra tags which was not dirty has survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be expunged");
+            QFAIL(
+                "One of extra tags which was not dirty has survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be expunged");
         }
     }
 
-    for(const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedTagGuids))
-    {
+    for (const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedTagGuids)) {
         auto remainingTagIt = std::find_if(
-            remainingTags.constBegin(),
-            remainingTags.constEnd(),
+            remainingTags.constBegin(), remainingTags.constEnd(),
             CompareItemByGuid<Tag>(syncedGuid));
 
         if (remainingTagIt == remainingTags.constEnd()) {
-            QFAIL("Could not find a tag within the remaining ones which guid "
-                  "was marked as synced");
+            QFAIL(
+                "Could not find a tag within the remaining ones which guid "
+                "was marked as synced");
         }
     }
 
@@ -2497,38 +2357,36 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     errorDescription.clear();
 
     auto remainingSavedSearches = pLocalStorageManager->listSavedSearches(
-        LocalStorageManager::ListObjectsOption::ListAll,
-        errorDescription);
+        LocalStorageManager::ListObjectsOption::ListAll, errorDescription);
 
     if (remainingSavedSearches.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    for(const auto & search: qAsConst(remainingSavedSearches))
-    {
-        if (search.hasGuid())
-        {
-            auto guidIt = m_syncedGuids.m_syncedSavedSearchGuids.find(
-                search.guid());
+    for (const auto & search: qAsConst(remainingSavedSearches)) {
+        if (search.hasGuid()) {
+            auto guidIt =
+                m_syncedGuids.m_syncedSavedSearchGuids.find(search.guid());
 
             if (guidIt != m_syncedGuids.m_syncedSavedSearchGuids.end()) {
                 continue;
             }
 
-            QFAIL("Found a non-synced saved search which survived the purge "
-                  "performed by FullSyncStaleDataItemsExpunger and kept its "
-                  "guid");
+            QFAIL(
+                "Found a non-synced saved search which survived the purge "
+                "performed by FullSyncStaleDataItemsExpunger and kept its "
+                "guid");
         }
 
         if (!search.isDirty()) {
-            QFAIL("Found a non-synced and non-dirty saved search which "
-                  "survived the purge performed by "
-                  "FullSyncStaleDataItemsExpunger");
+            QFAIL(
+                "Found a non-synced and non-dirty saved search which "
+                "survived the purge performed by "
+                "FullSyncStaleDataItemsExpunger");
         }
     }
 
-    for(const auto & search: qAsConst(nonSyncedSavedSearches))
-    {
+    for (const auto & search: qAsConst(nonSyncedSavedSearches)) {
         auto remainingSavedSearchIt = std::find_if(
             remainingSavedSearches.constBegin(),
             remainingSavedSearches.constEnd(),
@@ -2537,32 +2395,35 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         if ((remainingSavedSearchIt == remainingSavedSearches.constEnd()) &&
             search.isDirty())
         {
-            QFAIL("One of extra saved searches which was dirty has not "
-                  "survived the purge performed by "
-                  "FullSyncStaleDataItemsExpunger even though it was intended "
-                  "to be preserved");
+            QFAIL(
+                "One of extra saved searches which was dirty has not "
+                "survived the purge performed by "
+                "FullSyncStaleDataItemsExpunger even though it was intended "
+                "to be preserved");
         }
-        else if ((remainingSavedSearchIt !=
-                  remainingSavedSearches.constEnd()) && !search.isDirty())
+        else if (
+            (remainingSavedSearchIt != remainingSavedSearches.constEnd()) &&
+            !search.isDirty())
         {
-            QFAIL("One of extra saved searches which was not dirty has "
-                  "survived the purge performed by "
-                  "FullSyncStaleDataItemsExpunger even though it was intended "
-                  "to be expunged");
+            QFAIL(
+                "One of extra saved searches which was not dirty has "
+                "survived the purge performed by "
+                "FullSyncStaleDataItemsExpunger even though it was intended "
+                "to be expunged");
         }
     }
 
-    for(const auto & syncedGuid:
-        qAsConst(m_syncedGuids.m_syncedSavedSearchGuids))
-    {
+    for (const auto & syncedGuid:
+         qAsConst(m_syncedGuids.m_syncedSavedSearchGuids)) {
         auto remainingSavedSearchIt = std::find_if(
             remainingSavedSearches.constBegin(),
             remainingSavedSearches.constEnd(),
             CompareItemByGuid<SavedSearch>(syncedGuid));
 
         if (remainingSavedSearchIt == remainingSavedSearches.constEnd()) {
-            QFAIL("Could not find a saved search within the remaining ones "
-                  "which guid was marked as synced");
+            QFAIL(
+                "Could not find a saved search within the remaining ones "
+                "which guid was marked as synced");
         }
     }
 
@@ -2576,16 +2437,14 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         LocalStorageManager::GetNoteOption::WithResourceMetadata);
 
     auto remainingNotes = pLocalStorageManager->listNotes(
-        LocalStorageManager::ListObjectsOption::ListAll,
-        getNoteOptions,
+        LocalStorageManager::ListObjectsOption::ListAll, getNoteOptions,
         errorDescription);
 
     if (remainingNotes.isEmpty() && !errorDescription.isEmpty()) {
         QFAIL(qPrintable(errorDescription.nonLocalizedString()));
     }
 
-    for(const auto & note: qAsConst(remainingNotes))
-    {
+    for (const auto & note: qAsConst(remainingNotes)) {
         if (!note.hasNotebookGuid() && !note.hasNotebookLocalUid()) {
             QFAIL("Found a note without notebook guid and notebook local uid");
         }
@@ -2593,91 +2452,88 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
         auto remainingNotebookIt = remainingNotebooks.constEnd();
         if (note.hasNotebookGuid()) {
             remainingNotebookIt = std::find_if(
-                remainingNotebooks.constBegin(),
-                remainingNotebooks.constEnd(),
+                remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
                 CompareItemByGuid<Notebook>(note.notebookGuid()));
         }
         else {
             remainingNotebookIt = std::find_if(
-                remainingNotebooks.constBegin(),
-                remainingNotebooks.constEnd(),
+                remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
                 CompareItemByLocalUid<Notebook>(note.notebookLocalUid()));
         }
 
         if (Q_UNLIKELY(remainingNotebookIt == remainingNotebooks.constEnd())) {
-            QFAIL("Found a note which corresponding notebook has been expunged "
-                  "but the note still exists within the local storage");
+            QFAIL(
+                "Found a note which corresponding notebook has been expunged "
+                "but the note still exists within the local storage");
         }
 
-        if (note.hasGuid())
-        {
+        if (note.hasGuid()) {
             auto guidIt = m_syncedGuids.m_syncedNoteGuids.find(note.guid());
             if (guidIt != m_syncedGuids.m_syncedNoteGuids.end()) {
                 continue;
             }
 
-            QFAIL("Found a non-synced note which survived the purge performed "
-                  "by FullSyncStaleDataItemsExpunger and kept its guid");
+            QFAIL(
+                "Found a non-synced note which survived the purge performed "
+                "by FullSyncStaleDataItemsExpunger and kept its guid");
         }
 
         if (!note.isDirty()) {
-            QFAIL("Found a non-synced and non-dirty note which survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger");
+            QFAIL(
+                "Found a non-synced and non-dirty note which survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger");
         }
     }
 
-    for(const auto & note: qAsConst(nonSyncedNotes))
-    {
+    for (const auto & note: qAsConst(nonSyncedNotes)) {
         if (!note.hasNotebookGuid() && !note.hasNotebookLocalUid()) {
-            QFAIL("One of non-synced notes has no notebook guid and no "
-                  "notebook local uid");
+            QFAIL(
+                "One of non-synced notes has no notebook guid and no "
+                "notebook local uid");
         }
 
         auto remainingNotebookIt = remainingNotebooks.constEnd();
         if (note.hasNotebookGuid()) {
             remainingNotebookIt = std::find_if(
-                remainingNotebooks.constBegin(),
-                remainingNotebooks.constEnd(),
+                remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
                 CompareItemByGuid<Notebook>(note.notebookGuid()));
         }
         else {
             remainingNotebookIt = std::find_if(
-                remainingNotebooks.constBegin(),
-                remainingNotebooks.constEnd(),
+                remainingNotebooks.constBegin(), remainingNotebooks.constEnd(),
                 CompareItemByLocalUid<Notebook>(note.notebookLocalUid()));
         }
 
         auto remainingNoteIt = std::find_if(
-            remainingNotes.constBegin(),
-            remainingNotes.constEnd(),
+            remainingNotes.constBegin(), remainingNotes.constEnd(),
             CompareItemByLocalUid<Note>(note.localUid()));
 
         if ((remainingNoteIt == remainingNotes.constEnd()) && note.isDirty() &&
             (remainingNotebookIt != remainingNotebooks.constEnd()))
         {
-            QFAIL("One of extra notes which was dirty has not survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be preserved");
+            QFAIL(
+                "One of extra notes which was dirty has not survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be preserved");
         }
-        else if ((remainingNoteIt != remainingNotes.constEnd()) &&
-                 !note.isDirty())
-        {
-            QFAIL("One of extra notes which was not dirty has survived "
-                  "the purge performed by FullSyncStaleDataItemsExpunger even "
-                  "though it was intended to be expunged");
+        else if (
+            (remainingNoteIt != remainingNotes.constEnd()) && !note.isDirty()) {
+            QFAIL(
+                "One of extra notes which was not dirty has survived "
+                "the purge performed by FullSyncStaleDataItemsExpunger even "
+                "though it was intended to be expunged");
         }
     }
 
-    for(const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedNoteGuids))
-    {
+    for (const auto & syncedGuid: qAsConst(m_syncedGuids.m_syncedNoteGuids)) {
         auto remainingNoteIt = std::find_if(
-            remainingNotes.constBegin(),
-            remainingNotes.constEnd(),
+            remainingNotes.constBegin(), remainingNotes.constEnd(),
             CompareItemByGuid<Note>(syncedGuid));
 
         if (remainingNoteIt == remainingNotes.constEnd()) {
-            QFAIL("Could not find a note within the remaining ones which guid "
-                  "was marked as synced");
+            QFAIL(
+                "Could not find a note within the remaining ones which guid "
+                "was marked as synced");
         }
     }
 }

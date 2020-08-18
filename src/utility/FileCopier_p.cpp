@@ -29,15 +29,15 @@
 
 namespace quentier {
 
-FileCopierPrivate::FileCopierPrivate(QObject * parent) :
-    QObject(parent)
-{}
+FileCopierPrivate::FileCopierPrivate(QObject * parent) : QObject(parent) {}
 
 void FileCopierPrivate::copyFile(
     const QString & sourcePath, const QString & destPath)
 {
-    QNDEBUG("utility:file_copier", "FileCopierPrivate::copyFile: source path = "
-        << sourcePath << ", dest path = " << destPath);
+    QNDEBUG(
+        "utility:file_copier",
+        "FileCopierPrivate::copyFile: source path = "
+            << sourcePath << ", dest path = " << destPath);
 
     if ((m_sourcePath == sourcePath) && (m_destPath == destPath)) {
         QNDEBUG("utility:file_copier", "Paths haven't changed, nothing to do");
@@ -51,8 +51,7 @@ void FileCopierPrivate::copyFile(
     m_currentProgress = 0.0;
 
     QFile fromFile(sourcePath);
-    if (!fromFile.open(QIODevice::ReadOnly))
-    {
+    if (!fromFile.open(QIODevice::ReadOnly)) {
         ErrorString error(
             QT_TR_NOOP("Can't copy file, failed to open the source "
                        "file for writing"));
@@ -65,8 +64,7 @@ void FileCopierPrivate::copyFile(
     }
 
     qint64 fromFileSize = fromFile.size();
-    if (Q_UNLIKELY(fromFileSize <= 0))
-    {
+    if (Q_UNLIKELY(fromFileSize <= 0)) {
         ErrorString error(
             QT_TR_NOOP("Can't copy file, the source file is empty"));
 
@@ -78,8 +76,7 @@ void FileCopierPrivate::copyFile(
     }
 
     QFile toFile(destPath);
-    if (!toFile.open(QIODevice::WriteOnly))
-    {
+    if (!toFile.open(QIODevice::WriteOnly)) {
         ErrorString error(
             QT_TR_NOOP("Can't copy file, failed to open "
                        "the destination file for writing"));
@@ -91,14 +88,13 @@ void FileCopierPrivate::copyFile(
         return;
     }
 
-    int bufLen = 4194304;  // 4 Mb in bytes
+    int bufLen = 4194304; // 4 Mb in bytes
     QByteArray buf;
     buf.reserve(bufLen);
 
     qint64 totalBytesWritten = 0;
 
-    while(true)
-    {
+    while (true) {
         // Allow potential pending cancellation to get in
         QCoreApplication::processEvents();
 
@@ -110,8 +106,7 @@ void FileCopierPrivate::copyFile(
         }
 
         qint64 bytesRead = fromFile.read(buf.data(), bufLen);
-        if (Q_UNLIKELY(bytesRead <= 0))
-        {
+        if (Q_UNLIKELY(bytesRead <= 0)) {
             ErrorString error(
                 QT_TR_NOOP("Can't copy file, failed to read data "
                            "from the source file"));
@@ -124,11 +119,9 @@ void FileCopierPrivate::copyFile(
         }
 
         qint64 bytesWritten = toFile.write(
-            buf.constData(),
-            std::min(static_cast<int>(bytesRead), bufLen));
+            buf.constData(), std::min(static_cast<int>(bytesRead), bufLen));
 
-        if (Q_UNLIKELY(bytesWritten < 0))
-        {
+        if (Q_UNLIKELY(bytesWritten < 0)) {
             ErrorString error(
                 QT_TR_NOOP("Can't copy file, failed to write data "
                            "to the destination file"));
@@ -142,13 +135,16 @@ void FileCopierPrivate::copyFile(
 
         totalBytesWritten += bytesWritten;
 
-        m_currentProgress =
-            static_cast<double>(totalBytesWritten) / fromFileSize;
+        m_currentProgress = static_cast<double>(totalBytesWritten) /
+            static_cast<double>(fromFileSize);
 
-        QNTRACE("utility:file_copier", "File copying progress update: "
-            << "progress = " << m_currentProgress << ", total bytes written = "
-            << totalBytesWritten << ", source file size = " << fromFileSize
-            << ", source path = " << sourcePath << ", dest path = " << destPath);
+        QNTRACE(
+            "utility:file_copier",
+            "File copying progress update: "
+                << "progress = " << m_currentProgress
+                << ", total bytes written = " << totalBytesWritten
+                << ", source file size = " << fromFileSize << ", source path = "
+                << sourcePath << ", dest path = " << destPath);
 
         Q_EMIT progressUpdate(m_currentProgress);
 
@@ -157,8 +153,10 @@ void FileCopierPrivate::copyFile(
         }
     }
 
-    QNDEBUG("utility:file_copier", "File copying is complete: source path = "
-        << sourcePath << ", dest path = " << destPath);
+    QNDEBUG(
+        "utility:file_copier",
+        "File copying is complete: source path = "
+            << sourcePath << ", dest path = " << destPath);
 
     clear();
     Q_EMIT finished(sourcePath, destPath);

@@ -31,20 +31,21 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
  * particular caches (of notes, notebooks, tags, linked notebooks and/or saved
  * searches) need to be shrunk
  */
-class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker: public Printable
+class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker : public Printable
 {
 public:
     virtual ~ILocalStorageCacheExpiryChecker();
 
     /**
-     * @return              A pointer to the newly allocated copy of a particular
-     *                      ILocalStorageCacheExpiryChecker implementation
+     * @return              A pointer to the newly allocated copy of a
+     * particular ILocalStorageCacheExpiryChecker implementation
      */
     virtual ILocalStorageCacheExpiryChecker * clone() const = 0;
 
     /**
      * @return              False if the cache of notes needs to be shrunk (due
-     *                      to its size or whatever other reason), true otherwise
+     *                      to its size or whatever other reason), true
+     * otherwise
      */
     virtual bool checkNotes() const = 0;
 
@@ -94,10 +95,10 @@ protected:
     ILocalStorageCacheExpiryChecker(
         const LocalStorageCacheManager & cacheManager);
 
-    const LocalStorageCacheManager &    m_localStorageCacheManager;
+    const LocalStorageCacheManager & m_localStorageCacheManager;
 
 private:
-    ILocalStorageCacheExpiryChecker()  = delete;
+    ILocalStorageCacheExpiryChecker() = delete;
     Q_DISABLE_COPY(ILocalStorageCacheExpiryChecker)
 };
 

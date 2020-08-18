@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteData final: public FavoritableDataElementData
+class Q_DECL_HIDDEN NoteData final : public FavoritableDataElementData
 {
 public:
     NoteData();
@@ -61,18 +61,18 @@ public:
 public:
     struct Q_DECL_HIDDEN ResourceAdditionalInfo
     {
-        QString  localUid;
-        bool     isDirty = false;
+        QString localUid;
+        bool isDirty = false;
 
         bool operator==(const ResourceAdditionalInfo & other) const;
     };
 
 public:
-    qevercloud::Note                m_qecNote;
-    QList<ResourceAdditionalInfo>   m_resourcesAdditionalInfo;
-    qevercloud::Optional<QString>   m_notebookLocalUid;
-    QStringList                     m_tagLocalUids;
-    QByteArray                      m_thumbnailData;
+    qevercloud::Note m_qecNote;
+    QList<ResourceAdditionalInfo> m_resourcesAdditionalInfo;
+    qevercloud::Optional<QString> m_notebookLocalUid;
+    QStringList m_tagLocalUids;
+    QByteArray m_thumbnailData;
 };
 
 } // namespace quentier

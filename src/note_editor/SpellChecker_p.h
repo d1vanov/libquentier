@@ -41,20 +41,19 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
 
-class Q_DECL_HIDDEN SpellCheckerPrivate final: public QObject
+class Q_DECL_HIDDEN SpellCheckerPrivate final : public QObject
 {
     Q_OBJECT
 public:
     SpellCheckerPrivate(
-        FileIOProcessorAsync * pFileIOProcessorAsync,
-        const Account & account, QObject * parent = nullptr,
-        const QString & userDictionaryPath = {});
+        FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+        QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     virtual ~SpellCheckerPrivate() override;
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<std::pair<QString,bool>> listAvailableDictionaries() const;
+    QVector<std::pair<QString, bool>> listAvailableDictionaries() const;
 
     void setAccount(const Account & account);
 
@@ -76,12 +75,12 @@ public:
 Q_SIGNALS:
     void ready();
 
-// private signals
+    // private signals
     void readFile(QString absoluteFilePath, QUuid requestId);
 
     void writeFile(
-        QString absoluteFilePath, QByteArray data,
-        QUuid requestId, bool append);
+        QString absoluteFilePath, QByteArray data, QUuid requestId,
+        bool append);
 
 private Q_SLOTS:
     void onDictionariesFound(
@@ -100,8 +99,7 @@ private:
     void onAppendUserDictionaryPartDone(
         bool success, ErrorString errorDescription);
 
-    void onUpdateUserDictionaryDone(
-        bool success, ErrorString errorDescription);
+    void onUpdateUserDictionaryDone(bool success, ErrorString errorDescription);
 
     void persistEnabledSystemDictionaries();
     void restoreSystemDictionatiesEnabledDisabledSettings();
@@ -136,7 +134,7 @@ private:
         void remove(const QByteArray & wordData);
 
     private:
-        std::shared_ptr<Hunspell>   m_pHunspell;
+        std::shared_ptr<Hunspell> m_pHunspell;
     };
 
     class Q_DECL_HIDDEN Dictionary
@@ -147,31 +145,31 @@ private:
         bool isEmpty() const;
 
     public:
-        HunspellWrapper             m_hunspellWrapper;
-        QString                     m_dictionaryPath;
-        bool                        m_enabled;
+        HunspellWrapper m_hunspellWrapper;
+        QString m_dictionaryPath;
+        bool m_enabled;
     };
 
 private:
-    FileIOProcessorAsync *      m_pFileIOProcessorAsync;
+    FileIOProcessorAsync * m_pFileIOProcessorAsync;
 
-    Account                     m_currentAccount;
+    Account m_currentAccount;
 
     std::shared_ptr<QAtomicInt> m_pDictionariesFinderStopFlag;
 
     // Hashed by the language code
-    QHash<QString, Dictionary>  m_systemDictionaries;
-    bool                        m_systemDictionariesReady = false;
+    QHash<QString, Dictionary> m_systemDictionaries;
+    bool m_systemDictionariesReady = false;
 
-    QUuid                       m_readUserDictionaryRequestId;
-    QString                     m_userDictionaryPath;
-    QStringList                 m_userDictionary;
-    bool                        m_userDictionaryReady = false;
+    QUuid m_readUserDictionaryRequestId;
+    QString m_userDictionaryPath;
+    QStringList m_userDictionary;
+    bool m_userDictionaryReady = false;
 
-    QStringList                 m_userDictionaryPartPendingWriting;
-    QUuid                       m_appendUserDictionaryPartToFileRequestId;
+    QStringList m_userDictionaryPartPendingWriting;
+    QUuid m_appendUserDictionaryPartToFileRequestId;
 
-    QUuid                       m_updateUserDictionaryFileRequestId;
+    QUuid m_updateUserDictionaryFileRequestId;
 };
 
 } // namespace quentier

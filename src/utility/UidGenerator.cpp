@@ -33,7 +33,7 @@ QString UidGenerator::UidToString(const QUuid & uid)
     }
 
     QString result = uid.toString();
-    result.remove(result.size()-1, 1);
+    result.remove(result.size() - 1, 1);
     result.remove(0, 1);
     return result;
 }

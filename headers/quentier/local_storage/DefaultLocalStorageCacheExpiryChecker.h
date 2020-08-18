@@ -29,7 +29,7 @@ namespace quentier {
  * by default, if no another implementation of ILocalStorageCacheExpiryChecker
  * is set to be used by LocalStorageCacheManager
  */
-class QUENTIER_EXPORT DefaultLocalStorageCacheExpiryChecker:
+class QUENTIER_EXPORT DefaultLocalStorageCacheExpiryChecker :
     public ILocalStorageCacheExpiryChecker
 {
 public:
@@ -45,8 +45,8 @@ public:
     virtual DefaultLocalStorageCacheExpiryChecker * clone() const override;
 
     /**
-     * @return              False if the current number of cached notes is higher
-     *                      than a reasonable limit, true otherwise
+     * @return              False if the current number of cached notes is
+     * higher than a reasonable limit, true otherwise
      */
     virtual bool checkNotes() const override;
 
@@ -69,8 +69,8 @@ public:
     virtual bool checkTags() const override;
 
     /**
-     * @return              False if the current number of cached linked notebooks
-     *                      is higher than a reasonable limit, true otherwise
+     * @return              False if the current number of cached linked
+     * notebooks is higher than a reasonable limit, true otherwise
      */
     virtual bool checkLinkedNotebooks() const override;
 

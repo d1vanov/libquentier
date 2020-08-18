@@ -20,12 +20,8 @@
 
 namespace quentier {
 
-UserData::UserData(const qevercloud::User & user) :
-    m_qecUser(user)
-{}
+UserData::UserData(const qevercloud::User & user) : m_qecUser(user) {}
 
-UserData::UserData(qevercloud::User && user) :
-    m_qecUser(std::move(user))
-{}
+UserData::UserData(qevercloud::User && user) : m_qecUser(std::move(user)) {}
 
 } // namespace quentier

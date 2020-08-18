@@ -39,7 +39,7 @@ namespace quentier {
  * which stores sync state for given accounts persistently and provides access
  * to previously stores sync states
  */
-class QUENTIER_EXPORT ISyncStateStorage: public QObject
+class QUENTIER_EXPORT ISyncStateStorage : public QObject
 {
     Q_OBJECT
 public:
@@ -47,15 +47,15 @@ public:
      * @brief The SyncState struct encapsulates some data fields which
      * together constitute the sync state of an account
      */
-    class QUENTIER_EXPORT ISyncState: public Printable
+    class QUENTIER_EXPORT ISyncState : public Printable
     {
     public:
         virtual qint32 userDataUpdateCount() const = 0;
         virtual qevercloud::Timestamp userDataLastSyncTime() const = 0;
-        virtual QHash<QString,qint32> linkedNotebookUpdateCounts() const = 0;
+        virtual QHash<QString, qint32> linkedNotebookUpdateCounts() const = 0;
 
-        virtual QHash<QString,qevercloud::Timestamp>
-            linkedNotebookLastSyncTimes() const = 0;
+        virtual QHash<QString, qevercloud::Timestamp>
+        linkedNotebookLastSyncTimes() const = 0;
 
         virtual QTextStream & print(QTextStream & strm) const override;
     };
@@ -81,8 +81,8 @@ Q_SIGNALS:
     void notifySyncStateUpdated(Account account, ISyncStatePtr syncState);
 };
 
-QUENTIER_EXPORT ISyncStateStoragePtr newSyncStateStorage(
-    QObject * parent = nullptr);
+QUENTIER_EXPORT ISyncStateStoragePtr
+newSyncStateStorage(QObject * parent = nullptr);
 
 } // namespace quentier
 

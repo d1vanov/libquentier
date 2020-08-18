@@ -27,12 +27,14 @@ void ResourceInfo::cacheResourceInfo(
     const QString & resourceDisplaySize, const QString & resourceLocalFilePath,
     const QSize & resourceImageSize)
 {
-    QNDEBUG("note_editor", "ResourceInfo::cacheResourceInfo: resource hash = "
-        << resourceHash.toHex()
-        << ", resource display name = " << resourceDisplayName
-        << ", resource display size = " << resourceDisplaySize
-        << ", resource local file path = " << resourceLocalFilePath
-        << ", resource image size = " << resourceImageSize);
+    QNDEBUG(
+        "note_editor",
+        "ResourceInfo::cacheResourceInfo: resource hash = "
+            << resourceHash.toHex()
+            << ", resource display name = " << resourceDisplayName
+            << ", resource display size = " << resourceDisplaySize
+            << ", resource local file path = " << resourceLocalFilePath
+            << ", resource image size = " << resourceImageSize);
 
     Info & info = m_resourceInfoHash[resourceHash];
     info.m_resourceDisplayName = resourceDisplayName;
@@ -52,8 +54,10 @@ bool ResourceInfo::findResourceInfo(
     QString & resourceDisplaySize, QString & resourceLocalFilePath,
     QSize & resourceImageSize) const
 {
-    QNDEBUG("note_editor", "ResourceInfo::findResourceInfo: resource hash = "
-        << resourceHash.toHex());
+    QNDEBUG(
+        "note_editor",
+        "ResourceInfo::findResourceInfo: resource hash = "
+            << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {
@@ -67,17 +71,21 @@ bool ResourceInfo::findResourceInfo(
     resourceLocalFilePath = info.m_resourceLocalFilePath;
     resourceImageSize = info.m_resourceImageSize;
 
-    QNTRACE("note_editor", "Found resource info: name = " << resourceDisplayName
-        << ", display size = " << resourceDisplaySize
-        << ", local file path = " << resourceLocalFilePath
-        << ", image size = " << resourceImageSize);
+    QNTRACE(
+        "note_editor",
+        "Found resource info: name = "
+            << resourceDisplayName << ", display size = " << resourceDisplaySize
+            << ", local file path = " << resourceLocalFilePath
+            << ", image size = " << resourceImageSize);
     return true;
 }
 
 bool ResourceInfo::removeResourceInfo(const QByteArray & resourceHash)
 {
-    QNDEBUG("note_editor", "ResourceInfo::removeResourceInfo: resource hash = "
-        << resourceHash.toHex());
+    QNDEBUG(
+        "note_editor",
+        "ResourceInfo::removeResourceInfo: resource hash = "
+            << resourceHash.toHex());
 
     auto it = m_resourceInfoHash.find(resourceHash);
     if (it == m_resourceInfoHash.end()) {

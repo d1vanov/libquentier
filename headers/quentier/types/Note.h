@@ -31,7 +31,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(NoteData)
 
-class QUENTIER_EXPORT Note: public IFavoritableDataElement
+class QUENTIER_EXPORT Note : public IFavoritableDataElement
 {
 public:
     QN_DECLARE_LOCAL_UID

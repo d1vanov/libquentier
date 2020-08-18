@@ -29,8 +29,10 @@ SpellCheckerDynamicHelper::SpellCheckerDynamicHelper(QObject * parent) :
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
 void SpellCheckerDynamicHelper::setLastEnteredWords(QVariant words)
 {
-    QNDEBUG("note_editor:js_glue", "SpellCheckerDynamicHelper"
-        << "::setLastEnteredWords: " << words);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "SpellCheckerDynamicHelper"
+            << "::setLastEnteredWords: " << words);
 
     QStringList wordsList = words.toStringList();
     Q_EMIT lastEnteredWords(wordsList);
@@ -38,13 +40,15 @@ void SpellCheckerDynamicHelper::setLastEnteredWords(QVariant words)
 #else
 void SpellCheckerDynamicHelper::setLastEnteredWords(QVariantList words)
 {
-    QNDEBUG("note_editor:js_glue", "SpellCheckerDynamicHelper"
-        << "::setLastEnteredWords: " << words);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "SpellCheckerDynamicHelper"
+            << "::setLastEnteredWords: " << words);
 
     QStringList wordsList;
     wordsList.reserve(words.size());
 
-    for(const auto & word: qAsConst(words)) {
+    for (const auto & word: qAsConst(words)) {
         wordsList << word.toString();
     }
 

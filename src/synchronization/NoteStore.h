@@ -28,8 +28,8 @@
 
 #include <QHash>
 #include <QObject>
-#include <QQueue>
 #include <QPointer>
+#include <QQueue>
 #include <QUuid>
 
 namespace quentier {
@@ -56,7 +56,7 @@ QT_FORWARD_DECLARE_CLASS(SavedSearch)
  * in QEverCloud's NoteStore so only the small subset of original NoteStore's
  * API is wrapped here at the moment.
  */
-class Q_DECL_HIDDEN NoteStore final: public INoteStore
+class Q_DECL_HIDDEN NoteStore final : public INoteStore
 {
     Q_OBJECT
 public:
@@ -188,14 +188,12 @@ private:
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForNote(
-        const Note & note,
-        const qevercloud::EDAMUserException & userException,
+        const Note & note, const qevercloud::EDAMUserException & userException,
         const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForTag(
-        const Tag & tag,
-        const qevercloud::EDAMUserException & userException,
+        const Tag & tag, const qevercloud::EDAMUserException & userException,
         const UserExceptionSource & source,
         ErrorString & errorDescription) const;
 
@@ -207,8 +205,7 @@ private:
 
     qint32 processEdamUserExceptionForGetSyncChunk(
         const qevercloud::EDAMUserException & userException,
-        const qint32 afterUSN,
-        const qint32 maxEntries,
+        const qint32 afterUSN, const qint32 maxEntries,
         ErrorString & errorDescription) const;
 
     qint32 processEdamUserExceptionForGetNote(
@@ -229,8 +226,7 @@ private:
 
     qint32 processEdamSystemException(
         const qevercloud::EDAMSystemException & systemException,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) const;
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) const;
 
     void processEdamNotFoundException(
         const qevercloud::EDAMNotFoundException & notFoundException,
@@ -242,13 +238,13 @@ private:
     Q_DISABLE_COPY(NoteStore)
 
 private:
-    qevercloud::INoteStorePtr   m_pNoteStore;
-    QString     m_authenticationToken;
+    qevercloud::INoteStorePtr m_pNoteStore;
+    QString m_authenticationToken;
 
     struct RequestData
     {
-        QString     m_guid;
-        QPointer<qevercloud::AsyncResult>   m_asyncResult;
+        QString m_guid;
+        QPointer<qevercloud::AsyncResult> m_asyncResult;
     };
 
     struct GetNoteRequest
@@ -266,13 +262,13 @@ private:
         bool m_withNoteLimits = false;
     };
 
-    int     m_getNoteAsyncRequestCount = 0;
-    int     m_getNoteAsyncRequestCountMax = 100;
+    int m_getNoteAsyncRequestCount = 0;
+    int m_getNoteAsyncRequestCountMax = 100;
 
-    QQueue<GetNoteRequest>  m_pendingGetNoteRequests;
+    QQueue<GetNoteRequest> m_pendingGetNoteRequests;
 
-    QHash<QUuid, RequestData>   m_noteRequestDataById;
-    QHash<QUuid, RequestData>   m_resourceRequestDataById;
+    QHash<QUuid, RequestData> m_noteRequestDataById;
+    QHash<QUuid, RequestData> m_resourceRequestDataById;
 };
 
 } // namespace quentier

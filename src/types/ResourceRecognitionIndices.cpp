@@ -23,12 +23,11 @@
 namespace quentier {
 
 ResourceRecognitionIndices::ResourceRecognitionIndices() :
-    Printable(),
-    d(new ResourceRecognitionIndicesData)
+    Printable(), d(new ResourceRecognitionIndicesData)
 {}
 
 ResourceRecognitionIndices::ResourceRecognitionIndices(
-        const ResourceRecognitionIndices & other) :
+    const ResourceRecognitionIndices & other) :
     Printable(),
     d(other.d)
 {}
@@ -50,8 +49,7 @@ ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(
     return *this;
 }
 
-ResourceRecognitionIndices::~ResourceRecognitionIndices()
-{}
+ResourceRecognitionIndices::~ResourceRecognitionIndices() {}
 
 bool ResourceRecognitionIndices::isNull() const
 {
@@ -179,16 +177,14 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
         strm << "  object width is not set;\n";
     }
 
-    if (!d->m_items.isEmpty())
-    {
+    if (!d->m_items.isEmpty()) {
         strm << "  recognition items: \n";
-        for(const auto & item: qAsConst(d->m_items)) {
+        for (const auto & item: qAsConst(d->m_items)) {
             strm << item << "\n";
         }
         strm << "\n";
     }
-    else
-    {
+    else {
         strm << "  no recognition items are set;\n";
     }
 

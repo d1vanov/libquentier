@@ -32,8 +32,9 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SpellCheckerDictionariesFinder final:
-    public QObject, public QRunnable
+class Q_DECL_HIDDEN SpellCheckerDictionariesFinder final :
+    public QObject,
+    public QRunnable
 {
     Q_OBJECT
 public:
@@ -42,8 +43,7 @@ public:
 
 public:
     SpellCheckerDictionariesFinder(
-        std::shared_ptr<QAtomicInt> pStopFlag,
-        QObject * parent = nullptr);
+        std::shared_ptr<QAtomicInt> pStopFlag, QObject * parent = nullptr);
 
     virtual void run() override;
 
@@ -52,9 +52,9 @@ Q_SIGNALS:
         DicAndAffFilesByDictionaryName docAndAffFilesByDictionaryName);
 
 private:
-    std::shared_ptr<QAtomicInt>     m_pStopFlag;
-    DicAndAffFilesByDictionaryName  m_files;
-    const QSet<QString>             m_localeList;
+    std::shared_ptr<QAtomicInt> m_pStopFlag;
+    DicAndAffFilesByDictionaryName m_files;
+    const QSet<QString> m_localeList;
 };
 
 } // namespace quentier

@@ -45,12 +45,9 @@
 namespace quentier {
 namespace test {
 
-UtilityTester::UtilityTester(QObject * parent) :
-    QObject(parent)
-{}
+UtilityTester::UtilityTester(QObject * parent) : QObject(parent) {}
 
-UtilityTester::~UtilityTester()
-{}
+UtilityTester::~UtilityTester() {}
 
 inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
@@ -67,21 +64,17 @@ void UtilityTester::init()
 }
 
 #define CATCH_EXCEPTION()                                                      \
-    catch(const std::exception & exception)                                    \
-    {                                                                          \
+    catch (const std::exception & exception) {                                 \
         SysInfo sysInfo;                                                       \
         QFAIL(qPrintable(                                                      \
             QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \
-            QStringLiteral(", backtrace: ") +                                  \
-            sysInfo.stackTrace()));                                            \
-    }                                                                          \
-// CATCH_EXCEPTION
+            QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
+    }
 
 void UtilityTester::encryptDecryptNoteTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = encryptDecryptTest(error);
         QVERIFY2(res, qPrintable(error));
@@ -91,8 +84,7 @@ void UtilityTester::encryptDecryptNoteTest()
 
 void UtilityTester::decryptNoteAesTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = decryptAesTest(error);
         QVERIFY2(res, qPrintable(error));
@@ -102,8 +94,7 @@ void UtilityTester::decryptNoteAesTest()
 
 void UtilityTester::decryptNoteRc2Test()
 {
-    try
-    {
+    try {
         QString error;
         bool res = decryptRc2Test(error);
         QVERIFY2(res, qPrintable(error));
@@ -113,8 +104,7 @@ void UtilityTester::decryptNoteRc2Test()
 
 void UtilityTester::tagSortByParentChildRelationsTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
         QVERIFY2(res, qPrintable(error));
@@ -124,8 +114,7 @@ void UtilityTester::tagSortByParentChildRelationsTest()
 
 void UtilityTester::lruCacheTests()
 {
-    try
-    {
+    try {
         QString error;
         bool res = ::quentier::test::testEmptyLRUCacheConsistency(error);
         QVERIFY2(res, qPrintable(error));
@@ -139,8 +128,9 @@ void UtilityTester::lruCacheTests()
         res = ::quentier::test::testLRUCacheReverseIterators(error);
         QVERIFY2(res, qPrintable(error));
 
-        res = ::quentier::test::testItemsAdditionToLRUCacheBeforeReachingMaxSize(
-            error);
+        res =
+            ::quentier::test::testItemsAdditionToLRUCacheBeforeReachingMaxSize(
+                error);
 
         QVERIFY2(res, qPrintable(error));
 

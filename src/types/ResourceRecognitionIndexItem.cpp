@@ -23,12 +23,11 @@
 namespace quentier {
 
 ResourceRecognitionIndexItem::ResourceRecognitionIndexItem() :
-    Printable(),
-    d(new ResourceRecognitionIndexItemData)
+    Printable(), d(new ResourceRecognitionIndexItemData)
 {}
 
 ResourceRecognitionIndexItem::ResourceRecognitionIndexItem(
-        const ResourceRecognitionIndexItem & other) :
+    const ResourceRecognitionIndexItem & other) :
     Printable(),
     d(other.d)
 {}
@@ -43,8 +42,7 @@ ResourceRecognitionIndexItem & ResourceRecognitionIndexItem::operator=(
     return *this;
 }
 
-ResourceRecognitionIndexItem::~ResourceRecognitionIndexItem()
-{}
+ResourceRecognitionIndexItem::~ResourceRecognitionIndexItem() {}
 
 bool ResourceRecognitionIndexItem::isValid() const
 {
@@ -136,8 +134,7 @@ bool ResourceRecognitionIndexItem::setStrokeAt(
     const int strokeIndex, const int stroke)
 {
     if ((strokeIndex < 0) ||
-        (d.constData()->m_strokeList.size() <= strokeIndex))
-    {
+        (d.constData()->m_strokeList.size() <= strokeIndex)) {
         return false;
     }
 
@@ -210,8 +207,7 @@ bool ResourceRecognitionIndexItem::setTextItemAt(
     const int textItemIndex, const TextItem & textItem)
 {
     if ((textItemIndex < 0) ||
-        (d.constData()->m_textItems.size() <= textItemIndex))
-    {
+        (d.constData()->m_textItems.size() <= textItemIndex)) {
         return false;
     }
 
@@ -272,9 +268,7 @@ int ResourceRecognitionIndexItem::numObjectItems() const
 bool ResourceRecognitionIndexItem::objectItemAt(
     const int objectItemIndex, ObjectItem & objectItem) const
 {
-    if ((objectItemIndex < 0) ||
-        (d->m_objectItems.size() <= objectItemIndex))
-    {
+    if ((objectItemIndex < 0) || (d->m_objectItems.size() <= objectItemIndex)) {
         return false;
     }
 
@@ -423,8 +417,7 @@ bool ResourceRecognitionIndexItem::barcodeItemAt(
     const int barcodeItemIndex, BarcodeItem & barcodeItem) const
 {
     if ((barcodeItemIndex < 0) ||
-        (d->m_barcodeItems.size() <= barcodeItemIndex))
-    {
+        (d->m_barcodeItems.size() <= barcodeItemIndex)) {
         return false;
     }
 
@@ -531,69 +524,59 @@ QTextStream & ResourceRecognitionIndexItem::print(QTextStream & strm) const
         strm << "  duration is not set;\n";
     }
 
-    if (!d->m_strokeList.isEmpty())
-    {
+    if (!d->m_strokeList.isEmpty()) {
         strm << "  stroke list: ";
-        for(const auto stroke: qAsConst(d->m_strokeList)) {
+        for (const auto stroke: qAsConst(d->m_strokeList)) {
             strm << stroke << " ";
         }
         strm << ";\n";
     }
-    else
-    {
+    else {
         strm << "  stroke list is not set;\n";
     }
 
-    if (!d->m_textItems.isEmpty())
-    {
+    if (!d->m_textItems.isEmpty()) {
         strm << "  text items: \n";
-        for(const auto & item: qAsConst(d->m_textItems)) {
+        for (const auto & item: qAsConst(d->m_textItems)) {
             strm << "    text: " << item.m_text
-                << "; weight = " << item.m_weight << ";\n";
+                 << "; weight = " << item.m_weight << ";\n";
         }
     }
-    else
-    {
+    else {
         strm << "  text items are not set;\n";
     }
 
-    if (!d->m_objectItems.isEmpty())
-    {
+    if (!d->m_objectItems.isEmpty()) {
         strm << "  object items: \n";
 
-        for(const auto & item: qAsConst(d->m_objectItems)) {
+        for (const auto & item: qAsConst(d->m_objectItems)) {
             strm << "    object type: " << item.m_objectType
-                << "; weight: " << item.m_weight << ";\n";
+                 << "; weight: " << item.m_weight << ";\n";
         }
     }
-    else
-    {
+    else {
         strm << "  object items are not set;\n";
     }
 
-    if (!d->m_shapeItems.isEmpty())
-    {
+    if (!d->m_shapeItems.isEmpty()) {
         strm << "  shape items: \n";
-        for(const auto & item: qAsConst(d->m_shapeItems)) {
+        for (const auto & item: qAsConst(d->m_shapeItems)) {
             strm << "    shape type: " << item.m_shapeType
-                << "; weight: " << item.m_weight << ";\n";
+                 << "; weight: " << item.m_weight << ";\n";
         }
     }
-    else
-    {
+    else {
         strm << "  shape items are not set;\n";
     }
 
-    if (!d->m_barcodeItems.isEmpty())
-    {
+    if (!d->m_barcodeItems.isEmpty()) {
         strm << "  barcode items: \n";
-        for(const auto & item: qAsConst(d->m_barcodeItems)) {
+        for (const auto & item: qAsConst(d->m_barcodeItems)) {
             strm << "    barcode: " << item.m_barcode
-                << "; weight: " << item.m_weight << ";\n";
+                 << "; weight: " << item.m_weight << ";\n";
         }
     }
-    else
-    {
+    else {
         strm << "  barcode items are not set;\n";
     }
 

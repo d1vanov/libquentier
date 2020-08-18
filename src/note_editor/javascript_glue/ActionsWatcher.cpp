@@ -22,9 +22,7 @@
 
 namespace quentier {
 
-ActionsWatcher::ActionsWatcher(QObject * parent) :
-    QObject(parent)
-{}
+ActionsWatcher::ActionsWatcher(QObject * parent) : QObject(parent) {}
 
 void ActionsWatcher::onCutActionToggled()
 {

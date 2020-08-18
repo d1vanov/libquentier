@@ -39,7 +39,7 @@ namespace quentier {
  * in QEverCloud's UserStore so only the small subset of original UserStore's
  * API is wrapped at the moment.
  */
-class Q_DECL_HIDDEN UserStore final: public IUserStore
+class Q_DECL_HIDDEN UserStore final : public IUserStore
 {
 public:
     UserStore(QString evernoteHost);
@@ -62,8 +62,7 @@ public:
 
     virtual qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
-        qevercloud::AccountLimits & limits,
-        ErrorString & errorDescription,
+        qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
 private:
@@ -73,16 +72,15 @@ private:
 
     qint32 processEdamSystemException(
         const qevercloud::EDAMSystemException & systemException,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) const;
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) const;
 
 private:
     Q_DISABLE_COPY(UserStore)
 
 private:
-    qevercloud::IUserStorePtr   m_pUserStore;
-    QString                     m_authenticationToken;
-    QList<QNetworkCookie>       m_cookies;
+    qevercloud::IUserStorePtr m_pUserStore;
+    QString m_authenticationToken;
+    QList<QNetworkCookie> m_cookies;
 };
 
 } // namespace quentier

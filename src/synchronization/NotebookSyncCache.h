@@ -36,7 +36,7 @@ namespace quentier {
  * be needed (i.e. there won't be any conflicts detected during sync + there
  * won't be the need to expunge stale notebooks after the full sync).
  */
-class Q_DECL_HIDDEN NotebookSyncCache final: public QObject
+class Q_DECL_HIDDEN NotebookSyncCache final : public QObject
 {
     Q_OBJECT
 public:
@@ -52,29 +52,39 @@ public:
      */
     bool isFilled() const;
 
-    const QHash<QString,QString> & nameByLocalUidHash() const
-    { return m_notebookNameByLocalUid; }
+    const QHash<QString, QString> & nameByLocalUidHash() const
+    {
+        return m_notebookNameByLocalUid;
+    }
 
-    const QHash<QString,QString> & nameByGuidHash() const
-    { return m_notebookNameByGuid; }
+    const QHash<QString, QString> & nameByGuidHash() const
+    {
+        return m_notebookNameByGuid;
+    }
 
-    const QHash<QString,QString> & guidByNameHash() const
-    { return m_notebookGuidByName; }
+    const QHash<QString, QString> & guidByNameHash() const
+    {
+        return m_notebookGuidByName;
+    }
 
-    const QHash<QString,Notebook> & dirtyNotebooksByGuidHash() const
-    { return m_dirtyNotebooksByGuid; }
+    const QHash<QString, Notebook> & dirtyNotebooksByGuidHash() const
+    {
+        return m_dirtyNotebooksByGuid;
+    }
 
-    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
+    const QString & linkedNotebookGuid() const
+    {
+        return m_linkedNotebookGuid;
+    }
 
 Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
 
-// private signals
+    // private signals
     void listNotebooks(
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotebooksOrder order,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QUuid requestId);
 
@@ -89,18 +99,15 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void onListNotebooksComplete(
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotebooksOrder order,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid,
-        QList<Notebook> foundNotebooks,
+        QString linkedNotebookGuid, QList<Notebook> foundNotebooks,
         QUuid requestId);
 
     void onListNotebooksFailed(
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotebooksOrder order,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
@@ -119,20 +126,20 @@ private:
     void processNotebook(const Notebook & notebook);
 
 private:
-    LocalStorageManagerAsync &          m_localStorageManagerAsync;
-    bool                                m_connectedToLocalStorage = false;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
+    bool m_connectedToLocalStorage = false;
 
-    QString                             m_linkedNotebookGuid;
+    QString m_linkedNotebookGuid;
 
-    QHash<QString,QString>              m_notebookNameByLocalUid;
-    QHash<QString,QString>              m_notebookNameByGuid;
-    QHash<QString,QString>              m_notebookGuidByName;
+    QHash<QString, QString> m_notebookNameByLocalUid;
+    QHash<QString, QString> m_notebookNameByGuid;
+    QHash<QString, QString> m_notebookGuidByName;
 
-    QHash<QString,Notebook>             m_dirtyNotebooksByGuid;
+    QHash<QString, Notebook> m_dirtyNotebooksByGuid;
 
-    QUuid                               m_listNotebooksRequestId;
-    size_t                              m_limit = 20;
-    size_t                              m_offset = 0;
+    QUuid m_listNotebooksRequestId;
+    size_t m_limit = 20;
+    size_t m_offset = 0;
 };
 
 } // namespace quentier

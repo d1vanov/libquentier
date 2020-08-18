@@ -23,12 +23,11 @@
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
-        const TagDirectedGraph & graph) :
+    const TagDirectedGraph & graph) :
     m_graph(graph)
 {
     auto allTagIds = m_graph.allTagIds();
-    for(const auto & tagId: qAsConst(allTagIds))
-    {
+    for (const auto & tagId: qAsConst(allTagIds)) {
         if (!reached(tagId)) {
             depthFirstSearch(tagId);
         }
@@ -64,8 +63,7 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
     auto childTagIds = m_graph.childTagIds(sourceTagId);
-    for(const auto & childTagId: qAsConst(childTagIds))
-    {
+    for (const auto & childTagId: qAsConst(childTagIds)) {
         if (hasCycle()) {
             return;
         }
@@ -74,11 +72,9 @@ void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
             m_parentTagIdByChildTagId[childTagId] = sourceTagId;
             depthFirstSearch(childTagId);
         }
-        else if (m_onStack.find(childTagId) != m_onStack.end())
-        {
+        else if (m_onStack.find(childTagId) != m_onStack.end()) {
             QString cycledId = childTagId;
-            while(true)
-            {
+            while (true) {
                 if (cycledId == sourceTagId) {
                     break;
                 }

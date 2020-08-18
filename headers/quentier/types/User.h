@@ -30,7 +30,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(UserData)
 
-class QUENTIER_EXPORT User: public Printable
+class QUENTIER_EXPORT User : public Printable
 {
 public:
     using PrivilegeLevel = qevercloud::PrivilegeLevel;

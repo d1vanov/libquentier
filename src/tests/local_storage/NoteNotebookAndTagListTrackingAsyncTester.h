@@ -26,7 +26,7 @@
 namespace quentier {
 namespace test {
 
-class NoteNotebookAndTagListTrackingAsyncTester: public QObject
+class NoteNotebookAndTagListTrackingAsyncTester : public QObject
 {
     Q_OBJECT
 public:
@@ -42,7 +42,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals
+    // private signals
     void addNotebook(Notebook notebook, QUuid requestId);
     void addTag(Tag tag, QUuid requestId);
     void addNote(Note note, QUuid requestId);
@@ -105,27 +105,27 @@ private:
         STATE_PENDING_NOTE_UPDATE_WITH_NOTEBOOK_AND_TAG_LIST_CHANGES
     };
 
-    State   m_state = STATE_UNINITIALIZED;
+    State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook        m_firstNotebook;
-    Notebook        m_secondNotebook;
-    int             m_addedNotebooksCount = 0;
+    Notebook m_firstNotebook;
+    Notebook m_secondNotebook;
+    int m_addedNotebooksCount = 0;
 
-    QVector<Tag>    m_firstNoteTagsSet;
-    QVector<Tag>    m_secondNoteTagsSet;
-    int             m_addedTagsCount = 0;
+    QVector<Tag> m_firstNoteTagsSet;
+    QVector<Tag> m_secondNoteTagsSet;
+    int m_addedTagsCount = 0;
 
-    Note            m_note;
+    Note m_note;
 
-    bool            m_receivedUpdateNoteCompleteSignal = false;
-    bool            m_receivedNoteMovedToAnotherNotebookSignal = false;
-    bool            m_receivedNoteTagsListChangedSignal = false;
+    bool m_receivedUpdateNoteCompleteSignal = false;
+    bool m_receivedNoteMovedToAnotherNotebookSignal = false;
+    bool m_receivedNoteTagsListChangedSignal = false;
 
-    int             m_noteMovedToAnotherNotebookSlotInvocationCount = 0;
-    int             m_noteTagsListChangedSlotInvocationCount = 0;
+    int m_noteMovedToAnotherNotebookSlotInvocationCount = 0;
+    int m_noteTagsListChangedSlotInvocationCount = 0;
 };
 
 } // namespace test

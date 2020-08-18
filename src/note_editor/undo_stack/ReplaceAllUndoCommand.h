@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ReplaceAllUndoCommand final: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ReplaceAllUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -48,9 +48,9 @@ public:
     virtual void undoImpl() override;
 
 private:
-    QString     m_textToReplace;
-    bool        m_matchCase;
-    Callback    m_callback;
+    QString m_textToReplace;
+    bool m_matchCase;
+    Callback m_callback;
 };
 
 } // namespace quentier

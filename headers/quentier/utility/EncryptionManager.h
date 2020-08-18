@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(EncryptionManagerPrivate)
  * encrypt or decrypt given text with password, cipher and key length and their
  * signal-slot based potentially asynchronous counterparts
  */
-class QUENTIER_EXPORT EncryptionManager: public QObject
+class QUENTIER_EXPORT EncryptionManager : public QObject
 {
     Q_OBJECT
 public:
@@ -45,13 +45,13 @@ public:
 
     bool decrypt(
         const QString & encryptedText, const QString & passphrase,
-        const QString & cipher, const size_t keyLength,
-        QString & decryptedText, ErrorString & errorDescription);
+        const QString & cipher, const size_t keyLength, QString & decryptedText,
+        ErrorString & errorDescription);
 
     bool encrypt(
         const QString & textToEncrypt, const QString & passphrase,
-        QString & cipher, size_t & keyLength,
-        QString & encryptedText, ErrorString & errorDescription);
+        QString & cipher, size_t & keyLength, QString & encryptedText,
+        ErrorString & errorDescription);
 
 Q_SIGNALS:
     void decryptedText(

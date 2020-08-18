@@ -36,7 +36,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 
-class Q_DECL_HIDDEN EncryptionDialog final: public QDialog
+class Q_DECL_HIDDEN EncryptionDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -55,7 +55,7 @@ public:
     QString hint() const;
 
 Q_SIGNALS:
-    void accepted(
+    void encryptionAccepted(
         QString textToEncrypt, QString encryptedText, QString cipher,
         size_t keyLength, QString hint, bool rememberForSession);
 
@@ -69,12 +69,12 @@ private:
     void setError(const ErrorString & error);
 
 private:
-    Ui::EncryptionDialog *                  m_pUI;
-    QString                                 m_textToEncrypt;
-    QString                                 m_cachedEncryptedText;
-    Account                                 m_account;
-    std::shared_ptr<EncryptionManager>      m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
+    Ui::EncryptionDialog * m_pUI;
+    QString m_textToEncrypt;
+    QString m_cachedEncryptedText;
+    Account m_account;
+    std::shared_ptr<EncryptionManager> m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 };
 
 } // namespace quentier

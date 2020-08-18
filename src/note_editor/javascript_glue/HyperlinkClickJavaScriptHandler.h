@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-class HyperlinkClickJavaScriptHandler: public QObject
+class HyperlinkClickJavaScriptHandler : public QObject
 {
     Q_OBJECT
 public:

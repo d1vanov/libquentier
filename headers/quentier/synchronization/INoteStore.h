@@ -21,10 +21,10 @@
 
 #include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
-#include <quentier/types/Tag.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/types/SavedSearch.h>
+#include <quentier/types/Tag.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Macros.h>
 
@@ -41,7 +41,7 @@ namespace quentier {
  * required for the implementation of NoteStore part of Evernote EDAM sync
  * protocol
  */
-class QUENTIER_EXPORT INoteStore: public QObject
+class QUENTIER_EXPORT INoteStore : public QObject
 {
     Q_OBJECT
 protected:
@@ -102,8 +102,7 @@ public:
      */
     virtual qint32 createNotebook(
         Notebook & notebook, ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update notebook
@@ -128,8 +127,7 @@ public:
      */
     virtual qint32 updateNotebook(
         Notebook & notebook, ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create note
@@ -387,10 +385,8 @@ public:
     virtual qint32 getLinkedNotebookSyncChunk(
         const qevercloud::LinkedNotebook & linkedNotebook,
         const qint32 afterUSN, const qint32 maxEntries,
-        const QString & linkedNotebookAuthToken,
-        const bool fullSyncOnly,
-        qevercloud::SyncChunk & syncChunk,
-        ErrorString & errorDescription,
+        const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -426,9 +422,8 @@ public:
     virtual qint32 getNote(
         const bool withContent, const bool withResourcesData,
         const bool withResourcesRecognition,
-        const bool withResourceAlternateData,
-        Note & note, ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) = 0;
+        const bool withResourceAlternateData, Note & note,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
 
     /**
      * Get note asynchronously
@@ -468,17 +463,12 @@ public:
      *                                  otherwise
      */
     virtual bool getNoteAsync(
-        const bool withContent,
-        const bool withResourceData,
+        const bool withContent, const bool withResourceData,
         const bool withResourcesRecognition,
-        const bool withResourceAlternateData,
-        const bool withSharedNotes,
-        const bool withNoteAppDataValues,
-        const bool withResourceAppDataValues,
-        const bool withNoteLimits,
-        const QString & noteGuid,
-        const QString & authToken,
-        ErrorString & errorDescription) = 0;
+        const bool withResourceAlternateData, const bool withSharedNotes,
+        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+        const bool withNoteLimits, const QString & noteGuid,
+        const QString & authToken, ErrorString & errorDescription) = 0;
 
     /**
      * Get resource synchronously
@@ -512,14 +502,10 @@ public:
      *                                  instead
      */
     virtual qint32 getResource(
-        const bool withDataBody,
-        const bool withRecognitionDataBody,
-        const bool withAlternateDataBody,
-        const bool withAttributes,
-        const QString & authToken,
-        Resource & resource,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) = 0;
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & authToken, Resource & resource,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
 
     /**
      * Get resource asynchronously
@@ -546,12 +532,9 @@ public:
      *                                  otherwise
      */
     virtual bool getResourceAsync(
-        const bool withDataBody,
-        const bool withRecognitionDataBody,
-        const bool withAlternateDataBody,
-        const bool withAttributes,
-        const QString & resourceGuid,
-        const QString & authToken,
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & resourceGuid, const QString & authToken,
         ErrorString & errorDescription) = 0;
 
     /**
@@ -579,8 +562,8 @@ public:
 
 Q_SIGNALS:
     void getNoteAsyncFinished(
-        qint32 errorCode, qevercloud::Note note,
-        qint32 rateLimitSeconds, ErrorString errorDescription);
+        qint32 errorCode, qevercloud::Note note, qint32 rateLimitSeconds,
+        ErrorString errorDescription);
 
     void getResourceAsyncFinished(
         qint32 errorCode, qevercloud::Resource resource,

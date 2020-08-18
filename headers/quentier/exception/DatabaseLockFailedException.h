@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT DatabaseLockFailedException: public IQuentierException
+class QUENTIER_EXPORT DatabaseLockFailedException : public IQuentierException
 {
 public:
     explicit DatabaseLockFailedException(const ErrorString & message);

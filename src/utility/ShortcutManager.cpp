@@ -23,8 +23,7 @@
 namespace quentier {
 
 ShortcutManager::ShortcutManager(QObject * parent) :
-    QObject(parent),
-    d_ptr(new ShortcutManagerPrivate(*this))
+    QObject(parent), d_ptr(new ShortcutManagerPrivate(*this))
 {}
 
 QKeySequence ShortcutManager::shortcut(
@@ -100,10 +99,7 @@ void ShortcutManager::setNonStandardDefaultShortcut(
 {
     Q_D(ShortcutManager);
     d->setNonStandardDefaultShortcut(
-        nonStandardKey,
-        shortcut,
-        account,
-        context);
+        nonStandardKey, shortcut, account, context);
 }
 
 } // namespace quentier

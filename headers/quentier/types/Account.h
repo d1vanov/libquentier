@@ -36,7 +36,7 @@ QT_FORWARD_DECLARE_CLASS(AccountData)
  * name, whether it is local or synchronized to Evernote and for the latter
  * case - some additional details like upload limit etc.
  */
-class QUENTIER_EXPORT Account: public Printable
+class QUENTIER_EXPORT Account : public Printable
 {
 public:
     enum class Type
@@ -68,12 +68,10 @@ public:
     explicit Account();
 
     explicit Account(
-        QString name, const Type type,
-        const qevercloud::UserID userId = -1,
+        QString name, const Type type, const qevercloud::UserID userId = -1,
         const EvernoteAccountType evernoteAccountType =
             EvernoteAccountType::Free,
-        QString evernoteHost = {},
-        QString shardId = {});
+        QString evernoteHost = {}, QString shardId = {});
 
     Account(const Account & other);
     Account & operator=(const Account & other);

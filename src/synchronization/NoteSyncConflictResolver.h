@@ -44,7 +44,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
  * i.e. "not yet synchronized with Evernote" note and the remote note would be
  * treated as a new note coming from Evernote
  */
-class Q_DECL_HIDDEN NoteSyncConflictResolver final: public QObject
+class Q_DECL_HIDDEN NoteSyncConflictResolver final : public QObject
 {
     Q_OBJECT
 public:
@@ -68,8 +68,14 @@ public:
 
     void start();
 
-    const qevercloud::Note & remoteNote() const { return m_remoteNote; }
-    const Note & localConflict() const { return m_localConflict; }
+    const qevercloud::Note & remoteNote() const
+    {
+        return m_remoteNote;
+    }
+    const Note & localConflict() const
+    {
+        return m_localConflict;
+    }
 
 public Q_SLOTS:
     void onAuthDataUpdated(
@@ -77,8 +83,10 @@ public Q_SLOTS:
         qevercloud::Timestamp expirationTime);
 
     void onLinkedNotebooksAuthDataUpdated(
-        QHash<QString,std::pair<QString,QString>> authTokensAndShardIdsByLinkedNotebookGuid,
-        QHash<QString,qevercloud::Timestamp> authTokenExpirationTimesByLinkedNotebookGuid);
+        QHash<QString, std::pair<QString, QString>>
+            authTokensAndShardIdsByLinkedNotebookGuid,
+        QHash<QString, qevercloud::Timestamp>
+            authTokenExpirationTimesByLinkedNotebookGuid);
 
 Q_SIGNALS:
     void finished(qevercloud::Note remoteNote);
@@ -87,7 +95,7 @@ Q_SIGNALS:
     void rateLimitExceeded(qint32 secondsToWait);
     void notifyAuthExpiration();
 
-// private signals
+    // private signals
     void addNote(Note note, QUuid requestId);
 
     void updateNote(
@@ -126,29 +134,29 @@ private:
     Q_DISABLE_COPY(NoteSyncConflictResolver)
 
 private:
-    IManager &          m_manager;
+    IManager & m_manager;
 
-    qevercloud::Note    m_remoteNote;
-    Note                m_localConflict;
+    qevercloud::Note m_remoteNote;
+    Note m_localConflict;
 
-    Note                m_remoteNoteAsLocalNote;
+    Note m_remoteNoteAsLocalNote;
 
-    bool                m_shouldOverrideLocalNoteWithRemoteNote = false;
+    bool m_shouldOverrideLocalNoteWithRemoteNote = false;
 
-    bool                m_pendingLocalConflictUpdateInLocalStorage = false;
-    bool                m_pendingFullRemoteNoteDataDownload = false;
-    bool                m_pendingRemoteNoteAdditionToLocalStorage = false;
-    bool                m_pendingRemoteNoteUpdateInLocalStorage = false;
+    bool m_pendingLocalConflictUpdateInLocalStorage = false;
+    bool m_pendingFullRemoteNoteDataDownload = false;
+    bool m_pendingRemoteNoteAdditionToLocalStorage = false;
+    bool m_pendingRemoteNoteUpdateInLocalStorage = false;
 
-    bool                m_pendingAuthDataUpdate = false;
-    bool                m_pendingLinkedNotebookAuthDataUpdate = false;
+    bool m_pendingAuthDataUpdate = false;
+    bool m_pendingLinkedNotebookAuthDataUpdate = false;
 
-    int                 m_retryNoteDownloadingTimerId = 0;
+    int m_retryNoteDownloadingTimerId = 0;
 
-    QUuid               m_addNoteRequestId;
-    QUuid               m_updateNoteRequestId;
+    QUuid m_addNoteRequestId;
+    QUuid m_updateNoteRequestId;
 
-    bool                m_started = false;
+    bool m_started = false;
 };
 
 } // namespace quentier

@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-class ToDoCheckboxOnClickHandler: public QObject
+class ToDoCheckboxOnClickHandler : public QObject
 {
     Q_OBJECT
 public:

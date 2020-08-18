@@ -32,30 +32,35 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
-class Q_DECL_HIDDEN SavedSearchSyncConflictResolver final: public QObject
+class Q_DECL_HIDDEN SavedSearchSyncConflictResolver final : public QObject
 {
     Q_OBJECT
 public:
     explicit SavedSearchSyncConflictResolver(
         const qevercloud::SavedSearch & remoteSavedSearch,
-        const SavedSearch & localConflict,
-        SavedSearchSyncCache & cache,
+        const SavedSearch & localConflict, SavedSearchSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
     void start();
 
     const qevercloud::SavedSearch & remoteSavedSearch() const
-    { return m_remoteSavedSearch; }
+    {
+        return m_remoteSavedSearch;
+    }
 
-    const SavedSearch & localConflict() const { return m_localConflict; }
+    const SavedSearch & localConflict() const
+    {
+        return m_localConflict;
+    }
 
 Q_SIGNALS:
     void finished(qevercloud::SavedSearch remoteSavedSearch);
-    void failure(qevercloud::SavedSearch remoteSavedSearch,
-                 ErrorString errorDescription);
+    void failure(
+        qevercloud::SavedSearch remoteSavedSearch,
+        ErrorString errorDescription);
 
-// private signals
+    // private signals
     void fillSavedSearchesCache();
     void addSavedSearch(SavedSearch search, QUuid requestId);
     void updateSavedSearch(SavedSearch search, QUuid requestId);
@@ -98,22 +103,22 @@ private:
     friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
-    SavedSearchSyncCache &          m_cache;
-    LocalStorageManagerAsync &      m_localStorageManagerAsync;
+    SavedSearchSyncCache & m_cache;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
 
-    qevercloud::SavedSearch         m_remoteSavedSearch;
-    SavedSearch                     m_localConflict;
+    qevercloud::SavedSearch m_remoteSavedSearch;
+    SavedSearch m_localConflict;
 
-    SavedSearch                     m_savedSearchToBeRenamed;
+    SavedSearch m_savedSearchToBeRenamed;
 
-    State                           m_state = State::Undefined;
+    State m_state = State::Undefined;
 
-    QUuid                           m_addSavedSearchRequestId;
-    QUuid                           m_updateSavedSearchRequestId;
-    QUuid                           m_findSavedSearchRequestId;
+    QUuid m_addSavedSearchRequestId;
+    QUuid m_updateSavedSearchRequestId;
+    QUuid m_findSavedSearchRequestId;
 
-    bool                            m_started = false;
-    bool                            m_pendingCacheFilling = false;
+    bool m_started = false;
+    bool m_pendingCacheFilling = false;
 };
 
 } // namespace quentier

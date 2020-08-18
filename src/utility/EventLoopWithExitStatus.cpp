@@ -23,29 +23,25 @@
 
 #define PRINT_EXIT_STATUS(strm, status)                                        \
     using ExitStatus = EventLoopWithExitStatus::ExitStatus;                    \
-    switch(status)                                                             \
-    {                                                                          \
-        case ExitStatus::Success:                                              \
-            strm << "Success";                                                 \
-            break;                                                             \
-        case ExitStatus::Failure:                                              \
-            strm << "Failure";                                                 \
-            break;                                                             \
-        case ExitStatus::Timeout:                                              \
-            strm << "Timeout";                                                 \
-            break;                                                             \
-        default:                                                               \
-            strm << "Unknown (" << static_cast<qint64>(status) << ")";         \
-            break;                                                             \
-    }                                                                          \
-// PRINT_EXIT_STATUS
+    switch (status) {                                                          \
+    case ExitStatus::Success:                                                  \
+        strm << "Success";                                                     \
+        break;                                                                 \
+    case ExitStatus::Failure:                                                  \
+        strm << "Failure";                                                     \
+        break;                                                                 \
+    case ExitStatus::Timeout:                                                  \
+        strm << "Timeout";                                                     \
+        break;                                                                 \
+    default:                                                                   \
+        strm << "Unknown (" << static_cast<qint64>(status) << ")";             \
+        break;                                                                 \
+    }
 
 namespace quentier {
 
 EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
-    QEventLoop(parent),
-    m_exitStatus(ExitStatus::Success),
-    m_errorDescription()
+    QEventLoop(parent), m_exitStatus(ExitStatus::Success), m_errorDescription()
 {}
 
 EventLoopWithExitStatus::ExitStatus EventLoopWithExitStatus::exitStatus() const

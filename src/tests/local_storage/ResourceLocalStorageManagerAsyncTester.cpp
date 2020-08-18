@@ -27,11 +27,12 @@ namespace quentier {
 namespace test {
 
 ResourceLocalStorageManagerAsyncTester::ResourceLocalStorageManagerAsyncTester(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
-ResourceLocalStorageManagerAsyncTester::~ResourceLocalStorageManagerAsyncTester()
+ResourceLocalStorageManagerAsyncTester::
+    ~ResourceLocalStorageManagerAsyncTester()
 {
     clear();
 }
@@ -49,9 +50,8 @@ void ResourceLocalStorageManagerAsyncTester::onInitTestCase()
     LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    m_pLocalStorageManagerAsync = new LocalStorageManagerAsync(
-        account,
-        startupOptions);
+    m_pLocalStorageManagerAsync =
+        new LocalStorageManagerAsync(account, startupOptions);
 
     createConnections();
 
@@ -92,8 +92,10 @@ void ResourceLocalStorageManagerAsyncTester::initialize()
 
     ErrorString errorDescription;
     if (!m_notebook.checkParameters(errorDescription)) {
-        QNWARNING("tests:local_storage", "Found invalid notebook: "
-            << m_notebook << ", error: " << errorDescription);
+        QNWARNING(
+            "tests:local_storage",
+            "Found invalid notebook: " << m_notebook
+                                       << ", error: " << errorDescription);
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
     }
@@ -110,21 +112,17 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
     ErrorString errorDescription;
 
 #define HANDLE_WRONG_STATE()                                                   \
-    else                                                                       \
-    {                                                                          \
+    else {                                                                     \
         errorDescription.setBase(                                              \
             "Internal error in "                                               \
             "ResourceLocalStorageManagerAsyncTester: "                         \
             "found wrong state");                                              \
         QNWARNING("tests:local_storage", errorDescription << ": " << m_state); \
         Q_EMIT failure(errorDescription.nonLocalizedString());                 \
-    }                                                                          \
-// HANDLE_WRONG_STATE
+    }
 
-    if (m_state == STATE_SENT_ADD_NOTEBOOK_REQUEST)
-    {
-        if (m_notebook != notebook)
-        {
+    if (m_state == STATE_SENT_ADD_NOTEBOOK_REQUEST) {
+        if (m_notebook != notebook) {
             errorDescription.setBase(
                 "Internal error in ResourceLocalStorageManagerAsyncTester: "
                 "notebook in onAddNotebookCompleted slot "
@@ -158,8 +156,10 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Notebook: " << notebook);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Notebook: " << notebook);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -171,10 +171,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_ADD_NOTE_REQUEST)
-    {
-        if (m_note != note)
-        {
+    if (m_state == STATE_SENT_ADD_NOTE_REQUEST) {
+        if (m_note != note) {
             errorDescription.setBase(
                 "Internal error in ResourceLocalStorageManagerAsyncTester: "
                 "note in onAddNoteCompleted slot doesn't "
@@ -203,29 +201,29 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
         m_initialResource.setDataSize(m_initialResource.dataBody().size());
         m_initialResource.setDataHash(QByteArray("Fake hash      1"));
 
-        m_initialResource.setRecognitionDataBody(QByteArray(
-            "<recoIndex docType=\"handwritten\" objType=\"image\" "
-            "objID=\"fc83e58282d8059be17debabb69be900\" "
-            "engineVersion=\"5.5.22.7\" recoType=\"service\" "
-            "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
-            "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
-            "<t w=\"87\">EVER ?</t>"
-            "<t w=\"83\">EVER NOTE</t>"
-            "<t w=\"82\">EVERNOTE</t>"
-            "<t w=\"71\">EVER NaTE</t>"
-            "<t w=\"67\">EVER nine</t>"
-            "<t w=\"67\">EVER none</t>"
-            "<t w=\"66\">EVER not</t>"
-            "<t w=\"62\">over NOTE</t>"
-            "<t w=\"62\">even NOTE</t>"
-            "<t w=\"61\">EVER nose</t>"
-            "<t w=\"50\">EV£RNoTE</t>"
-            "</item>"
-            "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
-            "<t w=\"11\">et</t>"
-            "<t w=\"10\">TQ</t>"
-            "</item>"
-            "</recoIndex>"));
+        m_initialResource.setRecognitionDataBody(
+            QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" "
+                       "objID=\"fc83e58282d8059be17debabb69be900\" "
+                       "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+                       "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                       "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                       "<t w=\"87\">EVER ?</t>"
+                       "<t w=\"83\">EVER NOTE</t>"
+                       "<t w=\"82\">EVERNOTE</t>"
+                       "<t w=\"71\">EVER NaTE</t>"
+                       "<t w=\"67\">EVER nine</t>"
+                       "<t w=\"67\">EVER none</t>"
+                       "<t w=\"66\">EVER not</t>"
+                       "<t w=\"62\">over NOTE</t>"
+                       "<t w=\"62\">even NOTE</t>"
+                       "<t w=\"61\">EVER nose</t>"
+                       "<t w=\"50\">EV£RNoTE</t>"
+                       "</item>"
+                       "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+                       "<t w=\"11\">et</t>"
+                       "<t w=\"10\">TQ</t>"
+                       "</item>"
+                       "</recoIndex>"));
 
         m_initialResource.setRecognitionDataSize(
             m_initialResource.recognitionDataBody().size());
@@ -273,8 +271,10 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddNoteFailed(
     Note note, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Note: " << note);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Note: " << note);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -286,10 +286,8 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST)
-    {
-        if (count != 1)
-        {
+    if (m_state == STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST) {
+        if (count != 1) {
             errorDescription.setBase(
                 "GetResourceCount returned result different "
                 "from the expected one (1)");
@@ -303,10 +301,8 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
         m_state = STATE_SENT_EXPUNGE_REQUEST;
         Q_EMIT expungeResourceRequest(m_modifiedResource, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST)
-    {
-        if (count != 0)
-        {
+    else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST) {
+        if (count != 0) {
             errorDescription.setBase(
                 "GetResourceCount returned result different "
                 "from the expected one (0)");
@@ -325,8 +321,9 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
 void ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed(
     ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -337,10 +334,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
     Q_UNUSED(requestId)
 
     ErrorString errorDescription;
-    if (m_state == STATE_SENT_ADD_REQUEST)
-    {
-        if (m_initialResource != resource)
-        {
+    if (m_state == STATE_SENT_ADD_REQUEST) {
+        if (m_initialResource != resource) {
             errorDescription.setBase(
                 "Internal error in ResourceLocalStorageManagerAsyncTester: "
                 "resource in onAddResourceCompleted doesn't "
@@ -360,9 +355,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
             LocalStorageManager::GetResourceOption::WithBinaryData);
 
         Q_EMIT findResourceRequest(
-            m_foundResource,
-            options,
-            QUuid::createUuid());
+            m_foundResource, options, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
@@ -370,8 +363,10 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Resource: " << resource);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Resource: " << resource);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
@@ -383,10 +378,8 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_UPDATE_REQUEST)
-    {
-        if (m_modifiedResource != resource)
-        {
+    if (m_state == STATE_SENT_UPDATE_REQUEST) {
+        if (m_modifiedResource != resource) {
             errorDescription.setBase(
                 "Internal error in ResourceLocalStorageManagerAsyncTester: "
                 "resource in onUpdateResourceCompleted "
@@ -404,9 +397,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
         LocalStorageManager::GetResourceOptions options(0);
 
         Q_EMIT findResourceRequest(
-            m_foundResource,
-            options,
-            QUuid::createUuid());
+            m_foundResource, options, QUuid::createUuid());
     }
     HANDLE_WRONG_STATE();
 }
@@ -414,15 +405,16 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Resource: " << resource);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Resource: " << resource);
 
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
-    Resource resource,
-    LocalStorageManager::GetResourceOptions options,
+    Resource resource, LocalStorageManager::GetResourceOptions options,
     QUuid requestId)
 {
     Q_UNUSED(requestId)
@@ -430,18 +422,18 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
 
     ErrorString errorDescription;
 
-    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST)
-    {
-        if (resource != m_initialResource)
-        {
+    if (m_state == STATE_SENT_FIND_AFTER_ADD_REQUEST) {
+        if (resource != m_initialResource) {
             errorDescription.setBase(
                 "Added and found resources in the local "
                 "storage don't match");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ": Resource added to the local storage: "
-                << m_initialResource
-                << "\nResource found in the local storage: " << resource);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << ": Resource added to the local storage: "
+                    << m_initialResource
+                    << "\nResource found in the local storage: " << resource);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -463,23 +455,23 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
         m_state = STATE_SENT_UPDATE_REQUEST;
         Q_EMIT updateResourceRequest(m_modifiedResource, QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST)
-    {
+    else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST) {
         // Find after update was called without binary data, so need to remove
         // it from the modified resource prior to the comparison
         if (m_modifiedResource.hasDataBody()) {
             m_modifiedResource.setDataBody(QByteArray());
         }
 
-        if (resource != m_modifiedResource)
-        {
+        if (resource != m_modifiedResource) {
             errorDescription.setBase(
                 "Updated and found resources in the local storage don't match");
 
-            QNWARNING("tests:local_storage", errorDescription
-                << ": Resource updated in the local storage: "
-                << m_modifiedResource
-                << "\nResource found in the local storage: " << resource);
+            QNWARNING(
+                "tests:local_storage",
+                errorDescription
+                    << ": Resource updated in the local storage: "
+                    << m_modifiedResource
+                    << "\nResource found in the local storage: " << resource);
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -488,16 +480,17 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
         m_state = STATE_SENT_GET_COUNT_AFTER_UPDATE_REQUEST;
         Q_EMIT getResourceCountRequest(QUuid::createUuid());
     }
-    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST)
-    {
+    else if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         errorDescription.setBase(
             "Found resource which should have been expunged "
             "from the local storage");
 
-        QNWARNING("tests:local_storage", errorDescription
-            << ": Resource expunged from the local storage: "
-            << m_modifiedResource
-            << "\nResource fond in the local storage: " << resource);
+        QNWARNING(
+            "tests:local_storage",
+            errorDescription
+                << ": Resource expunged from the local storage: "
+                << m_modifiedResource
+                << "\nResource fond in the local storage: " << resource);
 
         Q_EMIT failure(errorDescription.nonLocalizedString());
         return;
@@ -515,12 +508,15 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
         return;
     }
 
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Resource: " << resource
-        << ", withBinaryData = "
-        << ((options & LocalStorageManager::GetResourceOption::WithBinaryData)
-             ? "true"
-             : "false"));
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription
+            << ", requestId = " << requestId << ", Resource: " << resource
+            << ", withBinaryData = "
+            << ((options &
+                 LocalStorageManager::GetResourceOption::WithBinaryData)
+                    ? "true"
+                    : "false"));
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
@@ -531,8 +527,7 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
 
     ErrorString errorDescription;
 
-    if (m_modifiedResource != resource)
-    {
+    if (m_modifiedResource != resource) {
         errorDescription.setBase(
             "Internal error in ResourceLocalStorageManagerAsyncTester: "
             "resource in onExpungeResourceCompleted slot "
@@ -554,151 +549,126 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed(
     Resource resource, ErrorString errorDescription, QUuid requestId)
 {
-    QNWARNING("tests:local_storage", errorDescription << ", requestId = "
-        << requestId << ", Resource: " << resource);
+    QNWARNING(
+        "tests:local_storage",
+        errorDescription << ", requestId = " << requestId
+                         << ", Resource: " << resource);
     Q_EMIT failure(errorDescription.nonLocalizedString());
 }
 
 void ResourceLocalStorageManagerAsyncTester::createConnections()
 {
     QObject::connect(
-        m_pLocalStorageManagerThread,
-        &QThread::finished,
-        m_pLocalStorageManagerThread,
-        &QThread::deleteLater);
+        m_pLocalStorageManagerThread, &QThread::finished,
+        m_pLocalStorageManagerThread, &QThread::deleteLater);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::initialized,
-        this,
-        &ResourceLocalStorageManagerAsyncTester::initialize);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::initialized,
+        this, &ResourceLocalStorageManagerAsyncTester::initialize);
 
     // Request --> slot connections
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::addNotebookRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::addNotebookRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNotebookRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::addNoteRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::addNoteRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddNoteRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::addResourceRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::addResourceRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onAddResourceRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::updateResourceRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::updateResourceRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateResourceRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::findResourceRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::findResourceRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onFindResourceRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::getResourceCountRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::getResourceCountRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onGetResourceCountRequest);
 
     QObject::connect(
-        this,
-        &ResourceLocalStorageManagerAsyncTester::expungeResourceRequest,
+        this, &ResourceLocalStorageManagerAsyncTester::expungeResourceRequest,
         m_pLocalStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeResourceRequest);
 
     // Slot <-- result connections
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addNotebookComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::addNotebookFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed);
 
     QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteComplete,
-        this,
-        &ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted);
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addNoteComplete,
+        this, &ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted);
+
+    QObject::connect(
+        m_pLocalStorageManagerAsync, &LocalStorageManagerAsync::addNoteFailed,
+        this, &ResourceLocalStorageManagerAsyncTester::onAddNoteFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addNoteFailed,
-        this,
-        &ResourceLocalStorageManagerAsyncTester::onAddNoteFailed);
-
-    QObject::connect(
-        m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addResourceComplete,
-        this,
+        &LocalStorageManagerAsync::addResourceComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::addResourceFailed,
-        this,
+        &LocalStorageManagerAsync::addResourceFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onAddResourceFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateResourceComplete,
-        this,
+        &LocalStorageManagerAsync::updateResourceComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::updateResourceFailed,
-        this,
+        &LocalStorageManagerAsync::updateResourceFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findResourceComplete,
-        this,
+        &LocalStorageManagerAsync::findResourceComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::findResourceFailed,
-        this,
+        &LocalStorageManagerAsync::findResourceFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onFindResourceFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getResourceCountComplete,
-        this,
+        &LocalStorageManagerAsync::getResourceCountComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::getResourceCountFailed,
-        this,
+        &LocalStorageManagerAsync::getResourceCountFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeResourceComplete,
-        this,
+        &LocalStorageManagerAsync::expungeResourceComplete, this,
         &ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted);
 
     QObject::connect(
         m_pLocalStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeResourceFailed,
-        this,
+        &LocalStorageManagerAsync::expungeResourceFailed, this,
         &ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed);
 }
 

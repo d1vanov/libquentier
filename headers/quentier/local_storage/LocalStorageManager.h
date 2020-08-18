@@ -52,7 +52,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(ILocalStoragePatch)
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
-class QUENTIER_EXPORT LocalStorageManager: public QObject
+class QUENTIER_EXPORT LocalStorageManager : public QObject
 {
     Q_OBJECT
 public:
@@ -141,16 +141,17 @@ public:
      * not yet synchronized) or elements never synchronized with the remote
      * storage or elements which are synchronizable with the remote storage etc.
      */
-    enum class ListObjectsOption {
-        ListAll                      = 0,
-        ListDirty                    = 1,
-        ListNonDirty                 = 2,
-        ListElementsWithoutGuid      = 4,
-        ListElementsWithGuid         = 8,
-        ListLocal                    = 16,
-        ListNonLocal                 = 32,
-        ListFavoritedElements        = 64,
-        ListNonFavoritedElements     = 128
+    enum class ListObjectsOption
+    {
+        ListAll = 0,
+        ListDirty = 1,
+        ListNonDirty = 2,
+        ListElementsWithoutGuid = 4,
+        ListElementsWithGuid = 8,
+        ListLocal = 16,
+        ListNonLocal = 32,
+        ListFavoritedElements = 64,
+        ListNonFavoritedElements = 128
     };
     Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
@@ -441,7 +442,8 @@ public:
      * @return                      True if the notebook was found, false
      *                              otherwise
      */
-    bool findNotebook(Notebook & notebook, ErrorString & errorDescription) const;
+    bool findNotebook(
+        Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findDefaultNotebook attempts to find the default notebook
@@ -553,8 +555,8 @@ public:
      *                              the account
      */
     QList<Notebook> listAllNotebooks(
-        ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        ErrorString & errorDescription, const size_t limit = 0,
+        const size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -593,8 +595,7 @@ public:
      *                              the account
      */
     QList<Notebook> listNotebooks(
-        const ListObjectsOptions flag,
-        ErrorString & errorDescription,
+        const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
@@ -761,9 +762,10 @@ public:
      *                              presence within the account
      */
     QList<LinkedNotebook> listAllLinkedNotebooks(
-        ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
-        const ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        ErrorString & errorDescription, const size_t limit = 0,
+        const size_t offset = 0,
+        const ListLinkedNotebooksOrder order =
+            ListLinkedNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
@@ -796,7 +798,8 @@ public:
     QList<LinkedNotebook> listLinkedNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
-        const ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        const ListLinkedNotebooksOrder order =
+            ListLinkedNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
@@ -826,7 +829,7 @@ public:
     enum class NoteCountOption
     {
         IncludeNonDeletedNotes = 1,
-        IncludeDeletedNotes    = 2
+        IncludeDeletedNotes = 2
     };
     Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption)
 
@@ -857,7 +860,7 @@ public:
     int noteCount(
         ErrorString & errorDescription,
         const NoteCountOptions options =
-        NoteCountOption::IncludeNonDeletedNotes) const;
+            NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebook returns the number of notes currently
@@ -876,10 +879,9 @@ public:
      *                              some error occurred
      */
     int noteCountPerNotebook(
-        const Notebook & notebook,
-        ErrorString & errorDescription,
+        const Notebook & notebook, ErrorString & errorDescription,
         const NoteCountOptions options =
-        NoteCountOption::IncludeNonDeletedNotes) const;
+            NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerTag returns the number of notes currently
@@ -900,7 +902,7 @@ public:
     int noteCountPerTag(
         const Tag & tag, ErrorString & errorDescription,
         const NoteCountOptions options =
-        NoteCountOption::IncludeNonDeletedNotes) const;
+            NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountsPerAllTags returns the number of notes
@@ -923,7 +925,7 @@ public:
         QHash<QString, int> & noteCountsPerTagLocalUid,
         ErrorString & errorDescription,
         const NoteCountOptions options =
-        NoteCountOption::IncludeNonDeletedNotes) const;
+            NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief noteCountPerNotebooksAndTags returns the number of notes currently
@@ -944,10 +946,10 @@ public:
      *                              error occurred
      */
     int noteCountPerNotebooksAndTags(
-        const QStringList & notebookLocalUids,
-        const QStringList & tagLocalUids, ErrorString & errorDescription,
+        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        ErrorString & errorDescription,
         const NoteCountOptions options =
-        NoteCountOption::IncludeNonDeletedNotes) const;
+            NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
      * @brief addNote adds passed in Note to the local storage database.
@@ -984,18 +986,18 @@ public:
          * dataSize, dataHash, alternateDataBody, alternateDataSize,
          * alternateDataHash for each note's resource should be updated
          */
-        UpdateResourceMetadata      = 1,
+        UpdateResourceMetadata = 1,
         /**
          * UpdateResourceBinaryData value specifies that dataBody, its size
          * and hash and alternateDataBody, its size and hash should be updated
          * for each of note's resources; this value only has effect if flags
          * also have UpdateResourceMetadata value enabled!
          */
-        UpdateResourceBinaryData    = 2,
+        UpdateResourceBinaryData = 2,
         /**
          * UpdateTags value specifies that note's tag lists should be updated
          */
-        UpdateTags                  = 4
+        UpdateTags = 4
     };
     Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
 
@@ -1032,17 +1034,13 @@ public:
      *     with Evernote
      *
      * @param note                  Note to be updated in the local storage
-     *                              database; required to contain either "remote"
-     *                              notebook guid or local notebook uid; may be
-     *                              changed as a result of the call, filled with
-     *                              fields like local uid or notebook guid or
-     *                              local uid if any of these were empty before
-     *                              the call; also tag guids are filled if
-     *                              the note passed in contained only tag local
-     *                              uids and tag local uids are filled if
-     *                              the note passed in contained only tag guids.
-     *                              Bear in mind that after the call the note
-     *                              may not have the representative resources if
+     *                              database; required to contain either
+     * "remote" notebook guid or local notebook uid; may be changed as a result
+     * of the call, filled with fields like local uid or notebook guid or local
+     * uid if any of these were empty before the call; also tag guids are filled
+     * if the note passed in contained only tag local uids and tag local uids
+     * are filled if the note passed in contained only tag guids. Bear in mind
+     * that after the call the note may not have the representative resources if
      *                              "updateNoteOptions" input parameter
      *                              contained no "UpdateResourceMetadata" flag
      *                              as well as it may not have
@@ -1078,14 +1076,14 @@ public:
          * dataSize, dataHash, alternateDataBody, alternateDataSize,
          * alternateDataHash for each note's resource should be included
          */
-        WithResourceMetadata    = 1,
+        WithResourceMetadata = 1,
         /**
          * WithResourceBinaryData value specifies that dataBody, its size
          * and hash and alternateDataBody, its size and hash should be included
          * into each of note's resources; this value only has effect if flags
          * also have WithResourceMetadata value enabled!
          */
-        WithResourceBinaryData  = 2
+        WithResourceBinaryData = 2
     };
     Q_DECLARE_FLAGS(GetNoteOptions, GetNoteOption)
 
@@ -1168,13 +1166,13 @@ public:
      *                              in the given notebook
      */
     QList<Note> listNotesPerNotebook(
-        const Notebook & notebook,
-        const GetNoteOptions options,
+        const Notebook & notebook, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
-        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
+        const OrderDirection & orderDirection =
+            OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerTag attempts to list notes labeled with a given tag
@@ -1209,7 +1207,8 @@ public:
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
-        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
+        const OrderDirection & orderDirection =
+            OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesPerNotebooksAndTags attempts to list notes which are
@@ -1242,14 +1241,13 @@ public:
      *                              presence
      */
     QList<Note> listNotesPerNotebooksAndTags(
-        const QStringList & notebookLocalUids,
-        const QStringList & tagLocalUids,
-        const GetNoteOptions options,
-        ErrorString & errorDescription,
+        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        const GetNoteOptions options, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
-        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
+        const OrderDirection & orderDirection =
+            OrderDirection::Ascending) const;
 
     /**
      * @brief listNotesByLocalUids attempts to list notes given their local uids
@@ -1283,13 +1281,13 @@ public:
      *                              corresponding to given local uids presence
      */
     QList<Note> listNotesByLocalUids(
-        const QStringList & noteLocalUids,
-        const GetNoteOptions options,
+        const QStringList & noteLocalUids, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
-        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
+        const OrderDirection & orderDirection =
+            OrderDirection::Ascending) const;
 
     /**
      * @brief listNotes attempts to list notes within the account according to
@@ -1327,8 +1325,8 @@ public:
      */
     QList<Note> listNotes(
         const ListObjectsOptions flag, const GetNoteOptions options,
-        ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        ErrorString & errorDescription, const size_t limit = 0,
+        const size_t offset = 0,
         const ListNotesOrder order = ListNotesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1364,8 +1362,8 @@ public:
      *                              presence for the given NoteSearchQuery
      */
     NoteList findNotesWithSearchQuery(
-        const NoteSearchQuery & noteSearchQuery,
-        const GetNoteOptions options, ErrorString & errorDescription) const;
+        const NoteSearchQuery & noteSearchQuery, const GetNoteOptions options,
+        ErrorString & errorDescription) const;
 
     /**
      * @brief expungeNote permanently deletes note from local storage.
@@ -1507,7 +1505,8 @@ public:
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
-        const OrderDirection & orderDirection = OrderDirection::Ascending) const;
+        const OrderDirection & orderDirection =
+            OrderDirection::Ascending) const;
 
     /**
      * @brief listAllTags lists all tags within the current user's account.
@@ -1540,8 +1539,8 @@ public:
      * @return                      The list of found tags within the account
      */
     QList<Tag> listAllTags(
-        ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        ErrorString & errorDescription, const size_t limit = 0,
+        const size_t offset = 0,
         const ListTagsOrder order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1579,8 +1578,7 @@ public:
      *                              the filter exist within the account
      */
     QList<Tag> listTags(
-        const ListObjectsOptions flag,
-        ErrorString & errorDescription,
+        const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
@@ -1841,7 +1839,8 @@ public:
      * @return                          True if SavedSearch was updated
      *                                  successfully, false otherwise
      */
-    bool updateSavedSearch(SavedSearch & search, ErrorString & errorDescription);
+    bool updateSavedSearch(
+        SavedSearch & search, ErrorString & errorDescription);
 
     /**
      * @brief findSavedSearch attempts to find and fill the fields of passed in
@@ -1904,8 +1903,8 @@ public:
      *                                  searches within the account
      */
     QList<SavedSearch> listAllSavedSearches(
-        ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        ErrorString & errorDescription, const size_t limit = 0,
+        const size_t offset = 0,
         const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
 

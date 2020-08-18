@@ -24,17 +24,11 @@ namespace quentier {
 
 QN_DEFINE_DIRTY(LinkedNotebook)
 
-LinkedNotebook::LinkedNotebook() :
-    d(new LinkedNotebookData)
-{}
+LinkedNotebook::LinkedNotebook() : d(new LinkedNotebookData) {}
 
-LinkedNotebook::LinkedNotebook(const LinkedNotebook & other) :
-    d(other.d)
-{}
+LinkedNotebook::LinkedNotebook(const LinkedNotebook & other) : d(other.d) {}
 
-LinkedNotebook::LinkedNotebook(LinkedNotebook && other) :
-    d(other.d)
-{}
+LinkedNotebook::LinkedNotebook(LinkedNotebook && other) : d(other.d) {}
 
 LinkedNotebook & LinkedNotebook::operator=(const LinkedNotebook & other)
 {
@@ -55,7 +49,7 @@ LinkedNotebook & LinkedNotebook::operator=(LinkedNotebook && other)
 }
 
 LinkedNotebook::LinkedNotebook(
-        const qevercloud::LinkedNotebook & linkedNotebook) :
+    const qevercloud::LinkedNotebook & linkedNotebook) :
     d(new LinkedNotebookData(linkedNotebook))
 {}
 
@@ -63,10 +57,10 @@ LinkedNotebook::LinkedNotebook(qevercloud::LinkedNotebook && linkedNotebook) :
     d(new LinkedNotebookData(std::move(linkedNotebook)))
 {}
 
-LinkedNotebook::~LinkedNotebook()
-{}
+LinkedNotebook::~LinkedNotebook() {}
 
-const qevercloud::LinkedNotebook & LinkedNotebook::qevercloudLinkedNotebook() const
+const qevercloud::LinkedNotebook & LinkedNotebook::qevercloudLinkedNotebook()
+    const
 {
     return d->m_qecLinkedNotebook;
 }

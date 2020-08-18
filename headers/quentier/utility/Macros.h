@@ -30,14 +30,15 @@
 
 // this adds const to non-const objects (like std::as_const)
 template <typename T>
-Q_DECL_CONSTEXPR typename std::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW
+Q_DECL_CONSTEXPR typename std::add_const<T>::type & qAsConst(T & t)
+    Q_DECL_NOTHROW
 {
     return t;
 }
 
 // prevent rvalue arguments:
 template <typename T>
-void qAsConst(const T &&)  = delete;
+void qAsConst(const T &&) = delete;
 
 #endif
 

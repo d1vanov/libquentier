@@ -38,13 +38,12 @@ class QUENTIER_EXPORT SpellChecker : public QObject
     Q_OBJECT
 public:
     SpellChecker(
-        FileIOProcessorAsync * pFileIOProcessorAsync,
-        const Account & account, QObject * parent = nullptr,
-        const QString & userDictionaryPath = {});
+        FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+        QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<std::pair<QString,bool>> listAvailableDictionaries() const;
+    QVector<std::pair<QString, bool>> listAvailableDictionaries() const;
 
     void setAccount(const Account & account);
 

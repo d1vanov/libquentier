@@ -28,13 +28,12 @@ template <class T>
 bool sortTagsByParentChildRelationsImpl(
     QList<T> & tagList, ErrorString & errorDescription)
 {
-    if (QuentierIsLogLevelActive(LogLevel::Trace))
-    {
+    if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
         QTextStream strm(&log);
         strm << "Tags list before performing the topological sort: ";
 
-        for(const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: ::qAsConst(tagList)) {
             strm << tag << ", ";
         }
         strm.flush();
@@ -53,30 +52,28 @@ bool sortTagsByParentChildRelationsImpl(
 
     bool allTagsHaveGuids = true;
 
-    for(const auto & tag: ::qAsConst(tagList))
-    {
+    for (const auto & tag: ::qAsConst(tagList)) {
         if (!tagHasGuid(tag)) {
             allTagsHaveGuids = false;
-            QNDEBUG("utility:tar_sort", "Not all tags have guids, won't use "
-                << "guids to track parent-child relations");
+            QNDEBUG(
+                "utility:tar_sort",
+                "Not all tags have guids, won't use "
+                    << "guids to track parent-child relations");
             break;
         }
     }
 
-    if (!allTagsHaveGuids)
-    {
+    if (!allTagsHaveGuids) {
         bool allTagsHaveLocalUids = true;
 
-        for(const auto & tag: ::qAsConst(tagList))
-        {
+        for (const auto & tag: ::qAsConst(tagList)) {
             if (!tagHasLocalUid(tag)) {
                 allTagsHaveLocalUids = false;
                 break;
             }
         }
 
-        if (!allTagsHaveLocalUids)
-        {
+        if (!allTagsHaveLocalUids) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "sortTagsByParentChildRelationsImpl",
                 "Can't synchronize tags: all tags must have "
@@ -89,33 +86,32 @@ bool sortTagsByParentChildRelationsImpl(
 
     TagDirectedGraph graph;
 
-    for(const auto & tag: ::qAsConst(tagList))
-    {
-        if (allTagsHaveGuids && tagHasGuid(tag))
-        {
+    for (const auto & tag: ::qAsConst(tagList)) {
+        if (allTagsHaveGuids && tagHasGuid(tag)) {
             QString guid = tagGuid(tag);
             QString parentTagGuid = tagParentGuid(tag);
             graph.addChild(parentTagGuid, guid);
         }
-        else if (tagHasLocalUid(tag))
-        {
+        else if (tagHasLocalUid(tag)) {
             QString localUid = tagLocalUid(tag);
             QString parentTagLocalUid = tagParentLocalUid(tag);
-            QNTRACE("utility:tar_sort", "Adding tag local uid " << localUid
-                << " and tag parent local uid " << parentTagLocalUid
-                << " to the graph");
+            QNTRACE(
+                "utility:tar_sort",
+                "Adding tag local uid "
+                    << localUid << " and tag parent local uid "
+                    << parentTagLocalUid << " to the graph");
             graph.addChild(parentTagLocalUid, localUid);
         }
-        else
-        {
-            QNTRACE("utility:tar_sort", "Skipping tag without either guid or "
-                << "local uid: " << tag);
+        else {
+            QNTRACE(
+                "utility:tar_sort",
+                "Skipping tag without either guid or "
+                    << "local uid: " << tag);
         }
     }
 
     TagDirectedGraphDepthFirstSearch dfs(graph);
-    if (Q_UNLIKELY(dfs.hasCycle()))
-    {
+    if (Q_UNLIKELY(dfs.hasCycle())) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "sortTagsByParentChildRelationsImpl",
             "Can't synchronize tags: detected cycle of "
@@ -123,7 +119,7 @@ bool sortTagsByParentChildRelationsImpl(
 
         errorDescription.details() = QStringLiteral("cycled tag guids: ");
         auto stack = dfs.cycle();
-        while(!stack.isEmpty()) {
+        while (!stack.isEmpty()) {
             errorDescription.details() += stack.pop() + QStringLiteral(", ");
             stack.pop();
         }
@@ -134,35 +130,30 @@ bool sortTagsByParentChildRelationsImpl(
     QStack<QString> order = dfs.tagIdsInReversePostOrder();
     QList<T> resultList;
     resultList.reserve(tagList.size());
-    while(!order.isEmpty())
-    {
+    while (!order.isEmpty()) {
         QString id = order.pop();
         if (id.isEmpty()) {
             continue;
         }
 
         auto it = tagList.end();
-        if (allTagsHaveGuids)
-        {
+        if (allTagsHaveGuids) {
             it = std::find_if(
-                tagList.begin(),
-                tagList.end(),
-                CompareItemByGuid<T>(id));
+                tagList.begin(), tagList.end(), CompareItemByGuid<T>(id));
         }
-        else
-        {
+        else {
             it = std::find_if(
-                tagList.begin(),
-                tagList.end(),
-                CompareItemByLocalUid<T>(id));
+                tagList.begin(), tagList.end(), CompareItemByLocalUid<T>(id));
         }
 
-        if (Q_UNLIKELY(it == tagList.end()))
-        {
-            QNDEBUG("utility:tar_sort", "Skipping the tag guid or local uid "
-                << "not found within the original set (probably the guid of "
-                << "some parent tag not present within the sorted subset): "
-                << id);
+        if (Q_UNLIKELY(it == tagList.end())) {
+            QNDEBUG(
+                "utility:tar_sort",
+                "Skipping the tag guid or local uid "
+                    << "not found within the original set (probably the guid "
+                       "of "
+                    << "some parent tag not present within the sorted subset): "
+                    << id);
             continue;
         }
 
@@ -172,13 +163,12 @@ bool sortTagsByParentChildRelationsImpl(
 
     tagList = resultList;
 
-    if (QuentierIsLogLevelActive(LogLevel::Trace))
-    {
+    if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QString log;
         QTextStream strm(&log);
         strm << "Tags list after performing the topological sort: ";
 
-        for(const auto & tag: ::qAsConst(tagList)) {
+        for (const auto & tag: ::qAsConst(tagList)) {
             strm << tag << "\n";
         }
         strm.flush();
@@ -200,4 +190,4 @@ bool sortTagsByParentChildRelations(
     return sortTagsByParentChildRelationsImpl(tagList, errorDescription);
 }
 
-}
+} // namespace quentier

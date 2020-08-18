@@ -28,7 +28,7 @@
 
 namespace quentier {
 
-class FakeUserStore final: public IUserStore
+class FakeUserStore final : public IUserStore
 {
 public:
     qint16 edamVersionMajor() const;
@@ -63,18 +63,18 @@ public:
 
     virtual qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
-        qevercloud::AccountLimits & limits,
-        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
+        qevercloud::AccountLimits & limits, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds) override;
 
 private:
-    QString                     m_authenticationToken;
-    QList<QNetworkCookie>       m_cookies;
+    QString m_authenticationToken;
+    QList<QNetworkCookie> m_cookies;
 
-    qint16      m_edamVersionMajor = 0;
-    qint16      m_edamVersionMinor = 0;
+    qint16 m_edamVersionMajor = 0;
+    qint16 m_edamVersionMinor = 0;
 
-    QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits>  m_accountLimits;
-    QHash<qint32, User>     m_users;
+    QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits> m_accountLimits;
+    QHash<qint32, User> m_users;
 };
 
 using FakeUserStorePtr = std::shared_ptr<FakeUserStore>;

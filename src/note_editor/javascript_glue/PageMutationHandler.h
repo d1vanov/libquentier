@@ -40,7 +40,7 @@ namespace quentier {
  * Hence, JavaScript-side filtering of page mutations + this class for a dialog
  * between JS and C++
  */
-class PageMutationHandler: public QObject
+class PageMutationHandler : public QObject
 {
     Q_OBJECT
 public:

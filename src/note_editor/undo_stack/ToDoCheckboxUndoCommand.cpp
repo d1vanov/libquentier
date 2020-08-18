@@ -25,8 +25,8 @@
 namespace quentier {
 
 ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(
-        const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent) :
+    const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_enToDoCheckboxId(enToDoCheckboxId)
 {
@@ -34,14 +34,13 @@ ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(
 }
 
 ToDoCheckboxUndoCommand::ToDoCheckboxUndoCommand(
-        const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
-        const QString & text, QUndoCommand * parent) :
+    const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+    const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_enToDoCheckboxId(enToDoCheckboxId)
 {}
 
-ToDoCheckboxUndoCommand::~ToDoCheckboxUndoCommand()
-{}
+ToDoCheckboxUndoCommand::~ToDoCheckboxUndoCommand() {}
 
 void ToDoCheckboxUndoCommand::redoImpl()
 {

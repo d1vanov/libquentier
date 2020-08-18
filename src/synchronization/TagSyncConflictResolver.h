@@ -36,27 +36,32 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
  * resolution might involve changes in other tags, seemingly unrelated
  * to the currently conflicting ones
  */
-class Q_DECL_HIDDEN TagSyncConflictResolver final: public QObject
+class Q_DECL_HIDDEN TagSyncConflictResolver final : public QObject
 {
     Q_OBJECT
 public:
     explicit TagSyncConflictResolver(
-        const qevercloud::Tag & remoteTag,
-        QString remoteTagLinkedNotebookGuid,
+        const qevercloud::Tag & remoteTag, QString remoteTagLinkedNotebookGuid,
         const Tag & localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
     void start();
 
-    const qevercloud::Tag & remoteTag() const { return m_remoteTag; }
-    const Tag & localConflict() const { return m_localConflict; }
+    const qevercloud::Tag & remoteTag() const
+    {
+        return m_remoteTag;
+    }
+    const Tag & localConflict() const
+    {
+        return m_localConflict;
+    }
 
 Q_SIGNALS:
     void finished(qevercloud::Tag remoteTag);
     void failure(qevercloud::Tag remoteTag, ErrorString errorDescription);
 
-// private signals
+    // private signals
     void fillTagsCache();
     void addTag(Tag tag, QUuid requestId);
     void updateTag(Tag tag, QUuid requestId);
@@ -65,8 +70,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onAddTagComplete(Tag tag, QUuid requestId);
 
-    void onAddTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateTagComplete(Tag tag, QUuid requestId);
 
@@ -99,24 +103,24 @@ private:
     friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
-    TagSyncCache &              m_cache;
-    LocalStorageManagerAsync &  m_localStorageManagerAsync;
+    TagSyncCache & m_cache;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
 
-    qevercloud::Tag             m_remoteTag;
-    Tag                         m_localConflict;
+    qevercloud::Tag m_remoteTag;
+    Tag m_localConflict;
 
-    QString                     m_remoteTagLinkedNotebookGuid;
+    QString m_remoteTagLinkedNotebookGuid;
 
-    Tag                         m_tagToBeRenamed;
+    Tag m_tagToBeRenamed;
 
-    State                       m_state = State::Undefined;
+    State m_state = State::Undefined;
 
-    QUuid                       m_addTagRequestId;
-    QUuid                       m_updateTagRequestId;
-    QUuid                       m_findTagRequestId;
+    QUuid m_addTagRequestId;
+    QUuid m_updateTagRequestId;
+    QUuid m_findTagRequestId;
 
-    bool                        m_started = false;
-    bool                        m_pendingCacheFilling = false;
+    bool m_started = false;
+    bool m_pendingCacheFilling = false;
 };
 
 } // namespace quentier

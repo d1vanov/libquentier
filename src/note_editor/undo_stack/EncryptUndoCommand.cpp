@@ -25,40 +25,34 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("EncryptUndoCommand",                            \
-                              "Can't undo/redo the text encryption: "          \
-                              "can't get note editor page"));                  \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "EncryptUndoCommand",                                              \
+            "Can't undo/redo the text encryption: "                            \
+            "can't get note editor page"));                                    \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 EncryptUndoCommand::EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_callback(callback)
 {
     setText(tr("Encrypt selected text"));
 }
 
-EncryptUndoCommand:: EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback,
-        const QString & text,
-        QUndoCommand * parent) :
+EncryptUndoCommand::EncryptUndoCommand(
+    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
     m_callback(callback)
 {}
 
-EncryptUndoCommand::~EncryptUndoCommand()
-{}
+EncryptUndoCommand::~EncryptUndoCommand() {}
 
 void EncryptUndoCommand::redoImpl()
 {
@@ -66,8 +60,7 @@ void EncryptUndoCommand::redoImpl()
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("encryptDecryptManager.redo();"),
-        m_callback);
+        QStringLiteral("encryptDecryptManager.redo();"), m_callback);
 }
 
 void EncryptUndoCommand::undoImpl()
@@ -76,9 +69,7 @@ void EncryptUndoCommand::undoImpl()
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("encryptDecryptManager.undo();"),
-        m_callback);
+        QStringLiteral("encryptDecryptManager.undo();"), m_callback);
 }
 
 } // namespace quentier
-

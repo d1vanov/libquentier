@@ -23,7 +23,7 @@
 namespace quentier {
 
 ResourceInfoJavaScriptHandler::ResourceInfoJavaScriptHandler(
-        const ResourceInfo & resourceInfo, QObject *parent) :
+    const ResourceInfo & resourceInfo, QObject * parent) :
     QObject(parent),
     m_resourceInfo(resourceInfo)
 {}
@@ -37,25 +37,17 @@ void ResourceInfoJavaScriptHandler::findResourceInfo(
     QSize resourceImageSize;
 
     bool found = m_resourceInfo.findResourceInfo(
-        QByteArray::fromHex(resourceHash.toLocal8Bit()),
-        resourceDisplayName,
-        resourceDisplaySize,
-        resourceLocalFilePath,
-        resourceImageSize);
+        QByteArray::fromHex(resourceHash.toLocal8Bit()), resourceDisplayName,
+        resourceDisplaySize, resourceLocalFilePath, resourceImageSize);
 
-    if (found)
-    {
+    if (found) {
         bool resourceImageSizeValid = resourceImageSize.isValid();
         int height = resourceImageSizeValid ? resourceImageSize.height() : 0;
         int width = resourceImageSizeValid ? resourceImageSize.width() : 0;
 
         Q_EMIT notifyResourceInfo(
-            resourceHash,
-            resourceLocalFilePath,
-            resourceDisplayName,
-            resourceDisplaySize,
-            height,
-            width);
+            resourceHash, resourceLocalFilePath, resourceDisplayName,
+            resourceDisplaySize, height, width);
     }
 }
 

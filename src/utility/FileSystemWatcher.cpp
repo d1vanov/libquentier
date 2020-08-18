@@ -23,20 +23,18 @@
 namespace quentier {
 
 FileSystemWatcher::FileSystemWatcher(
-        const int removalTimeoutMSec, QObject * parent) :
+    const int removalTimeoutMSec, QObject * parent) :
     QObject(parent),
     d_ptr(new FileSystemWatcherPrivate(*this, removalTimeoutMSec))
 {}
 
 FileSystemWatcher::FileSystemWatcher(
-        const QStringList & paths, const int removalTimeoutMSec,
-        QObject * parent) :
+    const QStringList & paths, const int removalTimeoutMSec, QObject * parent) :
     QObject(parent),
     d_ptr(new FileSystemWatcherPrivate(*this, paths, removalTimeoutMSec))
 {}
 
-FileSystemWatcher::~FileSystemWatcher()
-{}
+FileSystemWatcher::~FileSystemWatcher() {}
 
 void FileSystemWatcher::addPath(const QString & path)
 {

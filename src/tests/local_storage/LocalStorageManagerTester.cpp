@@ -34,15 +34,13 @@
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
 
 #define CATCH_EXCEPTION()                                                      \
-    catch(const std::exception & exception) {                                  \
+    catch (const std::exception & exception) {                                 \
         SysInfo sysInfo;                                                       \
-        QFAIL(                                                                 \
-            qPrintable(                                                        \
-                QStringLiteral("Caught exception: ") +                         \
-                QString::fromUtf8(exception.what()) +                          \
-                QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));      \
-    }                                                                          \
-// CATCH_EXCEPTION
+        QFAIL(qPrintable(                                                      \
+            QStringLiteral("Caught exception: ") +                             \
+            QString::fromUtf8(exception.what()) +                              \
+            QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
+    }
 
 inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
@@ -59,8 +57,7 @@ LocalStorageManagerTester::LocalStorageManagerTester(QObject * parent) :
     QObject(parent)
 {}
 
-LocalStorageManagerTester::~LocalStorageManagerTester()
-{}
+LocalStorageManagerTester::~LocalStorageManagerTester() {}
 
 void LocalStorageManagerTester::init()
 {
@@ -70,8 +67,7 @@ void LocalStorageManagerTester::init()
 
 void LocalStorageManagerTester::noteSearchQueryTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = NoteSearchQueryParsingTest(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -81,8 +77,7 @@ void LocalStorageManagerTester::noteSearchQueryTest()
 
 void LocalStorageManagerTester::localStorageManagerNoteSearchQueryTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = LocalStorageManagerNoteSearchQueryTest(error);
         if (!res) {
@@ -94,26 +89,25 @@ void LocalStorageManagerTester::localStorageManagerNoteSearchQueryTest()
 
 void LocalStorageManagerTester::localStorageManagerIndividualSavedSearchTest()
 {
-    try
-    {
+    try {
         TestSavedSearchAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerFindSavedSearchByNameWithDiacriticsTest()
+void LocalStorageManagerTester::
+    localStorageManagerFindSavedSearchByNameWithDiacriticsTest()
 {
-    try
-    {
+    try {
         TestFindSavedSearchByNameWithDiacritics();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerIndividualLinkedNotebookTest()
+void LocalStorageManagerTester::
+    localStorageManagerIndividualLinkedNotebookTest()
 {
-    try
-    {
+    try {
         TestLinkedNotebookAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -121,17 +115,16 @@ void LocalStorageManagerTester::localStorageManagerIndividualLinkedNotebookTest(
 
 void LocalStorageManagerTester::localStorageManagerIndividualTagTest()
 {
-    try
-    {
+    try {
         TestTagAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerFindTagByNameWithDiacriticsTest()
+void LocalStorageManagerTester::
+    localStorageManagerFindTagByNameWithDiacriticsTest()
 {
-    try
-    {
+    try {
         TestFindTagByNameWithDiacritics();
     }
     CATCH_EXCEPTION();
@@ -139,8 +132,7 @@ void LocalStorageManagerTester::localStorageManagerFindTagByNameWithDiacriticsTe
 
 void LocalStorageManagerTester::localStorageManagerIndividualResourceTest()
 {
-    try
-    {
+    try {
         TestResourceAddFindUpdateExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -148,8 +140,7 @@ void LocalStorageManagerTester::localStorageManagerIndividualResourceTest()
 
 void LocalStorageManagerTester::localStorageManagedIndividualNoteTest()
 {
-    try
-    {
+    try {
         TestNoteAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -157,17 +148,16 @@ void LocalStorageManagerTester::localStorageManagedIndividualNoteTest()
 
 void LocalStorageManagerTester::localStorageManagerIndividualNotebookTest()
 {
-    try
-    {
+    try {
         TestNotebookAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerFindNotebookByNameWithDiacriticsTest()
+void LocalStorageManagerTester::
+    localStorageManagerFindNotebookByNameWithDiacriticsTest()
 {
-    try
-    {
+    try {
         TestFindNotebookByNameWithDiacritics();
     }
     CATCH_EXCEPTION();
@@ -175,8 +165,7 @@ void LocalStorageManagerTester::localStorageManagerFindNotebookByNameWithDiacrit
 
 void LocalStorageManagerTester::localStorageManagedIndividualUserTest()
 {
-    try
-    {
+    try {
         TestUserAddFindUpdateDeleteExpungeInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -184,8 +173,7 @@ void LocalStorageManagerTester::localStorageManagedIndividualUserTest()
 
 void LocalStorageManagerTester::localStorageManagerSequentialUpdatesTest()
 {
-    try
-    {
+    try {
         TestSequentialUpdatesInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -193,8 +181,7 @@ void LocalStorageManagerTester::localStorageManagerSequentialUpdatesTest()
 
 void LocalStorageManagerTester::localStorageManagerAccountHighUsnTest()
 {
-    try
-    {
+    try {
         TestAccountHighUsnInLocalStorage();
     }
     CATCH_EXCEPTION();
@@ -202,8 +189,7 @@ void LocalStorageManagerTester::localStorageManagerAccountHighUsnTest()
 
 void LocalStorageManagerTester::localStorageManagerAddNoteWithoutLocalUidTest()
 {
-    try
-    {
+    try {
         TestAddingNoteWithoutLocalUid();
     }
     CATCH_EXCEPTION();
@@ -211,8 +197,7 @@ void LocalStorageManagerTester::localStorageManagerAddNoteWithoutLocalUidTest()
 
 void LocalStorageManagerTester::localStorageManagerNoteTagIdsComplementTest()
 {
-    try
-    {
+    try {
         TestNoteTagIdsComplementWhenAddingAndUpdatingNote();
     }
     CATCH_EXCEPTION();
@@ -220,8 +205,7 @@ void LocalStorageManagerTester::localStorageManagerNoteTagIdsComplementTest()
 
 void LocalStorageManagerTester::localStorageManagerListSavedSearchesTest()
 {
-    try
-    {
+    try {
         TestListSavedSearches();
     }
     CATCH_EXCEPTION();
@@ -229,8 +213,7 @@ void LocalStorageManagerTester::localStorageManagerListSavedSearchesTest()
 
 void LocalStorageManagerTester::localStorageManagerListLinkedNotebooksTest()
 {
-    try
-    {
+    try {
         TestListLinkedNotebooks();
     }
     CATCH_EXCEPTION();
@@ -238,17 +221,16 @@ void LocalStorageManagerTester::localStorageManagerListLinkedNotebooksTest()
 
 void LocalStorageManagerTester::localStorageManagerListTagsTest()
 {
-    try
-    {
+    try {
         TestListTags();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerListTagsWithNoteLocalUidsTest()
+void LocalStorageManagerTester::
+    localStorageManagerListTagsWithNoteLocalUidsTest()
 {
-    try
-    {
+    try {
         TestListTagsWithNoteLocalUids();
     }
     CATCH_EXCEPTION();
@@ -256,8 +238,7 @@ void LocalStorageManagerTester::localStorageManagerListTagsWithNoteLocalUidsTest
 
 void LocalStorageManagerTester::localStorageManagerListAllSharedNotebooksTest()
 {
-    try
-    {
+    try {
         TestListAllSharedNotebooks();
     }
     CATCH_EXCEPTION();
@@ -265,8 +246,7 @@ void LocalStorageManagerTester::localStorageManagerListAllSharedNotebooksTest()
 
 void LocalStorageManagerTester::localStorageManagerListAllTagsPerNoteTest()
 {
-    try
-    {
+    try {
         TestListAllTagsPerNote();
     }
     CATCH_EXCEPTION();
@@ -274,8 +254,7 @@ void LocalStorageManagerTester::localStorageManagerListAllTagsPerNoteTest()
 
 void LocalStorageManagerTester::localStorageManagerListNotesTest()
 {
-    try
-    {
+    try {
         TestListNotes();
     }
     CATCH_EXCEPTION();
@@ -283,17 +262,16 @@ void LocalStorageManagerTester::localStorageManagerListNotesTest()
 
 void LocalStorageManagerTester::localStorageManagerListNotebooksTest()
 {
-    try
-    {
+    try {
         TestListNotebooks();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
+void LocalStorageManagerTester::
+    localStorageManagerExpungeNotelessTagsFromLinkedNotebooksTest()
 {
-    try
-    {
+    try {
         TestExpungeNotelessTagsFromLinkedNotebooks();
     }
     CATCH_EXCEPTION();
@@ -301,8 +279,7 @@ void LocalStorageManagerTester::localStorageManagerExpungeNotelessTagsFromLinked
 
 void LocalStorageManagerTester::localStorageManagerAsyncSavedSearchesTest()
 {
-    try
-    {
+    try {
         TestSavedSearhAsync();
     }
     CATCH_EXCEPTION();
@@ -310,8 +287,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncSavedSearchesTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncLinkedNotebooksTest()
 {
-    try
-    {
+    try {
         TestLinkedNotebookAsync();
     }
     CATCH_EXCEPTION();
@@ -319,8 +295,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncLinkedNotebooksTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncTagsTest()
 {
-    try
-    {
+    try {
         TestTagAsync();
     }
     CATCH_EXCEPTION();
@@ -328,8 +303,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncTagsTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncUsersTest()
 {
-    try
-    {
+    try {
         TestUserAsync();
     }
     CATCH_EXCEPTION();
@@ -337,8 +311,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncUsersTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncNotebooksTest()
 {
-    try
-    {
+    try {
         TestNotebookAsync();
     }
     CATCH_EXCEPTION();
@@ -346,8 +319,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncNotebooksTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncNotesTest()
 {
-    try
-    {
+    try {
         TestNoteAsync();
     }
     CATCH_EXCEPTION();
@@ -355,17 +327,16 @@ void LocalStorageManagerTester::localStorageManagerAsyncNotesTest()
 
 void LocalStorageManagerTester::localStorageManagerAsyncResourceTest()
 {
-    try
-    {
+    try {
         TestResourceAsync();
     }
     CATCH_EXCEPTION();
 }
 
-void LocalStorageManagerTester::localStorageManagerAsyncNoteNotebookAndTagListTrackingTest()
+void LocalStorageManagerTester::
+    localStorageManagerAsyncNoteNotebookAndTagListTrackingTest()
 {
-    try
-    {
+    try {
         TestNoteNotebookAndTagListTrackingAsync();
     }
     CATCH_EXCEPTION();
@@ -373,8 +344,7 @@ void LocalStorageManagerTester::localStorageManagerAsyncNoteNotebookAndTagListTr
 
 void LocalStorageManagerTester::localStorageCacheManagerTest()
 {
-    try
-    {
+    try {
         TestCacheAsync();
     }
     CATCH_EXCEPTION();

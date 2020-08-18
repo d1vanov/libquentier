@@ -26,16 +26,15 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LocalStorageDataElementData: public QSharedData
+class Q_DECL_HIDDEN LocalStorageDataElementData : public QSharedData
 {
 public:
     LocalStorageDataElementData() = default;
 
-    LocalStorageDataElementData(
-        const LocalStorageDataElementData & other) = default;
+    LocalStorageDataElementData(const LocalStorageDataElementData & other) =
+        default;
 
-    LocalStorageDataElementData(
-        LocalStorageDataElementData && other) = default;
+    LocalStorageDataElementData(LocalStorageDataElementData && other) = default;
 
     LocalStorageDataElementData & operator=(
         const LocalStorageDataElementData & other) = delete;

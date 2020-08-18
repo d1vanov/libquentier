@@ -22,36 +22,26 @@
 
 #define __NCLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(                                                          \
-            "synchronization:notebook_cache",                                  \
-            message,                                                           \
-            level);                                                            \
+        __QNLOG_BASE("synchronization:notebook_cache", message, level);        \
     }                                                                          \
     else {                                                                     \
         __QNLOG_BASE(                                                          \
             "synchronization:notebook_cache",                                  \
             "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
             level);                                                            \
-    }                                                                          \
-// __NCLOG_BASE
+    }
 
-#define NCTRACE(message)                                                       \
-    __NCLOG_BASE(message, Trace)                                               \
-// NCTRACE
+#define NCTRACE(message) __NCLOG_BASE(message, Trace)
 
-#define NCDEBUG(message)                                                       \
-    __NCLOG_BASE(message, Debug)                                               \
-// NCDEBUG
+#define NCDEBUG(message) __NCLOG_BASE(message, Debug)
 
-#define NCWARNING(message)                                                     \
-    __NCLOG_BASE(message, Warning)                                             \
-// NCWARNING
+#define NCWARNING(message) __NCLOG_BASE(message, Warning)
 
 namespace quentier {
 
 NotebookSyncCache::NotebookSyncCache(
-        LocalStorageManagerAsync & localStorageManagerAsync,
-        const QString & linkedNotebookGuid, QObject * parent) :
+    LocalStorageManagerAsync & localStorageManagerAsync,
+    const QString & linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_linkedNotebookGuid(linkedNotebookGuid)
@@ -90,7 +80,8 @@ void NotebookSyncCache::fill()
     NCDEBUG("NotebookSyncCache::fill");
 
     if (m_connectedToLocalStorage) {
-        NCDEBUG("Already connected to the local storage, "
+        NCDEBUG(
+            "Already connected to the local storage, "
             << "no need to do anything");
         return;
     }
@@ -100,32 +91,31 @@ void NotebookSyncCache::fill()
 }
 
 void NotebookSyncCache::onListNotebooksComplete(
-    LocalStorageManager::ListObjectsOptions flag,
-    size_t limit, size_t offset,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<Notebook> foundNotebooks,
-    QUuid requestId)
+    QString linkedNotebookGuid, QList<Notebook> foundNotebooks, QUuid requestId)
 {
     if (requestId != m_listNotebooksRequestId) {
         return;
     }
 
-    NCDEBUG("NotebookSyncCache::onListNotebooksComplete: flag = "
+    NCDEBUG(
+        "NotebookSyncCache::onListNotebooksComplete: flag = "
         << flag << ", limit = " << limit << ", offset = " << offset
         << ", order = " << order << ", order direction = " << orderDirection
         << ", linked notebook guid = " << linkedNotebookGuid
         << ", request id = " << requestId);
 
-    for(const auto & notebook: qAsConst(foundNotebooks)) {
+    for (const auto & notebook: qAsConst(foundNotebooks)) {
         processNotebook(notebook);
     }
 
     m_listNotebooksRequestId = QUuid();
 
-    if (foundNotebooks.size() == static_cast<int>(limit))
-    {
-        NCTRACE("The number of found notebooks matches the limit, "
+    if (foundNotebooks.size() == static_cast<int>(limit)) {
+        NCTRACE(
+            "The number of found notebooks matches the limit, "
             << "requesting more notebooks from the local storage");
         m_offset += limit;
         requestNotebooksList();
@@ -136,25 +126,25 @@ void NotebookSyncCache::onListNotebooksComplete(
 }
 
 void NotebookSyncCache::onListNotebooksFailed(
-    LocalStorageManager::ListObjectsOptions flag,
-    size_t limit, size_t offset,
+    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, ErrorString errorDescription,
-    QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_listNotebooksRequestId) {
         return;
     }
 
-    NCDEBUG("NotebookSyncCache::onListNotebooksFailed: flag = "
+    NCDEBUG(
+        "NotebookSyncCache::onListNotebooksFailed: flag = "
         << flag << ", limit = " << limit << ", offset = " << offset
         << ", order = " << order << ", order direction = " << orderDirection
         << ", linked notebook guid = " << linkedNotebookGuid
         << ", error description = " << errorDescription
         << ", request id = " << requestId);
 
-    NCWARNING("Failed to cache the notebook information required "
+    NCWARNING(
+        "Failed to cache the notebook information required "
         << "for the sync: " << errorDescription);
 
     m_notebookNameByLocalUid.clear();
@@ -169,7 +159,8 @@ void NotebookSyncCache::onListNotebooksFailed(
 void NotebookSyncCache::onAddNotebookComplete(
     Notebook notebook, QUuid requestId)
 {
-    NCDEBUG("NotebookSyncCache::onAddNotebookComplete: request id = "
+    NCDEBUG(
+        "NotebookSyncCache::onAddNotebookComplete: request id = "
         << requestId << ", notebook: " << notebook);
 
     processNotebook(notebook);
@@ -178,7 +169,8 @@ void NotebookSyncCache::onAddNotebookComplete(
 void NotebookSyncCache::onUpdateNotebookComplete(
     Notebook notebook, QUuid requestId)
 {
-    NCDEBUG("NotebookSyncCache::onUpdateNotebookComplete: request id = "
+    NCDEBUG(
+        "NotebookSyncCache::onUpdateNotebookComplete: request id = "
         << requestId << ", notebook: " << notebook);
 
     removeNotebook(notebook.localUid());
@@ -188,7 +180,8 @@ void NotebookSyncCache::onUpdateNotebookComplete(
 void NotebookSyncCache::onExpungeNotebookComplete(
     Notebook notebook, QUuid requestId)
 {
-    NCDEBUG("NotebookSyncCache::onExpungeNotebookComplete: request id = "
+    NCDEBUG(
+        "NotebookSyncCache::onExpungeNotebookComplete: request id = "
         << requestId << ", notebook: " << notebook);
 
     removeNotebook(notebook.localUid());
@@ -205,45 +198,38 @@ void NotebookSyncCache::connectToLocalStorage()
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(
-        this,
-        &NotebookSyncCache::listNotebooks,
-        &m_localStorageManagerAsync,
+        this, &NotebookSyncCache::listNotebooks, &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onListNotebooksRequest,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connect local storage manager async's signals to local slots
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::listNotebooksComplete,
-        this,
+        &LocalStorageManagerAsync::listNotebooksComplete, this,
         &NotebookSyncCache::onListNotebooksComplete,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::listNotebooksFailed,
-        this,
+        &LocalStorageManagerAsync::listNotebooksFailed, this,
         &NotebookSyncCache::onListNotebooksFailed,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addNotebookComplete, this,
         &NotebookSyncCache::onAddNotebookComplete,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &NotebookSyncCache::onUpdateNotebookComplete,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookComplete, this,
         &NotebookSyncCache::onExpungeNotebookComplete,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
@@ -261,40 +247,33 @@ void NotebookSyncCache::disconnectFromLocalStorage()
 
     // Disconnect local signals from local storage manager async's slots
     QObject::disconnect(
-        this,
-        &NotebookSyncCache::listNotebooks,
-        &m_localStorageManagerAsync,
+        this, &NotebookSyncCache::listNotebooks, &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onListNotebooksRequest);
 
     // Disconnect local storage manager async's signals from local slots
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::listNotebooksComplete,
-        this,
+        &LocalStorageManagerAsync::listNotebooksComplete, this,
         &NotebookSyncCache::onListNotebooksComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::listNotebooksFailed,
-        this,
+        &LocalStorageManagerAsync::listNotebooksFailed, this,
         &NotebookSyncCache::onListNotebooksFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::addNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::addNotebookComplete, this,
         &NotebookSyncCache::onAddNotebookComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &NotebookSyncCache::onUpdateNotebookComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookComplete, this,
         &NotebookSyncCache::onExpungeNotebookComplete);
 
     m_connectedToLocalStorage = false;
@@ -306,24 +285,21 @@ void NotebookSyncCache::requestNotebooksList()
 
     m_listNotebooksRequestId = QUuid::createUuid();
 
-    NCTRACE("Emitting the request to list notebooks: request id = "
+    NCTRACE(
+        "Emitting the request to list notebooks: request id = "
         << m_listNotebooksRequestId << ", offset = " << m_offset);
 
     Q_EMIT listNotebooks(
-        LocalStorageManager::ListObjectsOption::ListAll,
-        m_limit,
-        m_offset,
+        LocalStorageManager::ListObjectsOption::ListAll, m_limit, m_offset,
         LocalStorageManager::ListNotebooksOrder::NoOrder,
-        LocalStorageManager::OrderDirection::Ascending,
-        m_linkedNotebookGuid,
+        LocalStorageManager::OrderDirection::Ascending, m_linkedNotebookGuid,
         m_listNotebooksRequestId);
-
 }
 
 void NotebookSyncCache::removeNotebook(const QString & notebookLocalUid)
 {
-    NCDEBUG("NotebookSyncCache::removeNotebook: local uid = "
-            << notebookLocalUid);
+    NCDEBUG(
+        "NotebookSyncCache::removeNotebook: local uid = " << notebookLocalUid);
 
     auto localUidIt = m_notebookNameByLocalUid.find(notebookLocalUid);
     if (Q_UNLIKELY(localUidIt == m_notebookNameByLocalUid.end())) {
@@ -361,14 +337,11 @@ void NotebookSyncCache::processNotebook(const Notebook & notebook)
 {
     NCDEBUG("NotebookSyncCache::processNotebook: " << notebook);
 
-    if (notebook.hasGuid())
-    {
-        if (notebook.isDirty())
-        {
+    if (notebook.hasGuid()) {
+        if (notebook.isDirty()) {
             m_dirtyNotebooksByGuid[notebook.guid()] = notebook;
         }
-        else
-        {
+        else {
             auto it = m_dirtyNotebooksByGuid.find(notebook.guid());
             if (it != m_dirtyNotebooksByGuid.end()) {
                 Q_UNUSED(m_dirtyNotebooksByGuid.erase(it))

@@ -30,7 +30,7 @@ namespace quentier {
  * to JavaScript in order to notify the C++ code of certain events, including
  * 'cut' and 'paste' actions
  */
-class ActionsWatcher: public QObject
+class ActionsWatcher : public QObject
 {
     Q_OBJECT
 public:

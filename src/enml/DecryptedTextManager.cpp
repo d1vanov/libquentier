@@ -37,13 +37,9 @@ void DecryptedTextManager::addEntry(
     const QString & cipher, const size_t keyLength)
 {
     Q_D(DecryptedTextManager);
+
     d->addEntry(
-        hash,
-        decryptedText,
-        rememberForSession,
-        passphrase,
-        cipher,
-        keyLength);
+        hash, decryptedText, rememberForSession, passphrase, cipher, keyLength);
 }
 
 void DecryptedTextManager::removeEntry(const QString & hash)
@@ -63,10 +59,9 @@ bool DecryptedTextManager::findDecryptedTextByEncryptedText(
     bool & rememberForSession) const
 {
     Q_D(const DecryptedTextManager);
+
     return d->findDecryptedTextByEncryptedText(
-        encryptedText,
-        decryptedText,
-        rememberForSession);
+        encryptedText, decryptedText, rememberForSession);
 }
 
 bool DecryptedTextManager::modifyDecryptedText(
@@ -74,10 +69,9 @@ bool DecryptedTextManager::modifyDecryptedText(
     QString & newEncryptedText)
 {
     Q_D(DecryptedTextManager);
+
     return d->modifyDecryptedText(
-        originalEncryptedText,
-        newDecryptedText,
-        newEncryptedText);
+        originalEncryptedText, newDecryptedText, newEncryptedText);
 }
 
 } // namespace quentier

@@ -23,28 +23,24 @@ namespace quentier {
 LinkedNotebookAuthData::LinkedNotebookAuthData() = default;
 
 LinkedNotebookAuthData::LinkedNotebookAuthData(
-        QString guid,
-        QString shardId,
-        QString sharedNotebookGlobalId,
-        QString uri,
-        QString noteStoreUrl) :
+    QString guid, QString shardId, QString sharedNotebookGlobalId, QString uri,
+    QString noteStoreUrl) :
     m_guid(std::move(guid)),
     m_shardId(std::move(shardId)),
     m_sharedNotebookGlobalId(std::move(sharedNotebookGlobalId)),
-    m_uri(std::move(uri)),
-    m_noteStoreUrl(std::move(noteStoreUrl))
+    m_uri(std::move(uri)), m_noteStoreUrl(std::move(noteStoreUrl))
 {}
 
 QTextStream & LinkedNotebookAuthData::print(QTextStream & strm) const
 {
     strm << "LinkedNotebookAuthData: {\n"
-        << "    guid = " << m_guid << "\n"
-        << "    shard id = " << m_shardId << "\n"
-        << "    shared notebook global id = "
-        << m_sharedNotebookGlobalId << "\n"
-        << "    uri = " << m_uri << "\n"
-        << "    note store url = " << m_noteStoreUrl
-        << "\n" << "};\n";
+         << "    guid = " << m_guid << "\n"
+         << "    shard id = " << m_shardId << "\n"
+         << "    shared notebook global id = " << m_sharedNotebookGlobalId
+         << "\n"
+         << "    uri = " << m_uri << "\n"
+         << "    note store url = " << m_noteStoreUrl << "\n"
+         << "};\n";
 
     return strm;
 }

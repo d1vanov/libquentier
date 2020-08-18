@@ -27,13 +27,17 @@ void DecryptedTextManagerPrivate::addEntry(
     const bool rememberForSession, const QString & passphrase,
     const QString & cipher, const size_t keyLength)
 {
-    QNDEBUG("enml", "DecryptedTextManagerPrivate::addEntry: hash = "
-        << hash << ", rememberForSession = "
-        << (rememberForSession ? "true" : "false"));
+    QNDEBUG(
+        "enml",
+        "DecryptedTextManagerPrivate::addEntry: hash = "
+            << hash << ", rememberForSession = "
+            << (rememberForSession ? "true" : "false"));
 
     if (passphrase.isEmpty()) {
-        QNWARNING("enml", "detected attempt to add decrypted text for "
-            << "empty passphrase to decrypted text manager");
+        QNWARNING(
+            "enml",
+            "detected attempt to add decrypted text for "
+                << "empty passphrase to decrypted text manager");
         return;
     }
 
@@ -47,8 +51,8 @@ void DecryptedTextManagerPrivate::addEntry(
 
 void DecryptedTextManagerPrivate::removeEntry(const QString & hash)
 {
-    QNDEBUG("enml", "DecryptedTextManagerPrivate::removeEntry: hash = "
-        << hash);
+    QNDEBUG(
+        "enml", "DecryptedTextManagerPrivate::removeEntry: hash = " << hash);
 
     auto it = m_dataHash.find(hash);
     if (it != m_dataHash.end()) {
@@ -66,8 +70,7 @@ void DecryptedTextManagerPrivate::clearNonRememberedForSessionEntries()
         "enml",
         "DecryptedTextManagerPrivate::clearNonRememberedForSessionEntries");
 
-    for(auto it = m_dataHash.begin(); it != m_dataHash.end();)
-    {
+    for (auto it = m_dataHash.begin(); it != m_dataHash.end();) {
         const Data & data = it.value();
         if (!data.m_rememberForSession) {
             it = m_dataHash.erase(it);
@@ -92,10 +95,11 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
             << encryptedText);
 
     auto dataIt = m_dataHash.find(encryptedText);
-    if (dataIt == m_dataHash.end())
-    {
-        QNTRACE("enml", "Can't find entry in the up to date data hash, trying "
-            << "the stale hash");
+    if (dataIt == m_dataHash.end()) {
+        QNTRACE(
+            "enml",
+            "Can't find entry in the up to date data hash, trying "
+                << "the stale hash");
 
         // Try the stale data hash
         dataIt = m_staleDataHash.find(encryptedText);
@@ -116,13 +120,14 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     const QString & originalEncryptedText, const QString & newDecryptedText,
     QString & newEncryptedText)
 {
-    QNDEBUG("enml", "DecryptedTextManagerPrivate::modifyDecryptedText: "
-        << "original decrypted text = " << originalEncryptedText);
+    QNDEBUG(
+        "enml",
+        "DecryptedTextManagerPrivate::modifyDecryptedText: "
+            << "original decrypted text = " << originalEncryptedText);
 
     bool foundInDataHash = true;
     auto it = m_dataHash.find(originalEncryptedText);
-    if (it == m_dataHash.end())
-    {
+    if (it == m_dataHash.end()) {
         foundInDataHash = false;
         // Try the stale data hash instead
         it = m_staleDataHash.find(originalEncryptedText);
@@ -137,21 +142,17 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
 
     ErrorString errorDescription;
     bool res = m_encryptionManager.encrypt(
-        newDecryptedText,
-        passphrase,
-        entry.m_cipher,
-        entry.m_keyLength,
-        newEncryptedText,
-        errorDescription);
+        newDecryptedText, passphrase, entry.m_cipher, entry.m_keyLength,
+        newEncryptedText, errorDescription);
 
     if (!res) {
-        QNWARNING("enml", "Could not re-encrypt the decrypted text: "
-            << errorDescription);
+        QNWARNING(
+            "enml",
+            "Could not re-encrypt the decrypted text: " << errorDescription);
         return false;
     }
 
-    if (foundInDataHash)
-    {
+    if (foundInDataHash) {
         // Copy the previous entry's stale data to the stale data hash
         // in case it would be needed further
         auto & staleEntry = m_staleDataHash[originalEncryptedText];
@@ -171,8 +172,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
 
         return true;
     }
-    else
-    {
+    else {
         auto & dataEntry = m_dataHash[newEncryptedText];
         dataEntry.m_cipher = entry.m_cipher;
         dataEntry.m_keyLength = entry.m_keyLength;

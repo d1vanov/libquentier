@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_I_LOCAL_STORAGE_PATCH_H
 #define LIB_QUENTIER_LOCAL_STORAGE_I_LOCAL_STORAGE_PATCH_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/Linkage.h>
+#include <quentier/utility/Macros.h>
 
 #include <QObject>
 
@@ -35,7 +35,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageDatabaseUpgrader)
  * persistence so that only compliant & corresponding versions of libquentier
  * can be used to work with it
  */
-class QUENTIER_EXPORT ILocalStoragePatch: public QObject
+class QUENTIER_EXPORT ILocalStoragePatch : public QObject
 {
     Q_OBJECT
 protected:
@@ -101,8 +101,8 @@ public:
      * @param errorDescription      The textual description of the error in case
      *                              of failure to remove the local storage
      *                              backup
-     * @return                      True if local storage backup was successfully
-     *                              removed, false otherwise
+     * @return                      True if local storage backup was
+     * successfully removed, false otherwise
      */
     virtual bool removeLocalStorageBackup(ErrorString & errorDescription) = 0;
 
@@ -111,8 +111,8 @@ public:
      *
      * @param errorDescription      The textual description of the error in case
      *                              of patch application failure
-     * @return                      True in case of successful patch application,
-     *                              false otherwise
+     * @return                      True in case of successful patch
+     * application, false otherwise
      */
     virtual bool apply(ErrorString & errorDescription) = 0;
 

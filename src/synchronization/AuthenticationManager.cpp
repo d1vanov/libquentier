@@ -16,30 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/AuthenticationManager.h>
 #include "AuthenticationManager_p.h"
+#include <quentier/synchronization/AuthenticationManager.h>
 
 namespace quentier {
 
 AuthenticationManager::AuthenticationManager(
-        const QString & consumerKey, const QString & consumerSecret,
-        const QString & host, QObject * parent) :
+    const QString & consumerKey, const QString & consumerSecret,
+    const QString & host, QObject * parent) :
     IAuthenticationManager(parent),
     d_ptr(new AuthenticationManagerPrivate(
-        consumerKey,
-        consumerSecret,
-        host,
-        this))
+        consumerKey, consumerSecret, host, this))
 {
     QObject::connect(
-        d_ptr,
-        &AuthenticationManagerPrivate::sendAuthenticationResult,
-        this,
+        d_ptr, &AuthenticationManagerPrivate::sendAuthenticationResult, this,
         &AuthenticationManager::sendAuthenticationResult);
 }
 
-AuthenticationManager::~AuthenticationManager()
-{}
+AuthenticationManager::~AuthenticationManager() {}
 
 void AuthenticationManager::onAuthenticationRequest()
 {

@@ -28,8 +28,7 @@ namespace quentier {
 QString defaultApplicationStoragePath()
 {
     QString storagePath = applicationPersistentStoragePath();
-    if (Q_UNLIKELY(storagePath.isEmpty()))
-    {
+    if (Q_UNLIKELY(storagePath.isEmpty())) {
         throw ApplicationSettingsInitializationException(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
@@ -55,10 +54,11 @@ QString accountApplicationStoragePath(
     const Account & account, const QString & settingsName)
 {
     QString accountName = account.name();
-    if (Q_UNLIKELY(accountName.isEmpty()))
-    {
-        QNWARNING("utility", "Detected attempt to create ApplicationSettings "
-                  "for account with empty name");
+    if (Q_UNLIKELY(accountName.isEmpty())) {
+        QNWARNING(
+            "utility",
+            "Detected attempt to create ApplicationSettings "
+            "for account with empty name");
         throw ApplicationSettingsInitializationException(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
@@ -67,8 +67,7 @@ QString accountApplicationStoragePath(
     }
 
     QString storagePath = accountPersistentStoragePath(account);
-    if (Q_UNLIKELY(storagePath.isEmpty()))
-    {
+    if (Q_UNLIKELY(storagePath.isEmpty())) {
         throw ApplicationSettingsInitializationException(
             ErrorString(QT_TRANSLATE_NOOP(
                 "ApplicationSettings",
@@ -78,16 +77,14 @@ QString accountApplicationStoragePath(
 
     storagePath += QStringLiteral("/settings/");
 
-    if (!settingsName.isEmpty())
-    {
+    if (!settingsName.isEmpty()) {
         storagePath += settingsName;
 
         if (!settingsName.endsWith(QStringLiteral(".ini"))) {
             storagePath += QStringLiteral(".ini");
         }
     }
-    else
-    {
+    else {
         storagePath += QStringLiteral("config.ini");
     }
 
@@ -99,24 +96,22 @@ ApplicationSettings::ApplicationSettings() :
 {}
 
 ApplicationSettings::ApplicationSettings(
-        const Account & account, const QString & settingsName) :
+    const Account & account, const QString & settingsName) :
     QSettings(
         accountApplicationStoragePath(account, settingsName),
         QSettings::IniFormat)
 {}
 
-ApplicationSettings::~ApplicationSettings()
-{}
+ApplicationSettings::~ApplicationSettings() {}
 
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
     auto allStoredKeys = QSettings::allKeys();
 
-    for(const auto & key: qAsConst(allStoredKeys))
-    {
+    for (const auto & key: qAsConst(allStoredKeys)) {
         auto value = QSettings::value(key);
         strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
-            << value.toString() << QStringLiteral("\n;");
+             << value.toString() << QStringLiteral("\n;");
     }
 
     return strm;

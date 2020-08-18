@@ -28,8 +28,10 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
 
 void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
 {
-    QNDEBUG("note_editor:js_glue", "ToDoCheckboxOnClickHandler"
-        << "::onToDoCheckboxClicked: " << enToDoCheckboxId);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "ToDoCheckboxOnClickHandler"
+            << "::onToDoCheckboxClicked: " << enToDoCheckboxId);
 
     bool conversionResult = false;
     quint64 id = enToDoCheckboxId.toULongLong(&conversionResult);

@@ -27,8 +27,9 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN InkNoteImageDownloader final:
-    public QObject, public QRunnable
+class Q_DECL_HIDDEN InkNoteImageDownloader final :
+    public QObject,
+    public QRunnable
 {
     Q_OBJECT
 public:
@@ -47,15 +48,15 @@ Q_SIGNALS:
         ErrorString errorDescription);
 
 private:
-    QString     m_host;
-    QString     m_resourceGuid;
-    QString     m_noteGuid;
-    QString     m_authToken;
-    QString     m_shardId;
-    QString     m_storageFolderPath;
-    int         m_height;
-    int         m_width;
-    bool        m_noteFromPublicLinkedNotebook;
+    QString m_host;
+    QString m_resourceGuid;
+    QString m_noteGuid;
+    QString m_authToken;
+    QString m_shardId;
+    QString m_storageFolderPath;
+    int m_height;
+    int m_width;
+    bool m_noteFromPublicLinkedNotebook;
 };
 
 } // namespace quentier

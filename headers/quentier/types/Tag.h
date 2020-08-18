@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(TagData)
 
-class QUENTIER_EXPORT Tag: public IFavoritableDataElement
+class QUENTIER_EXPORT Tag : public IFavoritableDataElement
 {
 public:
     QN_DECLARE_LOCAL_UID

@@ -30,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class SavedSearchLocalStorageManagerAsyncTester: public QObject
+class SavedSearchLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
@@ -46,7 +46,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getSavedSearchCountRequest(QUuid requestId);
     void addSavedSearchRequest(SavedSearch search, QUuid requestId);
     void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
@@ -55,8 +55,7 @@ Q_SIGNALS:
     void listAllSavedSearchesRequest(
         size_t limit, size_t offset,
         LocalStorageManager::ListSavedSearchesOrder order,
-        LocalStorageManager::OrderDirection orderDirection,
-        QUuid requestId);
+        LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
     void expungeSavedSearchRequest(SavedSearch search, QUuid requestId);
 
@@ -120,15 +119,15 @@ private:
         STATE_SENT_LIST_SEARCHES_REQUEST
     };
 
-    State   m_state = STATE_UNINITIALIZED;
+    State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    SavedSearch         m_initialSavedSearch;
-    SavedSearch         m_foundSavedSearch;
-    SavedSearch         m_modifiedSavedSearch;
-    QList<SavedSearch>  m_initialSavedSearches;
+    SavedSearch m_initialSavedSearch;
+    SavedSearch m_foundSavedSearch;
+    SavedSearch m_modifiedSavedSearch;
+    QList<SavedSearch> m_initialSavedSearches;
 };
 
 } // namespace test

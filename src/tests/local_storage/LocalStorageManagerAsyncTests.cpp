@@ -22,9 +22,9 @@
 
 #include "LinkedNotebookLocalStorageManagerAsyncTester.h"
 #include "LocalStorageCacheAsyncTester.h"
-#include "NotebookLocalStorageManagerAsyncTester.h"
 #include "NoteLocalStorageManagerAsyncTester.h"
 #include "NoteNotebookAndTagListTrackingAsyncTester.h"
+#include "NotebookLocalStorageManagerAsyncTester.h"
 #include "ResourceLocalStorageManagerAsyncTester.h"
 #include "SavedSearchLocalStorageManagerAsyncTester.h"
 #include "TagLocalStorageManagerAsyncTester.h"
@@ -50,21 +50,17 @@ void TestSavedSearhAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &savedSearchAsyncTester,
-            &SavedSearchLocalStorageManagerAsyncTester::success,
-            &loop,
+            &SavedSearchLocalStorageManagerAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &savedSearchAsyncTester,
-            &SavedSearchLocalStorageManagerAsyncTester::failure,
-            &loop,
+            &SavedSearchLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -73,17 +69,16 @@ void TestSavedSearhAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &savedSearchAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &savedSearchAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "SavedSearch async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "SavedSearch async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("SavedSearch async tester failed to finish in time");
@@ -103,21 +98,17 @@ void TestLinkedNotebookAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &linkedNotebookAsyncTester,
-            &LinkedNotebookLocalStorageManagerAsyncTester::success,
-            &loop,
+            &LinkedNotebookLocalStorageManagerAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &linkedNotebookAsyncTester,
-            &LinkedNotebookLocalStorageManagerAsyncTester::failure,
-            &loop,
+            &LinkedNotebookLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -126,17 +117,16 @@ void TestLinkedNotebookAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &linkedNotebookAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &linkedNotebookAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "LinkedNotebook async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "LinkedNotebook async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("LinkedNotebook async tester failed to finish in time");
@@ -156,21 +146,15 @@ void TestTagAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
-            &tagAsyncTester,
-            &TagLocalStorageManagerAsyncTester::success,
-            &loop,
+            &tagAsyncTester, &TagLocalStorageManagerAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
-            &tagAsyncTester,
-            &TagLocalStorageManagerAsyncTester::failure,
-            &loop,
+            &tagAsyncTester, &TagLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -179,17 +163,16 @@ void TestTagAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &tagAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &tagAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in Tag "
-              "async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in Tag "
+            "async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Tag async tester failed to finish in time");
@@ -209,22 +192,16 @@ void TestUserAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
-            &userAsyncTester,
-            &UserLocalStorageManagerAsyncTester::success,
-            &loop,
-            &EventLoopWithExitStatus::exitAsSuccess);
+            &userAsyncTester, &UserLocalStorageManagerAsyncTester::success,
+            &loop, &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
-            &userAsyncTester,
-            &UserLocalStorageManagerAsyncTester::failure,
-            &loop,
-            &EventLoopWithExitStatus::exitAsFailureWithError);
+            &userAsyncTester, &UserLocalStorageManagerAsyncTester::failure,
+            &loop, &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
         slotInvokingTimer.setInterval(500);
@@ -232,17 +209,16 @@ void TestUserAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &userAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &userAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "User async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "User async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("User async tester failed to finish in time");
@@ -262,21 +238,17 @@ void TestNotebookAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &notebookAsyncTester,
-            &NotebookLocalStorageManagerAsyncTester::success,
-            &loop,
+            &NotebookLocalStorageManagerAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &notebookAsyncTester,
-            &NotebookLocalStorageManagerAsyncTester::failure,
-            &loop,
+            &NotebookLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -285,17 +257,16 @@ void TestNotebookAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &notebookAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &notebookAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "Notebook async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "Notebook async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Notebook async tester failed to finish in time");
@@ -315,22 +286,16 @@ void TestNoteAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
-            &noteAsyncTester,
-            &NoteLocalStorageManagerAsyncTester::success,
-            &loop,
-            &EventLoopWithExitStatus::exitAsSuccess);
+            &noteAsyncTester, &NoteLocalStorageManagerAsyncTester::success,
+            &loop, &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
-            &noteAsyncTester,
-            &NoteLocalStorageManagerAsyncTester::failure,
-            &loop,
-            &EventLoopWithExitStatus::exitAsFailureWithError);
+            &noteAsyncTester, &NoteLocalStorageManagerAsyncTester::failure,
+            &loop, &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
         slotInvokingTimer.setInterval(500);
@@ -338,17 +303,16 @@ void TestNoteAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &noteAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &noteAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "Note async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "Note async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Note async tester failed to finish in time");
@@ -368,21 +332,17 @@ void TestResourceAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &resourceAsyncTester,
-            &ResourceLocalStorageManagerAsyncTester::success,
-            &loop,
+            &ResourceLocalStorageManagerAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &resourceAsyncTester,
-            &ResourceLocalStorageManagerAsyncTester::failure,
-            &loop,
+            &ResourceLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -391,17 +351,16 @@ void TestResourceAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &resourceAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &resourceAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "Resource async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "Resource async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Resource async tester failed to finish in time");
@@ -418,25 +377,22 @@ void TestNoteNotebookAndTagListTrackingAsync()
         timer.setInterval(MAX_ALLOWED_TEST_DURATION_MSEC);
         timer.setSingleShot(true);
 
-        NoteNotebookAndTagListTrackingAsyncTester noteNotebookAndTagListTrackingAsycTester;
+        NoteNotebookAndTagListTrackingAsyncTester
+            noteNotebookAndTagListTrackingAsycTester;
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &noteNotebookAndTagListTrackingAsycTester,
-            &NoteNotebookAndTagListTrackingAsyncTester::success,
-            &loop,
+            &NoteNotebookAndTagListTrackingAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &noteNotebookAndTagListTrackingAsycTester,
-            &NoteNotebookAndTagListTrackingAsyncTester::failure,
-            &loop,
+            &NoteNotebookAndTagListTrackingAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -445,8 +401,7 @@ void TestNoteNotebookAndTagListTrackingAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &noteNotebookAndTagListTrackingAsycTester,
+            0, &noteNotebookAndTagListTrackingAsycTester,
             SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec());
@@ -454,18 +409,17 @@ void TestNoteNotebookAndTagListTrackingAsync()
         errorDescription = loop.errorDescription();
     }
 
-    if (status == EventLoopWithExitStatus::ExitStatus::Failure)
-    {
-        QFAIL(qPrintable(QString::fromUtf8(
-            "Detected failure during the asynchronous "
-            "loop processing in Note notebook and tag "
-            "list tracking async tester: ") +
+    if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
+        QFAIL(qPrintable(
+            QString::fromUtf8("Detected failure during the asynchronous "
+                              "loop processing in Note notebook and tag "
+                              "list tracking async tester: ") +
             errorDescription.nonLocalizedString()));
     }
-    else if (status == EventLoopWithExitStatus::ExitStatus::Timeout)
-    {
-        QFAIL("Note notebook and tag list tracking async tester failed to "
-              "finish in time");
+    else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
+        QFAIL(
+            "Note notebook and tag list tracking async tester failed to "
+            "finish in time");
     }
 }
 
@@ -482,21 +436,17 @@ void TestCacheAsync()
         EventLoopWithExitStatus loop;
 
         QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
+            &timer, &QTimer::timeout, &loop,
             &EventLoopWithExitStatus::exitAsTimeout);
 
         QObject::connect(
             &localStorageCacheAsyncTester,
-            &LocalStorageCacheAsyncTester::success,
-            &loop,
+            &LocalStorageCacheAsyncTester::success, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
         QObject::connect(
             &localStorageCacheAsyncTester,
-            &LocalStorageCacheAsyncTester::failure,
-            &loop,
+            &LocalStorageCacheAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         QTimer slotInvokingTimer;
@@ -505,17 +455,16 @@ void TestCacheAsync()
 
         timer.start();
         slotInvokingTimer.singleShot(
-            0,
-            &localStorageCacheAsyncTester,
-            SLOT(onInitTestCase()));
+            0, &localStorageCacheAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();
     }
 
     if (status == EventLoopWithExitStatus::ExitStatus::Failure) {
-        QFAIL("Detected failure during the asynchronous loop processing in "
-              "local storage cache async tester");
+        QFAIL(
+            "Detected failure during the asynchronous loop processing in "
+            "local storage cache async tester");
     }
     else if (status == EventLoopWithExitStatus::ExitStatus::Timeout) {
         QFAIL("Local storage cache async tester failed to finish in time");

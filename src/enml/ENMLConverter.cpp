@@ -24,9 +24,7 @@
 
 namespace quentier {
 
-ENMLConverter::ENMLConverter() :
-    d_ptr(new ENMLConverterPrivate)
-{}
+ENMLConverter::ENMLConverter() : d_ptr(new ENMLConverterPrivate) {}
 
 ENMLConverter::~ENMLConverter()
 {
@@ -35,17 +33,13 @@ ENMLConverter::~ENMLConverter()
 
 bool ENMLConverter::htmlToNoteContent(
     const QString & html, QString & noteContent,
-    DecryptedTextManager & decryptedTextManager,
-    ErrorString & errorDescription,
+    DecryptedTextManager & decryptedTextManager, ErrorString & errorDescription,
     const QVector<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
+
     return d->htmlToNoteContent(
-        html,
-        skipRules,
-        noteContent,
-        decryptedTextManager,
-        errorDescription);
+        html, skipRules, noteContent, decryptedTextManager, errorDescription);
 }
 
 bool ENMLConverter::cleanupExternalHtml(
@@ -57,8 +51,7 @@ bool ENMLConverter::cleanupExternalHtml(
 }
 
 bool ENMLConverter::htmlToQTextDocument(
-    const QString & html, QTextDocument & doc,
-    ErrorString & errorDescription,
+    const QString & html, QTextDocument & doc, ErrorString & errorDescription,
     const QVector<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
@@ -71,12 +64,9 @@ bool ENMLConverter::noteContentToHtml(
     NoteContentToHtmlExtraData & extraData) const
 {
     Q_D(const ENMLConverter);
+
     return d->noteContentToHtml(
-        noteContent,
-        html,
-        errorDescription,
-        decryptedTextManager,
-        extraData);
+        noteContent, html, errorDescription, decryptedTextManager, extraData);
 }
 
 bool ENMLConverter::validateEnml(
@@ -98,9 +88,7 @@ bool ENMLConverter::noteContentToPlainText(
     ErrorString & errorMessage)
 {
     return ENMLConverterPrivate::noteContentToPlainText(
-        noteContent,
-        plainText,
-        errorMessage);
+        noteContent, plainText, errorMessage);
 }
 
 bool ENMLConverter::noteContentToListOfWords(
@@ -108,10 +96,7 @@ bool ENMLConverter::noteContentToListOfWords(
     ErrorString & errorMessage, QString * plainText)
 {
     return ENMLConverterPrivate::noteContentToListOfWords(
-        noteContent,
-        listOfWords,
-        errorMessage,
-        plainText);
+        noteContent, listOfWords, errorMessage, plainText);
 }
 
 QStringList ENMLConverter::plainTextToListOfWords(const QString & plainText)
@@ -126,16 +111,11 @@ QString ENMLConverter::toDoCheckboxHtml(
 }
 
 QString ENMLConverter::encryptedTextHtml(
-    const QString & encryptedText, const QString & hint,
-    const QString & cipher, const size_t keyLength,
-    const quint64 enCryptIndex)
+    const QString & encryptedText, const QString & hint, const QString & cipher,
+    const size_t keyLength, const quint64 enCryptIndex)
 {
     return ENMLConverterPrivate::encryptedTextHtml(
-        encryptedText,
-        hint,
-        cipher,
-        keyLength,
-        enCryptIndex);
+        encryptedText, hint, cipher, keyLength, enCryptIndex);
 }
 
 QString ENMLConverter::decryptedTextHtml(
@@ -144,9 +124,7 @@ QString ENMLConverter::decryptedTextHtml(
     const quint64 enDecryptedIndex)
 {
     return ENMLConverterPrivate::decryptedTextHtml(
-        decryptedText,
-        encryptedText,
-        hint, cipher, keyLength,
+        decryptedText, encryptedText, hint, cipher, keyLength,
         enDecryptedIndex);
 }
 
@@ -164,17 +142,13 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
 bool ENMLConverter::exportNotesToEnex(
     const QVector<Note> & notes,
     const QHash<QString, QString> & tagNamesByTagLocalUids,
-    const EnexExportTags exportTagsOption,
-    QString & enex, ErrorString & errorDescription,
-    const QString & version) const
+    const EnexExportTags exportTagsOption, QString & enex,
+    ErrorString & errorDescription, const QString & version) const
 {
     Q_D(const ENMLConverter);
+
     return d->exportNotesToEnex(
-        notes,
-        tagNamesByTagLocalUids,
-        exportTagsOption,
-        enex,
-        errorDescription,
+        notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription,
         version);
 }
 
@@ -190,58 +164,56 @@ bool ENMLConverter::importEnex(
 QTextStream & ENMLConverter::SkipHtmlElementRule::print(
     QTextStream & strm) const
 {
-#define PRINT_COMPARISON_RULE(rule)                                            \
-    switch(rule)                                                               \
-    {                                                                          \
-        case Equals:                                                           \
-            strm << "Equals";                                                  \
-            break;                                                             \
-        case StartsWith:                                                       \
-            strm << "Starts with";                                             \
-            break;                                                             \
-        case EndsWith:                                                         \
-            strm << "Ends with";                                               \
-            break;                                                             \
-        case Contains:                                                         \
-            strm << "Contains";                                                \
-            break;                                                             \
-        default:                                                               \
-            strm << "Unknown (" << static_cast<qint64>(rule) << ")";           \
-            break;                                                             \
-    }                                                                          \
-// PRINT_COMPARISON_RULE
-
     strm << "SkipHtmlElementRule: {\n";
-    strm << "  element name to skip = " << m_elementNameToSkip << ", rule: ";
-    PRINT_COMPARISON_RULE(m_elementNameComparisonRule)
-    strm << ", case "
+    strm << "  element name to skip = " << m_elementNameToSkip
+         << ", rule: " << m_elementNameComparisonRule << ", case "
          << ((m_elementNameCaseSensitivity == Qt::CaseSensitive)
-             ? "sensitive"
-             : "insensitive");
-    strm << "\n";
+                 ? "sensitive"
+                 : "insensitive")
+         << "\n";
 
-    strm << "  attribute name to skip = "
-         << m_attributeNameToSkip
-         << ", rule: ";
-    PRINT_COMPARISON_RULE(m_attributeNameComparisonRule)
-    strm << ", case "
+    strm << "  attribute name to skip = " << m_attributeNameToSkip
+         << ", rule: " << m_attributeNameComparisonRule << ", case "
          << ((m_attributeNameCaseSensitivity == Qt::CaseSensitive)
-             ? "sensitive"
-             : "insensitive");
-    strm << "\n";
+                 ? "sensitive"
+                 : "insensitive")
+         << "\n";
 
-    strm << "  attribute value to skip = "
-         << m_attributeValueToSkip
-         << ", rule: ";
-    PRINT_COMPARISON_RULE(m_attributeValueComparisonRule)
-    strm << ", case "
+    strm << "  attribute value to skip = " << m_attributeValueToSkip
+         << ", rule: " << m_attributeValueComparisonRule << ", case "
          << ((m_attributeValueCaseSensitivity == Qt::CaseSensitive)
-             ? "sensitive"
-             : "insensitive");
-    strm << "\n}\n";
+                 ? "sensitive"
+                 : "insensitive")
+         << "\n}\n";
+
+    return strm;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ENMLConverter::SkipHtmlElementRule::ComparisonRule rule)
+{
+    using ComparisonRule = ENMLConverter::SkipHtmlElementRule::ComparisonRule;
+
+    switch (rule) {
+    case ComparisonRule::Equals:
+        strm << "Equals";
+        break;
+    case ComparisonRule::StartsWith:
+        strm << "Starts with";
+        break;
+    case ComparisonRule::EndsWith:
+        strm << "Ends with";
+        break;
+    case ComparisonRule::Contains:
+        strm << "Contains";
+        break;
+    default:
+        strm << "Unknown (" << static_cast<qint64>(rule) << ")";
+        break;
+    }
 
     return strm;
 }
 
 } // namespace quentier
-

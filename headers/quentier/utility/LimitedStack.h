@@ -32,22 +32,19 @@ namespace quentier {
  * Only limits greater than zero are considered.
  */
 template <class T>
-class LimitedStack: public QStack<T>
+class LimitedStack : public QStack<T>
 {
 public:
-    LimitedStack(void (*deleter)(T&) = nullptr) :
+    LimitedStack(void (*deleter)(T &) = nullptr) :
         m_limit(-1), m_deleter(deleter)
     {}
 
     LimitedStack(const LimitedStack<T> & other) :
-        QStack<T>(other),
-        m_limit(other.m_limit),
-        m_deleter(other.m_deleter)
+        QStack<T>(other), m_limit(other.m_limit), m_deleter(other.m_deleter)
     {}
 
     LimitedStack(LimitedStack<T> && other) :
-        QStack<T>(std::move(other)),
-        m_limit(std::move(other.m_limit)),
+        QStack<T>(std::move(other)), m_limit(std::move(other.m_limit)),
         m_deleter(std::move(other.m_deleter))
     {}
 
@@ -75,8 +72,7 @@ public:
 
     ~LimitedStack()
     {
-        if (m_deleter)
-        {
+        if (m_deleter) {
             while (!QStack<T>::isEmpty()) {
                 T t = QStack<T>::pop();
                 (*m_deleter)(t);
@@ -97,8 +93,14 @@ public:
         QStack<T>::swap(other);
     }
 
-    int limit() const { return m_limit; }
-    void setLimit(const int limit) { m_limit = limit; }
+    int limit() const
+    {
+        return m_limit;
+    }
+    void setLimit(const int limit)
+    {
+        m_limit = limit;
+    }
 
     void push(const T & t)
     {
@@ -113,7 +115,7 @@ public:
     }
 
 private:
-    int  m_limit;
+    int m_limit;
     void (*m_deleter)(T &);
 };
 

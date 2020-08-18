@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class FullSyncStaleDataItemsExpungerTester: public QObject
+class FullSyncStaleDataItemsExpungerTester : public QObject
 {
     Q_OBJECT
 public:
@@ -85,22 +85,21 @@ private:
     void setupBaseDataItems();
 
     void doTest(
-        const bool useBaseDataItems,
-        const QList<Notebook> & nonSyncedNotebooks,
+        const bool useBaseDataItems, const QList<Notebook> & nonSyncedNotebooks,
         const QList<Tag> & nonSyncedTags,
         const QList<SavedSearch> & nonSyncedSavedSearches,
         const QList<Note> & nonSyncedNotes);
 
 private:
-    Account                     m_testAccount;
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    FullSyncStaleDataItemsExpunger::SyncedGuids     m_syncedGuids;
+    Account m_testAccount;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    FullSyncStaleDataItemsExpunger::SyncedGuids m_syncedGuids;
 
-    NotebookSyncCache *         m_pNotebookSyncCache = nullptr;
-    TagSyncCache *              m_pTagSyncCache = nullptr;
-    SavedSearchSyncCache *      m_pSavedSearchSyncCache = nullptr;
+    NotebookSyncCache * m_pNotebookSyncCache = nullptr;
+    TagSyncCache * m_pTagSyncCache = nullptr;
+    SavedSearchSyncCache * m_pSavedSearchSyncCache = nullptr;
 
-    bool    m_detectedTestFailure;
+    bool m_detectedTestFailure;
 };
 
 } // namespace test

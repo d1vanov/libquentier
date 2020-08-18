@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN SpellCorrectionUndoCommand final:
+class Q_DECL_HIDDEN SpellCorrectionUndoCommand final :
     public INoteEditorUndoCommand
 {
     Q_OBJECT
@@ -47,7 +47,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    Callback    m_callback;
+    Callback m_callback;
 };
 
 } // namespace quentier

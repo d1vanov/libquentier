@@ -34,7 +34,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN RemoveResourceDelegate final: public QObject
+class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -49,7 +49,7 @@ Q_SIGNALS:
     void cancelled(QString resourceLocalUid);
     void notifyError(ErrorString error);
 
-// private signals
+    // private signals
     void findResource(
         Resource resource, LocalStorageManager::GetResourceOptions options,
         QUuid requestId);
@@ -77,12 +77,12 @@ private:
     using JsCallback = JsResultCallbackFunctor<RemoveResourceDelegate>;
 
 private:
-    NoteEditorPrivate &         m_noteEditor;
-    LocalStorageManagerAsync &  m_localStorageManager;
-    Resource                    m_resource;
-    bool                        m_reversible = true;
+    NoteEditorPrivate & m_noteEditor;
+    LocalStorageManagerAsync & m_localStorageManager;
+    Resource m_resource;
+    bool m_reversible = true;
 
-    QUuid                       m_findResourceRequestId;
+    QUuid m_findResourceRequestId;
 };
 
 } // namespace quentier

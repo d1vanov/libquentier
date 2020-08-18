@@ -21,7 +21,7 @@
 namespace quentier {
 
 LocalStorageCacheManagerException::LocalStorageCacheManagerException(
-        const ErrorString & message) :
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

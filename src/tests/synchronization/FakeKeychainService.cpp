@@ -28,8 +28,7 @@ FakeKeychainService::FakeKeychainService(QObject * parent) :
     IKeychainService(parent)
 {}
 
-FakeKeychainService::~FakeKeychainService()
-{}
+FakeKeychainService::~FakeKeychainService() {}
 
 QUuid FakeKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
@@ -90,14 +89,12 @@ void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
     int timerId = pEvent->timerId();
 
     auto writeIt = m_writePasswordRequestIdByTimerId.find(timerId);
-    if (writeIt != m_writePasswordRequestIdByTimerId.end())
-    {
+    if (writeIt != m_writePasswordRequestIdByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
 
         Q_EMIT writePasswordJobFinished(
-            writeIt.value(),
-            IKeychainService::ErrorCode::NoError,
+            writeIt.value(), IKeychainService::ErrorCode::NoError,
             ErrorString());
 
         Q_UNUSED(m_writePasswordRequestIdByTimerId.erase(writeIt))
@@ -105,20 +102,17 @@ void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
     }
 
     auto readIt = m_readPasswordRequestIdWithPasswordByTimerId.find(timerId);
-    if (readIt != m_readPasswordRequestIdWithPasswordByTimerId.end())
-    {
+    if (readIt != m_readPasswordRequestIdWithPasswordByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
 
         auto errorCode =
             (readIt.value().second.isEmpty()
-             ? IKeychainService::ErrorCode::EntryNotFound
-             : IKeychainService::ErrorCode::NoError);
+                 ? IKeychainService::ErrorCode::EntryNotFound
+                 : IKeychainService::ErrorCode::NoError);
 
         Q_EMIT readPasswordJobFinished(
-            readIt.value().first,
-            errorCode,
-            ErrorString(),
+            readIt.value().first, errorCode, ErrorString(),
             readIt.value().second);
 
         Q_UNUSED(m_readPasswordRequestIdWithPasswordByTimerId.erase(readIt))
@@ -126,20 +120,17 @@ void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
     }
 
     auto deleteIt = m_deletePasswordRequestIdByTimerId.find(timerId);
-    if (deleteIt != m_deletePasswordRequestIdByTimerId.end())
-    {
+    if (deleteIt != m_deletePasswordRequestIdByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
 
         auto errorCode =
             (deleteIt.value().second
-             ? IKeychainService::ErrorCode::NoError
-             : IKeychainService::ErrorCode::EntryNotFound);
+                 ? IKeychainService::ErrorCode::NoError
+                 : IKeychainService::ErrorCode::EntryNotFound);
 
         Q_EMIT deletePasswordJobFinished(
-            deleteIt.value().first,
-            errorCode,
-            ErrorString());
+            deleteIt.value().first, errorCode, ErrorString());
 
         Q_UNUSED(m_deletePasswordRequestIdByTimerId.erase(deleteIt))
         return;

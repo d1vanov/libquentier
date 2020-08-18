@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndicesData)
 
-class QUENTIER_EXPORT ResourceRecognitionIndices: public Printable
+class QUENTIER_EXPORT ResourceRecognitionIndices : public Printable
 {
 public:
     explicit ResourceRecognitionIndices();

@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_TYPES_SHARED_NOTE_H
 #define LIB_QUENTIER_TYPES_SHARED_NOTE_H
 
-#include <quentier/utility/Printable.h>
 #include <quentier/utility/Linkage.h>
+#include <quentier/utility/Printable.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -30,7 +30,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SharedNoteData)
 
-class QUENTIER_EXPORT SharedNote: public Printable
+class QUENTIER_EXPORT SharedNote : public Printable
 {
 public:
     using SharedNotePrivilegeLevel = qevercloud::SharedNotePrivilegeLevel;

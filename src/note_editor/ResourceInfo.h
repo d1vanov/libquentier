@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_RESOURCE_INFO_H
 #define LIB_QUENTIER_NOTE_EDITOR_RESOURCE_INFO_H
 
-#include <QString>
 #include <QHash>
 #include <QSize>
+#include <QString>
 
 namespace quentier {
 

@@ -38,7 +38,7 @@ QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
  * The conflict resolution might involve changes in other notebooks, seemingly
  * unrelated to the currently conflicting ones
  */
-class Q_DECL_HIDDEN NotebookSyncConflictResolver final: public QObject
+class Q_DECL_HIDDEN NotebookSyncConflictResolver final : public QObject
 {
     Q_OBJECT
 public:
@@ -56,7 +56,10 @@ public:
         return m_remoteNotebook;
     }
 
-    const Notebook & localConflict() const { return m_localConflict; }
+    const Notebook & localConflict() const
+    {
+        return m_localConflict;
+    }
 
 Q_SIGNALS:
     void finished(qevercloud::Notebook remoteNotebook);
@@ -64,7 +67,7 @@ Q_SIGNALS:
     void failure(
         qevercloud::Notebook remoteNotebook, ErrorString errorDescription);
 
-// private signals
+    // private signals
     void fillNotebooksCache();
     void addNotebook(Notebook notebook, QUuid requestId);
     void updateNotebook(Notebook notebook, QUuid requestId);
@@ -107,24 +110,24 @@ private:
     friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
-    NotebookSyncCache &         m_cache;
-    LocalStorageManagerAsync &  m_localStorageManagerAsync;
+    NotebookSyncCache & m_cache;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
 
-    qevercloud::Notebook        m_remoteNotebook;
-    Notebook                    m_localConflict;
+    qevercloud::Notebook m_remoteNotebook;
+    Notebook m_localConflict;
 
-    QString                     m_remoteNotebookLinkedNotebookGuid;
+    QString m_remoteNotebookLinkedNotebookGuid;
 
-    Notebook                    m_notebookToBeRenamed;
+    Notebook m_notebookToBeRenamed;
 
-    State                       m_state = State::Undefined;
+    State m_state = State::Undefined;
 
-    QUuid                       m_addNotebookRequestId;
-    QUuid                       m_updateNotebookRequestId;
-    QUuid                       m_findNotebookRequestId;
+    QUuid m_addNotebookRequestId;
+    QUuid m_updateNotebookRequestId;
+    QUuid m_findNotebookRequestId;
 
-    bool                        m_started = false;
-    bool                        m_pendingCacheFilling = false;
+    bool m_started = false;
+    bool m_pendingCacheFilling = false;
 };
 
 } // namespace quentier

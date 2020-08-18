@@ -27,8 +27,7 @@
 
 namespace quentier {
 
-SyncStateStorage::SyncStateStorage(QObject * parent) :
-    ISyncStateStorage(parent)
+SyncStateStorage::SyncStateStorage(QObject * parent) : ISyncStateStorage(parent)
 {}
 
 ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
@@ -42,73 +41,78 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
 
     ApplicationSettings appSettings(account, SYNCHRONIZATION_PERSISTENCE_NAME);
 
-    const QString keyGroup =
-        QStringLiteral("Synchronization/") +
+    const QString keyGroup = QStringLiteral("Synchronization/") +
         account.evernoteHost() + QStringLiteral("/") +
         QString::number(account.id()) + QStringLiteral("/") +
         LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
 
-    QVariant lastUpdateCountVar = appSettings.value(
-        keyGroup + LAST_SYNC_UPDATE_COUNT_KEY);
+    QVariant lastUpdateCountVar =
+        appSettings.value(keyGroup + LAST_SYNC_UPDATE_COUNT_KEY);
 
-    if (!lastUpdateCountVar.isNull())
-    {
+    if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
         int userDataUpdateCount = lastUpdateCountVar.toInt(&conversionResult);
         if (conversionResult) {
             syncState->m_userDataUpdateCount = userDataUpdateCount;
         }
         else {
-            QNWARNING("synchronization:state_storage", "Couldn't read last "
-                << "update count from persistent application settings");
+            QNWARNING(
+                "synchronization:state_storage",
+                "Couldn't read last "
+                    << "update count from persistent application settings");
         }
     }
 
     QVariant lastSyncTimeVar = appSettings.value(keyGroup + LAST_SYNC_TIME_KEY);
-    if (!lastUpdateCountVar.isNull())
-    {
+    if (!lastUpdateCountVar.isNull()) {
         bool conversionResult = false;
 
-        qevercloud::Timestamp userDataLastSyncTime = lastSyncTimeVar.toLongLong(
-            &conversionResult);
+        qevercloud::Timestamp userDataLastSyncTime =
+            lastSyncTimeVar.toLongLong(&conversionResult);
 
         if (conversionResult) {
             syncState->m_userDataLastSyncTime = userDataLastSyncTime;
         }
         else {
-            QNWARNING("synchronization:state_storage", "Couldn't read last "
-                << "sync time from persistent application settings");
+            QNWARNING(
+                "synchronization:state_storage",
+                "Couldn't read last "
+                    << "sync time from persistent application settings");
         }
     }
 
     int numLinkedNotebooksSyncParams = appSettings.beginReadArray(
         keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS);
 
-    for(int i = 0; i < numLinkedNotebooksSyncParams; ++i)
-    {
+    for (int i = 0; i < numLinkedNotebooksSyncParams; ++i) {
         appSettings.setArrayIndex(i);
 
         QString guid = appSettings.value(LINKED_NOTEBOOK_GUID_KEY).toString();
         if (guid.isEmpty()) {
-            QNWARNING("synchronization:state_storage", "Couldn't read linked "
-                << "notebook's guid from persistent application settings");
+            QNWARNING(
+                "synchronization:state_storage",
+                "Couldn't read linked "
+                    << "notebook's guid from persistent application settings");
             continue;
         }
 
-        QVariant lastUpdateCountVar = appSettings.value(
-            LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY);
+        QVariant lastUpdateCountVar =
+            appSettings.value(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY);
 
         bool conversionResult = false;
         int lastUpdateCount = lastUpdateCountVar.toInt(&conversionResult);
         if (!conversionResult) {
-            QNWARNING("synchronization:state_storage", "Couldn't read linked "
-                << "notebook's last update count from persistent application "
-                << "settings");
+            QNWARNING(
+                "synchronization:state_storage",
+                "Couldn't read linked "
+                    << "notebook's last update count from persistent "
+                       "application "
+                    << "settings");
             continue;
         }
 
-        QVariant lastSyncTimeVar = appSettings.value(
-            LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY);
+        QVariant lastSyncTimeVar =
+            appSettings.value(LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY);
 
         conversionResult = false;
 
@@ -116,9 +120,11 @@ ISyncStateStorage::ISyncStatePtr SyncStateStorage::getSyncState(
             lastSyncTimeVar.toLongLong(&conversionResult);
 
         if (!conversionResult) {
-            QNWARNING("synchronization:state_storage", "Couldn't read linked "
-                << "notebook's last sync time from persistent application "
-                << "settings");
+            QNWARNING(
+                "synchronization:state_storage",
+                "Couldn't read linked "
+                    << "notebook's last sync time from persistent application "
+                    << "settings");
             continue;
         }
 
@@ -137,8 +143,7 @@ void SyncStateStorage::setSyncState(
 
     ApplicationSettings appSettings(account, SYNCHRONIZATION_PERSISTENCE_NAME);
 
-    const QString keyGroup =
-        QStringLiteral("Synchronization/") +
+    const QString keyGroup = QStringLiteral("Synchronization/") +
         account.evernoteHost() + QStringLiteral("/") +
         QString::number(account.id()) + QStringLiteral("/") +
         LAST_SYNC_PARAMS_KEY_GROUP + QStringLiteral("/");
@@ -148,8 +153,7 @@ void SyncStateStorage::setSyncState(
         syncState->userDataUpdateCount());
 
     appSettings.setValue(
-        keyGroup + LAST_SYNC_TIME_KEY,
-        syncState->userDataLastSyncTime());
+        keyGroup + LAST_SYNC_TIME_KEY, syncState->userDataLastSyncTime());
 
     const auto updateCountsByLinkedNotebookGuid =
         syncState->linkedNotebookUpdateCounts();
@@ -157,27 +161,27 @@ void SyncStateStorage::setSyncState(
     const auto lastSyncTimesByLinkedNotebookGuid =
         syncState->linkedNotebookLastSyncTimes();
 
-    int numLinkedNotebooksSyncParams =
-        updateCountsByLinkedNotebookGuid.size();
+    int numLinkedNotebooksSyncParams = updateCountsByLinkedNotebookGuid.size();
 
     appSettings.beginWriteArray(
         keyGroup + LAST_SYNC_LINKED_NOTEBOOKS_PARAMS,
         numLinkedNotebooksSyncParams);
 
     int counter = 0;
-    for(auto it:
-        qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid)))
-    {
+    for (auto it:
+         qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid))) {
         const QString & guid = it.key();
         auto syncTimeIt = lastSyncTimesByLinkedNotebookGuid.constFind(guid);
 
-        if (syncTimeIt == lastSyncTimesByLinkedNotebookGuid.constEnd())
-        {
-            QNWARNING("synchronization:state_storage", "Detected inconsistent "
-                << "last sync parameters for one of linked notebooks: last "
-                << "update count is present while last sync time is not, "
-                << "skipping writing the persistent settings entry for this "
-                << "linked notebook");
+        if (syncTimeIt == lastSyncTimesByLinkedNotebookGuid.constEnd()) {
+            QNWARNING(
+                "synchronization:state_storage",
+                "Detected inconsistent "
+                    << "last sync parameters for one of linked notebooks: last "
+                    << "update count is present while last sync time is not, "
+                    << "skipping writing the persistent settings entry for "
+                       "this "
+                    << "linked notebook");
             continue;
         }
 
@@ -186,20 +190,23 @@ void SyncStateStorage::setSyncState(
         appSettings.setValue(LINKED_NOTEBOOK_LAST_UPDATE_COUNT_KEY, it.value());
 
         appSettings.setValue(
-            LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY,
-            syncTimeIt.value());
+            LINKED_NOTEBOOK_LAST_SYNC_TIME_KEY, syncTimeIt.value());
 
-        QNTRACE("synchronization:state_storage", "Persisted last sync "
-            << "parameters for a linked notebook: guid = " << guid
-            << ", update count = " << it.value() << ", sync time = "
-            << printableDateTimeFromTimestamp(syncTimeIt.value()));
+        QNTRACE(
+            "synchronization:state_storage",
+            "Persisted last sync "
+                << "parameters for a linked notebook: guid = " << guid
+                << ", update count = " << it.value() << ", sync time = "
+                << printableDateTimeFromTimestamp(syncTimeIt.value()));
         ++counter;
     }
 
     appSettings.endArray();
 
-    QNTRACE("synchronization:state_storage", "Wrote " << counter
-        << " last sync params entries for linked notebooks");
+    QNTRACE(
+        "synchronization:state_storage",
+        "Wrote " << counter
+                 << " last sync params entries for linked notebooks");
 
     Q_EMIT notifySyncStateUpdated(account, syncState);
 }

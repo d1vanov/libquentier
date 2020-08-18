@@ -45,13 +45,11 @@ namespace quentier {
  * logging destination, like file or stderr or just something which can serve as
  * a logging destination
  */
-class Q_DECL_HIDDEN IQuentierLogWriter: public QObject
+class Q_DECL_HIDDEN IQuentierLogWriter : public QObject
 {
     Q_OBJECT
 public:
-    IQuentierLogWriter(QObject * parent = nullptr) :
-        QObject(parent)
-    {}
+    IQuentierLogWriter(QObject * parent = nullptr) : QObject(parent) {}
 
 public Q_SLOTS:
     virtual void write(QString message) = 0;
@@ -63,14 +61,15 @@ public Q_SLOTS:
 class Q_DECL_HIDDEN MaxSizeBytes
 {
 public:
-    MaxSizeBytes(const qint64 size) :
-        m_size(size)
-    {}
+    MaxSizeBytes(const qint64 size) : m_size(size) {}
 
-    qint64 size() const { return m_size; }
+    qint64 size() const
+    {
+        return m_size;
+    }
 
 private:
-    qint64      m_size;
+    qint64 m_size;
 };
 
 /**
@@ -79,14 +78,15 @@ private:
 class Q_DECL_HIDDEN MaxOldLogFilesCount
 {
 public:
-    MaxOldLogFilesCount(const int count) :
-        m_count(count)
-    {}
+    MaxOldLogFilesCount(const int count) : m_count(count) {}
 
-    int count() const { return m_count; }
+    int count() const
+    {
+        return m_count;
+    }
 
 private:
-    int     m_count;
+    int m_count;
 };
 
 /**
@@ -96,7 +96,7 @@ private:
  * It features the automatic rotation of the log file by its max size and
  * ensures not more than just a handful of previous log files are stored around
  */
-class Q_DECL_HIDDEN QuentierFileLogWriter final: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierFileLogWriter final : public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -115,17 +115,17 @@ private:
     void rotate();
 
 private:
-    QFile       m_logFile;
-    std::unique_ptr<QTextStream>    m_pStream;
+    QFile m_logFile;
+    std::unique_ptr<QTextStream> m_pStream;
 
-    qint64      m_maxSizeBytes;
-    int         m_maxOldLogFilesCount;
+    qint64 m_maxSizeBytes;
+    int m_maxOldLogFilesCount;
 
-    qint64      m_currentLogFileSize = 0;
-    int         m_currentOldLogFilesCount = 0;
+    qint64 m_currentLogFileSize = 0;
+    int m_currentOldLogFilesCount = 0;
 };
 
-class Q_DECL_HIDDEN QuentierConsoleLogWriter final: public IQuentierLogWriter
+class Q_DECL_HIDDEN QuentierConsoleLogWriter final : public IQuentierLogWriter
 {
     Q_OBJECT
 public:
@@ -137,7 +137,7 @@ public Q_SLOTS:
 
 QT_FORWARD_DECLARE_CLASS(QuentierLoggerImpl)
 
-class Q_DECL_HIDDEN QuentierLogger final: public QObject
+class Q_DECL_HIDDEN QuentierLogger final : public QObject
 {
     Q_OBJECT
 public:
@@ -170,18 +170,18 @@ private:
     QuentierLoggerImpl * m_pImpl;
 };
 
-class Q_DECL_HIDDEN QuentierLoggerImpl final: public QObject
+class Q_DECL_HIDDEN QuentierLoggerImpl final : public QObject
 {
     Q_OBJECT
 public:
     QuentierLoggerImpl(QObject * parent = nullptr);
 
-    QVector<QPointer<IQuentierLogWriter>>   m_logWriterPtrs;
-    QAtomicInt          m_minLogLevel;
-    QThread *           m_pLogWriteThread;
+    QVector<QPointer<IQuentierLogWriter>> m_logWriterPtrs;
+    QAtomicInt m_minLogLevel;
+    QThread * m_pLogWriteThread;
 
-    QReadWriteLock      m_componentFilterLock;
-    QRegularExpression  m_componentFilterRegex;
+    QReadWriteLock m_componentFilterLock;
+    QRegularExpression m_componentFilterRegex;
 };
 
 } // namespace quentier

@@ -32,7 +32,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class ResourceLocalStorageManagerAsyncTester: public QObject
+class ResourceLocalStorageManagerAsyncTester : public QObject
 {
     Q_OBJECT
 public:
@@ -46,7 +46,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void addNotebookRequest(Notebook notebook, QUuid requestId);
     void addNoteRequest(Note note, QUuid requestId);
     void getResourceCountRequest(QUuid requestId);
@@ -120,14 +120,14 @@ private:
 
     State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook             m_notebook;
-    Note                 m_note;
-    Resource             m_initialResource;
-    Resource             m_foundResource;
-    Resource             m_modifiedResource;
+    Notebook m_notebook;
+    Note m_note;
+    Resource m_initialResource;
+    Resource m_foundResource;
+    Resource m_modifiedResource;
 };
 
 } // namespace test

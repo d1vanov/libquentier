@@ -24,11 +24,11 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ErrorStringData final: public QSharedData
+class Q_DECL_HIDDEN ErrorStringData final : public QSharedData
 {
 public:
-    QString     m_base;
-    QString     m_details;
+    QString m_base;
+    QString m_details;
     QStringList m_additionalBases;
 };
 

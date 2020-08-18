@@ -20,23 +20,17 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier/utility/SuppressWarnings.h>
 
 #include <QHash>
 #include <QObject>
 #include <QSet>
 #include <QUuid>
 
-SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-
 #include <boost/bimap.hpp>
-
-RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteSyncCache final: public QObject
+class Q_DECL_HIDDEN NoteSyncCache final : public QObject
 {
     Q_OBJECT
 public:
@@ -46,7 +40,10 @@ public:
 
     void clear();
 
-    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
+    const QString & linkedNotebookGuid() const
+    {
+        return m_linkedNotebookGuid;
+    }
 
     /**
      * @return  True if the cache is already filled with up-to-moment data,
@@ -61,12 +58,12 @@ public:
         return m_noteGuidToLocalUidBimap;
     }
 
-    const QHash<QString,Note> & dirtyNotesByGuid() const
+    const QHash<QString, Note> & dirtyNotesByGuid() const
     {
         return m_dirtyNotesByGuid;
     }
 
-    const QHash<QString,QString> & notebookGuidByNoteGuid() const
+    const QHash<QString, QString> & notebookGuidByNoteGuid() const
     {
         return m_notebookGuidByNoteGuid;
     }
@@ -75,7 +72,7 @@ Q_SIGNALS:
     void filled();
     void failure(ErrorString errorDescription);
 
-// private signals
+    // private signals
     void listNotes(
         LocalStorageManager::ListObjectsOptions flag,
         LocalStorageManager::GetNoteOptions options, size_t limit,
@@ -85,27 +82,25 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     /**
-     * Start collecting the information about notes; does nothing if the information
-     * is already collected or is being collected at the moment, otherwise initiates
-     * the sequence of actions required to collect the note information
+     * Start collecting the information about notes; does nothing if the
+     * information is already collected or is being collected at the moment,
+     * otherwise initiates the sequence of actions required to collect the note
+     * information
      */
     void fill();
 
 private Q_SLOTS:
     void onListNotesComplete(
         LocalStorageManager::ListObjectsOptions flag,
-        LocalStorageManager::GetNoteOptions options,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::GetNoteOptions options, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Note> foundNotes,
-        QUuid requestId);
+        QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId);
 
     void onListNotesFailed(
         LocalStorageManager::ListObjectsOptions flag,
-        LocalStorageManager::GetNoteOptions options,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::GetNoteOptions options, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
@@ -128,18 +123,18 @@ private:
     void processNote(const Note & note);
 
 private:
-    LocalStorageManagerAsync &          m_localStorageManagerAsync;
-    bool                                m_connectedToLocalStorage = false;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
+    bool m_connectedToLocalStorage = false;
 
-    QString                             m_linkedNotebookGuid;
+    QString m_linkedNotebookGuid;
 
-    NoteGuidToLocalUidBimap             m_noteGuidToLocalUidBimap;
-    QHash<QString,Note>                 m_dirtyNotesByGuid;
-    QHash<QString,QString>              m_notebookGuidByNoteGuid;
+    NoteGuidToLocalUidBimap m_noteGuidToLocalUidBimap;
+    QHash<QString, Note> m_dirtyNotesByGuid;
+    QHash<QString, QString> m_notebookGuidByNoteGuid;
 
-    QUuid                               m_listNotesRequestId;
-    size_t                              m_limit = 40;
-    size_t                              m_offset = 0;
+    QUuid m_listNotesRequestId;
+    size_t m_limit = 40;
+    size_t m_offset = 0;
 };
 
 } // namespace quentier

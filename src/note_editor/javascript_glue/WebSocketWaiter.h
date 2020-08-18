@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class WebSocketWaiter: public QObject
+class WebSocketWaiter : public QObject
 {
     Q_OBJECT
 public:

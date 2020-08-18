@@ -28,7 +28,7 @@ class Q_DECL_HIDDEN SysInfoPrivate
 public:
     SysInfoPrivate() = default;
 
-    QMutex  m_mutex;
+    QMutex m_mutex;
 };
 
 } // namespace quentier

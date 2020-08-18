@@ -24,9 +24,7 @@
 
 namespace quentier {
 
-SysInfo::SysInfo() :
-    d_ptr(new SysInfoPrivate)
-{}
+SysInfo::SysInfo() : d_ptr(new SysInfoPrivate) {}
 
 SysInfo::~SysInfo()
 {

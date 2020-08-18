@@ -23,7 +23,7 @@
 namespace quentier {
 
 GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
-        const QHash<QByteArray, QString> & cache, QObject * parent) :
+    const QHash<QByteArray, QString> & cache, QObject * parent) :
     QObject(parent),
     m_cache(cache)
 {}
@@ -31,19 +31,23 @@ GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
     QByteArray resourceHash)
 {
-    QNDEBUG("note_editor:js_glue", "GenericResourceImageJavaScriptHandler"
-        << "::findGenericResourceImage: resource hash = "
-        << resourceHash);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "GenericResourceImageJavaScriptHandler"
+            << "::findGenericResourceImage: resource hash = " << resourceHash);
 
     auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
-        QNTRACE("note_editor:js_glue", "Found generic resouce image, path is "
-            << it.value());
+        QNTRACE(
+            "note_editor:js_glue",
+            "Found generic resouce image, path is " << it.value());
         Q_EMIT genericResourceImageFound(resourceHash, it.value());
     }
     else {
-        QNINFO("note_editor:js_glue", "Can't find generic resource image for "
-            << "hash " << resourceHash);
+        QNINFO(
+            "note_editor:js_glue",
+            "Can't find generic resource image for "
+                << "hash " << resourceHash);
     }
 }
 

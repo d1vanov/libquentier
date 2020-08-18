@@ -22,9 +22,7 @@
 
 namespace quentier {
 
-WebSocketWaiter::WebSocketWaiter(QObject * parent) :
-    QObject(parent)
-{}
+WebSocketWaiter::WebSocketWaiter(QObject * parent) : QObject(parent) {}
 
 void WebSocketWaiter::onReady()
 {

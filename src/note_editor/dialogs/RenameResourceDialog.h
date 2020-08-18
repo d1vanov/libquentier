@@ -29,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(RenameResourceDialog)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RenameResourceDialog final: public QDialog
+class Q_DECL_HIDDEN RenameResourceDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -39,7 +39,7 @@ public:
     virtual ~RenameResourceDialog();
 
 Q_SIGNALS:
-    void accepted(QString newResourceName);
+    void renameAccepted(QString newResourceName);
 
 private Q_SLOTS:
     virtual void accept() override;

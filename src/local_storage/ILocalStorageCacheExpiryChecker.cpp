@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,10 @@
 namespace quentier {
 
 ILocalStorageCacheExpiryChecker::ILocalStorageCacheExpiryChecker(
-        const LocalStorageCacheManager & cacheManager) :
+    const LocalStorageCacheManager & cacheManager) :
     m_localStorageCacheManager(cacheManager)
 {}
 
-ILocalStorageCacheExpiryChecker::~ILocalStorageCacheExpiryChecker()
-{}
+ILocalStorageCacheExpiryChecker::~ILocalStorageCacheExpiryChecker() {}
 
 } // namespace quentier

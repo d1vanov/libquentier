@@ -132,9 +132,7 @@ template <class T>
 class Q_DECL_HIDDEN CompareItemByGuid
 {
 public:
-    CompareItemByGuid(QString guid) :
-        m_guid(std::move(guid))
-    {}
+    CompareItemByGuid(QString guid) : m_guid(std::move(guid)) {}
 
     bool operator()(const T & tag) const
     {
@@ -146,16 +144,14 @@ public:
     }
 
 private:
-    QString     m_guid;
+    QString m_guid;
 };
 
 template <class T>
 class Q_DECL_HIDDEN CompareItemByLocalUid
 {
 public:
-    CompareItemByLocalUid(QString localUid) :
-        m_localUid(std::move(localUid))
-    {}
+    CompareItemByLocalUid(QString localUid) : m_localUid(std::move(localUid)) {}
 
     bool operator()(const T & tag) const
     {
@@ -167,9 +163,8 @@ public:
     }
 
 private:
-    QString     m_localUid;
+    QString m_localUid;
 };
-
 
 } // namespace quentier
 

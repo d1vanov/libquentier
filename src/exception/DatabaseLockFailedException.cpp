@@ -21,7 +21,7 @@
 namespace quentier {
 
 DatabaseLockFailedException::DatabaseLockFailedException(
-        const ErrorString & message) :
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

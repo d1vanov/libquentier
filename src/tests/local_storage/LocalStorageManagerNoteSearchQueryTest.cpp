@@ -21,10 +21,10 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
-#include <quentier/types/Tag.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/types/Resource.h>
+#include <quentier/types/Tag.h>
 
 #include <QCryptographicHash>
 
@@ -50,18 +50,14 @@ bool CheckQueryString(
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
 
     NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(
-        noteSearchQuery,
-        options,
-        errorDescription);
+        noteSearchQuery, options, errorDescription);
 
-    if (foundNotes.isEmpty())
-    {
+    if (foundNotes.isEmpty()) {
         if (!expectedContainedNotesIndices.contains(true)) {
             return true;
         }
 
-        if (errorDescription.isEmpty())
-        {
+        if (errorDescription.isEmpty()) {
             errorDescription.setBase(
                 "Internal error: no notes corresponding to note search query "
                 "were found and the error description is empty as well; "
@@ -69,8 +65,8 @@ bool CheckQueryString(
 
             errorDescription.details() = queryString;
 
-            errorDescription.details() += QStringLiteral(
-                "; \nNoteSearchQuery: ");
+            errorDescription.details() +=
+                QStringLiteral("; \nNoteSearchQuery: ");
 
             errorDescription.details() += noteSearchQuery.toString();
         }
@@ -82,36 +78,32 @@ bool CheckQueryString(
 
     res = true;
     int numOriginalNotes = notes.size();
-    for(int i = 0; i < numOriginalNotes; ++i) {
+    for (int i = 0; i < numOriginalNotes; ++i) {
         res &=
             (foundNotes.contains(notes[i]) == expectedContainedNotesIndices[i]);
     }
 
-    if (!res)
-    {
+    if (!res) {
         errorDescription.setBase(
             "Internal error: unexpected result "
             "of note search query processing");
 
-        for(int i = 0; i < numOriginalNotes; ++i)
-        {
-            errorDescription.details() += QStringLiteral(
-                "foundNotes.contains(notes[");
+        for (int i = 0; i < numOriginalNotes; ++i) {
+            errorDescription.details() +=
+                QStringLiteral("foundNotes.contains(notes[");
 
             errorDescription.details() += QString::number(i);
             errorDescription.details() += QStringLiteral("]) = ");
 
             errorDescription.details() +=
-                (foundNotes.contains(notes[i])
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"));
+                (foundNotes.contains(notes[i]) ? QStringLiteral("true")
+                                               : QStringLiteral("false"));
 
             errorDescription.details() += QStringLiteral("; expected: ");
 
             errorDescription.details() +=
-                (expectedContainedNotesIndices[i]
-                 ? QStringLiteral("true")
-                 : QStringLiteral("false"));
+                (expectedContainedNotesIndices[i] ? QStringLiteral("true")
+                                                  : QStringLiteral("false"));
 
             errorDescription.details() += QStringLiteral("\n");
         }
@@ -121,8 +113,7 @@ bool CheckQueryString(
         errorDescription.details() += QStringLiteral("; \nNoteSearchQuery: ");
         errorDescription.details() += noteSearchQuery.toString();
 
-        for(int i = 0; i < numFoundNotes; ++i)
-        {
+        for (int i = 0; i < numFoundNotes; ++i) {
             const Note & note = foundNotes[i];
             errorDescription.details() += QStringLiteral("foundNotes[");
             errorDescription.details() += QString::number(i);
@@ -131,8 +122,7 @@ bool CheckQueryString(
             errorDescription.details() += QStringLiteral("\n");
         }
 
-        for(int i = 0; i < numOriginalNotes; ++i)
-        {
+        for (int i = 0; i < numOriginalNotes; ++i) {
             const Note & note = notes[i];
             errorDescription.details() += QStringLiteral("originalNotes[");
             errorDescription.details() += QString::number(i);
@@ -155,14 +145,12 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<Notebook> notebooks;
     notebooks.reserve(numNotebooks);
 
-    for(int i = 0; i < numNotebooks; ++i)
-    {
+    for (int i = 0; i < numNotebooks; ++i) {
         notebooks << Notebook();
         Notebook & notebook = notebooks.back();
 
         notebook.setName(
-            QString(QStringLiteral("Test notebook #")) +
-            QString::number(i));
+            QString(QStringLiteral("Test notebook #")) + QString::number(i));
 
         notebook.setUpdateSequenceNumber(i);
         notebook.setDefaultNotebook(i == 0 ? true : false);
@@ -177,7 +165,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<Tag> tags;
     tags.reserve(numTags);
 
-    for(int i = 0; i < numTags; ++i) {
+    for (int i = 0; i < numTags; ++i) {
         tags << Tag();
         Tag & tag = tags.back();
         tag.setUpdateSequenceNumber(i);
@@ -209,8 +197,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<Resource> resources;
     resources.reserve(numResources);
 
-    for(int i = 0; i < numResources; ++i)
-    {
+    for (int i = 0; i < numResources; ++i) {
         resources << Resource();
         Resource & resource = resources.back();
 
@@ -248,10 +235,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     res0.setRecognitionDataBody(recognitionBodyStr.toUtf8());
     res0.setRecognitionDataSize(res0.recognitionDataBody().size());
 
-    res0.setRecognitionDataHash(
-        QCryptographicHash::hash(
-            res0.recognitionDataBody(),
-            QCryptographicHash::Md5));
+    res0.setRecognitionDataHash(QCryptographicHash::hash(
+        res0.recognitionDataBody(), QCryptographicHash::Md5));
 
     Resource & res1 = resources[1];
     res1.setMime(QStringLiteral("audio/*"));
@@ -261,32 +246,30 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     res1.setDataHash(
         QCryptographicHash::hash(res1.dataBody(), QCryptographicHash::Md5));
 
-    res1.setRecognitionDataBody(QByteArray(
-        "<recoIndex docType=\"picture\" objType=\"image\" "
-        "objID=\"fc83e58282d8059be17debabb69be900\" "
-        "engineVersion=\"5.5.22.7\" recoType=\"service\" "
-        "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
-        "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
-        "<t w=\"87\">WIKI ?</t>"
-        "<t w=\"83\">WIKIPEDIA</t>"
-        "<t w=\"82\">WIKJPEDJA</t>"
-        "<t w=\"71\">WJKJPEDJA</t>"
-        "<t w=\"67\">MJKJPEDJA</t>"
-        "<t w=\"67\">MJKJREDJA</t>"
-        "<t w=\"66\">MJKJREDJA</t>"
-        "</item>"
-        "<item x=\"1840\" y=\"1475\" w=\"14\" h=\"12\">"
-        "<t w=\"11\">et</t>"
-        "<t w=\"10\">TQ</t>"
-        "</item>"
-        "</recoIndex>"));
+    res1.setRecognitionDataBody(
+        QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
+                   "objID=\"fc83e58282d8059be17debabb69be900\" "
+                   "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+                   "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                   "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                   "<t w=\"87\">WIKI ?</t>"
+                   "<t w=\"83\">WIKIPEDIA</t>"
+                   "<t w=\"82\">WIKJPEDJA</t>"
+                   "<t w=\"71\">WJKJPEDJA</t>"
+                   "<t w=\"67\">MJKJPEDJA</t>"
+                   "<t w=\"67\">MJKJREDJA</t>"
+                   "<t w=\"66\">MJKJREDJA</t>"
+                   "</item>"
+                   "<item x=\"1840\" y=\"1475\" w=\"14\" h=\"12\">"
+                   "<t w=\"11\">et</t>"
+                   "<t w=\"10\">TQ</t>"
+                   "</item>"
+                   "</recoIndex>"));
 
     res1.setRecognitionDataSize(res1.recognitionDataBody().size());
 
-    res1.setRecognitionDataHash(
-        QCryptographicHash::hash(
-            res1.recognitionDataBody(),
-            QCryptographicHash::Md5));
+    res1.setRecognitionDataHash(QCryptographicHash::hash(
+        res1.recognitionDataBody(), QCryptographicHash::Md5));
 
     Resource & res2 = resources[2];
     res2.setMime(QStringLiteral("application/vnd.evernote.ink"));
@@ -303,56 +286,54 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     int numTitles = 3;
     QVector<QString> titles;
     titles.reserve(numTitles);
-    titles << QString::fromUtf8("Potato (είΝΑΙ)")
-        << QStringLiteral("Ham")
-        << QStringLiteral("Eggs");
+    titles << QString::fromUtf8("Potato (είΝΑΙ)") << QStringLiteral("Ham")
+           << QStringLiteral("Eggs");
 
     int numContents = 9;
     QVector<QString> contents;
     contents.reserve(numContents);
-    contents
-        << QStringLiteral(
-            "<en-note><h1>The unique identifier of this note. "
-             "Will be set by the server</h1></en-note>")
-        << QStringLiteral(
-            "<en-note><h1>The XHTML block that makes up the note. "
-            "This is the canonical form of the note's contents"
-            "</h1><en-todo checked = \"true\"/></en-note>")
-        << QStringLiteral(
-            "<en-note><h1>The binary MD5 checksum of the UTF-8 "
-            "encoded content body.</h1></en-note>")
-        << QString::fromUtf8(
-            "<en-note><h1>The number of Unicode characters "
-            "\"αυτό είναι ένα αυτοκίνητο\" in the content "
-            "of the note.</h1><en-todo/></en-note>")
-        << QStringLiteral(
-            "<en-note><en-todo checked = \"true\"/><h1>The date "
-            "and time when the note was created in one of "
-            "the clients.</h1><en-todo checked = \"false\"/></en-note>")
-        << QStringLiteral(
-            "<en-note><h1>If present [code characters], the note "
-            "is considered \"deleted\", and this stores the date "
-            "and time when the note was deleted</h1></en-note>")
-        << QString::fromUtf8(
-            "<en-note><h1>If the note is available {ΑΥΤΌ "
-            "ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, "
-            "this flag will be set to true.</h1><en-crypt "
-            "hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA"
-            "N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
-        << QString::fromUtf8(
-            "<en-note><h1>A number identifying the last "
-            "transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to "
-            "modify the state of this note</h1></en-note>")
-        << QStringLiteral(
-            "<en-note><h1>The list of resources that are embedded "
-            "within this note.</h1><en-todo checked = \"true\"/>"
-            "<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem"
-            "JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
+    contents << QStringLiteral(
+                    "<en-note><h1>The unique identifier of this note. "
+                    "Will be set by the server</h1></en-note>")
+             << QStringLiteral(
+                    "<en-note><h1>The XHTML block that makes up the note. "
+                    "This is the canonical form of the note's contents"
+                    "</h1><en-todo checked = \"true\"/></en-note>")
+             << QStringLiteral(
+                    "<en-note><h1>The binary MD5 checksum of the UTF-8 "
+                    "encoded content body.</h1></en-note>")
+             << QString::fromUtf8(
+                    "<en-note><h1>The number of Unicode characters "
+                    "\"αυτό είναι ένα αυτοκίνητο\" in the content "
+                    "of the note.</h1><en-todo/></en-note>")
+             << QStringLiteral(
+                    "<en-note><en-todo checked = \"true\"/><h1>The date "
+                    "and time when the note was created in one of "
+                    "the clients.</h1><en-todo checked = \"false\"/></en-note>")
+             << QStringLiteral(
+                    "<en-note><h1>If present [code characters], the note "
+                    "is considered \"deleted\", and this stores the date "
+                    "and time when the note was deleted</h1></en-note>")
+             << QString::fromUtf8(
+                    "<en-note><h1>If the note is available {ΑΥΤΌ "
+                    "ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, "
+                    "this flag will be set to true.</h1><en-crypt "
+                    "hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA"
+                    "N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
+             << QString::fromUtf8(
+                    "<en-note><h1>A number identifying the last "
+                    "transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to "
+                    "modify the state of this note</h1></en-note>")
+             << QStringLiteral(
+                    "<en-note><h1>The list of resources that are embedded "
+                    "within this note.</h1><en-todo checked = \"true\"/>"
+                    "<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem"
+                    "JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
 
-    QHash<QString,qint64> timestampForDateTimeString;
+    QHash<QString, qint64> timestampForDateTimeString;
 
     QDateTime datetime = QDateTime::currentDateTime();
-    datetime.setTime(QTime(0, 0, 0, 0));  // today midnight
+    datetime.setTime(QTime(0, 0, 0, 0)); // today midnight
 
     timestampForDateTimeString[QStringLiteral("day")] =
         datetime.toMSecsSinceEpoch();
@@ -387,7 +368,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     timestampForDateTimeString[QStringLiteral("day+3")] =
         datetime.toMSecsSinceEpoch();
 
-    datetime = datetime.addDays(-3);   // return back to today midnight
+    datetime = datetime.addDays(-3); // return back to today midnight
 
     int dayOfWeek = datetime.date().dayOfWeek();
 
@@ -427,10 +408,10 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     timestampForDateTimeString[QStringLiteral("week+3")] =
         datetime.toMSecsSinceEpoch();
 
-    datetime = datetime.addDays(-21 + dayOfWeek);  // return to today midnight
+    datetime = datetime.addDays(-21 + dayOfWeek); // return to today midnight
 
     int dayOfMonth = datetime.date().day();
-    datetime = datetime.addDays(-(dayOfMonth-1));
+    datetime = datetime.addDays(-(dayOfMonth - 1));
 
     timestampForDateTimeString[QStringLiteral("month")] =
         datetime.toMSecsSinceEpoch();
@@ -466,11 +447,12 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         datetime.toMSecsSinceEpoch();
 
     datetime = datetime.addMonths(-3);
-    datetime = datetime.addDays(dayOfMonth-1);  // return back to today midnight
+    datetime =
+        datetime.addDays(dayOfMonth - 1); // return back to today midnight
 
     int monthOfYear = datetime.date().month();
-    datetime = datetime.addMonths(-(monthOfYear-1));
-    datetime = datetime.addDays(-(dayOfMonth-1));
+    datetime = datetime.addMonths(-(monthOfYear - 1));
+    datetime = datetime.addDays(-(dayOfMonth - 1));
 
     timestampForDateTimeString[QStringLiteral("year")] =
         datetime.toMSecsSinceEpoch();
@@ -509,16 +491,15 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<qint64> creationTimestamps;
     creationTimestamps.reserve(numCreationTimestamps);
 
-    creationTimestamps
-        << timestampForDateTimeString[QStringLiteral("day-3")]
-        << timestampForDateTimeString[QStringLiteral("day-2")]
-        << timestampForDateTimeString[QStringLiteral("day-1")]
-        << timestampForDateTimeString[QStringLiteral("day")]
-        << timestampForDateTimeString[QStringLiteral("day+1")]
-        << timestampForDateTimeString[QStringLiteral("day+2")]
-        << timestampForDateTimeString[QStringLiteral("day+3")]
-        << timestampForDateTimeString[QStringLiteral("week-3")]
-        << timestampForDateTimeString[QStringLiteral("week-2")];
+    creationTimestamps << timestampForDateTimeString[QStringLiteral("day-3")]
+                       << timestampForDateTimeString[QStringLiteral("day-2")]
+                       << timestampForDateTimeString[QStringLiteral("day-1")]
+                       << timestampForDateTimeString[QStringLiteral("day")]
+                       << timestampForDateTimeString[QStringLiteral("day+1")]
+                       << timestampForDateTimeString[QStringLiteral("day+2")]
+                       << timestampForDateTimeString[QStringLiteral("day+3")]
+                       << timestampForDateTimeString[QStringLiteral("week-3")]
+                       << timestampForDateTimeString[QStringLiteral("week-2")];
 
     int numModificationTimestamps = 9;
     QVector<qint64> modificationTimestamps;
@@ -548,70 +529,65 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<double> latitudes;
     latitudes.reserve(numLatitudes);
 
-    latitudes << -72.5 << -51.3 << -32.1 << -11.03 << 10.24
-        << 32.33 << 54.78 << 72.34 << 91.18;
+    latitudes << -72.5 << -51.3 << -32.1 << -11.03 << 10.24 << 32.33 << 54.78
+              << 72.34 << 91.18;
 
     int numLongitudes = 9;
     QVector<double> longitudes;
     longitudes.reserve(numLongitudes);
 
-    longitudes << -71.15 << -52.42 << -31.91 << -12.25 << 9.78
-        << 34.62 << 56.17 << 73.27 << 92.46;
+    longitudes << -71.15 << -52.42 << -31.91 << -12.25 << 9.78 << 34.62 << 56.17
+               << 73.27 << 92.46;
 
     int numAltitudes = 9;
     QVector<double> altitudes;
     altitudes.reserve(numAltitudes);
 
-    altitudes << -70.23 << -51.81 << -32.62 << -11.14 << 10.45
-              << 31.73 << 52.73 << 71.82 << 91.92;
+    altitudes << -70.23 << -51.81 << -32.62 << -11.14 << 10.45 << 31.73 << 52.73
+              << 71.82 << 91.92;
 
     int numAuthors = 3;
     QVector<QString> authors;
     authors.reserve(numAuthors);
 
-    authors << QStringLiteral("Shakespeare")
-        << QStringLiteral("Homer")
-        << QStringLiteral("Socrates");
+    authors << QStringLiteral("Shakespeare") << QStringLiteral("Homer")
+            << QStringLiteral("Socrates");
 
     int numSources = 3;
     QVector<QString> sources;
     sources.reserve(numSources);
 
-    sources << QStringLiteral("web.clip")
-        << QStringLiteral("mail.clip")
-        << QStringLiteral("mobile.android");
+    sources << QStringLiteral("web.clip") << QStringLiteral("mail.clip")
+            << QStringLiteral("mobile.android");
 
     int numSourceApplications = 3;
     QVector<QString> sourceApplications;
     sourceApplications.reserve(numSourceApplications);
 
-    sourceApplications << QStringLiteral("food.*")
-        << QStringLiteral("hello.*")
-        << QStringLiteral("skitch.*");
+    sourceApplications << QStringLiteral("food.*") << QStringLiteral("hello.*")
+                       << QStringLiteral("skitch.*");
 
     int numContentClasses = 3;
     QVector<QString> contentClasses;
     contentClasses.reserve(numContentClasses);
 
     contentClasses << QStringLiteral("evernote.food.meal")
-        << QStringLiteral("evernote.hello.*")
-        << QStringLiteral("whatever");
+                   << QStringLiteral("evernote.hello.*")
+                   << QStringLiteral("whatever");
 
     int numPlaceNames = 3;
     QVector<QString> placeNames;
     placeNames.reserve(numPlaceNames);
 
-    placeNames << QStringLiteral("home")
-        << QStringLiteral("school")
-        << QStringLiteral("bus");
+    placeNames << QStringLiteral("home") << QStringLiteral("school")
+               << QStringLiteral("bus");
 
     int numApplicationData = 3;
     QVector<QString> applicationData;
     applicationData.reserve(numApplicationData);
 
-    applicationData << QStringLiteral("myapp")
-        << QStringLiteral("Evernote")
-        << QStringLiteral("Quentier");
+    applicationData << QStringLiteral("myapp") << QStringLiteral("Evernote")
+                    << QStringLiteral("Quentier");
 
     int numReminderOrders = 3;
     QVector<qint64> reminderOrders;
@@ -623,16 +599,16 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     reminderTimes.reserve(numReminderTimes);
 
     reminderTimes << timestampForDateTimeString[QStringLiteral("year-3")]
-        << timestampForDateTimeString[QStringLiteral("year-2")]
-        << timestampForDateTimeString[QStringLiteral("year-1")];
+                  << timestampForDateTimeString[QStringLiteral("year-2")]
+                  << timestampForDateTimeString[QStringLiteral("year-1")];
 
     int numReminderDoneTimes = 3;
     QVector<qint64> reminderDoneTimes;
     reminderDoneTimes.reserve(numReminderDoneTimes);
 
     reminderDoneTimes << timestampForDateTimeString[QStringLiteral("year")]
-        << timestampForDateTimeString[QStringLiteral("year+1")]
-        << timestampForDateTimeString[QStringLiteral("year+2")];
+                      << timestampForDateTimeString[QStringLiteral("year+1")]
+                      << timestampForDateTimeString[QStringLiteral("year+2")];
 
     // 5) ============= Create some notes ================
 
@@ -640,13 +616,12 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     QVector<Note> notes;
     notes.reserve(numNotes);
 
-    for(int i = 0; i < numNotes; ++i)
-    {
+    for (int i = 0; i < numNotes; ++i) {
         notes << Note();
         Note & note = notes.back();
 
         note.setTitle(
-            titles[i/numTitles] + QStringLiteral(" #") + QString::number(i));
+            titles[i / numTitles] + QStringLiteral(" #") + QString::number(i));
 
         note.setContent(contents[i]);
 
@@ -657,7 +632,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         qevercloud::NoteAttributes & attributes = note.noteAttributes();
 
         attributes.subjectDate =
-            subjectDateTimestamps[i/numSubjectDateTimestamps];
+            subjectDateTimestamps[i / numSubjectDateTimestamps];
 
         if ((i != 6) && (i != 7) && (i != 8)) {
             attributes.latitude = latitudes[i];
@@ -665,36 +640,34 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
         attributes.longitude = longitudes[i];
         attributes.altitude = altitudes[i];
-        attributes.author = authors[i/numAuthors];
-        attributes.source = sources[i/numSources];
+        attributes.author = authors[i / numAuthors];
+        attributes.source = sources[i / numSources];
 
         attributes.sourceApplication =
-            sourceApplications[i/numSourceApplications];
+            sourceApplications[i / numSourceApplications];
 
-        attributes.contentClass = contentClasses[i/numContentClasses];
+        attributes.contentClass = contentClasses[i / numContentClasses];
 
-        if (i/numPlaceNames != 2) {
-            attributes.placeName = placeNames[i/numPlaceNames];
+        if (i / numPlaceNames != 2) {
+            attributes.placeName = placeNames[i / numPlaceNames];
         }
 
-        if ((i != 3) && (i != 4) && (i != 5))
-        {
+        if ((i != 3) && (i != 4) && (i != 5)) {
             attributes.applicationData = qevercloud::LazyMap();
             attributes.applicationData->keysOnly = QSet<QString>();
             auto & keysOnly = attributes.applicationData->keysOnly.ref();
-            keysOnly.insert(applicationData[i/numApplicationData]);
+            keysOnly.insert(applicationData[i / numApplicationData]);
 
-            attributes.applicationData->fullMap = QMap<QString,QString>();
+            attributes.applicationData->fullMap = QMap<QString, QString>();
             auto & fullMap = attributes.applicationData->fullMap.ref();
 
             fullMap.insert(
-                applicationData[i/numApplicationData],
+                applicationData[i / numApplicationData],
                 QStringLiteral("Application data value at key ") +
-                applicationData[i/numApplicationData]);
+                    applicationData[i / numApplicationData]);
         }
 
-        if (i == 6)
-        {
+        if (i == 6) {
             if (!attributes.applicationData->keysOnly.isSet()) {
                 attributes.applicationData->keysOnly = QSet<QString>();
             }
@@ -703,7 +676,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
             keysOnly.insert(applicationData[1]);
 
             if (!attributes.applicationData->fullMap.isSet()) {
-                attributes.applicationData->fullMap = QMap<QString,QString>();
+                attributes.applicationData->fullMap = QMap<QString, QString>();
             }
 
             auto & fullMap = attributes.applicationData->fullMap.ref();
@@ -711,28 +684,28 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
             fullMap.insert(
                 applicationData[1],
                 QStringLiteral("Application data value at key ") +
-                applicationData[1]);
+                    applicationData[1]);
         }
 
         if ((i != 0) && (i != 1) && (i != 2)) {
-            attributes.reminderOrder = reminderOrders[i/numReminderOrders];
+            attributes.reminderOrder = reminderOrders[i / numReminderOrders];
         }
 
-        attributes.reminderTime = reminderTimes[i/numReminderTimes];
-        attributes.reminderDoneTime = reminderDoneTimes[i/numReminderDoneTimes];
+        attributes.reminderTime = reminderTimes[i / numReminderTimes];
+        attributes.reminderDoneTime =
+            reminderDoneTimes[i / numReminderDoneTimes];
 
-        if (i != (numNotes-1))
-        {
+        if (i != (numNotes - 1)) {
             int k = 0;
-            while( ((i+k) < numTags) && (k < 3) ) {
-                note.addTagGuid(tags[i+k].guid());
-                note.addTagLocalUid(tags[i+k].localUid());
+            while (((i + k) < numTags) && (k < 3)) {
+                note.addTagGuid(tags[i + k].guid());
+                note.addTagLocalUid(tags[i + k].localUid());
                 ++k;
             }
         }
 
         if (i != 8) {
-            Resource resource = resources[i/numResources];
+            Resource resource = resources[i / numResources];
             resource.setLocalUid(QUuid::createUuid().toString());
             note.addResource(resource);
         }
@@ -744,9 +717,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
     }
 
-    QMap<int,int> notebookIndexForNoteIndex;
-    for(int i = 0; i < numNotes; ++i) {
-        notebookIndexForNoteIndex[i] = i/numNotebooks;
+    QMap<int, int> notebookIndexForNoteIndex;
+    for (int i = 0; i < numNotes; ++i) {
+        notebookIndexForNoteIndex[i] = i / numNotebooks;
     }
 
     // 6) =========== Create local storage, add created notebooks,
@@ -763,8 +736,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     ErrorString errorMessage;
 
-    for(int i = 0; i < numNotebooks; ++i)
-    {
+    for (int i = 0; i < numNotebooks; ++i) {
         bool res = localStorageManager.addNotebook(notebooks[i], errorMessage);
         if (!res) {
             errorDescription = errorMessage.nonLocalizedString();
@@ -772,8 +744,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
     }
 
-    for(int i = 0; i < numTags; ++i)
-    {
+    for (int i = 0; i < numTags; ++i) {
         bool res = localStorageManager.addTag(tags[i], errorMessage);
         if (!res) {
             errorDescription = errorMessage.nonLocalizedString();
@@ -781,8 +752,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
     }
 
-    for(int i = 0; i < numNotes; ++i)
-    {
+    for (int i = 0; i < numNotes; ++i) {
         notes[i].setNotebookLocalUid(
             notebooks[notebookIndexForNoteIndex[i]].localUid());
 
@@ -800,11 +770,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
 #define RUN_CHECK()                                                            \
     res = CheckQueryString(                                                    \
-        queryString,                                                           \
-        notes,                                                                 \
-        expectedContainedNotesIndices,                                         \
-        localStorageManager,                                                   \
-        errorMessage);                                                         \
+        queryString, notes, expectedContainedNotesIndices,                     \
+        localStorageManager, errorMessage);                                    \
     if (!res) {                                                                \
         errorDescription = errorMessage.nonLocalizedString();                  \
         return false;                                                          \
@@ -854,7 +821,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.1.6) False but no true todo
     queryString = QStringLiteral("todo:false -todo:true");
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -871,7 +838,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.1.8) Ensure asterisk for todo catches all and ignores other options
     queryString = QStringLiteral("todo:true -todo:false todo:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -885,7 +852,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.1.9) Ensure "any:" modifier works as expected with todo
     queryString = QStringLiteral("any: todo:true todo:false");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -899,7 +866,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.1.10) Ensure we have just one match without "any:"
     queryString = QStringLiteral("todo:true todo:false");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -909,7 +876,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.1.11) Ensure notes without "todo" tags can be found too:
     queryString = QStringLiteral("-todo:*");
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -924,7 +891,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.2.1) Notes with encryption tags
     queryString = QStringLiteral("encryption:");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -936,7 +903,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.2.2) Notes without encryption tags
     queryString = QStringLiteral("-encryption:");
 
-    for(int i = 0;i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -948,7 +915,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.3) Arbitrary reminder order
     queryString = QStringLiteral("reminderOrder:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -961,7 +928,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.4) No reminder order
     queryString = QStringLiteral("-reminderOrder:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -974,7 +941,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.5) Notebook
     queryString = QStringLiteral("notebook:\"Test notebook #1\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -991,7 +958,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[1].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1005,7 +972,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[2].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1022,7 +989,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[3].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1037,7 +1004,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[3].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1055,7 +1022,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[2].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1071,11 +1038,11 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += tags[2].name();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
-    for(int i = 2; i < numNotes; ++i) {
+    for (int i = 2; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1084,7 +1051,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.6.6) Find all notes with a tag
     queryString = QStringLiteral("tag:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1095,7 +1062,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.6.7) Find all notes without a tag
     queryString = QStringLiteral("-tag:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1110,8 +1077,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += resources[1].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
-        expectedContainedNotesIndices[i] = ((i/numResources == 1) ? true : false);
+    for (int i = 0; i < numNotes; ++i) {
+        expectedContainedNotesIndices[i] =
+            ((i / numResources == 1) ? true : false);
     }
 
     RUN_CHECK()
@@ -1121,8 +1089,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += resources[2].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
-        expectedContainedNotesIndices[i] = ((i/numResources == 2) ? false : true);
+    for (int i = 0; i < numNotes; ++i) {
+        expectedContainedNotesIndices[i] =
+            ((i / numResources == 2) ? false : true);
     }
 
     expectedContainedNotesIndices[8] = true;
@@ -1136,7 +1105,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += resources[1].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1151,11 +1120,11 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += resources[1].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
-    for(int i = 6; i < numNotes; ++i) {
+    for (int i = 6; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1168,32 +1137,33 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += resources[1].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
-    for(int i = 3; i < numNotes; ++i) {
+    for (int i = 3; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
     RUN_CHECK()
 
-    // 7.7.6) Check for both positive and negated resource mime types with "any:" modifier
+    // 7.7.6) Check for both positive and negated resource mime types with
+    // "any:" modifier
     queryString = QStringLiteral("any: resource:\"");
     queryString += resources[0].mime();
     queryString += QStringLiteral("\" -resource:\"");
     queryString += resources[1].mime();
     queryString += QStringLiteral("\"");
 
-    for(int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
-    for(int i = 4; i < 6; ++i) {
+    for (int i = 4; i < 6; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
-    for(int i = 6; i < numNotes; ++i) {
+    for (int i = 6; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1202,7 +1172,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.7.7) Find all notes with a resource of any mime type
     queryString = QStringLiteral("resource:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1213,7 +1183,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.7.8) Find all notes without resources
     queryString = QStringLiteral("-resource:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1228,19 +1198,15 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     creationTimestampDateTimeStrings.reserve(numNotes - 1);
 
     creationTimestampDateTimeStrings
-        << QStringLiteral("day-3")
-        << QStringLiteral("day-2")
-        << QStringLiteral("day-1")
-        << QStringLiteral("day")
-        << QStringLiteral("day+1")
-        << QStringLiteral("day+2")
-        << QStringLiteral("day+3")
-        << QStringLiteral("week-3")
+        << QStringLiteral("day-3") << QStringLiteral("day-2")
+        << QStringLiteral("day-1") << QStringLiteral("day")
+        << QStringLiteral("day+1") << QStringLiteral("day+2")
+        << QStringLiteral("day+3") << QStringLiteral("week-3")
         << QStringLiteral("week-2");
 
     queryString = QStringLiteral("created:day");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i >= 3) && (i <= 6));
     }
 
@@ -1249,7 +1215,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.2) Negated single creation timestamps
     queryString = QStringLiteral("-created:day+1");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i <= 3) || (i > 7));
     }
 
@@ -1258,7 +1224,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.3) Multiple creation timestamps
     queryString = QStringLiteral("created:day created:day+2");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i >= 5) && (i < 7));
     }
 
@@ -1267,7 +1233,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.4) Multiple negated creation timestamps
     queryString = QStringLiteral("-created:day+2 -created:day-1");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i < 2) || (i == 8));
     }
 
@@ -1276,7 +1242,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.5) Multiple creation timestamps with "any:" modifier
     queryString = QStringLiteral("any: created:day-1 created:day+2");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i >= 2) && (i < 7));
     }
 
@@ -1285,7 +1251,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.6) Multiple negated creation timestamps with "any:" modifier
     queryString = QStringLiteral("any: -created:day+2 -created:day-1");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i <= 4) || (i == 8));
     }
 
@@ -1294,7 +1260,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.7) Both positive and negated creation timestamps
     queryString = QStringLiteral("created:day-1 -created:day+2");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i >= 2) && (i < 5));
     }
 
@@ -1303,7 +1269,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.8) Both positive and negated creation timestamps with "any:" modifier
     queryString = QStringLiteral("any: created:day+2 -created:day-1");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] =
             ((i < 2) || ((i >= 5) && (i < 7)) || (i == 8));
     }
@@ -1313,7 +1279,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.9) Find notes with any creation timestamp set
     queryString = QStringLiteral("created:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i != 7);
     }
 
@@ -1322,7 +1288,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.8.10) Find notes with no creation timestamp set
     queryString = QStringLiteral("-created:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i == 7);
     }
 
@@ -1333,7 +1299,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.1) Single latitude
     queryString = QStringLiteral("latitude:10");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i == 4) || (i == 5));
     }
 
@@ -1342,7 +1308,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.2) Single negated latitude
     queryString = QStringLiteral("-latitude:-30");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i <= 2);
     }
 
@@ -1351,7 +1317,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.3) Multiple latitudes
     queryString = QStringLiteral("latitude:-10 latitude:10");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i == 4) || (i == 5));
     }
 
@@ -1360,7 +1326,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.4) Multiple latitudes with "any:" modifier
     queryString = QStringLiteral("any: latitude:-10 latitude:10");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i >= 4) && (i < 6));
     }
 
@@ -1369,7 +1335,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.5) Multiple negated latitudes
     queryString = QStringLiteral("-latitude:-30 -latitude:-10");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i <= 2);
     }
 
@@ -1378,7 +1344,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.6) Multiple negated latitudes with "any:" modifier
     queryString = QStringLiteral("any: -latitude:-30 -latitude:-10");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i <= 3);
     }
 
@@ -1387,7 +1353,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.7) Both positive and negated latitudes
     queryString = QStringLiteral("latitude:-20 -latitude:20");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i == 3) || (i == 4));
     }
 
@@ -1396,7 +1362,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.8) Both positive and negated latitudes with "any:" modifier
     queryString = QStringLiteral("any: -latitude:-30 latitude:30");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i <= 2) || (i == 5));
     }
 
@@ -1405,7 +1371,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.9) Find notes with any latitude set
     queryString = QStringLiteral("latitude:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i < 6);
     }
 
@@ -1414,7 +1380,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.9.10) Find notes without latitude set
     queryString = QStringLiteral("-latitude:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i >= 6);
     }
 
@@ -1426,7 +1392,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString = QStringLiteral("placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i > 2) && (i < 6));
     }
 
@@ -1436,7 +1402,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString = QStringLiteral("-placeName:");
     queryString += placeNames[0];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i > 2);
     }
 
@@ -1448,7 +1414,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1460,7 +1426,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i < 6);
     }
 
@@ -1473,7 +1439,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i < 3);
     }
 
@@ -1485,7 +1451,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i < 3) || (i > 5));
     }
 
@@ -1497,7 +1463,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i > 5);
     }
 
@@ -1509,7 +1475,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -placeName:");
     queryString += placeNames[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1518,7 +1484,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.10.9) Find note with any place name
     queryString = QStringLiteral("placeName:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i < 6);
     }
 
@@ -1527,7 +1493,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.10.10) Find note without any place name
     queryString = QStringLiteral("-placeName:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i > 5);
     }
 
@@ -1539,7 +1505,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString = QStringLiteral("applicationData:");
     queryString += applicationData[0];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i < 3);
     }
 
@@ -1549,7 +1515,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString = QStringLiteral("-applicationData:");
     queryString += applicationData[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i < 6) || (i > 6));
     }
 
@@ -1561,7 +1527,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" applicationData:");
     queryString += applicationData[2];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i == 6);
     }
 
@@ -1573,7 +1539,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" applicationData:");
     queryString += applicationData[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i < 3) || (i == 6));
     }
 
@@ -1585,7 +1551,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -applicationData:");
     queryString += applicationData[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = ((i > 2) && (i != 6));
     }
 
@@ -1598,7 +1564,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -applicationData:");
     queryString += applicationData[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1610,7 +1576,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -applicationData:");
     queryString += applicationData[1];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i > 6);
     }
 
@@ -1623,7 +1589,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral(" -applicationData:");
     queryString += applicationData[0];
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = (i > 2);
     }
 
@@ -1632,7 +1598,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.11.9) Arbitrary application data
     queryString = QStringLiteral("applicationData:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
     expectedContainedNotesIndices[3] = false;
@@ -1644,7 +1610,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.11.10) No application data
     queryString = QStringLiteral("-applicationData:*");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
     expectedContainedNotesIndices[3] = true;
@@ -1659,7 +1625,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.1.1 Find a single note with a single term query
     queryString = QStringLiteral("cAnOniCal");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
     expectedContainedNotesIndices[1] = true;
@@ -1669,7 +1635,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.1.2 Find all notes without a singe term query
     queryString = QStringLiteral("-canOnIcal");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1680,7 +1646,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.1.3 Find all notes corresponding to several note search terms
     queryString = QStringLiteral("any: cAnOnical cHeckSuM ConsiDerEd");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1694,7 +1660,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // to several note search terms
     queryString = QStringLiteral("cAnOnical cHeckSuM ConsiDerEd");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1703,7 +1669,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.1.5 Find all notes except those excluded from the search
     queryString = QStringLiteral("-cAnOnical -cHeckSuM -ConsiDerEd");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1717,7 +1683,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // searches
     queryString = QStringLiteral("any: -cAnOnical -cHeckSuM -ConsiDerEd");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1728,7 +1694,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // notes
     queryString = QStringLiteral("-iDEnTIfIEr xhTmL -cHeckSuM -ConsiDerEd");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1740,7 +1706,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // as well as note content
     queryString = QStringLiteral("any: CaNonIcAl colLeGE UniCODe foOtLOCkeR");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1757,7 +1723,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // involving tag names as well as note content
     queryString = QStringLiteral("CaNonIcAl sERveR");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1769,7 +1735,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // "positive" and negated note content words and tag names
     queryString = QStringLiteral("wiLl -colLeGe");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1781,7 +1747,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // as well as note content
     queryString = QStringLiteral("any: CaNonIcAl eGGs");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1796,7 +1762,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // involves note titles as well as note content
     queryString = QStringLiteral("CaNonIcAl PotAto");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1808,7 +1774,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // "positive" and negated note content words and titles
     queryString = QStringLiteral("unIQue -EGgs");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1819,7 +1785,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.3.4 Find the union of notes corresponding to a query involving both
     // "positive" and negated note content words and titles
     queryString = QStringLiteral("any: cONSiDERed -hAm");
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1832,7 +1798,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // words, titles and tag names
     queryString = QStringLiteral("any: cHECksUM SeRVEr hAM");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1845,7 +1811,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.4.1 Find note corresponding to resource recognition data
     queryString = QStringLiteral("inFoRmATiON");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1859,7 +1825,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.4.2 Find notes corresponding to negated resource recognition data
     queryString = QStringLiteral("-infoRMatiON");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1874,7 +1840,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // recognition data
     queryString = QStringLiteral("infoRMAtion wikiPEDiA any:");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1888,7 +1854,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // data
     queryString = QStringLiteral("-inFORMation -wikiPEDiA");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1903,7 +1869,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // recognition data
     queryString = QStringLiteral("inFOrMATioN tHe poTaTO serVEr");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1918,7 +1884,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     queryString = QStringLiteral("wiKiPeDiA servER haM iDEntiFYiNg any:");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1934,7 +1900,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     queryString = QStringLiteral("infORMatioN -colLEgE pOtaTo -xHtMl");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1948,7 +1914,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     queryString = QStringLiteral("wikiPEDiA traNSActioN any: -PotaTo -biNARy");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -1961,7 +1927,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 8.5.1 Find notes corresponding to a phrase containing a whitespace
     queryString = QStringLiteral("\"The list\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1971,10 +1937,10 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 8.5.2 Find the union of notes corresponding to several phrases
 
-    queryString = QStringLiteral(
-        "\"tHe lIsT\" \"tHE lASt\" any: \"tHE xhTMl\"");
+    queryString =
+        QStringLiteral("\"tHe lIsT\" \"tHE lASt\" any: \"tHE xhTMl\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -1988,7 +1954,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // other search terms as well
     queryString = QStringLiteral("any: \"The xhTMl\" eggS wikiPEDiA");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2001,7 +1967,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // terms containing phrases
     queryString = QStringLiteral("\"tHE noTE\" -\"of tHE\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -2010,10 +1976,11 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     RUN_CHECK()
 
-    // 8.5.5 Find notes corresponding to some phrase with the wildcard in the end
+    // 8.5.5 Find notes corresponding to some phrase with the wildcard in the
+    // end
     queryString = QStringLiteral("\"the canonic*\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -2025,7 +1992,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // in the middle of it
     queryString = QStringLiteral("\"the can*cal\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -2037,7 +2004,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // in the beginning of it
     queryString = QStringLiteral("\"*onical\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -2049,7 +2016,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // in the beginning of it
     queryString = QStringLiteral("\"*code characters\"");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = false;
     }
 
@@ -2062,7 +2029,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // with diacritics for the note search query
     queryString = QString::fromUtf8("είναι");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2076,7 +2043,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // with diacritics and upper case for the note search query
     queryString = QString::fromUtf8("ΕΊΝΑΙ");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2090,7 +2057,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // with diacritics and mixed case for the note search query
     queryString = QString::fromUtf8("ΕΊναι");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2104,7 +2071,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // without diacritics
     queryString = QString::fromUtf8("ειναι");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2118,7 +2085,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // without diacritics in upper case
     queryString = QString::fromUtf8("ΕΙΝΑΙ");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2132,7 +2099,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // without diacritics in mixed case
     queryString = QString::fromUtf8("ΕΙναι");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 
@@ -2146,7 +2113,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // and without diacritics in mixed case when tags are also involved
     queryString = QString::fromUtf8("ΕΊναι any: αυΤΟκιΝΗτο");
 
-    for(int i = 0; i < numNotes; ++i) {
+    for (int i = 0; i < numNotes; ++i) {
         expectedContainedNotesIndices[i] = true;
     }
 

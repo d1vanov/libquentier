@@ -32,7 +32,7 @@ namespace quentier {
  * the encrypted text, cipher, key length and hint for someone to handle
  * the actual decryption
  */
-class EnCryptElementOnClickHandler: public QObject
+class EnCryptElementOnClickHandler : public QObject
 {
     Q_OBJECT
 public:

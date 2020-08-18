@@ -25,141 +25,106 @@
 // 1) "Implementation" macros containing the bulk of exception handling code
 
 #define CATCH_THRIFT_EXCEPTION_IMPL(...)                                       \
-    catch(const qevercloud::ThriftException & thriftException)                 \
-    {                                                                          \
+    catch (const qevercloud::ThriftException & thriftException) {              \
         errorDescription.setBase(                                              \
-            QT_TRANSLATE_NOOP("synchronization",                               \
-                              "Thrift exception"));                            \
+            QT_TRANSLATE_NOOP("synchronization", "Thrift exception"));         \
         errorDescription.details() = QStringLiteral("type = ");                \
         errorDescription.details() += ToString(thriftException.type());        \
         errorDescription.details() += QStringLiteral(": ");                    \
         errorDescription.details() +=                                          \
             QString::fromUtf8(thriftException.what());                         \
         QNWARNING("synchronization", errorDescription);                        \
-        __VA_ARGS__ ;                                                          \
-    }                                                                          \
-// CATCH_THRIFT_EXCEPTION_IMPL
+        __VA_ARGS__;                                                           \
+    }
 
 #define CATCH_EVERNOTE_EXCEPTION_IMPL(...)                                     \
-    catch(const qevercloud::EvernoteException & evernoteException)             \
-    {                                                                          \
-        errorDescription.setBase(                                              \
-            QT_TRANSLATE_NOOP("synchronization",                               \
-                              "QEverCloud Evernote exception"));               \
+    catch (const qevercloud::EvernoteException & evernoteException) {          \
+        errorDescription.setBase(QT_TRANSLATE_NOOP(                            \
+            "synchronization", "QEverCloud Evernote exception"));              \
         if (evernoteException.exceptionData()) {                               \
             errorDescription.details() =                                       \
                 evernoteException.exceptionData()->errorMessage;               \
         }                                                                      \
         QNWARNING("synchronization", errorDescription);                        \
-        __VA_ARGS__ ;                                                          \
-    }                                                                          \
-// CATCH_EVERNOTE_EXCEPTION_IMPL
+        __VA_ARGS__;                                                           \
+    }
 
 #define CATCH_EVER_CLOUD_EXCEPTION_IMPL(...)                                   \
-    catch(const qevercloud::EverCloudException & everCloudException)           \
-    {                                                                          \
+    catch (const qevercloud::EverCloudException & everCloudException) {        \
         errorDescription.setBase(                                              \
-            QT_TRANSLATE_NOOP("synchronization",                               \
-                              "QEverCloud exception"));                        \
+            QT_TRANSLATE_NOOP("synchronization", "QEverCloud exception"));     \
         errorDescription.details() =                                           \
             QString::fromUtf8(everCloudException.what());                      \
         QNWARNING("synchronization", errorDescription);                        \
-        __VA_ARGS__ ;                                                          \
-    }                                                                          \
-// CATCH_EVER_CLOUD_EXCEPTION_IMPL
+        __VA_ARGS__;                                                           \
+    }
 
 #define CATCH_STD_EXCEPTION_IMPL(...)                                          \
-    catch(const std::exception & e)                                            \
-    {                                                                          \
+    catch (const std::exception & e) {                                         \
         errorDescription.setBase(                                              \
-            QT_TRANSLATE_NOOP("synchronization",                               \
-                              "std::exception"));                              \
+            QT_TRANSLATE_NOOP("synchronization", "std::exception"));           \
         errorDescription.details() = QString::fromUtf8(e.what());              \
         QNWARNING("synchronization", errorDescription);                        \
-        __VA_ARGS__ ;                                                          \
-    }                                                                          \
-// CATCH_STD_EXCEPTION_IMPL
+        __VA_ARGS__;                                                           \
+    }
 
 #define CATCH_GENERIC_EXCEPTIONS_IMPL(...)                                     \
-    CATCH_THRIFT_EXCEPTION_IMPL( __VA_ARGS__ )                                 \
-    CATCH_EVERNOTE_EXCEPTION_IMPL( __VA_ARGS__ )                               \
-    CATCH_EVER_CLOUD_EXCEPTION_IMPL( __VA_ARGS__ )                             \
-    CATCH_STD_EXCEPTION_IMPL( __VA_ARGS__ )                                    \
-// CATCH_GENERIC_EXCEPTIONS_IMPL
+    CATCH_THRIFT_EXCEPTION_IMPL(__VA_ARGS__)                                   \
+    CATCH_EVERNOTE_EXCEPTION_IMPL(__VA_ARGS__)                                 \
+    CATCH_EVER_CLOUD_EXCEPTION_IMPL(__VA_ARGS__)                               \
+    CATCH_STD_EXCEPTION_IMPL(__VA_ARGS__)
 
 // 2) Macros returning false in the end of exception handling
 
 #define CATCH_THRIFT_EXCEPTION_RET_FALSE()                                     \
     CATCH_THRIFT_EXCEPTION_IMPL(return false)                                  \
-// CATCH_THRIFT_EXCEPTION_RET_FALSE
+    // CATCH_THRIFT_EXCEPTION_RET_FALSE
 
 #define CATCH_EVERNOTE_EXCEPTION_RET_FALSE()                                   \
-    CATCH_EVERNOTE_EXCEPTION_IMPL(return false)                                \
-// CATCH_EVERNOTE_EXCEPTION_RET_FALSE
+    CATCH_EVERNOTE_EXCEPTION_IMPL(return false)
 
 #define CATCH_EVER_CLOUD_EXCEPTION_RET_FALSE()                                 \
-    CATCH_EVER_CLOUD_EXCEPTION_IMPL(return false)                              \
-// CATCH_EVER_CLOUD_EXCEPTION_RET_FALSE
+    CATCH_EVER_CLOUD_EXCEPTION_IMPL(return false)
 
-#define CATCH_STD_EXCEPTION_RET_FALSE()                                        \
-    CATCH_STD_EXCEPTION_IMPL(return false)                                     \
-// CATCH_STD_EXCEPTION_RET_FALSE
+#define CATCH_STD_EXCEPTION_RET_FALSE() CATCH_STD_EXCEPTION_IMPL(return false)
 
 #define CATCH_GENERIC_EXCEPTIONS_RET_FALSE()                                   \
     CATCH_THRIFT_EXCEPTION_RET_FALSE()                                         \
     CATCH_EVERNOTE_EXCEPTION_RET_FALSE()                                       \
     CATCH_EVER_CLOUD_EXCEPTION_RET_FALSE()                                     \
-    CATCH_STD_EXCEPTION_RET_FALSE()                                            \
-// CATCH_GENERIC_EXCEPTIONS_RET_FALSE
+    CATCH_STD_EXCEPTION_RET_FALSE()
 
 // 3) Macros returning no value
 
-#define CATCH_THRIFT_EXCEPTION_RET()                                           \
-    CATCH_THRIFT_EXCEPTION_IMPL(return)                                        \
-// CATCH_THRIFT_EXCEPTION_RET
+#define CATCH_THRIFT_EXCEPTION_RET() CATCH_THRIFT_EXCEPTION_IMPL(return )
 
-#define CATCH_EVERNOTE_EXCEPTION_RET()                                         \
-    CATCH_EVERNOTE_EXCEPTION_IMPL(return)                                      \
-// CATCH_EVERNOTE_EXCEPTION_RET
+#define CATCH_EVERNOTE_EXCEPTION_RET() CATCH_EVERNOTE_EXCEPTION_IMPL(return )
 
 #define CATCH_EVER_CLOUD_EXCEPTION_RET()                                       \
-    CATCH_EVER_CLOUD_EXCEPTION_IMPL(return)                                    \
-// CATCH_EVER_CLOUD_EXCEPTION_RET
+    CATCH_EVER_CLOUD_EXCEPTION_IMPL(return )
 
-#define CATCH_STD_EXCEPTION_RET()                                              \
-    CATCH_STD_EXCEPTION_IMPL(return)                                           \
-// CATCH_STD_EXCEPTION_RET
+#define CATCH_STD_EXCEPTION_RET() CATCH_STD_EXCEPTION_IMPL(return )
 
 #define CATCH_GENERIC_EXCEPTIONS_RET()                                         \
     CATCH_THRIFT_EXCEPTION_RET()                                               \
     CATCH_EVERNOTE_EXCEPTION_RET()                                             \
     CATCH_EVER_CLOUD_EXCEPTION_RET()                                           \
-    CATCH_STD_EXCEPTION_RET()                                                  \
-// CATCH_GENERIC_EXCEPTIONS_RET
+    CATCH_STD_EXCEPTION_RET()
 
 // 4) Macros not returning anything
 
-#define CATCH_THRIFT_EXCEPTION_NO_RET()                                        \
-    CATCH_THRIFT_EXCEPTION_IMPL()                                              \
-// CATCH_THRIFT_EXCEPTION_NO_RET
+#define CATCH_THRIFT_EXCEPTION_NO_RET() CATCH_THRIFT_EXCEPTION_IMPL()
 
-#define CATCH_EVERNOTE_EXCEPTION_NO_RET()                                      \
-    CATCH_EVERNOTE_EXCEPTION_IMPL()                                            \
-// CATCH_EVERNOTE_EXCEPTION_NO_RET
+#define CATCH_EVERNOTE_EXCEPTION_NO_RET() CATCH_EVERNOTE_EXCEPTION_IMPL()
 
-#define CATCH_EVER_CLOUD_EXCEPTION_NO_RET()                                    \
-    CATCH_EVER_CLOUD_EXCEPTION_IMPL()                                          \
-// CATCH_EVER_CLOUD_EXCEPTION_NO_RET
+#define CATCH_EVER_CLOUD_EXCEPTION_NO_RET() CATCH_EVER_CLOUD_EXCEPTION_IMPL()
 
-#define CATCH_STD_EXCEPTION_NO_RET()                                           \
-    CATCH_STD_EXCEPTION_IMPL()                                                 \
-// CATCH_STD_EXCEPTION_NO_RET
+#define CATCH_STD_EXCEPTION_NO_RET() CATCH_STD_EXCEPTION_IMPL()
 
 #define CATCH_GENERIC_EXCEPTIONS_NO_RET()                                      \
     CATCH_THRIFT_EXCEPTION_NO_RET()                                            \
     CATCH_EVERNOTE_EXCEPTION_NO_RET()                                          \
     CATCH_EVER_CLOUD_EXCEPTION_NO_RET()                                        \
-    CATCH_STD_EXCEPTION_NO_RET()                                               \
-// CATCH_GENERIC_EXCEPTIONS_NO_RET
+    CATCH_STD_EXCEPTION_NO_RET()
 
 #endif // LIB_QUENTIER_SYNCHRONIZATION_EXCEPTION_HANDLING_HELPERS_H

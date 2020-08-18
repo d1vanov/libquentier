@@ -20,7 +20,7 @@ matrix:
           env: QT_BASE=551 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
 
         - os: linux
-          env: QT_BASE=5123 COMPILER=g++-5.4 CMAKE_BUILD_TYPE=RelWithDebInfo
+          env: QT_BASE=5123 COMPILER=g++-5.4 CMAKE_BUILD_TYPE=RelWithDebInfo CLANG_FORMAT_CHECK=1
 
         - os: linux
           env: QT_BASE=5123 COMPILER=clang++ CMAKE_BUILD_TYPE=Debug
@@ -46,8 +46,7 @@ before_install:
       if [[ ${DETECTED_CHANGES_AFFECTING_BUILD} == False ]]; then
         if [ -z "$TRAVIS_TAG" ]; then
           echo "No changes affecting build detected, exiting" &&
-          travis_terminate 0 &&
-          exit 1
+          travis_terminate 0
         fi
       fi
 
@@ -55,10 +54,7 @@ install:
     - |
       if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
         export DISPLAY=:99.0 &&
-        wget http://www.cmake.org/files/v3.2/cmake-3.2.0-Linux-x86_64.tar.gz &&
-        tar -xzf cmake-3.2.0-Linux-x86_64.tar.gz &&
-        sudo cp -fR cmake-3.2.0-Linux-x86_64/* /usr &&
-        sudo apt-get -qq install p7zip-full libxml2-dev libboost-dev libssl-dev libhunspell-dev coreutils curl &&
+        sudo apt-get -qq install cmake p7zip-full libxml2-dev libboost-dev libssl-dev libhunspell-dev coreutils curl &&
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test &&
         if [ "${QT_BASE}" = "551" ]; then
           echo "Building for Qt 5.5.1" &&
@@ -76,6 +72,12 @@ install:
             export CXX="clang++" &&
             export CC="clang"
           fi
+        fi
+        if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
+          mkdir -p /tmp/clang-format &&
+          curl -Ls "https://github.com/muttleyxd/clang-format-static-binaries/releases/download/master-5b56bb49/clang-format-10_linux-amd64" -o "/tmp/clang-format/clang-format" &&
+          chmod +x /tmp/clang-format/clang-format &&
+          export PATH=/tmp/clang-format:$PATH
         fi
       else
         brew update &&
@@ -189,6 +191,16 @@ script:
       fi
       make &&
       make check &&
+      if [ "${CLANG_FORMAT_CHECK}" = "1" ]; then
+        echo "Building clang-format target" &&
+        make clang-format &&
+        dirty=$(git ls-files --modified) &&
+        if [ ! -z $dirty ]; then
+          echo "Detected source code files not formatted with clang-format: " &&
+          echo $dirty &&
+          travis_terminate 1
+        fi
+      fi
       make lupdate &&
       make lrelease &&
       make install

@@ -28,8 +28,8 @@
 
 #include <QHash>
 #include <QNetworkAccessManager>
-#include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QObject>
 #include <QSet>
 #include <QUuid>
@@ -42,7 +42,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
-class Q_DECL_HIDDEN InsertHtmlDelegate final: public QObject
+class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -51,15 +51,13 @@ public:
         ENMLConverter & enmlConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-        ResourceInfo & resourceInfo,
-        QObject * parent = nullptr);
+        ResourceInfo & resourceInfo, QObject * parent = nullptr);
 
     void start();
 
 Q_SIGNALS:
     void finished(
-        QList<Resource> addedResources,
-        QStringList resourceFileStoragePaths);
+        QList<Resource> addedResources, QStringList resourceFileStoragePaths);
 
     void notifyError(ErrorString error);
 
@@ -91,33 +89,34 @@ private:
     using JsCallback = JsResultCallbackFunctor<InsertHtmlDelegate>;
 
 private:
-    NoteEditorPrivate &             m_noteEditor;
-    ENMLConverter &                 m_enmlConverter;
+    NoteEditorPrivate & m_noteEditor;
+    ENMLConverter & m_enmlConverter;
 
-    ResourceDataInTemporaryFileStorageManager *    m_pResourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> &       m_resourceFileStoragePathsByResourceLocalUid;
-    ResourceInfo &                  m_resourceInfo;
+    ResourceDataInTemporaryFileStorageManager *
+        m_pResourceDataInTemporaryFileStorageManager;
+    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalUid;
+    ResourceInfo & m_resourceInfo;
 
-    QString                         m_inputHtml;
-    QString                         m_cleanedUpHtml;
+    QString m_inputHtml;
+    QString m_cleanedUpHtml;
 
-    QSet<QUrl>                      m_imageUrls;
-    QSet<QUrl>                      m_pendingImageUrls;
-    QSet<QUrl>                      m_failingImageUrls;
+    QSet<QUrl> m_imageUrls;
+    QSet<QUrl> m_pendingImageUrls;
+    QSet<QUrl> m_failingImageUrls;
 
-    QHash<QUuid, Resource>          m_resourceBySaveDataToTemporaryFileRequestId;
-    QHash<QString, QUrl>            m_sourceUrlByResourceLocalUid;
-    QHash<QUrl, QUrl>               m_urlToRedirectUrl;
+    QHash<QUuid, Resource> m_resourceBySaveDataToTemporaryFileRequestId;
+    QHash<QString, QUrl> m_sourceUrlByResourceLocalUid;
+    QHash<QUrl, QUrl> m_urlToRedirectUrl;
 
     struct Q_DECL_HIDDEN ImgData
     {
-        Resource    m_resource;
-        QString     m_resourceFileStoragePath;
+        Resource m_resource;
+        QString m_resourceFileStoragePath;
     };
 
-    QHash<QUrl, ImgData>            m_imgDataBySourceUrl;
+    QHash<QUrl, ImgData> m_imgDataBySourceUrl;
 
-    QNetworkAccessManager           m_networkAccessManager;
+    QNetworkAccessManager m_networkAccessManager;
 };
 
 } // namespace quentier

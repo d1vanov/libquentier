@@ -25,7 +25,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
-class Q_DECL_HIDDEN KeychainService final: public IKeychainService
+class Q_DECL_HIDDEN KeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:

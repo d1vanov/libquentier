@@ -20,8 +20,8 @@
 #define LIB_QUENTIER_TESTS_NOTE_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
 #include <quentier/utility/Macros.h>
 
 #include <QUuid>
@@ -46,7 +46,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals
+    // private signals
     void addNotebookRequest(Notebook notebook, QUuid requestId);
 
     void getNoteCountRequest(
@@ -63,13 +63,10 @@ Q_SIGNALS:
         QUuid requestId);
 
     void listNotesPerNotebookRequest(
-        Notebook notebook,
-        LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotesOrder order,
-        LocalStorageManager::OrderDirection orderDirection,
-        QUuid requestId);
+        Notebook notebook, LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
     void expungeNoteRequest(Note note, QUuid requestId);
 
@@ -110,20 +107,16 @@ private Q_SLOTS:
         ErrorString errorDescription, QUuid requestId);
 
     void onListNotesPerNotebookCompleted(
-        Notebook notebook,
-        LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotesOrder order,
-        LocalStorageManager::OrderDirection orderDirection,
-        QList<Note> notes, QUuid requestId);
+        Notebook notebook, LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection, QList<Note> notes,
+        QUuid requestId);
 
     void onListNotesPerNotebookFailed(
-        Notebook notebook,
-        LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag,
-        size_t limit, size_t offset,
-        LocalStorageManager::ListNotesOrder order,
+        Notebook notebook, LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, size_t limit,
+        size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
@@ -159,19 +152,19 @@ private:
 
     State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook                    m_notebook;
-    Notebook                    m_extraNotebook;
-    Note                        m_initialNote;
-    Note                        m_foundNote;
-    Note                        m_modifiedNote;
-    QList<Note>                 m_initialNotes;
-    QList<Note>                 m_extraNotes;
+    Notebook m_notebook;
+    Notebook m_extraNotebook;
+    Note m_initialNote;
+    Note m_foundNote;
+    Note m_modifiedNote;
+    QList<Note> m_initialNotes;
+    QList<Note> m_extraNotes;
 };
 
-} // namespace quentier
 } // namespace test
+} // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_NOTE_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H

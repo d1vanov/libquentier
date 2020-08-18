@@ -29,7 +29,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ImageResourceRotationDelegate final: public QObject
+class Q_DECL_HIDDEN ImageResourceRotationDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -37,7 +37,8 @@ public:
         const QByteArray & resourceHashBefore,
         const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
-        ResourceDataInTemporaryFileStorageManager & resourceDataInTemporaryFileStorageManager,
+        ResourceDataInTemporaryFileStorageManager &
+            resourceDataInTemporaryFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
 
     void start();
@@ -52,7 +53,7 @@ Q_SIGNALS:
 
     void notifyError(ErrorString error);
 
-// private signals
+    // private signals
     void saveResourceDataToTemporaryFile(
         QString noteLocalUid, QString resourceLocalUid, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
@@ -73,27 +74,28 @@ private:
     using JsCallback = JsResultCallbackFunctor<ImageResourceRotationDelegate>;
 
 private:
-    NoteEditorPrivate &             m_noteEditor;
-    ResourceInfo &                  m_resourceInfo;
-    ResourceDataInTemporaryFileStorageManager &    m_resourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> &       m_resourceFileStoragePathsByLocalUid;
+    NoteEditorPrivate & m_noteEditor;
+    ResourceInfo & m_resourceInfo;
+    ResourceDataInTemporaryFileStorageManager &
+        m_resourceDataInTemporaryFileStorageManager;
+    QHash<QString, QString> & m_resourceFileStoragePathsByLocalUid;
 
-    INoteEditorBackend::Rotation    m_rotationDirection;
+    INoteEditorBackend::Rotation m_rotationDirection;
 
-    Note *                          m_pNote = nullptr;
+    Note * m_pNote = nullptr;
 
-    QByteArray                      m_resourceDataBefore;
-    QByteArray                      m_resourceHashBefore;
-    QSize                           m_resourceImageSizeBefore;
+    QByteArray m_resourceDataBefore;
+    QByteArray m_resourceHashBefore;
+    QSize m_resourceImageSizeBefore;
 
-    QByteArray                      m_resourceRecognitionDataBefore;
-    QByteArray                      m_resourceRecognitionDataHashBefore;
+    QByteArray m_resourceRecognitionDataBefore;
+    QByteArray m_resourceRecognitionDataHashBefore;
 
-    QString                         m_resourceFileStoragePathBefore;
-    QString                         m_resourceFileStoragePathAfter;
+    QString m_resourceFileStoragePathBefore;
+    QString m_resourceFileStoragePathAfter;
 
-    Resource                        m_rotatedResource;
-    QUuid                           m_saveResourceDataToTemporaryFileRequestId;
+    Resource m_rotatedResource;
+    QUuid m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier

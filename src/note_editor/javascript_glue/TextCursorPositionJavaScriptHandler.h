@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class TextCursorPositionJavaScriptHandler: public QObject
+class TextCursorPositionJavaScriptHandler : public QObject
 {
     Q_OBJECT
 public:

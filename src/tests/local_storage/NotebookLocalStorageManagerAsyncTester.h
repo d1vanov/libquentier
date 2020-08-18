@@ -45,7 +45,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getNotebookCountRequest(QUuid requestId);
     void addNotebookRequest(Notebook notebook, QUuid requestId);
     void updateNotebookRequest(Notebook notebook, QUuid requestId);
@@ -131,14 +131,12 @@ private Q_SLOTS:
         QUuid requestId);
 
     void onListSharedNotebooksPerNotebookGuidFailed(
-        QString notebookGuid, ErrorString errorDescription,
-        QUuid requestId);
+        QString notebookGuid, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeNotebookCompleted(Notebook notebook, QUuid requestId);
 
     void onExpungeNotebookFailed(
-        Notebook notebook, ErrorString errorDescription,
-        QUuid requestId);
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -172,20 +170,20 @@ private:
 
     State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync = nullptr;
-    QThread *                   m_pLocalStorageManagerThread = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    qint32                      m_userId = 4;
+    qint32 m_userId = 4;
 
-    Notebook                    m_initialNotebook;
-    Notebook                    m_foundNotebook;
-    Notebook                    m_modifiedNotebook;
-    QList<Notebook>             m_initialNotebooks;
-    QList<SharedNotebook>       m_allInitialSharedNotebooks;
-    QList<SharedNotebook>       m_initialSharedNotebooksPerNotebook;
+    Notebook m_initialNotebook;
+    Notebook m_foundNotebook;
+    Notebook m_modifiedNotebook;
+    QList<Notebook> m_initialNotebooks;
+    QList<SharedNotebook> m_allInitialSharedNotebooks;
+    QList<SharedNotebook> m_initialSharedNotebooksPerNotebook;
 };
 
-} // namespace quentier
 } // namespace test
+} // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_NOTEBOOK_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H

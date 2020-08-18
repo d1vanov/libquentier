@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LinkedNotebookData)
 
-class QUENTIER_EXPORT LinkedNotebook: public INoteStoreDataElement
+class QUENTIER_EXPORT LinkedNotebook : public INoteStoreDataElement
 {
 public:
     QN_DECLARE_DIRTY
@@ -104,11 +104,17 @@ public:
 
 private:
     // hide useless methods inherited from the base class from public interface
-    virtual const QString localUid() const override { return QString(); }
+    virtual const QString localUid() const override
+    {
+        return QString();
+    }
     virtual void setLocalUid(const QString &) override {}
     virtual void unsetLocalUid() override {}
 
-    virtual bool isLocal() const override { return false; }
+    virtual bool isLocal() const override
+    {
+        return false;
+    }
     virtual void setLocal(const bool) override {}
 
 private:

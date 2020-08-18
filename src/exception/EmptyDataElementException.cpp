@@ -21,7 +21,7 @@
 namespace quentier {
 
 EmptyDataElementException::EmptyDataElementException(
-        const ErrorString & message) :
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

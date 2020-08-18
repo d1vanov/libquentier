@@ -27,31 +27,27 @@ namespace quentier {
 QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
 {
     strm << "ISyncState: {\n"
-        << "    user data update count = "
-        << userDataUpdateCount() << "\n"
-        << "    user data last sync time = "
-        << printableDateTimeFromTimestamp(userDataLastSyncTime())
-        << "\n";
+         << "    user data update count = " << userDataUpdateCount() << "\n"
+         << "    user data last sync time = "
+         << printableDateTimeFromTimestamp(userDataLastSyncTime()) << "\n";
 
     auto updateCountsByLinkedNotebookGuid = linkedNotebookUpdateCounts();
-    if (!updateCountsByLinkedNotebookGuid.isEmpty())
-    {
+    if (!updateCountsByLinkedNotebookGuid.isEmpty()) {
         strm << "    update counts by linked notebook guid:\n";
 
-        for(const auto & it:
-            qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid)))
+        for (const auto & it:
+             qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid)))
         {
             strm << "        [" << it.key() << "] = " << it.value() << "\n";
         }
     }
 
     auto lastSyncTimesByLinkedNotebookGuid = linkedNotebookLastSyncTimes();
-    if (!lastSyncTimesByLinkedNotebookGuid.isEmpty())
-    {
+    if (!lastSyncTimesByLinkedNotebookGuid.isEmpty()) {
         strm << "    last sync times by linked notebook guid:\n";
 
-        for(const auto & it:
-            qevercloud::toRange(::qAsConst(lastSyncTimesByLinkedNotebookGuid)))
+        for (const auto & it:
+             qevercloud::toRange(::qAsConst(lastSyncTimesByLinkedNotebookGuid)))
         {
             strm << "        [" << it.key() << "] = " << it.value() << "\n";
         }

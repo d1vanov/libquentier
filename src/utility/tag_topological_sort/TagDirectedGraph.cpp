@@ -60,13 +60,14 @@ QStringList TagDirectedGraph::allTagIds() const
 {
     QStringList result;
 
-    for(auto it = m_childTagIdsByParentTagId.constBegin(),
-        end = m_childTagIdsByParentTagId.constEnd(); it != end; ++it)
+    for (auto it = m_childTagIdsByParentTagId.constBegin(),
+              end = m_childTagIdsByParentTagId.constEnd();
+         it != end; ++it)
     {
         result << it.key();
 
         const auto & childTagIds = it.value();
-        for(const auto & childTagId: ::qAsConst(childTagIds)) {
+        for (const auto & childTagId: ::qAsConst(childTagIds)) {
             result << childTagId;
         }
     }
