@@ -123,6 +123,8 @@ install:
   - set PATH=%cd%\bin;%PATH%
   - set LIB=%cd%\lib;%LIB%
   - set INCLUDE=%cd%\include;%INCLUDE%
+# Boost
+  - set BOOST_ROOT=C:\Libraries\boost_1_69_0
 # OpenSSL
   - if not exist c:\dev\openssl (set SHOULD_DOWNLOAD_OPENSSL=1) else (set SHOULD_DOWNLOAD_OPENSSL=0)
   - if %SHOULD_DOWNLOAD_OPENSSL%==1 (md c:\dev\openssl) else (echo "Using cached version of openssl")
