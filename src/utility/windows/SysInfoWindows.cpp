@@ -16,10 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef __MINGW32__
-#define _WIN32_WINNT 0x0501
-#endif
-
 #include "../SysInfo_p.h"
 
 #include <quentier/utility/SysInfo.h>
@@ -38,7 +34,7 @@ namespace quentier {
 qint64 SysInfo::pageSize()
 {
     SYSTEM_INFO systemInfo;
-    GetNativeSystemInfo (&systemInfo);
+    GetNativeSystemInfo(&systemInfo);
     return static_cast<qint64>(systemInfo.dwPageSize);
 }
 
