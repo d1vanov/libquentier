@@ -38,20 +38,16 @@ QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
 QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN ShouldSkipElementResult final : public Printable
+enum class SkipElementOption
 {
-public:
-    enum type
-    {
-        SkipWithContents = 0x0,
-        SkipButPreserveContents = 0x1,
-        ShouldNotSkip = 0x2
-    };
-
-    Q_DECLARE_FLAGS(Types, type)
-
-    virtual QTextStream & print(QTextStream & strm) const override;
+    SkipWithContents = 0x0,
+    SkipButPreserveContents = 0x1,
+    DontSkip = 0x2
 };
+
+QTextStream & operator<<(QTextStream & strm, const SkipElementOption option);
+
+Q_DECLARE_FLAGS(SkipElementOptions, SkipElementOption);
 
 class Q_DECL_HIDDEN ENMLConverterPrivate final : public QObject
 {
@@ -175,7 +171,7 @@ private:
 
     qint64 timestampFromDateTime(const QDateTime & dateTime) const;
 
-    ShouldSkipElementResult::type shouldSkipElement(
+    SkipElementOption skipElementOption(
         const QString & elementName, const QXmlStreamAttributes & attributes,
         const QVector<SkipHtmlElementRule> & skipRules) const;
 

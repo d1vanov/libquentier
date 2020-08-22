@@ -3211,7 +3211,7 @@ qint32 FakeNoteStore::checkNotebookFields(
 }
 
 qint32 FakeNoteStore::checkNoteFields(
-    const Note & note, const CheckNoteFieldsPurpose::type purpose,
+    const Note & note, const CheckNoteFieldsPurpose purpose,
     ErrorString & errorDescription) const
 {
     if (!note.hasNotebookGuid()) {

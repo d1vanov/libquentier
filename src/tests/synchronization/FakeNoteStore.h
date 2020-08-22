@@ -317,17 +317,14 @@ private:
     qint32 checkNotebookFields(
         const Notebook & notebook, ErrorString & errorDescription) const;
 
-    struct CheckNoteFieldsPurpose
+    enum class CheckNoteFieldsPurpose
     {
-        enum type
-        {
-            CreateNote = 0,
-            UpdateNote
-        };
+        CreateNote = 0,
+        UpdateNote
     };
 
     qint32 checkNoteFields(
-        const Note & note, const CheckNoteFieldsPurpose::type purpose,
+        const Note & note, const CheckNoteFieldsPurpose purpose,
         ErrorString & errorDescription) const;
 
     qint32 checkResourceFields(

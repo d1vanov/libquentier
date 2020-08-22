@@ -327,26 +327,24 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
             lastElementName = reader.name().toString();
             lastElementAttributes = reader.attributes();
 
-            auto shouldSkip = shouldSkipElement(
+            auto shouldSkip = skipElementOption(
                 lastElementName, lastElementAttributes, skipRules);
 
-            if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip) {
+            if (shouldSkip != SkipElementOption::DontSkip) {
                 QNTRACE(
                     "enml",
                     "Skipping element "
                         << lastElementName
                         << " per skip rules; the contents would be "
-                        << (shouldSkip ==
-                                    ShouldSkipElementResult::SkipWithContents
+                        << (shouldSkip == SkipElementOption::SkipWithContents
                                 ? "skipped"
                                 : "preserved"));
 
-                if (shouldSkip == ShouldSkipElementResult::SkipWithContents) {
+                if (shouldSkip == SkipElementOption::SkipWithContents) {
                     ++skippedElementNestingCounter;
                 }
                 else if (
-                    shouldSkip ==
-                    ShouldSkipElementResult::SkipButPreserveContents) {
+                    shouldSkip == SkipElementOption::SkipButPreserveContents) {
                     ++skippedElementWithPreservedContentsNestingCounter;
                 }
 
@@ -3913,29 +3911,29 @@ qint64 ENMLConverterPrivate::timestampFromDateTime(
     return timestamp;
 }
 
-ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
+SkipElementOption ENMLConverterPrivate::skipElementOption(
     const QString & elementName, const QXmlStreamAttributes & attributes,
     const QVector<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(
         "enml",
-        "ENMLConverterPrivate::shouldSkipElement: element name = "
+        "ENMLConverterPrivate::skipElementOption: element name = "
             << elementName << ", attributes = " << attributes);
 
     if (skipRules.isEmpty()) {
-        return ShouldSkipElementResult::ShouldNotSkip;
+        return SkipElementOption::DontSkip;
     }
 
-    ShouldSkipElementResult::Types flags;
-    flags |= ShouldSkipElementResult::ShouldNotSkip;
+    SkipElementOptions flags;
+    flags |= SkipElementOption::DontSkip;
 
 #define CHECK_IF_SHOULD_SKIP()                                                 \
     if (shouldSkip) {                                                          \
         if (rule.m_includeElementContents) {                                   \
-            flags |= ShouldSkipElementResult::SkipButPreserveContents;         \
+            flags |= SkipElementOption::SkipButPreserveContents;               \
         }                                                                      \
         else {                                                                 \
-            return ShouldSkipElementResult::SkipWithContents;                  \
+            return SkipElementOption::SkipWithContents;                        \
         }                                                                      \
     }
 
@@ -4084,11 +4082,11 @@ ShouldSkipElementResult::type ENMLConverterPrivate::shouldSkipElement(
         }
     }
 
-    if (flags & ShouldSkipElementResult::SkipButPreserveContents) {
-        return ShouldSkipElementResult::SkipButPreserveContents;
+    if (flags & SkipElementOption::SkipButPreserveContents) {
+        return SkipElementOption::SkipButPreserveContents;
     }
 
-    return ShouldSkipElementResult::ShouldNotSkip;
+    return SkipElementOption::DontSkip;
 }
 
 ENMLConverterPrivate::ProcessElementStatus
@@ -4156,24 +4154,23 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
 
     state.m_lastElementAttributes = reader.attributes();
 
-    auto shouldSkip = shouldSkipElement(
+    auto shouldSkip = skipElementOption(
         state.m_lastElementName, state.m_lastElementAttributes, skipRules);
 
-    if (shouldSkip != ShouldSkipElementResult::ShouldNotSkip) {
+    if (shouldSkip != SkipElementOption::DontSkip) {
         QNTRACE(
             "enml",
             "Skipping element "
                 << state.m_lastElementName
                 << " per skip rules; the contents would be "
-                << (shouldSkip == ShouldSkipElementResult::SkipWithContents
+                << (shouldSkip == SkipElementOption::SkipWithContents
                         ? "skipped"
                         : "preserved"));
 
-        if (shouldSkip == ShouldSkipElementResult::SkipWithContents) {
+        if (shouldSkip == SkipElementOption::SkipWithContents) {
             ++state.m_skippedElementNestingCounter;
         }
-        else if (shouldSkip == ShouldSkipElementResult::SkipButPreserveContents)
-        {
+        else if (shouldSkip == SkipElementOption::SkipButPreserveContents) {
             ++state.m_skippedElementWithPreservedContentsNestingCounter;
         }
 
@@ -4402,5 +4399,26 @@ QTextStream & operator<<(
     }
 
     strm << "}\n";
+    return strm;
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const quentier::SkipElementOption option)
+{
+    switch (option) {
+    case quentier::SkipElementOption::SkipWithContents:
+        strm << "Skip with contents";
+        break;
+    case quentier::SkipElementOption::SkipButPreserveContents:
+        strm << "Skip but preserve contents";
+        break;
+    case quentier::SkipElementOption::DontSkip:
+        strm << "Do not skip";
+        break;
+    default:
+        strm << "Unknown (" << static_cast<qint64>(option) << ")";
+        break;
+    }
+
     return strm;
 }
