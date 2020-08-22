@@ -301,6 +301,10 @@ QString QuentierLogger::logFilesDirPath()
 
 void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
 {
+    if (Q_UNLIKELY(!pLogWriter)) {
+        return;
+    }
+
     for (auto & pLogExistingWriter: m_pImpl->m_logWriterPtrs) {
         if (Q_UNLIKELY(pLogExistingWriter == pLogWriter)) {
             return;
@@ -326,6 +330,10 @@ void QuentierLogger::addLogWriter(IQuentierLogWriter * pLogWriter)
 
 void QuentierLogger::removeLogWriter(IQuentierLogWriter * pLogWriter)
 {
+    if (Q_UNLIKELY(!pLogWriter)) {
+        return;
+    }
+
     bool found = false;
     for (auto it = m_pImpl->m_logWriterPtrs.begin(),
               end = m_pImpl->m_logWriterPtrs.end();
