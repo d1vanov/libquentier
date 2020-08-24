@@ -827,8 +827,8 @@ add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
 target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
 
-# setup clang-format
 include(SetupClangFormat)
+include(SetupClangTidy)
 
 # set Doxygen documentation properties
 set(DOXY_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/headers ${CMAKE_CURRENT_SOURCE_DIR}/README.md")
