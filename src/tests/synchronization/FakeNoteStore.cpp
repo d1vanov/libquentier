@@ -4019,7 +4019,6 @@ qint32 FakeNoteStore::getSyncChunkImpl(
 
             qint32 usn = nextLinkedNotebook.updateSequenceNumber();
             if (usn < lastItemUsn) {
-                lastItemUsn = usn;
                 nextItemType = NextItemType::LinkedNotebook;
                 QNDEBUG(
                     "tests:synchronization",

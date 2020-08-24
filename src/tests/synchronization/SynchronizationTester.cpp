@@ -4938,6 +4938,7 @@ void SynchronizationTester::
             pNote != nullptr,
             "Detected unexpectedly missing note in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasNotebookGuid(),
             "Detected note without notebook guid in fake note store");
@@ -4949,6 +4950,7 @@ void SynchronizationTester::
             pNotebook != nullptr,
             "Detected unexpectedly missing notebook in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNotebook->hasLinkedNotebookGuid(),
             "Internal error: the note to be added a new resource should "
@@ -5047,6 +5049,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             pTag != nullptr,
             "Detected unexpectedly missing tag in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pTag->hasLinkedNotebookGuid(),
             "Detected broken test condition - the tag was supposed to be "
@@ -5073,6 +5076,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             pNotebook != nullptr,
             "Detected unexpectedly missing notebook in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the notebook was supposed to "
@@ -5102,15 +5106,18 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             pNote != nullptr,
             "Detected unexpectedly missing note in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasNotebookGuid(),
             "Detected note without notebook guid in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pNote->hasResources(),
             "Detected broken test condition - the note to be modified is "
             "not supposed to contain resources");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasTitle(),
             "Detected note without title in fake note store");
@@ -5122,6 +5129,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
             pNotebook != nullptr,
             "Detected unexpectedly missing notebook in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the note was supposed to be "
@@ -5156,10 +5164,12 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
             pResource != nullptr,
             "Detected unexpectedly missing resource in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pResource->hasNoteGuid(),
             "Detected resource without note guid in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pResource->hasDataBody(),
             "Detected resource without data body in fake note store");
@@ -5170,10 +5180,12 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
             pNote != nullptr,
             "Detected unexpectedly missing note in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasNotebookGuid(),
             "Detected note without notebook guid in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasResources(),
             "Detected broken test condition - the resource's note doesn't "
@@ -5186,6 +5198,7 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
             pNotebook != nullptr,
             "Detected unexpectedly missing notebook in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the note was supposed to be "
@@ -5243,6 +5256,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
             pLinkedNotebook != nullptr,
             "Detected unexpectedly missing linked notebook in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pLinkedNotebook->hasShareName(),
             "Detected linked notebook without share name in fake note store");
@@ -5273,6 +5287,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
             "Detected unexpectedly missing linked notebook's tag in fake note "
             "store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pTag->hasLinkedNotebookGuid(),
             "Detected broken test condition - the tag was supposed to belong "
@@ -5321,6 +5336,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
             "Detected unexpectedly missing linked notebook's notebook "
             "in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the notebook supposed to belong "
@@ -5371,15 +5387,18 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
             "Detected unexpectedly missing linked notebook's note in fake "
             "note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasNotebookGuid(),
             "Detected note without notebook guid in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             !pNote->hasResources(),
             "Detected broken test condition - the note to be modified was "
             "not supposed to contain resources");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasTitle(),
             "Detected note without title in fake note store");
@@ -5392,6 +5411,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
             "Detected unexpectedly missing linked notebook's note's notebook "
             "in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the note was supposed to belong "
@@ -5449,10 +5469,12 @@ void SynchronizationTester::
             "Detected unexpectedly missing linked notebook's resource "
             "in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pResource->hasNoteGuid(),
             "Detected resource without note guid in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pResource->hasDataBody(),
             "Detected resource without data body in fake note store");
@@ -5464,6 +5486,7 @@ void SynchronizationTester::
             "Detected unexpectedly missing linked notebook's note in fake "
             "note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNote->hasNotebookGuid(),
             "Detected note without notebook guid in fake note store");
@@ -5481,6 +5504,7 @@ void SynchronizationTester::
             "Detected unexpectedly missing linked notebook's note's notebook "
             "in fake note store");
 
+        // NOLINTNEXTLINE
         QVERIFY2(
             pNotebook->hasLinkedNotebookGuid(),
             "Detected broken test condition - the note was supposed to belong "
