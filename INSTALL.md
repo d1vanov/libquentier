@@ -1,6 +1,6 @@
 **Building and installation guide**
 
-Libquentier is intended to be built and shipped as s shared i.e. dynamically linked library. Dll export/import symbols necessary for Windows platform are supported.
+Libquentier is intended to be built and shipped as a shared i.e. dynamically linked library. Dll export/import symbols necessary for Windows platform are supported.
 
 ## Downloads
 
@@ -8,16 +8,14 @@ Prebuilt versions of the library can be downloaded from the following locations:
 
  * Stable version:
    * Windows binaries:
-     * [MSVC 2015 32 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt510-VS2015_x86.zip)
-     * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt510-VS2017_x64.zip)
-     * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt55-MinGW_x86.zip)
+     * [MSVC 2015 32 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt513-VS2015_x86.zip)
+     * [MSVC 2017 64 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier-windows-qt513-VS2017_x64.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
    * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-master/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
  * Unstable version:
    * Windows binaries:
-     * [MSVC 2015 32 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2015_x86.zip)
-     * [MSVC 2017 64 bit Qt 5.10](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt510-VS2017_x64.zip)
-     * [MinGW 32 bit Qt 5.5](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt55-MinGW_x86.zip)
+     * [MSVC 2015 32 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt513-VS2015_x86.zip)
+     * [MSVC 2017 64 bit Qt 5.13](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier-windows-qt513-VS2017_x64.zip)
    * [Mac binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_mac_x86_64.zip) built with latest Qt from Homebrew
    * [Linux binary](https://github.com/d1vanov/libquentier/releases/download/continuous-development/libquentier_linux_qt_5123_x86_64.zip) built on Ubuntu 14.04 with Qt 5.9.2
 
@@ -36,28 +34,29 @@ Note that you need to pick **either** stable or unstable version and not intermi
 
 ## Compatibility
 
-Libquentier works on Linux, OS X / macOS and Windows. It can be built with virtually any version of Qt framework,
-starting from Qt 4.8.6 and up to the latest and greatest Qt 5.x. The major part of libquentier is written in C++98 style
-with a few features of C++11 standard which are supported by older compilers. As a result, libquentier can be built
-by as old compilers as gcc-4.5, Visual C++ 2010.
+Libquentier works on Linux, OS X / macOS and Windows. It can be built Qt framework starting from 5.5.1,
+and up to the latest and greatest Qt 5.x. The major part of libquentier is written in C++14 standard.
+Libquentier should be easy to build on any recent enough Linux distro. The oldest supported distro
+is considered to be the oldest LTS Ubuntu version.
+
+Even though libquentier is cross-platform, most development and testing currently occurs on Linux
+so things might occasionally break on Windows and macOS platforms.
 
 ## Dependencies
 
-Dependencies include the following Qt components:
- * For Qt4: QtCore, QtGui, QtNetwork, QtXml, QtSql, QtTest + QtDBus on Linux platform only + optionally QtWebKit
+Dependencies include the following Qt modules:
  * For Qt5: Qt5Core, Qt5Gui, Qt5Widgets, Qt5Network, Qt5PrintSupport, Qt5Xml, Qt5Sql, Qt5Test, Qt5LinguistTools + Qt5DBus on Linux platform only + optionally either Qt5WebKit and Qt5WebKitWidgets or Qt5WebEngine (and Qt5WebEngineCore for Qt >= 5.6), Qt5WebEngineWidgets, Qt5WebSockets and Qt5WebChannel
 
 The dependency on QtWebKit or QtWebEngine for Qt4 and Qt5 is enabled by default but can be disabled by passing special arguments to `CMake`, see the details below.
 
 Non-Qt dependendencies of libquentier are the following:
  * libxml2 - for validation of Evernote notes ENML against the DTD
- * OpenSSL - for encryption and decryption of note fragments. Note that OpenSSL version shipped with OS X / macOS by Apple doesn't contain the required encryption/decryption API and is therefore not suitable for libquentier - you would encounter build errors if you try to use that OpenSSL version. The OpenSSL from homebrew or macports would be suitable.
+ * OpenSSL - for encryption and decryption of note fragments. Note that OpenSSL version shipped with macOS by Apple doesn't contain the required encryption/decryption API and is therefore not suitable for libquentier - you would encounter build errors if you try to use that OpenSSL version. The OpenSSL from homebrew or macports would be suitable.
  * Boost (some header-only libraries)
  * libhunspell
  * [QtKeychain](https://github.com/frankosterfeld/qtkeychain)
  * [QEverCloud](https://github.com/d1vanov/QEverCloud)
- * libtidy5 from [tidy-html5](https://github.com/htacg/tidy-html5). Note that the old libtidy 0.99 shipped with many Linux distros won't be suitable!
- * For Qt4 builds only: [qt4-mimetypes](https://github.com/d1vanov/qt4-mimetypes)
+ * libtidy5 from [tidy-html5](https://github.com/htacg/tidy-html5). Note that the old libtidy 0.99 shipped with some older Linux distros won't be suitable!
  * Optionally: Doxygen (for automatic generation of documentation)
 
 Although it is theoretically possible to use different Qt versions to build libquentier and its dependencies, it is highly
@@ -78,25 +77,12 @@ make
 make install
 ```
 
-On Windows the `cmake` step is usually more convenient to do using GUI version of `CMake`.
+On Windows the `cmake` step is usually more convenient to do using GUI version of `CMake`. For build instead of `make`
+it is convenient to call `cmake --build .` command; if target specification is required, it can be done like this:
+`cmake --build . --target install`.
 	
 If you installed libquentier's dependencies into non-standard locations on your Linux or OS X / macOS system, the `cmake` step
 from the above list might fail to find some library. You can give `CMake` some hints where to find the dependencies:
-
-For Qt4:
-```
-cmake -Dqt4-mimetypes_DIR=<...path to qt4-mimetypes installation folder...>/lib/cmake/qt4-mimetypes \
-      -DLIBXML2_INCLUDE_DIR=<...path to libxml2 include directory...> \
-      -DLIBXML2_LIBRARIES=<...path to libxml2 library...> \
-      -DOPENSSL_ROOT_DIR=<...path to the OpenSSL installation prefix...> \
-      -DBOOST_ROOT=<...path to boost installation prefix...> \
-      -DQtKeychain_DIR=<...path to QtKeychain cmake dir within the installation prefix...> \
-      -DQEverCloud-qt4_DIR=<...path to Qt4 QEverCloud installation...>/lib/cmake/QEverCloud-qt4 \
-      -DTIDY_HTML5_INCLUDE_PATH=<...path to tidy-html5 include directory...> \
-      -DTIDY_HTML5_LIB=<...path to tidy-html5 library...> \
-      -DCMAKE_INSTALL_PREFIX=<...where to install the built library...> ../
-```
-For Qt5:
 ```
 cmake -DLIBXML2_INCLUDE_DIR=<...path to libxml2 include directory...> \
       -DLIBXML2_LIBRARIES=<...path to libxml2 library...> \
@@ -109,7 +95,7 @@ cmake -DLIBXML2_INCLUDE_DIR=<...path to libxml2 include directory...> \
       -DCMAKE_INSTALL_PREFIX=<...where to install the built app...> ../
 ```
 
-As mentioned above, some Qt modules are listed as optional dependencies. These modules are required by default (i.e. the `cmake` step would fail if either of these modules is not found) but the build can be configured to exclude them as well as the pieces of libquentier's functionality for which these modules are required.
+As mentioned above, some Qt modules are listed as optional dependencies. These modules are required by default (i.e. `cmake` step would fail if either of these modules is not found) but the build can be configured to exclude them as well as the pieces of libquentier's functionality for which these modules are required.
 These pieces of functionality include:
  * Note editor - the widget encapsulating all the details of presenting the editable note with ENML-formatted text and resources (attachments)
  * OAuth authentication - the library's built-in implementation of `IAuthenticationManager` interface using `QEverCloud`'s authentication facilities
@@ -123,19 +109,24 @@ In order to force the build without `QtWebKit` or `QtWebEngine`, set both option
 cmake -DBUILD_WITH_NOTE_EDITOR=NO -DBUILD_WITH_AUTHENTICATION_MANAGER=NO <...>
 ```
 
-One other related option controls which of two Qt's web backends to use with Qt5: by default `QtWebEngine` is searched for for Qt >= 5.5. But one can force the use of `QtWebKit` instead of `QtWebEngine` with `CMake` option `USE_QT5_WEBKIT`:
+One other related option controls which of two Qt's web backends to use with Qt5: by default `QtWebEngine` is searched for Qt >= 5.5. But one can force the use of `QtWebKit` instead of `QtWebEngine` with `CMake` option `USE_QT5_WEBKIT`:
 ```
 cmake -DUSE_QT5_WEBKIT=YES <...>
-```
-
-The Qt version being searched/used by default is Qt5. If you want to build against Qt4, use `BUILD_WITH_QT4` `CMake` option:
-```
-cmake -DBUILD_WITH_QT4=YES <...>
 ```
 
 If you want to point `CMake` to some particular Qt installation in non-standard location, you can do it with `CMAKE_PREFIX_PATH` option:
 ```
 cmake -DCMAKE_PREFIX_PATH=<...path to Qt installation...> <...>
+```
+
+### Clang-tidy usage
+
+[Clang-tidy](https://clang.llvm.org/extra/clang-tidy) is a clang based "linter" tool for C++ code. Usage of clang-tidy is supported in libquentier project provided that `clang-tidy` binary can be found in your `PATH` environment variable:
+ * There is a configuration file [.clang-tidy](.clang-tidy) for running clang-tidy over libquentier's codebase
+ * There is a build target `clang-tidy` which allows one to run `clang-tidy` over the entire libquentier's database at once. It might be rather slow though.
+ * `CMake` of versions >= 3.7.2 have [built-in support](https://cmake.org/cmake/help/latest/prop_tgt/LANG_CLANG_TIDY.html) for running clang-tidy along with the compiler when compiling code. In order to set up this way of `clang-tidy` usage pass the following options to `CMake`:
+```
+cmake -DCMAKE_C_CLANG_TIDY=<path to clang-tidy> -DCMAKE_CXX_CLANG_TIDY=<path to clang-tidy> <...>
 ```
 
 ### Translation
