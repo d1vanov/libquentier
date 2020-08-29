@@ -119,7 +119,7 @@ QuentierSetLogComponentFilter(const QRegularExpression & filter);
         dbg.noquote();                                                         \
         dbg << message;                                                        \
         quentier::QuentierAddLogEntry(                                         \
-            QStringLiteral(__FILE__), __LINE__, QStringLiteral(component),     \
+            QStringLiteral(__FILE__), __LINE__, QString::fromUtf8(component),  \
             msg, quentier::LogLevel::level);                                   \
     }                                                                          \
     // __QNLOG_BASE
