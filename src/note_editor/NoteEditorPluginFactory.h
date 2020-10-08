@@ -25,6 +25,7 @@
 #include <QIcon>
 #include <QMimeDatabase>
 #include <QPointer>
+#include <QVector>
 #include <QWebPluginFactory>
 
 QT_FORWARD_DECLARE_CLASS(QRegExp)
@@ -233,6 +234,7 @@ private:
         QHash<ResourcePluginIdentifier, INoteEditorResourcePlugin *>;
 
     ResourcePluginsHash m_resourcePlugins;
+    QVector<INoteEditorResourcePlugin *> m_resourcePluginsInAdditionOrder;
     ResourcePluginIdentifier m_lastFreeResourcePluginId = 1;
 
     const Note * m_pCurrentNote = nullptr;

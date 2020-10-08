@@ -148,7 +148,16 @@ NoteEditorPluginFactory::addResourcePlugin(
     ResourcePluginIdentifier pluginId = m_lastFreeResourcePluginId;
     ++m_lastFreeResourcePluginId;
 
+    auto it = m_resourcePlugins.find(pluginId);
+    if (it != m_resourcePlugins.end()) {
+        int index = m_resourcePluginsInAdditionOrder.indexOf(it.value());
+        if (index >= 0) {
+            m_resourcePluginsInAdditionOrder.remove(index);
+        }
+    }
+
     m_resourcePlugins[pluginId] = plugin;
+    m_resourcePluginsInAdditionOrder << plugin;
 
     QNTRACE("note_editor", "Assigned id " << pluginId << " to resource plugin "
         << plugin->name());
@@ -176,6 +185,11 @@ bool NoteEditorPluginFactory::removeResourcePlugin(
     INoteEditorResourcePlugin * plugin = it.value();
     QString pluginName = (plugin ? plugin->name() : QStringLiteral("<null>"));
     QNTRACE("note_editor", "Plugin to remove: " << pluginName);
+
+    int index = m_resourcePluginsInAdditionOrder.indexOf(plugin);
+    if (index >= 0) {
+        m_resourcePluginsInAdditionOrder.remove(index);
+    }
 
     delete plugin;
     plugin = nullptr;
@@ -426,9 +440,9 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
     }
 
     QNTRACE("note_editor", "Number of installed resource plugins: "
-        << m_resourcePlugins.size());
+        << m_resourcePluginsInAdditionOrder.size());
 
-    if (!m_resourcePlugins.isEmpty())
+    if (!m_resourcePluginsInAdditionOrder.isEmpty())
     {
         /**
          * Need to loop through installed resource plugins considering the last
@@ -436,22 +450,21 @@ QObject * NoteEditorPluginFactory::createResourcePlugin(
          * iterators for its own containers without STL compatibility so will
          * emulate them
          */
-        auto resourcePluginsBegin = m_resourcePlugins.begin();
+        auto resourcePluginsBegin = m_resourcePluginsInAdditionOrder.begin();
         auto resourcePluginsBeforeBegin = resourcePluginsBegin;
         --resourcePluginsBeforeBegin;
 
-        auto resourcePluginsLast = m_resourcePlugins.end();
+        auto resourcePluginsLast = m_resourcePluginsInAdditionOrder.end();
         --resourcePluginsLast;
 
         for(auto it = resourcePluginsLast;
             it != resourcePluginsBeforeBegin; --it)
         {
-            const INoteEditorResourcePlugin * plugin = it.value();
+            const INoteEditorResourcePlugin * plugin = *it;
 
             const QStringList mimeTypes = plugin->mimeTypes();
             QNTRACE("note_editor", "Testing resource plugin " << plugin->name()
-                << " with id " << it.key() << ", mime types: "
-                << mimeTypes.join(QStringLiteral("; ")));
+                << ", mime types: " << mimeTypes.join(QStringLiteral("; ")));
 
             if (mimeTypes.contains(resourceMimeType))
             {
