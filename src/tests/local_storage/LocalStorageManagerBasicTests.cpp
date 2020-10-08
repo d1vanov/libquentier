@@ -33,6 +33,7 @@
 #include <quentier/utility/Utility.h>
 
 #include <QCryptographicHash>
+#include <QtGlobal>
 #include <QtTest/QtTest>
 
 #include <string>
