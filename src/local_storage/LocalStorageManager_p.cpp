@@ -2936,7 +2936,11 @@ QList<Note> LocalStorageManagerPrivate::listNotesImpl(
     GetResourceOptions resourceOptions =
         ((options & GetNoteOption::WithResourceBinaryData)
              ? GetResourceOption::WithBinaryData
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+             : GetResourceOptions());
+#else
              : GetResourceOptions(0));
+#endif
 
     // Will run all the queries from this method and its sub-methods within
     // a single transaction to prevent multiple drops and re-obtainings of
@@ -3244,7 +3248,11 @@ NoteList LocalStorageManagerPrivate::findNotesWithSearchQuery(
     GetResourceOptions resourceOptions =
         ((options & GetNoteOption::WithResourceBinaryData)
              ? GetResourceOption::WithBinaryData
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+             : GetResourceOptions());
+#else
              : GetResourceOptions(0));
+#endif
 
     NoteList notes;
     notes.reserve(qMax(query.size(), 0));

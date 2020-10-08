@@ -801,7 +801,12 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
     // Check Find without resource binary data
     foundResource.clear();
     foundResource.setGuid(resourceGuid);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    getResourceOptions = LocalStorageManager::GetResourceOptions();
+#else
     getResourceOptions = LocalStorageManager::GetResourceOptions(0);
+#endif
 
     QVERIFY2(
         localStorageManager.findEnResource(
@@ -1607,7 +1612,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     QVERIFY2(
         localStorageManager.updateNote(
-            modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+            modifiedNote,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
             errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 

@@ -213,7 +213,12 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(
         m_state = STATE_SENT_DELETE_REQUEST;
 
         Q_EMIT updateNoteRequest(
-            m_modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+            m_modifiedNote,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
             QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST) {

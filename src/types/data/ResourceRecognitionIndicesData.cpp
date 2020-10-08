@@ -349,8 +349,13 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
         }
         else if (name == QStringLiteral("strokeList")) {
             QString valueStr = value.toString();
-            QStringList valueList =
-                valueStr.split(QStringLiteral(","), QString::SkipEmptyParts);
+            QStringList valueList = valueStr.split(
+                QStringLiteral(","),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                Qt::SkipEmptyParts);
+#else
+                QString::SkipEmptyParts);
+#endif
             const int numValues = valueList.size();
             for (int i = 0; i < numValues; ++i) {
                 const QString & strokeStr = valueList[i];

@@ -2585,7 +2585,13 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
         "Emitting the request to find "
             << "resource in the local storage: request id = " << requestId
             << ", resource: " << resource);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    LocalStorageManager::GetResourceOptions options;
+#else
     LocalStorageManager::GetResourceOptions options(0);
+#endif
+
     Q_EMIT findResource(resource, options, requestId);
 }
 
@@ -3093,7 +3099,13 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
             << updateNoteRequestId << ", note: " << note);
 
     Q_EMIT updateNote(
-        note, LocalStorageManager::UpdateNoteOptions(0), updateNoteRequestId);
+        note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        LocalStorageManager::UpdateNoteOptions(),
+#else
+        LocalStorageManager::UpdateNoteOptions(0),
+#endif
+        updateNoteRequestId);
 }
 
 void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(
@@ -3746,7 +3758,12 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
             << "\nNote: " << note);
 
     Q_EMIT updateNote(
-        note, LocalStorageManager::UpdateNoteOptions(0),
+        note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        LocalStorageManager::UpdateNoteOptions(),
+#else
+        LocalStorageManager::UpdateNoteOptions(0),
+#endif
         markNoteDirtyRequestId);
 }
 

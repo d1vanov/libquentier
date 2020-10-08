@@ -488,17 +488,6 @@ void InsertHtmlDelegate::doStart()
         return;
     }
 
-    auto networkAccessibility = m_networkAccessManager.networkAccessible();
-    if (networkAccessibility != QNetworkAccessManager::Accessible) {
-        QNDEBUG(
-            "note_editor:delegate",
-            "The network is not accessible, can't "
-                << "load any image");
-        m_failingImageUrls = m_imageUrls;
-        checkImageResourcesReady();
-        return;
-    }
-
     // NOTE: will be using the application-wide proxy settings for image
     // downloading
 

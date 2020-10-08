@@ -1166,7 +1166,13 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             << requestId << ", note: " << note);
 
         Q_EMIT updateNote(
-            note, LocalStorageManager::UpdateNoteOptions(0), requestId);
+            note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
+            requestId);
     }
 }
 

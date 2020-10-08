@@ -1829,7 +1829,12 @@ void SynchronizationManagerPrivate::removeNonSecretPersistentAuthInfo(
             }
 
             QStringList nameParts = subdir.split(
-                QStringLiteral("_"), QString::SkipEmptyParts,
+                QStringLiteral("_"),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                Qt::SkipEmptyParts,
+#else
+                QString::SkipEmptyParts,
+#endif
                 Qt::CaseInsensitive);
 
             int numParts = nameParts.size();

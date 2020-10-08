@@ -394,7 +394,12 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
         m_foundResource.setLocalUid(m_modifiedResource.localUid());
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        LocalStorageManager::GetResourceOptions options;
+#else
         LocalStorageManager::GetResourceOptions options(0);
+#endif
 
         Q_EMIT findResourceRequest(
             m_foundResource, options, QUuid::createUuid());

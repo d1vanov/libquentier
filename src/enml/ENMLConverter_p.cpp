@@ -1372,7 +1372,12 @@ QStringList ENMLConverterPrivate::plainTextToListOfWords(
 {
     // Simply remove all non-word characters from plain text
     return plainText.split(
-        QRegExp(QStringLiteral("\\W+")), QString::SkipEmptyParts);
+        QRegExp(QStringLiteral("\\W+")),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        Qt::SkipEmptyParts);
+#else
+        QString::SkipEmptyParts);
+#endif
 }
 
 QString ENMLConverterPrivate::toDoCheckboxHtml(
@@ -1588,7 +1593,13 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     writer.writeStartElement(QStringLiteral("en-export"));
 
     QXmlStreamAttributes enExportAttributes;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    DateTimePrint::Options dateTimePrintOptions;
+#else
     DateTimePrint::Options dateTimePrintOptions(0);
+#endif
+
     qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
 
     enExportAttributes.append(

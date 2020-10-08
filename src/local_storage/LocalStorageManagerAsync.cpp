@@ -74,7 +74,13 @@ public:
 
     Account m_account;
     bool m_useCache = true;
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    LocalStorageManager::StartupOptions m_startupOptions;
+#else
     LocalStorageManager::StartupOptions m_startupOptions = 0;
+#endif
+
     LocalStorageManager * m_pLocalStorageManager = nullptr;
     LocalStorageCacheManager * m_pLocalStorageCacheManager = nullptr;
 };
@@ -1418,7 +1424,11 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
             if (!foundNoteInCache) {
                 ErrorString errorDescription;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                LocalStorageManager::GetNoteOptions getNoteOptions;
+#else
                 LocalStorageManager::GetNoteOptions getNoteOptions(0);
+#endif
                 bool res = false;
 
                 if (note.hasGuid()) {

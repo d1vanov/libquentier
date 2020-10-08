@@ -217,7 +217,12 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(
     m_receivedNoteTagsListChangedSignal = false;
     m_receivedNoteMovedToAnotherNotebookSignal = false;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    LocalStorageManager::UpdateNoteOptions options;
+#else
     LocalStorageManager::UpdateNoteOptions options(0);
+#endif
+
     Q_EMIT updateNote(modifiedNote, options, QUuid::createUuid());
 }
 
@@ -732,7 +737,12 @@ void NoteNotebookAndTagListTrackingAsyncTester::moveNoteToAnotherNotebook()
     m_receivedNoteTagsListChangedSignal = false;
     m_receivedNoteMovedToAnotherNotebookSignal = false;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    LocalStorageManager::UpdateNoteOptions options;
+#else
     LocalStorageManager::UpdateNoteOptions options(0);
+#endif
+
     Q_EMIT updateNote(modifiedNote, options, QUuid::createUuid());
 }
 

@@ -437,10 +437,22 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
     if (!ownDictionaryNames.isEmpty() && !ownDictionaryPaths.isEmpty()) {
         QStringList ownDictionaryNamesList = ownDictionaryNames.split(
-            envVarSeparator, QString::SkipEmptyParts, Qt::CaseInsensitive);
+            envVarSeparator,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            Qt::SkipEmptyParts,
+#else
+            QString::SkipEmptyParts,
+#endif
+            Qt::CaseInsensitive);
 
         QStringList ownDictionaryPathsList = ownDictionaryPaths.split(
-            envVarSeparator, QString::SkipEmptyParts, Qt::CaseInsensitive);
+            envVarSeparator,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            Qt::SkipEmptyParts,
+#else
+            QString::SkipEmptyParts,
+#endif
+            Qt::CaseInsensitive);
 
         const int numDictionaries = ownDictionaryNamesList.size();
         if (numDictionaries == ownDictionaryPathsList.size()) {

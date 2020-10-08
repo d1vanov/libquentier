@@ -6478,7 +6478,13 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
         note.setDirty(true);
 
         res = pLocalStorageManager->updateNote(
-            note, LocalStorageManager::UpdateNoteOptions(0), errorDescription);
+            note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
+            errorDescription);
 
         QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6570,7 +6576,13 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
         note.setDirty(true);
 
         res = pLocalStorageManager->updateNote(
-            note, LocalStorageManager::UpdateNoteOptions(0), errorDescription);
+            note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
+            errorDescription);
 
         QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
     }
@@ -6878,7 +6890,12 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
         modifiedNote.setTitle(originalTitle + MODIFIED_LOCALLY_SUFFIX);
 
         res = m_pLocalStorageManagerAsync->localStorageManager()->updateNote(
-            modifiedNote, LocalStorageManager::UpdateNoteOptions(0),
+            modifiedNote,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
+            LocalStorageManager::UpdateNoteOptions(0),
+#endif
             errorDescription);
 
         QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));

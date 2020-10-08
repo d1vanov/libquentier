@@ -1162,7 +1162,11 @@ void TestListNotes()
     // 1) Test method listing all notes per notebook
 
     errorMessage.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    LocalStorageManager::GetNoteOptions getNoteOptions;
+#else
     LocalStorageManager::GetNoteOptions getNoteOptions = 0;
+#endif
 
     QList<Note> foundNotes = localStorageManager.listNotesPerNotebook(
         notebook, getNoteOptions, errorMessage);
@@ -1318,7 +1322,12 @@ void TestListNotes()
 
     // 5) Test method listing all notes
     errorMessage.clear();
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    getNoteOptions = LocalStorageManager::GetNoteOptions();
+#else
     getNoteOptions = LocalStorageManager::GetNoteOptions(0);
+#endif
 
     foundNotes = localStorageManager.listNotes(
         LocalStorageManager::ListObjectsOption::ListAll, getNoteOptions,
