@@ -33,7 +33,6 @@
 #include <quentier/utility/Utility.h>
 
 #include <QCryptographicHash>
-#include <QtGlobal>
 #include <QtTest/QtTest>
 
 #include <string>
@@ -1611,14 +1610,16 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     modifiedNote.setDeletionTimestamp(1);
     foundNote.setActive(true);
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    updateNoteOptions = LocalStorageManager::UpdateNoteOptions();
+#else
+    updateNoteOptions = LocalStorageManager::UpdateNoteOptions(0);
+#endif
+
     QVERIFY2(
         localStorageManager.updateNote(
             modifiedNote,
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-            LocalStorageManager::UpdateNoteOptions(),
-#else
-            LocalStorageManager::UpdateNoteOptions(0),
-#endif
+            updateNoteOptions,
             errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
