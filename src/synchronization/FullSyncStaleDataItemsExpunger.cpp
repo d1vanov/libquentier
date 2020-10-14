@@ -829,6 +829,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     QSet<QString> noteGuidsToExpunge;
     m_tagGuidsToExpunge.clear();
 
+    QHash<QString, QSet<QString>> noteGuidsToExpungeByNotebookGuidsToExpunge;
+
     QList<Notebook> dirtyNotebooksToUpdate;
     QList<Tag> dirtyTagsToUpdate;
     QList<SavedSearch> dirtySavedSearchesToUpdate;
@@ -981,27 +983,30 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             continue;
         }
 
+        const auto & notebookGuidByNoteGuid =
+            m_noteSyncCache.notebookGuidByNoteGuid();
+
+        auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
+        if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
+            FEWARNING(
+                "Failed to find cached notebook guid for note guid " << guid
+                << ", won't do anything with this note");
+            continue;
+        }
+
+        const QString & notebookGuid = notebookGuidIt.value();
+
         auto dirtyNoteIt = dirtyNotesByGuid.find(guid);
         if (dirtyNoteIt == dirtyNotesByGuid.end()) {
             FETRACE(
                 "Note guid "
                 << guid << " doesn't appear within the list of dirty notes");
+
             Q_UNUSED(noteGuidsToExpunge.insert(guid))
+            Q_UNUSED(noteGuidsToExpungeByNotebookGuidsToExpunge[notebookGuid].insert(guid))
         }
         else {
-            const auto & notebookGuidByNoteGuid =
-                m_noteSyncCache.notebookGuidByNoteGuid();
 
-            auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
-            if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
-                FEWARNING(
-                    "Failed to find cached notebook guid "
-                    << "for note guid " << guid
-                    << ", won't do anything with this note");
-                continue;
-            }
-
-            const QString & notebookGuid = notebookGuidIt.value();
             bool foundActualNotebook = false;
 
             if (!m_pNotebookSyncCache.isNull()) {
@@ -1077,6 +1082,20 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             "Emitting the request to expunge notebook: "
             << "request id = " << requestId << ", notebook guid = " << guid);
         Q_EMIT expungeNotebook(dummyNotebook, requestId);
+
+        // If some notes to be expunged belong to the notebook being expunged,
+        // we don't need to expunge these notes separately
+        auto it = noteGuidsToExpungeByNotebookGuidsToExpunge.find(guid);
+        if (it != noteGuidsToExpungeByNotebookGuidsToExpunge.end()) {
+            for (const auto & noteGuid: qAsConst(it.value())) {
+                auto noteIt = noteGuidsToExpunge.find(noteGuid);
+                if (noteIt != noteGuidsToExpunge.end()) {
+                    noteGuidsToExpunge.erase(noteIt);
+                }
+            }
+
+            noteGuidsToExpungeByNotebookGuidsToExpunge.erase(it);
+        }
     }
 
     // NOTE: won't expunge tags until the dirty ones are updated in order
@@ -1166,13 +1185,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             << requestId << ", note: " << note);
 
         Q_EMIT updateNote(
-            note,
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-            LocalStorageManager::UpdateNoteOptions(),
-#else
-            LocalStorageManager::UpdateNoteOptions(0),
-#endif
-            requestId);
+            note, LocalStorageManager::UpdateNoteOptions(0), requestId);
     }
 }
 

@@ -80,6 +80,7 @@ private Q_SLOTS:
 
     void testDirtyNoteWithStaleNotebook();
     void testDirtyTagWithStaleParentTag();
+    void testStaleNoteFromStaleNotebook();
 
 private:
     void setupBaseDataItems();
