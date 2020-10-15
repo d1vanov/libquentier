@@ -19,13 +19,19 @@
 #pragma once
 
 #include <quentier/local_storage/Fwd.h>
+#include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/local_storage/Result.h>
+#include <quentier/types/LinkedNotebook.h>
+#include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
+#include <quentier/types/SharedNotebook.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QFlags>
 #include <QFuture>
+#include <QHash>
+#include <QStringList>
 #include <QThreadPool>
 #include <QVector>
 
@@ -62,7 +68,8 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, const StartupOptions options);
 
-public:
+    ////////////////////////////////////////////////////////////////////////////
+
     enum class ListObjectsOption
     {
         ListAll = 1 << 0,
@@ -90,23 +97,21 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, const ListObjectsOptions options);
 
-public:
-    // Versions/upgrade API
-    virtual QFuture<Result<bool>> isVersionTooHigh() = 0;
-    virtual QFuture<Result<bool>> requiresUpgrade() = 0;
-    virtual QFuture<Result<QVector<ILocalStoragePatchPtr>>> requiredPatches() = 0;
-    virtual QFuture<Result<qint32>> version() = 0;
-    virtual QFuture<qint32> highestSupportedVersion() = 0;
+    ////////////////////////////////////////////////////////////////////////////
 
-    // Users API
-    virtual QFuture<Result<qint32>> userCount() = 0;
-    virtual QFuture<Result<void>> putUser(User user) = 0;
-    virtual QFuture<Result<User>> findUser(qint32 userId) = 0;
-    virtual QFuture<Result<void>> expungeUser(qint32 userId) = 0;
+    enum class OrderDirection
+    {
+        Ascending,
+        Descending
+    };
 
-    // Notebooks API
-    virtual QFuture<Result<qint32>> notebookCount() = 0;
-    virtual QFuture<Result<void>> putNotebook(Notebook notebook) = 0;
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const OrderDirection orderDirection);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const OrderDirection orderDirection);
+
+    ////////////////////////////////////////////////////////////////////////////
 
     enum class FindNotebookBy
     {
@@ -121,13 +126,322 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, const FindNotebookBy what);
 
-    virtual QFuture<Result<Notebook>> findNotebook(FindNotebookBy what, QString value);
+    ////////////////////////////////////////////////////////////////////////////
 
-    virtual QFuture<Result<Notebook>> findDefaultNotebook();
-    virtual QFuture<Result<Notebook>> findLastUsedNotebook();
-    virtual QFuture<Result<Notebook>> findDefaultOrLastUsedNotebook();
+    enum class FindTagBy
+    {
+        LocalUid,
+        Guid,
+        Name
+    };
 
-    virtual QFuture<Result<void>> expungeNotebook(Notebook notebook);
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FindTagBy what);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FindTagBy what);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class FindNoteBy
+    {
+        LocalUid,
+        Guid,
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FindNoteBy what);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FindNoteBy what);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class ListNotebooksOrder
+    {
+        NoOrder,
+        ByUpdateSequenceNumber,
+        ByNotebookName,
+        ByCreationTimestamp,
+        ByModificationTimestamp
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotebooksOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListNotebooksOrder order);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class ListLinkedNotebooksOrder
+    {
+        NoOrder,
+        ByUpdateSequenceNumber,
+        ByShareName,
+        ByUsername,
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListLinkedNotebooksOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListLinkedNotebooksOrder order);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class ListTagsOrder
+    {
+        NoOrder,
+        ByUpdateSequenceNumber,
+        ByName
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListTagsOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListTagsOrder order);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class ListNotesOrder
+    {
+        NoOrder,
+        ByUpdateSequenceNumber,
+        ByTitle,
+        ByCreationTimestamp,
+        ByModificationTimestamp,
+        ByDeletionTimestamp,
+        ByAuthor,
+        BySource,
+        BySourceApplication,
+        ByReminderTime,
+        ByPlaceName
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotesOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListNotesOrder order);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    struct ListOptionsBase
+    {
+        ListOptionsBase() noexcept;
+
+        ListObjectsOptions m_options;
+        size_t m_limit;
+        size_t m_offset;
+        OrderDirection m_direction;
+    };
+
+    template <class Order>
+    struct ListOptions : ListOptionsBase
+    {
+        ListOptions() noexcept;
+
+        Order m_order;
+        QString m_linkedNotebookGuid;
+    };
+
+    template <>
+    struct ListOptions<ListLinkedNotebooksOrder> : ListOptionsBase
+    {
+        ListOptions() noexcept;
+
+        ListLinkedNotebooksOrder m_order;
+    };
+
+    template <class Order>
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListOptions<Order> options);
+
+    template <class Order>
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListOptions<Order> options);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class NoteCountOption
+    {
+        IncludeNonDeletedNotes = 1 << 1,
+        IncludeDeletedNotes = 1 << 2
+    };
+    Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const NoteCountOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const NoteCountOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const NoteCountOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const NoteCountOptions options);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class UpdateNoteOption
+    {
+        UpdateResourceMetadata = 1 << 1,
+        UpdateResourceBinaryData = 1 << 2,
+        UpdateTags = 1 << 3
+    };
+    Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const UpdateNoteOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const UpdateNoteOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const UpdateNoteOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const UpdateNoteOptions options);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class FetchNoteOption
+    {
+        WithResourceMetadata = 1 << 1,
+        WithResourceBinaryData = 1 << 2
+    };
+    Q_DECLARE_FLAGS(FetchNoteOptions, FetchNoteOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FetchNoteOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FetchNoteOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FetchNoteOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const FetchNoteOptions options);
+
+public:
+    // Versions/upgrade API
+    virtual QFuture<Result<bool>> isVersionTooHigh() = 0;
+    virtual QFuture<Result<bool>> requiresUpgrade() = 0;
+
+    virtual QFuture<Result<QVector<ILocalStoragePatchPtr>>>
+        requiredPatches() = 0;
+
+    virtual QFuture<Result<qint32>> version() = 0;
+    virtual QFuture<qint32> highestSupportedVersion() = 0;
+
+    // Users API
+    virtual QFuture<Result<size_t>> userCount() = 0;
+    virtual QFuture<Result<void>> putUser(User user) = 0;
+    virtual QFuture<Result<User>> findUser(qint32 userId) = 0;
+    virtual QFuture<Result<void>> expungeUser(qint32 userId) = 0;
+    virtual QFuture<Result<QVector<User>>> listUsers() = 0;
+
+    // Notebooks API
+    virtual QFuture<Result<size_t>> notebookCount() = 0;
+    virtual QFuture<Result<void>> putNotebook(Notebook notebook) = 0;
+
+    virtual QFuture<Result<Notebook>> findNotebook(
+        FindNotebookBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    virtual QFuture<Result<Notebook>> findDefaultNotebook() = 0;
+    virtual QFuture<Result<Notebook>> findLastUsedNotebook() = 0;
+    virtual QFuture<Result<Notebook>> findDefaultOrLastUsedNotebook() = 0;
+    virtual QFuture<Result<void>> expungeNotebook(Notebook notebook) = 0;
+
+    virtual QFuture<Result<QVector<Notebook>>> listNotebooks(
+        ListOptions<ListNotebooksOrder> options = {}) = 0;
+
+    virtual QFuture<Result<QVector<SharedNotebook>>> listSharedNotebooks(
+        QString notebookGuid = {}) = 0;
+
+    // Linked notebooks API
+    virtual QFuture<Result<size_t>> linkedNotebookCount() = 0;
+
+    virtual QFuture<Result<void>> putLinkedNotebook(
+        LinkedNotebook linkedNotebook) = 0;
+
+    virtual QFuture<Result<LinkedNotebook>> findLinkedNotebook(
+        QString guid) = 0;
+
+    virtual QFuture<Result<void>> expungeLinkedNotebook(QString guid) = 0;
+
+    virtual QFuture<Result<QVector<LinkedNotebook>>> listLinkedNotebooks(
+        ListOptions<ListLinkedNotebooksOrder> options = {}) = 0;
+
+    // Notes API
+    virtual QFuture<Result<size_t>> noteCount(
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<size_t>> noteCountPerNotebook(
+        FindNotebookBy notebookSearchCriteria,
+        QString notebookSearchCriteriaValue,
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<size_t>> noteCountPerTag(
+        FindTagBy tagSearchCriteria, QString tagSearchCriteriaValue,
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<QHash<QString, size_t>>> noteCountsPerTags(
+        ListOptions<ListTagsOrder> listTagsOptions = {},
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<size_t>> noteCountPerNotebooksAndTags(
+        QStringList notebookLocalUids, QStringList tagLocalUids,
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<void>> putNote(Note note) = 0;
+
+    virtual QFuture<Result<void>> updateNote(
+        Note note, UpdateNoteOptions options) = 0;
+
+    virtual QFuture<Result<Note>> findNote(
+        FindNoteBy searchCriteria, QString searchCriteriaValue,
+        FetchNoteOptions options);
+
+    virtual QFuture<Result<QVector<Note>>> listNotes(
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> listOptions = {});
+
+    virtual QFuture<Result<QVector<Note>>> listNotesPerNotebook(
+        FindNotebookBy notebookSearchCriteria,
+        QString notebookSearchCriteriaValue,
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+
+    virtual QFuture<Result<QVector<Note>>> listNotesPerTag(
+        FindTagBy tagSearchCriteria, QString tagSearchCriteriaValue,
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+
+    virtual QFuture<Result<QVector<Note>>> listNotesPerNotebooksAndTags(
+        QStringList notebookLocalUids, QStringList tagLocalUids,
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+
+    virtual QFuture<Result<QVector<Note>>> searchNotes(
+        FindNoteBy searchCriteria, QStringList searchCriteriaValues,
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+
+    virtual QFuture<Result<QVector<Note>>> queryNotes(
+        NoteSearchQuery query, FetchNoteOptions fetchOptions) = 0;
+
+    virtual QFuture<Result<void>> expungeNote(
+        FindNoteBy searchCriteria, QString searchCriteriaValue) = 0;
 };
 
 } // namespace quentier::local_storage
