@@ -24,7 +24,10 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
+#include <quentier/types/Resource.h>
+#include <quentier/types/SavedSearch.h>
 #include <quentier/types/SharedNotebook.h>
+#include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/Linkage.h>
 
@@ -157,6 +160,34 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
 
+    enum class FindResourceBy
+    {
+        LocalUid,
+        Guid
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FindResourceBy what);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FindResourceBy what);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class FindSavedSearchBy
+    {
+        LocalUid,
+        Guid
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FindSavedSearchBy what);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FindSavedSearchBy what);
+
+    ////////////////////////////////////////////////////////////////////////////
+
     enum class ListNotebooksOrder
     {
         NoOrder,
@@ -228,7 +259,23 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
 
-    struct ListOptionsBase
+    enum class ListSavedSearchesOrder
+    {
+        NoOrder,
+        ByUpdateSequenceNumber,
+        ByName,
+        ByFormat
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListSavedSearchesOrder order);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const ListSavedSearchesOrder order);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    struct QUENTIER_EXPORT ListOptionsBase
     {
         ListOptionsBase() noexcept;
 
@@ -239,7 +286,7 @@ public:
     };
 
     template <class Order>
-    struct ListOptions : ListOptionsBase
+    struct QUENTIER_EXPORT ListOptions : ListOptionsBase
     {
         ListOptions() noexcept;
 
@@ -248,7 +295,8 @@ public:
     };
 
     template <>
-    struct ListOptions<ListLinkedNotebooksOrder> : ListOptionsBase
+    struct QUENTIER_EXPORT ListOptions<ListLinkedNotebooksOrder> :
+        ListOptionsBase
     {
         ListOptions() noexcept;
 
@@ -326,6 +374,40 @@ public:
 
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & strm, const FetchNoteOptions options);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class FetchResourceOption
+    {
+        WithBinaryData = 1 << 1
+    };
+    Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption)
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FetchResourceOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const FetchResourceOption option);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const FetchResourceOptions options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & strm, const FetchResourceOptions options);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    enum class HighestUsnOption
+    {
+        WithinUserOwnContent,
+        WithinUserOwnContentAndLinkedNotebooks
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const HighestUsnOption option);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const HighestUsnOption option);
 
 public:
     // Versions/upgrade API
@@ -418,8 +500,7 @@ public:
 
     virtual QFuture<Result<QVector<Note>>> listNotesPerNotebook(
         FindNotebookBy notebookSearchCriteria,
-        QString notebookSearchCriteriaValue,
-        FetchNoteOptions fetchOptions,
+        QString notebookSearchCriteriaValue, FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {}) = 0;
 
     virtual QFuture<Result<QVector<Note>>> listNotesPerTag(
@@ -442,6 +523,61 @@ public:
 
     virtual QFuture<Result<void>> expungeNote(
         FindNoteBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    // Tags API
+    virtual QFuture<Result<size_t>> tagCount() = 0;
+    virtual QFuture<Result<void>> putTag(Tag tag) = 0;
+
+    virtual QFuture<Result<Tag>> findTag(
+        FindTagBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    virtual QFuture<Result<QVector<Tag>>> listTags(
+        ListOptions<ListTagsOrder> options = {}) = 0;
+
+    virtual QFuture<Result<QVector<Tag>>> listTagsPerNote(
+        FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue,
+        ListOptions<ListTagsOrder> options = {}) = 0;
+
+    virtual QFuture<Result<void>> expungeTag(
+        FindTagBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    // Resources API
+    virtual QFuture<Result<size_t>> resourceCount(
+        NoteCountOptions options =
+            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+
+    virtual QFuture<Result<size_t>> resourceCountPerNote(
+        FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue) = 0;
+
+    virtual QFuture<Result<void>> putResource(Resource resource) = 0;
+
+    virtual QFuture<Result<Resource>> findResource(
+        FindResourceBy searchCriteria, QString searchCriteriaValue,
+        FetchResourceOptions options = {}) = 0;
+
+    virtual QFuture<Result<void>> expungeResource(
+        FindResourceBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    // Saved searches API
+    virtual QFuture<Result<size_t>> savedSearchCount() = 0;
+
+    virtual QFuture<Result<void>> putSavedSearch(SavedSearch search) = 0;
+
+    virtual QFuture<Result<SavedSearch>> findSavedSearch(
+        FindSavedSearchBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    virtual QFuture<Result<QVector<SavedSearch>>> listSavedSearches(
+        ListOptions<ListSavedSearchesOrder> options = {}) = 0;
+
+    virtual QFuture<Result<void>> expungeSavedSearch(
+        FindSavedSearchBy searchCriteria, QString searchCriteriaValue) = 0;
+
+    // Auxiliary methods for synchronization
+    virtual QFuture<Result<qint32>> highestUpdateSequenceNumber(
+        HighestUsnOption option) = 0;
+
+    virtual QFuture<Result<qint32>> highestUpdateSequenceNumber(
+        QString linkedNotebookGuid) = 0;
 };
 
 } // namespace quentier::local_storage
