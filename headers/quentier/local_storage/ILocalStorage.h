@@ -56,7 +56,6 @@ public:
         ClearDatabase = 1 << 1,
         OverrideLock = 1 << 2
     };
-
     Q_DECLARE_FLAGS(StartupOptions, StartupOption);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
@@ -85,7 +84,6 @@ public:
         ListFavoritedElements = 1 << 7,
         ListNonFavoritedElements = 1 << 8
     };
-
     Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
@@ -578,6 +576,10 @@ public:
 
     virtual QFuture<Result<qint32>> highestUpdateSequenceNumber(
         QString linkedNotebookGuid) = 0;
+
+    // Notifications about events occurring in local storage are done via
+    // signals emitted by ILocalStorageNotifier
+    virtual ILocalStorageNotifier * notifier() = 0;
 };
 
 } // namespace quentier::local_storage

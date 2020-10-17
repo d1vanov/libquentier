@@ -26,6 +26,8 @@ namespace quentier {
 class ILocalStorage;
 using ILocalStoragePtr = std::shared_ptr<ILocalStorage>;
 
+class ILocalStorageNotifier;
+
 class ILocalStoragePatch;
 using ILocalStoragePatchPtr = std::shared_ptr<ILocalStoragePatch>;
 
