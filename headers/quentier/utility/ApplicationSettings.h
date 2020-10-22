@@ -94,6 +94,149 @@ public:
     };
 
 public:
+    /**
+     * Appends prefix to the current group.
+     * The call is redirected to QSettings::beginGroup. It is required in this
+     * class only to workaround hiding QSettings method due to overloads
+     * @param prefix    String containing the prefix name
+     */
+    void beginGroup(const QString & prefix);
+
+    /**
+     * Appends prefix to the current group.
+     * Overload of beginGroup accepting const char * and optionally the size of
+     * the string
+     * @param prefix    String containing the prefix name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString:fromUtf8
+     * @param size      Size of the prefix sring. If negative (the default),
+     *                  the prefix size is taken to be stren(prefix)
+     */
+    void beginGroup(const char * prefix, const int size = -1);
+
+    /**
+     * Adds prefix to the current group and starts reading from an array.
+     * The call is redirected to QSettings::beginReadArray. It is required in
+     * this class only to workaround hiding QSettings method due to overloads
+     * @param prefix    String containing the prefix name
+     * @return          The size of the array
+     */
+    int beginReadArray(const QString & prefix);
+
+    /**
+     * Adds prefix to the current group and starts reading from an array.
+     * Overload of beginReadArray accepting const char * and optionally
+     * the size of the string
+     * @param prefix    String containing the prefix name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString:fromUtf8
+     * @param size      Size of the prefix sring. If negative (the default),
+     *                  the prefix size is taken to be stren(prefix)
+     */
+    int beginReadArray(const char * prefix, const int size = -1);
+
+    /**
+     * Adds prefix to the current group and starts writing an array of size
+     * arraySize.
+     * The call is redirected to QSettings::beginWriteArray. It is required in
+     * this class only to workaround hiding QSettings method due to overloads
+     * @param prefix    String containing the prefix name
+     * @param arraySize Size of the array to be written. If negative
+     *                  (the default), it is automatically determined based on
+     *                  the indexes of the entries written.
+     */
+    void beginWriteArray(const QString & prefix, const int arraySize = -1);
+
+    /**
+     * Adds prefix to the current group and starts writing an array of size
+     * arraySize.
+     * Overload of beginWriteArray accepting const char * and optionally
+     * the size of the string
+     * @param prefix        String containing the prefix name. Must be UTF-8
+     *                      encoded as internally it is converted to QString via
+     *                      QString:fromUtf8
+     * @param prefixSize    Size of the prefix sring. If negative (the default),
+     *                      the prefix size is taken to be stren(prefix)
+     * @param arraySize     Size of the array to be written. If negative
+     *                      (the default), it is automatically determined based
+     *                      on the indexes of the entries written.
+     */
+    void beginWriteArray(
+        const char * prefix, const int prefixSize = -1,
+        const int arraySize = -1);
+
+    /**
+     * The call is redirected to QSettings::contains. It is required in
+     * this class only to workaround hiding QSettings method due to overloads
+     * @param key       The key being checked for presence
+     * @return          True if there exists a setting called key; false
+     *                  otherwise
+     */
+    bool contains(const QString & key) const;
+
+    /**
+     * Overload of contains accepting const char * and optionally the size of
+     * the string
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString:fromUtf8
+     * @param size      Size of the key sring. If negative (the default),
+     *                  the key size is taken to be stren(key)
+     * @return          True if there exists a setting called key; false
+     *                  otherwise
+     */
+    bool contains(const char * key, const int size = -1) const;
+
+    /**
+     * Removes the setting key and any sub-settings of key.
+     * The call is redirected to QSettings::remove. It is required in
+     * this class only to workaround hiding QSettings method due to overloads
+     * @param key       String containing the setting name
+     */
+    void remove(const QString & key);
+
+    /**
+     * Removes the setting key and any sub-settings of key.
+     * Overload of remove accepting const char * and optionally the size of
+     * the string
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString:fromUtf8
+     * @param size      Size of the key sring. If negative (the default),
+     *                  the key size is taken to be stren(key)
+     */
+    void remove(const char * key, const int size = -1);
+
+    /**
+     * The call is redirected to QSettings::value. It is required in this class
+     * only to workaround hiding QSettings method due to overloads
+     * @param key           String containing the setting name
+     * @param defautValue   Default value returned if the setting doesn't exist
+     * @return              The value for setting key. If the setting doesn't
+     *                      exist, returns defaultValue. If no default value is
+     *                      specified, a default QVariant is returned.
+     */
+    QVariant value(
+        const QString & key, const QVariant & defaultValue = {}) const;
+
+    /**
+     * Overload of beginWriteArray accepting const char * and optionally
+     * the size of the string
+     * @param key           String containing the setting name. Must be UTF-8
+     *                      encoded as internally it is converted to QString via
+     *                      QString:fromUtf8
+     * @param size          Size of the key sring. If negative (the default),
+     *                      the key size is taken to be stren(key)
+     * @param defautValue   Default value returned if the setting doesn't exist
+     * @return              The value for setting key. If the setting doesn't
+     *                      exist, returns defaultValue. If no default value is
+     *                      specified, a default QVariant is returned.
+     */
+    QVariant value(
+        const char * key, const int size = -1,
+        const QVariant & defaultValue = {}) const;
+
+public:
     virtual QTextStream & print(QTextStream & strm) const override;
 
 private:
