@@ -47,11 +47,31 @@ public:
      * @param settingsName  If not empty, the created application settings
      *                      would manage the settings stored in a file with
      *                      a specific name within the account's settings
-     * storage; otherwise they would be stored in the default settings file for
-     * the account
+     *                      storage; otherwise they would be stored in
+     *                      the default settings file for the account
      */
     ApplicationSettings(
         const Account & account, const QString & settingsName = {});
+
+    /**
+     * Constructor for application settings specific to the account
+     *
+     * @param account           The account for which the settings are to be
+     *                          stored or read
+     * @param settingsName      If not nullptr, the created application settings
+     *                          would manage the settings stored in a file with
+     *                          a specific name within the account's settings
+     *                          storage; otherwise they would be stored in
+     *                          the default settings file for the account.
+     *                          Must be UTF-8 encoded as internally it is
+     *                          converted to QString via QString::fromUtf8
+     * @param settingsNameSize  Size of the settingsName string. If negative
+     *                          (the default), the settingsName size is taken
+     *                          to be strlen(settingsName)
+     */
+    ApplicationSettings(
+        const Account & account, const char * settingsName,
+        const int settingsNameSize = -1);
 
     /**
      * Destructor
@@ -108,7 +128,7 @@ public:
      * the string
      * @param prefix    String containing the prefix name. Must be UTF-8
      *                  encoded as internally it is converted to QString via
-     *                  QString:fromUtf8
+     *                  QString::fromUtf8
      * @param size      Size of the prefix sring. If negative (the default),
      *                  the prefix size is taken to be stren(prefix)
      */
@@ -129,7 +149,7 @@ public:
      * the size of the string
      * @param prefix    String containing the prefix name. Must be UTF-8
      *                  encoded as internally it is converted to QString via
-     *                  QString:fromUtf8
+     *                  QString::fromUtf8
      * @param size      Size of the prefix sring. If negative (the default),
      *                  the prefix size is taken to be stren(prefix)
      */
@@ -154,7 +174,7 @@ public:
      * the size of the string
      * @param prefix        String containing the prefix name. Must be UTF-8
      *                      encoded as internally it is converted to QString via
-     *                      QString:fromUtf8
+     *                      QString::fromUtf8
      * @param prefixSize    Size of the prefix sring. If negative (the default),
      *                      the prefix size is taken to be stren(prefix)
      * @param arraySize     Size of the array to be written. If negative
@@ -179,7 +199,7 @@ public:
      * the string
      * @param key       String containing the setting name. Must be UTF-8
      *                  encoded as internally it is converted to QString via
-     *                  QString:fromUtf8
+     *                  QString::fromUtf8
      * @param size      Size of the key sring. If negative (the default),
      *                  the key size is taken to be stren(key)
      * @return          True if there exists a setting called key; false
@@ -201,7 +221,7 @@ public:
      * the string
      * @param key       String containing the setting name. Must be UTF-8
      *                  encoded as internally it is converted to QString via
-     *                  QString:fromUtf8
+     *                  QString::fromUtf8
      * @param size      Size of the key sring. If negative (the default),
      *                  the key size is taken to be stren(key)
      */
@@ -224,7 +244,7 @@ public:
      * the size of the string
      * @param key           String containing the setting name. Must be UTF-8
      *                      encoded as internally it is converted to QString via
-     *                      QString:fromUtf8
+     *                      QString::fromUtf8
      * @param size          Size of the key sring. If negative (the default),
      *                      the key size is taken to be stren(key)
      * @param defautValue   Default value returned if the setting doesn't exist

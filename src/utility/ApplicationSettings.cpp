@@ -25,6 +25,10 @@
 
 namespace quentier {
 
+namespace {
+
+////////////////////////////////////////////////////////////////////////////////
+
 QString defaultApplicationStoragePath()
 {
     QString storagePath = applicationPersistentStoragePath();
@@ -91,6 +95,10 @@ QString accountApplicationStoragePath(
     return storagePath;
 }
 
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 ApplicationSettings::ApplicationSettings() :
     QSettings(defaultApplicationStoragePath(), QSettings::IniFormat)
 {}
@@ -99,6 +107,15 @@ ApplicationSettings::ApplicationSettings(
     const Account & account, const QString & settingsName) :
     QSettings(
         accountApplicationStoragePath(account, settingsName),
+        QSettings::IniFormat)
+{}
+
+ApplicationSettings::ApplicationSettings(
+    const Account & account, const char * settingsName,
+    const int settingsNameSize) :
+    QSettings(
+        accountApplicationStoragePath(
+            account, QString::fromUtf8(settingsName, settingsNameSize)),
         QSettings::IniFormat)
 {}
 
