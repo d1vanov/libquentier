@@ -174,6 +174,17 @@ void ApplicationSettings::remove(const char * key, const int size)
     QSettings::remove(QString::fromUtf8(key, size));
 }
 
+void ApplicationSettings::setValue(const QString & key, const QVariant & value)
+{
+    QSettings::setValue(key, value);
+}
+
+void ApplicationSettings::setValue(
+    const char * key, const QVariant & value, const int keySize)
+{
+    QSettings::setValue(QString::fromUtf8(key, keySize), value);
+}
+
 QVariant ApplicationSettings::value(
     const QString & key, const QVariant & defaultValue) const
 {

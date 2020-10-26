@@ -130,7 +130,7 @@ public:
      *                  encoded as internally it is converted to QString via
      *                  QString::fromUtf8
      * @param size      Size of the prefix sring. If negative (the default),
-     *                  the prefix size is taken to be stren(prefix)
+     *                  the prefix size is taken to be stren(prefix).
      */
     void beginGroup(const char * prefix, const int size = -1);
 
@@ -223,9 +223,32 @@ public:
      *                  encoded as internally it is converted to QString via
      *                  QString::fromUtf8
      * @param size      Size of the key sring. If negative (the default),
-     *                  the key size is taken to be stren(key)
+     *                  the key size is taken to be stren(key).
      */
     void remove(const char * key, const int size = -1);
+
+    /**
+     * Sets the value of setting.
+     * The call is redirected to QSettings::setValue. It is required in this
+     * class only to workaround hiding QSettings method due to overloads
+     * @param key       String containing the setting name
+     * @param value     Value for setting key
+     */
+    void setValue(const QString & key, const QVariant & value);
+
+    /**
+     * Sets the value of setting.
+     * Overload of setValue accepting const char * and optionally the size of
+     * the string
+     * @param key       String containing the setting name. Must be UTF-8
+     *                  encoded as internally it is converted to QString via
+     *                  QString::fromUtf8
+     * @param value     Value for setting key
+     * @param keySize   Size of the key string. If negative (the default),
+     *                  the key size is taken to be strlen(key).
+     */
+    void setValue(
+        const char * key, const QVariant & value, const int keySize = -1);
 
     /**
      * The call is redirected to QSettings::value. It is required in this class
