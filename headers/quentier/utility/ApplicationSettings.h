@@ -268,16 +268,17 @@ public:
      * @param key           String containing the setting name. Must be UTF-8
      *                      encoded as internally it is converted to QString via
      *                      QString::fromUtf8
-     * @param size          Size of the key sring. If negative (the default),
-     *                      the key size is taken to be stren(key)
      * @param defautValue   Default value returned if the setting doesn't exist
+     * @param keySize       Size of the key sring. If negative (the default),
+     *                      the key size is taken to be stren(key)
      * @return              The value for setting key. If the setting doesn't
      *                      exist, returns defaultValue. If no default value is
      *                      specified, a default QVariant is returned.
      */
     QVariant value(
-        const char * key, const int size = -1,
-        const QVariant & defaultValue = {}) const;
+        const char * key, 
+        const QVariant & defaultValue = {},
+        const int keySize = -1) const;
 
 public:
     virtual QTextStream & print(QTextStream & strm) const override;

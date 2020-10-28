@@ -192,9 +192,9 @@ QVariant ApplicationSettings::value(
 }
 
 QVariant ApplicationSettings::value(
-    const char * key, const int size, const QVariant & defaultValue) const
+    const char * key, const QVariant & defaultValue, const int keySize) const
 {
-    return QSettings::value(QString::fromUtf8(key, size), defaultValue);
+    return QSettings::value(QString::fromUtf8(key, keySize), defaultValue);
 }
 
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
