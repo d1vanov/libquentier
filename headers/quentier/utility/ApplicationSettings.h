@@ -175,15 +175,15 @@ public:
      * @param prefix        String containing the prefix name. Must be UTF-8
      *                      encoded as internally it is converted to QString via
      *                      QString::fromUtf8
-     * @param prefixSize    Size of the prefix sring. If negative (the default),
-     *                      the prefix size is taken to be stren(prefix)
      * @param arraySize     Size of the array to be written. If negative
      *                      (the default), it is automatically determined based
      *                      on the indexes of the entries written.
+     * @param prefixSize    Size of the prefix sring. If negative (the default),
+     *                      the prefix size is taken to be stren(prefix)
      */
     void beginWriteArray(
-        const char * prefix, const int prefixSize = -1,
-        const int arraySize = -1);
+        const char * prefix, const int arraySize = -1,
+        const int prefixSize = -1);
 
     /**
      * The call is redirected to QSettings::contains. It is required in
@@ -251,6 +251,7 @@ public:
         const char * key, const QVariant & value, const int keySize = -1);
 
     /**
+     * Fetches the value of setting.
      * The call is redirected to QSettings::value. It is required in this class
      * only to workaround hiding QSettings method due to overloads
      * @param key           String containing the setting name
@@ -263,7 +264,8 @@ public:
         const QString & key, const QVariant & defaultValue = {}) const;
 
     /**
-     * Overload of beginWriteArray accepting const char * and optionally
+     * Fetches the value of setting.
+     * Overload of value accepting const char * and optionally
      * the size of the string
      * @param key           String containing the setting name. Must be UTF-8
      *                      encoded as internally it is converted to QString via
@@ -276,7 +278,7 @@ public:
      *                      specified, a default QVariant is returned.
      */
     QVariant value(
-        const char * key, 
+        const char * key,
         const QVariant & defaultValue = {},
         const int keySize = -1) const;
 

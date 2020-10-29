@@ -148,7 +148,7 @@ void ApplicationSettings::beginWriteArray(
 }
 
 void ApplicationSettings::beginWriteArray(
-    const char * prefix, const int prefixSize, const int arraySize)
+    const char * prefix, const int arraySize, const int prefixSize)
 {
     QSettings::beginWriteArray(
         QString::fromUtf8(prefix, prefixSize), arraySize);
