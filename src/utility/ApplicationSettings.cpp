@@ -25,6 +25,10 @@
 
 namespace quentier {
 
+namespace {
+
+////////////////////////////////////////////////////////////////////////////////
+
 QString defaultApplicationStoragePath()
 {
     QString storagePath = applicationPersistentStoragePath();
@@ -91,6 +95,10 @@ QString accountApplicationStoragePath(
     return storagePath;
 }
 
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 ApplicationSettings::ApplicationSettings() :
     QSettings(defaultApplicationStoragePath(), QSettings::IniFormat)
 {}
@@ -102,7 +110,92 @@ ApplicationSettings::ApplicationSettings(
         QSettings::IniFormat)
 {}
 
+ApplicationSettings::ApplicationSettings(
+    const Account & account, const char * settingsName,
+    const int settingsNameSize) :
+    QSettings(
+        accountApplicationStoragePath(
+            account, QString::fromUtf8(settingsName, settingsNameSize)),
+        QSettings::IniFormat)
+{}
+
 ApplicationSettings::~ApplicationSettings() {}
+
+void ApplicationSettings::beginGroup(const QString & prefix)
+{
+    QSettings::beginGroup(prefix);
+}
+
+void ApplicationSettings::beginGroup(const char * prefix, const int size)
+{
+    QSettings::beginGroup(QString::fromUtf8(prefix, size));
+}
+
+int ApplicationSettings::beginReadArray(const QString & prefix)
+{
+    return QSettings::beginReadArray(prefix);
+}
+
+int ApplicationSettings::beginReadArray(const char * prefix, const int size)
+{
+    return QSettings::beginReadArray(QString::fromUtf8(prefix, size));
+}
+
+void ApplicationSettings::beginWriteArray(
+    const QString & prefix, const int size)
+{
+    QSettings::beginWriteArray(prefix, size);
+}
+
+void ApplicationSettings::beginWriteArray(
+    const char * prefix, const int arraySize, const int prefixSize)
+{
+    QSettings::beginWriteArray(
+        QString::fromUtf8(prefix, prefixSize), arraySize);
+}
+
+bool ApplicationSettings::contains(const QString & key) const
+{
+    return QSettings::contains(key);
+}
+
+bool ApplicationSettings::contains(const char * key, const int size) const
+{
+    return QSettings::contains(QString::fromUtf8(key, size));
+}
+
+void ApplicationSettings::remove(const QString & key)
+{
+    QSettings::remove(key);
+}
+
+void ApplicationSettings::remove(const char * key, const int size)
+{
+    QSettings::remove(QString::fromUtf8(key, size));
+}
+
+void ApplicationSettings::setValue(const QString & key, const QVariant & value)
+{
+    QSettings::setValue(key, value);
+}
+
+void ApplicationSettings::setValue(
+    const char * key, const QVariant & value, const int keySize)
+{
+    QSettings::setValue(QString::fromUtf8(key, keySize), value);
+}
+
+QVariant ApplicationSettings::value(
+    const QString & key, const QVariant & defaultValue) const
+{
+    return QSettings::value(key, defaultValue);
+}
+
+QVariant ApplicationSettings::value(
+    const char * key, const QVariant & defaultValue, const int keySize) const
+{
+    return QSettings::value(QString::fromUtf8(key, keySize), defaultValue);
+}
 
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
