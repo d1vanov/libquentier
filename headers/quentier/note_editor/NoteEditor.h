@@ -22,8 +22,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QPrinter>
 #include <QStringList>

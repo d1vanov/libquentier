@@ -19,7 +19,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 
 #include <quentier/synchronization/IUserStore.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

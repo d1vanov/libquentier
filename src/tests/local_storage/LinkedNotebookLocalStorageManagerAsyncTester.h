@@ -22,7 +22,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
 

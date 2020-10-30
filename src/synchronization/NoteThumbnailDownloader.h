@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_THUMBNAIL_DOWNLOADER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 

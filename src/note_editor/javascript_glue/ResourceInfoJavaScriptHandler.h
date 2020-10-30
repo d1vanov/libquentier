@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QObject>
 #include <QSize>

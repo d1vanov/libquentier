@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTED_AREA_PLUGIN_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QWidget>
 

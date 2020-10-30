@@ -28,7 +28,7 @@
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <quentier/types/Account.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QObject>
 

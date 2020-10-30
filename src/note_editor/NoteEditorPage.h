@@ -21,7 +21,7 @@
 
 #include "JavaScriptInOrderExecutor.h"
 
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebPage>

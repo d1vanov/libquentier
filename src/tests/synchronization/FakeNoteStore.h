@@ -27,7 +27,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <boost/bimap.hpp>
 #include <boost/multi_index/global_fun.hpp>
@@ -908,10 +908,5 @@ private:
 using FakeNoteStorePtr = std::shared_ptr<FakeNoteStore>;
 
 } // namespace quentier
-
-inline size_t hash_value(const QString & str)
-{
-    return qHash(str);
-}
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H

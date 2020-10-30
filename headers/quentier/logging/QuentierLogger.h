@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
 #define LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QDebug>
 #include <QRegularExpression>

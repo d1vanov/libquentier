@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_PATCH_MANAGER_H
 
 #include <quentier/types/Account.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QObject>
 

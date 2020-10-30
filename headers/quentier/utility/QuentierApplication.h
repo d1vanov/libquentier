@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
 #define LIB_QUENTIER_UTILITY_QUENTIER_APPLICATION_H
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QApplication>
 

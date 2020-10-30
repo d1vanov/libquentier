@@ -20,8 +20,8 @@
 #define LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
 
 #include <quentier/types/Note.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/Printable.h>
 
 #include <QPalette>

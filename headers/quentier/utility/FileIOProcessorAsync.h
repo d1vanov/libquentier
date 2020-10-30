@@ -20,8 +20,8 @@
 #define LIB_QUENTIER_UTILITY_FILE_IO_PROCESSOR_ASYNC_H
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QByteArray>
 #include <QIODevice>

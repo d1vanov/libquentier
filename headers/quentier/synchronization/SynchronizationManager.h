@@ -24,8 +24,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/utility/ForwardDeclarations.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 
