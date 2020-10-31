@@ -18,17 +18,11 @@
 
 #pragma once
 
+#include <qt5qevercloud/generated/Types.h>
+
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/local_storage/Result.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QFlags>
@@ -420,41 +414,41 @@ public:
 
     // Users API
     virtual QFuture<Result<size_t>> userCount() = 0;
-    virtual QFuture<Result<void>> putUser(User user) = 0;
-    virtual QFuture<Result<User>> findUser(qint32 userId) = 0;
-    virtual QFuture<Result<void>> expungeUser(qint32 userId) = 0;
-    virtual QFuture<Result<QVector<User>>> listUsers() = 0;
+    virtual QFuture<Result<void>> putUser(qevercloud::User user) = 0;
+    virtual QFuture<Result<qevercloud::User>> findUser(qevercloud::UserID userId) = 0;
+    virtual QFuture<Result<void>> expungeUser(qevercloud::UserID userId) = 0;
+    virtual QFuture<Result<QVector<qevercloud::User>>> listUsers() = 0;
 
     // Notebooks API
     virtual QFuture<Result<size_t>> notebookCount() = 0;
-    virtual QFuture<Result<void>> putNotebook(Notebook notebook) = 0;
+    virtual QFuture<Result<void>> putNotebook(qevercloud::Notebook notebook) = 0;
 
-    virtual QFuture<Result<Notebook>> findNotebook(
+    virtual QFuture<Result<qevercloud::Notebook>> findNotebook(
         FindNotebookBy searchCriteria, QString searchCriteriaValue) = 0;
 
-    virtual QFuture<Result<Notebook>> findDefaultNotebook() = 0;
-    virtual QFuture<Result<Notebook>> findLastUsedNotebook() = 0;
-    virtual QFuture<Result<Notebook>> findDefaultOrLastUsedNotebook() = 0;
-    virtual QFuture<Result<void>> expungeNotebook(Notebook notebook) = 0;
+    virtual QFuture<Result<qevercloud::Notebook>> findDefaultNotebook() = 0;
+    virtual QFuture<Result<qevercloud::Notebook>> findLastUsedNotebook() = 0;
+    virtual QFuture<Result<qevercloud::Notebook>> findDefaultOrLastUsedNotebook() = 0;
+    virtual QFuture<Result<void>> expungeNotebook(qevercloud::Notebook notebook) = 0;
 
-    virtual QFuture<Result<QVector<Notebook>>> listNotebooks(
+    virtual QFuture<Result<QVector<qevercloud::Notebook>>> listNotebooks(
         ListOptions<ListNotebooksOrder> options = {}) = 0;
 
-    virtual QFuture<Result<QVector<SharedNotebook>>> listSharedNotebooks(
+    virtual QFuture<Result<QVector<qevercloud::SharedNotebook>>> listSharedNotebooks(
         QString notebookGuid = {}) = 0;
 
     // Linked notebooks API
     virtual QFuture<Result<size_t>> linkedNotebookCount() = 0;
 
     virtual QFuture<Result<void>> putLinkedNotebook(
-        LinkedNotebook linkedNotebook) = 0;
+        qevercloud::LinkedNotebook linkedNotebook) = 0;
 
-    virtual QFuture<Result<LinkedNotebook>> findLinkedNotebook(
+    virtual QFuture<Result<qevercloud::LinkedNotebook>> findLinkedNotebook(
         QString guid) = 0;
 
     virtual QFuture<Result<void>> expungeLinkedNotebook(QString guid) = 0;
 
-    virtual QFuture<Result<QVector<LinkedNotebook>>> listLinkedNotebooks(
+    virtual QFuture<Result<QVector<qevercloud::LinkedNotebook>>> listLinkedNotebooks(
         ListOptions<ListLinkedNotebooksOrder> options = {}) = 0;
 
     // Notes API
@@ -483,40 +477,40 @@ public:
         NoteCountOptions options =
             NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
 
-    virtual QFuture<Result<void>> putNote(Note note) = 0;
+    virtual QFuture<Result<void>> putNote(qevercloud::Note note) = 0;
 
     virtual QFuture<Result<void>> updateNote(
-        Note note, UpdateNoteOptions options) = 0;
+        qevercloud::Note note, UpdateNoteOptions options) = 0;
 
-    virtual QFuture<Result<Note>> findNote(
+    virtual QFuture<Result<qevercloud::Note>> findNote(
         FindNoteBy searchCriteria, QString searchCriteriaValue,
         FetchNoteOptions options);
 
-    virtual QFuture<Result<QVector<Note>>> listNotes(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotes(
         FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {});
 
-    virtual QFuture<Result<QVector<Note>>> listNotesPerNotebook(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerNotebook(
         FindNotebookBy notebookSearchCriteria,
         QString notebookSearchCriteriaValue, FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {}) = 0;
 
-    virtual QFuture<Result<QVector<Note>>> listNotesPerTag(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerTag(
         FindTagBy tagSearchCriteria, QString tagSearchCriteriaValue,
         FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {}) = 0;
 
-    virtual QFuture<Result<QVector<Note>>> listNotesPerNotebooksAndTags(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerNotebooksAndTags(
         QStringList notebookLocalUids, QStringList tagLocalUids,
         FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {}) = 0;
 
-    virtual QFuture<Result<QVector<Note>>> searchNotes(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> searchNotes(
         FindNoteBy searchCriteria, QStringList searchCriteriaValues,
         FetchNoteOptions fetchOptions,
         ListOptions<ListNotesOrder> listOptions = {}) = 0;
 
-    virtual QFuture<Result<QVector<Note>>> queryNotes(
+    virtual QFuture<Result<QVector<qevercloud::Note>>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) = 0;
 
     virtual QFuture<Result<void>> expungeNote(
@@ -524,15 +518,15 @@ public:
 
     // Tags API
     virtual QFuture<Result<size_t>> tagCount() = 0;
-    virtual QFuture<Result<void>> putTag(Tag tag) = 0;
+    virtual QFuture<Result<void>> putTag(qevercloud::Tag tag) = 0;
 
-    virtual QFuture<Result<Tag>> findTag(
+    virtual QFuture<Result<qevercloud::Tag>> findTag(
         FindTagBy searchCriteria, QString searchCriteriaValue) = 0;
 
-    virtual QFuture<Result<QVector<Tag>>> listTags(
+    virtual QFuture<Result<QVector<qevercloud::Tag>>> listTags(
         ListOptions<ListTagsOrder> options = {}) = 0;
 
-    virtual QFuture<Result<QVector<Tag>>> listTagsPerNote(
+    virtual QFuture<Result<QVector<qevercloud::Tag>>> listTagsPerNote(
         FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue,
         ListOptions<ListTagsOrder> options = {}) = 0;
 
@@ -547,9 +541,9 @@ public:
     virtual QFuture<Result<size_t>> resourceCountPerNote(
         FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue) = 0;
 
-    virtual QFuture<Result<void>> putResource(Resource resource) = 0;
+    virtual QFuture<Result<void>> putResource(qevercloud::Resource resource) = 0;
 
-    virtual QFuture<Result<Resource>> findResource(
+    virtual QFuture<Result<qevercloud::Resource>> findResource(
         FindResourceBy searchCriteria, QString searchCriteriaValue,
         FetchResourceOptions options = {}) = 0;
 
@@ -559,12 +553,12 @@ public:
     // Saved searches API
     virtual QFuture<Result<size_t>> savedSearchCount() = 0;
 
-    virtual QFuture<Result<void>> putSavedSearch(SavedSearch search) = 0;
+    virtual QFuture<Result<void>> putSavedSearch(qevercloud::SavedSearch search) = 0;
 
-    virtual QFuture<Result<SavedSearch>> findSavedSearch(
+    virtual QFuture<Result<qevercloud::SavedSearch>> findSavedSearch(
         FindSavedSearchBy searchCriteria, QString searchCriteriaValue) = 0;
 
-    virtual QFuture<Result<QVector<SavedSearch>>> listSavedSearches(
+    virtual QFuture<Result<QVector<qevercloud::SavedSearch>>> listSavedSearches(
         ListOptions<ListSavedSearchesOrder> options = {}) = 0;
 
     virtual QFuture<Result<void>> expungeSavedSearch(
