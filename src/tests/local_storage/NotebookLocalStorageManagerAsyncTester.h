@@ -23,7 +23,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SharedNotebook.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

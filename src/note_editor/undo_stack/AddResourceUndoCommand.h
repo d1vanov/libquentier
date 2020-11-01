@@ -24,7 +24,7 @@
 #include "../NoteEditorPage.h"
 
 #include <quentier/types/Resource.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

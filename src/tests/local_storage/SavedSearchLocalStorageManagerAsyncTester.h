@@ -22,7 +22,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/SavedSearch.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

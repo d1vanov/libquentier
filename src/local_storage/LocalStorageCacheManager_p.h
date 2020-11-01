@@ -489,9 +489,4 @@ private:
 
 } // namespace quentier
 
-inline std::size_t hash_value(QString x)
-{
-    return qHash(x);
-}
-
 #endif // LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H

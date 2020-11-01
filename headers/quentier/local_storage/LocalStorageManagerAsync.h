@@ -31,7 +31,7 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QObject>
 

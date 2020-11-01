@@ -20,8 +20,8 @@
 #define LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
 
 #include <quentier/types/Account.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 /**
  * This macro defines the name of the environment variable which can be set to

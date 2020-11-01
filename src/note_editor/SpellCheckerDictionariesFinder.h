@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_DICTIONARIES_FINDER_H
 #define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_DICTIONARIES_FINDER_H
 
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QAtomicInt>
 #include <QHash>

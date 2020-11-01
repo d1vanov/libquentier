@@ -143,6 +143,7 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
+    headers/quentier/utility/Compat.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileCopier.h

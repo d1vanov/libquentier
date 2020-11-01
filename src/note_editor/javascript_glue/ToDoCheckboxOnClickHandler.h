@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_TO_DO_CHECKBOX_ON_CLICK_HANDLER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QObject>
 

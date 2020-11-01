@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_RESOURCE_PLUGIN_H
 #define LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_RESOURCE_PLUGIN_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Compat.h>
 
 #include <QWidget>
 

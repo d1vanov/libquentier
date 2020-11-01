@@ -22,7 +22,7 @@
 #include <quentier/synchronization/IUserStore.h>
 
 #include <quentier/types/User.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QHash>
 

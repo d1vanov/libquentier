@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QUuid>
 

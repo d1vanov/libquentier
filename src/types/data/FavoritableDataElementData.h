@@ -21,7 +21,7 @@
 
 #include "NoteStoreDataElementData.h"
 
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

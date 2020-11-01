@@ -22,7 +22,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/utility/Compat.h>
 
 #include <QUuid>
 

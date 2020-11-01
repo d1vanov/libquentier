@@ -19,8 +19,8 @@
 #ifndef LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
 #define LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QMessageBox>
 

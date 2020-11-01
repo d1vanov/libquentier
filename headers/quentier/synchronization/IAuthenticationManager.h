@@ -21,8 +21,8 @@
 
 #include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
