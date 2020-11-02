@@ -19,6 +19,7 @@
 #include "data/UserData.h"
 
 #include <quentier/types/User.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Utility.h>
 
 #include <QRegExp>
