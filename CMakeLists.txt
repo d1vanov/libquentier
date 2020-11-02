@@ -154,7 +154,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
-    headers/quentier/utility/Macros.h
     headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h
