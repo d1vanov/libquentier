@@ -25,7 +25,6 @@
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <qt5qevercloud/QEverCloud.h>

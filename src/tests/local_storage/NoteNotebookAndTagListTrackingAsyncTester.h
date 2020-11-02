@@ -21,12 +21,11 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 namespace quentier {
 namespace test {
 
-class NoteNotebookAndTagListTrackingAsyncTester : public QObject
+class NoteNotebookAndTagListTrackingAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

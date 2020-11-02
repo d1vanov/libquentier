@@ -27,6 +27,7 @@
 #include <quentier/types/Account.h>
 #include <quentier/types/Note.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Utility.h>
 
 #include <QBuffer>

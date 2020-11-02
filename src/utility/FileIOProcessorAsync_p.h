@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <QIODevice>
 #include <QObject>

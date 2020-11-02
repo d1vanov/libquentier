@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
 #define LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QDialog>
 #include <QUrl>
 

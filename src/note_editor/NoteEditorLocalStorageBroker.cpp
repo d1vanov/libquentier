@@ -21,6 +21,7 @@
 #include "../synchronization/SynchronizationShared.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 // 10 Mb
 #define MAX_TOTAL_RESOURCE_BINARY_DATA_SIZE_IN_BYTES (10485760)

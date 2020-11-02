@@ -19,14 +19,12 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_IMAGE_JAVA_SCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_IMAGE_JAVA_SCRIPT_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QHash>
 #include <QObject>
 
 namespace quentier {
 
-class GenericResourceImageJavaScriptHandler : public QObject
+class GenericResourceImageJavaScriptHandler final: public QObject
 {
     Q_OBJECT
 public:

@@ -20,6 +20,7 @@
 
 #include "../../utility/TagSortByParentChildRelationsHelpers.hpp"
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <QSet>

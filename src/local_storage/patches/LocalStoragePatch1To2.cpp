@@ -24,6 +24,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/FileCopier.h>
 #include <quentier/utility/StandardPaths.h>

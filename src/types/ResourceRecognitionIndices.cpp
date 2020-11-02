@@ -17,6 +17,7 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/utility/Compat.h>
 
 #include "data/ResourceRecognitionIndicesData.h"
 

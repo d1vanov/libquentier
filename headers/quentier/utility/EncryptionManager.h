@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_ENCRYPTION_MANAGER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>

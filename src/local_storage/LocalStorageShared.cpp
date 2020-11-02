@@ -18,8 +18,6 @@
 
 #include "LocalStorageShared.h"
 
-#include <quentier/utility/Compat.h>
-
 #include <QMap>
 #include <QVariant>
 

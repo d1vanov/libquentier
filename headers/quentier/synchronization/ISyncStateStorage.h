@@ -21,7 +21,6 @@
 
 #include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/Account.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <qt5qevercloud/QEverCloud.h>

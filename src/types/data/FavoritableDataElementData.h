@@ -21,8 +21,6 @@
 
 #include "NoteStoreDataElementData.h"
 
-#include <quentier/utility/Compat.h>
-
 namespace quentier {
 
 class Q_DECL_HIDDEN FavoritableDataElementData : public NoteStoreDataElementData

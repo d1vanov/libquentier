@@ -19,13 +19,11 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESIZABLE_IMAGE_JAVASCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESIZABLE_IMAGE_JAVASCRIPT_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
 
-class ResizableImageJavaScriptHandler : public QObject
+class ResizableImageJavaScriptHandler final: public QObject
 {
     Q_OBJECT
 public:

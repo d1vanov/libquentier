@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ForwardDeclarations.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>

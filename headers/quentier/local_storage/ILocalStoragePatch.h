@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_I_LOCAL_STORAGE_PATCH_H
 #define LIB_QUENTIER_LOCAL_STORAGE_I_LOCAL_STORAGE_PATCH_H
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>

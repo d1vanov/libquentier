@@ -22,6 +22,7 @@
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Resource.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/Utility.h>
 

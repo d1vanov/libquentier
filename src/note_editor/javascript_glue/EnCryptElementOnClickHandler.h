@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_EN_CRYPT_ELEMENT_ON_CLICK_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
@@ -32,7 +30,7 @@ namespace quentier {
  * the encrypted text, cipher, key length and hint for someone to handle
  * the actual decryption
  */
-class EnCryptElementOnClickHandler : public QObject
+class EnCryptElementOnClickHandler final: public QObject
 {
     Q_OBJECT
 public:

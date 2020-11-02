@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_STANDARD_PATHS_H
 
 #include <quentier/types/Account.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 /**
@@ -28,7 +27,7 @@
  * override the default persistence storage path used by libquentier
  */
 #define LIBQUENTIER_PERSISTENCE_STORAGE_PATH                                   \
-    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH" // LIBQUENTIER_PERSISTENCE_STORAGE_PATH
+    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
 
 namespace quentier {
 

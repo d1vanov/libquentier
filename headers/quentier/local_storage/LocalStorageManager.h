@@ -23,7 +23,6 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QHash>

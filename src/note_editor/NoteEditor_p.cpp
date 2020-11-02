@@ -72,6 +72,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/Utility.h>

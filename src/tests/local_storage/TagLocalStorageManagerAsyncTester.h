@@ -22,7 +22,6 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Tag.h>
-#include <quentier/utility/Compat.h>
 
 namespace quentier {
 
@@ -30,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class TagLocalStorageManagerAsyncTester : public QObject
+class TagLocalStorageManagerAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

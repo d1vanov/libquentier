@@ -19,6 +19,7 @@
 #include "StringUtils_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 #include <QRegExp>
 

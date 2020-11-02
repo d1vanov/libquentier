@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>

@@ -22,7 +22,6 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
-#include <quentier/utility/Compat.h>
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
 
@@ -32,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class LinkedNotebookLocalStorageManagerAsyncTester : public QObject
+class LinkedNotebookLocalStorageManagerAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

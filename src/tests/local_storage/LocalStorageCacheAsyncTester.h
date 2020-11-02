@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_CACHE_ASYNC_TESTER_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier/utility/Compat.h>
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
 
@@ -30,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 namespace test {
 
-class LocalStorageCacheAsyncTester : public QObject
+class LocalStorageCacheAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

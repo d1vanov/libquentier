@@ -21,6 +21,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/SynchronizationManager.h>
+#include <quentier/utility/Compat.h>
 
 #include <QtTest/QtTest>
 

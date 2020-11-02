@@ -23,7 +23,6 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SharedNotebook.h>
-#include <quentier/utility/Compat.h>
 
 namespace quentier {
 
@@ -31,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class NotebookLocalStorageManagerAsyncTester : public QObject
+class NotebookLocalStorageManagerAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

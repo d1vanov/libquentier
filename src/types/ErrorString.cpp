@@ -17,6 +17,7 @@
  */
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Compat.h>
 
 #include "data/ErrorStringData.h"
 

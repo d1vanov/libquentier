@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 #include <QSize>
 #include <QString>
@@ -33,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceInfo)
  * The ResourceInfoJavaScriptHandler is used for communicating the information
  * on resources from C++ to JavaScript on requests coming from JavaScript to C++
  */
-class ResourceInfoJavaScriptHandler : public QObject
+class ResourceInfoJavaScriptHandler final: public QObject
 {
     Q_OBJECT
 public:

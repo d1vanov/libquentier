@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <QObject>
 #include <QUndoCommand>

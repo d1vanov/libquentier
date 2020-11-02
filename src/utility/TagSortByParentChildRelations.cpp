@@ -21,6 +21,7 @@
 #include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 

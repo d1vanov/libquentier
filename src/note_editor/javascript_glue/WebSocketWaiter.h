@@ -19,13 +19,11 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_WEB_SOCKET_WAITER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_WEB_SOCKET_WAITER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
 
-class WebSocketWaiter : public QObject
+class WebSocketWaiter final: public QObject
 {
     Q_OBJECT
 public:

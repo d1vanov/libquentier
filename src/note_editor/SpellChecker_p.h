@@ -23,7 +23,6 @@
 
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <QAtomicInt>
 #include <QHash>

@@ -26,6 +26,7 @@
 #include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/SuppressWarnings.h>
 
 SAVE_WARNINGS

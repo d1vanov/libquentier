@@ -17,7 +17,6 @@
  */
 
 #include <quentier/utility/FileIOProcessorAsync.h>
-#include <quentier/utility/Compat.h>
 
 #include "FileIOProcessorAsync_p.h"
 
