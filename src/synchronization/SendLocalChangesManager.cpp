@@ -21,6 +21,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/Utility.h>
 
@@ -1679,7 +1680,7 @@ void SendLocalChangesManager::sendTags()
                 return;
             }
 
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(
                     QT_TR_NOOP("Failed to start a timer to postpone "
@@ -1998,7 +1999,7 @@ void SendLocalChangesManager::sendSavedSearches()
                 return;
             }
 
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(
                     QT_TR_NOOP("Failed to start a timer to postpone "
@@ -2319,7 +2320,7 @@ void SendLocalChangesManager::sendNotebooks()
                 return;
             }
 
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 errorDescription.setBase(QT_TR_NOOP(
                     "Failed to start a timer to postpone the "
@@ -2830,7 +2831,7 @@ void SendLocalChangesManager::sendNotes()
                 return;
             }
 
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (timerId == 0) {
                 errorDescription.setBase(QT_TR_NOOP(
                     "Failed to start a timer to postpone the "

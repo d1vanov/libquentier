@@ -117,6 +117,7 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ShortcutManager.h>
@@ -580,7 +581,7 @@ void NoteEditorPrivate::onContentChanged()
     }
 
     m_pageToNoteContentPostponeTimerId =
-        startTimer(SEC_TO_MSEC(m_secondsToWaitBeforeConversionStart));
+        startTimer(secondsToMilliseconds(m_secondsToWaitBeforeConversionStart));
 
     m_watchingForContentChange = true;
     m_contentChangedSinceWatchingStart = false;
