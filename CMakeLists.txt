@@ -149,9 +149,11 @@ set(UTILITY_HEADERS
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
+    headers/quentier/utility/FileSystem.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/ForwardDeclarations.h
     headers/quentier/utility/IKeychainService.h
+    headers/quentier/utility/Initialize.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
