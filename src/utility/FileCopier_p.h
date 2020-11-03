@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_FILE_COPIER_PRIVATE_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <QObject>
 #include <QString>

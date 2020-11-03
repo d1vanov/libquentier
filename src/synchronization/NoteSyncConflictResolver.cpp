@@ -21,6 +21,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Utility.h>
 
 #include <quentier/synchronization/INoteStore.h>

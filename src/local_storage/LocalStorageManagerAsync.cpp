@@ -19,6 +19,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/SysInfo.h>
 
 #include <QMetaMethod>

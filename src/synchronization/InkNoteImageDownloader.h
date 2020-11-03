@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_INK_NOTE_IMAGE_DOWNLOADER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <QObject>
 #include <QRunnable>

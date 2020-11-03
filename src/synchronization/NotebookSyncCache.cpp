@@ -19,6 +19,7 @@
 #include "NotebookSyncCache.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 #define __NCLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \

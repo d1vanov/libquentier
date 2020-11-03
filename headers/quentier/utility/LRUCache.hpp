@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
 #define LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
 
-#include <quentier/utility/Compat.h>
-
 #include <QHash>
 
 #include <cstddef>

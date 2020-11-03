@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_PRIVATE_H
 
 #include <quentier/types/Account.h>
-#include <quentier/utility/Compat.h>
 
 #include <QKeySequence>
 #include <QObject>

@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_PAGE_MUTATION_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_PAGE_MUTATION_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
@@ -40,7 +38,7 @@ namespace quentier {
  * Hence, JavaScript-side filtering of page mutations + this class for a dialog
  * between JS and C++
  */
-class PageMutationHandler : public QObject
+class PageMutationHandler final: public QObject
 {
     Q_OBJECT
 public:

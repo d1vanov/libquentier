@@ -26,6 +26,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>

@@ -38,6 +38,7 @@
 #endif
 
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>

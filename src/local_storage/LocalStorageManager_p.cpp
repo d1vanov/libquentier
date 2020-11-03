@@ -29,6 +29,7 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SysInfo.h>

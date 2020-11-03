@@ -22,7 +22,6 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
-#include <quentier/utility/Compat.h>
 
 #include <QUuid>
 
@@ -32,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class NoteLocalStorageManagerAsyncTester : public QObject
+class NoteLocalStorageManagerAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

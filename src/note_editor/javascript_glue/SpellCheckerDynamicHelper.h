@@ -19,15 +19,13 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 #include <QStringList>
 #include <QVariant>
 
 namespace quentier {
 
-class SpellCheckerDynamicHelper : public QObject
+class SpellCheckerDynamicHelper final: public QObject
 {
     Q_OBJECT
 public:

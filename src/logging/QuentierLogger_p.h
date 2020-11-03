@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_PRIVATE_H
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QAtomicInt>
 #include <QFile>

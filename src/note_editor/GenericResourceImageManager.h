@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
-#include <quentier/utility/Compat.h>
 
 #include <QObject>
 #include <QUuid>

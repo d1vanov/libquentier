@@ -24,7 +24,6 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/utility/Compat.h>
 
 #include <QHash>
 #include <QNetworkAccessManager>

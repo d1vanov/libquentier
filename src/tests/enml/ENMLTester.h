@@ -19,14 +19,12 @@
 #ifndef LIB_QUENTIER_TESTS_ENML_ENML_TESTER_H
 #define LIB_QUENTIER_TESTS_ENML_ENML_TESTER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
 namespace test {
 
-class ENMLTester : public QObject
+class ENMLTester final: public QObject
 {
     Q_OBJECT
 public:

@@ -22,6 +22,7 @@
 #include "../../synchronization/SavedSearchSyncCache.h"
 #include "../../synchronization/TagSyncCache.h"
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/UidGenerator.h>
 

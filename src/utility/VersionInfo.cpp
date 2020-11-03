@@ -16,7 +16,6 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/VersionInfo.h>
 
 #include <QtGlobal>

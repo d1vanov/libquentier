@@ -20,6 +20,7 @@
 
 #include "SyncStateStorage.h"
 
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Utility.h>
 
 namespace quentier {

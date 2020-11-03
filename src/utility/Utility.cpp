@@ -20,6 +20,7 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
+#include <quentier/utility/Compat.h>
 #include <quentier/utility/Utility.h>
 
 #include <QApplication>

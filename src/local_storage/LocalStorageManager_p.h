@@ -29,7 +29,6 @@
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SuppressWarnings.h>
 

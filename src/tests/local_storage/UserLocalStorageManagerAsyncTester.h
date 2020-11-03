@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Compat.h>
 
 #include <QUuid>
 
@@ -31,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class UserLocalStorageManagerAsyncTester : public QObject
+class UserLocalStorageManagerAsyncTester final: public QObject
 {
     Q_OBJECT
 public:

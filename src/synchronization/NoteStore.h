@@ -22,7 +22,6 @@
 #include <quentier/synchronization/INoteStore.h>
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Compat.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 

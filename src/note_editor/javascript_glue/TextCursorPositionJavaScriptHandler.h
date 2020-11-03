@@ -19,13 +19,11 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_TEXT_CURSOR_POSITION_JAVASCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_TEXT_CURSOR_POSITION_JAVASCRIPT_HANDLER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
 
-class TextCursorPositionJavaScriptHandler : public QObject
+class TextCursorPositionJavaScriptHandler final: public QObject
 {
     Q_OBJECT
 public:

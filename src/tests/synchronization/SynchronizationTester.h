@@ -28,7 +28,6 @@
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/synchronization/SynchronizationManager.h>
 #include <quentier/types/Account.h>
-#include <quentier/utility/Compat.h>
 
 #include <QObject>
 
@@ -40,7 +39,7 @@ QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
 
 namespace test {
 
-class SynchronizationTester : public QObject
+class SynchronizationTester final: public QObject
 {
     Q_OBJECT
 public:

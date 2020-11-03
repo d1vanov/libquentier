@@ -40,7 +40,6 @@
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Compat.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 

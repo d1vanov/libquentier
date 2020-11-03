@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_H
 #define LIB_QUENTIER_NOTE_EDITOR_SPELL_CHECKER_H
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>

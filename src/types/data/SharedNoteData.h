@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_SHARED_NOTE_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_SHARED_NOTE_DATA_H
 
-#include <quentier/utility/Compat.h>
-
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QSharedData>

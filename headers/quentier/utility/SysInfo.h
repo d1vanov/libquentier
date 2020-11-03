@@ -19,8 +19,9 @@
 #ifndef LIB_QUENTIER_UTILITY_SYS_INFO_H
 #define LIB_QUENTIER_UTILITY_SYS_INFO_H
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/Linkage.h>
+
+#include <QString>
 
 namespace quentier {
 

@@ -19,6 +19,7 @@
 #include "NoteNotebookAndTagListTrackingAsyncTester.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 #include <QThread>
 

@@ -19,19 +19,17 @@
 #ifndef LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
 #define LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H
 
-#include <quentier/utility/Compat.h>
-
 #include <QObject>
 
 namespace quentier {
 namespace test {
 
-class UtilityTester : public QObject
+class UtilityTester final: public QObject
 {
     Q_OBJECT
 public:
     explicit UtilityTester(QObject * parent = nullptr);
-    virtual ~UtilityTester();
+    virtual ~UtilityTester() override;
 
 private Q_SLOTS:
     void init();
