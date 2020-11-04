@@ -32,6 +32,11 @@
 #include <string>
 
 #ifdef Q_OS_WIN
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <windows.h>
 #endif // defined Q_OS_WIN
 
