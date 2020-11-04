@@ -28,11 +28,11 @@
 #include <quentier/types/Resource.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCoreApplication>
 #include <QDir>
@@ -3438,7 +3438,7 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
             return;
         }
 
-        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "
@@ -3678,7 +3678,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
             return;
         }
 
-        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "
@@ -5297,7 +5297,7 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
             "Rate limit exceeded, need "
                 << "to wait for " << rateLimitSeconds << " seconds");
         if (waitIfRateLimitReached) {
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 ErrorString errorMessage(QT_TR_NOOP(
                     "Failed to start a timer to postpone the "
@@ -5487,7 +5487,7 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
                 << "to wait for " << rateLimitSeconds << " seconds");
 
         if (waitIfRateLimitReached) {
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 ErrorString errorMessage(QT_TR_NOOP(
                     "Failed to start a timer to postpone the "
@@ -7394,7 +7394,7 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
             return;
         }
 
-        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
             ErrorString errorMessage(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "
@@ -7642,7 +7642,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
 
                 m_linkedNotebookSyncChunks.pop_back();
 
-                int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+                int timerId =
+                    startTimer(secondsToMilliseconds(rateLimitSeconds));
                 if (Q_UNLIKELY(timerId == 0)) {
                     ErrorString errorMessage(
                         QT_TR_NOOP("Failed to start a timer to postpone "
@@ -9300,7 +9301,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
 
             m_syncChunks.pop_back();
 
-            int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
             if (Q_UNLIKELY(timerId == 0)) {
                 ErrorString errorDescription(QT_TR_NOOP(
                     "Failed to start a timer to postpone the Evernote "
@@ -9453,7 +9454,7 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
         }
 
         m_getSyncStateBeforeStartAPICallPostponeTimerId =
-            startTimer(SEC_TO_MSEC(rateLimitSeconds));
+            startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(m_getSyncStateBeforeStartAPICallPostponeTimerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "
@@ -11031,7 +11032,7 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
             return;
         }
 
-        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone "

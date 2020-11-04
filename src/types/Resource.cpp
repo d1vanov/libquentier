@@ -20,7 +20,7 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Resource.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
 
 #include <QFileInfo>
 #include <QMimeDatabase>

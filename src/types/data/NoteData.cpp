@@ -21,8 +21,8 @@
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/Note.h>
+#include <quentier/utility/Checks.h>
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
 
 #include <QXmlStreamReader>
 

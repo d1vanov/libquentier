@@ -143,14 +143,18 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
+    headers/quentier/utility/Checks.h
     headers/quentier/utility/Compat.h
+    headers/quentier/utility/DateTime.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
+    headers/quentier/utility/FileSystem.h
     headers/quentier/utility/FileSystemWatcher.h
     headers/quentier/utility/ForwardDeclarations.h
     headers/quentier/utility/IKeychainService.h
+    headers/quentier/utility/Initialize.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
@@ -160,10 +164,12 @@ set(UTILITY_HEADERS
     headers/quentier/utility/QuentierCheckPtr.h
     headers/quentier/utility/QuentierUndoCommand.h
     headers/quentier/utility/ShortcutManager.h
+    headers/quentier/utility/Size.h
     headers/quentier/utility/StandardPaths.h
     headers/quentier/utility/StringUtils.h
     headers/quentier/utility/SuppressWarnings.h
     headers/quentier/utility/SysInfo.h
+    headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
     headers/quentier/utility/Utility.h)
@@ -225,7 +231,6 @@ set(PRIVATE_HEADERS
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
-    src/utility/TagSortByParentChildRelationsHelpers.hpp
     src/utility/EncryptionManager_p.h
     src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
@@ -234,7 +239,8 @@ set(PRIVATE_HEADERS
     src/utility/QtKeychainWrapper.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
-    src/utility/StringUtils_p.h)
+    src/utility/StringUtils_p.h
+    src/utility/TagSortByParentChildRelationsHelpers.hpp)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND PRIVATE_HEADERS
@@ -416,8 +422,10 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
+    src/utility/Checks.cpp
+    src/utility/DateTime.cpp
+    src/utility/Initialize.cpp
     src/utility/MessageBox.cpp
-    src/utility/StandardPaths.cpp
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp
@@ -425,6 +433,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp
     src/utility/FileIOProcessorAsync_p.cpp
+    src/utility/FileSystem.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
     src/utility/IKeychainService.cpp
@@ -435,11 +444,13 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/QuentierUndoCommand.cpp
     src/utility/ShortcutManager.cpp
     src/utility/ShortcutManager_p.cpp
+    src/utility/Size.cpp
+    src/utility/StandardPaths.cpp
     src/utility/StringUtils.cpp
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
+    src/utility/System.cpp
     src/utility/TagSortByParentChildRelations.cpp
-    src/utility/Utility.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)
 

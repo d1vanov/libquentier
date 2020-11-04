@@ -22,7 +22,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/DateTime.h>
 
 #include <quentier/synchronization/INoteStore.h>
 
@@ -359,7 +359,7 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
             return;
         }
 
-        int timerId = startTimer(SEC_TO_MSEC(rateLimitSeconds));
+        int timerId = startTimer(secondsToMilliseconds(rateLimitSeconds));
         if (Q_UNLIKELY(timerId == 0)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Failed to start a timer to postpone the Evernote "

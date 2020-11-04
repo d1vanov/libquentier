@@ -19,8 +19,8 @@
 #include "QuentierLogger_p.h"
 
 #include <quentier/exception/LoggerInitializationException.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCoreApplication>
 #include <QDir>

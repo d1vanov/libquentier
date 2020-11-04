@@ -27,6 +27,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/DateTime.h>
 
 #include <quentier/synchronization/IAuthenticationManager.h>
 #include <quentier/synchronization/INoteStore.h>
@@ -39,10 +40,10 @@
 
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/Printable.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -2268,7 +2269,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             }
 
             m_authenticateToLinkedNotebooksPostponeTimerId =
-                startTimer(SEC_TO_MSEC(rateLimitSeconds));
+                startTimer(secondsToMilliseconds(rateLimitSeconds));
 
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
 

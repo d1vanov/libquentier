@@ -24,10 +24,12 @@
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Size.h>
 
 #include <QBuffer>
 #include <QDateTime>
+#include <QDir>
+#include <QFile>
 
 #include <limits>
 

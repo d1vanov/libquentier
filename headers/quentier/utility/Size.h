@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Printable.h>
+#ifndef LIB_QUENTIER_UTILITY_SIZE_H
+#define LIB_QUENTIER_UTILITY_SIZE_H
+
+#include <quentier/utility/Linkage.h>
+
+#include <QString>
 
 namespace quentier {
 
-const QString Printable::toString() const
-{
-    QString str;
-    QTextStream strm(&str, QIODevice::WriteOnly);
-    strm << *this;
-    return str;
-}
-
-Printable::Printable() = default;
-
-Printable::Printable(const Printable &) = default;
-
-Printable & Printable::operator=(const Printable &) = default;
-
-Printable::~Printable() = default;
-
-QDebug & operator<<(QDebug & debug, const Printable & printable)
-{
-    debug << printable.toString();
-    return debug;
-}
-
-QTextStream & operator<<(QTextStream & strm, const Printable & printable)
-{
-    return printable.print(strm);
-}
+/**
+ * humanReadableSize provides the human readable string denoting the size
+ * of some piece of data
+ *
+ * @param bytes     The number of bytes for which the human readable size string
+ *                  is required
+ * @return          The human readable string corresponding to the passed in
+ *                  number of bytes
+ */
+const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);
 
 } // namespace quentier
+
+#endif // LIB_QUENTIER_UTILITY_SIZE_H

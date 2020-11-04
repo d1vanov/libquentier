@@ -24,9 +24,10 @@
 #include "utility/UtilityTester.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/FileSystem.h>
+#include <quentier/utility/Initialize.h>
 #include <quentier/utility/QuentierApplication.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
 
 #include <QDebug>
 #include <QDir>

@@ -29,8 +29,8 @@
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/QuentierCheckPtr.h>
+#include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
 
 #include <QFileIconProvider>
 #include <QDir>

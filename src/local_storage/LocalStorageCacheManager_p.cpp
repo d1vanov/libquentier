@@ -21,8 +21,8 @@
 #include <quentier/exception/LocalStorageCacheManagerException.h>
 #include <quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/Utility.h>
 
 #include <QDateTime>
 

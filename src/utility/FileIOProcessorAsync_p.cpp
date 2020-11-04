@@ -19,7 +19,7 @@
 #include "FileIOProcessorAsync_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/DateTime.h>
 
 #include <QDir>
 #include <QFile>
@@ -46,7 +46,8 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
     if (m_postOperationTimerId != 0) {                                         \
         killTimer(m_postOperationTimerId);                                     \
     }                                                                          \
-    m_postOperationTimerId = startTimer(SEC_TO_MSEC(m_idleTimePeriodSeconds)); \
+    m_postOperationTimerId =                                                   \
+        startTimer(secondsToMilliseconds(m_idleTimePeriodSeconds));            \
     QNTRACE(                                                                   \
         "utility:file_async",                                                  \
         "FileIOProcessorAsyncPrivate: started post "                           \

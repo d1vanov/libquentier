@@ -19,7 +19,7 @@
 #include "TagData.h"
 
 #include <quentier/types/Tag.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
 
 namespace quentier {
 

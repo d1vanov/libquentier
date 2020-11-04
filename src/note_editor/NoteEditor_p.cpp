@@ -72,10 +72,15 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/note_editor/SpellChecker.h>
 #include <quentier/utility/ApplicationSettings.h>
+#include <quentier/utility/Checks.h>
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
+#include <quentier/utility/FileSystem.h>
+#include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
+
+#include <QDesktopServices>
+#include <QFileDialog>
 
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
 #include <QWebFrame>
@@ -117,10 +122,10 @@ typedef QWebEngineSettings WebSettings;
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/types/ResourceRecognitionIndexItem.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/ShortcutManager.h>
-#include <quentier/utility/Utility.h>
 
 #include <QApplication>
 #include <QBuffer>
@@ -580,7 +585,7 @@ void NoteEditorPrivate::onContentChanged()
     }
 
     m_pageToNoteContentPostponeTimerId =
-        startTimer(SEC_TO_MSEC(m_secondsToWaitBeforeConversionStart));
+        startTimer(secondsToMilliseconds(m_secondsToWaitBeforeConversionStart));
 
     m_watchingForContentChange = true;
     m_contentChangedSinceWatchingStart = false;
@@ -3975,7 +3980,7 @@ void NoteEditorPrivate::handleHyperlinkClicked(const QUrl & url)
         return;
     }
 
-    openUrl(url);
+    QDesktopServices::openUrl(url);
 }
 
 void NoteEditorPrivate::handleInAppLinkClicked(const QString & urlString)

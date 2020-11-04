@@ -22,7 +22,6 @@
 #include <quentier/types/Notebook.h>
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 

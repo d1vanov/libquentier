@@ -27,9 +27,9 @@
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/FileCopier.h>
+#include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/StringUtils.h>
-#include <quentier/utility/Utility.h>
 
 #include <QDir>
 #include <QFile>

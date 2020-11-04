@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,35 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Printable.h>
+#include <quentier/utility/Checks.h>
+
+#include <qt5qevercloud/generated/Constants.h>
+
+#include <limits>
 
 namespace quentier {
 
-const QString Printable::toString() const
+bool checkGuid(const QString & guid)
 {
-    QString str;
-    QTextStream strm(&str, QIODevice::WriteOnly);
-    strm << *this;
-    return str;
+    qint32 guidSize = static_cast<qint32>(guid.size());
+
+    if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
+        return false;
+    }
+
+    if (guidSize > qevercloud::EDAM_GUID_LEN_MAX) {
+        return false;
+    }
+
+    return true;
 }
 
-Printable::Printable() = default;
-
-Printable::Printable(const Printable &) = default;
-
-Printable & Printable::operator=(const Printable &) = default;
-
-Printable::~Printable() = default;
-
-QDebug & operator<<(QDebug & debug, const Printable & printable)
+bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
 {
-    debug << printable.toString();
-    return debug;
-}
-
-QTextStream & operator<<(QTextStream & strm, const Printable & printable)
-{
-    return printable.print(strm);
+    return !(
+        (updateSequenceNumber < 0) ||
+        (updateSequenceNumber == std::numeric_limits<int32_t>::min()) ||
+        (updateSequenceNumber == std::numeric_limits<int32_t>::max()));
 }
 
 } // namespace quentier

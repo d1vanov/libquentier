@@ -21,7 +21,7 @@
 #include "SyncStateStorage.h"
 
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/DateTime.h>
 
 namespace quentier {
 
