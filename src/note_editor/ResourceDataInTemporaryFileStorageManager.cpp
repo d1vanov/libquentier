@@ -24,8 +24,9 @@
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Size.h>
 
 #include <QCryptographicHash>
 #include <QDesktopServices>

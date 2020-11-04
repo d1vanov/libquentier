@@ -30,7 +30,6 @@
 #include <quentier/types/Tag.h>
 #include <quentier/types/User.h>
 #include <quentier/utility/UidGenerator.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCryptographicHash>
 #include <QtTest/QtTest>

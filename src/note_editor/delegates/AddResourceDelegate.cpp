@@ -27,7 +27,7 @@
 #include <quentier/types/Account.h>
 #include <quentier/types/Resource.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Size.h>
 
 #include <QBuffer>
 #include <QCryptographicHash>

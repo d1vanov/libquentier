@@ -28,7 +28,6 @@
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/MessageBox.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCryptographicHash>
 #include <QDesktopServices>

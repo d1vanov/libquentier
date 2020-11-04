@@ -19,8 +19,8 @@
 #include "NotebookData.h"
 
 #include <quentier/types/Notebook.h>
+#include <quentier/utility/Checks.h>
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 

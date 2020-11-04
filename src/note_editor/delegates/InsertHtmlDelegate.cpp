@@ -28,7 +28,7 @@
 #include <quentier/types/Note.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Compat.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Size.h>
 
 #include <QBuffer>
 #include <QCryptographicHash>

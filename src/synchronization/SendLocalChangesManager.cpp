@@ -23,7 +23,6 @@
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
-#include <quentier/utility/Utility.h>
 
 #include <QTimerEvent>
 

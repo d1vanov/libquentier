@@ -54,21 +54,7 @@ void QUENTIER_EXPORT initializeLibquentier();
  * @param guid      The guid to be checked for validity
  * @return          True if the passed in guid is valid, false otherwise
  */
-template <class T>
-bool checkGuid(const T & guid)
-{
-    qint32 guidSize = static_cast<qint32>(guid.size());
-
-    if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
-        return false;
-    }
-
-    if (guidSize > qevercloud::EDAM_GUID_LEN_MAX) {
-        return false;
-    }
-
-    return true;
-}
+bool QUENTIER_EXPORT checkGuid(const QString & guid);
 
 /**
  * checkUpdateSequenceNumber checks the passed in update sequence number
@@ -140,14 +126,6 @@ const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
     const char * customFormat = nullptr);
 
 /**
- * applicationStyle provides the current style of the application
- *
- * @return      The pointer to the current style of the application or null
- *              pointer if the application doesn't have the style
- */
-QUENTIER_EXPORT QStyle * applicationStyle();
-
-/**
  * humanReadableSize provides the human readable string denoting the size
  * of some piece of data
  *
@@ -157,14 +135,6 @@ QUENTIER_EXPORT QStyle * applicationStyle();
  *                  number of bytes
  */
 const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);
-
-/**
- * getExistingFolderDialog shows the file dialog with properly specified window
- * modality
- */
-const QString QUENTIER_EXPORT getExistingFolderDialog(
-    QWidget * parent, const QString & title, const QString & initialFolder,
-    QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 
 /**
  * relativePathFromAbsolutePath converts the absolute path to a relative one
@@ -186,12 +156,12 @@ const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
 /**
  * @return              The system user name of the currently logged in user
  */
-const QString QUENTIER_EXPORT getCurrentUserName();
+QString QUENTIER_EXPORT getCurrentUserName();
 
 /**
  * @return              The full name of the currently logged in user
  */
-const QString QUENTIER_EXPORT getCurrentUserFullName();
+QString QUENTIER_EXPORT getCurrentUserFullName();
 
 /**
  * openUrl sends the request to open a url

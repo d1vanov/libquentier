@@ -20,7 +20,6 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/DateTime.h>
-#include <quentier/utility/Utility.h>
 
 #include <QDir>
 #include <QFile>

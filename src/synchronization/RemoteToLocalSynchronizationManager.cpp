@@ -33,7 +33,6 @@
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCoreApplication>
 #include <QDir>

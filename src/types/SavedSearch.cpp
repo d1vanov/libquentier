@@ -19,7 +19,6 @@
 #include "data/SavedSearchData.h"
 
 #include <quentier/types/SavedSearch.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 

@@ -21,7 +21,7 @@
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Size.h>
 
 #include <QCryptographicHash>
 #include <QMimeDatabase>
@@ -169,8 +169,7 @@ void InsertHtmlUndoCommand::redoImpl()
         if (Q_UNLIKELY(!pResource->hasMime())) {
             QNDEBUG(
                 "note_editor:undo",
-                "One of added resources has no mime "
-                    << "type: " << *pResource);
+                "One of added resources has no mime type: " << *pResource);
 
             if (!pResource->hasDataBody()) {
                 QNDEBUG(

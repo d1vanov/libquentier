@@ -23,8 +23,8 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/DateTime.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 

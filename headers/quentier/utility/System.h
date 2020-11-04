@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,31 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Printable.h>
+#ifndef LIB_QUENTIER_UTILITY_SYSTEM_H
+#define LIB_QUENTIER_UTILITY_SYSTEM_H
+
+#include <quentier/utility/Linkage.h>
+
+#include <QString>
+#include <QUrl>
 
 namespace quentier {
 
-const QString Printable::toString() const
-{
-    QString str;
-    QTextStream strm(&str, QIODevice::WriteOnly);
-    strm << *this;
-    return str;
-}
+/**
+ * @return              The system user name of the currently logged in user
+ */
+QString QUENTIER_EXPORT getCurrentUserName();
 
-Printable::Printable() = default;
+/**
+ * @return              The full name of the currently logged in user
+ */
+QString QUENTIER_EXPORT getCurrentUserFullName();
 
-Printable::Printable(const Printable &) = default;
-
-Printable & Printable::operator=(const Printable &) = default;
-
-Printable::~Printable() = default;
-
-QDebug & operator<<(QDebug & debug, const Printable & printable)
-{
-    debug << printable.toString();
-    return debug;
-}
-
-QTextStream & operator<<(QTextStream & strm, const Printable & printable)
-{
-    return printable.print(strm);
-}
+/**
+ * openUrl sends the request to open a url
+ */
+void QUENTIER_EXPORT openUrl(const QUrl & url);
 
 } // namespace quentier
+
+#endif // LIB_QUENTIER_UTILITY_SYSTEM_H

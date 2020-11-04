@@ -18,7 +18,7 @@
 
 #include "LinkedNotebookData.h"
 
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
 
 namespace quentier {
 

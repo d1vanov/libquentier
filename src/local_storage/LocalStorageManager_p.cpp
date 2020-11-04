@@ -29,12 +29,13 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/utility/Checks.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SysInfo.h>
 #include <quentier/utility/UidGenerator.h>
-#include <quentier/utility/Utility.h>
 
 #include <QBuffer>
 #include <QDir>

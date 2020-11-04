@@ -19,7 +19,6 @@
 #include "data/SharedNotebookData.h"
 
 #include <quentier/types/SharedNotebook.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 

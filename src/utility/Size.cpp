@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,35 +16,32 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Printable.h>
+#include <quentier/utility/Size.h>
+
+#include <QStringList>
 
 namespace quentier {
 
-const QString Printable::toString() const
+const QString humanReadableSize(const quint64 bytes)
 {
-    QString str;
-    QTextStream strm(&str, QIODevice::WriteOnly);
-    strm << *this;
-    return str;
-}
+    QStringList list;
+    list << QStringLiteral("Kb") << QStringLiteral("Mb") << QStringLiteral("Gb")
+         << QStringLiteral("Tb");
 
-Printable::Printable() = default;
+    QStringListIterator it(list);
+    QString unit = QStringLiteral("bytes");
 
-Printable::Printable(const Printable &) = default;
+    double num = static_cast<double>(bytes);
+    while (num >= 1024.0 && it.hasNext()) {
+        unit = it.next();
+        num /= 1024.0;
+    }
 
-Printable & Printable::operator=(const Printable &) = default;
+    QString result = QString::number(num, 'f', 2);
+    result += QStringLiteral(" ");
+    result += unit;
 
-Printable::~Printable() = default;
-
-QDebug & operator<<(QDebug & debug, const Printable & printable)
-{
-    debug << printable.toString();
-    return debug;
-}
-
-QTextStream & operator<<(QTextStream & strm, const Printable & printable)
-{
-    return printable.print(strm);
+    return result;
 }
 
 } // namespace quentier
