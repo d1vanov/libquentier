@@ -30,7 +30,7 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-QString defaultApplicationStoragePath()
+QString defaultApplicationStoragePath(const QString & settingsName)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
@@ -43,12 +43,17 @@ QString defaultApplicationStoragePath()
 
     storagePath += QStringLiteral("/settings/");
 
-    QString appName = QApplication::applicationName();
-    if (!appName.isEmpty()) {
-        storagePath += appName;
+    if (!settingsName.isEmpty()) {
+        storagePath += settingsName;
     }
     else {
-        storagePath += QStringLiteral("config");
+        QString appName = QApplication::applicationName();
+        if (!appName.isEmpty()) {
+            storagePath += appName;
+        }
+        else {
+            storagePath += QStringLiteral("config");
+        }
     }
 
     storagePath += QStringLiteral(".ini");
@@ -100,8 +105,8 @@ QString accountApplicationStoragePath(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ApplicationSettings::ApplicationSettings() :
-    QSettings(defaultApplicationStoragePath(), QSettings::IniFormat)
+ApplicationSettings::ApplicationSettings(const QString & settingsName) :
+    QSettings(defaultApplicationStoragePath(settingsName), QSettings::IniFormat)
 {}
 
 ApplicationSettings::ApplicationSettings(
