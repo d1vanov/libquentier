@@ -39,8 +39,8 @@ void JavaScriptInOrderExecutor::append(
 
     QNTRACE(
         "note_editor",
-        "JavaScriptInOrderExecutor: appended new script, "
-            << "there are " << m_javaScriptsQueue.size() << " to execute now");
+        "JavaScriptInOrderExecutor: appended new script, there are "
+            << m_javaScriptsQueue.size() << " to execute now");
 }
 
 void JavaScriptInOrderExecutor::start()
@@ -66,9 +66,9 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
 {
     QNTRACE("note_editor", "JavaScriptInOrderExecutor::next");
 
-    if (!m_currentPendingCallback.empty()) {
+    if (m_currentPendingCallback) {
         m_currentPendingCallback(data);
-        m_currentPendingCallback = 0;
+        m_currentPendingCallback = {};
     }
 
     if (m_javaScriptsQueue.empty()) {
@@ -88,7 +88,9 @@ void JavaScriptInOrderExecutor::next(const QVariant & data)
 void JavaScriptInOrderExecutor::JavaScriptCallback::operator()(
     const QVariant & result)
 {
-    m_executor.next(result);
+    if (!m_executor.isNull()) {
+        m_executor->next(result);
+    }
 }
 
 } // namespace quentier

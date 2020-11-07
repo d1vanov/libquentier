@@ -19,9 +19,8 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 
-#include <quentier/utility/SuppressWarnings.h>
-
 #include <QObject>
+#include <QPointer>
 #include <QQueue>
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -30,16 +29,7 @@
 #include <QWebView>
 #endif
 
-SAVE_WARNINGS
-
-// clang-format off
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-// clang-format on
-
-#include <boost/function.hpp>
-
-RESTORE_WARNINGS
-
+#include <functional>
 #include <utility>
 
 namespace quentier {
@@ -56,7 +46,7 @@ private:
 #endif
 
 public:
-    using Callback = boost::function<void(const QVariant &)>;
+    using Callback = std::function<void(const QVariant &)>;
 
     explicit JavaScriptInOrderExecutor(
         WebView & view, QObject * parent = nullptr);
@@ -93,13 +83,13 @@ private:
     {
     public:
         JavaScriptCallback(JavaScriptInOrderExecutor & executor) :
-            m_executor(executor)
+            m_executor(&executor)
         {}
 
         void operator()(const QVariant & result);
 
     private:
-        JavaScriptInOrderExecutor & m_executor;
+        QPointer<JavaScriptInOrderExecutor> m_executor;
     };
 
     friend class JavaScriptCallback;
@@ -109,7 +99,7 @@ private:
 private:
     WebView & m_view;
     QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
-    Callback m_currentPendingCallback = 0;
+    Callback m_currentPendingCallback;
     bool m_inProgress = false;
 };
 
