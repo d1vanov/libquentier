@@ -229,7 +229,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/utility/keychain/QtKeychainService.h
-    src/utility/keychain/ObfuscatingStorage.h
+    src/utility/keychain/ObfuscatingKeychainService.h
     src/utility/keychain/QtKeychainWrapper.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
@@ -421,7 +421,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/LoggerInitializationException.cpp
     src/utility/keychain/IKeychainService.cpp
     src/utility/keychain/QtKeychainService.cpp
-    src/utility/keychain/ObfuscatingStorage.cpp
+    src/utility/keychain/ObfuscatingKeychainService.cpp
     src/utility/keychain/QtKeychainWrapper.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp

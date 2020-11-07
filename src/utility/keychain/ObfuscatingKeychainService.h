@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_OBFUSCATED_STORAGE_KEYCHAIN_H
-#define LIB_QUENTIER_UTILITY_OBFUSCATED_STORAGE_KEYCHAIN_H
+#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H
+#define LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H
 
 #include <quentier/utility/EncryptionManager.h>
 #include <quentier/utility/IKeychainService.h>
@@ -25,18 +25,18 @@
 namespace quentier {
 
 /**
- * @brief The ObfuscatingStorage class implements IKeychainService interface; it
- * stores the data passed to it in ApplicationSettings in obfuscated form. It is
- * not really a secure storage and should not be used for data which *must* be
- * stored securely.
+ * @brief The ObfuscatingKeychainService class implements IKeychainService
+ * interface; it stores the data passed to it in ApplicationSettings in
+ * obfuscated form. It is not really a secure storage and should not be used for
+ * data which *must* be stored securely.
  */
-class Q_DECL_HIDDEN ObfuscatingStorage final : public IKeychainService
+class Q_DECL_HIDDEN ObfuscatingKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:
-    explicit ObfuscatingStorage(QObject * parent = nullptr);
+    explicit ObfuscatingKeychainService(QObject * parent = nullptr);
 
-    virtual ~ObfuscatingStorage() override;
+    virtual ~ObfuscatingKeychainService() override;
 
     virtual QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -54,4 +54,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_UTILITY_OBFUSCATED_STORAGE_KEYCHAIN_H
+#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_OBFUSCATED_KEYCHAIN_SERVICE_H

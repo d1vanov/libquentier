@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ObfuscatingStorage.h"
+#include "ObfuscatingKeychainService.h"
 
 #include <quentier/utility/ApplicationSettings.h>
 
@@ -40,13 +40,13 @@ constexpr const char * settingsFileName = "obfuscatedDataStorage";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ObfuscatingStorage::ObfuscatingStorage(QObject * parent) :
+ObfuscatingKeychainService::ObfuscatingKeychainService(QObject * parent) :
     IKeychainService(parent)
 {}
 
-ObfuscatingStorage::~ObfuscatingStorage() {}
+ObfuscatingKeychainService::~ObfuscatingKeychainService() {}
 
-QUuid ObfuscatingStorage::startWritePasswordJob(
+QUuid ObfuscatingKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
 {
     QUuid requestId = QUuid::createUuid();
@@ -90,7 +90,7 @@ QUuid ObfuscatingStorage::startWritePasswordJob(
     return requestId;
 }
 
-QUuid ObfuscatingStorage::startReadPasswordJob(
+QUuid ObfuscatingKeychainService::startReadPasswordJob(
     const QString & service, const QString & key)
 {
     QUuid requestId = QUuid::createUuid();
@@ -147,7 +147,7 @@ QUuid ObfuscatingStorage::startReadPasswordJob(
     return requestId;
 }
 
-QUuid ObfuscatingStorage::startDeletePasswordJob(
+QUuid ObfuscatingKeychainService::startDeletePasswordJob(
     const QString & service, const QString & key)
 {
     QUuid requestId = QUuid::createUuid();
