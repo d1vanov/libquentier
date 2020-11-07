@@ -18,7 +18,7 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-#include "KeychainService.h"
+#include "QtKeychainService.h"
 
 #include <quentier/utility/Printable.h>
 
@@ -73,9 +73,9 @@ QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
     return dbg;
 }
 
-IKeychainServicePtr newKeychainService(QObject * parent)
+IKeychainServicePtr newQtKeychainService(QObject * parent)
 {
-    return std::make_shared<KeychainService>(parent);
+    return std::make_shared<QtKeychainService>(parent);
 }
 
 } // namespace quentier

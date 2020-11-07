@@ -188,7 +188,7 @@ private:
 };
 
 QUENTIER_EXPORT IKeychainServicePtr
-newKeychainService(QObject * parent = nullptr);
+newQtKeychainService(QObject * parent = nullptr);
 
 } // namespace quentier
 
