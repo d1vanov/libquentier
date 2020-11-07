@@ -47,6 +47,16 @@ public:
     virtual ~IKeychainService() {}
 
     /**
+     * Type of the keychain
+     */
+    enum class Type
+    {
+        QtKeychain,
+        ObfuscatingKeychain,
+        CompositeKeychain
+    };
+
+    /**
      * Error codes for results of operations with the keychain service
      */
     enum class ErrorCode
@@ -189,6 +199,9 @@ private:
 
 QUENTIER_EXPORT IKeychainServicePtr
 newQtKeychainService(QObject * parent = nullptr);
+
+QUENTIER_EXPORT IKeychainServicePtr
+newObfuscatingKeychainService(QObject * parent = nullptr);
 
 } // namespace quentier
 
