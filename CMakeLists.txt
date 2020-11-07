@@ -228,14 +228,14 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
+    src/utility/keychain/KeychainService.h
+    src/utility/keychain/QtKeychainWrapper.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
     src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
-    src/utility/KeychainService.h
-    src/utility/QtKeychainWrapper.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h
@@ -418,6 +418,9 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/utility/keychain/IKeychainService.cpp
+    src/utility/keychain/KeychainService.cpp
+    src/utility/keychain/QtKeychainWrapper.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
@@ -435,9 +438,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileSystem.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
-    src/utility/IKeychainService.cpp
-    src/utility/KeychainService.cpp
-    src/utility/QtKeychainWrapper.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp

@@ -23,7 +23,7 @@
 #include "SynchronizationShared.h"
 #include "UserStore.h"
 
-#include "../utility/KeychainService.h"
+#include "../utility/keychain/KeychainService.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
