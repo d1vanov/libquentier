@@ -22,6 +22,7 @@
 #include <quentier/utility/IKeychainService.h>
 
 #include <QHash>
+#include <QSet>
 
 #include <boost/bimap.hpp>
 
@@ -34,7 +35,16 @@ namespace quentier {
 class Q_DECL_HIDDEN CompositeKeychainService final : public IKeychainService
 {
 public:
+    /**
+     * CompositeKeychainService constructor
+     * @param name                  Name of the composite keychain, required to
+     *                              distinguish one composite keychain from
+     *                              the other
+     * @param primaryKeychain       Primary keychain
+     * @param secondaryKeychain     Secondary keychain
+     */
     explicit CompositeKeychainService(
+        QString name,
         IKeychainServicePtr primaryKeychain,
         IKeychainServicePtr secondaryKeychain);
 
@@ -45,13 +55,11 @@ public:
      * results are handled as follows:
      * 1. If both jobs succeed, the status is reported to the user
      * 2. If writing fails for the primary keychain but succeeds for the
-     *    secondary one, an attempt is made to delete the password from the
-     *    primary keychain and service + key pair is stored in a dedicated
-     *    ApplicationSettings as the one available for which the password is
+     *    secondary one, service + key pair is stored in a dedicated
+     *    ApplicationSettings as the one for which the password is
      *    available only in the secondary keychain.
      * 3. If writing succeeds for the primary keychain but fails for the
-     *    secondary one, success status is returned to the user but an attempt
-     *    is made to delete the password from the secondary keychain and service
+     *    secondary one, success status is returned to the user but service
      *    + key pair is stored in a dedicated ApplicationSettings as the one
      *    for which the password is available only in the primary keychain.
      * 4. If both keychains fail, the failure is propagated to the user.
@@ -86,6 +94,17 @@ public:
     virtual QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
+    /**
+     * Checks whether primary keychain appears to be operational: if there are
+     * 100 or more entries corresponding to failed writes to the primary
+     * keychain, it is considered non-operational, otherwise it is considered
+     * operational
+     *
+     * @return true if the primary keychain is considered operational, false
+     *         otherwise
+     */
+    bool isPrimaryKeychainOperational() const;
+
 private Q_SLOTS:
     void onPrimaryKeychainWritePasswordJobFinished(
         QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
@@ -108,6 +127,8 @@ private Q_SLOTS:
         QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
 
 private:
+    void createConnections();
+
     void markServiceKeyPairAsUnavailableInPrimaryKeychain(
         const QString & service, const QString & key);
 
@@ -140,18 +161,26 @@ private:
         ErrorString m_errorDescription;
     };
 
+    using IdBimap = boost::bimap<QUuid, QUuid>;
+
 private:
-    IKeychainServicePtr m_primaryKeychain;
-    IKeychainServicePtr m_secondaryKeychain;
+    const QString m_name;
+    const IKeychainServicePtr m_primaryKeychain;
+    const IKeychainServicePtr m_secondaryKeychain;
 
     QHash<QUuid, WritePasswordJobStatus> m_completedWritePasswordJobs;
     QHash<QUuid, ReadPasswordJobStatus> m_completedReadPasswordJobs;
     QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;
 
+    QHash<QUuid, std::pair<QString, QString>> m_serviceAndKeyByRequestId;
+
+    QSet<QUuid> m_primaryKeychainReadPasswordJobIds;
+    QSet<QUuid> m_secondaryKeychainReadPasswordJobIds;
+
     // Mapping job ids: primary <=> secondary keychains
-    boost::bimap<QUuid, QUuid> m_writePasswordJobIds;
-    boost::bimap<QUuid, QUuid> m_readPasswordJobIds;
-    boost::bimap<QUuid, QUuid> m_deletePasswordJobIds;
+    IdBimap m_writePasswordJobIds;
+    IdBimap m_readPasswordJobIds;
+    IdBimap m_deletePasswordJobIds;
 };
 
 } // namespace quentier
