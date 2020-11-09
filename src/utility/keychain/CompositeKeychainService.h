@@ -44,8 +44,7 @@ public:
      * @param secondaryKeychain     Secondary keychain
      */
     explicit CompositeKeychainService(
-        QString name,
-        IKeychainServicePtr primaryKeychain,
+        QString name, IKeychainServicePtr primaryKeychain,
         IKeychainServicePtr secondaryKeychain);
 
     virtual ~CompositeKeychainService() override;
@@ -72,24 +71,40 @@ public:
         const QString & password) override;
 
     /**
-     * Reading password jobs go to the primary keychain first unless service +
-     * key pair has been recorded as the one for which the password is available
-     * only in the secondary keychain. If reading from the primary keychain
-     * fails, an attempt is made to read from the secondary keychain. The first
-     * successful status (if any) is propagated to the user.
+     * Reading password jobs go as follows:
+     * 1. If service and key pair is not marked as the one for which the
+     *    password is not available in the primary keychain, the read request
+     *    goes to the primary keychain first.
+     * 2. If reading from the primary keychain fails or if it is skipped
+     *    altogether due to the reasons from p. 1, an attempt is made to read
+     *    the password from the secondary keychain unless service and key pair
+     *    is marked as the one for which the password is not available in the
+     *    secondary keychain.
+     * 3. If the password is not available in either keychain, reading fails.
+     *    Otherwise the first successful result (if any) is propagated back to
+     *    the user.
      *
      * Id of the first attempted read password job is returned from the method.
+     * If no real read password jobs are issued (because service and key pair
+     * is marked for both keychains), the synthetic id is returned.
      */
     virtual QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
     /**
      * Delete password jobs attempt to delete passwords from both primary and
-     * secondary keychains and error is propagated to the user if deletion fails
-     * for either of them.
+     * secondary keychains unless service and key pair is marked as unavailable
+     * in either of these keychains. The mark is stored persistently in a
+     * dedicated ApplicationSettings object. If deletion fails for either
+     * keychain, service and key pair is marked as the one for which the
+     * password is not available in the corresponding keychain.
      *
-     * If of delete password job for the primary keychain is returned from the
-     * method.
+     * If service and key pair is not marked as the one for which the password
+     * is not available in the primary keychain, id of delete password job from
+     * the primary keychain is returned from the method. Otherwise id of delete
+     * password job from the secondary keychain is returned unless service and
+     * key pair is marked as unavailable in the secondary keychain too. In which
+     * case the synthetic id is returned.
      */
     virtual QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
@@ -141,16 +156,14 @@ private:
     bool isServiceKeyPairAvailableInSecondaryKeychain(
         const QString & service, const QString & key) const;
 
+    std::pair<QString, QString> serviceAndKeyForRequestId(
+        const QUuid & requestId) const;
+
+    void cleanupServiceAndKeyForRequestId(const QUuid & requestId);
+
 private:
     struct WritePasswordJobStatus
     {
-        ErrorCode m_errorCode = ErrorCode::NoError;
-        ErrorString m_errorDescription;
-    };
-
-    struct ReadPasswordJobStatus
-    {
-        QString m_password;
         ErrorCode m_errorCode = ErrorCode::NoError;
         ErrorString m_errorDescription;
     };
@@ -169,13 +182,15 @@ private:
     const IKeychainServicePtr m_secondaryKeychain;
 
     QHash<QUuid, WritePasswordJobStatus> m_completedWritePasswordJobs;
-    QHash<QUuid, ReadPasswordJobStatus> m_completedReadPasswordJobs;
     QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;
 
     QHash<QUuid, std::pair<QString, QString>> m_serviceAndKeyByRequestId;
 
     QSet<QUuid> m_primaryKeychainReadPasswordJobIds;
     QSet<QUuid> m_secondaryKeychainReadPasswordJobIds;
+
+    QSet<QUuid> m_primaryKeychainSingleDeletePasswordJobIds;
+    QSet<QUuid> m_secondaryKeychainSingleDeletePasswordJobIds;
 
     // Mapping job ids: primary <=> secondary keychains
     IdBimap m_writePasswordJobIds;
