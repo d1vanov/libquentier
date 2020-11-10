@@ -34,6 +34,7 @@ namespace quentier {
  */
 class Q_DECL_HIDDEN CompositeKeychainService final : public IKeychainService
 {
+    Q_OBJECT
 public:
     /**
      * CompositeKeychainService constructor
@@ -45,7 +46,8 @@ public:
      */
     explicit CompositeKeychainService(
         QString name, IKeychainServicePtr primaryKeychain,
-        IKeychainServicePtr secondaryKeychain);
+        IKeychainServicePtr secondaryKeychain,
+        QObject * parent = nullptr);
 
     virtual ~CompositeKeychainService() override;
 
@@ -156,10 +158,23 @@ private:
     bool isServiceKeyPairAvailableInSecondaryKeychain(
         const QString & service, const QString & key) const;
 
+    void markServiceKeyPairAsUnavailableImpl(
+        const char * groupName, const QString & service, const QString & key);
+
     std::pair<QString, QString> serviceAndKeyForRequestId(
         const QUuid & requestId) const;
 
     void cleanupServiceAndKeyForRequestId(const QUuid & requestId);
+
+    void checkAndInitializeServiceKeysCaches() const;
+
+    using ServiceKeyPairsCache = QHash<QString, QSet<QString>>;
+
+    ServiceKeyPairsCache readServiceKeyPairsUnavailableInPrimaryKeychain() const;
+    ServiceKeyPairsCache readServiceKeyPairsUnavailableInSecondaryKeychain() const;
+
+    ServiceKeyPairsCache readServiceKeyPairsUnavailableInKeychainImpl(
+        const char * groupName) const;
 
 private:
     struct WritePasswordJobStatus
@@ -180,6 +195,10 @@ private:
     const QString m_name;
     const IKeychainServicePtr m_primaryKeychain;
     const IKeychainServicePtr m_secondaryKeychain;
+
+    mutable ServiceKeyPairsCache m_serviceKeysUnavailableInPrimaryKeychain;
+    mutable ServiceKeyPairsCache m_serviceKeysUnavailableInSecondaryKeychain;
+    mutable bool m_serviceKeysCachesInitialized = false;
 
     QHash<QUuid, WritePasswordJobStatus> m_completedWritePasswordJobs;
     QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;

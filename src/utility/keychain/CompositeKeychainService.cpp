@@ -41,6 +41,9 @@ namespace keys {
 constexpr const char * unavailablePrimaryKeychainGroup =
     "UnavailablePrimaryKeychainServiceKeyPairs";
 
+constexpr const char * unavailableSecondaryKeychainGroup =
+    "UnavailableSecondaryKeychainServiceKeyPairs";
+
 constexpr const char * serviceKeyPair = "ServiceKeyPairs";
 constexpr const char * service = "Service";
 constexpr const char * key = "Key";
@@ -49,7 +52,8 @@ constexpr const char * key = "Key";
 
 CompositeKeychainService::CompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain) :
+    IKeychainServicePtr secondaryKeychain, QObject * parent) :
+    IKeychainService(parent),
     m_name{std::move(name)},
     m_primaryKeychain{std::move(primaryKeychain)},
     m_secondaryKeychain{std::move(secondaryKeychain)}
@@ -669,8 +673,60 @@ void CompositeKeychainService::createConnections()
 void CompositeKeychainService::markServiceKeyPairAsUnavailableInPrimaryKeychain(
     const QString & service, const QString & key)
 {
+    if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
+        return;
+    }
+
+    m_serviceKeysUnavailableInPrimaryKeychain[service].insert(key);
+
+    markServiceKeyPairAsUnavailableImpl(
+        keys::unavailablePrimaryKeychainGroup, service, key);
+}
+
+bool CompositeKeychainService::isServiceKeyPairAvailableInPrimaryKeychain(
+    const QString & service, const QString & key) const
+{
+    checkAndInitializeServiceKeysCaches();
+
+    auto serviceIt = m_serviceKeysUnavailableInPrimaryKeychain.find(service);
+    if (serviceIt == m_serviceKeysUnavailableInPrimaryKeychain.end()) {
+        return false;
+    }
+
+    return serviceIt.value().contains(key);
+}
+
+void CompositeKeychainService::markServiceKeyPairAsUnavailableInSecondaryKeychain(
+    const QString & service, const QString & key)
+{
+    if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
+        return;
+    }
+
+    m_serviceKeysUnavailableInSecondaryKeychain[service].insert(key);
+
+    markServiceKeyPairAsUnavailableImpl(
+        keys::unavailableSecondaryKeychainGroup, service, key);
+}
+
+bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
+    const QString & service, const QString & key) const
+{
+    checkAndInitializeServiceKeysCaches();
+
+    auto serviceIt = m_serviceKeysUnavailableInSecondaryKeychain.find(service);
+    if (serviceIt == m_serviceKeysUnavailableInSecondaryKeychain.end()) {
+        return false;
+    }
+
+    return serviceIt.value().contains(key);
+}
+
+void CompositeKeychainService::markServiceKeyPairAsUnavailableImpl(
+    const char * groupName, const QString & service, const QString & key)
+{
     ApplicationSettings settings{m_name};
-    settings.beginGroup(keys::unavailablePrimaryKeychainGroup);
+    settings.beginGroup(groupName);
 
     bool foundItem = false;
     int size = settings.beginReadArray(keys::serviceKeyPair);
@@ -734,6 +790,60 @@ void CompositeKeychainService::cleanupServiceAndKeyForRequestId(
     if (it != m_serviceAndKeyByRequestId.end()) {
         m_serviceAndKeyByRequestId.erase(it);
     }
+}
+
+void CompositeKeychainService::checkAndInitializeServiceKeysCaches() const
+{
+    if (m_serviceKeysCachesInitialized) {
+        return;
+    }
+
+    m_serviceKeysUnavailableInPrimaryKeychain =
+        readServiceKeyPairsUnavailableInPrimaryKeychain();
+
+    m_serviceKeysUnavailableInSecondaryKeychain =
+        readServiceKeyPairsUnavailableInSecondaryKeychain();
+
+    m_serviceKeysCachesInitialized = true;
+}
+
+CompositeKeychainService::ServiceKeyPairsCache
+CompositeKeychainService::readServiceKeyPairsUnavailableInPrimaryKeychain() const
+{
+    return readServiceKeyPairsUnavailableInKeychainImpl(
+        keys::unavailablePrimaryKeychainGroup);
+}
+
+CompositeKeychainService::ServiceKeyPairsCache
+CompositeKeychainService::readServiceKeyPairsUnavailableInSecondaryKeychain() const
+{
+    return readServiceKeyPairsUnavailableInKeychainImpl(
+        keys::unavailableSecondaryKeychainGroup);
+}
+
+CompositeKeychainService::ServiceKeyPairsCache
+CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
+    const char * groupName) const
+{
+    ApplicationSettings settings{m_name};
+    settings.beginGroup(groupName);
+
+    ServiceKeyPairsCache cache;
+    int size = settings.beginReadArray(keys::serviceKeyPair);
+    for (int i = 0; i < size; ++i)
+    {
+        settings.setArrayIndex(i);
+
+        QString service = settings.value(keys::service).toString();
+        QString key = settings.value(keys::service).toString();
+
+        cache[service].insert(key);
+    }
+
+    settings.endArray();
+    settings.endGroup();
+
+    return cache;
 }
 
 } // namespace quentier

@@ -228,6 +228,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
+    src/utility/keychain/CompositeKeychainService.h
     src/utility/keychain/QtKeychainService.h
     src/utility/keychain/ObfuscatingKeychainService.h
     src/utility/keychain/QtKeychainWrapper.h
@@ -419,6 +420,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp
     src/utility/keychain/QtKeychainService.cpp
     src/utility/keychain/ObfuscatingKeychainService.cpp
