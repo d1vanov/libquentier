@@ -34,7 +34,7 @@ constexpr const char * value = "Value";
 
 namespace {
 
-constexpr const char * settingsFileName = "obfuscatedDataStorage";
+constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
 } // namespace
 
@@ -68,19 +68,20 @@ QUuid ObfuscatingKeychainService::startWritePasswordJob(
         return requestId;
     }
 
-    ApplicationSettings obfuscatedStorageSettings{
+    ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
 
-    obfuscatedStorageSettings.beginGroup(service + QStringLiteral("/") + key);
-    obfuscatedStorageSettings.setValue(keys::cipher, cipher);
+    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+    obfuscatedKeychainStorage.setValue(keys::cipher, cipher);
 
-    obfuscatedStorageSettings.setValue(
+    obfuscatedKeychainStorage.setValue(
         keys::keyLength, QVariant::fromValue(keyLength));
 
-    obfuscatedStorageSettings.setValue(
+    obfuscatedKeychainStorage.setValue(
         keys::value, encryptedString.toUtf8().toBase64());
 
-    obfuscatedStorageSettings.endGroup();
+    obfuscatedKeychainStorage.endGroup();
+    obfuscatedKeychainStorage.sync();
 
     QMetaObject::invokeMethod(
         this, "writePasswordJobFinished", Qt::QueuedConnection,
@@ -95,15 +96,15 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
 {
     QUuid requestId = QUuid::createUuid();
 
-    ApplicationSettings obfuscatedStorageSettings{
+    ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
 
-    obfuscatedStorageSettings.beginGroup(service + QStringLiteral("/") + key);
-    QString cipher = obfuscatedStorageSettings.value(keys::cipher).toString();
+    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+    QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
 
     size_t keyLength = 0;
     bool conversionResult = false;
-    keyLength = obfuscatedStorageSettings.value(keys::keyLength)
+    keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
                     .toULongLong(&conversionResult);
     if (!conversionResult) {
         QMetaObject::invokeMethod(
@@ -119,9 +120,9 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
     }
 
     QString encryptedText = QString::fromUtf8(QByteArray::fromBase64(
-        obfuscatedStorageSettings.value(keys::value).toByteArray()));
+        obfuscatedKeychainStorage.value(keys::value).toByteArray()));
 
-    obfuscatedStorageSettings.endGroup();
+    obfuscatedKeychainStorage.endGroup();
 
     QString decryptedText;
     ErrorString errorDescription;
@@ -152,27 +153,29 @@ QUuid ObfuscatingKeychainService::startDeletePasswordJob(
 {
     QUuid requestId = QUuid::createUuid();
 
-    ApplicationSettings obfuscatedStorageSettings{
+    ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
 
-    const QString compositeKey = service + QStringLiteral("/") + key;
+    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
 
-    if (!obfuscatedStorageSettings.contains(compositeKey)) {
+    if (obfuscatedKeychainStorage.allKeys().isEmpty()) {
         QMetaObject::invokeMethod(
-            this, "deletePasswordJobFinished", Q_ARG(QUuid, requestId),
-            Q_ARG(ErrorCode, ErrorCode::EntryNotFound),
+            this, "deletePasswordJobFinished", Qt::QueuedConnection,
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::EntryNotFound),
             Q_ARG(
                 ErrorString,
                 ErrorString(QT_TR_NOOP("could not find entry to delete"))));
 
+        obfuscatedKeychainStorage.endGroup();
         return requestId;
     }
 
-    obfuscatedStorageSettings.remove(compositeKey);
+    obfuscatedKeychainStorage.remove(QStringLiteral(""));
+    obfuscatedKeychainStorage.endGroup();
 
     QMetaObject::invokeMethod(
-        this, "deletePasswordJobFinished", Q_ARG(QUuid, requestId),
-        Q_ARG(ErrorCode, ErrorCode::NoError),
+        this, "deletePasswordJobFinished", Qt::QueuedConnection,
+        Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
         Q_ARG(ErrorString, ErrorString()));
 
     return requestId;
