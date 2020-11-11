@@ -54,8 +54,7 @@ CompositeKeychainService::CompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
     IKeychainServicePtr secondaryKeychain, QObject * parent) :
     IKeychainService(parent),
-    m_name{std::move(name)},
-    m_primaryKeychain{std::move(primaryKeychain)},
+    m_name{std::move(name)}, m_primaryKeychain{std::move(primaryKeychain)},
     m_secondaryKeychain{std::move(secondaryKeychain)}
 {
     if (m_name.isEmpty()) {
@@ -88,6 +87,9 @@ QUuid CompositeKeychainService::startWritePasswordJob(
         primaryKeychainRequestId, secondaryKeychainRequestId));
 
     m_serviceAndKeyByRequestId[primaryKeychainRequestId] =
+        std::make_pair(service, key);
+
+    m_serviceAndKeyByRequestId[secondaryKeychainRequestId] =
         std::make_pair(service, key);
 
     CKDEBUG(
@@ -189,11 +191,15 @@ QUuid CompositeKeychainService::startDeletePasswordJob(
             primaryKeychainRequestId, secondaryKeychainRequestId));
     }
 
-    const auto & requestId =
-        (primaryKeychainRequestId == QUuid() ? secondaryKeychainRequestId
-                                             : primaryKeychainRequestId);
+    if (primaryKeychainRequestId != QUuid()) {
+        m_serviceAndKeyByRequestId[primaryKeychainRequestId] =
+            std::make_pair(service, key);
+    }
 
-    m_serviceAndKeyByRequestId[requestId] = std::make_pair(service, key);
+    if (secondaryKeychainRequestId != QUuid()) {
+        m_serviceAndKeyByRequestId[secondaryKeychainRequestId] =
+            std::make_pair(service, key);
+    }
 
     CKDEBUG(
         "CompositeKeychainService::startDeletePasswordJob: service = "
@@ -201,7 +207,9 @@ QUuid CompositeKeychainService::startDeletePasswordJob(
         << ", primary keychain request id = " << primaryKeychainRequestId
         << ", secondary keychain request id = " << secondaryKeychainRequestId);
 
-    return requestId;
+    return (
+        primaryKeychainRequestId == QUuid() ? secondaryKeychainRequestId
+                                            : primaryKeychainRequestId);
 }
 
 bool CompositeKeychainService::isPrimaryKeychainOperational() const
@@ -298,10 +306,10 @@ void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
         << ", error description: " << errorDescription
         << ", service = " << service << ", key = " << key);
 
-    const auto primaryKeychainJobId = it->second;
+    const auto primaryKeychainRequestId = it->second;
 
     const auto resultIt =
-        m_completedWritePasswordJobs.find(primaryKeychainJobId);
+        m_completedWritePasswordJobs.find(primaryKeychainRequestId);
 
     if (resultIt == m_completedWritePasswordJobs.end()) {
         // The corresponding primary keychain's job hasn't finished yet, will
@@ -350,10 +358,11 @@ void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
 
     CKDEBUG(
         "Propagating best result to the user: error code = "
-        << bestErrorCode << ", error description = " << bestErrorDescription);
+        << bestErrorCode << ", error description = " << bestErrorDescription
+        << ", request id = " << primaryKeychainRequestId);
 
     Q_EMIT writePasswordJobFinished(
-        requestId, bestErrorCode, bestErrorDescription);
+        primaryKeychainRequestId, bestErrorCode, bestErrorDescription);
 }
 
 void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
@@ -690,14 +699,15 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInPrimaryKeychain(
 
     auto serviceIt = m_serviceKeysUnavailableInPrimaryKeychain.find(service);
     if (serviceIt == m_serviceKeysUnavailableInPrimaryKeychain.end()) {
-        return false;
+        return true;
     }
 
-    return serviceIt.value().contains(key);
+    return !serviceIt.value().contains(key);
 }
 
-void CompositeKeychainService::markServiceKeyPairAsUnavailableInSecondaryKeychain(
-    const QString & service, const QString & key)
+void CompositeKeychainService::
+    markServiceKeyPairAsUnavailableInSecondaryKeychain(
+        const QString & service, const QString & key)
 {
     if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         return;
@@ -716,10 +726,10 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
 
     auto serviceIt = m_serviceKeysUnavailableInSecondaryKeychain.find(service);
     if (serviceIt == m_serviceKeysUnavailableInSecondaryKeychain.end()) {
-        return false;
+        return true;
     }
 
-    return serviceIt.value().contains(key);
+    return !serviceIt.value().contains(key);
 }
 
 void CompositeKeychainService::markServiceKeyPairAsUnavailableImpl(
@@ -732,8 +742,7 @@ void CompositeKeychainService::markServiceKeyPairAsUnavailableImpl(
     int size = settings.beginReadArray(keys::serviceKeyPair);
     QVector<std::pair<QString, QString>> serviceAndKeyPairs;
     serviceAndKeyPairs.reserve(size + 1);
-    for (int i = 0; i < size; ++i)
-    {
+    for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
 
         QString serviceItem = settings.value(keys::service).toString();
@@ -808,14 +817,16 @@ void CompositeKeychainService::checkAndInitializeServiceKeysCaches() const
 }
 
 CompositeKeychainService::ServiceKeyPairsCache
-CompositeKeychainService::readServiceKeyPairsUnavailableInPrimaryKeychain() const
+CompositeKeychainService::readServiceKeyPairsUnavailableInPrimaryKeychain()
+    const
 {
     return readServiceKeyPairsUnavailableInKeychainImpl(
         keys::unavailablePrimaryKeychainGroup);
 }
 
 CompositeKeychainService::ServiceKeyPairsCache
-CompositeKeychainService::readServiceKeyPairsUnavailableInSecondaryKeychain() const
+CompositeKeychainService::readServiceKeyPairsUnavailableInSecondaryKeychain()
+    const
 {
     return readServiceKeyPairsUnavailableInKeychainImpl(
         keys::unavailableSecondaryKeychainGroup);
@@ -830,8 +841,7 @@ CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
 
     ServiceKeyPairsCache cache;
     int size = settings.beginReadArray(keys::serviceKeyPair);
-    for (int i = 0; i < size; ++i)
-    {
+    for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
 
         QString service = settings.value(keys::service).toString();

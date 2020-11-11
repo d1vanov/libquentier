@@ -18,6 +18,7 @@
 
 #include <quentier/utility/IKeychainService.h>
 
+#include "CompositeKeychainService.h"
 #include "ObfuscatingKeychainService.h"
 #include "QtKeychainService.h"
 
@@ -82,6 +83,15 @@ IKeychainServicePtr newQtKeychainService(QObject * parent)
 IKeychainServicePtr newObfuscatingKeychainService(QObject * parent)
 {
     return std::make_shared<ObfuscatingKeychainService>(parent);
+}
+
+IKeychainServicePtr newCompositeKeychainService(
+    QString name, IKeychainServicePtr primaryKeychain,
+    IKeychainServicePtr secondaryKeychain, QObject * parent)
+{
+    return std::make_shared<CompositeKeychainService>(
+        std::move(name), std::move(primaryKeychain),
+        std::move(secondaryKeychain), parent);
 }
 
 } // namespace quentier
