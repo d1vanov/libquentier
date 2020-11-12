@@ -31,10 +31,18 @@ public:
     explicit CompositeKeychainTester(QObject * parent = nullptr);
 
 private Q_SLOTS:
-    void checkWritePasswordGoesToBothKeychains();
-    void checkReadPasswordFromPrimaryKeychainSuccessfully();
+    void writePasswordToBothKeychains();
+    void readPasswordFromPrimaryKeychainFirst();
+    void readPasswordFromSecondaryKeychainAsFallback();
+    void readPasswordFromSecondaryKeychainIfWritingToPrimaryFails();
+    void deletePasswordFromBothKeychains();
+    void handleDeleteFromPrimaryKeychainError();
+    void handleDeleteFromSecondaryKeychainError();
+
+    void cleanup();
 
 private:
+    const QString m_name = QStringLiteral("compositeKeychainTest");
     const QString m_service = QStringLiteral("service");
     const QString m_key = QStringLiteral("key");
     const QString m_password = QStringLiteral("password");

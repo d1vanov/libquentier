@@ -149,16 +149,22 @@ private:
     void markServiceKeyPairAsUnavailableInPrimaryKeychain(
         const QString & service, const QString & key);
 
+    void unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(
+        const QString & service, const QString & key);
+
     bool isServiceKeyPairAvailableInPrimaryKeychain(
         const QString & service, const QString & key) const;
 
     void markServiceKeyPairAsUnavailableInSecondaryKeychain(
         const QString & service, const QString & key);
 
+    void unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
+        const QString & service, const QString & key);
+
     bool isServiceKeyPairAvailableInSecondaryKeychain(
         const QString & service, const QString & key) const;
 
-    void markServiceKeyPairAsUnavailableImpl(
+    void persistUnavailableServiceKeyPairs(
         const char * groupName, const QString & service, const QString & key);
 
     std::pair<QString, QString> serviceAndKeyForRequestId(
@@ -206,7 +212,7 @@ private:
     QHash<QUuid, std::pair<QString, QString>> m_serviceAndKeyByRequestId;
 
     QSet<QUuid> m_primaryKeychainReadPasswordJobIds;
-    QSet<QUuid> m_secondaryKeychainReadPasswordJobIds;
+    QHash<QUuid, QUuid> m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds;
 
     QSet<QUuid> m_primaryKeychainSingleDeletePasswordJobIds;
     QSet<QUuid> m_secondaryKeychainSingleDeletePasswordJobIds;

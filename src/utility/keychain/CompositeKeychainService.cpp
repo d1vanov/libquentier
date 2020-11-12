@@ -119,7 +119,10 @@ QUuid CompositeKeychainService::startReadPasswordJob(
     if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         QUuid requestId =
             m_secondaryKeychain->startReadPasswordJob(service, key);
-        m_secondaryKeychainReadPasswordJobIds.insert(requestId);
+
+        m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds
+            [requestId] = QUuid();
+
         m_serviceAndKeyByRequestId[requestId] = std::make_pair(service, key);
         CKDEBUG("Reading from secondary keychain, request id = " << requestId);
         return requestId;
@@ -260,10 +263,16 @@ void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
         // Writing failed for the secondary keychain
         markServiceKeyPairAsUnavailableInSecondaryKeychain(service, key);
     }
+    else {
+        unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(service, key);
+    }
 
     if (errorCode != ErrorCode::NoError) {
         // Writing failed for the primary keychain
         markServiceKeyPairAsUnavailableInPrimaryKeychain(service, key);
+    }
+    else {
+        unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(service, key);
     }
 
     // Clean things up and propagate the best result to the user
@@ -329,10 +338,16 @@ void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
         // Writing failed for the primary keychain
         markServiceKeyPairAsUnavailableInPrimaryKeychain(service, key);
     }
+    else {
+        unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(service, key);
+    }
 
     if (errorCode != ErrorCode::NoError) {
         // Writing failed for the secondary keychain
         markServiceKeyPairAsUnavailableInSecondaryKeychain(service, key);
+    }
+    else {
+        unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(service, key);
     }
 
     // Clean things up and propagate the best result to the user
@@ -407,7 +422,8 @@ void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
         std::make_pair(service, key);
 
     cleanupServiceAndKeyForRequestId(requestId);
-    m_secondaryKeychainReadPasswordJobIds.insert(secondaryKeychainRequestId);
+    m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds
+        [secondaryKeychainRequestId] = requestId;
 
     CKDEBUG(
         "Reading from secondary keychain, request id = "
@@ -418,10 +434,16 @@ void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
     QString password)
 {
-    auto it = m_secondaryKeychainReadPasswordJobIds.find(requestId);
-    if (it == m_secondaryKeychainReadPasswordJobIds.end()) {
+    auto it = m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.find(
+        requestId);
+
+    // clang-format off
+    if (it ==
+        m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.end())
+    {
         return;
     }
+    // clang-format on
 
     const auto serviceKeyPair = serviceAndKeyForRequestId(requestId);
     const QString & service = serviceKeyPair.first;
@@ -433,10 +455,16 @@ void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
         << ", error description = " << errorDescription
         << ", service = " << service << ", key = " << key);
 
+    const auto primaryKeychainRequestId = it.value();
+
     // Reading from the secondary keychain is a fallback, so doing the cleanup
     // and propagating whatever result we have received to the user
-    m_secondaryKeychainReadPasswordJobIds.erase(it);
+    m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.erase(it);
     cleanupServiceAndKeyForRequestId(requestId);
+
+    if (primaryKeychainRequestId != QUuid()) {
+        requestId = primaryKeychainRequestId;
+    }
 
     Q_EMIT readPasswordJobFinished(
         requestId, errorCode, errorDescription, password);
@@ -682,13 +710,27 @@ void CompositeKeychainService::createConnections()
 void CompositeKeychainService::markServiceKeyPairAsUnavailableInPrimaryKeychain(
     const QString & service, const QString & key)
 {
-    if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
+    if (!isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
         return;
     }
 
     m_serviceKeysUnavailableInPrimaryKeychain[service].insert(key);
 
-    markServiceKeyPairAsUnavailableImpl(
+    persistUnavailableServiceKeyPairs(
+        keys::unavailablePrimaryKeychainGroup, service, key);
+}
+
+void CompositeKeychainService::
+    unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(
+        const QString & service, const QString & key)
+{
+    if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
+        return;
+    }
+
+    m_serviceKeysUnavailableInPrimaryKeychain[service].remove(key);
+
+    persistUnavailableServiceKeyPairs(
         keys::unavailablePrimaryKeychainGroup, service, key);
 }
 
@@ -709,13 +751,26 @@ void CompositeKeychainService::
     markServiceKeyPairAsUnavailableInSecondaryKeychain(
         const QString & service, const QString & key)
 {
-    if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
+    if (!isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         return;
     }
 
     m_serviceKeysUnavailableInSecondaryKeychain[service].insert(key);
 
-    markServiceKeyPairAsUnavailableImpl(
+    persistUnavailableServiceKeyPairs(
+        keys::unavailableSecondaryKeychainGroup, service, key);
+}
+
+void CompositeKeychainService::unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
+    const QString & service, const QString & key)
+{
+    if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
+        return;
+    }
+
+    m_serviceKeysUnavailableInSecondaryKeychain[service].remove(key);
+
+    persistUnavailableServiceKeyPairs(
         keys::unavailableSecondaryKeychainGroup, service, key);
 }
 
@@ -732,7 +787,7 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
     return !serviceIt.value().contains(key);
 }
 
-void CompositeKeychainService::markServiceKeyPairAsUnavailableImpl(
+void CompositeKeychainService::persistUnavailableServiceKeyPairs(
     const char * groupName, const QString & service, const QString & key)
 {
     ApplicationSettings settings{m_name};
