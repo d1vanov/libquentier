@@ -68,7 +68,7 @@ public:
      * @param pKeychainService          Pointer to an object implementing
      *                                  IKeychainService interface; if nullptr,
      *                                  SynchronizationManager would create and
-     *                                  use its own instance; otherwise
+     *                                  use its own default instance; otherwise
      *                                  SynchronizationManager would set itself
      *                                  as the parent of the passed in object
      * @param pSyncStateStorage         Pointer to an object implementing

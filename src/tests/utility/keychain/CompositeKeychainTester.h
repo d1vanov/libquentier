@@ -35,9 +35,11 @@ private Q_SLOTS:
     void readPasswordFromPrimaryKeychainFirst();
     void readPasswordFromSecondaryKeychainAsFallback();
     void readPasswordFromSecondaryKeychainIfWritingToPrimaryFails();
+    void dontReadFromEitherKeychainIfWritingToBothKeychainsFails();
     void deletePasswordFromBothKeychains();
     void handleDeleteFromPrimaryKeychainError();
     void handleDeleteFromSecondaryKeychainError();
+    void handleDeleteFromBothKeychainsErrors();
 
     void cleanup();
 
