@@ -96,17 +96,30 @@ private Q_SLOTS:
 private:
     void createConnections();
 
+    using RequestIdToServiceAndKey = QHash<QUuid, std::pair<QString, QString>>;
+
+    struct ReadPasswordJobData
+    {
+        QUuid m_sinkKeychainReadRequestId;
+        QString m_service;
+        QString m_key;
+        QString m_password;
+    };
+
 private:
     const IKeychainServicePtr m_sourceKeychain;
     const IKeychainServicePtr m_sinkKeychain;
 
     QSet<QUuid> m_sinkKeychainWriteRequestIds;
 
-    QHash<QUuid, std::pair<QString, QString>> m_sinkKeychainReadRequestIdsToServiceAndKey;
-    QHash<QUuid, QUuid> m_sourceToSinkKeychainReadRequestIds;
+    RequestIdToServiceAndKey m_sinkKeychainReadRequestIdsToServiceAndKey;
+    QHash<QUuid, ReadPasswordJobData> m_sourceKeychainReadRequestData;
 
-    QHash<QUuid, std::pair<QString, QString>> m_sinkKeychainDeleteRequestIdsToServiceAndKey;
+    RequestIdToServiceAndKey m_sinkKeychainDeleteRequestIdsToServiceAndKey;
     QHash<QUuid, QUuid> m_sourceToSinkKeychainDeleteRequestIds;
+
+    RequestIdToServiceAndKey m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
+    QSet<QUuid> m_internalSourceKeychainDeleteRequestIds;
 };
 
 } // namespace quentier

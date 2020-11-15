@@ -40,6 +40,8 @@ MigratingKeychainService::MigratingKeychainService(
         throw std::invalid_argument{
             "MigratingKeychainService ctor: sink keychain is null"};
     }
+
+    createConnections();
 }
 
 MigratingKeychainService::~MigratingKeychainService() = default;
@@ -80,20 +82,61 @@ void MigratingKeychainService::onSinkKeychainWritePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
     const auto it = m_sinkKeychainWriteRequestIds.find(requestId);
-    if (it != m_sinkKeychainWriteRequestIds.end())
+
+    const auto internalIt =
+        (it == m_sinkKeychainWriteRequestIds.end()
+             ? m_internalSinkKeychainWriteRequestIdsToServiceAndKey.find(
+                   requestId)
+             : m_internalSinkKeychainWriteRequestIdsToServiceAndKey.end());
+
+    if (it != m_sinkKeychainWriteRequestIds.end() ||
+        internalIt !=
+            m_internalSinkKeychainWriteRequestIdsToServiceAndKey.end())
     {
         QNDEBUG(
             "utility:keychain_migrating",
             "MigratingKeychainService::onSinkKeychainWritePasswordJobFinished: "
-            << "request id = " << requestId << ", error code = " << errorCode
-            << ", error description = " << errorDescription);
+                << "request id = " << requestId << ", error code = "
+                << errorCode << ", error description = " << errorDescription);
+    }
 
+    if (it != m_sinkKeychainWriteRequestIds.end()) {
         m_sinkKeychainWriteRequestIds.erase(it);
         Q_EMIT writePasswordJobFinished(requestId, errorCode, errorDescription);
         return;
     }
 
-    // TODO: handle the case of writing from source to sink hidden from user
+    if (internalIt !=
+        m_internalSinkKeychainWriteRequestIdsToServiceAndKey.end()) {
+        if (errorCode != IKeychainService::ErrorCode::NoError) {
+            QNWARNING(
+                "utility:keychain_migrating",
+                "MigratingKeychainService::"
+                    << "onSinkKeychainWritePasswordJobFinished: failed to "
+                    << "copy password from source to sink keychain: error "
+                    << "code = " << errorCode
+                    << ", error description = " << errorDescription);
+        }
+        else {
+            const auto sourceKeychainDeleteRequestId =
+                m_sourceKeychain->startDeletePasswordJob(
+                    internalIt.value().first, internalIt.value().second);
+
+            QNDEBUG(
+                "utility:keychain_migrating",
+                "Deleting password from "
+                    << "the source keychain: request id = "
+                    << sourceKeychainDeleteRequestId
+                    << ", service = " << internalIt.value().first
+                    << ", key = " << internalIt.value().second);
+
+            m_internalSourceKeychainDeleteRequestIds.insert(
+                sourceKeychainDeleteRequestId);
+        }
+
+        m_internalSinkKeychainWriteRequestIdsToServiceAndKey.erase(internalIt);
+        return;
+    }
 }
 
 void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
@@ -123,15 +166,19 @@ void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
     const auto sourceKeychainRequestId = m_sourceKeychain->startReadPasswordJob(
         it.value().first, it.value().second);
 
-    m_sourceToSinkKeychainReadRequestIds[sourceKeychainRequestId] = requestId;
+    m_sourceKeychainReadRequestData[sourceKeychainRequestId] =
+        ReadPasswordJobData{
+            requestId, it.value().first, it.value().second, password};
+
+    m_sinkKeychainReadRequestIdsToServiceAndKey.erase(it);
 }
 
 void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
     QString password)
 {
-    auto it = m_sourceToSinkKeychainReadRequestIds.find(requestId);
-    if (it == m_sourceToSinkKeychainReadRequestIds.end()) {
+    auto it = m_sourceKeychainReadRequestData.find(requestId);
+    if (it == m_sourceKeychainReadRequestData.end()) {
         return;
     }
 
@@ -141,17 +188,143 @@ void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
             << "request id = " << requestId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
 
-    requestId = it.value();
-    m_sourceToSinkKeychainReadRequestIds.erase(it);
+    requestId = it.value().m_sinkKeychainReadRequestId;
 
     Q_EMIT readPasswordJobFinished(
         requestId, errorCode, errorDescription, password);
 
-    if (errorCode != IKeychainService::ErrorCode::NoError) {
+    if (errorCode == IKeychainService::ErrorCode::NoError) {
+        const auto sinkKeychainWriteRequestId =
+            m_sinkKeychain->startWritePasswordJob(
+                it.value().m_service, it.value().m_key, it.value().m_password);
+
+        QNDEBUG(
+            "utility:keychain_migrating",
+            "Copying the password to sink keychain: write request id = "
+                << sinkKeychainWriteRequestId);
+
+        m_internalSinkKeychainWriteRequestIdsToServiceAndKey
+            [sinkKeychainWriteRequestId] =
+                std::make_pair(it.value().m_service, it.value().m_key);
+    }
+
+    m_sourceKeychainReadRequestData.erase(it);
+}
+
+void MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished(
+    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
+{
+    auto it = m_sinkKeychainDeleteRequestIdsToServiceAndKey.find(requestId);
+    if (it == m_sinkKeychainDeleteRequestIdsToServiceAndKey.end()) {
         return;
     }
 
-    // TODO: write the read password to sink keychain
+    QNDEBUG(
+        "utility:keychain_migrating",
+        "MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished: "
+            << "request id = " << requestId << ", error code = " << errorCode
+            << ", error description = " << errorDescription);
+
+    if (errorCode != IKeychainService::ErrorCode::EntryNotFound) {
+        m_sinkKeychainDeleteRequestIdsToServiceAndKey.erase(it);
+        Q_EMIT deletePasswordJobFinished(
+            requestId, errorCode, errorDescription);
+        return;
+    }
+
+    // Could not find the entry in the sink keychain, will try to remove
+    // from source keychain
+    const auto sourceKeychainDeleteRequestId =
+        m_sourceKeychain->startDeletePasswordJob(
+            it.value().first, it.value().second);
+
+    m_sinkKeychainDeleteRequestIdsToServiceAndKey.erase(it);
+
+    QNDEBUG(
+        "utility:keychain_migrating",
+        "Trying to delete the password from the source keychain: delete "
+            << "request id = " << sourceKeychainDeleteRequestId);
+
+    m_sourceToSinkKeychainDeleteRequestIds[sourceKeychainDeleteRequestId] =
+        requestId;
+}
+
+void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
+    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
+{
+    const auto it = m_sourceToSinkKeychainDeleteRequestIds.find(requestId);
+
+    const auto internalIt =
+        (it == m_sourceToSinkKeychainDeleteRequestIds.end()
+         ? m_internalSourceKeychainDeleteRequestIds.find(requestId)
+         : m_internalSourceKeychainDeleteRequestIds.end());
+
+    if (it != m_sourceToSinkKeychainDeleteRequestIds.end() ||
+        internalIt != m_internalSourceKeychainDeleteRequestIds.end())
+    {
+        QNDEBUG(
+            "utility:keychain_migrating",
+            "MigratingKeychainService::"
+                << "onSourceKeychainDeletePasswordJobFinished: request id = "
+                << requestId << ", error code = " << errorCode
+                << ", error description = " << errorDescription);
+    }
+
+    if (it != m_sourceToSinkKeychainDeleteRequestIds.end()) {
+        requestId = it.value();
+        m_sourceToSinkKeychainDeleteRequestIds.erase(it);
+        Q_EMIT deletePasswordJobFinished(
+            requestId, errorCode, errorDescription);
+        return;
+    }
+
+    if (internalIt != m_internalSourceKeychainDeleteRequestIds.end()) {
+        if (errorCode != IKeychainService::ErrorCode::NoError) {
+            QNWARNING(
+                "utility:keychain_migrating",
+                "MigratingKeychainService::"
+                    << "onSourceKeychainDeletePasswordJobFinished: failed to "
+                    << "delete password from source keychain: error code = "
+                    << errorCode << ", error description = "
+                    << errorDescription);
+        }
+
+        m_internalSourceKeychainDeleteRequestIds.erase(internalIt);
+        return;
+    }
+}
+
+void MigratingKeychainService::createConnections()
+{
+    QObject::connect(
+        m_sinkKeychain.get(),
+        &IKeychainService::writePasswordJobFinished,
+        this,
+        &MigratingKeychainService::onSinkKeychainWritePasswordJobFinished);
+
+    QObject::connect(
+        m_sinkKeychain.get(),
+        &IKeychainService::readPasswordJobFinished,
+        this,
+        &MigratingKeychainService::onSinkKeychainReadPasswordJobFinished);
+
+    QObject::connect(
+        m_sourceKeychain.get(),
+        &IKeychainService::readPasswordJobFinished,
+        this,
+        &MigratingKeychainService::onSourceKeychainReadPasswordJobFinished);
+
+    QObject::connect(
+        m_sinkKeychain.get(),
+        &IKeychainService::deletePasswordJobFinished,
+        this,
+        &MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished);
+
+    QObject::connect(
+        m_sourceKeychain.get(),
+        &IKeychainService::deletePasswordJobFinished,
+        this,
+        &MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished);
 }
 
 } // namespace quentier
