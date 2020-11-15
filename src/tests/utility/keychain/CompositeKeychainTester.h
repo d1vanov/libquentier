@@ -31,6 +31,8 @@ public:
     explicit CompositeKeychainTester(QObject * parent = nullptr);
 
 private Q_SLOTS:
+    void throwExceptionWhenGivenNullPrimaryKeychain();
+    void throwExceptionWhenGivenNullSecondaryKeychain();
     void writePasswordToBothKeychains();
     void readPasswordFromPrimaryKeychainFirst();
     void readPasswordFromSecondaryKeychainAsFallback();

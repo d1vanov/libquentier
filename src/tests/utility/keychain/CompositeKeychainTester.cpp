@@ -33,6 +33,22 @@ CompositeKeychainTester::CompositeKeychainTester(QObject * parent) :
     QObject(parent)
 {}
 
+void CompositeKeychainTester::throwExceptionWhenGivenNullPrimaryKeychain()
+{
+    QVERIFY_EXCEPTION_THROWN(
+        const auto compositeKeychain = newCompositeKeychainService(
+            m_name, nullptr, std::make_shared<KeychainServiceMock>()),
+        std::invalid_argument);
+}
+
+void CompositeKeychainTester::throwExceptionWhenGivenNullSecondaryKeychain()
+{
+    QVERIFY_EXCEPTION_THROWN(
+        const auto compositeKeychain = newCompositeKeychainService(
+            m_name, std::make_shared<KeychainServiceMock>(), nullptr),
+        std::invalid_argument);
+}
+
 void CompositeKeychainTester::writePasswordToBothKeychains()
 {
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
