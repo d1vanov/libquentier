@@ -58,15 +58,18 @@ CompositeKeychainService::CompositeKeychainService(
     m_secondaryKeychain{std::move(secondaryKeychain)}
 {
     if (m_name.isEmpty()) {
-        throw std::invalid_argument{"Composite keychain name is empty"};
+        throw std::invalid_argument{
+            "CompositeKeychainService ctor: name is empty"};
     }
 
     if (Q_UNLIKELY(!m_primaryKeychain)) {
-        throw std::invalid_argument{"Primary keychain is null"};
+        throw std::invalid_argument{
+            "CompositeKeychainService ctor: primary keychain is null"};
     }
 
     if (Q_UNLIKELY(!m_secondaryKeychain)) {
-        throw std::invalid_argument{"Secondary keychain is null"};
+        throw std::invalid_argument{
+            "CompositeKeychainService ctor: secondary keychain is null"};
     }
 
     createConnections();
