@@ -24,6 +24,8 @@
 #include <QHash>
 #include <QSet>
 
+#include <boost/bimap.hpp>
+
 namespace quentier {
 
 /**
@@ -98,12 +100,20 @@ private:
 
     using RequestIdToServiceAndKey = QHash<QUuid, std::pair<QString, QString>>;
 
+    using IdBimap = boost::bimap<QUuid, QUuid>;
+
     struct ReadPasswordJobData
     {
         QUuid m_sinkKeychainReadRequestId;
         QString m_service;
         QString m_key;
         QString m_password;
+    };
+
+    struct DeletePasswordJobStatus
+    {
+        ErrorCode m_errorCode = ErrorCode::NoError;
+        ErrorString m_errorDescription;
     };
 
 private:
@@ -115,8 +125,9 @@ private:
     RequestIdToServiceAndKey m_sinkKeychainReadRequestIdsToServiceAndKey;
     QHash<QUuid, ReadPasswordJobData> m_sourceKeychainReadRequestData;
 
-    RequestIdToServiceAndKey m_sinkKeychainDeleteRequestIdsToServiceAndKey;
-    QHash<QUuid, QUuid> m_sourceToSinkKeychainDeleteRequestIds;
+    // sink <=> source keychains
+    IdBimap m_deletePasswordJobIds;
+    QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;
 
     RequestIdToServiceAndKey m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
     QSet<QUuid> m_internalSourceKeychainDeleteRequestIds;

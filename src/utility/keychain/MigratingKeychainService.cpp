@@ -70,12 +70,16 @@ QUuid MigratingKeychainService::startReadPasswordJob(
 QUuid MigratingKeychainService::startDeletePasswordJob(
     const QString & service, const QString & key)
 {
-    const auto requestId = m_sinkKeychain->startDeletePasswordJob(service, key);
+    const auto sinkKeychainRequestId =
+        m_sinkKeychain->startDeletePasswordJob(service, key);
 
-    m_sinkKeychainDeleteRequestIdsToServiceAndKey[requestId] =
-        std::make_pair(service, key);
+    const auto sourceKeychainRequestId =
+        m_sourceKeychain->startDeletePasswordJob(service, key);
 
-    return requestId;
+    m_deletePasswordJobIds.insert(
+        IdBimap::value_type(sinkKeychainRequestId, sourceKeychainRequestId));
+
+    return sinkKeychainRequestId;
 }
 
 void MigratingKeychainService::onSinkKeychainWritePasswordJobFinished(
@@ -214,8 +218,8 @@ void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
 void MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    auto it = m_sinkKeychainDeleteRequestIdsToServiceAndKey.find(requestId);
-    if (it == m_sinkKeychainDeleteRequestIdsToServiceAndKey.end()) {
+    const auto it = m_deletePasswordJobIds.left.find(requestId);
+    if (it == m_deletePasswordJobIds.left.end()) {
         return;
     }
 
@@ -225,41 +229,51 @@ void MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished(
             << "request id = " << requestId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
 
-    if (errorCode != IKeychainService::ErrorCode::EntryNotFound) {
-        m_sinkKeychainDeleteRequestIdsToServiceAndKey.erase(it);
-        Q_EMIT deletePasswordJobFinished(
-            requestId, errorCode, errorDescription);
+    const auto sourceKeychainRequestId = it->second;
+
+    const auto resultIt =
+        m_completedDeletePasswordJobs.find(sourceKeychainRequestId);
+
+    if (resultIt == m_completedDeletePasswordJobs.end()) {
+        // The corresponding source keychain's job hasn't finished yet, will
+        // record the sink one's status and wait for the source keychain
+        auto & status = m_completedDeletePasswordJobs[requestId];
+        status.m_errorCode = errorCode;
+        status.m_errorDescription = errorDescription;
         return;
     }
 
-    // Could not find the entry in the sink keychain, will try to remove
-    // from source keychain
-    const auto sourceKeychainDeleteRequestId =
-        m_sourceKeychain->startDeletePasswordJob(
-            it.value().first, it.value().second);
+    // Delete jobs for both sink and source keychain have finished
 
-    m_sinkKeychainDeleteRequestIdsToServiceAndKey.erase(it);
+    if (errorCode == IKeychainService::ErrorCode::EntryNotFound &&
+        resultIt->m_errorCode == IKeychainService::ErrorCode::NoError)
+    {
+        // Didn't find the entry in the sink keychain but successfully
+        // deleted it from the source keychain, propagating successful
+        // deletion to the user
+        errorCode = IKeychainService::ErrorCode::NoError;
+        errorDescription.clear();
+    }
 
-    QNDEBUG(
-        "utility:keychain_migrating",
-        "Trying to delete the password from the source keychain: delete "
-            << "request id = " << sourceKeychainDeleteRequestId);
+    // Otherwise propagating the sink keychain's error code as is to the user
+    m_deletePasswordJobIds.left.erase(it);
+    m_completedDeletePasswordJobs.erase(resultIt);
 
-    m_sourceToSinkKeychainDeleteRequestIds[sourceKeychainDeleteRequestId] =
-        requestId;
+    Q_EMIT deletePasswordJobFinished(
+        requestId, errorCode, errorDescription);
 }
 
 void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    const auto it = m_sourceToSinkKeychainDeleteRequestIds.find(requestId);
+    const auto it = m_deletePasswordJobIds.right.find(requestId);
 
     const auto internalIt =
-        (it == m_sourceToSinkKeychainDeleteRequestIds.end()
+        (it == m_deletePasswordJobIds.right.end()
          ? m_internalSourceKeychainDeleteRequestIds.find(requestId)
          : m_internalSourceKeychainDeleteRequestIds.end());
 
-    if (it != m_sourceToSinkKeychainDeleteRequestIds.end() ||
+    if (it != m_deletePasswordJobIds.right.end() ||
         internalIt != m_internalSourceKeychainDeleteRequestIds.end())
     {
         QNDEBUG(
@@ -270,11 +284,43 @@ void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
                 << ", error description = " << errorDescription);
     }
 
-    if (it != m_sourceToSinkKeychainDeleteRequestIds.end()) {
-        requestId = it.value();
-        m_sourceToSinkKeychainDeleteRequestIds.erase(it);
+    if (it != m_deletePasswordJobIds.right.end()) {
+        const auto sinkKeychainRequestId = it->second;
+
+        const auto resultIt =
+            m_completedDeletePasswordJobs.find(sinkKeychainRequestId);
+
+        if (resultIt == m_completedDeletePasswordJobs.end()) {
+            // The corresponding sink keychain's job hasn't finished yet, will
+            // record the source one's status and wait for the sink keychain
+            auto & status = m_completedDeletePasswordJobs[requestId];
+            status.m_errorCode = errorCode;
+            status.m_errorDescription = errorDescription;
+            return;
+        }
+
+        // Delete jobs for both sink and source keychain have finished
+
+        if (resultIt->m_errorCode == IKeychainService::ErrorCode::EntryNotFound
+            && errorCode == IKeychainService::ErrorCode::NoError)
+        {
+            // Didn't find the entry in the sink keychain but successfully
+            // deleted it from the source keychain, propagating successful
+            // deletion to the user
+        }
+        else
+        {
+            // Otherwise propagating the sink keychain's error code as is to
+            // the user
+            errorCode = resultIt->m_errorCode;
+            errorDescription = resultIt->m_errorDescription;
+        }
+
+        m_deletePasswordJobIds.right.erase(it);
+        m_completedDeletePasswordJobs.erase(resultIt);
+
         Q_EMIT deletePasswordJobFinished(
-            requestId, errorCode, errorDescription);
+            sinkKeychainRequestId, errorCode, errorDescription);
         return;
     }
 
