@@ -19,6 +19,7 @@
 #include <quentier/utility/IKeychainService.h>
 
 #include "CompositeKeychainService.h"
+#include "MigratingKeychainService.h"
 #include "ObfuscatingKeychainService.h"
 #include "QtKeychainService.h"
 
@@ -92,6 +93,14 @@ IKeychainServicePtr newCompositeKeychainService(
     return std::make_shared<CompositeKeychainService>(
         std::move(name), std::move(primaryKeychain),
         std::move(secondaryKeychain), parent);
+}
+
+IKeychainServicePtr newMigratingKeychainService(
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
+    QObject * parent)
+{
+    return std::make_shared<MigratingKeychainService>(
+        std::move(sourceKeychain), std::move(sinkKeychain), parent);
 }
 
 } // namespace quentier

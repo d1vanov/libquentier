@@ -207,6 +207,10 @@ QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
     IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
 
+QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
+    QObject * parent = nullptr);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
