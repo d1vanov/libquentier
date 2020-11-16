@@ -782,6 +782,7 @@ set(TEST_HEADERS
     src/tests/utility/UtilityTester.h
     src/tests/utility/keychain/CompositeKeychainTester.h
     src/tests/utility/keychain/KeychainServiceMock.h
+    src/tests/utility/keychain/MigratingKeychainTester.h
     src/tests/utility/keychain/ObfuscatingKeychainTester.h
     src/tests/TestMacros.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
@@ -824,6 +825,7 @@ set(TEST_SOURCES
     src/tests/utility/UtilityTester.cpp
     src/tests/utility/keychain/CompositeKeychainTester.cpp
     src/tests/utility/keychain/KeychainServiceMock.cpp
+    src/tests/utility/keychain/MigratingKeychainTester.cpp
     src/tests/utility/keychain/ObfuscatingKeychainTester.cpp
     src/tests/TestMain.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp

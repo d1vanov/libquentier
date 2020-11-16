@@ -26,6 +26,8 @@
 #include <QSignalSpy>
 #include <QtTest/QTest>
 
+#include <stdexcept>
+
 namespace quentier {
 namespace test {
 
