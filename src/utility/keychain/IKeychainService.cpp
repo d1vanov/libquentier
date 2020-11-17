@@ -18,7 +18,10 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-#include "KeychainService.h"
+#include "CompositeKeychainService.h"
+#include "MigratingKeychainService.h"
+#include "ObfuscatingKeychainService.h"
+#include "QtKeychainService.h"
 
 #include <quentier/utility/Printable.h>
 
@@ -73,9 +76,31 @@ QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
     return dbg;
 }
 
-IKeychainServicePtr newKeychainService(QObject * parent)
+IKeychainServicePtr newQtKeychainService(QObject * parent)
 {
-    return std::make_shared<KeychainService>(parent);
+    return std::make_shared<QtKeychainService>(parent);
+}
+
+IKeychainServicePtr newObfuscatingKeychainService(QObject * parent)
+{
+    return std::make_shared<ObfuscatingKeychainService>(parent);
+}
+
+IKeychainServicePtr newCompositeKeychainService(
+    QString name, IKeychainServicePtr primaryKeychain,
+    IKeychainServicePtr secondaryKeychain, QObject * parent)
+{
+    return std::make_shared<CompositeKeychainService>(
+        std::move(name), std::move(primaryKeychain),
+        std::move(secondaryKeychain), parent);
+}
+
+IKeychainServicePtr newMigratingKeychainService(
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
+    QObject * parent)
+{
+    return std::make_shared<MigratingKeychainService>(
+        std::move(sourceKeychain), std::move(sinkKeychain), parent);
 }
 
 } // namespace quentier

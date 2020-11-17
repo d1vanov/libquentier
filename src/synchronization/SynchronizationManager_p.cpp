@@ -23,7 +23,7 @@
 #include "SynchronizationShared.h"
 #include "UserStore.h"
 
-#include "../utility/KeychainService.h"
+#include "../utility/keychain/QtKeychainService.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -135,7 +135,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     }
 
     if (!m_pKeychainService) {
-        m_pKeychainService = newKeychainService(this);
+        m_pKeychainService = newQtKeychainService(this);
     }
     else {
         m_pKeychainService->setParent(this);

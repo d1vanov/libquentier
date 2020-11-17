@@ -43,8 +43,8 @@ class QUENTIER_EXPORT ISyncStateStorage : public QObject
     Q_OBJECT
 public:
     /**
-     * @brief The SyncState struct encapsulates some data fields which
-     * together constitute the sync state of an account
+     * @brief The ISyncState interface provides accessory methods to determine
+     * the sync state for the account
      */
     class QUENTIER_EXPORT ISyncState : public Printable
     {

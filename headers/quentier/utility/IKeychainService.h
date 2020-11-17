@@ -188,7 +188,18 @@ private:
 };
 
 QUENTIER_EXPORT IKeychainServicePtr
-newKeychainService(QObject * parent = nullptr);
+newQtKeychainService(QObject * parent = nullptr);
+
+QUENTIER_EXPORT IKeychainServicePtr
+newObfuscatingKeychainService(QObject * parent = nullptr);
+
+QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
+    QString name, IKeychainServicePtr primaryKeychain,
+    IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
+
+QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
+    QObject * parent = nullptr);
 
 } // namespace quentier
 

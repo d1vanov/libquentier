@@ -36,8 +36,14 @@ class QUENTIER_EXPORT ApplicationSettings : public QSettings, public Printable
 public:
     /**
      * Constructor for application settings not being account-specific
+     *
+     * @param settingsName  If not empty, the created application settings
+     *                      would manage the settings stored in a file with
+     *                      a specific name within the common settings
+     *                      storage; otherwise they would be stored in
+     *                      the default settings file for the account
      */
-    ApplicationSettings();
+    ApplicationSettings(const QString & settingsName = {});
 
     /**
      * Constructor for application settings specific to the account

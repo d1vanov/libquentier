@@ -16,52 +16,52 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "KeychainService.h"
+#include "QtKeychainService.h"
 #include "QtKeychainWrapper.h"
 
 namespace quentier {
 
-KeychainService::KeychainService(QObject * parent) :
+QtKeychainService::QtKeychainService(QObject * parent) :
     IKeychainService(parent), m_pQtKeychainWrapper(new QtKeychainWrapper)
 {
     QObject::connect(
-        this, &KeychainService::notifyStartWritePasswordJob,
+        this, &QtKeychainService::notifyStartWritePasswordJob,
         m_pQtKeychainWrapper, &QtKeychainWrapper::onStartWritePasswordJob,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        this, &KeychainService::notifyStartReadPasswordJob,
+        this, &QtKeychainService::notifyStartReadPasswordJob,
         m_pQtKeychainWrapper, &QtKeychainWrapper::onStartReadPasswordJob,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
-        this, &KeychainService::notifyStartDeletePasswordJob,
+        this, &QtKeychainService::notifyStartDeletePasswordJob,
         m_pQtKeychainWrapper, &QtKeychainWrapper::onStartDeletePasswordJob,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         m_pQtKeychainWrapper, &QtKeychainWrapper::writePasswordJobFinished,
-        this, &KeychainService::writePasswordJobFinished,
+        this, &QtKeychainService::writePasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         m_pQtKeychainWrapper, &QtKeychainWrapper::readPasswordJobFinished, this,
-        &KeychainService::readPasswordJobFinished,
+        &QtKeychainService::readPasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
         m_pQtKeychainWrapper, &QtKeychainWrapper::deletePasswordJobFinished,
-        this, &KeychainService::deletePasswordJobFinished,
+        this, &QtKeychainService::deletePasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
-KeychainService::~KeychainService()
+QtKeychainService::~QtKeychainService()
 {
     m_pQtKeychainWrapper->disconnect();
     m_pQtKeychainWrapper->deleteLater();
 }
 
-QUuid KeychainService::startWritePasswordJob(
+QUuid QtKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
 {
     QUuid jobId = QUuid::createUuid();
@@ -69,7 +69,7 @@ QUuid KeychainService::startWritePasswordJob(
     return jobId;
 }
 
-QUuid KeychainService::startReadPasswordJob(
+QUuid QtKeychainService::startReadPasswordJob(
     const QString & service, const QString & key)
 {
     QUuid jobId = QUuid::createUuid();
@@ -77,7 +77,7 @@ QUuid KeychainService::startReadPasswordJob(
     return jobId;
 }
 
-QUuid KeychainService::startDeletePasswordJob(
+QUuid QtKeychainService::startDeletePasswordJob(
     const QString & service, const QString & key)
 {
     QUuid jobId = QUuid::createUuid();

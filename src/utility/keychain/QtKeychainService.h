@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
+#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
+#define LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
 
 #include <quentier/utility/IKeychainService.h>
 
@@ -25,13 +25,13 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
-class Q_DECL_HIDDEN KeychainService final : public IKeychainService
+class Q_DECL_HIDDEN QtKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:
-    explicit KeychainService(QObject * parent = nullptr);
+    explicit QtKeychainService(QObject * parent = nullptr);
 
-    virtual ~KeychainService() override;
+    virtual ~QtKeychainService() override;
 
     virtual QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -59,4 +59,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
+#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
