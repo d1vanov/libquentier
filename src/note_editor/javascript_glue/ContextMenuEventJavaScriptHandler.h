@@ -40,7 +40,7 @@ namespace quentier {
  * find out which context menu reply was given for which events. For example,
  * for ignoring the replies for all but the last context menu event.
  */
-class ContextMenuEventJavaScriptHandler final: public QObject
+class ContextMenuEventJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:

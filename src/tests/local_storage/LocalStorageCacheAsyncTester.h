@@ -29,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 namespace test {
 
-class LocalStorageCacheAsyncTester final: public QObject
+class LocalStorageCacheAsyncTester final : public QObject
 {
     Q_OBJECT
 public:

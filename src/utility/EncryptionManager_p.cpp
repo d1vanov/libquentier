@@ -144,8 +144,7 @@ bool EncryptionManagerPrivate::encrypt(
     unsigned long errorCode = ERR_get_error();                                 \
     const char * errorLib = ERR_lib_error_string(errorCode);                   \
     const char * errorFunc = ERR_func_error_string(errorCode);                 \
-    const char * errorReason =                                                 \
-        ERR_reason_error_string(errorCode)
+    const char * errorReason = ERR_reason_error_string(errorCode)
 
     bool res = generateSalt(SaltKind::SALT, EN_AES_KEYSIZE, errorDescription);
     if (!res) {

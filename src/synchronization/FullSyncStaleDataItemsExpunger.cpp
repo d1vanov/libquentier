@@ -990,8 +990,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
         if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
             FEWARNING(
-                "Failed to find cached notebook guid for note guid " << guid
-                << ", won't do anything with this note");
+                "Failed to find cached notebook guid for note guid "
+                << guid << ", won't do anything with this note");
             continue;
         }
 
@@ -1004,10 +1004,11 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 << guid << " doesn't appear within the list of dirty notes");
 
             Q_UNUSED(noteGuidsToExpunge.insert(guid))
-            Q_UNUSED(noteGuidsToExpungeByNotebookGuidsToExpunge[notebookGuid].insert(guid))
+            Q_UNUSED(
+                noteGuidsToExpungeByNotebookGuidsToExpunge[notebookGuid].insert(
+                    guid))
         }
         else {
-
             bool foundActualNotebook = false;
 
             if (!m_pNotebookSyncCache.isNull()) {

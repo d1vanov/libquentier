@@ -45,8 +45,8 @@ class Q_DECL_HIDDEN MigratingKeychainService final : public IKeychainService
     Q_OBJECT
 public:
     explicit MigratingKeychainService(
-        IKeychainServicePtr sourceKeychain,
-        IKeychainServicePtr sinkKeychain, QObject * parent = nullptr);
+        IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
+        QObject * parent = nullptr);
 
     virtual ~MigratingKeychainService() override;
 
@@ -129,7 +129,8 @@ private:
     IdBimap m_deletePasswordJobIds;
     QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;
 
-    RequestIdToServiceAndKey m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
+    RequestIdToServiceAndKey
+        m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
     QSet<QUuid> m_internalSourceKeychainDeleteRequestIds;
 };
 

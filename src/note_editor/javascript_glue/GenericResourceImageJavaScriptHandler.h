@@ -24,7 +24,7 @@
 
 namespace quentier {
 
-class GenericResourceImageJavaScriptHandler final: public QObject
+class GenericResourceImageJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:

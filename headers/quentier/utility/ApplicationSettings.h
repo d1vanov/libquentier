@@ -284,8 +284,7 @@ public:
      *                      specified, a default QVariant is returned.
      */
     QVariant value(
-        const char * key,
-        const QVariant & defaultValue = {},
+        const char * key, const QVariant & defaultValue = {},
         const int keySize = -1) const;
 
 public:

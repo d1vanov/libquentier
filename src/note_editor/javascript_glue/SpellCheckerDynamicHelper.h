@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-class SpellCheckerDynamicHelper final: public QObject
+class SpellCheckerDynamicHelper final : public QObject
 {
     Q_OBJECT
 public:

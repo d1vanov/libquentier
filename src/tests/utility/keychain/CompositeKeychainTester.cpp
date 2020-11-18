@@ -56,8 +56,8 @@ void CompositeKeychainTester::writePasswordToBothKeychains()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool writeToPrimaryKeychainCalled = false;
     const auto primaryKeychainWriteRequestId = QUuid::createUuid();
@@ -139,8 +139,8 @@ void CompositeKeychainTester::readPasswordFromPrimaryKeychainFirst()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool readFromPrimaryKeychainCalled = false;
     const auto readFromPrimaryKeychainRequestId = QUuid::createUuid();
@@ -223,8 +223,8 @@ void CompositeKeychainTester::readPasswordFromSecondaryKeychainAsFallback()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool readFromPrimaryKeychainCalled = false;
     const auto readFromPrimaryKeychainRequestId = QUuid::createUuid();
@@ -302,13 +302,14 @@ void CompositeKeychainTester::readPasswordFromSecondaryKeychainAsFallback()
     QVERIFY(readFromSecondaryKeychainCalled);
 }
 
-void CompositeKeychainTester::readPasswordFromSecondaryKeychainIfWritingToPrimaryFails()
+void CompositeKeychainTester::
+    readPasswordFromSecondaryKeychainIfWritingToPrimaryFails()
 {
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool writeToPrimaryKeychainCalled = false;
     const auto primaryKeychainWriteRequestId = QUuid::createUuid();
@@ -462,13 +463,14 @@ void CompositeKeychainTester::readPasswordFromSecondaryKeychainIfWritingToPrimar
     QVERIFY(readFromSecondaryKeychainCalled);
 }
 
-void CompositeKeychainTester::dontReadFromEitherKeychainIfWritingToBothKeychainsFails()
+void CompositeKeychainTester::
+    dontReadFromEitherKeychainIfWritingToBothKeychainsFails()
 {
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool writeToPrimaryKeychainCalled = false;
     const auto primaryKeychainWriteRequestId = QUuid::createUuid();
@@ -547,8 +549,8 @@ void CompositeKeychainTester::dontReadFromEitherKeychainIfWritingToBothKeychains
         });
     // clang-format on
 
-    writeId = compositeKeychain->startWritePasswordJob(
-        m_service, m_key, m_password);
+    writeId =
+        compositeKeychain->startWritePasswordJob(m_service, m_key, m_password);
 
     QVERIFY(writeId == primaryKeychainWriteRequestId);
 
@@ -661,8 +663,8 @@ void CompositeKeychainTester::dontReadFromEitherKeychainIfWritingToBothKeychains
     compositeKeychainWriteCallbackCalled = false;
     expectedWriteErrorCode = IKeychainService::ErrorCode::NoError;
 
-    writeId = compositeKeychain->startWritePasswordJob(
-        m_service, m_key, m_password);
+    writeId =
+        compositeKeychain->startWritePasswordJob(m_service, m_key, m_password);
 
     QVERIFY(writeId == primaryKeychainWriteRequestId);
 
@@ -712,8 +714,8 @@ void CompositeKeychainTester::deletePasswordFromBothKeychains()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool deleteFromPrimaryKeychainCalled = false;
     const auto primaryKeychainDeleteRequestId = QUuid::createUuid();
@@ -791,8 +793,8 @@ void CompositeKeychainTester::handleDeleteFromPrimaryKeychainError()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool deleteFromPrimaryKeychainCalled = false;
     const auto primaryKeychainDeleteRequestId = QUuid::createUuid();
@@ -1011,8 +1013,8 @@ void CompositeKeychainTester::handleDeleteFromPrimaryKeychainError()
         });
     // clang-format on
 
-    writeId = compositeKeychain->startWritePasswordJob(
-        m_service, m_key, m_password);
+    writeId =
+        compositeKeychain->startWritePasswordJob(m_service, m_key, m_password);
 
     QVERIFY(writeId == primaryKeychainWriteRequestId);
 
@@ -1056,8 +1058,8 @@ void CompositeKeychainTester::handleDeleteFromSecondaryKeychainError()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool deleteFromPrimaryKeychainCalled = false;
     const auto primaryKeychainDeleteRequestId = QUuid::createUuid();
@@ -1279,8 +1281,8 @@ void CompositeKeychainTester::handleDeleteFromSecondaryKeychainError()
         });
     // clang-format on
 
-    writeId = compositeKeychain->startWritePasswordJob(
-        m_service, m_key, m_password);
+    writeId =
+        compositeKeychain->startWritePasswordJob(m_service, m_key, m_password);
 
     QVERIFY(writeId == primaryKeychainWriteRequestId);
 
@@ -1326,8 +1328,8 @@ void CompositeKeychainTester::handleDeleteFromBothKeychainsErrors()
     const auto primaryKeychain = std::make_shared<KeychainServiceMock>();
     const auto secondaryKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto compositeKeychain = newCompositeKeychainService(
-        m_name, primaryKeychain, secondaryKeychain);
+    const auto compositeKeychain =
+        newCompositeKeychainService(m_name, primaryKeychain, secondaryKeychain);
 
     bool deleteFromPrimaryKeychainCalled = false;
     const auto primaryKeychainDeleteRequestId = QUuid::createUuid();
@@ -1552,8 +1554,8 @@ void CompositeKeychainTester::handleDeleteFromBothKeychainsErrors()
         });
     // clang-format on
 
-    writeId = compositeKeychain->startWritePasswordJob(
-        m_service, m_key, m_password);
+    writeId =
+        compositeKeychain->startWritePasswordJob(m_service, m_key, m_password);
 
     QVERIFY(writeId == primaryKeychainWriteRequestId);
 

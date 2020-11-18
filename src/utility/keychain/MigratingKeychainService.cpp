@@ -259,8 +259,7 @@ void MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished(
     m_deletePasswordJobIds.left.erase(it);
     m_completedDeletePasswordJobs.erase(resultIt);
 
-    Q_EMIT deletePasswordJobFinished(
-        requestId, errorCode, errorDescription);
+    Q_EMIT deletePasswordJobFinished(requestId, errorCode, errorDescription);
 }
 
 void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
@@ -270,8 +269,8 @@ void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
 
     const auto internalIt =
         (it == m_deletePasswordJobIds.right.end()
-         ? m_internalSourceKeychainDeleteRequestIds.find(requestId)
-         : m_internalSourceKeychainDeleteRequestIds.end());
+             ? m_internalSourceKeychainDeleteRequestIds.find(requestId)
+             : m_internalSourceKeychainDeleteRequestIds.end());
 
     if (it != m_deletePasswordJobIds.right.end() ||
         internalIt != m_internalSourceKeychainDeleteRequestIds.end())
@@ -301,15 +300,15 @@ void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
 
         // Delete jobs for both sink and source keychain have finished
 
-        if (resultIt->m_errorCode == IKeychainService::ErrorCode::EntryNotFound
-            && errorCode == IKeychainService::ErrorCode::NoError)
+        if (resultIt->m_errorCode ==
+                IKeychainService::ErrorCode::EntryNotFound &&
+            errorCode == IKeychainService::ErrorCode::NoError)
         {
             // Didn't find the entry in the sink keychain but successfully
             // deleted it from the source keychain, propagating successful
             // deletion to the user
         }
-        else
-        {
+        else {
             // Otherwise propagating the sink keychain's error code as is to
             // the user
             errorCode = resultIt->m_errorCode;
@@ -331,8 +330,8 @@ void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
                 "MigratingKeychainService::"
                     << "onSourceKeychainDeletePasswordJobFinished: failed to "
                     << "delete password from source keychain: error code = "
-                    << errorCode << ", error description = "
-                    << errorDescription);
+                    << errorCode
+                    << ", error description = " << errorDescription);
         }
 
         m_internalSourceKeychainDeleteRequestIds.erase(internalIt);
@@ -343,32 +342,25 @@ void MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished(
 void MigratingKeychainService::createConnections()
 {
     QObject::connect(
-        m_sinkKeychain.get(),
-        &IKeychainService::writePasswordJobFinished,
-        this,
+        m_sinkKeychain.get(), &IKeychainService::writePasswordJobFinished, this,
         &MigratingKeychainService::onSinkKeychainWritePasswordJobFinished);
 
     QObject::connect(
-        m_sinkKeychain.get(),
-        &IKeychainService::readPasswordJobFinished,
-        this,
+        m_sinkKeychain.get(), &IKeychainService::readPasswordJobFinished, this,
         &MigratingKeychainService::onSinkKeychainReadPasswordJobFinished);
 
     QObject::connect(
-        m_sourceKeychain.get(),
-        &IKeychainService::readPasswordJobFinished,
+        m_sourceKeychain.get(), &IKeychainService::readPasswordJobFinished,
         this,
         &MigratingKeychainService::onSourceKeychainReadPasswordJobFinished);
 
     QObject::connect(
-        m_sinkKeychain.get(),
-        &IKeychainService::deletePasswordJobFinished,
+        m_sinkKeychain.get(), &IKeychainService::deletePasswordJobFinished,
         this,
         &MigratingKeychainService::onSinkKeychainDeletePasswordJobFinished);
 
     QObject::connect(
-        m_sourceKeychain.get(),
-        &IKeychainService::deletePasswordJobFinished,
+        m_sourceKeychain.get(), &IKeychainService::deletePasswordJobFinished,
         this,
         &MigratingKeychainService::onSourceKeychainDeletePasswordJobFinished);
 }

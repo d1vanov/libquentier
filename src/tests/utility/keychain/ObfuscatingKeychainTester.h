@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class ObfuscatingKeychainTester final: public QObject
+class ObfuscatingKeychainTester final : public QObject
 {
     Q_OBJECT
 public:

@@ -25,7 +25,7 @@
 namespace quentier {
 namespace test {
 
-class NoteNotebookAndTagListTrackingAsyncTester final: public QObject
+class NoteNotebookAndTagListTrackingAsyncTester final : public QObject
 {
     Q_OBJECT
 public:

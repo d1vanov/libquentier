@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class CompositeKeychainTester final: public QObject
+class CompositeKeychainTester final : public QObject
 {
     Q_OBJECT
 public:

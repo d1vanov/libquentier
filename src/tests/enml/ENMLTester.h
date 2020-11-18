@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class ENMLTester final: public QObject
+class ENMLTester final : public QObject
 {
     Q_OBJECT
 public:
