@@ -1617,9 +1617,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     QVERIFY2(
         localStorageManager.updateNote(
-            modifiedNote,
-            updateNoteOptions,
-            errorMessage),
+            modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     QVERIFY2(

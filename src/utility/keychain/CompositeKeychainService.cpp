@@ -764,8 +764,9 @@ void CompositeKeychainService::
         keys::unavailableSecondaryKeychainGroup, service, key);
 }
 
-void CompositeKeychainService::unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
-    const QString & service, const QString & key)
+void CompositeKeychainService::
+    unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
+        const QString & service, const QString & key)
 {
     if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
         return;

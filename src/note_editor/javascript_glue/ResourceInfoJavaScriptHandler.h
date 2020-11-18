@@ -31,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceInfo)
  * The ResourceInfoJavaScriptHandler is used for communicating the information
  * on resources from C++ to JavaScript on requests coming from JavaScript to C++
  */
-class ResourceInfoJavaScriptHandler final: public QObject
+class ResourceInfoJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:

@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class ResizableImageJavaScriptHandler final: public QObject
+class ResizableImageJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:

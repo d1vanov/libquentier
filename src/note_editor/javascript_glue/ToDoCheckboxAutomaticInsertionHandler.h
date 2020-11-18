@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class ToDoCheckboxAutomaticInsertionHandler final: public QObject
+class ToDoCheckboxAutomaticInsertionHandler final : public QObject
 {
     Q_OBJECT
 public:

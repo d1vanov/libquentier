@@ -29,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class TagLocalStorageManagerAsyncTester final: public QObject
+class TagLocalStorageManagerAsyncTester final : public QObject
 {
     Q_OBJECT
 public:

@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class MigratingKeychainTester final: public QObject
+class MigratingKeychainTester final : public QObject
 {
     Q_OBJECT
 public:

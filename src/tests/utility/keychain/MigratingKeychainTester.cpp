@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "KeychainServiceMock.h"
 #include "MigratingKeychainTester.h"
+#include "KeychainServiceMock.h"
 
 #include "../../TestMacros.h"
 
@@ -39,8 +39,7 @@ void MigratingKeychainTester::throwExceptionWhenGivenNullSourceKeychain()
 {
     QVERIFY_EXCEPTION_THROWN(
         const auto migratingKeychain = newMigratingKeychainService(
-            nullptr,
-            std::make_shared<KeychainServiceMock>()),
+            nullptr, std::make_shared<KeychainServiceMock>()),
         std::invalid_argument);
 }
 
@@ -48,8 +47,7 @@ void MigratingKeychainTester::throwExceptionWhenGivenNullSinkKeychain()
 {
     QVERIFY_EXCEPTION_THROWN(
         const auto migratingKeychain = newMigratingKeychainService(
-            std::make_shared<KeychainServiceMock>(),
-            nullptr),
+            std::make_shared<KeychainServiceMock>(), nullptr),
         std::invalid_argument);
 }
 
@@ -58,8 +56,8 @@ void MigratingKeychainTester::writePasswordToSinkKeychainOnly()
     const auto sourceKeychain = std::make_shared<KeychainServiceMock>();
     const auto sinkKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto migratingKeychain = newMigratingKeychainService(
-        sourceKeychain, sinkKeychain);
+    const auto migratingKeychain =
+        newMigratingKeychainService(sourceKeychain, sinkKeychain);
 
     bool writeToSourceKeychainCalled = false;
     const auto writeToSourceKeychainRequestId = QUuid::createUuid();
@@ -141,8 +139,8 @@ void MigratingKeychainTester::readPasswordFromSinkKeychainFirst()
     const auto sourceKeychain = std::make_shared<KeychainServiceMock>();
     const auto sinkKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto migratingKeychain = newMigratingKeychainService(
-        sourceKeychain, sinkKeychain);
+    const auto migratingKeychain =
+        newMigratingKeychainService(sourceKeychain, sinkKeychain);
 
     bool readFromSourceKeychainCalled = false;
     const auto readFromSourceKeychainRequestId = QUuid::createUuid();
@@ -225,8 +223,8 @@ void MigratingKeychainTester::readPasswordFromSourceKeychainAsFallback()
     const auto sourceKeychain = std::make_shared<KeychainServiceMock>();
     const auto sinkKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto migratingKeychain = newMigratingKeychainService(
-        sourceKeychain, sinkKeychain);
+    const auto migratingKeychain =
+        newMigratingKeychainService(sourceKeychain, sinkKeychain);
 
     bool readFromSourceKeychainCalled = false;
     const auto readFromSourceKeychainRequestId = QUuid::createUuid();
@@ -370,8 +368,8 @@ void MigratingKeychainTester::dontFallbackReadOnSeriousSinkKeychainError()
     const auto sourceKeychain = std::make_shared<KeychainServiceMock>();
     const auto sinkKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto migratingKeychain = newMigratingKeychainService(
-        sourceKeychain, sinkKeychain);
+    const auto migratingKeychain =
+        newMigratingKeychainService(sourceKeychain, sinkKeychain);
 
     bool readFromSourceKeychainCalled = false;
     const auto readFromSourceKeychainRequestId = QUuid::createUuid();
@@ -458,8 +456,8 @@ void MigratingKeychainTester::attemptToDeletePasswordFromBothKeychains()
     const auto sourceKeychain = std::make_shared<KeychainServiceMock>();
     const auto sinkKeychain = std::make_shared<KeychainServiceMock>();
 
-    const auto migratingKeychain = newMigratingKeychainService(
-        sourceKeychain, sinkKeychain);
+    const auto migratingKeychain =
+        newMigratingKeychainService(sourceKeychain, sinkKeychain);
 
     bool deleteFromSourceKeychainCalled = false;
     const auto deleteFromSourceKeychainRequestId = QUuid::createUuid();
@@ -516,8 +514,7 @@ void MigratingKeychainTester::attemptToDeletePasswordFromBothKeychains()
     QUuid id;
     bool deletePasswordCallbackCalled = false;
 
-    auto deletePasswordExpectedErrorCode =
-        IKeychainService::ErrorCode::NoError;
+    auto deletePasswordExpectedErrorCode = IKeychainService::ErrorCode::NoError;
 
     // clang-format off
     QObject::connect(

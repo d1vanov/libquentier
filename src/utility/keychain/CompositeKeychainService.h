@@ -46,8 +46,7 @@ public:
      */
     explicit CompositeKeychainService(
         QString name, IKeychainServicePtr primaryKeychain,
-        IKeychainServicePtr secondaryKeychain,
-        QObject * parent = nullptr);
+        IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
 
     virtual ~CompositeKeychainService() override;
 
@@ -176,8 +175,10 @@ private:
 
     using ServiceKeyPairsCache = QHash<QString, QSet<QString>>;
 
-    ServiceKeyPairsCache readServiceKeyPairsUnavailableInPrimaryKeychain() const;
-    ServiceKeyPairsCache readServiceKeyPairsUnavailableInSecondaryKeychain() const;
+    ServiceKeyPairsCache readServiceKeyPairsUnavailableInPrimaryKeychain()
+        const;
+    ServiceKeyPairsCache readServiceKeyPairsUnavailableInSecondaryKeychain()
+        const;
 
     ServiceKeyPairsCache readServiceKeyPairsUnavailableInKeychainImpl(
         const char * groupName) const;
@@ -212,7 +213,8 @@ private:
     QHash<QUuid, std::pair<QString, QString>> m_serviceAndKeyByRequestId;
 
     QSet<QUuid> m_primaryKeychainReadPasswordJobIds;
-    QHash<QUuid, QUuid> m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds;
+    QHash<QUuid, QUuid>
+        m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds;
 
     QSet<QUuid> m_primaryKeychainSingleDeletePasswordJobIds;
     QSet<QUuid> m_secondaryKeychainSingleDeletePasswordJobIds;

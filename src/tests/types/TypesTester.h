@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class TypesTester final: public QObject
+class TypesTester final : public QObject
 {
     Q_OBJECT
 public:

@@ -39,7 +39,7 @@ QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
 
 namespace test {
 
-class SynchronizationTester final: public QObject
+class SynchronizationTester final : public QObject
 {
     Q_OBJECT
 public:

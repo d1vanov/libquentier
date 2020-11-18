@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class GenericResourceOpenAndSaveButtonsOnClickHandler final: public QObject
+class GenericResourceOpenAndSaveButtonsOnClickHandler final : public QObject
 {
     Q_OBJECT
 public:

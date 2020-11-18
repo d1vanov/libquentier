@@ -99,7 +99,7 @@ void ObfuscatingKeychainTester::checkWriteDeletePassword()
     QVERIFY(settings.contains("KeyLength"));
     QVERIFY(settings.contains("Value"));
     settings.endGroup();
-    
+
     bool callbackCalled = false;
     QObject::connect(
         keychain.get(), &IKeychainService::deletePasswordJobFinished,
