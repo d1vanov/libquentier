@@ -118,6 +118,29 @@ bool QUENTIER_EXPORT libquentierHasAuthenticationManager();
  */
 bool QUENTIER_EXPORT libquentierUsesQtWebEngine();
 
+/**
+ * @return          Major version of QEverCloud against which libquentier was
+ *                  built
+ */
+int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionMajor();
+
+/**
+ * @return          Minor version of QEverCloud against which libquentier was
+ *                  built
+ */
+int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionMinor();
+
+/**
+ * @return          Patch version of QEverCloud against which libquentier was
+ *                  built
+ */
+int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionPatch();
+
+/**
+ * @return          Build info of QEverCloud against which libquentier was built
+ */
+QString QUENTIER_EXPORT libquentierBuiltWithQEverCloudBuildInfo();
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_VERSION_INFO_H
