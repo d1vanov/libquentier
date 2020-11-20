@@ -28,8 +28,6 @@
 #include <mach/mach_types.h>
 #include <mach/vm_statistics.h>
 
-#include "../StackTrace.h"
-
 #include <QMutexLocker>
 #include <QString>
 
@@ -79,6 +77,13 @@ qint64 SysInfo::freeMemory()
     {
         return -1;
     }
+}
+
+QString SysInfo::stackTrace()
+{
+    return QStringLiteral(
+        "Stack trace obtaining is not implemented on macOS, "
+        "patches are welcome");
 }
 
 } // namespace quentier
