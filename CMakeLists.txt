@@ -331,9 +331,9 @@ if(BUILD_WITH_NOTE_EDITOR)
   endif()
 endif()
 
-if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND PRIVATE_HEADERS
-       src/utility/unix/StackTrace.h)
+       src/utility/unix/linux/StackTrace.h)
 endif()
 
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
@@ -549,12 +549,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/windows/SysInfoWindows.cpp)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
+  list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/StackTrace.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/SysInfoLinux.cpp)
-  list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/StackTrace.cpp)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/darwin/SysInfoDarwin.cpp)
-  list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/StackTrace.cpp)
 endif()
 
 # generate version info header

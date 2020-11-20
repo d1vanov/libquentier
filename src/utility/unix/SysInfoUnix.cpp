@@ -20,66 +20,13 @@
 
 #include "../SysInfo_p.h"
 
-#include "StackTrace.h"
-
 #include <unistd.h>
-
-#include <QApplication>
-#include <QByteArray>
-#include <QDir>
-#include <QFile>
-#include <QMutexLocker>
-#include <QString>
 
 namespace quentier {
 
 qint64 SysInfo::pageSize()
 {
     return static_cast<qint64>(sysconf(_SC_PAGESIZE));
-}
-
-QString SysInfo::stackTrace()
-{
-    Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
-
-    fpos_t pos;
-
-    QString tmpFile = QDir::tempPath();
-    QString appName = QApplication::applicationName();
-
-    tmpFile += QStringLiteral("/Quentier_") + appName +
-        QStringLiteral("_StackTrace.txt");
-
-    // flush existing stderr and reopen it as file
-    fflush(stderr);
-    fgetpos(stderr, &pos);
-    int fd = dup(fileno(stderr));
-    FILE * fileHandle = freopen(tmpFile.toLocal8Bit().data(), "w", stderr);
-    if (!fileHandle) {
-        perror("Can't reopen stderr");
-        return QString();
-    }
-
-    stacktrace::displayCurrentStackTrace();
-
-    // revert stderr
-    fflush(stderr);
-    dup2(fd, fileno(stderr));
-    close(fd);
-    clearerr(stderr);
-    fsetpos(stderr, &pos);
-    fclose(fileHandle);
-
-    QFile file(tmpFile);
-    bool res = file.open(QIODevice::ReadOnly);
-    if (!res) {
-        return QStringLiteral("Cannot open temporary file with stacktrace");
-    }
-
-    QByteArray rawOutput = file.readAll();
-    QString output = QString::fromLocal8Bit(rawOutput);
-    return output;
 }
 
 } // namespace quentier
