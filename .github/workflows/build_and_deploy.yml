@@ -899,6 +899,7 @@ jobs:
           set INCLUDE=%RUNNER_WORKSPACE%\openssl_win_x86\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_win_x86\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5_win_x86\include;%INCLUDE%
+          set USE_QEVERCLOUD_DEVELOPMENT=0
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if %USE_QEVERCLOUD_DEVELOPMENT%==1 (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_development_x86) else (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_master_x86)
@@ -943,6 +944,7 @@ jobs:
           set INCLUDE=%RUNNER_WORKSPACE%\openssl_win_x64\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_win_x64\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5_win_x64\include;%INCLUDE%
+          set USE_QEVERCLOUD_DEVELOPMENT=0
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if %USE_QEVERCLOUD_DEVELOPMENT%==1 (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_development_x64) else (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_master_x64)
