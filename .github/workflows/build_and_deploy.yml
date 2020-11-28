@@ -398,49 +398,29 @@ jobs:
           brew install openssl@1.1 --force-bottle
           brew install boost --force-bottle
 
-      - name: Cache QEverCloud
-        id: cache_qevercloud
-        uses: actions/cache@v1
-        with:
-          path: '${{ runner.workspace }}/../QEverCloud/QEverCloud/build/installdir'
-          key: ${{ runner.os }}-qevercloud-1
-
-      - name: Download or build QEverCloud
-        id: download_or_build_qevercloud
+      - name: Build QEverCloud
+        id: build_qevercloud
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
-          if [ ! -d "$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir)" ]; then
-            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-              export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
-            else
-              export BRANCH_NAME=$GITHUB_BASE_REF
-            fi
-            if [ "$BRANCH_NAME" = "development" ]; then
-              curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
-            else
-              curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
-            fi
-            if [ -f QEverCloud_macos_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous release"
-              7z -o$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir x QEverCloud_macos_x86_64.zip
-            else
-              echo "Could not download prebuilt QEverCloud from continuous release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
-              cd qevercloud_src
-              if [ "$BRANCH_NAME" = "development" ]; then
-                git checkout development
-              else
-                git checkout master
-              fi
-              mkdir build
-              cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
-              cmake --build . --target all
-              cmake --build . --target check
-              cmake --build . --target install
-            fi
+          git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
+          cd qevercloud_src
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
           fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            git checkout development
+          else
+            git checkout master
+          fi
+          mkdir build
+          cd build
+          cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+          cmake --build . --target all
+          cmake --build . --target check
+          cmake --build . --target install
         shell: bash
 
       - name: Configure
@@ -452,7 +432,7 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
             -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             ..
