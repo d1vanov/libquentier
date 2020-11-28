@@ -562,7 +562,7 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x86
           if %QEVERCLOUD_CACHED%==0 cmd.exe /c curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_windows_x86.zip -o %RUNNER_WORKSPACE%\qevercloud_win_master_x86\QEverCloud_windows_x86.zip
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x86
-          if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x86.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0)
+          if %QEVERCLOUD_CACHED%==0 (if exist QEverCloud_windows_x86.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0))
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 echo "Downloaded prebuilt x86 QEverCloud from master branch"
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 7z x QEverCloud_windows_x86.zip
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==0 echo "Could not download prebuilt x86 QEverCloud from master branch, will build from source"
@@ -600,7 +600,7 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x86
           if %QEVERCLOUD_CACHED%==0 cmd.exe /c curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_windows_x86.zip -o %RUNNER_WORKSPACE%\qevercloud_win_development_x86\QEverCloud_windows_x86.zip
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x86
-          if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x86.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0)
+          if %QEVERCLOUD_CACHED%==0 (if exist QEverCloud_windows_x86.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0))
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 echo "Downloaded prebuilt x86 QEverCloud from development branch"
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 7z x QEverCloud_windows_x86.zip
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==0 echo "Could not download prebuilt x86 QEverCloud from development branch, will build from source"
@@ -776,7 +776,7 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x64
           if %QEVERCLOUD_CACHED%==0 cmd.exe /c curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_windows_x64.zip -o %RUNNER_WORKSPACE%\qevercloud_win_master_x64\QEverCloud_windows_x64.zip
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x64
-          if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x64.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0)
+          if %QEVERCLOUD_CACHED%==0 (if exist QEverCloud_windows_x64.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0))
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 echo "Downloaded prebuilt x64 QEverCloud from master branch"
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 7z x QEverCloud_windows_x64.zip
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==0 echo "Could not download prebuilt x64 QEverCloud from master branch, will build from source"
@@ -814,7 +814,7 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x64
           if %QEVERCLOUD_CACHED%==0 cmd.exe /c curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_windows_x64.zip -o %RUNNER_WORKSPACE%\qevercloud_win_development_x64\QEverCloud_windows_x64.zip
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x64
-          if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x64.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0)
+          if %QEVERCLOUD_CACHED%==0 (if exist QEverCloud_windows_x64.zip (set QEVERCLOUD_DOWNLOADED=1) else (set QEVERCLOUD_DOWNLOADED=0))
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 echo "Downloaded prebuilt x64 QEverCloud from development branch"
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==1 7z x QEverCloud_windows_x64.zip
           if %QEVERCLOUD_CACHED%==0 if %QEVERCLOUD_DOWNLOADED%==0 echo "Could not download prebuilt x64 QEverCloud from development branch, will build from source"
