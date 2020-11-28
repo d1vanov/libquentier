@@ -337,6 +337,13 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           xvfb-run ./test_libquentier -platform minimal
 
+      - name: Update translations
+        id: update_translations
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          cmake --build . --target lupdate
+          cmake --build . --target lrelease
+
       - name: Install
         id: install
         run: |
@@ -431,6 +438,13 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/build
           cmake --build . --target check
+
+      - name: Update translations
+        id: update_translations
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          cmake --build . --target lupdate
+          cmake --build . --target lrelease
 
       - name: Install
         id: install
@@ -915,6 +929,8 @@ jobs:
           cd build
           cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT=%BOOST_ROOT_1_72_0% ..
           cmake --build . --target all
+          cmake --build . --target lupdate
+          cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
         if: ${{ matrix.target_arch == 'x86' }}
@@ -960,6 +976,8 @@ jobs:
           cd build
           cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT=%BOOST_ROOT_1_72_0% ..
           cmake --build . --target all
+          cmake --build . --target lupdate
+          cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
         if: ${{ matrix.target_arch == 'x64' }}
