@@ -1001,7 +1001,6 @@ jobs:
     if: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     needs: [build_linux, build_macos, build_windows]
-    if: ${{ github.event_name == 'push' }}
     steps:
       - name: Install dependencies
         id: install_deps
