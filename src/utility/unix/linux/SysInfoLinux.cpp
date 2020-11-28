@@ -18,6 +18,7 @@
 
 #include <quentier/utility/SysInfo.h>
 
+#include "StackTrace.h"
 #include "../../SysInfo_p.h"
 #include "StackTrace.h"
 

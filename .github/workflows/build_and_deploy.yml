@@ -6,6 +6,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'COPYING.txt'
       - 'COPYING.LESSER'
+      - 'CodingStyle.md'
       - 'INSTALL.md'
       - 'README.md'
     branches:
@@ -20,6 +21,7 @@ on:
 
 jobs:
   build_linux:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-16.04
     strategy:
       matrix:
@@ -357,6 +359,7 @@ jobs:
         if: ${{ matrix.qt_version == '5.12.3' && matrix.compiler_cpp == 'g++' }}
 
   build_macos:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
@@ -449,6 +452,7 @@ jobs:
           path: '${{ github.workspace }}/build/installdir/libquentier_macos.zip'
 
   build_windows:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: windows-2019
     strategy:
       matrix:
@@ -899,6 +903,7 @@ jobs:
           set INCLUDE=%RUNNER_WORKSPACE%\openssl_win_x86\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_win_x86\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5_win_x86\include;%INCLUDE%
+          set USE_QEVERCLOUD_DEVELOPMENT=0
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if %USE_QEVERCLOUD_DEVELOPMENT%==1 (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_development_x86) else (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_master_x86)
@@ -943,6 +948,7 @@ jobs:
           set INCLUDE=%RUNNER_WORKSPACE%\openssl_win_x64\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\qtkeychain_win_x64\include;%INCLUDE%
           set INCLUDE=%RUNNER_WORKSPACE%\tidy_html5_win_x64\include;%INCLUDE%
+          set USE_QEVERCLOUD_DEVELOPMENT=0
           if "%GITHUB_EVENT_NAME%"=="push" if "%GITHUB_REF%"=="refs/heads/development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if "%GITHUB_EVENT_NAME%"=="pull_request" if "%GITHUB_BASE_REF%"=="development" set USE_QEVERCLOUD_DEVELOPMENT=1
           if %USE_QEVERCLOUD_DEVELOPMENT%==1 (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_development_x64) else (set QEVERCLOUD_DIR=%RUNNER_WORKSPACE%\qevercloud_win_master_x64)
@@ -992,9 +998,9 @@ jobs:
         if: ${{ matrix.target_arch == 'x64' }}
 
   create_new_release:
+    if: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     needs: [build_linux, build_macos, build_windows]
-    if: ${{ github.event_name == 'push' }}
     steps:
       - name: Install dependencies
         id: install_deps
