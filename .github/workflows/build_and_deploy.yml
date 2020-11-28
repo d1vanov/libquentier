@@ -402,7 +402,7 @@ jobs:
         id: cache_qevercloud
         uses: actions/cache@v1
         with:
-          path: '${{ runner.workspace }}/qevercloud'
+          path: '${{ runner.workspace }}/../QEverCloud/QEverCloud/build/installdir'
           key: ${{ runner.os }}-qevercloud-1
 
       - name: Download or build QEverCloud
@@ -410,7 +410,7 @@ jobs:
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
-          if [ ! -d "$RUNNER_WORKSPACE/qevercloud" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud)" ]; then
+          if [ ! -d "$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir)" ]; then
             if [ "$GITHUB_EVENT_NAME" = "push" ]; then
               export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
             else
@@ -423,7 +423,7 @@ jobs:
             fi
             if [ -f QEverCloud_macos_x86_64.zip ]; then
               echo "Downloaded prebuilt QEverCloud from continuous release"
-              7z -o$RUNNER_WORKSPACE/qevercloud x QEverCloud_macos_x86_64.zip
+              7z -o$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir x QEverCloud_macos_x86_64.zip
             else
               echo "Could not download prebuilt QEverCloud from continuous release, will build from source"
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
@@ -435,7 +435,7 @@ jobs:
               fi
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
@@ -451,10 +451,8 @@ jobs:
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-            -DCMAKE_PREFIX_PATH="/usr/local/opt/qt5;$RUNNER_WORKSPACE/qevercloud" \
-            -DCMAKE_INCLUDE_PATH="$RUNNER_WORKSPACE/qevercloud/include" \
-            -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud/lib/cmake/QEverCloud-qt5 \
+            -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
+            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/../QEverCloud/QEverCloud/build/installdir/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
             -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             ..
