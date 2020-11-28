@@ -451,7 +451,8 @@ jobs:
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
-            -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5;$RUNNER_WORKSPACE/qevercloud \
+            -DCMAKE_PREFIX_PATH="/usr/local/opt/qt5;$RUNNER_WORKSPACE/qevercloud" \
+            -DCMAKE_INCLUDE_PATH="$RUNNER_WORKSPACE/qevercloud/include" \
             -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
