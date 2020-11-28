@@ -6,6 +6,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'COPYING.txt'
       - 'COPYING.LESSER'
+      - 'CodingStyle.md'
       - 'INSTALL.md'
       - 'README.md'
     branches:
