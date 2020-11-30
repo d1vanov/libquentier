@@ -533,7 +533,7 @@ jobs:
               7z -o$RUNNER_WORKSPACE/qevercloud_development x QEverCloud_macos_x86_64.zip
               # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
               # of installed CMake files
-              cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
+              cd $RUNNER_WORKSPACE/qevercloud_development/lib/cmake/QEverCloud-qt5
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
               sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g'
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
