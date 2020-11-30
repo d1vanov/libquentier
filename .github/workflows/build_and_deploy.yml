@@ -472,6 +472,7 @@ jobs:
           brew install tidy-html5 --force-bottle
           brew install openssl@1.1 --force-bottle
           brew install boost --force-bottle
+          brew install gnu-sed --force-bottle
 
       - name: Cache QEverCloud master
         id: cache_qevercloud_master
@@ -502,6 +503,7 @@ jobs:
               # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
               # of installed CMake files
               cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
+              export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
               sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_master|g'
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
@@ -534,6 +536,7 @@ jobs:
               # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
               # of installed CMake files
               cd $RUNNER_WORKSPACE/qevercloud_development/lib/cmake/QEverCloud-qt5
+              export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
               sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g'
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
