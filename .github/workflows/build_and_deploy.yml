@@ -505,7 +505,7 @@ jobs:
               cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
               export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_master|g'
+              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_master|g' QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
             else
               echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
@@ -538,7 +538,7 @@ jobs:
               cd $RUNNER_WORKSPACE/qevercloud_development/lib/cmake/QEverCloud-qt5
               export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g'
+              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g' QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
               echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
             else
               echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
