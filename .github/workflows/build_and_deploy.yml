@@ -305,7 +305,7 @@ jobs:
           else
             export BRANCH_NAME=$GITHUB_BASE_REF
           fi
-          if [ "$BRANCH_NAME" == "development"]; then
+          if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_old
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_old
@@ -330,7 +330,7 @@ jobs:
           else
             export BRANCH_NAME=$GITHUB_BASE_REF
           fi
-          if [ "$BRANCH_NAME" == "development"]; then
+          if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_modern
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_modern
@@ -355,7 +355,7 @@ jobs:
           else
             export BRANCH_NAME=$GITHUB_BASE_REF
           fi
-          if [ "$BRANCH_NAME" == "development"]; then
+          if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_old
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_old
@@ -380,7 +380,7 @@ jobs:
           else
             export BRANCH_NAME=$GITHUB_BASE_REF
           fi
-          if [ "$BRANCH_NAME" == "development"]; then
+          if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_modern
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_modern
@@ -389,7 +389,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_C_COMPILER=/usr/bin/clang \
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/qt512 \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_modern/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-            -DQEverCloud-qt5_DIR=QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
             -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
         if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.12.3' }}
@@ -484,6 +484,7 @@ jobs:
       - name: Cache QEverCloud development
         id: cache_qevercloud_development
         uses: actions/cache@v1
+        with:
           path: '${{ runner.workspace }}/qevercloud_development'
           key: ${{ runner.os }}-qevercloud-development-1
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
@@ -536,7 +537,6 @@ jobs:
               cmake --build . --target check
               cmake --build . --target install
             fi
-            else
           fi
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
         shell: bash
@@ -553,7 +553,7 @@ jobs:
           else
             export BRANCH_NAME=$GITHUB_BASE_REF
           fi
-          if [ "$BRANCH_NAME" == "development"]; then
+          if [ "$BRANCH_NAME" = "development" ]; then
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development
           else
             export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
