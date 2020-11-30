@@ -1321,8 +1321,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Linux artifact to continuous development release
         id: upload_linux_artifact_to_continuous_development_release
@@ -1330,8 +1342,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload macOS artifact to continuous master release
         id: upload_macos_artifact_to_continuous_master_release
@@ -1339,8 +1363,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload macOS artifact to continuous development release
         id: upload_macos_artifact_to_continuous_development_release
@@ -1348,8 +1384,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to continuous master release
         id: upload_windows_x86_artifact_to_continuous_master_release
@@ -1357,8 +1405,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier_windows_x86.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to continuous development release
         id: upload_windows_x86_artifact_to_continuous_development_release
@@ -1366,8 +1426,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier_windows_x86.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to continuous master release
         id: upload_windows_x64_artifact_to_continuous_master_release
@@ -1375,8 +1447,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to continuous development release
         id: upload_windows_x64_artifact_to_continuous_development_release
@@ -1384,8 +1468,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Linux artifact to tagged release
         id: upload_linux_artifact_to_tagged_release
@@ -1394,8 +1490,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload macOS artifact to tagged release
         id: upload_macos_artifact_to_tagged_release
@@ -1404,8 +1512,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to tagged release
         id: upload_windows_x86_artifact_to_tagged_release
@@ -1414,8 +1534,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to tagged release
         id: upload_windows_x64_artifact_to_tagged_release
@@ -1424,5 +1556,17 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
