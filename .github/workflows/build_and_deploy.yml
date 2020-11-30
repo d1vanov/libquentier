@@ -478,7 +478,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_master'
-          key: ${{ runner.os }}-qevercloud-master-1
+          key: ${{ runner.os }}-qevercloud-master-2
         if: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development') }}
 
       - name: Cache QEverCloud development
@@ -486,7 +486,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_development'
-          key: ${{ runner.os }}-qevercloud-development-1
+          key: ${{ runner.os }}-qevercloud-development-2
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
 
       - name: Download or build QEverCloud master
@@ -502,9 +502,9 @@ jobs:
               # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
               # of installed CMake files
               cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
-              cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake | sed 's/\/Users\/runner\/work\/QEverCloud\/QEverCloud\/build\/installdir/\/Users\/runner\/work\/libquentier\/qevercloud_master/g' > /tmp/i.txt
-              rm QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
-              mv /tmp/i.txt QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
+              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
+              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_master|g'
+              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
             else
               echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
@@ -534,9 +534,9 @@ jobs:
               # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
               # of installed CMake files
               cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
-              cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake | sed 's/\/Users\/runner\/work\/QEverCloud\/QEverCloud\/build\/installdir/\/Users\/runner\/work\/libquentier\/qevercloud_development/g' > /tmp/i.txt
-              rm QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
-              mv /tmp/i.txt QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
+              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
+              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g'
+              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
             else
               echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
               git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_src
