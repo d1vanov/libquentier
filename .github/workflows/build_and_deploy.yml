@@ -479,7 +479,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_master'
-          key: ${{ runner.os }}-qevercloud-master-2
+          key: ${{ runner.os }}-qevercloud-master-3
         if: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development') }}
 
       - name: Cache QEverCloud development
@@ -487,71 +487,43 @@ jobs:
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_development'
-          key: ${{ runner.os }}-qevercloud-development-2
+          key: ${{ runner.os }}-qevercloud-development-3
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
 
-      - name: Download or build QEverCloud master
-        id: download_or_build_qevercloud_master
+      - name: Build QEverCloud master
+        id: build_qevercloud_master
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master)" ]; then
-            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
-            if [ -f QEverCloud_macos_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous-master release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_master x QEverCloud_macos_x86_64.zip
-              # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
-              # of installed CMake files
-              cd $RUNNER_WORKSPACE/qevercloud_master/lib/cmake/QEverCloud-qt5
-              export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
-              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_master|g' QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
-              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-            else
-              echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
-              cd qevercloud_master_src
-              git checkout master
-              mkdir build
-              cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
-              cmake --build . --target all
-              cmake --build . --target check
-              cmake --build . --target install
-            fi
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
+            cd qevercloud_master_src
+            git checkout master
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
           fi
         if: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development') }}
         shell: bash
 
-      - name: Download or build QEverCloud development
-        id: download_or_build_qevercloud_development
+      - name: Build QEverCloud development
+        id: Build_qevercloud_development
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
           if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development)" ]; then
-            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_macos_x86_64.zip -o QEverCloud_macos_x86_64.zip || true
-            if [ -f QEverCloud_macos_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous-development release"
-              7z -o$RUNNER_WORKSPACE/qevercloud_development x QEverCloud_macos_x86_64.zip
-              # Workaround for QEverCloud bug: for some reason on macOS absolute path gets hardcoded in one
-              # of installed CMake files
-              cd $RUNNER_WORKSPACE/qevercloud_development/lib/cmake/QEverCloud-qt5
-              export PATH="$(brew --prefix)/opt/gnu-sed/libexec/gnubin:$PATH"
-              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake before the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-              sed -i.bak 's|/Users/runner/work/QEverCloud/QEverCloud/build/installdir|/Users/runner/work/libquentier/qevercloud_development|g' QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake
-              echo "Contents of QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake after the replacement: $(cat QEverCloud-qt5LibraryDepends-relwithdebinfo.cmake)"
-            else
-              echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_src
-              cd qevercloud_development_src
-              git checkout development
-              mkdir build
-              cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
-              cmake --build . --target all
-              cmake --build . --target check
-              cmake --build . --target install
-            fi
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_src
+            cd qevercloud_development_src
+            git checkout development
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
           fi
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
         shell: bash
