@@ -8,27 +8,57 @@
 #  LIBQUENTIER_HAS_NOTE_EDITOR - Boolean set to true if libquentier was built with NoteEditor
 
 # Compute paths
-get_filename_component(LIBQUENTIER_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-if(EXISTS "${LIBQUENTIER_CMAKE_DIR}/CMakeCache.txt")
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/CMakeCache.txt")
   # in build tree
-  include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@BuildTreeSettings.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@BuildTreeSettings.cmake")
 else()
-  set(LIBQUENTIER_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
+  function(_libquentier_find_prefix_dir _libquentier_prefix_dir)
+    set(current_dir "${CMAKE_CURRENT_LIST_DIR}")
+    set(parent_dir "")
+    while(1)
+      get_filename_component(parent_dir ${current_dir} DIRECTORY)
+      if ("${parent_dir}" STREQUAL "${current_dir}")
+        break()
+      endif()
+
+      set(parent_dir_len "0")
+      string(LENGTH "${parent_dir}" parent_dir_len)
+      if ("${parent_dir_len}" STREQUAL "0")
+        break()
+      endif()
+
+      if(EXISTS "${parent_dir}/@CMAKE_INSTALL_INCLUDEDIR@/quentier/utility/ApplicationSettings.h")
+        set(_libquentier_prefix_dir "${parent_dir}" PARENT_SCOPE)
+        return()
+      endif()
+
+      set(current_dir "${parent_dir}")
+    endwhile()
+  endfunction()
+
+  set(_libquentier_prefix_dir "")
+  _libquentier_find_prefix_dir(_libquentier_prefix_dir)
+
+  if(_libquentier_prefix_dir)
+    set(LIBQUENTIER_INCLUDE_DIRS "${_libquentier_prefix_dir}/@CMAKE_INSTALL_INCLUDEDIR@")
+  else()
+    message(FATAL_ERROR "Failed to find libquentier prefix dir")
+  endif()
 endif()
 
 # Find the libquentier's Qt dependencies
-include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindPackageWrapperMacro.cmake")
-include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindQtDependencies.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindPackageWrapperMacro.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindQtDependencies.cmake")
 
 # libquentier library dependencies (contains definitions for IMPORTED targets)
-include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake")
 
 # find libquentier library dependencies being IMPORTED targets
-include("${LIBQUENTIER_CMAKE_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindOtherDependencies.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Libquentier-@LIBQUENTIER_QT_VERSION@FindOtherDependencies.cmake")
 
 # The following libraries are found via ad-hoc processing and don't have find_package scripts, processing them specifically
-include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindHunspell.cmake")
-include("${LIBQUENTIER_CMAKE_DIR}/LibquentierFindTidyHtml5.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindHunspell.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/LibquentierFindTidyHtml5.cmake")
 
 # These are IMPORTED targets created by Libquentier-@LIBQUENTIER_QT_VERSION@LibraryDepends.cmake
 set(LIBQUENTIER_LIBRARIES "lib@LIBQUENTIER_QT_VERSION@quentier@LIBQUENTIER_LIBNAME_SUFFIX@")
