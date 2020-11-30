@@ -29,7 +29,6 @@ jobs:
           - qt_version: '5.5.1'
             qtkeychain_cache_version: '1'
             tidy_html5_cache_version: '1'
-            qevercloud_cache_version: '1'
             compiler_c: 'gcc'
             compiler_cpp: 'g++'
           - qt_version: '5.5.1'
@@ -37,19 +36,16 @@ jobs:
             compiler_cpp: 'clang++'
             qtkeychain_cache_version: '1'
             tidy_html5_cache_version: '1'
-            qevercloud_cache_version: '1'
           - qt_version: '5.12.3'
             compiler_c: 'gcc'
             compiler_cpp: 'g++'
             qtkeychain_cache_version: '1'
             tidy_html5_cache_version: '1'
-            qevercloud_cache_version: '1'
           - qt_version: '5.12.3'
             compiler_c: 'clang'
             compiler_cpp: 'clang++'
             qtkeychain_cache_version: '1'
             tidy_html5_cache_version: '1'
-            qevercloud_cache_version: '1'
 
     steps:
       - uses: actions/checkout@v2
@@ -175,87 +171,126 @@ jobs:
           fi
         shell: bash
 
-      - name: Cache QEverCloud for Qt 5.5.1
-        id: cache_qevercloud_qt_old
+      - name: Cache QEverCloud master for Qt 5.5.1
+        id: cache_qevercloud_master_qt_old
         uses: actions/cache@v1
         with:
-          path: '${{ runner.workspace }}/qevercloud_qt_old'
-          key: ${{ runner.os }}-qevercloud-qt-old-${{ matrix.qevercloud_cache_version }}
-        if: ${{ matrix.qt_version == '5.5.1' }}
+          path: '${{ runner.workspace }}/qevercloud_master_qt_old'
+          key: ${{ runner.os }}-qevercloud-master_qt-old-1
+        if: ${{ matrix.qt_version == '5.5.1' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
 
-      - name: Build QEverCloud for Qt 5.5.1
-        id: build_qevercloud_qt_old
+      - name: Cache QEverCloud development for Qt 5.5.1
+        id: cache_qevercloud_development_qt_old
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qevercloud_development_qt_old'
+          key: ${{ runner.os }}-qevercloud-development_qt-old-1
+        if: ${{ matrix.qt_version == '5.5.1' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
+
+      - name: Build QEverCloud master for Qt 5.5.1
+        id: build_qevercloud_master_qt_old
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
-          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_qt_old" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_qt_old)" ]; then
-            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
-            cd qevercloud_src
-            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-              export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
-            else
-              export BRANCH_NAME=$GITHUB_BASE_REF
-            fi
-            if [ "$BRANCH_NAME" = "development" ]; then
-              git checkout development
-            else
-              git checkout master
-            fi
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master_qt_old" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master_qt_old)" ]; then
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_old_src
+            cd qevercloud_master_qt_old_src
+            git checkout master
             mkdir build
             cd build
-            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_qt_old -DUSE_QT5_WEBKIT=ON ..
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_old -DUSE_QT5_WEBKIT=ON ..
             cmake --build . --target all
             cmake --build . --target check
             cmake --build . --target install
           fi
-        if: ${{ matrix.qt_version == '5.5.1' }}
+        if: ${{ matrix.qt_version == '5.5.1' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: bash
 
-      - name: Cache QEverCloud for Qt 5.12.3
-        id: cache_qevercloud_qt_modern
-        uses: actions/cache@v1
-        with:
-          path: '${{ runner.workspace }}/qevercloud_qt_modern'
-          key: ${{ runner.os }}-qevercloud-qt-modern-${{ matrix.qevercloud_cache_version }}
-        if: ${{ matrix.qt_version == '5.12.3' }}
-
-      - name: Download or build QEverCloud for Qt 5.12.3
-        id: download_or_build_qevercloud_qt_modern
+      - name: Build QEverCloud development for Qt 5.5.1
+        id: build_qevercloud_development_qt_old
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
-          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_qt_modern" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_qt_modern)" ]; then
-            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-              export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
-            else
-              export BRANCH_NAME=$GITHUB_BASE_REF
-            fi
-            if [ "$BRANCH_NAME" = "development" ]; then
-              curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
-            else
-              curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
-            fi
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development_qt_old" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development_qt_old)" ]; then
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_old_src
+            cd qevercloud_development_qt_old_src
+            git checkout development
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_old -DUSE_QT5_WEBKIT=ON ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
+          fi
+        if: ${{ matrix.qt_version == '5.5.1' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
+        shell: bash
+
+      - name: Cache QEverCloud master for Qt 5.12.3
+        id: cache_qevercloud_master_qt_modern
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qevercloud_master_qt_modern'
+          key: ${{ runner.os }}-qevercloud-master_qt-modern-1
+        if: ${{ matrix.qt_version == '5.12.3' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
+
+      - name: Cache QEverCloud development Qt 5.12.3
+        id: cache_qevercloud_development_qt_modern
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qevercloud_development_qt_modern'
+          key: ${{ runner.os }}-qevercloud-development_qt-modern-1
+        if: ${{ matrix.qt_version == '5.12.3' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
+
+      - name: Download or build QEverCloud master for Qt 5.12.3
+        id: download_or_build_qevercloud_master_qt_modern
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master_qt_modern" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master_qt_modern)" ]; then
+            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-master/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
             if [ -f QEverCloud_linux_x86_64.zip ]; then
-              echo "Downloaded prebuilt QEverCloud from continuous release"
-              7z -o$RUNNER_WORKSPACE/qevvercloud_qt_modern x QEverCloud_linux_x86_64.zip
+              echo "Downloaded prebuilt QEverCloud from continuous-master release"
+              7z -o$RUNNER_WORKSPACE/qevercloud_master_qt_modern x QEverCloud_linux_x86_64.zip
             else
-              echo "Could not download prebuilt QEverCloud from continuous release, will build from source"
-              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
-              cd qevercloud_src
-              if [ "$BRANCH_NAME" = "development" ]; then
-                git checkout development
-              else
-                git checkout master
-              fi
+              echo "Could not download prebuilt QEverCloud from continuous-master release, will build from source"
+              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_qt_modern_src
+              cd qevercloud_master_qt_modern_src
+              git checkout master
               mkdir build
               cd build
-              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt512 ..
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt512 ..
               cmake --build . --target all
               cmake --build . --target check
               cmake --build . --target install
             fi
           fi
-        if: ${{ matrix.qt_version == '5.12.3' }}
+        if: ${{ matrix.qt_version == '5.12.3' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
+        shell: bash
+
+      - name: Download or build QEverCloud development for Qt 5.12.3
+        id: download_or_build_qevercloud_development_qt_modern
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development_qt_modern" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development_qt_modern)" ]; then
+            curl -fsSL https://github.com/d1vanov/QEverCloud/releases/download/continuous-development/QEverCloud_linux_x86_64.zip -o QEverCloud_linux_x86_64.zip || true
+            if [ -f QEverCloud_linux_x86_64.zip ]; then
+              echo "Downloaded prebuilt QEverCloud from continuous-development release"
+              7z -o$RUNNER_WORKSPACE/qevercloud_development_qt_modern x QEverCloud_linux_x86_64.zip
+            else
+              echo "Could not download prebuilt QEverCloud from continuous-development release, will build from source"
+              git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_qt_modern_src
+              cd qevercloud_development_qt_modern_src
+              git checkout development
+              mkdir build
+              cd build
+              cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development_qt_modern -DCMAKE_PREFIX_PATH=/opt/qt512 ..
+              cmake --build . --target all
+              cmake --build . --target check
+              cmake --build . --target install
+            fi
+          fi
+        if: ${{ matrix.qt_version == '5.12.3' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
         shell: bash
 
       - name: Configure for gcc and Qt 5.5.1
@@ -265,11 +300,21 @@ jobs:
         run: |
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_old
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_old
+          fi
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_C_COMPILER=/usr/bin/gcc \
             -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DUSE_QT5_WEBKIT=ON \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_old/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud_qt_old/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
             -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.5.1' }}
@@ -280,11 +325,21 @@ jobs:
         run: |
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_modern
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_modern
+          fi
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_C_COMPILER=/usr/bin/gcc \
             -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_PREFIX_PATH=/opt/qt512 \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_modern/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud_qt_modern/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
             -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.12.3' }}
@@ -295,11 +350,21 @@ jobs:
         run: |
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_old
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_old
+          fi
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_C_COMPILER=/usr/bin/clang \
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DUSE_QT5_WEBKIT=ON \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_old/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud_qt_old/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
             -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
         if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.5.1' }}
@@ -310,11 +375,21 @@ jobs:
         run: |
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development_qt_modern
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master_qt_modern
+          fi
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir -DCMAKE_C_COMPILER=/usr/bin/clang \
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/qt512 \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_modern/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud_qt_modern/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
             -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
         if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.12.3' }}
@@ -397,30 +472,60 @@ jobs:
           brew install tidy-html5 --force-bottle
           brew install openssl@1.1 --force-bottle
           brew install boost --force-bottle
+          brew install gnu-sed --force-bottle
 
-      - name: Build QEverCloud
-        id: build_qevercloud
+      - name: Cache QEverCloud master
+        id: cache_qevercloud_master
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qevercloud_master'
+          key: ${{ runner.os }}-qevercloud-master-3
+        if: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development') }}
+
+      - name: Cache QEverCloud development
+        id: cache_qevercloud_development
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/qevercloud_development'
+          key: ${{ runner.os }}-qevercloud-development-3
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
+
+      - name: Build QEverCloud master
+        id: build_qevercloud_master
         env:
           RUNNER_WORKSPACE: ${{ runner.workspace }}
         run: |
-          git clone https://github.com/d1vanov/QEverCloud.git qevercloud_src
-          cd qevercloud_src
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
-          else
-            export BRANCH_NAME=$GITHUB_BASE_REF
-          fi
-          if [ "$BRANCH_NAME" = "development" ]; then
-            git checkout development
-          else
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_master" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_master)" ]; then
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_master_src
+            cd qevercloud_master_src
             git checkout master
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_master -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
           fi
-          mkdir build
-          cd build
-          cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
-          cmake --build . --target all
-          cmake --build . --target check
-          cmake --build . --target install
+        if: ${{ (github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development') }}
+        shell: bash
+
+      - name: Build QEverCloud development
+        id: Build_qevercloud_development
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if [ ! -d "$RUNNER_WORKSPACE/qevercloud_development" ] || [ -z "$(ls -A $RUNNER_WORKSPACE/qevercloud_development)" ]; then
+            git clone https://github.com/d1vanov/QEverCloud.git qevercloud_development_src
+            cd qevercloud_development_src
+            git checkout development
+            mkdir build
+            cd build
+            cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$RUNNER_WORKSPACE/qevercloud_development -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 ..
+            cmake --build . --target all
+            cmake --build . --target check
+            cmake --build . --target install
+          fi
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development') }}
         shell: bash
 
       - name: Configure
@@ -430,9 +535,19 @@ jobs:
         run: |
           mkdir $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            export BRANCH_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
+          else
+            export BRANCH_NAME=$GITHUB_BASE_REF
+          fi
+          if [ "$BRANCH_NAME" = "development" ]; then
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_development
+          else
+            export QEVERCLOUD_DIR=$RUNNER_WORKSPACE/qevercloud_master
+          fi
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
-            -DQEverCloud-qt5_DIR=$RUNNER_WORKSPACE/qevercloud/lib/cmake/QEverCloud-qt5 \
+            -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
             -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
             -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             ..
@@ -1193,8 +1308,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Linux artifact to continuous development release
         id: upload_linux_artifact_to_continuous_development_release
@@ -1202,8 +1329,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload macOS artifact to continuous master release
         id: upload_macos_artifact_to_continuous_master_release
@@ -1211,8 +1350,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload macOS artifact to continuous development release
         id: upload_macos_artifact_to_continuous_development_release
@@ -1220,8 +1371,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to continuous master release
         id: upload_windows_x86_artifact_to_continuous_master_release
@@ -1229,8 +1392,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier_windows_x86.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to continuous development release
         id: upload_windows_x86_artifact_to_continuous_development_release
@@ -1238,8 +1413,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier_windows_x86.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to continuous master release
         id: upload_windows_x64_artifact_to_continuous_master_release
@@ -1247,8 +1434,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber continuous-master /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-master /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to continuous development release
         id: upload_windows_x64_artifact_to_continuous_development_release
@@ -1256,8 +1455,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber continuous-development /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber continuous-development /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref == 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Linux artifact to tagged release
         id: upload_linux_artifact_to_tagged_release
@@ -1266,8 +1477,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_linux.zip /tmp/libquentier_linux_x86_64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_linux_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload macOS artifact to tagged release
         id: upload_macos_artifact_to_tagged_release
@@ -1276,8 +1499,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_macos.zip /tmp/libquentier_macos_x86_64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_macos_x86_64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x86 artifact to tagged release
         id: upload_windows_x86_artifact_to_tagged_release
@@ -1286,8 +1521,20 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x86.zip /tmp/libquentier.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x86.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
 
       - name: Upload Windows x64 artifact to tagged release
         id: upload_windows_x64_artifact_to_tagged_release
@@ -1296,5 +1543,17 @@ jobs:
         run: |
           export TAG_NAME=$(echo $GITHUB_REF | sed 's/.*\/\(.*\)$/\1/')
           mv $GITHUB_WORKSPACE/artifacts/libquentier_windows_x64.zip /tmp/libquentier_windows_x64.zip
-          gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier
+          for i in 0..3
+          do
+            export UPLOADED=0
+            gh release upload --clobber ${TAG_NAME} /tmp/libquentier_windows_x64.zip -R d1vanov/libquentier && export UPLOADED=1 || true
+            if [ "$UPLOADED" = "1" ]; then
+              break
+            fi
+          done
+          if [ "$UPLOADED" != "1" ]; then
+            echo "Failed to upload artifact to release"
+            exit 1
+          fi
         if: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/development' }}
+        shell: bash
