@@ -472,7 +472,6 @@ jobs:
           brew install tidy-html5 --force-bottle
           brew install openssl@1.1 --force-bottle
           brew install boost --force-bottle
-          brew install gnu-sed --force-bottle
 
       - name: Cache QEverCloud master
         id: cache_qevercloud_master
