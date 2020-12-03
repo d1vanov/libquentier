@@ -18,22 +18,50 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
     message(FATAL_ERROR "Can't find development headers for tidy-html5 library: tidyplatform.h is missing; found include dir is ${TIDY_HTML5_INCLUDE_DIR}")
   endif()
 
-  find_library(TIDY_HTML5_LIBRARIES
-    NAMES
-    libtidy5.so libtidy5.dylib libtidy5.a libtidy5.dll.a libtidy5.lib libtidy5s.lib
-    tidy5.so tidy5.dylib tidy5.a tidy5.dll.a tidy5.lib tidy5s.lib
-    libtidy.so libtidy.dylib libtidy.a libtidy.dll.a libtidy.lib libtidys.lib
-    tidy.so tidy.dylib tidy.a tidy.dll.a tidy.lib tidys.lib
-    PATHS ${TIDY_HTML5_ROOT} ${CMAKE_PREFIX_PATH}
-    PATH_SUFFIXES lib)
+  if(MSVC)
+    find_library(TIDY_HTML5_IMPORT_LIBRARY
+      NAMES
+      tidys.lib
+      PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib)
 
-  if(NOT TIDY_HTML5_LIBRARIES)
-    message(FATAL_ERROR "Can't find tidy-html5 library")
+    if(NOT TIDY_HTML5_IMPORT_LIBRARY)
+      message(FATAL_ERROR "Can't find tidy-html5 import library")
+    endif()
+
+    get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_IMPORT_LIBRARY}" DIRECTORY)
+    get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_IMPORT_LIBRARY}" NAME)
+  else()
+    find_library(TIDY_HTML5_SHARED_LIBRARY
+      NAMES
+      libtidy.so libtidy.dylib
+      PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib)
+
+    if(NOT TIDY_HTML5_SHARED_LIBRARY)
+      message(FATAL_ERROR "Can't find tidy-html5 shared library")
+    endif()
+
+    get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_SHARED_LIBRARY}" DIRECTORY)
+    get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_SHARED_LIBRARY}" NAME)
   endif()
+
+  add_library(tidy_html5 SHARED IMPORTED)
+  if(MSVC)
+    set_target_properties(tidy_html5 PROPERTIES
+      IMPORTED_IMPLIB ${TIDY_HTML5_IMPORT_LIBRARY}
+    )
+  else()
+    set_target_properties(tidy_html5 PROPERTIES
+      IMPORTED_LOCATION ${TIDY_HTML5_SHARED_LIBRARY}
+    )
+  endif()
+
+  set(TIDY_HTML5_LIBRARIES "tidy_html5")
+else()
+  get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_LIBRARIES}" DIRECTORY)
+  get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_LIBRARIES}" NAME)
 endif()
 
-message(STATUS "Found tidy-html5 library: ${TIDY_HTML5_LIBRARIES}")
+message(STATUS "Found tidy-html5 library: ${TIDY_HTML5_LIB_DIR}/${TIDY_HTML5_LIB_NAME}")
 include_directories(${TIDY_HTML5_INCLUDE_DIR})
 
-get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_LIBRARIES}" PATH)
 set(TIDY_HTML5_FOUND TRUE)
