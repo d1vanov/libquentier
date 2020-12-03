@@ -21,8 +21,7 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
   find_library(TIDY_HTML5_SHARED_LIBRARY
     NAMES
     libtidy.so libtidy.dylib tidy.dll
-    PATHS ${TIDY_HTML5_ROOT}/bin ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/bin ${CMAKE_PREFIX_PATH}/lib $ENV{PATH}
-    PATH_SUFFIXES lib)
+    PATHS ${TIDY_HTML5_ROOT}/bin ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/bin ${CMAKE_PREFIX_PATH}/lib)
 
   if(NOT TIDY_HTML5_SHARED_LIBRARY)
     message(FATAL_ERROR "Can't find tidy-html5 shared library")
@@ -35,7 +34,7 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
     find_library(TIDY_HTML5_IMPORT_LIBRARY
       NAMES
       tidys.lib
-      PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib) $ENV{LIB}
+      PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib)
 
     if(NOT TIDY_HTML5_IMPORT_LIBRARY)
       message(FATAL_ERROR "Can't find tidy-html5 static library")
