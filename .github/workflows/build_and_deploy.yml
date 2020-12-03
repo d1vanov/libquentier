@@ -315,8 +315,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DUSE_QT5_WEBKIT=ON \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_old/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
-            -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
+            -DTIDY_HTML5_ROOT=$RUNNER_WORKSPACE/tidy_html5 \
+            ..
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.5.1' }}
         shell: bash
 
@@ -340,8 +340,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_PREFIX_PATH=/opt/qt512 \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_modern/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
-            -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
+            -DTIDY_HTML5_ROOT=$RUNNER_WORKSPACE/tidy_html5 \
+            ..
         if: ${{ matrix.compiler_cpp == 'g++' && matrix.qt_version == '5.12.3' }}
         shell: bash
 
@@ -365,8 +365,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DUSE_QT5_WEBKIT=ON \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_old/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
-            -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
+            -DTIDY_HTML5_ROOT=$RUNNER_WORKSPACE/tidy_html5 \
+            ..
         if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.5.1' }}
         shell: bash
 
@@ -390,8 +390,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/qt512 \
             -DQt5Keychain_DIR=$RUNNER_WORKSPACE/qtkeychain_qt_modern/lib/x86_64-linux-gnu/cmake/Qt5Keychain \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_INCLUDE_DIR=$RUNNER_WORKSPACE/tidy_html5/include \
-            -DTIDY_HTML5_LIBRARIES=$RUNNER_WORKSPACE/tidy_html5/lib/libtidy.so ..
+            -DTIDY_HTML5_ROOT=$RUNNER_WORKSPACE/tidy_html5 \
+            ..
         if: ${{ matrix.compiler_cpp == 'clang++' && matrix.qt_version == '5.12.3' }}
         shell: bash
 
@@ -547,8 +547,7 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
-            -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
+            -DTIDY_HTML5_ROOT=/usr/local/opt/tidy-html5 \
             ..
         shell: bash
 
