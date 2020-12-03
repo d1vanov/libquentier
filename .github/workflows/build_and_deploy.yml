@@ -53,7 +53,19 @@ jobs:
       - name: Install non-Qt dependencies
         id: install_non_qt_deps
         run: |
-          sudo apt-get -qq install cmake ninja-build p7zip-full coreutils curl libxml2-dev libboost-dev libssl-dev libhunspell-dev xvfb xorg openbox
+          for i in 0..5
+          do
+            export INSTALLED_DEPS=0
+            sudo apt-get -qq install cmake ninja-build p7zip-full coreutils curl libxml2-dev libboost-dev libssl-dev libhunspell-dev xvfb
+            if [ "$INSTALLED_DEPS" = "1" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ "$INSTALLED_DEPS" != "1" ]; then
+            echo "Failed to install non-Qt dependencies"
+            exit 1
+          fi
 
       - name: Fetch clang-format
         id: fetch_clang_format
