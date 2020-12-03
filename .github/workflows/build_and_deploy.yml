@@ -559,7 +559,8 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$(pwd)/installdir \
             -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5 -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl \
             -DQEverCloud-qt5_DIR=$QEVERCLOUD_DIR/lib/cmake/QEverCloud-qt5 \
-            -DTIDY_HTML5_ROOT=/usr/local/opt/tidy-html5 \
+            -DTIDY_HTML5_INCLUDE_DIR=/usr/local/opt/tidy-html5/include \
+            -DTIDY_HTML5_LIBRARIES=/usr/local/opt/tidy-html5/lib/libtidy.dylib \
             ..
         shell: bash
 
