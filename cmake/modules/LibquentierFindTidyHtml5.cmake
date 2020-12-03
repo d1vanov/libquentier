@@ -18,18 +18,6 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
     message(FATAL_ERROR "Can't find development headers for tidy-html5 library: tidyplatform.h is missing; found include dir is ${TIDY_HTML5_INCLUDE_DIR}")
   endif()
 
-  find_library(TIDY_HTML5_SHARED_LIBRARY
-    NAMES
-    libtidy.so libtidy.dylib tidy.dll
-    PATHS ${TIDY_HTML5_ROOT}/bin ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/bin ${CMAKE_PREFIX_PATH}/lib)
-
-  if(NOT TIDY_HTML5_SHARED_LIBRARY)
-    message(FATAL_ERROR "Can't find tidy-html5 shared library")
-  endif()
-
-  get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_SHARED_LIBRARY}" DIRECTORY)
-  get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_SHARED_LIBRARY}" NAME)
-
   if(MSVC)
     find_library(TIDY_HTML5_IMPORT_LIBRARY
       NAMES
@@ -37,18 +25,33 @@ if(NOT TIDY_HTML5_INCLUDE_DIR AND NOT TIDY_HTML5_LIBRARIES)
       PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib)
 
     if(NOT TIDY_HTML5_IMPORT_LIBRARY)
-      message(FATAL_ERROR "Can't find tidy-html5 static library")
+      message(FATAL_ERROR "Can't find tidy-html5 import library")
     endif()
+
+    get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_IMPORT_LIBRARY}" DIRECTORY)
+    get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_IMPORT_LIBRARY}" NAME)
+  else()
+    find_library(TIDY_HTML5_SHARED_LIBRARY
+      NAMES
+      libtidy.so libtidy.dylib
+      PATHS ${TIDY_HTML5_ROOT}/lib ${CMAKE_PREFIX_PATH}/lib)
+
+    if(NOT TIDY_HTML5_SHARED_LIBRARY)
+      message(FATAL_ERROR "Can't find tidy-html5 shared library")
+    endif()
+
+    get_filename_component(TIDY_HTML5_LIB_DIR "${TIDY_HTML5_SHARED_LIBRARY}" DIRECTORY)
+    get_filename_component(TIDY_HTML5_LIB_NAME "${TIDY_HTML5_SHARED_LIBRARY}" NAME)
   endif()
 
   add_library(tidy_html5 SHARED IMPORTED)
-  set_target_properties(tidy_html5 PROPERTIES
-    IMPORTED_LOCATION ${TIDY_HTML5_SHARED_LIBRARY}
-  )
-
   if(MSVC)
     set_target_properties(tidy_html5 PROPERTIES
       IMPORTED_IMPLIB ${TIDY_HTML5_IMPORT_LIBRARY}
+    )
+  else()
+    set_target_properties(tidy_html5 PROPERTIES
+      IMPORTED_LOCATION ${TIDY_HTML5_SHARED_LIBRARY}
     )
   endif()
 
