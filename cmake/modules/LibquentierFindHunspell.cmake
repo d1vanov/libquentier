@@ -21,6 +21,15 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
   if(NOT HUNSPELL_LIBRARIES)
     message(FATAL_ERROR "Can't find hunspell library")
   endif()
+
+  add_library(Hunspell::Libhunspell SHARED IMPORTED)
+  if(MSVC)
+    set_target_properties(Hunspell::Libhunspell PROPERTIES
+      IMPORTED_IMPLIB ${HUNSPELL_LIBRARIES})
+  else()
+    set_target_properties(Hunspell::Libhunspell PROPERTIES
+      IMPORTED_LOCATION ${HUNSPELL_LIBRARIES})
+  endif()
 endif()
 
 message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
