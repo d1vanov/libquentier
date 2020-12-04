@@ -661,7 +661,7 @@ jobs:
       - name: Cache QEverCloud master x86
         id: cache_qevercloud_master_x86
         env:
-          QEVERCLOUD_CACHE_VERSION: '1'
+          QEVERCLOUD_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_win_master_x86'
@@ -679,28 +679,28 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x86
           if %QEVERCLOUD_CACHED%==0 set QEVERCLOUD_DOWNLOADED=0
           if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x86.zip set QEVERCLOUD_DOWNLOADED=1
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 echo "Downloaded prebuilt x86 QEverCloud from master branch"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 7z x QEverCloud_windows_x86.zip
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 echo "Could not download prebuilt x86 QEverCloud from master branch, will build from source"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git checkout master
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x86\Qt\5.12.9\win32_msvc2017"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_master_x86" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target all
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target check
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target install
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" echo "Downloaded prebuilt x86 QEverCloud from master branch"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" 7z x QEverCloud_windows_x86.zip
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" echo "Could not download prebuilt x86 QEverCloud from master branch, will build from source"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\qevercloud_win_master_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git checkout master
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x86\Qt\5.12.9\win32_msvc2017"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_master_x86" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target all
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target check
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target install
         if: ${{ matrix.target_arch == 'x86' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: cmd
 
       - name: Cache QEverCloud development x86
         id: cache_qevercloud_development_x86
         env:
-          QEVERCLOUD_CACHE_VERSION: '1'
+          QEVERCLOUD_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_x86'
@@ -718,21 +718,21 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x86
           if %QEVERCLOUD_CACHED%==0 set QEVERCLOUD_DOWNLOADED=0
           if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x86.zip set QEVERCLOUD_DOWNLOADED=1
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 echo "Downloaded prebuilt x86 QEverCloud from development branch"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 7z x QEverCloud_windows_x86.zip
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 echo "Could not download prebuilt x86 QEverCloud from development branch, will build from source"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git checkout development
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x86\Qt\5.12.9\win32_msvc2017"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_development_x86" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target all
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target check
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target install
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" echo "Downloaded prebuilt x86 QEverCloud from development branch"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" 7z x QEverCloud_windows_x86.zip
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" echo "Could not download prebuilt x86 QEverCloud from development branch, will build from source"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\qevercloud_win_development_x86_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git checkout development
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x86\Qt\5.12.9\win32_msvc2017"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_development_x86" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target all
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target check
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target install
         if: ${{ matrix.target_arch == 'x86' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
         shell: cmd
 
@@ -877,7 +877,7 @@ jobs:
       - name: Cache QEverCloud master x64
         id: cache_qevercloud_master_x64
         env:
-          QEVERCLOUD_CACHE_VERSION: '1'
+          QEVERCLOUD_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_win_master_x64'
@@ -895,28 +895,28 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x64
           if %QEVERCLOUD_CACHED%==0 set QEVERCLOUD_DOWNLOADED=0
           if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x64.zip set QEVERCLOUD_DOWNLOADED=1
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 echo "Downloaded prebuilt x64 QEverCloud from master branch"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 7z x QEverCloud_windows_x64.zip
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 echo "Could not download prebuilt x64 QEverCloud from master branch, will build from source"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git checkout master
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x64\Qt\5.12.9\win64_msvc2017_x64"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_master_x64" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target all
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target check
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target install
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" echo "Downloaded prebuilt x64 QEverCloud from master branch"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" 7z x QEverCloud_windows_x64.zip
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" echo "Could not download prebuilt x64 QEverCloud from master branch, will build from source"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\qevercloud_win_master_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git checkout master
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x64\Qt\5.12.9\win64_msvc2017_x64"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_master_x64" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target all
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target check
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target install
         if: ${{ matrix.target_arch == 'x64' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: cmd
 
       - name: Cache QEverCloud development x64
         id: cache_qevercloud_development_x64
         env:
-          QEVERCLOUD_CACHE_VERSION: '1'
+          QEVERCLOUD_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/qevercloud_win_development_x64'
@@ -934,21 +934,21 @@ jobs:
           if %QEVERCLOUD_CACHED%==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x64
           if %QEVERCLOUD_CACHED%==0 set QEVERCLOUD_DOWNLOADED=0
           if %QEVERCLOUD_CACHED%==0 if exist QEverCloud_windows_x64.zip set QEVERCLOUD_DOWNLOADED=1
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 echo "Downloaded prebuilt x64 QEverCloud from development branch"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==1 7z x QEverCloud_windows_x64.zip
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 echo "Could not download prebuilt x64 QEverCloud from development branch, will build from source"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 git checkout development
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 mkdir build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cd build
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x64\Qt\5.12.9\win64_msvc2017_x64"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_development_x64" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target all
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target check
-          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"==0 cmake --build . --target install
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" echo "Downloaded prebuilt x64 QEverCloud from development branch"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="1" 7z x QEverCloud_windows_x64.zip
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" echo "Could not download prebuilt x64 QEverCloud from development branch, will build from source"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git clone https://github.com/d1vanov/QEverCloud.git %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd %RUNNER_WORKSPACE%\qevercloud_win_development_x64_src
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" git checkout development
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" mkdir build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cd build
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" set CMAKE_PREFIX_PATH="%RUNNER_WORKSPACE%\Qt_x64\Qt\5.12.9\win64_msvc2017_x64"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%RUNNER_WORKSPACE%\qevercloud_win_development_x64" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" ..
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target all
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target check
+          if %QEVERCLOUD_CACHED%==0 if "%QEVERCLOUD_DOWNLOADED%"=="0" cmake --build . --target install
         if: ${{ matrix.target_arch == 'x64' && ((github.event_name == 'push' && github.ref == 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref == 'development')) }}
         shell: cmd
 
