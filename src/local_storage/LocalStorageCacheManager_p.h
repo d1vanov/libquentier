@@ -19,20 +19,16 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 
+#include <qevercloud/generated/types/LinkedNotebook.h>
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/generated/types/SavedSearch.h>
+#include <qevercloud/generated/types/Tag.h>
+
 #include <quentier/local_storage/LocalStorageCacheManager.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/Tag.h>
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/SuppressWarnings.h>
-
-SAVE_WARNINGS
-// clang-format off
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-// clang-format on
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -40,8 +36,6 @@ GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-
-RESTORE_WARNINGS
 
 #include <memory>
 
@@ -59,66 +53,88 @@ public:
     bool empty() const;
 
     // Notes cache
-    size_t numCachedNotes() const;
-    void cacheNote(const Note & note);
-    void expungeNote(const Note & note);
+    [[nodiscard]] std::size_t numCachedNotes() const;
+    void cacheNote(const qevercloud::Note & note);
+    void expungeNote(const qevercloud::Note & note);
 
-    const Note * findNoteByLocalUid(const QString & localUid) const;
-    const Note * findNoteByGuid(const QString & guid) const;
+    [[nodiscard]] const qevercloud::Note * findNoteByLocalUid(
+        const QString & localUid) const;
+
+    [[nodiscard]] const qevercloud::Note * findNoteByGuid(
+        const QString & guid) const;
 
     void clearAllNotes();
 
     // Resources cache
-    size_t numCachedResources() const;
-    void cacheResource(const Resource & resource);
-    void expungeResource(const Resource & resource);
+    [[nodiscard]] std::size_t numCachedResources() const;
+    void cacheResource(const qevercloud::Resource & resource);
+    void expungeResource(const qevercloud::Resource & resource);
 
-    const Resource * findResourceByLocalUid(const QString & localUid) const;
-    const Resource * findResourceByGuid(const QString & guid) const;
+    [[nodiscard]] const qevercloud::Resource * findResourceByLocalUid(
+        const QString & localUid) const;
+
+    [[nodiscard]] const qevercloud::Resource * findResourceByGuid(
+        const QString & guid) const;
 
     void clearAllResources();
 
     // Notebooks cache
-    size_t numCachedNotebooks() const;
-    void cacheNotebook(const Notebook & notebook);
-    void expungeNotebook(const Notebook & notebook);
+    [[nodiscard]] std::size_t numCachedNotebooks() const;
+    void cacheNotebook(const qevercloud::Notebook & notebook);
+    void expungeNotebook(const qevercloud::Notebook & notebook);
 
-    const Notebook * findNotebookByLocalUid(const QString & localUid) const;
-    const Notebook * findNotebookByGuid(const QString & guid) const;
-    const Notebook * findNotebookByName(const QString & name) const;
+    [[nodiscard]] const qevercloud::Notebook * findNotebookByLocalUid(
+        const QString & localUid) const;
+
+    [[nodiscard]] const qevercloud::Notebook * findNotebookByGuid(
+        const QString & guid) const;
+
+    [[nodiscard]] const qevercloud::Notebook * findNotebookByName(
+        const QString & name) const;
 
     void clearAllNotebooks();
 
     // Tags cache
-    size_t numCachedTags() const;
-    void cacheTag(const Tag & tag);
-    void expungeTag(const Tag & tag);
+    [[nodiscard]] std::size_t numCachedTags() const;
+    void cacheTag(const qevercloud::Tag & tag);
+    void expungeTag(const qevercloud::Tag & tag);
 
-    const Tag * findTagByLocalUid(const QString & localUid) const;
-    const Tag * findTagByGuid(const QString & guid) const;
-    const Tag * findTagByName(const QString & name) const;
+    [[nodiscard]] const qevercloud::Tag * findTagByLocalUid(
+        const QString & localUid) const;
+
+    [[nodiscard]] const qevercloud::Tag * findTagByGuid(
+        const QString & guid) const;
+
+    [[nodiscard]] const qevercloud::Tag * findTagByName(
+        const QString & name) const;
 
     void clearAllTags();
 
     // Linked notebooks cache
-    size_t numCachedLinkedNotebooks() const;
-    void cacheLinkedNotebook(const LinkedNotebook & linkedNotebook);
-    void expungeLinkedNotebook(const LinkedNotebook & linkedNotebook);
+    [[nodiscard]] std::size_t numCachedLinkedNotebooks() const;
+    void cacheLinkedNotebook(const qevercloud::LinkedNotebook & linkedNotebook);
 
-    const LinkedNotebook * findLinkedNotebookByGuid(const QString & guid) const;
+    void expungeLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook);
+
+    [[nodiscard]] const qevercloud::LinkedNotebook * findLinkedNotebookByGuid(
+        const QString & guid) const;
 
     void clearAllLinkedNotebooks();
 
     // Saved searches cache
-    size_t numCachedSavedSearches() const;
-    void cacheSavedSearch(const SavedSearch & savedSearch);
-    void expungeSavedSearch(const SavedSearch & savedSearch);
+    [[nodiscard]] std::size_t numCachedSavedSearches() const;
+    void cacheSavedSearch(const qevercloud::SavedSearch & savedSearch);
+    void expungeSavedSearch(const qevercloud::SavedSearch & savedSearch);
 
-    const SavedSearch * findSavedSearchByLocalUid(
+    [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByLocalUid(
         const QString & localUid) const;
 
-    const SavedSearch * findSavedSearchByGuid(const QString & guid) const;
-    const SavedSearch * findSavedSearchByName(const QString & name) const;
+    [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByGuid(
+        const QString & guid) const;
+
+    [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByName(
+        const QString & name) const;
 
     void clearAllSavedSearches();
 
@@ -127,40 +143,39 @@ public:
 
     LocalStorageCacheManager * q_ptr;
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
-    class NoteHolder : public Printable
+    class NoteHolder final: public Printable
     {
     public:
         NoteHolder() = default;
-
         NoteHolder(const NoteHolder & other) = default;
         NoteHolder(NoteHolder && other) = default;
 
-        NoteHolder & operator=(const NoteHolder & other) = default;
-        NoteHolder & operator=(NoteHolder && other) = default;
+        [[nodiscard]] NoteHolder & operator=(const NoteHolder & other) = default;
+        [[nodiscard]] NoteHolder & operator=(NoteHolder && other) = default;
 
-        Note m_value;
+        qevercloud::Note m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString localUid() const
+        [[nodiscard]] QString localId() const
         {
-            return m_value.localUid();
+            return m_value.localId();
         }
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
         struct ByLastAccessTimestamp
         {};
 
-        struct ByLocalUid
+        struct ByLocalId
         {};
 
         struct ByGuid
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using NotesCache = boost::multi_index_container<
@@ -171,46 +186,45 @@ private:
                 boost::multi_index::member<
                     NoteHolder, qint64, &NoteHolder::m_lastAccessTimestamp>>,
             boost::multi_index::hashed_unique<
-                boost::multi_index::tag<NoteHolder::ByLocalUid>,
+                boost::multi_index::tag<NoteHolder::ByLocalId>,
                 boost::multi_index::const_mem_fun<
-                    NoteHolder, const QString, &NoteHolder::localUid>>,
+                    NoteHolder, QString, &NoteHolder::localId>>,
             // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    NoteHolder, const QString, &NoteHolder::guid>>>>;
+                    NoteHolder, QString, &NoteHolder::guid>>>>;
 
-    class ResourceHolder : public Printable
+    class ResourceHolder final: public Printable
     {
     public:
         ResourceHolder() = default;
-
         ResourceHolder(const ResourceHolder & other) = default;
         ResourceHolder(ResourceHolder && other) = default;
 
-        ResourceHolder & operator=(const ResourceHolder & other) = default;
-        ResourceHolder & operator=(ResourceHolder && other) = default;
+        [[nodiscard]] ResourceHolder & operator=(const ResourceHolder & other) = default;
+        [[nodiscard]] ResourceHolder & operator=(ResourceHolder && other) = default;
 
-        Resource m_value;
+        qevercloud::Resource m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString localUid() const
+        [[nodiscard]] QString localId() const
         {
-            return m_value.localUid();
+            return m_value.localId();
         }
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
         struct ByLastAccessTimestamp
         {};
 
-        struct ByLocalUid
+        struct ByLocalId
         {};
 
         struct ByGuid
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using ResourcesCache = boost::multi_index_container<
@@ -222,45 +236,44 @@ private:
                     ResourceHolder, qint64,
                     &ResourceHolder::m_lastAccessTimestamp>>,
             boost::multi_index::hashed_unique<
-                boost::multi_index::tag<ResourceHolder::ByLocalUid>,
+                boost::multi_index::tag<ResourceHolder::ByLocalId>,
                 boost::multi_index::const_mem_fun<
-                    ResourceHolder, const QString, &ResourceHolder::localUid>>,
+                    ResourceHolder, QString, &ResourceHolder::localId>>,
             // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<ResourceHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    ResourceHolder, const QString, &ResourceHolder::guid>>>>;
+                    ResourceHolder, QString, &ResourceHolder::guid>>>>;
 
-    class NotebookHolder : public Printable
+    class NotebookHolder final: public Printable
     {
     public:
         NotebookHolder() = default;
-
         NotebookHolder(const NotebookHolder & other) = default;
         NotebookHolder(NotebookHolder && other) = default;
 
-        NotebookHolder & operator=(const NotebookHolder & other) = default;
-        NotebookHolder & operator=(NotebookHolder && other) = default;
+        [[nodiscard]] NotebookHolder & operator=(const NotebookHolder & other) = default;
+        [[nodiscard]] NotebookHolder & operator=(NotebookHolder && other) = default;
 
-        Notebook m_value;
+        qevercloud::Notebook m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString localUid() const
+        [[nodiscard]] QString localId() const
         {
-            return m_value.localUid();
+            return m_value.localId();
         }
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
-        const QString nameUpper() const
+        [[nodiscard]] QString nameUpper() const
         {
-            return (m_value.hasName() ? m_value.name().toUpper() : QString());
+            return (m_value.name() ? m_value.name()->toUpper() : QString());
         }
 
         struct ByLastAccessTimestamp
         {};
 
-        struct ByLocalUid
+        struct ByLocalId
         {};
 
         struct ByGuid
@@ -269,7 +282,7 @@ private:
         struct ByName
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using NotebooksCache = boost::multi_index_container<
@@ -281,52 +294,50 @@ private:
                     NotebookHolder, qint64,
                     &NotebookHolder::m_lastAccessTimestamp>>,
             boost::multi_index::hashed_unique<
-                boost::multi_index::tag<NotebookHolder::ByLocalUid>,
+                boost::multi_index::tag<NotebookHolder::ByLocalId>,
                 boost::multi_index::const_mem_fun<
-                    NotebookHolder, const QString, &NotebookHolder::localUid>>,
+                    NotebookHolder, QString, &NotebookHolder::localId>>,
             // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    NotebookHolder, const QString, &NotebookHolder::guid>>,
+                    NotebookHolder, QString, &NotebookHolder::guid>>,
             // NOTE: non-unique for proper support of empty names and possible
             // name collisions due to linked notebooks
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookHolder::ByName>,
                 boost::multi_index::const_mem_fun<
-                    NotebookHolder, const QString,
-                    &NotebookHolder::nameUpper>>>>;
+                    NotebookHolder, QString, &NotebookHolder::nameUpper>>>>;
 
-    class TagHolder : public Printable
+    class TagHolder final: public Printable
     {
     public:
         TagHolder() = default;
-
         TagHolder(const TagHolder & other) = default;
         TagHolder(TagHolder && other) = default;
 
-        TagHolder & operator=(const TagHolder & other) = default;
-        TagHolder & operator=(TagHolder && other) = default;
+        [[nodiscard]] TagHolder & operator=(const TagHolder & other) = default;
+        [[nodiscard]] TagHolder & operator=(TagHolder && other) = default;
 
-        Tag m_value;
+        qevercloud::Tag m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString localUid() const
+        [[nodiscard]] QString localId() const
         {
-            return m_value.localUid();
+            return m_value.localId();
         }
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
-        const QString nameUpper() const
+        [[nodiscard]] QString nameUpper() const
         {
-            return (m_value.hasName() ? m_value.name().toUpper() : QString());
+            return (m_value.name() ? m_value.name()->toUpper() : QString());
         }
 
         struct ByLastAccessTimestamp
         {};
 
-        struct ByLocalUid
+        struct ByLocalId
         {};
 
         struct ByGuid
@@ -335,7 +346,7 @@ private:
         struct ByName
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using TagsCache = boost::multi_index_container<
@@ -346,39 +357,38 @@ private:
                 boost::multi_index::member<
                     TagHolder, qint64, &TagHolder::m_lastAccessTimestamp>>,
             boost::multi_index::hashed_unique<
-                boost::multi_index::tag<TagHolder::ByLocalUid>,
+                boost::multi_index::tag<TagHolder::ByLocalId>,
                 boost::multi_index::const_mem_fun<
-                    TagHolder, const QString, &TagHolder::localUid>>,
+                    TagHolder, QString, &TagHolder::localId>>,
             // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    TagHolder, const QString, &TagHolder::guid>>,
+                    TagHolder, QString, &TagHolder::guid>>,
             // NOTE: non-unique for proper support of empty names and possible
             // name collisions due to linked notebooks */
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagHolder::ByName>,
                 boost::multi_index::const_mem_fun<
-                    TagHolder, const QString, &TagHolder::nameUpper>>>>;
+                    TagHolder, QString, &TagHolder::nameUpper>>>>;
 
-    class LinkedNotebookHolder : public Printable
+    class LinkedNotebookHolder final: public Printable
     {
     public:
         LinkedNotebookHolder() = default;
-
         LinkedNotebookHolder(const LinkedNotebookHolder & other) = default;
         LinkedNotebookHolder(LinkedNotebookHolder && other) = default;
 
-        LinkedNotebookHolder & operator=(const LinkedNotebookHolder & other) =
-            default;
+        [[nodiscard]] LinkedNotebookHolder & operator=(
+            const LinkedNotebookHolder & other) = default;
 
-        LinkedNotebookHolder & operator=(LinkedNotebookHolder && other) =
-            default;
+        [[nodiscard]] LinkedNotebookHolder & operator=(
+            LinkedNotebookHolder && other) = default;
 
-        LinkedNotebook m_value;
+        qevercloud::LinkedNotebook m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
         struct ByLastAccessTimestamp
         {};
@@ -386,7 +396,7 @@ private:
         struct ByGuid
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using LinkedNotebooksCache = boost::multi_index_container<
@@ -401,41 +411,41 @@ private:
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    LinkedNotebookHolder, const QString,
+                    LinkedNotebookHolder, QString,
                     &LinkedNotebookHolder::guid>>>>;
 
-    class SavedSearchHolder : public Printable
+    class SavedSearchHolder final: public Printable
     {
     public:
         SavedSearchHolder() = default;
-
         SavedSearchHolder(const SavedSearchHolder & other) = default;
         SavedSearchHolder(SavedSearchHolder && other) = default;
 
-        SavedSearchHolder & operator=(const SavedSearchHolder & other) =
-            default;
+        [[nodiscard]] SavedSearchHolder & operator=(
+            const SavedSearchHolder & other) = default;
 
-        SavedSearchHolder & operator=(SavedSearchHolder && other) = default;
+        [[nodiscard]] SavedSearchHolder & operator=(SavedSearchHolder && other)
+            = default;
 
-        SavedSearch m_value;
+        qevercloud::SavedSearch m_value;
         qint64 m_lastAccessTimestamp = 0;
 
-        const QString localUid() const
+        [[nodiscard]] QString localId() const
         {
-            return m_value.localUid();
+            return m_value.localId();
         }
 
-        const QString guid() const;
+        [[nodiscard]] QString guid() const;
 
-        const QString nameUpper() const
+        [[nodiscard]] QString nameUpper() const
         {
-            return (m_value.hasName() ? m_value.name().toUpper() : QString());
+            return (m_value.name() ? m_value.name()->toUpper() : QString());
         }
 
         struct ByLastAccessTimestamp
         {};
 
-        struct ByLocalUid
+        struct ByLocalId
         {};
 
         struct ByGuid
@@ -444,7 +454,7 @@ private:
         struct ByName
         {};
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using SavedSearchesCache = boost::multi_index_container<
@@ -457,21 +467,21 @@ private:
                     SavedSearchHolder, qint64,
                     &SavedSearchHolder::m_lastAccessTimestamp>>,
             boost::multi_index::hashed_unique<
-                boost::multi_index::tag<SavedSearchHolder::ByLocalUid>,
+                boost::multi_index::tag<SavedSearchHolder::ByLocalId>,
                 boost::multi_index::const_mem_fun<
-                    SavedSearchHolder, const QString,
-                    &SavedSearchHolder::localUid>>,
+                    SavedSearchHolder, QString,
+                    &SavedSearchHolder::localId>>,
             // NOTE: non-unique for proper support of empty guids
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByGuid>,
                 boost::multi_index::const_mem_fun<
-                    SavedSearchHolder, const QString,
+                    SavedSearchHolder, QString,
                     &SavedSearchHolder::guid>>,
             // NOTE: non-unique for proper support of empty names
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<SavedSearchHolder::ByName>,
                 boost::multi_index::const_mem_fun<
-                    SavedSearchHolder, const QString,
+                    SavedSearchHolder, QString,
                     &SavedSearchHolder::nameUpper>>>>;
 
 private:

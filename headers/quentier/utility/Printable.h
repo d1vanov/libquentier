@@ -39,7 +39,7 @@ class QUENTIER_EXPORT Printable
 public:
     virtual QTextStream & print(QTextStream & strm) const = 0;
 
-    virtual const QString toString() const;
+    [[nodiscard]] virtual const QString toString() const;
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, const Printable & printable);
@@ -51,7 +51,7 @@ protected:
     Printable();
     Printable(const Printable & other);
     Printable & operator=(const Printable & other);
-    virtual ~Printable();
+    virtual ~Printable() noexcept;
 };
 
 } // namespace quentier
@@ -59,7 +59,7 @@ protected:
 // printing operators for existing classes not inheriting from Printable
 
 template <class T>
-const QString ToString(const T & object)
+[[nodiscard]] const QString ToString(const T & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -68,7 +68,7 @@ const QString ToString(const T & object)
 }
 
 template <class TKey, class TValue>
-const QString ToString(const QHash<TKey, TValue> & object)
+[[nodiscard]] const QString ToString(const QHash<TKey, TValue> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -84,7 +84,7 @@ const QString ToString(const QHash<TKey, TValue> & object)
 }
 
 template <class T>
-const QString ToString(const QSet<T> & object)
+[[nodiscard]] const QString ToString(const QSet<T> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -101,7 +101,7 @@ const QString ToString(const QSet<T> & object)
 #define QUENTIER_DECLARE_PRINTABLE(type, ...)                                  \
     QUENTIER_EXPORT QTextStream & operator<<(                                  \
         QTextStream & strm, const type & obj);                                 \
-    inline QDebug & operator<<(QDebug & debug, const type & obj)               \
+    [[nodiscard]] inline QDebug & operator<<(QDebug & debug, const type & obj) \
     {                                                                          \
         debug << ToString<type, ##__VA_ARGS__>(obj);                           \
         return debug;                                                          \

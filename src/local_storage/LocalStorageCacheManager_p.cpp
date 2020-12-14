@@ -60,22 +60,22 @@ bool LocalStorageCacheManagerPrivate::empty() const
 
 size_t LocalStorageCacheManagerPrivate::numCachedNotes() const
 {
-    return m_notesCache.get<NoteHolder::ByLocalUid>().size();
+    return m_notesCache.get<NoteHolder::ByLocalId>().size();
 }
 
 size_t LocalStorageCacheManagerPrivate::numCachedResources() const
 {
-    return m_resourcesCache.get<ResourceHolder::ByLocalUid>().size();
+    return m_resourcesCache.get<ResourceHolder::ByLocalId>().size();
 }
 
 size_t LocalStorageCacheManagerPrivate::numCachedNotebooks() const
 {
-    return m_notebooksCache.get<NotebookHolder::ByLocalUid>().size();
+    return m_notebooksCache.get<NotebookHolder::ByLocalId>().size();
 }
 
 size_t LocalStorageCacheManagerPrivate::numCachedTags() const
 {
-    return m_tagsCache.get<TagHolder::ByLocalUid>().size();
+    return m_tagsCache.get<TagHolder::ByLocalId>().size();
 }
 
 size_t LocalStorageCacheManagerPrivate::numCachedLinkedNotebooks() const
@@ -85,7 +85,7 @@ size_t LocalStorageCacheManagerPrivate::numCachedLinkedNotebooks() const
 
 size_t LocalStorageCacheManagerPrivate::numCachedSavedSearches() const
 {
-    return m_savedSearchesCache.get<SavedSearchHolder::ByLocalUid>().size();
+    return m_savedSearchesCache.get<SavedSearchHolder::ByLocalId>().size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,13 +97,13 @@ namespace {
 template <typename TItem>
 QString itemId(const TItem & item)
 {
-    return item.localUid();
+    return item.localId();
 }
 
 template <>
-QString itemId(const LinkedNotebook & linkedNotebook)
+QString itemId(const qevercloud::LinkedNotebook & linkedNotebook)
 {
-    return linkedNotebook.guid();
+    return linkedNotebook.guid() ? *linkedNotebook.guid() : QString();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,37 +112,41 @@ template <typename T>
 bool checkExpiry(ILocalStorageCacheExpiryChecker & checker);
 
 template <>
-bool checkExpiry<Note>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::Note>(ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkNotes();
 }
 
 template <>
-bool checkExpiry<Notebook>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::Notebook>(
+    ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkNotebooks();
 }
 
 template <>
-bool checkExpiry<Tag>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::Tag>(ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkTags();
 }
 
 template <>
-bool checkExpiry<Resource>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::Resource>(
+    ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkResources();
 }
 
 template <>
-bool checkExpiry<LinkedNotebook>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::LinkedNotebook>(
+    ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkLinkedNotebooks();
 }
 
 template <>
-bool checkExpiry<SavedSearch>(ILocalStorageCacheExpiryChecker & checker)
+bool checkExpiry<qevercloud::SavedSearch>(
+    ILocalStorageCacheExpiryChecker & checker)
 {
     return checker.checkSavedSearches();
 }
@@ -167,8 +171,8 @@ void cacheItem(
                 auto latIndexBegin = latIndex.begin();
                 QNTRACE(
                     "local_storage",
-                    "Going to remove the object from "
-                        << "the local storage cache: " << *latIndexBegin);
+                    "Going to remove the object from the local storage cache: "
+                        << *latIndexBegin);
                 Q_UNUSED(latIndex.erase(latIndexBegin));
                 continue;
             }
@@ -218,56 +222,60 @@ void cacheItem(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void LocalStorageCacheManagerPrivate::cacheNote(const Note & note)
+void LocalStorageCacheManagerPrivate::cacheNote(const qevercloud::Note & note)
 {
     cacheItem<
-        Note, NotesCache, NoteHolder, NoteHolder::ByLocalUid,
+        qevercloud::Note, NotesCache, NoteHolder, NoteHolder::ByLocalId,
         ILocalStorageCacheExpiryChecker>(
         note, QStringLiteral("note"), m_notesCache, m_cacheExpiryChecker.get());
 }
 
-void LocalStorageCacheManagerPrivate::cacheNotebook(const Notebook & notebook)
+void LocalStorageCacheManagerPrivate::cacheNotebook(
+    const qevercloud::Notebook & notebook)
 {
     cacheItem<
-        Notebook, NotebooksCache, NotebookHolder, NotebookHolder::ByLocalUid,
+        qevercloud::Notebook, NotebooksCache, NotebookHolder,
+        NotebookHolder::ByLocalId,
         ILocalStorageCacheExpiryChecker>(
         notebook, QStringLiteral("notebook"), m_notebooksCache,
         m_cacheExpiryChecker.get());
 }
 
-void LocalStorageCacheManagerPrivate::cacheTag(const Tag & tag)
+void LocalStorageCacheManagerPrivate::cacheTag(const qevercloud::Tag & tag)
 {
     cacheItem<
-        Tag, TagsCache, TagHolder, TagHolder::ByLocalUid,
+        qevercloud::Tag, TagsCache, TagHolder, TagHolder::ByLocalId,
         ILocalStorageCacheExpiryChecker>(
         tag, QStringLiteral("tag"), m_tagsCache, m_cacheExpiryChecker.get());
 }
 
-void LocalStorageCacheManagerPrivate::cacheResource(const Resource & resource)
+void LocalStorageCacheManagerPrivate::cacheResource(
+    const qevercloud::Resource & resource)
 {
     cacheItem<
-        Resource, ResourcesCache, ResourceHolder, ResourceHolder::ByLocalUid,
+        qevercloud::Resource, ResourcesCache, ResourceHolder,
+        ResourceHolder::ByLocalId,
         ILocalStorageCacheExpiryChecker>(
         resource, QStringLiteral("resource"), m_resourcesCache,
         m_cacheExpiryChecker.get());
 }
 
 void LocalStorageCacheManagerPrivate::cacheLinkedNotebook(
-    const LinkedNotebook & linkedNotebook)
+    const qevercloud::LinkedNotebook & linkedNotebook)
 {
     cacheItem<
-        LinkedNotebook, LinkedNotebooksCache, LinkedNotebookHolder,
+        qevercloud::LinkedNotebook, LinkedNotebooksCache, LinkedNotebookHolder,
         LinkedNotebookHolder::ByGuid, ILocalStorageCacheExpiryChecker>(
         linkedNotebook, QStringLiteral("linked notebook"),
         m_linkedNotebooksCache, m_cacheExpiryChecker.get());
 }
 
 void LocalStorageCacheManagerPrivate::cacheSavedSearch(
-    const SavedSearch & savedSearch)
+    const qevercloud::SavedSearch & savedSearch)
 {
     cacheItem<
-        SavedSearch, SavedSearchesCache, SavedSearchHolder,
-        SavedSearchHolder::ByLocalUid, ILocalStorageCacheExpiryChecker>(
+        qevercloud::SavedSearch, SavedSearchesCache, SavedSearchHolder,
+        SavedSearchHolder::ByLocalId, ILocalStorageCacheExpiryChecker>(
         savedSearch, QStringLiteral("saved search"), m_savedSearchesCache,
         m_cacheExpiryChecker.get());
 }
@@ -280,8 +288,8 @@ template <typename TItem, typename TCache, typename THolder>
 void expungeItem(
     const TItem & item, const QString & itemTypeName, TCache & cache)
 {
-    bool itemHasGuid = item.hasGuid();
-    const QString uid = (itemHasGuid ? item.guid() : item.localUid());
+    bool itemHasGuid = (item.guid() != std::nullopt);
+    const QString uid = (itemHasGuid ? *item.guid() : item.localId());
     if (itemHasGuid) {
         auto & index = cache.template get<typename THolder::ByGuid>();
         auto it = index.find(uid);
@@ -294,7 +302,7 @@ void expungeItem(
         }
     }
     else {
-        auto & index = cache.template get<typename THolder::ByLocalUid>();
+        auto & index = cache.template get<typename THolder::ByLocalId>();
         auto it = index.find(uid);
         if (it != index.end()) {
             index.erase(it);
@@ -310,41 +318,47 @@ void expungeItem(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void LocalStorageCacheManagerPrivate::expungeNote(const Note & note)
+void LocalStorageCacheManagerPrivate::expungeNote(const qevercloud::Note & note)
 {
-    expungeItem<Note, NotesCache, NoteHolder>(
+    expungeItem<qevercloud::Note, NotesCache, NoteHolder>(
         note, QStringLiteral("note"), m_notesCache);
 }
 
-void LocalStorageCacheManagerPrivate::expungeResource(const Resource & resource)
+void LocalStorageCacheManagerPrivate::expungeResource(
+    const qevercloud::Resource & resource)
 {
-    expungeItem<Resource, ResourcesCache, ResourceHolder>(
+    expungeItem<qevercloud::Resource, ResourcesCache, ResourceHolder>(
         resource, QStringLiteral("resource"), m_resourcesCache);
 }
 
-void LocalStorageCacheManagerPrivate::expungeNotebook(const Notebook & notebook)
+void LocalStorageCacheManagerPrivate::expungeNotebook(
+    const qevercloud::Notebook & notebook)
 {
-    expungeItem<Notebook, NotebooksCache, NotebookHolder>(
+    expungeItem<qevercloud::Notebook, NotebooksCache, NotebookHolder>(
         notebook, QStringLiteral("notebook"), m_notebooksCache);
 }
 
-void LocalStorageCacheManagerPrivate::expungeTag(const Tag & tag)
+void LocalStorageCacheManagerPrivate::expungeTag(const qevercloud::Tag & tag)
 {
-    expungeItem<Tag, TagsCache, TagHolder>(
+    expungeItem<qevercloud::Tag, TagsCache, TagHolder>(
         tag, QStringLiteral("tag"), m_tagsCache);
 }
 
 void LocalStorageCacheManagerPrivate::expungeSavedSearch(
-    const SavedSearch & search)
+    const qevercloud::SavedSearch & search)
 {
-    expungeItem<SavedSearch, SavedSearchesCache, SavedSearchHolder>(
+    expungeItem<qevercloud::SavedSearch, SavedSearchesCache, SavedSearchHolder>(
         search, QStringLiteral("saved search"), m_savedSearchesCache);
 }
 
 void LocalStorageCacheManagerPrivate::expungeLinkedNotebook(
-    const LinkedNotebook & linkedNotebook)
+    const qevercloud::LinkedNotebook & linkedNotebook)
 {
-    const QString guid = linkedNotebook.guid();
+    if (!linkedNotebook.guid()) {
+        return;
+    }
+
+    const QString guid = *linkedNotebook.guid();
     auto & index = m_linkedNotebooksCache.get<LinkedNotebookHolder::ByGuid>();
     auto it = index.find(guid);
     if (it != index.end()) {
@@ -375,101 +389,102 @@ const TItem * findItem(const QString & id, const TCache & cache)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const Note * LocalStorageCacheManagerPrivate::findNoteByLocalUid(
+const qevercloud::Note * LocalStorageCacheManagerPrivate::findNoteByLocalUid(
     const QString & localUid) const
 {
-    return findItem<Note, NotesCache, NoteHolder::ByLocalUid>(
+    return findItem<qevercloud::Note, NotesCache, NoteHolder::ByLocalId>(
         localUid, m_notesCache);
 }
 
-const Note * LocalStorageCacheManagerPrivate::findNoteByGuid(
+const qevercloud::Note * LocalStorageCacheManagerPrivate::findNoteByGuid(
     const QString & guid) const
 {
-    return findItem<Note, NotesCache, NoteHolder::ByGuid>(guid, m_notesCache);
+    return findItem<qevercloud::Note, NotesCache, NoteHolder::ByGuid>(
+        guid, m_notesCache);
 }
 
-const Resource * LocalStorageCacheManagerPrivate::findResourceByLocalUid(
+const qevercloud::Resource * LocalStorageCacheManagerPrivate::findResourceByLocalUid(
     const QString & localUid) const
 {
-    return findItem<Resource, ResourcesCache, ResourceHolder::ByLocalUid>(
+    return findItem<qevercloud::Resource, ResourcesCache, ResourceHolder::ByLocalId>(
         localUid, m_resourcesCache);
 }
 
-const Resource * LocalStorageCacheManagerPrivate::findResourceByGuid(
+const qevercloud::Resource * LocalStorageCacheManagerPrivate::findResourceByGuid(
     const QString & guid) const
 {
-    return findItem<Resource, ResourcesCache, ResourceHolder::ByGuid>(
+    return findItem<qevercloud::Resource, ResourcesCache, ResourceHolder::ByGuid>(
         guid, m_resourcesCache);
 }
 
-const Notebook * LocalStorageCacheManagerPrivate::findNotebookByLocalUid(
+const qevercloud::Notebook * LocalStorageCacheManagerPrivate::findNotebookByLocalUid(
     const QString & localUid) const
 {
-    return findItem<Notebook, NotebooksCache, NotebookHolder::ByLocalUid>(
+    return findItem<qevercloud::Notebook, NotebooksCache, NotebookHolder::ByLocalId>(
         localUid, m_notebooksCache);
 }
 
-const Notebook * LocalStorageCacheManagerPrivate::findNotebookByGuid(
+const qevercloud::Notebook * LocalStorageCacheManagerPrivate::findNotebookByGuid(
     const QString & guid) const
 {
-    return findItem<Notebook, NotebooksCache, NotebookHolder::ByGuid>(
+    return findItem<qevercloud::Notebook, NotebooksCache, NotebookHolder::ByGuid>(
         guid, m_notebooksCache);
 }
 
-const Notebook * LocalStorageCacheManagerPrivate::findNotebookByName(
+const qevercloud::Notebook * LocalStorageCacheManagerPrivate::findNotebookByName(
     const QString & name) const
 {
-    return findItem<Notebook, NotebooksCache, NotebookHolder::ByName>(
+    return findItem<qevercloud::Notebook, NotebooksCache, NotebookHolder::ByName>(
         name, m_notebooksCache);
 }
 
-const Tag * LocalStorageCacheManagerPrivate::findTagByLocalUid(
+const qevercloud::Tag * LocalStorageCacheManagerPrivate::findTagByLocalUid(
     const QString & localUid) const
 {
-    return findItem<Tag, TagsCache, TagHolder::ByLocalUid>(
+    return findItem<qevercloud::Tag, TagsCache, TagHolder::ByLocalId>(
         localUid, m_tagsCache);
 }
 
-const Tag * LocalStorageCacheManagerPrivate::findTagByGuid(
+const qevercloud::Tag * LocalStorageCacheManagerPrivate::findTagByGuid(
     const QString & guid) const
 {
-    return findItem<Tag, TagsCache, TagHolder::ByGuid>(guid, m_tagsCache);
+    return findItem<qevercloud::Tag, TagsCache, TagHolder::ByGuid>(guid, m_tagsCache);
 }
 
-const Tag * LocalStorageCacheManagerPrivate::findTagByName(
+const qevercloud::Tag * LocalStorageCacheManagerPrivate::findTagByName(
     const QString & name) const
 {
-    return findItem<Tag, TagsCache, TagHolder::ByName>(name, m_tagsCache);
+    return findItem<qevercloud::Tag, TagsCache, TagHolder::ByName>(name, m_tagsCache);
 }
 
-const LinkedNotebook *
+const qevercloud::LinkedNotebook *
 LocalStorageCacheManagerPrivate::findLinkedNotebookByGuid(
     const QString & guid) const
 {
     return findItem<
-        LinkedNotebook, LinkedNotebooksCache, LinkedNotebookHolder::ByGuid>(
+        qevercloud::LinkedNotebook, LinkedNotebooksCache, LinkedNotebookHolder::ByGuid>(
         guid, m_linkedNotebooksCache);
 }
 
-const SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByLocalUid(
+const qevercloud::SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByLocalUid(
     const QString & localUid) const
 {
     return findItem<
-        SavedSearch, SavedSearchesCache, SavedSearchHolder::ByLocalUid>(
+        qevercloud::SavedSearch, SavedSearchesCache, SavedSearchHolder::ByLocalId>(
         localUid, m_savedSearchesCache);
 }
 
-const SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByGuid(
+const qevercloud::SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByGuid(
     const QString & guid) const
 {
-    return findItem<SavedSearch, SavedSearchesCache, SavedSearchHolder::ByGuid>(
+    return findItem<qevercloud::SavedSearch, SavedSearchesCache, SavedSearchHolder::ByGuid>(
         guid, m_savedSearchesCache);
 }
 
-const SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByName(
+const qevercloud::SavedSearch * LocalStorageCacheManagerPrivate::findSavedSearchByName(
     const QString & name) const
 {
-    return findItem<SavedSearch, SavedSearchesCache, SavedSearchHolder::ByName>(
+    return findItem<qevercloud::SavedSearch, SavedSearchesCache, SavedSearchHolder::ByName>(
         name, m_savedSearchesCache);
 }
 
@@ -514,7 +529,7 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     strm << "LocalStorageCacheManager: {\n";
     strm << "Notes cache: {\n";
 
-    const auto & notesCacheIndex = m_notesCache.get<NoteHolder::ByLocalUid>();
+    const auto & notesCacheIndex = m_notesCache.get<NoteHolder::ByLocalId>();
     for (const auto & note: notesCacheIndex) {
         strm << note;
     }
@@ -523,7 +538,7 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     strm << "Resources cache: {\n";
 
     const auto & resourcesCacheIndex =
-        m_resourcesCache.get<ResourceHolder::ByLocalUid>();
+        m_resourcesCache.get<ResourceHolder::ByLocalId>();
     for (const auto & resource: resourcesCacheIndex) {
         strm << resource;
     }
@@ -532,7 +547,7 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     strm << "Notebooks cache: {\n";
 
     const auto & notebooksCacheIndex =
-        m_notebooksCache.get<NotebookHolder::ByLocalUid>();
+        m_notebooksCache.get<NotebookHolder::ByLocalId>();
     for (const auto & notebook: notebooksCacheIndex) {
         strm << notebook;
     }
@@ -540,7 +555,7 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     strm << "}; \n";
     strm << "Tags cache: {\n";
 
-    const auto & tagsCacheIndex = m_tagsCache.get<TagHolder::ByLocalUid>();
+    const auto & tagsCacheIndex = m_tagsCache.get<TagHolder::ByLocalId>();
     for (const auto & tag: tagsCacheIndex) {
         strm << tag;
     }
@@ -558,7 +573,7 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     strm << "Saved searches cache: {\n";
 
     const auto & savedSearchesCacheIndex =
-        m_savedSearchesCache.get<SavedSearchHolder::ByLocalUid>();
+        m_savedSearchesCache.get<SavedSearchHolder::ByLocalId>();
     for (const auto & savedSearch: savedSearchesCacheIndex) {
         strm << savedSearch;
     }
@@ -576,35 +591,34 @@ QTextStream & LocalStorageCacheManagerPrivate::print(QTextStream & strm) const
     return strm;
 }
 
-const QString LocalStorageCacheManagerPrivate::NoteHolder::guid() const
+QString LocalStorageCacheManagerPrivate::NoteHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
-const QString LocalStorageCacheManagerPrivate::NotebookHolder::guid() const
+QString LocalStorageCacheManagerPrivate::NotebookHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
-const QString LocalStorageCacheManagerPrivate::ResourceHolder::guid() const
+QString LocalStorageCacheManagerPrivate::ResourceHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
-const QString LocalStorageCacheManagerPrivate::TagHolder::guid() const
+QString LocalStorageCacheManagerPrivate::TagHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
-const QString LocalStorageCacheManagerPrivate::LinkedNotebookHolder::guid()
-    const
+QString LocalStorageCacheManagerPrivate::LinkedNotebookHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
-const QString LocalStorageCacheManagerPrivate::SavedSearchHolder::guid() const
+QString LocalStorageCacheManagerPrivate::SavedSearchHolder::guid() const
 {
-    return (m_value.hasGuid() ? m_value.guid() : QString());
+    return (m_value.guid() ? *m_value.guid() : QString());
 }
 
 QTextStream & LocalStorageCacheManagerPrivate::NoteHolder::print(

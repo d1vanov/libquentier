@@ -29,7 +29,7 @@ LocalStorageCacheManager::LocalStorageCacheManager() :
     d_ptr(new LocalStorageCacheManagerPrivate(*this))
 {}
 
-LocalStorageCacheManager::~LocalStorageCacheManager()
+LocalStorageCacheManager::~LocalStorageCacheManager() noexcept
 {
     delete d_ptr;
 }
@@ -52,13 +52,13 @@ size_t LocalStorageCacheManager::numCachedNotes() const
     return d->numCachedNotes();
 }
 
-void LocalStorageCacheManager::cacheNote(const Note & note)
+void LocalStorageCacheManager::cacheNote(const qevercloud::Note & note)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheNote(note);
 }
 
-void LocalStorageCacheManager::expungeNote(const Note & note)
+void LocalStorageCacheManager::expungeNote(const qevercloud::Note & note)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeNote(note);
@@ -71,7 +71,7 @@ void LocalStorageCacheManager::clearAllNotes()
 }
 
 #define FIND_OBJECT(Type)                                                      \
-    const Type * LocalStorageCacheManager::find##Type(                         \
+    const qevercloud::Type * LocalStorageCacheManager::find##Type(             \
         const QString & uid,                                                   \
         const LocalStorageCacheManager::WhichUid whichUid) const               \
     {                                                                          \
@@ -98,20 +98,21 @@ FIND_OBJECT(SavedSearch)
 
 #undef FIND_OBJECT
 
-const Tag * LocalStorageCacheManager::findTagByName(const QString & name) const
+const qevercloud::Tag * LocalStorageCacheManager::findTagByName(
+    const QString & name) const
 {
     Q_D(const LocalStorageCacheManager);
     return d->findTagByName(name.toUpper());
 }
 
-const Notebook * LocalStorageCacheManager::findNotebookByName(
+const qevercloud::Notebook * LocalStorageCacheManager::findNotebookByName(
     const QString & name) const
 {
     Q_D(const LocalStorageCacheManager);
     return d->findNotebookByName(name.toUpper());
 }
 
-const SavedSearch * LocalStorageCacheManager::findSavedSearchByName(
+const qevercloud::SavedSearch * LocalStorageCacheManager::findSavedSearchByName(
     const QString & name) const
 {
     Q_D(const LocalStorageCacheManager);
@@ -124,13 +125,15 @@ size_t LocalStorageCacheManager::numCachedResources() const
     return d->numCachedResources();
 }
 
-void LocalStorageCacheManager::cacheResource(const Resource & resource)
+void LocalStorageCacheManager::cacheResource(
+    const qevercloud::Resource & resource)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheResource(resource);
 }
 
-void LocalStorageCacheManager::expungeResource(const Resource & resource)
+void LocalStorageCacheManager::expungeResource(
+    const qevercloud::Resource & resource)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeResource(resource);
@@ -148,13 +151,15 @@ size_t LocalStorageCacheManager::numCachedNotebooks() const
     return d->numCachedNotebooks();
 }
 
-void LocalStorageCacheManager::cacheNotebook(const Notebook & notebook)
+void LocalStorageCacheManager::cacheNotebook(
+    const qevercloud::Notebook & notebook)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheNotebook(notebook);
 }
 
-void LocalStorageCacheManager::expungeNotebook(const Notebook & notebook)
+void LocalStorageCacheManager::expungeNotebook(
+    const qevercloud::Notebook & notebook)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeNotebook(notebook);
@@ -172,13 +177,13 @@ size_t LocalStorageCacheManager::numCachedTags() const
     return d->numCachedTags();
 }
 
-void LocalStorageCacheManager::cacheTag(const Tag & tag)
+void LocalStorageCacheManager::cacheTag(const qevercloud::Tag & tag)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheTag(tag);
 }
 
-void LocalStorageCacheManager::expungeTag(const Tag & tag)
+void LocalStorageCacheManager::expungeTag(const qevercloud::Tag & tag)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeTag(tag);
@@ -197,20 +202,20 @@ size_t LocalStorageCacheManager::numCachedLinkedNotebooks() const
 }
 
 void LocalStorageCacheManager::cacheLinkedNotebook(
-    const LinkedNotebook & linkedNotebook)
+    const qevercloud::LinkedNotebook & linkedNotebook)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheLinkedNotebook(linkedNotebook);
 }
 
 void LocalStorageCacheManager::expungeLinkedNotebook(
-    const LinkedNotebook & linkedNotebook)
+    const qevercloud::LinkedNotebook & linkedNotebook)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeLinkedNotebook(linkedNotebook);
 }
 
-const LinkedNotebook * LocalStorageCacheManager::findLinkedNotebook(
+const qevercloud::LinkedNotebook * LocalStorageCacheManager::findLinkedNotebook(
     const QString & guid) const
 {
     Q_D(const LocalStorageCacheManager);
@@ -229,14 +234,15 @@ size_t LocalStorageCacheManager::numCachedSavedSearches() const
     return d->numCachedSavedSearches();
 }
 
-void LocalStorageCacheManager::cacheSavedSearch(const SavedSearch & savedSearch)
+void LocalStorageCacheManager::cacheSavedSearch(
+    const qevercloud::SavedSearch & savedSearch)
 {
     Q_D(LocalStorageCacheManager);
     d->cacheSavedSearch(savedSearch);
 }
 
 void LocalStorageCacheManager::expungeSavedSearch(
-    const SavedSearch & savedSearch)
+    const qevercloud::SavedSearch & savedSearch)
 {
     Q_D(LocalStorageCacheManager);
     d->expungeSavedSearch(savedSearch);
