@@ -26,7 +26,7 @@
 #include <QList>
 #include <QNetworkCookie>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <memory>
 

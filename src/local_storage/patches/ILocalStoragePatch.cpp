@@ -22,6 +22,6 @@ namespace quentier {
 
 ILocalStoragePatch::ILocalStoragePatch(QObject * parent) : QObject(parent) {}
 
-ILocalStoragePatch::~ILocalStoragePatch() {}
+ILocalStoragePatch::~ILocalStoragePatch() = default;
 
 } // namespace quentier

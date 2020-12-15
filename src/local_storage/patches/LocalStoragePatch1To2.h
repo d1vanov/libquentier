@@ -37,27 +37,31 @@ public:
         LocalStorageManagerPrivate & localStorageManager,
         QSqlDatabase & database, QObject * parent = nullptr);
 
-    virtual int fromVersion() const override
+    ~LocalStoragePatch1To2() noexcept override = default;
+
+    [[nodiscard]] int fromVersion() const override
     {
         return 1;
     }
-    virtual int toVersion() const override
+
+    [[nodiscard]] int toVersion() const override
     {
         return 2;
     }
 
-    virtual QString patchShortDescription() const override;
-    virtual QString patchLongDescription() const override;
+    [[nodiscard]] QString patchShortDescription() const override;
+    [[nodiscard]] QString patchLongDescription() const override;
 
-    virtual bool backupLocalStorage(ErrorString & errorDescription) override;
-
-    virtual bool restoreLocalStorageFromBackup(
+    [[nodiscard]] bool backupLocalStorage(
         ErrorString & errorDescription) override;
 
-    virtual bool removeLocalStorageBackup(
+    [[nodiscard]] bool restoreLocalStorageFromBackup(
         ErrorString & errorDescription) override;
 
-    virtual bool apply(ErrorString & errorDescription) override;
+    [[nodiscard]] bool removeLocalStorageBackup(
+        ErrorString & errorDescription) override;
+
+    [[nodiscard]] bool apply(ErrorString & errorDescription) override;
 
     // private
 Q_SIGNALS:
@@ -68,13 +72,14 @@ private Q_SLOTS:
     void startLocalStorageRestorationFromBackup();
 
 private:
-    QStringList listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+    [[nodiscard]] QStringList
+    listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
 
     void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
         QStringList & resourceLocalUids);
 
-    bool
+    [[nodiscard]] bool
     ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
 

@@ -22,7 +22,7 @@
 
 namespace quentier {
 
-NoteSearchQuery::NoteSearchQuery() : d(new NoteSearchQueryData) {}
+NoteSearchQuery::NoteSearchQuery() : d(new NoteSearchQuery::Data) {}
 
 NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & /* other */) = default;
 
@@ -34,7 +34,7 @@ NoteSearchQuery & NoteSearchQuery::operator=(
 NoteSearchQuery & NoteSearchQuery::operator=(NoteSearchQuery && /* other */) =
     default;
 
-NoteSearchQuery::~NoteSearchQuery() = default;
+NoteSearchQuery::~NoteSearchQuery() noexcept = default;
 
 bool NoteSearchQuery::isEmpty() const
 {
@@ -46,7 +46,7 @@ void NoteSearchQuery::clear()
     d->clear();
 }
 
-const QString NoteSearchQuery::queryString() const
+QString NoteSearchQuery::queryString() const
 {
     return d->m_queryString;
 }
@@ -58,7 +58,7 @@ bool NoteSearchQuery::setQueryString(
     return d->parseQueryString(queryString, error);
 }
 
-const QString NoteSearchQuery::notebookModifier() const
+QString NoteSearchQuery::notebookModifier() const
 {
     return d->m_notebookModifier;
 }
@@ -108,12 +108,12 @@ bool NoteSearchQuery::hasNegatedAnyTitleName() const
     return d->m_hasNegatedAnyTitleName;
 }
 
-const QVector<qint64> & NoteSearchQuery::creationTimestamps() const
+const QList<qint64> & NoteSearchQuery::creationTimestamps() const
 {
     return d->m_creationTimestamps;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedCreationTimestamps() const
+const QList<qint64> & NoteSearchQuery::negatedCreationTimestamps() const
 {
     return d->m_negatedCreationTimestamps;
 }
@@ -128,12 +128,12 @@ bool NoteSearchQuery::hasNegatedAnyCreationTimestamp() const
     return d->m_hasNegatedAnyCreationTimestamp;
 }
 
-const QVector<qint64> & NoteSearchQuery::modificationTimestamps() const
+const QList<qint64> & NoteSearchQuery::modificationTimestamps() const
 {
     return d->m_modificationTimestamps;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedModificationTimestamps() const
+const QList<qint64> & NoteSearchQuery::negatedModificationTimestamps() const
 {
     return d->m_negatedModificationTimestamps;
 }
@@ -168,12 +168,12 @@ bool NoteSearchQuery::hasNegatedAnyResourceMimeType() const
     return d->m_hasNegatedAnyResourceMimeType;
 }
 
-const QVector<qint64> & NoteSearchQuery::subjectDateTimestamps() const
+const QList<qint64> & NoteSearchQuery::subjectDateTimestamps() const
 {
     return d->m_subjectDateTimestamps;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedSubjectDateTimestamps() const
+const QList<qint64> & NoteSearchQuery::negatedSubjectDateTimestamps() const
 {
     return d->m_negatedSubjectDateTimestamps;
 }
@@ -188,12 +188,12 @@ bool NoteSearchQuery::hasNegatedAnySubjectDateTimestamp() const
     return d->m_hasNegatedAnySubjectDateTimestamp;
 }
 
-const QVector<double> & NoteSearchQuery::latitudes() const
+const QList<double> & NoteSearchQuery::latitudes() const
 {
     return d->m_latitudes;
 }
 
-const QVector<double> & NoteSearchQuery::negatedLatitudes() const
+const QList<double> & NoteSearchQuery::negatedLatitudes() const
 {
     return d->m_negatedLatitudes;
 }
@@ -208,12 +208,12 @@ bool NoteSearchQuery::hasNegatedAnyLatitude() const
     return d->m_hasNegatedAnyLatitude;
 }
 
-const QVector<double> & NoteSearchQuery::longitudes() const
+const QList<double> & NoteSearchQuery::longitudes() const
 {
     return d->m_longitudes;
 }
 
-const QVector<double> & NoteSearchQuery::negatedLongitudes() const
+const QList<double> & NoteSearchQuery::negatedLongitudes() const
 {
     return d->m_negatedLongitudes;
 }
@@ -228,12 +228,12 @@ bool NoteSearchQuery::hasNegatedAnyLongitude() const
     return d->m_hasNegatedAnyLongitude;
 }
 
-const QVector<double> & NoteSearchQuery::altitudes() const
+const QList<double> & NoteSearchQuery::altitudes() const
 {
     return d->m_altitudes;
 }
 
-const QVector<double> & NoteSearchQuery::negatedAltitudes() const
+const QList<double> & NoteSearchQuery::negatedAltitudes() const
 {
     return d->m_negatedAltitudes;
 }
@@ -378,22 +378,22 @@ bool NoteSearchQuery::hasNegatedAnyReminderOrder() const
     return d->m_hasNegatedAnyReminderOrder;
 }
 
-const QVector<qint64> & NoteSearchQuery::reminderOrders() const
+const QList<qint64> & NoteSearchQuery::reminderOrders() const
 {
     return d->m_reminderOrders;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedReminderOrders() const
+const QList<qint64> & NoteSearchQuery::negatedReminderOrders() const
 {
     return d->m_negatedReminderOrders;
 }
 
-const QVector<qint64> & NoteSearchQuery::reminderTimes() const
+const QList<qint64> & NoteSearchQuery::reminderTimes() const
 {
     return d->m_reminderTimes;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedReminderTimes() const
+const QList<qint64> & NoteSearchQuery::negatedReminderTimes() const
 {
     return d->m_negatedReminderTimes;
 }
@@ -408,12 +408,12 @@ bool NoteSearchQuery::hasNegatedAnyReminderTime() const
     return d->m_hasNegatedAnyReminderTime;
 }
 
-const QVector<qint64> & NoteSearchQuery::reminderDoneTimes() const
+const QList<qint64> & NoteSearchQuery::reminderDoneTimes() const
 {
     return d->m_reminderDoneTimes;
 }
 
-const QVector<qint64> & NoteSearchQuery::negatedReminderDoneTimes() const
+const QList<qint64> & NoteSearchQuery::negatedReminderDoneTimes() const
 {
     return d->m_negatedReminderDoneTimes;
 }

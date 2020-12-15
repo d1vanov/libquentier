@@ -19,26 +19,32 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_DATA_H
 #define LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_DATA_H
 
-#include <quentier/types/ErrorString.h>
+#include <quentier/local_storage/NoteSearchQuery.h>
 
 #include <QSharedData>
 #include <QStringList>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteSearchQueryData final :
+class Q_DECL_HIDDEN NoteSearchQuery::Data final :
     public QSharedData,
     public Printable
 {
 public:
-    NoteSearchQueryData();
-    NoteSearchQueryData(const NoteSearchQueryData & other);
+    Data() = default;
+    Data(const NoteSearchQuery::Data & other) = default;
+
+    NoteSearchQuery::Data & operator=(const NoteSearchQuery::Data & other) = delete;
+    NoteSearchQuery::Data & operator=(NoteSearchQuery::Data && other) = delete;
+
+    ~Data() noexcept override = default;
 
     void clear();
 
-    bool parseQueryString(const QString & queryString, ErrorString & error);
+    [[nodiscard]] bool parseQueryString(
+        const QString & queryString, ErrorString & error);
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
     QString m_queryString;
     QString m_notebookModifier;
@@ -51,32 +57,32 @@ public:
     QStringList m_negatedTitleNames;
     bool m_hasAnyTitleName = false;
     bool m_hasNegatedAnyTitleName = false;
-    QVector<qint64> m_creationTimestamps;
-    QVector<qint64> m_negatedCreationTimestamps;
+    QList<qint64> m_creationTimestamps;
+    QList<qint64> m_negatedCreationTimestamps;
     bool m_hasAnyCreationTimestamp = false;
     bool m_hasNegatedAnyCreationTimestamp = false;
-    QVector<qint64> m_modificationTimestamps;
-    QVector<qint64> m_negatedModificationTimestamps;
+    QList<qint64> m_modificationTimestamps;
+    QList<qint64> m_negatedModificationTimestamps;
     bool m_hasAnyModificationTimestamp = false;
     bool m_hasNegatedAnyModificationTimestamp = false;
     QStringList m_resourceMimeTypes;
     QStringList m_negatedResourceMimeTypes;
     bool m_hasAnyResourceMimeType = false;
     bool m_hasNegatedAnyResourceMimeType = false;
-    QVector<qint64> m_subjectDateTimestamps;
-    QVector<qint64> m_negatedSubjectDateTimestamps;
+    QList<qint64> m_subjectDateTimestamps;
+    QList<qint64> m_negatedSubjectDateTimestamps;
     bool m_hasAnySubjectDateTimestamp = false;
     bool m_hasNegatedAnySubjectDateTimestamp = false;
-    QVector<double> m_latitudes;
-    QVector<double> m_negatedLatitudes;
+    QList<double> m_latitudes;
+    QList<double> m_negatedLatitudes;
     bool m_hasAnyLatitude = false;
     bool m_hasNegatedAnyLatitude = false;
-    QVector<double> m_longitudes;
-    QVector<double> m_negatedLongitudes;
+    QList<double> m_longitudes;
+    QList<double> m_negatedLongitudes;
     bool m_hasAnyLongitude = false;
     bool m_hasNegatedAnyLongitude = false;
-    QVector<double> m_altitudes;
-    QVector<double> m_negatedAltitudes;
+    QList<double> m_altitudes;
+    QList<double> m_negatedAltitudes;
     bool m_hasAnyAltitude = false;
     bool m_hasNegatedAnyAltitude = false;
     QStringList m_authors;
@@ -103,16 +109,16 @@ public:
     QStringList m_negatedApplicationData;
     bool m_hasAnyApplicationData = false;
     bool m_hasNegatedAnyApplicationData = false;
-    QVector<qint64> m_reminderOrders;
-    QVector<qint64> m_negatedReminderOrders;
+    QList<qint64> m_reminderOrders;
+    QList<qint64> m_negatedReminderOrders;
     bool m_hasAnyReminderOrder = false;
     bool m_hasNegatedAnyReminderOrder = false;
-    QVector<qint64> m_reminderTimes;
-    QVector<qint64> m_negatedReminderTimes;
+    QList<qint64> m_reminderTimes;
+    QList<qint64> m_negatedReminderTimes;
     bool m_hasAnyReminderTime = false;
     bool m_hasNegatedAnyReminderTime = false;
-    QVector<qint64> m_reminderDoneTimes;
-    QVector<qint64> m_negatedReminderDoneTimes;
+    QList<qint64> m_reminderDoneTimes;
+    QList<qint64> m_negatedReminderDoneTimes;
     bool m_hasAnyReminderDoneTime = false;
     bool m_hasNegatedAnyReminderDoneTime = false;
     bool m_hasUnfinishedToDo = false;
@@ -126,30 +132,31 @@ public:
     QStringList m_contentSearchTerms;
     QStringList m_negatedContentSearchTerms;
 
-    bool isMatcheable() const;
+    [[nodiscard]] bool isMatcheable() const;
 
 private:
-    QStringList splitSearchQueryString(const QString & searchQueryString) const;
+    [[nodiscard]] QStringList splitSearchQueryString(
+        const QString & searchQueryString) const;
 
     void parseStringValue(
         const QString & key, QStringList & words, QStringList & container,
         QStringList & negatedContainer, bool & hasAnyValue,
         bool & hasNegatedAnyValue) const;
 
-    bool parseIntValue(
-        const QString & key, QStringList & words, QVector<qint64> & container,
-        QVector<qint64> & negatedContainer, bool & hasAnyValue,
+    [[nodiscard]] bool parseIntValue(
+        const QString & key, QStringList & words, QList<qint64> & container,
+        QList<qint64> & negatedContainer, bool & hasAnyValue,
         bool & hasNegatedAnyValue, ErrorString & error) const;
 
-    bool parseDoubleValue(
-        const QString & key, QStringList & words, QVector<double> & container,
-        QVector<double> & negatedContainer, bool & hasAnyValue,
+    [[nodiscard]] bool parseDoubleValue(
+        const QString & key, QStringList & words, QList<double> & container,
+        QList<double> & negatedContainer, bool & hasAnyValue,
         bool & hasNegatedAnyValue, ErrorString & error) const;
 
-    bool dateTimeStringToTimestamp(
+    [[nodiscard]] bool dateTimeStringToTimestamp(
         QString dateTimeString, qint64 & timestamp, ErrorString & error) const;
 
-    bool convertAbsoluteAndRelativeDateTimesToTimestamps(
+    [[nodiscard]] bool convertAbsoluteAndRelativeDateTimesToTimestamps(
         QStringList & words, ErrorString & error) const;
 
     void removeBoundaryQuotesFromWord(QString & word) const;

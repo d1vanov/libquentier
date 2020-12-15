@@ -19,27 +19,31 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LISTS_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LISTS_H
 
-#include <QVector>
+#include <QList>
+
+namespace qevercloud {
+
+class LinkedNotebook;
+class Note;
+class Notebook;
+class Resource;
+class SavedSearch;
+class SharedNotebook;
+class Tag;
+class User;
+
+} // namespace qevercloud
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LinkedNotebook)
-QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(Notebook)
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(SavedSearch)
-QT_FORWARD_DECLARE_CLASS(SharedNotebook)
-QT_FORWARD_DECLARE_CLASS(Tag)
-QT_FORWARD_DECLARE_CLASS(User)
-
-using LinkedNotebookList = QList<LinkedNotebook>;
-using NoteList = QList<Note>;
-using NotebookList = QList<Notebook>;
-using ResourceList = QList<Resource>;
-using SavedSearchList = QList<SavedSearch>;
-using SharedNotebookList = QList<SharedNotebook>;
-using TagList = QList<Tag>;
-using UserList = QList<User>;
+using LinkedNotebookList = QList<qevercloud::LinkedNotebook>;
+using NoteList = QList<qevercloud::Note>;
+using NotebookList = QList<qevercloud::Notebook>;
+using ResourceList = QList<qevercloud::Resource>;
+using SavedSearchList = QList<qevercloud::SavedSearch>;
+using SharedNotebookList = QList<qevercloud::SharedNotebook>;
+using TagList = QList<qevercloud::Tag>;
+using UserList = QList<qevercloud::User>;
 
 } // namespace quentier
 

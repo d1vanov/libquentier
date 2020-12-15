@@ -23,7 +23,7 @@
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QHash>
 #include <QObject>

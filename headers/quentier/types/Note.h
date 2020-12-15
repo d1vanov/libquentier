@@ -22,7 +22,7 @@
 #include "IFavoritableDataElement.h"
 #include "SharedNote.h"
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QSharedDataPointer>
 

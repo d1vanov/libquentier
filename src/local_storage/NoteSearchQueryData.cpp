@@ -25,12 +25,7 @@
 
 namespace quentier {
 
-NoteSearchQueryData::NoteSearchQueryData() = default;
-
-NoteSearchQueryData::NoteSearchQueryData(
-    const NoteSearchQueryData & /* other */) = default;
-
-void NoteSearchQueryData::clear()
+void NoteSearchQuery::Data::clear()
 {
     m_queryString.resize(0);
     m_notebookModifier.resize(0);
@@ -119,7 +114,7 @@ void NoteSearchQueryData::clear()
     m_negatedContentSearchTerms.clear();
 }
 
-bool NoteSearchQueryData::parseQueryString(
+bool NoteSearchQuery::Data::parseQueryString(
     const QString & queryString, ErrorString & error)
 {
     m_queryString = queryString;
@@ -271,12 +266,12 @@ bool NoteSearchQueryData::parseQueryString(
 
     // Processing all possible variants of "todo:[true|false|*]" tags
 
-    QString negatedFinishedToDo = QStringLiteral("-todo:true");
-    QString finishedToDo = QStringLiteral("todo:true");
-    QString negatedUnfinishedToDo = QStringLiteral("-todo:false");
-    QString unfinishedToDo = QStringLiteral("todo:false");
-    QString negatedAnyToDo = QStringLiteral("-todo:*");
-    QString anyToDo = QStringLiteral("todo:*");
+    const QString negatedFinishedToDo = QStringLiteral("-todo:true");
+    const QString finishedToDo = QStringLiteral("todo:true");
+    const QString negatedUnfinishedToDo = QStringLiteral("-todo:false");
+    const QString unfinishedToDo = QStringLiteral("todo:false");
+    const QString negatedAnyToDo = QStringLiteral("-todo:*");
+    const QString anyToDo = QStringLiteral("todo:*");
 
     for (const auto & searchTerm: qAsConst(words)) {
         if (searchTerm == negatedFinishedToDo) {
@@ -403,7 +398,7 @@ bool NoteSearchQueryData::parseQueryString(
     return true;
 }
 
-QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
+QTextStream & NoteSearchQuery::Data::print(QTextStream & strm) const
 {
     const char * indent = "  ";
 
@@ -543,7 +538,7 @@ QTextStream & NoteSearchQueryData::print(QTextStream & strm) const
     return strm;
 }
 
-bool NoteSearchQueryData::isMatcheable() const
+bool NoteSearchQuery::Data::isMatcheable() const
 {
     if (m_hasAnyTag && m_hasNegatedAnyTag) {
         return false;
@@ -628,7 +623,7 @@ bool NoteSearchQueryData::isMatcheable() const
     return true;
 }
 
-QStringList NoteSearchQueryData::splitSearchQueryString(
+QStringList NoteSearchQuery::Data::splitSearchQueryString(
     const QString & searchQueryString) const
 {
     QStringList words;
@@ -732,7 +727,7 @@ QStringList NoteSearchQueryData::splitSearchQueryString(
     return words;
 }
 
-void NoteSearchQueryData::parseStringValue(
+void NoteSearchQuery::Data::parseStringValue(
     const QString & key, QStringList & words, QStringList & container,
     QStringList & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue) const
@@ -803,9 +798,9 @@ void NoteSearchQueryData::parseStringValue(
     }
 }
 
-bool NoteSearchQueryData::parseIntValue(
-    const QString & key, QStringList & words, QVector<qint64> & container,
-    QVector<qint64> & negatedContainer, bool & hasAnyValue,
+bool NoteSearchQuery::Data::parseIntValue(
+    const QString & key, QStringList & words, QList<qint64> & container,
+    QList<qint64> & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue, ErrorString & error) const
 {
     int keyIndex = 0;
@@ -892,9 +887,9 @@ bool NoteSearchQueryData::parseIntValue(
     return true;
 }
 
-bool NoteSearchQueryData::parseDoubleValue(
-    const QString & key, QStringList & words, QVector<double> & container,
-    QVector<double> & negatedContainer, bool & hasAnyValue,
+bool NoteSearchQuery::Data::parseDoubleValue(
+    const QString & key, QStringList & words, QList<double> & container,
+    QList<double> & negatedContainer, bool & hasAnyValue,
     bool & hasNegatedAnyValue, ErrorString & error) const
 {
     int keyIndex = 0;
@@ -981,7 +976,7 @@ bool NoteSearchQueryData::parseDoubleValue(
     return true;
 }
 
-bool NoteSearchQueryData::dateTimeStringToTimestamp(
+bool NoteSearchQuery::Data::dateTimeStringToTimestamp(
     QString dateTimeString, qint64 & timestamp, ErrorString & error) const
 {
     QDateTime todayMidnight = QDateTime::currentDateTime();
@@ -1108,7 +1103,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(
     return true;
 }
 
-bool NoteSearchQueryData::convertAbsoluteAndRelativeDateTimesToTimestamps(
+bool NoteSearchQuery::Data::convertAbsoluteAndRelativeDateTimesToTimestamps(
     QStringList & words, ErrorString & error) const
 {
     QStringList dateTimePrefixes;
@@ -1155,7 +1150,7 @@ bool NoteSearchQueryData::convertAbsoluteAndRelativeDateTimesToTimestamps(
     return true;
 }
 
-void NoteSearchQueryData::removeBoundaryQuotesFromWord(QString & word) const
+void NoteSearchQuery::Data::removeBoundaryQuotesFromWord(QString & word) const
 {
     if (word.startsWith(QStringLiteral("\"")) &&
         word.endsWith(QStringLiteral("\"")))

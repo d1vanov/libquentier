@@ -21,7 +21,7 @@
 
 #include <quentier/utility/Printable.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QSharedDataPointer>
 

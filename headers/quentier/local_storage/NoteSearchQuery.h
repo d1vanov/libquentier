@@ -21,11 +21,10 @@
 
 #include <quentier/types/ErrorString.h>
 
+#include <QList>
 #include <QSharedDataPointer>
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(NoteSearchQueryData)
 
 class QUENTIER_EXPORT NoteSearchQuery : public Printable
 {
@@ -33,142 +32,146 @@ public:
     NoteSearchQuery();
     NoteSearchQuery(const NoteSearchQuery & other);
     NoteSearchQuery(NoteSearchQuery && other);
-    NoteSearchQuery & operator=(const NoteSearchQuery & other);
-    NoteSearchQuery & operator=(NoteSearchQuery && other);
-    virtual ~NoteSearchQuery();
 
-    bool isEmpty() const;
+    [[nodiscard]] NoteSearchQuery & operator=(const NoteSearchQuery & other);
+    [[nodiscard]] NoteSearchQuery & operator=(NoteSearchQuery && other);
+
+    ~NoteSearchQuery() noexcept override;
+
+    [[nodiscard]] bool isEmpty() const;
 
     void clear();
 
     /**
      * Returns the original non-parsed query string
      */
-    const QString queryString() const;
+    [[nodiscard]] QString queryString() const;
 
-    bool setQueryString(const QString & queryString, ErrorString & error);
+    [[nodiscard]] bool setQueryString(
+        const QString & queryString, ErrorString & error);
 
     /**
      * If query string has "notebook:<notebook name>" scope modifier,
      * this method returns the name of the notebook, otherwise it returns
      * empty string
      */
-    const QString notebookModifier() const;
+    [[nodiscard]] QString notebookModifier() const;
 
-    bool hasAnyModifier() const;
+    [[nodiscard]] bool hasAnyModifier() const;
 
-    const QStringList & tagNames() const;
-    const QStringList & negatedTagNames() const;
-    bool hasAnyTag() const;
-    bool hasNegatedAnyTag() const;
+    [[nodiscard]] const QStringList & tagNames() const;
+    [[nodiscard]] const QStringList & negatedTagNames() const;
+    [[nodiscard]] bool hasAnyTag() const;
+    [[nodiscard]] bool hasNegatedAnyTag() const;
 
-    const QStringList & titleNames() const;
-    const QStringList & negatedTitleNames() const;
-    bool hasAnyTitleName() const;
-    bool hasNegatedAnyTitleName() const;
+    [[nodiscard]] const QStringList & titleNames() const;
+    [[nodiscard]] const QStringList & negatedTitleNames() const;
+    [[nodiscard]] bool hasAnyTitleName() const;
+    [[nodiscard]] bool hasNegatedAnyTitleName() const;
 
-    const QVector<qint64> & creationTimestamps() const;
-    const QVector<qint64> & negatedCreationTimestamps() const;
-    bool hasAnyCreationTimestamp() const;
-    bool hasNegatedAnyCreationTimestamp() const;
+    [[nodiscard]] const QList<qint64> & creationTimestamps() const;
+    [[nodiscard]] const QList<qint64> & negatedCreationTimestamps() const;
+    [[nodiscard]] bool hasAnyCreationTimestamp() const;
+    [[nodiscard]] bool hasNegatedAnyCreationTimestamp() const;
 
-    const QVector<qint64> & modificationTimestamps() const;
-    const QVector<qint64> & negatedModificationTimestamps() const;
-    bool hasAnyModificationTimestamp() const;
-    bool hasNegatedAnyModificationTimestamp() const;
+    [[nodiscard]] const QList<qint64> & modificationTimestamps() const;
+    [[nodiscard]] const QList<qint64> & negatedModificationTimestamps() const;
+    [[nodiscard]] bool hasAnyModificationTimestamp() const;
+    [[nodiscard]] bool hasNegatedAnyModificationTimestamp() const;
 
-    const QStringList & resourceMimeTypes() const;
-    const QStringList & negatedResourceMimeTypes() const;
-    bool hasAnyResourceMimeType() const;
-    bool hasNegatedAnyResourceMimeType() const;
+    [[nodiscard]] const QStringList & resourceMimeTypes() const;
+    [[nodiscard]] const QStringList & negatedResourceMimeTypes() const;
+    [[nodiscard]] bool hasAnyResourceMimeType() const;
+    [[nodiscard]] bool hasNegatedAnyResourceMimeType() const;
 
-    const QVector<qint64> & subjectDateTimestamps() const;
-    const QVector<qint64> & negatedSubjectDateTimestamps() const;
-    bool hasAnySubjectDateTimestamp() const;
-    bool hasNegatedAnySubjectDateTimestamp() const;
+    [[nodiscard]] const QList<qint64> & subjectDateTimestamps() const;
+    [[nodiscard]] const QList<qint64> & negatedSubjectDateTimestamps() const;
+    [[nodiscard]] bool hasAnySubjectDateTimestamp() const;
+    [[nodiscard]] bool hasNegatedAnySubjectDateTimestamp() const;
 
-    const QVector<double> & latitudes() const;
-    const QVector<double> & negatedLatitudes() const;
-    bool hasAnyLatitude() const;
-    bool hasNegatedAnyLatitude() const;
+    [[nodiscard]] const QList<double> & latitudes() const;
+    [[nodiscard]] const QList<double> & negatedLatitudes() const;
+    [[nodiscard]] bool hasAnyLatitude() const;
+    [[nodiscard]] bool hasNegatedAnyLatitude() const;
 
-    const QVector<double> & longitudes() const;
-    const QVector<double> & negatedLongitudes() const;
-    bool hasAnyLongitude() const;
-    bool hasNegatedAnyLongitude() const;
+    [[nodiscard]] const QList<double> & longitudes() const;
+    [[nodiscard]] const QList<double> & negatedLongitudes() const;
+    [[nodiscard]] bool hasAnyLongitude() const;
+    [[nodiscard]] bool hasNegatedAnyLongitude() const;
 
-    const QVector<double> & altitudes() const;
-    const QVector<double> & negatedAltitudes() const;
-    bool hasAnyAltitude() const;
-    bool hasNegatedAnyAltitude() const;
+    [[nodiscard]] const QList<double> & altitudes() const;
+    [[nodiscard]] const QList<double> & negatedAltitudes() const;
+    [[nodiscard]] bool hasAnyAltitude() const;
+    [[nodiscard]] bool hasNegatedAnyAltitude() const;
 
-    const QStringList & authors() const;
-    const QStringList & negatedAuthors() const;
-    bool hasAnyAuthor() const;
-    bool hasNegatedAnyAuthor() const;
+    [[nodiscard]] const QStringList & authors() const;
+    [[nodiscard]] const QStringList & negatedAuthors() const;
+    [[nodiscard]] bool hasAnyAuthor() const;
+    [[nodiscard]] bool hasNegatedAnyAuthor() const;
 
-    const QStringList & sources() const;
-    const QStringList & negatedSources() const;
-    bool hasAnySource() const;
-    bool hasNegatedAnySource() const;
+    [[nodiscard]] const QStringList & sources() const;
+    [[nodiscard]] const QStringList & negatedSources() const;
+    [[nodiscard]] bool hasAnySource() const;
+    [[nodiscard]] bool hasNegatedAnySource() const;
 
-    const QStringList & sourceApplications() const;
-    const QStringList & negatedSourceApplications() const;
-    bool hasAnySourceApplication() const;
-    bool hasNegatedAnySourceApplication() const;
+    [[nodiscard]] const QStringList & sourceApplications() const;
+    [[nodiscard]] const QStringList & negatedSourceApplications() const;
+    [[nodiscard]] bool hasAnySourceApplication() const;
+    [[nodiscard]] bool hasNegatedAnySourceApplication() const;
 
-    const QStringList & contentClasses() const;
-    const QStringList & negatedContentClasses() const;
-    bool hasAnyContentClass() const;
-    bool hasNegatedAnyContentClass() const;
+    [[nodiscard]] const QStringList & contentClasses() const;
+    [[nodiscard]] const QStringList & negatedContentClasses() const;
+    [[nodiscard]] bool hasAnyContentClass() const;
+    [[nodiscard]] bool hasNegatedAnyContentClass() const;
 
-    const QStringList & placeNames() const;
-    const QStringList & negatedPlaceNames() const;
-    bool hasAnyPlaceName() const;
-    bool hasNegatedAnyPlaceName() const;
+    [[nodiscard]] const QStringList & placeNames() const;
+    [[nodiscard]] const QStringList & negatedPlaceNames() const;
+    [[nodiscard]] bool hasAnyPlaceName() const;
+    [[nodiscard]] bool hasNegatedAnyPlaceName() const;
 
-    const QStringList & applicationData() const;
-    const QStringList & negatedApplicationData() const;
-    bool hasAnyApplicationData() const;
-    bool hasNegatedAnyApplicationData() const;
+    [[nodiscard]] const QStringList & applicationData() const;
+    [[nodiscard]] const QStringList & negatedApplicationData() const;
+    [[nodiscard]] bool hasAnyApplicationData() const;
+    [[nodiscard]] bool hasNegatedAnyApplicationData() const;
 
-    const QVector<qint64> & reminderOrders() const;
-    const QVector<qint64> & negatedReminderOrders() const;
-    bool hasAnyReminderOrder() const;
-    bool hasNegatedAnyReminderOrder() const;
+    [[nodiscard]] const QList<qint64> & reminderOrders() const;
+    [[nodiscard]] const QList<qint64> & negatedReminderOrders() const;
+    [[nodiscard]] bool hasAnyReminderOrder() const;
+    [[nodiscard]] bool hasNegatedAnyReminderOrder() const;
 
-    const QVector<qint64> & reminderTimes() const;
-    const QVector<qint64> & negatedReminderTimes() const;
-    bool hasAnyReminderTime() const;
-    bool hasNegatedAnyReminderTime() const;
+    [[nodiscard]] const QList<qint64> & reminderTimes() const;
+    [[nodiscard]] const QList<qint64> & negatedReminderTimes() const;
+    [[nodiscard]] bool hasAnyReminderTime() const;
+    [[nodiscard]] bool hasNegatedAnyReminderTime() const;
 
-    const QVector<qint64> & reminderDoneTimes() const;
-    const QVector<qint64> & negatedReminderDoneTimes() const;
-    bool hasAnyReminderDoneTime() const;
-    bool hasNegatedAnyReminderDoneTime() const;
+    [[nodiscard]] const QList<qint64> & reminderDoneTimes() const;
+    [[nodiscard]] const QList<qint64> & negatedReminderDoneTimes() const;
+    [[nodiscard]] bool hasAnyReminderDoneTime() const;
+    [[nodiscard]] bool hasNegatedAnyReminderDoneTime() const;
 
-    bool hasUnfinishedToDo() const;
-    bool hasNegatedUnfinishedToDo() const;
+    [[nodiscard]] bool hasUnfinishedToDo() const;
+    [[nodiscard]] bool hasNegatedUnfinishedToDo() const;
 
-    bool hasFinishedToDo() const;
-    bool hasNegatedFinishedToDo() const;
+    [[nodiscard]] bool hasFinishedToDo() const;
+    [[nodiscard]] bool hasNegatedFinishedToDo() const;
 
-    bool hasAnyToDo() const;
-    bool hasNegatedAnyToDo() const;
+    [[nodiscard]] bool hasAnyToDo() const;
+    [[nodiscard]] bool hasNegatedAnyToDo() const;
 
-    bool hasEncryption() const;
-    bool hasNegatedEncryption() const;
+    [[nodiscard]] bool hasEncryption() const;
+    [[nodiscard]] bool hasNegatedEncryption() const;
 
-    const QStringList & contentSearchTerms() const;
-    const QStringList & negatedContentSearchTerms() const;
-    bool hasAnyContentSearchTerms() const;
+    [[nodiscard]] const QStringList & contentSearchTerms() const;
+    [[nodiscard]] const QStringList & negatedContentSearchTerms() const;
+    [[nodiscard]] bool hasAnyContentSearchTerms() const;
 
-    bool isMatcheable() const;
+    [[nodiscard]] bool isMatcheable() const;
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
-    QSharedDataPointer<NoteSearchQueryData> d;
+    class Data;
+    QSharedDataPointer<Data> d;
 };
 
 } // namespace quentier

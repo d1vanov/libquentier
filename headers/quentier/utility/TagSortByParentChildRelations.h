@@ -22,7 +22,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Tag.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QList>
 

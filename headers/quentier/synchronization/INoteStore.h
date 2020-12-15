@@ -27,7 +27,7 @@
 #include <quentier/types/Tag.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QObject>
 
