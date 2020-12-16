@@ -27,7 +27,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
 
-class Q_DECL_HIDDEN Transaction
+class Q_DECL_HIDDEN Transaction final
 {
 public:
     enum class Type
@@ -45,11 +45,11 @@ public:
         const LocalStorageManagerPrivate & localStorageManager,
         Type type = Type::Default);
 
-    virtual ~Transaction();
+    ~Transaction() noexcept;
 
-    bool commit(ErrorString & errorDescription);
-    bool rollback(ErrorString & errorDescription);
-    bool end(ErrorString & errorDescription);
+    [[nodiscard]] bool commit(ErrorString & errorDescription);
+    [[nodiscard]] bool rollback(ErrorString & errorDescription);
+    [[nodiscard]] bool end(ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(Transaction)
@@ -61,9 +61,9 @@ private:
 
 private:
     Type m_type;
-    bool m_committed;
-    bool m_rolledBack;
-    bool m_ended;
+    bool m_committed = false;
+    bool m_rolledBack = false;
+    bool m_ended = false;
 };
 
 } // namespace quentier

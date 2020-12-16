@@ -32,13 +32,12 @@ Transaction::Transaction(
     const QSqlDatabase & db,
     const LocalStorageManagerPrivate & localStorageManager, Type type) :
     m_db(db),
-    m_localStorageManager(localStorageManager), m_type(type),
-    m_committed(false), m_rolledBack(false), m_ended(false)
+    m_localStorageManager(localStorageManager), m_type(type)
 {
     init();
 }
 
-Transaction::~Transaction()
+Transaction::~Transaction() noexcept
 {
     if ((m_type != Type::Selection) && !m_committed && !m_rolledBack) {
         QSqlQuery query(m_db);

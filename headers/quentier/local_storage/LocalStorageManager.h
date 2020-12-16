@@ -26,8 +26,8 @@
 #include <quentier/utility/Linkage.h>
 
 #include <QHash>
+#include <QList>
 #include <QString>
-#include <QVector>
 
 #include <cstdint>
 #include <memory>
@@ -35,21 +35,21 @@
 
 namespace qevercloud {
 
-QT_FORWARD_DECLARE_STRUCT(Accounting)
-QT_FORWARD_DECLARE_STRUCT(BusinessUserInfo)
-QT_FORWARD_DECLARE_STRUCT(NoteAttributes)
-QT_FORWARD_DECLARE_STRUCT(NotebookRestrictions)
-QT_FORWARD_DECLARE_STRUCT(ResourceAttributes)
-QT_FORWARD_DECLARE_STRUCT(PremiumInfo)
-QT_FORWARD_DECLARE_STRUCT(SharedNotebook)
-QT_FORWARD_DECLARE_STRUCT(UserAttributes)
+class Accounting;
+class BusinessUserInfo;
+class NoteAttributes;
+class NotebookRestrictions;
+class ResourceAttributes;
+class PremiumInfo;
+class SharedNotebook;
+class UserAttributes;
 
 } // namespace qevercloud
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ILocalStoragePatch)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
+class ILocalStoragePatch;
+class LocalStorageManagerPrivate;
 
 class QUENTIER_EXPORT LocalStorageManager : public QObject
 {
@@ -114,7 +114,7 @@ public:
 #endif
         QObject * parent = nullptr);
 
-    virtual ~LocalStorageManager() override;
+    ~LocalStorageManager() noexcept override;
 
 Q_SIGNALS:
     /**
@@ -213,7 +213,8 @@ public:
      *                              for the currently run version of libquentier
      *                              to work with, false otherwise
      */
-    bool isLocalStorageVersionTooHigh(ErrorString & errorDescription);
+    [[nodiscard]] bool isLocalStorageVersionTooHigh(
+        ErrorString & errorDescription);
 
     /**
      * localStorageRequiresUpgrade method checks whether the existing local
@@ -239,7 +240,8 @@ public:
      * @return                      True if local storage requires upgrade,
      *                              false otherwise
      */
-    bool localStorageRequiresUpgrade(ErrorString & errorDescription);
+    [[nodiscard]] bool localStorageRequiresUpgrade(
+        ErrorString & errorDescription);
 
     /**
      * requiredLocalStoragePatches provides the client code with the list of
@@ -253,7 +255,7 @@ public:
      * @return                      The vector of patches required to be applied
      *                              to the current local storage version
      */
-    QVector<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
+    [[nodiscard]] QList<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage
@@ -267,7 +269,7 @@ public:
      *                              version or negative number in case of error
      *                              retrieving the local storage version
      */
-    qint32 localStorageVersion(ErrorString & errorDescription);
+    [[nodiscard]] qint32 localStorageVersion(ErrorString & errorDescription);
 
     /**
      * highestSupportedLocalStorageVersion returns the highest version of local
@@ -276,7 +278,7 @@ public:
      *
      * @return                      Highest supported local storage version
      */
-    qint32 highestSupportedLocalStorageVersion() const;
+    [[nodiscard]] qint32 highestSupportedLocalStorageVersion() const;
 
     /**
      * @brief userCount returns the number of non-deleted users currently stored
@@ -288,7 +290,7 @@ public:
      *                              users or -1 which means some error has
      *                              occurred
      */
-    int userCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int userCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addUser adds the passed in User object to the local storage
@@ -304,7 +306,8 @@ public:
      * @return                      True if the user was added successfully,
      *                              false otherwise
      */
-    bool addUser(const User & user, ErrorString & errorDescription);
+    [[nodiscard]] bool addUser(
+        const qevercloud::User & user, ErrorString & errorDescription);
 
     /**
      * @brief updateUser updates the passed in User object in the local storage
@@ -320,7 +323,8 @@ public:
      * @return                      True if the user was updated successfully,
      *                              false otherwise
      */
-    bool updateUser(const User & user, ErrorString & errorDescription);
+    [[nodiscard]] bool updateUser(
+        const qevercloud::User & user, ErrorString & errorDescription);
 
     /**
      * @brief findUser attempts to find and fill the fields of the passed in
@@ -334,7 +338,8 @@ public:
      * @return                      True if the user was found successfully,
      *                              false otherwise
      */
-    bool findUser(User & user, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findUser(
+        qevercloud::User & user, ErrorString & errorDescription) const;
 
     /**
      * @brief deleteUser marks the user as deleted in local storage
@@ -345,7 +350,8 @@ public:
      * @return                      True if the user was marked as deleted
      *                              successfully, false otherwise
      */
-    bool deleteUser(const User & user, ErrorString & errorDescription);
+    [[nodiscard]] bool deleteUser(
+        const qevercloud::User & user, ErrorString & errorDescription);
 
     /**
      * @brief expungeUser permanently deletes the user from the local storage
@@ -357,7 +363,8 @@ public:
      * @return                      True if the user was expunged successfully,
      *                              false otherwise
      */
-    bool expungeUser(const User & user, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeUser(
+        const qevercloud::User & user, ErrorString & errorDescription);
 
     /**
      * @brief notebookCount returns the number of notebooks currently stored
@@ -369,7 +376,7 @@ public:
      *                              notebooks or -1 which means some error
      *                              has occurred
      */
-    int notebookCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int notebookCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addNotebook adds the passed in Notebook to the local storage
@@ -377,20 +384,21 @@ public:
      *
      * If the notebook has "remote" Evernote service's guid set, it is
      * identified by this guid in the local storage database. Otherwise it is
-     * identified by the local uid
+     * identified by the local id
      *
      * @param notebook              The notebook to be added to the local
      *                              storage database; the object is passed by
      *                              reference and may be changed as a result of
      *                              the call (filled with autocompleted fields
-     *                              like local uid if it was empty before
+     *                              like local id if it was empty before
      *                              the call)
      * @param errorDescription      Error description if the notebook could not
      *                              be added
      * @return                      True if the notebook was added successfully,
      *                              false otherwise
      */
-    bool addNotebook(Notebook & notebook, ErrorString & errorDescription);
+    [[nodiscard]] bool addNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
     /**
      * @brief updateNotebook updates the passed in Notebook in the local storage
@@ -398,19 +406,20 @@ public:
      *
      * If the notebook has "remote" Evernote service's guid set, it is
      * identified by this guid in the local storage database. Otherwise it is
-     * identified by the local uid.
+     * identified by the local id.
      *
      * @param notebook              Notebook to be updated in the local storage
      *                              database; the object is passed by reference
      *                              and may be changed as a result of the call
      *                              (filled with autocompleted fields like local
-     *                              uid if it was empty before the call)
+     *                              id if it was empty before the call)
      * @param errorDescription      Error description if the notebook could not
      *                              be updated
      * @return                      True if the notebook was updated
      *                              successfully, false otherwise
      */
-    bool updateNotebook(Notebook & notebook, ErrorString & errorDescription);
+    [[nodiscard]] bool updateNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
     /**
      * @brief findNotebook attempts to find and set all found fields of
@@ -418,7 +427,7 @@ public:
      *
      * If "remote" Evernote service's guid for the notebook is set,
      * it is used to identify the notebook in the local storage database.
-     * Otherwise the notebook is identified by its local uid. If it's empty,
+     * Otherwise the notebook is identified by its local id. If it's empty,
      * the search would attempt to find the notebook by its name. If the name
      * is also not set, the search would attempt to find the notebook by
      * linked notebook guid assuming that no more than one notebook corresponds
@@ -434,15 +443,15 @@ public:
      * the corresponding guid.
      *
      * @param notebook              The notebook to be found. Must have either
-     *                              "remote" or local uid or name or linked
+     *                              "remote" or local id or name or linked
      *                              notebook guid set
      * @param errorDescription      Error description if the notebook could not
      *                              be found
      * @return                      True if the notebook was found, false
      *                              otherwise
      */
-    bool findNotebook(
-        Notebook & notebook, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findDefaultNotebook attempts to find the default notebook
@@ -454,8 +463,8 @@ public:
      * @return                      True if the default notebook was found,
      *                              false otherwise
      */
-    bool findDefaultNotebook(
-        Notebook & notebook, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findDefaultNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findLastUsedNotebook attempts to find the last used notebook
@@ -467,8 +476,8 @@ public:
      * @return                      True if the last used notebook was found,
      *                              false otherwise
      */
-    bool findLastUsedNotebook(
-        Notebook & notebook, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findLastUsedNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief findDefaultOrLastUsedNotebook attempts to find either the default
@@ -481,8 +490,8 @@ public:
      * @return                      True if the default or the last used
      *                              notebook were found, false otherwise
      */
-    bool findDefaultOrLastUsedNotebook(
-        Notebook & notebook, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findDefaultOrLastUsedNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription) const;
 
     /**
      * @brief The OrderDirection enum specifies the direction of ordering of
@@ -553,12 +562,12 @@ public:
      *                              error or no notebooks presence within
      *                              the account
      */
-    QList<Notebook> listAllNotebooks(
+    [[nodiscard]] QList<qevercloud::Notebook> listAllNotebooks(
         ErrorString & errorDescription, const size_t limit = 0,
         const size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        const QString & linkedNotebookGuid = {}) const;
 
     /**
      * @brief listNotebooks attempts to list notebooks within the account
@@ -593,12 +602,12 @@ public:
      *                              conforming to the filter exist within
      *                              the account
      */
-    QList<Notebook> listNotebooks(
+    [[nodiscard]] QList<qevercloud::Notebook> listNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        const QString & linkedNotebookGuid = {}) const;
 
     /**
      * @brief listAllSharedNotebooks attempts to list all shared notebooks
@@ -612,12 +621,12 @@ public:
      *                              error or no shared notebooks presence
      *                              within the account
      */
-    QList<SharedNotebook> listAllSharedNotebooks(
+    [[nodiscard]] QList<qevercloud::SharedNotebook> listAllSharedNotebooks(
         ErrorString & errorDescription) const;
 
     /**
      * @brief listSharedNotebooksPerNotebookGuid - attempts to list all shared
-     * notebooks per given notebook's remote guid (not local uid, it's
+     * notebooks per given notebook's remote guid (not local id, it's
      * important).
      *
      * @param notebookGuid          Remote Evernote service's guid of
@@ -631,7 +640,7 @@ public:
      *                              or no shared notebooks presence per given
      *                              notebook guid
      */
-    QList<SharedNotebook> listSharedNotebooksPerNotebookGuid(
+    [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooksPerNotebookGuid(
         const QString & notebookGuid, ErrorString & errorDescription) const;
 
     /**
@@ -647,17 +656,18 @@ public:
      * synchronized with Evernote at all.
      *
      * @param notebook              The notebook to be expunged. Must have
-     *                              either "remote" guid or local uid set;
+     *                              either "remote" guid or local id set;
      *                              the object is passed by reference and may
      *                              be changed as a result of the call (filled
-     *                              with local uid if it was empty before
+     *                              with local id if it was empty before
      *                              the call)
      * @param errorDescription      Error description if the notebook could
      *                              not be expunged
      * @return                      True if the notebook was expunged
      *                              successfully, false otherwise
      */
-    bool expungeNotebook(Notebook & notebook, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
     /**
      * @brief linkedNotebookCount returns the number of linked notebooks stored
@@ -668,7 +678,7 @@ public:
      * @return                      Either non-negative number of linked
      *                              notebooks or -1 if some error has occurred
      */
-    int linkedNotebookCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int linkedNotebookCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addLinkedNotebook adds passed in LinkedNotebook to the local
@@ -683,8 +693,9 @@ public:
      * @return                      True if linked notebook was added
      *                              successfully, false otherwise
      */
-    bool addLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    [[nodiscard]] bool addLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
     /**
      * @brief updateLinkedNotebook updates passd in LinkedNotebook in the local
@@ -698,13 +709,14 @@ public:
      * @return                      True if linked notebook was updated
      *                              successfully, false otherwise
      */
-    bool updateLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    [[nodiscard]] bool updateLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
     /**
      * @brief findLinkedNotebook attempts to find and set all found fields for
      * passed in by reference LinkedNotebook object. For LinkedNotebook local
-     * uid doesn't mean anything because it can only be considered valid if it
+     * id doesn't mean anything because it can only be considered valid if it
      * has "remote" Evernote service's guid set. So this passed in
      * LinkedNotebook object must have guid set to identify the linked notebook
      * in the local storage database.
@@ -716,8 +728,9 @@ public:
      * @return                      True if linked notebook was found,
      *                              false otherwise
      */
-    bool findLinkedNotebook(
-        LinkedNotebook & linkedNotebook, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findLinkedNotebook(
+        qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription) const;
 
     /**
      * @brief The ListLinkedNotebooksOrder enum allows to specify the results
@@ -760,7 +773,7 @@ public:
      *                              list in case of error or no linked notebooks
      *                              presence within the account
      */
-    QList<LinkedNotebook> listAllLinkedNotebooks(
+    [[nodiscard]] QList<qevercloud::LinkedNotebook> listAllLinkedNotebooks(
         ErrorString & errorDescription, const size_t limit = 0,
         const size_t offset = 0,
         const ListLinkedNotebooksOrder order =
@@ -794,7 +807,7 @@ public:
      *                              notebooks conforming to the filter exist
      *                              within the account
      */
-    QList<LinkedNotebook> listLinkedNotebooks(
+    [[nodiscard]] QList<qevercloud::LinkedNotebook> listLinkedNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListLinkedNotebooksOrder order =
@@ -818,8 +831,9 @@ public:
      * @return                      True if linked notebook was expunged
      *                              successfully, false otherwise
      */
-    bool expungeLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
     /**
      * @brief The NoteCountOption enum is a QFlags enum which allows to specify
@@ -856,7 +870,7 @@ public:
      *                              of notes or -1 which means some error
      *                              occurred
      */
-    int noteCount(
+    [[nodiscard]] int noteCount(
         ErrorString & errorDescription,
         const NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
@@ -868,7 +882,7 @@ public:
      * @param notebook              Notebook for which the number of notes is
      *                              requested. If its guid is set, it is used to
      *                              identify the notebook, otherwise its local
-     *                              uid is used
+     *                              id is used
      * @param errorDescription      Error description if the number of notes per
      *                              given notebook could not be returned
      * @param options               Options clarifying which notes to list;
@@ -877,8 +891,8 @@ public:
      *                              notes per given notebook or -1 which means
      *                              some error occurred
      */
-    int noteCountPerNotebook(
-        const Notebook & notebook, ErrorString & errorDescription,
+    [[nodiscard]] int noteCountPerNotebook(
+        const qevercloud::Notebook & notebook, ErrorString & errorDescription,
         const NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
@@ -889,7 +903,7 @@ public:
      * @param tag                   Tag for which the number of notes labeled
      *                              with it is requested. If its guid is set,
      *                              it is used to identify the tag, otherwise
-     *                              its local uid is used
+     *                              its local id is used
      * @param errorDescription      Error description if the number of notes per
      *                              given tag could not be returned
      * @param options               Options clarifying which notes to list;
@@ -898,8 +912,8 @@ public:
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerTag(
-        const Tag & tag, ErrorString & errorDescription,
+    [[nodiscard]] int noteCountPerTag(
+        const qevercloud::Tag & tag, ErrorString & errorDescription,
         const NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
@@ -909,7 +923,7 @@ public:
      * in the local storage database.
      *
      * @param noteCountsPerTagLocalUid      The result hash: note counts by tag
-     *                                      local uids
+     *                                      local ids
      * @param errorDescription              Error description if the number of
      *                                      notes per all tags could not be
      *                                      returned
@@ -920,7 +934,7 @@ public:
      *                                      were computed successfully, false
      *                                      otherwise
      */
-    bool noteCountsPerAllTags(
+    [[nodiscard]] bool noteCountsPerAllTags(
         QHash<QString, int> & noteCountsPerTagLocalUid,
         ErrorString & errorDescription,
         const NoteCountOptions options =
@@ -929,12 +943,12 @@ public:
     /**
      * @brief noteCountPerNotebooksAndTags returns the number of notes currently
      * stored in local storage database belonging to one of notebooks
-     * corresponding to given notebook local uids and labeled by at least one of
-     * tags corresponding to given tag local uids
+     * corresponding to given notebook local ids and labeled by at least one of
+     * tags corresponding to given tag local ids
      *
-     * @param notebookLocalUids     The list of notebook local uids used for
+     * @param notebookLocalUids     The list of notebook local ids used for
      *                              filtering
-     * @param tagLocalUids          The list of tag local uids used for
+     * @param tagLocalUids          The list of tag local ids used for
      *                              filtering
      * @param errorDescription      Error description if the number of notes per
      *                              notebooks and tags could not be returned
@@ -944,7 +958,7 @@ public:
      *                              notes per given tag or -1 which means some
      *                              error occurred
      */
-    int noteCountPerNotebooksAndTags(
+    [[nodiscard]] int noteCountPerNotebooksAndTags(
         const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
         ErrorString & errorDescription,
         const NoteCountOptions options =
@@ -955,19 +969,20 @@ public:
      *
      * @param note                  Note to be added to local storage database;
      *                              required to contain either "remote" notebook
-     *                              guid or local notebook uid; may be changed
+     *                              guid or local notebook id; may be changed
      *                              as a result of the call, filled with
-     *                              autogenerated fields like local uid if it
+     *                              autogenerated fields like local id if it
      *                              was empty before the call; also tag guids
      *                              are filled if the note passed in contained
-     *                              only tag local uids and tag local uids are
+     *                              only tag local ids and tag local ids are
      *                              filled if the note passed in contained only
      *                              tag guids
      * @param errorDescription      Error description if note could not be added
      * @return                      True if note was added successfully,
      *                              false otherwise
      */
-    bool addNote(Note & note, ErrorString & errorDescription);
+    [[nodiscard]] bool addNote(
+        qevercloud::Note & note, ErrorString & errorDescription);
 
     /**
      * @brief The UpdateNoteOption enum is a QFlags enum which allows to specify
@@ -1017,8 +1032,8 @@ public:
      *
      * If the note has "remote" Evernote service's guid set, it is identified
      * by this guid in the local storage database. If no note with such guid is
-     * found, the local uid is used to identify the note in the local storage
-     * database. If the note has no guid, the local uid is used to identify it
+     * found, the local id is used to identify the note in the local storage
+     * database. If the note has no guid, the local id is used to identify it
      * in the local storage database.
      *
      * A special way in which this method might be used is the update of a note
@@ -1034,10 +1049,10 @@ public:
      *
      * @param note                  Note to be updated in the local storage
      *                              database; required to contain either
-     * "remote" notebook guid or local notebook uid; may be changed as a result
-     * of the call, filled with fields like local uid or notebook guid or local
-     * uid if any of these were empty before the call; also tag guids are filled
-     * if the note passed in contained only tag local uids and tag local uids
+     * "remote" notebook guid or local notebook id; may be changed as a result
+     * of the call, filled with fields like local id or notebook guid or local
+     * id if any of these were empty before the call; also tag guids are filled
+     * if the note passed in contained only tag local ids and tag local ids
      * are filled if the note passed in contained only tag guids. Bear in mind
      * that after the call the note may not have the representative resources if
      *                              "updateNoteOptions" input parameter
@@ -1053,8 +1068,8 @@ public:
      * @return                      True if note was updated successfully,
      *                              false otherwise
      */
-    bool updateNote(
-        Note & note, const UpdateNoteOptions options,
+    [[nodiscard]] bool updateNote(
+        qevercloud::Note & note, const UpdateNoteOptions options,
         ErrorString & errorDescription);
 
     /**
@@ -1107,8 +1122,8 @@ public:
      * @param errorDescription - error description if note could not be found
      * @return true if note was found successfully, false otherwise
      */
-    bool findNote(
-        Note & note, const GetNoteOptions options,
+    [[nodiscard]] bool findNote(
+        qevercloud::Note & note, const GetNoteOptions options,
         ErrorString & errorDescription) const;
 
     /**
@@ -1142,7 +1157,7 @@ public:
      *                              requested. If it has the "remote" Evernote
      *                              service's guid set, it would be used to
      *                              identify the notebook in the local storage
-     *                              database, otherwise its local uid would be
+     *                              database, otherwise its local id would be
      *                              used
      * @param options               Options specifying which optionally
      *                              includable fields of the note should
@@ -1164,8 +1179,8 @@ public:
      *                              list in case of error or no notes presence
      *                              in the given notebook
      */
-    QList<Note> listNotesPerNotebook(
-        const Notebook & notebook, const GetNoteOptions options,
+    [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebook(
+        const qevercloud::Notebook & notebook, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
@@ -1179,7 +1194,7 @@ public:
      *                              it is requested. If it has the "remote"
      *                              Evernote service's guid set, it is used to
      *                              identify the tag in the local storage
-     *                              database, otherwise its local uid is used
+     *                              database, otherwise its local id is used
      * @param options               Options specifying which optionally
      *                              includable fields of the note should
      *                              actually be included
@@ -1200,8 +1215,8 @@ public:
      *                              in case of error or no notes labeled with
      *                              the given tag presence
      */
-    QList<Note> listNotesPerTag(
-        const Tag & tag, const GetNoteOptions options,
+    [[nodiscard]] QList<qevercloud::Note> listNotesPerTag(
+        const qevercloud::Tag & tag, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
@@ -1239,7 +1254,7 @@ public:
      *                              corresponding to given notebooks and tags
      *                              presence
      */
-    QList<Note> listNotesPerNotebooksAndTags(
+    [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebooksAndTags(
         const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
         const GetNoteOptions options, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
@@ -1249,10 +1264,10 @@ public:
             OrderDirection::Ascending) const;
 
     /**
-     * @brief listNotesByLocalUids attempts to list notes given their local uids
+     * @brief listNotesByLocalUids attempts to list notes given their local ids
      *
      * The method would only return notes which it managed to find within
-     * the local storage i.e. having an invalid local uid in the list won't
+     * the local storage i.e. having an invalid local id in the list won't
      * result in an error, just in the corresponding note not returned
      * within the result
      *
@@ -1275,11 +1290,11 @@ public:
      *                              notes in the result, NoOrder by default
      * @param orderDirection        Specifies the direction of ordering, by
      *                              default ascending direction is used;
-     * @return                      Either list of notes by local uids or empty
+     * @return                      Either list of notes by local ids or empty
      *                              list in case of error or no notes
-     *                              corresponding to given local uids presence
+     *                              corresponding to given local ids presence
      */
-    QList<Note> listNotesByLocalUids(
+    [[nodiscard]] QList<qevercloud::Note> listNotesByLocalUids(
         const QStringList & noteLocalUids, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
@@ -1322,7 +1337,7 @@ public:
      *                              cases of error or no notes conforming to
      *                              the filter exist within the account
      */
-    QList<Note> listNotes(
+    [[nodiscard]] QList<qevercloud::Note> listNotes(
         const ListObjectsOptions flag, const GetNoteOptions options,
         ErrorString & errorDescription, const size_t limit = 0,
         const size_t offset = 0,
@@ -1331,17 +1346,17 @@ public:
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
-     * @brief findNoteLocalUidsWithSearchQuery attempts to find note local uids
+     * @brief findNoteLocalUidsWithSearchQuery attempts to find note local ids
      * of notes corresponding to the passed in NoteSearchQuery object.
      *
      * @param noteSearchQuery       Filled NoteSearchQuery object used to filter
      *                              the notes
-     * @param errorDescription      Error description in case note local uids
+     * @param errorDescription      Error description in case note local ids
      *                              could not be listed
-     * @return                      The list of found notes' local uids or empty
+     * @return                      The list of found notes' local ids or empty
      *                              list in case of error
      */
-    QStringList findNoteLocalUidsWithSearchQuery(
+    [[nodiscard]] QStringList findNoteLocalUidsWithSearchQuery(
         const NoteSearchQuery & noteSearchQuery,
         ErrorString & errorDescription) const;
 
@@ -1360,7 +1375,7 @@ public:
      *                              empty list in case of error or no notes
      *                              presence for the given NoteSearchQuery
      */
-    NoteList findNotesWithSearchQuery(
+    [[nodiscard]] NoteList findNotesWithSearchQuery(
         const NoteSearchQuery & noteSearchQuery, const GetNoteOptions options,
         ErrorString & errorDescription) const;
 
@@ -1375,13 +1390,14 @@ public:
      *
      * @param note                  Note to be expunged; may be changed as a
      *                              result of the call, filled with fields like
-     *                              local uid or notebook guid or local uid
+     *                              local id or notebook guid or local id
      * @param errorDescription      Error description if note could not be
      *                              expunged
      * @return                      True if note was expunged successfully,
      *                              false otherwise
      */
-    bool expungeNote(Note & note, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeNote(
+        qevercloud::Note & note, ErrorString & errorDescription);
 
     /**
      * @brief tagCount returns the number of non-deleted tags currently stored
@@ -1392,41 +1408,43 @@ public:
      * @return                      Either non-negative value with the number of
      *                              tags or -1 which means some error occurred
      */
-    int tagCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int tagCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addTag adds passed in Tag to the local storage database. If tag
      * has "remote" Evernote service's guid set, it is identified in
-     * the database by this guid. Otherwise it is identified by local uid.
+     * the database by this guid. Otherwise it is identified by local id.
      *
      * @param tag                   Tag to be added to the local storage; may be
      *                              changed as a result of the call, filled with
-     *                              autogenerated fields like local uid if it
+     *                              autogenerated fields like local id if it
      *                              was empty before the call
      * @param errorDescription      Error description if Tag could not be added
      * @return                      True if Tag was added successfully,
      *                              false otherwise
      */
-    bool addTag(Tag & tag, ErrorString & errorDescription);
+    [[nodiscard]] bool addTag(
+        qevercloud::Tag & tag, ErrorString & errorDescription);
 
     /**
      * @brief updateTag updates passed in Tag in the local storage database.
      *
      * If the tag has "remote" Evernote service's guid set, it is identified
      * by this guid in the local storage database. If the tag has no guid,
-     * the local uid is used to identify it in the local storage database.
+     * the local id is used to identify it in the local storage database.
      *
      * @param tag                   Tag filled with values to be updated in
      *                              the local storage database. Note that it
      *                              can be changed * as a result of the call:
-     *                              automatically filled with local uid if it
+     *                              automatically filled with local id if it
      *                              was empty before the call
      * @param errorDescription      Error description if tag could not be
      *                              updated
      * @return                      True if tag was updated successfully,
      *                              false otherwise
      */
-    bool updateTag(Tag & tag, ErrorString & errorDescription);
+    [[nodiscard]] bool updateTag(
+        qevercloud::Tag & tag, ErrorString & errorDescription);
 
     /**
      * @brief findTag attempts to find and fill the fields of passed in tag
@@ -1434,7 +1452,7 @@ public:
      *
      * If "remote" Evernote service's guid for the tag is set, it would be used
      * to identify the tag in the local storage database. Otherwise the local
-     * uid would be used. If neither guid nor local uid are set, tag's name
+     * id would be used. If neither guid nor local id are set, tag's name
      * would be used. If the name is also not set, the search would fail.
      *
      * Important! Due to the fact that the tag name is only unique within
@@ -1446,13 +1464,14 @@ public:
      * the corresponding guid.
      *
      * @param tag                   Tag to be found in the local storage
-     *                              database; must have either guid, local uid
+     *                              database; must have either guid, local id
      *                              or name set
      * @param errorDescription      Error description in case tag could not be
      *                              found
      * @return                      True if tag was found, false otherwise
      */
-    bool findTag(Tag & tag, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findTag(
+        qevercloud::Tag & tag, ErrorString & errorDescription) const;
 
     /**
      * @brief The ListTagsOrder enum allows to specify the results ordering for
@@ -1477,7 +1496,7 @@ public:
      *                              requested. If it has "remote" Evernote
      *                              service's guid set, it is used to identify
      *                              the note in the local storage database.
-     *                              Otherwise its local uid is used for that.
+     *                              Otherwise its local id is used for that.
      * @param errorDescription      Error description if tags were not listed
      *                              successfully.  In such case the returned
      *                              list of tags would be empty and error
@@ -1499,8 +1518,8 @@ public:
      *                              default ascending direction is used;
      * @return                      The list of found tags per note
      */
-    QList<Tag> listAllTagsPerNote(
-        const Note & note, ErrorString & errorDescription,
+    [[nodiscard]] QList<qevercloud::Tag> listAllTagsPerNote(
+        const qevercloud::Note & note, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
@@ -1537,7 +1556,7 @@ public:
      *                              would be listed
      * @return                      The list of found tags within the account
      */
-    QList<Tag> listAllTags(
+    [[nodiscard]] QList<qevercloud::Tag> listAllTags(
         ErrorString & errorDescription, const size_t limit = 0,
         const size_t offset = 0,
         const ListTagsOrder order = ListTagsOrder::NoOrder,
@@ -1576,7 +1595,7 @@ public:
      *                              cases of error or no tags conforming to
      *                              the filter exist within the account
      */
-    QList<Tag> listTags(
+    [[nodiscard]] QList<qevercloud::Tag> listTags(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
@@ -1585,11 +1604,11 @@ public:
 
     /**
      * @brief listTagsWithNoteLocalUids attempts to list tags and their
-     * corresponding local uids within the account according to the specified
+     * corresponding local ids within the account according to the specified
      * input flag
      *
      * The method is very similar to listTags only for each listed tag it
-     * returns the list of note local uids corresponding to notes labeled with
+     * returns the list of note local ids corresponding to notes labeled with
      * the respective tag.
      *
      * @param flag                  Input parameter used to set the filter for
@@ -1615,13 +1634,13 @@ public:
      *                              would be listed; otherwise, only the tags
      *                              corresponding to the certain linked notebook
      *                              would be listed
-     * @return                      Either list of tags and note local uids
+     * @return                      Either list of tags and note local ids
      *                              within the account conforming to the filter
      *                              or empty list in cases of error or no tags
      *                              conforming to the filter exist within
      *                              the account
      */
-    QList<std::pair<Tag, QStringList>> listTagsWithNoteLocalUids(
+    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalUids(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
@@ -1640,20 +1659,20 @@ public:
      *
      * @param tag                           Tag to be expunged; may be changed
      *                                      as a result of the call,
-     *                                      automatically filled with local uid
+     *                                      automatically filled with local id
      *                                      if it was empty before the call
      * @param expungedChildTagLocalUids     If the expunged tag was a parent of
      *                                      some other tags, these were expunged
      *                                      as well; this parameter would
-     *                                      contain the local uids of expunged
+     *                                      contain the local ids of expunged
      *                                      child tags
      * @param errorDescription              Error description if tag could not
      *                                      be expunged
      * @return                              True if tag was expunged
      *                                      successfully, false otherwise
      */
-    bool expungeTag(
-        Tag & tag, QStringList & expungedChildTagLocalUids,
+    [[nodiscard]] bool expungeTag(
+        qevercloud::Tag & tag, QStringList & expungedChildTagLocalUids,
         ErrorString & errorDescription);
 
     /**
@@ -1666,7 +1685,8 @@ public:
      * @return                          True if relevant tags were expunged
      *                                  successfully, false otherwise
      */
-    bool expungeNotelessTagsFromLinkedNotebooks(ErrorString & errorDescription);
+    [[nodiscard]] bool expungeNotelessTagsFromLinkedNotebooks(
+        ErrorString & errorDescription);
 
     /**
      * @brief enResourceCount (the name is not Resource to prevent problems with
@@ -1679,25 +1699,26 @@ public:
      *                                  the number of resources or -1 which
      *                                  means some error occurred
      */
-    int enResourceCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int enResourceCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addEnResource adds passed in resource to the local storage
      * database.
      *
      * @param resource                  Resource to be added to the database,
-     *                                  must have either note's local uid set
+     *                                  must have either note's local id set
      *                                  or note's "remote" Evernote service's
      *                                  guid set; may be changed as a result of
      *                                  the call, filled with autogenerated
-     *                                  fields like local uid if it was empty
+     *                                  fields like local id if it was empty
      *                                  before the call
      * @param errorDescription          Error description if resource could
      *                                  not be added
      * @return                          True if resource was added successfully,
      *                                  false otherwise
      */
-    bool addEnResource(Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool addEnResource(
+        qevercloud::Resource & resource, ErrorString & errorDescription);
 
     /**
      * @brief updateEnResource updates passed in resource in the local storage
@@ -1705,13 +1726,13 @@ public:
      *
      * If the resource has "remote" Evernote service's guid set, it is
      * identified by this guid in the local storage database. If no resource
-     * with such guid is found, the local uid is used to identify the resource
+     * with such guid is found, the local id is used to identify the resource
      * in the local storage database. If the resource has no guid, the local
-     * uid is used to identify it in the local storage database.
+     * id is used to identify it in the local storage database.
      *
      * @param resource                  Resource to be updated; may be changed
      *                                  as a result of the call, automatically
-     *                                  filled with local uid and note local uid
+     *                                  filled with local id and note local id
      *                                  and/or guid if these were empty before
      *                                  the call
      * @param errorDescription          Error description if resource could not
@@ -1719,7 +1740,8 @@ public:
      * @return                          True if resource was updated
      *                                  successfully, false otherwise
      */
-    bool updateEnResource(Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool updateEnResource(
+        qevercloud::Resource & resource, ErrorString & errorDescription);
 
     /**
      * @brief The GetResourceOption enum is a QFlags enum which allows to
@@ -1761,7 +1783,7 @@ public:
      *                              database. If it has the "remote" Evernote
      *                              service's guid set, this guid is used to
      *                              identify the resource in the local storage
-     *                              database. Otherwise resource's local uid is
+     *                              database. Otherwise resource's local id is
      *                              used
      * @param options               Options specifying which optionally
      *                              includable fields of the resource should
@@ -1771,8 +1793,8 @@ public:
      * @return                      True if resource was found successfully,
      *                              false otherwise
      */
-    bool findEnResource(
-        Resource & resource, const GetResourceOptions options,
+    [[nodiscard]] bool findEnResource(
+        qevercloud::Resource & resource, const GetResourceOptions options,
         ErrorString & errorDescription) const;
 
     /**
@@ -1781,15 +1803,16 @@ public:
      *
      * @param resource                  Resource to be expunged; may be changed
      *                                  as a result of the call, automatically
-     *                                  filled with local uid and note local
-     *                                  uid and/or guid if these were empty
+     *                                  filled with local id and note local
+     *                                  id and/or guid if these were empty
      *                                  before the call
      * @param errorDescription          Error description if resource could not
      *                                  be expunged
      * @return                          True if resource was expunged
      *                                  successfully, false otherwise
      */
-    bool expungeEnResource(Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeEnResource(
+        qevercloud::Resource & resource, ErrorString & errorDescription);
 
     /**
      * @brief savedSearchCount returns the number of saved seacrhes currently
@@ -1800,25 +1823,26 @@ public:
      *                                  number of saved seacrhes or -1 which
      *                                  means some error occurred
      */
-    int savedSearchCount(ErrorString & errorDescription) const;
+    [[nodiscard]] int savedSearchCount(ErrorString & errorDescription) const;
 
     /**
      * @brief addSavedSearch adds passed in SavedSearch to the local storage
      * database; if search has "remote" Evernote service's guid set, it is
      * identified in the database by this guid. Otherwise it is identified by
-     * local uid.
+     * local id.
      *
      * @param search                    SavedSearch to be added to the local
      *                                  storage; may be changed as a result of
      *                                  the call, filled with autogenerated
-     *                                  fields like local uid if it was empty
+     *                                  fields like local id if it was empty
      *                                  before the call
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be added
      * @return                          True if SavedSearch was added
      *                                  successfully, false otherwise
      */
-    bool addSavedSearch(SavedSearch & search, ErrorString & errorDescription);
+    [[nodiscard]] bool addSavedSearch(
+        qevercloud::SavedSearch & search, ErrorString & errorDescription);
 
     /**
      * @brief updateSavedSearch updates passed in SavedSearch in the local
@@ -1826,20 +1850,20 @@ public:
      *
      * If search has "remote" Evernote service's guid set, it is identified
      * in the database by this guid. If the saved search has no guid,
-     * the local uid is used to identify it in the local storage database.
+     * the local id is used to identify it in the local storage database.
      *
      * @param search                    SavedSearch filled with values to be
      *                                  updated in the local storage database;
      *                                  may be changed as a result of the call
-     *                                  filled local uid if it was empty before
+     *                                  filled local id if it was empty before
      *                                  the call
      * @param errorDescription          Error description if SavedSearch could
      *                                  not be updated
      * @return                          True if SavedSearch was updated
      *                                  successfully, false otherwise
      */
-    bool updateSavedSearch(
-        SavedSearch & search, ErrorString & errorDescription);
+    [[nodiscard]] bool updateSavedSearch(
+        qevercloud::SavedSearch & search, ErrorString & errorDescription);
 
     /**
      * @brief findSavedSearch attempts to find and fill the fields of passed in
@@ -1847,7 +1871,7 @@ public:
      *
      * If "remote" Evernote services's guid for the saved search is set, it
      * would be used to identify the saved search in the local storage.
-     * Otherwise the local uid would be used. If neither guid not local uid are
+     * Otherwise the local id would be used. If neither guid not local id are
      * set, saved search's name would be used. If the name is also not set,
      * the search for saved search would fail.
      *
@@ -1858,8 +1882,8 @@ public:
      * @return                          True if SavedSearch was found, false
      *                                  otherwise
      */
-    bool findSavedSearch(
-        SavedSearch & search, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findSavedSearch(
+        qevercloud::SavedSearch & search, ErrorString & errorDescription) const;
 
     /**
      * @brief The ListSavedSearchesOrder enum allows to specify the results
@@ -1901,7 +1925,7 @@ public:
      *                                  of error or if there are no saved
      *                                  searches within the account
      */
-    QList<SavedSearch> listAllSavedSearches(
+    [[nodiscard]] QList<qevercloud::SavedSearch> listAllSavedSearches(
         ErrorString & errorDescription, const size_t limit = 0,
         const size_t offset = 0,
         const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
@@ -1936,7 +1960,7 @@ public:
      *                                  searches conforming to the filter exist
      *                                  within the account
      */
-    QList<SavedSearch> listSavedSearches(
+    [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearches(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
@@ -1948,15 +1972,15 @@ public:
      *
      * @param search                    Saved search to be expunged; may be
      *                                  changed as a result of the call filled
-     *                                  local uid if it was empty before
+     *                                  local id if it was empty before
      *                                  the call
      * @param errorDescription          Error description if saved search could
      *                                  not be expunged
      * @return                          True if saved search was expunged
      *                                  successfully, false otherwise
      */
-    bool expungeSavedSearch(
-        SavedSearch & search, ErrorString & errorDescription);
+    [[nodiscard]] bool expungeSavedSearch(
+        qevercloud::SavedSearch & search, ErrorString & errorDescription);
 
     /**
      * @brief accountHighUsn returns the highest update sequence number within
@@ -1975,12 +1999,13 @@ public:
      *                                  number - a non-negative value - or
      *                                  a negative number in case of error
      */
-    qint32 accountHighUsn(
+    [[nodiscard]] qint32 accountHighUsn(
         const QString & linkedNotebookGuid, ErrorString & errorDescription);
 
 private:
     Q_DISABLE_COPY(LocalStorageManager)
 
+private:
     LocalStorageManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(LocalStorageManager)
 };

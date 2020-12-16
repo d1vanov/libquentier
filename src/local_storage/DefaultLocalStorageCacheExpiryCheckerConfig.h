@@ -19,11 +19,17 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_DEFAULT_LOCAL_STORAGE_CHECK_EXPIRY_CHECKER_CONFIG_H
 #define LIB_QUENTIER_LOCAL_STORAGE_DEFAULT_LOCAL_STORAGE_CHECK_EXPIRY_CHECKER_CONFIG_H
 
-#define MAX_NOTES_TO_STORE            5
-#define MAX_RESOURCES_TO_STORE        5
-#define MAX_NOTEBOOKS_TO_STORE        5
-#define MAX_TAGS_TO_STORE             5
-#define MAX_LINKED_NOTEBOOKS_TO_STORE 5
-#define MAX_SAVED_SEARCHES_TO_STORE   5
+#include <QtGlobal>
+
+namespace quentier::local_storage {
+
+constexpr quint32 maxNotesToCache = 5;
+constexpr quint32 maxResourcesToCache = 5;
+constexpr quint32 maxNotebooksToCache = 5;
+constexpr quint32 maxTagsToCache = 5;
+constexpr quint32 maxLinkedNotebooksToCache = 5;
+constexpr quint32 maxSavedSearchesToCache = 5;
+
+} // namespace quentier::local_storage
 
 #endif // LIB_QUENTIER_LOCAL_STORAGE_DEFAULT_LOCAL_STORAGE_CHECK_EXPIRY_CHECKER_CONFIG_H

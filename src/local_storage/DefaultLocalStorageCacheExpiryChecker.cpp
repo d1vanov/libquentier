@@ -28,7 +28,7 @@ DefaultLocalStorageCacheExpiryChecker::DefaultLocalStorageCacheExpiryChecker(
     ILocalStorageCacheExpiryChecker(cacheManager)
 {}
 
-DefaultLocalStorageCacheExpiryChecker::~DefaultLocalStorageCacheExpiryChecker()
+DefaultLocalStorageCacheExpiryChecker::~DefaultLocalStorageCacheExpiryChecker() noexcept
 {}
 
 DefaultLocalStorageCacheExpiryChecker *
@@ -41,7 +41,7 @@ DefaultLocalStorageCacheExpiryChecker::clone() const
 bool DefaultLocalStorageCacheExpiryChecker::checkNotes() const
 {
     size_t numNotes = m_localStorageCacheManager.numCachedNotes();
-    return (numNotes < MAX_NOTES_TO_STORE);
+    return (numNotes < local_storage::maxNotesToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkResources() const
@@ -53,13 +53,13 @@ bool DefaultLocalStorageCacheExpiryChecker::checkResources() const
 bool DefaultLocalStorageCacheExpiryChecker::checkNotebooks() const
 {
     size_t numNotebooks = m_localStorageCacheManager.numCachedNotebooks();
-    return (numNotebooks < MAX_NOTEBOOKS_TO_STORE);
+    return (numNotebooks < local_storage::maxNotebooksToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkTags() const
 {
     size_t numTags = m_localStorageCacheManager.numCachedTags();
-    return (numTags < MAX_TAGS_TO_STORE);
+    return (numTags < local_storage::maxTagsToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkLinkedNotebooks() const
@@ -67,7 +67,7 @@ bool DefaultLocalStorageCacheExpiryChecker::checkLinkedNotebooks() const
     size_t numCachedLinkedNotebooks =
         m_localStorageCacheManager.numCachedLinkedNotebooks();
 
-    return (numCachedLinkedNotebooks < MAX_LINKED_NOTEBOOKS_TO_STORE);
+    return (numCachedLinkedNotebooks < local_storage::maxLinkedNotebooksToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkSavedSearches() const
@@ -75,7 +75,7 @@ bool DefaultLocalStorageCacheExpiryChecker::checkSavedSearches() const
     size_t numCachedSavedSearches =
         m_localStorageCacheManager.numCachedSavedSearches();
 
-    return (numCachedSavedSearches < MAX_SAVED_SEARCHES_TO_STORE);
+    return (numCachedSavedSearches < local_storage::maxSavedSearchesToCache);
 }
 
 QTextStream & DefaultLocalStorageCacheExpiryChecker::print(
@@ -84,15 +84,18 @@ QTextStream & DefaultLocalStorageCacheExpiryChecker::print(
     const char * indent = "  ";
 
     strm << "DefaultLocalStorageCacheExpiryChecker: {\n"
-         << indent << "max notes to store: " << MAX_NOTES_TO_STORE << ";\n"
-         << indent << "max notebooks to store: " << MAX_NOTEBOOKS_TO_STORE
+         << indent << "max notes to cache: " << local_storage::maxNotesToCache
          << ";\n"
-         << indent << "max tags to store: " << MAX_TAGS_TO_STORE << ";\n"
-         << indent
-         << "max linked notebooks to store: " << MAX_LINKED_NOTEBOOKS_TO_STORE
+         << indent << "max notebooks to cache: "
+         << local_storage::maxNotebooksToCache
          << ";\n"
-         << indent
-         << "max saved searches to store: " << MAX_SAVED_SEARCHES_TO_STORE
+         << indent << "max tags to cache: " << local_storage::maxTagsToCache
+         << ";\n" << indent
+         << "max linked notebooks to cache: "
+         << local_storage::maxLinkedNotebooksToCache
+         << ";\n" << indent
+         << "max saved searches to cache: "
+         << local_storage::maxSavedSearchesToCache
          << "\n"
          << "};\n";
 
