@@ -329,7 +329,10 @@ public:
     /**
      * @brief findUser attempts to find and fill the fields of the passed in
      * User object which must have "id" field set as this value is used as
-     * the identifier of User objects in the local storage database
+     * the identifier of User objects in the local storage database.
+     *
+     * NOTE: at the moment User's localId field is not used for lookup and
+     * is not stored in the local storage at all.
      *
      * @param user                  The user to be found. Must have "id" field
      *                              set

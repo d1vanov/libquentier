@@ -397,195 +397,213 @@ private:
     [[nodiscard]] bool insertOrReplaceUser(
         const qevercloud::User & user, ErrorString & errorDescription);
 
-    bool insertOrReplaceBusinessUserInfo(
+    [[nodiscard]] bool insertOrReplaceBusinessUserInfo(
         const qevercloud::UserID id, const qevercloud::BusinessUserInfo & info,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceAccounting(
+    [[nodiscard]] bool insertOrReplaceAccounting(
         const qevercloud::UserID id, const qevercloud::Accounting & accounting,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceAccountLimits(
+    [[nodiscard]] bool insertOrReplaceAccountLimits(
         const qevercloud::UserID id,
         const qevercloud::AccountLimits & accountLimits,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceUserAttributes(
+    [[nodiscard]] bool insertOrReplaceUserAttributes(
         const qevercloud::UserID id,
         const qevercloud::UserAttributes & attributes,
         ErrorString & errorDescription);
 
-    bool checkAndPrepareUserCountQuery() const;
-    bool checkAndPrepareInsertOrReplaceUserQuery();
-    bool checkAndPrepareInsertOrReplaceAccountingQuery();
-    bool checkAndPrepareInsertOrReplaceAccountLimitsQuery();
-    bool checkAndPrepareInsertOrReplaceBusinessUserInfoQuery();
-    bool checkAndPrepareInsertOrReplaceUserAttributesQuery();
-    bool checkAndPrepareInsertOrReplaceUserAttributesViewedPromotionsQuery();
+    [[nodiscard]] bool checkAndPrepareUserCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceUserQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceAccountingQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceAccountLimitsQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceBusinessUserInfoQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceUserAttributesQuery();
 
-    bool
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceUserAttributesViewedPromotionsQuery();
+
+    [[nodiscard]] bool
     checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
 
-    bool checkAndPrepareDeleteUserQuery();
+    [[nodiscard]] bool checkAndPrepareDeleteUserQuery();
 
-    bool insertOrReplaceNotebook(
-        const Notebook & notebook, ErrorString & errorDescription);
+    [[nodiscard]] bool insertOrReplaceNotebook(
+        const qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
-    bool checkAndPrepareNotebookCountQuery() const;
-    bool checkAndPrepareInsertOrReplaceNotebookQuery();
-    bool checkAndPrepareInsertOrReplaceNotebookRestrictionsQuery();
-    bool checkAndPrepareInsertOrReplaceSharedNotebookQuery();
+    [[nodiscard]] bool checkAndPrepareNotebookCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNotebookQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNotebookRestrictionsQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceSharedNotebookQuery();
 
-    bool insertOrReplaceLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    [[nodiscard]] bool insertOrReplaceLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
-    bool checkAndPrepareGetLinkedNotebookCountQuery() const;
-    bool checkAndPrepareInsertOrReplaceLinkedNotebookQuery();
+    [[nodiscard]] bool checkAndPrepareGetLinkedNotebookCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceLinkedNotebookQuery();
 
-    bool getNoteLocalUidFromResource(
-        const Resource & resource, QString & noteLocalUid,
+    [[nodiscard]] bool getNoteLocalUidFromResource(
+        const qevercloud::Resource & resource, QString & noteLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getNotebookLocalUidFromNote(
-        const Note & note, QString & notebookLocalUid,
+    [[nodiscard]] bool getNotebookLocalUidFromNote(
+        const qevercloud::Note & note, QString & notebookLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getNotebookGuidForNote(
-        const Note & note, QString & notebookGuid,
+    [[nodiscard]] bool getNotebookGuidForNote(
+        const qevercloud::Note & note, QString & notebookGuid,
         ErrorString & errorDescription) const;
 
-    bool getNotebookLocalUidForGuid(
+    [[nodiscard]] bool getNotebookLocalIdForGuid(
         const QString & notebookGuid, QString & notebookLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getNoteLocalUidForGuid(
+    [[nodiscard]] bool getNoteLocalUidForGuid(
         const QString & noteGuid, QString & noteLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getNoteGuidForLocalUid(
+    [[nodiscard]] bool getNoteGuidForLocalUid(
         const QString & noteLocalUid, QString & noteGuid,
         ErrorString & errorDescription) const;
 
-    bool getTagLocalUidForGuid(
+    [[nodiscard]] bool getTagLocalUidForGuid(
         const QString & tagGuid, QString & tagLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getResourceLocalUidForGuid(
+    [[nodiscard]] bool getResourceLocalUidForGuid(
         const QString & resourceGuid, QString & resourceLocalUid,
         ErrorString & errorDescription) const;
 
-    bool getSavedSearchLocalUidForGuid(
+    [[nodiscard]] bool getSavedSearchLocalUidForGuid(
         const QString & savedSearchGuid, QString & savedSearchLocalUid,
         ErrorString & errorDescription) const;
 
-    bool insertOrReplaceNote(
-        Note & note, const LocalStorageManager::UpdateNoteOptions options,
+    [[nodiscard]] bool insertOrReplaceNote(
+        qevercloud::Note & note,
+        const LocalStorageManager::UpdateNoteOptions options,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceSharedNote(
-        const SharedNote & sharedNote, ErrorString & errorDescription);
+    [[nodiscard]] bool insertOrReplaceSharedNote(
+        const qevercloud::SharedNote & sharedNote,
+        ErrorString & errorDescription);
 
-    bool insertOrReplaceNoteRestrictions(
+    [[nodiscard]] bool insertOrReplaceNoteRestrictions(
         const QString & noteLocalUid,
         const qevercloud::NoteRestrictions & noteRestrictions,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceNoteLimits(
+    [[nodiscard]] bool insertOrReplaceNoteLimits(
         const QString & noteLocalUid, const qevercloud::NoteLimits & noteLimits,
         ErrorString & errorDescription);
 
-    bool checkAndPrepareInsertOrReplaceNoteQuery();
-    bool checkAndPrepareInsertOrReplaceSharedNoteQuery();
-    bool checkAndPrepareInsertOrReplaceNoteRestrictionsQuery();
-    bool checkAndPrepareInsertOrReplaceNoteLimitsQuery();
-    bool checkAndPrepareCanAddNoteToNotebookQuery() const;
-    bool checkAndPrepareCanUpdateNoteInNotebookQuery() const;
-    bool checkAndPrepareCanExpungeNoteInNotebookQuery() const;
-    bool checkAndPrepareInsertOrReplaceNoteIntoNoteTagsQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceSharedNoteQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteRestrictionsQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteLimitsQuery();
+    [[nodiscard]] bool checkAndPrepareCanAddNoteToNotebookQuery() const;
+    [[nodiscard]] bool checkAndPrepareCanUpdateNoteInNotebookQuery() const;
+    [[nodiscard]] bool checkAndPrepareCanExpungeNoteInNotebookQuery() const;
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteIntoNoteTagsQuery();
 
-    bool insertOrReplaceTag(const Tag & tag, ErrorString & errorDescription);
-    bool checkAndPrepareTagCountQuery() const;
-    bool checkAndPrepareInsertOrReplaceTagQuery();
-    bool checkAndPrepareDeleteTagQuery();
-    bool complementTagParentInfo(Tag & tag, ErrorString & errorDescription);
+    [[nodiscard]] bool insertOrReplaceTag(
+        const qevercloud::Tag & tag, ErrorString & errorDescription);
 
-    bool insertOrReplaceResource(
-        const Resource & resource, ErrorString & errorDescription,
+    [[nodiscard]] bool checkAndPrepareTagCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceTagQuery();
+    [[nodiscard]] bool checkAndPrepareDeleteTagQuery();
+
+    [[nodiscard]] bool complementTagParentInfo(
+        qevercloud::Tag & tag, ErrorString & errorDescription);
+
+    [[nodiscard]] bool insertOrReplaceResource(
+        const qevercloud::Resource & resource, ErrorString & errorDescription,
         const bool setResourceBinaryData = true,
         const bool useSeparateTransaction = true);
 
-    bool insertOrReplaceResourceAttributes(
+    [[nodiscard]] bool insertOrReplaceResourceAttributes(
         const QString & localUid,
         const qevercloud::ResourceAttributes & attributes,
         ErrorString & errorDescription);
 
-    bool insertOrReplaceResourceMetadata(
-        const Resource & resource, const bool setResourceDataProperties,
+    [[nodiscard]] bool insertOrReplaceResourceMetadata(
+        const qevercloud::Resource & resource,
+        const bool setResourceDataProperties,
         ErrorString & errorDescription);
 
-    bool writeResourceBinaryDataToFiles(
-        const Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool writeResourceBinaryDataToFiles(
+        const qevercloud::Resource & resource, ErrorString & errorDescription);
 
-    bool writeResourceBinaryDataToFile(
+    [[nodiscard]] bool writeResourceBinaryDataToFile(
         const QString & resourceLocalUid, const QString & noteLocalUid,
         const QByteArray & dataBody, const bool isAlternateDataBody,
         const bool replaceOriginalFile, ErrorString & errorDescription);
 
-    bool updateNoteResources(
-        const Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool updateNoteResources(
+        const qevercloud::Resource & resource, ErrorString & errorDescription);
 
-    void setNoteIdsToNoteResources(Note & note) const;
+    void setNoteIdsToNoteResources(qevercloud::Note & note) const;
 
-    bool removeResourceDataFiles(
-        const Resource & resource, ErrorString & errorDescription);
+    [[nodiscard]] bool removeResourceDataFiles(
+        const qevercloud::Resource & resource, ErrorString & errorDescription);
 
-    bool removeResourceDataFilesForNote(
+    [[nodiscard]] bool removeResourceDataFilesForNote(
         const QString & noteLocalUid, ErrorString & errorDescription);
 
-    bool removeResourceDataFilesForNotebook(
-        const Notebook & notebook, ErrorString & errorDescription);
+    [[nodiscard]] bool removeResourceDataFilesForNotebook(
+        const qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
-    bool removeResourceDataFilesForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    [[nodiscard]] bool removeResourceDataFilesForLinkedNotebook(
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
-    bool
+    [[nodiscard]] bool
     checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
 
-    bool checkAndPrepareUpdateResourceMetadataWithoutDataPropertiesQuery();
-    bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
-    bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
-    bool checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
-    bool checkAndPrepareDeleteResourceFromResourceAttributesQuery();
+    [[nodiscard]] bool
+    checkAndPrepareUpdateResourceMetadataWithoutDataPropertiesQuery();
 
-    bool
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
+
+    [[nodiscard]] bool
+    checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
+
+    [[nodiscard]] bool
+    checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
+
+    [[nodiscard]] bool
+    checkAndPrepareDeleteResourceFromResourceAttributesQuery();
+
+    [[nodiscard]] bool
     checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery();
 
-    bool
+    [[nodiscard]] bool
     checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataFullMapQuery();
 
-    bool checkAndPrepareInsertOrReplaceResourceAttributesQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceResourceAttributesQuery();
 
-    bool
+    [[nodiscard]] bool
     checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataKeysOnlyQuery();
 
-    bool
+    [[nodiscard]] bool
     checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataFullMapQuery();
 
-    bool checkAndPrepareResourceCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareResourceCountQuery() const;
 
-    bool insertOrReplaceSavedSearch(
-        const SavedSearch & search, ErrorString & errorDescription);
+    [[nodiscard]] bool insertOrReplaceSavedSearch(
+        const qevercloud::SavedSearch & search, ErrorString & errorDescription);
 
-    bool checkAndPrepareInsertOrReplaceSavedSearchQuery();
-    bool checkAndPrepareGetSavedSearchCountQuery() const;
-    bool checkAndPrepareExpungeSavedSearchQuery();
+    [[nodiscard]] bool checkAndPrepareInsertOrReplaceSavedSearchQuery();
+    [[nodiscard]] bool checkAndPrepareGetSavedSearchCountQuery() const;
+    [[nodiscard]] bool checkAndPrepareExpungeSavedSearchQuery();
 
-    bool complementTagsWithNoteLocalUids(
-        QList<std::pair<Tag, QStringList>> & tagsWithNoteLocalUids,
+    [[nodiscard]] bool complementTagsWithNoteLocalUids(
+        QList<std::pair<qevercloud::Tag, QStringList>> & tagsWithNoteLocalUids,
         ErrorString & errorDescription) const;
 
-    bool readResourceDataFromFiles(
-        Resource & resource, ErrorString & errorDescription) const;
+    [[nodiscard]] bool readResourceDataFromFiles(
+        qevercloud::Resource & resource, ErrorString & errorDescription) const;
 
     enum class ReadResourceBinaryDataFromFileStatus
     {
@@ -594,23 +612,24 @@ private:
         Failure
     };
 
-    ReadResourceBinaryDataFromFileStatus readResourceBinaryDataFromFile(
+    [[nodiscard]] ReadResourceBinaryDataFromFileStatus
+    readResourceBinaryDataFromFile(
         const QString & resourceLocalUid, const QString & noteLocalUid,
         const bool isAlternateDataBody, QByteArray & dataBody,
         ErrorString & errorDescription) const;
 
     void fillResourceFromSqlRecord(
-        const QSqlRecord & rec, Resource & resource) const;
+        const QSqlRecord & rec, qevercloud::Resource & resource) const;
 
-    bool fillResourceAttributesFromSqlRecord(
+    [[nodiscard]] bool fillResourceAttributesFromSqlRecord(
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
-    bool fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(
+    [[nodiscard]] bool fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
-    bool fillResourceAttributesApplicationDataFullMapFromSqlRecord(
+    [[nodiscard]] bool fillResourceAttributesApplicationDataFullMapFromSqlRecord(
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
@@ -626,65 +645,67 @@ private:
     void fillNoteAttributesClassificationsFromSqlRecord(
         const QSqlRecord & rec, qevercloud::NoteAttributes & attributes) const;
 
-    bool fillUserFromSqlRecord(
-        const QSqlRecord & rec, User & user,
+    [[nodiscard]] bool fillUserFromSqlRecord(
+        const QSqlRecord & rec, qevercloud::User & user,
         ErrorString & errorDescription) const;
 
-    bool fillNoteFromSqlRecord(
-        const QSqlRecord & record, Note & note,
+    [[nodiscard]] bool fillNoteFromSqlRecord(
+        const QSqlRecord & record, qevercloud::Note & note,
         ErrorString & errorDescription) const;
 
-    bool fillSharedNoteFromSqlRecord(
-        const QSqlRecord & record, SharedNote & sharedNote,
+    [[nodiscard]] bool fillSharedNoteFromSqlRecord(
+        const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
         ErrorString & errorDescription) const;
 
-    bool fillNoteTagIdFromSqlRecord(
+    [[nodiscard]] bool fillNoteTagIdFromSqlRecord(
         const QSqlRecord & record, const QString & column,
         QList<std::pair<QString, int>> & tagIdsAndIndices,
         QHash<QString, int> & tagIndexPerId,
         ErrorString & errorDescription) const;
 
-    bool fillNotebookFromSqlRecord(
-        const QSqlRecord & record, Notebook & notebook,
+    [[nodiscard]] bool fillNotebookFromSqlRecord(
+        const QSqlRecord & record, qevercloud::Notebook & notebook,
         ErrorString & errorDescription) const;
 
-    bool fillSharedNotebookFromSqlRecord(
-        const QSqlRecord & record, SharedNotebook & sharedNotebook,
+    [[nodiscard]] bool fillSharedNotebookFromSqlRecord(
+        const QSqlRecord & record, qevercloud::SharedNotebook & sharedNotebook,
         ErrorString & errorDescription) const;
 
-    bool fillLinkedNotebookFromSqlRecord(
-        const QSqlRecord & record, LinkedNotebook & linkedNotebook,
+    [[nodiscard]] bool fillLinkedNotebookFromSqlRecord(
+        const QSqlRecord & record, qevercloud::LinkedNotebook & linkedNotebook,
         ErrorString & errorDescription) const;
 
-    bool fillSavedSearchFromSqlRecord(
-        const QSqlRecord & rec, SavedSearch & search,
+    [[nodiscard]] bool fillSavedSearchFromSqlRecord(
+        const QSqlRecord & rec, qevercloud::SavedSearch & search,
         ErrorString & errorDescription) const;
 
-    bool fillTagFromSqlRecord(
-        const QSqlRecord & rec, Tag & tag,
+    [[nodiscard]] bool fillTagFromSqlRecord(
+        const QSqlRecord & rec, qevercloud::Tag & tag,
         ErrorString & errorDescription) const;
 
-    QList<Tag> fillTagsFromSqlQuery(
+    [[nodiscard]] QList<qevercloud::Tag> fillTagsFromSqlQuery(
         QSqlQuery & query, ErrorString & errorDescription) const;
 
-    bool findAndSetTagIdsPerNote(
-        Note & note, ErrorString & errorDescription) const;
+    [[nodiscard]] bool findAndSetTagIdsPerNote(
+        qevercloud::Note & note, ErrorString & errorDescription) const;
 
-    bool findAndSetResourcesPerNote(
-        Note & note, const LocalStorageManager::GetResourceOptions options,
+    [[nodiscard]] bool findAndSetResourcesPerNote(
+        qevercloud::Note & note,
+        const LocalStorageManager::GetResourceOptions options,
         ErrorString & errorDescription) const;
 
-    void sortSharedNotebooks(Notebook & notebook) const;
-    void sortSharedNotes(Note & note) const;
+    void sortSharedNotebooks(qevercloud::Notebook & notebook) const;
+    void sortSharedNotes(qevercloud::Note & note) const;
 
-    QList<qevercloud::SharedNotebook> listEnSharedNotebooksPerNotebookGuid(
+    [[nodiscard]] QList<qevercloud::SharedNotebook>
+    listEnSharedNotebooksPerNotebookGuid(
         const QString & notebookGuid, ErrorString & errorDescription) const;
 
-    bool noteSearchQueryToSQL(
+    [[nodiscard]] bool noteSearchQueryToSQL(
         const NoteSearchQuery & noteSearchQuery, QString & sql,
         ErrorString & errorDescription) const;
 
-    bool noteSearchQueryContentSearchTermsToSQL(
+    [[nodiscard]] bool noteSearchQueryContentSearchTermsToSQL(
         const NoteSearchQuery & noteSearchQuery, QString & sql,
         ErrorString & errorDescription) const;
 
@@ -692,29 +713,29 @@ private:
         QString & frontSearchTermModifier, QString & searchTerm,
         QString & backSearchTermModifier, QString & matchStatement) const;
 
-    bool tagNamesToTagLocalUids(
+    [[nodiscard]] bool tagNamesToTagLocalUids(
         const QStringList & tagNames, QStringList & tagLocalUids,
         ErrorString & errorDescription) const;
 
-    bool resourceMimeTypesToResourceLocalUids(
+    [[nodiscard]] bool resourceMimeTypesToResourceLocalUids(
         const QStringList & resourceMimeTypes, QStringList & resourceLocalUids,
         ErrorString & errorDescription) const;
 
-    bool complementResourceNoteIds(
-        Resource & resource, ErrorString & errorDescription) const;
+    [[nodiscard]] bool complementResourceNoteIds(
+        qevercloud::Resource & resource, ErrorString & errorDescription) const;
 
-    bool partialUpdateNoteResources(
+    [[nodiscard]] bool partialUpdateNoteResources(
         const QString & noteLocalUid,
-        const QList<Resource> & updatedNoteResources,
+        const QList<qevercloud::Resource> & updatedNoteResources,
         const bool UpdateResourceBinaryData, ErrorString & errorDescription);
 
     template <class T>
-    QString listObjectsOptionsToSqlQueryConditions(
+    [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
         const LocalStorageManager::ListObjectsOptions & flag,
         ErrorString & errorDescription) const;
 
     template <class T, class TOrderBy>
-    QList<T> listObjects(
+    [[nodiscard]] QList<T> listObjects(
         const LocalStorageManager::ListObjectsOptions & flag,
         ErrorString & errorDescription, const size_t limit, const size_t offset,
         const TOrderBy & orderBy,
@@ -722,18 +743,19 @@ private:
         const QString & additionalSqlQueryCondition = QString()) const;
 
     template <class T>
-    QString listObjectsGenericSqlQuery() const;
+    [[nodiscard]] QString listObjectsGenericSqlQuery() const;
 
     template <class TOrderBy>
-    QString orderByToSqlTableColumn(const TOrderBy & orderBy) const;
+    [[nodiscard]] QString orderByToSqlTableColumn(
+        const TOrderBy & orderBy) const;
 
     template <class T>
-    bool fillObjectsFromSqlQuery(
+    [[nodiscard]] bool fillObjectsFromSqlQuery(
         QSqlQuery query, QList<T> & objects,
         ErrorString & errorDescription) const;
 
     template <class T>
-    bool fillObjectFromSqlRecord(
+    [[nodiscard]] bool fillObjectFromSqlRecord(
         const QSqlRecord & record, T & object,
         ErrorString & errorDescription) const;
 
@@ -743,25 +765,30 @@ private:
 
     struct SharedNotebookCompareByIndex
     {
-        bool operator()(
-            const SharedNotebook & lhs, const SharedNotebook & rhs) const;
+        [[nodiscard]] bool operator()(
+            const qevercloud::SharedNotebook & lhs,
+            const qevercloud::SharedNotebook & rhs) const noexcept;
     };
 
     struct SharedNoteCompareByIndex
     {
-        bool operator()(const SharedNote & lhs, const SharedNote & rhs) const;
+        [[nodiscard]] bool operator()(
+            const qevercloud::SharedNote & lhs,
+            const qevercloud::SharedNote & rhs) const noexcept;
     };
 
     struct ResourceCompareByIndex
     {
-        bool operator()(const Resource & lhs, const Resource & rhs) const;
+        [[nodiscard]] bool operator()(
+            const qevercloud::Resource & lhs,
+            const qevercloud::Resource & rhs) const;
     };
 
     struct QStringIntPairCompareByInt
     {
-        bool operator()(
+        [[nodiscard]] bool operator()(
             const std::pair<QString, int> & lhs,
-            const std::pair<QString, int> & rhs) const;
+            const std::pair<QString, int> & rhs) const noexcept;
     };
 
     struct HighUsnRequestData
@@ -915,7 +942,7 @@ private:
     LocalStoragePatchManager * m_pLocalStoragePatchManager = nullptr;
 
     StringUtils m_stringUtils;
-    QVector<QChar> m_preservedAsterisk;
+    QList<QChar> m_preservedAsterisk;
 };
 
 } // namespace quentier

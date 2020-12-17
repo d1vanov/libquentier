@@ -35,13 +35,15 @@ LocalStoragePatchManager::LocalStoragePatchManager(
     m_sqlDatabase(database)
 {}
 
-QVector<std::shared_ptr<ILocalStoragePatch>>
+QList<std::shared_ptr<ILocalStoragePatch>>
 LocalStoragePatchManager::patchesForCurrentVersion()
 {
-    QVector<std::shared_ptr<ILocalStoragePatch>> result;
-
+    QList<std::shared_ptr<ILocalStoragePatch>> result;
     ErrorString errorDescription;
-    int version = m_localStorageManager.localStorageVersion(errorDescription);
+
+    const int version =
+        m_localStorageManager.localStorageVersion(errorDescription);
+
     if (version <= 0) {
         QNWARNING(
             "local_storage",

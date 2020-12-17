@@ -25,12 +25,12 @@
 
 #include <memory>
 
-QT_FORWARD_DECLARE_CLASS(QSqlDatabase)
+class QSqlDatabase;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ILocalStoragePatch)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
+class ILocalStoragePatch;
+class LocalStorageManagerPrivate;
 
 /**
  * @brief The LocalStoragePatchManager controls the set of patches which are
@@ -46,11 +46,13 @@ public:
         LocalStorageManagerPrivate & localStorageManager,
         QSqlDatabase & database, QObject * parent = nullptr);
 
+    ~LocalStoragePatchManager() noexcept override;
+
     /**
      * @return          The list of patches required to be applied to the
      *                  current version of local storage
      */
-    QVector<std::shared_ptr<ILocalStoragePatch>> patchesForCurrentVersion();
+    QList<std::shared_ptr<ILocalStoragePatch>> patchesForCurrentVersion();
 
 private:
     Q_DISABLE_COPY(LocalStoragePatchManager)
