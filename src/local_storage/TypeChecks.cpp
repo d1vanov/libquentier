@@ -19,6 +19,7 @@
 #include "TypeChecks.h"
 
 #include <qevercloud/generated/Constants.h>
+#include <qevercloud/generated/types/LinkedNotebook.h>
 #include <qevercloud/generated/types/Notebook.h>
 #include <qevercloud/generated/types/User.h>
 
@@ -69,6 +70,59 @@ namespace {
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
+
+bool checkLinkedNotebook(
+    const qevercloud::LinkedNotebook & linkedNotebook,
+    ErrorString & errorDescription) noexcept
+{
+    if (!linkedNotebook.guid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Linked notebook's guid is not set"));
+
+        return false;
+    }
+
+    if (!checkGuid(*linkedNotebook.guid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Linked notebook's guid is invalid"));
+
+        errorDescription.details() = *linkedNotebook.guid();
+        return false;
+    }
+
+    if (linkedNotebook.shareName()) {
+        if (linkedNotebook.shareName()->isEmpty()) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Linked notebook's custom name is empty"));
+
+            return false;
+        }
+
+        QLatin1Char spaceChar(' ');
+        const QString & name = *linkedNotebook.shareName();
+        const int size = name.size();
+
+        bool nonSpaceCharFound = false;
+        for (int i = 0; i < size; ++i) {
+            if (name[i] != spaceChar) {
+                nonSpaceCharFound = true;
+                break;
+            }
+        }
+
+        if (!nonSpaceCharFound) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Linked notebook's custom name must contain non-whitespace "
+                "characters"));
+
+            return false;
+        }
+    }
+
+    return true;
+}
 
 bool checkNotebook(
     const qevercloud::Notebook & notebook,

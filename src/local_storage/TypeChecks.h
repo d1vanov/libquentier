@@ -21,6 +21,7 @@
 
 namespace qevercloud {
 
+class LinkedNotebook;
 class Notebook;
 class User;
 
@@ -29,6 +30,10 @@ class User;
 namespace quentier {
 
 class ErrorString;
+
+[[nodiscard]] bool checkLinkedNotebook(
+    const qevercloud::LinkedNotebook & linkedNotebook,
+    ErrorString & errorDescription) noexcept;
 
 [[nodiscard]] bool checkNotebook(
     const qevercloud::Notebook & notebook,
