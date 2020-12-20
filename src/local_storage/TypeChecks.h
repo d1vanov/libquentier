@@ -22,7 +22,9 @@
 namespace qevercloud {
 
 class LinkedNotebook;
+class Note;
 class Notebook;
+class Tag;
 class User;
 
 } // namespace qevercloud
@@ -35,9 +37,15 @@ class ErrorString;
     const qevercloud::LinkedNotebook & linkedNotebook,
     ErrorString & errorDescription) noexcept;
 
+[[nodiscard]] bool checkNote(
+    const qevercloud::Note & note, ErrorString & errorDescription) noexcept;
+
 [[nodiscard]] bool checkNotebook(
     const qevercloud::Notebook & notebook,
     ErrorString & errorDescription) noexcept;
+
+[[nodiscard]] bool checkTag(
+    const qevercloud::Tag & tag, ErrorString & errorDescription) noexcept;
 
 [[nodiscard]] bool checkUser(
     const qevercloud::User & user, ErrorString & errorDescription) noexcept;

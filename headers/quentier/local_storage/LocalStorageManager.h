@@ -1349,7 +1349,7 @@ public:
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
-     * @brief findNoteLocalUidsWithSearchQuery attempts to find note local ids
+     * @brief findNoteLocalIdsWithSearchQuery attempts to find note local ids
      * of notes corresponding to the passed in NoteSearchQuery object.
      *
      * @param noteSearchQuery       Filled NoteSearchQuery object used to filter
@@ -1359,7 +1359,7 @@ public:
      * @return                      The list of found notes' local ids or empty
      *                              list in case of error
      */
-    [[nodiscard]] QStringList findNoteLocalUidsWithSearchQuery(
+    [[nodiscard]] QStringList findNoteLocalIdsWithSearchQuery(
         const NoteSearchQuery & noteSearchQuery,
         ErrorString & errorDescription) const;
 

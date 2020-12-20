@@ -95,6 +95,7 @@ set(TYPES_HEADERS
     headers/quentier/types/SharedNotebook.h
     headers/quentier/types/Tag.h
     headers/quentier/types/User.h
+    headers/quentier/types/Validation.h
     headers/quentier/types/RegisterMetatypes.h)
 
 set(ENML_HEADERS
@@ -184,7 +185,14 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
+    src/local_storage/LocalStorageCacheManager_p.h
+    src/local_storage/LocalStoragePatchManager.h
+    src/local_storage/LocalStorageManager_p.h
+    src/local_storage/LocalStorageShared.h
+    src/local_storage/NoteSearchQueryData.h
     src/local_storage/Transaction.h
+    src/local_storage/TypeChecks.h
+    src/local_storage/patches/LocalStoragePatch1To2.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
     src/types/data/ErrorStringData.h
@@ -204,12 +212,6 @@ set(PRIVATE_HEADERS
     src/types/data/UserData.h
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
-    src/local_storage/LocalStorageCacheManager_p.h
-    src/local_storage/LocalStoragePatchManager.h
-    src/local_storage/LocalStorageManager_p.h
-    src/local_storage/LocalStorageShared.h
-    src/local_storage/NoteSearchQueryData.h
-    src/local_storage/patches/LocalStoragePatch1To2.h
     src/synchronization/ExceptionHandlingHelpers.h
     src/synchronization/InkNoteImageDownloader.h
     src/synchronization/NoteStore.h
@@ -340,39 +342,23 @@ endif()
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 
 set(${PROJECT_NAME}_SOURCES
-    src/logging/QuentierLogger.cpp
-    src/logging/QuentierLogger_p.cpp
-    src/types/Account.cpp
-    src/types/ErrorString.cpp
-    src/types/LinkedNotebook.cpp
-    src/types/Note.cpp
-    src/types/Notebook.cpp
-    src/types/Resource.cpp
-    src/types/ResourceRecognitionIndexItem.cpp
-    src/types/ResourceRecognitionIndices.cpp
-    src/types/SavedSearch.cpp
-    src/types/SharedNote.cpp
-    src/types/SharedNotebook.cpp
-    src/types/Tag.cpp
-    src/types/User.cpp
-    src/types/RegisterMetatypes.cpp
-    src/types/data/AccountData.cpp
-    src/types/data/LinkedNotebookData.cpp
-    src/types/data/NoteData.cpp
-    src/types/data/NotebookData.cpp
-    src/types/data/ResourceData.cpp
-    src/types/data/ResourceRecognitionIndexItemData.cpp
-    src/types/data/ResourceRecognitionIndicesData.cpp
-    src/types/data/SharedNotebookData.cpp
-    src/types/data/TagData.cpp
-    src/types/data/SavedSearchData.cpp
-    src/types/data/SharedNoteData.cpp
-    src/types/data/UserData.cpp
     src/enml/ENMLConverter.cpp
     src/enml/ENMLConverter_p.cpp
     src/enml/HTMLCleaner.cpp
     src/enml/DecryptedTextManager.cpp
     src/enml/DecryptedTextManager_p.cpp
+    src/exception/ApplicationSettingsInitializationException.cpp
+    src/exception/EmptyDataElementException.cpp
+    src/exception/DatabaseLockedException.cpp
+    src/exception/DatabaseLockFailedException.cpp
+    src/exception/DatabaseOpeningException.cpp
+    src/exception/DatabaseRequestException.cpp
+    src/exception/IQuentierException.cpp
+    src/exception/NoteEditorInitializationException.cpp
+    src/exception/NoteEditorPluginInitializationException.cpp
+    src/exception/NullPtrException.cpp
+    src/exception/LocalStorageCacheManagerException.cpp
+    src/exception/LoggerInitializationException.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
     src/local_storage/LocalStorageManager.cpp
@@ -385,8 +371,11 @@ set(${PROJECT_NAME}_SOURCES
     src/local_storage/NoteSearchQuery.cpp
     src/local_storage/NoteSearchQueryData.cpp
     src/local_storage/Transaction.cpp
+    src/local_storage/TypeChecks.cpp
     src/local_storage/patches/ILocalStoragePatch.cpp
     src/local_storage/patches/LocalStoragePatch1To2.cpp
+    src/logging/QuentierLogger.cpp
+    src/logging/QuentierLogger_p.cpp
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
@@ -410,18 +399,33 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteSyncConflictResolver.cpp
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
-    src/exception/ApplicationSettingsInitializationException.cpp
-    src/exception/EmptyDataElementException.cpp
-    src/exception/DatabaseLockedException.cpp
-    src/exception/DatabaseLockFailedException.cpp
-    src/exception/DatabaseOpeningException.cpp
-    src/exception/DatabaseRequestException.cpp
-    src/exception/IQuentierException.cpp
-    src/exception/NoteEditorInitializationException.cpp
-    src/exception/NoteEditorPluginInitializationException.cpp
-    src/exception/NullPtrException.cpp
-    src/exception/LocalStorageCacheManagerException.cpp
-    src/exception/LoggerInitializationException.cpp
+    src/types/Account.cpp
+    src/types/ErrorString.cpp
+    src/types/LinkedNotebook.cpp
+    src/types/Note.cpp
+    src/types/Notebook.cpp
+    src/types/Resource.cpp
+    src/types/ResourceRecognitionIndexItem.cpp
+    src/types/ResourceRecognitionIndices.cpp
+    src/types/SavedSearch.cpp
+    src/types/SharedNote.cpp
+    src/types/SharedNotebook.cpp
+    src/types/Tag.cpp
+    src/types/User.cpp
+    src/types/Validation.cpp
+    src/types/RegisterMetatypes.cpp
+    src/types/data/AccountData.cpp
+    src/types/data/LinkedNotebookData.cpp
+    src/types/data/NoteData.cpp
+    src/types/data/NotebookData.cpp
+    src/types/data/ResourceData.cpp
+    src/types/data/ResourceRecognitionIndexItemData.cpp
+    src/types/data/ResourceRecognitionIndicesData.cpp
+    src/types/data/SharedNotebookData.cpp
+    src/types/data/TagData.cpp
+    src/types/data/SavedSearchData.cpp
+    src/types/data/SharedNoteData.cpp
+    src/types/data/UserData.cpp
     src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp
     src/utility/keychain/MigratingKeychainService.cpp

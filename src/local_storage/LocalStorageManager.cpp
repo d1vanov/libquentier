@@ -399,12 +399,12 @@ QList<Note> LocalStorageManager::listNotes(
         linkedNotebookGuid);
 }
 
-QStringList LocalStorageManager::findNoteLocalUidsWithSearchQuery(
+QStringList LocalStorageManager::findNoteLocalIdsWithSearchQuery(
     const NoteSearchQuery & noteSearchQuery,
     ErrorString & errorDescription) const
 {
     Q_D(const LocalStorageManager);
-    return d->findNoteLocalUidsWithSearchQuery(
+    return d->findNoteLocalIdsWithSearchQuery(
         noteSearchQuery, errorDescription);
 }
 

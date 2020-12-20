@@ -20,56 +20,18 @@
 
 #include <qevercloud/generated/Constants.h>
 #include <qevercloud/generated/types/LinkedNotebook.h>
+#include <qevercloud/generated/types/Note.h>
 #include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Tag.h>
 #include <qevercloud/generated/types/User.h>
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/Validation.h>
 #include <quentier/utility/Checks.h>
 
 #include <QRegularExpression>
 
 namespace quentier {
-
-namespace {
-
-////////////////////////////////////////////////////////////////////////////////
-
-[[nodiscard]] bool checkNotebookName(
-    const QString & notebookName, ErrorString & errorDescription) noexcept
-{
-    if (notebookName != notebookName.trimmed()) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:type_checks",
-            "Notebook name cannot start or end with whitespace"));
-
-        return false;
-    }
-
-    const int len = notebookName.length();
-    if (len < qevercloud::EDAM_NOTEBOOK_NAME_LEN_MIN) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:type_checks",
-            "Notebook name's length is too small"));
-
-        errorDescription.details() = notebookName;
-        return false;
-    }
-
-    if (len > qevercloud::EDAM_NOTEBOOK_NAME_LEN_MAX) {
-        errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "local_storage:type_checks",
-            "Notebook name's length is too large"));
-
-        errorDescription.details() = notebookName;
-        return false;
-    }
-
-    return true;
-}
-
-} // namespace
-
-////////////////////////////////////////////////////////////////////////////////
 
 bool checkLinkedNotebook(
     const qevercloud::LinkedNotebook & linkedNotebook,
@@ -118,6 +80,225 @@ bool checkLinkedNotebook(
                 "characters"));
 
             return false;
+        }
+    }
+
+    return true;
+}
+
+bool checkNote(
+    const qevercloud::Note & note, ErrorString & errorDescription) noexcept
+{
+    if (note.localId().isEmpty() && !note.guid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Both note's local id and guid are empty"));
+
+        return false;
+    }
+
+    if (note.guid() && !checkGuid(*note.guid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Note's guid is invalid"));
+
+        errorDescription.details() = *note.guid();
+        return false;
+    }
+
+    if (note.updateSequenceNum() &&
+        !checkUpdateSequenceNumber(*note.updateSequenceNum()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Note's update sequence number is invalid"));
+
+        errorDescription.details() =
+            QString::number(*note.updateSequenceNum());
+
+        return false;
+    }
+
+    if (note.title() && !validateNoteTitle(*note.title(), &errorDescription)) {
+        return false;
+    }
+
+    if (note.content()) {
+        int contentSize = note.content()->size();
+
+        if ((contentSize < qevercloud::EDAM_NOTE_CONTENT_LEN_MIN) ||
+            (contentSize > qevercloud::EDAM_NOTE_CONTENT_LEN_MAX))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Note's content length is invalid"));
+
+            errorDescription.details() = QString::number(contentSize);
+            return false;
+        }
+    }
+
+    if (note.contentHash()) {
+        int contentHashSize = note.contentHash()->size();
+
+        if (contentHashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Note's content hash size is invalid"));
+
+            errorDescription.details() = QString::number(contentHashSize);
+            return false;
+        }
+    }
+
+    if (note.notebookGuid() &&
+        !checkGuid(*note.notebookGuid()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Note's notebook guid is invalid"));
+
+        errorDescription.details() = *note.notebookGuid();
+        return false;
+    }
+
+    if (note.tagGuids()) {
+        int numTagGuids = note.tagGuids()->size();
+
+        if (numTagGuids > qevercloud::EDAM_NOTE_TAGS_MAX) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks", "Note has too many tags"));
+
+            errorDescription.details() = QString::number(numTagGuids);
+            return false;
+        }
+    }
+
+    if (note.resources()) {
+        int numResources = note.resources()->size();
+
+        if (numResources > qevercloud::EDAM_NOTE_RESOURCES_MAX) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks", "Note has too many resources"));
+
+            errorDescription.details() =
+                QString::number(qevercloud::EDAM_NOTE_RESOURCES_MAX);
+
+            return false;
+        }
+    }
+
+    if (note.attributes()) {
+        const auto & attributes = *note.attributes();
+
+        ErrorString error(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Note attributes field has invalid size"));
+
+#define CHECK_NOTE_ATTRIBUTE(name)                                             \
+    if (attributes.name()) {                                                   \
+        int name##Size = attributes.name()->size();                            \
+        if ((name##Size < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||               \
+            (name##Size > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))                 \
+        {                                                                      \
+            error.details() = QStringLiteral(#name);                           \
+            errorDescription = error;                                          \
+            return false;                                                      \
+        }                                                                      \
+    }
+
+        CHECK_NOTE_ATTRIBUTE(author);
+        CHECK_NOTE_ATTRIBUTE(source);
+        CHECK_NOTE_ATTRIBUTE(sourceURL);
+        CHECK_NOTE_ATTRIBUTE(sourceApplication);
+
+#undef CHECK_NOTE_ATTRIBUTE
+
+        if (attributes.contentClass()) {
+            int contentClassSize = attributes.contentClass()->size();
+            if ((contentClassSize <
+                 qevercloud::EDAM_NOTE_CONTENT_CLASS_LEN_MIN) ||
+                (contentClassSize >
+                 qevercloud::EDAM_NOTE_CONTENT_CLASS_LEN_MAX))
+            {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage:type_checks",
+                    "Note attributes' content class has invalid size"));
+
+                errorDescription.details() = QString::number(contentClassSize);
+                return false;
+            }
+        }
+
+        if (attributes.applicationData()) {
+            const auto & applicationData = *attributes.applicationData();
+
+            if (applicationData.keysOnly()) {
+                for (const auto & key: qAsConst(*applicationData.keysOnly()))
+                {
+                    int keySize = key.size();
+                    if ((keySize <
+                         qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
+                        (keySize >
+                         qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX))
+                    {
+                        errorDescription.setBase(QT_TRANSLATE_NOOP(
+                            "local_storage:type_checks",
+                            "Note's attributes application data "
+                            "has invalid key (in keysOnly part)"));
+
+                        errorDescription.details() = key;
+                        return false;
+                    }
+                }
+            }
+
+            if (applicationData.fullMap()) {
+                for (auto it = applicationData.fullMap()->constBegin(),
+                     end = applicationData.fullMap()->constEnd(); it != end;
+                     ++it)
+                {
+                    int keySize = it.key().size();
+                    if ((keySize <
+                         qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MIN) ||
+                        (keySize >
+                         qevercloud::EDAM_APPLICATIONDATA_NAME_LEN_MAX))
+                    {
+                        errorDescription.setBase(QT_TRANSLATE_NOOP(
+                            "local_storage:type_checks",
+                            "Note's attributes application data "
+                            "has invalid key (in fullMap part)"));
+
+                        errorDescription.details() = it.key();
+                        return false;
+                    }
+
+                    int valueSize = it.value().size();
+                    if ((valueSize <
+                         qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MIN) ||
+                        (valueSize >
+                         qevercloud::EDAM_APPLICATIONDATA_VALUE_LEN_MAX))
+                    {
+                        errorDescription.setBase(QT_TRANSLATE_NOOP(
+                            "local_storage:type_checks",
+                            "Note's attributes application data "
+                            "has invalid value size"));
+
+                        errorDescription.details() = it.value();
+                        return false;
+                    }
+
+                    int sumSize = keySize + valueSize;
+                    if (sumSize >
+                        qevercloud::EDAM_APPLICATIONDATA_ENTRY_LEN_MAX) {
+                        errorDescription.setBase(QT_TRANSLATE_NOOP(
+                            "local_storage:type_checks",
+                            "Note's attributes application data "
+                            "has invalid sum entry size"));
+
+                        errorDescription.details() = QString::number(sumSize);
+                        return false;
+                    }
+                }
+            }
         }
     }
 
@@ -180,7 +361,7 @@ bool checkNotebook(
     }
 
     if (notebook.name() &&
-        !checkNotebookName(*notebook.name(), errorDescription))
+        !validateNotebookName(*notebook.name(), &errorDescription))
     {
         return false;
     }
@@ -230,6 +411,65 @@ bool checkNotebook(
                 return false;
             }
         }
+    }
+
+    return true;
+}
+
+bool checkTag(
+    const qevercloud::Tag & tag, ErrorString & errorDescription) noexcept
+{
+    if (tag.localId().isEmpty() && !tag.guid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Both tag's local id and guid are empty"));
+
+        return false;
+    }
+
+    if (tag.guid() && !checkGuid(*tag.guid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+             "local_storage:type_checks", "Tag's guid is invalid"));
+
+        errorDescription.details() = *tag.guid();
+        return false;
+    }
+
+    if (const auto it =
+        tag.localData().constFind(QStringLiteral("linkedNotebookGuid"));
+        it != tag.localData().constEnd() && !checkGuid(it.value().toString()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Tag's linked notebook guid is invalid"));
+
+        errorDescription.details() = it.value().toString();
+        return false;
+    }
+
+    if (tag.name() &&
+        !validateTagName(*tag.name(), &errorDescription))
+    {
+        return false;
+    }
+
+    if (tag.updateSequenceNum() &&
+        !checkUpdateSequenceNumber(*tag.updateSequenceNum()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Tag's update sequence number is invalid"));
+
+        errorDescription.details() = QString::number(*tag.updateSequenceNum());
+        return false;
+    }
+
+    if (tag.parentGuid() && !checkGuid(*tag.parentGuid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Tag's parent guid is invalid"));
+
+        errorDescription.details() = *tag.parentGuid();
+        return false;
     }
 
     return true;

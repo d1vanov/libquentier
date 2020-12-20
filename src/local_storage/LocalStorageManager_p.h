@@ -185,12 +185,12 @@ public:
         const LocalStorageManager::NoteCountOptions options) const;
 
     [[nodiscard]] bool noteCountsPerAllTags(
-        QHash<QString, int> & noteCountsPerTagLocalUid,
+        QHash<QString, int> & noteCountsPerTagLocalId,
         ErrorString & errorDescription,
         const LocalStorageManager::NoteCountOptions options) const;
 
     [[nodiscard]] int noteCountPerNotebooksAndTags(
-        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         ErrorString & errorDescription,
         const LocalStorageManager::NoteCountOptions options) const;
 
@@ -229,7 +229,7 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebooksAndTags(
-        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
@@ -237,8 +237,8 @@ public:
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
-    [[nodiscard]] QList<qevercloud::Note> listNotesByLocalUids(
-        const QStringList & noteLocalUids,
+    [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIds(
+        const QStringList & noteLocalIds,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
@@ -265,7 +265,7 @@ public:
     [[nodiscard]] bool expungeNote(
         qevercloud::Note & note, ErrorString & errorDescription);
 
-    [[nodiscard]] QStringList findNoteLocalUidsWithSearchQuery(
+    [[nodiscard]] QStringList findNoteLocalIdsWithSearchQuery(
         const NoteSearchQuery & noteSearchQuery,
         ErrorString & errorDescription) const;
 
@@ -448,7 +448,7 @@ private:
         const qevercloud::Resource & resource, QString & noteLocalUid,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getNotebookLocalUidFromNote(
+    [[nodiscard]] bool getNotebookLocalIdFromNote(
         const qevercloud::Note & note, QString & notebookLocalUid,
         ErrorString & errorDescription) const;
 
@@ -460,7 +460,7 @@ private:
         const QString & notebookGuid, QString & notebookLocalUid,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getNoteLocalUidForGuid(
+    [[nodiscard]] bool getNoteLocalIdForGuid(
         const QString & noteGuid, QString & noteLocalUid,
         ErrorString & errorDescription) const;
 
