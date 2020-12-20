@@ -18,6 +18,7 @@
 
 #include <qevercloud/generated/Constants.h>
 #include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/SavedSearch.h>
 #include <qevercloud/generated/types/Tag.h>
 
 #include <quentier/types/ErrorString.h>
@@ -100,6 +101,47 @@ bool validateNotebookName(
                 "Notebook name's length is too large"));
 
             errorDescription->details() = notebookName;
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+bool validateSavedSearchName(
+    const QString & savedSearchName, ErrorString * errorDescription) noexcept
+{
+    if (savedSearchName != savedSearchName.trimmed()) {
+        if (errorDescription) {
+            errorDescription->setBase(QT_TRANSLATE_NOOP(
+                "types:validation",
+                "Saved search name cannot start or end with whitespace"));
+
+            errorDescription->details() = savedSearchName;
+        }
+
+        return false;
+    }
+
+    int len = savedSearchName.length();
+    if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
+        if (errorDescription) {
+            errorDescription->setBase(QT_TRANSLATE_NOOP(
+                "types:validation", "Saved search name's length is too small"));
+
+            errorDescription->details() = savedSearchName;
+        }
+
+        return false;
+    }
+
+    if (len > qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MAX) {
+        if (errorDescription) {
+            errorDescription->setBase(QT_TRANSLATE_NOOP(
+                "types:validation", "Saved search's name length is too large"));
+
+            errorDescription->details() = savedSearchName;
         }
 
         return false;

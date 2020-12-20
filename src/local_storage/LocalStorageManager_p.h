@@ -305,7 +305,7 @@ public:
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
-    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalUids(
+    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalIds(
         const LocalStorageManager::ListObjectsOptions flag,
         ErrorString & errorDescription, const size_t limit, const size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
@@ -382,7 +382,7 @@ private:
     [[nodiscard]] bool createTables(ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceNotebookRestrictions(
-        const QString & localUid,
+        const QString & localId,
         const qevercloud::NotebookRestrictions & notebookRestrictions,
         ErrorString & errorDescription);
 
@@ -444,12 +444,12 @@ private:
     [[nodiscard]] bool checkAndPrepareGetLinkedNotebookCountQuery() const;
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceLinkedNotebookQuery();
 
-    [[nodiscard]] bool getNoteLocalUidFromResource(
-        const qevercloud::Resource & resource, QString & noteLocalUid,
+    [[nodiscard]] bool getNoteLocalIdFromResource(
+        const qevercloud::Resource & resource, QString & noteLocalId,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool getNotebookLocalIdFromNote(
-        const qevercloud::Note & note, QString & notebookLocalUid,
+        const qevercloud::Note & note, QString & notebookLocalId,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool getNotebookGuidForNote(
@@ -457,27 +457,27 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool getNotebookLocalIdForGuid(
-        const QString & notebookGuid, QString & notebookLocalUid,
+        const QString & notebookGuid, QString & notebookLocalId,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool getNoteLocalIdForGuid(
-        const QString & noteGuid, QString & noteLocalUid,
+        const QString & noteGuid, QString & noteLocalId,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getNoteGuidForLocalUid(
-        const QString & noteLocalUid, QString & noteGuid,
+    [[nodiscard]] bool getNoteGuidForLocalId(
+        const QString & noteLocalId, QString & noteGuid,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getTagLocalUidForGuid(
-        const QString & tagGuid, QString & tagLocalUid,
+    [[nodiscard]] bool getTagLocalIdForGuid(
+        const QString & tagGuid, QString & tagLocalId,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getResourceLocalUidForGuid(
-        const QString & resourceGuid, QString & resourceLocalUid,
+    [[nodiscard]] bool getResourceLocalIdForGuid(
+        const QString & resourceGuid, QString & resourceLocalId,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool getSavedSearchLocalUidForGuid(
-        const QString & savedSearchGuid, QString & savedSearchLocalUid,
+    [[nodiscard]] bool getSavedSearchLocalIdForGuid(
+        const QString & savedSearchGuid, QString & savedSearchLocalId,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool insertOrReplaceNote(
@@ -490,12 +490,12 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceNoteRestrictions(
-        const QString & noteLocalUid,
+        const QString & noteLocalId,
         const qevercloud::NoteRestrictions & noteRestrictions,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceNoteLimits(
-        const QString & noteLocalUid, const qevercloud::NoteLimits & noteLimits,
+        const QString & noteLocalId, const qevercloud::NoteLimits & noteLimits,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceNoteQuery();
@@ -523,7 +523,7 @@ private:
         const bool useSeparateTransaction = true);
 
     [[nodiscard]] bool insertOrReplaceResourceAttributes(
-        const QString & localUid,
+        const QString & localId,
         const qevercloud::ResourceAttributes & attributes,
         ErrorString & errorDescription);
 
@@ -536,7 +536,7 @@ private:
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     [[nodiscard]] bool writeResourceBinaryDataToFile(
-        const QString & resourceLocalUid, const QString & noteLocalUid,
+        const QString & resourceLocalId, const QString & noteLocalId,
         const QByteArray & dataBody, const bool isAlternateDataBody,
         const bool replaceOriginalFile, ErrorString & errorDescription);
 
@@ -549,7 +549,7 @@ private:
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     [[nodiscard]] bool removeResourceDataFilesForNote(
-        const QString & noteLocalUid, ErrorString & errorDescription);
+        const QString & noteLocalId, ErrorString & errorDescription);
 
     [[nodiscard]] bool removeResourceDataFilesForNotebook(
         const qevercloud::Notebook & notebook, ErrorString & errorDescription);
@@ -598,8 +598,8 @@ private:
     [[nodiscard]] bool checkAndPrepareGetSavedSearchCountQuery() const;
     [[nodiscard]] bool checkAndPrepareExpungeSavedSearchQuery();
 
-    [[nodiscard]] bool complementTagsWithNoteLocalUids(
-        QList<std::pair<qevercloud::Tag, QStringList>> & tagsWithNoteLocalUids,
+    [[nodiscard]] bool complementTagsWithNoteLocalIds(
+        QList<std::pair<qevercloud::Tag, QStringList>> & tagsWithNoteLocalIds,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool readResourceDataFromFiles(
@@ -713,19 +713,19 @@ private:
         QString & frontSearchTermModifier, QString & searchTerm,
         QString & backSearchTermModifier, QString & matchStatement) const;
 
-    [[nodiscard]] bool tagNamesToTagLocalUids(
-        const QStringList & tagNames, QStringList & tagLocalUids,
+    [[nodiscard]] bool tagNamesToTagLocalIds(
+        const QStringList & tagNames, QStringList & tagLocalIds,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool resourceMimeTypesToResourceLocalUids(
-        const QStringList & resourceMimeTypes, QStringList & resourceLocalUids,
+    [[nodiscard]] bool resourceMimeTypesToResourceLocalIds(
+        const QStringList & resourceMimeTypes, QStringList & resourceLocalIds,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool complementResourceNoteIds(
         qevercloud::Resource & resource, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool partialUpdateNoteResources(
-        const QString & noteLocalUid,
+        const QString & noteLocalId,
         const QList<qevercloud::Resource> & updatedNoteResources,
         const bool UpdateResourceBinaryData, ErrorString & errorDescription);
 

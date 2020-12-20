@@ -24,6 +24,7 @@ namespace qevercloud {
 class LinkedNotebook;
 class Note;
 class Notebook;
+class SavedSearch;
 class Tag;
 class User;
 
@@ -42,6 +43,10 @@ class ErrorString;
 
 [[nodiscard]] bool checkNotebook(
     const qevercloud::Notebook & notebook,
+    ErrorString & errorDescription) noexcept;
+
+[[nodiscard]] bool checkSavedSearch(
+    const qevercloud::SavedSearch & savedSearch,
     ErrorString & errorDescription) noexcept;
 
 [[nodiscard]] bool checkTag(

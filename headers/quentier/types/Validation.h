@@ -46,13 +46,28 @@ class ErrorString;
  *
  * @param notebookName          Notebook name to validate
  * @param errorDescription      Pointer to error string to hold output error
- *                              decription in case the notebook name is invalid.
- *                              If nullptr, error description is not propagated
- *                              to the caller of the function
+ *                              description in case the notebook name is
+ *                              invalid. If nullptr, error description is not
+ *                              propagated to the caller of the function
  * @return true if notebook name is valid, false otherwise
  */
 [[nodiscard]] QUENTIER_EXPORT bool validateNotebookName(
     const QString & notebookName,
+    ErrorString * errorDescription = nullptr) noexcept;
+
+/**
+ * @brief checks saved search name for validity from Evernote service's rules
+ * POV
+ *
+ * @param savedSearchName       Saved search name to validate
+ * @param errorDescription      Pointer to error string to hold output error
+ *                              descsription in case the saved search name is
+ *                              invalid. If nullptr, error description is not
+ *                              propagated to the called of the function
+ * @return true if saved search name is valid, false otherwise
+ */
+[[nodiscard]] QUENTIER_EXPORT bool validateSavedSearchName(
+    const QString & savedSearchName,
     ErrorString * errorDescription = nullptr) noexcept;
 
 /**

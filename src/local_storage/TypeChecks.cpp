@@ -22,6 +22,7 @@
 #include <qevercloud/generated/types/LinkedNotebook.h>
 #include <qevercloud/generated/types/Note.h>
 #include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/SavedSearch.h>
 #include <qevercloud/generated/types/Tag.h>
 #include <qevercloud/generated/types/User.h>
 
@@ -411,6 +412,75 @@ bool checkNotebook(
                 return false;
             }
         }
+    }
+
+    return true;
+}
+
+bool checkSavedSearch(
+    const qevercloud::SavedSearch & savedSearch,
+    ErrorString & errorDescription) noexcept
+{
+    if (savedSearch.localId().isEmpty() && !savedSearch.guid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Both saved search's local id and guid are empty"));
+
+        return false;
+    }
+
+    if (savedSearch.guid() && !checkGuid(*savedSearch.guid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Saved search's guid is invalid"));
+
+        errorDescription.details() = *savedSearch.guid();
+        return false;
+    }
+
+    if (savedSearch.name() &&
+        !validateSavedSearchName(*savedSearch.name(), &errorDescription))
+    {
+        return false;
+    }
+
+    if (savedSearch.updateSequenceNum() &&
+        !checkUpdateSequenceNumber(*savedSearch.updateSequenceNum()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Saved search's update sequence number is invalid"));
+
+        errorDescription.details() =
+            QString::number(*savedSearch.updateSequenceNum());
+
+        return false;
+    }
+
+    if (savedSearch.query()) {
+        const QString & query = *savedSearch.query();
+        int querySize = query.size();
+
+        if ((querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
+            (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Saved search's query exceeds the allowed size"));
+
+            errorDescription.details() = query;
+            return false;
+        }
+    }
+
+    if (savedSearch.format() &&
+        *savedSearch.format() != qevercloud::QueryFormat::USER)
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Saved search has unsupported query format"));
+
+        errorDescription.details() = ToString(*savedSearch.format());
+        return false;
     }
 
     return true;
