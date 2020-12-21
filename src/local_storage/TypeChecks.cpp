@@ -22,6 +22,7 @@
 #include <qevercloud/generated/types/LinkedNotebook.h>
 #include <qevercloud/generated/types/Note.h>
 #include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
 #include <qevercloud/generated/types/SavedSearch.h>
 #include <qevercloud/generated/types/Tag.h>
 #include <qevercloud/generated/types/User.h>
@@ -383,7 +384,7 @@ bool checkNotebook(
                 !checkGuid(*sharedNotebook.notebookGuid()))
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "NotebookData",
+                    "local_storage:type_checks",
                     "Notebook has shared notebook with invalid guid"));
 
                 errorDescription.details() = *sharedNotebook.notebookGuid();
@@ -403,11 +404,174 @@ bool checkNotebook(
                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX))
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
-                    "NotebookData",
+                    "local_storage:type_checks",
                     "Description for business notebook has invalid size"));
 
                 errorDescription.details() =
                     *notebook.businessNotebook()->notebookDescription();
+
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool checkResource(
+    const qevercloud::Resource & resource,
+    ErrorString & errorDescription) noexcept
+{
+    if (resource.localId().isEmpty() && !resource.guid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Both resource's local id and guid are empty"));
+
+        return false;
+    }
+
+    if (resource.guid() && !checkGuid(*resource.guid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Resource's guid is invalid"));
+
+        errorDescription.details() = *resource.guid();
+        return false;
+    }
+
+    if (resource.updateSequenceNum() &&
+        !checkUpdateSequenceNumber(*resource.updateSequenceNum()))
+    {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks",
+            "Resource's update sequence number is invalid"));
+
+        errorDescription.details() =
+            QString::number(*resource.updateSequenceNum());
+
+        return false;
+    }
+
+    if (resource.noteGuid() && !checkGuid(*resource.noteGuid())) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage:type_checks", "Resource's note guid is invalid"));
+
+        errorDescription.details() = *resource.noteGuid();
+        return false;
+    }
+
+    if (resource.data() && resource.data()->bodyHash()) {
+        qint32 hashSize =
+            static_cast<qint32>(resource.data()->bodyHash()->size());
+
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Resource's data hash has invalid size"));
+
+            errorDescription.details() =
+                QString::fromLocal8Bit(*resource.data()->bodyHash());
+
+            return false;
+        }
+    }
+
+    if (resource.recognition() && resource.recognition()->bodyHash()) {
+        qint32 hashSize =
+            static_cast<qint32>(resource.recognition()->bodyHash()->size());
+
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Resource's recognition data hash has invalid size"));
+
+            errorDescription.details() =
+                QString::fromLocal8Bit(*resource.recognition()->bodyHash());
+
+            return false;
+        }
+    }
+
+    if (resource.alternateData() && resource.alternateData()->bodyHash())
+    {
+        qint32 hashSize =
+            static_cast<qint32>(resource.alternateData()->bodyHash()->size());
+
+        if (hashSize != qevercloud::EDAM_HASH_LEN) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Resource's alternate data hash has invalid size"));
+
+            errorDescription.details() = QString::fromLocal8Bit(
+                *resource.alternateData()->bodyHash());
+
+            return false;
+        }
+    }
+
+    if (resource.mime()) {
+        int32_t mimeSize = static_cast<int32_t>(resource.mime()->size());
+        if ((mimeSize < qevercloud::EDAM_MIME_LEN_MIN) ||
+            (mimeSize > qevercloud::EDAM_MIME_LEN_MAX))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage:type_checks",
+                "Resource's mime type has invalid length"));
+
+            errorDescription.details() = *resource.mime();
+            return false;
+        }
+    }
+
+    if (resource.attributes()) {
+        if (resource.attributes()->sourceURL()) {
+            int32_t sourceURLSize = static_cast<int32_t>(
+                resource.attributes()->sourceURL()->size());
+
+            if ((sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                (sourceURLSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage:type_checks",
+                    "Resource's sourceURL attribute has invalid length"));
+
+                errorDescription.details() =
+                    *resource.attributes()->sourceURL();
+
+                return false;
+            }
+        }
+
+        if (resource.attributes()->cameraMake()) {
+            int32_t cameraMakeSize = static_cast<int32_t>(
+                resource.attributes()->cameraMake()->size());
+
+            if ((cameraMakeSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                (cameraMakeSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage:type_checks",
+                    "Resource's cameraMake attribute has invalid length"));
+
+                errorDescription.details() =
+                    *resource.attributes()->cameraMake();
+
+                return false;
+            }
+        }
+
+        if (resource.attributes()->cameraModel()) {
+            int32_t cameraModelSize = static_cast<int32_t>(
+                resource.attributes()->cameraModel()->size());
+
+            if ((cameraModelSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
+                (cameraModelSize > qevercloud::EDAM_ATTRIBUTE_LEN_MAX))
+            {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage:type_checks",
+                    "Resource's cameraModel attribute has invalid length"));
+
+                errorDescription.details() =
+                    *resource.attributes()->cameraModel();
 
                 return false;
             }
