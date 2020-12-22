@@ -86,6 +86,7 @@ set(TYPES_HEADERS
     headers/quentier/types/ILocalStorageDataElement.h
     headers/quentier/types/Note.h
     headers/quentier/types/Notebook.h
+    headers/quentier/types/NoteUtils.h
     headers/quentier/types/INoteStoreDataElement.h
     headers/quentier/types/Resource.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
@@ -404,6 +405,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/LinkedNotebook.cpp
     src/types/Note.cpp
     src/types/Notebook.cpp
+    src/types/NoteUtils.cpp
     src/types/Resource.cpp
     src/types/ResourceRecognitionIndexItem.cpp
     src/types/ResourceRecognitionIndices.cpp
