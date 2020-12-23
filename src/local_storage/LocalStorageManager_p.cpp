@@ -8487,7 +8487,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
-    const SharedNote & sharedNote, ErrorString & errorDescription)
+    const qevercloud::SharedNote & sharedNote, ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage",
@@ -8497,130 +8497,172 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
     // NOTE: this method expects to be called after the shared note is already
     // checked for sanity of its parameters!
 
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace shared note"));
+    const ErrorString errorPrefix(
+        QT_TR_NOOP("can't insert or replace shared note"));
 
     bool res = checkAndPrepareInsertOrReplaceSharedNoteQuery();
     QSqlQuery & query = m_insertOrReplaceSharedNoteQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    QVariant nullValue;
+    const QVariant nullValue;
+
+    const QString noteGuid = [&sharedNote]{
+        const auto it =
+            sharedNote.localData().constFind(QStringLiteral("noteGuid"));
+        if (it != sharedNote.localData().constEnd()) {
+            return it.value().toString();
+        }
+
+        return QString{};
+    }();
 
     query.bindValue(
-        QStringLiteral(":sharedNoteNoteGuid"), sharedNote.noteGuid());
+        QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
 
     query.bindValue(
         QStringLiteral(":sharedNoteSharerUserId"),
-        (sharedNote.hasSharerUserId() ? sharedNote.sharerUserId() : nullValue));
+        (sharedNote.sharerUserID() ? *sharedNote.sharerUserID() : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientIdentityId"),
-        (sharedNote.hasRecipientIdentityId() ? sharedNote.recipientIdentityId()
-                                             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? sharedNote.recipientIdentity()->id()
+         : nullValue));
+
+    const std::optional<qevercloud::Contact> contact =
+        (sharedNote.recipientIdentity()
+         ? sharedNote.recipientIdentity()->contact()
+         : std::nullopt);
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactName"),
-        (sharedNote.hasRecipientIdentityContactName()
-             ? sharedNote.recipientIdentityContactName()
-             : nullValue));
+        (contact ? contact->name().value_or(QString{}) : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactId"),
-        (sharedNote.hasRecipientIdentityContactId()
-             ? sharedNote.recipientIdentityContactId()
-             : nullValue));
+        (contact ? contact->id().value_or(QString{}) : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactType"),
-        (sharedNote.hasRecipientIdentityContactType()
-             ? static_cast<int>(sharedNote.recipientIdentityContactType())
-             : nullValue));
+        (contact
+         ? (contact->type() ? static_cast<int>(*contact->type()) : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactPhotoUrl"),
-        (sharedNote.hasRecipientIdentityContactPhotoUrl()
-             ? sharedNote.recipientIdentityContactPhotoUrl()
-             : nullValue));
+        (contact
+         ? contact->photoUrl().value_or(QString{})
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactPhotoLastUpdated"),
-        (sharedNote.hasRecipientIdentityContactPhotoLastUpdated()
-             ? sharedNote.recipientIdentityContactPhotoLastUpdated()
-             : nullValue));
+        (contact
+         ? (contact->photoLastUpdated() ? *contact->photoLastUpdated() : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactMessagingPermit"),
-        (sharedNote.hasRecipientIdentityContactMessagingPermit()
-             ? sharedNote.recipientIdentityContactMessagingPermit()
-             : nullValue));
+        (contact
+         ? (contact->messagingPermit() ? *contact->messagingPermit() : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientContactMessagingPermitExpires"),
-        (sharedNote.hasRecipientIdentityContactMessagingPermitExpires()
-             ? sharedNote.recipientIdentityContactMessagingPermitExpires()
-             : nullValue));
+        (contact
+         ? (contact->messagingPermitExpires() ? *contact->messagingPermitExpires() : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientUserId"),
-        (sharedNote.hasRecipientIdentityUserId()
-             ? sharedNote.recipientIdentityUserId()
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->userId()
+            ? *sharedNote.recipientIdentity()->userId()
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientDeactivated"),
-        (sharedNote.hasRecipientIdentityDeactivated()
-             ? (sharedNote.recipientIdentityDeactivated() ? 1 : 0)
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->deactivated()
+            ? static_cast<int>(*sharedNote.recipientIdentity()->deactivated())
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientSameBusiness"),
-        (sharedNote.hasRecipientIdentitySameBusiness()
-             ? (sharedNote.recipientIdentitySameBusiness() ? 1 : 0)
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->sameBusiness()
+            ? static_cast<int>(*sharedNote.recipientIdentity()->sameBusiness())
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientBlocked"),
-        (sharedNote.hasRecipientIdentityBlocked()
-             ? (sharedNote.recipientIdentityBlocked() ? 1 : 0)
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->blocked()
+            ? static_cast<int>(*sharedNote.recipientIdentity()->blocked())
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientUserConnected"),
-        (sharedNote.hasRecipientIdentityUserConnected()
-             ? (sharedNote.recipientIdentityUserConnected() ? 1 : 0)
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->userConnected()
+            ? static_cast<int>(*sharedNote.recipientIdentity()->userConnected())
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteRecipientEventId"),
-        (sharedNote.hasRecipientIdentityEventId()
-             ? sharedNote.recipientIdentityEventId()
-             : nullValue));
+        (sharedNote.recipientIdentity()
+         ? (sharedNote.recipientIdentity()->eventId()
+            ? static_cast<int>(*sharedNote.recipientIdentity()->eventId())
+            : nullValue)
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNotePrivilegeLevel"),
-        (sharedNote.hasPrivilegeLevel()
-             ? static_cast<int>(sharedNote.privilegeLevel())
-             : nullValue));
+        (sharedNote.privilege()
+         ? static_cast<int>(*sharedNote.privilege())
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteCreationTimestamp"),
-        (sharedNote.hasCreationTimestamp() ? sharedNote.creationTimestamp()
-                                           : nullValue));
+        (sharedNote.serviceCreated() ? *sharedNote.serviceCreated()
+                                     : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteModificationTimestamp"),
-        (sharedNote.hasModificationTimestamp()
-             ? sharedNote.modificationTimestamp()
+        (sharedNote.serviceUpdated()
+             ? *sharedNote.serviceUpdated()
              : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteAssignmentTimestamp"),
-        (sharedNote.hasAssignmentTimestamp() ? sharedNote.assignmentTimestamp()
-                                             : nullValue));
+        (sharedNote.serviceAssigned()
+         ? *sharedNote.serviceAssigned()
+         : nullValue));
+
+    const std::optional<int> indexInNote = [&sharedNote] () -> std::optional<int>
+    {
+        const auto indexInNoteIt =
+            sharedNote.localData().constFind(QStringLiteral("indexInNote"));
+        if (indexInNoteIt == sharedNote.localData().constEnd()) {
+            return std::nullopt;
+        }
+
+        bool conversionResult = false;
+        int indexInNote = indexInNoteIt.value().toInt(&conversionResult);
+        if (!conversionResult) {
+            return std::nullopt;
+        }
+
+        return indexInNote;
+    }();
 
     query.bindValue(
         QStringLiteral(":indexInNote"),
-        ((sharedNote.indexInNote() >= 0) ? sharedNote.indexInNote()
-                                         : nullValue));
+        (indexInNote ? *indexInNote : nullValue));
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -8629,26 +8671,26 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceNoteRestrictions(
-    const QString & noteLocalUid,
+    const QString & noteLocalId,
     const qevercloud::NoteRestrictions & noteRestrictions,
     ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(
+    const ErrorString errorPrefix(
         QT_TR_NOOP("can't insert or replace note restrictions"));
 
     bool res = checkAndPrepareInsertOrReplaceNoteRestrictionsQuery();
     QSqlQuery & query = m_insertOrReplaceNoteRestrictionsQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    QVariant nullValue;
+    const QVariant nullValue;
 
-    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalUid);
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
 
 #define BIND_RESTRICTION(column, name)                                         \
     query.bindValue(                                                           \
         QStringLiteral(":" #column),                                           \
-        (noteRestrictions.name.isSet() ? (noteRestrictions.name.ref() ? 1 : 0) \
-                                       : nullValue))
+        (noteRestrictions.name() ? (*noteRestrictions.name() ? 1 : 0)          \
+                                 : nullValue))
 
     BIND_RESTRICTION(noUpdateNoteTitle, noUpdateTitle);
     BIND_RESTRICTION(noUpdateNoteContent, noUpdateContent);
@@ -8665,23 +8707,23 @@ bool LocalStorageManagerPrivate::insertOrReplaceNoteRestrictions(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceNoteLimits(
-    const QString & noteLocalUid, const qevercloud::NoteLimits & noteLimits,
+    const QString & noteLocalId, const qevercloud::NoteLimits & noteLimits,
     ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace note limits"));
+    const ErrorString errorPrefix(QT_TR_NOOP("can't insert or replace note limits"));
 
     bool res = checkAndPrepareInsertOrReplaceNoteLimitsQuery();
     QSqlQuery & query = m_insertOrReplaceNoteLimitsQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    QVariant nullValue;
+    const QVariant nullValue;
 
-    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalUid);
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
 
 #define BIND_LIMIT(limit)                                                      \
     query.bindValue(                                                           \
         QStringLiteral(":" #limit),                                            \
-        (noteLimits.limit.isSet() ? noteLimits.limit.ref() : nullValue))
+        (noteLimits.limit() ? *noteLimits.limit() : nullValue))
 
     BIND_LIMIT(noteResourceCountMax);
     BIND_LIMIT(uploadLimit);
@@ -8707,7 +8749,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteQuery()
 
     m_insertOrReplaceNoteQuery = QSqlQuery(m_sqlDatabase);
 
-    QString columns = QStringLiteral(
+    const QString columns = QStringLiteral(
         "localUid, guid, updateSequenceNumber, isDirty, "
         "isLocal, isFavorited, title, titleNormalized, content, "
         "contentLength, contentHash, contentPlainText, "
@@ -8725,7 +8767,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteQuery()
         "applicationDataKeysMap, applicationDataValues, "
         "classificationKeys, classificationValues");
 
-    QString values = QStringLiteral(
+    const QString values = QStringLiteral(
         ":localUid, :guid, :updateSequenceNumber, :isDirty, "
         ":isLocal, :isFavorited, :title, :titleNormalized, "
         ":content, :contentLength, :contentHash, "
@@ -8745,11 +8787,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteQuery()
         ":applicationDataKeysMap, :applicationDataValues, "
         ":classificationKeys, :classificationValues");
 
-    QString queryString =
+    const QString queryString =
         QString::fromUtf8("INSERT OR REPLACE INTO Notes(%1) VALUES(%2)")
             .arg(columns, values);
 
-    bool res = m_insertOrReplaceNoteQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceNoteQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteQueryPrepared = true;
     }
@@ -8770,7 +8812,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
 
     m_insertOrReplaceSharedNoteQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO SharedNotes ("
         "sharedNoteNoteGuid, "
         "sharedNoteSharerUserId, "
@@ -8816,7 +8858,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceSharedNoteQuery()
         ":sharedNoteAssignmentTimestamp, "
         ":indexInNote)");
 
-    bool res = m_insertOrReplaceSharedNoteQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceSharedNoteQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceSharedNoteQueryPrepared = true;
     }
@@ -8838,7 +8880,7 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceNoteRestrictionsQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteRestrictions "
         "(noteLocalUid, noUpdateNoteTitle, noUpdateNoteContent, "
         "noEmailNote, noShareNote, noShareNotePublicly) "
@@ -8846,7 +8888,7 @@ bool LocalStorageManagerPrivate::
         ":noUpdateNoteContent, :noEmailNote, "
         ":noShareNote, :noShareNotePublicly)");
 
-    bool res = m_insertOrReplaceNoteRestrictionsQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceNoteRestrictionsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteRestrictionsQueryPrepared = true;
     }
@@ -8867,14 +8909,14 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceNoteLimitsQuery()
 
     m_insertOrReplaceNoteLimitsQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteLimits "
         "(noteLocalUid, noteResourceCountMax, uploadLimit, "
         "resourceSizeMax, noteSizeMax, uploaded) "
         "VALUES(:noteLocalUid, :noteResourceCountMax, "
         ":uploadLimit, :resourceSizeMax, :noteSizeMax, :uploaded)");
 
-    bool res = m_insertOrReplaceNoteLimitsQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceNoteLimitsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteLimitsQueryPrepared = true;
     }
@@ -8896,11 +8938,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanAddNoteToNotebookQuery()
 
     m_canAddNoteToNotebookQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "SELECT noCreateNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
 
-    bool res = m_canAddNoteToNotebookQuery.prepare(queryString);
+    const bool res = m_canAddNoteToNotebookQuery.prepare(queryString);
     if (res) {
         m_canAddNoteToNotebookQueryPrepared = true;
     }
@@ -8922,11 +8964,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanUpdateNoteInNotebookQuery()
 
     m_canUpdateNoteInNotebookQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "SELECT noUpdateNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
 
-    bool res = m_canUpdateNoteInNotebookQuery.prepare(queryString);
+    const bool res = m_canUpdateNoteInNotebookQuery.prepare(queryString);
     if (res) {
         m_canUpdateNoteInNotebookQueryPrepared = true;
     }
@@ -8948,11 +8990,11 @@ bool LocalStorageManagerPrivate::checkAndPrepareCanExpungeNoteInNotebookQuery()
 
     m_canExpungeNoteInNotebookQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "SELECT noExpungeNotes FROM NotebookRestrictions "
         "WHERE localUid = :notebookLocalUid");
 
-    bool res = m_canExpungeNoteInNotebookQuery.prepare(queryString);
+    const bool res = m_canExpungeNoteInNotebookQuery.prepare(queryString);
     if (res) {
         m_canExpungeNoteInNotebookQueryPrepared = true;
     }
@@ -8974,12 +9016,12 @@ bool LocalStorageManagerPrivate::
 
     m_insertOrReplaceNoteIntoNoteTagsQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO NoteTags"
         "(localNote, note, localTag, tag, tagIndexInNote) "
         "VALUES(:localNote, :note, :localTag, :tag, :tagIndexInNote)");
 
-    bool res = m_insertOrReplaceNoteIntoNoteTagsQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceNoteIntoNoteTagsQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = true;
     }
@@ -8988,66 +9030,76 @@ bool LocalStorageManagerPrivate::
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceTag(
-    const Tag & tag, ErrorString & errorDescription)
+    const qevercloud::Tag & tag, ErrorString & errorDescription)
 {
     // NOTE: this method expects to be called after tag is already checked
     // for sanity of its parameters!
 
     ErrorString errorPrefix(
-        QT_TR_NOOP("can't insert or replace tag into the local storage "
-                   "database"));
+        QT_TR_NOOP("can't insert or replace tag in the local storage"));
 
-    QString localUid = tag.localUid();
+    QString localId = tag.localId();
 
     bool res = checkAndPrepareInsertOrReplaceTagQuery();
     QSqlQuery & query = m_insertOrReplaceTagQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    QVariant nullValue;
+    const QVariant nullValue;
 
     QString tagNameNormalized;
-    if (tag.hasName()) {
-        tagNameNormalized = tag.name().toLower();
+    if (tag.name()) {
+        tagNameNormalized = tag.name()->toLower();
         m_stringUtils.removeDiacritics(tagNameNormalized);
     }
 
     query.bindValue(
         QStringLiteral(":localUid"),
-        (localUid.isEmpty() ? nullValue : localUid));
+        (localId.isEmpty() ? nullValue : localId));
 
     query.bindValue(
-        QStringLiteral(":guid"), (tag.hasGuid() ? tag.guid() : nullValue));
+        QStringLiteral(":guid"), (tag.guid() ? *tag.guid() : nullValue));
+
+    const std::optional<QString> linkedNotebookGuid =
+        [&tag] () -> std::optional<QString>
+        {
+            const auto it =
+                tag.localData().constFind(QStringLiteral("linkedNotebookGuid"));
+            if (it == tag.localData().constEnd()) {
+                return std::nullopt;
+            }
+
+            return it.value().toString();
+        }();
 
     query.bindValue(
         QStringLiteral(":linkedNotebookGuid"),
-        (tag.hasLinkedNotebookGuid() ? tag.linkedNotebookGuid() : nullValue));
+        (linkedNotebookGuid ? *linkedNotebookGuid : nullValue));
 
     query.bindValue(
         QStringLiteral(":updateSequenceNumber"),
-        (tag.hasUpdateSequenceNumber() ? tag.updateSequenceNumber()
-                                       : nullValue));
+        (tag.updateSequenceNum() ? *tag.updateSequenceNum() : nullValue));
 
     query.bindValue(
-        QStringLiteral(":name"), (tag.hasName() ? tag.name() : nullValue));
+        QStringLiteral(":name"), (tag.name() ? *tag.name() : nullValue));
 
     query.bindValue(
         QStringLiteral(":nameLower"),
-        (tag.hasName() ? tagNameNormalized : nullValue));
+        (tag.name() ? tagNameNormalized : nullValue));
 
     query.bindValue(
         QStringLiteral(":parentGuid"),
-        (tag.hasParentGuid() ? tag.parentGuid() : nullValue));
+        (tag.parentGuid() ? *tag.parentGuid() : nullValue));
 
     query.bindValue(
         QStringLiteral(":parentLocalUid"),
-        (tag.hasParentLocalUid() ? tag.parentLocalUid() : nullValue));
+        (!tag.parentLocalId().isEmpty() ? tag.parentLocalId() : nullValue));
 
-    query.bindValue(QStringLiteral(":isDirty"), (tag.isDirty() ? 1 : 0));
+    query.bindValue(QStringLiteral(":isDirty"), (tag.isLocallyModified() ? 1 : 0));
 
-    query.bindValue(QStringLiteral(":isLocal"), (tag.isLocal() ? 1 : 0));
+    query.bindValue(QStringLiteral(":isLocal"), (tag.isLocalOnly() ? 1 : 0));
 
     query.bindValue(
-        QStringLiteral(":isFavorited"), (tag.isFavorited() ? 1 : 0));
+        QStringLiteral(":isFavorited"), (tag.isLocallyFavorited() ? 1 : 0));
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -9062,8 +9114,10 @@ bool LocalStorageManagerPrivate::checkAndPrepareTagCountQuery() const
     }
 
     m_getTagCountQuery = QSqlQuery(m_sqlDatabase);
-    bool res =
+
+    const bool res =
         m_getTagCountQuery.prepare(QStringLiteral("SELECT COUNT(*) FROM Tags"));
+
     if (res) {
         m_getTagCountQueryPrepared = true;
     }
@@ -9079,7 +9133,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceTagQuery()
 
     m_insertOrReplaceTagQuery = QSqlQuery(m_sqlDatabase);
 
-    QString queryString = QStringLiteral(
+    const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Tags "
         "(localUid, guid, linkedNotebookGuid, updateSequenceNumber, "
         "name, nameLower, parentGuid, parentLocalUid, isDirty, "
@@ -9088,7 +9142,7 @@ bool LocalStorageManagerPrivate::checkAndPrepareInsertOrReplaceTagQuery()
         ":updateSequenceNumber, :name, :nameLower, "
         ":parentGuid, :parentLocalUid, :isDirty, :isLocal, :isFavorited)");
 
-    bool res = m_insertOrReplaceTagQuery.prepare(queryString);
+    const bool res = m_insertOrReplaceTagQuery.prepare(queryString);
     if (res) {
         m_insertOrReplaceTagQueryPrepared = true;
     }
