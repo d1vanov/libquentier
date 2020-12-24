@@ -91,6 +91,7 @@ set(TYPES_HEADERS
     headers/quentier/types/Resource.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
     headers/quentier/types/ResourceRecognitionIndices.h
+    headers/quentier/types/ResourceUtils.h
     headers/quentier/types/SavedSearch.h
     headers/quentier/types/SharedNote.h
     headers/quentier/types/SharedNotebook.h
@@ -409,6 +410,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/Resource.cpp
     src/types/ResourceRecognitionIndexItem.cpp
     src/types/ResourceRecognitionIndices.cpp
+    src/types/ResourceUtils.cpp
     src/types/SavedSearch.cpp
     src/types/SharedNote.cpp
     src/types/SharedNotebook.cpp
