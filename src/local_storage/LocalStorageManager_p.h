@@ -781,7 +781,7 @@ private:
     {
         [[nodiscard]] bool operator()(
             const qevercloud::Resource & lhs,
-            const qevercloud::Resource & rhs) const;
+            const qevercloud::Resource & rhs) const noexcept;
     };
 
     struct QStringIntPairCompareByInt

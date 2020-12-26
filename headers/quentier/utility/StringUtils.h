@@ -21,9 +21,9 @@
 
 #include <quentier/utility/Linkage.h>
 
+#include <QList>
 #include <QSet>
 #include <QString>
-#include <QVector>
 
 namespace quentier {
 
@@ -36,7 +36,7 @@ public:
     virtual ~StringUtils();
 
     void removePunctuation(
-        QString & str, const QVector<QChar> & charactersToPreserve = {}) const;
+        QString & str, const QList<QChar> & charactersToPreserve = {}) const;
 
     void removeDiacritics(QString & str) const;
     void removeNewlines(QString & str) const;

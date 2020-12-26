@@ -30,7 +30,7 @@ StringUtils::~StringUtils()
 }
 
 void StringUtils::removePunctuation(
-    QString & str, const QVector<QChar> & charactersToPreserve) const
+    QString & str, const QList<QChar> & charactersToPreserve) const
 {
     Q_D(const StringUtils);
     d->removePunctuation(str, charactersToPreserve);

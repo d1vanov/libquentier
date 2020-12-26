@@ -31,7 +31,7 @@ StringUtilsPrivate::StringUtilsPrivate()
 }
 
 void StringUtilsPrivate::removePunctuation(
-    QString & str, const QVector<QChar> & charactersToPreserve) const
+    QString & str, const QList<QChar> & charactersToPreserve) const
 {
     QString filterStr =
         QString::fromUtf8("[`~!@#$%^&()—+=|:;<>«»,.?/{}\'\"\\[\\]]");
