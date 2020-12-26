@@ -47,7 +47,7 @@ public:
     }
 
     void cacheNotes(
-        const QList<Note> & notes,
+        const QList<qevercloud::Note> & notes,
         const LocalStorageManager::GetNoteOptions options)
     {
         if (!m_useCache) {
@@ -62,7 +62,7 @@ public:
         if (options &
             LocalStorageManager::GetNoteOption::WithResourceBinaryData) {
             for (auto note: notes) {
-                note.setResources(QList<Resource>());
+                note.setResources(QList<qevercloud::Resource>());
                 m_pLocalStorageCacheManager->cacheNote(note);
             }
         }
@@ -93,15 +93,23 @@ namespace {
  * resources containing dataBody and/or alternateDataBody within a separate list
  * in order to cache them separately from notes
  */
-void splitNoteAndResourcesForCaching(Note & note, QList<Resource> & resources)
+void splitNoteAndResourcesForCaching(
+    qevercloud::Note & note, QList<qevercloud::Resource> & resources)
 {
-    resources = note.resources();
-    QList<Resource> noteResources = resources;
-    for (auto & resource: noteResources) {
-        resource.setDataBody(QByteArray());
-        resource.setAlternateDataBody(QByteArray());
+    if (!note.resources()) {
+        resources.clear();
+        return;
     }
-    note.setResources(noteResources);
+
+    resources = *note.resources();
+    for (auto & resource: *note.mutableResources()) {
+        if (resource.data() && resource.data()->body()) {
+            resource.mutableData()->setBody(std::nullopt);
+        }
+        if (resource.alternateData() && resource.alternateData()->body()) {
+            resource.mutableAlternateData()->setBody(std::nullopt);
+        }
+    }
 }
 
 } // namespace
@@ -117,7 +125,7 @@ LocalStorageManagerAsync::LocalStorageManagerAsync(
     d->m_startupOptions = options;
 }
 
-LocalStorageManagerAsync::~LocalStorageManagerAsync()
+LocalStorageManagerAsync::~LocalStorageManagerAsync() noexcept
 {
     delete d_ptr;
 }
@@ -246,15 +254,14 @@ void LocalStorageManagerAsync::onSwitchUserRequest(
     Q_EMIT switchUserComplete(account, requestId);
 }
 
-void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onAddUserRequest(
+    qevercloud::User user, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->addUser(user, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addUser(user, errorDescription)) {
             Q_EMIT addUserFailed(user, errorDescription, requestId);
             return;
         }
@@ -276,17 +283,14 @@ void LocalStorageManagerAsync::onAddUserRequest(User user, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateUserRequest(
+    qevercloud::User user, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res =
-            d->m_pLocalStorageManager->updateUser(user, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateUser(user, errorDescription)) {
             Q_EMIT updateUserFailed(user, errorDescription, requestId);
             return;
         }
@@ -308,15 +312,14 @@ void LocalStorageManagerAsync::onUpdateUserRequest(User user, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onFindUserRequest(
+    qevercloud::User user, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->findUser(user, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->findUser(user, errorDescription)) {
             Q_EMIT findUserFailed(user, errorDescription, requestId);
             return;
         }
@@ -338,16 +341,14 @@ void LocalStorageManagerAsync::onFindUserRequest(User user, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onDeleteUserRequest(
+    qevercloud::User user, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res =
-            d->m_pLocalStorageManager->deleteUser(user, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->deleteUser(user, errorDescription)) {
             Q_EMIT deleteUserFailed(user, errorDescription, requestId);
             return;
         }
@@ -369,17 +370,14 @@ void LocalStorageManagerAsync::onDeleteUserRequest(User user, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onExpungeUserRequest(User user, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeUserRequest(
+    qevercloud::User user, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res =
-            d->m_pLocalStorageManager->expungeUser(user, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeUser(user, errorDescription)) {
             Q_EMIT expungeUserFailed(user, errorDescription, requestId);
             return;
         }
@@ -431,17 +429,16 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onAddNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
 
-        bool res =
-            d->m_pLocalStorageManager->addNotebook(notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT addNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
@@ -468,17 +465,15 @@ void LocalStorageManagerAsync::onAddNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->updateNotebook(
-            notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT updateNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
@@ -505,7 +500,7 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onFindNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -514,27 +509,26 @@ void LocalStorageManagerAsync::onFindNotebookRequest(
 
         bool foundNotebookInCache = false;
         if (d->m_useCache) {
-            bool notebookHasGuid = notebook.hasGuid();
-            if (notebookHasGuid || !notebook.localUid().isEmpty()) {
-                const QString uid =
-                    (notebookHasGuid ? notebook.guid() : notebook.localUid());
+            if (notebook.guid() || !notebook.localId().isEmpty()) {
+                const QString id =
+                    (notebook.guid() ? *notebook.guid() : notebook.localId());
 
                 LocalStorageCacheManager::WhichUid wg =
-                    (notebookHasGuid ? LocalStorageCacheManager::Guid
+                    (notebook.guid() ? LocalStorageCacheManager::Guid
                                      : LocalStorageCacheManager::LocalUid);
 
-                const Notebook * pNotebook =
-                    d->m_pLocalStorageCacheManager->findNotebook(uid, wg);
+                const qevercloud::Notebook * pNotebook =
+                    d->m_pLocalStorageCacheManager->findNotebook(id, wg);
 
                 if (pNotebook) {
                     notebook = *pNotebook;
                     foundNotebookInCache = true;
                 }
             }
-            else if (notebook.hasName() && !notebook.name().isEmpty()) {
-                const QString notebookName = notebook.name();
+            else if (notebook.name() && !notebook.name()->isEmpty()) {
+                const QString notebookName = *notebook.name();
 
-                const Notebook * pNotebook =
+                const qevercloud::Notebook * pNotebook =
                     d->m_pLocalStorageCacheManager->findNotebookByName(
                         notebookName);
 
@@ -574,17 +568,15 @@ void LocalStorageManagerAsync::onFindNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onFindDefaultNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->findDefaultNotebook(
-            notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->findDefaultNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT findDefaultNotebookFailed(
                 notebook, errorDescription, requestId);
             return;
@@ -608,17 +600,15 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->findLastUsedNotebook(
-            notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->findLastUsedNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT findLastUsedNotebookFailed(
                 notebook, errorDescription, requestId);
             return;
@@ -642,17 +632,15 @@ void LocalStorageManagerAsync::onFindLastUsedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->findDefaultOrLastUsedNotebook(
-            notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->findDefaultOrLastUsedNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT findDefaultOrLastUsedNotebookFailed(
                 notebook, errorDescription, requestId);
             return;
@@ -684,9 +672,10 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Notebook> notebooks = d->m_pLocalStorageManager->listAllNotebooks(
-            errorDescription, limit, offset, order, orderDirection,
-            linkedNotebookGuid);
+        QList<qevercloud::Notebook> notebooks =
+            d->m_pLocalStorageManager->listAllNotebooks(
+                errorDescription, limit, offset, order, orderDirection,
+                linkedNotebookGuid);
 
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllNotebooksFailed(
@@ -728,8 +717,9 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        QList<SharedNotebook> sharedNotebooks =
+        QList<qevercloud::SharedNotebook> sharedNotebooks =
             d->m_pLocalStorageManager->listAllSharedNotebooks(errorDescription);
+
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllSharedNotebooksFailed(errorDescription, requestId);
             return;
@@ -762,9 +752,10 @@ void LocalStorageManagerAsync::onListNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Notebook> notebooks = d->m_pLocalStorageManager->listNotebooks(
-            flag, errorDescription, limit, offset, order, orderDirection,
-            linkedNotebookGuid);
+        QList<qevercloud::Notebook> notebooks =
+            d->m_pLocalStorageManager->listNotebooks(
+                flag, errorDescription, limit, offset, order, orderDirection,
+                linkedNotebookGuid);
 
         if (notebooks.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotebooksFailed(
@@ -807,7 +798,7 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
 
     try {
         ErrorString errorDescription;
-        QList<SharedNotebook> sharedNotebooks =
+        QList<qevercloud::SharedNotebook> sharedNotebooks =
             d->m_pLocalStorageManager->listSharedNotebooksPerNotebookGuid(
                 notebookGuid, errorDescription);
 
@@ -837,17 +828,15 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeNotebookRequest(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->expungeNotebook(
-            notebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeNotebook(
+                notebook, errorDescription))
+        {
             Q_EMIT expungeNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
@@ -904,17 +893,15 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onAddLinkedNotebookRequest(
-    LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->addLinkedNotebook(
-            linkedNotebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addLinkedNotebook(
+                linkedNotebook, errorDescription))
+        {
             Q_EMIT addLinkedNotebookFailed(
                 linkedNotebook, errorDescription, requestId);
             return;
@@ -942,17 +929,15 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(
-    LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->updateLinkedNotebook(
-            linkedNotebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateLinkedNotebook(
+                linkedNotebook, errorDescription))
+        {
             Q_EMIT updateLinkedNotebookFailed(
                 linkedNotebook, errorDescription, requestId);
             return;
@@ -980,7 +965,7 @@ void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
-    LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -988,9 +973,9 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
         ErrorString errorDescription;
 
         bool foundLinkedNotebookInCache = false;
-        if (d->m_useCache && linkedNotebook.hasGuid()) {
-            const QString guid = linkedNotebook.guid();
-            const LinkedNotebook * pLinkedNotebook =
+        if (d->m_useCache && linkedNotebook.guid()) {
+            const QString guid = *linkedNotebook.guid();
+            const qevercloud::LinkedNotebook * pLinkedNotebook =
                 d->m_pLocalStorageCacheManager->findLinkedNotebook(guid);
             if (pLinkedNotebook) {
                 linkedNotebook = *pLinkedNotebook;
@@ -1035,7 +1020,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<LinkedNotebook> linkedNotebooks =
+        QList<qevercloud::LinkedNotebook> linkedNotebooks =
             d->m_pLocalStorageManager->listAllLinkedNotebooks(
                 errorDescription, limit, offset, order, orderDirection);
 
@@ -1081,7 +1066,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<LinkedNotebook> linkedNotebooks =
+        QList<qevercloud::LinkedNotebook> linkedNotebooks =
             d->m_pLocalStorageManager->listLinkedNotebooks(
                 flag, errorDescription, limit, offset, order, orderDirection);
 
@@ -1120,17 +1105,15 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(
-    LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->expungeLinkedNotebook(
-            linkedNotebook, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeLinkedNotebook(
+                linkedNotebook, errorDescription))
+        {
             Q_EMIT expungeLinkedNotebookFailed(
                 linkedNotebook, errorDescription, requestId);
             return;
@@ -1191,8 +1174,8 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
-    Notebook notebook, LocalStorageManager::NoteCountOptions options,
-    QUuid requestId)
+    qevercloud::Notebook notebook,
+    LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1227,7 +1210,8 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(
-    Tag tag, LocalStorageManager::NoteCountOptions options, QUuid requestId)
+    qevercloud::Tag tag, LocalStorageManager::NoteCountOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1267,10 +1251,9 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
     try {
         ErrorString errorDescription;
         QHash<QString, int> noteCountsPerTagLocalUid;
-        bool res = d->m_pLocalStorageManager->noteCountsPerAllTags(
-            noteCountsPerTagLocalUid, errorDescription, options);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->noteCountsPerAllTags(
+                noteCountsPerTagLocalUid, errorDescription, options))
+        {
             Q_EMIT getNoteCountsPerAllTagsFailed(
                 errorDescription, options, requestId);
         }
@@ -1331,7 +1314,8 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
     }
 }
 
-void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
+void LocalStorageManagerAsync::onAddNoteRequest(
+    qevercloud::Note note, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1345,8 +1329,8 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
         }
 
         if (d->m_useCache) {
-            Note noteForCaching = note;
-            QList<Resource> resourcesForCaching;
+            qevercloud::Note noteForCaching = note;
+            QList<qevercloud::Resource> resourcesForCaching;
             splitNoteAndResourcesForCaching(
                 noteForCaching, resourcesForCaching);
 
@@ -1375,7 +1359,7 @@ void LocalStorageManagerAsync::onAddNoteRequest(Note note, QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onUpdateNoteRequest(
-    Note note, const LocalStorageManager::UpdateNoteOptions options,
+    qevercloud::Note note, const LocalStorageManager::UpdateNoteOptions options,
     QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1400,20 +1384,20 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
             }
         }
 
-        Note previousNoteVersion;
+        qevercloud::Note previousNoteVersion;
         if (shouldCheckForNotebookChange || shouldCheckForTagListUpdate) {
             bool foundNoteInCache = false;
             if (d->m_useCache) {
-                const Note * pNote = nullptr;
+                const qevercloud::Note * pNote = nullptr;
 
-                if (note.hasGuid()) {
+                if (note.guid()) {
                     pNote = d->m_pLocalStorageCacheManager->findNote(
-                        note.guid(), LocalStorageCacheManager::WhichUid::Guid);
+                        *note.guid(), LocalStorageCacheManager::WhichUid::Guid);
                 }
 
                 if (!pNote) {
                     pNote = d->m_pLocalStorageCacheManager->findNote(
-                        note.localUid(),
+                        note.localId(),
                         LocalStorageCacheManager::WhichUid::LocalUid);
                 }
 
@@ -1432,7 +1416,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 #endif
                 bool res = false;
 
-                if (note.hasGuid()) {
+                if (note.guid()) {
                     // Try to find note by guid first
                     previousNoteVersion.setGuid(note.guid());
                     res = d->m_pLocalStorageManager->findNote(
@@ -1440,8 +1424,8 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                 }
 
                 if (!res) {
-                    previousNoteVersion.setLocalUid(note.localUid());
-                    previousNoteVersion.setGuid(QString());
+                    previousNoteVersion.setLocalId(note.localId());
+                    previousNoteVersion.setGuid(std::nullopt);
                     res = d->m_pLocalStorageManager->findNote(
                         previousNoteVersion, getNoteOptions, errorDescription);
                 }
@@ -1455,10 +1439,9 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
         }
 
         ErrorString errorDescription;
-        bool res = d->m_pLocalStorageManager->updateNote(
-            note, options, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateNote(
+                note, options, errorDescription))
+        {
             Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
             return;
         }
@@ -1469,8 +1452,8 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                      UpdateResourceMetadata) &&
                 (options & LocalStorageManager::UpdateNoteOption::UpdateTags))
             {
-                Note noteForCaching = note;
-                QList<Resource> resourcesForCaching;
+                qevercloud::Note noteForCaching = note;
+                QList<qevercloud::Resource> resourcesForCaching;
                 splitNoteAndResourcesForCaching(
                     noteForCaching, resourcesForCaching);
 
@@ -1500,9 +1483,12 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                 d->m_pLocalStorageCacheManager->expungeNote(note);
 
                 // Same goes for its resources
-                QList<Resource> resources = note.resources();
-                for (const auto & resource: qAsConst(resources)) {
-                    d->m_pLocalStorageCacheManager->expungeResource(resource);
+                if (note.resources()) {
+                    QList<qevercloud::Resource> resources = *note.resources();
+                    for (const auto & resource: qAsConst(resources)) {
+                        d->m_pLocalStorageCacheManager->expungeResource(
+                            resource);
+                    }
                 }
             }
         }
