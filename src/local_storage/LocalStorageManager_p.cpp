@@ -697,7 +697,7 @@ bool LocalStorageManagerPrivate::localStorageRequiresUpgrade(
     return currentVersion < highestSupportedVersion;
 }
 
-QList<std::shared_ptr<ILocalStoragePatch>>
+QList<ILocalStoragePatchPtr>
 LocalStorageManagerPrivate::requiredLocalStoragePatches()
 {
     if (!m_pLocalStoragePatchManager) {

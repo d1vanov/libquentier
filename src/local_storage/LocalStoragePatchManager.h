@@ -19,11 +19,10 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_PATCH_MANAGER_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_PATCH_MANAGER_H
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <QObject>
-
-#include <memory>
 
 class QSqlDatabase;
 
@@ -52,7 +51,7 @@ public:
      * @return          The list of patches required to be applied to the
      *                  current version of local storage
      */
-    QList<std::shared_ptr<ILocalStoragePatch>> patchesForCurrentVersion();
+    QList<ILocalStoragePatchPtr> patchesForCurrentVersion();
 
 private:
     Q_DISABLE_COPY(LocalStoragePatchManager)

@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_H
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/Lists.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/types/Account.h>
@@ -30,7 +31,6 @@
 #include <QString>
 
 #include <cstdint>
-#include <memory>
 #include <utility>
 
 namespace qevercloud {
@@ -255,7 +255,7 @@ public:
      * @return                      The vector of patches required to be applied
      *                              to the current local storage version
      */
-    [[nodiscard]] QList<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
+    [[nodiscard]] QList<ILocalStoragePatchPtr> requiredLocalStoragePatches();
 
     /**
      * localStorageVersion method fetches the current version of local storage
@@ -925,7 +925,7 @@ public:
      * currently stored in local storage database labeled with each tag stored
      * in the local storage database.
      *
-     * @param noteCountsPerTagLocalUid      The result hash: note counts by tag
+     * @param noteCountsPerTagLocalId       The result hash: note counts by tag
      *                                      local ids
      * @param errorDescription              Error description if the number of
      *                                      notes per all tags could not be
@@ -938,7 +938,7 @@ public:
      *                                      otherwise
      */
     [[nodiscard]] bool noteCountsPerAllTags(
-        QHash<QString, int> & noteCountsPerTagLocalUid,
+        QHash<QString, int> & noteCountsPerTagLocalId,
         ErrorString & errorDescription,
         const NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
@@ -949,9 +949,9 @@ public:
      * corresponding to given notebook local ids and labeled by at least one of
      * tags corresponding to given tag local ids
      *
-     * @param notebookLocalUids     The list of notebook local ids used for
+     * @param notebookLocalIds      The list of notebook local ids used for
      *                              filtering
-     * @param tagLocalUids          The list of tag local ids used for
+     * @param tagLocalIds           The list of tag local ids used for
      *                              filtering
      * @param errorDescription      Error description if the number of notes per
      *                              notebooks and tags could not be returned
@@ -962,7 +962,7 @@ public:
      *                              error occurred
      */
     [[nodiscard]] int noteCountPerNotebooksAndTags(
-        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         ErrorString & errorDescription,
         const NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
@@ -1232,9 +1232,9 @@ public:
      * present within one of specified notebooks and are labeled with at least
      * one of specified tags
      *
-     * @param notebookLocalUids     Local uids of notebooks to which the listed
+     * @param notebookLocalIds      Local ids of notebooks to which the listed
      *                              notes might belong
-     * @param tagLocalUids          Local uids of tags with which the listed
+     * @param tagLocalIds           Local ids of tags with which the listed
      *                              notes might be labeled
      * @param options               Options specifying which optionally
      *                              includable fields of the note should
@@ -1258,7 +1258,7 @@ public:
      *                              presence
      */
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebooksAndTags(
-        const QStringList & notebookLocalUids, const QStringList & tagLocalUids,
+        const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         const GetNoteOptions options, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
@@ -1267,7 +1267,7 @@ public:
             OrderDirection::Ascending) const;
 
     /**
-     * @brief listNotesByLocalUids attempts to list notes given their local ids
+     * @brief listNotesByLocalIds attempts to list notes given their local ids
      *
      * The method would only return notes which it managed to find within
      * the local storage i.e. having an invalid local id in the list won't
@@ -1276,7 +1276,7 @@ public:
      *
      * Notes within the result can be additionally filtered with flag parameter
      *
-     * @param noteLocalUids         Local uids of notes to be listed
+     * @param noteLocalIds          Local ids of notes to be listed
      * @param options               Options specifying which optionally
      *                              includable fields of the note should
      *                              actually be included
@@ -1297,8 +1297,8 @@ public:
      *                              list in case of error or no notes
      *                              corresponding to given local ids presence
      */
-    [[nodiscard]] QList<qevercloud::Note> listNotesByLocalUids(
-        const QStringList & noteLocalUids, const GetNoteOptions options,
+    [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIds(
+        const QStringList & noteLocalIds, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
         const size_t limit = 0, const size_t offset = 0,
@@ -1606,7 +1606,7 @@ public:
         const QString & linkedNotebookGuid = QString()) const;
 
     /**
-     * @brief listTagsWithNoteLocalUids attempts to list tags and their
+     * @brief listTagsWithNoteLocalIds attempts to list tags and their
      * corresponding local ids within the account according to the specified
      * input flag
      *
@@ -1643,7 +1643,7 @@ public:
      *                              conforming to the filter exist within
      *                              the account
      */
-    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalUids(
+    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalIds(
         const ListObjectsOptions flag, ErrorString & errorDescription,
         const size_t limit = 0, const size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
@@ -1664,7 +1664,7 @@ public:
      *                                      as a result of the call,
      *                                      automatically filled with local id
      *                                      if it was empty before the call
-     * @param expungedChildTagLocalUids     If the expunged tag was a parent of
+     * @param expungedChildTagLocalIds      If the expunged tag was a parent of
      *                                      some other tags, these were expunged
      *                                      as well; this parameter would
      *                                      contain the local ids of expunged
@@ -1675,7 +1675,7 @@ public:
      *                                      successfully, false otherwise
      */
     [[nodiscard]] bool expungeTag(
-        qevercloud::Tag & tag, QStringList & expungedChildTagLocalUids,
+        qevercloud::Tag & tag, QStringList & expungedChildTagLocalIds,
         ErrorString & errorDescription);
 
     /**

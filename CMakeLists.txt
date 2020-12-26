@@ -109,6 +109,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/ILocalStoragePatch.h
     headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
+    headers/quentier/local_storage/Fwd.h
     headers/quentier/local_storage/Lists.h
     headers/quentier/local_storage/LocalStorageCacheManager.h
     headers/quentier/local_storage/LocalStorageManager.h

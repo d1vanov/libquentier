@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_PRIVATE_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_PRIVATE_H
 
+#include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/Lists.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/utility/StringUtils.h>
@@ -80,7 +81,7 @@ public:
     [[nodiscard]] bool localStorageRequiresUpgrade(
         ErrorString & errorDescription);
 
-    [[nodiscard]] QList<std::shared_ptr<ILocalStoragePatch>> requiredLocalStoragePatches();
+    [[nodiscard]] QList<ILocalStoragePatchPtr> requiredLocalStoragePatches();
 
     [[nodiscard]] qint32 localStorageVersion(ErrorString & errorDescription);
     [[nodiscard]] qint32 highestSupportedLocalStorageVersion() const;

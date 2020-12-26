@@ -35,10 +35,10 @@ LocalStoragePatchManager::LocalStoragePatchManager(
     m_sqlDatabase(database)
 {}
 
-QList<std::shared_ptr<ILocalStoragePatch>>
+QList<ILocalStoragePatchPtr>
 LocalStoragePatchManager::patchesForCurrentVersion()
 {
-    QList<std::shared_ptr<ILocalStoragePatch>> result;
+    QList<ILocalStoragePatchPtr> result;
     ErrorString errorDescription;
 
     const int version =
