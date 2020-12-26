@@ -3174,8 +3174,8 @@ QStringList LocalStorageManagerPrivate::findNoteLocalIdsWithSearchQuery(
 
     QStringList result;
     result.reserve(foundLocalIds.size());
-    for (const auto & localUid: foundLocalIds) {
-        result << localUid;
+    for (const auto & localId: foundLocalIds) {
+        result << localId;
     }
 
     return result;
@@ -3833,7 +3833,7 @@ bool LocalStorageManagerPrivate::expungeTag(
                 errorDescription.appendBase(
                     QT_TR_NOOP("tag to be expunged was not found in the local "
                                "storage"));
-                errorDescription.details() = QStringLiteral("local uid = ");
+                errorDescription.details() = QStringLiteral("local id = ");
                 errorDescription.details() += localId;
                 QNWARNING("local_storage", errorDescription);
                 return false;
@@ -4078,9 +4078,9 @@ bool LocalStorageManagerPrivate::expungeEnResource(
     if (Q_UNLIKELY(noteLocalId.isEmpty())) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
-            QT_TR_NOOP("note's local uid corresponding to the resource is "
+            QT_TR_NOOP("note's local id corresponding to the resource is "
                        "empty"));
-        errorDescription.details() = QStringLiteral("local uid = ");
+        errorDescription.details() = QStringLiteral("local id = ");
         errorDescription.details() += noteLocalId;
         QNWARNING("local_storage", errorDescription);
         return false;
@@ -5895,11 +5895,11 @@ bool LocalStorageManagerPrivate::createTables(ErrorString & errorDescription)
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
-    const QString & localUid,
+    const QString & localId,
     const qevercloud::NotebookRestrictions & notebookRestrictions,
     ErrorString & errorDescription)
 {
-    ErrorString errorPrefix(
+    const ErrorString errorPrefix(
         QT_TR_NOOP("can't insert or replace notebook restrictions"));
 
     bool res = checkAndPrepareInsertOrReplaceNotebookRestrictionsQuery();
@@ -5908,7 +5908,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebookRestrictions(
 
     const QVariant nullValue;
 
-    query.bindValue(QStringLiteral(":localUid"), localUid);
+    query.bindValue(QStringLiteral(":localUid"), localId);
 
 #define BIND_RESTRICTION(name)                                                 \
     query.bindValue(                                                           \
@@ -7522,7 +7522,7 @@ bool LocalStorageManagerPrivate::getNotebookLocalIdFromNote(
             << (note.guid() ? *note.guid() : QStringLiteral("<null>")));
 
     const ErrorString errorPrefix(
-        QT_TR_NOOP("can't get notebook local uid for note"));
+        QT_TR_NOOP("can't get notebook local id for note"));
 
     notebookLocalId.resize(0);
 
@@ -7560,8 +7560,8 @@ bool LocalStorageManagerPrivate::getNotebookLocalIdFromNote(
 
         QNTRACE(
             "local_storage",
-            "Notebook local uid deduced from notebook's "
-                << "guid " << notebookGuid << ": " << notebookLocalId);
+            "Notebook local id deduced from notebook's guid " << notebookGuid
+                << ": " << notebookLocalId);
     }
     else {
         QString column, id;
@@ -7677,7 +7677,7 @@ bool LocalStorageManagerPrivate::getNotebookLocalIdForGuid(
             << "notebook guid = " << notebookGuid);
 
     const ErrorString errorPrefix(
-        QT_TR_NOOP("can't get notebook local uid for guid"));
+        QT_TR_NOOP("can't get notebook local id for guid"));
 
     const QString queryString =
         QString::fromUtf8("SELECT localUid FROM Notebooks WHERE guid = '%1'")
@@ -7695,7 +7695,7 @@ bool LocalStorageManagerPrivate::getNotebookLocalIdForGuid(
     if (notebookLocalId.isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
-            QT_TR_NOOP("no existing local uid corresponding to notebook's guid "
+            QT_TR_NOOP("no existing local id corresponding to notebook's guid "
                        "was found"));
         errorDescription.details() = notebookGuid;
         QNDEBUG("local_storage", errorDescription);
@@ -7715,7 +7715,7 @@ bool LocalStorageManagerPrivate::getNoteLocalIdForGuid(
             << noteGuid);
 
     const ErrorString errorPrefix(
-        QT_TR_NOOP("can't get note local uid for guid"));
+        QT_TR_NOOP("can't get note local id for guid"));
 
     const QString queryString =
         QString::fromUtf8("SELECT localUid FROM Notes WHERE guid='%1'")
@@ -7733,7 +7733,7 @@ bool LocalStorageManagerPrivate::getNoteLocalIdForGuid(
     if (noteLocalId.isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
-            QT_TR_NOOP("no existing local uid corresponding to note's guid was "
+            QT_TR_NOOP("no existing local id corresponding to note's guid was "
                        "found"));
         errorDescription.details() = noteGuid;
         QNDEBUG("local_storage", errorDescription);
@@ -7753,7 +7753,7 @@ bool LocalStorageManagerPrivate::getNoteGuidForLocalId(
             << "uid = " << noteLocalUid);
 
     const ErrorString errorPrefix(
-        QT_TR_NOOP("can't get note guid for local uid"));
+        QT_TR_NOOP("can't get note guid for local id"));
 
     const QString queryString =
         QString::fromUtf8("SELECT guid FROM Notes WHERE localUid='%1'")
@@ -9290,7 +9290,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
         return false;
     }
 
-    // Removing resource's local uid from ResourceRecognitionData table
+    // Removing resource's local id from ResourceRecognitionData table
     {
         bool res =
             checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
@@ -9608,8 +9608,8 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFile(
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::writeResourceBinaryDataToFile: "
-            << "resource local uid = " << resourceLocalId
-            << ", note local uid = " << noteLocalId << ", writing"
+            << "resource local id = " << resourceLocalId
+            << ", note local id = " << noteLocalId << ", writing"
             << (isAlternateDataBody ? " alternate" : "")
             << " data body; replace original file = "
             << (replaceOriginalFile ? "true" : "false"));
@@ -10025,7 +10025,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
             }
 
             errorDescription.details() +=
-                QStringLiteral("resource local uid = ");
+                QStringLiteral("resource local id = ");
 
             errorDescription.details() += resource.localId();
             QNWARNING("local_storage", errorDescription);
@@ -10057,7 +10057,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
             }
 
             errorDescription.details() +=
-                QStringLiteral("resource local uid = ");
+                QStringLiteral("resource local id = ");
 
             errorDescription.details() += resource.localId();
             QNWARNING("local_storage", errorDescription);
@@ -10115,7 +10115,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFilesForNotebook(
 
     const ErrorString errorPrefix(
         QT_TR_NOOP("failed to remove resource data files for notebook: cannot "
-                   "list note local uids per notebook"));
+                   "list note local ids per notebook"));
 
     QString column, id;
     if (notebook.guid()) {
@@ -10928,8 +10928,8 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::readResourceBinaryDataFromFile: "
-            << "resource local uid = " << resourceLocalUid
-            << ", note local uid = " << noteLocalUid << ", reading "
+            << "resource local id = " << resourceLocalUid
+            << ", note local id = " << noteLocalUid << ", reading "
             << (isAlternateDataBody ? "alternate" : "") << " data body");
 
     QString storagePath = accountPersistentStoragePath(m_currentAccount);
@@ -13379,7 +13379,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
         if (Q_UNLIKELY(index < 0)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(QT_TR_NOOP(
-                "can't find notebook's local uid by notebook name: "
+                "can't find notebook's local id by notebook name: "
                 "SQL query record doesn't contain the requested item"));
             return false;
         }
@@ -13388,7 +13388,7 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
         if (Q_UNLIKELY(value.isNull())) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
-                QT_TR_NOOP("found null notebook's local uid corresponding to "
+                QT_TR_NOOP("found null notebook's local id corresponding to "
                            "notebook's name"));
             return false;
         }
@@ -13442,10 +13442,10 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
             if (!queryHasAnyModifier) {
                 /**
                  * In successful note search query there are exactly as many tag
-                 * local uids as there are tag names; therefore, when the search
+                 * local ids as there are tag names; therefore, when the search
                  * is for notes with some particular tags, we need to ensure
-                 * that each note's local uid in the sub-query result is present
-                 * there exactly as many times as there are tag local uids in
+                 * that each note's local id in the sub-query result is present
+                 * there exactly as many times as there are tag local ids in
                  * the query which the note is labeled with
                  */
 
@@ -13601,11 +13601,11 @@ bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
             if (!queryHasAnyModifier) {
                 /**
                  * Need to find notes which each have all the found resource
-                 * local uids. One resource mime type can correspond to multiple
+                 * local ids. One resource mime type can correspond to multiple
                  * resources. However, one resource corresponds to exactly one
                  * note. When searching for notes which resources have
                  * particular mime type, we need to ensure that each note's
-                 * local uid in the sub-query result is present there exactly as
+                 * local id in the sub-query result is present there exactly as
                  * many times as there are resource mime types in the query
                  */
 
@@ -14307,7 +14307,7 @@ bool LocalStorageManagerPrivate::tagNamesToTagLocalIds(
         if (Q_UNLIKELY(index < 0)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
-                QT_TR_NOOP("tag's local uid is not present in the result of "
+                QT_TR_NOOP("tag's local id is not present in the result of "
                            "SQL query"));
             QNWARNING("local_storage", errorDescription);
             return false;
@@ -14401,7 +14401,7 @@ bool LocalStorageManagerPrivate::resourceMimeTypesToResourceLocalIds(
         if (Q_UNLIKELY(index < 0)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
-                QT_TR_NOOP("resource's local uid is not present in the result "
+                QT_TR_NOOP("resource's local id is not present in the result "
                            "of SQL query"));
             return false;
         }
