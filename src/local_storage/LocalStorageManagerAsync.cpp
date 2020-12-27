@@ -200,7 +200,8 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->userCount(errorDescription);
+        const int count =
+            d->m_pLocalStorageManager->userCount(errorDescription);
         if (count < 0) {
             Q_EMIT getUserCountFailed(errorDescription, requestId);
         }
@@ -405,7 +406,8 @@ void LocalStorageManagerAsync::onGetNotebookCountRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->notebookCount(errorDescription);
+        const int count =
+            d->m_pLocalStorageManager->notebookCount(errorDescription);
         if (count < 0) {
             Q_EMIT getNotebookCountFailed(errorDescription, requestId);
         }
@@ -435,7 +437,6 @@ void LocalStorageManagerAsync::onAddNotebookRequest(
 
     try {
         ErrorString errorDescription;
-
         if (!d->m_pLocalStorageManager->addNotebook(
                 notebook, errorDescription))
         {
@@ -506,7 +507,6 @@ void LocalStorageManagerAsync::onFindNotebookRequest(
 
     try {
         ErrorString errorDescription;
-
         bool foundNotebookInCache = false;
         if (d->m_useCache) {
             if (notebook.guid() || !notebook.localId().isEmpty()) {
@@ -672,7 +672,7 @@ void LocalStorageManagerAsync::onListAllNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::Notebook> notebooks =
+        const QList<qevercloud::Notebook> notebooks =
             d->m_pLocalStorageManager->listAllNotebooks(
                 errorDescription, limit, offset, order, orderDirection,
                 linkedNotebookGuid);
@@ -717,7 +717,7 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::SharedNotebook> sharedNotebooks =
+        const QList<qevercloud::SharedNotebook> sharedNotebooks =
             d->m_pLocalStorageManager->listAllSharedNotebooks(errorDescription);
 
         if (sharedNotebooks.isEmpty() && !errorDescription.isEmpty()) {
@@ -752,7 +752,7 @@ void LocalStorageManagerAsync::onListNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::Notebook> notebooks =
+        const QList<qevercloud::Notebook> notebooks =
             d->m_pLocalStorageManager->listNotebooks(
                 flag, errorDescription, limit, offset, order, orderDirection,
                 linkedNotebookGuid);
@@ -798,7 +798,7 @@ void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::SharedNotebook> sharedNotebooks =
+        const QList<qevercloud::SharedNotebook> sharedNotebooks =
             d->m_pLocalStorageManager->listSharedNotebooksPerNotebookGuid(
                 notebookGuid, errorDescription);
 
@@ -868,7 +868,7 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        int count =
+        const int count =
             d->m_pLocalStorageManager->linkedNotebookCount(errorDescription);
         if (count < 0) {
             Q_EMIT getLinkedNotebookCountFailed(errorDescription, requestId);
@@ -971,7 +971,6 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
 
     try {
         ErrorString errorDescription;
-
         bool foundLinkedNotebookInCache = false;
         if (d->m_useCache && linkedNotebook.guid()) {
             const QString guid = *linkedNotebook.guid();
@@ -1020,7 +1019,7 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::LinkedNotebook> linkedNotebooks =
+        const QList<qevercloud::LinkedNotebook> linkedNotebooks =
             d->m_pLocalStorageManager->listAllLinkedNotebooks(
                 errorDescription, limit, offset, order, orderDirection);
 
@@ -1066,7 +1065,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        QList<qevercloud::LinkedNotebook> linkedNotebooks =
+        const QList<qevercloud::LinkedNotebook> linkedNotebooks =
             d->m_pLocalStorageManager->listLinkedNotebooks(
                 flag, errorDescription, limit, offset, order, orderDirection);
 
@@ -1148,7 +1147,7 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(
 
     try {
         ErrorString errorDescription;
-        int count =
+        const int count =
             d->m_pLocalStorageManager->noteCount(errorDescription, options);
 
         if (count < 0) {
@@ -1181,7 +1180,7 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
 
     try {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCountPerNotebook(
+        const int count = d->m_pLocalStorageManager->noteCountPerNotebook(
             notebook, errorDescription, options);
 
         if (count < 0) {
@@ -1217,7 +1216,7 @@ void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(
 
     try {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCountPerTag(
+        const int count = d->m_pLocalStorageManager->noteCountPerTag(
             tag, errorDescription, options);
 
         if (count < 0) {
@@ -1250,16 +1249,16 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
 
     try {
         ErrorString errorDescription;
-        QHash<QString, int> noteCountsPerTagLocalUid;
+        QHash<QString, int> noteCountsPerTagLocalId;
         if (!d->m_pLocalStorageManager->noteCountsPerAllTags(
-                noteCountsPerTagLocalUid, errorDescription, options))
+                noteCountsPerTagLocalId, errorDescription, options))
         {
             Q_EMIT getNoteCountsPerAllTagsFailed(
                 errorDescription, options, requestId);
         }
         else {
             Q_EMIT getNoteCountsPerAllTagsComplete(
-                noteCountsPerTagLocalUid, options, requestId);
+                noteCountsPerTagLocalId, options, requestId);
         }
     }
     catch (const std::exception & e) {
@@ -1278,24 +1277,25 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
-    QStringList notebookLocalUids, QStringList tagLocalUids,
+    QStringList notebookLocalIds, QStringList tagLocalIds,
     LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-        int count = d->m_pLocalStorageManager->noteCountPerNotebooksAndTags(
-            notebookLocalUids, tagLocalUids, errorDescription, options);
+        const int count =
+            d->m_pLocalStorageManager->noteCountPerNotebooksAndTags(
+                notebookLocalIds, tagLocalIds, errorDescription, options);
 
         if (count < 0) {
             Q_EMIT getNoteCountPerNotebooksAndTagsFailed(
-                errorDescription, notebookLocalUids, tagLocalUids, options,
+                errorDescription, notebookLocalIds, tagLocalIds, options,
                 requestId);
         }
         else {
             Q_EMIT getNoteCountPerNotebooksAndTagsComplete(
-                count, notebookLocalUids, tagLocalUids, options, requestId);
+                count, notebookLocalIds, tagLocalIds, options, requestId);
         }
     }
     catch (const std::exception & e) {
@@ -1310,7 +1310,7 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
         Q_EMIT getNoteCountPerNotebooksAndTagsFailed(
-            error, notebookLocalUids, tagLocalUids, options, requestId);
+            error, notebookLocalIds, tagLocalIds, options, requestId);
     }
 }
 
@@ -1321,9 +1321,7 @@ void LocalStorageManagerAsync::onAddNoteRequest(
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->addNote(note, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addNote(note, errorDescription)) {
             Q_EMIT addNoteFailed(note, errorDescription, requestId);
             return;
         }
@@ -1495,46 +1493,47 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
         Q_EMIT updateNoteComplete(note, options, requestId);
 
-        if (shouldCheckForNotebookChange) {
-            bool notebookChanged = false;
-            if (note.hasNotebookGuid() && previousNoteVersion.hasNotebookGuid())
-            {
-                notebookChanged =
-                    (note.notebookGuid() != previousNoteVersion.notebookGuid());
-            }
-            else {
-                notebookChanged =
-                    (note.notebookLocalUid() !=
-                     previousNoteVersion.notebookLocalUid());
-            }
+        if (shouldCheckForNotebookChange &&
+            (note.notebookGuid() != previousNoteVersion.notebookGuid()))
+        {
+            QNDEBUG(
+                "local_storage",
+                "Notebook change detected for note "
+                << note.localId() << ": moved from notebook "
+                << previousNoteVersion.parentLocalId()
+                << " to notebook " << note.parentLocalId());
 
-            if (notebookChanged) {
-                QNDEBUG(
-                    "local_storage",
-                    "Notebook change detected for note "
-                        << note.localUid() << ": moved from notebook "
-                        << previousNoteVersion.notebookLocalUid()
-                        << " to notebook " << note.notebookLocalUid());
-
-                Q_EMIT noteMovedToAnotherNotebook(
-                    note.localUid(), previousNoteVersion.notebookLocalUid(),
-                    note.notebookLocalUid());
-            }
+            Q_EMIT noteMovedToAnotherNotebook(
+                note.localId(), previousNoteVersion.parentLocalId(),
+                note.parentLocalId());
         }
 
         if (shouldCheckForTagListUpdate) {
-            const QStringList & previousTagLocalUids =
-                previousNoteVersion.tagLocalUids();
+            const auto getTagLocalIds = [](const qevercloud::Note & note)
+            {
+                const auto it =
+                    note.localData().constFind(QStringLiteral("tagLocalIds"));
+                if (it == note.localData().constEnd()) {
+                    return QStringList{};
+                }
 
-            const QStringList & updatedTagLocalUids = note.tagLocalUids();
+                return it.value().toStringList();
+            };
+
+            const QStringList previousTagLocalIds =
+                getTagLocalIds(previousNoteVersion);
+
+            const QStringList updatedTagLocalIds =
+                getTagLocalIds(note);
 
             bool tagListUpdated =
-                (previousTagLocalUids.size() != updatedTagLocalUids.size());
+                (previousTagLocalIds.size() != updatedTagLocalIds.size());
 
             if (!tagListUpdated) {
-                for (const auto & prevTagLocalUid:
-                     qAsConst(previousTagLocalUids)) {
-                    int index = updatedTagLocalUids.indexOf(prevTagLocalUid);
+                for (const auto & prevTagLocalId:
+                     qAsConst(previousTagLocalIds)) {
+                    const int index =
+                        updatedTagLocalIds.indexOf(prevTagLocalId);
                     if (index < 0) {
                         tagListUpdated = true;
                         break;
@@ -1546,13 +1545,13 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                 QNDEBUG(
                     "local_storage",
                     "Tags list update detected for note "
-                        << note.localUid() << ": previous tag local uids: "
-                        << previousTagLocalUids.join(QStringLiteral(", "))
-                        << "; updated tag local uids: "
-                        << updatedTagLocalUids.join(QStringLiteral(",")));
+                        << note.localId() << ": previous tag local ids: "
+                        << previousTagLocalIds.join(QStringLiteral(", "))
+                        << "; updated tag local ids: "
+                        << updatedTagLocalIds.join(QStringLiteral(",")));
 
                 Q_EMIT noteTagListChanged(
-                    note.localUid(), previousTagLocalUids, updatedTagLocalUids);
+                    note.localId(), previousTagLocalIds, updatedTagLocalIds);
             }
         }
     }
@@ -1572,47 +1571,44 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 }
 
 void LocalStorageManagerAsync::onFindNoteRequest(
-    Note note, LocalStorageManager::GetNoteOptions options, QUuid requestId)
+    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
+    QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
         bool foundNoteInCache = false;
         if (d->m_useCache) {
-            bool noteHasGuid = note.hasGuid();
-            const QString uid = (noteHasGuid ? note.guid() : note.localUid());
+            const QString id = (note.guid() ? *note.guid() : note.localId());
             LocalStorageCacheManager::WhichUid wu =
-                (noteHasGuid ? LocalStorageCacheManager::Guid
+                (note.guid() ? LocalStorageCacheManager::Guid
                              : LocalStorageCacheManager::LocalUid);
 
-            const Note * pNote =
-                d->m_pLocalStorageCacheManager->findNote(uid, wu);
+            const auto * pNote =
+                d->m_pLocalStorageCacheManager->findNote(id, wu);
 
             if (pNote) {
                 note = *pNote;
                 foundNoteInCache = true;
 
-                if (options &
-                    LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                if ((options &
+                     LocalStorageManager::GetNoteOption::WithResourceBinaryData)
+                    && note.resources())
                 {
-                    QList<Resource> resources = note.resources();
-                    for (auto & resource: resources) {
-                        bool resourceHasGuid = resource.hasGuid();
-
-                        const QString resourceUid =
-                            (resourceHasGuid ? resource.guid()
-                                             : resource.localUid());
+                    for (auto & resource: *note.mutableResources()) {
+                        const QString resourceId =
+                            (resource.guid() ? *resource.guid()
+                                             : resource.localId());
 
                         LocalStorageCacheManager::WhichUid rwu =
-                            (resourceHasGuid
+                            (resource.guid()
                                  ? LocalStorageCacheManager::Guid
                                  : LocalStorageCacheManager::LocalUid);
 
-                        const Resource * pResource =
+                        const auto * pResource =
                             d->m_pLocalStorageCacheManager->findResource(
-                                resourceUid, rwu);
+                                resourceId, rwu);
 
                         if (pResource) {
                             resource = *pResource;
@@ -1622,44 +1618,46 @@ void LocalStorageManagerAsync::onFindNoteRequest(
                                 resourceOptions = LocalStorageManager::
                                     GetResourceOption::WithBinaryData;
 
-                            bool res =
-                                d->m_pLocalStorageManager->findEnResource(
+                            if (!d->m_pLocalStorageManager->findEnResource(
                                     resource, resourceOptions,
-                                    errorDescription);
-
-                            if (!res) {
+                                    errorDescription))
+                            {
                                 Q_EMIT findNoteFailed(
                                     note, options, errorDescription, requestId);
                                 return;
                             }
                         }
                     }
-
-                    note.setResources(resources);
                 }
             }
         }
 
-        if (!foundNoteInCache) {
-            bool res = d->m_pLocalStorageManager->findNote(
-                note, options, errorDescription);
-
-            if (!res) {
-                Q_EMIT findNoteFailed(
-                    note, options, errorDescription, requestId);
-                return;
-            }
+        if (!foundNoteInCache &&
+            !d->m_pLocalStorageManager->findNote(
+                note, options, errorDescription))
+        {
+            Q_EMIT findNoteFailed(
+                note, options, errorDescription, requestId);
+            return;
         }
 
         if (!foundNoteInCache && d->m_useCache) {
-            QList<Resource> resources = note.resources();
-            for (auto & resource: resources) {
-                resource.setDataBody(QByteArray());
-                resource.setAlternateDataBody(QByteArray());
+            QList<qevercloud::Resource> resources;
+            if (note.resources()) {
+                resources = *note.resources();
+                for (auto & resource: resources) {
+                    if (resource.data()) {
+                        resource.mutableData()->setBody(std::nullopt);
+                    }
+                    if (resource.alternateData()) {
+                        resource.mutableAlternateData()->setBody(std::nullopt);
+                    }
+                }
             }
 
-            Note noteWithoutResourceBinaryData = note;
+            qevercloud::Note noteWithoutResourceBinaryData = note;
             noteWithoutResourceBinaryData.setResources(resources);
+
             d->m_pLocalStorageCacheManager->cacheNote(
                 noteWithoutResourceBinaryData);
         }
@@ -1668,7 +1666,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(
             !(options &
               LocalStorageManager::GetNoteOption::WithResourceMetadata))
         {
-            note.setResources(QList<Resource>());
+            note.setResources(std::nullopt);
         }
 
         Q_EMIT findNoteComplete(note, options, requestId);
@@ -1689,7 +1687,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
-    Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1698,10 +1696,10 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
 
     try {
         ErrorString errorDescription;
-
-        QList<Note> notes = d->m_pLocalStorageManager->listNotesPerNotebook(
-            notebook, options, errorDescription, flag, limit, offset, order,
-            orderDirection);
+        const QList<qevercloud::Note> notes =
+            d->m_pLocalStorageManager->listNotesPerNotebook(
+                notebook, options, errorDescription, flag, limit, offset, order,
+                orderDirection);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesPerNotebookFailed(
@@ -1734,7 +1732,7 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerTagRequest(
-    Tag tag, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Tag tag, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1743,10 +1741,10 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
 
     try {
         ErrorString errorDescription;
-
-        QList<Note> notes = d->m_pLocalStorageManager->listNotesPerTag(
-            tag, options, errorDescription, flag, limit, offset, order,
-            orderDirection);
+        const QList<qevercloud::Note> notes =
+            d->m_pLocalStorageManager->listNotesPerTag(
+                tag, options, errorDescription, flag, limit, offset, order,
+                orderDirection);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesPerTagFailed(
@@ -1778,7 +1776,7 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
-    QStringList notebookLocalUids, QStringList tagLocalUids,
+    QStringList notebookLocalIds, QStringList tagLocalIds,
     LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
@@ -1788,21 +1786,21 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Note> notes =
+        const QList<qevercloud::Note> notes =
             d->m_pLocalStorageManager->listNotesPerNotebooksAndTags(
-                notebookLocalUids, tagLocalUids, options, errorDescription,
+                notebookLocalIds, tagLocalIds, options, errorDescription,
                 flag, limit, offset, order, orderDirection);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesPerNotebooksAndTagsFailed(
-                notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+                notebookLocalIds, tagLocalIds, options, flag, limit, offset,
                 order, orderDirection, errorDescription, requestId);
             return;
         }
 
         d->cacheNotes(notes, options);
         Q_EMIT listNotesPerNotebooksAndTagsComplete(
-            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            notebookLocalIds, tagLocalIds, options, flag, limit, offset,
             order, orderDirection, notes, requestId);
     }
     catch (const std::exception & e) {
@@ -1817,13 +1815,13 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
         Q_EMIT listNotesPerNotebooksAndTagsFailed(
-            notebookLocalUids, tagLocalUids, options, flag, limit, offset,
+            notebookLocalIds, tagLocalIds, options, flag, limit, offset,
             order, orderDirection, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
-    QStringList noteLocalUids, LocalStorageManager::GetNoteOptions options,
+void LocalStorageManagerAsync::onListNotesByLocalIdsRequest(
+    QStringList noteLocalIds, LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1832,25 +1830,26 @@ void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Note> notes = d->m_pLocalStorageManager->listNotesByLocalUids(
-            noteLocalUids, options, errorDescription, flag, limit, offset,
-            order, orderDirection);
+        const QList<qevercloud::Note> notes =
+            d->m_pLocalStorageManager->listNotesByLocalIds(
+                noteLocalIds, options, errorDescription, flag, limit, offset,
+                order, orderDirection);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listNotesByLocalUidsFailed(
-                noteLocalUids, options, flag, limit, offset, order,
+            Q_EMIT listNotesByLocalIdsFailed(
+                noteLocalIds, options, flag, limit, offset, order,
                 orderDirection, errorDescription, requestId);
             return;
         }
 
         d->cacheNotes(notes, options);
-        Q_EMIT listNotesByLocalUidsComplete(
-            noteLocalUids, options, flag, limit, offset, order, orderDirection,
+        Q_EMIT listNotesByLocalIdsComplete(
+            noteLocalIds, options, flag, limit, offset, order, orderDirection,
             notes, requestId);
     }
     catch (const std::exception & e) {
         ErrorString error(
-            QT_TR_NOOP("Can't list notes by local uids from "
+            QT_TR_NOOP("Can't list notes by local ids from "
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
@@ -1859,8 +1858,8 @@ void LocalStorageManagerAsync::onListNotesByLocalUidsRequest(
         QNERROR(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
-        Q_EMIT listNotesByLocalUidsFailed(
-            noteLocalUids, options, flag, limit, offset, order, orderDirection,
+        Q_EMIT listNotesByLocalIdsFailed(
+            noteLocalIds, options, flag, limit, offset, order, orderDirection,
             error, requestId);
     }
 }
@@ -1876,9 +1875,10 @@ void LocalStorageManagerAsync::onListNotesRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Note> notes = d->m_pLocalStorageManager->listNotes(
-            flag, options, errorDescription, limit, offset, order,
-            orderDirection, linkedNotebookGuid);
+        const QList<qevercloud::Note> notes =
+            d->m_pLocalStorageManager->listNotes(
+                flag, options, errorDescription, limit, offset, order,
+                orderDirection, linkedNotebookGuid);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesFailed(
@@ -1910,29 +1910,29 @@ void LocalStorageManagerAsync::onListNotesRequest(
     }
 }
 
-void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(
+void LocalStorageManagerAsync::onFindNoteLocalIdsWithSearchQuery(
     NoteSearchQuery noteSearchQuery, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-        QStringList noteLocalUids =
-            d->m_pLocalStorageManager->findNoteLocalUidsWithSearchQuery(
+        const QStringList noteLocalIds =
+            d->m_pLocalStorageManager->findNoteLocalIdsWithSearchQuery(
                 noteSearchQuery, errorDescription);
 
-        if (noteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT findNoteLocalUidsWithSearchQueryFailed(
+        if (noteLocalIds.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT findNoteLocalIdsWithSearchQueryFailed(
                 noteSearchQuery, errorDescription, requestId);
             return;
         }
 
-        Q_EMIT findNoteLocalUidsWithSearchQueryComplete(
-            noteLocalUids, noteSearchQuery, requestId);
+        Q_EMIT findNoteLocalIdsWithSearchQueryComplete(
+            noteLocalIds, noteSearchQuery, requestId);
     }
     catch (const std::exception & e) {
         ErrorString error(
-            QT_TR_NOOP("Can't find note local uids with search query "
+            QT_TR_NOOP("Can't find note local ids with search query "
                        "within the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
@@ -1941,23 +1941,20 @@ void LocalStorageManagerAsync::onFindNoteLocalUidsWithSearchQuery(
         QNERROR(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
-        Q_EMIT findNoteLocalUidsWithSearchQueryFailed(
+        Q_EMIT findNoteLocalIdsWithSearchQueryFailed(
             noteSearchQuery, error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeNoteRequest(
+    qevercloud::Note note, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-        QList<Resource> resources = note.resources();
-
-        bool res =
-            d->m_pLocalStorageManager->expungeNote(note, errorDescription);
-
-        if (!res) {
+        const auto resources = note.resources();
+        if (!d->m_pLocalStorageManager->expungeNote(note, errorDescription)) {
             Q_EMIT expungeNoteFailed(note, errorDescription, requestId);
             return;
         }
@@ -1965,8 +1962,10 @@ void LocalStorageManagerAsync::onExpungeNoteRequest(Note note, QUuid requestId)
         if (d->m_useCache) {
             d->m_pLocalStorageCacheManager->expungeNote(note);
 
-            for (const auto & resource: qAsConst(resources)) {
-                d->m_pLocalStorageCacheManager->expungeResource(resource);
+            if (resources) {
+                for (const auto & resource: qAsConst(*resources)) {
+                    d->m_pLocalStorageCacheManager->expungeResource(resource);
+                }
             }
         }
 
@@ -2016,15 +2015,14 @@ void LocalStorageManagerAsync::onGetTagCountRequest(QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onAddTagRequest(
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->addTag(tag, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addTag(tag, errorDescription)) {
             Q_EMIT addTagFailed(tag, errorDescription, requestId);
             return;
         }
@@ -2050,15 +2048,14 @@ void LocalStorageManagerAsync::onAddTagRequest(Tag tag, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onUpdateTagRequest(
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->updateTag(tag, errorDescription);
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateTag(tag, errorDescription)) {
             Q_EMIT updateTagFailed(tag, errorDescription, requestId);
             return;
         }
@@ -2084,7 +2081,8 @@ void LocalStorageManagerAsync::onUpdateTagRequest(Tag tag, QUuid requestId)
     }
 }
 
-void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onFindTagRequest(
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -2093,14 +2091,13 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 
         bool foundTagInCache = false;
         if (d->m_useCache) {
-            bool tagHasGuid = tag.hasGuid();
-            if (tagHasGuid || !tag.localUid().isEmpty()) {
-                const QString uid = (tagHasGuid ? tag.guid() : tag.localUid());
+            if (tag.guid() || !tag.localId().isEmpty()) {
+                const QString uid = (tag.guid() ? *tag.guid() : tag.localId());
                 LocalStorageCacheManager::WhichUid wg =
-                    (tagHasGuid ? LocalStorageCacheManager::Guid
+                    (tag.guid() ? LocalStorageCacheManager::Guid
                                 : LocalStorageCacheManager::LocalUid);
 
-                const Tag * pTag =
+                const auto * pTag =
                     d->m_pLocalStorageCacheManager->findTag(uid, wg);
 
                 if (pTag) {
@@ -2108,9 +2105,9 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
                     foundTagInCache = true;
                 }
             }
-            else if (tag.hasName() && !tag.name().isEmpty()) {
-                const QString tagName = tag.name();
-                const Tag * pTag =
+            else if (tag.name() && !tag.name()->isEmpty()) {
+                const QString tagName = *tag.name();
+                const auto * pTag =
                     d->m_pLocalStorageCacheManager->findTagByName(tagName);
                 if (pTag) {
                     tag = *pTag;
@@ -2119,14 +2116,11 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
             }
         }
 
-        if (!foundTagInCache) {
-            bool res =
-                d->m_pLocalStorageManager->findTag(tag, errorDescription);
-
-            if (!res) {
-                Q_EMIT findTagFailed(tag, errorDescription, requestId);
-                return;
-            }
+        if (!foundTagInCache &&
+            !d->m_pLocalStorageManager->findTag(tag, errorDescription))
+        {
+            Q_EMIT findTagFailed(tag, errorDescription, requestId);
+            return;
         }
 
         Q_EMIT findTagComplete(tag, requestId);
@@ -2147,8 +2141,8 @@ void LocalStorageManagerAsync::onFindTagRequest(Tag tag, QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
-    Note note, LocalStorageManager::ListObjectsOptions flag, size_t limit,
-    size_t offset, LocalStorageManager::ListTagsOrder order,
+    qevercloud::Note note, LocalStorageManager::ListObjectsOptions flag,
+    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2156,8 +2150,10 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
     try {
         ErrorString errorDescription;
 
-        QList<Tag> tags = d->m_pLocalStorageManager->listAllTagsPerNote(
-            note, errorDescription, flag, limit, offset, order, orderDirection);
+        const QList<qevercloud::Tag> tags =
+            d->m_pLocalStorageManager->listAllTagsPerNote(
+                note, errorDescription, flag, limit, offset, order,
+                orderDirection);
 
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllTagsPerNoteFailed(
@@ -2201,9 +2197,10 @@ void LocalStorageManagerAsync::onListAllTagsRequest(
     try {
         ErrorString errorDescription;
 
-        QList<Tag> tags = d->m_pLocalStorageManager->listAllTags(
-            errorDescription, limit, offset, order, orderDirection,
-            linkedNotebookGuid);
+        const QList<qevercloud::Tag> tags =
+            d->m_pLocalStorageManager->listAllTags(
+                errorDescription, limit, offset, order, orderDirection,
+                linkedNotebookGuid);
 
         if (tags.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listAllTagsFailed(
@@ -2249,7 +2246,7 @@ void LocalStorageManagerAsync::onListTagsRequest(
 
     try {
         ErrorString errorDescription;
-        QList<Tag> tags = d->m_pLocalStorageManager->listTags(
+        const QList<qevercloud::Tag> tags = d->m_pLocalStorageManager->listTags(
             flag, errorDescription, limit, offset, order, orderDirection,
             linkedNotebookGuid);
 
@@ -2286,7 +2283,7 @@ void LocalStorageManagerAsync::onListTagsRequest(
     }
 }
 
-void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
+void LocalStorageManagerAsync::onListTagsWithNoteLocalIdsRequest(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
@@ -2296,31 +2293,31 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
 
     try {
         ErrorString errorDescription;
-        QList<std::pair<Tag, QStringList>> tagsWithNoteLocalUids =
-            d->m_pLocalStorageManager->listTagsWithNoteLocalUids(
+        QList<std::pair<qevercloud::Tag, QStringList>> tagsWithNoteLocalIds =
+            d->m_pLocalStorageManager->listTagsWithNoteLocalIds(
                 flag, errorDescription, limit, offset, order, orderDirection,
                 linkedNotebookGuid);
 
-        if (tagsWithNoteLocalUids.isEmpty() && !errorDescription.isEmpty()) {
-            Q_EMIT listTagsWithNoteLocalUidsFailed(
+        if (tagsWithNoteLocalIds.isEmpty() && !errorDescription.isEmpty()) {
+            Q_EMIT listTagsWithNoteLocalIdsFailed(
                 flag, limit, offset, order, orderDirection, linkedNotebookGuid,
                 errorDescription, requestId);
         }
 
         if (d->m_useCache) {
             for (const auto & it:
-                 qevercloud::toRange(qAsConst(tagsWithNoteLocalUids))) {
+                 qevercloud::toRange(qAsConst(tagsWithNoteLocalIds))) {
                 d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }
         }
 
-        Q_EMIT listTagsWithNoteLocalUidsComplete(
+        Q_EMIT listTagsWithNoteLocalIdsComplete(
             flag, limit, offset, order, orderDirection, linkedNotebookGuid,
-            tagsWithNoteLocalUids, requestId);
+            tagsWithNoteLocalIds, requestId);
     }
     catch (const std::exception & e) {
         ErrorString error(
-            QT_TR_NOOP("Can't list tags with note local uids from "
+            QT_TR_NOOP("Can't list tags with note local ids from "
                        "the local storage: caught exception"));
 
         error.details() = QString::fromUtf8(e.what());
@@ -2329,24 +2326,23 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
         QNERROR(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
-        Q_EMIT listTagsWithNoteLocalUidsFailed(
+        Q_EMIT listTagsWithNoteLocalIdsFailed(
             flag, limit, offset, order, orderDirection, linkedNotebookGuid,
             error, requestId);
     }
 }
 
-void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
+void LocalStorageManagerAsync::onExpungeTagRequest(
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        QStringList expungedChildTagLocalUids;
-        bool res = d->m_pLocalStorageManager->expungeTag(
-            tag, expungedChildTagLocalUids, errorDescription);
-
-        if (!res) {
+        QStringList expungedChildTagLocalIds;
+        if (!d->m_pLocalStorageManager->expungeTag(
+                tag, expungedChildTagLocalIds, errorDescription))
+        {
             Q_EMIT expungeTagFailed(tag, errorDescription, requestId);
             return;
         }
@@ -2354,14 +2350,14 @@ void LocalStorageManagerAsync::onExpungeTagRequest(Tag tag, QUuid requestId)
         if (d->m_useCache) {
             d->m_pLocalStorageCacheManager->expungeTag(tag);
 
-            for (const auto & localUid: qAsConst(expungedChildTagLocalUids)) {
-                Tag dummyTag;
-                dummyTag.setLocalUid(localUid);
+            for (const auto & localId: qAsConst(expungedChildTagLocalIds)) {
+                qevercloud::Tag dummyTag;
+                dummyTag.setLocalId(localId);
                 d->m_pLocalStorageCacheManager->expungeTag(dummyTag);
             }
         }
 
-        Q_EMIT expungeTagComplete(tag, expungedChildTagLocalUids, requestId);
+        Q_EMIT expungeTagComplete(tag, expungedChildTagLocalIds, requestId);
     }
     catch (const std::exception & e) {
         ErrorString error(
@@ -2385,11 +2381,9 @@ void LocalStorageManagerAsync::onExpungeNotelessTagsFromLinkedNotebooksRequest(
 
     try {
         ErrorString errorDescription;
-        bool res =
-            d->m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(
-                errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeNotelessTagsFromLinkedNotebooks(
+                errorDescription))
+        {
             Q_EMIT expungeNotelessTagsFromLinkedNotebooksFailed(
                 errorDescription, requestId);
             return;
@@ -2423,7 +2417,7 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
 
     try {
         ErrorString errorDescription;
-        int count =
+        const int count =
             d->m_pLocalStorageManager->enResourceCount(errorDescription);
         if (count < 0) {
             Q_EMIT getResourceCountFailed(errorDescription, requestId);
@@ -2448,17 +2442,15 @@ void LocalStorageManagerAsync::onGetResourceCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onAddResourceRequest(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->addEnResource(
-            resource, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addEnResource(
+                resource, errorDescription))
+        {
             Q_EMIT addResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2485,17 +2477,15 @@ void LocalStorageManagerAsync::onAddResourceRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateResourceRequest(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->updateEnResource(
-            resource, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateEnResource(
+                resource, errorDescription))
+        {
             Q_EMIT updateResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2522,25 +2512,23 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(
 }
 
 void LocalStorageManagerAsync::onFindResourceRequest(
-    Resource resource, LocalStorageManager::GetResourceOptions options,
-    QUuid requestId)
+    qevercloud::Resource resource,
+    LocalStorageManager::GetResourceOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
         bool foundResourceInCache = false;
         if (d->m_useCache) {
-            bool resourceHasGuid = resource.hasGuid();
-            const QString uid =
-                (resourceHasGuid ? resource.guid() : resource.localUid());
+            const QString id =
+                (resource.guid() ? *resource.guid() : resource.localId());
             LocalStorageCacheManager::WhichUid wu =
-                (resourceHasGuid ? LocalStorageCacheManager::Guid
+                (resource.guid() ? LocalStorageCacheManager::Guid
                                  : LocalStorageCacheManager::LocalUid);
 
-            const Resource * pResource =
-                d->m_pLocalStorageCacheManager->findResource(uid, wu);
+            const auto * pResource =
+                d->m_pLocalStorageCacheManager->findResource(id, wu);
             if (pResource) {
                 resource = *pResource;
                 foundResourceInCache = true;
@@ -2566,8 +2554,12 @@ void LocalStorageManagerAsync::onFindResourceRequest(
         }
         else if (!(options &
                    LocalStorageManager::GetResourceOption::WithBinaryData)) {
-            resource.setDataBody(QByteArray());
-            resource.setAlternateDataBody(QByteArray());
+            if (resource.data()) {
+                resource.mutableData()->setBody(std::nullopt);
+            }
+            if (resource.alternateData()) {
+                resource.mutableAlternateData()->setBody(std::nullopt);
+            }
         }
 
         Q_EMIT findResourceComplete(resource, options, requestId);
@@ -2588,17 +2580,15 @@ void LocalStorageManagerAsync::onFindResourceRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeResourceRequest(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->expungeEnResource(
-            resource, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeEnResource(
+                resource, errorDescription))
+        {
             Q_EMIT expungeResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2655,17 +2645,15 @@ void LocalStorageManagerAsync::onGetSavedSearchCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onAddSavedSearchRequest(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res =
-            d->m_pLocalStorageManager->addSavedSearch(search, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->addSavedSearch(
+                search, errorDescription))
+        {
             Q_EMIT addSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
@@ -2692,17 +2680,15 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateSavedSearchRequest(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->updateSavedSearch(
-            search, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->updateSavedSearch(
+                search, errorDescription))
+        {
             Q_EMIT updateSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
@@ -2729,7 +2715,7 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(
 }
 
 void LocalStorageManagerAsync::onFindSavedSearchRequest(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -2738,24 +2724,23 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(
 
         bool foundCachedSavedSearch = false;
         if (d->m_useCache) {
-            bool searchHasGuid = search.hasGuid();
-            if (searchHasGuid || !search.localUid().isEmpty()) {
-                const QString uid =
-                    (searchHasGuid ? search.guid() : search.localUid());
+            if (search.guid() || !search.localId().isEmpty()) {
+                const QString id =
+                    (search.guid() ? *search.guid() : search.localId());
                 const LocalStorageCacheManager::WhichUid wg =
-                    (searchHasGuid ? LocalStorageCacheManager::Guid
+                    (search.guid() ? LocalStorageCacheManager::Guid
                                    : LocalStorageCacheManager::LocalUid);
 
-                const SavedSearch * pSearch =
-                    d->m_pLocalStorageCacheManager->findSavedSearch(uid, wg);
+                const auto * pSearch =
+                    d->m_pLocalStorageCacheManager->findSavedSearch(id, wg);
                 if (pSearch) {
                     search = *pSearch;
                     foundCachedSavedSearch = true;
                 }
             }
-            else if (search.hasName() && !search.name().isEmpty()) {
-                const QString searchName = search.name();
-                const SavedSearch * pSearch =
+            else if (search.name() && !search.name()->isEmpty()) {
+                const QString searchName = *search.name();
+                const auto * pSearch =
                     d->m_pLocalStorageCacheManager->findSavedSearchByName(
                         searchName);
                 if (pSearch) {
@@ -2765,15 +2750,13 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(
             }
         }
 
-        if (!foundCachedSavedSearch) {
-            bool res = d->m_pLocalStorageManager->findSavedSearch(
-                search, errorDescription);
-
-            if (!res) {
-                Q_EMIT findSavedSearchFailed(
-                    search, errorDescription, requestId);
-                return;
-            }
+        if (!foundCachedSavedSearch &&
+            !d->m_pLocalStorageManager->findSavedSearch(
+                search, errorDescription))
+        {
+            Q_EMIT findSavedSearchFailed(
+                search, errorDescription, requestId);
+            return;
         }
 
         Q_EMIT findSavedSearchComplete(search, requestId);
@@ -2802,7 +2785,7 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
 
     try {
         ErrorString errorDescription;
-        QList<SavedSearch> savedSearches =
+        const QList<qevercloud::SavedSearch> savedSearches =
             d->m_pLocalStorageManager->listAllSavedSearches(
                 errorDescription, limit, offset, order, orderDirection);
 
@@ -2847,7 +2830,7 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(
 
     try {
         ErrorString errorDescription;
-        QList<SavedSearch> savedSearches =
+        const QList<qevercloud::SavedSearch> savedSearches =
             d->m_pLocalStorageManager->listSavedSearches(
                 flag, errorDescription, limit, offset, order, orderDirection);
 
@@ -2886,17 +2869,15 @@ void LocalStorageManagerAsync::onListSavedSearchesRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeSavedSearchRequest(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
     try {
         ErrorString errorDescription;
-
-        bool res = d->m_pLocalStorageManager->expungeSavedSearch(
-            search, errorDescription);
-
-        if (!res) {
+        if (!d->m_pLocalStorageManager->expungeSavedSearch(
+                search, errorDescription))
+        {
             Q_EMIT expungeSavedSearchFailed(
                 search, errorDescription, requestId);
             return;
