@@ -30,6 +30,7 @@ class Q_DECL_HIDDEN DecryptedTextManagerPrivate
 {
 public:
     DecryptedTextManagerPrivate() = default;
+    ~DecryptedTextManagerPrivate() noexcept = default;
 
     void addEntry(
         const QString & hash, const QString & decryptedText,

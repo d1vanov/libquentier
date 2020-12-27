@@ -21,10 +21,13 @@
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Resource.h>
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/UidGenerator.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QApplication>
 #include <QBrush>
@@ -94,7 +97,7 @@ ENMLConverterPrivate::~ENMLConverterPrivate()
 }
 
 bool ENMLConverterPrivate::htmlToNoteContent(
-    const QString & html, const QVector<SkipHtmlElementRule> & skipRules,
+    const QString & html, const QList<SkipHtmlElementRule> & skipRules,
     QString & noteContent, DecryptedTextManager & decryptedTextManager,
     ErrorString & errorDescription) const
 {
@@ -254,7 +257,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
 bool ENMLConverterPrivate::htmlToQTextDocument(
     const QString & html, QTextDocument & doc, ErrorString & errorDescription,
-    const QVector<SkipHtmlElementRule> & skipRules) const
+    const QList<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG("enml", "ENMLConverterPrivate::htmlToQTextDocument: " << html);
 
@@ -1462,11 +1465,11 @@ QString ENMLConverterPrivate::decryptedTextHtml(
 }
 
 QString ENMLConverterPrivate::resourceHtml(
-    const Resource & resource, ErrorString & errorDescription)
+    const qevercloud::Resource & resource, ErrorString & errorDescription)
 {
     QNDEBUG("enml", "ENMLConverterPrivate::resourceHtml");
 
-    if (Q_UNLIKELY(!resource.hasDataHash())) {
+    if (Q_UNLIKELY(!resource.data() || !resource.data()->bodyHash())) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no data hash is set"));
@@ -1474,7 +1477,7 @@ QString ENMLConverterPrivate::resourceHtml(
         return QString();
     }
 
-    if (Q_UNLIKELY(!resource.hasMime())) {
+    if (Q_UNLIKELY(!resource.mime())) {
         errorDescription.setBase(
             QT_TR_NOOP("Can't compose the resource's html "
                        "representation: no mime type is set"));
@@ -1486,9 +1489,9 @@ QString ENMLConverterPrivate::resourceHtml(
 
     attributes.append(
         QStringLiteral("hash"),
-        QString::fromLocal8Bit(resource.dataHash().toHex()));
+        QString::fromLocal8Bit(resource.data()->bodyHash()->toHex()));
 
-    attributes.append(QStringLiteral("type"), resource.mime());
+    attributes.append(QStringLiteral("type"), *resource.mime());
 
     QBuffer htmlBuffer;
     bool res = htmlBuffer.open(QIODevice::WriteOnly);
@@ -1529,7 +1532,7 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
 }
 
 bool ENMLConverterPrivate::exportNotesToEnex(
-    const QVector<Note> & notes,
+    const QList<qevercloud::Note> & notes,
     const QHash<QString, QString> & tagNamesByTagLocalUids,
     const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
     ErrorString & errorDescription, const QString & version) const
@@ -1554,8 +1557,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
     bool foundNoteEligibleForExport = false;
     for (const auto & note: qAsConst(notes)) {
-        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() &&
-            !note.hasTagLocalUids())
+        if (!note.title() && !note.content() && !note.resources() &&
+            (note.localData().constFind(QStringLiteral("tagLocalIds")) ==
+             note.localData().constEnd()))
         {
             continue;
         }
@@ -1617,9 +1621,10 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     writer.writeAttributes(enExportAttributes);
 
     for (const auto & note: qAsConst(notes)) {
-        if (!note.hasTitle() && !note.hasContent() && !note.hasResources() &&
+        if (!note.title() && !note.content() && !note.resources() &&
             ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) ||
-             !note.hasTagLocalUids()))
+            (note.localData().constFind(QStringLiteral("tagLocalIds")) ==
+             note.localData().constEnd())))
         {
             QNINFO(
                 "enml",
@@ -1633,39 +1638,44 @@ bool ENMLConverterPrivate::exportNotesToEnex(
         // NOTE: per DTD, title and content tags have to exist while created
         // and updated don't have to
         writer.writeStartElement(QStringLiteral("title"));
-        if (note.hasTitle()) {
-            writer.writeCharacters(note.title());
+        if (note.title()) {
+            writer.writeCharacters(*note.title());
         }
         writer.writeEndElement(); // title
 
         writer.writeStartElement(QStringLiteral("content"));
-        if (note.hasContent()) {
-            writer.writeCDATA(note.content());
+        if (note.content()) {
+            writer.writeCDATA(*note.content());
         }
         writer.writeEndElement(); // content
 
-        if (note.hasCreationTimestamp()) {
+        if (note.created()) {
             writer.writeStartElement(QStringLiteral("created"));
             writer.writeCharacters(printableDateTimeFromTimestamp(
-                note.creationTimestamp(), dateTimePrintOptions,
+                *note.created(), dateTimePrintOptions,
                 ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement(); // created
         }
 
-        if (note.hasModificationTimestamp()) {
+        if (note.updated()) {
             writer.writeStartElement(QStringLiteral("updated"));
             writer.writeCharacters(printableDateTimeFromTimestamp(
-                note.modificationTimestamp(), dateTimePrintOptions,
+                *note.updated(), dateTimePrintOptions,
                 ENEX_DATE_TIME_FORMAT_STRFTIME));
             writer.writeEndElement(); // updated
         }
 
-        if ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) &&
-            note.hasTagLocalUids())
+        if (exportTagsOption == ENMLConverter::EnexExportTags::Yes)
         {
-            const QStringList & tagLocalUids = note.tagLocalUids();
-            for (auto tagIt = tagLocalUids.constBegin(),
-                      tagEnd = tagLocalUids.constEnd();
+            QStringList tagLocalIds;
+            const auto tagLocalIdsIt =
+                note.localData().constFind(QStringLiteral("tagLocalIds"));
+            if (tagLocalIdsIt != note.localData().constEnd()) {
+                tagLocalIds = tagLocalIdsIt.value().toStringList();
+            }
+
+            for (auto tagIt = tagLocalIds.constBegin(),
+                      tagEnd = tagLocalIds.constEnd();
                  tagIt != tagEnd; ++tagIt)
             {
                 auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
@@ -1695,127 +1705,127 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             }
         }
 
-        if (note.hasNoteAttributes()) {
-            const auto & noteAttributes = note.noteAttributes();
+        if (note.attributes()) {
+            const auto & noteAttributes = *note.attributes();
 
-            if (noteAttributes.latitude.isSet() ||
-                noteAttributes.longitude.isSet() ||
-                noteAttributes.altitude.isSet() ||
-                noteAttributes.author.isSet() ||
-                noteAttributes.source.isSet() ||
-                noteAttributes.sourceURL.isSet() ||
-                noteAttributes.sourceApplication.isSet() ||
-                noteAttributes.reminderOrder.isSet() ||
-                noteAttributes.reminderTime.isSet() ||
-                noteAttributes.reminderDoneTime.isSet() ||
-                noteAttributes.placeName.isSet() ||
-                noteAttributes.contentClass.isSet() ||
-                noteAttributes.subjectDate.isSet() ||
-                noteAttributes.applicationData.isSet())
+            if (noteAttributes.latitude() ||
+                noteAttributes.longitude() ||
+                noteAttributes.altitude() ||
+                noteAttributes.author() ||
+                noteAttributes.source() ||
+                noteAttributes.sourceURL() ||
+                noteAttributes.sourceApplication() ||
+                noteAttributes.reminderOrder() ||
+                noteAttributes.reminderTime() ||
+                noteAttributes.reminderDoneTime() ||
+                noteAttributes.placeName() ||
+                noteAttributes.contentClass() ||
+                noteAttributes.subjectDate() ||
+                noteAttributes.applicationData())
             {
                 writer.writeStartElement(QStringLiteral("note-attributes"));
 
-                if (noteAttributes.subjectDate.isSet()) {
+                if (noteAttributes.subjectDate()) {
                     writer.writeStartElement(QStringLiteral("subject-date"));
                     writer.writeCharacters(printableDateTimeFromTimestamp(
-                        noteAttributes.subjectDate.ref(), dateTimePrintOptions,
+                        *noteAttributes.subjectDate(), dateTimePrintOptions,
                         ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.latitude.isSet()) {
+                if (noteAttributes.latitude()) {
                     writer.writeStartElement(QStringLiteral("latitude"));
                     writer.writeCharacters(
-                        QString::number(noteAttributes.latitude.ref()));
+                        QString::number(*noteAttributes.latitude()));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.longitude.isSet()) {
+                if (noteAttributes.longitude()) {
                     writer.writeStartElement(QStringLiteral("longitude"));
                     writer.writeCharacters(
-                        QString::number(noteAttributes.longitude.ref()));
+                        QString::number(*noteAttributes.longitude()));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.altitude.isSet()) {
+                if (noteAttributes.altitude()) {
                     writer.writeStartElement(QStringLiteral("altitude"));
                     writer.writeCharacters(
-                        QString::number(noteAttributes.altitude.ref()));
+                        QString::number(*noteAttributes.altitude()));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.author.isSet()) {
+                if (noteAttributes.author()) {
                     writer.writeStartElement(QStringLiteral("author"));
-                    writer.writeCharacters(noteAttributes.author.ref());
+                    writer.writeCharacters(*noteAttributes.author());
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.source.isSet()) {
+                if (noteAttributes.source()) {
                     writer.writeStartElement(QStringLiteral("source"));
-                    writer.writeCharacters(noteAttributes.source.ref());
+                    writer.writeCharacters(*noteAttributes.source());
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.sourceURL.isSet()) {
+                if (noteAttributes.sourceURL()) {
                     writer.writeStartElement(QStringLiteral("source-url"));
-                    writer.writeCharacters(noteAttributes.sourceURL.ref());
+                    writer.writeCharacters(*noteAttributes.sourceURL());
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.sourceApplication.isSet()) {
+                if (noteAttributes.sourceApplication()) {
                     writer.writeStartElement(
                         QStringLiteral("source-application"));
 
                     writer.writeCharacters(
-                        noteAttributes.sourceApplication.ref());
+                        *noteAttributes.sourceApplication());
 
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderOrder.isSet()) {
+                if (noteAttributes.reminderOrder()) {
                     writer.writeStartElement(QStringLiteral("reminder-order"));
 
                     writer.writeCharacters(
-                        QString::number(noteAttributes.reminderOrder.ref()));
+                        QString::number(*noteAttributes.reminderOrder()));
 
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderTime.isSet()) {
+                if (noteAttributes.reminderTime()) {
                     writer.writeStartElement(QStringLiteral("reminder-time"));
                     writer.writeCharacters(printableDateTimeFromTimestamp(
-                        noteAttributes.reminderTime.ref(), dateTimePrintOptions,
+                        *noteAttributes.reminderTime(), dateTimePrintOptions,
                         ENEX_DATE_TIME_FORMAT_STRFTIME));
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.reminderDoneTime.isSet()) {
+                if (noteAttributes.reminderDoneTime()) {
                     writer.writeStartElement(
                         QStringLiteral("reminder-done-time"));
 
                     writer.writeCharacters(printableDateTimeFromTimestamp(
-                        noteAttributes.reminderDoneTime.ref(),
+                        *noteAttributes.reminderDoneTime(),
                         dateTimePrintOptions, ENEX_DATE_TIME_FORMAT_STRFTIME));
 
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.placeName.isSet()) {
+                if (noteAttributes.placeName()) {
                     writer.writeStartElement(QStringLiteral("place-name"));
-                    writer.writeCharacters(noteAttributes.placeName.ref());
+                    writer.writeCharacters(*noteAttributes.placeName());
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.contentClass.isSet()) {
+                if (noteAttributes.contentClass()) {
                     writer.writeStartElement(QStringLiteral("content-class"));
-                    writer.writeCharacters(noteAttributes.contentClass.ref());
+                    writer.writeCharacters(*noteAttributes.contentClass());
                     writer.writeEndElement();
                 }
 
-                if (noteAttributes.applicationData.isSet()) {
-                    const auto & appData = noteAttributes.applicationData.ref();
-                    if (appData.fullMap.isSet()) {
-                        const auto & fullMap = appData.fullMap.ref();
+                if (noteAttributes.applicationData()) {
+                    const auto & appData = *noteAttributes.applicationData();
+                    if (appData.fullMap()) {
+                        const auto & fullMap = *appData.fullMap();
 
                         for (const auto & mapIt: qevercloud::toRange(fullMap)) {
                             writer.writeStartElement(
@@ -1832,11 +1842,11 @@ bool ENMLConverterPrivate::exportNotesToEnex(
             }
         }
 
-        if (note.hasResources()) {
-            auto resources = note.resources();
+        if (note.resources()) {
+            auto resources = *note.resources();
 
             for (const auto & resource: qAsConst(resources)) {
-                if (!resource.hasDataBody()) {
+                if (!resource.data() || !resource.data()->body()) {
                     QNINFO(
                         "enml",
                         "Skipping ENEX export of a resource "
@@ -1844,7 +1854,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     continue;
                 }
 
-                if (!resource.hasMime()) {
+                if (!resource.mime()) {
                     QNINFO(
                         "enml",
                         "Skipping ENEX export of a resource "
@@ -1854,7 +1864,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
                 writer.writeStartElement(QStringLiteral("resource"));
 
-                const QByteArray & resourceData = resource.dataBody();
+                const QByteArray & resourceData = *resource.data()->body();
                 if (resourceData.size() > ENEX_MAX_RESOURCE_DATA_SIZE) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't export note(s) to ENEX: found "
@@ -1876,31 +1886,28 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                 writer.writeEndElement(); // data
 
                 writer.writeStartElement(QStringLiteral("mime"));
-                writer.writeCharacters(resource.mime());
+                writer.writeCharacters(*resource.mime());
                 writer.writeEndElement(); // mime
 
-                if (resource.hasWidth()) {
+                if (resource.width()) {
                     writer.writeStartElement(QStringLiteral("width"));
-                    writer.writeCharacters(QString::number(resource.width()));
+                    writer.writeCharacters(QString::number(*resource.width()));
                     writer.writeEndElement(); // width
                 }
 
-                if (resource.hasHeight()) {
+                if (resource.height()) {
                     writer.writeStartElement(QStringLiteral("height"));
-                    writer.writeCharacters(QString::number(resource.height()));
+                    writer.writeCharacters(QString::number(*resource.height()));
                     writer.writeEndElement();
                 }
 
-                if (resource.hasRecognitionDataBody()) {
+                if (resource.recognition() && resource.recognition()->body()) {
                     const auto & recognitionData =
-                        resource.recognitionDataBody();
-
+                        *resource.recognition()->body();
                     ErrorString error;
-
-                    bool res = validateRecoIndex(
-                        QString::fromUtf8(recognitionData), error);
-
-                    if (Q_UNLIKELY(!res)) {
+                    if (Q_UNLIKELY(!validateRecoIndex(
+                            QString::fromUtf8(recognitionData), error)))
+                    {
                         errorDescription.setBase(
                             QT_TR_NOOP("Can't export note(s) to ENEX: found "
                                        "invalid resource recognition index at "
@@ -1917,125 +1924,123 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     writer.writeEndElement(); // recognition
                 }
 
-                if (resource.hasResourceAttributes()) {
-                    const auto & resourceAttributes =
-                        resource.resourceAttributes();
-
-                    if (resourceAttributes.sourceURL.isSet() ||
-                        resourceAttributes.timestamp.isSet() ||
-                        resourceAttributes.latitude.isSet() ||
-                        resourceAttributes.longitude.isSet() ||
-                        resourceAttributes.altitude.isSet() ||
-                        resourceAttributes.cameraMake.isSet() ||
-                        resourceAttributes.recoType.isSet() ||
-                        resourceAttributes.fileName.isSet() ||
-                        resourceAttributes.attachment.isSet() ||
-                        resourceAttributes.applicationData.isSet())
+                if (resource.attributes()) {
+                    const auto & resourceAttributes = *resource.attributes();
+                    if (resourceAttributes.sourceURL() ||
+                        resourceAttributes.timestamp() ||
+                        resourceAttributes.latitude() ||
+                        resourceAttributes.longitude() ||
+                        resourceAttributes.altitude() ||
+                        resourceAttributes.cameraMake() ||
+                        resourceAttributes.recoType() ||
+                        resourceAttributes.fileName() ||
+                        resourceAttributes.attachment() ||
+                        resourceAttributes.applicationData())
                     {
                         writer.writeStartElement(
                             QStringLiteral("resource-attributes"));
 
-                        if (resourceAttributes.sourceURL.isSet()) {
+                        if (resourceAttributes.sourceURL()) {
                             writer.writeStartElement(
                                 QStringLiteral("source-url"));
 
                             writer.writeCharacters(
-                                resourceAttributes.sourceURL.ref());
+                                *resourceAttributes.sourceURL());
 
                             writer.writeEndElement(); // source-url
                         }
 
-                        if (resourceAttributes.timestamp.isSet()) {
+                        if (resourceAttributes.timestamp()) {
                             writer.writeStartElement(
                                 QStringLiteral("timestamp"));
 
                             writer.writeCharacters(
                                 printableDateTimeFromTimestamp(
-                                    resourceAttributes.timestamp.ref(),
+                                    *resourceAttributes.timestamp(),
                                     dateTimePrintOptions,
                                     ENEX_DATE_TIME_FORMAT_STRFTIME));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.latitude.isSet()) {
+                        if (resourceAttributes.latitude()) {
                             writer.writeStartElement(
                                 QStringLiteral("latitude"));
 
                             writer.writeCharacters(QString::number(
-                                resourceAttributes.latitude.ref()));
+                                *resourceAttributes.latitude()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.longitude.isSet()) {
+                        if (resourceAttributes.longitude()) {
                             writer.writeStartElement(
                                 QStringLiteral("longitude"));
 
                             writer.writeCharacters(QString::number(
-                                resourceAttributes.longitude.ref()));
+                                *resourceAttributes.longitude()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.altitude.isSet()) {
+                        if (resourceAttributes.altitude()) {
                             writer.writeStartElement(
                                 QStringLiteral("altitude"));
 
                             writer.writeCharacters(QString::number(
-                                resourceAttributes.altitude.ref()));
+                                *resourceAttributes.altitude()));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.cameraMake.isSet()) {
+                        if (resourceAttributes.cameraMake()) {
                             writer.writeStartElement(
                                 QStringLiteral("camera-make"));
 
                             writer.writeCharacters(
-                                resourceAttributes.cameraMake.ref());
+                                *resourceAttributes.cameraMake());
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.recoType.isSet()) {
+                        if (resourceAttributes.recoType()) {
                             writer.writeStartElement(
                                 QStringLiteral("reco-type"));
 
                             writer.writeCharacters(
-                                resourceAttributes.recoType.ref());
+                                *resourceAttributes.recoType());
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.fileName.isSet()) {
+                        if (resourceAttributes.fileName()) {
                             writer.writeStartElement(
                                 QStringLiteral("file-name"));
 
                             writer.writeCharacters(
-                                resourceAttributes.fileName.ref());
+                                *resourceAttributes.fileName());
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.attachment.isSet()) {
+                        if (resourceAttributes.attachment()) {
                             writer.writeStartElement(
                                 QStringLiteral("attachment"));
 
                             writer.writeCharacters(
-                                resourceAttributes.attachment.ref()
+                                *resourceAttributes.attachment()
                                     ? QStringLiteral("true")
                                     : QStringLiteral("false"));
 
                             writer.writeEndElement();
                         }
 
-                        if (resourceAttributes.applicationData.isSet()) {
+                        if (resourceAttributes.applicationData()) {
                             const auto & appData =
-                                resourceAttributes.applicationData.ref();
+                                *resourceAttributes.applicationData();
 
-                            if (appData.fullMap.isSet()) {
-                                const auto & fullMap = appData.fullMap.ref();
+                            if (appData.fullMap()) {
+                                const auto & fullMap = *appData.fullMap();
 
                                 for (const auto & mapIt:
                                      qevercloud::toRange(fullMap)) {
@@ -2055,8 +2060,12 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     }
                 }
 
-                if (resource.hasAlternateDataBody()) {
-                    const auto & resourceAltData = resource.alternateDataBody();
+                if (resource.alternateData() &&
+                    resource.alternateData()->body())
+                {
+                    const auto & resourceAltData =
+                        *resource.alternateData()->body();
+
                     writer.writeStartElement(QStringLiteral("alternate-data"));
 
                     writer.writeAttribute(
@@ -2095,8 +2104,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 }
 
 bool ENMLConverterPrivate::importEnex(
-    const QString & enex, QVector<Note> & notes,
-    QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+    const QString & enex, QList<qevercloud::Note> & notes,
+    QHash<QString, QStringList> & tagNamesByNoteLocalId,
     ErrorString & errorDescription) const
 {
     QNDEBUG("enml", "ENMLConverterPrivate::importEnex");
@@ -2108,8 +2117,8 @@ bool ENMLConverterPrivate::importEnex(
         return false;
     }
 
-    notes.resize(0);
-    tagNamesByNoteLocalUid.clear();
+    notes.clear();
+    tagNamesByNoteLocalId.clear();
 
     const QString dateTimeFormat = QStringLiteral(ENEX_DATE_TIME_FORMAT);
 
@@ -2122,10 +2131,10 @@ bool ENMLConverterPrivate::importEnex(
     bool insideResourceAlternateData = false;
     bool insideResourceAttributes = false;
 
-    Note currentNote;
+    qevercloud::Note currentNote;
     QString currentNoteContent;
 
-    Resource currentResource;
+    qevercloud::Resource currentResource;
     QByteArray currentResourceData;
     QByteArray currentResourceRecognitionData;
     QByteArray currentResourceAlternateData;
@@ -2167,8 +2176,8 @@ bool ENMLConverterPrivate::importEnex(
 
             if (elementName == QStringLiteral("note")) {
                 QNTRACE("enml", "Starting a new note");
-                currentNote.clear();
-                currentNote.setLocalUid(UidGenerator::Generate());
+                currentNote = qevercloud::Note{};
+                currentNote.setLocalId(UidGenerator::Generate());
                 insideNote = true;
                 continue;
             }
@@ -2226,7 +2235,7 @@ bool ENMLConverterPrivate::importEnex(
                     }
 
                     qint64 timestamp = timestampFromDateTime(creationDateTime);
-                    currentNote.setCreationTimestamp(timestamp);
+                    currentNote.setCreated(timestamp);
                     QNTRACE("enml", "Set creation timestamp to " << timestamp);
 
                     continue;
@@ -2263,7 +2272,7 @@ bool ENMLConverterPrivate::importEnex(
                     qint64 timestamp =
                         timestampFromDateTime(modificationDateTime);
 
-                    currentNote.setModificationTimestamp(timestamp);
+                    currentNote.setUpdated(timestamp);
                     QNTRACE(
                         "enml", "Set modification timestamp to " << timestamp);
 
@@ -2280,18 +2289,18 @@ bool ENMLConverterPrivate::importEnex(
                 if (insideNote) {
                     QString tagName = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
-                    QString noteLocalUid = currentNote.localUid();
+                    QString noteLocalId = currentNote.localId();
 
                     QStringList & tagNames =
-                        tagNamesByNoteLocalUid[noteLocalUid];
+                        tagNamesByNoteLocalId[noteLocalId];
 
                     if (!tagNames.contains(tagName)) {
                         tagNames << tagName;
                         QNTRACE(
                             "enml",
                             "Added tag name " << tagName
-                                              << " for note local uid "
-                                              << noteLocalUid);
+                                              << " for note local id "
+                                              << noteLocalId);
                     }
 
                     continue;
@@ -2332,16 +2341,25 @@ bool ENMLConverterPrivate::importEnex(
                     }
 
                     if (insideNoteAttributes) {
-                        auto & noteAttributes = currentNote.noteAttributes();
-                        noteAttributes.latitude = latitudeNum;
+                        if (!currentNote.attributes()) {
+                            currentNote.setAttributes(
+                                qevercloud::NoteAttributes{});
+                        }
+                        auto & noteAttributes =
+                            *currentNote.mutableAttributes();
+                        noteAttributes.setLatitude(latitudeNum);
                         QNTRACE("enml", "Set note latitude to " << latitudeNum);
                         continue;
                     }
                     else if (insideResourceAttributes) {
+                        if (!currentResource.attributes()) {
+                            currentResource.setAttributes(
+                                qevercloud::ResourceAttributes{});
+                        }
                         auto & resourceAttributes =
-                            currentResource.resourceAttributes();
+                            *currentResource.mutableAttributes();
 
-                        resourceAttributes.latitude = latitudeNum;
+                        resourceAttributes.setLatitude(latitudeNum);
                         QNTRACE(
                             "enml", "Set resource latitude to " << latitudeNum);
                         continue;
@@ -3925,7 +3943,7 @@ qint64 ENMLConverterPrivate::timestampFromDateTime(
 
 SkipElementOption ENMLConverterPrivate::skipElementOption(
     const QString & elementName, const QXmlStreamAttributes & attributes,
-    const QVector<SkipHtmlElementRule> & skipRules) const
+    const QList<SkipHtmlElementRule> & skipRules) const
 {
     QNDEBUG(
         "enml",
@@ -4103,7 +4121,7 @@ SkipElementOption ENMLConverterPrivate::skipElementOption(
 
 ENMLConverterPrivate::ProcessElementStatus
 ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
-    const QVector<SkipHtmlElementRule> & skipRules, ConversionState & state,
+    const QList<SkipHtmlElementRule> & skipRules, ConversionState & state,
     DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
     QXmlStreamWriter & writer, ErrorString & errorDescription) const
 {
@@ -4390,7 +4408,7 @@ QTextStream & operator<<(
 
 QTextStream & operator<<(
     QTextStream & strm,
-    const QVector<quentier::ENMLConverter::SkipHtmlElementRule> & rules)
+    const QList<quentier::ENMLConverter::SkipHtmlElementRule> & rules)
 {
     strm << "SkipHtmlElementRules";
 

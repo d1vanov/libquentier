@@ -20,20 +20,26 @@
 #define LIB_QUENTIER_ENML_ENML_CONVERTER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
 #include <QHash>
+#include <QList>
 #include <QSet>
 #include <QString>
 #include <QTextDocument>
 
+namespace qevercloud {
+
+class Note;
+class Resource;
+
+} // namespace qevercloud
+
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-QT_FORWARD_DECLARE_CLASS(ENMLConverterPrivate)
-QT_FORWARD_DECLARE_CLASS(Resource)
+class DecryptedTextManager;
+class ENMLConverterPrivate;
 
 /**
  * @brief The ENMLConverter class encapsulates a set of methods
@@ -44,8 +50,7 @@ class QUENTIER_EXPORT ENMLConverter
 {
 public:
     ENMLConverter();
-
-    virtual ~ENMLConverter();
+    ~ENMLConverter() noexcept;
 
     /**
      * @brief The SkipHtmlElementRule class describes the set of rules
@@ -71,7 +76,7 @@ public:
         friend QUENTIER_EXPORT QTextStream & operator<<(
             QTextStream & strm, const ComparisonRule rule);
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
 
         QString m_elementNameToSkip;
         ComparisonRule m_elementNameComparisonRule = ComparisonRule::Equals;
@@ -92,7 +97,7 @@ public:
         const QString & html, QString & noteContent,
         DecryptedTextManager & decryptedTextManager,
         ErrorString & errorDescription,
-        const QVector<SkipHtmlElementRule> & skipRules = {}) const;
+        const QList<SkipHtmlElementRule> & skipRules = {}) const;
 
     /**
      * @brief cleanupExternalHtml method cleans up a piece of HTML coming from
@@ -127,7 +132,7 @@ public:
     bool htmlToQTextDocument(
         const QString & html, QTextDocument & doc,
         ErrorString & errorDescription,
-        const QVector<SkipHtmlElementRule> & skipRules = {}) const;
+        const QList<SkipHtmlElementRule> & skipRules = {}) const;
 
     struct NoteContentToHtmlExtraData
     {
@@ -172,7 +177,7 @@ public:
         const quint64 enDecryptedIndex);
 
     static QString resourceHtml(
-        const Resource & resource, ErrorString & errorDescription);
+        const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify = true);
 
@@ -215,7 +220,7 @@ public:
      * successfully, false otherwise
      */
     bool exportNotesToEnex(
-        const QVector<Note> & notes,
+        const QList<qevercloud::Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalUids,
         const EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version = {}) const;
@@ -239,7 +244,7 @@ public:
      * converted into a set of notes and tag names successfully, false otherwise
      */
     bool importEnex(
-        const QString & enex, QVector<Note> & notes,
+        const QString & enex, QList<qevercloud::Note> & notes,
         QHash<QString, QStringList> & tagNamesByNoteLocalUid,
         ErrorString & errorDescription) const;
 

@@ -26,7 +26,7 @@ DecryptedTextManager::DecryptedTextManager() :
     d_ptr(new DecryptedTextManagerPrivate)
 {}
 
-DecryptedTextManager::~DecryptedTextManager()
+DecryptedTextManager::~DecryptedTextManager() noexcept
 {
     delete d_ptr;
 }

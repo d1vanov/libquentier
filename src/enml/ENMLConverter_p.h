@@ -21,21 +21,19 @@
 
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
 
 #include <QFlag>
 #include <QStringList>
 #include <QXmlStreamAttributes>
 #include <QtGlobal>
 
-QT_FORWARD_DECLARE_CLASS(QXmlStreamReader)
-QT_FORWARD_DECLARE_CLASS(QXmlStreamWriter)
+class QXmlStreamReader;
+class QXmlStreamWriter;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-QT_FORWARD_DECLARE_CLASS(HTMLCleaner)
-QT_FORWARD_DECLARE_CLASS(Resource)
+class DecryptedTextManager;
+class HTMLCleaner;
 
 enum class SkipElementOption
 {
@@ -62,7 +60,7 @@ public:
     using SkipHtmlElementRule = ENMLConverter::SkipHtmlElementRule;
 
     bool htmlToNoteContent(
-        const QString & html, const QVector<SkipHtmlElementRule> & skipRules,
+        const QString & html, const QList<SkipHtmlElementRule> & skipRules,
         QString & noteContent, DecryptedTextManager & decryptedTextManager,
         ErrorString & errorDescription) const;
 
@@ -79,7 +77,7 @@ public:
     bool htmlToQTextDocument(
         const QString & html, QTextDocument & doc,
         ErrorString & errorDescription,
-        const QVector<SkipHtmlElementRule> & skipRules) const;
+        const QList<SkipHtmlElementRule> & skipRules) const;
 
     bool validateEnml(
         const QString & enml, ErrorString & errorDescription) const;
@@ -110,19 +108,19 @@ public:
         const quint64 enDecryptedIndex);
 
     static QString resourceHtml(
-        const Resource & resource, ErrorString & errorDescription);
+        const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify);
 
     bool exportNotesToEnex(
-        const QVector<Note> & notes,
+        const QList<qevercloud::Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalUids,
         const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version) const;
 
     bool importEnex(
-        const QString & enex, QVector<Note> & notes,
-        QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+        const QString & enex, QList<qevercloud::Note> & notes,
+        QHash<QString, QStringList> & tagNamesByNoteLocalId,
         ErrorString & errorDescription) const;
 
 private:
@@ -172,7 +170,7 @@ private:
 
     SkipElementOption skipElementOption(
         const QString & elementName, const QXmlStreamAttributes & attributes,
-        const QVector<SkipHtmlElementRule> & skipRules) const;
+        const QList<SkipHtmlElementRule> & skipRules) const;
 
     struct ConversionState
     {
@@ -197,7 +195,7 @@ private:
     };
 
     ProcessElementStatus processElementForHtmlToNoteContentConversion(
-        const QVector<SkipHtmlElementRule> & skipRules, ConversionState & state,
+        const QList<SkipHtmlElementRule> & skipRules, ConversionState & state,
         DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
         QXmlStreamWriter & writer, ErrorString & errorDescription) const;
 

@@ -31,7 +31,7 @@ class QUENTIER_EXPORT DecryptedTextManager
 {
 public:
     DecryptedTextManager();
-    virtual ~DecryptedTextManager();
+    ~DecryptedTextManager() noexcept;
 
     void addEntry(
         const QString & hash, const QString & decryptedText,
