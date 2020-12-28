@@ -42,11 +42,11 @@ public:
 
     void clearNonRememberedForSessionEntries();
 
-    bool findDecryptedTextByEncryptedText(
+    [[nodiscard]] bool findDecryptedTextByEncryptedText(
         const QString & encryptedText, QString & decryptedText,
         bool & rememberForSession) const;
 
-    bool modifyDecryptedText(
+    [[nodiscard]] bool modifyDecryptedText(
         const QString & originalEncryptedText, const QString & newDecryptedText,
         QString & newEncryptedText);
 

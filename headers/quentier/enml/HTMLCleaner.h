@@ -29,15 +29,15 @@ class QUENTIER_EXPORT HTMLCleaner
 {
 public:
     HTMLCleaner();
-    virtual ~HTMLCleaner();
+    ~HTMLCleaner() noexcept;
 
-    bool htmlToXml(
+    [[nodiscard]] bool htmlToXml(
         const QString & html, QString & output, QString & errorDescription);
 
-    bool htmlToXhtml(
+    [[nodiscard]] bool htmlToXhtml(
         const QString & html, QString & output, QString & errorDescription);
 
-    bool cleanupHtml(QString & html, QString & errorDescription);
+    [[nodiscard]] bool cleanupHtml(QString & html, QString & errorDescription);
 
 private:
     Q_DISABLE_COPY(HTMLCleaner)

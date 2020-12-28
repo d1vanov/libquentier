@@ -101,7 +101,7 @@ template <class T>
 #define QUENTIER_DECLARE_PRINTABLE(type, ...)                                  \
     QUENTIER_EXPORT QTextStream & operator<<(                                  \
         QTextStream & strm, const type & obj);                                 \
-    [[nodiscard]] inline QDebug & operator<<(QDebug & debug, const type & obj) \
+    inline QDebug & operator<<(QDebug & debug, const type & obj)               \
     {                                                                          \
         debug << ToString<type, ##__VA_ARGS__>(obj);                           \
         return debug;                                                          \

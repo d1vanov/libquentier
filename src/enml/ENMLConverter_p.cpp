@@ -1019,10 +1019,13 @@ bool ENMLConverterPrivate::noteContentToHtml(
                 quint64 enDecryptedIndex = extraData.m_numEnDecryptedNodes + 1;
                 bool convertedToEnCryptNode = false;
 
-                encryptedTextToHtml(
+                if (!encryptedTextToHtml(
                     lastElementAttributes, reader.text(), enCryptIndex,
                     enDecryptedIndex, writer, decryptedTextManager,
-                    convertedToEnCryptNode);
+                    convertedToEnCryptNode))
+                {
+                    return false;
+                }
 
                 if (convertedToEnCryptNode) {
                     ++extraData.m_numEnCryptNodes;
@@ -2177,7 +2180,6 @@ bool ENMLConverterPrivate::importEnex(
             if (elementName == QStringLiteral("note")) {
                 QNTRACE("enml", "Starting a new note");
                 currentNote = qevercloud::Note{};
-                currentNote.setLocalId(UidGenerator::Generate());
                 insideNote = true;
                 continue;
             }
@@ -2327,11 +2329,12 @@ bool ENMLConverterPrivate::importEnex(
 
             if (elementName == QStringLiteral("latitude")) {
                 if (insideNote) {
-                    QString latitude = reader.readElementText(
+                    const QString latitude = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
 
                     bool conversionResult = false;
-                    double latitudeNum = latitude.toDouble(&conversionResult);
+                    const double latitudeNum =
+                        latitude.toDouble(&conversionResult);
                     if (Q_UNLIKELY(!conversionResult)) {
                         errorDescription.setBase(
                             QT_TR_NOOP("Failed to parse latitude"));
@@ -2358,7 +2361,6 @@ bool ENMLConverterPrivate::importEnex(
                         }
                         auto & resourceAttributes =
                             *currentResource.mutableAttributes();
-
                         resourceAttributes.setLatitude(latitudeNum);
                         QNTRACE(
                             "enml", "Set resource latitude to " << latitudeNum);
@@ -2379,11 +2381,12 @@ bool ENMLConverterPrivate::importEnex(
             }
 
             if (elementName == QStringLiteral("longitude")) {
-                QString longitude =
+                const QString longitude =
                     reader.readElementText(QXmlStreamReader::SkipChildElements);
 
                 bool conversionResult = false;
-                double longitudeNum = longitude.toDouble(&conversionResult);
+                const double longitudeNum =
+                    longitude.toDouble(&conversionResult);
                 if (Q_UNLIKELY(!conversionResult)) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Failed to parse longitude"));
@@ -2394,17 +2397,25 @@ bool ENMLConverterPrivate::importEnex(
 
                 if (insideNote) {
                     if (insideNoteAttributes) {
-                        auto & noteAttributes = currentNote.noteAttributes();
-                        noteAttributes.longitude = longitudeNum;
+                        if (!currentNote.attributes()) {
+                            currentNote.setAttributes(
+                                qevercloud::NoteAttributes{});
+                        }
+                        auto & noteAttributes =
+                            *currentNote.mutableAttributes();
+                        noteAttributes.setLongitude(longitudeNum);
                         QNTRACE(
                             "enml", "Set note longitude to " << longitudeNum);
                         continue;
                     }
                     else if (insideResourceAttributes) {
+                        if (!currentResource.attributes()) {
+                            currentResource.setAttributes(
+                                qevercloud::ResourceAttributes{});
+                        }
                         auto & resourceAttributes =
-                            currentResource.resourceAttributes();
-
-                        resourceAttributes.longitude = longitudeNum;
+                            *currentResource.mutableAttributes();
+                        resourceAttributes.setLongitude(longitudeNum);
                         QNTRACE(
                             "enml",
                             "Set resource longitude to " << longitudeNum);
@@ -2425,10 +2436,10 @@ bool ENMLConverterPrivate::importEnex(
             }
 
             if (elementName == QStringLiteral("altitude")) {
-                QString altitude =
+                const QString altitude =
                     reader.readElementText(QXmlStreamReader::SkipChildElements);
                 bool conversionResult = false;
-                double altitudeNum = altitude.toDouble(&conversionResult);
+                const double altitudeNum = altitude.toDouble(&conversionResult);
                 if (Q_UNLIKELY(!conversionResult)) {
                     errorDescription.setBase(
                         QT_TR_NOOP("Failed to parse altitude"));
@@ -2439,16 +2450,24 @@ bool ENMLConverterPrivate::importEnex(
 
                 if (insideNote) {
                     if (insideNoteAttributes) {
-                        auto & noteAttributes = currentNote.noteAttributes();
-                        noteAttributes.altitude = altitudeNum;
+                        if (!currentNote.attributes()) {
+                            currentNote.setAttributes(
+                                qevercloud::NoteAttributes{});
+                        }
+                        auto & noteAttributes =
+                            *currentNote.mutableAttributes();
+                        noteAttributes.setAltitude(altitudeNum);
                         QNTRACE("enml", "Set note altitude to " << altitudeNum);
                         continue;
                     }
                     else if (insideResourceAttributes) {
+                        if (!currentResource.attributes()) {
+                            currentResource.setAttributes(
+                                qevercloud::ResourceAttributes{});
+                        }
                         auto & resourceAttributes =
-                            currentResource.resourceAttributes();
-
-                        resourceAttributes.altitude = altitudeNum;
+                            *currentResource.mutableAttributes();
+                        resourceAttributes.setAltitude(altitudeNum);
                         QNTRACE(
                             "enml", "Set resource altitude to " << altitudeNum);
                         continue;

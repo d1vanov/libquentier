@@ -26,7 +26,7 @@ namespace quentier {
 
 ENMLConverter::ENMLConverter() : d_ptr(new ENMLConverterPrivate) {}
 
-ENMLConverter::~ENMLConverter()
+ENMLConverter::~ENMLConverter() noexcept
 {
     delete d_ptr;
 }
@@ -34,7 +34,7 @@ ENMLConverter::~ENMLConverter()
 bool ENMLConverter::htmlToNoteContent(
     const QString & html, QString & noteContent,
     DecryptedTextManager & decryptedTextManager, ErrorString & errorDescription,
-    const QVector<SkipHtmlElementRule> & skipRules) const
+    const QList<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
 
@@ -52,7 +52,7 @@ bool ENMLConverter::cleanupExternalHtml(
 
 bool ENMLConverter::htmlToQTextDocument(
     const QString & html, QTextDocument & doc, ErrorString & errorDescription,
-    const QVector<SkipHtmlElementRule> & skipRules) const
+    const QList<SkipHtmlElementRule> & skipRules) const
 {
     Q_D(const ENMLConverter);
     return d->htmlToQTextDocument(html, doc, errorDescription, skipRules);
@@ -129,7 +129,7 @@ QString ENMLConverter::decryptedTextHtml(
 }
 
 QString ENMLConverter::resourceHtml(
-    const Resource & resource, ErrorString & errorDescription)
+    const qevercloud::Resource & resource, ErrorString & errorDescription)
 {
     return ENMLConverterPrivate::resourceHtml(resource, errorDescription);
 }
@@ -140,25 +140,25 @@ void ENMLConverter::escapeString(QString & string, const bool simplify)
 }
 
 bool ENMLConverter::exportNotesToEnex(
-    const QVector<Note> & notes,
-    const QHash<QString, QString> & tagNamesByTagLocalUids,
+    const QList<qevercloud::Note> & notes,
+    const QHash<QString, QString> & tagNamesByTagLocalIds,
     const EnexExportTags exportTagsOption, QString & enex,
     ErrorString & errorDescription, const QString & version) const
 {
     Q_D(const ENMLConverter);
 
     return d->exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, exportTagsOption, enex, errorDescription,
+        notes, tagNamesByTagLocalIds, exportTagsOption, enex, errorDescription,
         version);
 }
 
 bool ENMLConverter::importEnex(
-    const QString & enex, QVector<Note> & notes,
-    QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+    const QString & enex, QList<qevercloud::Note> & notes,
+    QHash<QString, QStringList> & tagNamesByNoteLocalId,
     ErrorString & errorDescription) const
 {
     Q_D(const ENMLConverter);
-    return d->importEnex(enex, notes, tagNamesByNoteLocalUid, errorDescription);
+    return d->importEnex(enex, notes, tagNamesByNoteLocalId, errorDescription);
 }
 
 QTextStream & ENMLConverter::SkipHtmlElementRule::print(

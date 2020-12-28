@@ -51,91 +51,97 @@ class Q_DECL_HIDDEN ENMLConverterPrivate final : public QObject
     Q_OBJECT
 public:
     explicit ENMLConverterPrivate(QObject * parent = nullptr);
-
-    virtual ~ENMLConverterPrivate() override;
+    ~ENMLConverterPrivate() override;
 
     using NoteContentToHtmlExtraData =
         ENMLConverter::NoteContentToHtmlExtraData;
 
     using SkipHtmlElementRule = ENMLConverter::SkipHtmlElementRule;
 
-    bool htmlToNoteContent(
+    [[nodiscard]] bool htmlToNoteContent(
         const QString & html, const QList<SkipHtmlElementRule> & skipRules,
         QString & noteContent, DecryptedTextManager & decryptedTextManager,
         ErrorString & errorDescription) const;
 
-    bool cleanupExternalHtml(
+    [[nodiscard]] bool cleanupExternalHtml(
         const QString & inputHtml, QString & cleanedUpHtml,
         ErrorString & errorDescription) const;
 
-    bool noteContentToHtml(
+    [[nodiscard]] bool noteContentToHtml(
         const QString & noteContent, QString & html,
         ErrorString & errorDescription,
         DecryptedTextManager & decryptedTextManager,
         NoteContentToHtmlExtraData & extraData) const;
 
-    bool htmlToQTextDocument(
+    [[nodiscard]] bool htmlToQTextDocument(
         const QString & html, QTextDocument & doc,
         ErrorString & errorDescription,
         const QList<SkipHtmlElementRule> & skipRules) const;
 
-    bool validateEnml(
+    [[nodiscard]] bool validateEnml(
         const QString & enml, ErrorString & errorDescription) const;
 
-    bool validateAndFixupEnml(
+    [[nodiscard]] bool validateAndFixupEnml(
         QString & enml, ErrorString & errorDescription) const;
 
-    static bool noteContentToPlainText(
+    [[nodiscard]] static bool noteContentToPlainText(
         const QString & noteContent, QString & plainText,
         ErrorString & errorMessage);
 
-    static bool noteContentToListOfWords(
+    [[nodiscard]] static bool noteContentToListOfWords(
         const QString & noteContent, QStringList & listOfWords,
         ErrorString & errorMessage, QString * plainText = nullptr);
 
-    static QStringList plainTextToListOfWords(const QString & plainText);
+    [[nodiscard]] static QStringList plainTextToListOfWords(
+        const QString & plainText);
 
-    static QString toDoCheckboxHtml(const bool checked, const quint64 idNumber);
+    [[nodiscard]] static QString toDoCheckboxHtml(
+        const bool checked, const quint64 idNumber);
 
-    static QString encryptedTextHtml(
+    [[nodiscard]] static QString encryptedTextHtml(
         const QString & encryptedText, const QString & hint,
         const QString & cipher, const size_t keyLength,
         const quint64 enCryptIndex);
 
-    static QString decryptedTextHtml(
+    [[nodiscard]] static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
         const QString & hint, const QString & cipher, const size_t keyLength,
         const quint64 enDecryptedIndex);
 
-    static QString resourceHtml(
+    [[nodiscard]] static QString resourceHtml(
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify);
 
-    bool exportNotesToEnex(
+    [[nodiscard]] bool exportNotesToEnex(
         const QList<qevercloud::Note> & notes,
-        const QHash<QString, QString> & tagNamesByTagLocalUids,
+        const QHash<QString, QString> & tagNamesByTagLocalIds,
         const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version) const;
 
-    bool importEnex(
+    [[nodiscard]] bool importEnex(
         const QString & enex, QList<qevercloud::Note> & notes,
         QHash<QString, QStringList> & tagNamesByNoteLocalId,
         ErrorString & errorDescription) const;
 
 private:
-    bool isForbiddenXhtmlTag(const QString & tagName) const;
-    bool isForbiddenXhtmlAttribute(const QString & attributeName) const;
-    bool isEvernoteSpecificXhtmlTag(const QString & tagName) const;
-    bool isAllowedXhtmlTag(const QString & tagName) const;
+    [[nodiscard]] bool isForbiddenXhtmlTag(const QString & tagName) const;
+
+    [[nodiscard]] bool isForbiddenXhtmlAttribute(
+        const QString & attributeName) const;
+
+    [[nodiscard]] bool isEvernoteSpecificXhtmlTag(
+        const QString & tagName) const;
+
+    [[nodiscard]] bool isAllowedXhtmlTag(const QString & tagName) const;
 
     // convert <div> element with decrypted text to ENML <en-crypt> tag
-    bool decryptedTextToEnml(
+    [[nodiscard]] bool decryptedTextToEnml(
         QXmlStreamReader & reader, DecryptedTextManager & decryptedTextManager,
         QXmlStreamWriter & writer, ErrorString & errorDescription) const;
 
     // convert ENML en-crypt tag to HTML <object> tag
-    bool encryptedTextToHtml(
+    [[nodiscard]] bool encryptedTextToHtml(
         const QXmlStreamAttributes & enCryptAttributes,
         const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
         const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
@@ -143,7 +149,7 @@ private:
         bool & convertedToEnCryptNode) const;
 
     // convert ENML <en-media> tag to HTML <object> tag
-    static bool resourceInfoToHtml(
+    [[nodiscard]] static bool resourceInfoToHtml(
         const QXmlStreamAttributes & attributes, QXmlStreamWriter & writer,
         ErrorString & errorDescription);
 
@@ -156,19 +162,19 @@ private:
         const QString & hint, const QString & cipher, const size_t keyLength,
         const quint64 enDecryptedIndex, QXmlStreamWriter & writer);
 
-    bool validateEnex(
+    [[nodiscard]] bool validateEnex(
         const QString & enex, ErrorString & errorDescription) const;
 
-    bool validateRecoIndex(
+    [[nodiscard]] bool validateRecoIndex(
         const QString & recoIndex, ErrorString & errorDescription) const;
 
-    bool validateAgainstDtd(
+    [[nodiscard]] bool validateAgainstDtd(
         const QString & input, const QString & dtdFilePath,
         ErrorString & errorDescription) const;
 
-    qint64 timestampFromDateTime(const QDateTime & dateTime) const;
+    [[nodiscard]] qint64 timestampFromDateTime(const QDateTime & dateTime) const;
 
-    SkipElementOption skipElementOption(
+    [[nodiscard]] SkipElementOption skipElementOption(
         const QString & elementName, const QXmlStreamAttributes & attributes,
         const QList<SkipHtmlElementRule> & skipRules) const;
 
@@ -194,7 +200,8 @@ private:
         Error
     };
 
-    ProcessElementStatus processElementForHtmlToNoteContentConversion(
+    [[nodiscard]] ProcessElementStatus
+    processElementForHtmlToNoteContentConversion(
         const QList<SkipHtmlElementRule> & skipRules, ConversionState & state,
         DecryptedTextManager & decryptedTextManager, QXmlStreamReader & reader,
         QXmlStreamWriter & writer, ErrorString & errorDescription) const;
@@ -220,6 +227,6 @@ private:
 QUENTIER_DECLARE_PRINTABLE(QXmlStreamAttributes)
 
 QUENTIER_DECLARE_PRINTABLE(
-    QVector<quentier::ENMLConverter::SkipHtmlElementRule>)
+    QList<quentier::ENMLConverter::SkipHtmlElementRule>)
 
 #endif // LIB_QUENTIER_ENML_ENML_CONVERTER_P_H

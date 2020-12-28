@@ -172,16 +172,15 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
 
         return true;
     }
-    else {
-        auto & dataEntry = m_dataHash[newEncryptedText];
-        dataEntry.m_cipher = entry.m_cipher;
-        dataEntry.m_keyLength = entry.m_keyLength;
-        dataEntry.m_rememberForSession = entry.m_rememberForSession;
-        dataEntry.m_decryptedText = newDecryptedText;
-        dataEntry.m_passphrase = entry.m_passphrase;
 
-        return true;
-    }
+    auto & dataEntry = m_dataHash[newEncryptedText];
+    dataEntry.m_cipher = entry.m_cipher;
+    dataEntry.m_keyLength = entry.m_keyLength;
+    dataEntry.m_rememberForSession = entry.m_rememberForSession;
+    dataEntry.m_decryptedText = newDecryptedText;
+    dataEntry.m_passphrase = entry.m_passphrase;
+
+    return true;
 }
 
 } // namespace quentier

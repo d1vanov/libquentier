@@ -93,7 +93,7 @@ public:
         bool m_includeElementContents = false;
     };
 
-    bool htmlToNoteContent(
+    [[nodiscard]] bool htmlToNoteContent(
         const QString & html, QString & noteContent,
         DecryptedTextManager & decryptedTextManager,
         ErrorString & errorDescription,
@@ -112,7 +112,7 @@ public:
      *
      * @return true in case of successful conversion, false otherwise
      */
-    bool cleanupExternalHtml(
+    [[nodiscard]] bool cleanupExternalHtml(
         const QString & inputHtml, QString & cleanedUpHtml,
         ErrorString & errorDescription) const;
 
@@ -129,7 +129,7 @@ public:
      *
      * @return true in case of successful conversion, false otherwise
      */
-    bool htmlToQTextDocument(
+    [[nodiscard]] bool htmlToQTextDocument(
         const QString & html, QTextDocument & doc,
         ErrorString & errorDescription,
         const QList<SkipHtmlElementRule> & skipRules = {}) const;
@@ -142,41 +142,43 @@ public:
         quint64 m_numEnDecryptedNodes = 0;
     };
 
-    bool noteContentToHtml(
+    [[nodiscard]] bool noteContentToHtml(
         const QString & noteContent, QString & html,
         ErrorString & errorDescription,
         DecryptedTextManager & decryptedTextManager,
         NoteContentToHtmlExtraData & extraData) const;
 
-    bool validateEnml(
+    [[nodiscard]] bool validateEnml(
         const QString & enml, ErrorString & errorDescription) const;
 
-    bool validateAndFixupEnml(
+    [[nodiscard]] bool validateAndFixupEnml(
         QString & enml, ErrorString & errorDescription) const;
 
-    static bool noteContentToPlainText(
+    [[nodiscard]] static bool noteContentToPlainText(
         const QString & noteContent, QString & plainText,
         ErrorString & errorMessage);
 
-    static bool noteContentToListOfWords(
+    [[nodiscard]] static bool noteContentToListOfWords(
         const QString & noteContent, QStringList & listOfWords,
         ErrorString & errorMessage, QString * plainText = nullptr);
 
-    static QStringList plainTextToListOfWords(const QString & plainText);
+    [[nodiscard]] static QStringList plainTextToListOfWords(
+        const QString & plainText);
 
-    static QString toDoCheckboxHtml(const bool checked, const quint64 idNumber);
+    [[nodiscard]] static QString toDoCheckboxHtml(
+        const bool checked, const quint64 idNumber);
 
-    static QString encryptedTextHtml(
+    [[nodiscard]] static QString encryptedTextHtml(
         const QString & encryptedText, const QString & hint,
         const QString & cipher, const size_t keyLength,
         const quint64 enCryptIndex);
 
-    static QString decryptedTextHtml(
+    [[nodiscard]] static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
         const QString & hint, const QString & cipher, const size_t keyLength,
         const quint64 enDecryptedIndex);
 
-    static QString resourceHtml(
+    [[nodiscard]] static QString resourceHtml(
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
     static void escapeString(QString & string, const bool simplify = true);
@@ -203,9 +205,9 @@ public:
      *                                  its corresponding fragment of ENEX won't
      *                                  contain tag names associated with the
      * note
-     * @param tagNamesByTagLocalUids    Tag names for all tag local uids across
+     * @param tagNamesByTagLocalIds     Tag names for all tag local ids across
      *                                  all passed in notes. The lack of any tag
-     *                                  name for any tag local uid is considered
+     *                                  name for any tag local id is considered
      *                                  an error and the overall export attempt
      *                                  fails
      * @param exportTagsOption          Whether the export to ENEX should
@@ -219,9 +221,9 @@ public:
      * @return                          True if the export completed
      * successfully, false otherwise
      */
-    bool exportNotesToEnex(
+    [[nodiscard]] bool exportNotesToEnex(
         const QList<qevercloud::Note> & notes,
-        const QHash<QString, QString> & tagNamesByTagLocalUids,
+        const QHash<QString, QString> & tagNamesByTagLocalIds,
         const EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version = {}) const;
 
@@ -231,11 +233,11 @@ public:
      *
      * @param enex                      The input ENEX file contents
      * @param notes                     Notes read from the ENEX
-     * @param tagNamesByNoteLocalUid    Tag names per each read note; it is
+     * @param tagNamesByNoteLocalId     Tag names per each read note; it is
      *                                  the responsibility of the method caller
      *                                  to find the actual tags corresponding
      *                                  to these names and set the tag local
-     * uids and/or guids to the note
+     *                                  ids and/or guids to the note
      * @param errorDescription          The textual descrition of the error if
      *                                  the ENEX file could not be read and
      *                                  converted into a set of notes and tag
@@ -243,9 +245,9 @@ public:
      * @return                          True of the ENEX file was read and
      * converted into a set of notes and tag names successfully, false otherwise
      */
-    bool importEnex(
+    [[nodiscard]] bool importEnex(
         const QString & enex, QList<qevercloud::Note> & notes,
-        QHash<QString, QStringList> & tagNamesByNoteLocalUid,
+        QHash<QString, QStringList> & tagNamesByNoteLocalId,
         ErrorString & errorDescription) const;
 
 private:
