@@ -172,8 +172,6 @@ private:
         const QString & input, const QString & dtdFilePath,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] qint64 timestampFromDateTime(const QDateTime & dateTime) const;
-
     [[nodiscard]] SkipElementOption skipElementOption(
         const QString & elementName, const QXmlStreamAttributes & attributes,
         const QList<SkipHtmlElementRule> & skipRules) const;

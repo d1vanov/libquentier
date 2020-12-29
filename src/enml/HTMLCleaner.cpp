@@ -46,16 +46,16 @@ namespace quentier {
 class HTMLCleaner::Impl
 {
 public:
-    Impl() : m_tidyOutput(), m_tidyErrorBuffer(), m_tidyDoc(tidyCreate()) {}
+    Impl() : m_tidyDoc(tidyCreate()) {}
 
-    ~Impl()
+    ~Impl() noexcept
     {
         tidyBufFree(&m_tidyOutput);
         tidyBufFree(&m_tidyErrorBuffer);
         tidyRelease(m_tidyDoc);
     }
 
-    bool convertHtml(
+    [[nodiscard]] bool convertHtml(
         const QString & html, const TidyOptionId outputFormat, QString & output,
         QString & errorDescription);
 
@@ -66,7 +66,7 @@ public:
 
 HTMLCleaner::HTMLCleaner() : m_impl(new HTMLCleaner::Impl) {}
 
-HTMLCleaner::~HTMLCleaner()
+HTMLCleaner::~HTMLCleaner() noexcept
 {
     delete m_impl;
 }
@@ -281,7 +281,7 @@ bool HTMLCleaner::Impl::convertHtml(
         reinterpret_cast<const char *>(m_tidyOutput.bp),
         static_cast<int>(m_tidyOutput.size))));
 
-    QString nbspEntityDeclaration =
+    const QString nbspEntityDeclaration =
         QStringLiteral("<!DOCTYPE doctypeName [<!ENTITY nbsp \"&#160;\">]>");
 
     bool insertedNbspEntityDeclaration = false;
@@ -306,8 +306,7 @@ bool HTMLCleaner::Impl::convertHtml(
     QXmlStreamReader reader(output);
 
     QBuffer fixedUpOutputBuffer;
-    bool res = fixedUpOutputBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res)) {
+    if (!fixedUpOutputBuffer.open(QIODevice::WriteOnly)) {
         errorDescription = QStringLiteral(
             "Failed to open the buffer to write the fixed up output: ");
         errorDescription += fixedUpOutputBuffer.errorString();
@@ -360,7 +359,7 @@ bool HTMLCleaner::Impl::convertHtml(
 
             if (justProcessedEndElement) {
                 // Need to remove the extra newline tidy added
-                int firstNewlineIndex = text.indexOf(QStringLiteral("\n"));
+                const int firstNewlineIndex = text.indexOf(QStringLiteral("\n"));
                 if (firstNewlineIndex >= 0) {
                     text.remove(firstNewlineIndex, 1);
                 }
