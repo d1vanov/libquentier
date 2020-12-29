@@ -85,12 +85,13 @@ void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
  * Check whether log level is active i.e. whether log level is larger than or
  * equal to the minimal log level
  */
-bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel logLevel);
+[[nodiscard]] bool QUENTIER_EXPORT QuentierIsLogLevelActive(
+    const LogLevel logLevel);
 
 /**
  * Directory containing rotating log files written by libquentier
  */
-QString QUENTIER_EXPORT QuentierLogFilesDirPath();
+[[nodiscard]] QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
 /**
  * Clear logs accumulated within the existing log file
@@ -100,7 +101,7 @@ void QUENTIER_EXPORT QuentierRestartLogging();
 /**
  * Current filter specified for log components
  */
-QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
+[[nodiscard]] QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
 
 /**
  * Change the current filter for log components

@@ -54,16 +54,16 @@ LogLevel QEverCloudLogLevelToQuentierLogLevel(
 class QEverCloudLogger final : public qevercloud::ILogger
 {
 public:
-    virtual bool shouldLog(
+    [[nodiscard]] bool shouldLog(
         const qevercloud::LogLevel level, const char * component) const override
     {
         Q_UNUSED(component)
 
-        auto logLevel = QEverCloudLogLevelToQuentierLogLevel(level);
+        const auto logLevel = QEverCloudLogLevelToQuentierLogLevel(level);
         return QuentierIsLogLevelActive(logLevel);
     }
 
-    virtual void log(
+    void log(
         const qevercloud::LogLevel level, const char * component,
         const char * fileName, const quint32 lineNumber, const qint64 timestamp,
         const QString & message) override
@@ -77,7 +77,7 @@ public:
             QEverCloudLogLevelToQuentierLogLevel(level));
     }
 
-    virtual void setLevel(const qevercloud::LogLevel level) override
+    void setLevel(const qevercloud::LogLevel level) override
     {
         Q_UNUSED(level)
 
@@ -85,7 +85,7 @@ public:
             "Unimplemented method QEverCloudLogger::setLevel was called");
     }
 
-    virtual qevercloud::LogLevel level() const override
+    [[nodiscard]] qevercloud::LogLevel level() const override
     {
         auto logLevel = QuentierMinLogLevel();
         switch (logLevel) {
@@ -119,8 +119,7 @@ void QuentierAddLogEntry(
     const QString & sourceFileName, const int sourceFileLineNumber,
     const QString & component, const QString & message, const LogLevel logLevel)
 {
-    auto componentFilter = QuentierLogComponentFilter();
-
+    const auto componentFilter = QuentierLogComponentFilter();
     if (componentFilter.isValid() && !component.isEmpty() &&
         !componentFilter.match(component).hasMatch())
     {
@@ -141,7 +140,7 @@ void QuentierAddLogEntry(
         relativeSourceFileName.remove(0, prefixIndex);
     }
     else {
-        QString appName = QCoreApplication::applicationName().toLower();
+        const QString appName = QCoreApplication::applicationName().toLower();
         prefixIndex =
             relativeSourceFileName.indexOf(appName, Qt::CaseInsensitive);
 

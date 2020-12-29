@@ -62,7 +62,7 @@ class Q_DECL_HIDDEN MaxSizeBytes
 public:
     MaxSizeBytes(const qint64 size) : m_size(size) {}
 
-    qint64 size() const
+    [[nodiscard]] qint64 size() const
     {
         return m_size;
     }
@@ -79,7 +79,7 @@ class Q_DECL_HIDDEN MaxOldLogFilesCount
 public:
     MaxOldLogFilesCount(const int count) : m_count(count) {}
 
-    int count() const
+    [[nodiscard]] int count() const
     {
         return m_count;
     }
@@ -104,10 +104,10 @@ public:
         const MaxOldLogFilesCount & maxOldLogFilesCount,
         QObject * parent = nullptr);
 
-    virtual ~QuentierFileLogWriter() override;
+    ~QuentierFileLogWriter() noexcept override;
 
 public Q_SLOTS:
-    virtual void write(QString message) override;
+    void write(QString message) override;
     void restartLogging();
 
 private:
@@ -142,17 +142,17 @@ class Q_DECL_HIDDEN QuentierLogger final : public QObject
 public:
     static QuentierLogger & instance();
 
-    static QString logFilesDirPath();
+    [[nodiscard]] static QString logFilesDirPath();
 
     void addLogWriter(IQuentierLogWriter * pWriter);
     void removeLogWriter(IQuentierLogWriter * pWriter);
 
     void write(QString message);
 
-    LogLevel minLogLevel() const;
+    [[nodiscard]] LogLevel minLogLevel() const;
     void setMinLogLevel(const LogLevel minLogLevel);
 
-    QRegularExpression componentFilterRegex();
+    [[nodiscard]] QRegularExpression componentFilterRegex();
     void setComponentFilterRegex(const QRegularExpression & filter);
 
     void restartLogging();
