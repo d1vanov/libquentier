@@ -42,10 +42,10 @@ public:
 
     virtual ~IQuentierException() noexcept override;
 
-    QString localizedErrorMessage() const;
-    QString nonLocalizedErrorMessage() const;
+    [[nodiscard]] QString localizedErrorMessage() const;
+    [[nodiscard]] QString nonLocalizedErrorMessage() const;
 
-    virtual const char * what() const noexcept override;
+    [[nodiscard]] virtual const char * what() const noexcept override;
 
     virtual QTextStream & print(QTextStream & strm) const override;
 
@@ -53,13 +53,13 @@ protected:
     IQuentierException(const IQuentierException & other);
     IQuentierException & operator=(const IQuentierException & other);
 
-    virtual const QString exceptionDisplayName() const = 0;
+    [[nodiscard]] virtual QString exceptionDisplayName() const = 0;
 
 private:
     IQuentierException() = delete;
 
     ErrorString m_message;
-    char * m_whatMessage;
+    char * m_whatMessage = nullptr;
 };
 
 } // namespace quentier

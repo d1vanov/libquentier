@@ -25,8 +25,7 @@ NoteEditorPluginInitializationException::
     IQuentierException(message)
 {}
 
-const QString NoteEditorPluginInitializationException::exceptionDisplayName()
-    const
+QString NoteEditorPluginInitializationException::exceptionDisplayName() const
 {
     return QStringLiteral("NoteEditorPluginInitializationException");
 }

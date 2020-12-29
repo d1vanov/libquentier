@@ -25,7 +25,7 @@ DatabaseOpeningException::DatabaseOpeningException(
     IQuentierException(message)
 {}
 
-const QString DatabaseOpeningException::exceptionDisplayName() const
+QString DatabaseOpeningException::exceptionDisplayName() const
 {
     return QStringLiteral("DatabaseOpeningException");
 }

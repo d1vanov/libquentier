@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@ NullPtrException::NullPtrException(const ErrorString & message) :
     IQuentierException(message)
 {}
 
-const QString NullPtrException::exceptionDisplayName() const
+QString NullPtrException::exceptionDisplayName() const
 {
     return QStringLiteral("NullPtrException");
 }

@@ -31,7 +31,7 @@ public:
         const ErrorString & message);
 
 protected:
-    virtual const QString exceptionDisplayName() const override;
+    [[nodiscard]] QString exceptionDisplayName() const override;
 };
 
 } // namespace quentier

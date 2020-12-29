@@ -25,7 +25,7 @@ LoggerInitializationException::LoggerInitializationException(
     IQuentierException(message)
 {}
 
-const QString LoggerInitializationException::exceptionDisplayName() const
+QString LoggerInitializationException::exceptionDisplayName() const
 {
     return QStringLiteral("LoggerInitializationException");
 }

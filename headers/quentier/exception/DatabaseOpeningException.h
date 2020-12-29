@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ public:
     explicit DatabaseOpeningException(const ErrorString & message);
 
 protected:
-    virtual const QString exceptionDisplayName() const override;
+    [[nodiscard]] QString exceptionDisplayName() const override;
 };
 
 } // namespace quentier

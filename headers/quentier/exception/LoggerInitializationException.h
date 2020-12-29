@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ public:
     explicit LoggerInitializationException(const ErrorString & message);
 
 protected:
-    const QString exceptionDisplayName() const override;
+    [[nodiscard]] QString exceptionDisplayName() const override;
 };
 
 } // namespace quentier

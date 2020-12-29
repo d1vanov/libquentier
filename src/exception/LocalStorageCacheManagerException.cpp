@@ -25,7 +25,7 @@ LocalStorageCacheManagerException::LocalStorageCacheManagerException(
     IQuentierException(message)
 {}
 
-const QString LocalStorageCacheManagerException::exceptionDisplayName() const
+QString LocalStorageCacheManagerException::exceptionDisplayName() const
 {
     return QStringLiteral("LocalStorageCacheManagerException");
 }

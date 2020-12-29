@@ -25,8 +25,7 @@ ApplicationSettingsInitializationException::
     IQuentierException(message)
 {}
 
-const QString ApplicationSettingsInitializationException::exceptionDisplayName()
-    const
+QString ApplicationSettingsInitializationException::exceptionDisplayName() const
 {
     return QStringLiteral("ApplicationSettingsInitializationException");
 }

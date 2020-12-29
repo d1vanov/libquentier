@@ -25,7 +25,7 @@ DatabaseRequestException::DatabaseRequestException(
     IQuentierException(message)
 {}
 
-const QString DatabaseRequestException::exceptionDisplayName() const
+QString DatabaseRequestException::exceptionDisplayName() const
 {
     return QStringLiteral("DatabaseRequestException");
 }

@@ -25,7 +25,7 @@ EmptyDataElementException::EmptyDataElementException(
     IQuentierException(message)
 {}
 
-const QString EmptyDataElementException::exceptionDisplayName() const
+QString EmptyDataElementException::exceptionDisplayName() const
 {
     return QStringLiteral("EmptyDataElementException");
 }

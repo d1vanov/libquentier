@@ -25,7 +25,7 @@ DatabaseLockFailedException::DatabaseLockFailedException(
     IQuentierException(message)
 {}
 
-const QString DatabaseLockFailedException::exceptionDisplayName() const
+QString DatabaseLockFailedException::exceptionDisplayName() const
 {
     return QStringLiteral("DatabaseLockFailedException");
 }
