@@ -45,13 +45,13 @@ public:
             FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
         QObject * parent = nullptr);
 
-    virtual ~FileSystemWatcher() override;
+    ~FileSystemWatcher() override;
 
     void addPath(const QString & path);
     void addPaths(const QStringList & paths);
 
-    QStringList directories() const;
-    QStringList files() const;
+    [[nodiscard]] QStringList directories() const;
+    [[nodiscard]] QStringList files() const;
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);

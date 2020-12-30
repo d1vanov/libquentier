@@ -31,7 +31,7 @@ namespace quentier {
  * @param guid      The guid to be checked for validity
  * @return          True if the passed in guid is valid, false otherwise
  */
-bool QUENTIER_EXPORT checkGuid(const QString & guid);
+[[nodiscard]] bool QUENTIER_EXPORT checkGuid(const QString & guid);
 
 /**
  * checkUpdateSequenceNumber checks the passed in update sequence number
@@ -42,8 +42,8 @@ bool QUENTIER_EXPORT checkGuid(const QString & guid);
  * @return                      True if the passed in update sequence number
  *                              is valid, false otherwise
  */
-bool QUENTIER_EXPORT
-checkUpdateSequenceNumber(const int32_t updateSequenceNumber);
+[[nodiscard]] bool QUENTIER_EXPORT checkUpdateSequenceNumber(
+    const int32_t updateSequenceNumber);
 
 } // namespace quentier
 

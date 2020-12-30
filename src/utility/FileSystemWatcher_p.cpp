@@ -77,12 +77,12 @@ QStringList FileSystemWatcherPrivate::files() const
 
 void FileSystemWatcherPrivate::removePath(const QString & path)
 {
-    auto fileIt = m_watchedFiles.find(path);
+    const auto fileIt = m_watchedFiles.find(path);
     if (fileIt != m_watchedFiles.end()) {
         Q_UNUSED(m_watchedFiles.erase(fileIt));
     }
     else {
-        auto dirIt = m_watchedDirectories.find(path);
+        const auto dirIt = m_watchedDirectories.find(path);
         if (dirIt != m_watchedDirectories.end()) {
             Q_UNUSED(m_watchedDirectories.erase(dirIt));
         }
@@ -101,7 +101,7 @@ void FileSystemWatcherPrivate::removePaths(const QStringList & paths)
 
 void FileSystemWatcherPrivate::onFileChanged(const QString & path)
 {
-    auto fileIt = m_watchedFiles.find(path);
+    const auto fileIt = m_watchedFiles.find(path);
     if (Q_UNLIKELY(fileIt == m_watchedFiles.end())) {
         QNWARNING(
             "utility:fs_watcher",
@@ -168,7 +168,8 @@ void FileSystemWatcherPrivate::createConnections()
 
 void FileSystemWatcherPrivate::processFileRemoval(const QString & path)
 {
-    auto it = m_justRemovedFilePathsWithPostRemovalTimerIds.left.find(path);
+    const auto it =
+        m_justRemovedFilePathsWithPostRemovalTimerIds.left.find(path);
     if (it != m_justRemovedFilePathsWithPostRemovalTimerIds.left.end()) {
         return;
     }
@@ -179,7 +180,7 @@ void FileSystemWatcherPrivate::processFileRemoval(const QString & path)
             << "removed recently and no timer has been set up yet to track its "
             << "removal; setting up such timer now");
 
-    int timerId = startTimer(m_removalTimeoutMSec);
+    const int timerId = startTimer(m_removalTimeoutMSec);
 
     m_justRemovedFilePathsWithPostRemovalTimerIds.insert(
         PathWithTimerId::value_type(path, timerId));
@@ -193,7 +194,7 @@ void FileSystemWatcherPrivate::processFileRemoval(const QString & path)
 
 void FileSystemWatcherPrivate::processDirectoryRemoval(const QString & path)
 {
-    auto it =
+    const auto it =
         m_justRemovedDirectoryPathsWithPostRemovalTimerIds.left.find(path);
 
     if (it != m_justRemovedDirectoryPathsWithPostRemovalTimerIds.left.end()) {
@@ -206,7 +207,7 @@ void FileSystemWatcherPrivate::processDirectoryRemoval(const QString & path)
             << "removed recently and no timer has been set up yet to track its "
             << "removal; setting up such timer now");
 
-    int timerId = startTimer(m_removalTimeoutMSec);
+    const int timerId = startTimer(m_removalTimeoutMSec);
 
     m_justRemovedDirectoryPathsWithPostRemovalTimerIds.insert(
         PathWithTimerId::value_type(path, timerId));
@@ -224,10 +225,10 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
-    int timerId = pEvent->timerId();
+    const int timerId = pEvent->timerId();
     killTimer(timerId);
 
-    auto fileIt =
+    const auto fileIt =
         m_justRemovedFilePathsWithPostRemovalTimerIds.right.find(timerId);
 
     if (fileIt != m_justRemovedFilePathsWithPostRemovalTimerIds.right.end()) {
@@ -239,7 +240,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
                 "File " << filePath
                         << " doesn't exist after some time since its removal");
 
-            auto it = m_watchedFiles.find(filePath);
+            const auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
                 Q_UNUSED(m_watchedFiles.erase(it));
                 Q_EMIT fileRemoved(filePath);
@@ -251,7 +252,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
                 "File " << filePath
                         << " exists again after some time since its removal");
 
-            auto it = m_watchedFiles.find(filePath);
+            const auto it = m_watchedFiles.find(filePath);
             if (it != m_watchedFiles.end()) {
                 m_watcher.addPath(filePath);
                 Q_EMIT fileChanged(filePath);
@@ -264,7 +265,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
-    auto dirIt =
+    const auto dirIt =
         m_justRemovedDirectoryPathsWithPostRemovalTimerIds.right.find(timerId);
 
     if (dirIt != m_justRemovedDirectoryPathsWithPostRemovalTimerIds.right.end())
@@ -278,7 +279,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
                     << directoryPath
                     << " doesn't exist after some time since its removal");
 
-            auto it = m_watchedDirectories.find(directoryPath);
+            const auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
                 Q_UNUSED(m_watchedDirectories.erase(it));
                 Q_EMIT directoryRemoved(directoryPath);
@@ -291,7 +292,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
                     << directoryPath
                     << " exists again after some time since its removal");
 
-            auto it = m_watchedDirectories.find(directoryPath);
+            const auto it = m_watchedDirectories.find(directoryPath);
             if (it != m_watchedDirectories.end()) {
                 m_watcher.addPath(directoryPath);
                 Q_EMIT directoryChanged(directoryPath);

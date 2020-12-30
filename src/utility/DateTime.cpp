@@ -33,7 +33,6 @@ const QString printableDateTimeFromTimestamp(
     }
 
     QString result;
-
     if (options & DateTimePrint::IncludeNumericTimestamp) {
         result += QString::number(timestamp);
         result += QStringLiteral(" (");
@@ -64,7 +63,7 @@ const QString printableDateTimeFromTimestamp(
     const size_t maxBufSize = 100;
     char buffer[maxBufSize];
     const char * format = "%Y-%m-%d %H:%M:%S";
-    size_t size = strftime(
+    const size_t size = strftime(
         buffer, maxBufSize, (customFormat ? customFormat : format), tm);
 
     result += QString::fromLocal8Bit(buffer, static_cast<int>(size));

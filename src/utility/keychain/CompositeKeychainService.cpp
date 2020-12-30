@@ -75,15 +75,15 @@ CompositeKeychainService::CompositeKeychainService(
     createConnections();
 }
 
-CompositeKeychainService::~CompositeKeychainService() = default;
+CompositeKeychainService::~CompositeKeychainService() noexcept = default;
 
 QUuid CompositeKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
 {
-    QUuid primaryKeychainRequestId =
+    const QUuid primaryKeychainRequestId =
         m_primaryKeychain->startWritePasswordJob(service, key, password);
 
-    QUuid secondaryKeychainRequestId =
+    const QUuid secondaryKeychainRequestId =
         m_secondaryKeychain->startWritePasswordJob(service, key, password);
 
     m_writePasswordJobIds.insert(IdBimap::value_type(
@@ -112,7 +112,9 @@ QUuid CompositeKeychainService::startReadPasswordJob(
         << service << ", key = " << key);
 
     if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
-        QUuid requestId = m_primaryKeychain->startReadPasswordJob(service, key);
+        const QUuid requestId =
+            m_primaryKeychain->startReadPasswordJob(service, key);
+
         m_primaryKeychainReadPasswordJobIds.insert(requestId);
         m_serviceAndKeyByRequestId[requestId] = std::make_pair(service, key);
         CKDEBUG("Reading from primary keychain, request id = " << requestId);
@@ -120,7 +122,7 @@ QUuid CompositeKeychainService::startReadPasswordJob(
     }
 
     if (isServiceKeyPairAvailableInSecondaryKeychain(service, key)) {
-        QUuid requestId =
+        const QUuid requestId =
             m_secondaryKeychain->startReadPasswordJob(service, key);
 
         m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds
@@ -222,7 +224,7 @@ bool CompositeKeychainService::isPrimaryKeychainOperational() const
 {
     ApplicationSettings settings{m_name};
     settings.beginGroup(keys::unavailablePrimaryKeychainGroup);
-    int keyCount = settings.allKeys().size();
+    const int keyCount = settings.allKeys().size();
     settings.endGroup();
     return (keyCount < 100);
 }
@@ -230,7 +232,7 @@ bool CompositeKeychainService::isPrimaryKeychainOperational() const
 void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    auto it = m_writePasswordJobIds.left.find(requestId);
+    const auto it = m_writePasswordJobIds.left.find(requestId);
     if (it == m_writePasswordJobIds.left.end()) {
         return;
     }
@@ -246,8 +248,10 @@ void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
         << ", service = " << service << ", key = " << key);
 
     const auto secondaryKeychainJobId = it->second;
+
     const auto resultIt =
         m_completedWritePasswordJobs.find(secondaryKeychainJobId);
+
     if (resultIt == m_completedWritePasswordJobs.end()) {
         // The corresponding secondary keychain's job hasn't finished yet, will
         // record the primary one's status and wait for the secondary keychain
@@ -303,7 +307,7 @@ void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
 void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    auto it = m_writePasswordJobIds.right.find(requestId);
+    const auto it = m_writePasswordJobIds.right.find(requestId);
     if (it == m_writePasswordJobIds.right.end()) {
         return;
     }
@@ -387,7 +391,7 @@ void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
     QString password)
 {
-    auto it = m_primaryKeychainReadPasswordJobIds.find(requestId);
+    const auto it = m_primaryKeychainReadPasswordJobIds.find(requestId);
     if (it == m_primaryKeychainReadPasswordJobIds.end()) {
         return;
     }
@@ -437,8 +441,9 @@ void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
     QString password)
 {
-    auto it = m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.find(
-        requestId);
+    const auto it =
+        m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.find(
+            requestId);
 
     // clang-format off
     if (it ==
@@ -476,13 +481,17 @@ void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
 void CompositeKeychainService::onPrimaryKeychainDeletePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    auto bimapIt = m_deletePasswordJobIds.left.find(requestId);
-    auto singleIt = m_primaryKeychainSingleDeletePasswordJobIds.end();
-    if (bimapIt == m_deletePasswordJobIds.left.end()) {
-        singleIt = m_primaryKeychainSingleDeletePasswordJobIds.find(requestId);
-        if (singleIt == m_primaryKeychainSingleDeletePasswordJobIds.end()) {
-            return;
-        }
+    const auto bimapIt = m_deletePasswordJobIds.left.find(requestId);
+
+    const auto singleIt =
+        (bimapIt != m_deletePasswordJobIds.left.end()
+         ? m_primaryKeychainSingleDeletePasswordJobIds.end()
+         : m_primaryKeychainSingleDeletePasswordJobIds.find(requestId));
+
+    if (bimapIt == m_deletePasswordJobIds.left.end() &&
+        singleIt == m_primaryKeychainSingleDeletePasswordJobIds.end())
+    {
+        return;
     }
 
     const auto serviceKeyPair = serviceAndKeyForRequestId(requestId);
@@ -524,8 +533,10 @@ void CompositeKeychainService::onPrimaryKeychainDeletePasswordJobFinished(
     // Deletion attempt was issued for both keychains
 
     const auto secondaryKeychainRequestId = bimapIt->second;
+
     const auto resultIt =
         m_completedDeletePasswordJobs.find(secondaryKeychainRequestId);
+
     if (resultIt == m_completedDeletePasswordJobs.end()) {
         // The corresponding secondary keychain's job hasn't finished yet, will
         // record the primary one's status and wait for the secondary keychain
@@ -576,15 +587,17 @@ void CompositeKeychainService::onPrimaryKeychainDeletePasswordJobFinished(
 void CompositeKeychainService::onSecondaryKeychainDeletePasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
 {
-    auto bimapIt = m_deletePasswordJobIds.right.find(requestId);
-    auto singleIt = m_secondaryKeychainSingleDeletePasswordJobIds.end();
-    if (bimapIt == m_deletePasswordJobIds.right.end()) {
-        singleIt =
-            m_secondaryKeychainSingleDeletePasswordJobIds.find(requestId);
+    const auto bimapIt = m_deletePasswordJobIds.right.find(requestId);
 
-        if (singleIt == m_secondaryKeychainSingleDeletePasswordJobIds.end()) {
-            return;
-        }
+    const auto singleIt =
+        (bimapIt != m_deletePasswordJobIds.right.end()
+         ? m_secondaryKeychainSingleDeletePasswordJobIds.end()
+         : m_secondaryKeychainSingleDeletePasswordJobIds.find(requestId));
+
+    if (bimapIt == m_deletePasswordJobIds.right.end() &&
+        singleIt == m_secondaryKeychainSingleDeletePasswordJobIds.end())
+    {
+        return;
     }
 
     const auto serviceKeyPair = serviceAndKeyForRequestId(requestId);
@@ -626,8 +639,10 @@ void CompositeKeychainService::onSecondaryKeychainDeletePasswordJobFinished(
     // Deletion attempt was issued for both keychains
 
     const auto primaryKeychainRequestId = bimapIt->second;
+
     const auto resultIt =
         m_completedDeletePasswordJobs.find(primaryKeychainRequestId);
+
     if (resultIt == m_completedDeletePasswordJobs.end()) {
         // The corresponding primary keychain's job hasn't finished yet, will
         // record the secondary one's status and wait for the primary keychain
@@ -742,7 +757,9 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInPrimaryKeychain(
 {
     checkAndInitializeServiceKeysCaches();
 
-    auto serviceIt = m_serviceKeysUnavailableInPrimaryKeychain.find(service);
+    const auto serviceIt =
+        m_serviceKeysUnavailableInPrimaryKeychain.find(service);
+
     if (serviceIt == m_serviceKeysUnavailableInPrimaryKeychain.end()) {
         return true;
     }
@@ -783,7 +800,9 @@ bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
 {
     checkAndInitializeServiceKeysCaches();
 
-    auto serviceIt = m_serviceKeysUnavailableInSecondaryKeychain.find(service);
+    const auto serviceIt =
+        m_serviceKeysUnavailableInSecondaryKeychain.find(service);
+
     if (serviceIt == m_serviceKeysUnavailableInSecondaryKeychain.end()) {
         return true;
     }
@@ -798,14 +817,14 @@ void CompositeKeychainService::persistUnavailableServiceKeyPairs(
     settings.beginGroup(groupName);
 
     bool foundItem = false;
-    int size = settings.beginReadArray(keys::serviceKeyPair);
+    const int size = settings.beginReadArray(keys::serviceKeyPair);
     QVector<std::pair<QString, QString>> serviceAndKeyPairs;
     serviceAndKeyPairs.reserve(size + 1);
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
 
-        QString serviceItem = settings.value(keys::service).toString();
-        QString keyItem = settings.value(keys::service).toString();
+        const QString serviceItem = settings.value(keys::service).toString();
+        const QString keyItem = settings.value(keys::service).toString();
 
         if (serviceItem == service && keyItem == key) {
             foundItem = true;
@@ -839,7 +858,7 @@ void CompositeKeychainService::persistUnavailableServiceKeyPairs(
 std::pair<QString, QString> CompositeKeychainService::serviceAndKeyForRequestId(
     const QUuid & requestId) const
 {
-    auto serviceKeyIt = m_serviceAndKeyByRequestId.find(requestId);
+    const auto serviceKeyIt = m_serviceAndKeyByRequestId.find(requestId);
     if (Q_UNLIKELY(serviceKeyIt == m_serviceAndKeyByRequestId.end())) {
         CKERROR("Unable to find service and key for request id " << requestId);
         throw std::logic_error{
@@ -854,7 +873,7 @@ std::pair<QString, QString> CompositeKeychainService::serviceAndKeyForRequestId(
 void CompositeKeychainService::cleanupServiceAndKeyForRequestId(
     const QUuid & requestId)
 {
-    auto it = m_serviceAndKeyByRequestId.find(requestId);
+    const auto it = m_serviceAndKeyByRequestId.find(requestId);
     if (it != m_serviceAndKeyByRequestId.end()) {
         m_serviceAndKeyByRequestId.erase(it);
     }
@@ -899,12 +918,12 @@ CompositeKeychainService::readServiceKeyPairsUnavailableInKeychainImpl(
     settings.beginGroup(groupName);
 
     ServiceKeyPairsCache cache;
-    int size = settings.beginReadArray(keys::serviceKeyPair);
+    const int size = settings.beginReadArray(keys::serviceKeyPair);
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
 
-        QString service = settings.value(keys::service).toString();
-        QString key = settings.value(keys::service).toString();
+        const QString service = settings.value(keys::service).toString();
+        const QString key = settings.value(keys::service).toString();
 
         cache[service].insert(key);
     }

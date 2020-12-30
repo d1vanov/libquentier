@@ -48,7 +48,7 @@ const QString relativePathFromAbsolutePath(
     QNDEBUG(
         "utility:filesystem", "relativePathFromAbsolutePath: " << absolutePath);
 
-    int position = absolutePath.indexOf(
+    const int position = absolutePath.indexOf(
         relativePathRootFolder, 0,
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
         Qt::CaseInsensitive
@@ -74,8 +74,7 @@ bool removeFile(const QString & filePath)
 
     QFile file(filePath);
     file.close(); // NOTE: this line seems to be mandatory on Windows
-    bool res = file.remove();
-    if (res) {
+    if (file.remove()) {
         QNTRACE("utility:filesystem", "Successfully removed file " << filePath);
         return true;
     }
@@ -107,7 +106,7 @@ bool removeDirImpl(const QString & dirPath)
     QDir dir(dirPath);
 
     if (dir.exists()) {
-        QFileInfoList dirContents = dir.entryInfoList(
+        const QFileInfoList dirContents = dir.entryInfoList(
             QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs |
                 QDir::Files,
             QDir::DirsFirst);

@@ -55,7 +55,7 @@ QtKeychainService::QtKeychainService(QObject * parent) :
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
-QtKeychainService::~QtKeychainService()
+QtKeychainService::~QtKeychainService() noexcept
 {
     m_pQtKeychainWrapper->disconnect();
     m_pQtKeychainWrapper->deleteLater();
@@ -64,7 +64,7 @@ QtKeychainService::~QtKeychainService()
 QUuid QtKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
 {
-    QUuid jobId = QUuid::createUuid();
+    const QUuid jobId = QUuid::createUuid();
     Q_EMIT notifyStartWritePasswordJob(jobId, service, key, password);
     return jobId;
 }
@@ -72,7 +72,7 @@ QUuid QtKeychainService::startWritePasswordJob(
 QUuid QtKeychainService::startReadPasswordJob(
     const QString & service, const QString & key)
 {
-    QUuid jobId = QUuid::createUuid();
+    const QUuid jobId = QUuid::createUuid();
     Q_EMIT notifyStartReadPasswordJob(jobId, service, key);
     return jobId;
 }
@@ -80,7 +80,7 @@ QUuid QtKeychainService::startReadPasswordJob(
 QUuid QtKeychainService::startDeletePasswordJob(
     const QString & service, const QString & key)
 {
-    QUuid jobId = QUuid::createUuid();
+    const QUuid jobId = QUuid::createUuid();
     Q_EMIT notifyStartDeletePasswordJob(jobId, service, key);
     return jobId;
 }

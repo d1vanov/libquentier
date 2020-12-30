@@ -40,14 +40,14 @@ class QUENTIER_EXPORT EncryptionManager : public QObject
     Q_OBJECT
 public:
     explicit EncryptionManager(QObject * parent = nullptr);
-    virtual ~EncryptionManager();
+    ~EncryptionManager() noexcept override;
 
-    bool decrypt(
+    [[nodiscard]] bool decrypt(
         const QString & encryptedText, const QString & passphrase,
         const QString & cipher, const size_t keyLength, QString & decryptedText,
         ErrorString & errorDescription);
 
-    bool encrypt(
+    [[nodiscard]] bool encrypt(
         const QString & textToEncrypt, const QString & passphrase,
         QString & cipher, size_t & keyLength, QString & encryptedText,
         ErrorString & errorDescription);

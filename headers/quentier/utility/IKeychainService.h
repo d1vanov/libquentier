@@ -44,7 +44,7 @@ protected:
     explicit IKeychainService(QObject * parent = nullptr);
 
 public:
-    virtual ~IKeychainService() {}
+    virtual ~IKeychainService() noexcept = default;
 
     /**
      * Error codes for results of operations with the keychain service
@@ -103,7 +103,7 @@ public:
      * @return                          Unique identifier assigned to this
      *                                  write password request
      */
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] virtual QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) = 0;
 
@@ -118,7 +118,7 @@ public:
      * @return                          Unique identifier assigned to this
      *                                  read password request
      */
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] virtual QUuid startReadPasswordJob(
         const QString & service, const QString & key) = 0;
 
     /**
@@ -132,7 +132,7 @@ public:
      * @return                          Unique identifier assigned to this
      *                                  delete password request
      */
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] virtual QUuid startDeletePasswordJob(
         const QString & service, const QString & key) = 0;
 
 Q_SIGNALS:
@@ -187,17 +187,17 @@ private:
     Q_DISABLE_COPY(IKeychainService);
 };
 
-QUENTIER_EXPORT IKeychainServicePtr
+[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr
 newQtKeychainService(QObject * parent = nullptr);
 
-QUENTIER_EXPORT IKeychainServicePtr
+[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr
 newObfuscatingKeychainService(QObject * parent = nullptr);
 
-QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
+[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
     IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
 
-QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
+[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
     IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
     QObject * parent = nullptr);
 

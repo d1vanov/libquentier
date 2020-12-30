@@ -32,27 +32,27 @@ class Q_DECL_HIDDEN FileCopierPrivate final : public QObject
 public:
     explicit FileCopierPrivate(QObject * parent = nullptr);
 
-    bool isIdle() const
+    [[nodiscard]] bool isIdle() const noexcept
     {
         return m_idle;
     }
 
-    bool isCancelled() const
+    [[nodiscard]] bool isCancelled() const noexcept
     {
         return m_cancelled;
     }
 
-    const QString & sourceFilePath() const
+    [[nodiscard]] const QString & sourceFilePath() const noexcept
     {
         return m_sourcePath;
     }
 
-    const QString & destinationFilePath() const
+    [[nodiscard]] const QString & destinationFilePath() const noexcept
     {
         return m_destPath;
     }
 
-    double currentProgress() const
+    [[nodiscard]] double currentProgress() const noexcept
     {
         return m_currentProgress;
     }

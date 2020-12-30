@@ -25,12 +25,12 @@
 #include <QObject>
 #include <QString>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
-QT_FORWARD_DECLARE_CLASS(QTextStream)
+class QDebug;
+class QTextStream;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileCopierPrivate)
+class FileCopierPrivate;
 
 class QUENTIER_EXPORT FileCopier : public QObject
 {
@@ -48,12 +48,12 @@ public:
     friend QDebug & operator<<(QDebug & dbg, const State state);
     friend QTextStream & operator<<(QTextStream & strm, const State state);
 
-    State state() const;
+    [[nodiscard]] State state() const;
 
-    QString sourceFilePath() const;
-    QString destinationFilePath() const;
+    [[nodiscard]] QString sourceFilePath() const;
+    [[nodiscard]] QString destinationFilePath() const;
 
-    double currentProgress() const;
+    [[nodiscard]] double currentProgress() const;
 
 Q_SIGNALS:
     void progressUpdate(double progress);

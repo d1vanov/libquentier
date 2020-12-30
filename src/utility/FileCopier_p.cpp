@@ -63,7 +63,7 @@ void FileCopierPrivate::copyFile(
         return;
     }
 
-    qint64 fromFileSize = fromFile.size();
+    const qint64 fromFileSize = fromFile.size();
     if (Q_UNLIKELY(fromFileSize <= 0)) {
         ErrorString error(
             QT_TR_NOOP("Can't copy file, the source file is empty"));
@@ -88,7 +88,7 @@ void FileCopierPrivate::copyFile(
         return;
     }
 
-    int bufLen = 4194304; // 4 Mb in bytes
+    const int bufLen = 4194304; // 4 Mb in bytes
     QByteArray buf;
     buf.reserve(bufLen);
 
@@ -105,7 +105,7 @@ void FileCopierPrivate::copyFile(
             return;
         }
 
-        qint64 bytesRead = fromFile.read(buf.data(), bufLen);
+        const qint64 bytesRead = fromFile.read(buf.data(), bufLen);
         if (Q_UNLIKELY(bytesRead <= 0)) {
             ErrorString error(
                 QT_TR_NOOP("Can't copy file, failed to read data "
@@ -118,7 +118,7 @@ void FileCopierPrivate::copyFile(
             return;
         }
 
-        qint64 bytesWritten = toFile.write(
+        const qint64 bytesWritten = toFile.write(
             buf.constData(), std::min(static_cast<int>(bytesRead), bufLen));
 
         if (Q_UNLIKELY(bytesWritten < 0)) {

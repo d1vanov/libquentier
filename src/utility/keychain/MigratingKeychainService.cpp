@@ -28,8 +28,8 @@ MigratingKeychainService::MigratingKeychainService(
     IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
     QObject * parent) :
     IKeychainService(parent),
-    m_sourceKeychain{std::move(sourceKeychain)}, m_sinkKeychain{
-                                                     std::move(sinkKeychain)}
+    m_sourceKeychain(std::move(sourceKeychain)),
+    m_sinkKeychain(std::move(sinkKeychain))
 {
     if (Q_UNLIKELY(!m_sourceKeychain)) {
         throw std::invalid_argument{
@@ -44,7 +44,7 @@ MigratingKeychainService::MigratingKeychainService(
     createConnections();
 }
 
-MigratingKeychainService::~MigratingKeychainService() = default;
+MigratingKeychainService::~MigratingKeychainService() noexcept = default;
 
 QUuid MigratingKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
@@ -181,7 +181,7 @@ void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
     QString password)
 {
-    auto it = m_sourceKeychainReadRequestData.find(requestId);
+    const auto it = m_sourceKeychainReadRequestData.find(requestId);
     if (it == m_sourceKeychainReadRequestData.end()) {
         return;
     }

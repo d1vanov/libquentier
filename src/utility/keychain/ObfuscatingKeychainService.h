@@ -36,16 +36,16 @@ class Q_DECL_HIDDEN ObfuscatingKeychainService final : public IKeychainService
 public:
     explicit ObfuscatingKeychainService(QObject * parent = nullptr);
 
-    virtual ~ObfuscatingKeychainService() override;
+    ~ObfuscatingKeychainService() noexcept override;
 
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;
 
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
 private:

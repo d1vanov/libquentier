@@ -31,16 +31,16 @@ class Q_DECL_HIDDEN QtKeychainService final : public IKeychainService
 public:
     explicit QtKeychainService(QObject * parent = nullptr);
 
-    virtual ~QtKeychainService() override;
+    ~QtKeychainService() noexcept override;
 
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;
 
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
 Q_SIGNALS:

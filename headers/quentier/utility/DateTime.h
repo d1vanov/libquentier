@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-constexpr int secondsToMilliseconds(int seconds) noexcept
+[[nodiscard]] constexpr int secondsToMilliseconds(int seconds) noexcept
 {
     return seconds * 1000;
 }
@@ -80,7 +80,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
  * @return                      Human readable datetime string corresponding to
  *                              the passed in timestamp
  */
-const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
+[[nodiscard]] const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
     const qint64 timestamp,
     DateTimePrint::Options options = DateTimePrint::Options(
         DateTimePrint::IncludeNumericTimestamp |

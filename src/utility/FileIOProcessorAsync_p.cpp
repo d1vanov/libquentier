@@ -88,8 +88,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         mode = QIODevice::WriteOnly;
     }
 
-    bool open = file.open(mode);
-    if (Q_UNLIKELY(!open)) {
+    if (Q_UNLIKELY(!file.open(mode))) {
         ErrorString error(QT_TR_NOOP("can't open file for writing/appending"));
         error.details() = absoluteFilePath;
         QNWARNING("utility:file_async", error);
@@ -98,7 +97,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         return;
     }
 
-    qint64 writtenBytes = file.write(data);
+    const qint64 writtenBytes = file.write(data);
     if (Q_UNLIKELY(writtenBytes < data.size())) {
         ErrorString error(QT_TR_NOOP("can't write the whole data to file"));
         error.details() = absoluteFilePath;
@@ -139,8 +138,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
         return;
     }
 
-    bool open = file.open(QIODevice::ReadOnly);
-    if (!open) {
+    if (!file.open(QIODevice::ReadOnly)) {
         ErrorString error(QT_TR_NOOP("can't open file for reading"));
         error.details() = absoluteFilePath;
         QNDEBUG("utility:file_async", error);
@@ -149,7 +147,7 @@ void FileIOProcessorAsyncPrivate::onReadFileRequest(
         return;
     }
 
-    QByteArray data = file.readAll();
+    const QByteArray data = file.readAll();
     Q_EMIT readFileRequestProcessed(true, ErrorString(), data, requestId);
     RESTART_TIMER();
 }
@@ -164,8 +162,7 @@ void FileIOProcessorAsyncPrivate::timerEvent(QTimerEvent * pEvent)
         return;
     }
 
-    qint32 timerId = pEvent->timerId();
-
+    const qint32 timerId = pEvent->timerId();
     if (timerId != m_postOperationTimerId) {
         QNTRACE(
             "utility:file_async",

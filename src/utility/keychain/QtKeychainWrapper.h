@@ -40,7 +40,7 @@ class Q_DECL_HIDDEN QtKeychainWrapper final : public QObject
     Q_OBJECT
 public:
     QtKeychainWrapper();
-    virtual ~QtKeychainWrapper();
+    ~QtKeychainWrapper() noexcept override;
 
 public Q_SLOTS:
     void onStartWritePasswordJob(
@@ -71,7 +71,7 @@ private Q_SLOTS:
     void onDeletePasswordJobFinished(QKeychain::Job * pJob);
 
 private:
-    IKeychainService::ErrorCode translateErrorCode(
+    [[nodiscard]] IKeychainService::ErrorCode translateErrorCode(
         const QKeychain::Error errorCode) const;
 
 private:

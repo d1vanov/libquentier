@@ -22,6 +22,8 @@
 
 #include <QMetaObject>
 
+#include <cstdint>
+
 namespace quentier {
 
 namespace keys {
@@ -44,22 +46,22 @@ ObfuscatingKeychainService::ObfuscatingKeychainService(QObject * parent) :
     IKeychainService(parent)
 {}
 
-ObfuscatingKeychainService::~ObfuscatingKeychainService() {}
+ObfuscatingKeychainService::~ObfuscatingKeychainService() noexcept = default;
 
 QUuid ObfuscatingKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
 {
-    QUuid requestId = QUuid::createUuid();
+    const QUuid requestId = QUuid::createUuid();
 
     ErrorString errorDescription;
     QString encryptedString;
     QString cipher;
     size_t keyLength = 0;
 
-    bool res = m_encryptionManager.encrypt(
-        password, key, cipher, keyLength, encryptedString, errorDescription);
-
-    if (!res) {
+    if (!m_encryptionManager.encrypt(
+            password, key, cipher, keyLength, encryptedString,
+            errorDescription))
+    {
         QMetaObject::invokeMethod(
             this, "writePasswordJobFinished", Qt::QueuedConnection,
             Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
@@ -94,7 +96,7 @@ QUuid ObfuscatingKeychainService::startWritePasswordJob(
 QUuid ObfuscatingKeychainService::startReadPasswordJob(
     const QString & service, const QString & key)
 {
-    QUuid requestId = QUuid::createUuid();
+    const QUuid requestId = QUuid::createUuid();
 
     ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
@@ -102,9 +104,8 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
     obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
     QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
 
-    size_t keyLength = 0;
     bool conversionResult = false;
-    keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
+    std::size_t keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
                     .toULongLong(&conversionResult);
     if (!conversionResult) {
         QMetaObject::invokeMethod(
@@ -126,10 +127,10 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
 
     QString decryptedText;
     ErrorString errorDescription;
-    bool res = m_encryptionManager.decrypt(
-        encryptedText, key, cipher, keyLength, decryptedText, errorDescription);
-
-    if (!res) {
+    if (!m_encryptionManager.decrypt(
+            encryptedText, key, cipher, keyLength, decryptedText,
+            errorDescription))
+    {
         QMetaObject::invokeMethod(
             this, "readPasswordJobFinished", Qt::QueuedConnection,
             Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
@@ -151,7 +152,7 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
 QUuid ObfuscatingKeychainService::startDeletePasswordJob(
     const QString & service, const QString & key)
 {
-    QUuid requestId = QUuid::createUuid();
+    const QUuid requestId = QUuid::createUuid();
 
     ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};

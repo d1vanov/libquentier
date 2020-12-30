@@ -26,7 +26,7 @@ EncryptionManager::EncryptionManager(QObject * parent) :
     QObject(parent), d_ptr(new EncryptionManagerPrivate)
 {}
 
-EncryptionManager::~EncryptionManager()
+EncryptionManager::~EncryptionManager() noexcept
 {
     delete d_ptr;
 }

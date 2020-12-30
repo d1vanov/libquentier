@@ -34,7 +34,7 @@ class LimitedStack : public QStack<T>
 {
 public:
     LimitedStack(void (*deleter)(T &) = nullptr) :
-        m_limit(-1), m_deleter(deleter)
+        m_deleter(deleter)
     {}
 
     LimitedStack(const LimitedStack<T> & other) :
@@ -91,10 +91,11 @@ public:
         QStack<T>::swap(other);
     }
 
-    int limit() const
+    [[nodiscard]] int limit() const
     {
         return m_limit;
     }
+
     void setLimit(const int limit)
     {
         m_limit = limit;
@@ -113,7 +114,7 @@ public:
     }
 
 private:
-    int m_limit;
+    int m_limit = -1;
     void (*m_deleter)(T &);
 };
 

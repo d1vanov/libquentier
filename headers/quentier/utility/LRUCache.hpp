@@ -33,7 +33,7 @@ class LRUCache
 {
 public:
     LRUCache(const size_t maxSize = 100) :
-        m_container(), m_currentSize(0), m_maxSize(maxSize), m_mapper()
+        m_maxSize(maxSize)
     {}
 
     using key_type = Key;
@@ -55,51 +55,57 @@ public:
     using const_pointer =
         typename std::allocator_traits<allocator_type>::const_pointer;
 
-    iterator begin()
-    {
-        return m_container.begin();
-    }
-    const_iterator begin() const
+    [[nodiscard]] iterator begin() noexcept
     {
         return m_container.begin();
     }
 
-    reverse_iterator rbegin()
+    [[nodiscard]] const_iterator begin() const noexcept
+    {
+        return m_container.begin();
+    }
+
+    [[nodiscard]] reverse_iterator rbegin() noexcept
     {
         return m_container.rbegin();
     }
-    const_reverse_iterator rbegin() const
+    
+    [[nodiscard]] const_reverse_iterator rbegin() const noexcept
     {
         return m_container.rbegin();
     }
 
-    iterator end()
-    {
-        return m_container.end();
-    }
-    const_iterator end() const
+    [[nodiscard]] iterator end() noexcept
     {
         return m_container.end();
     }
 
-    reverse_iterator rend()
+    [[nodiscard]] const_iterator end() const noexcept
     {
-        return m_container.rend();
+        return m_container.end();
     }
-    const_reverse_iterator rend() const
+
+    [[nodiscard]] reverse_iterator rend() noexcept
     {
         return m_container.rend();
     }
 
-    bool empty() const
+    [[nodiscard]] const_reverse_iterator rend() const noexcept
+    {
+        return m_container.rend();
+    }
+
+    [[nodiscard]] bool empty() const noexcept
     {
         return m_container.empty();
     }
-    size_t size() const
+
+    [[nodiscard]] size_t size() const noexcept
     {
         return m_currentSize;
     }
-    size_t max_size() const
+
+    [[nodiscard]] size_t max_size() const noexcept
     {
         return m_maxSize;
     }
@@ -122,7 +128,7 @@ public:
         fixupSize();
     }
 
-    const mapped_type * get(const key_type & key) const
+    [[nodiscard]] const mapped_type * get(const key_type & key) const noexcept
     {
         auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
@@ -139,25 +145,25 @@ public:
         return &(mapperIt.value()->second);
     }
 
-    bool exists(const key_type & key)
+    [[nodiscard]] bool exists(const key_type & key) const noexcept
     {
-        auto mapperIt = m_mapper.find(key);
+        const auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
             return false;
         }
 
-        auto it = mapperIt.value();
+        const auto it = mapperIt.value();
         return (it != m_container.end());
     }
 
-    bool remove(const key_type & key)
+    [[nodiscard]] bool remove(const key_type & key) noexcept
     {
-        auto mapperIt = m_mapper.find(key);
+        const auto mapperIt = m_mapper.find(key);
         if (mapperIt == m_mapper.end()) {
             return false;
         }
 
-        auto it = mapperIt.value();
+        const auto it = mapperIt.value();
         Q_UNUSED(m_container.erase(it))
         Q_UNUSED(m_mapper.erase(mapperIt))
 
@@ -216,7 +222,7 @@ private:
 
 private:
     mutable container_type m_container;
-    size_t m_currentSize;
+    size_t m_currentSize = 0;
     size_t m_maxSize;
 
     mutable QHash<Key, iterator> m_mapper;

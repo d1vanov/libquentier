@@ -18,7 +18,7 @@
 
 #include <quentier/utility/Checks.h>
 
-#include <qt5qevercloud/generated/Constants.h>
+#include <qevercloud/generated/Constants.h>
 
 #include <limits>
 
@@ -26,8 +26,7 @@ namespace quentier {
 
 bool checkGuid(const QString & guid)
 {
-    qint32 guidSize = static_cast<qint32>(guid.size());
-
+    const qint32 guidSize = static_cast<qint32>(guid.size());
     if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
         return false;
     }

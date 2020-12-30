@@ -47,7 +47,7 @@ QString defaultApplicationStoragePath(const QString & settingsName)
         storagePath += settingsName;
     }
     else {
-        QString appName = QApplication::applicationName();
+        const QString appName = QApplication::applicationName();
         if (!appName.isEmpty()) {
             storagePath += appName;
         }
@@ -63,7 +63,7 @@ QString defaultApplicationStoragePath(const QString & settingsName)
 QString accountApplicationStoragePath(
     const Account & account, const QString & settingsName)
 {
-    QString accountName = account.name();
+    const QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
         QNWARNING(
             "utility",
@@ -205,10 +205,9 @@ QVariant ApplicationSettings::value(
 
 QTextStream & ApplicationSettings::print(QTextStream & strm) const
 {
-    auto allStoredKeys = QSettings::allKeys();
-
+    const auto allStoredKeys = QSettings::allKeys();
     for (const auto & key: qAsConst(allStoredKeys)) {
-        auto value = QSettings::value(key);
+        const auto value = QSettings::value(key);
         strm << QStringLiteral("Key: ") << key << QStringLiteral("; Value: ")
              << value.toString() << QStringLiteral("\n;");
     }

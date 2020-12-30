@@ -44,8 +44,8 @@ public:
     void addPath(const QString & path);
     void addPaths(const QStringList & paths);
 
-    QStringList directories() const;
-    QStringList files() const;
+    [[nodiscard]] QStringList directories() const;
+    [[nodiscard]] QStringList files() const;
 
     void removePath(const QString & path);
     void removePaths(const QStringList & paths);
@@ -67,7 +67,7 @@ private:
     void processDirectoryRemoval(const QString & path);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) override;
+    void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)

@@ -48,13 +48,13 @@ public:
         IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
         QObject * parent = nullptr);
 
-    virtual ~MigratingKeychainService() override;
+    ~MigratingKeychainService() noexcept override;
 
     /**
      * Write password jobs go to the sink keychain only. The idea is that new
      * data should go only to the sink keychain.
      */
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;
 
@@ -66,7 +66,7 @@ public:
      * from there. After successful writing to the sink keychain it also tries
      * to delete the password from the source keychain.
      */
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
     /**
@@ -74,7 +74,7 @@ public:
      * "entry not found", it attempts to delete the password from the source
      * keychain.
      */
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
 private Q_SLOTS:
@@ -131,6 +131,7 @@ private:
 
     RequestIdToServiceAndKey
         m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
+
     QSet<QUuid> m_internalSourceKeychainDeleteRequestIds;
 };
 

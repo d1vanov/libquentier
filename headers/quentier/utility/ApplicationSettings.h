@@ -82,7 +82,7 @@ public:
     /**
      * Destructor
      */
-    virtual ~ApplicationSettings() override;
+    ~ApplicationSettings() override;
 
 public:
     /**
@@ -147,7 +147,7 @@ public:
      * @param prefix    String containing the prefix name
      * @return          The size of the array
      */
-    int beginReadArray(const QString & prefix);
+    [[nodiscard]] int beginReadArray(const QString & prefix);
 
     /**
      * Adds prefix to the current group and starts reading from an array.
@@ -159,7 +159,7 @@ public:
      * @param size      Size of the prefix sring. If negative (the default),
      *                  the prefix size is taken to be stren(prefix)
      */
-    int beginReadArray(const char * prefix, const int size = -1);
+    [[nodiscard]] int beginReadArray(const char * prefix, const int size = -1);
 
     /**
      * Adds prefix to the current group and starts writing an array of size
@@ -198,7 +198,7 @@ public:
      * @return          True if there exists a setting called key; false
      *                  otherwise
      */
-    bool contains(const QString & key) const;
+    [[nodiscard]] bool contains(const QString & key) const;
 
     /**
      * Overload of contains accepting const char * and optionally the size of
@@ -211,7 +211,7 @@ public:
      * @return          True if there exists a setting called key; false
      *                  otherwise
      */
-    bool contains(const char * key, const int size = -1) const;
+    [[nodiscard]] bool contains(const char * key, const int size = -1) const;
 
     /**
      * Removes the setting key and any sub-settings of key.
@@ -266,7 +266,7 @@ public:
      *                      exist, returns defaultValue. If no default value is
      *                      specified, a default QVariant is returned.
      */
-    QVariant value(
+    [[nodiscard]] QVariant value(
         const QString & key, const QVariant & defaultValue = {}) const;
 
     /**
@@ -283,12 +283,12 @@ public:
      *                      exist, returns defaultValue. If no default value is
      *                      specified, a default QVariant is returned.
      */
-    QVariant value(
+    [[nodiscard]] QVariant value(
         const char * key, const QVariant & defaultValue = {},
         const int keySize = -1) const;
 
 public:
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     Q_DISABLE_COPY(ApplicationSettings)

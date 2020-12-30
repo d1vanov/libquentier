@@ -47,8 +47,8 @@ public:
     friend QTextStream & operator<<(
         QTextStream & strm, const ExitStatus status);
 
-    ExitStatus exitStatus() const;
-    const ErrorString & errorDescription() const;
+    [[nodiscard]] ExitStatus exitStatus() const;
+    [[nodiscard]] const ErrorString & errorDescription() const;
 
 public Q_SLOTS:
     void exitAsSuccess();

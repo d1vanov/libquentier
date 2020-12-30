@@ -24,7 +24,7 @@ namespace quentier {
 
 QtKeychainWrapper::QtKeychainWrapper() = default;
 
-QtKeychainWrapper::~QtKeychainWrapper()
+QtKeychainWrapper::~QtKeychainWrapper() noexcept
 {
     for (auto it = m_readPasswordJobs.begin(), end = m_readPasswordJobs.end();
          it != end; ++it)
@@ -123,7 +123,8 @@ void QtKeychainWrapper::onWritePasswordJobFinished(QKeychain::Job * pJob)
 
     auto * pWritePasswordJob =
         qobject_cast<QKeychain::WritePasswordJob *>(pJob);
-    auto it = m_writePasswordJobs.find(pWritePasswordJob);
+
+    const auto it = m_writePasswordJobs.find(pWritePasswordJob);
     if (Q_UNLIKELY(it == m_writePasswordJobs.end())) {
         QNWARNING(
             "utiity:qtkeychain",
@@ -132,8 +133,8 @@ void QtKeychainWrapper::onWritePasswordJobFinished(QKeychain::Job * pJob)
         return;
     }
 
-    QUuid jobId = it.value();
-    auto errorCode = translateErrorCode(pWritePasswordJob->error());
+    const QUuid jobId = it.value();
+    const auto errorCode = translateErrorCode(pWritePasswordJob->error());
     ErrorString errorDescription(pWritePasswordJob->errorString());
 
     QObject::disconnect(
@@ -158,7 +159,7 @@ void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
         "utiity:qtkeychain", "QtKeychainWrapper::onReadPasswordJobFinished");
 
     auto * pReadPasswordJob = qobject_cast<QKeychain::ReadPasswordJob *>(pJob);
-    auto it = m_readPasswordJobs.find(pReadPasswordJob);
+    const auto it = m_readPasswordJobs.find(pReadPasswordJob);
     if (Q_UNLIKELY(it == m_readPasswordJobs.end())) {
         QNWARNING(
             "utiity:qtkeychain",
@@ -167,8 +168,8 @@ void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
         return;
     }
 
-    QUuid jobId = it.value();
-    auto errorCode = translateErrorCode(pReadPasswordJob->error());
+    const QUuid jobId = it.value();
+    const auto errorCode = translateErrorCode(pReadPasswordJob->error());
 
     ErrorString errorDescription;
 
@@ -182,7 +183,7 @@ void QtKeychainWrapper::onReadPasswordJobFinished(QKeychain::Job * pJob)
         errorDescription.setBase(pReadPasswordJob->errorString());
     }
 
-    QString password = pReadPasswordJob->textData();
+    const QString password = pReadPasswordJob->textData();
 
     QObject::disconnect(
         pReadPasswordJob, &QKeychain::ReadPasswordJob::finished, this,
@@ -209,7 +210,7 @@ void QtKeychainWrapper::onDeletePasswordJobFinished(QKeychain::Job * pJob)
     auto * pDeletePasswordJob =
         qobject_cast<QKeychain::DeletePasswordJob *>(pJob);
 
-    auto it = m_deletePasswordJobs.find(pDeletePasswordJob);
+    const auto it = m_deletePasswordJobs.find(pDeletePasswordJob);
     if (Q_UNLIKELY(it == m_deletePasswordJobs.end())) {
         QNWARNING(
             "utiity:qtkeychain",
@@ -218,8 +219,8 @@ void QtKeychainWrapper::onDeletePasswordJobFinished(QKeychain::Job * pJob)
         return;
     }
 
-    QUuid jobId = it.value();
-    auto errorCode = translateErrorCode(pDeletePasswordJob->error());
+    const QUuid jobId = it.value();
+    const auto errorCode = translateErrorCode(pDeletePasswordJob->error());
     ErrorString errorDescription(pDeletePasswordJob->errorString());
 
     QObject::disconnect(

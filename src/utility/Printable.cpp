@@ -34,7 +34,7 @@ Printable::Printable(const Printable &) = default;
 
 Printable & Printable::operator=(const Printable &) = default;
 
-Printable::~Printable() = default;
+Printable::~Printable() noexcept = default;
 
 QDebug & operator<<(QDebug & debug, const Printable & printable)
 {

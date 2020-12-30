@@ -48,7 +48,7 @@ public:
         QString name, IKeychainServicePtr primaryKeychain,
         IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
 
-    virtual ~CompositeKeychainService() override;
+    ~CompositeKeychainService() noexcept override;
 
     /**
      * Write password jobs go to both primary and secondary keychains. The
@@ -67,7 +67,7 @@ public:
      * Id of write password job for the primary keychain is returned from the
      * method.
      */
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;
 
@@ -89,7 +89,7 @@ public:
      * If no real read password jobs are issued (because service and key pair
      * is marked for both keychains), the synthetic id is returned.
      */
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
     /**
@@ -107,7 +107,7 @@ public:
      * key pair is marked as unavailable in the secondary keychain too. In which
      * case the synthetic id is returned.
      */
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
     /**
@@ -119,7 +119,7 @@ public:
      * @return true if the primary keychain is considered operational, false
      *         otherwise
      */
-    bool isPrimaryKeychainOperational() const;
+    [[nodiscard]] bool isPrimaryKeychainOperational() const;
 
 private Q_SLOTS:
     void onPrimaryKeychainWritePasswordJobFinished(
@@ -160,13 +160,13 @@ private:
     void unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
         const QString & service, const QString & key);
 
-    bool isServiceKeyPairAvailableInSecondaryKeychain(
+    [[nodiscard]] bool isServiceKeyPairAvailableInSecondaryKeychain(
         const QString & service, const QString & key) const;
 
     void persistUnavailableServiceKeyPairs(
         const char * groupName, const QString & service, const QString & key);
 
-    std::pair<QString, QString> serviceAndKeyForRequestId(
+    [[nodiscard]] std::pair<QString, QString> serviceAndKeyForRequestId(
         const QUuid & requestId) const;
 
     void cleanupServiceAndKeyForRequestId(const QUuid & requestId);
@@ -175,13 +175,14 @@ private:
 
     using ServiceKeyPairsCache = QHash<QString, QSet<QString>>;
 
-    ServiceKeyPairsCache readServiceKeyPairsUnavailableInPrimaryKeychain()
-        const;
-    ServiceKeyPairsCache readServiceKeyPairsUnavailableInSecondaryKeychain()
-        const;
+    [[nodiscard]] ServiceKeyPairsCache
+    readServiceKeyPairsUnavailableInPrimaryKeychain() const;
 
-    ServiceKeyPairsCache readServiceKeyPairsUnavailableInKeychainImpl(
-        const char * groupName) const;
+    [[nodiscard]] ServiceKeyPairsCache
+    readServiceKeyPairsUnavailableInSecondaryKeychain() const;
+
+    [[nodiscard]] ServiceKeyPairsCache
+    readServiceKeyPairsUnavailableInKeychainImpl(const char * groupName) const;
 
 private:
     struct WritePasswordJobStatus

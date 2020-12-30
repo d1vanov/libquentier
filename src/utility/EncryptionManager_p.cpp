@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -68,7 +68,7 @@ EncryptionManagerPrivate::EncryptionManagerPrivate() :
 #endif
 }
 
-EncryptionManagerPrivate::~EncryptionManagerPrivate()
+EncryptionManagerPrivate::~EncryptionManagerPrivate() noexcept
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100003L
     EVP_cleanup();
@@ -91,14 +91,14 @@ bool EncryptionManagerPrivate::decrypt(
             return false;
         }
 
-        bool res = decryptRc2(
-            encryptedText, passphrase, decryptedText, errorDescription);
-        if (!res) {
+        if (!decryptRc2(
+                encryptedText, passphrase, decryptedText, errorDescription))
+        {
             QNWARNING("utility:encryption", errorDescription);
             return false;
         }
 
-        QByteArray decryptedByteArray = decryptedText.toUtf8();
+        const QByteArray decryptedByteArray = decryptedText.toUtf8();
 
         decryptedText = QString::fromUtf8(
             decryptedByteArray.constData(), decryptedByteArray.size());
@@ -116,9 +116,10 @@ bool EncryptionManagerPrivate::decrypt(
         }
 
         QByteArray decryptedByteArray;
-        bool res = decryptAes(
-            encryptedText, passphrase, decryptedByteArray, errorDescription);
-        if (!res) {
+        if (!decryptAes(
+                encryptedText, passphrase, decryptedByteArray,
+                errorDescription))
+        {
             return false;
         }
 
@@ -146,18 +147,15 @@ bool EncryptionManagerPrivate::encrypt(
     const char * errorFunc = ERR_func_error_string(errorCode);                 \
     const char * errorReason = ERR_reason_error_string(errorCode)
 
-    bool res = generateSalt(SaltKind::SALT, EN_AES_KEYSIZE, errorDescription);
-    if (!res) {
+    if (!generateSalt(SaltKind::SALT, EN_AES_KEYSIZE, errorDescription)) {
         return false;
     }
 
-    res = generateSalt(SaltKind::SALTMAC, EN_AES_KEYSIZE, errorDescription);
-    if (!res) {
+    if (!generateSalt(SaltKind::SALTMAC, EN_AES_KEYSIZE, errorDescription)) {
         return false;
     }
 
-    res = generateSalt(SaltKind::IV, EN_AES_KEYSIZE, errorDescription);
-    if (!res) {
+    if (!generateSalt(SaltKind::IV, EN_AES_KEYSIZE, errorDescription)) {
         return false;
     }
 
@@ -172,23 +170,24 @@ bool EncryptionManagerPrivate::encrypt(
 
     QByteArray passphraseData = passphrase.toUtf8();
 
-    res = generateKey(passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription);
-    if (!res) {
+    if (!generateKey(
+            passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription))
+    {
         return false;
     }
 
     QByteArray textToEncryptData = textToEncrypt.toUtf8();
 
-    res = encyptWithAes(textToEncryptData, encryptedTextData, errorDescription);
-    if (!res) {
+    if (!encyptWithAes(
+            textToEncryptData, encryptedTextData, errorDescription))
+    {
         return false;
     }
 
-    res = calculateHmac(
-        passphraseData, m_saltmac, encryptedTextData, EN_AES_KEYSIZE,
-        errorDescription);
-
-    if (!res) {
+    if (!calculateHmac(
+            passphraseData, m_saltmac, encryptedTextData, EN_AES_KEYSIZE,
+            errorDescription))
+    {
         return false;
     }
 
@@ -233,8 +232,7 @@ bool EncryptionManagerPrivate::generateSalt(
     }
     }
 
-    int res = RAND_bytes(salt, static_cast<int>(saltSize));
-    if (res != 1) {
+    if (RAND_bytes(salt, static_cast<int>(saltSize)) != 1) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "EncryptionManagerPrivate",
             "can't generate cryptographically strong bytes for encryption"));
@@ -283,8 +281,7 @@ bool EncryptionManagerPrivate::calculateHmac(
     const QByteArray & encryptedTextData, const size_t keySize,
     ErrorString & errorDescription)
 {
-    bool res = generateKey(passphraseData, salt, keySize, errorDescription);
-    if (!res) {
+    if (!generateKey(passphraseData, salt, keySize, errorDescription)) {
         return false;
     }
 
@@ -293,7 +290,7 @@ bool EncryptionManagerPrivate::calculateHmac(
 
     unsigned char * digest = HMAC(
         EVP_sha256(), m_key, static_cast<int>(keySize), data,
-        static_cast<size_t>(encryptedTextData.size()), NULL, NULL);
+        static_cast<size_t>(encryptedTextData.size()), nullptr, nullptr);
 
     for (int i = 0; i < EN_AES_HMACSIZE; ++i) {
         m_hmac[i] = digest[i];
@@ -309,7 +306,7 @@ bool EncryptionManagerPrivate::encyptWithAes(
     const unsigned char * rawTextToEncrypt =
         reinterpret_cast<const unsigned char *>(textToEncryptData.constData());
 
-    int rawTextToEncryptSize = textToEncryptData.size();
+    const int rawTextToEncryptSize = textToEncryptData.size();
 
     unsigned char * cipherText = reinterpret_cast<unsigned char *>(
         malloc(static_cast<size_t>(rawTextToEncryptSize + MAX_PADDING_LEN)));
@@ -394,12 +391,10 @@ bool EncryptionManagerPrivate::decryptAes(
     QNDEBUG("utility:encryption", "EncryptionManagerPrivate::decryptAes");
 
     QByteArray cipherText;
-
-    bool bres = splitEncryptedData(
-        encryptedText, EN_AES_KEYSIZE, EN_AES_HMACSIZE, cipherText,
-        errorDescription);
-
-    if (!bres) {
+    if (!splitEncryptedData(
+            encryptedText, EN_AES_KEYSIZE, EN_AES_HMACSIZE, cipherText,
+            errorDescription))
+    {
         return false;
     }
 
@@ -419,11 +414,10 @@ bool EncryptionManagerPrivate::decryptAes(
     saltWithCipherText.remove(
         saltWithCipherText.size() - EN_AES_HMACSIZE, EN_AES_HMACSIZE);
 
-    bres = calculateHmac(
-        passphraseData, m_saltmac, saltWithCipherText, EN_AES_KEYSIZE,
-        errorDescription);
-
-    if (!bres) {
+    if (!calculateHmac(
+            passphraseData, m_saltmac, saltWithCipherText, EN_AES_KEYSIZE,
+            errorDescription))
+    {
         return false;
     }
 
@@ -453,10 +447,9 @@ bool EncryptionManagerPrivate::decryptAes(
 
     QNTRACE("utility:encryption", "Successfully validated hmac");
 
-    bres =
-        generateKey(passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription);
-
-    if (!bres) {
+    if (!generateKey(
+            passphraseData, m_salt, EN_AES_KEYSIZE, errorDescription))
+    {
         return false;
     }
 
@@ -542,7 +535,7 @@ bool EncryptionManagerPrivate::splitEncryptedData(
     const QString & encryptedData, const size_t saltSize, const size_t hmacSize,
     QByteArray & encryptedText, ErrorString & errorDescription)
 {
-    QByteArray decodedEncryptedData =
+    const QByteArray decodedEncryptedData =
         QByteArray::fromBase64(encryptedData.toUtf8());
 
     const int minLength = static_cast<int>(4 + 3 * saltSize + hmacSize);
@@ -693,9 +686,10 @@ void EncryptionManagerPrivate::rc2KeyCodesFromPassphrase(
         254, 127, 193, 173};
 
     // Convert the input data into the array
-    m_cached_xkey.resize(keyDataSize);
+    m_cached_xkey.clear();
+    m_cached_xkey.reserve(keyDataSize);
     for (int i = 0; i < keyDataSize; ++i) {
-        m_cached_xkey[i] = static_cast<int>(keyData[i]);
+        m_cached_xkey.push_back(static_cast<int>(keyData[i]));
     }
 
     // Phase 1: Expand input key to 128 bytes

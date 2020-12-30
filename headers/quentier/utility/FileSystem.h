@@ -41,7 +41,7 @@ QT_FORWARD_DECLARE_CLASS(ErrorString)
  *                                      the input absolute path and root dir
  *                                      path
  */
-const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
+[[nodiscard]] const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
     const QString & absolutePath, const QString & relativePathRootFolderPath);
 
 /**
@@ -52,7 +52,7 @@ const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
  * @return              True if the file was removed successfully, false
  *                      otherwise
  */
-bool QUENTIER_EXPORT removeFile(const QString & filePath);
+[[nodiscard]] bool QUENTIER_EXPORT removeFile(const QString & filePath);
 
 /**
  * removeDir removes the directory specified by path recursively, with all its
@@ -63,7 +63,7 @@ bool QUENTIER_EXPORT removeFile(const QString & filePath);
  * @return              True if the directory was removed successfully, false
  *                      otherwise
  */
-bool QUENTIER_EXPORT removeDir(const QString & dirPath);
+[[nodiscard]] bool QUENTIER_EXPORT removeDir(const QString & dirPath);
 
 /**
  * readFileContents reads the entire contents of a file into QByteArray which
@@ -76,7 +76,7 @@ bool QUENTIER_EXPORT removeDir(const QString & dirPath);
  * @return                  QByteArray with file's contents read into memory or
  *                          empty QByteArray in case of I/O error
  */
-QByteArray QUENTIER_EXPORT
+[[nodiscard]] QByteArray QUENTIER_EXPORT
 readFileContents(const QString & filePath, ErrorString & errorDescription);
 
 /**
@@ -93,7 +93,7 @@ readFileContents(const QString & filePath, ErrorString & errorDescription);
  * @return                  True if file was successfully renamed, false
  *                          otherwise
  */
-bool QUENTIER_EXPORT renameFile(
+[[nodiscard]] bool QUENTIER_EXPORT renameFile(
     const QString & from, const QString & to, ErrorString & errorDescription);
 
 } // namespace quentier
