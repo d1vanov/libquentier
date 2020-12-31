@@ -31,15 +31,15 @@ class QUENTIER_EXPORT SysInfo
 {
 public:
     SysInfo();
-    ~SysInfo();
+    ~SysInfo() noexcept;
 
-    qint64 pageSize();
-    qint64 totalMemory();
-    qint64 freeMemory();
+    [[nodiscard]] qint64 pageSize();
+    [[nodiscard]] qint64 totalMemory();
+    [[nodiscard]] qint64 freeMemory();
 
-    QString stackTrace();
+    [[nodiscard]] QString stackTrace();
 
-    QString platformName();
+    [[nodiscard]] QString platformName();
 
 private:
     Q_DISABLE_COPY(SysInfo)

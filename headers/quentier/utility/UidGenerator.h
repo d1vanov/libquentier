@@ -29,8 +29,8 @@ namespace quentier {
 class QUENTIER_EXPORT UidGenerator
 {
 public:
-    static QString Generate();
-    static QString UidToString(const QUuid & uid);
+    [[nodiscard]] static QString Generate();
+    [[nodiscard]] static QString UidToString(const QUuid & uid);
 };
 
 } // namespace quentier

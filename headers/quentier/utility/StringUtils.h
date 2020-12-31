@@ -33,7 +33,7 @@ class QUENTIER_EXPORT StringUtils
 {
 public:
     StringUtils();
-    virtual ~StringUtils();
+    ~StringUtils() noexcept;
 
     void removePunctuation(
         QString & str, const QList<QChar> & charactersToPreserve = {}) const;
@@ -47,7 +47,7 @@ public:
             m_filteredStrings(filteredStrings)
         {}
 
-        bool operator()(const QString & str) const
+        [[nodiscard]] bool operator()(const QString & str) const
         {
             return m_filteredStrings.contains(str);
         }

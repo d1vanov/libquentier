@@ -29,12 +29,12 @@ namespace quentier {
 /**
  * @return              The system user name of the currently logged in user
  */
-QString QUENTIER_EXPORT getCurrentUserName();
+[[nodiscard]] QString QUENTIER_EXPORT getCurrentUserName();
 
 /**
  * @return              The full name of the currently logged in user
  */
-QString QUENTIER_EXPORT getCurrentUserFullName();
+[[nodiscard]] QString QUENTIER_EXPORT getCurrentUserFullName();
 
 /**
  * openUrl sends the request to open a url

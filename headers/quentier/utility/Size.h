@@ -34,7 +34,8 @@ namespace quentier {
  * @return          The human readable string corresponding to the passed in
  *                  number of bytes
  */
-const QString QUENTIER_EXPORT humanReadableSize(const quint64 bytes);
+[[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(
+    const quint64 bytes);
 
 } // namespace quentier
 

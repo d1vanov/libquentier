@@ -26,7 +26,7 @@ namespace quentier {
 
 SysInfo::SysInfo() : d_ptr(new SysInfoPrivate) {}
 
-SysInfo::~SysInfo()
+SysInfo::~SysInfo() noexcept
 {
     delete d_ptr;
 }

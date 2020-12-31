@@ -28,7 +28,7 @@ QuentierApplication::QuentierApplication(int & argc, char * argv[]) :
     QApplication(argc, argv)
 {}
 
-QuentierApplication::~QuentierApplication() {}
+QuentierApplication::~QuentierApplication() noexcept = default;
 
 bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
 {

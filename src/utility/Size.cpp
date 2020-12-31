@@ -22,7 +22,7 @@
 
 namespace quentier {
 
-const QString humanReadableSize(const quint64 bytes)
+QString humanReadableSize(const quint64 bytes)
 {
     QStringList list;
     list << QStringLiteral("Kb") << QStringLiteral("Mb") << QStringLiteral("Gb")

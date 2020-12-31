@@ -38,7 +38,7 @@ namespace quentier {
 qint64 SysInfo::totalMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
     int rc = sysinfo(&si);
@@ -52,7 +52,7 @@ qint64 SysInfo::totalMemory()
 qint64 SysInfo::freeMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
     int rc = sysinfo(&si);
@@ -66,7 +66,7 @@ qint64 SysInfo::freeMemory()
 QString SysInfo::stackTrace()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     fpos_t pos;
 
@@ -79,7 +79,7 @@ QString SysInfo::stackTrace()
     // flush existing stderr and reopen it as file
     fflush(stderr);
     fgetpos(stderr, &pos);
-    int fd = dup(fileno(stderr));
+    const int fd = dup(fileno(stderr));
     FILE * fileHandle = freopen(tmpFile.toLocal8Bit().data(), "w", stderr);
     if (!fileHandle) {
         perror("Can't reopen stderr");
@@ -97,8 +97,7 @@ QString SysInfo::stackTrace()
     fclose(fileHandle);
 
     QFile file(tmpFile);
-    bool res = file.open(QIODevice::ReadOnly);
-    if (!res) {
+    if (!file.open(QIODevice::ReadOnly)) {
         return QStringLiteral("Cannot open temporary file with stacktrace");
     }
 

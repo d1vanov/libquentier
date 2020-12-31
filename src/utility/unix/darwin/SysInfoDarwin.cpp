@@ -36,14 +36,14 @@ namespace quentier {
 qint64 SysInfo::totalMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     int mib[2];
     int64_t physical_memory;
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
     size_t length = sizeof(int64_t);
-    int rc = sysctl(mib, 2, &physical_memory, &length, NULL, 0);
+    const int rc = sysctl(mib, 2, &physical_memory, &length, NULL, 0);
     if (rc) {
         return -1;
     }
@@ -54,7 +54,7 @@ qint64 SysInfo::totalMemory()
 qint64 SysInfo::freeMemory()
 {
     Q_D(SysInfo);
-    QMutexLocker mutexLocker(&d->m_mutex);
+    const QMutexLocker mutexLocker(&d->m_mutex);
 
     vm_size_t page_size;
     mach_port_t mach_port;

@@ -34,24 +34,24 @@ class Q_DECL_HIDDEN ShortcutManagerPrivate final : public QObject
 public:
     explicit ShortcutManagerPrivate(ShortcutManager & shortcutManager);
 
-    QKeySequence shortcut(
+    [[nodiscard]] QKeySequence shortcut(
         const int key, const Account & account, const QString & context) const;
 
-    QKeySequence shortcut(
+    [[nodiscard]] QKeySequence shortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
-    QKeySequence defaultShortcut(
+    [[nodiscard]] QKeySequence defaultShortcut(
         const int key, const Account & account, const QString & context) const;
 
-    QKeySequence defaultShortcut(
+    [[nodiscard]] QKeySequence defaultShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
-    QKeySequence userShortcut(
+    [[nodiscard]] QKeySequence userShortcut(
         const int key, const Account & account, const QString & context) const;
 
-    QKeySequence userShortcut(
+    [[nodiscard]] QKeySequence userShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
@@ -82,9 +82,9 @@ public Q_SLOTS:
         QString context);
 
 private:
-    QString keyToString(const int key) const;
+    [[nodiscard]] QString keyToString(const int key) const;
 
-    QString shortcutGroupString(
+    [[nodiscard]] QString shortcutGroupString(
         const QString & context, const bool defaultShortcut,
         const bool nonStandardShortcut) const;
 

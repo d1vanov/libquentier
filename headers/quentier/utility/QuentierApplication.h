@@ -30,10 +30,10 @@ class QUENTIER_EXPORT QuentierApplication : public QApplication
     Q_OBJECT
 public:
     QuentierApplication(int & argc, char * argv[]);
-    virtual ~QuentierApplication() override;
+    ~QuentierApplication() noexcept override;
 
-    virtual bool notify(QObject * pObject, QEvent * pEvent) override;
-    virtual bool event(QEvent * pEvent) override;
+    [[nodiscard]] bool notify(QObject * pObject, QEvent * pEvent) override;
+    [[nodiscard]] bool event(QEvent * pEvent) override;
 };
 
 } // namespace quentier

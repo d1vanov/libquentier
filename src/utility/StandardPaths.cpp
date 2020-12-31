@@ -25,9 +25,11 @@
 
 namespace quentier {
 
-const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
+QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 {
-    QByteArray envOverride = qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+    const QByteArray envOverride =
+        qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
+
     if (!envOverride.isEmpty()) {
         if (pNonStandardLocation) {
             *pNonStandardLocation = true;
@@ -50,7 +52,7 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 #endif
 }
 
-const QString accountPersistentStoragePath(const Account & account)
+QString accountPersistentStoragePath(const Account & account)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
@@ -82,20 +84,21 @@ const QString accountPersistentStoragePath(const Account & account)
     return storagePath;
 }
 
-const QString applicationTemporaryStoragePath()
+QString applicationTemporaryStoragePath()
 {
-    QString path;
-    path = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QString path =
+        QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+
     path += QStringLiteral("/") + QCoreApplication::applicationName();
     return path;
 }
 
-const QString homePath()
+QString homePath()
 {
     return QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 }
 
-const QString documentsPath()
+QString documentsPath()
 {
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 }

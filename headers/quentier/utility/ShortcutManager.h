@@ -116,7 +116,7 @@ public:
      *                      the user defined shortcut (if present) or
      *                      the default one (if present as well)
      */
-    QKeySequence shortcut(
+    [[nodiscard]] QKeySequence shortcut(
         const int key, const Account & account,
         const QString & context = {}) const;
 
@@ -125,7 +125,7 @@ public:
      *                      the user defined shortcut (if present) or
      *                      the default one (if present as well)
      */
-    QKeySequence shortcut(
+    [[nodiscard]] QKeySequence shortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context = {}) const;
 
@@ -133,7 +133,7 @@ public:
      * @return              Default shortcut for the standard key if present,
      *                      otherwise empty key sequence
      */
-    QKeySequence defaultShortcut(
+    [[nodiscard]] QKeySequence defaultShortcut(
         const int key, const Account & account,
         const QString & context = {}) const;
 
@@ -141,7 +141,7 @@ public:
      * @return              Default shortcut for the non-standard key if
      *                      present, otherwise empty key sequence
      */
-    QKeySequence defaultShortcut(
+    [[nodiscard]] QKeySequence defaultShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context = {}) const;
 
@@ -149,7 +149,7 @@ public:
      * @return              User defined shortcut for the standard key if
      *                      present, otherwise empty key sequence
      */
-    QKeySequence userShortcut(
+    [[nodiscard]] QKeySequence userShortcut(
         const int key, const Account & account,
         const QString & context = {}) const;
 
@@ -157,7 +157,7 @@ public:
      * @return              User defined shortcut for the non-standard key if
      *                      present, otherwise empty key sequence
      */
-    QKeySequence userShortcut(
+    [[nodiscard]] QKeySequence userShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context = {}) const;
 

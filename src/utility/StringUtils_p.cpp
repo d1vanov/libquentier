@@ -54,8 +54,8 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
     QNTRACE("utility:string", "str after normalizing by KD form: " << str);
 
     for (int i = 0; i < str.length(); ++i) {
-        QChar currentCharacter = str[i];
-        auto category = currentCharacter.category();
+        const QChar currentCharacter = str[i];
+        const auto category = currentCharacter.category();
         if ((category == QChar::Mark_NonSpacing) ||
             (category == QChar::Mark_SpacingCombining) ||
             (category == QChar::Mark_Enclosing))
@@ -64,7 +64,7 @@ void StringUtilsPrivate::removeDiacritics(QString & str) const
             continue;
         }
 
-        int diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
+        const int diacriticIndex = m_diacriticLetters.indexOf(currentCharacter);
         if (diacriticIndex < 0) {
             continue;
         }

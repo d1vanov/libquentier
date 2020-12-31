@@ -24,62 +24,62 @@
 
 namespace quentier {
 
-int libquentierVersionMajor()
+int libquentierVersionMajor() noexcept
 {
     return LIB_QUENTIER_VERSION_MAJOR;
 }
 
-int libquentierVersionMinor()
+int libquentierVersionMinor() noexcept
 {
     return LIB_QUENTIER_VERSION_MINOR;
 }
 
-int libquentierVersionPatch()
+int libquentierVersionPatch() noexcept
 {
     return LIB_QUENTIER_VERSION_PATCH;
 }
 
-QString libquentierBuildInfo()
+QString libquentierBuildInfo() noexcept
 {
     return QStringLiteral(LIB_QUENTIER_BUILD_INFO);
 }
 
-QString libquentierBuiltWithQtVersion()
+QString libquentierBuiltWithQtVersion() noexcept
 {
     return QStringLiteral(QT_VERSION_STR);
 }
 
-bool libquentierHasNoteEditor()
+bool libquentierHasNoteEditor() noexcept
 {
     return static_cast<bool>(LIB_QUENTIER_HAS_NOTE_EDITOR);
 }
 
-bool libquentierHasAuthenticationManager()
+bool libquentierHasAuthenticationManager() noexcept
 {
     return static_cast<bool>(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER);
 }
 
-bool libquentierUsesQtWebEngine()
+bool libquentierUsesQtWebEngine() noexcept
 {
     return static_cast<bool>(LIB_QUENTIER_USE_QT_WEB_ENGINE);
 }
 
-int libquentierBuiltWithQEverCloudVersionMajor()
+int libquentierBuiltWithQEverCloudVersionMajor() noexcept
 {
     return QEVERCLOUD_VERSION_MAJOR;
 }
 
-int libquentierBuiltWithQEverCloudVersionMinor()
+int libquentierBuiltWithQEverCloudVersionMinor() noexcept
 {
     return QEVERCLOUD_VERSION_MINOR;
 }
 
-int libquentierBuiltWithQEverCloudVersionPatch()
+int libquentierBuiltWithQEverCloudVersionPatch() noexcept
 {
     return QEVERCLOUD_VERSION_PATCH;
 }
 
-QString libquentierBuiltWithQEverCloudBuildInfo()
+QString libquentierBuiltWithQEverCloudBuildInfo() noexcept
 {
     return QStringLiteral(QEVERCLOUD_BUILD_INFO);
 }

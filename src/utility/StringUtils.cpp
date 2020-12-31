@@ -24,7 +24,7 @@ namespace quentier {
 
 StringUtils::StringUtils() : d_ptr(new StringUtilsPrivate) {}
 
-StringUtils::~StringUtils()
+StringUtils::~StringUtils() noexcept
 {
     delete d_ptr;
 }

@@ -57,12 +57,12 @@ class QuentierUndoCommand : public QObject, public QUndoCommand
 public:
     QuentierUndoCommand(QUndoCommand * parent = nullptr);
     QuentierUndoCommand(const QString & text, QUndoCommand * parent = nullptr);
-    virtual ~QuentierUndoCommand() override;
+    ~QuentierUndoCommand() noexcept override;
 
-    virtual void undo() override final;
-    virtual void redo() override final;
+    void undo() override final;
+    void redo() override final;
 
-    bool onceUndoExecuted() const
+    [[nodiscard]] bool onceUndoExecuted() const noexcept
     {
         return m_onceUndoExecuted;
     }
@@ -75,7 +75,7 @@ protected:
     virtual void redoImpl() = 0;
 
 private:
-    bool m_onceUndoExecuted;
+    bool m_onceUndoExecuted = false;
 };
 
 } // namespace quentier

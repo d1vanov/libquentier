@@ -22,7 +22,7 @@ namespace quentier {
 
 QString UidGenerator::Generate()
 {
-    QUuid uid = QUuid::createUuid();
+    const QUuid uid = QUuid::createUuid();
     return UidToString(uid);
 }
 

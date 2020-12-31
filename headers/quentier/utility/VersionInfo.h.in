@@ -73,41 +73,41 @@ namespace quentier {
 /**
  * @return          Major version of libquentier
  */
-int QUENTIER_EXPORT libquentierVersionMajor();
+[[nodiscard]] int QUENTIER_EXPORT libquentierVersionMajor() noexcept;
 
 /**
  * @return          Minor version of libquentier
  */
-int QUENTIER_EXPORT libquentierVersionMinor();
+[[nodiscard]] int QUENTIER_EXPORT libquentierVersionMinor() noexcept;
 
 /**
  * @return          Patch version of libquentier
  */
-int QUENTIER_EXPORT libquentierVersionPatch();
+[[nodiscard]] int QUENTIER_EXPORT libquentierVersionPatch() noexcept;
 
 /**
  * @return          String containing information about
  *                  the current libquentier build
  */
-QString QUENTIER_EXPORT libquentierBuildInfo();
+[[nodiscard]] QString QUENTIER_EXPORT libquentierBuildInfo() noexcept;
 
 /**
  * @return          String representing the version of Qt against which
  *                  libquentier was built
  */
-QString QUENTIER_EXPORT libquentierBuiltWithQtVersion();
+[[nodiscard]] QString QUENTIER_EXPORT libquentierBuiltWithQtVersion() noexcept;
 
 /**
  * @return          True if the current build if libquentier has note editor
  *                  included, false otherwise
  */
-bool QUENTIER_EXPORT libquentierHasNoteEditor();
+[[nodiscard]] bool QUENTIER_EXPORT libquentierHasNoteEditor() noexcept;
 
 /**
  * @return          True if the current build of libquentier has authentication
  *                  manager included, false otherwise
  */
-bool QUENTIER_EXPORT libquentierHasAuthenticationManager();
+[[nodiscard]] bool QUENTIER_EXPORT libquentierHasAuthenticationManager() noexcept;
 
 /**
  * @return          True if the current build of libquentier uses QtWebEngine
@@ -116,30 +116,34 @@ bool QUENTIER_EXPORT libquentierHasAuthenticationManager();
  *                  manager are present or if QtWebKit is used for these instead
  *                  of QtWebEngine)
  */
-bool QUENTIER_EXPORT libquentierUsesQtWebEngine();
+[[nodiscard]] bool QUENTIER_EXPORT libquentierUsesQtWebEngine() noexcept;
 
 /**
  * @return          Major version of QEverCloud against which libquentier was
  *                  built
  */
-int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionMajor();
+[[nodiscard]] int QUENTIER_EXPORT
+libquentierBuiltWithQEverCloudVersionMajor() noexcept;
 
 /**
  * @return          Minor version of QEverCloud against which libquentier was
  *                  built
  */
-int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionMinor();
+[[nodiscard]] int QUENTIER_EXPORT
+libquentierBuiltWithQEverCloudVersionMinor() noexcept;
 
 /**
  * @return          Patch version of QEverCloud against which libquentier was
  *                  built
  */
-int QUENTIER_EXPORT libquentierBuiltWithQEverCloudVersionPatch();
+[[nodiscard]] int QUENTIER_EXPORT
+libquentierBuiltWithQEverCloudVersionPatch() noexcept;
 
 /**
  * @return          Build info of QEverCloud against which libquentier was built
  */
-QString QUENTIER_EXPORT libquentierBuiltWithQEverCloudBuildInfo();
+[[nodiscard]] QString QUENTIER_EXPORT
+libquentierBuiltWithQEverCloudBuildInfo() noexcept;
 
 } // namespace quentier
 

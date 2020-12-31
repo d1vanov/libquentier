@@ -65,7 +65,7 @@ QString getCurrentUserName()
         userName = QString::fromWCharArray(acUserName);
     }
 #else
-    uid_t uid = geteuid();
+    const uid_t uid = geteuid();
     struct passwd * pw = getpwuid(uid);
     if (pw) {
         userName = QString::fromLocal8Bit(pw->pw_name);
@@ -105,18 +105,13 @@ QString getCurrentUserFullName()
     if (userFullName.isEmpty()) {
         /**
          * GetUserNameEx with NameDisplay format doesn't work when the computer
-         * is offline. It's serious. Take a look here:
-         * http://stackoverflow.com/a/2997257
-         * I've never had any serious business with WinAPI but I nearly killed
-         * myself with a facepalm when I figured this thing out. God help
-         * Microsoft - nothing else will.
-         *
+         * is offline: http://stackoverflow.com/a/2997257
          * Falling back to the login name
          */
         userFullName = getCurrentUserName();
     }
 #else
-    uid_t uid = geteuid();
+    const uid_t uid = geteuid();
     struct passwd * pw = getpwuid(uid);
     if (Q_LIKELY(pw)) {
         struct passwd * pwf = getpwnam(pw->pw_name);
@@ -131,7 +126,7 @@ QString getCurrentUserFullName()
      * split the values of different kind and the user's full name is the first
      * one
      */
-    int commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
+    const int commaIndex = userFullName.indexOf(QChar::fromLatin1(','));
     if (commaIndex > 0) { // NOTE: not >= but >
         userFullName.truncate(commaIndex);
     }
