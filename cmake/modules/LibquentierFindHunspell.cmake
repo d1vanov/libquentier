@@ -21,19 +21,19 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
   if(NOT HUNSPELL_LIBRARIES)
     message(FATAL_ERROR "Can't find hunspell library")
   endif()
-
-  add_library(Hunspell::Libhunspell SHARED IMPORTED)
-  if(MSVC)
-    set_target_properties(Hunspell::Libhunspell PROPERTIES
-      IMPORTED_IMPLIB ${HUNSPELL_LIBRARIES})
-  else()
-    set_target_properties(Hunspell::Libhunspell PROPERTIES
-      IMPORTED_LOCATION ${HUNSPELL_LIBRARIES})
-  endif()
 endif()
 
 message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
 include_directories(${HUNSPELL_INCLUDE_DIR})
+
+add_library(Hunspell::Libhunspell SHARED IMPORTED)
+if(MSVC)
+  set_target_properties(Hunspell::Libhunspell PROPERTIES
+    IMPORTED_IMPLIB ${HUNSPELL_LIBRARIES})
+else()
+  set_target_properties(Hunspell::Libhunspell PROPERTIES
+    IMPORTED_LOCATION ${HUNSPELL_LIBRARIES})
+endif()
 
 try_compile(HUNSPELL_NEW_API_AVAILABLE "${CMAKE_BINARY_DIR}/hunspell_api_check"
             "${CMAKE_CURRENT_LIST_DIR}/hunspell_new_api_check.cpp"
