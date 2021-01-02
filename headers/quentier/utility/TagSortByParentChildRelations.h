@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,14 +19,19 @@
 #ifndef LIB_QUENTIER_UTILITY_TAG_SORT_BY_PARENT_CHILD_RELATIONS_H
 #define LIB_QUENTIER_UTILITY_TAG_SORT_BY_PARENT_CHILD_RELATIONS_H
 
-#include <quentier/types/ErrorString.h>
-#include <quentier/types/Tag.h>
-
-#include <qevercloud/QEverCloud.h>
+#include <quentier/utility/Linkage.h>
 
 #include <QList>
 
+namespace qevercloud {
+
+class Tag;
+
+} // namespace qevercloud
+
 namespace quentier {
+
+class ErrorString;
 
 /**
  * Sorts the tags within the passed in list in such a manner that all parent
@@ -41,21 +46,6 @@ namespace quentier {
  */
 bool QUENTIER_EXPORT sortTagsByParentChildRelations(
     QList<qevercloud::Tag> & tagList, ErrorString & errorDescription);
-
-/**
- * Sorts the tags within the passed in list in such a manner that all parent
- * tags go before their child tags. NOTE: the sorting logics uses guids and
- * parent tag guids, not local uids and parent tag local uids!
- *
- * @param tagList           The input-output list of tags to be sorted by
- *                          parent-child relations
- * @param errorDescription  The textual description of the error if the sorting
- *                          could not be performed
- * @return                  True if the sorting was performed successfully,
- *                          false otherwise
- */
-bool QUENTIER_EXPORT sortTagsByParentChildRelations(
-    QList<Tag> & tagList, ErrorString errorDescription);
 
 } // namespace quentier
 

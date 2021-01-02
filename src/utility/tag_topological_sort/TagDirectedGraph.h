@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_TAG_TOPOLOGICAL_SORT_TAG_DIGRAPH_H
 
 #include <QHash>
-#include <QString>
 #include <QStringList>
 
 namespace quentier {
@@ -30,16 +29,17 @@ class Q_DECL_HIDDEN TagDirectedGraph
 public:
     explicit TagDirectedGraph() = default;
 
-    bool isEmpty() const;
-    bool empty() const;
+    [[nodiscard]] bool isEmpty() const noexcept;
+    [[nodiscard]] bool empty() const noexcept;
 
     void clear();
 
     void addChild(const QString & parentTagId, const QString & childTagId);
 
-    QStringList childTagIds(const QString & parentTagId) const;
+    [[nodiscard]] QStringList childTagIds(
+        const QString & parentTagId) const noexcept;
 
-    QStringList allTagIds() const;
+    [[nodiscard]] QStringList allTagIds() const;
 
 private:
     QHash<QString, QStringList> m_childTagIdsByParentTagId;

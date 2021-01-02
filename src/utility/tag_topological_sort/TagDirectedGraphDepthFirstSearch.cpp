@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,15 +18,13 @@
 
 #include "TagDirectedGraphDepthFirstSearch.h"
 
-#include <quentier/utility/Compat.h>
-
 namespace quentier {
 
 TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
     const TagDirectedGraph & graph) :
     m_graph(graph)
 {
-    auto allTagIds = m_graph.allTagIds();
+    const auto allTagIds = m_graph.allTagIds();
     for (const auto & tagId: qAsConst(allTagIds)) {
         if (!reached(tagId)) {
             depthFirstSearch(tagId);
@@ -34,22 +32,24 @@ TagDirectedGraphDepthFirstSearch::TagDirectedGraphDepthFirstSearch(
     }
 }
 
-const TagDirectedGraph & TagDirectedGraphDepthFirstSearch::graph() const
+const TagDirectedGraph & TagDirectedGraphDepthFirstSearch::graph()
+    const noexcept
 {
     return m_graph;
 }
 
-bool TagDirectedGraphDepthFirstSearch::reached(const QString & tagId) const
+bool TagDirectedGraphDepthFirstSearch::reached(
+    const QString & tagId) const noexcept
 {
     return (m_reachedTagIds.find(tagId) != m_reachedTagIds.end());
 }
 
-bool TagDirectedGraphDepthFirstSearch::hasCycle() const
+bool TagDirectedGraphDepthFirstSearch::hasCycle() const noexcept
 {
     return !m_cycle.isEmpty();
 }
 
-const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
+const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const noexcept
 {
     return m_cycle;
 }
@@ -57,12 +57,12 @@ const QStack<QString> & TagDirectedGraphDepthFirstSearch::cycle() const
 void TagDirectedGraphDepthFirstSearch::depthFirstSearch(
     const QString & sourceTagId)
 {
-    auto stackIt = m_onStack.insert(sourceTagId).first;
+    const auto stackIt = m_onStack.insert(sourceTagId).first;
 
     m_tagIdsInPreOrder.enqueue(sourceTagId);
     Q_UNUSED(m_reachedTagIds.insert(sourceTagId))
 
-    auto childTagIds = m_graph.childTagIds(sourceTagId);
+    const auto childTagIds = m_graph.childTagIds(sourceTagId);
     for (const auto & childTagId: qAsConst(childTagIds)) {
         if (hasCycle()) {
             return;

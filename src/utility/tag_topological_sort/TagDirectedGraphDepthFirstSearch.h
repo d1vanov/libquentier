@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,23 +33,24 @@ class Q_DECL_HIDDEN TagDirectedGraphDepthFirstSearch
 public:
     TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);
 
-    const TagDirectedGraph & graph() const;
-    bool reached(const QString & tagId) const;
+    [[nodiscard]] const TagDirectedGraph & graph() const noexcept;
+    [[nodiscard]] bool reached(const QString & tagId) const noexcept;
 
-    bool hasCycle() const;
-    const QStack<QString> & cycle() const;
+    [[nodiscard]] bool hasCycle() const noexcept;
+    [[nodiscard]] const QStack<QString> & cycle() const noexcept;
 
-    const QQueue<QString> & tagIdsInPreOrder() const
+    [[nodiscard]] const QQueue<QString> & tagIdsInPreOrder() const noexcept
     {
         return m_tagIdsInPreOrder;
     }
 
-    const QQueue<QString> & tagIdsInPostOrder() const
+    [[nodiscard]] const QQueue<QString> & tagIdsInPostOrder() const noexcept
     {
         return m_tagIdsInPostOrder;
     }
 
-    const QStack<QString> & tagIdsInReversePostOrder() const
+    [[nodiscard]] const QStack<QString> & tagIdsInReversePostOrder()
+        const noexcept
     {
         return m_tagIdsInReversePostOrder;
     }

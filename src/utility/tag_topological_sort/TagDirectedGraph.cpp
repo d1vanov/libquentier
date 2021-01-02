@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,16 +18,14 @@
 
 #include "TagDirectedGraph.h"
 
-#include <quentier/utility/Compat.h>
-
 namespace quentier {
 
-bool TagDirectedGraph::isEmpty() const
+bool TagDirectedGraph::isEmpty() const noexcept
 {
     return m_childTagIdsByParentTagId.isEmpty();
 }
 
-bool TagDirectedGraph::empty() const
+bool TagDirectedGraph::empty() const noexcept
 {
     return m_childTagIdsByParentTagId.empty();
 }
@@ -46,14 +44,15 @@ void TagDirectedGraph::addChild(
     }
 }
 
-QStringList TagDirectedGraph::childTagIds(const QString & parentTagId) const
+QStringList TagDirectedGraph::childTagIds(
+    const QString & parentTagId) const noexcept
 {
     auto it = m_childTagIdsByParentTagId.find(parentTagId);
     if (it != m_childTagIdsByParentTagId.end()) {
         return it.value();
     }
 
-    return QStringList();
+    return {};
 }
 
 QStringList TagDirectedGraph::allTagIds() const

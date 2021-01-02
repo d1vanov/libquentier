@@ -247,8 +247,7 @@ set(PRIVATE_HEADERS
     src/utility/FileSystemWatcher_p.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
-    src/utility/StringUtils_p.h
-    src/utility/TagSortByParentChildRelationsHelpers.hpp)
+    src/utility/StringUtils_p.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND PRIVATE_HEADERS
