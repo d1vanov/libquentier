@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,13 +45,13 @@ public:
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent = nullptr);
 
-    virtual ~EncryptionDialog() override;
+    ~EncryptionDialog() noexcept override;
 
-    QString passphrase() const;
-    bool rememberPassphrase() const;
+    [[nodiscard]] QString passphrase() const noexcept;
+    [[nodiscard]] bool rememberPassphrase() const noexcept;
 
-    QString encryptedText() const;
-    QString hint() const;
+    [[nodiscard]] QString encryptedText() const noexcept;
+    [[nodiscard]] QString hint() const noexcept;
 
 Q_SIGNALS:
     void encryptionAccepted(
@@ -62,7 +62,7 @@ private Q_SLOTS:
     void setRememberPassphraseDefaultState(const bool checked);
     void onRememberPassphraseStateChanged(int checked);
 
-    virtual void accept() override;
+    void accept() override;
 
 private:
     void setError(const ErrorString & error);

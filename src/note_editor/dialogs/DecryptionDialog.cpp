@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -75,27 +75,27 @@ DecryptionDialog::DecryptionDialog(
         &DecryptionDialog::onDecryptPermanentlyStateChanged);
 }
 
-DecryptionDialog::~DecryptionDialog()
+DecryptionDialog::~DecryptionDialog() noexcept
 {
     delete m_pUI;
 }
 
-QString DecryptionDialog::passphrase() const
+QString DecryptionDialog::passphrase() const noexcept
 {
     return m_pUI->passwordLineEdit->text();
 }
 
-bool DecryptionDialog::rememberPassphrase() const
+bool DecryptionDialog::rememberPassphrase() const noexcept
 {
     return m_pUI->rememberPasswordCheckBox->isChecked();
 }
 
-bool DecryptionDialog::decryptPermanently() const
+bool DecryptionDialog::decryptPermanently() const noexcept
 {
     return m_pUI->decryptPermanentlyCheckBox->isChecked();
 }
 
-QString DecryptionDialog::decryptedText() const
+QString DecryptionDialog::decryptedText() const noexcept
 {
     return m_cachedDecryptedText;
 }
@@ -150,7 +150,7 @@ void DecryptionDialog::onDecryptPermanentlyStateChanged(int checked)
 
 void DecryptionDialog::accept()
 {
-    QString passphrase = m_pUI->passwordLineEdit->text();
+    const QString passphrase = m_pUI->passwordLineEdit->text();
 
     ErrorString errorDescription;
     bool res = m_encryptionManager->decrypt(
@@ -179,8 +179,11 @@ void DecryptionDialog::accept()
         return;
     }
 
-    bool rememberForSession = m_pUI->rememberPasswordCheckBox->isChecked();
-    bool decryptPermanently = m_pUI->decryptPermanentlyCheckBox->isChecked();
+    const bool rememberForSession =
+        m_pUI->rememberPasswordCheckBox->isChecked();
+
+    const bool decryptPermanently =
+        m_pUI->decryptPermanentlyCheckBox->isChecked();
 
     m_decryptedTextManager->addEntry(
         m_encryptedText, m_cachedDecryptedText, rememberForSession, passphrase,

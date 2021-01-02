@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,7 @@ void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
         "GenericResourceImageJavaScriptHandler"
             << "::findGenericResourceImage: resource hash = " << resourceHash);
 
-    auto it = m_cache.find(QByteArray::fromHex(resourceHash));
+    const auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
         QNTRACE(
             "note_editor:js_glue",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,8 +26,9 @@ ContextMenuEventJavaScriptHandler::ContextMenuEventJavaScriptHandler(
 {}
 
 void ContextMenuEventJavaScriptHandler::setContextMenuContent(
-    QString contentType, QString selectedHtml, bool insideDecryptedTextFragment,
-    QStringList extraData, quint64 sequenceNumber)
+    const QString contentType, const QString selectedHtml,
+    const bool insideDecryptedTextFragment, const QStringList extraData,
+    const quint64 sequenceNumber)
 {
     Q_EMIT contextMenuEventReply(
         contentType, selectedHtml, insideDecryptedTextFragment, extraData,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -62,27 +62,27 @@ EncryptionDialog::EncryptionDialog(
         this, &EncryptionDialog::onRememberPassphraseStateChanged);
 }
 
-EncryptionDialog::~EncryptionDialog()
+EncryptionDialog::~EncryptionDialog() noexcept
 {
     delete m_pUI;
 }
 
-QString EncryptionDialog::passphrase() const
+QString EncryptionDialog::passphrase() const noexcept
 {
     return m_pUI->encryptionPasswordLineEdit->text();
 }
 
-bool EncryptionDialog::rememberPassphrase() const
+bool EncryptionDialog::rememberPassphrase() const noexcept
 {
     return m_pUI->rememberPasswordForSessionCheckBox->isChecked();
 }
 
-QString EncryptionDialog::encryptedText() const
+QString EncryptionDialog::encryptedText() const noexcept
 {
     return m_cachedEncryptedText;
 }
 
-QString EncryptionDialog::hint() const
+QString EncryptionDialog::hint() const noexcept
 {
     return m_pUI->hintLineEdit->text();
 }
@@ -112,8 +112,9 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
 
 void EncryptionDialog::accept()
 {
-    QString passphrase = m_pUI->encryptionPasswordLineEdit->text();
-    QString repeatedPassphrase =
+    const QString passphrase = m_pUI->encryptionPasswordLineEdit->text();
+
+    const QString repeatedPassphrase =
         m_pUI->repeatEncryptionPasswordLineEdit->text();
 
     if (passphrase.isEmpty()) {
@@ -140,7 +141,7 @@ void EncryptionDialog::accept()
     QString cipher = QStringLiteral("AES");
     size_t keyLength = 128;
 
-    bool res = m_encryptionManager->encrypt(
+    const bool res = m_encryptionManager->encrypt(
         m_textToEncrypt, passphrase, cipher, keyLength, m_cachedEncryptedText,
         errorDescription);
 
@@ -150,7 +151,7 @@ void EncryptionDialog::accept()
         return;
     }
 
-    bool rememberForSession =
+    const bool rememberForSession =
         m_pUI->rememberPasswordForSessionCheckBox->isChecked();
 
     m_decryptedTextManager->addEntry(

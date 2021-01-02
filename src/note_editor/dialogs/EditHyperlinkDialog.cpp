@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,7 +52,7 @@ EditHyperlinkDialog::EditHyperlinkDialog(
     }
 }
 
-EditHyperlinkDialog::~EditHyperlinkDialog()
+EditHyperlinkDialog::~EditHyperlinkDialog() noexcept
 {
     delete m_pUI;
 }
@@ -62,8 +62,7 @@ void EditHyperlinkDialog::accept()
     QNDEBUG("note_editor:dialog", "EditHyperlinkDialog::accept");
 
     QUrl url;
-    bool res = validateAndGetUrl(url);
-    if (!res) {
+    if (!validateAndGetUrl(url)) {
         return;
     }
 
@@ -92,7 +91,7 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
 
     url = QUrl();
 
-    QString enteredUrl = m_pUI->urlLineEdit->text();
+    const QString enteredUrl = m_pUI->urlLineEdit->text();
     QNTRACE("note_editor:dialog", "Entered URL string: " << enteredUrl);
 
     if (enteredUrl.isEmpty()) {

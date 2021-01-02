@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,20 +36,20 @@ public:
         QWidget * parent = nullptr, const QString & startupText = {},
         const QString & startupUrl = {}, const quint64 idNumber = 0);
 
-    virtual ~EditHyperlinkDialog();
+    ~EditHyperlinkDialog() noexcept override;
 
 Q_SIGNALS:
     void editHyperlinkAccepted(
         QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
-    virtual void accept() override;
+    void accept() override;
 
     void onUrlEdited(QString url);
     void onUrlEditingFinished();
 
 private:
-    bool validateAndGetUrl(QUrl & url);
+    [[nodiscard]] bool validateAndGetUrl(QUrl & url);
 
 private:
     Ui::EditHyperlinkDialog * m_pUI;

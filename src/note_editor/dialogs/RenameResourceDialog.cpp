@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ RenameResourceDialog::RenameResourceDialog(
     m_pUI->lineEdit->setText(initialResourceName);
 }
 
-RenameResourceDialog::~RenameResourceDialog()
+RenameResourceDialog::~RenameResourceDialog() noexcept
 {
     delete m_pUI;
 }
