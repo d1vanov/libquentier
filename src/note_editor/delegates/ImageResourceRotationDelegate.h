@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,8 @@
 
 #include "JsResultCallbackFunctor.hpp"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QSize>
 
@@ -48,7 +49,7 @@ Q_SIGNALS:
         QByteArray resourceDataBefore, QByteArray resourceHashBefore,
         QByteArray resourceRecognitionDataBefore,
         QByteArray resourceRecognitionDataHashBefore,
-        QSize resourceImageSizeBefore, Resource resourceAfter,
+        QSize resourceImageSizeBefore, qevercloud::Resource resourceAfter,
         INoteEditorBackend::Rotation rotationDirection);
 
     void notifyError(ErrorString error);
@@ -59,7 +60,7 @@ Q_SIGNALS:
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onResourceDataSavedToTemporaryFile(
         QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
@@ -82,7 +83,7 @@ private:
 
     INoteEditorBackend::Rotation m_rotationDirection;
 
-    Note * m_pNote = nullptr;
+    qevercloud::Note * m_pNote = nullptr;
 
     QByteArray m_resourceDataBefore;
     QByteArray m_resourceHashBefore;
@@ -94,7 +95,7 @@ private:
     QString m_resourceFileStoragePathBefore;
     QString m_resourceFileStoragePathAfter;
 
-    Resource m_rotatedResource;
+    qevercloud::Resource m_rotatedResource;
     QUuid m_saveResourceDataToTemporaryFileRequestId;
 };
 

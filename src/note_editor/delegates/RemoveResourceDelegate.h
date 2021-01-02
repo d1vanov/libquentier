@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,48 +23,52 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class LocalStorageManagerAsync;
+class NoteEditorPrivate;
 
 class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit RemoveResourceDelegate(
-        const Resource & resourceToRemove, NoteEditorPrivate & noteEditor,
+        const qevercloud::Resource & resourceToRemove,
+        NoteEditorPrivate & noteEditor,
         LocalStorageManagerAsync & localStorageManager);
 
     void start();
 
 Q_SIGNALS:
-    void finished(Resource removedResource, bool reversible);
+    void finished(qevercloud::Resource removedResource, bool reversible);
     void cancelled(QString resourceLocalUid);
     void notifyError(ErrorString error);
 
     // private signals
     void findResource(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
-        QUuid requestId);
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onResourceReferenceRemovedFromNoteContent(const QVariant & data);
 
 private Q_SLOTS:
     void onFindResourceComplete(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         QUuid requestId);
 
     void onFindResourceFailed(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         ErrorString errorDescription, QUuid requestId);
 
 private:
@@ -78,7 +82,7 @@ private:
 private:
     NoteEditorPrivate & m_noteEditor;
     LocalStorageManagerAsync & m_localStorageManager;
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     bool m_reversible = true;
 
     QUuid m_findResourceRequestId;

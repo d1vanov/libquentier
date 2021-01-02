@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
 #define LIB_QUENTIER_NOTE_EDITOR_I_NOTE_EDITOR_BACKEND_H
 
-#include <quentier/types/Note.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
@@ -29,27 +28,28 @@
 #include <QThread>
 #include <QWidget>
 
-QT_FORWARD_DECLARE_CLASS(QUndoStack)
+class QUndoStack;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(NoteEditor)
-QT_FORWARD_DECLARE_CLASS(SpellChecker)
+class Account;
+class ErrorString;
+class LocalStorageManagerAsync;
+class NoteEditor;
+class SpellChecker;
 
 class QUENTIER_EXPORT INoteEditorBackend
 {
 public:
-    virtual ~INoteEditorBackend();
+    virtual ~INoteEditorBackend() noexcept;
 
     virtual void initialize(
         LocalStorageManagerAsync & localStorageManager,
         SpellChecker & spellChecker, const Account & account,
         QThread * pBackgroundJobsThread) = 0;
 
-    virtual QObject * object() = 0; // provide QObject interface
-    virtual QWidget * widget() = 0; // provide QWidget interface
+    [[nodiscard]] virtual QObject * object() = 0; // provide QObject interface
+    [[nodiscard]] virtual QWidget * widget() = 0; // provide QWidget interface
 
     virtual void setAccount(const Account & account) = 0;
     virtual void setUndoStack(QUndoStack * pUndoStack) = 0;
@@ -59,8 +59,8 @@ public:
     virtual void setNoteDeletedPageHtml(const QString & html) = 0;
     virtual void setNoteLoadingPageHtml(const QString & html) = 0;
 
-    virtual bool isNoteLoaded() const = 0;
-    virtual qint64 idleTime() const = 0;
+    [[nodiscard]] virtual bool isNoteLoaded() const = 0;
+    [[nodiscard]] virtual qint64 idleTime() const = 0;
 
     virtual void convertToNote() = 0;
     virtual void saveNoteToLocalStorage() = 0;
@@ -91,7 +91,7 @@ public:
     virtual void alignRight() = 0;
     virtual void alignFull() = 0;
 
-    virtual QString selectedText() const = 0;
+    [[nodiscard]] virtual QString selectedText() const = 0;
     virtual bool hasSelection() const = 0;
 
     virtual void findNext(const QString & text, const bool matchCase) const = 0;
@@ -121,10 +121,10 @@ public:
     virtual void setFontColor(const QColor & color) = 0;
     virtual void setBackgroundColor(const QColor & color) = 0;
 
-    virtual QPalette defaultPalette() const = 0;
+    [[nodiscard]] virtual QPalette defaultPalette() const = 0;
     virtual void setDefaultPalette(const QPalette & pal) = 0;
 
-    virtual const QFont * defaultFont() const = 0;
+    [[nodiscard]] virtual const QFont * defaultFont() const = 0;
     virtual void setDefaultFont(const QFont & font) = 0;
 
     virtual void insertHorizontalLine() = 0;
@@ -201,17 +201,18 @@ public:
 
     virtual void onNoteLoadCancelled() = 0;
 
-    virtual bool print(QPrinter & printer, ErrorString & errorDescription) = 0;
+    [[nodiscard]] virtual bool print(
+        QPrinter & printer, ErrorString & errorDescription) = 0;
 
-    virtual bool exportToPdf(
+    [[nodiscard]] virtual bool exportToPdf(
         const QString & absoluteFilePath, ErrorString & errorDescription) = 0;
 
-    virtual bool exportToEnex(
+    [[nodiscard]] virtual bool exportToEnex(
         const QStringList & tagNames, QString & enex,
         ErrorString & errorDescription) = 0;
 
-    virtual QString currentNoteLocalUid() const = 0;
-    virtual void setCurrentNoteLocalUid(const QString & noteLocalUid) = 0;
+    [[nodiscard]] virtual QString currentNoteLocalId() const = 0;
+    virtual void setCurrentNoteLocalId(const QString & noteLocalUid) = 0;
 
     virtual void clear() = 0;
 

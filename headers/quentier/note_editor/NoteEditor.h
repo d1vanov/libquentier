@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,23 +20,24 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/utility/Linkage.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
 
 #include <QPrinter>
 #include <QStringList>
 #include <QThread>
 #include <QWidget>
 
-QT_FORWARD_DECLARE_CLASS(QUndoStack)
+class QUndoStack;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(INoteEditorBackend)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(SpellChecker)
+class Account;
+class INoteEditorBackend;
+class LocalStorageManagerAsync;
+class SpellChecker;
 
 /**
  * @brief The NoteEditor class is a widget encapsulating all the functionality
@@ -54,7 +55,7 @@ public:
         Qt::WindowFlags flags = 0);
 #endif
 
-    virtual ~NoteEditor() override;
+    ~NoteEditor() noexcept override;
 
     /**
      * NoteEditor requires LocalStorageManagerAsync, SpellChecker and
@@ -82,7 +83,7 @@ public:
     /**
      * @return the pointer to the note editor's backend
      */
-    INoteEditorBackend * backend();
+    [[nodiscard]] INoteEditorBackend * backend() noexcept;
 
     /**
      * This method can be used to set the backend to the note editor;
@@ -99,7 +100,7 @@ public:
     /**
      * Get the undo stack serving to the note editor
      */
-    const QUndoStack * undoStack() const;
+    [[nodiscard]] const QUndoStack * undoStack() const noexcept;
 
     /**
      * Set the undo stack for the note editor to use
@@ -131,18 +132,18 @@ public:
     void setNoteLoadingPageHtml(const QString & html);
 
     /**
-     * Get the local uid of the note currently set to the note editor
+     * Get the local id of the note currently set to the note editor
      */
-    QString currentNoteLocalUid() const;
+    [[nodiscard]] QString currentNoteLocalId() const;
 
     /**
-     * Set note local uid to the note editor. The note is being searched for
+     * Set note local id to the note editor. The note is being searched for
      * within the local storage, in case of no note being found noteNotFound
      * signal is emitted. Otherwise note editor page starts loading.
      *
-     * @param noteLocalUid              The local uid of note
+     * @param noteLocalId               The local id of note
      */
-    void setCurrentNoteLocalUid(const QString & noteLocalUid);
+    void setCurrentNoteLocalId(const QString & noteLocalId);
 
     /**
      * Clear the contents of the note editor
@@ -153,43 +154,44 @@ public:
      * @return true if there's content within the editor not yet converted to
      * note or not saved to local storage, false otherwise
      */
-    bool isModified() const;
+    [[nodiscard]] bool isModified() const noexcept;
 
     /**
      * @return true if there's content within the editor not yet converted to
      * note, false otherwise
      */
-    bool isEditorPageModified() const;
+    [[nodiscard]] bool isEditorPageModified() const noexcept;
 
     /**
      * @return true if the note last set to the editor has been fully
      * loaded already, false otherwise
      */
-    bool isNoteLoaded() const;
+    [[nodiscard]] bool isNoteLoaded() const noexcept;
 
     /**
      * @return the number of milliseconds since the last user's interaction
      * with the note editor or -1 if there was no interaction or if no note
      * is loaded at the moment
      */
-    qint64 idleTime() const;
+    [[nodiscard]] qint64 idleTime() const noexcept;
 
     /**
      * Sets the focus to the backend note editor widget
      */
     void setFocus();
 
-    QString selectedText() const;
-    bool hasSelection() const;
+    [[nodiscard]] QString selectedText() const noexcept;
+    [[nodiscard]] bool hasSelection() const noexcept;
 
-    bool spellCheckEnabled() const;
+    [[nodiscard]] bool spellCheckEnabled() const noexcept;
 
-    bool print(QPrinter & printer, ErrorString & errorDescription);
+    [[nodiscard]] bool print(
+        QPrinter & printer, ErrorString & errorDescription);
 
-    bool exportToPdf(
+    [[nodiscard]] bool exportToPdf(
         const QString & absoluteFilePath, ErrorString & errorDescription);
 
-    bool exportToEnex(
+    [[nodiscard]] bool exportToEnex(
         const QStringList & tagNames, QString & enex,
         ErrorString & errorDescription);
 
@@ -200,13 +202,13 @@ public:
      * previously via setDefaultPalette method: those colors from the specified
      * palette which were valid
      */
-    QPalette defaultPalette() const;
+    [[nodiscard]] QPalette defaultPalette() const;
 
     /**
      * @return pointer to the default font used by the note editor; if no such
      *         font was set to the editor previously, returns null pointer
      */
-    const QFont * defaultFont() const;
+    [[nodiscard]] const QFont * defaultFont() const;
 
 Q_SIGNALS:
     /**
@@ -220,20 +222,21 @@ Q_SIGNALS:
      * its corresponding notebook were found within the local storage right
      * before the note editor starts to load the note into the editor
      */
-    void noteAndNotebookFoundInLocalStorage(Note note, Notebook notebook);
+    void noteAndNotebookFoundInLocalStorage(
+        qevercloud::Note note, qevercloud::Notebook notebook);
 
     /**
      * @brief noteNotFound signal is emitted when the note could not be found
-     * within the local storage by the provided local uid
+     * within the local storage by the provided local id
      */
-    void noteNotFound(QString noteLocalUid);
+    void noteNotFound(QString noteLocalId);
 
     /**
      * @brief noteDeleted signal is emitted when the note displayed within the
      * note editor is deleted. The note editor stops displaying the note in this
      * case shortly after emitting this signal
      */
-    void noteDeleted(QString noteLocalUid);
+    void noteDeleted(QString noteLocalId);
 
     /**
      * @brief noteModified signal is emitted when the note's content within
@@ -269,12 +272,12 @@ Q_SIGNALS:
     void inAppNoteLinkPasteRequested(
         QString url, QString userId, QString shardId, QString noteGuid);
 
-    void convertedToNote(Note note);
+    void convertedToNote(qevercloud::Note note);
     void cantConvertToNote(ErrorString error);
 
     void noteEditorHtmlUpdated(QString html);
 
-    void currentNoteChanged(Note note);
+    void currentNoteChanged(qevercloud::Note note);
 
     void spellCheckerNotReady();
     void spellCheckerReady();
@@ -287,14 +290,14 @@ Q_SIGNALS:
      * unless it's explicitly asked to do this via invoking its
      * saveNoteToLocalStorage slot
      */
-    void noteSavedToLocalStorage(QString noteLocalUid);
+    void noteSavedToLocalStorage(QString noteLocalId);
 
     /**
      * @brief failedToSaveNoteToLocalStorage signal is emitted in case of
      * failure to save the note to local storage
      */
     void failedToSaveNoteToLocalStorage(
-        ErrorString errorDescription, QString noteLocalUid);
+        ErrorString errorDescription, QString noteLocalId);
 
     // Signals to notify anyone interested of the formatting at the current
     // cursor position

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -119,12 +119,12 @@ void DecryptEncryptedTextDelegate::start()
     }
 }
 
-void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(Note note)
+void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "DecryptEncryptedTextDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote");
 
     CHECK_NOTE_EDITOR()
 
@@ -141,8 +141,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "DecryptEncryptedTextDelegate"
-            << "::raiseDecryptionDialog");
+        "DecryptEncryptedTextDelegate::raiseDecryptionDialog");
 
     CHECK_ACCOUNT()
 
@@ -150,7 +149,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
         m_cipher = QStringLiteral("AES");
     }
 
-    auto pDecryptionDialog = std::make_unique<DecryptionDialog>(
+    const auto pDecryptionDialog = std::make_unique<DecryptionDialog>(
         m_encryptedText, m_cipher, m_hint, m_length,
         *m_pNoteEditor->accountPtr(), m_encryptionManager,
         m_decryptedTextManager, m_pNoteEditor);
@@ -162,8 +161,7 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
         &DecryptEncryptedTextDelegate::onEncryptedTextDecrypted);
 
     QNTRACE("note_editor:delegate", "Will exec decryption dialog now");
-    int res = pDecryptionDialog->exec();
-    if (res == QDialog::Rejected) {
+    if (pDecryptionDialog->exec() == QDialog::Rejected) {
         Q_EMIT cancelled();
         return;
     }
@@ -221,9 +219,9 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
         "DecryptEncryptedTextDelegate"
             << "::onDecryptionScriptFinished: " << data);
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of text decryption "
@@ -233,11 +231,10 @@ void DecryptEncryptedTextDelegate::onDecryptionScriptFinished(
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
-        auto errorIt = resultMap.find(QStringLiteral("error"));
+        const auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of text decryption "

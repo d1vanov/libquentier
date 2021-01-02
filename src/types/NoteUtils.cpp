@@ -21,6 +21,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/NoteUtils.h>
 
+#include <qevercloud/generated/types/Note.h>
+
 #include <QXmlStreamReader>
 
 namespace quentier {
@@ -156,6 +158,15 @@ std::pair<QString, QStringList> noteContentToPlainTextAndListOfWords(
     }
 
     return result;
+}
+
+int noteResourceCount(const qevercloud::Note & note)
+{
+    if (!note.resources()) {
+        return 0;
+    }
+
+    return note.resources()->size();
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,6 +23,7 @@
 #include "../dialogs/RenameResourceDialog.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/ResourceUtils.h>
 
 #include <QBuffer>
 #include <QImage>
@@ -44,7 +45,7 @@ namespace quentier {
     }
 
 RenameResourceDelegate::RenameResourceDelegate(
-    const Resource & resource, NoteEditorPrivate & noteEditor,
+    const qevercloud::Resource & resource, NoteEditorPrivate & noteEditor,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
     const bool performingUndo) :
@@ -52,7 +53,7 @@ RenameResourceDelegate::RenameResourceDelegate(
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
-    m_resource(resource), m_oldResourceName(resource.displayName()),
+    m_resource(resource), m_oldResourceName(resourceDisplayName(resource)),
     m_newResourceName(), m_performingUndo(performingUndo),
     m_pNote(noteEditor.notePtr())
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -93,7 +94,8 @@ void RenameResourceDelegate::startWithPresetNames(
     start();
 }
 
-void RenameResourceDelegate::onOriginalPageConvertedToNote(Note note)
+void RenameResourceDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note)
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -127,7 +129,7 @@ void RenameResourceDelegate::doStart()
 
     CHECK_NOTE_ACTUALITY()
 
-    if (Q_UNLIKELY(!m_resource.hasDataHash())) {
+    if (Q_UNLIKELY(!m_resource.data() || !m_resource.data()->bodyHash())) {
         ErrorString error(
             QT_TR_NOOP("Can't rename the attachment: data hash is missing"));
         QNWARNING("note_editor:delegate", error);
@@ -139,7 +141,10 @@ void RenameResourceDelegate::doStart()
         raiseRenameResourceDialog();
     }
     else {
-        m_resource.setDisplayName(m_newResourceName);
+        if (!m_resource.attributes()) {
+            m_resource.setAttributes(qevercloud::ResourceAttributes{});
+        }
+        m_resource.mutableAttributes()->setFileName(m_newResourceName);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
         buildAndSaveGenericResourceImage();
@@ -157,7 +162,7 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
         "RenameResourceDelegate"
             << "::raiseRenameResourceDialog");
 
-    auto pRenameResourceDialog = std::make_unique<RenameResourceDialog>(
+    const auto pRenameResourceDialog = std::make_unique<RenameResourceDialog>(
         m_oldResourceName, &m_noteEditor);
 
     pRenameResourceDialog->setWindowModality(Qt::WindowModal);
@@ -167,8 +172,7 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
         this, &RenameResourceDelegate::onRenameResourceDialogFinished);
 
     QNTRACE("note_editor:delegate", "Will exec rename resource dialog now");
-    int res = pRenameResourceDialog->exec();
-    if (res == QDialog::Rejected) {
+    if (pRenameResourceDialog->exec() == QDialog::Rejected) {
         QNTRACE("note_editor:delegate", "Cancelled renaming the resource");
         Q_EMIT cancelled();
     }
@@ -179,15 +183,13 @@ void RenameResourceDelegate::onRenameResourceDialogFinished(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RenameResourceDelegate"
-            << "::onRenameResourceDialogFinished: new resource name = "
-            << newResourceName);
+        "RenameResourceDelegate::onRenameResourceDialogFinished: "
+            << "new resource name = " << newResourceName);
 
     if (newResourceName.isEmpty()) {
         QNTRACE(
             "note_editor:delegate",
-            "New resource name is empty, treating "
-                << "it as cancellation");
+            "New resource name is empty, treating it as cancellation");
         Q_EMIT cancelled();
         return;
     }
@@ -195,14 +197,19 @@ void RenameResourceDelegate::onRenameResourceDialogFinished(
     if (newResourceName == m_oldResourceName) {
         QNTRACE(
             "note_editor:delegate",
-            "The new resource name is equal to "
-                << "the old one, treating it as cancellation");
+            "The new resource name is equal to the old one, treating it as "
+                << "cancellation");
         Q_EMIT cancelled();
         return;
     }
 
     m_newResourceName = newResourceName;
-    m_resource.setDisplayName(m_newResourceName);
+
+    if (!m_resource.attributes()) {
+        m_resource.setAttributes(qevercloud::ResourceAttributes{});
+    }
+    m_resource.mutableAttributes()->setFileName(m_newResourceName);
+
     m_noteEditor.replaceResourceInNote(m_resource);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -218,8 +225,7 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RenameResourceDelegate"
-            << "::buildAndSaveGenericResourceImage");
+        "RenameResourceDelegate::buildAndSaveGenericResourceImage");
 
     CHECK_NOTE_ACTUALITY()
 
@@ -235,10 +241,10 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
     QNDEBUG(
         "note_editor:delegate",
         "Emitting request to write generic "
-            << "resource image for resource with local uid "
-            << m_resource.localUid() << ", request id "
+            << "resource image for resource with local id "
+            << m_resource.localId() << ", request id "
             << m_genericResourceImageWriterRequestId
-            << ", note local uid = " << m_pNote->localUid());
+            << ", note local id = " << m_pNote->localId());
 
     QObject::connect(
         this, &RenameResourceDelegate::saveGenericResourceImageToFile,
@@ -251,8 +257,9 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
         &RenameResourceDelegate::onGenericResourceImageWriterFinished);
 
     Q_EMIT saveGenericResourceImageToFile(
-        m_pNote->localUid(), m_resource.localUid(), imageData,
-        QStringLiteral("png"), m_resource.dataHash(), m_resource.displayName(),
+        m_pNote->localId(), m_resource.localId(), imageData,
+        QStringLiteral("png"), *m_resource.data()->bodyHash(),
+        resourceDisplayName(m_resource),
         m_genericResourceImageWriterRequestId);
 }
 
@@ -297,7 +304,7 @@ void RenameResourceDelegate::onGenericResourceImageWriterFinished(
 
     m_genericResourceImageFilePathsByResourceHash[resourceHash] = filePath;
 
-    QString javascript = QStringLiteral("updateImageResourceSrc('") +
+    const QString javascript = QStringLiteral("updateImageResourceSrc('") +
         QString::fromLocal8Bit(resourceHash.toHex()) + QStringLiteral("', '") +
         filePath + QStringLiteral("', 0, 0);");
 

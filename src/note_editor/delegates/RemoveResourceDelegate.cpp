@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,7 +45,8 @@ namespace quentier {
     }
 
 RemoveResourceDelegate::RemoveResourceDelegate(
-    const Resource & resourceToRemove, NoteEditorPrivate & noteEditor,
+    const qevercloud::Resource & resourceToRemove,
+    NoteEditorPrivate & noteEditor,
     LocalStorageManagerAsync & localStorageManager) :
     m_noteEditor(noteEditor),
     m_localStorageManager(localStorageManager), m_resource(resourceToRemove)
@@ -67,12 +68,12 @@ void RemoveResourceDelegate::start()
     }
 }
 
-void RemoveResourceDelegate::onOriginalPageConvertedToNote(Note note)
+void RemoveResourceDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "RemoveResourceDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -84,8 +85,8 @@ void RemoveResourceDelegate::onOriginalPageConvertedToNote(Note note)
 }
 
 void RemoveResourceDelegate::onFindResourceComplete(
-    Resource resource, LocalStorageManager::GetResourceOptions options,
-    QUuid requestId)
+    qevercloud::Resource resource,
+    LocalStorageManager::GetResourceOptions options, QUuid requestId)
 {
     if (m_findResourceRequestId != requestId) {
         return;
@@ -104,7 +105,8 @@ void RemoveResourceDelegate::onFindResourceComplete(
 }
 
 void RemoveResourceDelegate::onFindResourceFailed(
-    Resource resource, LocalStorageManager::GetResourceOptions options,
+    qevercloud::Resource resource,
+    LocalStorageManager::GetResourceOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
     if (m_findResourceRequestId != requestId) {
@@ -113,9 +115,8 @@ void RemoveResourceDelegate::onFindResourceFailed(
 
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::onFindResourceFailed: request id = " << requestId
-            << ", error description: " << errorDescription);
+        "RemoveResourceDelegate::onFindResourceFailed: request id = "
+            << requestId << ", error description: " << errorDescription);
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
@@ -128,7 +129,7 @@ void RemoveResourceDelegate::doStart()
 {
     QNDEBUG("note_editor:delegate", "RemoveResourceDelegate::doStart");
 
-    if (Q_UNLIKELY(!m_resource.hasDataHash())) {
+    if (Q_UNLIKELY(!m_resource.data() || !m_resource.data()->bodyHash())) {
         ErrorString error(
             QT_TR_NOOP("Can't remove the attachment: data hash is missing"));
         QNWARNING("note_editor:delegate", error);
@@ -150,7 +151,7 @@ void RemoveResourceDelegate::doStart()
     int resourceDataSizeThreshold = -1;
     if (appSettings.contains(
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD)) {
-        QVariant threshold = appSettings.value(
+        const QVariant threshold = appSettings.value(
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD);
 
         bool conversionResult = false;
@@ -171,17 +172,18 @@ void RemoveResourceDelegate::doStart()
             NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_DEFAULT_THRESHOLD;
     }
 
-    if ((!m_resource.hasDataBody() && m_resource.hasDataSize() &&
-         (m_resource.dataSize() > resourceDataSizeThreshold)) ||
-        (!m_resource.hasDataBody() && !m_resource.hasAlternateDataBody() &&
-         m_resource.hasAlternateDataSize() &&
-         (m_resource.alternateDataSize() > resourceDataSizeThreshold)))
+    if ((!m_resource.data()->body() && m_resource.data()->size() &&
+         (*m_resource.data()->size() > resourceDataSizeThreshold)) ||
+        (!m_resource.data()->body() && m_resource.alternateData() &&
+         !m_resource.alternateData()->body() &&
+         m_resource.alternateData()->size() &&
+         (*m_resource.alternateData()->size() > resourceDataSizeThreshold)))
     {
-        int resourceDataSize =
-            (m_resource.hasDataSize() ? m_resource.dataSize()
-                                      : m_resource.alternateDataSize());
+        const int resourceDataSize =
+            (m_resource.data()->size() ? *m_resource.data()->size()
+                                       : *m_resource.alternateData()->size());
 
-        int result = questionMessageBox(
+        const int result = questionMessageBox(
             &m_noteEditor, tr("Confirm attachment removal"),
             tr("The attachment removal would be irreversible"),
             tr("Are you sure you want to remove this "
@@ -192,15 +194,15 @@ void RemoveResourceDelegate::doStart()
                 QStringLiteral(") ") + tr("its removal would be irreversible"));
 
         if (result != QMessageBox::Ok) {
-            Q_EMIT cancelled(m_resource.localUid());
+            Q_EMIT cancelled(m_resource.localId());
             return;
         }
 
         m_reversible = false;
     }
 
-    if (m_reversible && !m_resource.hasDataBody() &&
-        !m_resource.hasAlternateDataBody())
+    if (m_reversible && (!m_resource.data() || m_resource.data()->body()) &&
+        (!m_resource.alternateData() || !m_resource.alternateData()->body()))
     {
         connectToLocalStorage();
         m_findResourceRequestId = QUuid::createUuid();
@@ -210,9 +212,9 @@ void RemoveResourceDelegate::doStart()
             "Emitting the request to find resource "
                 << "within the local storage: request id = "
                 << m_findResourceRequestId
-                << ", resource local uid = " << m_resource.localUid());
+                << ", resource local id = " << m_resource.localId());
 
-        LocalStorageManager::GetResourceOptions options(
+        const LocalStorageManager::GetResourceOptions options(
             LocalStorageManager::GetResourceOption::WithBinaryData);
 
         Q_EMIT findResource(m_resource, options, m_findResourceRequestId);
@@ -229,8 +231,9 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
         "RemoveResourceDelegate"
             << "::removeResourceFromNoteEditorPage");
 
-    QString javascript = QStringLiteral("resourceManager.removeResource('") +
-        QString::fromLocal8Bit(m_resource.dataHash().toHex()) +
+    const QString javascript =
+        QStringLiteral("resourceManager.removeResource('") +
+        QString::fromLocal8Bit(m_resource.data()->bodyHash()->toHex()) +
         QStringLiteral("');");
 
     GET_PAGE()
@@ -270,9 +273,9 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
         "RemoveResourceDelegate"
             << "::onResourceReferenceRemovedFromNoteContent");
 
-    auto resultMap = data.toMap();
+    const auto resultMap = data.toMap();
 
-    auto statusIt = resultMap.find(QStringLiteral("status"));
+    const auto statusIt = resultMap.find(QStringLiteral("status"));
     if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of attachment "
@@ -282,8 +285,7 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
         return;
     }
 
-    bool res = statusIt.value().toBool();
-    if (!res) {
+    if (!statusIt.value().toBool()) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));

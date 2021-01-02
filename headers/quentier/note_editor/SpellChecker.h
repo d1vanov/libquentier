@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,9 +28,9 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
-QT_FORWARD_DECLARE_CLASS(SpellCheckerPrivate)
+class Account;
+class FileIOProcessorAsync;
+class SpellCheckerPrivate;
 
 class QUENTIER_EXPORT SpellChecker : public QObject
 {
@@ -42,16 +42,17 @@ public:
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<std::pair<QString, bool>> listAvailableDictionaries() const;
+    [[nodiscard]] QVector<std::pair<QString, bool>> listAvailableDictionaries()
+        const;
 
     void setAccount(const Account & account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);
 
-    bool checkSpell(const QString & word) const;
+    [[nodiscard]] bool checkSpell(const QString & word) const;
 
-    QStringList spellCorrectionSuggestions(
+    [[nodiscard]] QStringList spellCorrectionSuggestions(
         const QString & misSpelledWord) const;
 
     void addToUserWordlist(const QString & word);
@@ -59,7 +60,7 @@ public:
     void ignoreWord(const QString & word);
     void removeWord(const QString & word);
 
-    bool isReady() const;
+    [[nodiscard]] bool isReady() const noexcept;
 
 Q_SIGNALS:
     void ready();

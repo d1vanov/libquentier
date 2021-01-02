@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,7 +22,8 @@
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/generated/types/Note.h>
 
 #include <QPointer>
 
@@ -30,9 +31,9 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-QT_FORWARD_DECLARE_CLASS(EncryptionManager)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class DecryptedTextManager;
+class EncryptionManager;
+class NoteEditorPrivate;
 
 /**
  * @brief The DecryptEncryptedTextDelegate class encapsulates a chain of
@@ -62,7 +63,7 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onEncryptedTextDecrypted(
         QString cipher, size_t keyLength, QString encryptedText,
@@ -75,7 +76,7 @@ private:
     void raiseDecryptionDialog();
 
 private:
-    typedef JsResultCallbackFunctor<DecryptEncryptedTextDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<DecryptEncryptedTextDelegate>;
 
 private:
     QString m_encryptedTextId;

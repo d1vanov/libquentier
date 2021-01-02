@@ -25,6 +25,12 @@
 
 #include <utility>
 
+namespace qevercloud {
+
+class Note;
+
+} // namespace qevercloud
+
 namespace quentier {
 
 class ErrorString;
@@ -47,8 +53,12 @@ class ErrorString;
 [[nodiscard]] QUENTIER_EXPORT QStringList noteContentToListOfWords(
     const QString & noteContent, ErrorString * errorDescription = nullptr);
 
-[[nodiscard]] std::pair<QString, QStringList> noteContentToPlainTextAndListOfWords(
+[[nodiscard]] QUENTIER_EXPORT std::pair<QString, QStringList>
+noteContentToPlainTextAndListOfWords(
     const QString & noteContent, ErrorString * errorDescription = nullptr);
+
+[[nodiscard]] QUENTIER_EXPORT int noteResourceCount(
+    const qevercloud::Note & note);
 
 } // namespace quentier
 

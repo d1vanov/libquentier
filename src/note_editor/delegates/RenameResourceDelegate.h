@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,9 @@
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QHash>
 #include <QObject>
@@ -31,8 +32,8 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class GenericResourceImageManager;
+class NoteEditorPrivate;
 
 /**
  * @brief The RenameResourceDelegate class encapsulates a chain of callbacks
@@ -45,7 +46,7 @@ class Q_DECL_HIDDEN RenameResourceDelegate final : public QObject
     Q_OBJECT
 public:
     explicit RenameResourceDelegate(
-        const Resource & resource, NoteEditorPrivate & noteEditor,
+        const qevercloud::Resource & resource, NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash,
@@ -58,8 +59,8 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString oldResourceName, QString newResourceName, Resource resource,
-        bool performingUndo);
+        QString oldResourceName, QString newResourceName,
+        qevercloud::Resource resource, bool performingUndo);
 
     void cancelled();
     void notifyError(ErrorString);
@@ -74,7 +75,7 @@ Q_SIGNALS:
 #endif
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onRenameResourceDialogFinished(QString newResourceName);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -100,7 +101,7 @@ private:
     NoteEditorPrivate & m_noteEditor;
     GenericResourceImageManager * m_pGenericResourceImageManager;
     QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
-    Resource m_resource;
+    qevercloud::Resource m_resource;
 
     QString m_oldResourceName;
     QString m_newResourceName;
@@ -108,7 +109,7 @@ private:
 
     bool m_performingUndo;
 
-    Note * m_pNote;
+    qevercloud::Note * m_pNote;
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     QUuid m_genericResourceImageWriterRequestId;

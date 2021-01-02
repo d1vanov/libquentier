@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,9 @@
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QHash>
 #include <QNetworkAccessManager>
@@ -35,11 +36,11 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(ENMLConverter)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
-QT_FORWARD_DECLARE_CLASS(ResourceInfo)
+class Account;
+class ENMLConverter;
+class NoteEditorPrivate;
+class ResourceDataInTemporaryFileStorageManager;
+class ResourceInfo;
 
 class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
 {
@@ -56,7 +57,8 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QList<Resource> addedResources, QStringList resourceFileStoragePaths);
+        QList<qevercloud::Resource> addedResources,
+        QStringList resourceFileStoragePaths);
 
     void notifyError(ErrorString error);
 
@@ -66,7 +68,7 @@ Q_SIGNALS:
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onImageDataDownloadFinished(QNetworkReply * pReply);
 
     void onResourceDataSavedToTemporaryFile(
@@ -103,13 +105,13 @@ private:
     QSet<QUrl> m_pendingImageUrls;
     QSet<QUrl> m_failingImageUrls;
 
-    QHash<QUuid, Resource> m_resourceBySaveDataToTemporaryFileRequestId;
+    QHash<QUuid, qevercloud::Resource> m_resourceBySaveDataToTemporaryFileRequestId;
     QHash<QString, QUrl> m_sourceUrlByResourceLocalUid;
     QHash<QUrl, QUrl> m_urlToRedirectUrl;
 
     struct Q_DECL_HIDDEN ImgData
     {
-        Resource m_resource;
+        qevercloud::Resource m_resource;
         QString m_resourceFileStoragePath;
     };
 

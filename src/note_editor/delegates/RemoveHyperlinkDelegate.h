@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,12 @@
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/generated/types/Note.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPrivate;
 
 /**
  * @brief The RemoveHyperlinkDelegate class encapsulates a chain of callbacks
@@ -46,7 +47,7 @@ Q_SIGNALS:
     void notifyError(ErrorString error);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
     void onHyperlinkIdFound(const QVariant & data);
     void onHyperlinkRemoved(const QVariant & data);
 

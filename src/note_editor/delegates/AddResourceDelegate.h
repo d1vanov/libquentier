@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,9 @@
 #include "JsResultCallbackFunctor.hpp"
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QByteArray>
 #include <QHash>
@@ -33,11 +34,11 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Account)
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
-QT_FORWARD_DECLARE_CLASS(GenericResourceImageManager)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
+class Account;
+class FileIOProcessorAsync;
+class GenericResourceImageManager;
+class NoteEditorPrivate;
+class ResourceDataInTemporaryFileStorageManager;
 
 /**
  * The AddResourceDelegate class wraps a series of asynchronous actions required
@@ -124,7 +125,9 @@ public:
     void start();
 
 Q_SIGNALS:
-    void finished(Resource addedResource, QString resourceFileStoragePath);
+    void finished(
+        qevercloud::Resource addedResource, QString resourceFileStoragePath);
+
     void notifyError(ErrorString error);
 
     // private signals
@@ -142,7 +145,7 @@ Q_SIGNALS:
         QUuid requestId);
 
 private Q_SLOTS:
-    void onOriginalPageConvertedToNote(Note note);
+    void onOriginalPageConvertedToNote(qevercloud::Note note);
 
     void onResourceFileRead(
         bool success, ErrorString errorDescription, QByteArray data,
@@ -171,7 +174,8 @@ private:
     void insertNewResourceHtml();
 
     bool checkResourceDataSize(
-        const Note & note, const Account * pAccount, const qint64 size);
+        const qevercloud::Note & note, const Account * pAccount,
+        const qint64 size);
 
 private:
     typedef JsResultCallbackFunctor<AddResourceDelegate> JsCallback;
@@ -197,7 +201,7 @@ private:
 
     QMimeType m_resourceMimeType;
 
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     QString m_resourceFileStoragePath;
 
     QUuid m_readResourceFileRequestId;
