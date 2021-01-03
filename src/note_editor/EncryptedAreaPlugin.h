@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,13 +24,15 @@
 #include <QWidget>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(EncryptedAreaPlugin)
-}
+
+class EncryptedAreaPlugin;
+
+} // namespace Ui
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
+class NoteEditorPrivate;
+class NoteEditorPluginFactory;
 
 class Q_DECL_HIDDEN EncryptedAreaPlugin final: public QWidget
 {
@@ -40,16 +42,16 @@ public:
         NoteEditorPrivate & noteEditor,
         QWidget * parent = nullptr);
 
-    virtual ~EncryptedAreaPlugin();
+    ~EncryptedAreaPlugin() noexcept override;
 
-    bool initialize(
+    [[nodiscard]] bool initialize(
         const QStringList & parameterNames,
         const QStringList & parameterValues,
         const NoteEditorPluginFactory & pluginFactory,
         ErrorString & errorDescription);
 
-    QString name() const;
-    QString description() const;
+    [[nodiscard]] QString name() const noexcept;
+    [[nodiscard]] QString description() const noexcept;
 
 private Q_SLOTS:
     void decrypt();

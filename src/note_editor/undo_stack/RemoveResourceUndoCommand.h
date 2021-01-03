@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 
 #include "../NoteEditorPage.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Resource.h>
 
 namespace quentier {
 
@@ -36,21 +36,21 @@ public:
 
 public:
     RemoveResourceUndoCommand(
-        const Resource & resource, const Callback & callback,
+        const qevercloud::Resource & resource, const Callback & callback,
         NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     RemoveResourceUndoCommand(
-        const Resource & resource, const Callback & callback,
+        const qevercloud::Resource & resource, const Callback & callback,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~RemoveResourceUndoCommand();
+    ~RemoveResourceUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     Callback m_callback;
 };
 

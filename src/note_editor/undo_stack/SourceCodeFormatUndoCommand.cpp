@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -52,7 +52,7 @@ SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
     m_callback(callback)
 {}
 
-SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand() {}
+SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand() noexcept = default;
 
 void SourceCodeFormatUndoCommand::redoImpl()
 {

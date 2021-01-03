@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,8 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "ToDoCheckboxAutomaticInsertionUndoCommand",                       \
-            "Can't undo/redo the automatic insertion "                         \
-            "of a TODO checkbox: no note editor page"));                       \
+            "Can't undo/redo the automatic insertion of a TODO checkbox: "     \
+            "no note editor page"));                                           \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -55,15 +55,13 @@ ToDoCheckboxAutomaticInsertionUndoCommand::
 {}
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
-    ~ToDoCheckboxAutomaticInsertionUndoCommand()
-{}
+    ~ToDoCheckboxAutomaticInsertionUndoCommand() noexcept = default;
 
 void ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "ToDoCheckboxAutomaticInsertionUndoCommand"
-            << "::redoImpl");
+        "ToDoCheckboxAutomaticInsertionUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -74,8 +72,7 @@ void ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "ToDoCheckboxAutomaticInsertionUndoCommand"
-            << "::undoImpl");
+        "ToDoCheckboxAutomaticInsertionUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(

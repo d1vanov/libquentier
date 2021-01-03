@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,11 +23,12 @@
 #include "ResourceDataInTemporaryFileStorageManager.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Resource.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/MessageBox.h>
 #include <quentier/utility/QuentierCheckPtr.h>
+
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QCryptographicHash>
 #include <QDesktopServices>
@@ -42,41 +43,39 @@ namespace quentier {
 
 GenericResourceDisplayWidget::GenericResourceDisplayWidget(QWidget * parent) :
     QWidget(parent),
-    m_pUi(new Ui::GenericResourceDisplayWidget),
-    m_resourceLocalUid(),
-    m_resourceHash()
+    m_pUi(new Ui::GenericResourceDisplayWidget)
 {
     m_pUi->setupUi(this);
 }
 
-GenericResourceDisplayWidget::~GenericResourceDisplayWidget()
+GenericResourceDisplayWidget::~GenericResourceDisplayWidget() noexcept
 {
     delete m_pUi;
 }
 
 void GenericResourceDisplayWidget::initialize(
     const QIcon & icon, const QString & name, const QString & size,
-    const Resource & resource)
+    const qevercloud::Resource & resource)
 {
     QNDEBUG("note_editor", "GenericResourceDisplayWidget::initialize: name = "
         << name << ", size = " << size);
 
-    m_resourceLocalUid = resource.localUid();
+    m_resourceLocalId = resource.localId();
 
-    if (resource.hasDataHash()) {
-        m_resourceHash = resource.dataHash();
+    if (resource.data() && resource.data()->bodyHash()) {
+        m_resourceHash = *resource.data()->bodyHash();
     }
-    else if (resource.hasDataBody()) {
+    else if (resource.data() && resource.data()->body()) {
         m_resourceHash = QCryptographicHash::hash(
-            resource.dataBody(),
+            *resource.data()->body(),
             QCryptographicHash::Md5);
     }
-    else if (resource.hasAlternateDataHash()) {
-        m_resourceHash = resource.alternateDataHash();
+    else if (resource.alternateData() && resource.alternateData()->bodyHash()) {
+        m_resourceHash = *resource.alternateData()->bodyHash();
     }
-    else if (resource.hasAlternateDataBody()) {
+    else if (resource.alternateData() && resource.alternateData()->body()) {
         m_resourceHash = QCryptographicHash::hash(
-            resource.alternateDataBody(),
+            *resource.alternateData()->body(),
             QCryptographicHash::Md5);
     }
 
@@ -111,9 +110,9 @@ void GenericResourceDisplayWidget::initialize(
         &GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed);
 }
 
-QString GenericResourceDisplayWidget::resourceLocalUid() const
+QString GenericResourceDisplayWidget::resourceLocalId() const noexcept
 {
-    return m_resourceLocalUid;
+    return m_resourceLocalId;
 }
 
 void GenericResourceDisplayWidget::updateResourceName(

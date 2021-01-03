@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include "INoteEditorUndoCommand.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Resource.h>
 
 namespace quentier {
 
@@ -31,25 +31,27 @@ class Q_DECL_HIDDEN UpdateResourceUndoCommand final :
     Q_OBJECT
 public:
     UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
+        const qevercloud::Resource & resourceBefore,
+        const qevercloud::Resource & resourceAfter,
         NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     UpdateResourceUndoCommand(
-        const Resource & resourceBefore, const Resource & resourceAfter,
+        const qevercloud::Resource & resourceBefore,
+        const qevercloud::Resource & resourceAfter,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~UpdateResourceUndoCommand();
+    ~UpdateResourceUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
     void init();
 
 private:
-    Resource m_resourceBefore;
-    Resource m_resourceAfter;
+    qevercloud::Resource m_resourceBefore;
+    qevercloud::Resource m_resourceAfter;
 };
 
 } // namespace quentier

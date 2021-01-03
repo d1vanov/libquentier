@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,28 +25,34 @@
 #include <QUuid>
 #include <QWidget>
 
-QT_FORWARD_DECLARE_CLASS(QMimeDatabase)
+class QMimeDatabase;
+
+namespace qevercloud {
+
+class Resource;
+
+} // namespace qevercloud
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(GenericResourceDisplayWidget)
-}
+
+class GenericResourceDisplayWidget;
+
+} // namespace Ui
 
 namespace quentier {
-
-QT_FORWARD_DECLARE_CLASS(Resource)
 
 class Q_DECL_HIDDEN GenericResourceDisplayWidget final: public QWidget
 {
     Q_OBJECT
 public:
     GenericResourceDisplayWidget(QWidget * parent = nullptr);
-    virtual ~GenericResourceDisplayWidget();
+    ~GenericResourceDisplayWidget() noexcept override;
 
     void initialize(
         const QIcon & icon, const QString & name, const QString & size,
-        const Resource & resource);
+        const qevercloud::Resource & resource);
 
-    QString resourceLocalUid() const;
+    [[nodiscard]] QString resourceLocalId() const noexcept;
 
     void updateResourceName(const QString & resourceName);
     void updateResourceSize(const QString & size);
@@ -64,7 +70,7 @@ private:
 
 private:
     Ui::GenericResourceDisplayWidget *  m_pUi;
-    QString             m_resourceLocalUid;
+    QString             m_resourceLocalId;
     QByteArray          m_resourceHash;
 };
 

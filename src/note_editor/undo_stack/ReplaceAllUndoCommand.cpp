@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,7 @@ ReplaceAllUndoCommand::ReplaceAllUndoCommand(
     m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
 {}
 
-ReplaceAllUndoCommand::~ReplaceAllUndoCommand() {}
+ReplaceAllUndoCommand::~ReplaceAllUndoCommand() noexcept = default;
 
 void ReplaceAllUndoCommand::redoImpl()
 {

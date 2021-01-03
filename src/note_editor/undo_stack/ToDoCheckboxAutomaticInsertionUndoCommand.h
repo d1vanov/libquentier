@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,10 +41,10 @@ public:
         NoteEditorPrivate & noteEditor, const Callback & callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~ToDoCheckboxAutomaticInsertionUndoCommand();
+    ~ToDoCheckboxAutomaticInsertionUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     Callback m_callback;

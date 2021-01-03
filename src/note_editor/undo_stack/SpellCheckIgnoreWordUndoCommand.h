@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SpellChecker)
+class SpellChecker;
 
 class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand final :
     public INoteEditorUndoCommand
@@ -41,10 +41,10 @@ public:
         SpellChecker * pSpellChecker, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~SpellCheckIgnoreWordUndoCommand();
+    ~SpellCheckIgnoreWordUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     QPointer<SpellChecker> m_pSpellChecker;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "TableActionUndoCommand",                                          \
-            "Can't table action: can't get "                                   \
-            "note editor page"));                                              \
+            "Can't table action: can't get note editor page"));                \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -52,16 +51,14 @@ TableActionUndoCommand::TableActionUndoCommand(
     m_callback(callback)
 {}
 
-TableActionUndoCommand::~TableActionUndoCommand() {}
+TableActionUndoCommand::~TableActionUndoCommand() noexcept = default;
 
 void TableActionUndoCommand::redoImpl()
 {
     QNDEBUG("note_editor:undo", "TableActionUndoCommand::redoImpl");
 
     GET_PAGE()
-
-    QString javascript = QStringLiteral("tableManager.redo();");
-    page->executeJavaScript(javascript, m_callback);
+    page->executeJavaScript(QStringLiteral("tableManager.redo();"), m_callback);
 }
 
 void TableActionUndoCommand::undoImpl()
@@ -69,9 +66,7 @@ void TableActionUndoCommand::undoImpl()
     QNDEBUG("note_editor:undo", "TableActionUndoCommand::undoImpl");
 
     GET_PAGE()
-
-    QString javascript = QStringLiteral("tableManager.undo();");
-    page->executeJavaScript(javascript, m_callback);
+    page->executeJavaScript(QStringLiteral("tableManager.undo();"), m_callback);
 }
 
 } // namespace quentier

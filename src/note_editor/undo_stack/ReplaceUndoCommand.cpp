@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,8 +29,7 @@ namespace quentier {
     if (Q_UNLIKELY(!page)) {                                                   \
         ErrorString error(QT_TRANSLATE_NOOP(                                   \
             "ReplaceUndoCommand",                                              \
-            "Can't undo/redo text replacement: "                               \
-            "can't get note editor page"));                                    \
+            "Can't undo/redo text replacement: can't get note editor page"));  \
         QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
@@ -54,7 +53,7 @@ ReplaceUndoCommand::ReplaceUndoCommand(
     m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
 {}
 
-ReplaceUndoCommand::~ReplaceUndoCommand() {}
+ReplaceUndoCommand::~ReplaceUndoCommand() noexcept = default;
 
 void ReplaceUndoCommand::redoImpl()
 {

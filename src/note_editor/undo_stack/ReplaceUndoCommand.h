@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,10 +42,10 @@ public:
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         Callback callback, QUndoCommand * parent = nullptr);
 
-    virtual ~ReplaceUndoCommand();
+    ~ReplaceUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     QString m_textToReplace;

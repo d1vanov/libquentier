@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 #define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_IMAGE_MANAGER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
+
+#include <qevercloud/generated/types/Note.h>
 
 #include <QObject>
 #include <QUuid>
@@ -51,19 +52,19 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     void onGenericResourceImageWriteRequest(
-        QString noteLocalUid, QString resourceLocalUid,
+        QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
 
-    void onCurrentNoteChanged(Note note);
+    void onCurrentNoteChanged(qevercloud::Note note);
 
 private:
     void removeStaleGenericResourceImageFilesFromCurrentNote();
 
 private:
     QString m_storageFolderPath;
-    std::unique_ptr<Note> m_pCurrentNote;
+    std::unique_ptr<qevercloud::Note> m_pCurrentNote;
 };
 
 } // namespace quentier

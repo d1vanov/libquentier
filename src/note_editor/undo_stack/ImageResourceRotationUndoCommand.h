@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 
 #include "../NoteEditor_p.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QSize>
 
@@ -39,7 +39,8 @@ public:
         const QByteArray & resourceHashBefore,
         const QByteArray & resourceRecognitionDataBefore,
         const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+        const QSize & resourceImageSizeBefore,
+        const qevercloud::Resource & resourceAfter,
         const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, QUndoCommand * parent = nullptr);
 
@@ -48,15 +49,16 @@ public:
         const QByteArray & resourceHashBefore,
         const QByteArray & resourceRecognitionDataBefore,
         const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
+        const QSize & resourceImageSizeBefore,
+        const qevercloud::Resource & resourceAfter,
         const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~ImageResourceRotationUndoCommand();
+    ~ImageResourceRotationUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     const QByteArray m_resourceDataBefore;
@@ -64,7 +66,7 @@ private:
     const QByteArray m_resourceRecognitionDataBefore;
     const QByteArray m_resourceRecognitionDataHashBefore;
     const QSize m_resourceImageSizeBefore;
-    const Resource m_resourceAfter;
+    const qevercloud::Resource m_resourceAfter;
     const INoteEditorBackend::Rotation m_rotationDirection;
 };
 

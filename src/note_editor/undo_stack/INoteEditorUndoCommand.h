@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditorPrivate;
 
 class Q_DECL_HIDDEN INoteEditorUndoCommand : public QuentierUndoCommand
 {

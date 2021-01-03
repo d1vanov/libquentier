@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,8 @@
 namespace quentier {
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-    const Resource & resourceBefore, const Resource & resourceAfter,
+    const qevercloud::Resource & resourceBefore,
+    const qevercloud::Resource & resourceAfter,
     NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
     m_resourceBefore(resourceBefore), m_resourceAfter(resourceAfter)
@@ -34,7 +35,8 @@ UpdateResourceUndoCommand::UpdateResourceUndoCommand(
 }
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-    const Resource & resourceBefore, const Resource & resourceAfter,
+    const qevercloud::Resource & resourceBefore,
+    const qevercloud::Resource & resourceAfter,
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
@@ -43,7 +45,7 @@ UpdateResourceUndoCommand::UpdateResourceUndoCommand(
     init();
 }
 
-UpdateResourceUndoCommand::~UpdateResourceUndoCommand() {}
+UpdateResourceUndoCommand::~UpdateResourceUndoCommand() noexcept = default;
 
 void UpdateResourceUndoCommand::undoImpl()
 {

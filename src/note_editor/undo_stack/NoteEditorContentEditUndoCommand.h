@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include "INoteEditorUndoCommand.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QList>
 
@@ -34,17 +34,18 @@ class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand final :
 public:
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources, QUndoCommand * parent = nullptr);
+        const QList<qevercloud::Resource> & resources,
+        QUndoCommand * parent = nullptr);
 
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<Resource> & resources, const QString & text,
+        const QList<qevercloud::Resource> & resources, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    virtual ~NoteEditorContentEditUndoCommand();
+    ~NoteEditorContentEditUndoCommand() noexcept;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     void init();
@@ -55,8 +56,8 @@ private:
      * the note might be deleted via simply pressing backspace; the actual fact
      * of the resource's deletion only becomes clear when the HTML from note
      * editor's page is converted back into ENML and its analysis can reveal
-     * that certain resource is no longer is a part of the note. Only at that
-     * time it is removed from the list of note's resources.
+     * that certain resource is no longer a part of the note. Only at that
+     * time the resource is removed from the list of note's resources.
      *
      * The undo stack must make it possible to restore the resources when
      * undoing the changes made to the note's content. For this reason each undo
@@ -72,7 +73,7 @@ private:
      * removing the resource from the note's content via backspace, that fact
      * would be figured out elsewhere
      */
-    QList<Resource> m_resources;
+    QList<qevercloud::Resource> m_resources;
 };
 
 } // namespace quentier

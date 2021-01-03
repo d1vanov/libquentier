@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,7 @@ EncryptedAreaPlugin::EncryptedAreaPlugin(
 
     m_pUi->setupUi(this);
 
-    QAction * showEncryptedTextAction = new QAction(this);
+    auto * showEncryptedTextAction = new QAction(this);
 
     showEncryptedTextAction->setText(
         tr("Show encrypted text") + QStringLiteral("..."));
@@ -62,7 +62,7 @@ EncryptedAreaPlugin::EncryptedAreaPlugin(
     }
 }
 
-EncryptedAreaPlugin::~EncryptedAreaPlugin()
+EncryptedAreaPlugin::~EncryptedAreaPlugin() noexcept
 {
     QNDEBUG("note_editor", "EncryptedAreaPlugin: destructor");
     delete m_pUi;
@@ -82,14 +82,14 @@ bool EncryptedAreaPlugin::initialize(
 
     const int numParameterValues = parameterValues.size();
 
-    int cipherIndex = parameterNames.indexOf(QStringLiteral("cipher"));
+    const int cipherIndex = parameterNames.indexOf(QStringLiteral("cipher"));
     if (numParameterValues <= cipherIndex) {
         errorDescription.setBase(
             QT_TR_NOOP("No value was found for cipher attribute"));
         return false;
     }
 
-    int encryptedTextIndex = parameterNames.indexOf(
+    const int encryptedTextIndex = parameterNames.indexOf(
         QStringLiteral("encrypted_text"));
     if (encryptedTextIndex < 0) {
         errorDescription.setBase(
@@ -98,7 +98,7 @@ bool EncryptedAreaPlugin::initialize(
         return false;
     }
 
-    int keyLengthIndex = parameterNames.indexOf(QStringLiteral("length"));
+    const int keyLengthIndex = parameterNames.indexOf(QStringLiteral("length"));
     if (numParameterValues <= keyLengthIndex) {
         errorDescription.setBase(
             QT_TR_NOOP("No value was found for length attribute"));
@@ -125,7 +125,7 @@ bool EncryptedAreaPlugin::initialize(
 
     m_encryptedText = parameterValues[encryptedTextIndex];
 
-    int hintIndex = parameterNames.indexOf(QStringLiteral("hint"));
+    const int hintIndex = parameterNames.indexOf(QStringLiteral("hint"));
     if ((hintIndex < 0) || (numParameterValues <= hintIndex)) {
         m_hint.clear();
     }
@@ -133,14 +133,14 @@ bool EncryptedAreaPlugin::initialize(
         m_hint = parameterValues[hintIndex];
     }
 
-    int enCryptIndexIndex = parameterNames.indexOf(
+    const int enCryptIdIndex = parameterNames.indexOf(
         QStringLiteral("en-crypt-id"));
 
-    if ((enCryptIndexIndex < 0) || (numParameterValues <= enCryptIndexIndex)) {
+    if ((enCryptIdIndex < 0) || (numParameterValues <= enCryptIdIndex)) {
         m_id.clear();
     }
     else {
-        m_id = parameterValues[enCryptIndexIndex];
+        m_id = parameterValues[enCryptIdIndex];
     }
 
     QNTRACE("note_editor", "Initialized encrypted area plugin: cipher = "
@@ -150,12 +150,12 @@ bool EncryptedAreaPlugin::initialize(
     return true;
 }
 
-QString EncryptedAreaPlugin::name() const
+QString EncryptedAreaPlugin::name() const noexcept
 {
     return QStringLiteral("EncryptedAreaPlugin");
 }
 
-QString EncryptedAreaPlugin::description() const
+QString EncryptedAreaPlugin::description() const noexcept
 {
     return tr("Encrypted area plugin - note editor plugin used for the display "
               "and convenient work with encrypted text within notes");

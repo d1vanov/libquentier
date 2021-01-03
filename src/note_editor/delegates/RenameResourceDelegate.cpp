@@ -159,8 +159,7 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RenameResourceDelegate"
-            << "::raiseRenameResourceDialog");
+        "RenameResourceDelegate::raiseRenameResourceDialog");
 
     const auto pRenameResourceDialog = std::make_unique<RenameResourceDialog>(
         m_oldResourceName, &m_noteEditor);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include "INoteEditorUndoCommand.h"
 
-#include <quentier/types/Resource.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QHash>
 
@@ -35,7 +35,7 @@ class Q_DECL_HIDDEN RenameResourceUndoCommand final :
     Q_OBJECT
 public:
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        const qevercloud::Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
@@ -43,20 +43,20 @@ public:
         QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
-        const Resource & resource, const QString & previousResourceName,
+        const qevercloud::Resource & resource, const QString & previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~RenameResourceUndoCommand();
+    ~RenameResourceUndoCommand() noexcept override;
 
-    virtual void undoImpl() override;
-    virtual void redoImpl() override;
+    void undoImpl() override;
+    void redoImpl() override;
 
 private:
-    Resource m_resource;
+    qevercloud::Resource m_resource;
     QString m_previousResourceName;
     QString m_newResourceName;
     GenericResourceImageManager * m_pGenericResourceImageManager;

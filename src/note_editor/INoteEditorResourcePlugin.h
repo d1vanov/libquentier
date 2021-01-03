@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,10 +23,15 @@
 
 #include <QWidget>
 
+namespace qevercloud {
+
+class Resource;
+
+} // namespace qevercloud
+
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(Resource)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
+class NoteEditorPluginFactory;
 
 /**
  * @brief The INoteEditorResourcePlugin class is the interface for note editor
@@ -47,7 +52,7 @@ public:
      * caller's responsibility to take care about the ownership
      * of the returned pointer
      */
-    virtual INoteEditorResourcePlugin * clone() const = 0;
+    [[nodiscard]] virtual INoteEditorResourcePlugin * clone() const = 0;
 
     /**
      * @brief initialize is the method used to initialize the note editor plugin
@@ -67,11 +72,12 @@ public:
      * @return                  True if initialization was successful,
      *                          false otherwise
      */
-    virtual bool initialize(
+    [[nodiscard]] virtual bool initialize(
         const QString & mimeType, const QStringList & parameterNames,
         const QStringList & parameterValues,
         const NoteEditorPluginFactory & pluginFactory,
-        const Resource & resource, ErrorString & errorDescription) = 0;
+        const qevercloud::Resource & resource,
+        ErrorString & errorDescription) = 0;
 
     /**
      * @brief mimeTypes         The method telling which are the mime types of
@@ -79,7 +85,7 @@ public:
      * @return                  The list of resource mime types the plugin
      *                          supports
      */
-    virtual QStringList mimeTypes() const = 0;
+    [[nodiscard]] virtual QStringList mimeTypes() const = 0;
 
     /**
      * @brief fileExtensions is the method telling which file extensions of
@@ -89,19 +95,19 @@ public:
      * @return                  The hash of file extensions the plugin supports
      *                          per mime types the plugin supports
      */
-    virtual QHash<QString, QStringList> fileExtensions() const = 0;
+    [[nodiscard]] virtual QHash<QString, QStringList> fileExtensions() const = 0;
 
     /**
      * @brief name - the method returning the name of the plugin
      * @return the name of the plugin
      */
-    virtual QString name() const = 0;
+    [[nodiscard]] virtual QString name() const = 0;
 
     /**
      * @brief description - the optional method
      * @return plugin's description
      */
-    virtual QString description() const { return QString(); }
+    [[nodiscard]] virtual QString description() const { return QString(); }
 };
 
 } // namespace quentier

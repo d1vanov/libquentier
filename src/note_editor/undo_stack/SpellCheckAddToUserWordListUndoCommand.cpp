@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,15 +42,13 @@ SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
 {}
 
 SpellCheckAddToUserWordListUndoCommand::
-    ~SpellCheckAddToUserWordListUndoCommand()
-{}
+    ~SpellCheckAddToUserWordListUndoCommand() noexcept = default;
 
 void SpellCheckAddToUserWordListUndoCommand::redoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "SpellCheckAddToUserWordListUndoCommand"
-            << "::redoImpl");
+        "SpellCheckAddToUserWordListUndoCommand::redoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
         QNTRACE("note_editor:undo", "No spell checker");
@@ -69,8 +67,7 @@ void SpellCheckAddToUserWordListUndoCommand::undoImpl()
 {
     QNDEBUG(
         "note_editor:undo",
-        "SpellCheckAddToUserWordListUndoCommand"
-            << "::undoImpl");
+        "SpellCheckAddToUserWordListUndoCommand::undoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
         QNTRACE("note_editor:undo", "No spell checker");

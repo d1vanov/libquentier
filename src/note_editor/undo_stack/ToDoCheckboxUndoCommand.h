@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,10 +36,10 @@ public:
         const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~ToDoCheckboxUndoCommand();
+    ~ToDoCheckboxUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     quint64 m_enToDoCheckboxId;

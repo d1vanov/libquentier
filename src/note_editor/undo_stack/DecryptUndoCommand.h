@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,10 +49,10 @@ public:
         NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
-    virtual ~DecryptUndoCommand();
+    ~DecryptUndoCommand() noexcept override;
 
-    virtual void redoImpl() override;
-    virtual void undoImpl() override;
+    void redoImpl() override;
+    void undoImpl() override;
 
 private:
     EncryptDecryptUndoCommandInfo m_info;
