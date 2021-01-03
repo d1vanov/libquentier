@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,9 +48,9 @@ public:
 public:
     explicit NoteEditorPage(NoteEditorPrivate & parent);
 
-    virtual ~NoteEditorPage();
+    ~NoteEditorPage() noexcept override;
 
-    bool javaScriptQueueEmpty() const;
+    [[nodiscard]] bool javaScriptQueueEmpty() const noexcept;
 
     void setInactive();
     void setActive();
@@ -73,7 +73,7 @@ public:
      */
     void startJavaScriptAutoExecution();
 
-    virtual void triggerAction(
+    void triggerAction(
         WebPage::WebAction action, bool checked = false) override;
 
 Q_SIGNALS:
@@ -103,23 +103,23 @@ private Q_SLOTS:
 
 private:
 #ifndef QUENTIER_USE_QT_WEB_ENGINE
-    virtual void javaScriptAlert(
+    void javaScriptAlert(
         QWebFrame * pFrame, const QString & message) override;
 
-    virtual bool javaScriptConfirm(
+    [[nodiscard]] bool javaScriptConfirm(
         QWebFrame * pFrame, const QString & message) override;
 
-    virtual void javaScriptConsoleMessage(
+    void javaScriptConsoleMessage(
         const QString & message, int lineNumber,
         const QString & sourceID) override;
 #else
-    virtual void javaScriptAlert(
+    void javaScriptAlert(
         const QUrl & securityOrigin, const QString & msg) override;
 
-    virtual bool javaScriptConfirm(
+    [[nodiscard]] bool javaScriptConfirm(
         const QUrl & securityOrigin, const QString & msg) override;
 
-    virtual void javaScriptConsoleMessage(
+    void javaScriptConsoleMessage(
         JavaScriptConsoleMessageLevel level, const QString & message,
         int lineNumber, const QString & sourceID) override;
 #endif

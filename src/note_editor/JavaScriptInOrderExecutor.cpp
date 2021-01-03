@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,7 +45,7 @@ void JavaScriptInOrderExecutor::append(
 
 void JavaScriptInOrderExecutor::start()
 {
-    auto scriptCallbackPair = m_javaScriptsQueue.dequeue();
+    const auto scriptCallbackPair = m_javaScriptsQueue.dequeue();
 
     m_inProgress = true;
 

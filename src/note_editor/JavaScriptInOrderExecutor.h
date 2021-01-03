@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -53,12 +53,12 @@ public:
 
     void append(const QString & script, Callback callback = 0);
 
-    int size() const
+    [[nodiscard]] int size() const noexcept
     {
         return m_javaScriptsQueue.size();
     }
 
-    bool empty() const
+    [[nodiscard]] bool empty() const noexcept
     {
         return m_javaScriptsQueue.empty();
     }
@@ -70,7 +70,7 @@ public:
 
     void start();
 
-    bool inProgress() const
+    [[nodiscard]] bool inProgress() const noexcept
     {
         return m_inProgress;
     }

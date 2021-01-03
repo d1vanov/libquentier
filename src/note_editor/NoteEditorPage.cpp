@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,12 +45,12 @@ NoteEditorPage::NoteEditorPage(NoteEditorPrivate & parent) :
         this, &NoteEditorPage::onJavaScriptQueueEmpty);
 }
 
-NoteEditorPage::~NoteEditorPage()
+NoteEditorPage::~NoteEditorPage() noexcept
 {
     QNDEBUG("note_editor", "NoteEditorPage::~NoteEditorPage");
 }
 
-bool NoteEditorPage::javaScriptQueueEmpty() const
+bool NoteEditorPage::javaScriptQueueEmpty() const noexcept
 {
     QNDEBUG(
         "note_editor",
@@ -109,9 +109,9 @@ bool NoteEditorPage::shouldInterruptJavaScript()
 {
     QNDEBUG("note_editor", "NoteEditorPage::shouldInterruptJavaScript");
 
-    QString title = tr("Note editor hanged");
+    const QString title = tr("Note editor hanged");
 
-    QString question =
+    const QString question =
         tr("Note editor seems hanged when loading or editing "
            "the note. Would you like to cancel loading the note?");
 

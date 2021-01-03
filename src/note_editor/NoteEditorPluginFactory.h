@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@
 #include <QVector>
 #include <QWebPluginFactory>
 
-QT_FORWARD_DECLARE_CLASS(QRegExp)
+class QRegularExpression;
 
 #define RESOURCE_PLUGIN_HTML_OBJECT_TYPE                                       \
     QStringLiteral("application/vnd.quentier.resource")
@@ -36,15 +36,20 @@ QT_FORWARD_DECLARE_CLASS(QRegExp)
 #define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE                                      \
     QStringLiteral("application/vnd.quentier.encrypt")
 
+namespace qevercloud {
+
+class Note;
+
+} // namespace qevercloud
+
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
-QT_FORWARD_DECLARE_CLASS(EncryptionManager)
-QT_FORWARD_DECLARE_CLASS(Note)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class DecryptedTextManager;
+class EncryptionManager;
+class NoteEditorPrivate;
 
-QT_FORWARD_DECLARE_CLASS(EncryptedAreaPlugin)
-QT_FORWARD_DECLARE_CLASS(GenericResourceDisplayWidget)
+class EncryptedAreaPlugin;
+class GenericResourceDisplayWidget;
 
 /**
  * @brief The NoteEditorPluginFactory class allows one to install and uninstall
@@ -57,14 +62,14 @@ public:
     explicit NoteEditorPluginFactory(
         NoteEditorPrivate & editor, QObject * parent = nullptr);
 
-    virtual ~NoteEditorPluginFactory();
+    ~NoteEditorPluginFactory() noexcept override;
 
     /**
      * @brief noteEditor is the accessor providing the const reference to
      * INoteEditorBackend object owning the factory
      * @return const reference to INoteEditorBackend object
      */
-    const NoteEditorPrivate & noteEditor() const;
+    [[nodiscard]] const NoteEditorPrivate & noteEditor() const noexcept;
 
     /**
      * @brief ResourcePluginIdentifier is the unique identifier of the plugin
@@ -101,7 +106,7 @@ public:
      *                                  was successfully installed, zero
      *                                  otherwise
      */
-    ResourcePluginIdentifier addResourcePlugin(
+    [[nodiscard]] ResourcePluginIdentifier addResourcePlugin(
         INoteEditorResourcePlugin * plugin, ErrorString & errorDescription,
         const bool forceOverrideTypeKeys = false);
 
@@ -116,7 +121,7 @@ public:
      * @return                          True if the plugin was successfully
      *                                  uninstalled, false otherwise
      */
-    bool removeResourcePlugin(
+    [[nodiscard]] bool removeResourcePlugin(
         const ResourcePluginIdentifier id, ErrorString & errorDescription);
 
     /**
@@ -128,7 +133,8 @@ public:
      * @return                          True if the plugin is installed,
      *                                  false otherwise
      */
-    bool hasResourcePlugin(const ResourcePluginIdentifier id) const;
+    [[nodiscard]] bool hasResourcePlugin(
+        const ResourcePluginIdentifier id) const noexcept;
 
     /**
      * @brief hasResourcePluginForMimeType is the method allowing one to find
@@ -140,7 +146,8 @@ public:
      * @return                          True if the plugin for specified mime
      *                                  type is installed, false otherwise
      */
-    bool hasResourcePluginForMimeType(const QString & mimeType) const;
+    [[nodiscard]] bool hasResourcePluginForMimeType(
+        const QString & mimeType) const;
 
     /**
      * @brief hasResourcePluginForMimeType is the method allowing one to find
@@ -154,7 +161,8 @@ public:
      *                                  matching the specified regex is
      *                                  installed, false otherwise
      */
-    bool hasResourcePluginForMimeType(const QRegExp & mimeTypeRegex) const;
+    [[nodiscard]] bool hasResourcePluginForMimeType(
+        const QRegExp & mimeTypeRegex) const;
 
     /**
      * @brief setNote is the method specifying the note for the plugin factory.
@@ -168,7 +176,7 @@ public:
      *                                  editor with plugins from note editor
      *                                  plugin factory
      */
-    void setNote(const Note & note);
+    void setNote(const qevercloud::Note & note);
 
     /**
      * @brief setFallbackResourceIcon is the method specifying the icon which
@@ -188,7 +196,7 @@ public:
     void setInactive();
     void setActive();
 
-    void updateResource(const Resource & resource);
+    void updateResource(const qevercloud::Resource & resource);
 
 private:
     // QWebPluginFactory interface
@@ -218,13 +226,13 @@ private:
     class GenericResourceDisplayWidgetFinder
     {
     public:
-        GenericResourceDisplayWidgetFinder(const Resource & resource);
+        GenericResourceDisplayWidgetFinder(const qevercloud::Resource & resource);
 
         bool operator()(
             const QPointer<GenericResourceDisplayWidget> & ptr) const;
 
     private:
-        QString m_resourceLocalUid;
+        QString m_resourceLocalId;
     };
 
 private:
@@ -237,7 +245,7 @@ private:
     QVector<INoteEditorResourcePlugin *> m_resourcePluginsInAdditionOrder;
     ResourcePluginIdentifier m_lastFreeResourcePluginId = 1;
 
-    const Note * m_pCurrentNote = nullptr;
+    const qevercloud::Note * m_pCurrentNote = nullptr;
 
     QIcon m_fallbackResourceIcon;
 
@@ -248,6 +256,7 @@ private:
 
     mutable QVector<QPointer<GenericResourceDisplayWidget>>
         m_genericResourceDisplayWidgetPlugins;
+
     mutable QVector<QPointer<EncryptedAreaPlugin>> m_encryptedAreaPlugins;
 };
 

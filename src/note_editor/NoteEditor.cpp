@@ -42,7 +42,7 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
     setAcceptDrops(true);
 }
 
-NoteEditor::~NoteEditor() {}
+NoteEditor::~NoteEditor() noexcept = default;
 
 void NoteEditor::initialize(
     LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
@@ -52,7 +52,7 @@ void NoteEditor::initialize(
         localStorageManager, spellChecker, account, pBackgroundJobsThread);
 }
 
-INoteEditorBackend * NoteEditor::backend()
+INoteEditorBackend * NoteEditor::backend() noexcept
 {
     return m_backend;
 }
@@ -97,14 +97,14 @@ void NoteEditor::setNoteLoadingPageHtml(const QString & html)
     m_backend->setNoteLoadingPageHtml(html);
 }
 
-QString NoteEditor::currentNoteLocalUid() const
+QString NoteEditor::currentNoteLocalId() const
 {
-    return m_backend->currentNoteLocalUid();
+    return m_backend->currentNoteLocalId();
 }
 
-void NoteEditor::setCurrentNoteLocalUid(const QString & noteLocalUid)
+void NoteEditor::setCurrentNoteLocalId(const QString & noteLocalId)
 {
-    m_backend->setCurrentNoteLocalUid(noteLocalUid);
+    m_backend->setCurrentNoteLocalId(noteLocalId);
 }
 
 void NoteEditor::clear()
@@ -112,17 +112,17 @@ void NoteEditor::clear()
     m_backend->clear();
 }
 
-bool NoteEditor::isModified() const
+bool NoteEditor::isModified() const noexcept
 {
     return m_backend->isModified();
 }
 
-bool NoteEditor::isNoteLoaded() const
+bool NoteEditor::isNoteLoaded() const noexcept
 {
     return m_backend->isNoteLoaded();
 }
 
-qint64 NoteEditor::idleTime() const
+qint64 NoteEditor::idleTime() const noexcept
 {
     return m_backend->idleTime();
 }
@@ -243,12 +243,12 @@ void NoteEditor::alignFull()
     m_backend->alignFull();
 }
 
-QString NoteEditor::selectedText() const
+QString NoteEditor::selectedText() const noexcept
 {
     return m_backend->selectedText();
 }
 
-bool NoteEditor::hasSelection() const
+bool NoteEditor::hasSelection() const noexcept
 {
     return m_backend->hasSelection();
 }
@@ -294,7 +294,7 @@ void NoteEditor::setSpellcheck(const bool enabled)
     m_backend->setSpellcheck(enabled);
 }
 
-bool NoteEditor::spellCheckEnabled() const
+bool NoteEditor::spellCheckEnabled() const noexcept
 {
     return m_backend->spellCheckEnabled();
 }
