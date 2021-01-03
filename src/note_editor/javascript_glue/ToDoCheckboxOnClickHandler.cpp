@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,15 +26,16 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
     QObject(parent)
 {}
 
-void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
+void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(
+    const QString enToDoCheckboxId)
 {
     QNDEBUG(
         "note_editor:js_glue",
-        "ToDoCheckboxOnClickHandler"
-            << "::onToDoCheckboxClicked: " << enToDoCheckboxId);
+        "ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: "
+            << enToDoCheckboxId);
 
     bool conversionResult = false;
-    quint64 id = enToDoCheckboxId.toULongLong(&conversionResult);
+    const quint64 id = enToDoCheckboxId.toULongLong(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
         ErrorString error(
             QT_TR_NOOP("Error handling todo checkbox click event: "

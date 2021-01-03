@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceInfo)
+class ResourceInfo;
 
 /**
  * The ResourceInfoJavaScriptHandler is used for communicating the information
@@ -42,8 +42,8 @@ Q_SIGNALS:
     void notifyResourceInfo(
         const QString & resourceHash, const QString & resourceLocalFilePath,
         const QString & resourceDisplayName,
-        const QString & resourceDisplaySize, const int resourceImageHeight,
-        const int resourceImageWidth);
+        const QString & resourceDisplaySize, int resourceImageHeight,
+        int resourceImageWidth);
 
 public Q_SLOTS:
     void findResourceInfo(const QString & resourceHash);

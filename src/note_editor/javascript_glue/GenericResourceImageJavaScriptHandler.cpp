@@ -29,12 +29,12 @@ GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
 {}
 
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
-    QByteArray resourceHash)
+    const QByteArray resourceHash)
 {
     QNDEBUG(
         "note_editor:js_glue",
-        "GenericResourceImageJavaScriptHandler"
-            << "::findGenericResourceImage: resource hash = " << resourceHash);
+        "GenericResourceImageJavaScriptHandler::findGenericResourceImage: "
+            << "resource hash = " << resourceHash);
 
     const auto it = m_cache.find(QByteArray::fromHex(resourceHash));
     if (it != m_cache.end()) {
