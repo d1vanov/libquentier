@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,19 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SHARED_H
 
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/Printable.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QString>
 #include <QVector>
 
-#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
+
+#include <optional>
 
 #define SYNCHRONIZATION_PERSISTENCE_NAME                                       \
     QStringLiteral("SynchronizationPersistence")
@@ -84,11 +87,11 @@
 #define SHARD_ID_KEYCHAIN_KEY_PART   QStringLiteral("_shard_id")
 
 #define APPEND_NOTE_DETAILS(errorDescription, note)                            \
-    if (note.hasTitle()) {                                                     \
-        errorDescription.details() = note.title();                             \
+    if (note.title()) {                                                        \
+        errorDescription.details() = *note.title();                            \
     }                                                                          \
-    else if (note.hasContent()) {                                              \
-        QString previewText = note.plainText();                                \
+    else if (note.content()) {                                                 \
+        QString previewText = noteContentToPlainText(*note.content());         \
         if (!previewText.isEmpty()) {                                          \
             previewText.truncate(30);                                          \
             errorDescription.details() = previewText;                          \
@@ -106,7 +109,7 @@ public:
         QString guid, QString shardId, QString sharedNotebookGlobalId,
         QString uri, QString noteStoreUrl);
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
     QString m_guid;
     QString m_shardId;
@@ -120,20 +123,20 @@ class OptionalComparator
 {
 public:
     bool operator()(
-        const qevercloud::Optional<T> & lhs,
-        const qevercloud::Optional<T> & rhs) const
+        const std::optional<T> & lhs,
+        const std::optional<T> & rhs) const
     {
-        if (!lhs.isSet() && !rhs.isSet()) {
+        if (!lhs && !rhs) {
             return false;
         }
-        else if (!lhs.isSet() && rhs.isSet()) {
+        else if (!lhs && rhs) {
             return true;
         }
-        else if (lhs.isSet() && !rhs.isSet()) {
+        else if (lhs && !rhs) {
             return false;
         }
         else {
-            return lhs.ref() < rhs.ref();
+            return *lhs < *rhs;
         }
     }
 };
@@ -142,28 +145,30 @@ class OptionalStringCaseInsensitiveComparator
 {
 public:
     bool operator()(
-        const qevercloud::Optional<QString> & lhs,
-        const qevercloud::Optional<QString> & rhs) const
+        const std::optional<QString> & lhs,
+        const std::optional<QString> & rhs) const
     {
-        if (!lhs.isSet() && !rhs.isSet()) {
+        if (!lhs && !rhs) {
             return false;
         }
-        else if (!lhs.isSet() && rhs.isSet()) {
+        else if (!lhs && rhs) {
             return true;
         }
-        else if (lhs.isSet() && !rhs.isSet()) {
+        else if (lhs && !rhs) {
             return false;
         }
         else {
-            return lhs.ref().toUpper() < rhs.ref().toUpper();
+            return lhs->toUpper() < rhs->toUpper();
         }
     }
 };
 
 struct ByGuid
 {};
+
 struct ByName
 {};
+
 struct ByParentTagGuid
 {};
 
@@ -172,20 +177,20 @@ using TagsContainer = boost::multi_index_container<
     boost::multi_index::indexed_by<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<ByGuid>,
-            boost::multi_index::member<
-                qevercloud::Tag, qevercloud::Optional<QString>,
+            boost::multi_index::const_mem_fun<
+                qevercloud::Tag, const std::optional<QString> &,
                 &qevercloud::Tag::guid>,
             OptionalComparator<QString>>,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByName>,
-            boost::multi_index::member<
-                qevercloud::Tag, qevercloud::Optional<QString>,
+            boost::multi_index::const_mem_fun<
+                qevercloud::Tag, const std::optional<QString> &,
                 &qevercloud::Tag::name>,
             OptionalStringCaseInsensitiveComparator>,
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<ByParentTagGuid>,
-            boost::multi_index::member<
-                qevercloud::Tag, qevercloud::Optional<QString>,
+            boost::multi_index::const_mem_fun<
+                qevercloud::Tag, const std::optional<QString> &,
                 &qevercloud::Tag::parentGuid>,
             OptionalComparator<QString>>>>;
 

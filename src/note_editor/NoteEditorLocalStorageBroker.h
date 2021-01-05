@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,8 +20,11 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_EDITOR_LOCAL_STORAGE_BROKER_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier/types/Note.h>
 #include <quentier/utility/LRUCache.hpp>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
 
 #include <QHash>
 #include <QObject>
@@ -37,106 +40,118 @@ private:
     explicit NoteEditorLocalStorageBroker(QObject * parent = nullptr);
 
 public:
-    static NoteEditorLocalStorageBroker & instance();
+    [[nodiscard]] static NoteEditorLocalStorageBroker & instance();
 
-    LocalStorageManagerAsync * localStorageManager();
+    [[nodiscard]] LocalStorageManagerAsync * localStorageManager();
 
     void setLocalStorageManager(
         LocalStorageManagerAsync & localStorageManagerAsync);
 
 Q_SIGNALS:
-    void noteSavedToLocalStorage(QString noteLocalUid);
+    void noteSavedToLocalStorage(QString noteLocalId);
 
     void failedToSaveNoteToLocalStorage(
-        QString noteLocalUid, ErrorString errorDescription);
+        QString noteLocalId, ErrorString errorDescription);
 
-    void foundNoteAndNotebook(Note note, Notebook notebook);
+    void foundNoteAndNotebook(
+        qevercloud::Note note, qevercloud::Notebook notebook);
 
     void failedToFindNoteOrNotebook(
-        QString noteLocalUid, ErrorString errorDescription);
+        QString noteLocalId, ErrorString errorDescription);
 
-    void noteUpdated(Note note);
-    void notebookUpdated(Notebook);
-    void noteDeleted(QString noteLocalUid);
-    void notebookDeleted(QString notebookLocalUid);
+    void noteUpdated(qevercloud::Note note);
+    void notebookUpdated(qevercloud::Notebook notebook);
+    void noteDeleted(QString noteLocalId);
+    void notebookDeleted(QString notebookLocalId);
 
-    void foundResourceData(Resource resource);
+    void foundResourceData(qevercloud::Resource resource);
 
     void failedToFindResourceData(
-        QString resourceLocalUid, ErrorString errorDescription);
+        QString resourceLocalId, ErrorString errorDescription);
 
     // private signals
     void updateNote(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
-    void addResource(Resource resource, QUuid requestId);
-    void updateResource(Resource resource, QUuid requestId);
-    void expungeResource(Resource resource, QUuid requestId);
+    void addResource(qevercloud::Resource resource, QUuid requestId);
+    void updateResource(qevercloud::Resource resource, QUuid requestId);
+    void expungeResource(qevercloud::Resource resource, QUuid requestId);
 
     void findNote(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
-    void findNotebook(Notebook notebook, QUuid requestId);
+    void findNotebook(qevercloud::Notebook notebook, QUuid requestId);
 
     void findResource(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
-        QUuid requestId);
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
 
 public Q_SLOTS:
-    void saveNoteToLocalStorage(const Note & note);
-    void findNoteAndNotebook(const QString & noteLocalUid);
-    void findResourceData(const QString & resourceLocalUid);
+    void saveNoteToLocalStorage(const qevercloud::Note & note);
+    void findNoteAndNotebook(const QString & noteLocalId);
+    void findResourceData(const QString & resourceLocalId);
 
 private Q_SLOTS:
     void onUpdateNoteComplete(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onFindNoteComplete(
-        Note foundNote, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note foundNote, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
     void onFindNoteFailed(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onFindNotebookComplete(Notebook foundNotebook, QUuid requestId);
+    void onFindNotebookComplete(
+        qevercloud::Notebook foundNotebook, QUuid requestId);
 
     void onFindNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
-
-    void onAddResourceComplete(Resource resource, QUuid requestId);
-
-    void onAddResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onUpdateResourceComplete(Resource resource, QUuid requestId);
-
-    void onUpdateResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onExpungeResourceComplete(Resource resource, QUuid requestId);
-
-    void onExpungeResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onExpungeNoteComplete(Note note, QUuid requestId);
-    void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
-
-    void onFindResourceComplete(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Notebook notebook, ErrorString errorDescription,
         QUuid requestId);
 
+    void onAddResourceComplete(qevercloud::Resource resource, QUuid requestId);
+
+    void onAddResourceFailed(
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onUpdateResourceComplete(
+        qevercloud::Resource resource, QUuid requestId);
+
+    void onUpdateResourceFailed(
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onExpungeResourceComplete(
+        qevercloud::Resource resource, QUuid requestId);
+
+    void onExpungeResourceFailed(
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onExpungeNoteComplete(qevercloud::Note note, QUuid requestId);
+
+    void onExpungeNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
+
+    void onFindResourceComplete(
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
+
     void onFindResourceFailed(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onSwitchUserComplete(Account account, QUuid requestId);
@@ -147,33 +162,34 @@ private:
     void disconnectFromLocalStorage(
         LocalStorageManagerAsync & localStorageManagerAsync);
 
-    void emitFindNoteRequest(const QString & noteLocalUid);
-    void emitUpdateNoteRequest(const Note & note);
+    void emitFindNoteRequest(const QString & noteLocalId);
+    void emitUpdateNoteRequest(const qevercloud::Note & note);
 
-    void emitFindNotebookForNoteByLocalUidRequest(
-        const QString & notebookLocalUid, const Note & note);
+    void emitFindNotebookForNoteByLocalIdRequest(
+        const QString & notebookLocalId, const qevercloud::Note & note);
 
     void emitFindNotebookForNoteByGuidRequest(
-        const QString & notebookGuid, const Note & note);
+        const QString & notebookGuid, const qevercloud::Note & note);
 
-    using NotesHash = QHash<QString, Note>;
+    using NotesHash = QHash<QString, qevercloud::Note>;
     using NotesPendingNotebookFindingHash = QHash<QString, NotesHash>;
 
     void emitFindNotebookForNoteRequest(
-        const Notebook & notebook, const Note & note,
+        const qevercloud::Notebook & notebook, const qevercloud::Note & note,
         NotesPendingNotebookFindingHash & notesPendingNotebookFinding);
 
     void saveNoteToLocalStorageImpl(
-        const Note & previousNoteVersion, const Note & updatedNoteVersion);
+        const qevercloud::Note & previousNoteVersion,
+        const qevercloud::Note & updatedNoteVersion);
 
     class SaveNoteInfo : public Printable
     {
     public:
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
 
-        bool hasPendingResourceOperations() const;
+        [[nodiscard]] bool hasPendingResourceOperations() const;
 
-        Note m_notePendingSaving;
+        qevercloud::Note m_notePendingSaving;
         quint32 m_pendingAddResourceRequests = 0;
         quint32 m_pendingUpdateResourceRequests = 0;
         quint32 m_pendingExpungeResourceRequests = 0;
@@ -189,26 +205,26 @@ private:
     QSet<QUuid> m_findNotebookRequestIds;
     QSet<QUuid> m_findResourceRequestIds;
 
-    QHash<QUuid, Note> m_notesPendingSavingByFindNoteRequestIds;
+    QHash<QUuid, qevercloud::Note> m_notesPendingSavingByFindNoteRequestIds;
 
     NotesPendingNotebookFindingHash
-        m_notesPendingNotebookFindingByNotebookLocalUid;
+        m_notesPendingNotebookFindingByNotebookLocalId;
     NotesPendingNotebookFindingHash m_notesPendingNotebookFindingByNotebookGuid;
 
-    QHash<QUuid, QString> m_noteLocalUidsByAddResourceRequestIds;
-    QHash<QUuid, QString> m_noteLocalUidsByUpdateResourceRequestIds;
-    QHash<QUuid, QString> m_noteLocalUidsByExpungeResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalIdsByAddResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalIdsByUpdateResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalIdsByExpungeResourceRequestIds;
 
-    LRUCache<QString, Notebook> m_notebooksCache;
-    LRUCache<QString, Note> m_notesCache;
+    LRUCache<QString, qevercloud::Notebook> m_notebooksCache;
+    LRUCache<QString, qevercloud::Note> m_notesCache;
 
     /**
      * This cache stores resources with binary data but only if that data is not
      * too large to prevent spending too much memory on it
      */
-    LRUCache<QString, Resource> m_resourcesCache;
+    LRUCache<QString, qevercloud::Resource> m_resourcesCache;
 
-    QHash<QString, SaveNoteInfo> m_saveNoteInfoByNoteLocalUids;
+    QHash<QString, SaveNoteInfo> m_saveNoteInfoByNoteLocalIds;
     QSet<QUuid> m_updateNoteRequestIds;
 };
 
