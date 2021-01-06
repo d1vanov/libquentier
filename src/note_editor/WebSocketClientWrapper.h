@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,8 @@
 
 #include <QObject>
 
-QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
-QT_FORWARD_DECLARE_CLASS(WebSocketTransport)
+class QWebSocketServer;
+class WebSocketTransport;
 
 class Q_DECL_HIDDEN WebSocketClientWrapper final : public QObject
 {

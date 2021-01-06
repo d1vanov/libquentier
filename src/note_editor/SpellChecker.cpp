@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -97,7 +97,7 @@ void SpellChecker::removeWord(const QString & word)
     d->removeWord(word);
 }
 
-bool SpellChecker::isReady() const
+bool SpellChecker::isReady() const noexcept
 {
     Q_D(const SpellChecker);
     return d->isReady();

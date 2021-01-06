@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -76,10 +76,10 @@ void SpellCheckerDictionariesFinder::run()
         while (it.hasNext()) {
             CHECK_AND_STOP()
 
-            QString nextDirName = it.next();
+            const QString nextDirName = it.next();
             QNTRACE("note_editor", "Next dir name = " << nextDirName);
 
-            QFileInfo fileInfo = it.fileInfo();
+            const QFileInfo fileInfo = it.fileInfo();
             if (!fileInfo.isReadable()) {
                 QNTRACE(
                     "note_editor",
@@ -88,7 +88,8 @@ void SpellCheckerDictionariesFinder::run()
                 continue;
             }
 
-            QString fileNameSuffix = fileInfo.completeSuffix();
+            const QString fileNameSuffix = fileInfo.completeSuffix();
+
             bool isDicFile = false;
             if (fileNameSuffix == QStringLiteral("dic")) {
                 isDicFile = true;
@@ -101,7 +102,7 @@ void SpellCheckerDictionariesFinder::run()
                 continue;
             }
 
-            QString dictionaryName = fileInfo.baseName();
+            const QString dictionaryName = fileInfo.baseName();
             if (!m_localeList.contains(dictionaryName.toUpper())) {
                 QNTRACE(
                     "note_editor",

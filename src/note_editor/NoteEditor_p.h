@@ -125,8 +125,8 @@ Q_SIGNALS:
     void noteAndNotebookFoundInLocalStorage(
         qevercloud::Note note, qevercloud::Notebook notebook);
 
-    void noteNotFound(QString noteLocalUid);
-    void noteDeleted(QString noteLocalUid);
+    void noteNotFound(QString noteLocalId);
+    void noteDeleted(QString noteLocalId);
 
     void noteModified();
     void notifyError(ErrorString error);
@@ -435,7 +435,7 @@ public Q_SLOTS:
     void setNoteTitle(const QString & noteTitle) override;
 
     void setTagIds(
-        const QStringList & tagLocalUids,
+        const QStringList & tagLocalIds,
         const QStringList & tagGuids) override;
 
     void undoPageAction();
@@ -486,7 +486,7 @@ Q_SIGNALS:
      * as an img tag's URL into the note editor page
      */
     void saveGenericResourceImageToFile(
-        QString noteLocalUid, QString resourceLocalUid,
+        QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);
@@ -524,7 +524,7 @@ private Q_SLOTS:
     void onContentChanged();
 
     void onResourceFileChanged(
-        QString resourceLocalUid, QString fileStoragePath,
+        QString resourceLocalId, QString fileStoragePath,
         QByteArray resourceData, QByteArray resourceDataHash);
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -726,16 +726,16 @@ private Q_SLOTS:
 #endif
 
     // Slots for signals from NoteEditorLocalStorageBroker
-    void onNoteSavedToLocalStorage(QString noteLocalUid);
+    void onNoteSavedToLocalStorage(QString noteLocalId);
 
     void onFailedToSaveNoteToLocalStorage(
-        QString noteLocalUid, ErrorString errorDescription);
+        QString noteLocalId, ErrorString errorDescription);
 
     void onFoundNoteAndNotebook(
         qevercloud::Note note, qevercloud::Notebook notebook);
 
     void onFailedToFindNoteOrNotebook(
-        QString noteLocalUid, ErrorString errorDescription);
+        QString noteLocalId, ErrorString errorDescription);
 
     void onNoteUpdated(qevercloud::Note note);
     void onNotebookUpdated(qevercloud::Notebook notebook);
@@ -824,7 +824,7 @@ private:
         Initial = 0,
         /**
          * Blank page of "NoteNotFound" kind is displayed if no note
-         * corresponding to the local uid passed to setCurrentNoteLocalUid
+         * corresponding to the local id passed to setCurrentNoteLocalId
          * slot was found * within the local storage
          */
         NoteNotFound,
@@ -999,8 +999,9 @@ private:
     void reloadCurrentNote();
 
     void clearPrepareNoteImageResourcesProgressDialog();
+
     void clearPrepareResourceForOpeningProgressDialog(
-        const QString & resourceLocalUid);
+        const QString & resourceLocalId);
 
 private:
     // Overrides for some Qt's virtual methods
@@ -1301,7 +1302,7 @@ private:
 
     bool m_skipPushingUndoCommandOnNextContentChange = false;
 
-    QString m_noteLocalUid;
+    QString m_noteLocalId;
 
     std::unique_ptr<QFont> m_pDefaultFont;
     std::unique_ptr<QPalette> m_pPalette;
@@ -1399,7 +1400,7 @@ private:
                                  // conversions
     QString m_errorCachedMemory; // Cached memory for various errors
 
-    QVector<ENMLConverter::SkipHtmlElementRule>
+    QList<ENMLConverter::SkipHtmlElementRule>
         m_skipRulesForHtmlToEnmlConversion;
 
     ResourceDataInTemporaryFileStorageManager *
@@ -1409,7 +1410,7 @@ private:
     ResourceInfo m_resourceInfo;
     ResourceInfoJavaScriptHandler * m_pResourceInfoJavaScriptHandler;
 
-    QHash<QString, QString> m_resourceFileStoragePathsByResourceLocalUid;
+    QHash<QString, QString> m_resourceFileStoragePathsByResourceLocalId;
     QSet<QUuid> m_manualSaveResourceToFileRequestIds;
 
     QHash<QString, QStringList> m_fileSuffixesForMimeType;
@@ -1429,9 +1430,9 @@ private:
 
     CurrentContextMenuExtraData m_currentContextMenuExtraData;
 
-    QSet<QUuid> m_resourceLocalUidsPendingFindDataInLocalStorageForSavingToFile;
+    QSet<QUuid> m_resourceLocalIdsPendingFindDataInLocalStorageForSavingToFile;
     QHash<QUuid, Rotation>
-        m_rotationTypeByResourceLocalUidsPendingFindDataInLocalStorage;
+        m_rotationTypeByResourceLocalIdsPendingFindDataInLocalStorage;
 
     quint64 m_lastFreeEnToDoIdNumber = 1;
     quint64 m_lastFreeHyperlinkIdNumber = 1;

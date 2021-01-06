@@ -35,6 +35,8 @@ namespace quentier {
 
 class ErrorString;
 
+[[nodiscard]] QUENTIER_EXPORT bool isInkNote(const qevercloud::Note & note);
+
 [[nodiscard]] QUENTIER_EXPORT bool noteContentContainsCheckedToDo(
     const QString & noteContent);
 

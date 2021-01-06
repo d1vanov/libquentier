@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,7 +43,7 @@ public:
     SpellCheckerDictionariesFinder(
         std::shared_ptr<QAtomicInt> pStopFlag, QObject * parent = nullptr);
 
-    virtual void run() override;
+    void run() override;
 
 Q_SIGNALS:
     void foundDictionaries(

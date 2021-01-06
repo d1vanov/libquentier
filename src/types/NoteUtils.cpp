@@ -66,6 +66,36 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+bool isInkNote(const qevercloud::Note & note)
+{
+    if (!note.resources()) {
+        return false;
+    }
+
+    const auto & resources = *note.resources();
+
+    // NOTE: it is not known for sure how many resources there might be within
+    // an ink note. Probably just one in most cases.
+    const int numResources = resources.size();
+    if (numResources == 0) {
+        return false;
+    }
+
+    for (int i = 0; i < numResources; ++i) {
+        const auto & resource = resources[i];
+        if (!resource.mime()) {
+            return false;
+        }
+        else if (
+            *resource.mime() !=
+            QStringLiteral("application/vnd.evernote.ink")) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool noteContentContainsCheckedToDo(const QString & noteContent)
 {
     return noteContentContainsToDoImpl(noteContent, /* checked = */ true);

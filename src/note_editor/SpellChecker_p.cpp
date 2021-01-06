@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,11 +20,10 @@
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/StandardPaths.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QBuffer>
 #include <QDir>
@@ -36,6 +35,7 @@
 #include <hunspell/hunspell.hxx>
 
 #include <algorithm>
+#include <cstdint>
 
 #define SPELL_CHECKER_FOUND_DICTIONARIES_GROUP                                 \
     QStringLiteral("SpellCheckerFoundDictionaries")
@@ -101,7 +101,7 @@ void SpellCheckerPrivate::enableDictionary(const QString & language)
         "note_editor",
         "SpellCheckerPrivate::enableDictionary: language = " << language);
 
-    auto it = m_systemDictionaries.find(language);
+    const auto it = m_systemDictionaries.find(language);
     if (it == m_systemDictionaries.end()) {
         QNINFO(
             "note_editor",
@@ -120,7 +120,7 @@ void SpellCheckerPrivate::disableDictionary(const QString & language)
         "note_editor",
         "SpellCheckerPrivate::disableDictionary: language = " << language);
 
-    auto it = m_systemDictionaries.find(language);
+    const auto it = m_systemDictionaries.find(language);
     if (it == m_systemDictionaries.end()) {
         QNINFO(
             "note_editor",
@@ -141,8 +141,8 @@ bool SpellCheckerPrivate::checkSpell(const QString & word) const
         return true;
     }
 
-    QByteArray wordData = word.toUtf8();
-    QByteArray lowerWordData = word.toLower().toUtf8();
+    const QByteArray wordData = word.toUtf8();
+    const QByteArray lowerWordData = word.toLower().toUtf8();
 
     for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
         const Dictionary & dictionary = it.value();
@@ -154,8 +154,7 @@ bool SpellCheckerPrivate::checkSpell(const QString & word) const
             continue;
         }
 
-        bool res = dictionary.m_hunspellWrapper.spell(wordData);
-        if (res) {
+        if (dictionary.m_hunspellWrapper.spell(wordData)) {
             QNTRACE(
                 "note_editor",
                 "Found word " << word << " in dictionary "
@@ -163,8 +162,7 @@ bool SpellCheckerPrivate::checkSpell(const QString & word) const
             return true;
         }
 
-        res = dictionary.m_hunspellWrapper.spell(lowerWordData);
-        if (res) {
+        if (dictionary.m_hunspellWrapper.spell(lowerWordData)) {
             QNTRACE(
                 "note_editor",
                 "Found word " << lowerWordData << " in dictionary "
@@ -183,7 +181,7 @@ QStringList SpellCheckerPrivate::spellCorrectionSuggestions(
         "note_editor",
         "SpellCheckerPrivate::spellCorrectionSuggestions: " << misSpelledWord);
 
-    QByteArray wordData = misSpelledWord.toUtf8();
+    const QByteArray wordData = misSpelledWord.toUtf8();
 
     QStringList result;
     for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
@@ -249,7 +247,7 @@ void SpellCheckerPrivate::ignoreWord(const QString & word)
 {
     QNDEBUG("note_editor", "SpellCheckerPrivate::ignoreWord: " << word);
 
-    QByteArray wordData = word.toUtf8();
+    const QByteArray wordData = word.toUtf8();
 
     for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
         Dictionary & dictionary = it.value();
@@ -279,7 +277,7 @@ void SpellCheckerPrivate::removeWord(const QString & word)
     }
 }
 
-bool SpellCheckerPrivate::isReady() const
+bool SpellCheckerPrivate::isReady() const noexcept
 {
     return m_systemDictionariesReady && m_userDictionaryReady;
 }
@@ -354,14 +352,14 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
     SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName
         existingDictionaries;
 
-    int size =
+    const int size =
         appSettings.beginReadArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
 
     existingDictionaries.reserve(size);
     for (int i = 0; i < size; ++i) {
         appSettings.setArrayIndex(i);
 
-        QString languageKey =
+        const QString languageKey =
             appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_LANGUAGE_KEY)
                 .toString();
 
@@ -370,11 +368,11 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
             continue;
         }
 
-        QString dicFile =
+        const QString dicFile =
             appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM)
                 .toString();
 
-        QFileInfo dicFileInfo(dicFile);
+        const QFileInfo dicFileInfo(dicFile);
         if (!dicFileInfo.exists() || !dicFileInfo.isReadable()) {
             QNTRACE(
                 "note_editor",
@@ -383,11 +381,11 @@ void SpellCheckerPrivate::checkAndScanSystemDictionaries()
             continue;
         }
 
-        QString affFile =
+        const QString affFile =
             appSettings.value(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM)
                 .toString();
 
-        QFileInfo affFileInfo(affFile);
+        const QFileInfo affFileInfo(affFile);
         if (!affFileInfo.exists() || !affFileInfo.isReadable()) {
             QNTRACE(
                 "note_editor",
@@ -423,21 +421,21 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     // variables; probably that is the only way to get path to system wide
     // dictionaries on Windows
 
-    QString envVarSeparator;
+    const QString envVarSeparator =
 #ifdef Q_OS_WIN
-    envVarSeparator = QStringLiteral(":");
+        QStringLiteral(":");
 #else
-    envVarSeparator = QStringLiteral(";");
+        QStringLiteral(";");
 #endif
 
-    QString ownDictionaryNames =
+    const QString ownDictionaryNames =
         QString::fromLocal8Bit(qgetenv("LIBQUENTIERDICTNAMES"));
 
-    QString ownDictionaryPaths =
+    const QString ownDictionaryPaths =
         QString::fromLocal8Bit(qgetenv("LIBQUENTIERDICTPATHS"));
 
     if (!ownDictionaryNames.isEmpty() && !ownDictionaryPaths.isEmpty()) {
-        QStringList ownDictionaryNamesList = ownDictionaryNames.split(
+        const QStringList ownDictionaryNamesList = ownDictionaryNames.split(
             envVarSeparator,
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             Qt::SkipEmptyParts,
@@ -458,12 +456,9 @@ void SpellCheckerPrivate::scanSystemDictionaries()
         const int numDictionaries = ownDictionaryNamesList.size();
         if (numDictionaries == ownDictionaryPathsList.size()) {
             for (int i = 0; i < numDictionaries; ++i) {
-                QString path = ownDictionaryPathsList[i];
-                path = QDir::fromNativeSeparators(path);
-
-                const QString & name = ownDictionaryNamesList[i];
-
-                addSystemDictionary(path, name);
+                addSystemDictionary(
+                    QDir::fromNativeSeparators(ownDictionaryPathsList[i]),
+                    ownDictionaryNamesList[i]);
             }
         }
         else {
@@ -489,21 +484,24 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     QString hunspellDictionaryName =
         QString::fromLocal8Bit(qgetenv("DICTIONARY"));
 
-    QString hunspellDictionaryPath = QString::fromLocal8Bit(qgetenv("DICPATH"));
+    QString hunspellDictionaryPath =
+        QString::fromLocal8Bit(qgetenv("DICPATH"));
 
     if (!hunspellDictionaryName.isEmpty() && !hunspellDictionaryPath.isEmpty())
     {
         // These environment variables are intended to specify the only one
         // dictionary
-        int nameSeparatorIndex =
+        const int nameSeparatorIndex =
             hunspellDictionaryName.indexOf(envVarSeparator);
+
         if (nameSeparatorIndex >= 0) {
             hunspellDictionaryName =
                 hunspellDictionaryName.left(nameSeparatorIndex);
         }
 
-        int nameColonIndex =
+        const int nameColonIndex =
             hunspellDictionaryName.indexOf(QStringLiteral(","));
+
         if (nameColonIndex >= 0) {
             hunspellDictionaryName =
                 hunspellDictionaryName.left(nameColonIndex);
@@ -511,14 +509,16 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
         hunspellDictionaryName = hunspellDictionaryName.trimmed();
 
-        int pathSeparatorIndex =
+        const int pathSeparatorIndex =
             hunspellDictionaryPath.indexOf(envVarSeparator);
+
         if (pathSeparatorIndex >= 0) {
             hunspellDictionaryPath =
                 hunspellDictionaryPath.left(pathSeparatorIndex);
         }
 
         hunspellDictionaryPath = hunspellDictionaryPath.trimmed();
+
         hunspellDictionaryPath =
             QDir::fromNativeSeparators(hunspellDictionaryPath);
 
@@ -560,8 +560,8 @@ void SpellCheckerPrivate::scanSystemDictionaries()
         }
 
         dir.setNameFilters(filter);
-        QFileInfoList fileInfos = dir.entryInfoList(QDir::Files);
 
+        const QFileInfoList fileInfos = dir.entryInfoList(QDir::Files);
         for (const auto & fileInfo: qAsConst(fileInfos)) {
             QString fileName = fileInfo.fileName();
             QNTRACE("note_editor", "Inspecting file name " << fileName);
@@ -636,27 +636,28 @@ void SpellCheckerPrivate::scanSystemDictionaries()
 
     SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName
         dicAndAffFiles;
-    ApplicationSettings settings;
-    QStringList childGroups = settings.childGroups();
 
-    int foundDictionariesGroupIndex =
+    ApplicationSettings settings;
+    const QStringList childGroups = settings.childGroups();
+
+    const int foundDictionariesGroupIndex =
         childGroups.indexOf(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
     if (foundDictionariesGroupIndex >= 0) {
         settings.beginGroup(SPELL_CHECKER_FOUND_DICTIONARIES_GROUP);
 
-        int numDicFiles =
+        const int numDicFiles =
             settings.beginReadArray(SPELL_CHECKER_FOUND_DICTIONARIES_ARRAY);
 
         dicAndAffFiles.reserve(numDicFiles);
         for (int i = 0; i < numDicFiles; ++i) {
             settings.setArrayIndex(i);
 
-            QString dicFile =
+            const QString dicFile =
                 settings.value(SPELL_CHECKER_FOUND_DICTIONARIES_DIC_FILE_ITEM)
                     .toString();
 
-            QString affFile =
+            const QString affFile =
                 settings.value(SPELL_CHECKER_FOUND_DICTIONARIES_AFF_FILE_ITEM)
                     .toString();
 
@@ -664,12 +665,12 @@ void SpellCheckerPrivate::scanSystemDictionaries()
                 continue;
             }
 
-            QFileInfo dicFileInfo(dicFile);
+            const QFileInfo dicFileInfo(dicFile);
             if (!dicFileInfo.exists() || !dicFileInfo.isReadable()) {
                 continue;
             }
 
-            QFileInfo affFileInfo(affFile);
+            const QFileInfo affFileInfo(affFile);
             if (!affFileInfo.exists() || !affFileInfo.isReadable()) {
                 continue;
             }
@@ -685,19 +686,17 @@ void SpellCheckerPrivate::scanSystemDictionaries()
     if (!dicAndAffFiles.isEmpty()) {
         QNDEBUG(
             "note_editor",
-            "Found some previously found dictionary files, "
-                << "will use them instead of running a new search across the "
-                   "system");
+            "Found some previously found dictionary files, will use them "
+                << "instead of running a new search across the system");
         onDictionariesFound(dicAndAffFiles);
         return;
     }
 
     QNDEBUG(
         "note_editor",
-        "Still can't find any valid hunspell dictionaries, "
-            << "trying the full recursive search across the entire system, "
-               "just to "
-            << "find something");
+        "Still can't find any valid hunspell dictionaries, trying the full "
+            << "recursive search across the entire system, just to find "
+            << "something");
 
     auto * pFinder =
         new SpellCheckerDictionariesFinder(m_pDictionariesFinderStopFlag);
@@ -717,7 +716,7 @@ void SpellCheckerPrivate::addSystemDictionary(
         "SpellCheckerPrivate::addSystemDictionary: path = "
             << path << ", name = " << name);
 
-    QFileInfo dictionaryFileInfo(
+    const QFileInfo dictionaryFileInfo(
         path + QStringLiteral("/") + name + QStringLiteral(".dic"));
 
     if (!dictionaryFileInfo.exists()) {
@@ -736,7 +735,7 @@ void SpellCheckerPrivate::addSystemDictionary(
         return;
     }
 
-    QFileInfo affixFileInfo(
+    const QFileInfo affixFileInfo(
         path + QStringLiteral("/") + name + QStringLiteral(".aff"));
 
     if (!affixFileInfo.exists()) {
@@ -755,8 +754,9 @@ void SpellCheckerPrivate::addSystemDictionary(
         return;
     }
 
-    QString dictionaryFilePath = dictionaryFileInfo.absoluteFilePath();
-    QString affixFilePath = affixFileInfo.absoluteFilePath();
+    const QString dictionaryFilePath = dictionaryFileInfo.absoluteFilePath();
+    const QString affixFilePath = affixFileInfo.absoluteFilePath();
+
     QNTRACE(
         "note_editor",
         "Raw dictionary file path = " << dictionaryFilePath
@@ -767,6 +767,7 @@ void SpellCheckerPrivate::addSystemDictionary(
     dictionary.m_hunspellWrapper.initialize(affixFilePath, dictionaryFilePath);
     dictionary.m_dictionaryPath = dictionaryFilePath;
     dictionary.m_enabled = true;
+
     QNTRACE(
         "note_editor",
         "Added dictionary for language " << name << "; dictionary file "
@@ -786,8 +787,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
     bool foundValidPath = false;
 
     if (!userDictionaryPath.isEmpty()) {
-        bool res = checkUserDictionaryPath(userDictionaryPath);
-        if (!res) {
+        if (!checkUserDictionaryPath(userDictionaryPath)) {
             QNINFO(
                 "note_editor",
                 "Can't accept the proposed user dictionary "
@@ -807,7 +807,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
         ApplicationSettings settings;
         settings.beginGroup(QStringLiteral("SpellCheck"));
 
-        QString userDictionaryPathFromSettings =
+        const QString userDictionaryPathFromSettings =
             settings.value(QStringLiteral("UserDictionaryPath")).toString();
 
         settings.endGroup();
@@ -817,8 +817,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
                 "note_editor",
                 "Inspecting the user dictionary path found "
                     << "in the application settings");
-            bool res = checkUserDictionaryPath(userDictionaryPathFromSettings);
-            if (!res) {
+            if (!checkUserDictionaryPath(userDictionaryPathFromSettings)) {
                 QNINFO(
                     "note_editor",
                     "Can't accept the user dictionary path "
@@ -842,11 +841,11 @@ void SpellCheckerPrivate::initializeUserDictionary(
             "Haven't found valid user dictionary file path "
                 << "within the app settings, fallback to the default path");
 
-        QString fallbackUserDictionaryPath =
+        const QString fallbackUserDictionaryPath =
             applicationPersistentStoragePath() +
             QStringLiteral("/spellcheck/user_dictionary.txt");
-        bool res = checkUserDictionaryPath(fallbackUserDictionaryPath);
-        if (!res) {
+
+        if (!checkUserDictionaryPath(fallbackUserDictionaryPath)) {
             QNINFO(
                 "note_editor", "Can't accept even the fallback default path");
         }
@@ -879,6 +878,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
 
         m_readUserDictionaryRequestId = QUuid::createUuid();
         Q_EMIT readFile(m_userDictionaryPath, m_readUserDictionaryRequestId);
+
         QNTRACE(
             "note_editor",
             "Sent the request to read the user dictionary "
@@ -896,7 +896,7 @@ void SpellCheckerPrivate::initializeUserDictionary(
 bool SpellCheckerPrivate::checkUserDictionaryPath(
     const QString & userDictionaryPath) const
 {
-    QFileInfo info(userDictionaryPath);
+    const QFileInfo info(userDictionaryPath);
     if (info.exists()) {
         if (!info.isFile()) {
             QNTRACE(
@@ -908,8 +908,7 @@ bool SpellCheckerPrivate::checkUserDictionaryPath(
 
         if (!info.isReadable() || !info.isWritable()) {
             QFile file(userDictionaryPath);
-            bool res = file.setPermissions(QFile::WriteUser | QFile::ReadUser);
-            if (!res) {
+            if (!file.setPermissions(QFile::WriteUser | QFile::ReadUser)) {
                 QNTRACE(
                     "note_editor",
                     "User dictionary path candidate is a "
@@ -926,15 +925,12 @@ bool SpellCheckerPrivate::checkUserDictionaryPath(
     }
 
     QDir dir = info.absoluteDir();
-    if (!dir.exists()) {
-        bool res = dir.mkpath(dir.absolutePath());
-        if (!res) {
-            QNWARNING(
-                "note_editor",
-                "Can't create not yet existing user "
-                    << "dictionary path candidate folder");
-            return false;
-        }
+    if (!dir.exists() && !dir.mkpath(dir.absolutePath())) {
+        QNWARNING(
+            "note_editor",
+            "Can't create not yet existing user dictionary path candidate "
+                << "folder");
+        return false;
     }
 
     return true;
@@ -944,8 +940,7 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
 {
     QNDEBUG(
         "note_editor",
-        "SpellCheckerPrivate"
-            << "::checkUserDictionaryDataPendingWriting");
+        "SpellCheckerPrivate::checkUserDictionaryDataPendingWriting");
 
     if (m_userDictionaryPartPendingWriting.isEmpty()) {
         QNTRACE("note_editor", "Nothing is pending writing");
@@ -977,8 +972,8 @@ void SpellCheckerPrivate::checkUserDictionaryDataPendingWriting()
 
         QNTRACE(
             "note_editor",
-            "Sent the request to append the data pending "
-                << "writing to user dictionary, id = "
+            "Sent the request to append the data pending writing to user "
+                << "dictionary, id = "
                 << m_appendUserDictionaryPartToFileRequestId);
     }
 
@@ -989,8 +984,7 @@ void SpellCheckerPrivate::persistEnabledSystemDictionaries()
 {
     QNDEBUG(
         "note_editor",
-        "SpellCheckerPrivate"
-            << "::persistEnabledSystemDictionaries");
+        "SpellCheckerPrivate::persistEnabledSystemDictionaries");
 
     QStringList enabledSystemDictionaries;
     enabledSystemDictionaries.reserve(m_systemDictionaries.size());
@@ -1020,9 +1014,11 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
             << "::restoreSystemDictionatiesEnabledDisabledSettings");
 
     ApplicationSettings appSettings(m_currentAccount);
-    bool containsEnabledSystemDictionaries =
+
+    const bool containsEnabledSystemDictionaries =
         appSettings.contains(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY);
-    QStringList enabledSystemDictionaries =
+
+    const QStringList enabledSystemDictionaries =
         appSettings.value(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY)
             .toStringList();
 
@@ -1049,11 +1045,11 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
             << "enabled system dictionaries, will enable the dictionary "
             << "corresponding to the system locale");
 
-    QLocale systemLocale = QLocale::system();
-    QString systemLocaleName = systemLocale.name();
+    const QLocale systemLocale = QLocale::system();
+    const QString systemLocaleName = systemLocale.name();
     QNDEBUG("note_editor", "System locale name: " << systemLocaleName);
 
-    auto systemLocaleDictIt = m_systemDictionaries.find(systemLocaleName);
+    const auto systemLocaleDictIt = m_systemDictionaries.find(systemLocaleName);
     if (systemLocaleDictIt != m_systemDictionaries.end()) {
         for (auto it = m_systemDictionaries.begin(),
                   end = m_systemDictionaries.end();
@@ -1108,8 +1104,7 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(
 
     if (Q_LIKELY(success)) {
         QBuffer buffer(&data);
-        bool res = buffer.open(QIODevice::ReadOnly);
-        if (Q_LIKELY(res)) {
+        if (buffer.open(QIODevice::ReadOnly)) {
             QTextStream stream(&buffer);
             stream.setCodec("UTF-8");
             QString word;
@@ -1209,7 +1204,7 @@ SpellCheckerPrivate::Dictionary::Dictionary() :
     m_hunspellWrapper(), m_dictionaryPath(), m_enabled(true)
 {}
 
-bool SpellCheckerPrivate::Dictionary::isEmpty() const
+bool SpellCheckerPrivate::Dictionary::isEmpty() const noexcept
 {
     return m_dictionaryPath.isEmpty() || m_hunspellWrapper.isEmpty();
 }
@@ -1222,7 +1217,7 @@ void SpellCheckerPrivate::HunspellWrapper::initialize(
         dicFilePath.toLocal8Bit().constData());
 }
 
-bool SpellCheckerPrivate::HunspellWrapper::isEmpty() const
+bool SpellCheckerPrivate::HunspellWrapper::isEmpty() const noexcept
 {
     return !m_pHunspell;
 }
@@ -1262,21 +1257,27 @@ QStringList SpellCheckerPrivate::HunspellWrapper::suggestions(
     }
 
 #ifdef HUNSPELL_NEW_API_AVAILABLE
-    std::vector<std::string> res = m_pHunspell->suggest(wordData.toStdString());
+    const std::vector<std::string> res =
+        m_pHunspell->suggest(wordData.toStdString());
 
-    size_t size = res.size();
+    const std::size_t size = res.size();
     result.reserve(static_cast<int>(
-        std::min(size, size_t(std::numeric_limits<int>::max()))));
-    for (size_t i = 0; i < size; ++i) {
+        std::min(size, std::size_t(std::numeric_limits<int>::max()))));
+
+    for (std::size_t i = 0; i < size; ++i) {
         result << QString::fromStdString(res[i]);
     }
 #else
     char ** rawCorrectionSuggestions = nullptr;
-    int numSuggestions =
+
+    const int numSuggestions =
         m_pHunspell->suggest(&rawCorrectionSuggestions, wordData.constData());
+
     result.reserve(std::max(numSuggestions, 0));
     for (int i = 0; i < numSuggestions; ++i) {
-        QString suggestion = QString::fromUtf8(rawCorrectionSuggestions[i]);
+        const QString suggestion =
+            QString::fromUtf8(rawCorrectionSuggestions[i]);
+
         if (!result.contains(suggestion)) {
             result << suggestion;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,15 +29,16 @@ class Q_DECL_HIDDEN WebSocketTransport final :
     Q_OBJECT
 public:
     explicit WebSocketTransport(QWebSocket * socket);
-    virtual ~WebSocketTransport();
+    ~WebSocketTransport() override;
 
-    virtual void sendMessage(const QJsonObject & message) override;
+    void sendMessage(const QJsonObject & message) override;
 
 private Q_SLOTS:
     void textMessageReceived(const QString & message);
 
 private:
-    bool parseMessage(QByteArray messageData, QJsonObject & object);
+    [[nodiscard]] bool parseMessage(
+        QByteArray messageData, QJsonObject & object);
 
 private:
     QWebSocket * m_socket;

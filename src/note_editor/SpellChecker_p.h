@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,11 +34,11 @@
 #include <memory>
 #include <utility>
 
-QT_FORWARD_DECLARE_CLASS(Hunspell)
+class Hunspell;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(FileIOProcessorAsync)
+class FileIOProcessorAsync;
 
 class Q_DECL_HIDDEN SpellCheckerPrivate final : public QObject
 {
@@ -48,20 +48,21 @@ public:
         FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
-    virtual ~SpellCheckerPrivate() override;
+    ~SpellCheckerPrivate() override;
 
     // The second bool in the pair indicates whether the dictionary
     // is enabled or disabled
-    QVector<std::pair<QString, bool>> listAvailableDictionaries() const;
+    [[nodiscard]] QVector<std::pair<QString, bool>> listAvailableDictionaries()
+        const;
 
     void setAccount(const Account & account);
 
     void enableDictionary(const QString & language);
     void disableDictionary(const QString & language);
 
-    bool checkSpell(const QString & word) const;
+    [[nodiscard]] bool checkSpell(const QString & word) const;
 
-    QStringList spellCorrectionSuggestions(
+    [[nodiscard]] QStringList spellCorrectionSuggestions(
         const QString & misSpelledWord) const;
 
     void addToUserWordlist(const QString & word);
@@ -69,7 +70,7 @@ public:
     void ignoreWord(const QString & word);
     void removeWord(const QString & word);
 
-    bool isReady() const;
+    [[nodiscard]] bool isReady() const noexcept;
 
 Q_SIGNALS:
     void ready();
@@ -91,7 +92,9 @@ private:
     void addSystemDictionary(const QString & path, const QString & name);
 
     void initializeUserDictionary(const QString & userDictionaryPath);
-    bool checkUserDictionaryPath(const QString & userDictionaryPath) const;
+
+    [[nodiscard]] bool checkUserDictionaryPath(
+        const QString & userDictionaryPath) const;
 
     void checkUserDictionaryDataPendingWriting();
 
@@ -118,13 +121,13 @@ private:
         void initialize(
             const QString & affFilePath, const QString & dicFilePath);
 
-        bool isEmpty() const;
+        [[nodiscard]] bool isEmpty() const noexcept;
 
-        bool spell(const QString & word) const;
-        bool spell(const QByteArray & wordData) const;
+        [[nodiscard]] bool spell(const QString & word) const;
+        [[nodiscard]] bool spell(const QByteArray & wordData) const;
 
-        QStringList suggestions(const QString & word) const;
-        QStringList suggestions(const QByteArray & wordData) const;
+        [[nodiscard]] QStringList suggestions(const QString & word) const;
+        [[nodiscard]] QStringList suggestions(const QByteArray & wordData) const;
 
         void add(const QString & word);
         void add(const QByteArray & wordData);
@@ -141,7 +144,7 @@ private:
     public:
         Dictionary();
 
-        bool isEmpty() const;
+        [[nodiscard]] bool isEmpty() const noexcept;
 
     public:
         HunspellWrapper m_hunspellWrapper;

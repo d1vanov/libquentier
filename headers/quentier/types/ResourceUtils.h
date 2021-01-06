@@ -34,6 +34,9 @@ namespace quentier {
 [[nodiscard]] QUENTIER_EXPORT QString resourceDisplayName(
     const qevercloud::Resource & resource);
 
+[[nodiscard]] QUENTIER_EXPORT QString preferredFileSuffix(
+    const qevercloud::Resource & resource);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_RESOURCE_UTILS_H

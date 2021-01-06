@@ -20,6 +20,9 @@
 
 #include <qevercloud/generated/types/Resource.h>
 
+#include <QFileInfo>
+#include <QMimeDatabase>
+
 namespace quentier {
 
 QString resourceDisplayName(const qevercloud::Resource & resource)
@@ -31,6 +34,27 @@ QString resourceDisplayName(const qevercloud::Resource & resource)
         else if (resource.attributes()->sourceURL()) {
             return *resource.attributes()->sourceURL();
         }
+    }
+
+    return {};
+}
+
+QString preferredFileSuffix(const qevercloud::Resource & resource)
+{
+    if (resource.attributes() &&
+        resource.attributes()->fileName()) {
+        const QFileInfo fileInfo(*resource.attributes()->fileName());
+        const QString completeSuffix = fileInfo.completeSuffix();
+        if (!completeSuffix.isEmpty()) {
+            return completeSuffix;
+        }
+    }
+
+    if (resource.mime()) {
+        const QMimeDatabase mimeDatabase;
+        const QMimeType mimeType =
+            mimeDatabase.mimeTypeForName(*resource.mime());
+        return mimeType.preferredSuffix();
     }
 
     return {};

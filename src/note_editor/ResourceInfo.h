@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,14 +33,14 @@ public:
         const QString & resourceDisplaySize,
         const QString & resourceLocalFilePath, const QSize & resourceImageSize);
 
-    bool contains(const QByteArray & resourceHash) const;
+    [[nodiscard]] bool contains(const QByteArray & resourceHash) const noexcept;
 
-    bool findResourceInfo(
+    [[nodiscard]] bool findResourceInfo(
         const QByteArray & resourceHash, QString & resourceDisplayName,
         QString & resourceDisplaySize, QString & resourceLocalFilePath,
         QSize & resourceImageSize) const;
 
-    bool removeResourceInfo(const QByteArray & resourceHash);
+    [[nodiscard]] bool removeResourceInfo(const QByteArray & resourceHash);
 
     void clear();
 
