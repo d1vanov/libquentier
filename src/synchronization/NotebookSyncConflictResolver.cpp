@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <QDebug>
 
@@ -30,7 +31,7 @@ namespace quentier {
 NotebookSyncConflictResolver::NotebookSyncConflictResolver(
     const qevercloud::Notebook & remoteNotebook,
     const QString & remoteNotebookLinkedNotebookGuid,
-    const Notebook & localConflict, NotebookSyncCache & cache,
+    const qevercloud::Notebook & localConflict, NotebookSyncCache & cache,
     LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_cache(cache), m_localStorageManagerAsync(localStorageManagerAsync),
@@ -51,7 +52,7 @@ void NotebookSyncConflictResolver::start()
 
     m_started = true;
 
-    if (Q_UNLIKELY(!m_remoteNotebook.guid.isSet())) {
+    if (Q_UNLIKELY(!m_remoteNotebook.guid())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote and local "
                        "notebooks: the remote notebook has no guid set"));
@@ -62,7 +63,7 @@ void NotebookSyncConflictResolver::start()
         return;
     }
 
-    if (Q_UNLIKELY(!m_remoteNotebook.name.isSet())) {
+    if (Q_UNLIKELY(!m_remoteNotebook.name())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote and local "
                        "notebooks: the remote notebook has no name set"));
@@ -73,7 +74,7 @@ void NotebookSyncConflictResolver::start()
         return;
     }
 
-    if (Q_UNLIKELY(!m_localConflict.hasGuid() && !m_localConflict.hasName())) {
+    if (Q_UNLIKELY(!m_localConflict.guid() && !m_localConflict.name())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote and local "
                        "notebooks: the local conflicting notebook has neither "
@@ -87,8 +88,8 @@ void NotebookSyncConflictResolver::start()
 
     connectToLocalStorage();
 
-    if (m_localConflict.hasName() &&
-        (m_localConflict.name() == m_remoteNotebook.name.ref()))
+    if (m_localConflict.name() &&
+        (*m_localConflict.name() == *m_remoteNotebook.name()))
     {
         processNotebooksConflictByName(m_localConflict);
     }
@@ -98,7 +99,7 @@ void NotebookSyncConflictResolver::start()
 }
 
 void NotebookSyncConflictResolver::onAddNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     if (requestId != m_addNotebookRequestId) {
         return;
@@ -106,15 +107,13 @@ void NotebookSyncConflictResolver::onAddNotebookComplete(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onAddNotebookComplete: request id = " << requestId
-            << ", notebook: " << notebook);
+        "NotebookSyncConflictResolver::onAddNotebookComplete: request id = "
+            << requestId << ", notebook: " << notebook);
 
     if (m_state == State::PendingRemoteNotebookAdoptionInLocalStorage) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Successfully added "
-                << "the remote notebook to the local storage");
+            "Successfully added the remote notebook to the local storage");
         Q_EMIT finished(m_remoteNotebook);
     }
     else {
@@ -130,7 +129,8 @@ void NotebookSyncConflictResolver::onAddNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onAddNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_addNotebookRequestId) {
         return;
@@ -138,16 +138,15 @@ void NotebookSyncConflictResolver::onAddNotebookFailed(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onAddNotebookFailed: request id = " << requestId
-            << ", error description = " << errorDescription
+        "NotebookSyncConflictResolver::onAddNotebookFailed: request id = "
+            << requestId << ", error description = " << errorDescription
             << "; notebook: " << notebook);
 
     Q_EMIT failure(m_remoteNotebook, errorDescription);
 }
 
 void NotebookSyncConflictResolver::onUpdateNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     if (requestId != m_updateNotebookRequestId) {
         return;
@@ -155,24 +154,21 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onUpdateNotebookComplete: request id = " << requestId
-            << ", notebook: " << notebook);
+        "NotebookSyncConflictResolver::onUpdateNotebookComplete: request id = "
+            << requestId << ", notebook: " << notebook);
 
     if (m_state == State::OverrideLocalChangesWithRemoteChanges) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Successfully overridden "
-                << "the local changes with remote changes");
+            "Successfully overridden the local changes with remote changes");
         Q_EMIT finished(m_remoteNotebook);
         return;
     }
     else if (m_state == State::PendingConflictingNotebookRenaming) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Successfully renamed "
-                << "the local notebook conflicting by name with the remote "
-                   "notebook");
+            "Successfully renamed the local notebook conflicting by name with "
+                << "the remote notebook");
 
         // Now need to find the duplicate of the remote notebook by guid:
         // 1) if one exists, update it from the remote changes - notwithstanding
@@ -193,56 +189,67 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
         m_state = State::PendingRemoteNotebookAdoptionInLocalStorage;
 
         const auto & nameByGuidHash = m_cache.nameByGuidHash();
-        auto it = nameByGuidHash.find(m_remoteNotebook.guid.ref());
+        const auto it = nameByGuidHash.find(*m_remoteNotebook.guid());
         if (it == nameByGuidHash.end()) {
             QNDEBUG(
                 "synchronization:notebook_conflict",
-                "Found no duplicate "
-                    << "of the remote notebook by guid, adding new notebook to "
-                    << "the local storage");
+                "Found no duplicate of the remote notebook by guid, adding new "
+                    << "notebook to the local storage");
 
-            Notebook notebook(m_remoteNotebook);
-            notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
-            notebook.setDirty(false);
-            notebook.setLocal(false);
+            qevercloud::Notebook notebook = m_remoteNotebook;
+
+            if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
+                notebook.mutableLocalData()[
+                    QStringLiteral("linkedNotebookGuid")] =
+                        m_remoteNotebookLinkedNotebookGuid;
+            }
+
+            notebook.setLocallyModified(false);
+            notebook.setLocalOnly(false);
 
             m_addNotebookRequestId = QUuid::createUuid();
             QNTRACE(
                 "synchronization:notebook_conflict",
-                "Emitting the request "
-                    << "to add notebook: request id = "
+                "Emitting the request to add notebook: request id = "
                     << m_addNotebookRequestId << ", notebook: " << notebook);
             Q_EMIT addNotebook(notebook, m_addNotebookRequestId);
         }
         else {
             QNDEBUG(
                 "synchronization:notebook_conflict",
-                "The duplicate by "
-                    << "guid exists in the local storage, updating it with "
-                    << "the state of the remote notebook");
+                "The duplicate by guid exists in the local storage, updating "
+                    << "it with the state of the remote notebook");
 
-            Notebook notebook(m_localConflict);
-            notebook.qevercloudNotebook() = m_remoteNotebook;
-            notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
-            notebook.setDirty(false);
-            notebook.setLocal(false);
+            qevercloud::Notebook notebook = m_remoteNotebook;
+
+            notebook.setLocalId(m_localConflict.localId());
+            notebook.setParentLocalId(m_localConflict.parentLocalId());
+            notebook.mutableLocalData() = m_localConflict.localData();
+
+            if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
+                notebook.mutableLocalData()[
+                    QStringLiteral("linkedNotebookGuid")] =
+                        m_remoteNotebookLinkedNotebookGuid;
+            }
+
+            notebook.setLocallyModified(false);
+            notebook.setLocalOnly(false);
 
             m_updateNotebookRequestId = QUuid::createUuid();
+
             QNTRACE(
                 "synchronization:notebook_conflict",
-                "Emitting the request "
-                    << "to update notebook: request id = "
+                "Emitting the request to update notebook: request id = "
                     << m_updateNotebookRequestId << ", notebook: " << notebook);
+
             Q_EMIT updateNotebook(notebook, m_updateNotebookRequestId);
         }
     }
     else if (m_state == State::PendingRemoteNotebookAdoptionInLocalStorage) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Successfully finalized "
-                << "the sequence of actions required for resolving the "
-                   "conflict "
-                << "of notebooks");
+            "Successfully finalized the sequence of actions required for "
+                << "resolving the conflict of notebooks");
         Q_EMIT finished(m_remoteNotebook);
     }
     else {
@@ -258,7 +265,8 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onUpdateNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_updateNotebookRequestId) {
         return;
@@ -266,16 +274,15 @@ void NotebookSyncConflictResolver::onUpdateNotebookFailed(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onUpdateNotebookFailed: request id = " << requestId
-            << ", error description = " << errorDescription
+        "NotebookSyncConflictResolver::onUpdateNotebookFailed: request id = "
+            << requestId << ", error description = " << errorDescription
             << "; notebook: " << notebook);
 
     Q_EMIT failure(m_remoteNotebook, errorDescription);
 }
 
 void NotebookSyncConflictResolver::onFindNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     if (requestId != m_findNotebookRequestId) {
         return;
@@ -283,9 +290,8 @@ void NotebookSyncConflictResolver::onFindNotebookComplete(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onFindNotebookComplete: request id = " << requestId
-            << ", notebook: " << notebook);
+        "NotebookSyncConflictResolver::onFindNotebookComplete: request id = "
+            << requestId << ", notebook: " << notebook);
 
     m_findNotebookRequestId = QUuid();
 
@@ -294,7 +300,8 @@ void NotebookSyncConflictResolver::onFindNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onFindNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_findNotebookRequestId) {
         return;
@@ -302,9 +309,8 @@ void NotebookSyncConflictResolver::onFindNotebookFailed(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onFindNotebookFailed: request id = " << requestId
-            << ", error description = " << errorDescription
+        "NotebookSyncConflictResolver::onFindNotebookFailed: request id = "
+            << requestId << ", error description = " << errorDescription
             << ", notebook: " << notebook);
 
     m_findNotebookRequestId = QUuid();
@@ -318,14 +324,12 @@ void NotebookSyncConflictResolver::onCacheFilled()
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onCacheFilled");
+        "NotebookSyncConflictResolver::onCacheFilled");
 
     if (!m_pendingCacheFilling) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Not pending the cache "
-                << "filling");
+            "Not pending the cache filling");
         return;
     }
 
@@ -349,14 +353,12 @@ void NotebookSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::onCacheFailed: " << errorDescription);
+        "NotebookSyncConflictResolver::onCacheFailed: " << errorDescription);
 
     if (!m_pendingCacheFilling) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "Not pending the cache "
-                << "filling");
+            "Not pending the cache filling");
         return;
     }
 
@@ -368,8 +370,7 @@ void NotebookSyncConflictResolver::connectToLocalStorage()
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::connectToLocalStorage");
+        "NotebookSyncConflictResolver::connectToLocalStorage");
 
     // Connect local signals to local storage manager async's slots
     QObject::connect(
@@ -432,15 +433,17 @@ void NotebookSyncConflictResolver::processNotebooksConflictByGuid()
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::processNotebooksConflictByGuid");
+        "NotebookSyncConflictResolver::processNotebooksConflictByGuid");
 
     // Need to understand whether there's a duplicate by name in the local
     // storage for the new state of the remote notebook
 
     if (m_cache.isFilled()) {
         const auto & guidByNameHash = m_cache.guidByNameHash();
-        auto it = guidByNameHash.find(m_remoteNotebook.name.ref().toLower());
+
+        const auto it = guidByNameHash.find(
+            m_remoteNotebook.name().value().toLower());
+
         if (it == guidByNameHash.end()) {
             QNDEBUG(
                 "synchronization:notebook_conflict",
@@ -458,36 +461,33 @@ void NotebookSyncConflictResolver::processNotebooksConflictByGuid()
         // it
     }
 
-    Notebook dummyNotebook;
-    dummyNotebook.unsetLocalUid();
-    dummyNotebook.setName(m_remoteNotebook.name.ref());
+    qevercloud::Notebook dummyNotebook;
+    dummyNotebook.setLocalId(QString{});
+    dummyNotebook.setName(m_remoteNotebook.name().value());
     m_findNotebookRequestId = QUuid::createUuid();
 
     QNTRACE(
         "synchronization:notebook_conflict",
-        "Emitting the request to find "
-            << "notebook by name: request id = " << m_findNotebookRequestId
-            << ", notebook: " << dummyNotebook);
+        "Emitting the request to find notebook by name: request id = "
+            << m_findNotebookRequestId << ", notebook: " << dummyNotebook);
 
     Q_EMIT findNotebook(dummyNotebook, m_findNotebookRequestId);
 }
 
 void NotebookSyncConflictResolver::processNotebooksConflictByName(
-    const Notebook & localConflict)
+    const qevercloud::Notebook & localConflict)
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::processNotebooksConflictByName: local conflict = "
-            << localConflict);
+        "NotebookSyncConflictResolver::processNotebooksConflictByName: "
+            << "local conflict = " << localConflict);
 
-    if (localConflict.hasGuid() &&
-        (localConflict.guid() == m_remoteNotebook.guid.ref()))
+    if (localConflict.guid() &&
+        (*localConflict.guid() == m_remoteNotebook.guid().value()))
     {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "The conflicting "
-                << "notebooks match by name and guid => "
+            "The conflicting notebooks match by name and guid => "
                 << "the changes from the remote notebook should just "
                 << "override the local changes");
         overrideLocalChangesWithRemoteChanges();
@@ -496,38 +496,45 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "The conflicting notebooks "
-            << "match by name but not by guid");
+        "The conflicting notebooks match by name but not by guid");
 
     QString localConflictLinkedNotebookGuid;
-    if (localConflict.hasLinkedNotebookGuid()) {
-        localConflictLinkedNotebookGuid = localConflict.linkedNotebookGuid();
+
+    const auto linkedNotebookGuidIt = localConflict.localData().constFind(
+        QStringLiteral("linkedNotebookGuid"));
+
+    if (linkedNotebookGuidIt != localConflict.localData().constEnd()) {
+        localConflictLinkedNotebookGuid =
+            linkedNotebookGuidIt.value().toString();
     }
 
     if (localConflictLinkedNotebookGuid != m_remoteNotebookLinkedNotebookGuid) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "The notebooks "
-                << "conflicting by name don't have "
-                << "matching linked notebook guids => they are either "
-                << "from user's own account and a linked notebook or "
-                << "from two different linked notebooks => can just "
-                << "add the remote linked notebook to the local storage");
+            "The notebooks conflicting by name don't have matching linked "
+                << "notebook guids => they are either from user's own account "
+                << "and a linked notebook or from two different linked "
+                << "notebooks => can just add the remote linked notebook to "
+                << "the local storage");
 
         m_state = State::PendingRemoteNotebookAdoptionInLocalStorage;
 
-        Notebook notebook(m_remoteNotebook);
-        notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
-        notebook.setDirty(false);
-        notebook.setLocal(false);
+        qevercloud::Notebook notebook = m_remoteNotebook;
+
+        if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
+            notebook.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
+                m_remoteNotebookLinkedNotebookGuid;
+        }
+
+        notebook.setLocallyModified(false);
+        notebook.setLocalOnly(false);
 
         m_addNotebookRequestId = QUuid::createUuid();
 
         QNTRACE(
             "synchronization:notebook_conflict",
-            "Emitting the request to "
-                << "add notebook: request id = " << m_addNotebookRequestId
-                << ", notebook: " << notebook);
+            "Emitting the request to add notebook: request id = "
+                << m_addNotebookRequestId << ", notebook: " << notebook);
 
         Q_EMIT addNotebook(notebook, m_addNotebookRequestId);
         return;
@@ -540,19 +547,16 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "Both conflicting notebooks "
-            << "are from user's own account or from "
+        "Both conflicting notebooks are from user's own account or from "
             << "the same linked notebook => should rename the local "
-               "conflicting "
-            << "notebook to \"free\" the name it occupies");
+            << "conflicting notebook to \"free\" the name it occupies");
 
     m_state = State::PendingConflictingNotebookRenaming;
 
     if (!m_cache.isFilled()) {
         QNDEBUG(
             "synchronization:notebook_conflict",
-            "The cache of notebook "
-                << "info has not been filled yet");
+            "The cache of notebook info has not been filled yet");
 
         QObject::connect(
             &m_cache, &NotebookSyncCache::filled, this,
@@ -571,8 +575,7 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
 
         QNTRACE(
             "synchronization:notebook_conflict",
-            "Emitting the request to "
-                << "fill the notebooks cache");
+            "Emitting the request to fill the notebooks cache");
 
         Q_EMIT fillNotebooksCache();
         return;
@@ -580,8 +583,7 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
 
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "The cache of notebook info "
-            << "has already been filled");
+        "The cache of notebook info has already been filled");
 
     renameConflictingLocalNotebook(localConflict);
 }
@@ -590,23 +592,29 @@ void NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::overrideLocalChangesWithRemoteChanges");
+        "NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges");
 
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
-    Notebook notebook(m_localConflict);
-    notebook.qevercloudNotebook() = m_remoteNotebook;
-    notebook.setLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid);
-    notebook.setDirty(false);
-    notebook.setLocal(false);
+    qevercloud::Notebook notebook = m_remoteNotebook;
+    notebook.setLocalId(m_localConflict.localId());
+    notebook.setParentLocalId(m_localConflict.parentLocalId());
+    notebook.mutableLocalData() = m_localConflict.localData();
 
-    if (notebook.hasLinkedNotebookGuid()) {
+    if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
+        notebook.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
+            m_remoteNotebookLinkedNotebookGuid;
+    }
+
+    notebook.setLocallyModified(false);
+    notebook.setLocalOnly(false);
+
+    if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
         // NOTE: the notebook coming from the linked notebook might be marked as
         // default and/or last used which might not make much sense in
         // the context of the user's own default and/or last used notebooks so
         // removing these two properties
-        notebook.setLastUsed(false);
+        notebook.mutableLocalData()[QStringLiteral("lastUsed")] = false;
         notebook.setDefaultNotebook(false);
     }
 
@@ -622,21 +630,21 @@ void NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 }
 
 void NotebookSyncConflictResolver::renameConflictingLocalNotebook(
-    const Notebook & localConflict)
+    const qevercloud::Notebook & localConflict)
 {
     QNDEBUG(
         "synchronization:notebook_conflict",
-        "NotebookSyncConflictResolver"
-            << "::renameConflictingLocalNotebook: local conflict = "
-            << localConflict);
+        "NotebookSyncConflictResolver::renameConflictingLocalNotebook: "
+            << "local conflict = " << localConflict);
 
-    QString name =
-        (localConflict.hasName() ? localConflict.name()
-                                 : m_remoteNotebook.name.ref());
+    const QString name =
+        (localConflict.name() ? *localConflict.name()
+                              : m_remoteNotebook.name().value());
 
     const auto & guidByNameHash = m_cache.guidByNameHash();
 
-    QString conflictingName = name + QStringLiteral(" - ") + tr("conflicting");
+    QString conflictingName =
+        name + QStringLiteral(" - ") + tr("conflicting");
 
     int suffix = 1;
     QString currentName = conflictingName;
@@ -651,17 +659,16 @@ void NotebookSyncConflictResolver::renameConflictingLocalNotebook(
 
     conflictingName = currentName;
 
-    Notebook notebook(localConflict);
+    qevercloud::Notebook notebook = localConflict;
     notebook.setName(conflictingName);
-    notebook.setDirty(true);
+    notebook.setLocallyModified(true);
 
     m_updateNotebookRequestId = QUuid::createUuid();
 
     QNTRACE(
         "synchronization:notebook_conflict",
-        "Emitting the request to "
-            << "update notebook: request id = " << m_updateNotebookRequestId
-            << ", notebook: " << notebook);
+        "Emitting the request to update notebook: request id = "
+            << m_updateNotebookRequestId << ", notebook: " << notebook);
 
     Q_EMIT updateNotebook(notebook, m_updateNotebookRequestId);
 }

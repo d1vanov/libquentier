@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,29 +50,29 @@ public:
      * @return  True if the cache is already filled with up-to-moment data,
      *          false otherwise
      */
-    bool isFilled() const;
+    [[nodiscard]] bool isFilled() const noexcept;
 
-    const QHash<QString, QString> & nameByLocalUidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByLocalIdHash() const noexcept
     {
-        return m_notebookNameByLocalUid;
+        return m_notebookNameByLocalId;
     }
 
-    const QHash<QString, QString> & nameByGuidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByGuidHash() const noexcept
     {
         return m_notebookNameByGuid;
     }
 
-    const QHash<QString, QString> & guidByNameHash() const
+    [[nodiscard]] const QHash<QString, QString> & guidByNameHash() const noexcept
     {
         return m_notebookGuidByName;
     }
 
-    const QHash<QString, Notebook> & dirtyNotebooksByGuidHash() const
+    [[nodiscard]] const QHash<QString, qevercloud::Notebook> & dirtyNotebooksByGuidHash() const noexcept
     {
         return m_dirtyNotebooksByGuid;
     }
 
-    const QString & linkedNotebookGuid() const
+    [[nodiscard]] const QString & linkedNotebookGuid() const noexcept
     {
         return m_linkedNotebookGuid;
     }
@@ -102,7 +102,7 @@ private Q_SLOTS:
         LocalStorageManager::ListObjectsOptions flag, size_t limit,
         size_t offset, LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Notebook> foundNotebooks,
+        QString linkedNotebookGuid, QList<qevercloud::Notebook> foundNotebooks,
         QUuid requestId);
 
     void onListNotebooksFailed(
@@ -112,9 +112,9 @@ private Q_SLOTS:
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
-    void onAddNotebookComplete(Notebook notebook, QUuid requestId);
-    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
-    void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
+    void onAddNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
+    void onUpdateNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
+    void onExpungeNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
 
 private:
     void connectToLocalStorage();
@@ -122,8 +122,8 @@ private:
 
     void requestNotebooksList();
 
-    void removeNotebook(const QString & notebookLocalUid);
-    void processNotebook(const Notebook & notebook);
+    void removeNotebook(const QString & notebookLocalId);
+    void processNotebook(const qevercloud::Notebook & notebook);
 
 private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
@@ -131,11 +131,11 @@ private:
 
     QString m_linkedNotebookGuid;
 
-    QHash<QString, QString> m_notebookNameByLocalUid;
+    QHash<QString, QString> m_notebookNameByLocalId;
     QHash<QString, QString> m_notebookNameByGuid;
     QHash<QString, QString> m_notebookGuidByName;
 
-    QHash<QString, Notebook> m_dirtyNotebooksByGuid;
+    QHash<QString, qevercloud::Notebook> m_dirtyNotebooksByGuid;
 
     QUuid m_listNotebooksRequestId;
     size_t m_limit = 20;

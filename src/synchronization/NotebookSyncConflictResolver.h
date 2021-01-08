@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,18 +19,19 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLVER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTEBOOK_SYNC_CONFLICT_RESOLVER_H
 
-#include <quentier/types/Notebook.h>
+#include <quentier/types/ErrorString.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/generated/types/Notebook.h>
 
 #include <QObject>
+#include <QUuid>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+class QDebug;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
+class LocalStorageManagerAsync;
+class NotebookSyncCache;
 
 /**
  * The NotebookSyncConflictResolver class resolves the conflict between two
@@ -45,18 +46,18 @@ public:
     explicit NotebookSyncConflictResolver(
         const qevercloud::Notebook & remoteNotebook,
         const QString & remoteNotebookLinkedNotebookGuid,
-        const Notebook & localConflict, NotebookSyncCache & cache,
+        const qevercloud::Notebook & localConflict, NotebookSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
     void start();
 
-    const qevercloud::Notebook & remoteNotebook() const
+    [[nodiscard]] const qevercloud::Notebook & remoteNotebook() const noexcept
     {
         return m_remoteNotebook;
     }
 
-    const Notebook & localConflict() const
+    [[nodiscard]] const qevercloud::Notebook & localConflict() const noexcept
     {
         return m_localConflict;
     }
@@ -69,25 +70,29 @@ Q_SIGNALS:
 
     // private signals
     void fillNotebooksCache();
-    void addNotebook(Notebook notebook, QUuid requestId);
-    void updateNotebook(Notebook notebook, QUuid requestId);
-    void findNotebook(Notebook notebook, QUuid requestId);
+    void addNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void updateNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void findNotebook(qevercloud::Notebook notebook, QUuid requestId);
 
 private Q_SLOTS:
-    void onAddNotebookComplete(Notebook notebook, QUuid requestId);
+    void onAddNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onUpdateNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onFindNotebookComplete(Notebook notebook, QUuid requestId);
+    void onFindNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
 
     void onFindNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -95,9 +100,14 @@ private Q_SLOTS:
 private:
     void connectToLocalStorage();
     void processNotebooksConflictByGuid();
-    void processNotebooksConflictByName(const Notebook & localConflict);
+
+    void processNotebooksConflictByName(
+        const qevercloud::Notebook & localConflict);
+
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalNotebook(const Notebook & localConflict);
+
+    void renameConflictingLocalNotebook(
+        const qevercloud::Notebook & localConflict);
 
     enum class State
     {
@@ -114,11 +124,11 @@ private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
 
     qevercloud::Notebook m_remoteNotebook;
-    Notebook m_localConflict;
+    qevercloud::Notebook m_localConflict;
 
     QString m_remoteNotebookLinkedNotebookGuid;
 
-    Notebook m_notebookToBeRenamed;
+    qevercloud::Notebook m_notebookToBeRenamed;
 
     State m_state = State::Undefined;
 

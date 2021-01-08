@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,7 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#include <qt5qevercloud/InkNoteImageDownloader.h>
+#include <qevercloud/InkNoteImageDownloader.h>
 
 #include <QDir>
 #include <QFile>
@@ -116,11 +116,10 @@ void InkNoteImageDownloader::run()
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
     }
 
-    QFileInfo folderPathInfo(m_storageFolderPath);
+    const QFileInfo folderPathInfo(m_storageFolderPath);
     if (Q_UNLIKELY(!folderPathInfo.exists())) {
         QDir dir(m_storageFolderPath);
-        bool res = dir.mkpath(m_storageFolderPath);
-        if (Q_UNLIKELY(!res)) {
+        if (Q_UNLIKELY(!dir.mkpath(m_storageFolderPath))) {
             SET_ERROR(
                 QT_TR_NOOP("can't create a folder to store the ink note "
                            "images in"));
@@ -138,7 +137,7 @@ void InkNoteImageDownloader::run()
                        "writable"));
     }
 
-    QString filePath = m_storageFolderPath + QStringLiteral("/") +
+    const QString filePath = m_storageFolderPath + QStringLiteral("/") +
         m_resourceGuid + QStringLiteral(".png");
 
     QFile file(filePath);

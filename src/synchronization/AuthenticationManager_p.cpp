@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 #error "The used QEverCloud library has no OAuth support"
 #endif
 
-#include <qt5qevercloud/QEverCloudOAuth.h>
+#include <qevercloud/QEverCloudOAuth.h>
 
 #include <memory>
 
@@ -47,10 +47,10 @@ void AuthenticationManagerPrivate::onAuthenticationRequest()
 
     auto pDialog = std::make_unique<qevercloud::EvernoteOAuthDialog>(
         m_consumerKey, m_consumerSecret, m_host, pParentWidget);
+
     pDialog->setWindowModality(Qt::WindowModal);
 
-    auto res = pDialog->exec();
-    if (res == QDialog::Accepted) {
+    if (pDialog->exec() == QDialog::Accepted) {
         auto result = pDialog->oauthResult();
         Q_EMIT sendAuthenticationResult(
             /* success = */ true, result.userId, result.authenticationToken,

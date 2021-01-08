@@ -6956,7 +6956,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
 
         bool isLastUsed = false;
         if (const auto it = notebook.localData().constFind(
-                QStringLiteral("LastUsed"));
+                QStringLiteral("lastUsed"));
             it != notebook.localData().constEnd())
         {
             isLastUsed = it.value().toBool();

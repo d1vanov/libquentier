@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,7 @@ void NotebookSyncCache::clear()
 
     disconnectFromLocalStorage();
 
-    m_notebookNameByLocalUid.clear();
+    m_notebookNameByLocalId.clear();
     m_notebookNameByGuid.clear();
     m_notebookGuidByName.clear();
     m_dirtyNotebooksByGuid.clear();
@@ -63,7 +63,7 @@ void NotebookSyncCache::clear()
     m_offset = 0;
 }
 
-bool NotebookSyncCache::isFilled() const
+bool NotebookSyncCache::isFilled() const noexcept
 {
     if (!m_connectedToLocalStorage) {
         return false;
@@ -95,7 +95,8 @@ void NotebookSyncCache::onListNotebooksComplete(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<Notebook> foundNotebooks, QUuid requestId)
+    QString linkedNotebookGuid, QList<qevercloud::Notebook> foundNotebooks,
+    QUuid requestId)
 {
     if (requestId != m_listNotebooksRequestId) {
         return;
@@ -148,7 +149,7 @@ void NotebookSyncCache::onListNotebooksFailed(
         "Failed to cache the notebook information required "
         << "for the sync: " << errorDescription);
 
-    m_notebookNameByLocalUid.clear();
+    m_notebookNameByLocalId.clear();
     m_notebookNameByGuid.clear();
     m_notebookGuidByName.clear();
     m_dirtyNotebooksByGuid.clear();
@@ -158,7 +159,7 @@ void NotebookSyncCache::onListNotebooksFailed(
 }
 
 void NotebookSyncCache::onAddNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     NCDEBUG(
         "NotebookSyncCache::onAddNotebookComplete: request id = "
@@ -168,24 +169,24 @@ void NotebookSyncCache::onAddNotebookComplete(
 }
 
 void NotebookSyncCache::onUpdateNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     NCDEBUG(
         "NotebookSyncCache::onUpdateNotebookComplete: request id = "
         << requestId << ", notebook: " << notebook);
 
-    removeNotebook(notebook.localUid());
+    removeNotebook(notebook.localId());
     processNotebook(notebook);
 }
 
 void NotebookSyncCache::onExpungeNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     NCDEBUG(
         "NotebookSyncCache::onExpungeNotebookComplete: request id = "
         << requestId << ", notebook: " << notebook);
 
-    removeNotebook(notebook.localUid());
+    removeNotebook(notebook.localId());
 }
 
 void NotebookSyncCache::connectToLocalStorage()
@@ -297,35 +298,35 @@ void NotebookSyncCache::requestNotebooksList()
         m_listNotebooksRequestId);
 }
 
-void NotebookSyncCache::removeNotebook(const QString & notebookLocalUid)
+void NotebookSyncCache::removeNotebook(const QString & notebookLocalId)
 {
     NCDEBUG(
-        "NotebookSyncCache::removeNotebook: local uid = " << notebookLocalUid);
+        "NotebookSyncCache::removeNotebook: local id = " << notebookLocalId);
 
-    auto localUidIt = m_notebookNameByLocalUid.find(notebookLocalUid);
-    if (Q_UNLIKELY(localUidIt == m_notebookNameByLocalUid.end())) {
-        NCDEBUG("The notebook name was not found in the cache by local uid");
+    const auto localIdIt = m_notebookNameByLocalId.find(notebookLocalId);
+    if (Q_UNLIKELY(localIdIt == m_notebookNameByLocalId.end())) {
+        NCDEBUG("The notebook name was not found in the cache by local id");
         return;
     }
 
-    QString name = localUidIt.value();
-    Q_UNUSED(m_notebookNameByLocalUid.erase(localUidIt))
+    const QString name = localIdIt.value();
+    Q_UNUSED(m_notebookNameByLocalId.erase(localIdIt))
 
-    auto guidIt = m_notebookGuidByName.find(name);
+    const auto guidIt = m_notebookGuidByName.find(name);
     if (Q_UNLIKELY(guidIt == m_notebookGuidByName.end())) {
         NCDEBUG("The notebook guid was not found in the cache by name");
         return;
     }
 
-    QString guid = guidIt.value();
+    const QString guid = guidIt.value();
     Q_UNUSED(m_notebookGuidByName.erase(guidIt))
 
-    auto dirtyNotebookIt = m_dirtyNotebooksByGuid.find(guid);
+    const auto dirtyNotebookIt = m_dirtyNotebooksByGuid.find(guid);
     if (dirtyNotebookIt != m_dirtyNotebooksByGuid.end()) {
         Q_UNUSED(m_dirtyNotebooksByGuid.erase(dirtyNotebookIt))
     }
 
-    auto nameIt = m_notebookNameByGuid.find(guid);
+    const auto nameIt = m_notebookNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_notebookNameByGuid.end())) {
         NCDEBUG("The notebook name was not found in the cache by guid");
         return;
@@ -334,35 +335,35 @@ void NotebookSyncCache::removeNotebook(const QString & notebookLocalUid)
     Q_UNUSED(m_notebookNameByGuid.erase(nameIt))
 }
 
-void NotebookSyncCache::processNotebook(const Notebook & notebook)
+void NotebookSyncCache::processNotebook(const qevercloud::Notebook & notebook)
 {
     NCDEBUG("NotebookSyncCache::processNotebook: " << notebook);
 
-    if (notebook.hasGuid()) {
-        if (notebook.isDirty()) {
-            m_dirtyNotebooksByGuid[notebook.guid()] = notebook;
+    if (notebook.guid()) {
+        if (notebook.isLocallyModified()) {
+            m_dirtyNotebooksByGuid[*notebook.guid()] = notebook;
         }
         else {
-            auto it = m_dirtyNotebooksByGuid.find(notebook.guid());
+            const auto it = m_dirtyNotebooksByGuid.find(*notebook.guid());
             if (it != m_dirtyNotebooksByGuid.end()) {
                 Q_UNUSED(m_dirtyNotebooksByGuid.erase(it))
             }
         }
     }
 
-    if (!notebook.hasName()) {
+    if (!notebook.name()) {
         NCDEBUG("Skipping the notebook without a name");
         return;
     }
 
-    QString name = notebook.name().toLower();
-    m_notebookNameByLocalUid[notebook.localUid()] = name;
+    const QString name = notebook.name()->toLower();
+    m_notebookNameByLocalId[notebook.localId()] = name;
 
-    if (!notebook.hasGuid()) {
+    if (!notebook.guid()) {
         return;
     }
 
-    const QString & guid = notebook.guid();
+    const QString & guid = *notebook.guid();
     m_notebookNameByGuid[guid] = name;
     m_notebookGuidByName[name] = guid;
 }

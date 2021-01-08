@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,6 +24,6 @@ IAuthenticationManager::IAuthenticationManager(QObject * parent) :
     QObject(parent)
 {}
 
-IAuthenticationManager::~IAuthenticationManager() {}
+IAuthenticationManager::~IAuthenticationManager() = default;
 
 } // namespace quentier
