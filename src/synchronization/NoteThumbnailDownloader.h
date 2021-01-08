@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QByteArray>
 #include <QObject>
@@ -36,9 +36,9 @@ public:
     explicit NoteThumbnailDownloader(
         const QString & host, const QString & noteGuid,
         const QString & authToken, const QString & shardId,
-        const bool noteFromPublicLinkedNotebook, QObject * parent = nullptr);
+        bool noteFromPublicLinkedNotebook, QObject * parent = nullptr);
 
-    virtual ~NoteThumbnailDownloader();
+    ~NoteThumbnailDownloader() override;
 
     void start();
 

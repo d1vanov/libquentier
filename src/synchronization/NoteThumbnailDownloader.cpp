@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,7 @@
 #include "NoteThumbnailDownloader.h"
 #include <quentier/logging/QuentierLogger.h>
 
-#include <qt5qevercloud/Thumbnail.h>
+#include <qevercloud/Thumbnail.h>
 
 namespace quentier {
 
@@ -121,7 +121,7 @@ void NoteThumbnailDownloader::onDownloadFinished(
         return;
     }
 
-    QByteArray thumbnailImageData = result.toByteArray();
+    const QByteArray thumbnailImageData = result.toByteArray();
     if (Q_UNLIKELY(thumbnailImageData.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("received empty note thumbnail data"));
     }

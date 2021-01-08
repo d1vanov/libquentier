@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,6 @@
 #include "NoteSyncCache.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #define __NSLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
@@ -54,14 +53,14 @@ void NoteSyncCache::clear()
 
     disconnectFromLocalStorage();
 
-    m_noteGuidToLocalUidBimap.clear();
+    m_noteGuidToLocalIdBimap.clear();
     m_dirtyNotesByGuid.clear();
     m_notebookGuidByNoteGuid.clear();
     m_listNotesRequestId = QUuid();
     m_offset = 0;
 }
 
-bool NoteSyncCache::isFilled() const
+bool NoteSyncCache::isFilled() const noexcept
 {
     if (!m_connectedToLocalStorage) {
         return false;
@@ -94,7 +93,8 @@ void NoteSyncCache::onListNotesComplete(
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId)
+    QString linkedNotebookGuid, QList<qevercloud::Note> foundNotes,
+    QUuid requestId)
 {
     if (requestId != m_listNotesRequestId) {
         return;
@@ -167,7 +167,7 @@ void NoteSyncCache::onListNotesFailed(
         "Failed to cache the note information required for the sync: "
         << errorDescription);
 
-    m_noteGuidToLocalUidBimap.clear();
+    m_noteGuidToLocalIdBimap.clear();
     m_dirtyNotesByGuid.clear();
     m_notebookGuidByNoteGuid.clear();
     disconnectFromLocalStorage();
@@ -175,7 +175,7 @@ void NoteSyncCache::onListNotesFailed(
     Q_EMIT failure(errorDescription);
 }
 
-void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
+void NoteSyncCache::onAddNoteComplete(qevercloud::Note note, QUuid requestId)
 {
     NSDEBUG(
         "NoteSyncCache::onAddNoteComplete: request id = "
@@ -185,7 +185,8 @@ void NoteSyncCache::onAddNoteComplete(Note note, QUuid requestId)
 }
 
 void NoteSyncCache::onUpdateNoteComplete(
-    Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
+    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
+    QUuid requestId)
 {
     NSDEBUG(
         "NoteSyncCache::onUpdateNoteComplete: request id = "
@@ -208,13 +209,14 @@ void NoteSyncCache::onUpdateNoteComplete(
     processNote(note);
 }
 
-void NoteSyncCache::onExpungeNoteComplete(Note note, QUuid requestId)
+void NoteSyncCache::onExpungeNoteComplete(
+    qevercloud::Note note, QUuid requestId)
 {
     NSDEBUG(
         "NoteSyncCache::onExpungeNoteComplete: request id = "
         << requestId << ", note: " << note);
 
-    removeNote(note.localUid());
+    removeNote(note.localId());
 }
 
 void NoteSyncCache::connectToLocalStorage()
@@ -327,61 +329,63 @@ void NoteSyncCache::requestNotesList()
         m_listNotesRequestId);
 }
 
-void NoteSyncCache::removeNote(const QString & noteLocalUid)
+void NoteSyncCache::removeNote(const QString & noteLocalId)
 {
-    NSDEBUG("NoteSyncCache::removeNote: " << noteLocalUid);
+    NSDEBUG("NoteSyncCache::removeNote: " << noteLocalId);
 
-    auto localUidIt = m_noteGuidToLocalUidBimap.right.find(noteLocalUid);
-    if (localUidIt == m_noteGuidToLocalUidBimap.right.end()) {
+    const auto localIdIt = m_noteGuidToLocalIdBimap.right.find(noteLocalId);
+    if (localIdIt == m_noteGuidToLocalIdBimap.right.end()) {
         NSDEBUG("Found no cached note to remove");
         return;
     }
 
-    QString guid = localUidIt->second;
-    Q_UNUSED(m_noteGuidToLocalUidBimap.right.erase(localUidIt))
+    const QString guid = localIdIt->second;
+    Q_UNUSED(m_noteGuidToLocalIdBimap.right.erase(localIdIt))
 
-    auto dirtyNoteIt = m_dirtyNotesByGuid.find(guid);
+    const auto dirtyNoteIt = m_dirtyNotesByGuid.find(guid);
     if (dirtyNoteIt != m_dirtyNotesByGuid.end()) {
         Q_UNUSED(m_dirtyNotesByGuid.erase(dirtyNoteIt))
     }
 
-    auto notebookGuitIt = m_notebookGuidByNoteGuid.find(guid);
+    const auto notebookGuitIt = m_notebookGuidByNoteGuid.find(guid);
     if (notebookGuitIt != m_notebookGuidByNoteGuid.end()) {
         Q_UNUSED(m_notebookGuidByNoteGuid.erase(notebookGuitIt))
     }
 }
 
-void NoteSyncCache::processNote(const Note & note)
+void NoteSyncCache::processNote(const qevercloud::Note & note)
 {
     NSDEBUG("NoteSyncCache::processNote: " << note);
 
-    if (note.hasGuid()) {
-        Q_UNUSED(m_noteGuidToLocalUidBimap.insert(
-            NoteGuidToLocalUidBimap::value_type(note.guid(), note.localUid())))
+    if (note.guid()) {
+        Q_UNUSED(m_noteGuidToLocalIdBimap.insert(
+            NoteGuidToLocalIdBimap::value_type(*note.guid(), note.localId())))
     }
     else {
-        auto localUidIt = m_noteGuidToLocalUidBimap.right.find(note.localUid());
-        if (localUidIt != m_noteGuidToLocalUidBimap.right.end()) {
-            Q_UNUSED(m_noteGuidToLocalUidBimap.right.erase(localUidIt))
+        const auto localIdIt =
+            m_noteGuidToLocalIdBimap.right.find(note.localId());
+
+        if (localIdIt != m_noteGuidToLocalIdBimap.right.end()) {
+            Q_UNUSED(m_noteGuidToLocalIdBimap.right.erase(localIdIt))
         }
     }
 
-    if (note.hasGuid()) {
-        if (note.isDirty()) {
-            m_dirtyNotesByGuid[note.guid()] = note;
+    if (note.guid()) {
+        if (note.isLocallyModified()) {
+            m_dirtyNotesByGuid[*note.guid()] = note;
         }
         else {
-            auto it = m_dirtyNotesByGuid.find(note.guid());
+            const auto it = m_dirtyNotesByGuid.find(*note.guid());
             if (it != m_dirtyNotesByGuid.end()) {
                 Q_UNUSED(m_dirtyNotesByGuid.erase(it))
             }
         }
 
-        if (note.hasNotebookGuid()) {
-            m_notebookGuidByNoteGuid[note.guid()] = note.notebookGuid();
+        if (note.notebookGuid()) {
+            m_notebookGuidByNoteGuid[*note.guid()] = *note.notebookGuid();
         }
         else {
-            auto it = m_notebookGuidByNoteGuid.find(note.guid());
+            const auto it = m_notebookGuidByNoteGuid.find(*note.guid());
             if (it != m_notebookGuidByNoteGuid.end()) {
                 Q_UNUSED(m_notebookGuidByNoteGuid.erase(it))
             }

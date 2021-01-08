@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,7 +40,7 @@ public:
 
     void clear();
 
-    const QString & linkedNotebookGuid() const
+    [[nodiscard]] const QString & linkedNotebookGuid() const noexcept
     {
         return m_linkedNotebookGuid;
     }
@@ -49,21 +49,24 @@ public:
      * @return  True if the cache is already filled with up-to-moment data,
      *          false otherwise
      */
-    bool isFilled() const;
+    [[nodiscard]] bool isFilled() const noexcept;
 
-    using NoteGuidToLocalUidBimap = boost::bimap<QString, QString>;
+    using NoteGuidToLocalIdBimap = boost::bimap<QString, QString>;
 
-    const NoteGuidToLocalUidBimap & noteGuidToLocalUidBimap() const
+    [[nodiscard]] const NoteGuidToLocalIdBimap & noteGuidToLocalIdBimap()
+        const noexcept
     {
-        return m_noteGuidToLocalUidBimap;
+        return m_noteGuidToLocalIdBimap;
     }
 
-    const QHash<QString, Note> & dirtyNotesByGuid() const
+    [[nodiscard]] const QHash<QString, qevercloud::Note> & dirtyNotesByGuid()
+        const noexcept
     {
         return m_dirtyNotesByGuid;
     }
 
-    const QHash<QString, QString> & notebookGuidByNoteGuid() const
+    [[nodiscard]] const QHash<QString, QString> & notebookGuidByNoteGuid()
+        const noexcept
     {
         return m_notebookGuidByNoteGuid;
     }
@@ -95,7 +98,8 @@ private Q_SLOTS:
         LocalStorageManager::GetNoteOptions options, size_t limit,
         size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Note> foundNotes, QUuid requestId);
+        QString linkedNotebookGuid, QList<qevercloud::Note> foundNotes,
+        QUuid requestId);
 
     void onListNotesFailed(
         LocalStorageManager::ListObjectsOptions flag,
@@ -105,13 +109,13 @@ private Q_SLOTS:
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
-    void onAddNoteComplete(Note note, QUuid requestId);
+    void onAddNoteComplete(qevercloud::Note note, QUuid requestId);
 
     void onUpdateNoteComplete(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
-    void onExpungeNoteComplete(Note note, QUuid requestId);
+    void onExpungeNoteComplete(qevercloud::Note note, QUuid requestId);
 
 private:
     void connectToLocalStorage();
@@ -119,8 +123,8 @@ private:
 
     void requestNotesList();
 
-    void removeNote(const QString & noteLocalUid);
-    void processNote(const Note & note);
+    void removeNote(const QString & noteLocalId);
+    void processNote(const qevercloud::Note & note);
 
 private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
@@ -128,8 +132,8 @@ private:
 
     QString m_linkedNotebookGuid;
 
-    NoteGuidToLocalUidBimap m_noteGuidToLocalUidBimap;
-    QHash<QString, Note> m_dirtyNotesByGuid;
+    NoteGuidToLocalIdBimap m_noteGuidToLocalIdBimap;
+    QHash<QString, qevercloud::Note> m_dirtyNotesByGuid;
     QHash<QString, QString> m_notebookGuidByNoteGuid;
 
     QUuid m_listNotesRequestId;

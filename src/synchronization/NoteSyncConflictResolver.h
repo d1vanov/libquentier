@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,9 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CONFLICT_RESOLVER_H
 
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/Note.h>
-
-#include <qt5qevercloud/QEverCloud.h>
 
 #include <QObject>
 
@@ -30,8 +27,8 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(INoteStore)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class INoteStore;
+class LocalStorageManagerAsync;
 
 /**
  * The NoteSyncConflictResolver class resolves the conflict between two notes:
@@ -51,28 +48,30 @@ public:
     class Q_DECL_HIDDEN IManager
     {
     public:
-        virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
+        [[nodiscard]] virtual LocalStorageManagerAsync &
+        localStorageManagerAsync() = 0;
 
-        virtual INoteStore * noteStoreForNote(
-            const Note & note, QString & authToken,
+        [[nodiscard]] virtual INoteStore * noteStoreForNote(
+            const qevercloud::Note & note, QString & authToken,
             ErrorString & errorDescription) = 0;
 
-        virtual bool syncingLinkedNotebooksContent() const = 0;
+        [[nodiscard]] virtual bool syncingLinkedNotebooksContent() const = 0;
 
         virtual ~IManager() = default;
     };
 
     explicit NoteSyncConflictResolver(
         IManager & manager, const qevercloud::Note & remoteNote,
-        const Note & localConflict, QObject * parent = nullptr);
+        const qevercloud::Note & localConflict, QObject * parent = nullptr);
 
     void start();
 
-    const qevercloud::Note & remoteNote() const
+    [[nodiscard]] const qevercloud::Note & remoteNote() const noexcept
     {
         return m_remoteNote;
     }
-    const Note & localConflict() const
+
+    [[nodiscard]] const qevercloud::Note & localConflict() const noexcept
     {
         return m_localConflict;
     }
@@ -96,24 +95,24 @@ Q_SIGNALS:
     void notifyAuthExpiration();
 
     // private signals
-    void addNote(Note note, QUuid requestId);
+    void addNote(qevercloud::Note note, QUuid requestId);
 
     void updateNote(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
 private Q_SLOTS:
-    void onAddNoteComplete(Note note, QUuid requestId);
+    void onAddNoteComplete(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateNoteComplete(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onGetNoteAsyncFinished(
@@ -137,9 +136,9 @@ private:
     IManager & m_manager;
 
     qevercloud::Note m_remoteNote;
-    Note m_localConflict;
+    qevercloud::Note m_localConflict;
 
-    Note m_remoteNoteAsLocalNote;
+    qevercloud::Note m_remoteNoteAsLocalNote;
 
     bool m_shouldOverrideLocalNoteWithRemoteNote = false;
 
