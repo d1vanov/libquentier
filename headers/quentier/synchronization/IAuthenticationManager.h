@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
@@ -40,7 +40,7 @@ protected:
     explicit IAuthenticationManager(QObject * parent = nullptr);
 
 public:
-    virtual ~IAuthenticationManager();
+    ~IAuthenticationManager() override;
 
 Q_SIGNALS:
     void sendAuthenticationResult(

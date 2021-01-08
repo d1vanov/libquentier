@@ -22,7 +22,7 @@
 #include "RemoteToLocalSynchronizationManager.h"
 #include "SendLocalChangesManager.h"
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/IKeychainService.h>
 

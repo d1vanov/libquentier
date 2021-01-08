@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,19 +19,21 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/utility/ForwardDeclarations.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
+
+#include <qevercloud/generated/types/LinkedNotebook.h>
+#include <qevercloud/generated/types/TypeAliases.h>
 
 #include <QObject>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(SynchronizationManagerPrivate)
+class LocalStorageManagerAsync;
+class SynchronizationManagerPrivate;
 
 /**
  * @brief The SynchronizationManager class encapsulates methods and signals &
@@ -86,13 +88,13 @@ public:
         IKeychainServicePtr pKeychainService = {},
         ISyncStateStoragePtr pSyncStateStorage = {});
 
-    virtual ~SynchronizationManager();
+    ~SynchronizationManager() override;
 
     /**
      * @return                          True if the synchronization is being
      *                                  performed at the moment, false otherwise
      */
-    bool active() const;
+    [[nodiscard]] bool active() const;
 
     /**
      * @return                          True or false depending on the option to
@@ -100,7 +102,7 @@ public:
      *                                  containing resources during sync; by
      *                                  default no thumbnails are downloaded
      */
-    bool downloadNoteThumbnailsOption() const;
+    [[nodiscard]] bool downloadNoteThumbnailsOption() const;
 
 public Q_SLOTS:
     /**
@@ -159,7 +161,7 @@ public Q_SLOTS:
      * the next attempt to synchronize the data for this user ID would cause
      * the launch of OAuth to get the new authentication token
      */
-    void revokeAuthentication(const qevercloud::UserID userId);
+    void revokeAuthentication(qevercloud::UserID userId);
 
     /**
      * Use this slot to switch the option whether the synchronization of notes
@@ -392,7 +394,7 @@ Q_SIGNALS:
      */
     void linkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
+        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
     /**
      * This signal is emitted when the sync chunks for the stuff from linked

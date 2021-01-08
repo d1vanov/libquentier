@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,19 +19,29 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_NOTE_STORE_H
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/Tag.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qevercloud/QEverCloud.h>
-
+#include <QNetworkCookie>
 #include <QObject>
 
 #include <memory>
+
+namespace qevercloud {
+
+class AuthenticationResult;
+class LinkedNotebook;
+class Note;
+class Notebook;
+class Resource;
+class SavedSearch;
+class SyncChunk;
+class SyncChunkFilter;
+class SyncState;
+class Tag;
+
+} // namespace qevercloud
 
 namespace quentier {
 
@@ -47,17 +57,17 @@ protected:
     explicit INoteStore(QObject * parent = nullptr);
 
 public:
-    virtual ~INoteStore() = default;
+    ~INoteStore() override = default;
 
     /*
      * Factory method, create a new INoteStore subclass object
      */
-    virtual INoteStore * create() const = 0;
+    [[nodiscard]] virtual INoteStore * create() const = 0;
 
     /**
      * Provide note store URL used by this INoteStore instance
      */
-    virtual QString noteStoreUrl() const = 0;
+    [[nodiscard]] virtual QString noteStoreUrl() const = 0;
 
     /**
      * Set note store URL to be used by this INoteStore instance
@@ -99,8 +109,8 @@ public:
      *                          creation, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 createNotebook(
-        Notebook & notebook, ErrorString & errorDescription,
+    [[nodiscard]] virtual qint32 createNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
@@ -124,8 +134,8 @@ public:
      *                          update, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 updateNotebook(
-        Notebook & notebook, ErrorString & errorDescription,
+    [[nodiscard]] virtual qint32 updateNotebook(
+        qevercloud::Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
@@ -148,9 +158,9 @@ public:
      *                          creation, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 createNote(
-        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+    [[nodiscard]] virtual qint32 createNote(
+        qevercloud::Note & note, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update note
@@ -173,9 +183,9 @@ public:
      *                          other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 updateNote(
-        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+    [[nodiscard]] virtual qint32 updateNote(
+        qevercloud::Note & note, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create tag
@@ -198,9 +208,9 @@ public:
      *                          creation, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 createTag(
-        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+    [[nodiscard]] virtual qint32 createTag(
+        qevercloud::Tag & tag, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Update tag
@@ -223,9 +233,9 @@ public:
      *                          other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 updateTag(
-        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
-        QString linkedNotebookAuthToken = {}) = 0;
+    [[nodiscard]] virtual qint32 updateTag(
+        qevercloud::Tag & tag, ErrorString & errorDescription,
+        qint32 & rateLimitSeconds, QString linkedNotebookAuthToken = {}) = 0;
 
     /**
      * Create saved search
@@ -244,8 +254,8 @@ public:
      *                          creation, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 createSavedSearch(
-        SavedSearch & savedSearch, ErrorString & errorDescription,
+    [[nodiscard]] virtual qint32 createSavedSearch(
+        qevercloud::SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -264,8 +274,8 @@ public:
      *                          update, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 updateSavedSearch(
-        SavedSearch & savedSearch, ErrorString & errorDescription,
+    [[nodiscard]] virtual qint32 updateSavedSearch(
+        qevercloud::SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -284,7 +294,7 @@ public:
      *                          retrieval, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 getSyncState(
+    [[nodiscard]] virtual qint32 getSyncState(
         qevercloud::SyncState & syncState, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
@@ -310,7 +320,7 @@ public:
      *                          retrieval, other values corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 getSyncChunk(
+    [[nodiscard]] virtual qint32 getSyncChunk(
         const qint32 afterUSN, const qint32 maxEntries,
         const qevercloud::SyncChunkFilter & filter,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
@@ -340,7 +350,7 @@ public:
      *                          corresponding to qevercloud::EDAMErrorCode
      *                          enumeration instead
      */
-    virtual qint32 getLinkedNotebookSyncState(
+    [[nodiscard]] virtual qint32 getLinkedNotebookSyncState(
         const qevercloud::LinkedNotebook & linkedNotebook,
         const QString & authToken, qevercloud::SyncState & syncState,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
@@ -381,10 +391,10 @@ public:
      *                                  qevercloud::EDAMErrorCode enumeration
      *                                  instead
      */
-    virtual qint32 getLinkedNotebookSyncChunk(
+    [[nodiscard]] virtual qint32 getLinkedNotebookSyncChunk(
         const qevercloud::LinkedNotebook & linkedNotebook,
-        const qint32 afterUSN, const qint32 maxEntries,
-        const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+        qint32 afterUSN, qint32 maxEntries,
+        const QString & linkedNotebookAuthToken, bool fullSyncOnly,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
@@ -418,10 +428,9 @@ public:
      *                                  qevercloud::EDAMErrorCode enumeration
      *                                  instead
      */
-    virtual qint32 getNote(
-        const bool withContent, const bool withResourcesData,
-        const bool withResourcesRecognition,
-        const bool withResourceAlternateData, Note & note,
+    [[nodiscard]] virtual qint32 getNote(
+        bool withContent, bool withResourcesData, bool withResourcesRecognition,
+        bool withResourceAlternateData, qevercloud::Note & note,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -461,12 +470,11 @@ public:
      *                                  retrieval was successful, false
      *                                  otherwise
      */
-    virtual bool getNoteAsync(
-        const bool withContent, const bool withResourceData,
-        const bool withResourcesRecognition,
-        const bool withResourceAlternateData, const bool withSharedNotes,
-        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-        const bool withNoteLimits, const QString & noteGuid,
+    [[nodiscard]] virtual bool getNoteAsync(
+        bool withContent, bool withResourceData, bool withResourcesRecognition,
+        bool withResourceAlternateData, bool withSharedNotes,
+        bool withNoteAppDataValues, bool withResourceAppDataValues,
+        bool withNoteLimits, const QString & noteGuid,
         const QString & authToken, ErrorString & errorDescription) = 0;
 
     /**
@@ -500,10 +508,10 @@ public:
      *                                  qevercloud::EDAMErrorCode enumeration
      *                                  instead
      */
-    virtual qint32 getResource(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
-        const QString & authToken, Resource & resource,
+    [[nodiscard]] virtual qint32 getResource(
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
+        const QString & authToken, qevercloud::Resource & resource,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -530,9 +538,9 @@ public:
      *                                  retrieval was successful, false
      *                                  otherwise
      */
-    virtual bool getResourceAsync(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
+    [[nodiscard]] virtual bool getResourceAsync(
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
         const QString & resourceGuid, const QString & authToken,
         ErrorString & errorDescription) = 0;
 
@@ -555,7 +563,7 @@ public:
      *                          corresponding to
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
-    virtual qint32 authenticateToSharedNotebook(
+    [[nodiscard]] virtual qint32 authenticateToSharedNotebook(
         const QString & shareKey, qevercloud::AuthenticationResult & authResult,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) = 0;
 

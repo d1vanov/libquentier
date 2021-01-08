@@ -117,7 +117,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
-    headers/quentier/synchronization/ForwardDeclarations.h
+    headers/quentier/synchronization/Fwd.h
     headers/quentier/synchronization/IAuthenticationManager.h
     headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/ISyncStateStorage.h
@@ -157,7 +157,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/FileIOProcessorAsync.h
     headers/quentier/utility/FileSystem.h
     headers/quentier/utility/FileSystemWatcher.h
-    headers/quentier/utility/ForwardDeclarations.h
+    headers/quentier/utility/Fwd.h
     headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/Initialize.h
     headers/quentier/utility/LimitedStack.h

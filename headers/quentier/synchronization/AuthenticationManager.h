@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(AuthenticationManagerPrivate)
+class AuthenticationManagerPrivate;
 
 /**
  * @brief The AuthenticationManager class is libquentier's default
@@ -38,13 +38,12 @@ public:
         const QString & consumerKey, const QString & consumerSecret,
         const QString & host, QObject * parent = nullptr);
 
-    virtual ~AuthenticationManager();
+    ~AuthenticationManager() override;
 
 public Q_SLOTS:
-    virtual void onAuthenticationRequest() override;
+    void onAuthenticationRequest() override;
 
 private:
-    AuthenticationManager() = delete;
     Q_DISABLE_COPY(AuthenticationManager)
 
 private:

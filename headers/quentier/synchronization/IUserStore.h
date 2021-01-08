@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,23 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_USER_STORE_H
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QList>
 #include <QNetworkCookie>
 
-#include <qevercloud/QEverCloud.h>
-
 #include <memory>
+
+namespace qevercloud {
+
+enum class ServiceLevel;
+
+class AccountLimits;
+class User;
+
+} // namespace qevercloud
 
 namespace quentier {
 
@@ -68,7 +75,7 @@ public:
      *                          the service can talk to the client using
      *                          the supplied protocol version, false otherwise
      */
-    virtual bool checkVersion(
+    [[nodiscard]] virtual bool checkVersion(
         const QString & clientName, qint16 edamVersionMajor,
         qint16 edamVersionMinor, ErrorString & errorDescription) = 0;
 
@@ -90,8 +97,8 @@ public:
      *                          corresponding to qevercloud::EDAMErrorCode
      *                          enumeration instead
      */
-    virtual qint32 getUser(
-        User & user, ErrorString & errorDescription,
+    [[nodiscard]] virtual qint32 getUser(
+        qevercloud::User & user, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 
     /**
@@ -114,7 +121,7 @@ public:
      *                          qevercoud::EDAMErrorCode::type enumeration
      *                          instead
      */
-    virtual qint32 getAccountLimits(
+    [[nodiscard]] virtual qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;

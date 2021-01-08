@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
 
-#include <quentier/synchronization/ForwardDeclarations.h>
+#include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 
@@ -49,14 +49,18 @@ public:
     class QUENTIER_EXPORT ISyncState : public Printable
     {
     public:
-        virtual qint32 userDataUpdateCount() const = 0;
-        virtual qevercloud::Timestamp userDataLastSyncTime() const = 0;
-        virtual QHash<QString, qint32> linkedNotebookUpdateCounts() const = 0;
+        [[nodiscard]] virtual qint32 userDataUpdateCount() const = 0;
 
-        virtual QHash<QString, qevercloud::Timestamp>
+        [[nodiscard]] virtual qevercloud::Timestamp userDataLastSyncTime()
+            const = 0;
+
+        [[nodiscard]] virtual QHash<QString, qint32>
+        linkedNotebookUpdateCounts() const = 0;
+
+        [[nodiscard]] virtual QHash<QString, qevercloud::Timestamp>
         linkedNotebookLastSyncTimes() const = 0;
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     using ISyncStatePtr = std::shared_ptr<ISyncState>;
@@ -64,9 +68,10 @@ public:
 public:
     explicit ISyncStateStorage(QObject * parent = nullptr) : QObject(parent) {}
 
-    virtual ~ISyncStateStorage() = default;
+    ~ISyncStateStorage() override = default;
 
-    virtual ISyncStatePtr getSyncState(const Account & account) = 0;
+    [[nodiscard]] virtual ISyncStatePtr getSyncState(
+        const Account & account) = 0;
 
     virtual void setSyncState(
         const Account & account, ISyncStatePtr syncState) = 0;

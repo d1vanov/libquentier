@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/ForwardDeclarations.h>
+#include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QObject>
