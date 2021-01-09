@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,6 +19,9 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_USER_STORE_H
 
 #include <quentier/synchronization/IUserStore.h>
+
+#include <qevercloud/Exceptions.h>
+#include <qevercloud/generated/Services.h>
 
 namespace quentier {
 
@@ -41,35 +44,35 @@ namespace quentier {
 class Q_DECL_HIDDEN UserStore final : public IUserStore
 {
 public:
-    UserStore(QString evernoteHost);
+    explicit UserStore(QString evernoteHost);
 
-    virtual ~UserStore() override = default;
+    ~UserStore() override = default;
 
 public:
     // IUserStore interface
 
-    virtual void setAuthData(
+    void setAuthData(
         QString authenticationToken, QList<QNetworkCookie> cookies) override;
 
-    virtual bool checkVersion(
+    [[nodiscard]] bool checkVersion(
         const QString & clientName, qint16 edamVersionMajor,
         qint16 edamVersionMinor, ErrorString & errorDescription) override;
 
-    virtual qint32 getUser(
-        User & user, ErrorString & errorDescription,
+    [[nodiscard]] qint32 getUser(
+        qevercloud::User & user, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
-    virtual qint32 getAccountLimits(
+    [[nodiscard]] qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
 private:
-    qint32 processEdamUserException(
+    [[nodiscard]] qint32 processEdamUserException(
         const qevercloud::EDAMUserException & userException,
         ErrorString & errorDescription) const;
 
-    qint32 processEdamSystemException(
+    [[nodiscard]] qint32 processEdamSystemException(
         const qevercloud::EDAMSystemException & systemException,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) const;
 

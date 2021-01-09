@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,26 +34,28 @@ public:
         qevercloud::Timestamp m_userDataLastSyncTime = 0;
 
         QHash<QString, qint32> m_updateCountsByLinkedNotebookGuid;
+
         QHash<QString, qevercloud::Timestamp>
             m_lastSyncTimesByLinkedNotebookGuid;
 
-        virtual qint32 userDataUpdateCount() const override
+        [[nodiscard]] virtual qint32 userDataUpdateCount() const override
         {
             return m_userDataUpdateCount;
         }
 
-        virtual qevercloud::Timestamp userDataLastSyncTime() const override
+        [[nodiscard]] virtual qevercloud::Timestamp userDataLastSyncTime()
+            const override
         {
             return m_userDataLastSyncTime;
         }
 
-        virtual QHash<QString, qint32> linkedNotebookUpdateCounts()
-            const override
+        [[nodiscard]] virtual QHash<QString, qint32>
+        linkedNotebookUpdateCounts() const override
         {
             return m_updateCountsByLinkedNotebookGuid;
         }
 
-        virtual QHash<QString, qevercloud::Timestamp>
+        [[nodiscard]] virtual QHash<QString, qevercloud::Timestamp>
         linkedNotebookLastSyncTimes() const override
         {
             return m_lastSyncTimesByLinkedNotebookGuid;
@@ -63,11 +65,11 @@ public:
 public:
     explicit SyncStateStorage(QObject * parent);
 
-    virtual ~SyncStateStorage() = default;
+    ~SyncStateStorage() override = default;
 
-    virtual ISyncStatePtr getSyncState(const Account & account) override;
+    [[nodiscard]] ISyncStatePtr getSyncState(const Account & account) override;
 
-    virtual void setSyncState(
+    void setSyncState(
         const Account & account, ISyncStatePtr syncState) override;
 };
 

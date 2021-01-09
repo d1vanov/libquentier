@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,16 +21,16 @@
 
 #include <quentier/types/SavedSearch.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/generated/types/SavedSearch.h>
 
 #include <QObject>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+class QDebug;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class SavedSearchSyncCache;
+class LocalStorageManagerAsync;
 
 class Q_DECL_HIDDEN SavedSearchSyncConflictResolver final : public QObject
 {
@@ -38,49 +38,58 @@ class Q_DECL_HIDDEN SavedSearchSyncConflictResolver final : public QObject
 public:
     explicit SavedSearchSyncConflictResolver(
         const qevercloud::SavedSearch & remoteSavedSearch,
-        const SavedSearch & localConflict, SavedSearchSyncCache & cache,
+        const qevercloud::SavedSearch & localConflict,
+        SavedSearchSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
     void start();
 
-    const qevercloud::SavedSearch & remoteSavedSearch() const
+    [[nodiscard]] const qevercloud::SavedSearch & remoteSavedSearch()
+        const noexcept
     {
         return m_remoteSavedSearch;
     }
 
-    const SavedSearch & localConflict() const
+    [[nodiscard]] const qevercloud::SavedSearch & localConflict() const noexcept
     {
         return m_localConflict;
     }
 
 Q_SIGNALS:
     void finished(qevercloud::SavedSearch remoteSavedSearch);
+
     void failure(
         qevercloud::SavedSearch remoteSavedSearch,
         ErrorString errorDescription);
 
     // private signals
     void fillSavedSearchesCache();
-    void addSavedSearch(SavedSearch search, QUuid requestId);
-    void updateSavedSearch(SavedSearch search, QUuid requestId);
-    void findSavedSearch(SavedSearch search, QUuid requestId);
+    void addSavedSearch(qevercloud::SavedSearch search, QUuid requestId);
+    void updateSavedSearch(qevercloud::SavedSearch search, QUuid requestId);
+    void findSavedSearch(qevercloud::SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
-    void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onAddSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onAddSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onUpdateSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onFindSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onFindSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onFindSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -88,9 +97,14 @@ private Q_SLOTS:
 private:
     void connectToLocalStorage();
     void processSavedSearchesConflictByGuid();
-    void processSavedSearchesConflictByName(const SavedSearch & localConflict);
+
+    void processSavedSearchesConflictByName(
+        const qevercloud::SavedSearch & localConflict);
+
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalSavedSearch(const SavedSearch & localConflict);
+
+    void renameConflictingLocalSavedSearch(
+        const qevercloud::SavedSearch & localConflict);
 
     enum class State
     {
@@ -107,9 +121,9 @@ private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
 
     qevercloud::SavedSearch m_remoteSavedSearch;
-    SavedSearch m_localConflict;
+    qevercloud::SavedSearch m_localConflict;
 
-    SavedSearch m_savedSearchToBeRenamed;
+    qevercloud::SavedSearch m_savedSearchToBeRenamed;
 
     State m_state = State::Undefined;
 

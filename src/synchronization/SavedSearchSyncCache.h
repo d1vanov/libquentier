@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,24 +41,28 @@ public:
      * @return      True if the cache is already filled with up-to-moment data,
      *              false otherwise
      */
-    bool isFilled() const;
+    [[nodiscard]] bool isFilled() const noexcept;
 
-    const QHash<QString, QString> & nameByLocalUidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByLocalIdHash()
+        const noexcept
     {
-        return m_savedSearchNameByLocalUid;
+        return m_savedSearchNameByLocalId;
     }
 
-    const QHash<QString, QString> & nameByGuidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByGuidHash()
+        const noexcept
     {
         return m_savedSearchNameByGuid;
     }
 
-    const QHash<QString, QString> & guidByNameHash() const
+    [[nodiscard]] const QHash<QString, QString> & guidByNameHash()
+        const noexcept
     {
         return m_savedSearchGuidByName;
     }
 
-    const QHash<QString, SavedSearch> & dirtySavedSearchesByGuid() const
+    [[nodiscard]] const QHash<QString, qevercloud::SavedSearch> &
+    dirtySavedSearchesByGuid() const noexcept
     {
         return m_dirtySavedSearchesByGuid;
     }
@@ -87,7 +91,7 @@ private Q_SLOTS:
         LocalStorageManager::ListObjectsOptions flag, size_t limit,
         size_t offset, LocalStorageManager::ListSavedSearchesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<SavedSearch> foundSearches, QUuid requestId);
+        QList<qevercloud::SavedSearch> foundSearches, QUuid requestId);
 
     void onListSavedSearchesFailed(
         LocalStorageManager::ListObjectsOptions flag, size_t limit,
@@ -95,9 +99,14 @@ private Q_SLOTS:
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
-    void onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onAddSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
+
+    void onUpdateSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
+
+    void onExpungeSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
 private:
     void connectToLocalStorage();
@@ -105,18 +114,18 @@ private:
 
     void requestSavedSearchesList();
 
-    void removeSavedSearch(const QString & savedSearchLocalUid);
-    void processSavedSearch(const SavedSearch & search);
+    void removeSavedSearch(const QString & savedSearchLocalId);
+    void processSavedSearch(const qevercloud::SavedSearch & search);
 
 private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
     bool m_connectedToLocalStorage = false;
 
-    QHash<QString, QString> m_savedSearchNameByLocalUid;
+    QHash<QString, QString> m_savedSearchNameByLocalId;
     QHash<QString, QString> m_savedSearchNameByGuid;
     QHash<QString, QString> m_savedSearchGuidByName;
 
-    QHash<QString, SavedSearch> m_dirtySavedSearchesByGuid;
+    QHash<QString, qevercloud::SavedSearch> m_dirtySavedSearchesByGuid;
 
     QUuid m_listSavedSearchesRequestId;
     size_t m_limit = 50;

@@ -16,9 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NotebookSyncConflictResolver.h"
-
 #include "NotebookSyncCache.h"
+#include "NotebookSyncConflictResolver.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>

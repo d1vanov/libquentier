@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,16 +19,17 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLVER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_TAG_SYNC_CONFLICT_RESOLVER_H
 
-#include <quentier/types/Tag.h>
+#include <quentier/types/ErrorString.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/generated/types/Tag.h>
 
 #include <QObject>
+#include <QUuid>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(TagSyncCache)
+class LocalStorageManagerAsync;
+class TagSyncCache;
 
 /**
  * The TagSyncConflictResolver class resolves the conflict between two tags:
@@ -42,17 +43,18 @@ class Q_DECL_HIDDEN TagSyncConflictResolver final : public QObject
 public:
     explicit TagSyncConflictResolver(
         const qevercloud::Tag & remoteTag, QString remoteTagLinkedNotebookGuid,
-        const Tag & localConflict, TagSyncCache & cache,
+        const qevercloud::Tag & localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
     void start();
 
-    const qevercloud::Tag & remoteTag() const
+    [[nodiscard]] const qevercloud::Tag & remoteTag() const noexcept
     {
         return m_remoteTag;
     }
-    const Tag & localConflict() const
+
+    [[nodiscard]] const qevercloud::Tag & localConflict() const noexcept
     {
         return m_localConflict;
     }
@@ -63,24 +65,25 @@ Q_SIGNALS:
 
     // private signals
     void fillTagsCache();
-    void addTag(Tag tag, QUuid requestId);
-    void updateTag(Tag tag, QUuid requestId);
-    void findTag(Tag tag, QUuid requestId);
+    void addTag(qevercloud::Tag tag, QUuid requestId);
+    void updateTag(qevercloud::Tag tag, QUuid requestId);
+    void findTag(qevercloud::Tag tag, QUuid requestId);
 
 private Q_SLOTS:
-    void onAddTagComplete(Tag tag, QUuid requestId);
+    void onAddTagComplete(qevercloud::Tag tag, QUuid requestId);
 
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onAddTagFailed(
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateTagComplete(Tag tag, QUuid requestId);
+    void onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId);
 
     void onUpdateTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onFindTagComplete(Tag tag, QUuid requestId);
+    void onFindTagComplete(qevercloud::Tag tag, QUuid requestId);
 
     void onFindTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onCacheFilled();
     void onCacheFailed(ErrorString errorDescription);
@@ -88,9 +91,9 @@ private Q_SLOTS:
 private:
     void connectToLocalStorage();
     void processTagsConflictByGuid();
-    void processTagsConflictByName(const Tag & localConflict);
+    void processTagsConflictByName(const qevercloud::Tag & localConflict);
     void overrideLocalChangesWithRemoteChanges();
-    void renameConflictingLocalTag(const Tag & localConflict);
+    void renameConflictingLocalTag(const qevercloud::Tag & localConflict);
 
     enum class State
     {
@@ -107,11 +110,11 @@ private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
 
     qevercloud::Tag m_remoteTag;
-    Tag m_localConflict;
+    qevercloud::Tag m_localConflict;
 
     QString m_remoteTagLinkedNotebookGuid;
 
-    Tag m_tagToBeRenamed;
+    qevercloud::Tag m_tagToBeRenamed;
 
     State m_state = State::Undefined;
 

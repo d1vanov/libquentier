@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SavedSearchSyncConflictResolver.h"
-
 #include "SavedSearchSyncCache.h"
+#include "SavedSearchSyncConflictResolver.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -27,7 +26,7 @@ namespace quentier {
 
 SavedSearchSyncConflictResolver::SavedSearchSyncConflictResolver(
     const qevercloud::SavedSearch & remoteSavedSearch,
-    const SavedSearch & localConflict, SavedSearchSyncCache & cache,
+    const qevercloud::SavedSearch & localConflict, SavedSearchSyncCache & cache,
     LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_cache(cache), m_localStorageManagerAsync(localStorageManagerAsync),
@@ -47,7 +46,7 @@ void SavedSearchSyncConflictResolver::start()
 
     m_started = true;
 
-    if (Q_UNLIKELY(!m_remoteSavedSearch.guid.isSet())) {
+    if (Q_UNLIKELY(!m_remoteSavedSearch.guid())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local saved searches: the remote saved "
@@ -59,7 +58,7 @@ void SavedSearchSyncConflictResolver::start()
         return;
     }
 
-    if (Q_UNLIKELY(!m_remoteSavedSearch.name.isSet())) {
+    if (Q_UNLIKELY(!m_remoteSavedSearch.name())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
                        "and local saved searches: the remote saved "
@@ -71,12 +70,11 @@ void SavedSearchSyncConflictResolver::start()
         return;
     }
 
-    if (Q_UNLIKELY(!m_localConflict.hasGuid() && !m_localConflict.hasName())) {
+    if (Q_UNLIKELY(!m_localConflict.guid() && !m_localConflict.name())) {
         ErrorString error(
             QT_TR_NOOP("Can't resolve the conflict between remote "
-                       "and local saved searches: the local "
-                       "conflicting saved search has neither guid "
-                       "not name set"));
+                       "and local saved searches: the local conflicting saved "
+                       "search has neither guid nor name set"));
         QNWARNING(
             "synchronization:saved_search_conflict",
             error << ": " << m_localConflict);
@@ -86,8 +84,8 @@ void SavedSearchSyncConflictResolver::start()
 
     connectToLocalStorage();
 
-    if (m_localConflict.hasName() &&
-        (m_localConflict.name() == m_remoteSavedSearch.name.ref()))
+    if (m_localConflict.name() &&
+        (*m_localConflict.name() == *m_remoteSavedSearch.name()))
     {
         processSavedSearchesConflictByName(m_localConflict);
     }
@@ -97,7 +95,7 @@ void SavedSearchSyncConflictResolver::start()
 }
 
 void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     if (requestId != m_addSavedSearchRequestId) {
         return;
@@ -111,8 +109,7 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(
     if (m_state == State::PendingRemoteSavedSearchAdoptionInLocalStorage) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Successfully added "
-                << "the remote saved search to the local storage");
+            "Successfully added the remote saved search to the local storage");
         Q_EMIT finished(m_remoteSavedSearch);
     }
     else {
@@ -128,7 +125,8 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onAddSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_addSavedSearchRequestId) {
         return;
@@ -144,7 +142,7 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchFailed(
 }
 
 void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     if (requestId != m_updateSavedSearchRequestId) {
         return;
@@ -158,22 +156,20 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
     if (m_state == State::OverrideLocalChangesWithRemoteChanges) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Successfully "
-                << "overridden the local changes with remote changes");
+            "Successfully overridden the local changes with remote changes");
         Q_EMIT finished(m_remoteSavedSearch);
         return;
     }
     else if (m_state == State::PendingConflictingSavedSearchRenaming) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Successfully renamed "
-                << "the local saved search conflicting by name with the remote "
-                << "search");
+            "Successfully renamed the local saved search conflicting by name "
+                << "with the remote search");
 
         /**
          * Now need to find the duplicate of the remote saved search by guid:
          * 1) if one exists, update it from the remote changes - notwithstanding
-         *    its "dirty" state
+         *    its locally modified state
          * 2) if one doesn't exist, add it to the local storage
 
          * The cache should have been filled by that moment, otherwise how could
@@ -191,46 +187,45 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
         m_state = State::PendingRemoteSavedSearchAdoptionInLocalStorage;
 
         const auto & nameByGuidHash = m_cache.nameByGuidHash();
-        auto it = nameByGuidHash.find(m_remoteSavedSearch.guid.ref());
+        const auto it = nameByGuidHash.find(*m_remoteSavedSearch.guid());
         if (it == nameByGuidHash.end()) {
             QNDEBUG(
                 "synchronization:saved_search_conflict",
-                "Found no "
-                    << "duplicate of the remote saved search by guid, "
+                "Found no duplicate of the remote saved search by guid, "
                     << "adding new saved search to the local storage");
 
-            SavedSearch search(m_remoteSavedSearch);
-            search.setDirty(false);
-            search.setLocal(false);
+            qevercloud::SavedSearch search = m_remoteSavedSearch;
+            search.setLocallyModified(false);
+            search.setLocalOnly(false);
 
             m_addSavedSearchRequestId = QUuid::createUuid();
+
             QNTRACE(
                 "synchronization:saved_search_conflict",
-                "Emitting "
-                    << "the request to add saved search: request id = "
-                    << m_addSavedSearchRequestId
+                "Emitting the request to add saved search to the local storage:"
+                    << " request id = " << m_addSavedSearchRequestId
                     << ", saved search: " << search);
             Q_EMIT addSavedSearch(search, m_addSavedSearchRequestId);
         }
         else {
             QNDEBUG(
                 "synchronization:saved_search_conflict",
-                "The duplicate by "
-                    << "guid exists in the local storage, updating it with "
-                    << "the state of the remote saved search");
+                "The duplicate by guid exists in the local storage, updating "
+                    << "it with the state of the remote saved search");
 
-            SavedSearch search(m_localConflict);
-            search.qevercloudSavedSearch() = m_remoteSavedSearch;
-            search.setDirty(false);
-            search.setLocal(false);
+            qevercloud::SavedSearch search = m_remoteSavedSearch;
+            search.setLocalId(m_localConflict.localId());
+            search.setParentLocalId(m_localConflict.parentLocalId());
+            search.setLocalData(m_localConflict.localData());
+            search.setLocallyModified(false);
+            search.setLocalOnly(false);
 
             m_updateSavedSearchRequestId = QUuid::createUuid();
 
             QNTRACE(
                 "synchronization:saved_search_conflict",
-                "Emitting "
-                    << "the request to update saved search: request id = "
-                    << m_updateSavedSearchRequestId
+                "Emitting the request to update saved search in the local "
+                    << "storage: request id = " << m_updateSavedSearchRequestId
                     << ", saved search: " << search);
             Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
         }
@@ -238,9 +233,8 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
     else if (m_state == State::PendingRemoteSavedSearchAdoptionInLocalStorage) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Successfully "
-                << "finalized the sequence of actions required for resolving "
-                << "the conflict of saved searches");
+            "Successfully finalized the sequence of actions required for "
+                << "resolving the conflict of saved searches");
         Q_EMIT finished(m_remoteSavedSearch);
     }
     else {
@@ -256,7 +250,8 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_updateSavedSearchRequestId) {
         return;
@@ -272,7 +267,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(
 }
 
 void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     if (requestId != m_findSavedSearchRequestId) {
         return;
@@ -290,7 +285,8 @@ void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onFindSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (requestId != m_findSavedSearchRequestId) {
         return;
@@ -318,8 +314,7 @@ void SavedSearchSyncConflictResolver::onCacheFilled()
     if (!m_pendingCacheFilling) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Not pending "
-                << "the cache filling");
+            "Not pending the cache filling");
         return;
     }
 
@@ -349,8 +344,7 @@ void SavedSearchSyncConflictResolver::onCacheFailed(
     if (!m_pendingCacheFilling) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "Not pending "
-                << "the cache filling");
+            "Not pending the cache filling");
         return;
     }
 
@@ -432,17 +426,17 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid()
 
     if (m_cache.isFilled()) {
         const auto & guidByNameHash = m_cache.guidByNameHash();
-        auto it = guidByNameHash.find(m_remoteSavedSearch.name.ref().toLower());
+
+        const auto it = guidByNameHash.find(
+            m_remoteSavedSearch.name().value().toLower());
+
         if (it == guidByNameHash.end()) {
             QNDEBUG(
                 "synchronization:saved_search_conflict",
-                "As deduced by "
-                    << "the existing tag info cache, there is no local tag "
-                       "with "
-                    << "the same name as the name from the new state of the "
-                       "remote "
-                    << "tag, can safely override the local changes with "
-                    << "remote changes: " << m_remoteSavedSearch);
+                "As deduced by the existing tag info cache, there is no local "
+                    << "tag with the same name as the name from the new state "
+                    << "of the remote tag, can safely override the local "
+                    << "changes with remote changes: " << m_remoteSavedSearch);
             overrideLocalChangesWithRemoteChanges();
             return;
         }
@@ -453,54 +447,51 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByGuid()
          */
     }
 
-    SavedSearch dummySearch;
-    dummySearch.unsetLocalUid();
-    dummySearch.setName(m_remoteSavedSearch.name.ref());
+    qevercloud::SavedSearch search;
+    search.setLocalId(QString{});
+    search.setName(m_remoteSavedSearch.name().value());
 
     m_findSavedSearchRequestId = QUuid::createUuid();
 
     QNTRACE(
         "synchronization:saved_search_conflict",
-        "Emitting the request to "
-            << "find saved search: request id = " << m_findSavedSearchRequestId
-            << ", saved search: " << dummySearch);
-    Q_EMIT findSavedSearch(dummySearch, m_findSavedSearchRequestId);
+        "Emitting the request to find saved search: request id = "
+            << m_findSavedSearchRequestId << ", saved search: " << search);
+    Q_EMIT findSavedSearch(search, m_findSavedSearchRequestId);
 }
 
 void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(
-    const SavedSearch & localConflict)
+    const qevercloud::SavedSearch & localConflict)
 {
     QNDEBUG(
         "synchronization:saved_search_conflict",
         "SavedSearchSyncConflictResolver::processSavedSearchesConflictByName: "
             << "local conflict = " << localConflict);
 
-    if (localConflict.hasGuid() &&
-        (localConflict.guid() == m_remoteSavedSearch.guid.ref()))
+    if (localConflict.guid() &&
+        (*localConflict.guid() == m_remoteSavedSearch.guid().value()))
     {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "The conflicting "
-                << "saved searches match by name and guid => the changes from "
-                << "the remote saved search should override the local changes");
+            "The conflicting saved searches match by name and guid => the "
+                << "changes from the remote saved search should override the "
+                << "local changes");
         overrideLocalChangesWithRemoteChanges();
         return;
     }
 
     QNDEBUG(
         "synchronization:saved_search_conflict",
-        "The conflicting saved "
-            << "searches match by name but not by guid => should rename the "
-               "local "
-            << "conflicting saved search to \"free\" the name it occupies");
+        "The conflicting saved searches match by name but not by guid => "
+            << "should rename the local conflicting saved search to \"free\" "
+            << "the name it occupies");
 
     m_state = State::PendingConflictingSavedSearchRenaming;
 
     if (!m_cache.isFilled()) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
-            "The cache of saved "
-                << "search info has not been filled yet");
+            "The cache of saved search info has not been filled yet");
 
         QObject::connect(
             &m_cache, &SavedSearchSyncCache::filled, this,
@@ -519,16 +510,14 @@ void SavedSearchSyncConflictResolver::processSavedSearchesConflictByName(
 
         QNTRACE(
             "synchronization:saved_search_conflict",
-            "Emitting the request "
-                << "to fill the saved searches cache");
+            "Emitting the request to fill the saved searches cache");
         Q_EMIT fillSavedSearchesCache();
         return;
     }
 
     QNDEBUG(
         "synchronization:saved_search_conflict",
-        "The cache of saved "
-            << "search info has already been filled");
+        "The cache of saved search info has already been filled");
     renameConflictingLocalSavedSearch(localConflict);
 }
 
@@ -541,32 +530,33 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     m_state = State::OverrideLocalChangesWithRemoteChanges;
 
-    SavedSearch search(m_localConflict);
-    search.qevercloudSavedSearch() = m_remoteSavedSearch;
-    search.setDirty(false);
-    search.setLocal(false);
+    qevercloud::SavedSearch search = m_remoteSavedSearch;
+    search.setLocalId(m_localConflict.localId());
+    search.setParentLocalId(m_localConflict.parentLocalId());
+    search.setLocalData(m_localConflict.localData());
+    search.setLocallyModified(false);
+    search.setLocalOnly(false);
 
     m_updateSavedSearchRequestId = QUuid::createUuid();
 
     QNTRACE(
         "synchronization:saved_search_conflict",
-        "Emitting the request to "
-            << "update saved search: request id = "
+        "Emitting the request to update saved search: request id = "
             << m_updateSavedSearchRequestId << " saved search: " << search);
     Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
 }
 
 void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch(
-    const SavedSearch & localConflict)
+    const qevercloud::SavedSearch & localConflict)
 {
     QNDEBUG(
         "synchronization:saved_search_conflict",
         "SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch: "
             << "local conflict = " << localConflict);
 
-    QString name =
-        (localConflict.hasName() ? localConflict.name()
-                                 : m_remoteSavedSearch.name.ref());
+    const QString name =
+        (localConflict.name() ? *localConflict.name()
+                              : m_remoteSavedSearch.name().value());
 
     const auto & guidByNameHash = m_cache.guidByNameHash();
 
@@ -584,16 +574,15 @@ void SavedSearchSyncConflictResolver::renameConflictingLocalSavedSearch(
 
     conflictingName = currentName;
 
-    SavedSearch search(localConflict);
+    qevercloud::SavedSearch search = localConflict;
     search.setName(conflictingName);
-    search.setDirty(true);
+    search.setLocallyModified(true);
 
     m_updateSavedSearchRequestId = QUuid::createUuid();
 
     QNTRACE(
         "synchronization:saved_search_conflict",
-        "Emitting the request to "
-            << "update saved search: request id = "
+        "Emitting the request to update saved search: request id = "
             << m_updateSavedSearchRequestId << ", saved search: " << search);
     Q_EMIT updateSavedSearch(search, m_updateSavedSearchRequestId);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,29 +41,33 @@ public:
      * @return True if the cache is already filled with up-to-moment data,
      * false otherwise
      */
-    bool isFilled() const;
+    [[nodiscard]] bool isFilled() const noexcept;
 
-    const QHash<QString, QString> & nameByLocalUidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByLocalIdHash()
+        const noexcept
     {
-        return m_tagNameByLocalUid;
+        return m_tagNameByLocalId;
     }
 
-    const QHash<QString, QString> & nameByGuidHash() const
+    [[nodiscard]] const QHash<QString, QString> & nameByGuidHash()
+        const noexcept
     {
         return m_tagNameByGuid;
     }
 
-    const QHash<QString, QString> & guidByNameHash() const
+    [[nodiscard]] const QHash<QString, QString> & guidByNameHash()
+        const noexcept
     {
         return m_tagGuidByName;
     }
 
-    const QHash<QString, Tag> & dirtyTagsByGuidHash() const
+    [[nodiscard]] const QHash<QString, qevercloud::Tag> & dirtyTagsByGuidHash()
+        const noexcept
     {
         return m_dirtyTagsByGuid;
     }
 
-    const QString & linkedNotebookGuid() const
+    [[nodiscard]] const QString & linkedNotebookGuid() const noexcept
     {
         return m_linkedNotebookGuid;
     }
@@ -93,7 +97,8 @@ private Q_SLOTS:
         LocalStorageManager::ListObjectsOptions flag, size_t limit,
         size_t offset, LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Tag> foundTags, QUuid requestId);
+        QString linkedNotebookGuid, QList<qevercloud::Tag> foundTags,
+        QUuid requestId);
 
     void onListTagsFailed(
         LocalStorageManager::ListObjectsOptions flag, size_t limit,
@@ -102,11 +107,12 @@ private Q_SLOTS:
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
-    void onAddTagComplete(Tag tag, QUuid requestId);
-    void onUpdateTagComplete(Tag tag, QUuid requestId);
+    void onAddTagComplete(qevercloud::Tag tag, QUuid requestId);
+    void onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId);
 
     void onExpungeTagComplete(
-        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+        qevercloud::Tag tag, QStringList expungedChildTagLocalUids,
+        QUuid requestId);
 
 private:
     void connectToLocalStorage();
@@ -115,7 +121,7 @@ private:
     void requestTagsList();
 
     void removeTag(const QString & tagLocalUid);
-    void processTag(const Tag & tag);
+    void processTag(const qevercloud::Tag & tag);
 
 private:
     LocalStorageManagerAsync & m_localStorageManagerAsync;
@@ -123,11 +129,11 @@ private:
 
     QString m_linkedNotebookGuid;
 
-    QHash<QString, QString> m_tagNameByLocalUid;
+    QHash<QString, QString> m_tagNameByLocalId;
     QHash<QString, QString> m_tagNameByGuid;
     QHash<QString, QString> m_tagGuidByName;
 
-    QHash<QString, Tag> m_dirtyTagsByGuid;
+    QHash<QString, qevercloud::Tag> m_dirtyTagsByGuid;
 
     QUuid m_listTagsRequestId;
     size_t m_limit = 50;

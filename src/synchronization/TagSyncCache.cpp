@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,6 @@
 #include "TagSyncCache.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #define __TCLOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
@@ -54,7 +53,7 @@ void TagSyncCache::clear()
 
     disconnectFromLocalStorage();
 
-    m_tagNameByLocalUid.clear();
+    m_tagNameByLocalId.clear();
     m_tagNameByGuid.clear();
     m_tagGuidByName.clear();
     m_dirtyTagsByGuid.clear();
@@ -62,7 +61,7 @@ void TagSyncCache::clear()
     m_offset = 0;
 }
 
-bool TagSyncCache::isFilled() const
+bool TagSyncCache::isFilled() const noexcept
 {
     if (!m_connectedToLocalStorage) {
         return false;
@@ -94,7 +93,8 @@ void TagSyncCache::onListTagsComplete(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<Tag> foundTags, QUuid requestId)
+    QString linkedNotebookGuid, QList<qevercloud::Tag> foundTags,
+    QUuid requestId)
 {
     if (requestId != m_listTagsRequestId) {
         return;
@@ -116,7 +116,7 @@ void TagSyncCache::onListTagsComplete(
     if (foundTags.size() == static_cast<int>(limit)) {
         TCTRACE(
             "The number of found tags matches the limit, "
-            << "requesting more tags from the local storage");
+                << "requesting more tags from the local storage");
         m_offset += limit;
         requestTagsList();
         return;
@@ -147,7 +147,7 @@ void TagSyncCache::onListTagsFailed(
         "Failed to cache the tag information required for the sync: "
         << errorDescription);
 
-    m_tagNameByLocalUid.clear();
+    m_tagNameByLocalId.clear();
     m_tagNameByGuid.clear();
     m_tagGuidByName.clear();
     m_dirtyTagsByGuid.clear();
@@ -156,7 +156,7 @@ void TagSyncCache::onListTagsFailed(
     Q_EMIT failure(errorDescription);
 }
 
-void TagSyncCache::onAddTagComplete(Tag tag, QUuid requestId)
+void TagSyncCache::onAddTagComplete(qevercloud::Tag tag, QUuid requestId)
 {
     TCDEBUG(
         "TagSyncCache::onAddTagComplete: request id = " << requestId
@@ -165,29 +165,29 @@ void TagSyncCache::onAddTagComplete(Tag tag, QUuid requestId)
     processTag(tag);
 }
 
-void TagSyncCache::onUpdateTagComplete(Tag tag, QUuid requestId)
+void TagSyncCache::onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId)
 {
     TCDEBUG(
         "TagSyncCache::onUpdateTagComplete: request id = " << requestId
                                                            << ", tag: " << tag);
 
-    removeTag(tag.localUid());
+    removeTag(tag.localId());
     processTag(tag);
 }
 
 void TagSyncCache::onExpungeTagComplete(
-    Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId)
 {
     TCDEBUG(
         "TagSyncCache::onExpungeTagComplete: request id = "
-        << requestId << ", expunged child tag local uids: "
-        << expungedChildTagLocalUids.join(QStringLiteral(", "))
+        << requestId << ", expunged child tag local ids: "
+        << expungedChildTagLocalIds.join(QStringLiteral(", "))
         << ", tag: " << tag);
 
-    removeTag(tag.localUid());
+    removeTag(tag.localId());
 
-    for (const auto & tagLocalUid: qAsConst(expungedChildTagLocalUids)) {
-        removeTag(tagLocalUid);
+    for (const auto & tagLocalId: qAsConst(expungedChildTagLocalIds)) {
+        removeTag(tagLocalId);
     }
 }
 
@@ -296,34 +296,34 @@ void TagSyncCache::requestTagsList()
         m_listTagsRequestId);
 }
 
-void TagSyncCache::removeTag(const QString & tagLocalUid)
+void TagSyncCache::removeTag(const QString & tagLocalId)
 {
-    TCDEBUG("TagSyncCache::removeTag: local uid = " << tagLocalUid);
+    TCDEBUG("TagSyncCache::removeTag: local id = " << tagLocalId);
 
-    auto localUidIt = m_tagNameByLocalUid.find(tagLocalUid);
-    if (Q_UNLIKELY(localUidIt == m_tagNameByLocalUid.end())) {
-        TCDEBUG("The tag name was not found in the cache by local uid");
+    const auto localIdIt = m_tagNameByLocalId.find(tagLocalId);
+    if (Q_UNLIKELY(localIdIt == m_tagNameByLocalId.end())) {
+        TCDEBUG("The tag name was not found in the cache by local id");
         return;
     }
 
-    QString name = localUidIt.value();
-    Q_UNUSED(m_tagNameByLocalUid.erase(localUidIt))
+    const QString name = localIdIt.value();
+    Q_UNUSED(m_tagNameByLocalId.erase(localIdIt))
 
-    auto guidIt = m_tagGuidByName.find(name);
+    const auto guidIt = m_tagGuidByName.find(name);
     if (Q_UNLIKELY(guidIt == m_tagGuidByName.end())) {
         TCDEBUG("The tag guid was not found in the cache by name");
         return;
     }
 
-    QString guid = guidIt.value();
+    const QString guid = guidIt.value();
     Q_UNUSED(m_tagGuidByName.erase(guidIt))
 
-    auto dirtyTagIt = m_dirtyTagsByGuid.find(guid);
+    const auto dirtyTagIt = m_dirtyTagsByGuid.find(guid);
     if (dirtyTagIt != m_dirtyTagsByGuid.end()) {
         Q_UNUSED(m_dirtyTagsByGuid.erase(dirtyTagIt))
     }
 
-    auto nameIt = m_tagNameByGuid.find(guid);
+    const auto nameIt = m_tagNameByGuid.find(guid);
     if (Q_UNLIKELY(nameIt == m_tagNameByGuid.end())) {
         TCDEBUG("The tag name was not found in the cache by guid");
         return;
@@ -332,35 +332,35 @@ void TagSyncCache::removeTag(const QString & tagLocalUid)
     Q_UNUSED(m_tagNameByGuid.erase(nameIt))
 }
 
-void TagSyncCache::processTag(const Tag & tag)
+void TagSyncCache::processTag(const qevercloud::Tag & tag)
 {
     TCDEBUG("TagSyncCache::processTag: " << tag);
 
-    if (tag.hasGuid()) {
-        if (tag.isDirty()) {
-            m_dirtyTagsByGuid[tag.guid()] = tag;
+    if (tag.guid()) {
+        if (tag.isLocallyModified()) {
+            m_dirtyTagsByGuid[*tag.guid()] = tag;
         }
         else {
-            auto it = m_dirtyTagsByGuid.find(tag.guid());
+            const auto it = m_dirtyTagsByGuid.find(*tag.guid());
             if (it != m_dirtyTagsByGuid.end()) {
                 Q_UNUSED(m_dirtyTagsByGuid.erase(it))
             }
         }
     }
 
-    if (!tag.hasName()) {
+    if (!tag.name()) {
         TCDEBUG("Skipping the tag without a name");
         return;
     }
 
-    QString name = tag.name().toLower();
-    m_tagNameByLocalUid[tag.localUid()] = name;
+    const QString name = tag.name()->toLower();
+    m_tagNameByLocalId[tag.localId()] = name;
 
-    if (!tag.hasGuid()) {
+    if (!tag.guid()) {
         return;
     }
 
-    const QString & guid = tag.guid();
+    const QString & guid = *tag.guid();
     m_tagNameByGuid[guid] = name;
     m_tagGuidByName[name] = guid;
 }

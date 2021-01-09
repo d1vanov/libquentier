@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 #include "ExceptionHandlingHelpers.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/User.h>
 
 #define USER_STORE_REQUEST_TIMEOUT_MSEC (-1)
 
@@ -58,7 +57,8 @@ bool UserStore::checkVersion(
 }
 
 qint32 UserStore::getUser(
-    User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds)
+    qevercloud::User & user, ErrorString & errorDescription,
+    qint32 & rateLimitSeconds)
 {
     try {
         auto ctx = qevercloud::newRequestContext(
@@ -67,7 +67,7 @@ qint32 UserStore::getUser(
             qevercloud::DEFAULT_MAX_REQUEST_TIMEOUT_MSEC,
             qevercloud::DEFAULT_MAX_REQUEST_RETRY_COUNT, m_cookies);
 
-        user.qevercloudUser() = m_pUserStore->getUser(ctx);
+        user = m_pUserStore->getUser(ctx);
         return 0;
     }
     catch (const qevercloud::EDAMUserException & userException) {
@@ -115,7 +115,7 @@ qint32 UserStore::processEdamUserException(
     const qevercloud::EDAMUserException & userException,
     ErrorString & errorDescription) const
 {
-    switch (userException.errorCode) {
+    switch (userException.errorCode()) {
     case qevercloud::EDAMErrorCode::BAD_DATA_FORMAT:
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("UserStore", "BAD_DATA_FORMAT exception"));
@@ -142,17 +142,16 @@ qint32 UserStore::processEdamUserException(
         break;
     default:
         errorDescription.setBase(QT_TRANSLATE_NOOP("UserStore", "Error"));
-
         errorDescription.details() = QStringLiteral("error code = ");
-        errorDescription.details() += ToString(userException.errorCode);
+        errorDescription.details() += ToString(userException.errorCode());
         break;
     }
 
     const auto exceptionData = userException.exceptionData();
 
-    if (userException.parameter.isSet()) {
+    if (userException.parameter()) {
         errorDescription.details() += QStringLiteral(", parameter: ");
-        errorDescription.details() += userException.parameter.ref();
+        errorDescription.details() += *userException.parameter();
     }
 
     if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
@@ -161,7 +160,7 @@ qint32 UserStore::processEdamUserException(
     }
 
     // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
-    return static_cast<int>(userException.errorCode);
+    return static_cast<int>(userException.errorCode());
 }
 
 qint32 UserStore::processEdamSystemException(
@@ -170,9 +169,9 @@ qint32 UserStore::processEdamSystemException(
 {
     rateLimitSeconds = -1;
 
-    if (systemException.errorCode ==
+    if (systemException.errorCode() ==
         qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
-        if (!systemException.rateLimitDuration.isSet()) {
+        if (!systemException.rateLimitDuration()) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "UserStore",
                 "Evernote API rate limit exceeded but no rate limit duration "
@@ -183,10 +182,10 @@ qint32 UserStore::processEdamSystemException(
                 "UserStore", "Evernote API rate limit exceeded, retry in"));
 
             errorDescription.details() =
-                QString::number(systemException.rateLimitDuration.ref());
+                QString::number(*systemException.rateLimitDuration());
 
             errorDescription.details() += QStringLiteral(" sec");
-            rateLimitSeconds = systemException.rateLimitDuration.ref();
+            rateLimitSeconds = *systemException.rateLimitDuration();
         }
     }
     else {
@@ -194,17 +193,17 @@ qint32 UserStore::processEdamSystemException(
             "UserStore", "Caught EDAM system exception, error code "));
 
         errorDescription.details() += QStringLiteral("error code = ");
-        errorDescription.details() += ToString(systemException.errorCode);
+        errorDescription.details() += ToString(systemException.errorCode());
 
-        if (systemException.message.isSet() &&
-            !systemException.message->isEmpty()) {
+        if (systemException.message() &&
+            !systemException.message()->isEmpty()) {
             errorDescription.details() += QStringLiteral(", message: ");
-            errorDescription.details() += systemException.message.ref();
+            errorDescription.details() += *systemException.message();
         }
     }
 
     // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
-    return static_cast<int>(systemException.errorCode);
+    return static_cast<int>(systemException.errorCode());
 }
 
 } // namespace quentier
