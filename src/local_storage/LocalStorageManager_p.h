@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -51,6 +51,8 @@ GCC_SUPPRESS_WARNING(-Wtype-limits)
 
 RESTORE_WARNINGS
 
+#include <cstddef>
+
 namespace quentier {
 
 class LocalStoragePatchManager;
@@ -72,8 +74,7 @@ Q_SIGNALS:
 
 public:
     void switchUser(
-        const Account & account,
-        LocalStorageManager::StartupOptions options);
+        const Account & account, LocalStorageManager::StartupOptions options);
 
     [[nodiscard]] bool isLocalStorageVersionTooHigh(
         ErrorString & errorDescription);
@@ -124,14 +125,16 @@ public:
         qevercloud::Notebook & notebook, ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listAllNotebooks(
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -139,7 +142,8 @@ public:
     [[nodiscard]] QList<qevercloud::SharedNotebook> listAllSharedNotebooks(
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooksPerNotebookGuid(
+    [[nodiscard]] QList<qevercloud::SharedNotebook>
+    listSharedNotebooksPerNotebookGuid(
         const QString & notebookGuid, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeNotebook(
@@ -160,18 +164,21 @@ public:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listAllLinkedNotebooks(
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListLinkedNotebooksOrder order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listLinkedNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListLinkedNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] bool expungeLinkedNotebook(
-        const qevercloud::LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        ErrorString & errorDescription);
 
     [[nodiscard]] int noteCount(
         ErrorString & errorDescription,
@@ -216,7 +223,7 @@ public:
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
-        const size_t limit, const size_t offset,
+        const std::size_t limit, const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -225,7 +232,7 @@ public:
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
-        const size_t limit, const size_t offset,
+        const std::size_t limit, const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -234,7 +241,7 @@ public:
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
-        const size_t limit, const size_t offset,
+        const std::size_t limit, const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -243,14 +250,15 @@ public:
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
-        const size_t limit, const size_t offset,
+        const std::size_t limit, const std::size_t offset,
         const LocalStorageManager::ListNotesOrder order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotes(
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -259,7 +267,8 @@ public:
         const ErrorString & errorPrefix, const QString & sqlQueryCondition,
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -289,26 +298,30 @@ public:
     [[nodiscard]] QList<qevercloud::Tag> listAllTagsPerNote(
         const qevercloud::Note & note, ErrorString & errorDescription,
         const LocalStorageManager::ListObjectsOptions & flag,
-        const size_t limit, const size_t offset,
+        const std::size_t limit, const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] QList<qevercloud::Tag> listAllTags(
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::Tag> listTags(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
 
-    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalIds(
+    [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>>
+    listTagsWithNoteLocalIds(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & linkedNotebookGuid) const;
@@ -348,13 +361,15 @@ public:
         qevercloud::SavedSearch & search, ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::SavedSearch> listAllSavedSearches(
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListSavedSearchesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearches(
         const LocalStorageManager::ListObjectsOptions flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset,
         const LocalStorageManager::ListSavedSearchesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection) const;
 
@@ -423,7 +438,8 @@ private:
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceBusinessUserInfoQuery();
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceUserAttributesQuery();
 
-    [[nodiscard]] bool checkAndPrepareInsertOrReplaceUserAttributesViewedPromotionsQuery();
+    [[nodiscard]] bool
+    checkAndPrepareInsertOrReplaceUserAttributesViewedPromotionsQuery();
 
     [[nodiscard]] bool
     checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
@@ -435,7 +451,8 @@ private:
 
     [[nodiscard]] bool checkAndPrepareNotebookCountQuery() const;
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceNotebookQuery();
-    [[nodiscard]] bool checkAndPrepareInsertOrReplaceNotebookRestrictionsQuery();
+    [[nodiscard]] bool
+    checkAndPrepareInsertOrReplaceNotebookRestrictionsQuery();
     [[nodiscard]] bool checkAndPrepareInsertOrReplaceSharedNotebookQuery();
 
     [[nodiscard]] bool insertOrReplaceLinkedNotebook(
@@ -530,8 +547,7 @@ private:
 
     [[nodiscard]] bool insertOrReplaceResourceMetadata(
         const qevercloud::Resource & resource,
-        const bool setResourceDataProperties,
-        ErrorString & errorDescription);
+        const bool setResourceDataProperties, ErrorString & errorDescription);
 
     [[nodiscard]] bool writeResourceBinaryDataToFiles(
         const qevercloud::Resource & resource, ErrorString & errorDescription);
@@ -626,11 +642,13 @@ private:
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
-    [[nodiscard]] bool fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(
+    [[nodiscard]] bool
+    fillResourceAttributesApplicationDataKeysOnlyFromSqlRecord(
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
-    [[nodiscard]] bool fillResourceAttributesApplicationDataFullMapFromSqlRecord(
+    [[nodiscard]] bool
+    fillResourceAttributesApplicationDataFullMapFromSqlRecord(
         const QSqlRecord & rec,
         qevercloud::ResourceAttributes & attributes) const;
 
@@ -738,8 +756,8 @@ private:
     template <class T, class TOrderBy>
     [[nodiscard]] QList<T> listObjects(
         const LocalStorageManager::ListObjectsOptions & flag,
-        ErrorString & errorDescription, const size_t limit, const size_t offset,
-        const TOrderBy & orderBy,
+        ErrorString & errorDescription, const std::size_t limit,
+        const std::size_t offset, const TOrderBy & orderBy,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & additionalSqlQueryCondition = QString()) const;
 

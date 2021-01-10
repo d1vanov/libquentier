@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -437,8 +437,7 @@ void LocalStorageManagerAsync::onAddNotebookRequest(
 
     try {
         ErrorString errorDescription;
-        if (!d->m_pLocalStorageManager->addNotebook(
-                notebook, errorDescription))
+        if (!d->m_pLocalStorageManager->addNotebook(notebook, errorDescription))
         {
             Q_EMIT addNotebookFailed(notebook, errorDescription, requestId);
             return;
@@ -473,8 +472,7 @@ void LocalStorageManagerAsync::onUpdateNotebookRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->updateNotebook(
-                notebook, errorDescription))
-        {
+                notebook, errorDescription)) {
             Q_EMIT updateNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
@@ -575,8 +573,7 @@ void LocalStorageManagerAsync::onFindDefaultNotebookRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->findDefaultNotebook(
-                notebook, errorDescription))
-        {
+                notebook, errorDescription)) {
             Q_EMIT findDefaultNotebookFailed(
                 notebook, errorDescription, requestId);
             return;
@@ -664,7 +661,8 @@ void LocalStorageManagerAsync::onFindDefaultOrLastUsedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onListAllNotebooksRequest(
-    size_t limit, size_t offset, LocalStorageManager::ListNotebooksOrder order,
+    std::size_t limit, std::size_t offset,
+    LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -743,8 +741,8 @@ void LocalStorageManagerAsync::onListAllSharedNotebooksRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onListNotebooksRequest(
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotebooksOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -835,8 +833,7 @@ void LocalStorageManagerAsync::onExpungeNotebookRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->expungeNotebook(
-                notebook, errorDescription))
-        {
+                notebook, errorDescription)) {
             Q_EMIT expungeNotebookFailed(notebook, errorDescription, requestId);
             return;
         }
@@ -1011,7 +1008,7 @@ void LocalStorageManagerAsync::onFindLinkedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
-    size_t limit, size_t offset,
+    std::size_t limit, std::size_t offset,
     LocalStorageManager::ListLinkedNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
@@ -1057,8 +1054,8 @@ void LocalStorageManagerAsync::onListAllLinkedNotebooksRequest(
 }
 
 void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListLinkedNotebooksOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListLinkedNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1438,8 +1435,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->updateNote(
-                note, options, errorDescription))
-        {
+                note, options, errorDescription)) {
             Q_EMIT updateNoteFailed(note, options, errorDescription, requestId);
             return;
         }
@@ -1499,9 +1495,9 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
             QNDEBUG(
                 "local_storage",
                 "Notebook change detected for note "
-                << note.localId() << ": moved from notebook "
-                << previousNoteVersion.parentLocalId()
-                << " to notebook " << note.parentLocalId());
+                    << note.localId() << ": moved from notebook "
+                    << previousNoteVersion.parentLocalId() << " to notebook "
+                    << note.parentLocalId());
 
             Q_EMIT noteMovedToAnotherNotebook(
                 note.localId(), previousNoteVersion.parentLocalId(),
@@ -1509,8 +1505,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
         }
 
         if (shouldCheckForTagListUpdate) {
-            const auto getTagLocalIds = [](const qevercloud::Note & note)
-            {
+            const auto getTagLocalIds = [](const qevercloud::Note & note) {
                 const auto it =
                     note.localData().constFind(QStringLiteral("tagLocalIds"));
                 if (it == note.localData().constEnd()) {
@@ -1523,15 +1518,14 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
             const QStringList previousTagLocalIds =
                 getTagLocalIds(previousNoteVersion);
 
-            const QStringList updatedTagLocalIds =
-                getTagLocalIds(note);
+            const QStringList updatedTagLocalIds = getTagLocalIds(note);
 
             bool tagListUpdated =
                 (previousTagLocalIds.size() != updatedTagLocalIds.size());
 
             if (!tagListUpdated) {
-                for (const auto & prevTagLocalId:
-                     qAsConst(previousTagLocalIds)) {
+                for (const auto & prevTagLocalId: qAsConst(previousTagLocalIds))
+                {
                     const int index =
                         updatedTagLocalIds.indexOf(prevTagLocalId);
                     if (index < 0) {
@@ -1593,8 +1587,9 @@ void LocalStorageManagerAsync::onFindNoteRequest(
                 foundNoteInCache = true;
 
                 if ((options &
-                     LocalStorageManager::GetNoteOption::WithResourceBinaryData)
-                    && note.resources())
+                     LocalStorageManager::GetNoteOption::
+                         WithResourceBinaryData) &&
+                    note.resources())
                 {
                     for (auto & resource: *note.mutableResources()) {
                         const QString resourceId =
@@ -1636,8 +1631,7 @@ void LocalStorageManagerAsync::onFindNoteRequest(
             !d->m_pLocalStorageManager->findNote(
                 note, options, errorDescription))
         {
-            Q_EMIT findNoteFailed(
-                note, options, errorDescription, requestId);
+            Q_EMIT findNoteFailed(note, options, errorDescription, requestId);
             return;
         }
 
@@ -1688,8 +1682,8 @@ void LocalStorageManagerAsync::onFindNoteRequest(
 
 void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
     qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1733,8 +1727,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
 
 void LocalStorageManagerAsync::onListNotesPerTagRequest(
     qevercloud::Tag tag, LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1778,8 +1772,8 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
 void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
     QStringList notebookLocalIds, QStringList tagLocalIds,
     LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1788,8 +1782,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
         ErrorString errorDescription;
         const QList<qevercloud::Note> notes =
             d->m_pLocalStorageManager->listNotesPerNotebooksAndTags(
-                notebookLocalIds, tagLocalIds, options, errorDescription,
-                flag, limit, offset, order, orderDirection);
+                notebookLocalIds, tagLocalIds, options, errorDescription, flag,
+                limit, offset, order, orderDirection);
 
         if (notes.isEmpty() && !errorDescription.isEmpty()) {
             Q_EMIT listNotesPerNotebooksAndTagsFailed(
@@ -1800,8 +1794,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
 
         d->cacheNotes(notes, options);
         Q_EMIT listNotesPerNotebooksAndTagsComplete(
-            notebookLocalIds, tagLocalIds, options, flag, limit, offset,
-            order, orderDirection, notes, requestId);
+            notebookLocalIds, tagLocalIds, options, flag, limit, offset, order,
+            orderDirection, notes, requestId);
     }
     catch (const std::exception & e) {
         ErrorString error(
@@ -1815,15 +1809,15 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
             "local_storage", error << "; backtrace: " << sysInfo.stackTrace());
 
         Q_EMIT listNotesPerNotebooksAndTagsFailed(
-            notebookLocalIds, tagLocalIds, options, flag, limit, offset,
-            order, orderDirection, error, requestId);
+            notebookLocalIds, tagLocalIds, options, flag, limit, offset, order,
+            orderDirection, error, requestId);
     }
 }
 
 void LocalStorageManagerAsync::onListNotesByLocalIdsRequest(
     QStringList noteLocalIds, LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1866,8 +1860,8 @@ void LocalStorageManagerAsync::onListNotesByLocalIdsRequest(
 
 void LocalStorageManagerAsync::onListNotesRequest(
     LocalStorageManager::ListObjectsOptions flag,
-    LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::GetNoteOptions options, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -2142,7 +2136,8 @@ void LocalStorageManagerAsync::onFindTagRequest(
 
 void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
     qevercloud::Note note, LocalStorageManager::ListObjectsOptions flag,
-    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+    std::size_t limit, std::size_t offset,
+    LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2188,7 +2183,8 @@ void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
 }
 
 void LocalStorageManagerAsync::onListAllTagsRequest(
-    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+    std::size_t limit, std::size_t offset,
+    LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -2237,8 +2233,8 @@ void LocalStorageManagerAsync::onListAllTagsRequest(
 }
 
 void LocalStorageManagerAsync::onListTagsRequest(
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -2284,8 +2280,8 @@ void LocalStorageManagerAsync::onListTagsRequest(
 }
 
 void LocalStorageManagerAsync::onListTagsWithNoteLocalIdsRequest(
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListTagsOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, QUuid requestId)
 {
@@ -2449,8 +2445,7 @@ void LocalStorageManagerAsync::onAddResourceRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->addEnResource(
-                resource, errorDescription))
-        {
+                resource, errorDescription)) {
             Q_EMIT addResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2484,8 +2479,7 @@ void LocalStorageManagerAsync::onUpdateResourceRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->updateEnResource(
-                resource, errorDescription))
-        {
+                resource, errorDescription)) {
             Q_EMIT updateResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2587,8 +2581,7 @@ void LocalStorageManagerAsync::onExpungeResourceRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->expungeEnResource(
-                resource, errorDescription))
-        {
+                resource, errorDescription)) {
             Q_EMIT expungeResourceFailed(resource, errorDescription, requestId);
             return;
         }
@@ -2652,8 +2645,7 @@ void LocalStorageManagerAsync::onAddSavedSearchRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->addSavedSearch(
-                search, errorDescription))
-        {
+                search, errorDescription)) {
             Q_EMIT addSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
@@ -2687,8 +2679,7 @@ void LocalStorageManagerAsync::onUpdateSavedSearchRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->updateSavedSearch(
-                search, errorDescription))
-        {
+                search, errorDescription)) {
             Q_EMIT updateSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
@@ -2754,8 +2745,7 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(
             !d->m_pLocalStorageManager->findSavedSearch(
                 search, errorDescription))
         {
-            Q_EMIT findSavedSearchFailed(
-                search, errorDescription, requestId);
+            Q_EMIT findSavedSearchFailed(search, errorDescription, requestId);
             return;
         }
 
@@ -2777,7 +2767,7 @@ void LocalStorageManagerAsync::onFindSavedSearchRequest(
 }
 
 void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
-    size_t limit, size_t offset,
+    std::size_t limit, std::size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
@@ -2822,8 +2812,8 @@ void LocalStorageManagerAsync::onListAllSavedSearchesRequest(
 }
 
 void LocalStorageManagerAsync::onListSavedSearchesRequest(
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListSavedSearchesOrder order,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -2876,8 +2866,7 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(
     try {
         ErrorString errorDescription;
         if (!d->m_pLocalStorageManager->expungeSavedSearch(
-                search, errorDescription))
-        {
+                search, errorDescription)) {
             Q_EMIT expungeSavedSearchFailed(
                 search, errorDescription, requestId);
             return;

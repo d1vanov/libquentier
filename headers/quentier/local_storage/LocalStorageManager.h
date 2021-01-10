@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -30,6 +30,7 @@
 #include <QList>
 #include <QString>
 
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 
@@ -566,8 +567,8 @@ public:
      *                              the account
      */
     [[nodiscard]] QList<qevercloud::Notebook> listAllNotebooks(
-        ErrorString & errorDescription, const size_t limit = 0,
-        const size_t offset = 0,
+        ErrorString & errorDescription, const std::size_t limit = 0,
+        const std::size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = {}) const;
@@ -607,7 +608,7 @@ public:
      */
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = {}) const;
@@ -777,8 +778,8 @@ public:
      *                              presence within the account
      */
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listAllLinkedNotebooks(
-        ErrorString & errorDescription, const size_t limit = 0,
-        const size_t offset = 0,
+        ErrorString & errorDescription, const std::size_t limit = 0,
+        const std::size_t offset = 0,
         const ListLinkedNotebooksOrder order =
             ListLinkedNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
@@ -812,7 +813,7 @@ public:
      */
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listLinkedNotebooks(
         const ListObjectsOptions flag, ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListLinkedNotebooksOrder order =
             ListLinkedNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
@@ -1186,7 +1187,7 @@ public:
         const qevercloud::Notebook & notebook, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1222,7 +1223,7 @@ public:
         const qevercloud::Tag & tag, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1261,7 +1262,7 @@ public:
         const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         const GetNoteOptions options, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1301,7 +1302,7 @@ public:
         const QStringList & noteLocalIds, const GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1342,8 +1343,8 @@ public:
      */
     [[nodiscard]] QList<qevercloud::Note> listNotes(
         const ListObjectsOptions flag, const GetNoteOptions options,
-        ErrorString & errorDescription, const size_t limit = 0,
-        const size_t offset = 0,
+        ErrorString & errorDescription, const std::size_t limit = 0,
+        const std::size_t offset = 0,
         const ListNotesOrder order = ListNotesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1524,7 +1525,7 @@ public:
     [[nodiscard]] QList<qevercloud::Tag> listAllTagsPerNote(
         const qevercloud::Note & note, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1560,8 +1561,8 @@ public:
      * @return                      The list of found tags within the account
      */
     [[nodiscard]] QList<qevercloud::Tag> listAllTags(
-        ErrorString & errorDescription, const size_t limit = 0,
-        const size_t offset = 0,
+        ErrorString & errorDescription, const std::size_t limit = 0,
+        const std::size_t offset = 0,
         const ListTagsOrder order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1600,7 +1601,7 @@ public:
      */
     [[nodiscard]] QList<qevercloud::Tag> listTags(
         const ListObjectsOptions flag, ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1645,7 +1646,7 @@ public:
      */
     [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalIds(
         const ListObjectsOptions flag, ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
         const QString & linkedNotebookGuid = QString()) const;
@@ -1929,8 +1930,8 @@ public:
      *                                  searches within the account
      */
     [[nodiscard]] QList<qevercloud::SavedSearch> listAllSavedSearches(
-        ErrorString & errorDescription, const size_t limit = 0,
-        const size_t offset = 0,
+        ErrorString & errorDescription, const std::size_t limit = 0,
+        const std::size_t offset = 0,
         const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
 
@@ -1965,7 +1966,7 @@ public:
      */
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearches(
         const ListObjectsOptions flag, ErrorString & errorDescription,
-        const size_t limit = 0, const size_t offset = 0,
+        const std::size_t limit = 0, const std::size_t offset = 0,
         const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending) const;
 

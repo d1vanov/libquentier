@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -102,8 +102,7 @@ bool LocalStorageManager::localStorageRequiresUpgrade(
     return d->localStorageRequiresUpgrade(errorDescription);
 }
 
-QList<ILocalStoragePatchPtr>
-LocalStorageManager::requiredLocalStoragePatches()
+QList<ILocalStoragePatchPtr> LocalStorageManager::requiredLocalStoragePatches()
 {
     Q_D(LocalStorageManager);
     return d->requiredLocalStoragePatches();
@@ -170,8 +169,9 @@ bool LocalStorageManager::findDefaultOrLastUsedNotebook(
 }
 
 QList<qevercloud::Notebook> LocalStorageManager::listAllNotebooks(
-    ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListNotebooksOrder order, const OrderDirection orderDirection,
+    ErrorString & errorDescription, const std::size_t limit,
+    const std::size_t offset, const ListNotebooksOrder order,
+    const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -182,8 +182,8 @@ QList<qevercloud::Notebook> LocalStorageManager::listAllNotebooks(
 
 QList<qevercloud::Notebook> LocalStorageManager::listNotebooks(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset, const ListNotebooksOrder order,
-    const OrderDirection orderDirection,
+    const std::size_t limit, const std::size_t offset,
+    const ListNotebooksOrder order, const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -199,7 +199,8 @@ QList<qevercloud::SharedNotebook> LocalStorageManager::listAllSharedNotebooks(
     return d->listAllSharedNotebooks(errorDescription);
 }
 
-QList<qevercloud::SharedNotebook> LocalStorageManager::listSharedNotebooksPerNotebookGuid(
+QList<qevercloud::SharedNotebook>
+LocalStorageManager::listSharedNotebooksPerNotebookGuid(
     const QString & notebookGuid, ErrorString & errorDescription) const
 {
     Q_D(const LocalStorageManager);
@@ -246,8 +247,8 @@ bool LocalStorageManager::findLinkedNotebook(
 }
 
 QList<qevercloud::LinkedNotebook> LocalStorageManager::listAllLinkedNotebooks(
-    ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListLinkedNotebooksOrder order,
+    ErrorString & errorDescription, const std::size_t limit,
+    const std::size_t offset, const ListLinkedNotebooksOrder order,
     const OrderDirection orderDirection) const
 {
     Q_D(const LocalStorageManager);
@@ -257,7 +258,7 @@ QList<qevercloud::LinkedNotebook> LocalStorageManager::listAllLinkedNotebooks(
 
 QList<qevercloud::LinkedNotebook> LocalStorageManager::listLinkedNotebooks(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset,
+    const std::size_t limit, const std::size_t offset,
     const ListLinkedNotebooksOrder order,
     const OrderDirection orderDirection) const
 {
@@ -343,8 +344,8 @@ bool LocalStorageManager::findNote(
 QList<qevercloud::Note> LocalStorageManager::listNotesPerNotebook(
     const qevercloud::Notebook & notebook, const GetNoteOptions options,
     ErrorString & errorDescription, const ListObjectsOptions & flag,
-    const size_t limit, const size_t offset, const ListNotesOrder & order,
-    const OrderDirection & orderDirection) const
+    const std::size_t limit, const std::size_t offset,
+    const ListNotesOrder & order, const OrderDirection & orderDirection) const
 {
     Q_D(const LocalStorageManager);
     return d->listNotesPerNotebook(
@@ -355,8 +356,8 @@ QList<qevercloud::Note> LocalStorageManager::listNotesPerNotebook(
 QList<qevercloud::Note> LocalStorageManager::listNotesPerTag(
     const qevercloud::Tag & tag, const GetNoteOptions options,
     ErrorString & errorDescription, const ListObjectsOptions & flag,
-    const size_t limit, const size_t offset, const ListNotesOrder & order,
-    const OrderDirection & orderDirection) const
+    const std::size_t limit, const std::size_t offset,
+    const ListNotesOrder & order, const OrderDirection & orderDirection) const
 {
     Q_D(const LocalStorageManager);
     return d->listNotesPerTag(
@@ -368,8 +369,9 @@ QList<qevercloud::Note> LocalStorageManager::listNotesPerNotebooksAndTags(
     const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
     const LocalStorageManager::GetNoteOptions options,
     ErrorString & errorDescription,
-    const LocalStorageManager::ListObjectsOptions & flag, const size_t limit,
-    const size_t offset, const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const std::size_t limit, const std::size_t offset,
+    const LocalStorageManager::ListNotesOrder & order,
     const LocalStorageManager::OrderDirection & orderDirection) const
 {
     Q_D(const LocalStorageManager);
@@ -382,8 +384,9 @@ QList<qevercloud::Note> LocalStorageManager::listNotesByLocalIds(
     const QStringList & noteLocalIds,
     const LocalStorageManager::GetNoteOptions options,
     ErrorString & errorDescription,
-    const LocalStorageManager::ListObjectsOptions & flag, const size_t limit,
-    const size_t offset, const LocalStorageManager::ListNotesOrder & order,
+    const LocalStorageManager::ListObjectsOptions & flag,
+    const std::size_t limit, const std::size_t offset,
+    const LocalStorageManager::ListNotesOrder & order,
     const LocalStorageManager::OrderDirection & orderDirection) const
 {
     Q_D(const LocalStorageManager);
@@ -394,8 +397,9 @@ QList<qevercloud::Note> LocalStorageManager::listNotesByLocalIds(
 
 QList<qevercloud::Note> LocalStorageManager::listNotes(
     const ListObjectsOptions flag, const GetNoteOptions options,
-    ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListNotesOrder order, const OrderDirection orderDirection,
+    ErrorString & errorDescription, const std::size_t limit,
+    const std::size_t offset, const ListNotesOrder order,
+    const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -458,8 +462,9 @@ bool LocalStorageManager::findTag(
 
 QList<qevercloud::Tag> LocalStorageManager::listAllTagsPerNote(
     const qevercloud::Note & note, ErrorString & errorDescription,
-    const ListObjectsOptions & flag, const size_t limit, const size_t offset,
-    const ListTagsOrder & order, const OrderDirection & orderDirection) const
+    const ListObjectsOptions & flag, const std::size_t limit,
+    const std::size_t offset, const ListTagsOrder & order,
+    const OrderDirection & orderDirection) const
 {
     Q_D(const LocalStorageManager);
     return d->listAllTagsPerNote(
@@ -467,8 +472,9 @@ QList<qevercloud::Tag> LocalStorageManager::listAllTagsPerNote(
 }
 
 QList<qevercloud::Tag> LocalStorageManager::listAllTags(
-    ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListTagsOrder order, const OrderDirection orderDirection,
+    ErrorString & errorDescription, const std::size_t limit,
+    const std::size_t offset, const ListTagsOrder order,
+    const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -479,8 +485,8 @@ QList<qevercloud::Tag> LocalStorageManager::listAllTags(
 
 QList<qevercloud::Tag> LocalStorageManager::listTags(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset, const ListTagsOrder & order,
-    const OrderDirection orderDirection,
+    const std::size_t limit, const std::size_t offset,
+    const ListTagsOrder & order, const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -492,8 +498,8 @@ QList<qevercloud::Tag> LocalStorageManager::listTags(
 QList<std::pair<qevercloud::Tag, QStringList>>
 LocalStorageManager::listTagsWithNoteLocalIds(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset, const ListTagsOrder & order,
-    const OrderDirection orderDirection,
+    const std::size_t limit, const std::size_t offset,
+    const ListTagsOrder & order, const OrderDirection orderDirection,
     const QString & linkedNotebookGuid) const
 {
     Q_D(const LocalStorageManager);
@@ -580,8 +586,8 @@ bool LocalStorageManager::findSavedSearch(
 }
 
 QList<qevercloud::SavedSearch> LocalStorageManager::listAllSavedSearches(
-    ErrorString & errorDescription, const size_t limit, const size_t offset,
-    const ListSavedSearchesOrder order,
+    ErrorString & errorDescription, const std::size_t limit,
+    const std::size_t offset, const ListSavedSearchesOrder order,
     const OrderDirection orderDirection) const
 {
     Q_D(const LocalStorageManager);
@@ -591,7 +597,8 @@ QList<qevercloud::SavedSearch> LocalStorageManager::listAllSavedSearches(
 
 QList<qevercloud::SavedSearch> LocalStorageManager::listSavedSearches(
     const ListObjectsOptions flag, ErrorString & errorDescription,
-    const size_t limit, const size_t offset, const ListSavedSearchesOrder order,
+    const std::size_t limit, const std::size_t offset,
+    const ListSavedSearchesOrder order,
     const OrderDirection orderDirection) const
 {
     Q_D(const LocalStorageManager);

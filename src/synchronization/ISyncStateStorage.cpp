@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include "SyncStateStorage.h"
 
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 
 namespace quentier {
@@ -32,7 +31,7 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
          << "    user data last sync time = "
          << printableDateTimeFromTimestamp(userDataLastSyncTime()) << "\n";
 
-    auto updateCountsByLinkedNotebookGuid = linkedNotebookUpdateCounts();
+    const auto updateCountsByLinkedNotebookGuid = linkedNotebookUpdateCounts();
     if (!updateCountsByLinkedNotebookGuid.isEmpty()) {
         strm << "    update counts by linked notebook guid:\n";
 
@@ -43,7 +42,9 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
         }
     }
 
-    auto lastSyncTimesByLinkedNotebookGuid = linkedNotebookLastSyncTimes();
+    const auto lastSyncTimesByLinkedNotebookGuid =
+        linkedNotebookLastSyncTimes();
+
     if (!lastSyncTimesByLinkedNotebookGuid.isEmpty()) {
         strm << "    last sync times by linked notebook guid:\n";
 

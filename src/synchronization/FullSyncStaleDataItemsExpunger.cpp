@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,7 +23,6 @@
 #include "TagSyncCache.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QStringList>
 
@@ -146,9 +145,9 @@ void FullSyncStaleDataItemsExpunger::onNoteCacheFilled()
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
-    auto it = m_expungeNotebookRequestIds.find(requestId);
+    const auto it = m_expungeNotebookRequestIds.find(requestId);
     if (it == m_expungeNotebookRequestIds.end()) {
         return;
     }
@@ -162,9 +161,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
-    auto it = m_expungeNotebookRequestIds.find(requestId);
+    const auto it = m_expungeNotebookRequestIds.find(requestId);
     if (it == m_expungeNotebookRequestIds.end()) {
         return;
     }
@@ -178,9 +178,9 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(
-    Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId)
 {
-    auto it = m_expungeTagRequestIds.find(requestId);
+    const auto it = m_expungeTagRequestIds.find(requestId);
     if (it == m_expungeTagRequestIds.end()) {
         return;
     }
@@ -188,17 +188,17 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(
     FEDEBUG(
         "FullSyncStaleDataItemsExpunger::onExpungeTagComplete: "
         << "request id = " << requestId << ", tag: " << tag
-        << "\nExpunged child tag local uids: "
-        << expungedChildTagLocalUids.join(QStringLiteral(", ")));
+        << "\nExpunged child tag local ids: "
+        << expungedChildTagLocalIds.join(QStringLiteral(", ")));
 
     Q_UNUSED(m_expungeTagRequestIds.erase(it))
     checkRequestsCompletionAndSendResult();
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_expungeTagRequestIds.find(requestId);
+    const auto it = m_expungeTagRequestIds.find(requestId);
     if (it == m_expungeTagRequestIds.end()) {
         return;
     }
@@ -212,9 +212,9 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
-    auto it = m_expungeSavedSearchRequestIds.find(requestId);
+    const auto it = m_expungeSavedSearchRequestIds.find(requestId);
     if (it == m_expungeSavedSearchRequestIds.end()) {
         return;
     }
@@ -228,9 +228,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
-    auto it = m_expungeSavedSearchRequestIds.find(requestId);
+    const auto it = m_expungeSavedSearchRequestIds.find(requestId);
     if (it == m_expungeSavedSearchRequestIds.end()) {
         return;
     }
@@ -244,9 +245,9 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(
-    Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId)
 {
-    auto it = m_expungeNoteRequestIds.find(requestId);
+    const auto it = m_expungeNoteRequestIds.find(requestId);
     if (it == m_expungeNoteRequestIds.end()) {
         return;
     }
@@ -260,9 +261,9 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(
-    Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_expungeNoteRequestIds.find(requestId);
+    const auto it = m_expungeNoteRequestIds.find(requestId);
     if (it == m_expungeNoteRequestIds.end()) {
         return;
     }
@@ -276,9 +277,9 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
-    auto it = m_updateNotebookRequestId.find(requestId);
+    const auto it = m_updateNotebookRequestId.find(requestId);
     if (it == m_updateNotebookRequestId.end()) {
         return;
     }
@@ -292,9 +293,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
-    auto it = m_updateNotebookRequestId.find(requestId);
+    const auto it = m_updateNotebookRequestId.find(requestId);
     if (it == m_updateNotebookRequestId.end()) {
         return;
     }
@@ -308,9 +310,9 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(
-    Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId)
 {
-    auto it = m_updateTagRequestIds.find(requestId);
+    const auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
         return;
     }
@@ -325,9 +327,9 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_updateTagRequestIds.find(requestId);
+    const auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
         return;
     }
@@ -341,9 +343,9 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
-    auto it = m_updateSavedSearchRequestIds.find(requestId);
+    const auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
         return;
     }
@@ -357,9 +359,9 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_updateSavedSearchRequestIds.find(requestId);
+    const auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
         return;
     }
@@ -373,9 +375,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(
-    Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
+    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
+    QUuid requestId)
 {
-    auto it = m_updateNoteRequestIds.find(requestId);
+    const auto it = m_updateNoteRequestIds.find(requestId);
     if (it == m_updateNoteRequestIds.end()) {
         return;
     }
@@ -403,10 +406,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNoteFailed(
-    Note note, LocalStorageManager::UpdateNoteOptions options,
+    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_updateNoteRequestIds.find(requestId);
+    const auto it = m_updateNoteRequestIds.find(requestId);
     if (it == m_updateNoteRequestIds.end()) {
         return;
     }
@@ -792,7 +795,7 @@ void FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling()
     }
 }
 
-bool FullSyncStaleDataItemsExpunger::pendingCachesFilling() const
+bool FullSyncStaleDataItemsExpunger::pendingCachesFilling() const noexcept
 {
     FEDEBUG("FullSyncStaleDataItemsExpunger::pendingCachesFilling");
 
@@ -832,10 +835,10 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
     QHash<QString, QSet<QString>> noteGuidsToExpungeByNotebookGuidsToExpunge;
 
-    QList<Notebook> dirtyNotebooksToUpdate;
-    QList<Tag> dirtyTagsToUpdate;
-    QList<SavedSearch> dirtySavedSearchesToUpdate;
-    QList<Note> dirtyNotesToUpdate;
+    QList<qevercloud::Notebook> dirtyNotebooksToUpdate;
+    QList<qevercloud::Tag> dirtyTagsToUpdate;
+    QList<qevercloud::SavedSearch> dirtySavedSearchesToUpdate;
+    QList<qevercloud::Note> dirtyNotesToUpdate;
 
     if (!m_pNotebookSyncCache.isNull()) {
         const auto & nameByGuidHash = m_pNotebookSyncCache->nameByGuidHash();
@@ -855,7 +858,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 continue;
             }
 
-            auto dirtyNotebookIt = dirtyNotebooksByGuidHash.find(guid);
+            const auto dirtyNotebookIt = dirtyNotebooksByGuidHash.find(guid);
             if (dirtyNotebookIt == dirtyNotebooksByGuidHash.end()) {
                 FETRACE(
                     "Notebook guid " << guid
@@ -890,7 +893,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 continue;
             }
 
-            auto dirtyTagIt = dirtyTagsByGuidHash.find(guid);
+            const auto dirtyTagIt = dirtyTagsByGuidHash.find(guid);
             if (dirtyTagIt == dirtyTagsByGuidHash.end()) {
                 FETRACE(
                     "Tag guid "
@@ -913,11 +916,11 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     // to tags which should be expunged; if they do, need to clear these parent
     // guids from them because dirty tags need to be preserved
     for (auto & tag: dirtyTagsToUpdate) {
-        if (!tag.hasParentGuid()) {
+        if (!tag.parentGuid()) {
             continue;
         }
 
-        auto parentGuidIt = m_tagGuidsToExpunge.find(tag.parentGuid());
+        const auto parentGuidIt = m_tagGuidsToExpunge.find(*tag.parentGuid());
         if (parentGuidIt == m_tagGuidsToExpunge.end()) {
             continue;
         }
@@ -926,8 +929,8 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             "Clearing parent guid from dirty tag because "
             << "the parent tag is going to be expunged: " << tag);
 
-        tag.setParentGuid(QString());
-        tag.setParentLocalUid(QString());
+        tag.setParentGuid(std::nullopt);
+        tag.setParentLocalId(QString{});
     }
 
     if (m_linkedNotebookGuid.isEmpty() && !m_pSavedSearchSyncCache.isNull()) {
@@ -949,7 +952,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                 continue;
             }
 
-            auto dirtySavedSearchIt = dirtySavedSearchesByGuid.find(guid);
+            const auto dirtySavedSearchIt = dirtySavedSearchesByGuid.find(guid);
             if (dirtySavedSearchIt == dirtySavedSearchesByGuid.end()) {
                 FETRACE(
                     "Saved search guid "
@@ -970,12 +973,12 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         FEWARNING("Saved search sync cache is expired");
     }
 
-    const auto & noteGuidToLocalUidBimap =
-        m_noteSyncCache.noteGuidToLocalUidBimap();
+    const auto & noteGuidToLocalIdBimap =
+        m_noteSyncCache.noteGuidToLocalIdBimap();
 
     const auto & dirtyNotesByGuid = m_noteSyncCache.dirtyNotesByGuid();
 
-    for (const auto & pair: noteGuidToLocalUidBimap.left) {
+    for (const auto & pair: noteGuidToLocalIdBimap.left) {
         const QString & guid = pair.first;
         if (m_syncedGuids.m_syncedNoteGuids.find(guid) !=
             m_syncedGuids.m_syncedNoteGuids.end())
@@ -987,7 +990,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         const auto & notebookGuidByNoteGuid =
             m_noteSyncCache.notebookGuidByNoteGuid();
 
-        auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
+        const auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
         if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
             FEWARNING(
                 "Failed to find cached notebook guid for note guid "
@@ -997,7 +1000,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
         const QString & notebookGuid = notebookGuidIt.value();
 
-        auto dirtyNoteIt = dirtyNotesByGuid.find(guid);
+        const auto dirtyNoteIt = dirtyNotesByGuid.find(guid);
         if (dirtyNoteIt == dirtyNotesByGuid.end()) {
             FETRACE(
                 "Note guid "
@@ -1022,7 +1025,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
                     const auto & dirtyNotebooksByGuidHash =
                         m_pNotebookSyncCache->dirtyNotebooksByGuidHash();
 
-                    auto dirtyNotebookIt =
+                    const auto dirtyNotebookIt =
                         dirtyNotebooksByGuidHash.find(notebookGuid);
 
                     if (dirtyNotebookIt != dirtyNotebooksByGuidHash.end()) {
@@ -1074,12 +1077,13 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     connectToLocalStorage();
 
     for (const auto & guid: qAsConst(notebookGuidsToExpunge)) {
-        Notebook dummyNotebook;
-        dummyNotebook.unsetLocalUid();
+        qevercloud::Notebook dummyNotebook;
+        dummyNotebook.setLocalId(QString{});
         dummyNotebook.setGuid(guid);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNotebookRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to expunge notebook: "
             << "request id = " << requestId << ", notebook guid = " << guid);
@@ -1087,10 +1091,10 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
         // If some notes to be expunged belong to the notebook being expunged,
         // we don't need to expunge these notes separately
-        auto it = noteGuidsToExpungeByNotebookGuidsToExpunge.find(guid);
+        const auto it = noteGuidsToExpungeByNotebookGuidsToExpunge.find(guid);
         if (it != noteGuidsToExpungeByNotebookGuidsToExpunge.end()) {
             for (const auto & noteGuid: qAsConst(it.value())) {
-                auto noteIt = noteGuidsToExpunge.find(noteGuid);
+                const auto noteIt = noteGuidsToExpunge.find(noteGuid);
                 if (noteIt != noteGuidsToExpunge.end()) {
                     noteGuidsToExpunge.erase(noteIt);
                 }
@@ -1106,12 +1110,13 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     // expunged
 
     for (const auto & guid: qAsConst(savedSearchGuidsToExpunge)) {
-        SavedSearch dummySearch;
-        dummySearch.unsetLocalUid();
+        qevercloud::SavedSearch dummySearch;
+        dummySearch.setLocalId(QString{});
         dummySearch.setGuid(guid);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeSavedSearchRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to expunge saved search: "
             << "request id = " << requestId
@@ -1120,12 +1125,13 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     for (const auto & guid: qAsConst(noteGuidsToExpunge)) {
-        Note dummyNote;
-        dummyNote.unsetLocalUid();
+        qevercloud::Note dummyNote;
+        dummyNote.setLocalId(QString{});
         dummyNote.setGuid(guid);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNoteRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to expunge note: request id = "
             << requestId << ", note guid = " << guid);
@@ -1133,11 +1139,12 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     for (auto & notebook: dirtyNotebooksToUpdate) {
-        notebook.setGuid(QString());
-        notebook.setUpdateSequenceNumber(-1);
+        notebook.setGuid(std::nullopt);
+        notebook.setUpdateSequenceNum(std::nullopt);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateNotebookRequestId.insert(requestId))
+
         FETRACE(
             "Emitting the request to update notebook: request id = "
             << requestId << ", notebook: " << notebook);
@@ -1145,11 +1152,12 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     for (auto & tag: dirtyTagsToUpdate) {
-        tag.setGuid(QString());
-        tag.setUpdateSequenceNumber(-1);
+        tag.setGuid(std::nullopt);
+        tag.setUpdateSequenceNum(std::nullopt);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateTagRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to update tag: request id = "
             << requestId << ", tag: " << tag);
@@ -1159,11 +1167,12 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     checkTagUpdatesCompletionAndSendExpungeTagRequests();
 
     for (auto & search: dirtySavedSearchesToUpdate) {
-        search.setGuid(QString());
-        search.setUpdateSequenceNumber(-1);
+        search.setGuid(std::nullopt);
+        search.setUpdateSequenceNum(std::nullopt);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateSavedSearchRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to update saved search: "
             << "request id = " << requestId << ", saved search: " << search);
@@ -1171,17 +1180,18 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     for (auto & note: dirtyNotesToUpdate) {
-        note.setGuid(QString());
+        note.setGuid(std::nullopt);
 
         // NOTE: it is just in case one of notebooks stripped off the guid was
         // this note's notebook; it shouldn't be a problem since the note should
         // have notebook local uid set as well
-        note.setNotebookGuid(QString());
+        note.setNotebookGuid(std::nullopt);
 
-        note.setUpdateSequenceNumber(-1);
+        note.setUpdateSequenceNum(std::nullopt);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to update note: request id = "
             << requestId << ", note: " << note);
@@ -1293,12 +1303,13 @@ void FullSyncStaleDataItemsExpunger::
         << "expunging the tags meant to be expunged");
 
     for (const auto & guid: qAsConst(m_tagGuidsToExpunge)) {
-        Tag dummyTag;
-        dummyTag.unsetLocalUid();
+        qevercloud::Tag dummyTag;
+        dummyTag.setLocalId(QString{});
         dummyTag.setGuid(guid);
 
-        QUuid requestId = QUuid::createUuid();
+        const QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeTagRequestIds.insert(requestId))
+
         FETRACE(
             "Emitting the request to expunge tag: request id = "
             << requestId << ", tag guid = " << guid);

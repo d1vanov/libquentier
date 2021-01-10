@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,9 +27,9 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(NotebookSyncCache)
-QT_FORWARD_DECLARE_CLASS(SavedSearchSyncCache)
-QT_FORWARD_DECLARE_CLASS(TagSyncCache)
+class NotebookSyncCache;
+class SavedSearchSyncCache;
+class TagSyncCache;
 
 /**
  * @brief The FullSyncStaleDataItemsExpunger class ensures there would be no
@@ -88,17 +88,17 @@ Q_SIGNALS:
     void failure(ErrorString errorDescription);
 
     // private signals:
-    void expungeNotebook(Notebook notebook, QUuid requestId);
-    void expungeTag(Tag tag, QUuid requestId);
-    void expungeSavedSearch(SavedSearch search, QUuid requestId);
-    void expungeNote(Note note, QUuid requestId);
+    void expungeNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void expungeTag(qevercloud::Tag tag, QUuid requestId);
+    void expungeSavedSearch(qevercloud::SavedSearch search, QUuid requestId);
+    void expungeNote(qevercloud::Note note, QUuid requestId);
 
-    void updateNotebook(Notebook notebook, QUuid requestId);
-    void updateTag(Tag tag, QUuid requestId);
-    void updateSavedSearch(SavedSearch search, QUuid requestId);
+    void updateNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void updateTag(qevercloud::Tag tag, QUuid requestId);
+    void updateSavedSearch(qevercloud::SavedSearch search, QUuid requestId);
 
     void updateNote(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
 public Q_SLOTS:
@@ -110,48 +110,54 @@ private Q_SLOTS:
     void onSavedSearchCacheFilled();
     void onNoteCacheFilled();
 
-    void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
+    void onExpungeNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
 
     void onExpungeNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeTagComplete(
-        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+        qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId);
 
     void onExpungeTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onExpungeSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onExpungeSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onExpungeNoteComplete(Note note, QUuid requestId);
+    void onExpungeNoteComplete(qevercloud::Note note, QUuid requestId);
 
     void onExpungeNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateNotebookComplete(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onUpdateNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateTagComplete(Tag tag, QUuid requestId);
+    void onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId);
 
     void onUpdateTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateSavedSearchComplete(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchComplete(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onUpdateSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
     void onUpdateNoteComplete(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
 private:
@@ -159,7 +165,7 @@ private:
     void disconnectFromLocalStorage();
 
     void checkAndRequestCachesFilling();
-    bool pendingCachesFilling() const;
+    [[nodiscard]] bool pendingCachesFilling() const noexcept;
 
     void analyzeDataAndSendRequestsOrResult();
 
