@@ -256,7 +256,7 @@ private:
     void connectToLocalStorage();
     void disconnectFromLocalStorage();
 
-    [[nodiscard]] bool requestStuffFromLocalStorage(
+    bool requestStuffFromLocalStorage(
         const QString & linkedNotebookGuid = QLatin1String(""));
 
     void checkListLocalStorageObjectsCompletion();

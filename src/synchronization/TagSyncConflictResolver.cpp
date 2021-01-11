@@ -21,6 +21,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/CommonUtils.h>
 
 namespace quentier {
 
@@ -184,16 +185,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(
                     << "to the local storage");
 
             qevercloud::Tag tag = m_remoteTag;
-
-            if (!m_remoteTagLinkedNotebookGuid.isEmpty()) {
-                tag.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-                    m_remoteTagLinkedNotebookGuid;
-            }
-            else {
-                tag.mutableLocalData().remove(
-                    QStringLiteral("linkedNotebookGuid"));
-            }
-
+            setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
             tag.setLocallyModified(false);
             tag.setLocalOnly(false);
 
@@ -215,16 +207,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(
             qevercloud::Tag tag = m_remoteTag;
             tag.setLocalId(m_localConflict.localId());
             tag.setLocalData(m_localConflict.localData());
-
-            if (!m_remoteTagLinkedNotebookGuid.isEmpty()) {
-                tag.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-                    m_remoteTagLinkedNotebookGuid;
-            }
-            else {
-                tag.mutableLocalData().remove(
-                    QStringLiteral("linkedNotebookGuid"));
-            }
-
+            setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
             tag.setLocallyModified(false);
             tag.setLocalOnly(false);
 
@@ -475,17 +458,7 @@ void TagSyncConflictResolver::processTagsConflictByName(
         "The conflicting tags match by name but not by guid");
 
     const QString localConflictLinkedNotebookGuid =
-        [&localConflict]
-        {
-            const auto it = localConflict.localData().constFind(
-                QStringLiteral("linkedNotebookGuid"));
-
-            if (it != localConflict.localData().constEnd()) {
-                return it.value().toString();
-            }
-
-            return QString{};
-        }();
+        itemLinkedNotebookGuid(localConflict);
 
     if (localConflictLinkedNotebookGuid != m_remoteTagLinkedNotebookGuid) {
         QNDEBUG(
@@ -498,15 +471,7 @@ void TagSyncConflictResolver::processTagsConflictByName(
         m_state = State::PendingRemoteTagAdoptionInLocalStorage;
 
         qevercloud::Tag tag = m_remoteTag;
-
-        if (!m_remoteTagLinkedNotebookGuid.isEmpty()) {
-            tag.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-                m_remoteTagLinkedNotebookGuid;
-        }
-        else {
-            tag.mutableLocalData().remove(QStringLiteral("linkedNotebookGuid"));
-        }
-
+        setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
         tag.setLocallyModified(false);
         tag.setLocalOnly(false);
 
@@ -575,15 +540,7 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     qevercloud::Tag tag = m_remoteTag;
     tag.setLocalId(m_localConflict.localId());
     tag.setLocalData(m_localConflict.localData());
-
-    if (!m_remoteTagLinkedNotebookGuid.isEmpty()) {
-        tag.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-            m_remoteTagLinkedNotebookGuid;
-    }
-    else {
-        tag.mutableLocalData().remove(QStringLiteral("linkedNotebookGuid"));
-    }
-
+    setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
     tag.setLocallyModified(false);
     tag.setLocalOnly(false);
 

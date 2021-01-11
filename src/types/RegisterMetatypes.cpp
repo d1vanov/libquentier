@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,16 +23,15 @@
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 #include <quentier/utility/IKeychainService.h>
+
+#include <qevercloud/generated/types/LinkedNotebook.h>
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/generated/types/SavedSearch.h>
+#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/generated/types/User.h>
 
 #include <QList>
 #include <QMetaType>
@@ -44,35 +43,29 @@ namespace quentier {
 
 void registerMetatypes()
 {
-    qRegisterMetaType<Notebook>("Notebook");
-    qRegisterMetaType<Note>("Note");
-    qRegisterMetaType<Tag>("Tag");
-    qRegisterMetaType<Resource>("Resource");
-    qRegisterMetaType<User>("User");
-    qRegisterMetaType<LinkedNotebook>("LinkedNotebook");
-    qRegisterMetaType<SavedSearch>("SavedSearch");
     qRegisterMetaType<Account>("Account");
 
+    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
+    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
+    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
+    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
+    qRegisterMetaType<qevercloud::User>("qevercloud::User");
+    qRegisterMetaType<qevercloud::LinkedNotebook>("qevercloud::LinkedNotebook");
+    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
     qRegisterMetaType<qevercloud::UserID>("qevercloud::UserID");
     qRegisterMetaType<qevercloud::Timestamp>("qevercloud::Timestamp");
-    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
-    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
-    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
-    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
-    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
 
     qRegisterMetaType<QVector<LinkedNotebookAuthData>>(
         "QVector<LinkedNotebookAuthData>");
 
-    qRegisterMetaType<QList<Notebook>>("QList<Notebook>");
-    qRegisterMetaType<QList<Note>>("QList<Note>");
-    qRegisterMetaType<QList<Tag>>("QList<Tag>");
-    qRegisterMetaType<QList<Resource>>("QList<Resource>");
-    qRegisterMetaType<QList<User>>("QList<User>");
-    qRegisterMetaType<QList<LinkedNotebook>>("QList<LinkedNotebook>");
-    qRegisterMetaType<QList<SavedSearch>>("QList<SavedSearch>");
-
-    qRegisterMetaType<QList<SharedNotebook>>("QList<SharedNotebook>");
+    qRegisterMetaType<QList<qevercloud::Notebook>>("QList<qevercloud::Notebook>");
+    qRegisterMetaType<QList<qevercloud::Note>>("QList<qevercloud::Note>");
+    qRegisterMetaType<QList<qevercloud::Tag>>("QList<qevercloud::Tag>");
+    qRegisterMetaType<QList<qevercloud::Resource>>("QList<qevercloud::Resource>");
+    qRegisterMetaType<QList<qevercloud::User>>("QList<qevercloud::User>");
+    qRegisterMetaType<QList<qevercloud::LinkedNotebook>>("QList<qevercloud::LinkedNotebook>");
+    qRegisterMetaType<QList<qevercloud::SavedSearch>>("QList<qevercloud::SavedSearch>");
+    qRegisterMetaType<QList<qevercloud::SharedNotebook>>("QList<qevercloud::SharedNotebook>");
 
     qRegisterMetaType<LocalStorageManager::ListObjectsOptions>(
         "LocalStorageManager::ListObjectsOptions");
@@ -132,8 +125,8 @@ void registerMetatypes()
     qRegisterMetaType<ErrorString>("ErrorString");
     qRegisterMetaType<QSqlError>("QSqlError");
 
-    qRegisterMetaType<QList<std::pair<Tag, QStringList>>>(
-        "QList<std::pair<Tag, QStringList> >");
+    qRegisterMetaType<QList<std::pair<qevercloud::Tag, QStringList>>>(
+        "QList<std::pair<qevercloud::Tag, QStringList> >");
 
     qRegisterMetaType<QHash<QString, std::pair<QString, QString>>>(
         "QHash<QString,std::pair<QString,QString> >");

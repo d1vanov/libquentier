@@ -29,6 +29,7 @@
 #include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/CommonUtils.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
 #include <quentier/types/ResourceUtils.h>
@@ -55,24 +56,6 @@ namespace quentier {
 namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
-
-[[nodiscard]] std::optional<int> resourceIndexInNote(
-    const qevercloud::Resource & resource) noexcept
-{
-    const auto it =
-        resource.localData().constFind(QStringLiteral("indexInNote"));
-    if (it == resource.localData().constEnd()) {
-        return std::nullopt;
-    }
-
-    bool conversionResult = false;
-    const int index = it.value().toInt(&conversionResult);
-    if (!conversionResult) {
-        return std::nullopt;
-    }
-
-    return index;
-}
 
 [[nodiscard]] std::optional<int> sharedNotebookIndexInNotebook(
     const qevercloud::SharedNotebook & sharedNotebook) noexcept
@@ -1007,12 +990,11 @@ bool LocalStorageManagerPrivate::findNotebook(
         value = notebook.name()->toUpper();
         searchingByName = true;
     }
-    else if (const auto it = notebook.localData().constFind(
-                 QStringLiteral("linkedNotebookGuid"));
-             it != notebook.localData().constEnd())
+    else if (const QString linkedNotebookGuid =
+             itemLinkedNotebookGuid(notebook); !linkedNotebookGuid.isEmpty())
     {
         column = QStringLiteral("linkedNotebookGuid");
-        value = it.value().toString();
+        value = linkedNotebookGuid;
     }
     else {
         errorDescription.base() = errorPrefix.base();
@@ -1050,12 +1032,9 @@ bool LocalStorageManagerPrivate::findNotebook(
             .arg(column, value);
 
     if (searchingByName) {
-        const auto it = notebook.localData().constFind(
-            QStringLiteral("linkedNotebookGuid"));
-
-        if (it != notebook.localData().constEnd()) {
-            const QString linkedNotebookGuid =
-                sqlEscapeString(it.value().toString());
+        QString linkedNotebookGuid = itemLinkedNotebookGuid(notebook);
+        if (!linkedNotebookGuid.isEmpty()) {
+            linkedNotebookGuid = sqlEscapeString(linkedNotebookGuid);
 
             queryString +=
                 QString::fromUtf8(" AND Notebooks.linkedNotebookGuid = '%1')")
@@ -2615,19 +2594,19 @@ bool LocalStorageManagerPrivate::findNote(
         result.setTagGuids(tagGuids);
     }
 
-    const int numTagLocalUids = tagLocalIdsAndIndices.size();
-    if (numTagLocalUids > 0) {
+    const int numTagLocalIds = tagLocalIdsAndIndices.size();
+    if (numTagLocalIds > 0) {
         std::sort(
             tagLocalIdsAndIndices.begin(), tagLocalIdsAndIndices.end(),
             QStringIntPairCompareByInt());
 
-        QStringList tagLocalUids;
-        tagLocalUids.reserve(numTagLocalUids);
-        for (int i = 0; i < numTagLocalUids; ++i) {
-            tagLocalUids << tagLocalIdsAndIndices[i].first;
+        QStringList tagLocalIds;
+        tagLocalIds.reserve(numTagLocalIds);
+        for (int i = 0; i < numTagLocalIds; ++i) {
+            tagLocalIds << tagLocalIdsAndIndices[i].first;
         }
 
-        result.mutableLocalData()["tagLocalUids"] = tagLocalUids;
+        setNoteTagLocalIds(tagLocalIds, result);
     }
 
     sortSharedNotes(result);
@@ -3569,11 +3548,10 @@ bool LocalStorageManagerPrivate::findTag(
             .arg(column, value);
 
     if (searchingByName) {
-        const auto it =
-            tag.localData().constFind(QStringLiteral("linkedNotebookGuid"));
+        QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
 
-        if (it != tag.localData().constEnd()) {
-            const QString linkedNotebookGuid = it.value().toString();
+        if (!linkedNotebookGuid.isEmpty()) {
+            linkedNotebookGuid = sqlEscapeString(linkedNotebookGuid);
             queryString += QString::fromUtf8(" AND linkedNotebookGuid = '%1')")
                                .arg(sqlEscapeString(linkedNotebookGuid));
         }
@@ -4794,8 +4772,7 @@ bool LocalStorageManagerPrivate::addEnResource(
         resourceIndexInNote = 0;
     }
 
-    resource.mutableLocalData()[QStringLiteral("indexInNote")] =
-        resourceIndexInNote;
+    setResourceIndexInNote(resourceIndexInNote, resource);
 
     QString resourceLocalId = resource.localId();
 
@@ -6884,17 +6861,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
             QStringLiteral(":guid"),
             (notebook.guid() ? *notebook.guid() : nullValue));
 
-        std::optional<QString> linkedNotebookGuid;
-        if (const auto it = notebook.localData().constFind(
-                QStringLiteral("linkedNotebookGuid"));
-            it != notebook.localData().constEnd())
-        {
-            linkedNotebookGuid = it.value().toString();
-        }
+        const QString linkedNotebookGuid = itemLinkedNotebookGuid(notebook);
 
         query.bindValue(
             QStringLiteral(":linkedNotebookGuid"),
-            (linkedNotebookGuid ? *linkedNotebookGuid : nullValue));
+            (!linkedNotebookGuid.isEmpty() ? linkedNotebookGuid : nullValue));
 
         query.bindValue(
             QStringLiteral(":updateSequenceNumber"),
@@ -8365,16 +8336,15 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             DATABASE_CHECK_AND_SET_ERROR()
         }
 
-        const auto tagLocalIdsIt =
-            note.localData().constFind(QStringLiteral("tagLocalIds"));
+        const QStringList tagLocalIds = noteTagLocalIds(note);
 
-        bool hasTagLocalIds = (tagLocalIdsIt != note.localData().constEnd());
-        bool hasTagGuids = (note.tagGuids() != std::nullopt);
+        const bool hasTagLocalIds = !tagLocalIds.isEmpty();
+        const bool hasTagGuids = (note.tagGuids() != std::nullopt);
 
         if (hasTagLocalIds || hasTagGuids) {
             QStringList tagIds;
             if (hasTagLocalIds) {
-                tagIds = tagLocalIdsIt.value().toStringList();
+                tagIds = tagLocalIds;
             }
             else {
                 tagIds = *note.tagGuids();
@@ -8455,8 +8425,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
                 note.setTagGuids(tagComplementedIds);
             }
             else {
-                note.mutableLocalData()[QStringLiteral("tagLocalIds")] =
-                    tagComplementedIds;
+                setNoteTagLocalIds(tagComplementedIds, note);
             }
         }
 
@@ -9063,20 +9032,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceTag(
     query.bindValue(
         QStringLiteral(":guid"), (tag.guid() ? *tag.guid() : nullValue));
 
-    const std::optional<QString> linkedNotebookGuid =
-        [&tag]() -> std::optional<QString> {
-        const auto it =
-            tag.localData().constFind(QStringLiteral("linkedNotebookGuid"));
-        if (it == tag.localData().constEnd()) {
-            return std::nullopt;
-        }
-
-        return it.value().toString();
-    }();
+    const QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
 
     query.bindValue(
         QStringLiteral(":linkedNotebookGuid"),
-        (linkedNotebookGuid ? *linkedNotebookGuid : nullValue));
+        (!linkedNotebookGuid.isEmpty() ? linkedNotebookGuid : nullValue));
 
     query.bindValue(
         QStringLiteral(":updateSequenceNumber"),
@@ -9865,7 +9825,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceMetadata(
 
     query.bindValue(
         QStringLiteral(":resourceIndexInNote"),
-        (indexInNote ? *indexInNote : nullValue));
+        (indexInNote >= 0 ? indexInNote : nullValue));
 
     query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localId());
 
@@ -11143,10 +11103,9 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
         const QVariant value = rec.value(resourceIndexInNoteIndex);
         if (!value.isNull()) {
             bool conversionResult = false;
-            int index = value.toInt(&conversionResult);
+            const int index = value.toInt(&conversionResult);
             if (conversionResult) {
-                resource.mutableLocalData()[QStringLiteral("indexInNote")] =
-                    index;
+                setResourceIndexInNote(index, resource);
             }
         }
     }
@@ -12997,8 +12956,7 @@ bool LocalStorageManagerPrivate::fillTagFromSqlRecord(
     if (linkedNotebookGuidIndex >= 0) {
         const QVariant value = rec.value(linkedNotebookGuidIndex);
         if (!value.isNull()) {
-            tag.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-                value.toString();
+            setItemLinkedNotebookGuid(value.toString(), tag);
         }
     }
     else {
@@ -13154,7 +13112,7 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
         tagLocalIds << tagLocalIdIndexPairs[i].first;
     }
 
-    note.mutableLocalData()[QStringLiteral("tagLocalIds")] = tagLocalIds;
+    setNoteTagLocalIds(tagLocalIds, note);
 
     // Setting tag guids
 

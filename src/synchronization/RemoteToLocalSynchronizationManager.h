@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,15 +33,8 @@
 #include <quentier/synchronization/IUserStore.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QMap>
 #include <QMultiHash>
@@ -50,8 +43,8 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(NoteSyncConflictResolverManager)
+class LocalStorageManagerAsync;
+class NoteSyncConflictResolverManager;
 
 class Q_DECL_HIDDEN RemoteToLocalSynchronizationManager final : public QObject
 {
@@ -60,12 +53,12 @@ public:
     class Q_DECL_HIDDEN IManager
     {
     public:
-        virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
-        virtual INoteStore & noteStore() = 0;
-        virtual IUserStore & userStore() = 0;
+        [[nodiscard]] virtual LocalStorageManagerAsync & localStorageManagerAsync() = 0;
+        [[nodiscard]] virtual INoteStore & noteStore() = 0;
+        [[nodiscard]] virtual IUserStore & userStore() = 0;
 
-        virtual INoteStore * noteStoreForLinkedNotebook(
-            const LinkedNotebook & linkedNotebook) = 0;
+        [[nodiscard]] virtual INoteStore * noteStoreForLinkedNotebook(
+            const qevercloud::LinkedNotebook & linkedNotebook) = 0;
 
         virtual ~IManager() = default;
     };
@@ -73,32 +66,32 @@ public:
     explicit RemoteToLocalSynchronizationManager(
         IManager & manager, const QString & host, QObject * parent = nullptr);
 
-    virtual ~RemoteToLocalSynchronizationManager() override;
+    ~RemoteToLocalSynchronizationManager() override;
 
-    bool active() const;
+    [[nodiscard]] bool active() const noexcept;
 
     void setAccount(const Account & account);
-    Account account() const;
+    [[nodiscard]] Account account() const;
 
-    bool syncUser(
+    [[nodiscard]] bool syncUser(
         const qevercloud::UserID userId, ErrorString & errorDescription,
         const bool writeUserDataToLocalStorage = true);
 
-    const User & user() const;
+    [[nodiscard]] const User & user() const noexcept;
 
-    bool downloadedSyncChunks() const
+    [[nodiscard]] bool downloadedSyncChunks() const noexcept
     {
         return m_syncChunksDownloaded;
     }
 
-    bool downloadedLinkedNotebooksSyncChunks() const
+    [[nodiscard]] bool downloadedLinkedNotebooksSyncChunks() const noexcept
     {
         return m_linkedNotebooksSyncChunksDownloaded;
     }
 
-    bool shouldDownloadThumbnailsForNotes() const;
-    bool shouldDownloadInkNoteImages() const;
-    QString inkNoteImagesStoragePath() const;
+    [[nodiscard]] bool shouldDownloadThumbnailsForNotes() const;
+    [[nodiscard]] bool shouldDownloadInkNoteImages() const;
+    [[nodiscard]] QString inkNoteImagesStoragePath() const;
 
 Q_SIGNALS:
     void failure(ErrorString errorDescription);
@@ -134,7 +127,7 @@ Q_SIGNALS:
 
     void linkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
+        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
 
@@ -188,41 +181,49 @@ Q_SIGNALS:
     void updateUser(User user, QUuid requestId);
     void findUser(User user, QUuid requestId);
 
-    void addNotebook(Notebook notebook, QUuid requestId);
-    void updateNotebook(Notebook notebook, QUuid requestId);
-    void findNotebook(Notebook notebook, QUuid requestId);
-    void expungeNotebook(Notebook notebook, QUuid requestId);
+    void addNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void updateNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void findNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void expungeNotebook(qevercloud::Notebook notebook, QUuid requestId);
 
-    void addNote(Note note, QUuid requestId);
+    void addNote(qevercloud::Note note, QUuid requestId);
 
     void updateNote(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void findNote(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
-    void expungeNote(Note note, QUuid requestId);
+    void expungeNote(qevercloud::Note note, QUuid requestId);
 
-    void addTag(Tag tag, QUuid requestId);
-    void updateTag(Tag tag, QUuid requestId);
-    void findTag(Tag tag, QUuid requestId);
-    void expungeTag(Tag tag, QUuid requestId);
+    void addTag(qevercloud::Tag tag, QUuid requestId);
+    void updateTag(qevercloud::Tag tag, QUuid requestId);
+    void findTag(qevercloud::Tag tag, QUuid requestId);
+    void expungeTag(qevercloud::Tag tag, QUuid requestId);
 
     void expungeNotelessTagsFromLinkedNotebooks(QUuid requestId);
 
-    void addResource(Resource resource, QUuid requestId);
-    void updateResource(Resource resource, QUuid requestId);
+    void addResource(qevercloud::Resource resource, QUuid requestId);
+    void updateResource(qevercloud::Resource resource, QUuid requestId);
 
     void findResource(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         QUuid requestId);
 
-    void addLinkedNotebook(LinkedNotebook notebook, QUuid requestId);
-    void updateLinkedNotebook(LinkedNotebook notebook, QUuid requestId);
-    void findLinkedNotebook(LinkedNotebook linkedNotebook, QUuid requestId);
-    void expungeLinkedNotebook(LinkedNotebook notebook, QUuid requestId);
+    void addLinkedNotebook(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
+
+    void updateLinkedNotebook(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
+
+    void findLinkedNotebook(
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
+
+    void expungeLinkedNotebook(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void listAllLinkedNotebooks(
         size_t limit, size_t offset,
@@ -250,113 +251,128 @@ private Q_SLOTS:
     void onFindUserFailed(
         User user, ErrorString errorDescription, QUuid requestId);
 
-    void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onFindNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onFindNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onFindNoteCompleted(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
     void onFindNoteFailed(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onFindTagCompleted(Tag tag, QUuid requestId);
+    void onFindTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
     void onFindTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onFindResourceCompleted(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
-        QUuid requestId);
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
 
     void onFindResourceFailed(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onFindLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onFindLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
-    void onFindSavedSearchCompleted(SavedSearch savedSearch, QUuid requestId);
+    void onFindSavedSearchCompleted(
+        qevercloud::SavedSearch savedSearch, QUuid requestId);
 
     void onFindSavedSearchFailed(
-        SavedSearch savedSearch, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch savedSearch, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onAddUserCompleted(User user, QUuid requestId);
+    void onAddUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onAddUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onAddTagCompleted(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onUpdateUserCompleted(User user, QUuid requestId);
+    void onAddTagCompleted(qevercloud::Tag tag, QUuid requestId);
+
+    void onAddTagFailed(
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onUpdateUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateTagCompleted(Tag tag, QUuid requestId);
+    void onUpdateTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
     void onUpdateTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeTagCompleted(
-        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+        qevercloud::Tag tag, QStringList expungedChildTagLocalUids,
+        QUuid requestId);
 
     void onExpungeTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeNotelessTagsFromLinkedNotebooksCompleted(QUuid requestId);
 
     void onExpungeNotelessTagsFromLinkedNotebooksFailed(
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onAddSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onAddSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onUpdateSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onExpungeSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onExpungeSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
     void onAddLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onAddLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
     void onUpdateLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onUpdateLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
     void onExpungeLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onExpungeLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
     void onListAllLinkedNotebooksCompleted(
         size_t limit, size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+        QList<qevercloud::LinkedNotebook> linkedNotebooks, QUuid requestId);
 
     void onListAllLinkedNotebooksFailed(
         size_t limit, size_t offset,
@@ -364,48 +380,56 @@ private Q_SLOTS:
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onAddNotebookCompleted(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onUpdateNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onExpungeNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onExpungeNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onExpungeNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onAddNoteCompleted(Note note, QUuid requestId);
+    void onAddNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateNoteCompleted(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeNoteCompleted(Note note, QUuid requestId);
+    void onExpungeNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onExpungeNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
-    void onAddResourceCompleted(Resource resource, QUuid requestId);
+    void onAddResourceCompleted(qevercloud::Resource resource, QUuid requestId);
 
     void onAddResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateResourceCompleted(Resource resource, QUuid requestId);
+    void onUpdateResourceCompleted(
+        qevercloud::Resource resource, QUuid requestId);
 
     void onUpdateResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
 
     void onInkNoteImageDownloadFinished(
         bool status, QString resourceGuid, QString noteGuid,
@@ -464,24 +488,24 @@ private:
 
     void resetCurrentSyncState();
 
-    QString defaultInkNoteImageStoragePath() const;
+    [[nodiscard]] QString defaultInkNoteImageStoragePath() const;
 
     void launchSync();
 
     // If any of these return false, it is either due to error or due to
     // API rate limit exceeding
-    bool checkProtocolVersion(ErrorString & errorDescription);
+    [[nodiscard]] bool checkProtocolVersion(ErrorString & errorDescription);
 
-    bool syncUserImpl(
+    [[nodiscard]] bool syncUserImpl(
         const bool waitIfRateLimitReached, ErrorString & errorDescription,
         const bool writeUserDataToLocalStorage = true);
 
     void launchWritingUserDataToLocalStorage();
 
-    bool checkAndSyncAccountLimits(
+    [[nodiscard]] bool checkAndSyncAccountLimits(
         const bool waitIfRateLimitReached, ErrorString & errorDescription);
 
-    bool syncAccountLimits(
+    [[nodiscard]] bool syncAccountLimits(
         const bool waitIfRateLimitReached, ErrorString & errorDescription);
 
     void readSavedAccountLimits();
@@ -499,21 +523,21 @@ private:
     // for at least one linked notebook i.e. if the last sync performed
     // for at least one linked notebook was full and it was not the first sync
     // of this linked notebook's contents
-    bool launchFullSyncStaleDataItemsExpungersForLinkedNotebooks();
+    [[nodiscard]] bool launchFullSyncStaleDataItemsExpungersForLinkedNotebooks();
 
     void launchExpungingOfNotelessTagsFromLinkedNotebooks();
 
-    bool syncingLinkedNotebooksContent() const;
+    [[nodiscard]] bool syncingLinkedNotebooksContent() const;
 
     void checkAndIncrementNoteDownloadProgress(const QString & noteGuid);
 
     void checkAndIncrementResourceDownloadProgress(
         const QString & resourceGuid);
 
-    bool notebooksSyncInProgress() const;
-    bool tagsSyncInProgress() const;
-    bool notesSyncInProgress() const;
-    bool resourcesSyncInProgress() const;
+    [[nodiscard]] bool notebooksSyncInProgress() const noexcept;
+    [[nodiscard]] bool tagsSyncInProgress() const noexcept;
+    [[nodiscard]] bool notesSyncInProgress() const noexcept;
+    [[nodiscard]] bool resourcesSyncInProgress() const noexcept;
 
     enum class ContentSource
     {
@@ -544,7 +568,8 @@ private:
     // Returns binded linked notebook guid or empty string if no linked notebook
     // guid was bound
     template <class ElementType>
-    QString checkAndAddLinkedNotebookBinding(ElementType & targetElement);
+    [[nodiscard]] QString checkAndAddLinkedNotebookBinding(
+        ElementType & targetElement);
 
     enum class ResolveSyncConflictStatus
     {
@@ -553,12 +578,12 @@ private:
     };
 
     template <class RemoteElementType, class ElementType>
-    ResolveSyncConflictStatus resolveSyncConflict(
+    [[nodiscard]] ResolveSyncConflictStatus resolveSyncConflict(
         const RemoteElementType & remoteElement,
         const ElementType & localConflict);
 
     template <class ContainerType>
-    bool mapContainerElementsWithLinkedNotebookGuid(
+    [[nodiscard]] bool mapContainerElementsWithLinkedNotebookGuid(
         const QString & linkedNotebookGuid, const ContainerType & container);
 
     template <class ElementType>
@@ -576,13 +601,13 @@ private:
 
     template <
         class ElementType, class ContainerType, class PendingContainerType>
-    bool onFoundDuplicateByGuid(
+    [[nodiscard]] bool onFoundDuplicateByGuid(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
         QSet<QUuid> & findByGuidRequestIds);
 
     template <class ContainerType, class ElementType>
-    bool onNoDuplicateByGuid(
+    [[nodiscard]] bool onNoDuplicateByGuid(
         ElementType element, const QUuid & requestId,
         const ErrorString & errorDescription, const QString & typeName,
         ContainerType & container, QSet<QUuid> & findElementRequestIds);
@@ -595,13 +620,13 @@ private:
 
     template <
         class ContainerType, class PendingContainerType, class ElementType>
-    bool onFoundDuplicateByName(
+    [[nodiscard]] bool onFoundDuplicateByName(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
         QSet<QUuid> & findElementRequestIds);
 
     template <class ContainerType, class ElementType>
-    bool onNoDuplicateByName(
+    [[nodiscard]] bool onNoDuplicateByName(
         ElementType element, const QUuid & requestId,
         const ErrorString & errorDescription, const QString & typeName,
         ContainerType & container, QSet<QUuid> & findElementRequestIds);
@@ -672,12 +697,12 @@ private:
     // ======== Find in blocks from sync chunk helpers ==========
 
     template <class ContainerType, class ElementType>
-    typename ContainerType::iterator findItemByName(
+    [[nodiscard]] typename ContainerType::iterator findItemByName(
         ContainerType & container, const ElementType & element,
         const QString & targetLinkedNotebookGuid, const QString & typeName);
 
     template <class ContainerType, class ElementType>
-    typename ContainerType::iterator findItemByGuid(
+    [[nodiscard]] typename ContainerType::iterator findItemByGuid(
         ContainerType & container, const ElementType & element,
         const QString & typeName);
 
@@ -704,10 +729,11 @@ private:
     void requestAllLinkedNotebooks();
 
     void getLinkedNotebookSyncState(
-        const LinkedNotebook & linkedNotebook, const QString & authToken,
-        qevercloud::SyncState & syncState, bool & asyncWait, bool & error);
+        const qevercloud::LinkedNotebook & linkedNotebook,
+        const QString & authToken, qevercloud::SyncState & syncState,
+        bool & asyncWait, bool & error);
 
-    bool downloadLinkedNotebooksSyncChunks();
+    [[nodiscard]] bool downloadLinkedNotebooksSyncChunks();
 
     void launchLinkedNotebooksTagsSync();
     void launchLinkedNotebooksNotebooksSync();
@@ -718,68 +744,82 @@ private:
     void clear();
     void clearAll();
 
-    void handleLinkedNotebookAdded(const LinkedNotebook & linkedNotebook);
-    void handleLinkedNotebookUpdated(const LinkedNotebook & linkedNotebook);
+    void handleLinkedNotebookAdded(
+        const qevercloud::LinkedNotebook & linkedNotebook);
 
-    virtual void timerEvent(QTimerEvent * pEvent) override;
+    void handleLinkedNotebookUpdated(
+        const qevercloud::LinkedNotebook & linkedNotebook);
 
-    void getFullNoteDataAsync(const Note & note);
-    void getFullNoteDataAsyncAndAddToLocalStorage(const Note & note);
-    void getFullNoteDataAsyncAndUpdateInLocalStorage(const Note & note);
+    void timerEvent(QTimerEvent * pEvent) override;
+
+    void getFullNoteDataAsync(const qevercloud::Note & note);
+
+    void getFullNoteDataAsyncAndAddToLocalStorage(
+        const qevercloud::Note & note);
+
+    void getFullNoteDataAsyncAndUpdateInLocalStorage(
+        const qevercloud::Note & note);
 
     void getFullResourceDataAsync(
-        const Resource & resource, const Note & resourceOwningNote);
+        const qevercloud::Resource & resource,
+        const qevercloud::Note & resourceOwningNote);
 
     void getFullResourceDataAsyncAndAddToLocalStorage(
-        const Resource & resource, const Note & resourceOwningNote);
+        const qevercloud::Resource & resource,
+        const qevercloud::Note & resourceOwningNote);
 
     void getFullResourceDataAsyncAndUpdateInLocalStorage(
-        const Resource & resource, const Note & resourceOwningNote);
+        const qevercloud::Resource & resource,
+        const qevercloud::Note & resourceOwningNote);
 
     void downloadSyncChunksAndLaunchSync(qint32 afterUsn);
 
-    const Notebook * getNotebookPerNote(const Note & note) const;
+    [[nodiscard]] const qevercloud::Notebook * getNotebookPerNote(
+        const qevercloud::Note & note) const;
 
     void handleAuthExpiration();
 
-    bool checkUserAccountSyncState(
+    [[nodiscard]] bool checkUserAccountSyncState(
         bool & asyncWait, bool & error, qint32 & afterUsn);
 
-    bool checkLinkedNotebooksSyncStates(bool & asyncWait, bool & error);
+    [[nodiscard]] bool checkLinkedNotebooksSyncStates(
+        bool & asyncWait, bool & error);
 
     void authenticationInfoForNotebook(
-        const Notebook & notebook, QString & authToken, QString & shardId,
-        bool & isPublic) const;
+        const qevercloud::Notebook & notebook, QString & authToken,
+        QString & shardId, bool & isPublic) const;
 
-    bool findNotebookForInkNoteImageDownloading(const Note & note);
+    [[nodiscard]] bool findNotebookForInkNoteImageDownloading(
+        const qevercloud::Note & note);
 
     void setupInkNoteImageDownloading(
         const QString & resourceGuid, const int resourceHeight,
         const int resourceWidth, const QString & noteGuid,
-        const Notebook & notebook);
+        const qevercloud::Notebook & notebook);
 
     bool setupInkNoteImageDownloadingForNote(
-        const Note & note, const Notebook & notebook);
+        const qevercloud::Note & note, const qevercloud::Notebook & notebook);
 
-    bool findNotebookForNoteThumbnailDownloading(const Note & note);
+    bool findNotebookForNoteThumbnailDownloading(const qevercloud::Note & note);
 
     bool setupNoteThumbnailDownloading(
-        const Note & note, const Notebook & notebook);
+        const qevercloud::Note & note, const qevercloud::Notebook & notebook);
 
     void launchNoteSyncConflictResolver(
-        const Note & localConflict, const qevercloud::Note & remoteNote);
+        const qevercloud::Note & localConflict,
+        const qevercloud::Note & remoteNote);
 
-    QString clientNameForProtocolVersionCheck() const;
+    [[nodiscard]] QString clientNameForProtocolVersionCheck() const;
 
     // Infrastructure for persisting the sync state corresponding to data synced
     // so far when API rate limit breach occurs
-    qint32 findSmallestUsnOfNonSyncedItems(
+    [[nodiscard]] qint32 findSmallestUsnOfNonSyncedItems(
         const QString & linkedNotebookGuid = {}) const;
 
-    QHash<QString, QString> linkedNotebookGuidByNoteGuidHash() const;
+    [[nodiscard]] QHash<QString, QString> linkedNotebookGuidByNoteGuidHash() const;
 
     template <class T>
-    QString findLinkedNotebookGuidForItem(const T & item) const;
+    [[nodiscard]] QString findLinkedNotebookGuidForItem(const T & item) const;
 
     template <class T>
     void checkNonSyncedItemForSmallestUsn(
@@ -793,44 +833,57 @@ private:
 
     // Infrastructure for handling of asynchronous data items add/update
     // requests
-    void registerTagPendingAddOrUpdate(const Tag & tag);
-    void registerSavedSearchPendingAddOrUpdate(const SavedSearch & search);
+    void registerTagPendingAddOrUpdate(const qevercloud::Tag & tag);
+
+    void registerSavedSearchPendingAddOrUpdate(
+        const qevercloud::SavedSearch & search);
 
     void registerLinkedNotebookPendingAddOrUpdate(
-        const LinkedNotebook & linkedNotebook);
+        const qevercloud::LinkedNotebook & linkedNotebook);
 
-    void registerNotebookPendingAddOrUpdate(const Notebook & notebook);
-    void registerNotePendingAddOrUpdate(const Note & note);
-    void registerResourcePendingAddOrUpdate(const Resource & resource);
+    void registerNotebookPendingAddOrUpdate(
+        const qevercloud::Notebook & notebook);
 
-    void unregisterTagPendingAddOrUpdate(const Tag & tag);
-    void unregisterSavedSearchPendingAddOrUpdate(const SavedSearch & search);
+    void registerNotePendingAddOrUpdate(const qevercloud::Note & note);
+
+    void registerResourcePendingAddOrUpdate(
+        const qevercloud::Resource & resource);
+
+    void unregisterTagPendingAddOrUpdate(const qevercloud::Tag & tag);
+
+    void unregisterSavedSearchPendingAddOrUpdate(
+        const qevercloud::SavedSearch & search);
 
     void unregisterLinkedNotebookPendingAddOrUpdate(
-        const LinkedNotebook & linkedNotebook);
+        const qevercloud::LinkedNotebook & linkedNotebook);
 
-    void unregisterNotebookPendingAddOrUpdate(const Notebook & notebook);
-    void unregisterNotePendingAddOrUpdate(const Note & note);
+    void unregisterNotebookPendingAddOrUpdate(
+        const qevercloud::Notebook & notebook);
+
     void unregisterNotePendingAddOrUpdate(const qevercloud::Note & note);
-    void unregisterResourcePendingAddOrUpdate(const Resource & resource);
+
+    void unregisterResourcePendingAddOrUpdate(
+        const qevercloud::Resource & resource);
 
     // Infrastructure for processing of conflicts occurred during sync
-    Note createConflictingNote(
-        const Note & originalNote,
+    [[nodiscard]] qevercloud::Note createConflictingNote(
+        const qevercloud::Note & originalNote,
         const qevercloud::Note * pRemoteNote = nullptr) const;
 
     void overrideLocalNoteWithRemoteNote(
-        Note & localNote, const qevercloud::Note & remoteNote) const;
+        qevercloud::Note & localNote, const qevercloud::Note & remoteNote) const;
 
     void processResourceConflictAsNoteConflict(
-        Note & remoteNote, const Note & localConflictingNote,
-        Resource & remoteNoteResource);
+        qevercloud::Note & remoteNote,
+        const qevercloud::Note & localConflictingNote,
+        qevercloud::Resource & remoteNoteResource);
 
     void junkFullSyncStaleDataItemsExpunger(
         FullSyncStaleDataItemsExpunger & expunger);
 
-    INoteStore * noteStoreForNote(
-        const Note & note, QString & authToken, ErrorString & errorDescription);
+    [[nodiscard]] INoteStore * noteStoreForNote(
+        const qevercloud::Note & note, QString & authToken,
+        ErrorString & errorDescription);
 
     void connectToUserOwnNoteStore(INoteStore * pNoteStore);
 
@@ -842,10 +895,11 @@ private:
 
     void syncNextTagPendingProcessing();
 
-    void removeNoteResourcesFromSyncChunks(const Note & note);
+    void removeNoteResourcesFromSyncChunks(const qevercloud::Note & note);
 
     void removeResourceFromSyncChunks(
-        const Resource & resource, QVector<qevercloud::SyncChunk> & syncChunks);
+        const qevercloud::Resource & resource,
+        QVector<qevercloud::SyncChunk> & syncChunks);
 
 private:
     template <class T>
@@ -853,7 +907,7 @@ private:
     {
     public:
         CompareItemByName(const QString & name) : m_name(name) {}
-        bool operator()(const T & item) const;
+        [[nodiscard]] bool operator()(const T & item) const;
 
     private:
         const QString m_name;
@@ -864,7 +918,7 @@ private:
     {
     public:
         CompareItemByGuid(const QString & guid) : m_guid(guid) {}
-        bool operator()(const T & item) const;
+        [[nodiscard]] bool operator()(const T & item) const;
 
     private:
         const QString m_guid;
@@ -877,7 +931,7 @@ private:
     using NotesList = QList<qevercloud::Note>;
     using ResourcesList = QList<qevercloud::Resource>;
 
-    bool sortTagsByParentChildRelations(TagsList & tags);
+    [[nodiscard]] bool sortTagsByParentChildRelations(TagsList & tags);
 
     struct InkNoteResourceData
     {
@@ -914,11 +968,11 @@ private:
     class PostponedConflictingResourceData : public Printable
     {
     public:
-        Note m_remoteNote;
-        Note m_localConflictingNote;
-        Resource m_remoteNoteResourceWithoutFullData;
+        qevercloud::Note m_remoteNote;
+        qevercloud::Note m_localConflictingNote;
+        qevercloud::Resource m_remoteNoteResourceWithoutFullData;
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     enum class SyncMode
@@ -1007,7 +1061,7 @@ private:
     QSet<QUuid> m_expungeLinkedNotebookRequestIds;
     bool m_pendingLinkedNotebooksSyncStart = false;
 
-    QList<LinkedNotebook> m_allLinkedNotebooks;
+    QList<qevercloud::LinkedNotebook> m_allLinkedNotebooks;
     QUuid m_listAllLinkedNotebooksRequestId;
     bool m_allLinkedNotebooksListed = false;
 
@@ -1016,7 +1070,7 @@ private:
     qevercloud::Timestamp m_authenticationTokenExpirationTime = 0;
     bool m_pendingAuthenticationTokenAndShardId = false;
 
-    User m_user;
+    qevercloud::User m_user;
     QUuid m_findUserRequestId;
     QUuid m_addOrUpdateUserRequestId;
     bool m_onceAddedOrUpdatedUserInLocalStorage = false;
@@ -1067,14 +1121,15 @@ private:
     QSet<QString> m_guidsOfProcessedNonExpungedNotes;
 
     using NoteDataPerFindNotebookRequestId =
-        QHash<QUuid, std::pair<Note, QUuid>>;
+        QHash<QUuid, std::pair<qevercloud::Note, QUuid>>;
+
     NoteDataPerFindNotebookRequestId
         m_notesWithFindRequestIdsPerFindNotebookRequestId;
 
     QScopedPointer<NoteSyncConflictResolverManager>
         m_pNoteSyncConflictResolverManager;
 
-    QMap<std::pair<QString, QString>, Notebook> m_notebooksPerNoteIds;
+    QMap<std::pair<QString, QString>, qevercloud::Notebook> m_notebooksPerNoteIds;
 
     ResourcesList m_resources;
     ResourcesList m_resourcesPendingAddOrUpdate;
@@ -1083,11 +1138,12 @@ private:
     QSet<QUuid> m_findResourceByGuidRequestIds;
     QSet<QUuid> m_addResourceRequestIds;
     QSet<QUuid> m_updateResourceRequestIds;
-    QHash<QUuid, Resource> m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
-    QHash<QUuid, Resource> m_resourcesByFindNoteRequestIds;
+    QHash<QUuid, qevercloud::Resource> m_resourcesByMarkNoteOwningResourceDirtyRequestIds;
+    QHash<QUuid, qevercloud::Resource> m_resourcesByFindNoteRequestIds;
 
     using InkNoteResourceDataPerFindNotebookRequestId =
         QHash<QUuid, InkNoteResourceData>;
+
     InkNoteResourceDataPerFindNotebookRequestId
         m_inkNoteResourceDataPerFindNotebookRequestId;
 
@@ -1099,11 +1155,12 @@ private:
     ResourceGuidsPendingInkNoteImageDownloadPerNoteGuid
         m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid;
 
-    QHash<QUuid, Note>
+    QHash<QUuid, qevercloud::Note>
         m_notesPendingInkNoteImagesDownloadByFindNotebookRequestId;
-    QHash<QUuid, Note> m_notesPendingThumbnailDownloadByFindNotebookRequestId;
 
-    QHash<QString, Note> m_notesPendingThumbnailDownloadByGuid;
+    QHash<QUuid, qevercloud::Note> m_notesPendingThumbnailDownloadByFindNotebookRequestId;
+
+    QHash<QString, qevercloud::Note> m_notesPendingThumbnailDownloadByGuid;
     QSet<QUuid> m_updateNoteWithThumbnailRequestIds;
 
     /**
@@ -1118,26 +1175,29 @@ private:
 
     QHash<QString, qevercloud::Note>
         m_notesPendingDownloadForAddingToLocalStorage;
-    QHash<QString, Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
+    QHash<QString, qevercloud::Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
-    QHash<QString, std::pair<Resource, Note>>
+    QHash<QString, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid;
-    QHash<QString, std::pair<Resource, Note>>
+    QHash<QString, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 
     FullSyncStaleDataItemsExpunger::SyncedGuids
         m_fullSyncStaleDataItemsSyncedGuids;
+
     FullSyncStaleDataItemsExpunger * m_pFullSyncStaleDataItemsExpunger =
         nullptr;
+
     QMap<QString, FullSyncStaleDataItemsExpunger *>
         m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
-    QHash<int, Note> m_notesToAddPerAPICallPostponeTimerId;
-    QHash<int, Note> m_notesToUpdatePerAPICallPostponeTimerId;
+    QHash<int, qevercloud::Note> m_notesToAddPerAPICallPostponeTimerId;
+    QHash<int, qevercloud::Note> m_notesToUpdatePerAPICallPostponeTimerId;
 
-    QHash<int, std::pair<Resource, Note>>
+    QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesToAddWithNotesPerAPICallPostponeTimerId;
-    QHash<int, std::pair<Resource, Note>>
+
+    QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId;
 
     QHash<int, PostponedConflictingResourceData>

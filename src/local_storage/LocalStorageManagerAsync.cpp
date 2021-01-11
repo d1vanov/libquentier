@@ -19,6 +19,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/SysInfo.h>
 
@@ -1505,20 +1506,10 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
         }
 
         if (shouldCheckForTagListUpdate) {
-            const auto getTagLocalIds = [](const qevercloud::Note & note) {
-                const auto it =
-                    note.localData().constFind(QStringLiteral("tagLocalIds"));
-                if (it == note.localData().constEnd()) {
-                    return QStringList{};
-                }
-
-                return it.value().toStringList();
-            };
-
             const QStringList previousTagLocalIds =
-                getTagLocalIds(previousNoteVersion);
+                noteTagLocalIds(previousNoteVersion);
 
-            const QStringList updatedTagLocalIds = getTagLocalIds(note);
+            const QStringList updatedTagLocalIds = noteTagLocalIds(note);
 
             bool tagListUpdated =
                 (previousTagLocalIds.size() != updatedTagLocalIds.size());

@@ -21,6 +21,7 @@
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/UidGenerator.h>
@@ -1607,9 +1608,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
     bool foundNoteEligibleForExport = false;
     for (const auto & note: qAsConst(notes)) {
-        if (!note.title() && !note.content() && !note.resources() &&
-            (note.localData().constFind(QStringLiteral("tagLocalIds")) ==
-             note.localData().constEnd()))
+        if (!note.title() && !note.content() &&
+            (!note.resources() || note.resources()->isEmpty()) &&
+            noteTagLocalIds(note).isEmpty())
         {
             continue;
         }
@@ -1671,10 +1672,10 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     writer.writeAttributes(enExportAttributes);
 
     for (const auto & note: qAsConst(notes)) {
-        if (!note.title() && !note.content() && !note.resources() &&
+        if (!note.title() && !note.content() &&
+            (!note.resources() || note.resources()->isEmpty()) &&
             ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) ||
-            (note.localData().constFind(QStringLiteral("tagLocalIds")) ==
-             note.localData().constEnd())))
+             noteTagLocalIds(note).isEmpty()))
         {
             QNINFO(
                 "enml",
@@ -1717,13 +1718,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
         if (exportTagsOption == ENMLConverter::EnexExportTags::Yes)
         {
-            QStringList tagLocalIds;
-            const auto tagLocalIdsIt =
-                note.localData().constFind(QStringLiteral("tagLocalIds"));
-            if (tagLocalIdsIt != note.localData().constEnd()) {
-                tagLocalIds = tagLocalIdsIt.value().toStringList();
-            }
-
+            const QStringList tagLocalIds = noteTagLocalIds(note);
             for (auto tagIt = tagLocalIds.constBegin(),
                       tagEnd = tagLocalIds.constEnd();
                  tagIt != tagEnd; ++tagIt)

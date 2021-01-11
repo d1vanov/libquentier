@@ -1,0 +1,53 @@
+/*
+ * Copyright 2021 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef LIB_QUENTIER_TYPES_COMMON_UTILS_H
+#define LIB_QUENTIER_TYPES_COMMON_UTILS_H
+
+#include <QString>
+
+namespace quentier {
+
+template <class T>
+[[nodiscard]] QString itemLinkedNotebookGuid(const T & item) noexcept
+{
+    const auto it =
+        item.localData().constFind(QStringLiteral("linkedNotebookGuid"));
+
+    if (it != item.localData().constEnd()) {
+        return it.value().toString();
+    }
+
+    return QString{};
+}
+
+template <class T>
+void setItemLinkedNotebookGuid(const QString & linkedNotebookGuid, T & item)
+{
+    if (linkedNotebookGuid.isEmpty()) {
+        item.mutableLocalData().remove(QStringLiteral("linkedNotebookGuid"));
+    }
+    else {
+        item.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
+            linkedNotebookGuid;
+    }
+}
+
+} // namespace quentier
+
+#endif // LIB_QUENTIER_TYPES_COMMON_UTILS_H

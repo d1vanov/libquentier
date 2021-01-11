@@ -199,4 +199,20 @@ int noteResourceCount(const qevercloud::Note & note)
     return note.resources()->size();
 }
 
+QStringList noteTagLocalIds(const qevercloud::Note & note)
+{
+    const auto it = note.localData().constFind(QStringLiteral("tagLocalIds"));
+    if (it != note.localData().constEnd()) {
+        return it.value().toStringList();
+    }
+
+    return QStringList{};
+}
+
+void setNoteTagLocalIds(QStringList tagLocalIds, qevercloud::Note & note)
+{
+    note.mutableLocalData()[QStringLiteral("tagLocalIds")] =
+        std::move(tagLocalIds);
+}
+
 } // namespace quentier

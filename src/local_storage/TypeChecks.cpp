@@ -27,6 +27,7 @@
 #include <qevercloud/generated/types/Tag.h>
 #include <qevercloud/generated/types/User.h>
 
+#include <quentier/types/CommonUtils.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Validation.h>
 #include <quentier/utility/Checks.h>
@@ -669,15 +670,14 @@ bool checkTag(
         return false;
     }
 
-    if (const auto it =
-        tag.localData().constFind(QStringLiteral("linkedNotebookGuid"));
-        it != tag.localData().constEnd() && !checkGuid(it.value().toString()))
+    const QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
+    if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage:type_checks",
             "Tag's linked notebook guid is invalid"));
 
-        errorDescription.details() = it.value().toString();
+        errorDescription.details() = linkedNotebookGuid;
         return false;
     }
 

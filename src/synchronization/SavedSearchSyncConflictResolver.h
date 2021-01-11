@@ -19,11 +19,12 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CONFLICT_RESOLVER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SAVED_SEARCH_SYNC_CONFLICT_RESOLVER_H
 
-#include <quentier/types/SavedSearch.h>
+#include <quentier/types/ErrorString.h>
 
 #include <qevercloud/generated/types/SavedSearch.h>
 
 #include <QObject>
+#include <QUuid>
 
 class QDebug;
 

@@ -21,6 +21,7 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/CommonUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <QDebug>
@@ -198,9 +199,8 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
             qevercloud::Notebook notebook = m_remoteNotebook;
 
             if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
-                notebook.mutableLocalData()[
-                    QStringLiteral("linkedNotebookGuid")] =
-                        m_remoteNotebookLinkedNotebookGuid;
+                setItemLinkedNotebookGuid(
+                    m_remoteNotebookLinkedNotebookGuid, notebook);
             }
 
             notebook.setLocallyModified(false);
@@ -226,9 +226,8 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
             notebook.mutableLocalData() = m_localConflict.localData();
 
             if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
-                notebook.mutableLocalData()[
-                    QStringLiteral("linkedNotebookGuid")] =
-                        m_remoteNotebookLinkedNotebookGuid;
+                setItemLinkedNotebookGuid(
+                    m_remoteNotebookLinkedNotebookGuid, notebook);
             }
 
             notebook.setLocallyModified(false);
@@ -497,15 +496,8 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
         "synchronization:notebook_conflict",
         "The conflicting notebooks match by name but not by guid");
 
-    QString localConflictLinkedNotebookGuid;
-
-    const auto linkedNotebookGuidIt = localConflict.localData().constFind(
-        QStringLiteral("linkedNotebookGuid"));
-
-    if (linkedNotebookGuidIt != localConflict.localData().constEnd()) {
-        localConflictLinkedNotebookGuid =
-            linkedNotebookGuidIt.value().toString();
-    }
+    const QString localConflictLinkedNotebookGuid =
+        itemLinkedNotebookGuid(localConflict);
 
     if (localConflictLinkedNotebookGuid != m_remoteNotebookLinkedNotebookGuid) {
         QNDEBUG(
@@ -521,8 +513,7 @@ void NotebookSyncConflictResolver::processNotebooksConflictByName(
         qevercloud::Notebook notebook = m_remoteNotebook;
 
         if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
-            notebook.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-                m_remoteNotebookLinkedNotebookGuid;
+            setItemLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid, notebook);
         }
 
         notebook.setLocallyModified(false);
@@ -601,8 +592,7 @@ void NotebookSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     notebook.mutableLocalData() = m_localConflict.localData();
 
     if (!m_remoteNotebookLinkedNotebookGuid.isEmpty()) {
-        notebook.mutableLocalData()[QStringLiteral("linkedNotebookGuid")] =
-            m_remoteNotebookLinkedNotebookGuid;
+        setItemLinkedNotebookGuid(m_remoteNotebookLinkedNotebookGuid, notebook);
     }
 
     notebook.setLocallyModified(false);

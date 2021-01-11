@@ -80,6 +80,7 @@ endif()
 
 set(TYPES_HEADERS
     headers/quentier/types/Account.h
+    headers/quentier/types/CommonUtils.h
     headers/quentier/types/ErrorString.h
     headers/quentier/types/IFavoritableDataElement.h
     headers/quentier/types/LinkedNotebook.h

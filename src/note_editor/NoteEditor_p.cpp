@@ -9095,17 +9095,7 @@ void NoteEditorPrivate::setTagIds(
         return;
     }
 
-    const QStringList previousTagLocalIds =
-        [this]
-        {
-            const auto it =
-                m_pNote->localData().constFind(QStringLiteral("tagLocalIds"));
-            if (it != m_pNote->localData().constEnd()) {
-                return it.value().toStringList();
-            }
-
-            return QStringList{};
-        }();
+    const QStringList previousTagLocalIds = noteTagLocalIds(*m_pNote);
 
     const QStringList previousTagGuids =
         (m_pNote->tagGuids() ? *m_pNote->tagGuids() : QStringList());
