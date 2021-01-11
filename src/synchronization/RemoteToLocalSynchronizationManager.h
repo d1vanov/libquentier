@@ -77,7 +77,7 @@ public:
         const qevercloud::UserID userId, ErrorString & errorDescription,
         const bool writeUserDataToLocalStorage = true);
 
-    [[nodiscard]] const User & user() const noexcept;
+    [[nodiscard]] const qevercloud::User & user() const noexcept;
 
     [[nodiscard]] bool downloadedSyncChunks() const noexcept
     {
@@ -177,9 +177,9 @@ public Q_SLOTS:
 
     // private signals
 Q_SIGNALS:
-    void addUser(User user, QUuid requestId);
-    void updateUser(User user, QUuid requestId);
-    void findUser(User user, QUuid requestId);
+    void addUser(qevercloud::User user, QUuid requestId);
+    void updateUser(qevercloud::User user, QUuid requestId);
+    void findUser(qevercloud::User user, QUuid requestId);
 
     void addNotebook(qevercloud::Notebook notebook, QUuid requestId);
     void updateNotebook(qevercloud::Notebook notebook, QUuid requestId);
@@ -226,14 +226,19 @@ Q_SIGNALS:
         qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void listAllLinkedNotebooks(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder,
         LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
-    void addSavedSearch(SavedSearch savedSearch, QUuid requestId);
-    void updateSavedSearch(SavedSearch savedSearch, QUuid requestId);
-    void findSavedSearch(SavedSearch savedSearch, QUuid requestId);
-    void expungeSavedSearch(SavedSearch savedSearch, QUuid requestId);
+    void addSavedSearch(qevercloud::SavedSearch savedSearch, QUuid requestId);
+
+    void updateSavedSearch(
+        qevercloud::SavedSearch savedSearch, QUuid requestId);
+
+    void findSavedSearch(qevercloud::SavedSearch savedSearch, QUuid requestId);
+
+    void expungeSavedSearch(
+        qevercloud::SavedSearch savedSearch, QUuid requestId);
 
     void authDataUpdated(
         QString authToken, QString shardId,
@@ -246,10 +251,10 @@ Q_SIGNALS:
             authTokenExpirationTimesByLinkedNotebookGuid);
 
 private Q_SLOTS:
-    void onFindUserCompleted(User user, QUuid requestId);
+    void onFindUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onFindUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
     void onFindNotebookCompleted(
         qevercloud::Notebook notebook, QUuid requestId);
@@ -369,13 +374,13 @@ private Q_SLOTS:
         QUuid requestId);
 
     void onListAllLinkedNotebooksCompleted(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QList<qevercloud::LinkedNotebook> linkedNotebooks, QUuid requestId);
 
     void onListAllLinkedNotebooksFailed(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
