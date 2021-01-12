@@ -31,6 +31,12 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static const QString tagLocalIdsKey = QStringLiteral("tagLocalIds");
+static const QString thumbnailDataKey = QStringLiteral("thumbnailData");
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 [[nodiscard]] bool noteContentContainsToDoImpl(
     const QString & noteContent, const bool checked)
 {
@@ -201,18 +207,32 @@ int noteResourceCount(const qevercloud::Note & note)
 
 QStringList noteTagLocalIds(const qevercloud::Note & note)
 {
-    const auto it = note.localData().constFind(QStringLiteral("tagLocalIds"));
+    const auto it = note.localData().constFind(tagLocalIdsKey);
     if (it != note.localData().constEnd()) {
         return it.value().toStringList();
     }
 
-    return QStringList{};
+    return {};
 }
 
 void setNoteTagLocalIds(QStringList tagLocalIds, qevercloud::Note & note)
 {
-    note.mutableLocalData()[QStringLiteral("tagLocalIds")] =
-        std::move(tagLocalIds);
+    note.mutableLocalData()[tagLocalIdsKey] = std::move(tagLocalIds);
+}
+
+QByteArray noteThumbnailData(const qevercloud::Note & note)
+{
+    const auto it = note.localData().constFind(thumbnailDataKey);
+    if (it != note.localData().constEnd()) {
+        return it.value().toByteArray();
+    }
+
+    return {};
+}
+
+void setNoteThumbnailData(QByteArray thumbnailData, qevercloud::Note & note)
+{
+    note.mutableLocalData()[thumbnailDataKey] = std::move(thumbnailData);
 }
 
 } // namespace quentier

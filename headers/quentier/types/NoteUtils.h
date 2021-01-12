@@ -68,6 +68,12 @@ noteContentToPlainTextAndListOfWords(
 void QUENTIER_EXPORT setNoteTagLocalIds(
     QStringList tagLocalIds, qevercloud::Note & note);
 
+[[nodiscard]] QUENTIER_EXPORT QByteArray noteThumbnailData(
+    const qevercloud::Note & note);
+
+void QUENTIER_EXPORT setNoteThumbnailData(
+    QByteArray thumbnailData, qevercloud::Note & note);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_NOTE_UTILS_H

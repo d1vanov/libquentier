@@ -8062,15 +8062,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
         query.bindValue(
             QStringLiteral(":hasAttributes"), (note.attributes() ? 1 : 0));
 
-        const QByteArray thumbnailData = [&note] {
-            const auto it =
-                note.localData().constFind(QStringLiteral("thumbnailData"));
-            if (it != note.localData().constEnd()) {
-                return it.value().toByteArray();
-            }
-
-            return QByteArray();
-        }();
+        const QByteArray thumbnailData = noteThumbnailData(note);
 
         query.bindValue(
             QStringLiteral(":thumbnail"),
@@ -12003,9 +11995,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
 
         const QVariant thumbnailValue = rec.value(indexOfThumbnail);
         if (!thumbnailValue.isNull()) {
-            QByteArray thumbnailData = thumbnailValue.toByteArray();
-            note.mutableLocalData().insert(
-                QStringLiteral("thumbnailData"), thumbnailData);
+            setNoteThumbnailData(thumbnailValue.toByteArray(), note);
         }
     }
 
