@@ -573,7 +573,7 @@ private:
     // Returns binded linked notebook guid or empty string if no linked notebook
     // guid was bound
     template <class ElementType>
-    [[nodiscard]] QString checkAndAddLinkedNotebookBinding(
+    QString checkAndAddLinkedNotebookBinding(
         ElementType & targetElement);
 
     enum class ResolveSyncConflictStatus
