@@ -539,10 +539,10 @@ private:
     void checkAndIncrementResourceDownloadProgress(
         const QString & resourceGuid);
 
-    [[nodiscard]] bool notebooksSyncInProgress() const noexcept;
-    [[nodiscard]] bool tagsSyncInProgress() const noexcept;
-    [[nodiscard]] bool notesSyncInProgress() const noexcept;
-    [[nodiscard]] bool resourcesSyncInProgress() const noexcept;
+    [[nodiscard]] bool notebooksSyncInProgress() const;
+    [[nodiscard]] bool tagsSyncInProgress() const;
+    [[nodiscard]] bool notesSyncInProgress() const;
+    [[nodiscard]] bool resourcesSyncInProgress() const;
 
     enum class ContentSource
     {
