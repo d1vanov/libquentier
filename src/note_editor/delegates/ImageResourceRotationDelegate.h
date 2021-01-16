@@ -40,7 +40,7 @@ public:
         NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
         ResourceDataInTemporaryFileStorageManager &
             resourceDataInTemporaryFileStorageManager,
-        QHash<QString, QString> & resourceFileStoragePathsByLocalUid);
+        QHash<QString, QString> & resourceFileStoragePathsByLocalId);
 
     void start();
 
@@ -56,7 +56,7 @@ Q_SIGNALS:
 
     // private signals
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalId, QString resourceLocalId, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
@@ -79,7 +79,7 @@ private:
     ResourceInfo & m_resourceInfo;
     ResourceDataInTemporaryFileStorageManager &
         m_resourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> & m_resourceFileStoragePathsByLocalUid;
+    QHash<QString, QString> & m_resourceFileStoragePathsByLocalId;
 
     INoteEditorBackend::Rotation m_rotationDirection;
 

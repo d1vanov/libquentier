@@ -47,7 +47,7 @@ public:
 
 Q_SIGNALS:
     void finished(qevercloud::Resource removedResource, bool reversible);
-    void cancelled(QString resourceLocalUid);
+    void cancelled(QString resourceLocalId);
     void notifyError(ErrorString error);
 
     // private signals

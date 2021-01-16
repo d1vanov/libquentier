@@ -316,7 +316,7 @@ void NoteEditorPluginFactory::updateResource(
     QNDEBUG("note_editor", "NoteEditorPluginFactory::updateResource: "
         << resource);
 
-    auto it = std::find_if(
+    const auto it = std::find_if(
         m_genericResourceDisplayWidgetPlugins.begin(),
         m_genericResourceDisplayWidgetPlugins.end(),
         GenericResourceDisplayWidgetFinder(resource));
@@ -826,8 +826,8 @@ QString NoteEditorPluginFactory::getFilterStringForMimeType(
 }
 
 NoteEditorPluginFactory::GenericResourceDisplayWidgetFinder::GenericResourceDisplayWidgetFinder(
-        const Resource & resource) :
-    m_resourceLocalUid(resource.localUid())
+        const qevercloud::Resource & resource) :
+    m_resourceLocalId(resource.localId())
 {}
 
 bool NoteEditorPluginFactory::GenericResourceDisplayWidgetFinder::operator()(
@@ -837,7 +837,7 @@ bool NoteEditorPluginFactory::GenericResourceDisplayWidgetFinder::operator()(
         return false;
     }
 
-    return (ptr->resourceLocalUid() == m_resourceLocalUid);
+    return (ptr->resourceLocalId() == m_resourceLocalId);
 }
 
 } // namespace quentier

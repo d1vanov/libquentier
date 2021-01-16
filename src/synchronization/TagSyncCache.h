@@ -111,7 +111,7 @@ private Q_SLOTS:
     void onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId);
 
     void onExpungeTagComplete(
-        qevercloud::Tag tag, QStringList expungedChildTagLocalUids,
+        qevercloud::Tag tag, QStringList expungedChildTagLocalIds,
         QUuid requestId);
 
 private:
@@ -120,7 +120,7 @@ private:
 
     void requestTagsList();
 
-    void removeTag(const QString & tagLocalUid);
+    void removeTag(const QString & tagLocalId);
     void processTag(const qevercloud::Tag & tag);
 
 private:

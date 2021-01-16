@@ -1924,14 +1924,14 @@ int LocalStorageManagerPrivate::noteCountPerTag(
 }
 
 bool LocalStorageManagerPrivate::noteCountsPerAllTags(
-    QHash<QString, int> & noteCountsPerTagLocalUid,
+    QHash<QString, int> & noteCountsPerTagLocalId,
     ErrorString & errorDescription, const NoteCountOptions options) const
 {
     const ErrorString errorPrefix(
         QT_TR_NOOP("Can't get note counts for all tags from the local "
                    "storage"));
 
-    noteCountsPerTagLocalUid.clear();
+    noteCountsPerTagLocalId.clear();
 
     QString queryString = QStringLiteral(
         "SELECT localTag, COUNT(localTag) AS noteCount FROM "
@@ -1966,8 +1966,8 @@ bool LocalStorageManagerPrivate::noteCountsPerAllTags(
             return false;
         }
 
-        const QString tagLocalUid = rec.value(tagLocalIdIndex).toString();
-        if (Q_UNLIKELY(tagLocalUid.isEmpty())) {
+        const QString tagLocalId = rec.value(tagLocalIdIndex).toString();
+        if (Q_UNLIKELY(tagLocalId.isEmpty())) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(
                 QT_TR_NOOP("local id of a tag from the result of SQL query "
@@ -2009,7 +2009,7 @@ bool LocalStorageManagerPrivate::noteCountsPerAllTags(
             return false;
         }
 
-        noteCountsPerTagLocalUid[tagLocalUid] = noteCount;
+        noteCountsPerTagLocalId[tagLocalId] = noteCount;
     }
 
     return true;
@@ -3675,12 +3675,12 @@ QList<qevercloud::Tag> LocalStorageManagerPrivate::listAllTagsPerNote(
     }
 
     QString noteGuidSqlQueryCondition = QStringLiteral("localUid IN (");
-    const int numTagLocalUids = tagLocalIds.size();
-    for (int i = 0; i < numTagLocalUids; ++i) {
+    const int numTagLocalIds = tagLocalIds.size();
+    for (int i = 0; i < numTagLocalIds; ++i) {
         noteGuidSqlQueryCondition +=
             QString::fromUtf8("'%1'").arg(sqlEscapeString(tagLocalIds[i]));
 
-        if (i != (numTagLocalUids - 1)) {
+        if (i != (numTagLocalIds - 1)) {
             noteGuidSqlQueryCondition += QStringLiteral(", ");
         }
     }
@@ -12576,7 +12576,7 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
                             qevercloud::NotebookRestrictions{});               \
                     }                                                          \
                     notebook.mutableRestrictions()->setter(                    \
-                        qvariant_cast<type>(value));                           \
+                        qvariant_cast<type>(valueInt));                        \
                 }                                                              \
             }                                                                  \
         }                                                                      \

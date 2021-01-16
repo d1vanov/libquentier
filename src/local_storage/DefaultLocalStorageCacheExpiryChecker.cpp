@@ -47,7 +47,7 @@ bool DefaultLocalStorageCacheExpiryChecker::checkNotes() const
 bool DefaultLocalStorageCacheExpiryChecker::checkResources() const
 {
     size_t numResources = m_localStorageCacheManager.numCachedResources();
-    return (numResources < MAX_RESOURCES_TO_STORE);
+    return (numResources < local_storage::maxResourcesToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkNotebooks() const

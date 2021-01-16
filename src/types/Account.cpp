@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,9 +50,9 @@ Account & Account::operator=(const Account & other)
     return *this;
 }
 
-Account::~Account() {}
+Account::~Account() noexcept = default;
 
-bool Account::operator==(const Account & other) const
+bool Account::operator==(const Account & other) const noexcept
 {
     if (d == other.d) {
         return true;
@@ -82,7 +82,7 @@ bool Account::operator==(const Account & other) const
     return false;
 }
 
-bool Account::operator!=(const Account & other) const
+bool Account::operator!=(const Account & other) const noexcept
 {
     return !(operator==(other));
 }

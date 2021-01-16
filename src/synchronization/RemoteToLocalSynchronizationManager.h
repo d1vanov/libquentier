@@ -320,7 +320,7 @@ private Q_SLOTS:
         qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onExpungeTagCompleted(
-        qevercloud::Tag tag, QStringList expungedChildTagLocalUids,
+        qevercloud::Tag tag, QStringList expungedChildTagLocalIds,
         QUuid requestId);
 
     void onExpungeTagFailed(
@@ -667,9 +667,6 @@ private:
 
     template <class ElementType>
     void performPostAddOrUpdateChecks(const ElementType & element);
-
-    template <class ElementType>
-    void unsetLocalUid(ElementType & element);
 
     template <class ElementType>
     void setNonLocalAndNonDirty(ElementType & element);
@@ -1176,14 +1173,16 @@ private:
      */
     QSet<QString> m_guidsOfResourcesFoundWithinTheLocalStorage;
 
-    QSet<QString> m_localUidsOfElementsAlreadyAttemptedToFindByName;
+    QSet<QString> m_localIdsOfElementsAlreadyAttemptedToFindByName;
 
     QHash<QString, qevercloud::Note>
         m_notesPendingDownloadForAddingToLocalStorage;
+
     QHash<QString, qevercloud::Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
     QHash<QString, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesPendingDownloadForAddingToLocalStorageWithNotesByResourceGuid;
+
     QHash<QString, std::pair<qevercloud::Resource, qevercloud::Note>>
         m_resourcesPendingDownloadForUpdatingInLocalStorageWithNotesByResourceGuid;
 

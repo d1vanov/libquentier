@@ -50,14 +50,14 @@ InsertHtmlDelegate::InsertHtmlDelegate(
     ENMLConverter & enmlConverter,
     ResourceDataInTemporaryFileStorageManager *
         pResourceDataInTemporaryFileStorageManager,
-    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+    QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor), m_enmlConverter(enmlConverter),
     m_pResourceDataInTemporaryFileStorageManager(
         pResourceDataInTemporaryFileStorageManager),
-    m_resourceFileStoragePathsByResourceLocalUid(
-        resourceFileStoragePathsByResourceLocalUid),
+    m_resourceFileStoragePathsByResourceLocalId(
+        resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo), m_inputHtml(inputHtml)
 {}
 
@@ -117,12 +117,12 @@ void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(
                 << errorDescription);
 
         const auto urlIt =
-            m_sourceUrlByResourceLocalUid.find(resource.localId());
+            m_sourceUrlByResourceLocalId.find(resource.localId());
 
-        if (urlIt != m_sourceUrlByResourceLocalUid.end()) {
+        if (urlIt != m_sourceUrlByResourceLocalId.end()) {
             const QUrl & url = urlIt.value();
             Q_UNUSED(m_failingImageUrls.insert(url))
-            Q_UNUSED(m_sourceUrlByResourceLocalUid.erase(urlIt))
+            Q_UNUSED(m_sourceUrlByResourceLocalId.erase(urlIt))
         }
 
         m_noteEditor.removeResourceFromNote(resource);
@@ -139,8 +139,8 @@ void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(
         m_noteEditor.replaceResourceInNote(resource);
     }
 
-    const auto urlIt = m_sourceUrlByResourceLocalUid.find(resource.localId());
-    if (urlIt != m_sourceUrlByResourceLocalUid.end()) {
+    const auto urlIt = m_sourceUrlByResourceLocalId.find(resource.localId());
+    if (urlIt != m_sourceUrlByResourceLocalId.end()) {
         const QUrl & url = urlIt.value();
         ImgData & imgData = m_imgDataBySourceUrl[url];
         imgData.m_resource = resource;
@@ -162,7 +162,7 @@ void InsertHtmlDelegate::onResourceDataSavedToTemporaryFile(
 
         imgData.m_resourceFileStoragePath = fileStoragePath;
 
-        Q_UNUSED(m_sourceUrlByResourceLocalUid.erase(urlIt))
+        Q_UNUSED(m_sourceUrlByResourceLocalId.erase(urlIt))
     }
     else {
         ErrorString error(
@@ -263,7 +263,7 @@ void InsertHtmlDelegate::onHtmlInserted(const QVariant & responseData)
             resource.mutableData()->setSize(dataSize);
         }
 
-        m_resourceFileStoragePathsByResourceLocalUid[resource.localId()] =
+        m_resourceFileStoragePathsByResourceLocalId[resource.localId()] =
             imgData.m_resourceFileStoragePath;
 
         QSize resourceImageSize;
@@ -1063,7 +1063,7 @@ bool InsertHtmlDelegate::addResource(
     auto resource = m_noteEditor.attachResourceToNote(
         resourceData, dataHash, mimeType, QString(), url.toString());
 
-    m_sourceUrlByResourceLocalUid[resource.localId()] = url;
+    m_sourceUrlByResourceLocalId[resource.localId()] = url;
 
     QObject::connect(
         this, &InsertHtmlDelegate::saveResourceDataToTemporaryFile,

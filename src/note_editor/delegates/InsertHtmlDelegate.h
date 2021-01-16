@@ -50,7 +50,7 @@ public:
         const QString & inputHtml, NoteEditorPrivate & noteEditor,
         ENMLConverter & enmlConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
-        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
+        QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo, QObject * parent = nullptr);
 
     void start();
@@ -64,7 +64,7 @@ Q_SIGNALS:
 
     // private signals:
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalId, QString resourceLocalId, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
 
 private Q_SLOTS:
@@ -95,7 +95,7 @@ private:
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
-    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalUid;
+    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalId;
     ResourceInfo & m_resourceInfo;
 
     QString m_inputHtml;
@@ -106,7 +106,7 @@ private:
     QSet<QUrl> m_failingImageUrls;
 
     QHash<QUuid, qevercloud::Resource> m_resourceBySaveDataToTemporaryFileRequestId;
-    QHash<QString, QUrl> m_sourceUrlByResourceLocalUid;
+    QHash<QString, QUrl> m_sourceUrlByResourceLocalId;
     QHash<QUrl, QUrl> m_urlToRedirectUrl;
 
     struct Q_DECL_HIDDEN ImgData

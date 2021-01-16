@@ -65,20 +65,20 @@ bool sortTagsByParentChildRelations(
     }
 
     if (!allTagsHaveGuids) {
-        bool allTagsHaveLocalUids = true;
+        bool allTagsHaveLocalIds = true;
 
         for (const auto & tag: ::qAsConst(tagList)) {
             if (tag.localId().isEmpty()) {
-                allTagsHaveLocalUids = false;
+                allTagsHaveLocalIds = false;
                 break;
             }
         }
 
-        if (!allTagsHaveLocalUids) {
+        if (!allTagsHaveLocalIds) {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "sortTagsByParentChildRelationsImpl",
                 "Can't synchronize tags: all tags must have "
-                "either guids or local uids to be sorted by "
+                "either guids or local ids to be sorted by "
                 "parent-child relations"));
 
             return false;

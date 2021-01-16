@@ -1584,15 +1584,15 @@ void ENMLConverterPrivate::escapeString(QString & string, const bool simplify)
 
 bool ENMLConverterPrivate::exportNotesToEnex(
     const QList<qevercloud::Note> & notes,
-    const QHash<QString, QString> & tagNamesByTagLocalUids,
+    const QHash<QString, QString> & tagNamesByTagLocalIds,
     const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
     ErrorString & errorDescription, const QString & version) const
 {
     QNDEBUG(
         "enml",
         "ENMLConverterPrivate::exportNotesToEnex: num notes = "
-            << notes.size() << ", num tag names by tag local uids = "
-            << tagNamesByTagLocalUids.size() << ", export tags option = "
+            << notes.size() << ", num tag names by tag local ids = "
+            << tagNamesByTagLocalIds.size() << ", export tags option = "
             << ((exportTagsOption == ENMLConverter::EnexExportTags::Yes) ? "Yes"
                                                                          : "No")
             << ", version = " << version);
@@ -1723,8 +1723,8 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                       tagEnd = tagLocalIds.constEnd();
                  tagIt != tagEnd; ++tagIt)
             {
-                auto tagNameIt = tagNamesByTagLocalUids.find(*tagIt);
-                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalUids.end())) {
+                auto tagNameIt = tagNamesByTagLocalIds.find(*tagIt);
+                if (Q_UNLIKELY(tagNameIt == tagNamesByTagLocalIds.end())) {
                     enex.clear();
                     errorDescription.setBase(
                         QT_TR_NOOP("Can't export note(s) to ENEX: one of notes "
@@ -2187,7 +2187,7 @@ bool ENMLConverterPrivate::importEnex(
     QXmlStreamReader reader(enex);
 
     const auto readNoteTimestamp =
-        [this, &dateTimeFormat, &reader, &insideNote, &currentNote]
+        [&dateTimeFormat, &reader, &insideNote, &currentNote]
            (std::function<void(
                 qevercloud::Note*, qevercloud::Timestamp)> setter,
             const char * fieldName, ErrorString & errorDescription) -> bool

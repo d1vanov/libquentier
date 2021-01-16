@@ -35,6 +35,8 @@ LocalStoragePatchManager::LocalStoragePatchManager(
     m_sqlDatabase(database)
 {}
 
+LocalStoragePatchManager::~LocalStoragePatchManager() noexcept = default;
+
 QList<ILocalStoragePatchPtr>
 LocalStoragePatchManager::patchesForCurrentVersion()
 {

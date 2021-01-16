@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,13 +48,13 @@
 #define UPGRADE_1_TO_2_ALL_RESOURCE_DATA_COPIED_FROM_TABLE_TO_FILES_KEY        \
     QStringLiteral("AllResourceDataCopiedFromTableToFiles")
 
-#define UPGRADE_1_TO_2_LOCAL_UIDS_FOR_RESOURCES_COPIED_TO_FILES_KEY            \
+#define UPGRADE_1_TO_2_LOCAL_IDS_FOR_RESOURCES_COPIED_TO_FILES_KEY             \
     QStringLiteral("LocalUidsOfResourcesCopiedToFiles")
 
 #define UPGRADE_1_TO_2_ALL_RESOURCE_DATA_REMOVED_FROM_RESOURCE_TABLE           \
     QStringLiteral("AllResourceDataRemovedFromResourceTable")
 
-#define RESOURCE_LOCAL_UID QStringLiteral("resourceLocalUid")
+#define RESOURCE_LOCAL_ID QStringLiteral("resourceLocalUid")
 
 namespace quentier {
 
@@ -537,7 +537,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     double lastProgress = 0.0;
     QString storagePath = accountPersistentStoragePath(m_account);
 
-    QStringList resourceLocalUids;
+    QStringList resourceLocalIds;
 
     bool allResourceDataCopiedFromTablesToFiles =
         databaseUpgradeInfo
@@ -548,19 +548,19 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     if (!allResourceDataCopiedFromTablesToFiles) {
         // Part 1: extract the list of resource local uids from the local
         // storage database
-        resourceLocalUids =
-            listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+        resourceLocalIds =
+            listResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
                 errorDescription);
 
-        if (resourceLocalUids.isEmpty() && !errorDescription.isEmpty()) {
+        if (resourceLocalIds.isEmpty() && !errorDescription.isEmpty()) {
             return false;
         }
 
         lastProgress = 0.05;
         Q_EMIT progress(lastProgress);
 
-        filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
-            resourceLocalUids);
+        filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
+            resourceLocalIds);
 
         // Part 2: ensure the directories for resources data body and
         // recognition data body exist, create them if necessary
@@ -572,25 +572,25 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 
         // Part 3: copy the data for each resource local uid into the local file
         databaseUpgradeInfo.beginWriteArray(
-            UPGRADE_1_TO_2_LOCAL_UIDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
+            UPGRADE_1_TO_2_LOCAL_IDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
 
-        auto pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser =
+        auto pProcessedResourceLocalIdsDatabaseUpgradeInfoCloser =
             std::make_unique<ApplicationSettings::ArrayCloser>(
                 databaseUpgradeInfo);
 
-        int numResources = resourceLocalUids.size();
+        const int numResources = resourceLocalIds.size();
         double singleResourceProgressFraction = (0.7 - lastProgress) /
             std::max(1.0, static_cast<double>(numResources));
 
         int processedResourceCounter = 0;
-        for (const auto & resourceLocalUid: qAsConst(resourceLocalUids)) {
+        for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
             QSqlQuery query(m_sqlDatabase);
 
             bool res =
                 query.exec(QString::fromUtf8("SELECT noteLocalUid, dataBody, "
                                              "alternateDataBody FROM Resources "
                                              "WHERE resourceLocalUid='%1'")
-                               .arg(resourceLocalUid));
+                               .arg(resourceLocalId));
 
             DATABASE_CHECK_AND_SET_ERROR()
 
@@ -602,7 +602,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "storage database"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -670,7 +670,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
             // 3.2 Write resource data body to a file
             QFile resourceDataFile(
                 noteResourceDataDir.absolutePath() + QStringLiteral("/") +
-                resourceLocalUid + QStringLiteral(".dat"));
+                resourceLocalId + QStringLiteral(".dat"));
 
             if (!resourceDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
@@ -679,7 +679,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "data file for writing"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local uid = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -694,7 +694,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "data body to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local uid = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -707,7 +707,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "resource data body to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -720,7 +720,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "data body to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local uid = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -732,15 +732,15 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                 databaseUpgradeInfo.setArrayIndex(processedResourceCounter);
 
                 databaseUpgradeInfo.setValue(
-                    RESOURCE_LOCAL_UID, resourceLocalUid);
+                    RESOURCE_LOCAL_ID, resourceLocalId);
 
                 lastProgress += singleResourceProgressFraction;
 
                 QNDEBUG(
                     "local_storage:patches",
                     "Processed resource data (no "
-                        << "alternate data) for resource local uid "
-                        << resourceLocalUid << "; updated progress to "
+                        << "alternate data) for resource local id "
+                        << resourceLocalId << "; updated progress to "
                         << lastProgress);
 
                 Q_EMIT progress(lastProgress);
@@ -774,7 +774,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
             // 3.5 Write resource alternate data body to a file
             QFile resourceAlternateDataFile(
                 noteResourceAlternateDataDir.absolutePath() +
-                QStringLiteral("/") + resourceLocalUid +
+                QStringLiteral("/") + resourceLocalId +
                 QStringLiteral(".dat"));
 
             if (!resourceAlternateDataFile.open(QIODevice::WriteOnly)) {
@@ -784,7 +784,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "for writing"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -800,7 +800,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -814,7 +814,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "body to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
@@ -828,27 +828,26 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                "body to a file"));
 
                 errorDescription.details() =
-                    QStringLiteral("resource local uid = ") + resourceLocalUid;
+                    QStringLiteral("resource local id = ") + resourceLocalId;
 
                 QNWARNING("tests:local_storage", errorDescription);
                 return false;
             }
 
             databaseUpgradeInfo.setArrayIndex(processedResourceCounter);
-            databaseUpgradeInfo.setValue(RESOURCE_LOCAL_UID, resourceLocalUid);
+            databaseUpgradeInfo.setValue(RESOURCE_LOCAL_ID, resourceLocalId);
             lastProgress += singleResourceProgressFraction;
 
             QNDEBUG(
                 "local_storage:patches",
-                "Processed resource data and "
-                    << "alternate data for resource local uid "
-                    << resourceLocalUid << "; updated progress to "
+                "Processed resource data and alternate data for resource local "
+                    << "id " << resourceLocalId << "; updated progress to "
                     << lastProgress);
 
             Q_EMIT progress(lastProgress);
         }
 
-        pProcessedResourceLocalUidsDatabaseUpgradeInfoCloser.reset(nullptr);
+        pProcessedResourceLocalIdsDatabaseUpgradeInfoCloser.reset(nullptr);
 
         QNDEBUG(
             "local_storage:patches",
@@ -930,7 +929,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 }
 
 QStringList LocalStoragePatch1To2::
-    listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+    listResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription)
 {
     QSqlQuery query(m_sqlDatabase);
@@ -955,52 +954,53 @@ QStringList LocalStoragePatch1To2::
     while (query.next()) {
         QSqlRecord rec = query.record();
 
-        QString resourceLocalUid =
+        QString resourceLocalId =
             rec.value(QStringLiteral("resourceLocalUid")).toString();
 
-        if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
+        if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
             errorDescription.setBase(
-                QT_TR_NOOP("failed to extract local uid of a resource which "
+                QT_TR_NOOP("failed to extract local id of a resource which "
                            "needs a transfer of its binary data into another "
                            "table as a part of database upgrade"));
             QNWARNING("tests:local_storage", errorDescription);
             return QStringList();
         }
 
-        resourceLocalUids << resourceLocalUid;
+        resourceLocalUids << resourceLocalId;
     }
 
     return resourceLocalUids;
 }
 
 void LocalStoragePatch1To2::
-    filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+    filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
         QStringList & resourceLocalUids)
 {
     QNDEBUG(
         "local_storage:patches",
         "LocalStoragePatch1To2"
             << "::"
-               "filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion"
-               "2");
+               "filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2"
+               );
 
     ApplicationSettings databaseUpgradeInfo(
         m_account, UPGRADE_1_TO_2_PERSISTENCE);
 
     int numEntries = databaseUpgradeInfo.beginReadArray(
-        UPGRADE_1_TO_2_LOCAL_UIDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
+        UPGRADE_1_TO_2_LOCAL_IDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
 
     QSet<QString> processedResourceLocalUids;
     processedResourceLocalUids.reserve(numEntries);
     for (int i = 0; i < numEntries; ++i) {
         databaseUpgradeInfo.setArrayIndex(i);
-        QString str = databaseUpgradeInfo.value(RESOURCE_LOCAL_UID).toString();
+        const QString str =
+            databaseUpgradeInfo.value(RESOURCE_LOCAL_ID).toString();
         Q_UNUSED(processedResourceLocalUids.insert(str))
     }
 
     databaseUpgradeInfo.endArray();
 
-    auto it = std::remove_if(
+    const auto it = std::remove_if(
         resourceLocalUids.begin(), resourceLocalUids.end(),
         StringUtils::StringFilterPredicate(processedResourceLocalUids));
 

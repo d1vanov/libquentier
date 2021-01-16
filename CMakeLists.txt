@@ -82,22 +82,11 @@ set(TYPES_HEADERS
     headers/quentier/types/Account.h
     headers/quentier/types/CommonUtils.h
     headers/quentier/types/ErrorString.h
-    headers/quentier/types/IFavoritableDataElement.h
-    headers/quentier/types/LinkedNotebook.h
-    headers/quentier/types/ILocalStorageDataElement.h
-    headers/quentier/types/Note.h
-    headers/quentier/types/Notebook.h
     headers/quentier/types/NoteUtils.h
-    headers/quentier/types/INoteStoreDataElement.h
     headers/quentier/types/Resource.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
     headers/quentier/types/ResourceRecognitionIndices.h
     headers/quentier/types/ResourceUtils.h
-    headers/quentier/types/SavedSearch.h
-    headers/quentier/types/SharedNote.h
-    headers/quentier/types/SharedNotebook.h
-    headers/quentier/types/Tag.h
-    headers/quentier/types/User.h
     headers/quentier/types/Validation.h
     headers/quentier/types/RegisterMetatypes.h)
 
@@ -200,20 +189,8 @@ set(PRIVATE_HEADERS
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
     src/types/data/ErrorStringData.h
-    src/types/data/FavoritableDataElementData.h
-    src/types/data/LocalStorageDataElementData.h
-    src/types/data/LinkedNotebookData.h
-    src/types/data/NoteStoreDataElementData.h
-    src/types/data/NoteData.h
-    src/types/data/NotebookData.h
-    src/types/data/ResourceData.h
-    src/types/data/SharedNotebookData.h
-    src/types/data/TagData.h
-    src/types/data/SharedNoteData.h
-    src/types/data/SavedSearchData.h
     src/types/data/ResourceRecognitionIndexItemData.h
     src/types/data/ResourceRecognitionIndicesData.h
-    src/types/data/UserData.h
     src/enml/ENMLConverter_p.h
     src/enml/DecryptedTextManager_p.h
     src/synchronization/ExceptionHandlingHelpers.h
@@ -404,33 +381,15 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/types/Account.cpp
     src/types/ErrorString.cpp
-    src/types/LinkedNotebook.cpp
-    src/types/Note.cpp
-    src/types/Notebook.cpp
     src/types/NoteUtils.cpp
-    src/types/Resource.cpp
     src/types/ResourceRecognitionIndexItem.cpp
     src/types/ResourceRecognitionIndices.cpp
     src/types/ResourceUtils.cpp
-    src/types/SavedSearch.cpp
-    src/types/SharedNote.cpp
-    src/types/SharedNotebook.cpp
-    src/types/Tag.cpp
-    src/types/User.cpp
     src/types/Validation.cpp
     src/types/RegisterMetatypes.cpp
     src/types/data/AccountData.cpp
-    src/types/data/LinkedNotebookData.cpp
-    src/types/data/NoteData.cpp
-    src/types/data/NotebookData.cpp
-    src/types/data/ResourceData.cpp
     src/types/data/ResourceRecognitionIndexItemData.cpp
     src/types/data/ResourceRecognitionIndicesData.cpp
-    src/types/data/SharedNotebookData.cpp
-    src/types/data/TagData.cpp
-    src/types/data/SavedSearchData.cpp
-    src/types/data/SharedNoteData.cpp
-    src/types/data/UserData.cpp
     src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp
     src/utility/keychain/MigratingKeychainService.cpp
@@ -746,7 +705,7 @@ set_target_properties(${LIBNAME} PROPERTIES
   PREFIX ""
   VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
   SOVERSION "${PROJECT_VERSION_MAJOR}"
-  CXX_STANDARD 14
+  CXX_STANDARD 17
   CXX_EXTENSIONS OFF
   MACOSX_RPATH 1
   INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"

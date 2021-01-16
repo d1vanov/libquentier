@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,11 +22,11 @@
 #include <quentier/local_storage/ILocalStoragePatch.h>
 #include <quentier/types/Account.h>
 
-QT_FORWARD_DECLARE_CLASS(QSqlDatabase)
+class QSqlDatabase;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerPrivate)
+class LocalStorageManagerPrivate;
 
 class Q_DECL_HIDDEN LocalStoragePatch1To2 final : public ILocalStoragePatch
 {
@@ -73,10 +73,10 @@ private Q_SLOTS:
 
 private:
     [[nodiscard]] QStringList
-    listResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+    listResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription);
 
-    void filterResourceLocalUidsForDatabaseUpgradeFromVersion1ToVersion2(
+    void filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
         QStringList & resourceLocalUids);
 
     [[nodiscard]] bool

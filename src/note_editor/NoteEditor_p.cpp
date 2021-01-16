@@ -8908,9 +8908,9 @@ bool NoteEditorPrivate::exportToEnex(
         tagNamesByTagLocalId[fakeTagLocalId] = *it;
     }
 
-    notes[0].mutableLocalData()["tagLocalIds"] = tagLocalIds;
+    setNoteTagLocalIds(tagLocalIds, notes[0]);
 
-    ENMLConverter::EnexExportTags exportTagsOption =
+    const ENMLConverter::EnexExportTags exportTagsOption =
         (tagNames.isEmpty() ? ENMLConverter::EnexExportTags::No
                             : ENMLConverter::EnexExportTags::Yes);
 

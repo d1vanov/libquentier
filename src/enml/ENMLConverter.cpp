@@ -20,8 +20,6 @@
 
 #include "ENMLConverter_p.h"
 
-#include <quentier/types/Resource.h>
-
 namespace quentier {
 
 ENMLConverter::ENMLConverter() : d_ptr(new ENMLConverterPrivate) {}

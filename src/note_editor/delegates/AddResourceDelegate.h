@@ -134,13 +134,13 @@ Q_SIGNALS:
     void readFileData(QString filePath, QUuid requestId);
 
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalUid, QString resourceLocalId, QByteArray data,
         QByteArray dataHash, QUuid requestId, bool isImage);
 
     void writeFile(QString filePath, QByteArray data, QUuid requestId);
 
     void saveGenericResourceImageToFile(
-        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString noteLocalUid, QString resourceLocalId, QByteArray data,
         QString fileSuffix, QByteArray dataHash, QString fileStoragePath,
         QUuid requestId);
 

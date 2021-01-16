@@ -52,12 +52,12 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
     NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
     ResourceDataInTemporaryFileStorageManager &
         resourceDataInTemporaryFileStorageManager,
-    QHash<QString, QString> & resourceFileStoragePathsByLocalUid) :
+    QHash<QString, QString> & resourceFileStoragePathsByLocalId) :
     m_noteEditor(noteEditor),
     m_resourceInfo(resourceInfo),
     m_resourceDataInTemporaryFileStorageManager(
         resourceDataInTemporaryFileStorageManager),
-    m_resourceFileStoragePathsByLocalUid(resourceFileStoragePathsByLocalUid),
+    m_resourceFileStoragePathsByLocalId(resourceFileStoragePathsByLocalId),
     m_rotationDirection(rotationDirection),
     m_resourceHashBefore(resourceHashBefore)
 {}
@@ -344,11 +344,11 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
     m_resourceFileStoragePathAfter = linkFilePath;
 
     const auto resourceFileStoragePathIt =
-        m_resourceFileStoragePathsByLocalUid.find(localId);
+        m_resourceFileStoragePathsByLocalId.find(localId);
 
     if (Q_UNLIKELY(
             resourceFileStoragePathIt ==
-            m_resourceFileStoragePathsByLocalUid.end()))
+            m_resourceFileStoragePathsByLocalId.end()))
     {
         errorDescription.setBase(
             QT_TR_NOOP("Can't rotate the image attachment: "
@@ -389,7 +389,7 @@ void ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile(
         }
     }
 
-    m_resourceInfo.removeResourceInfo(m_resourceHashBefore);
+    Q_UNUSED(m_resourceInfo.removeResourceInfo(m_resourceHashBefore))
 
     m_resourceInfo.cacheResourceInfo(
         dataHash, displayName, displaySize, linkFilePath,

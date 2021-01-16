@@ -327,7 +327,7 @@ public:
         const QString & linkedNotebookGuid) const;
 
     [[nodiscard]] bool expungeTag(
-        qevercloud::Tag & tag, QStringList & expungedChildTagLocalUids,
+        qevercloud::Tag & tag, QStringList & expungedChildTagLocalIds,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool expungeNotelessTagsFromLinkedNotebooks(
@@ -631,7 +631,7 @@ private:
 
     [[nodiscard]] ReadResourceBinaryDataFromFileStatus
     readResourceBinaryDataFromFile(
-        const QString & resourceLocalUid, const QString & noteLocalUid,
+        const QString & resourceLocalId, const QString & noteLocalId,
         const bool isAlternateDataBody, QByteArray & dataBody,
         ErrorString & errorDescription) const;
 

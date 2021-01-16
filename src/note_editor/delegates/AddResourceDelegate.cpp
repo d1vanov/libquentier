@@ -588,8 +588,7 @@ void AddResourceDelegate::doGenerateGenericResourceImage(
     m_resource = m_noteEditor.attachResourceToNote(
         data, dataHash, m_resourceMimeType, resourceName);
 
-    const QString resourceLocalUid = m_resource.localId();
-    if (Q_UNLIKELY(resourceLocalUid.isEmpty())) {
+    if (Q_UNLIKELY(m_resource.localId().isEmpty())) {
         return;
     }
 

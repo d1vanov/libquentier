@@ -68,7 +68,7 @@ Q_SIGNALS:
 // private signals
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
     void saveGenericResourceImageToFile(
-        QString noteLocalUid, QString resourceLocalUid,
+        QString noteLocalId, QString resourceLocalId,
         QByteArray resourceImageData, QString resourceFileSuffix,
         QByteArray resourceActualHash, QString resourceDisplayName,
         QUuid requestId);

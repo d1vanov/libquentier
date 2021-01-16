@@ -1184,7 +1184,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
         // NOTE: it is just in case one of notebooks stripped off the guid was
         // this note's notebook; it shouldn't be a problem since the note should
-        // have notebook local uid set as well
+        // have notebook local id set as well
         note.setNotebookGuid(std::nullopt);
 
         note.setUpdateSequenceNum(std::nullopt);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,8 +50,8 @@ public:
 
     virtual ~SynchronizationManagerPrivate();
 
-    bool active() const;
-    bool downloadNoteThumbnailsOption() const;
+    [[nodiscard]] bool active() const;
+    [[nodiscard]] bool downloadNoteThumbnailsOption() const;
 
     // Only public because otherwise can't implement printing
     enum class AuthContext
@@ -84,7 +84,7 @@ Q_SIGNALS:
 
     void linkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
+        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
 
@@ -237,9 +237,9 @@ private:
 
     void clear();
 
-    bool validAuthentication() const;
+    [[nodiscard]] bool validAuthentication() const;
 
-    bool checkIfTimestampIsAboutToExpireSoon(
+    [[nodiscard]] bool checkIfTimestampIsAboutToExpireSoon(
         const qevercloud::Timestamp timestamp) const;
 
     void authenticateToLinkedNotebooks();
@@ -268,20 +268,26 @@ private:
         const IKeychainService::ErrorCode errorCode,
         const qevercloud::UserID userId, const ErrorString & errorDescription);
 
-    bool isReadingAuthToken(const qevercloud::UserID userId) const;
-    bool isReadingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isReadingAuthToken(
+        const qevercloud::UserID userId) const;
 
-    bool isWritingAuthToken(const qevercloud::UserID userId) const;
-    bool isWritingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isReadingShardId(const qevercloud::UserID userId) const;
 
-    bool isDeletingAuthToken(const qevercloud::UserID userId) const;
-    bool isDeletingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isWritingAuthToken(
+        const qevercloud::UserID userId) const;
+
+    [[nodiscard]] bool isWritingShardId(const qevercloud::UserID userId) const;
+
+    [[nodiscard]] bool isDeletingAuthToken(
+        const qevercloud::UserID userId) const;
+
+    [[nodiscard]] bool isDeletingShardId(const qevercloud::UserID userId) const;
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();
 
     INoteStore * noteStoreForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook);
+        const qevercloud::LinkedNotebook & linkedNotebook);
 
     INoteStore * noteStoreForLinkedNotebookGuid(const QString & guid);
 
@@ -307,8 +313,10 @@ private:
     qint32 m_lastUpdateCount = -1;
     qevercloud::Timestamp m_lastSyncTime = -1;
     QHash<QString, qint32> m_cachedLinkedNotebookLastUpdateCountByGuid;
+
     QHash<QString, qevercloud::Timestamp>
         m_cachedLinkedNotebookLastSyncTimeByGuid;
+
     bool m_onceReadLastSyncParams = false;
 
     INoteStorePtr m_pNoteStore;
@@ -323,6 +331,7 @@ private:
 
     std::unique_ptr<RemoteToLocalSynchronizationManagerController>
         m_pRemoteToLocalSyncManagerController;
+
     RemoteToLocalSynchronizationManager * m_pRemoteToLocalSyncManager;
 
     // The flag coming from RemoteToLocalSynchronizationManager and telling
@@ -331,10 +340,12 @@ private:
 
     std::unique_ptr<SendLocalChangesManagerController>
         m_pSendLocalChangesManagerController;
+
     SendLocalChangesManager * m_pSendLocalChangesManager;
 
     QHash<QString, std::pair<QString, QString>>
         m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid;
+
     QHash<QString, qevercloud::Timestamp>
         m_cachedLinkedNotebookAuthTokenExpirationTimeByGuid;
 
@@ -360,10 +371,13 @@ private:
 
     KeychainJobIdWithGuidBimap
         m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+
     KeychainJobIdWithGuidBimap
         m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+
     KeychainJobIdWithGuidBimap
         m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
+
     KeychainJobIdWithGuidBimap
         m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
 

@@ -2511,7 +2511,7 @@ void SendLocalChangesManager::sendNotebooks()
     }
 
     // Need to set notebook guids for all dirty notes which have the
-    // corresponding notebook local uids
+    // corresponding notebook local ids
     for (auto & note: m_notes) {
         if (note.notebookGuid()) {
             QNDEBUG(
@@ -2525,7 +2525,7 @@ void SendLocalChangesManager::sendNotebooks()
         if (Q_UNLIKELY(note.parentLocalId().isEmpty())) {
             ErrorString error(
                 QT_TR_NOOP("Detected note which doesn't have neither "
-                           "notebook guid not notebook local uid"));
+                           "notebook guid not notebook local id"));
             APPEND_NOTE_DETAILS(error, note);
             QNWARNING(
                 "synchronization:send_changes",
@@ -2913,7 +2913,7 @@ void SendLocalChangesManager::sendNotes()
 
         /**
          * NOTE: update of resources and tags is required here because otherwise
-         * we might end up with note which has only tag/resource local uids but
+         * we might end up with note which has only tag/resource local ids but
          * no tag/resource guids (if the note's tags were local i.e. newly
          * created tags/resources before the sync was launched) or, in case of
          * resources, with the list of resources lacking USN values set

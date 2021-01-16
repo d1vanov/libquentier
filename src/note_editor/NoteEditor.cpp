@@ -148,9 +148,9 @@ void NoteEditor::setNoteTitle(const QString & noteTitle)
 }
 
 void NoteEditor::setTagIds(
-    const QStringList & tagLocalUids, const QStringList & tagGuids)
+    const QStringList & tagLocalIds, const QStringList & tagGuids)
 {
-    m_backend->setTagIds(tagLocalUids, tagGuids);
+    m_backend->setTagIds(tagLocalIds, tagGuids);
 }
 
 void NoteEditor::undo()

@@ -117,7 +117,8 @@ void InsertHtmlUndoCommand::undoImpl()
             Q_UNUSED(m_resourceFileStoragePathsByResourceLocalId.erase(rit))
         }
 
-        m_resourceInfo.removeResourceInfo(*pResource->data()->bodyHash());
+        Q_UNUSED(
+            m_resourceInfo.removeResourceInfo(*pResource->data()->bodyHash()))
     }
 
     GET_PAGE()
