@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class ENMLTester final : public QObject
     Q_OBJECT
 public:
     ENMLTester(QObject * parent = nullptr);
-    virtual ~ENMLTester() override;
+    ~ENMLTester() noexcept override;
 
 private Q_SLOTS:
     void init();

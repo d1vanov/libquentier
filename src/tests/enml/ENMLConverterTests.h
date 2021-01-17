@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,17 +24,19 @@
 namespace quentier {
 namespace test {
 
-bool convertSimpleNoteToHtmlAndBack(QString & error);
-bool convertNoteWithToDoTagsToHtmlAndBack(QString & error);
-bool convertNoteWithEncryptionToHtmlAndBack(QString & error);
-bool convertNoteWithResourcesToHtmlAndBack(QString & error);
-bool convertComplexNoteToHtmlAndBack(QString & error);
-bool convertComplexNote2ToHtmlAndBack(QString & error);
-bool convertComplexNote3ToHtmlAndBack(QString & error);
-bool convertComplexNote4ToHtmlAndBack(QString & error);
-bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error);
-bool convertHtmlWithTableHelperTagsToEnml(QString & error);
-bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error);
+[[nodiscard]] bool convertSimpleNoteToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertNoteWithToDoTagsToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertNoteWithEncryptionToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertNoteWithResourcesToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertComplexNoteToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertComplexNote2ToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertComplexNote3ToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertComplexNote4ToHtmlAndBack(QString & error);
+[[nodiscard]] bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error);
+[[nodiscard]] bool convertHtmlWithTableHelperTagsToEnml(QString & error);
+
+[[nodiscard]] bool convertHtmlWithTableAndHilitorHelperTagsToEnml(
+    QString & error);
 
 } // namespace test
 } // namespace quentier

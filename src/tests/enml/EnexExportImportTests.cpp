@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,12 +21,14 @@
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/Tag.h>
+#include <quentier/types/NoteUtils.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Tag.h>
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QFile>
 #include <QHash>
 
@@ -35,57 +37,60 @@
 namespace quentier {
 namespace test {
 
-bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error);
-
-bool compareNotes(
-    const QVector<Note> & originalNotes, const QVector<Note> & importedNotes,
+[[nodiscard]] bool compareNoteContents(
+    const qevercloud::Note & lhs, const qevercloud::Note & rhs,
     QString & error);
 
-void setupSampleNote(Note & note);
-void setupSampleNoteV2(Note & note);
+[[nodiscard]] bool compareNotes(
+    const QList<qevercloud::Note> & originalNotes,
+    const QList<qevercloud::Note> & importedNotes,
+    QString & error);
+
+void setupSampleNote(qevercloud::Note & note);
+void setupSampleNoteV2(qevercloud::Note & note);
 
 void setupNoteTags(
-    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+    qevercloud::Note & note, QHash<QString, QString> & tagNamesByTagLocalIds);
 
 void setupNoteTagsV2(
-    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids);
+    qevercloud::Note & note, QHash<QString, QString> & tagNamesByTagLocalIds);
 
 void bindTagsWithNotes(
-    QVector<Note> & importedNotes,
-    const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-    const QHash<QString, QString> & tagNamesByTagLocalUids);
+    QList<qevercloud::Note> & importedNotes,
+    const QHash<QString, QStringList> & tagNamesByNoteLocalId,
+    const QHash<QString, QString> & tagNamesByTagLocalIds);
 
-bool setupNoteResources(Note & note, QString & error);
+[[nodiscard]] bool setupNoteResources(qevercloud::Note & note, QString & error);
 
-void setupNoteResourcesV2(Note & note);
+void setupNoteResourcesV2(qevercloud::Note & note);
 
 bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
 {
-    Note note;
+    qevercloud::Note note;
     setupSampleNote(note);
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << note;
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
+    QHash<QString, QString> tagNamesByTagLocalIds;
     ErrorString errorDescription;
 
     QString enex;
 
     ENMLConverter converter;
     bool res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::Yes, enex,
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::Yes, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -96,13 +101,13 @@ bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(QString & error)
 
 bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
 {
-    Note note;
+    qevercloud::Note note;
     setupSampleNote(note);
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
-    setupNoteTags(note, tagNamesByTagLocalUids);
+    QHash<QString, QString> tagNamesByTagLocalIds;
+    setupNoteTags(note, tagNamesByTagLocalIds);
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << note;
 
     ErrorString errorDescription;
@@ -110,32 +115,32 @@ bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error)
 
     ENMLConverter converter;
     bool res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::Yes, enex,
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::Yes, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
     bindTagsWithNotes(
-        importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
+        importedNotes, tagNamesByNoteLocalId, tagNamesByTagLocalIds);
 
     return compareNotes(notes, importedNotes, error);
 }
 
 bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
 {
-    Note note;
+    qevercloud::Note note;
     setupSampleNote(note);
 
     bool res = setupNoteResources(note, error);
@@ -143,9 +148,9 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
         return false;
     }
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
+    QHash<QString, QString> tagNamesByTagLocalIds;
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << note;
 
     ErrorString errorDescription;
@@ -153,18 +158,18 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
 
     ENMLConverter converter;
     res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::Yes, enex,
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::Yes, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -175,7 +180,7 @@ bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error)
 
 bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
 {
-    Note note;
+    qevercloud::Note note;
     setupSampleNote(note);
 
     bool res = setupNoteResources(note, error);
@@ -183,10 +188,10 @@ bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
         return false;
     }
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
-    setupNoteTags(note, tagNamesByTagLocalUids);
+    QHash<QString, QString> tagNamesByTagLocalIds;
+    setupNoteTags(note, tagNamesByTagLocalIds);
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << note;
 
     ErrorString errorDescription;
@@ -194,38 +199,38 @@ bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error)
 
     ENMLConverter converter;
     res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::Yes, enex,
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::Yes, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
     bindTagsWithNotes(
-        importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
+        importedNotes, tagNamesByNoteLocalId, tagNamesByTagLocalIds);
 
     return compareNotes(notes, importedNotes, error);
 }
 
 bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
 {
-    Note note;
+    qevercloud::Note note;
     setupSampleNote(note);
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
-    setupNoteTags(note, tagNamesByTagLocalUids);
+    QHash<QString, QString> tagNamesByTagLocalIds;
+    setupNoteTags(note, tagNamesByTagLocalIds);
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << note;
 
     ErrorString errorDescription;
@@ -233,24 +238,24 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
 
     ENMLConverter converter;
     bool res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::No, enex,
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::No, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    if (Q_UNLIKELY(!tagNamesByNoteLocalUid.isEmpty())) {
+    if (Q_UNLIKELY(!tagNamesByNoteLocalId.isEmpty())) {
         error = QStringLiteral(
             "The hash of tag names by note local uid is not "
             "empty even though the option to not include "
@@ -258,34 +263,33 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
         return false;
     }
 
-    notes[0].setTagLocalUids(QStringList());
+    setNoteTagLocalIds(QStringList{}, notes[0]);
     return compareNotes(notes, importedNotes, error);
 }
 
 bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
 {
-    Note firstNote;
+    qevercloud::Note firstNote;
     setupSampleNote(firstNote);
 
-    Note secondNote;
+    qevercloud::Note secondNote;
     setupSampleNoteV2(secondNote);
 
-    Note thirdNote;
+    qevercloud::Note thirdNote;
     thirdNote.setContent(
         QStringLiteral("<en-note><h1>Quick note</h1></en-note>"));
 
-    QHash<QString, QString> tagNamesByTagLocalUids;
-    setupNoteTags(firstNote, tagNamesByTagLocalUids);
-    setupNoteTagsV2(secondNote, tagNamesByTagLocalUids);
+    QHash<QString, QString> tagNamesByTagLocalIds;
+    setupNoteTags(firstNote, tagNamesByTagLocalIds);
+    setupNoteTagsV2(secondNote, tagNamesByTagLocalIds);
 
-    bool res = setupNoteResources(thirdNote, error);
-    if (Q_UNLIKELY(!res)) {
+    if (Q_UNLIKELY(!setupNoteResources(thirdNote, error))) {
         return false;
     }
 
     setupNoteResourcesV2(secondNote);
 
-    QVector<Note> notes;
+    QList<qevercloud::Note> notes;
     notes << firstNote;
     notes << secondNote;
     notes << thirdNote;
@@ -294,26 +298,26 @@ bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error)
     QString enex;
 
     ENMLConverter converter;
-    res = converter.exportNotesToEnex(
-        notes, tagNamesByTagLocalUids, ENMLConverter::EnexExportTags::Yes, enex,
+    bool res = converter.exportNotesToEnex(
+        notes, tagNamesByTagLocalIds, ENMLConverter::EnexExportTags::Yes, enex,
         errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        enex, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        enex, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (Q_UNLIKELY(!res)) {
         error = errorDescription.nonLocalizedString();
         return false;
     }
 
     bindTagsWithNotes(
-        importedNotes, tagNamesByNoteLocalUid, tagNamesByTagLocalUids);
+        importedNotes, tagNamesByNoteLocalId, tagNamesByTagLocalIds);
 
     return compareNotes(notes, importedNotes, error);
 }
@@ -328,18 +332,17 @@ bool importRealWorldEnex(QString & error)
     bool res = sampleEnex1File.open(QIODevice::ReadOnly);
     if (Q_UNLIKELY(!res)) {
         error = QStringLiteral(
-            "Failed to open the sample enex file for "
-            "reading");
+            "Failed to open the sample enex file for reading");
         return false;
     }
 
-    QString sampleEnex1 = QString::fromLocal8Bit(sampleEnex1File.readAll());
+    const auto sampleEnex1 = QString::fromLocal8Bit(sampleEnex1File.readAll());
 
-    QVector<Note> importedNotes;
-    QHash<QString, QStringList> tagNamesByNoteLocalUid;
+    QList<qevercloud::Note> importedNotes;
+    QHash<QString, QStringList> tagNamesByNoteLocalId;
 
     res = converter.importEnex(
-        sampleEnex1, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        sampleEnex1, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -360,13 +363,13 @@ bool importRealWorldEnex(QString & error)
         return false;
     }
 
-    QString sampleEnex2 = QString::fromLocal8Bit(sampleEnex2File.readAll());
+    const auto sampleEnex2 = QString::fromLocal8Bit(sampleEnex2File.readAll());
 
     importedNotes.clear();
-    tagNamesByNoteLocalUid.clear();
+    tagNamesByNoteLocalId.clear();
 
     res = converter.importEnex(
-        sampleEnex2, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        sampleEnex2, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -388,13 +391,13 @@ bool importRealWorldEnex(QString & error)
         return false;
     }
 
-    QString sampleEnex3 = QString::fromLocal8Bit(sampleEnex3File.readAll());
+    const auto sampleEnex3 = QString::fromLocal8Bit(sampleEnex3File.readAll());
 
     importedNotes.clear();
-    tagNamesByNoteLocalUid.clear();
+    tagNamesByNoteLocalId.clear();
 
     res = converter.importEnex(
-        sampleEnex3, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        sampleEnex3, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -416,13 +419,13 @@ bool importRealWorldEnex(QString & error)
         return false;
     }
 
-    QString sampleEnex4 = QString::fromLocal8Bit(sampleEnex4File.readAll());
+    const auto sampleEnex4 = QString::fromLocal8Bit(sampleEnex4File.readAll());
 
     importedNotes.clear();
-    tagNamesByNoteLocalUid.clear();
+    tagNamesByNoteLocalId.clear();
 
     res = converter.importEnex(
-        sampleEnex4, importedNotes, tagNamesByNoteLocalUid, errorDescription);
+        sampleEnex4, importedNotes, tagNamesByNoteLocalId, errorDescription);
     if (!res) {
         error = errorDescription.nonLocalizedString();
         return false;
@@ -438,174 +441,163 @@ bool importRealWorldEnex(QString & error)
     return true;
 }
 
-bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
+bool compareNoteContents(
+    const qevercloud::Note & lhs, const qevercloud::Note & rhs, QString & error)
 {
-    if (lhs.hasTitle() != rhs.hasTitle()) {
+    if (lhs.title().has_value() != rhs.title().has_value()) {
         error = QStringLiteral("left: has title = ") +
-            (lhs.hasTitle() ? QStringLiteral("true")
-                            : QStringLiteral("false")) +
+            (lhs.title() ? QStringLiteral("true")
+                         : QStringLiteral("false")) +
             QStringLiteral(", right: has title = ") +
-            (rhs.hasTitle() ? QStringLiteral("true") : QStringLiteral("false"));
+            (rhs.title() ? QStringLiteral("true")
+                         : QStringLiteral("false"));
         return false;
     }
 
-    if (lhs.hasTitle() && (lhs.title() != rhs.title())) {
-        error = QStringLiteral("left: title = ") + lhs.title() +
-            QStringLiteral(", right: title = ") + rhs.title();
+    if (lhs.title() && (*lhs.title() != *rhs.title())) {
+        error = QStringLiteral("left: title = ") + *lhs.title() +
+            QStringLiteral(", right: title = ") + *rhs.title();
         return false;
     }
 
-    if (lhs.hasContent() != rhs.hasContent()) {
+    if (lhs.content().has_value() != rhs.content().has_value()) {
         error = QStringLiteral("left: has content = ") +
-            (lhs.hasContent() ? QStringLiteral("true")
-                              : QStringLiteral("false")) +
+            (lhs.content() ? QStringLiteral("true")
+                           : QStringLiteral("false")) +
             QStringLiteral(", right: has title = ") +
-            (rhs.hasContent() ? QStringLiteral("true")
+            (rhs.content() ? QStringLiteral("true")
+                           : QStringLiteral("false"));
+        return false;
+    }
+
+    if (lhs.content() && (*lhs.content() != *rhs.content())) {
+        error = QStringLiteral("left: content = ") + *lhs.content() +
+            QStringLiteral("\n\nRight: content = ") + *rhs.content();
+        return false;
+    }
+
+    if (lhs.created().has_value() != rhs.created().has_value()) {
+        error = QStringLiteral("left: has creation timestamp = ") +
+            (lhs.created() ? QStringLiteral("true")
+                           : QStringLiteral("false")) +
+            QStringLiteral(", right: has creation timestamp = ") +
+            (rhs.created() ? QStringLiteral("true")
+                           : QStringLiteral("false"));
+        return false;
+    }
+
+    if (lhs.created() && (*lhs.created() != *rhs.created()))
+    {
+        error = QStringLiteral("left: creation timestamp = ") +
+            QString::number(*lhs.created()) +
+            QStringLiteral(", right: creation timestamp = ") +
+            QString::number(*rhs.created());
+        return false;
+    }
+
+    if (lhs.updated().has_value() != rhs.updated().has_value()) {
+        error = QStringLiteral("left: has modification timestamp = ") +
+            (lhs.updated() ? QStringLiteral("true")
+                           : QStringLiteral("false")) +
+            QStringLiteral(", right: has modification timestamp = ") +
+            (rhs.updated() ? QStringLiteral("true")
+                           : QStringLiteral("false"));
+        return false;
+    }
+
+    if (lhs.updated() && (*lhs.updated() != *rhs.updated()))
+    {
+        error = QStringLiteral("left: modification timestamp = ") +
+            QString::number(*lhs.updated()) +
+            QStringLiteral(", right: modification timestamp = ") +
+            QString::number(*rhs.updated());
+        return false;
+    }
+
+    const QStringList lhsTagLocalIds = noteTagLocalIds(lhs);
+    const QStringList rhsTagLocalIds = noteTagLocalIds(rhs);
+
+    if (lhsTagLocalIds.size() != rhsTagLocalIds.size()) {
+        error = QStringLiteral(
+            "left and right notes has different number "
+            "of tag local ids");
+        return false;
+    }
+
+    for (auto it = lhsTagLocalIds.constBegin(),
+                end = lhsTagLocalIds.constEnd();
+            it != end; ++it)
+    {
+        if (!rhsTagLocalIds.contains(*it)) {
+            error = QStringLiteral("left: has tag local uid ") + *it +
+                QStringLiteral(" which right doesn't have");
+            return false;
+        }
+    }
+
+    if (lhs.attributes().has_value() != rhs.attributes().has_value()) {
+        error = QStringLiteral("left: has note attributes = ") +
+            (lhs.attributes() ? QStringLiteral("true")
+                              : QStringLiteral("false")) +
+            QStringLiteral(", right: has note attributes = ") +
+            (rhs.attributes() ? QStringLiteral("true")
                               : QStringLiteral("false"));
         return false;
     }
 
-    if (lhs.hasContent() && (lhs.content() != rhs.content())) {
-        error = QStringLiteral("left: content = ") + lhs.content() +
-            QStringLiteral("\n\nRight: content = ") + rhs.content();
-        return false;
-    }
-
-    if (lhs.hasCreationTimestamp() != rhs.hasCreationTimestamp()) {
-        error = QStringLiteral("left: has creation timestamp = ") +
-            (lhs.hasCreationTimestamp() ? QStringLiteral("true")
-                                        : QStringLiteral("false")) +
-            QStringLiteral(", right: has creation timestamp = ") +
-            (rhs.hasCreationTimestamp() ? QStringLiteral("true")
-                                        : QStringLiteral("false"));
-        return false;
-    }
-
-    if (lhs.hasCreationTimestamp() &&
-        (lhs.creationTimestamp() != rhs.creationTimestamp()))
-    {
-        error = QStringLiteral("left: creation timestamp = ") +
-            QString::number(lhs.creationTimestamp()) +
-            QStringLiteral(", right: creation timestamp = ") +
-            QString::number(rhs.creationTimestamp());
-        return false;
-    }
-
-    if (lhs.hasModificationTimestamp() != rhs.hasModificationTimestamp()) {
-        error = QStringLiteral("left: has modification timestamp = ") +
-            (lhs.hasModificationTimestamp() ? QStringLiteral("true")
-                                            : QStringLiteral("false")) +
-            QStringLiteral(", right: has modification timestamp = ") +
-            (rhs.hasModificationTimestamp() ? QStringLiteral("true")
-                                            : QStringLiteral("false"));
-        return false;
-    }
-
-    if (lhs.hasModificationTimestamp() &&
-        (lhs.modificationTimestamp() != rhs.modificationTimestamp()))
-    {
-        error = QStringLiteral("left: modification timestamp = ") +
-            QString::number(lhs.modificationTimestamp()) +
-            QStringLiteral(", right: modification timestamp = ") +
-            QString::number(rhs.modificationTimestamp());
-        return false;
-    }
-
-    if (lhs.hasTagLocalUids() != rhs.hasTagLocalUids()) {
-        error = QStringLiteral("left: has tag local uids = ") +
-            (lhs.hasTagLocalUids() ? QStringLiteral("true")
-                                   : QStringLiteral("false")) +
-            QStringLiteral(", right: has tag local uids = ") +
-            (rhs.hasTagLocalUids() ? QStringLiteral("true")
-                                   : QStringLiteral("false"));
-        return false;
-    }
-
-    if (lhs.hasTagLocalUids()) {
-        const QStringList & leftTagLocalUids = lhs.tagLocalUids();
-        const QStringList & rightTagLocalUids = rhs.tagLocalUids();
-        if (leftTagLocalUids.size() != rightTagLocalUids.size()) {
-            error = QStringLiteral(
-                "left and right notes has different number "
-                "of tag local uids");
-            return false;
-        }
-
-        for (auto it = leftTagLocalUids.constBegin(),
-                  end = leftTagLocalUids.constEnd();
-             it != end; ++it)
-        {
-            if (!rightTagLocalUids.contains(*it)) {
-                error = QStringLiteral("left: has tag local uid ") + *it +
-                    QStringLiteral(" which right doesn't have");
-                return false;
-            }
-        }
-    }
-
-    if (lhs.hasNoteAttributes() != rhs.hasNoteAttributes()) {
-        error = QStringLiteral("left: has note attributes = ") +
-            (lhs.hasNoteAttributes() ? QStringLiteral("true")
-                                     : QStringLiteral("false")) +
-            QStringLiteral(", right: has note attributes = ") +
-            (rhs.hasNoteAttributes() ? QStringLiteral("true")
-                                     : QStringLiteral("false"));
-        return false;
-    }
-
-    if (lhs.hasNoteAttributes()) {
-        const auto & leftNoteAttributes = lhs.noteAttributes();
-        const auto & rightNoteAttributes = rhs.noteAttributes();
+    if (lhs.attributes()) {
+        const auto & leftNoteAttributes = *lhs.attributes();
+        const auto & rightNoteAttributes = *rhs.attributes();
 
 #define CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                \
-    if (leftNoteAttributes.attrName.isSet() !=                                 \
-        rightNoteAttributes.attrName.isSet()) {                                \
+    if (leftNoteAttributes.attrName().has_value() !=                           \
+        rightNoteAttributes.attrName().has_value()) {                          \
         error = QStringLiteral("left: has " #attrName " = ") +                 \
-            (leftNoteAttributes.attrName.isSet() ? QStringLiteral("true")      \
-                                                 : QStringLiteral("false")) +  \
+            (leftNoteAttributes.attrName() ? QStringLiteral("true")            \
+                                           : QStringLiteral("false")) +        \
             QStringLiteral(", right: has " #attrName " = ") +                  \
-            (rightNoteAttributes.attrName.isSet() ? QStringLiteral("true")     \
-                                                  : QStringLiteral("false"));  \
+            (rightNoteAttributes.attrName() ? QStringLiteral("true")           \
+                                            : QStringLiteral("false"));        \
         return false;                                                          \
     }
 
 #define CHECK_NOTE_DOUBLE_ATTRIBUTE(attrName)                                  \
     CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                    \
-    if (leftNoteAttributes.attrName.isSet() &&                                 \
+    if (leftNoteAttributes.attrName() &&                                       \
         (std::fabs(                                                            \
-             leftNoteAttributes.attrName.ref() -                               \
-             rightNoteAttributes.attrName.ref()) > 1.0e-9))                    \
+             *leftNoteAttributes.attrName() -                                  \
+             *rightNoteAttributes.attrName()) > 1.0e-9))                       \
     {                                                                          \
         error = QStringLiteral("left: " #attrName " = ") +                     \
-            QString::number(leftNoteAttributes.attrName.ref()) +               \
+            QString::number(*leftNoteAttributes.attrName()) +                  \
             QStringLiteral(", right: " #attrName " = ") +                      \
-            QString::number(rightNoteAttributes.attrName.ref());               \
+            QString::number(*rightNoteAttributes.attrName());                  \
         return false;                                                          \
     }
 
 #define CHECK_NOTE_STRING_ATTRIBUTE(attrName)                                  \
     CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                    \
-    if (leftNoteAttributes.attrName.isSet() &&                                 \
-        (leftNoteAttributes.attrName.ref() !=                                  \
-         rightNoteAttributes.attrName.ref()))                                  \
+    if (leftNoteAttributes.attrName() &&                                       \
+        (*leftNoteAttributes.attrName() !=                                     \
+         *rightNoteAttributes.attrName()))                                     \
     {                                                                          \
         error = QStringLiteral("left: " #attrName " = ") +                     \
-            leftNoteAttributes.attrName.ref() +                                \
+            *leftNoteAttributes.attrName() +                                   \
             QStringLiteral(", right: " #attrName " = ") +                      \
-            rightNoteAttributes.attrName.ref();                                \
+            *rightNoteAttributes.attrName();                                   \
         return false;                                                          \
     }
 
 #define CHECK_NOTE_INTEGER_ATTRIBUTE(attrName)                                 \
     CHECK_NOTE_ATTRIBUTE_PRESENCE(attrName)                                    \
-    if (leftNoteAttributes.attrName.isSet() &&                                 \
-        (leftNoteAttributes.attrName.ref() !=                                  \
-         rightNoteAttributes.attrName.ref()))                                  \
+    if (leftNoteAttributes.attrName() &&                                       \
+        (leftNoteAttributes.attrName() !=                                      \
+         rightNoteAttributes.attrName()))                                      \
     {                                                                          \
         error = QStringLiteral("left: " #attrName " = ") +                     \
-            QString::number(leftNoteAttributes.attrName.ref()) +               \
+            QString::number(*leftNoteAttributes.attrName()) +                  \
             QStringLiteral(", right: " #attrName " = ") +                      \
-            QString::number(rightNoteAttributes.attrName.ref());               \
+            QString::number(*rightNoteAttributes.attrName());                  \
         return false;                                                          \
     }
 
@@ -626,23 +618,25 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         CHECK_NOTE_STRING_ATTRIBUTE(contentClass)
 
         CHECK_NOTE_ATTRIBUTE_PRESENCE(applicationData)
-        if (leftNoteAttributes.applicationData.isSet()) {
+        if (leftNoteAttributes.applicationData()) {
             const qevercloud::LazyMap & leftLazyMap =
-                leftNoteAttributes.applicationData.ref();
-            const qevercloud::LazyMap & rightLazyMap =
-                rightNoteAttributes.applicationData.ref();
+                *leftNoteAttributes.applicationData();
 
-            if (leftLazyMap.fullMap.isSet() != rightLazyMap.fullMap.isSet()) {
+            const qevercloud::LazyMap & rightLazyMap =
+                *rightNoteAttributes.applicationData();
+
+            if (leftLazyMap.fullMap().has_value() !=
+                rightLazyMap.fullMap().has_value()) {
                 QTextStream strm(&error);
                 strm << "left: application data full map is set = "
-                     << (leftLazyMap.fullMap.isSet() ? "true" : "false")
+                     << (leftLazyMap.fullMap() ? "true" : "false")
                      << ", right: application data full map is set = "
-                     << (rightLazyMap.fullMap.isSet() ? "true" : "false");
+                     << (rightLazyMap.fullMap() ? "true" : "false");
                 return false;
             }
 
-            if (leftLazyMap.fullMap.isSet() &&
-                (leftLazyMap.fullMap.ref() != rightLazyMap.fullMap.ref()))
+            if (leftLazyMap.fullMap() &&
+                (*leftLazyMap.fullMap() != *rightLazyMap.fullMap()))
             {
                 error = QStringLiteral(
                     "left and right notes' application data "
@@ -652,21 +646,21 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         }
     }
 
-    if (lhs.hasResources() != rhs.hasResources()) {
+    if (lhs.resources().has_value() != rhs.resources().has_value()) {
         error = QStringLiteral("left: has resources = ") +
-            (lhs.hasResources() ? QStringLiteral("true")
-                                : QStringLiteral("false")) +
+            (lhs.resources() ? QStringLiteral("true")
+                             : QStringLiteral("false")) +
             QStringLiteral(", right: has resources = ") +
-            (rhs.hasResources() ? QStringLiteral("true")
-                                : QStringLiteral("false"));
+            (rhs.resources() ? QStringLiteral("true")
+                             : QStringLiteral("false"));
         return false;
     }
 
-    if (lhs.hasResources()) {
-        QList<Resource> leftResources = lhs.resources();
-        QList<Resource> rightResources = rhs.resources();
+    if (lhs.resources()) {
+        auto leftResources = *lhs.resources();
+        auto rightResources = *rhs.resources();
 
-        int numResources = leftResources.size();
+        const int numResources = leftResources.size();
         if (numResources != rightResources.size()) {
             error = QStringLiteral("left note has ") +
                 QString::number(numResources) +
@@ -677,15 +671,15 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
         }
 
         for (int i = 0; i < numResources; ++i) {
-            const Resource & leftResource = leftResources.at(i);
-            const Resource & rightResource = rightResources.at(i);
+            const auto & leftResource = leftResources.at(i);
+            const auto & rightResource = rightResources.at(i);
 
-            if (Q_UNLIKELY(!leftResource.hasMime())) {
+            if (Q_UNLIKELY(!leftResource.mime())) {
                 error = QStringLiteral("left note's resource has no mime");
                 return false;
             }
 
-            if (Q_UNLIKELY(!rightResource.hasMime())) {
+            if (Q_UNLIKELY(!rightResource.mime())) {
                 error = QStringLiteral("right note's resource has no mime");
                 return false;
             }
@@ -693,150 +687,161 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
             if (leftResource.mime() != rightResource.mime()) {
                 QTextStream strm(&error);
                 strm << "left and right resource's mime types don't match: "
-                     << "left = " << leftResource.mime()
-                     << ", right = " << rightResource.mime();
+                     << "left = " << *leftResource.mime()
+                     << ", right = " << *rightResource.mime();
                 return false;
             }
 
-            if (Q_UNLIKELY(!leftResource.hasDataBody())) {
+            if (Q_UNLIKELY(!leftResource.data() ||
+                           !leftResource.data()->body())) {
                 error = QStringLiteral("left note's resource has no data body");
                 return false;
             }
 
-            if (Q_UNLIKELY(!rightResource.hasDataBody())) {
+            if (Q_UNLIKELY(!rightResource.data() ||
+                           !rightResource.data()->body())) {
                 error =
                     QStringLiteral("right note's resource has no data body");
                 return false;
             }
 
-            if (leftResource.dataBody() != rightResource.dataBody()) {
+            if (*leftResource.data()->body() != *rightResource.data()->body()) {
                 error = QStringLiteral(
-                    "left and right resources' data bodies "
-                    "don't match");
+                    "left and right resources' data bodies don't match");
                 return false;
             }
 
-            if (leftResource.hasWidth() != rightResource.hasWidth()) {
+            if (leftResource.width() != rightResource.width()) {
                 error = QStringLiteral("left resource has width = ") +
-                    (leftResource.hasWidth() ? QStringLiteral("true")
-                                             : QStringLiteral("false")) +
+                    (leftResource.width() ? QStringLiteral("true")
+                                          : QStringLiteral("false")) +
                     QStringLiteral(", right resource has width = ") +
-                    (rightResource.hasWidth() ? QStringLiteral("true")
-                                              : QStringLiteral("false"));
+                    (rightResource.width() ? QStringLiteral("true")
+                                           : QStringLiteral("false"));
                 return false;
             }
 
-            if (leftResource.hasWidth() &&
-                (leftResource.width() != rightResource.width())) {
+            if (leftResource.width() &&
+                (*leftResource.width() != *rightResource.width())) {
                 error = QStringLiteral("left resource width = ") +
-                    QString::number(leftResource.width()) +
+                    QString::number(*leftResource.width()) +
                     QStringLiteral(", right resource width = ") +
-                    QString::number(rightResource.width());
+                    QString::number(*rightResource.width());
                 return false;
             }
 
-            if (leftResource.hasHeight() != rightResource.hasHeight()) {
+            if (leftResource.height() != rightResource.height()) {
                 error = QStringLiteral("left resource has height = ") +
-                    (leftResource.hasHeight() ? QStringLiteral("true")
-                                              : QStringLiteral("false")) +
+                    (leftResource.height() ? QStringLiteral("true")
+                                           : QStringLiteral("false")) +
                     QStringLiteral(", right resource has height = ") +
-                    (rightResource.hasHeight() ? QStringLiteral("true")
-                                               : QStringLiteral("false"));
+                    (rightResource.height() ? QStringLiteral("true")
+                                            : QStringLiteral("false"));
                 return false;
             }
 
-            if (leftResource.hasHeight() &&
-                (leftResource.height() != rightResource.height()))
+            if (leftResource.height() &&
+                (*leftResource.height() != *rightResource.height()))
             {
                 error = QStringLiteral("left resource height = ") +
-                    QString::number(leftResource.height()) +
+                    QString::number(*leftResource.height()) +
                     QStringLiteral(", right resource height = ") +
-                    QString::number(rightResource.height());
+                    QString::number(*rightResource.height());
                 return false;
             }
 
-            if (leftResource.hasRecognitionDataBody() !=
-                rightResource.hasRecognitionDataBody())
+            if ((leftResource.recognition() &&
+                 leftResource.recognition()->body()) !=
+                (rightResource.recognition() &&
+                 rightResource.recognition()->body()))
             {
                 QTextStream strm(&error);
                 strm << "left resource has recognition data body = "
-                     << (leftResource.hasRecognitionDataBody() ? "true"
-                                                               : "false")
-                     << ", right resource has recognition data body = "
-                     << (rightResource.hasRecognitionDataBody() ? "true"
-                                                                : "false");
-                return false;
-            }
-
-            if (leftResource.hasRecognitionDataBody()) {
-                auto leftRecognitionBody =
-                    QString::fromUtf8(leftResource.recognitionDataBody())
-                        .simplified();
-
-                auto rightRecognitionBody =
-                    QString::fromUtf8(rightResource.recognitionDataBody())
-                        .simplified();
-
-                if (leftRecognitionBody != rightRecognitionBody) {
-                    error = QStringLiteral(
-                        "left and right resources' "
-                        "recognition data bodies don't "
-                        "match");
-                    return false;
-                }
-            }
-
-            if (leftResource.hasAlternateDataBody() !=
-                rightResource.hasAlternateDataBody()) {
-                QTextStream strm(&error);
-                strm << "left resource has alternate data body = "
-                     << (leftResource.hasAlternateDataBody() ? "true" : "false")
-                     << ", right resource has alternate data body = "
-                     << (rightResource.hasAlternateDataBody() ? "true"
-                                                              : "false");
-                return false;
-            }
-
-            if (leftResource.hasAlternateDataBody() &&
-                (leftResource.alternateDataBody() !=
-                 rightResource.alternateDataBody()))
-            {
-                error = QStringLiteral(
-                    "left and right resources' alternate "
-                    "data bodies don't match");
-                return false;
-            }
-
-            if (leftResource.hasResourceAttributes() !=
-                rightResource.hasResourceAttributes())
-            {
-                QTextStream strm(&error);
-                strm << "left resource has resource attributes = "
-                     << (leftResource.hasResourceAttributes() ? "true"
+                     << ((leftResource.recognition() &&
+                          leftResource.recognition()->body()) ? "true"
                                                               : "false")
-                     << ", right resource has resource attributes = "
-                     << (rightResource.hasResourceAttributes() ? "true"
+                     << ", right resource has recognition data body = "
+                     << ((rightResource.recognition() &&
+                          rightResource.recognition()->body()) ? "true"
                                                                : "false");
                 return false;
             }
 
-            if (leftResource.hasResourceAttributes()) {
+            if (leftResource.recognition() &&
+                leftResource.recognition()->body()) {
+                const auto leftRecognitionBody =
+                    QString::fromUtf8(*leftResource.recognition()->body())
+                        .simplified();
+
+                const auto rightRecognitionBody =
+                    QString::fromUtf8(*rightResource.recognition()->body())
+                        .simplified();
+
+                if (leftRecognitionBody != rightRecognitionBody) {
+                    error = QStringLiteral(
+                        "left and right resources' recognition data bodies "
+                        "don't match");
+                    return false;
+                }
+            }
+
+            if ((leftResource.alternateData() &&
+                 leftResource.alternateData()->body()) !=
+                (rightResource.alternateData() &&
+                 rightResource.alternateData()->body())) {
+                QTextStream strm(&error);
+                strm << "left resource has alternate data body = "
+                     << ((leftResource.alternateData() &&
+                          leftResource.alternateData()->body()) ? "true"
+                                                                : "false")
+                     << ", right resource has alternate data body = "
+                     << ((rightResource.alternateData() &&
+                          rightResource.alternateData()->body()) ? "true"
+                                                                 : "false");
+                return false;
+            }
+
+            if ((leftResource.alternateData() &&
+                 leftResource.alternateData()->body()) &&
+                (*leftResource.alternateData()->body() !=
+                 *rightResource.alternateData()->body()))
+            {
+                error = QStringLiteral(
+                    "left and right resources' alternate data bodies don't "
+                    "match");
+                return false;
+            }
+
+            if (leftResource.attributes().has_value() !=
+                rightResource.attributes().has_value())
+            {
+                QTextStream strm(&error);
+                strm << "left resource has resource attributes = "
+                     << (leftResource.attributes() ? "true"
+                                                   : "false")
+                     << ", right resource has resource attributes = "
+                     << (rightResource.attributes() ? "true"
+                                                    : "false");
+                return false;
+            }
+
+            if (leftResource.attributes()) {
                 const auto & leftResourceAttributes =
-                    leftResource.resourceAttributes();
+                    *leftResource.attributes();
 
                 const auto & rightResourceAttributes =
-                    rightResource.resourceAttributes();
+                    *rightResource.attributes();
 
 #define CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                            \
-    if (leftResourceAttributes.attrName.isSet() !=                             \
-        rightResourceAttributes.attrName.isSet())                              \
+    if (leftResourceAttributes.attrName().has_value() !=                       \
+        rightResourceAttributes.attrName().has_value())                        \
     {                                                                          \
         error = QStringLiteral("left resource: has " #attrName " = ") +        \
-            (leftResourceAttributes.attrName.isSet()                           \
+            (leftResourceAttributes.attrName()                                 \
                  ? QStringLiteral("true")                                      \
                  : QStringLiteral("false")) +                                  \
             QStringLiteral(", right resource: has " #attrName " = ") +         \
-            (rightResourceAttributes.attrName.isSet()                          \
+            (rightResourceAttributes.attrName()                                \
                  ? QStringLiteral("true")                                      \
                  : QStringLiteral("false"));                                   \
         return false;                                                          \
@@ -844,54 +849,54 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
 
 #define CHECK_RESOURCE_DOUBLE_ATTRIBUTE(attrName)                              \
     CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                                \
-    if (leftResourceAttributes.attrName.isSet() &&                             \
+    if (leftResourceAttributes.attrName() &&                                   \
         (std::fabs(                                                            \
-             leftResourceAttributes.attrName.ref() -                           \
-             rightResourceAttributes.attrName.ref()) > 1.0e-9))                \
+             *leftResourceAttributes.attrName() -                              \
+             *rightResourceAttributes.attrName()) > 1.0e-9))                   \
     {                                                                          \
         error = QStringLiteral("left resource: " #attrName " = ") +            \
-            QString::number(leftResourceAttributes.attrName.ref()) +           \
+            QString::number(*leftResourceAttributes.attrName()) +              \
             QStringLiteral(", right resource: " #attrName " = ") +             \
-            QString::number(rightResourceAttributes.attrName.ref());           \
+            QString::number(*rightResourceAttributes.attrName());              \
         return false;                                                          \
     }
 
 #define CHECK_RESOURCE_STRING_ATTRIBUTE(attrName)                              \
     CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                                \
-    if (leftResourceAttributes.attrName.isSet() &&                             \
-        (leftResourceAttributes.attrName.ref() !=                              \
-         rightResourceAttributes.attrName.ref()))                              \
+    if (leftResourceAttributes.attrName() &&                                   \
+        (*leftResourceAttributes.attrName() !=                                 \
+         *rightResourceAttributes.attrName()))                                 \
     {                                                                          \
         error = QStringLiteral("left resource: " #attrName " = ") +            \
-            leftResourceAttributes.attrName.ref() +                            \
+            *leftResourceAttributes.attrName() +                               \
             QStringLiteral(", right resource: " #attrName " = ") +             \
-            rightResourceAttributes.attrName.ref();                            \
+            *rightResourceAttributes.attrName();                               \
         return false;                                                          \
     }
 
 #define CHECK_RESOURCE_INTEGER_ATTRIBUTE(attrName)                             \
     CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                                \
-    if (leftResourceAttributes.attrName.isSet() &&                             \
-        (leftResourceAttributes.attrName.ref() !=                              \
-         rightResourceAttributes.attrName.ref()))                              \
+    if (leftResourceAttributes.attrName() &&                                   \
+        (*leftResourceAttributes.attrName() !=                                 \
+         *rightResourceAttributes.attrName()))                                 \
     {                                                                          \
         error = QStringLiteral("left resource: " #attrName " = ") +            \
-            QString::number(leftResourceAttributes.attrName.ref()) +           \
+            QString::number(*leftResourceAttributes.attrName()) +              \
             QStringLiteral(", right resource: " #attrName " = ") +             \
-            QString::number(rightResourceAttributes.attrName.ref());           \
+            QString::number(*rightResourceAttributes.attrName());              \
         return false;                                                          \
     }
 
 #define CHECK_RESOURCE_BOOLEAN_ATTRIBUTE(attrName)                             \
     CHECK_RESOURCE_ATTRIBUTE_PRESENCE(attrName)                                \
-    if (leftResourceAttributes.attrName.isSet() &&                             \
-        (leftResourceAttributes.attrName.ref() !=                              \
-         rightResourceAttributes.attrName.ref()))                              \
+    if (leftResourceAttributes.attrName() &&                                   \
+        (*leftResourceAttributes.attrName() !=                                 \
+         *rightResourceAttributes.attrName()))                                 \
     {                                                                          \
         error = QStringLiteral("left resource: " #attrName " = ") +            \
-            QString::number(leftResourceAttributes.attrName.ref()) +           \
+            QString::number(*leftResourceAttributes.attrName()) +              \
             QStringLiteral(", right resource: " #attrName " = ") +             \
-            QString::number(rightResourceAttributes.attrName.ref());           \
+            QString::number(*rightResourceAttributes.attrName());              \
         return false;                                                          \
     }
 
@@ -906,34 +911,31 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
                 CHECK_RESOURCE_BOOLEAN_ATTRIBUTE(attachment)
 
                 CHECK_RESOURCE_ATTRIBUTE_PRESENCE(applicationData)
-                if (leftResourceAttributes.applicationData.isSet()) {
+                if (leftResourceAttributes.applicationData()) {
                     const auto & leftLazyMap =
-                        leftResourceAttributes.applicationData.ref();
+                        *leftResourceAttributes.applicationData();
 
                     const auto & rightLazyMap =
-                        rightResourceAttributes.applicationData.ref();
+                        *rightResourceAttributes.applicationData();
 
-                    if (leftLazyMap.fullMap.isSet() !=
-                        rightLazyMap.fullMap.isSet()) {
+                    if (leftLazyMap.fullMap().has_value() !=
+                        rightLazyMap.fullMap().has_value()) {
                         QTextStream strm(&error);
                         strm << "left resource: application data "
                              << "full map is set = "
-                             << (leftLazyMap.fullMap.isSet() ? "true" : "false")
+                             << (leftLazyMap.fullMap() ? "true" : "false")
                              << ", right resource: application "
                              << "data full map is set = "
-                             << (rightLazyMap.fullMap.isSet() ? "true"
-                                                              : "false");
+                             << (rightLazyMap.fullMap() ? "true" : "false");
                         return false;
                     }
 
-                    if (leftLazyMap.fullMap.isSet() &&
-                        (leftLazyMap.fullMap.ref() !=
-                         rightLazyMap.fullMap.ref()))
+                    if (leftLazyMap.fullMap() &&
+                        (*leftLazyMap.fullMap() != *rightLazyMap.fullMap()))
                     {
                         error = QStringLiteral(
-                            "left and right resources' "
-                            "application data full maps "
-                            "are not equal");
+                            "left and right resources' application data full "
+                            "maps are not equal");
                         return false;
                     }
                 }
@@ -945,24 +947,23 @@ bool compareNoteContents(const Note & lhs, const Note & rhs, QString & error)
 }
 
 bool compareNotes(
-    const QVector<Note> & notes, const QVector<Note> & importedNotes,
+    const QList<qevercloud::Note> & notes,
+    const QList<qevercloud::Note> & importedNotes,
     QString & error)
 {
-    int numNotes = notes.size();
+    const int numNotes = notes.size();
 
     if (numNotes != importedNotes.size()) {
         error = QStringLiteral(
-            "The number of original and imported notes "
-            "doesn't match");
+            "The number of original and imported notes doesn't match");
         return false;
     }
 
     for (int i = 0; i < numNotes; ++i) {
-        const Note & originalNote = notes.at(i);
-        const Note & importedNote = importedNotes.at(i);
+        const auto & originalNote = notes.at(i);
+        const auto & importedNote = importedNotes.at(i);
 
-        bool res = compareNoteContents(originalNote, importedNote, error);
-        if (!res) {
+        if (!compareNoteContents(originalNote, importedNote, error)) {
             return false;
         }
     }
@@ -970,7 +971,7 @@ bool compareNotes(
     return true;
 }
 
-void setupSampleNote(Note & note)
+void setupSampleNote(qevercloud::Note & note)
 {
     note.setTitle(QStringLiteral("Simple note"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
@@ -980,18 +981,22 @@ void setupSampleNote(Note & note)
     timestamp /= 1000;
     timestamp *= 1000;
 
-    note.setCreationTimestamp(timestamp);
-    note.setModificationTimestamp(timestamp);
+    note.setCreated(timestamp);
+    note.setUpdated(timestamp);
 
-    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
-    noteAttributes.source = QStringLiteral("The magnificent author");
-    noteAttributes.author = QStringLiteral("Very cool guy");
-    noteAttributes.placeName = QStringLiteral("bathroom");
-    noteAttributes.contentClass = QStringLiteral("average");
-    noteAttributes.subjectDate = timestamp;
+    if (!note.attributes()) {
+        note.setAttributes(qevercloud::NoteAttributes{});
+    }
+
+    auto & noteAttributes = *note.mutableAttributes();
+    noteAttributes.setSource(QStringLiteral("The magnificent author"));
+    noteAttributes.setAuthor(QStringLiteral("Very cool guy"));
+    noteAttributes.setPlaceName(QStringLiteral("bathroom"));
+    noteAttributes.setContentClass(QStringLiteral("average"));
+    noteAttributes.setSubjectDate(timestamp);
 }
 
-void setupSampleNoteV2(Note & note)
+void setupSampleNoteV2(qevercloud::Note & note)
 {
     note.setTitle(QStringLiteral("My cool note"));
     note.setContent(
@@ -1004,85 +1009,92 @@ void setupSampleNoteV2(Note & note)
     timestamp /= 1000;
     timestamp *= 1000;
 
-    note.setCreationTimestamp(timestamp);
-    note.setModificationTimestamp(timestamp);
+    note.setCreated(timestamp);
+    note.setUpdated(timestamp);
 
-    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
-    noteAttributes.subjectDate = timestamp;
-    noteAttributes.latitude = 23.48;
-    noteAttributes.longitude = 72.11;
-    noteAttributes.altitude = 52.36;
-    noteAttributes.author = QStringLiteral("The creator");
-    noteAttributes.source = QStringLiteral("Brain");
-    noteAttributes.sourceURL = QStringLiteral("https://www.google.com");
-    noteAttributes.sourceApplication = QCoreApplication::applicationName();
-    noteAttributes.reminderOrder = 2;
-    noteAttributes.reminderTime = timestamp + 2000;
-    noteAttributes.reminderDoneTime = timestamp + 3000;
-    noteAttributes.placeName = QStringLiteral("shower");
-    noteAttributes.contentClass = QStringLiteral("awesome");
+    if (!note.attributes()) {
+        note.setAttributes(qevercloud::NoteAttributes{});
+    }
 
-    noteAttributes.applicationData = qevercloud::LazyMap();
+    auto & noteAttributes = *note.mutableAttributes();
+    noteAttributes.setSubjectDate(timestamp);
+    noteAttributes.setLatitude(23.48);
+    noteAttributes.setLongitude(72.11);
+    noteAttributes.setAltitude(52.36);
+    noteAttributes.setAuthor(QStringLiteral("The creator"));
+    noteAttributes.setSource(QStringLiteral("Brain"));
+    noteAttributes.setSourceURL(QStringLiteral("https://www.google.com"));
+    noteAttributes.setSourceApplication(QCoreApplication::applicationName());
+    noteAttributes.setReminderOrder(2);
+    noteAttributes.setReminderTime(timestamp + 2000);
+    noteAttributes.setReminderDoneTime(timestamp + 3000);
+    noteAttributes.setPlaceName(QStringLiteral("shower"));
+    noteAttributes.setContentClass(QStringLiteral("awesome"));
 
-    noteAttributes.applicationData->keysOnly = QSet<QString>();
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+    noteAttributes.setApplicationData(qevercloud::LazyMap{});
+
+    auto & appData = *noteAttributes.mutableApplicationData();
+
+    appData.setKeysOnly(QSet<QString>{});
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("key1")))
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("key2")))
-    Q_UNUSED(noteAttributes.applicationData->keysOnly->insert(
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("key3")))
 
-    noteAttributes.applicationData->fullMap = QMap<QString, QString>();
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key1")] =
+    appData.setFullMap(QMap<QString, QString>{});
+    (*appData.mutableFullMap())[QStringLiteral("key1")] =
         QStringLiteral("value1");
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key2")] =
+    (*appData.mutableFullMap())[QStringLiteral("key2")] =
         QStringLiteral("value2");
-    noteAttributes.applicationData->fullMap.ref()[QStringLiteral("key3")] =
+    (*appData.mutableFullMap())[QStringLiteral("key3")] =
         QStringLiteral("value3");
 }
 
 void setupNoteTags(
-    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
+    qevercloud::Note & note, QHash<QString, QString> & tagNamesByTagLocalIds)
 {
-    Tag tag1, tag2, tag3;
+    qevercloud::Tag tag1, tag2, tag3;
     tag1.setName(QStringLiteral("First tag"));
     tag2.setName(QStringLiteral("Second tag"));
     tag3.setName(QStringLiteral("Third tag"));
 
-    note.addTagLocalUid(tag1.localUid());
-    note.addTagLocalUid(tag2.localUid());
-    note.addTagLocalUid(tag3.localUid());
+    setNoteTagLocalIds(
+        QStringList() << tag1.localId() << tag2.localId() << tag3.localId(),
+        note);
 
-    tagNamesByTagLocalUids[tag1.localUid()] = tag1.name();
-    tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
-    tagNamesByTagLocalUids[tag3.localUid()] = tag3.name();
+    tagNamesByTagLocalIds[tag1.localId()] = *tag1.name();
+    tagNamesByTagLocalIds[tag2.localId()] = *tag2.name();
+    tagNamesByTagLocalIds[tag3.localId()] = *tag3.name();
 }
 
 void setupNoteTagsV2(
-    Note & note, QHash<QString, QString> & tagNamesByTagLocalUids)
+    qevercloud::Note & note, QHash<QString, QString> & tagNamesByTagLocalIds)
 {
-    Tag tag1, tag2;
+    qevercloud::Tag tag1, tag2;
     tag1.setName(QStringLiteral("Cool tag"));
     tag2.setName(QStringLiteral("Even cooler tag"));
 
-    note.addTagLocalUid(tag1.localUid());
-    note.addTagLocalUid(tag2.localUid());
+    setNoteTagLocalIds(
+        QStringList() << tag1.localId() << tag2.localId(),
+        note);
 
-    tagNamesByTagLocalUids[tag1.localUid()] = tag1.name();
-    tagNamesByTagLocalUids[tag2.localUid()] = tag2.name();
+    tagNamesByTagLocalIds[tag1.localId()] = *tag1.name();
+    tagNamesByTagLocalIds[tag2.localId()] = *tag2.name();
 }
 
 void bindTagsWithNotes(
-    QVector<Note> & importedNotes,
-    const QHash<QString, QStringList> & tagNamesByNoteLocalUid,
-    const QHash<QString, QString> & tagNamesByTagLocalUids)
+    QVector<qevercloud::Note> & importedNotes,
+    const QHash<QString, QStringList> & tagNamesByNoteLocalId,
+    const QHash<QString, QString> & tagNamesByTagLocalIds)
 {
     for (auto it = importedNotes.begin(), end = importedNotes.end(); it != end;
          ++it)
     {
-        Note & note = *it;
-        auto tagIt = tagNamesByNoteLocalUid.find(note.localUid());
-        if (tagIt == tagNamesByNoteLocalUid.end()) {
+        auto & note = *it;
+        const auto tagIt = tagNamesByNoteLocalId.find(note.localId());
+        if (tagIt == tagNamesByNoteLocalId.end()) {
             continue;
         }
 
@@ -1094,49 +1106,53 @@ void bindTagsWithNotes(
             const QString & tagName = *tagNameIt;
 
             // Linear search, not nice but ok on this tiny set
-            for (auto tagNamesByTagLocalUidsIt =
-                          tagNamesByTagLocalUids.constBegin(),
-                      tagNamesByTagLocalUidsEnd =
-                          tagNamesByTagLocalUids.constEnd();
-                 tagNamesByTagLocalUidsIt != tagNamesByTagLocalUidsEnd;
-                 ++tagNamesByTagLocalUidsIt)
+            for (auto tagNamesByTagLocalIdsIt =
+                          tagNamesByTagLocalIds.constBegin(),
+                      tagNamesByTagLocalIdsEnd =
+                          tagNamesByTagLocalIds.constEnd();
+                 tagNamesByTagLocalIdsIt != tagNamesByTagLocalIdsEnd;
+                 ++tagNamesByTagLocalIdsIt)
             {
-                if (tagNamesByTagLocalUidsIt.value() == tagName) {
-                    note.addTagLocalUid(tagNamesByTagLocalUidsIt.key());
+                if (tagNamesByTagLocalIdsIt.value() == tagName) {
+                    QStringList tagLocalIds = noteTagLocalIds(note);
+                    tagLocalIds << tagNamesByTagLocalIdsIt.key();
+                    setNoteTagLocalIds(tagLocalIds, note);
                 }
             }
         }
     }
 }
 
-bool setupNoteResources(Note & note, QString & error)
+bool setupNoteResources(qevercloud::Note & note, QString & error)
 {
-    Resource firstResource;
+    qevercloud::Resource firstResource;
+    firstResource.setData(qevercloud::Data{});
 
     QString sampleDataBody = QStringLiteral("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-    firstResource.setDataBody(sampleDataBody.toLocal8Bit());
+    firstResource.mutableData()->setBody(sampleDataBody.toLocal8Bit());
 
-    firstResource.setDataHash(QCryptographicHash::hash(
-        firstResource.dataBody(), QCryptographicHash::Md5));
+    firstResource.mutableData()->setBodyHash(QCryptographicHash::hash(
+        *firstResource.data()->body(), QCryptographicHash::Md5));
 
-    firstResource.setDataSize(firstResource.dataBody().size());
+    firstResource.mutableData()->setSize(firstResource.data()->body()->size());
 
     firstResource.setMime(QStringLiteral("application/text-plain"));
 
-    qevercloud::ResourceAttributes & firstResourceAttributes =
-        firstResource.resourceAttributes();
+    firstResource.setAttributes(qevercloud::ResourceAttributes{});
+
+    auto & firstResourceAttributes = *firstResource.mutableAttributes();
 
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
     // NOTE: rounding the timestamp to ensure the msec would all be zero
     timestamp /= 1000;
     timestamp *= 1000;
 
-    firstResourceAttributes.timestamp = timestamp;
-    firstResourceAttributes.cameraMake = QStringLiteral("Canon. Or Nixon");
-    firstResourceAttributes.fileName = QStringLiteral("Huh?");
-    firstResourceAttributes.attachment = false;
+    firstResourceAttributes.setTimestamp(timestamp);
+    firstResourceAttributes.setCameraMake(QStringLiteral("Canon. Or Nixon"));
+    firstResourceAttributes.setFileName(QStringLiteral("Huh?"));
+    firstResourceAttributes.setAttachment(false);
 
-    Resource secondResource;
+    qevercloud::Resource secondResource;
 
     QFile imageResourceFile(QStringLiteral(":/tests/life_to_blame.jpg"));
     bool res = imageResourceFile.open(QIODevice::ReadOnly);
@@ -1149,29 +1165,32 @@ bool setupNoteResources(Note & note, QString & error)
 
     QByteArray imageResourceDataBody = imageResourceFile.readAll();
 
-    secondResource.setDataBody(imageResourceDataBody);
+    secondResource.setData(qevercloud::Data{});
 
-    secondResource.setDataHash(QCryptographicHash::hash(
+    secondResource.mutableData()->setBody(imageResourceDataBody);
+
+    secondResource.mutableData()->setBodyHash(QCryptographicHash::hash(
         imageResourceDataBody, QCryptographicHash::Md5));
 
-    secondResource.setDataSize(imageResourceDataBody.size());
+    secondResource.mutableData()->setSize(imageResourceDataBody.size());
 
     secondResource.setWidth(640);
     secondResource.setHeight(480);
 
     secondResource.setMime(QStringLiteral("image/jpg"));
 
-    auto & secondResourceAttributes = secondResource.resourceAttributes();
+    secondResource.setAttributes(qevercloud::ResourceAttributes{});
+    auto & secondResourceAttributes = *secondResource.mutableAttributes();
 
-    secondResourceAttributes.sourceURL =
-        QStringLiteral("https://www.google.ru");
+    secondResourceAttributes.setSourceURL(
+        QStringLiteral("https://www.google.ru"));
 
-    secondResourceAttributes.fileName = imageResourceFile.fileName();
-    secondResourceAttributes.attachment = true;
-    secondResourceAttributes.latitude = 53.02;
-    secondResourceAttributes.longitude = 43.16;
-    secondResourceAttributes.altitude = 28.92;
-    secondResourceAttributes.recoType = QStringLiteral("Fake");
+    secondResourceAttributes.setFileName(imageResourceFile.fileName());
+    secondResourceAttributes.setAttachment(true);
+    secondResourceAttributes.setLatitude(53.02);
+    secondResourceAttributes.setLongitude(43.16);
+    secondResourceAttributes.setAltitude(28.92);
+    secondResourceAttributes.setRecoType(QStringLiteral("Fake"));
 
     QFile fakeRecognitionDataFile(
         QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
@@ -1186,12 +1205,13 @@ bool setupNoteResources(Note & note, QString & error)
 
     QByteArray recognitionDataBody = fakeRecognitionDataFile.readAll();
 
-    secondResource.setRecognitionDataBody(recognitionDataBody);
-    secondResource.setRecognitionDataHash(
+    secondResource.setRecognition(qevercloud::Data{});
+    secondResource.mutableRecognition()->setBody(recognitionDataBody);
+    secondResource.mutableRecognition()->setBodyHash(
         QCryptographicHash::hash(recognitionDataBody, QCryptographicHash::Md5));
-    secondResource.setRecognitionDataSize(recognitionDataBody.size());
+    secondResource.mutableRecognition()->setSize(recognitionDataBody.size());
 
-    QList<Resource> resources;
+    QList<qevercloud::Resource> resources;
     resources.reserve(2);
     resources << firstResource;
     resources << secondResource;
@@ -1200,62 +1220,68 @@ bool setupNoteResources(Note & note, QString & error)
     return true;
 }
 
-void setupNoteResourcesV2(Note & note)
+void setupNoteResourcesV2(qevercloud::Note & note)
 {
-    Resource resource;
+    qevercloud::Resource resource;
+    resource.setData(qevercloud::Data{});
 
     QString sampleDataBody = QStringLiteral(
-        "Suppose this would be some "
-        "meaningless piece of text");
+        "Suppose this would be some meaningless piece of text");
 
-    resource.setDataBody(sampleDataBody.toLocal8Bit());
+    resource.mutableData()->setBody(sampleDataBody.toLocal8Bit());
 
-    resource.setDataHash(
-        QCryptographicHash::hash(resource.dataBody(), QCryptographicHash::Md5));
+    resource.mutableData()->setBodyHash(QCryptographicHash::hash(
+        *resource.data()->body(), QCryptographicHash::Md5));
 
-    resource.setDataSize(resource.dataBody().size());
+    resource.mutableData()->setSize(resource.data()->body()->size());
 
     resource.setMime(QStringLiteral("application/text-plain"));
 
-    auto & resourceAttributes = resource.resourceAttributes();
+    resource.setAttributes(qevercloud::ResourceAttributes{});
+    auto & resourceAttributes = *resource.mutableAttributes();
 
     qint64 timestamp = QDateTime::currentMSecsSinceEpoch();
     // NOTE: rounding the timestamp to ensure the msec would all be zero
     timestamp /= 1000;
     timestamp *= 1000;
 
-    resourceAttributes.sourceURL = QStringLiteral("https://www.google.com");
-    resourceAttributes.timestamp = timestamp;
-    resourceAttributes.latitude = 52.43;
-    resourceAttributes.longitude = 23.46;
-    resourceAttributes.altitude = 82.13;
-    resourceAttributes.cameraMake = QStringLiteral("something");
-    resourceAttributes.fileName = QStringLiteral("None");
-    resourceAttributes.attachment = true;
+    resourceAttributes.setSourceURL(QStringLiteral("https://www.google.com"));
+    resourceAttributes.setTimestamp(timestamp);
+    resourceAttributes.setLatitude(52.43);
+    resourceAttributes.setLongitude(23.46);
+    resourceAttributes.setAltitude(82.13);
+    resourceAttributes.setCameraMake(QStringLiteral("something"));
+    resourceAttributes.setFileName(QStringLiteral("None"));
+    resourceAttributes.setAttachment(true);
 
-    resourceAttributes.applicationData = qevercloud::LazyMap();
+    resourceAttributes.setApplicationData(qevercloud::LazyMap{});
+    auto & appData = *resourceAttributes.mutableApplicationData();
 
-    resourceAttributes.applicationData->keysOnly = QSet<QString>();
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+    appData.setKeysOnly(QSet<QString>{});
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("resKey1")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("resKey2")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("resKey3")))
-    Q_UNUSED(resourceAttributes.applicationData->keysOnly->insert(
+    Q_UNUSED(appData.mutableKeysOnly()->insert(
         QStringLiteral("resKey4")))
 
-    resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
-    resourceAttributes.applicationData->fullMap
-        .ref()[QStringLiteral("resKey1")] = QStringLiteral("resVal1");
-    resourceAttributes.applicationData->fullMap
-        .ref()[QStringLiteral("resKey2")] = QStringLiteral("resVal2");
-    resourceAttributes.applicationData->fullMap
-        .ref()[QStringLiteral("resKey3")] = QStringLiteral("resVal3");
-    resourceAttributes.applicationData->fullMap
-        .ref()[QStringLiteral("resKey4")] = QStringLiteral("resVal4");
+    appData.setFullMap(QMap<QString, QString>{});
 
-    note.addResource(resource);
+    (*appData.mutableFullMap())[QStringLiteral("resKey1")] =
+        QStringLiteral("resVal1");
+
+    (*appData.mutableFullMap())[QStringLiteral("resKey2")] =
+        QStringLiteral("resVal2");
+
+    (*appData.mutableFullMap())[QStringLiteral("resKey3")] =
+        QStringLiteral("resVal3");
+
+    (*appData.mutableFullMap())[QStringLiteral("resKey4")] =
+        QStringLiteral("resVal4");
+
+    note.setResources(QList<qevercloud::Resource>() << resource);
 }
 
 } // namespace test

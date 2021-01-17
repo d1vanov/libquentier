@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,7 +50,7 @@ namespace test {
 
 ENMLTester::ENMLTester(QObject * parent) : QObject(parent) {}
 
-ENMLTester::~ENMLTester() {}
+ENMLTester::~ENMLTester() noexcept = default;
 
 void ENMLTester::init()
 {
@@ -62,7 +62,7 @@ void ENMLTester::enmlConverterSimpleTest()
 {
     try {
         QString error;
-        bool res = convertSimpleNoteToHtmlAndBack(error);
+        const bool res = convertSimpleNoteToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -72,7 +72,7 @@ void ENMLTester::enmlConverterToDoTest()
 {
     try {
         QString error;
-        bool res = convertNoteWithToDoTagsToHtmlAndBack(error);
+        const bool res = convertNoteWithToDoTagsToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -82,7 +82,7 @@ void ENMLTester::enmlConverterEnCryptTest()
 {
     try {
         QString error;
-        bool res = convertNoteWithEncryptionToHtmlAndBack(error);
+        const bool res = convertNoteWithEncryptionToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -92,7 +92,7 @@ void ENMLTester::enmlConverterEnCryptWithModifiedDecryptedTextTest()
 {
     try {
         QString error;
-        bool res = convertHtmlWithModifiedDecryptedTextToEnml(error);
+        const bool res = convertHtmlWithModifiedDecryptedTextToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -102,7 +102,7 @@ void ENMLTester::enmlConverterEnMediaTest()
 {
     try {
         QString error;
-        bool res = convertNoteWithResourcesToHtmlAndBack(error);
+        const bool res = convertNoteWithResourcesToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -112,7 +112,7 @@ void ENMLTester::enmlConverterComplexTest()
 {
     try {
         QString error;
-        bool res = convertComplexNoteToHtmlAndBack(error);
+        const bool res = convertComplexNoteToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -122,7 +122,7 @@ void ENMLTester::enmlConverterComplexTest2()
 {
     try {
         QString error;
-        bool res = convertComplexNote2ToHtmlAndBack(error);
+        const bool res = convertComplexNote2ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -132,7 +132,7 @@ void ENMLTester::enmlConverterComplexTest3()
 {
     try {
         QString error;
-        bool res = convertComplexNote3ToHtmlAndBack(error);
+        const bool res = convertComplexNote3ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -142,7 +142,7 @@ void ENMLTester::enmlConverterComplexTest4()
 {
     try {
         QString error;
-        bool res = convertComplexNote4ToHtmlAndBack(error);
+        const bool res = convertComplexNote4ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -152,7 +152,7 @@ void ENMLTester::enmlConverterHtmlWithTableHelperTags()
 {
     try {
         QString error;
-        bool res = convertHtmlWithTableHelperTagsToEnml(error);
+        const bool res = convertHtmlWithTableHelperTagsToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -162,7 +162,7 @@ void ENMLTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
 {
     try {
         QString error;
-        bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
+        const bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -172,7 +172,7 @@ void ENMLTester::enexExportImportSingleSimpleNoteTest()
 {
     try {
         QString error;
-        bool res =
+        const bool res =
             exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
@@ -183,7 +183,7 @@ void ENMLTester::enexExportImportSingleNoteWithTagsTest()
 {
     try {
         QString error;
-        bool res =
+        const bool res =
             exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
@@ -194,7 +194,7 @@ void ENMLTester::enexExportImportSingleNoteWithResourcesTest()
 {
     try {
         QString error;
-        bool res =
+        const bool res =
             exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
@@ -205,7 +205,7 @@ void ENMLTester::enexExportImportSingleNoteWithTagsAndResourcesTest()
 {
     try {
         QString error;
-        bool res =
+        const bool res =
             exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
@@ -216,7 +216,7 @@ void ENMLTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
 {
     try {
         QString error;
-        bool res =
+        const bool res =
             exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
@@ -227,7 +227,8 @@ void ENMLTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
 {
     try {
         QString error;
-        bool res = exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
+        const bool res =
+            exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -237,7 +238,7 @@ void ENMLTester::importRealWorldEnexTest()
 {
     try {
         QString error;
-        bool res = importRealWorldEnex(error);
+        const bool res = importRealWorldEnex(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

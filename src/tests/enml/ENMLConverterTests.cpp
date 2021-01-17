@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,28 +17,30 @@
  */
 
 #include "ENMLConverterTests.h"
-#include <QFile>
-#include <QXmlStreamReader>
+
 #include <quentier/enml/DecryptedTextManager.h>
 #include <quentier/enml/ENMLConverter.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
+
+#include <QFile>
+#include <QXmlStreamReader>
 
 void initENMLConversionTestResources();
 
 namespace quentier {
 namespace test {
 
-bool convertNoteToHtmlAndBackImpl(
+[[nodiscard]] bool convertNoteToHtmlAndBackImpl(
     const QString & noteContent, DecryptedTextManager & decryptedTextManager,
     QString & error);
 
-bool compareEnml(
+[[nodiscard]] bool compareEnml(
     const QString & original, const QString & processed, QString & error);
 
 bool convertSimpleNoteToHtmlAndBack(QString & error)
 {
-    QString noteContent = QStringLiteral(
+    const QString noteContent = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM "
         "\"http://xml.evernote.com/pub/enml2.dtd\">"
@@ -62,7 +64,7 @@ bool convertSimpleNoteToHtmlAndBack(QString & error)
 
 bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
 {
-    QString noteContent = QStringLiteral(
+    const QString noteContent = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM "
         "\"http://xml.evernote.com/pub/enml2.dtd\">"
@@ -84,7 +86,7 @@ bool convertNoteWithToDoTagsToHtmlAndBack(QString & error)
 
 bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
 {
-    QString noteContent = QStringLiteral(
+    const QString noteContent = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM "
         "\"http://xml.evernote.com/pub/enml2.dtd\">"
@@ -212,7 +214,7 @@ bool convertNoteWithEncryptionToHtmlAndBack(QString & error)
 
 bool convertNoteWithResourcesToHtmlAndBack(QString & error)
 {
-    QString noteContent = QStringLiteral(
+    const QString noteContent = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM "
         "\"http://xml.evernote.com/pub/enml2.dtd\">"
@@ -244,7 +246,7 @@ bool convertComplexNoteToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
@@ -262,7 +264,7 @@ bool convertComplexNote2ToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
@@ -280,7 +282,7 @@ bool convertComplexNote3ToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
@@ -298,7 +300,7 @@ bool convertComplexNote4ToHtmlAndBack(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     DecryptedTextManager decryptedTextManager;
 
     return convertNoteToHtmlAndBackImpl(
@@ -309,7 +311,7 @@ bool convertNoteToHtmlAndBackImpl(
     const QString & noteContent, DecryptedTextManager & decryptedTextManager,
     QString & error)
 {
-    QString originalNoteContent = noteContent;
+    const QString originalNoteContent = noteContent;
 
     ENMLConverter converter;
     QString html;
@@ -359,8 +361,8 @@ bool convertNoteToHtmlAndBackImpl(
 bool compareEnml(
     const QString & original, const QString & processed, QString & error)
 {
-    QString originalSimplified = original.simplified();
-    QString processedSimplified = processed.simplified();
+    const QString originalSimplified = original.simplified();
+    const QString processedSimplified = processed.simplified();
 
     QXmlStreamReader readerOriginal(originalSimplified);
     QXmlStreamReader readerProcessed(processedSimplified);
@@ -468,8 +470,8 @@ bool compareEnml(
                 return false;
             }
 
-            QStringRef originalName = readerOriginal.name();
-            QStringRef processedName = readerProcessed.name();
+            const QStringRef originalName = readerOriginal.name();
+            const QStringRef processedName = readerProcessed.name();
             if (originalName != processedName) {
                 error = QStringLiteral(
                     "Found a tag in the original ENML which name doesn't match "
@@ -480,17 +482,17 @@ bool compareEnml(
                 return false;
             }
 
-            QXmlStreamAttributes originalAttributes =
+            const QXmlStreamAttributes originalAttributes =
                 readerOriginal.attributes();
 
-            QXmlStreamAttributes processedAttributes =
+            const QXmlStreamAttributes processedAttributes =
                 readerProcessed.attributes();
 
             if (originalName == QStringLiteral("en-todo")) {
                 bool originalChecked = false;
                 if (originalAttributes.hasAttribute(QStringLiteral("checked")))
                 {
-                    QStringRef originalCheckedStr =
+                    const QStringRef originalCheckedStr =
                         originalAttributes.value(QStringLiteral("checked"));
                     if (originalCheckedStr == QStringLiteral("true")) {
                         originalChecked = true;
@@ -500,7 +502,7 @@ bool compareEnml(
                 bool processedChecked = false;
                 if (processedAttributes.hasAttribute(QStringLiteral("checked")))
                 {
-                    QStringRef processedCheckedStr =
+                    const QStringRef processedCheckedStr =
                         processedAttributes.value(QStringLiteral("checked"));
                     if (processedCheckedStr == QStringLiteral("true")) {
                         processedChecked = true;
@@ -675,9 +677,10 @@ bool compareEnml(
                 }
             }
 
-            QString textOriginal =
+            const QString textOriginal =
                 readerOriginal.text().toString().simplified();
-            QString textProcessed =
+
+            const QString textProcessed =
                 readerProcessed.text().toString().simplified();
 
             if (textOriginal != textProcessed) {
@@ -732,7 +735,7 @@ bool compareEnml(
 
 bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
 {
-    QString originalENML = QStringLiteral(
+    const QString originalENML = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"
         "<en-note>"
@@ -748,7 +751,7 @@ bool convertHtmlWithModifiedDecryptedTextToEnml(QString & error)
         "+Vem1pTWgRfYXF70mMduEmAd4xXy1JqV6XNUYDddW9iPpffWTZgD409LK9wIZM5C"
         "W2rbM2lwM/R0IEnoK7N5X8lCOzqkA9H/HF+8E=</en-crypt></en-note>");
 
-    QString expectedReturnENML = QStringLiteral(
+    const QString expectedReturnENML = QStringLiteral(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<!DOCTYPE en-note SYSTEM \"http://xml.evernote.com/pub/enml2.dtd\">"
         "<en-note>"
@@ -867,7 +870,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     file.setFileName(
@@ -880,7 +883,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString html = QString::fromLocal8Bit(file.readAll());
+    const QString html = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     ENMLConverter converter;
@@ -892,7 +895,7 @@ bool convertHtmlWithTableHelperTagsToEnml(QString & error)
         ENMLConverter::SkipHtmlElementRule::ComparisonRule::StartsWith;
     skipRule.m_attributeValueCaseSensitivity = Qt::CaseSensitive;
 
-    QVector<ENMLConverter::SkipHtmlElementRule> skipRules;
+    QList<ENMLConverter::SkipHtmlElementRule> skipRules;
     skipRules << skipRule;
 
     QString processedNoteContent;
@@ -925,7 +928,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString noteContent = QString::fromLocal8Bit(file.readAll());
+    const QString noteContent = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     file.setFileName(QStringLiteral(
@@ -938,7 +941,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
         return false;
     }
 
-    QString html = QString::fromLocal8Bit(file.readAll());
+    const QString html = QString::fromLocal8Bit(file.readAll());
     file.close();
 
     ENMLConverter converter;
@@ -957,7 +960,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     hilitorSkipRule.m_attributeValueComparisonRule =
         ENMLConverter::SkipHtmlElementRule::ComparisonRule::Contains;
 
-    QVector<ENMLConverter::SkipHtmlElementRule> skipRules;
+    QList<ENMLConverter::SkipHtmlElementRule> skipRules;
     skipRules << tableSkipRule;
     skipRules << hilitorSkipRule;
 

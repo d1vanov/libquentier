@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,20 +24,25 @@
 namespace quentier {
 namespace test {
 
-bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(
+[[nodiscard]] bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(
     QString & error);
 
-bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(QString & error);
+[[nodiscard]] bool exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(
+    QString & error);
 
-bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(QString & error);
+[[nodiscard]] bool exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(
+    QString & error);
 
-bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(QString & error);
+[[nodiscard]] bool exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(
+    QString & error);
 
-bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error);
+[[nodiscard]] bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(
+    QString & error);
 
-bool exportMultipleNotesWithTagsAndResourcesAndImportBack(QString & error);
+[[nodiscard]] bool exportMultipleNotesWithTagsAndResourcesAndImportBack(
+    QString & error);
 
-bool importRealWorldEnex(QString & error);
+[[nodiscard]] bool importRealWorldEnex(QString & error);
 
 } // namespace test
 } // namespace quentier
