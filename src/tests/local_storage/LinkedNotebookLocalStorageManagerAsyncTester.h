@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,13 +21,14 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+#include <qevercloud/generated/types/LinkedNotebook.h>
+
+class QDebug;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -38,7 +39,7 @@ public:
     explicit LinkedNotebookLocalStorageManagerAsyncTester(
         QObject * parent = nullptr);
 
-    virtual ~LinkedNotebookLocalStorageManagerAsyncTester() override;
+    ~LinkedNotebookLocalStorageManagerAsyncTester() noexcept override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -49,16 +50,23 @@ Q_SIGNALS:
 
     // private signals:
     void getLinkedNotebookCountRequest(QUuid requestId);
-    void addLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
-    void updateLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
-    void findLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+
+    void addLinkedNotebookRequest(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
+
+    void updateLinkedNotebookRequest(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
+
+    void findLinkedNotebookRequest(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void listAllLinkedNotebooksRequest(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
-    void expungeLinkedNotebookRequest(LinkedNotebook notebook, QUuid requestId);
+    void expungeLinkedNotebookRequest(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
@@ -67,44 +75,49 @@ private Q_SLOTS:
     void onGetLinkedNotebookCountFailed(
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId);
+    void onAddLinkedNotebookCompleted(
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void onAddLinkedNotebookFailed(
-        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onUpdateLinkedNotebookCompleted(
-        LinkedNotebook notebook, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void onUpdateLinkedNotebookFailed(
-        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onFindLinkedNotebookCompleted(
-        LinkedNotebook notebook, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void onFindLinkedNotebookFailed(
-        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onListAllLinkedNotebooksCompleted(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<LinkedNotebook> linkedNotebooks, QUuid requestId);
+        QList<qevercloud::LinkedNotebook> linkedNotebooks, QUuid requestId);
 
     void onListAllLinkedNotebooksFailed(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
     void onExpungeLinkedNotebookCompleted(
-        LinkedNotebook notebook, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, QUuid requestId);
 
     void onExpungeLinkedNotebookFailed(
-        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
 private:
     void createConnections();
-    void clear();
+    void clear() noexcept;
 
     enum class State
     {
@@ -130,10 +143,10 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    LinkedNotebook m_initialLinkedNotebook;
-    LinkedNotebook m_foundLinkedNotebook;
-    LinkedNotebook m_modifiedLinkedNotebook;
-    QList<LinkedNotebook> m_initialLinkedNotebooks;
+    qevercloud::LinkedNotebook m_initialLinkedNotebook;
+    qevercloud::LinkedNotebook m_foundLinkedNotebook;
+    qevercloud::LinkedNotebook m_modifiedLinkedNotebook;
+    QList<qevercloud::LinkedNotebook> m_initialLinkedNotebooks;
 };
 
 } // namespace test

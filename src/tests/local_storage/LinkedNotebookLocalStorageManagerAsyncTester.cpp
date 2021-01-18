@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QDebug>
 #include <QThread>
@@ -34,18 +33,18 @@ LinkedNotebookLocalStorageManagerAsyncTester::
 {}
 
 LinkedNotebookLocalStorageManagerAsyncTester::
-    ~LinkedNotebookLocalStorageManagerAsyncTester()
+    ~LinkedNotebookLocalStorageManagerAsyncTester() noexcept
 {
     clear();
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username =
+    const QString username =
         QStringLiteral("LinkedNotebookLocalStorageManagerAsyncTester");
 
-    qint32 userId = 1;
-    LocalStorageManager::StartupOptions startupOptions(
+    const qint32 userId = 1;
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     clear();
@@ -69,7 +68,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::initialize()
     m_initialLinkedNotebook.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-    m_initialLinkedNotebook.setUpdateSequenceNumber(1);
+    m_initialLinkedNotebook.setUpdateSequenceNum(1);
 
     m_initialLinkedNotebook.setShareName(
         QStringLiteral("Fake linked notebook share name"));
@@ -95,16 +94,6 @@ void LinkedNotebookLocalStorageManagerAsyncTester::initialize()
         QStringLiteral("Fake linked notebook stack"));
 
     m_initialLinkedNotebook.setBusinessId(1);
-
-    ErrorString errorDescription;
-    if (!m_initialLinkedNotebook.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid LinkedNotebook: "
-                << m_initialLinkedNotebook << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
 
     m_state = State::STATE_SENT_ADD_REQUEST;
     Q_EMIT addLinkedNotebookRequest(
@@ -154,12 +143,12 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
             return;
         }
 
-        LinkedNotebook extraLinkedNotebook;
+        qevercloud::LinkedNotebook extraLinkedNotebook;
 
         extraLinkedNotebook.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-        extraLinkedNotebook.setUpdateSequenceNumber(1);
+        extraLinkedNotebook.setUpdateSequenceNum(1);
         extraLinkedNotebook.setUsername(QStringLiteral("Extra LinkedNotebook"));
 
         extraLinkedNotebook.setShareName(
@@ -203,7 +192,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
-    LinkedNotebook notebook, QUuid requestId)
+    qevercloud::LinkedNotebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -221,7 +210,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
             return;
         }
 
-        m_foundLinkedNotebook = LinkedNotebook();
+        m_foundLinkedNotebook = qevercloud::LinkedNotebook();
         m_foundLinkedNotebook.setGuid(notebook.guid());
 
         m_state = State::STATE_SENT_FIND_AFTER_ADD_REQUEST;
@@ -232,12 +221,12 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
     {
         m_initialLinkedNotebooks << notebook;
 
-        LinkedNotebook extraLinkedNotebook;
+        qevercloud::LinkedNotebook extraLinkedNotebook;
 
         extraLinkedNotebook.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000002"));
 
-        extraLinkedNotebook.setUpdateSequenceNumber(2);
+        extraLinkedNotebook.setUpdateSequenceNum(2);
 
         extraLinkedNotebook.setUsername(
             QStringLiteral("Fake linked notebook username two"));
@@ -273,12 +262,12 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
         m_initialLinkedNotebooks << notebook;
 
         m_state = State::STATE_SENT_LIST_LINKED_NOTEBOOKS_REQUEST;
-        size_t limit = 0, offset = 0;
+        const std::size_t limit = 0, offset = 0;
 
-        LocalStorageManager::ListLinkedNotebooksOrder order =
+        const LocalStorageManager::ListLinkedNotebooksOrder order =
             LocalStorageManager::ListLinkedNotebooksOrder::NoOrder;
 
-        LocalStorageManager::OrderDirection orderDirection =
+        const LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
 
         Q_EMIT listAllLinkedNotebooksRequest(
@@ -288,7 +277,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookFailed(
-    LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -299,7 +289,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookFailed(
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
-    onUpdateLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId)
+    onUpdateLinkedNotebookCompleted(
+        qevercloud::LinkedNotebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -325,7 +316,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookFailed(
-    LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -336,7 +328,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookFailed(
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
-    onFindLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId)
+    onFindLinkedNotebookCompleted(
+        qevercloud::LinkedNotebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -363,17 +356,20 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
         // Ok, found linked notebook is good, updating it now
         m_modifiedLinkedNotebook = m_initialLinkedNotebook;
 
-        m_modifiedLinkedNotebook.setUpdateSequenceNumber(
-            m_initialLinkedNotebook.updateSequenceNumber() + 1);
+        m_modifiedLinkedNotebook.setUpdateSequenceNum(
+            m_initialLinkedNotebook.updateSequenceNum().value() + 1);
 
         m_modifiedLinkedNotebook.setUsername(
-            m_initialLinkedNotebook.username() + QStringLiteral("_modified"));
+            m_initialLinkedNotebook.username().value() +
+            QStringLiteral("_modified"));
 
         m_modifiedLinkedNotebook.setStack(
-            m_initialLinkedNotebook.stack() + QStringLiteral("_modified"));
+            m_initialLinkedNotebook.stack().value() +
+            QStringLiteral("_modified"));
 
         m_modifiedLinkedNotebook.setShareName(
-            m_initialLinkedNotebook.shareName() + QStringLiteral("_modified"));
+            m_initialLinkedNotebook.shareName().value() +
+            QStringLiteral("_modified"));
 
         m_state = State::STATE_SENT_UPDATE_REQUEST;
 
@@ -419,7 +415,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookFailed(
-    LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (m_state == State::STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = State::STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -440,7 +437,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
         size_t limit, size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<LinkedNotebook> linkedNotebooks, QUuid requestId)
+        QList<qevercloud::LinkedNotebook> linkedNotebooks, QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -448,8 +445,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
     Q_UNUSED(orderDirection)
     Q_UNUSED(requestId)
 
-    int numInitialLinkedNotebooks = m_initialLinkedNotebooks.size();
-    int numFoundLinkedNotebooks = linkedNotebooks.size();
+    const int numInitialLinkedNotebooks = m_initialLinkedNotebooks.size();
+    const int numFoundLinkedNotebooks = linkedNotebooks.size();
 
     ErrorString errorDescription;
 
@@ -478,7 +475,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onListAllLinkedNotebooksFailed(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId)
@@ -496,7 +493,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
-    onExpungeLinkedNotebookCompleted(LinkedNotebook notebook, QUuid requestId)
+    onExpungeLinkedNotebookCompleted(
+        qevercloud::LinkedNotebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -521,7 +519,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onExpungeLinkedNotebookFailed(
-        LinkedNotebook notebook, ErrorString errorDescription, QUuid requestId)
+        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+        QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -657,7 +656,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::createConnections()
             onExpungeLinkedNotebookFailed);
 }
 
-void LinkedNotebookLocalStorageManagerAsyncTester::clear()
+void LinkedNotebookLocalStorageManagerAsyncTester::clear() noexcept
 {
     if (m_pLocalStorageManagerThread) {
         m_pLocalStorageManagerThread->quit();

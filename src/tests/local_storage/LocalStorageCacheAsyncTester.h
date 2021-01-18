@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,11 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+class QDebug;
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
+class LocalStorageCacheManager;
 
 namespace test {
 
@@ -34,7 +34,7 @@ class LocalStorageCacheAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit LocalStorageCacheAsyncTester(QObject * parent = nullptr);
-    virtual ~LocalStorageCacheAsyncTester() override;
+    ~LocalStorageCacheAsyncTester() noexcept override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -44,88 +44,99 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
     // private signals
-    void addNotebookRequest(Notebook notebook, QUuid requestId);
-    void updateNotebookRequest(Notebook notebook, QUuid requestId);
+    void addNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
+    void updateNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
 
-    void addNoteRequest(Note note, QUuid requestId);
+    void addNoteRequest(qevercloud::Note note, QUuid requestId);
 
     void updateNoteRequest(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
-    void addTagRequest(Tag tag, QUuid requestId);
-    void updateTagRequest(Tag tag, QUuid requestId);
+    void addTagRequest(qevercloud::Tag tag, QUuid requestId);
+    void updateTagRequest(qevercloud::Tag tag, QUuid requestId);
 
     void addLinkedNotebookRequest(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void updateLinkedNotebookRequest(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
-    void addSavedSearchRequest(SavedSearch search, QUuid requestId);
-    void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void addSavedSearchRequest(qevercloud::SavedSearch search, QUuid requestId);
+
+    void updateSavedSearchRequest(
+        qevercloud::SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
 
-    void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onAddNotebookCompleted(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onUpdateNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onAddNoteCompleted(Note note, QUuid requestId);
+    void onAddNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateNoteCompleted(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddTagCompleted(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
+    void onAddTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
-    void onUpdateTagCompleted(Tag tag, QUuid requestId);
+    void onAddTagFailed(
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
     void onUpdateTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onAddLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onAddLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
     void onUpdateLinkedNotebookCompleted(
-        LinkedNotebook linkedNotebook, QUuid requestId);
+        qevercloud::LinkedNotebook linkedNotebook, QUuid requestId);
 
     void onUpdateLinkedNotebookFailed(
-        LinkedNotebook linkedNotebook, ErrorString errorDescription,
+        qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
         QUuid requestId);
 
-    void onAddSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onAddSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onAddSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onUpdateSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
 private:
     void createConnections();
-    void clear();
+    void clear() noexcept;
 
     void addNotebook();
     void updateNotebook();
@@ -165,30 +176,30 @@ private:
     const LocalStorageCacheManager * m_pLocalStorageCacheManager = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook m_firstNotebook;
-    Notebook m_secondNotebook;
-    Notebook m_currentNotebook;
-    size_t m_addedNotebooksCount = 0;
+    qevercloud::Notebook m_firstNotebook;
+    qevercloud::Notebook m_secondNotebook;
+    qevercloud::Notebook m_currentNotebook;
+    std::size_t m_addedNotebooksCount = 0;
 
-    Note m_firstNote;
-    Note m_secondNote;
-    Note m_currentNote;
-    size_t m_addedNotesCount = 0;
+    qevercloud::Note m_firstNote;
+    qevercloud::Note m_secondNote;
+    qevercloud::Note m_currentNote;
+    std::size_t m_addedNotesCount = 0;
 
-    Tag m_firstTag;
-    Tag m_secondTag;
-    Tag m_currentTag;
-    size_t m_addedTagsCount = 0;
+    qevercloud::Tag m_firstTag;
+    qevercloud::Tag m_secondTag;
+    qevercloud::Tag m_currentTag;
+    std::size_t m_addedTagsCount = 0;
 
-    LinkedNotebook m_firstLinkedNotebook;
-    LinkedNotebook m_secondLinkedNotebook;
-    LinkedNotebook m_currentLinkedNotebook;
-    size_t m_addedLinkedNotebooksCount = 0;
+    qevercloud::LinkedNotebook m_firstLinkedNotebook;
+    qevercloud::LinkedNotebook m_secondLinkedNotebook;
+    qevercloud::LinkedNotebook m_currentLinkedNotebook;
+    std::size_t m_addedLinkedNotebooksCount = 0;
 
-    SavedSearch m_firstSavedSearch;
-    SavedSearch m_secondSavedSearch;
-    SavedSearch m_currentSavedSearch;
-    size_t m_addedSavedSearchesCount = 0;
+    qevercloud::SavedSearch m_firstSavedSearch;
+    qevercloud::SavedSearch m_secondSavedSearch;
+    qevercloud::SavedSearch m_currentSavedSearch;
+    std::size_t m_addedSavedSearchesCount = 0;
 };
 
 } // namespace test
