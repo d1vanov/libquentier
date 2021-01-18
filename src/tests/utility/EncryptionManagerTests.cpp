@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -50,7 +50,7 @@ bool decryptAesTest(QString & error)
     QString decryptedText;
     ErrorString errorMessage;
 
-    bool res = manager.decrypt(
+    const bool res = manager.decrypt(
         encryptedText, passphrase, QStringLiteral("AES"), 128, decryptedText,
         errorMessage);
 
@@ -137,7 +137,7 @@ bool decryptRc2Test(QString & error)
     ErrorString errorMessage;
     QString decryptedText;
 
-    bool res = manager.decrypt(
+    const bool res = manager.decrypt(
         encryptedText, passphrase, QStringLiteral("RC2"), 64, decryptedText,
         errorMessage);
 

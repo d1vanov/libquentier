@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,7 +38,7 @@ void ObfuscatingKeychainTester::checkWriteReadPassword()
     QSignalSpy writeSpy(
         keychain.get(), &IKeychainService::writePasswordJobFinished);
 
-    keychain->startWritePasswordJob(m_service, m_key, m_password);
+    Q_UNUSED(keychain->startWritePasswordJob(m_service, m_key, m_password))
     QVERIFY(writeSpy.wait(10000));
 
     ApplicationSettings settings{QStringLiteral("obfuscatingKeychainStorage")};
@@ -78,7 +78,7 @@ void ObfuscatingKeychainTester::checkWriteReadPassword()
     QSignalSpy readSpy(
         keychain.get(), &IKeychainService::readPasswordJobFinished);
 
-    keychain->startReadPasswordJob(m_service, m_key);
+    Q_UNUSED(keychain->startReadPasswordJob(m_service, m_key))
     QVERIFY(readSpy.wait(10000));
     QVERIFY(callbackCalled);
 }
@@ -90,7 +90,7 @@ void ObfuscatingKeychainTester::checkWriteDeletePassword()
     QSignalSpy writeSpy(
         keychain.get(), &IKeychainService::writePasswordJobFinished);
 
-    keychain->startWritePasswordJob(m_service, m_key, m_password);
+    Q_UNUSED(keychain->startWritePasswordJob(m_service, m_key, m_password))
     QVERIFY(writeSpy.wait(10000));
 
     ApplicationSettings settings{QStringLiteral("obfuscatingKeychainStorage")};
@@ -118,7 +118,7 @@ void ObfuscatingKeychainTester::checkWriteDeletePassword()
     QSignalSpy deleteSpy(
         keychain.get(), &IKeychainService::deletePasswordJobFinished);
 
-    keychain->startDeletePasswordJob(m_service, m_key);
+    Q_UNUSED(keychain->startDeletePasswordJob(m_service, m_key))
     QVERIFY(deleteSpy.wait(10000));
     QVERIFY(callbackCalled);
 
@@ -151,7 +151,7 @@ void ObfuscatingKeychainTester::checkDeletePasswordWithoutWriting()
     QSignalSpy deleteSpy(
         keychain.get(), &IKeychainService::deletePasswordJobFinished);
 
-    keychain->startDeletePasswordJob(m_service, m_key);
+    Q_UNUSED(keychain->startDeletePasswordJob(m_service, m_key))
     QVERIFY(deleteSpy.wait(10000));
     QVERIFY(callbackCalled);
 }

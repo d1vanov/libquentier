@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-bool tagSortByParentChildRelationsTest(QString & error);
+[[nodiscard]] bool tagSortByParentChildRelationsTest(QString & error);
 
 } // namespace test
 } // namespace quentier

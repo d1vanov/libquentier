@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,10 +18,11 @@
 
 #include "TagSortByParentChildRelationsTest.h"
 
-#include "../../utility/TagSortByParentChildRelationsHelpers.hpp"
-
-#include <quentier/utility/Compat.h>
+#include <quentier/types/ErrorString.h>
+#include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/UidGenerator.h>
+
+#include <qevercloud/generated/types/Tag.h>
 
 #include <QSet>
 #include <QTextStream>
@@ -29,24 +30,26 @@
 namespace quentier {
 namespace test {
 
-template <class T>
-bool checkTagsOrder(const QList<T> & tags, QString & error)
+namespace {
+
+[[nodiscard]] bool checkTagsOrder(
+    const QList<qevercloud::Tag> & tags, QString & error)
 {
     QSet<QString> encounteredTagGuids;
 
     for (const auto & tag: ::qAsConst(tags)) {
-        if (Q_UNLIKELY(!tagHasGuid(tag))) {
+        if (Q_UNLIKELY(!tag.guid())) {
             continue;
         }
 
-        QString guid = tagGuid(tag);
+        const QString guid = *tag.guid();
         Q_UNUSED(encounteredTagGuids.insert(guid))
 
-        QString parentGuid = tagParentGuid(tag);
-        if (parentGuid.isEmpty()) {
+        if (Q_UNLIKELY(!tag.parentGuid())) {
             continue;
         }
 
+        const QString parentGuid = *tag.parentGuid();
         if (Q_UNLIKELY(guid == parentGuid)) {
             QTextStream strm(&error);
             strm << "Found tag which guid matches its parent guid: ";
@@ -65,86 +68,77 @@ bool checkTagsOrder(const QList<T> & tags, QString & error)
     return true;
 }
 
-void tagListToQEverCloudTagList(
-    const QList<Tag> & inputTags, QList<qevercloud::Tag> & outputTags)
-{
-    outputTags.clear();
-    outputTags.reserve(inputTags.size());
-
-    for (const auto & tag: ::qAsConst(inputTags)) {
-        outputTags << tag.qevercloudTag();
-    }
-}
+} // namespace
 
 bool tagSortByParentChildRelationsTest(QString & error)
 {
-    Tag firstTag;
+    qevercloud::Tag firstTag;
     firstTag.setName(QStringLiteral("First tag"));
     firstTag.setGuid(UidGenerator::Generate());
 
-    Tag secondTag;
+    qevercloud::Tag secondTag;
     secondTag.setName(QStringLiteral("Second tag"));
     secondTag.setGuid(UidGenerator::Generate());
 
-    Tag thirdTag;
+    qevercloud::Tag thirdTag;
     thirdTag.setName(QStringLiteral("Third tag"));
     thirdTag.setGuid(UidGenerator::Generate());
 
-    Tag fourthTag;
+    qevercloud::Tag fourthTag;
     fourthTag.setName(QStringLiteral("Fourth tag"));
     fourthTag.setGuid(UidGenerator::Generate());
     fourthTag.setParentGuid(firstTag.guid());
-    fourthTag.setParentLocalUid(firstTag.localUid());
+    fourthTag.setParentLocalId(firstTag.localId());
 
-    Tag fifthTag;
+    qevercloud::Tag fifthTag;
     fifthTag.setName(QStringLiteral("Fifth tag"));
     fifthTag.setGuid(UidGenerator::Generate());
     fifthTag.setParentGuid(firstTag.guid());
-    fifthTag.setParentLocalUid(firstTag.localUid());
+    fifthTag.setParentLocalId(firstTag.localId());
 
-    Tag sixthTag;
+    qevercloud::Tag sixthTag;
     sixthTag.setName(QStringLiteral("Sixth tag"));
     sixthTag.setGuid(UidGenerator::Generate());
     sixthTag.setParentGuid(secondTag.guid());
-    sixthTag.setParentLocalUid(secondTag.localUid());
+    sixthTag.setParentLocalId(secondTag.localId());
 
-    Tag seventhTag;
+    qevercloud::Tag seventhTag;
     seventhTag.setName(QStringLiteral("Seventh tag"));
     seventhTag.setGuid(UidGenerator::Generate());
     seventhTag.setParentGuid(secondTag.guid());
-    seventhTag.setParentLocalUid(secondTag.localUid());
+    seventhTag.setParentLocalId(secondTag.localId());
 
-    Tag eighthTag;
+    qevercloud::Tag eighthTag;
     eighthTag.setName(QStringLiteral("Eighth tag"));
     eighthTag.setGuid(UidGenerator::Generate());
     eighthTag.setParentGuid(thirdTag.guid());
-    eighthTag.setParentLocalUid(thirdTag.localUid());
+    eighthTag.setParentLocalId(thirdTag.localId());
 
-    Tag ninethTag;
+    qevercloud::Tag ninethTag;
     ninethTag.setName(QStringLiteral("Ninth tag"));
     ninethTag.setGuid(UidGenerator::Generate());
     ninethTag.setParentGuid(fourthTag.guid());
-    ninethTag.setParentLocalUid(fourthTag.localUid());
+    ninethTag.setParentLocalId(fourthTag.localId());
 
-    Tag tenthTag;
+    qevercloud::Tag tenthTag;
     tenthTag.setName(QStringLiteral("Tenth tag"));
     tenthTag.setGuid(UidGenerator::Generate());
     tenthTag.setParentGuid(sixthTag.guid());
-    tenthTag.setParentLocalUid(sixthTag.localUid());
+    tenthTag.setParentLocalId(sixthTag.localId());
 
-    Tag eleventhTag;
+    qevercloud::Tag eleventhTag;
     eleventhTag.setName(QStringLiteral("Eleventh tag"));
     eleventhTag.setGuid(UidGenerator::Generate());
     eleventhTag.setParentGuid(eighthTag.guid());
-    eleventhTag.setParentLocalUid(eighthTag.localUid());
+    eleventhTag.setParentLocalId(eighthTag.localId());
 
-    Tag twelvethTag;
+    qevercloud::Tag twelvethTag;
     twelvethTag.setName(QStringLiteral("Twelveth tag"));
     twelvethTag.setGuid(UidGenerator::Generate());
     twelvethTag.setParentGuid(tenthTag.guid());
-    twelvethTag.setParentLocalUid(tenthTag.localUid());
+    twelvethTag.setParentLocalId(tenthTag.localId());
 
-    QList<Tag> tags;
+    QList<qevercloud::Tag> tags;
     tags.reserve(12);
     tags << tenthTag;
     tags << firstTag;
@@ -159,9 +153,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << ninethTag;
     tags << eighthTag;
 
-    QList<qevercloud::Tag> qecTags;
-    tagListToQEverCloudTagList(tags, qecTags);
-
     ErrorString errorDescription;
     bool res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -170,18 +161,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }
@@ -199,26 +178,12 @@ bool tagSortByParentChildRelationsTest(QString & error)
         return false;
     }
 
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
-    if (!res) {
-        return false;
-    }
-
     // Check the list of parentless tags
     tags.clear();
     tags << firstTag;
     tags << secondTag;
     tags << thirdTag;
 
-    tagListToQEverCloudTagList(tags, qecTags);
-
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -227,25 +192,12 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }
 
     // Check the empty list of tags
     tags.clear();
-    tagListToQEverCloudTagList(tags, qecTags);
 
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
@@ -255,18 +207,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }
@@ -275,8 +215,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags.clear();
     tags << firstTag;
 
-    tagListToQEverCloudTagList(tags, qecTags);
-
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -285,18 +223,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }
@@ -306,8 +232,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << firstTag;
     tags << secondTag;
 
-    tagListToQEverCloudTagList(tags, qecTags);
-
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -316,18 +240,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }
@@ -338,8 +250,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     tags << firstTag;
     tags << fourthTag;
 
-    tagListToQEverCloudTagList(tags, qecTags);
-
     errorDescription.clear();
     res = sortTagsByParentChildRelations(tags, errorDescription);
     if (!res) {
@@ -348,18 +258,6 @@ bool tagSortByParentChildRelationsTest(QString & error)
     }
 
     res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    errorDescription.clear();
-    res = sortTagsByParentChildRelations(qecTags, errorDescription);
-    if (!res) {
-        error = errorDescription.nonLocalizedString();
-        return false;
-    }
-
-    res = checkTagsOrder(qecTags, error);
     if (!res) {
         return false;
     }

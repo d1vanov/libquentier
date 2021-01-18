@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,15 +17,17 @@
  */
 
 #include "LRUCacheTests.h"
-#include <cstdint>
+
 #include <quentier/utility/LRUCache.hpp>
+
+#include <cstdint>
 
 namespace quentier {
 namespace test {
 
 bool testEmptyLRUCacheConsistency(QString & error)
 {
-    const size_t maxSize = 5;
+    const quint32 maxSize = 5;
     LRUCache<QString, int> cache(maxSize);
 
     if (Q_UNLIKELY(!cache.empty())) {
@@ -72,12 +74,12 @@ bool testEmptyLRUCacheConsistency(QString & error)
 
 bool testNonEmptyLRUCacheConsistency(QString & error)
 {
-    const size_t maxSize = 5;
+    const quint32 maxSize = 5;
     LRUCache<QString, int> cache(maxSize);
 
-    QString firstItemName = QStringLiteral("My first item");
-    QString secondItemName = QStringLiteral("My second item");
-    QString thirdItemName = QStringLiteral("My third item");
+    const QString firstItemName = QStringLiteral("My first item");
+    const QString secondItemName = QStringLiteral("My second item");
+    const QString thirdItemName = QStringLiteral("My third item");
 
     if (Q_UNLIKELY(
             (cache.get(firstItemName) != nullptr) ||
@@ -211,18 +213,23 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
 
 bool testRemovalFromLRUCache(QString & error)
 {
-    const size_t maxSize = 5;
+    const quint32 maxSize = 5;
     LRUCache<QString, int> cache(maxSize);
 
-    QString firstItemName = QStringLiteral("My first item");
-    QString secondItemName = QStringLiteral("My second item");
-    QString thirdItemName = QStringLiteral("My third item");
+    const QString firstItemName = QStringLiteral("My first item");
+    const QString secondItemName = QStringLiteral("My second item");
+    const QString thirdItemName = QStringLiteral("My third item");
 
     cache.put(firstItemName, 1);
     cache.put(secondItemName, 2);
     cache.put(thirdItemName, 3);
 
-    cache.remove(firstItemName);
+    if (Q_UNLIKELY(!cache.remove(firstItemName))) {
+        error = QStringLiteral(
+            "LRUCache's remove method returned false "
+            "on attempt to delete entry definitely existing in the cache");
+        return false;
+    }
 
     if (Q_UNLIKELY(cache.empty())) {
         error = QStringLiteral(
@@ -286,7 +293,12 @@ bool testRemovalFromLRUCache(QString & error)
         return false;
     }
 
-    cache.remove(secondItemName);
+    if (Q_UNLIKELY(!cache.remove(secondItemName))) {
+        error = QStringLiteral(
+            "LRUCache's remove method returned false "
+            "on attempt to delete entry definitely existing in the cache");
+        return false;
+    }
 
     if (Q_UNLIKELY(cache.empty())) {
         error = QStringLiteral(
@@ -354,7 +366,12 @@ bool testRemovalFromLRUCache(QString & error)
         return false;
     }
 
-    cache.remove(thirdItemName);
+    if (Q_UNLIKELY(!cache.remove(thirdItemName))) {
+        error = QStringLiteral(
+            "LRUCache's remove method returned false "
+            "on attempt to delete entry definitely existing in the cache");
+        return false;
+    }
 
     if (Q_UNLIKELY(!cache.empty())) {
         error =
@@ -405,9 +422,9 @@ bool testLRUCacheReverseIterators(QString & error)
     const size_t maxSize = 5;
     LRUCache<QString, int> cache(maxSize);
 
-    QString firstItemName = QStringLiteral("My first item");
-    QString secondItemName = QStringLiteral("My second item");
-    QString thirdItemName = QStringLiteral("My third item");
+    const QString firstItemName = QStringLiteral("My first item");
+    const QString secondItemName = QStringLiteral("My second item");
+    const QString thirdItemName = QStringLiteral("My third item");
 
     cache.put(firstItemName, 1);
     cache.put(secondItemName, 2);
@@ -455,9 +472,9 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
         return false;
     }
 
-    QString firstItemName = QStringLiteral("My first item");
-    QString secondItemName = QStringLiteral("My second item");
-    QString thirdItemName = QStringLiteral("My third item");
+    const QString firstItemName = QStringLiteral("My first item");
+    const QString secondItemName = QStringLiteral("My second item");
+    const QString thirdItemName = QStringLiteral("My third item");
 
     cache.put(firstItemName, 1);
 
@@ -645,13 +662,13 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
         return false;
     }
 
-    QString firstItemName = QStringLiteral("My first item");
-    QString secondItemName = QStringLiteral("My second item");
-    QString thirdItemName = QStringLiteral("My third item");
-    QString fourthItemName = QStringLiteral("My fourth item");
-    QString fifthItemName = QStringLiteral("My fifth item");
-    QString sixthItemName = QStringLiteral("My sixth item");
-    QString seventhItemName = QStringLiteral("My seventh item");
+    const QString firstItemName = QStringLiteral("My first item");
+    const QString secondItemName = QStringLiteral("My second item");
+    const QString thirdItemName = QStringLiteral("My third item");
+    const QString fourthItemName = QStringLiteral("My fourth item");
+    const QString fifthItemName = QStringLiteral("My fifth item");
+    const QString sixthItemName = QStringLiteral("My sixth item");
+    const QString seventhItemName = QStringLiteral("My seventh item");
 
     cache.put(firstItemName, 1);
     cache.put(secondItemName, 2);

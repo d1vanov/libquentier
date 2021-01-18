@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,9 +24,9 @@
 namespace quentier {
 namespace test {
 
-bool encryptDecryptTest(QString & error);
-bool decryptAesTest(QString & error);
-bool decryptRc2Test(QString & error);
+[[nodiscard]] bool encryptDecryptTest(QString & error);
+[[nodiscard]] bool decryptAesTest(QString & error);
+[[nodiscard]] bool decryptRc2Test(QString & error);
 
 } // namespace test
 } // namespace quentier

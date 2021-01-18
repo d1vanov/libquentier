@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class UtilityTester final : public QObject
     Q_OBJECT
 public:
     explicit UtilityTester(QObject * parent = nullptr);
-    virtual ~UtilityTester() override;
+    ~UtilityTester() noexcept override;
 
 private Q_SLOTS:
     void init();

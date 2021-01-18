@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,12 +24,16 @@
 namespace quentier {
 namespace test {
 
-bool testEmptyLRUCacheConsistency(QString & error);
-bool testNonEmptyLRUCacheConsistency(QString & error);
-bool testRemovalFromLRUCache(QString & error);
-bool testLRUCacheReverseIterators(QString & error);
-bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error);
-bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error);
+[[nodiscard]] bool testEmptyLRUCacheConsistency(QString & error);
+[[nodiscard]] bool testNonEmptyLRUCacheConsistency(QString & error);
+[[nodiscard]] bool testRemovalFromLRUCache(QString & error);
+[[nodiscard]] bool testLRUCacheReverseIterators(QString & error);
+
+[[nodiscard]] bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(
+    QString & error);
+
+[[nodiscard]] bool testItemsAdditionToLRUCacheAfterReachingMaxSize(
+    QString & error);
 
 } // namespace test
 } // namespace quentier

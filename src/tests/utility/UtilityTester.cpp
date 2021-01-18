@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,16 +24,7 @@
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
 #include <quentier/types/RegisterMetatypes.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNote.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
 
 #include <quentier/utility/SysInfo.h>
 
@@ -47,7 +38,7 @@ namespace test {
 
 UtilityTester::UtilityTester(QObject * parent) : QObject(parent) {}
 
-UtilityTester::~UtilityTester() {}
+UtilityTester::~UtilityTester() noexcept = default;
 
 inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
@@ -76,7 +67,7 @@ void UtilityTester::encryptDecryptNoteTest()
 {
     try {
         QString error;
-        bool res = encryptDecryptTest(error);
+        const bool res = encryptDecryptTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -86,7 +77,7 @@ void UtilityTester::decryptNoteAesTest()
 {
     try {
         QString error;
-        bool res = decryptAesTest(error);
+        const bool res = decryptAesTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -96,7 +87,7 @@ void UtilityTester::decryptNoteRc2Test()
 {
     try {
         QString error;
-        bool res = decryptRc2Test(error);
+        const bool res = decryptRc2Test(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -106,7 +97,8 @@ void UtilityTester::tagSortByParentChildRelationsTest()
 {
     try {
         QString error;
-        bool res = ::quentier::test::tagSortByParentChildRelationsTest(error);
+        const bool res =
+            ::quentier::test::tagSortByParentChildRelationsTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
