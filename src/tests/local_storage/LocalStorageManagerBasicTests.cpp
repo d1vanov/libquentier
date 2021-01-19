@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,15 +21,11 @@
 #include "../TestMacros.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
+#include <quentier/types/CommonUtils.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/UidGenerator.h>
+
+#include <qevercloud/generated/Types.h>
 
 #include <QCryptographicHash>
 #include <QtTest/QtTest>
@@ -41,36 +37,37 @@ namespace test {
 
 void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    const Account account{
+        QStringLiteral("CoreTesterFakeUser"),
+        Account::Type::Local};
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    SavedSearch search;
+    qevercloud::SavedSearch search;
     search.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    search.setUpdateSequenceNumber(1);
+    search.setUpdateSequenceNum(1);
     search.setName(QStringLiteral("Fake saved search name"));
     search.setQuery(QStringLiteral("Fake saved search query"));
-    search.setQueryFormat(1);
-    search.setIncludeAccount(true);
-    search.setIncludeBusinessLinkedNotebooks(false);
-    search.setIncludePersonalLinkedNotebooks(true);
+    search.setFormat(qevercloud::QueryFormat::USER);
+
+    qevercloud::SavedSearchScope scope;
+    scope.setIncludeAccount(true);
+    scope.setIncludeBusinessLinkedNotebooks(true);
+    scope.setIncludePersonalLinkedNotebooks(true);
 
     ErrorString errorMessage;
-
-    QVERIFY2(
-        search.checkParameters(errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
 
     // Check Add + Find
     QVERIFY2(
         localStorageManager.addSavedSearch(search, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString searchGuid = search.localUid();
-    SavedSearch foundSearch;
-    foundSearch.setLocalUid(searchGuid);
+    const QString searchLocalId = search.localId();
+    qevercloud::SavedSearch foundSearch;
+    foundSearch.setLocalId(searchLocalId);
 
     QVERIFY2(
         localStorageManager.findSavedSearch(foundSearch, errorMessage),
@@ -83,8 +80,8 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
             << "\nSaved search found in the local storage:" << foundSearch);
 
     // Check Find by name
-    SavedSearch foundByNameSearch;
-    foundByNameSearch.unsetLocalUid();
+    qevercloud::SavedSearch foundByNameSearch;
+    foundByNameSearch.setLocalId(QString{});
     foundByNameSearch.setName(search.name());
 
     QVERIFY2(
@@ -99,15 +96,12 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
             << foundByNameSearch);
 
     // Check Update + Find
-    SavedSearch modifiedSearch(search);
-    modifiedSearch.setUpdateSequenceNumber(search.updateSequenceNumber() + 1);
-    modifiedSearch.setName(search.name() + QStringLiteral("_modified"));
-    modifiedSearch.setQuery(search.query() + QStringLiteral("_modified"));
-    modifiedSearch.setFavorited(true);
-    modifiedSearch.setDirty(true);
-
-    QString localUid = modifiedSearch.localUid();
-    modifiedSearch.unsetLocalUid();
+    qevercloud::SavedSearch modifiedSearch = search;
+    modifiedSearch.setUpdateSequenceNum(search.updateSequenceNum().value() + 1);
+    modifiedSearch.setName(search.name().value() + QStringLiteral("_modified"));
+    modifiedSearch.setQuery(search.query().value() + QStringLiteral("_modified"));
+    modifiedSearch.setLocallyFavorited(true);
+    modifiedSearch.setLocallyModified(true);
 
     QVERIFY2(
         localStorageManager.updateSavedSearch(modifiedSearch, errorMessage),
@@ -117,7 +111,7 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
         localStorageManager.findSavedSearch(foundSearch, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    modifiedSearch.setLocalUid(localUid);
+    modifiedSearch.setLocalId(searchLocalId);
     VERIFY2(
         modifiedSearch == foundSearch,
         "Updated and found saved searches in the local storage "
@@ -160,23 +154,23 @@ void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
 
 void TestFindSavedSearchByNameWithDiacritics()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("TestFindSavedSearchByNameWithDiacriticsFakeUser"),
-        Account::Type::Local);
+        Account::Type::Local};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    SavedSearch search1;
+    qevercloud::SavedSearch search1;
     search1.setGuid(UidGenerator::Generate());
-    search1.setUpdateSequenceNumber(1);
+    search1.setUpdateSequenceNum(1);
     search1.setName(QStringLiteral("search"));
 
-    SavedSearch search2;
+    qevercloud::SavedSearch search2;
     search2.setGuid(UidGenerator::Generate());
-    search2.setUpdateSequenceNumber(2);
+    search2.setUpdateSequenceNum(2);
     search2.setName(QStringLiteral("séarch"));
 
     ErrorString errorMessage;
@@ -189,8 +183,8 @@ void TestFindSavedSearchByNameWithDiacritics()
         localStorageManager.addSavedSearch(search2, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    SavedSearch searchToFind;
-    searchToFind.unsetLocalUid();
+    qevercloud::SavedSearch searchToFind;
+    searchToFind.setLocalId(QString{});
     searchToFind.setName(search1.name());
 
     QVERIFY2(
@@ -202,8 +196,8 @@ void TestFindSavedSearchByNameWithDiacritics()
         "Found wrong saved search by name: expected saved search: "
             << search1 << "\nActually found search: " << searchToFind);
 
-    searchToFind = SavedSearch();
-    searchToFind.unsetLocalUid();
+    searchToFind = qevercloud::SavedSearch();
+    searchToFind.setLocalId(QString{});
     searchToFind.setName(search2.name());
 
     QVERIFY2(
@@ -218,18 +212,21 @@ void TestFindSavedSearchByNameWithDiacritics()
 
 void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    const Account account{
+        QStringLiteral("CoreTesterFakeUser"),
+        Account::Type::Local};
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    LinkedNotebook linkedNotebook;
+    qevercloud::LinkedNotebook linkedNotebook;
 
     linkedNotebook.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000046"));
 
-    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setUpdateSequenceNum(1);
 
     linkedNotebook.setShareName(
         QStringLiteral("Fake linked notebook share name"));
@@ -253,18 +250,14 @@ void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
 
     ErrorString errorMessage;
 
-    VERIFY2(
-        linkedNotebook.checkParameters(errorMessage),
-        "Found invalid LinkedNotebook: " << linkedNotebook << ", error: "
-                                         << errorMessage.nonLocalizedString());
-
     // Check Add + Find
     QVERIFY2(
         localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString linkedNotebookGuid = linkedNotebook.guid();
-    LinkedNotebook foundLinkedNotebook;
+    const QString linkedNotebookGuid = linkedNotebook.guid().value();
+
+    qevercloud::LinkedNotebook foundLinkedNotebook;
     foundLinkedNotebook.setGuid(linkedNotebookGuid);
 
     QVERIFY2(
@@ -280,36 +273,38 @@ void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
             << foundLinkedNotebook);
 
     // Check Update + Find
-    LinkedNotebook modifiedLinkedNotebook(linkedNotebook);
+    qevercloud::LinkedNotebook modifiedLinkedNotebook = linkedNotebook;
 
-    modifiedLinkedNotebook.setUpdateSequenceNumber(
-        linkedNotebook.updateSequenceNumber() + 1);
+    modifiedLinkedNotebook.setUpdateSequenceNum(
+        linkedNotebook.updateSequenceNum().value() + 1);
 
     modifiedLinkedNotebook.setShareName(
-        linkedNotebook.shareName() + QStringLiteral("_modified"));
+        linkedNotebook.shareName().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setUsername(
-        linkedNotebook.username() + QStringLiteral("_modified"));
+        linkedNotebook.username().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setShardId(
-        linkedNotebook.shardId() + QStringLiteral("_modified"));
+        linkedNotebook.shardId().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setSharedNotebookGlobalId(
-        linkedNotebook.sharedNotebookGlobalId() + QStringLiteral("_modified"));
+        linkedNotebook.sharedNotebookGlobalId().value() +
+        QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setUri(
-        linkedNotebook.uri() + QStringLiteral("_modified"));
+        linkedNotebook.uri().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setNoteStoreUrl(
-        linkedNotebook.noteStoreUrl() + QStringLiteral("_modified"));
+        linkedNotebook.noteStoreUrl().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setWebApiUrlPrefix(
-        linkedNotebook.webApiUrlPrefix() + QStringLiteral("_modified"));
+        linkedNotebook.webApiUrlPrefix().value() + QStringLiteral("_modified"));
 
     modifiedLinkedNotebook.setStack(
-        linkedNotebook.stack() + QStringLiteral("_modified"));
+        linkedNotebook.stack().value() + QStringLiteral("_modified"));
 
-    modifiedLinkedNotebook.setBusinessId(linkedNotebook.businessId() + 1);
+    modifiedLinkedNotebook.setBusinessId(
+        linkedNotebook.businessId().value() + 1);
 
     QVERIFY2(
         localStorageManager.updateLinkedNotebook(
@@ -368,18 +363,21 @@ void TestLinkedNotebookAddFindUpdateExpungeInLocalStorage()
 
 void TestTagAddFindUpdateExpungeInLocalStorage()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    const Account account{
+        QStringLiteral("CoreTesterFakeUser"),
+        Account::Type::Local};
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    LinkedNotebook linkedNotebook;
+    qevercloud::LinkedNotebook linkedNotebook;
 
     linkedNotebook.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setUpdateSequenceNum(1);
     linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
     linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
     linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
@@ -403,27 +401,24 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
         localStorageManager.addLinkedNotebook(linkedNotebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Tag tag;
+    qevercloud::Tag tag;
     tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    tag.setLinkedNotebookGuid(linkedNotebook.guid());
-    tag.setUpdateSequenceNumber(1);
+    setItemLinkedNotebookGuid(linkedNotebook.guid().value(), tag);
+    tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Fake tag name"));
-
-    QVERIFY2(
-        tag.checkParameters(errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
 
     // Check Add + Find
     QVERIFY2(
         localStorageManager.addTag(tag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString localTagGuid = tag.localUid();
-    Tag foundTag;
-    foundTag.setLocalUid(localTagGuid);
-    if (tag.hasLinkedNotebookGuid()) {
-        foundTag.setLinkedNotebookGuid(tag.linkedNotebookGuid());
-    }
+    const QString tagLocalId = tag.localId();
+
+    qevercloud::Tag foundTag;
+    foundTag.setLocalId(tagLocalId);
+
+    const QString tagLinkedNotebookGuid = itemLinkedNotebookGuid(tag);
+    setItemLinkedNotebookGuid(tagLinkedNotebookGuid, foundTag);
 
     QVERIFY2(
         localStorageManager.findTag(foundTag, errorMessage),
@@ -436,12 +431,11 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
             << "\nTag found in the local storage: " << foundTag);
 
     // Check Find by name
-    Tag foundByNameTag;
-    foundByNameTag.unsetLocalUid();
+    qevercloud::Tag foundByNameTag;
+    foundByNameTag.setLocalId(QString{});
     foundByNameTag.setName(tag.name());
-    if (tag.hasLinkedNotebookGuid()) {
-        foundByNameTag.setLinkedNotebookGuid(tag.linkedNotebookGuid());
-    }
+
+    setItemLinkedNotebookGuid(tagLinkedNotebookGuid, foundByNameTag);
 
     QVERIFY2(
         localStorageManager.findTag(foundByNameTag, errorMessage),
@@ -454,26 +448,30 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
             << "\nOriginal tag: " << tag);
 
     // Check Update + Find
-    Tag modifiedTag(tag);
-    modifiedTag.setUpdateSequenceNumber(tag.updateSequenceNumber() + 1);
-    modifiedTag.setLinkedNotebookGuid(QLatin1String(""));
-    modifiedTag.setName(tag.name() + QStringLiteral("_modified"));
-    modifiedTag.setFavorited(true);
-    modifiedTag.unsetLocalUid();
+    qevercloud::Tag modifiedTag = tag;
+    modifiedTag.setUpdateSequenceNum(tag.updateSequenceNum().value() + 1);
+    setItemLinkedNotebookGuid(QLatin1String(""), modifiedTag);
+
+    modifiedTag.setName(tag.name().value() + QStringLiteral("_modified"));
+    modifiedTag.setLocallyFavorited(true);
+    modifiedTag.setLocalId(QString{});
 
     QVERIFY2(
         localStorageManager.updateTag(modifiedTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    if (!modifiedTag.hasLinkedNotebookGuid()) {
-        foundTag.setLinkedNotebookGuid(QLatin1String(""));
+    const QString modifiedTagLinkedNotebookGuid =
+        itemLinkedNotebookGuid(modifiedTag);
+
+    if (modifiedTagLinkedNotebookGuid.isEmpty()) {
+        setItemLinkedNotebookGuid(QLatin1String(""), foundTag);
     }
 
     QVERIFY2(
         localStorageManager.findTag(foundTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    modifiedTag.setLocalUid(localTagGuid);
+    modifiedTag.setLocalId(tagLocalId);
 
     VERIFY2(
         modifiedTag == foundTag,
@@ -492,17 +490,17 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
             .arg(count));
 
     // Add another tag referencing the first tag as its parent
-    Tag newTag;
+    qevercloud::Tag newTag;
     newTag.setName(QStringLiteral("New tag"));
     newTag.setParentGuid(tag.guid());
-    newTag.setParentLocalUid(tag.localUid());
+    newTag.setParentLocalId(tag.localId());
 
     QVERIFY2(
         localStorageManager.addTag(newTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Tag foundNewTag;
-    foundNewTag.setLocalUid(newTag.localUid());
+    qevercloud::Tag foundNewTag;
+    foundNewTag.setLocalId(newTag.localId());
 
     QVERIFY2(
         localStorageManager.findTag(foundNewTag, errorMessage),
@@ -516,14 +514,14 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
             << "\nTag found in the local storage: " << foundNewTag);
 
     // Check Expunge + Find (failure expected)
-    QStringList expungedChildTagLocalUids;
+    QStringList expungedChildTagLocalIds;
 
     QVERIFY2(
         localStorageManager.expungeTag(
-            modifiedTag, expungedChildTagLocalUids, errorMessage),
+            modifiedTag, expungedChildTagLocalIds, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Q_UNUSED(expungedChildTagLocalUids)
+    Q_UNUSED(expungedChildTagLocalIds)
 
     VERIFY2(
         !localStorageManager.findTag(foundTag, errorMessage),
@@ -535,23 +533,23 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
 
 void TestFindTagByNameWithDiacritics()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("TestFindTagByNameWithDiacriticsFakeUser"),
-        Account::Type::Local);
+        Account::Type::Local};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    Tag tag1;
+    qevercloud::Tag tag1;
     tag1.setGuid(UidGenerator::Generate());
-    tag1.setUpdateSequenceNumber(1);
+    tag1.setUpdateSequenceNum(1);
     tag1.setName(QStringLiteral("tag"));
 
-    Tag tag2;
+    qevercloud::Tag tag2;
     tag2.setGuid(UidGenerator::Generate());
-    tag2.setUpdateSequenceNumber(2);
+    tag2.setUpdateSequenceNum(2);
     tag2.setName(QStringLiteral("tāg"));
 
     ErrorString errorMessage;
@@ -564,8 +562,8 @@ void TestFindTagByNameWithDiacritics()
         localStorageManager.addTag(tag2, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Tag tagToFind;
-    tagToFind.unsetLocalUid();
+    qevercloud::Tag tagToFind;
+    tagToFind.setLocalId(QString{});
     tagToFind.setName(tag1.name());
 
     QVERIFY2(
@@ -577,8 +575,8 @@ void TestFindTagByNameWithDiacritics()
         "Found wrong tag by name: expected tag: "
             << tag1 << "\nActually found tag: " << tagToFind);
 
-    tagToFind = Tag();
-    tagToFind.unsetLocalUid();
+    tagToFind = qevercloud::Tag();
+    tagToFind.setLocalId(QString{});
     tagToFind.setName(tag2.name());
 
     QVERIFY2(
@@ -593,18 +591,21 @@ void TestFindTagByNameWithDiacritics()
 
 void TestResourceAddFindUpdateExpungeInLocalStorage()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    const Account account{
+        QStringLiteral("CoreTesterFakeUser"),
+        Account::Type::Local};
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    notebook.setUpdateSequenceNumber(1);
+    notebook.setUpdateSequenceNum(1);
     notebook.setName(QStringLiteral("Fake notebook name"));
-    notebook.setCreationTimestamp(1);
-    notebook.setModificationTimestamp(1);
+    notebook.setServiceCreated(1);
+    notebook.setServiceUpdated(1);
 
     ErrorString errorMessage;
 
@@ -612,16 +613,16 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
         localStorageManager.addNotebook(notebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Note note;
+    qevercloud::Note note;
     note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    note.setUpdateSequenceNumber(1);
+    note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Fake note title"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-    note.setCreationTimestamp(1);
-    note.setModificationTimestamp(1);
+    note.setCreated(1);
+    note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setNotebookLocalUid(notebook.localUid());
+    note.setParentLocalId(notebook.localId());
 
     errorMessage.clear();
 
@@ -629,15 +630,21 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
         localStorageManager.addNote(note, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Resource resource;
+    qevercloud::Resource resource;
     resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    resource.setUpdateSequenceNumber(1);
+    resource.setUpdateSequenceNum(1);
     resource.setNoteGuid(note.guid());
-    resource.setDataBody(QByteArray("Fake resource data body"));
-    resource.setDataSize(resource.dataBody().size());
-    resource.setDataHash(QByteArray("Fake hash      1"));
 
-    resource.setRecognitionDataBody(
+    resource.setData(qevercloud::Data{});
+    resource.mutableData()->setBody(QByteArray("Fake resource data body"));
+    resource.mutableData()->setSize(resource.data()->body()->size());
+    resource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.data()->body(),
+            QCryptographicHash::Md5));
+
+    resource.setRecognition(qevercloud::Data{});
+    resource.mutableRecognition()->setBody(
         QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" "
                    "objID=\"fc83e58282d8059be17debabb69be900\" "
                    "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -661,45 +668,59 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
                    "</item>"
                    "</recoIndex>"));
 
-    resource.setRecognitionDataSize(resource.recognitionDataBody().size());
-    resource.setRecognitionDataHash(QByteArray("Fake hash      2"));
+    resource.mutableRecognition()->setSize(
+        resource.recognition()->body()->size());
 
-    resource.setAlternateDataBody(QByteArray("Fake alternate data body"));
-    resource.setAlternateDataSize(resource.alternateDataBody().size());
-    resource.setAlternateDataHash(QByteArray("Fake hash      3"));
+    resource.mutableRecognition()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.recognition()->body(),
+            QCryptographicHash::Md5));
+
+    resource.setAlternateData(qevercloud::Data{});
+
+    resource.mutableAlternateData()->setBody(
+        QByteArray("Fake alternate data body"));
+
+    resource.mutableAlternateData()->setSize(
+        resource.recognition()->body()->size());
+
+    resource.mutableAlternateData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.alternateData()->body(),
+            QCryptographicHash::Md5));
 
     resource.setMime(QStringLiteral("text/plain"));
     resource.setWidth(1);
     resource.setHeight(1);
 
-    auto & resourceAttributes = resource.resourceAttributes();
+    resource.setAttributes(qevercloud::ResourceAttributes{});
+    auto & resourceAttributes = *resource.mutableAttributes();
 
-    resourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
-    resourceAttributes.timestamp = 1;
-    resourceAttributes.latitude = 0.0;
-    resourceAttributes.longitude = 0.0;
-    resourceAttributes.altitude = 0.0;
-    resourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
+    resourceAttributes.setSourceURL(QStringLiteral("Fake resource source URL"));
+    resourceAttributes.setTimestamp(1);
+    resourceAttributes.setLatitude(0.0);
+    resourceAttributes.setLongitude(0.0);
+    resourceAttributes.setAltitude(0.0);
 
-    resourceAttributes.cameraModel =
-        QStringLiteral("Fake resource camera model");
+    resourceAttributes.setCameraMake(
+        QStringLiteral("Fake resource camera make"));
 
-    note.unsetLocalUid();
+    resourceAttributes.setCameraModel(
+        QStringLiteral("Fake resource camera model"));
 
-    QVERIFY2(
-        resource.checkParameters(errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
+    note.setLocalId(QString{});
 
     // Check Add + Find
     QVERIFY2(
         localStorageManager.addEnResource(resource, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString resourceGuid = resource.guid();
-    Resource foundResource;
+    const QString resourceGuid = resource.guid().value();
+
+    qevercloud::Resource foundResource;
     foundResource.setGuid(resourceGuid);
 
-    LocalStorageManager::GetResourceOptions getResourceOptions(
+    const LocalStorageManager::GetResourceOptions getResourceOptions(
         LocalStorageManager::GetResourceOption::WithBinaryData);
 
     QVERIFY2(
@@ -715,19 +736,29 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
             << "\nIResource found in the local storage: " << foundResource);
 
     // Check Update + Find
-    Resource modifiedResource(resource);
+    qevercloud::Resource modifiedResource = resource;
 
-    modifiedResource.setUpdateSequenceNumber(
-        resource.updateSequenceNumber() + 1);
+    modifiedResource.setUpdateSequenceNum(
+        resource.updateSequenceNum().value() + 1);
 
-    modifiedResource.setDataBody(resource.dataBody() + QByteArray("_modified"));
-    modifiedResource.setDataSize(modifiedResource.dataBody().size());
-    modifiedResource.setDataHash(QByteArray("Fake hash      3"));
+    modifiedResource.setData(qevercloud::Data{});
 
-    modifiedResource.setWidth(resource.width() + 1);
-    modifiedResource.setHeight(resource.height() + 1);
+    modifiedResource.mutableData()->setBody(
+        *resource.data()->body() + QByteArray("_modified"));
 
-    modifiedResource.setRecognitionDataBody(
+    modifiedResource.mutableData()->setSize(
+        modifiedResource.data()->body()->size());
+
+    modifiedResource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *modifiedResource.data()->body(),
+            QCryptographicHash::Md5));
+
+    modifiedResource.setWidth(resource.width().value() + 1);
+    modifiedResource.setHeight(resource.height().value() + 1);
+
+    modifiedResource.setRecognition(qevercloud::Data{});
+    modifiedResource.mutableRecognition()->setBody(
         QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
                    "objID=\"fc83e58282d8059be17debabb69be900\" "
                    "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -751,36 +782,47 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
                    "</item>"
                    "</recoIndex>"));
 
-    modifiedResource.setRecognitionDataSize(
-        modifiedResource.recognitionDataBody().size());
+    modifiedResource.mutableData()->setSize(
+        modifiedResource.data()->body()->size());
 
-    modifiedResource.setRecognitionDataHash(QByteArray("Fake hash      4"));
+    modifiedResource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *modifiedResource.data()->body(),
+            QCryptographicHash::Md5));
 
-    modifiedResource.setAlternateDataBody(
-        resource.alternateDataBody() + QByteArray("_modified"));
+    modifiedResource.setAlternateData(qevercloud::Data{});
 
-    modifiedResource.setAlternateDataSize(
-        modifiedResource.alternateDataBody().size());
+    modifiedResource.mutableAlternateData()->setBody(
+        resource.alternateData()->body().value() + QByteArray("_modified"));
 
-    modifiedResource.setAlternateDataHash(QByteArray("Fake hash      5"));
+    modifiedResource.mutableAlternateData()->setSize(
+        modifiedResource.alternateData()->body()->size());
 
-    auto & modifiedResourceAttributes = modifiedResource.resourceAttributes();
+    modifiedResource.mutableAlternateData()->setBodyHash(
+        QCryptographicHash::hash(
+            *modifiedResource.alternateData()->body(),
+            QCryptographicHash::Md5));
 
-    modifiedResourceAttributes.sourceURL =
-        QStringLiteral("Modified source URL");
+    auto & modifiedResourceAttributes =
+        modifiedResource.mutableAttributes().value();
 
-    modifiedResourceAttributes.timestamp += 1;
-    modifiedResourceAttributes.latitude = 2.0;
-    modifiedResourceAttributes.longitude = 2.0;
-    modifiedResourceAttributes.altitude = 2.0;
+    modifiedResourceAttributes.setSourceURL(
+        QStringLiteral("Modified source URL"));
 
-    modifiedResourceAttributes.cameraMake =
-        QStringLiteral("Modified camera make");
+    modifiedResourceAttributes.setTimestamp(
+        modifiedResourceAttributes.timestamp().value() + 1);
 
-    modifiedResourceAttributes.cameraModel =
-        QStringLiteral("Modified camera model");
+    modifiedResourceAttributes.setLatitude(2.0);
+    modifiedResourceAttributes.setLongitude(2.0);
+    modifiedResourceAttributes.setAltitude(2.0);
 
-    modifiedResource.unsetLocalUid();
+    modifiedResourceAttributes.setCameraMake(
+        QStringLiteral("Modified camera make"));
+
+    modifiedResourceAttributes.setCameraModel(
+        QStringLiteral("Modified camera model"));
+
+    modifiedResource.setLocalId(QString{});
 
     QVERIFY2(
         localStorageManager.updateEnResource(modifiedResource, errorMessage),
@@ -798,7 +840,7 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
             << "\nIResource found in the local storage: " << foundResource);
 
     // Check Find without resource binary data
-    foundResource.clear();
+    foundResource = qevercloud::Resource{};
     foundResource.setGuid(resourceGuid);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
@@ -812,14 +854,14 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
             foundResource, getResourceOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    modifiedResource.setDataBody(QByteArray());
-    modifiedResource.setAlternateDataBody(QByteArray());
+    modifiedResource.mutableData()->setBody(std::nullopt);
+    modifiedResource.mutableAlternateData()->setBody(std::nullopt);
 
     VERIFY2(
         modifiedResource == foundResource,
-        "Updated and found in the local storage "
-        "resources without binary data don't match: "
-            << "Resource updated in the local storage: " << modifiedResource
+        "Updated and found in the local storage resources without binary data "
+            << "don't match: Resource updated in the local storage: "
+            << modifiedResource
             << "\nIResource found in the local storage: " << foundResource);
 
     // enResourceCount to return 1
@@ -859,18 +901,21 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
 
 void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
+    const Account account{
+        QStringLiteral("CoreTesterFakeUser"),
+        Account::Type::Local};
+
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    notebook.setUpdateSequenceNumber(1);
+    notebook.setUpdateSequenceNum(1);
     notebook.setName(QStringLiteral("Fake notebook name"));
-    notebook.setCreationTimestamp(1);
-    notebook.setModificationTimestamp(1);
+    notebook.setServiceCreated(1);
+    notebook.setServiceUpdated(1);
 
     ErrorString errorMessage;
 
@@ -878,65 +923,83 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addNotebook(notebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Note note;
+    qevercloud::Note note;
     note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    note.setUpdateSequenceNumber(1);
+    note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Fake note title"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-    note.setCreationTimestamp(1);
-    note.setModificationTimestamp(1);
+    note.setCreated(1);
+    note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setNotebookLocalUid(notebook.localUid());
+    note.setParentLocalId(notebook.localId());
 
-    qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
-    noteAttributes.subjectDate = 1;
-    noteAttributes.latitude = 1.0;
-    noteAttributes.longitude = 1.0;
-    noteAttributes.altitude = 1.0;
-    noteAttributes.author = QStringLiteral("author");
-    noteAttributes.source = QStringLiteral("source");
-    noteAttributes.sourceURL = QStringLiteral("source URL");
-    noteAttributes.sourceApplication = QStringLiteral("source application");
-    noteAttributes.shareDate = 2;
+    note.setAttributes(qevercloud::NoteAttributes{});
+    auto & noteAttributes = *note.mutableAttributes();
+    noteAttributes.setSubjectDate(1);
+    noteAttributes.setLatitude(1.0);
+    noteAttributes.setLongitude(1.0);
+    noteAttributes.setAltitude(1.0);
+    noteAttributes.setAuthor(QStringLiteral("author"));
+    noteAttributes.setSource(QStringLiteral("source"));
+    noteAttributes.setSourceURL(QStringLiteral("source URL"));
+    noteAttributes.setSourceApplication(QStringLiteral("source application"));
+    noteAttributes.setShareDate(2);
 
-    qevercloud::NoteLimits & noteLimits = note.noteLimits();
-    noteLimits.noteResourceCountMax = 50;
-    noteLimits.uploadLimit = 268435456;
-    noteLimits.resourceSizeMax = 268435456;
-    noteLimits.noteSizeMax = 268435456;
-    noteLimits.uploaded = 100;
+    note.setLimits(qevercloud::NoteLimits{});
+    auto & noteLimits = *note.mutableLimits();
+    noteLimits.setNoteResourceCountMax(50);
+    noteLimits.setUploadLimit(268435456);
+    noteLimits.setResourceSizeMax(268435456);
+    noteLimits.setNoteSizeMax(268435456);
+    noteLimits.setUploaded(100);
 
-    note.unsetLocalUid();
+    note.setLocalId(QString{});
 
-    SharedNote sharedNote;
-    sharedNote.setNoteGuid(note.guid());
-    sharedNote.setSharerUserId(1);
-    sharedNote.setRecipientIdentityId(qint64(2));
-    sharedNote.setRecipientIdentityContactName(QStringLiteral("Contact"));
-    sharedNote.setRecipientIdentityContactId(QStringLiteral("Contact id"));
+    qevercloud::SharedNote sharedNote;
 
-    sharedNote.setRecipientIdentityContactType(
+    sharedNote.mutableLocalData()[QStringLiteral("noteGuid")] =
+        note.guid().value();
+
+    sharedNote.setSharerUserID(1);
+
+    sharedNote.setRecipientIdentity(qevercloud::Identity{});
+    sharedNote.mutableRecipientIdentity()->setId(qint64{2});
+    sharedNote.mutableRecipientIdentity()->setContact(qevercloud::Contact{});
+
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setName(
+        QStringLiteral("Contact"));
+
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setId(
+        QStringLiteral("Contact id"));
+
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setType(
         qevercloud::ContactType::EVERNOTE);
 
-    sharedNote.setRecipientIdentityContactPhotoUrl(QStringLiteral("url"));
-    sharedNote.setRecipientIdentityContactPhotoLastUpdated(qint64(50));
-    sharedNote.setRecipientIdentityContactMessagingPermit(QByteArray("aaa"));
-    sharedNote.setRecipientIdentityContactMessagingPermitExpires(qint64(1));
-    sharedNote.setRecipientIdentityUserId(3);
-    sharedNote.setRecipientIdentityDeactivated(false);
-    sharedNote.setRecipientIdentitySameBusiness(true);
-    sharedNote.setRecipientIdentityBlocked(true);
-    sharedNote.setRecipientIdentityUserConnected(true);
-    sharedNote.setRecipientIdentityEventId(qint64(5));
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setPhotoUrl(
+        QStringLiteral("url"));
 
-    sharedNote.setPrivilegeLevel(
-        qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS);
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setPhotoLastUpdated(
+        qint64{50});
 
-    sharedNote.setCreationTimestamp(6);
-    sharedNote.setModificationTimestamp(7);
-    sharedNote.setAssignmentTimestamp(8);
-    note.addSharedNote(sharedNote);
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setMessagingPermit(
+        QByteArray{"aaa"});
+
+    sharedNote.mutableRecipientIdentity()->mutableContact()->setMessagingPermitExpires(
+        qint64{1});
+
+    sharedNote.mutableRecipientIdentity()->setUserId(3);
+    sharedNote.mutableRecipientIdentity()->setDeactivated(false);
+    sharedNote.mutableRecipientIdentity()->setSameBusiness(true);
+    sharedNote.mutableRecipientIdentity()->setBlocked(true);
+    sharedNote.mutableRecipientIdentity()->setUserConnected(true);
+    sharedNote.mutableRecipientIdentity()->setEventId(qint64{5});
+    sharedNote.setPrivilege(qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS);
+    sharedNote.setServiceCreated(6);
+    sharedNote.setServiceUpdated(7);
+    sharedNote.setServiceAssigned(8);
+
+    note.setSharedNotes(QList<qevercloud::SharedNote>() << sharedNote);
 
     errorMessage.clear();
 
@@ -944,9 +1007,9 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addNote(note, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Tag tag;
+    qevercloud::Tag tag;
     tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
-    tag.setUpdateSequenceNumber(1);
+    tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Fake tag name"));
 
     errorMessage.clear();
@@ -955,8 +1018,8 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addTag(tag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    note.addTagGuid(tag.guid());
-    note.addTagLocalUid(tag.localUid());
+    note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
+    setNoteTagLocalIds(QStringList() << tag.localId(), note);
 
     errorMessage.clear();
 
@@ -967,18 +1030,25 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.updateNote(note, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Resource resource;
+    qevercloud::Resource resource;
     resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
-    resource.setUpdateSequenceNumber(1);
+    resource.setUpdateSequenceNum(1);
     resource.setNoteGuid(note.guid());
-    resource.setDataBody(QByteArray("Fake resource data body"));
-    resource.setDataSize(resource.dataBody().size());
-    resource.setDataHash(QByteArray("Fake hash      1"));
+    resource.setData(qevercloud::Data{});
+    resource.mutableData()->setBody(QByteArray("Fake resource data body"));
+    resource.mutableData()->setSize(resource.data()->body()->size());
+    resource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.data()->body(),
+            QCryptographicHash::Md5));
+
     resource.setMime(QStringLiteral("text/plain"));
     resource.setWidth(1);
     resource.setHeight(1);
 
-    resource.setRecognitionDataBody(
+    resource.setRecognition(qevercloud::Data{});
+
+    resource.mutableRecognition()->setBody(
         QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" "
                    "objID=\"fc83e58282d8059be17debabb69be900\" "
                    "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -1002,23 +1072,30 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                    "</item>"
                    "</recoIndex>"));
 
-    resource.setRecognitionDataSize(resource.recognitionDataBody().size());
-    resource.setRecognitionDataHash(QByteArray("Fake hash      2"));
+    resource.mutableRecognition()->setSize(
+        resource.recognition()->body()->size());
 
-    auto & resourceAttributes = resource.resourceAttributes();
+    resource.mutableRecognition()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.recognition()->body(),
+            QCryptographicHash::Md5));
 
-    resourceAttributes.sourceURL = QStringLiteral("Fake resource source URL");
-    resourceAttributes.timestamp = 1;
-    resourceAttributes.latitude = 0.0;
-    resourceAttributes.longitude = 0.0;
-    resourceAttributes.altitude = 0.0;
+    resource.setAttributes(qevercloud::ResourceAttributes{});
+    auto & resourceAttributes = *resource.mutableAttributes();
 
-    resourceAttributes.cameraMake = QStringLiteral("Fake resource camera make");
+    resourceAttributes.setSourceURL(QStringLiteral("Fake resource source URL"));
+    resourceAttributes.setTimestamp(1);
+    resourceAttributes.setLatitude(0.0);
+    resourceAttributes.setLongitude(0.0);
+    resourceAttributes.setAltitude(0.0);
 
-    resourceAttributes.cameraModel =
-        QStringLiteral("Fake resource camera model");
+    resourceAttributes.setCameraMake(
+        QStringLiteral("Fake resource camera make"));
 
-    note.addResource(resource);
+    resourceAttributes.setCameraModel(
+        QStringLiteral("Fake resource camera model"));
+
+    note.setResources(QList<qevercloud::Resource>() << resource);
 
     errorMessage.clear();
 
@@ -1035,10 +1112,10 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     const QString initialResourceGuid =
         QStringLiteral("00000000-0000-0000-c000-000000000049");
 
-    Resource foundResource;
+    qevercloud::Resource foundResource;
     foundResource.setGuid(initialResourceGuid);
 
-    LocalStorageManager::GetResourceOptions getResourceOptions(
+    const LocalStorageManager::GetResourceOptions getResourceOptions(
         LocalStorageManager::GetResourceOption::WithBinaryData);
 
     QVERIFY2(
@@ -1046,13 +1123,13 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             foundResource, getResourceOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString noteGuid = note.guid();
+    const QString noteGuid = note.guid().value();
 
-    LocalStorageManager::GetNoteOptions getNoteOptions(
+    const LocalStorageManager::GetNoteOptions getNoteOptions(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
 
-    Note foundNote;
+    qevercloud::Note foundNote;
     foundNote.setGuid(noteGuid);
 
     QVERIFY2(
@@ -1060,12 +1137,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid
+     * NOTE: foundNote was searched by guid and might have another local id
      * than the original note which doesn't have one. So use this workaround
-     * to ensure the comparison is good for everything without local uid
+     * to ensure the comparison is good for everything without local id
      */
-    if (note.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (note.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     VERIFY2(
@@ -1075,52 +1152,62 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNote found in the local storage: " << foundNote);
 
     // Check Update + Find
-    Note modifiedNote(note);
-    modifiedNote.setUpdateSequenceNumber(note.updateSequenceNumber() + 1);
-    modifiedNote.setTitle(note.title() + QStringLiteral("_modified"));
-    modifiedNote.setCreationTimestamp(note.creationTimestamp() + 1);
-    modifiedNote.setModificationTimestamp(note.modificationTimestamp() + 1);
-    modifiedNote.setFavorited(true);
+    qevercloud::Note modifiedNote = note;
+    modifiedNote.setUpdateSequenceNum(note.updateSequenceNum().value() + 1);
+    modifiedNote.setTitle(note.title().value() + QStringLiteral("_modified"));
+    modifiedNote.setCreated(note.created().value() + 1);
+    modifiedNote.setUpdated(note.updated().value() + 1);
+    modifiedNote.setLocallyFavorited(true);
 
-    auto & modifiedNoteAttributes = modifiedNote.noteAttributes();
+    auto & modifiedNoteAttributes = *modifiedNote.mutableAttributes();
 
-    modifiedNoteAttributes.subjectDate = 2;
-    modifiedNoteAttributes.latitude = 2.0;
-    modifiedNoteAttributes.longitude = 2.0;
-    modifiedNoteAttributes.altitude = 2.0;
-    modifiedNoteAttributes.author = QStringLiteral("modified author");
-    modifiedNoteAttributes.source = QStringLiteral("modified source");
-    modifiedNoteAttributes.sourceURL = QStringLiteral("modified source URL");
+    modifiedNoteAttributes.setSubjectDate(2);
+    modifiedNoteAttributes.setLatitude(2.0);
+    modifiedNoteAttributes.setLongitude(2.0);
+    modifiedNoteAttributes.setAltitude(2.0);
+    modifiedNoteAttributes.setAuthor(QStringLiteral("modified author"));
+    modifiedNoteAttributes.setSource(QStringLiteral("modified source"));
+    modifiedNoteAttributes.setSourceURL(QStringLiteral("modified source URL"));
 
-    modifiedNoteAttributes.sourceApplication =
-        QStringLiteral("modified source application");
+    modifiedNoteAttributes.setSourceApplication(
+        QStringLiteral("modified source application"));
 
-    modifiedNoteAttributes.shareDate = 2;
+    modifiedNoteAttributes.setShareDate(2);
 
-    Tag newTag;
+    qevercloud::Tag newTag;
     newTag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000050"));
-    newTag.setUpdateSequenceNumber(1);
+    newTag.setUpdateSequenceNum(1);
     newTag.setName(QStringLiteral("Fake new tag name"));
 
     QVERIFY2(
         localStorageManager.addTag(newTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    modifiedNote.addTagGuid(newTag.guid());
-    modifiedNote.addTagLocalUid(newTag.localUid());
+    addNoteTagLocalId(newTag.localId(), modifiedNote);
+    addNoteTagGuid(newTag.guid().value(), modifiedNote);
 
-    Resource newResource;
+    qevercloud::Resource newResource;
     newResource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000051"));
-    newResource.setUpdateSequenceNumber(2);
+    newResource.setUpdateSequenceNum(2);
     newResource.setNoteGuid(note.guid());
-    newResource.setDataBody(QByteArray("Fake new resource data body"));
-    newResource.setDataSize(newResource.dataBody().size());
-    newResource.setDataHash(QByteArray("Fake hash      3"));
+    newResource.setData(qevercloud::Data{});
+
+    newResource.mutableData()->setBody(
+        QByteArray("Fake new resource data body"));
+
+    newResource.mutableData()->setSize(newResource.data()->body()->size());
+
+    newResource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *newResource.data()->body(),
+            QCryptographicHash::Md5));
+
     newResource.setMime(QStringLiteral("text/plain"));
     newResource.setWidth(2);
     newResource.setHeight(2);
 
-    newResource.setRecognitionDataBody(
+    newResource.setRecognition(qevercloud::Data{});
+    newResource.mutableRecognition()->setBody(
         QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
                    "objID=\"fc83e58282d8059be17debabb69be900\" "
                    "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -1144,49 +1231,61 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                    "</item>"
                    "</recoIndex>"));
 
-    newResource.setRecognitionDataSize(
-        newResource.recognitionDataBody().size());
+    newResource.mutableRecognition()->setSize(
+        newResource.recognition()->body()->size());
 
-    newResource.setRecognitionDataHash(QByteArray("Fake hash      4"));
+    newResource.mutableRecognition()->setBodyHash(
+        QCryptographicHash::hash(
+            *newResource.data()->body(),
+            QCryptographicHash::Md5));
 
-    auto & newResourceAttributes = newResource.resourceAttributes();
+    newResource.setAttributes(qevercloud::ResourceAttributes{});
+    auto & newResourceAttributes = *newResource.mutableAttributes();
 
-    newResourceAttributes.sourceURL =
-        QStringLiteral("Fake resource source URL");
+    newResourceAttributes.setSourceURL(
+        QStringLiteral("Fake resource source URL"));
 
-    newResourceAttributes.timestamp = 1;
-    newResourceAttributes.latitude = 0.0;
-    newResourceAttributes.longitude = 0.0;
-    newResourceAttributes.altitude = 0.0;
+    newResourceAttributes.setTimestamp(1);
+    newResourceAttributes.setLatitude(0.0);
+    newResourceAttributes.setLongitude(0.0);
+    newResourceAttributes.setAltitude(0.0);
 
-    newResourceAttributes.cameraMake =
-        QStringLiteral("Fake resource camera make");
+    newResourceAttributes.setCameraMake(
+        QStringLiteral("Fake resource camera make"));
 
-    newResourceAttributes.cameraModel =
-        QStringLiteral("Fake resource camera model");
+    newResourceAttributes.setCameraModel(
+        QStringLiteral("Fake resource camera model"));
 
-    newResourceAttributes.applicationData = qevercloud::LazyMap();
+    newResourceAttributes.setApplicationData(qevercloud::LazyMap{});
 
-    newResourceAttributes.applicationData->keysOnly = QSet<QString>();
-    auto & keysOnly = newResourceAttributes.applicationData->keysOnly.ref();
+    newResourceAttributes.mutableApplicationData()->setKeysOnly(
+        QSet<QString>{});
+
+    auto & keysOnly =
+        *newResourceAttributes.mutableApplicationData()->mutableKeysOnly();
+
     keysOnly.reserve(1);
     keysOnly.insert(QStringLiteral("key 1"));
 
-    newResourceAttributes.applicationData->fullMap = QMap<QString, QString>();
-    auto & fullMap = newResourceAttributes.applicationData->fullMap.ref();
+    newResourceAttributes.mutableApplicationData()->setFullMap(
+        QMap<QString, QString>{});
+
+    auto & fullMap =
+        *newResourceAttributes.mutableApplicationData()->mutableFullMap();
+
     fullMap[QStringLiteral("key 1 map")] = QStringLiteral("value 1");
 
-    modifiedNote.addResource(newResource);
+    modifiedNote.mutableResources().value().push_back(newResource);
 
-    modifiedNote.unsetLocalUid();
-    modifiedNote.setNotebookLocalUid(notebook.localUid());
+    modifiedNote.setLocalId(QString{});
+    modifiedNote.setParentLocalId(notebook.localId());
 
     QVERIFY2(
         localStorageManager.updateNote(
             modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundResource = Resource();
+    foundResource = qevercloud::Resource();
     foundResource.setGuid(newResource.guid());
 
     QVERIFY2(
@@ -1194,28 +1293,26 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             foundResource, getResourceOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundResource.setNoteLocalUid(QString());
+    foundResource.setParentLocalId(QString{});
 
     VERIFY2(
         foundResource == newResource,
-        "Something is wrong with the new resource "
-            << "which should have been added to the local "
-            << "storage along with the note update: it is "
-            << "not equal to the original resource"
-            << ": original resource: " << newResource
-            << "\nfound resource: " << foundResource);
+        "Something is wrong with the new resource which should have been added "
+            << "to the local storage along with the note update: it is not "
+            << "equal to the original resource: original resource: "
+            << newResource << "\nfound resource: " << foundResource);
 
     QVERIFY2(
         localStorageManager.findNote(foundNote, getNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid is
+     * NOTE: foundNote was searched by guid and might have another local id is
      * the original note doesn't have one. So use this workaround to ensure
-     * the comparison is good for everything without local uid
+     * the comparison is good for everything without local id
      */
-    if (modifiedNote.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (modifiedNote.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     VERIFY2(
@@ -1226,19 +1323,21 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     // Check that tags are not touched if update tags flag is not set on attempt
     // to update note
-    QStringList tagLocalUidsBeforeUpdate = modifiedNote.tagLocalUids();
-    QStringList tagGuidsBeforeUpdate = modifiedNote.tagGuids();
+    QStringList tagLocalIdsBeforeUpdate = noteTagLocalIds(modifiedNote);
 
-    modifiedNote.removeTagGuid(newTag.guid());
-    modifiedNote.removeTagLocalUid(newTag.localUid());
+    QStringList tagGuidsBeforeUpdate =
+        modifiedNote.tagGuids().value_or(QStringList());
+
+    removeNoteTagLocalId(newTag.localId(), modifiedNote);
+    removeNoteTagGuid(*newTag.guid(), modifiedNote);
 
     // Modify something about the note to make the test a little more
     // interesting
     modifiedNote.setTitle(
-        modifiedNote.title() + QStringLiteral("_modified_again"));
+        modifiedNote.title().value() + QStringLiteral("_modified_again"));
 
-    modifiedNote.setFavorited(false);
-    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    modifiedNote.setLocallyFavorited(false);
+    modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
     updateNoteOptions = LocalStorageManager::UpdateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata |
@@ -1249,7 +1348,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundNote = Note();
+    foundNote = qevercloud::Note();
     foundNote.setGuid(modifiedNote.guid());
 
     QVERIFY2(
@@ -1257,12 +1356,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid is
+     * NOTE: foundNote was searched by guid and might have another local id is
      * the original note doesn't have one. So use this workaround to ensure
-     * the comparison is good for everything without local uid
+     * the comparison is good for everything without local id
      */
-    if (modifiedNote.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (modifiedNote.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     /**
@@ -1282,7 +1381,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNote found in the local storage: " << foundNote);
 
     modifiedNote.setTagGuids(tagGuidsBeforeUpdate);
-    modifiedNote.setTagLocalUids(tagLocalUidsBeforeUpdate);
+    setNoteTagLocalIds(tagLocalIdsBeforeUpdate, modifiedNote);
 
     VERIFY2(
         modifiedNote == foundNote,
@@ -1296,16 +1395,18 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
      * Check that resources are not touched if update resource metadata flag
      * is not set on attempt to update note
      */
-    QList<Resource> previousModifiedNoteResources = modifiedNote.resources();
-    Q_UNUSED(modifiedNote.removeResource(newResource))
+    auto previousModifiedNoteResources =
+        modifiedNote.resources().value_or(QList<qevercloud::Resource>());
+
+    removeNoteResource(newResource.localId(), modifiedNote);
 
     // Modify something about the note to make the test a little more
     // interesting
     modifiedNote.setTitle(
-        modifiedNote.title() + QStringLiteral("_modified_once_again"));
+        modifiedNote.title().value() + QStringLiteral("_modified_once_again"));
 
-    modifiedNote.setFavorited(true);
-    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    modifiedNote.setLocallyFavorited(true);
+    modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
     updateNoteOptions = LocalStorageManager::UpdateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateTags);
@@ -1315,7 +1416,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundNote = Note();
+    foundNote = qevercloud::Note();
     foundNote.setGuid(modifiedNote.guid());
 
     QVERIFY2(
@@ -1323,12 +1424,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid is
+     * NOTE: foundNote was searched by guid and might have another local id is
      * the original note doesn't have one. So use this workaround to ensure
-     * the comparison is good for everything without local uid
+     * the comparison is good for everything without local id
      */
-    if (modifiedNote.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (modifiedNote.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     /**
@@ -1362,9 +1463,9 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
      * is not set even if update resource binary data flag is set on attempt
      * to update note
      */
-    Q_UNUSED(modifiedNote.removeResource(newResource))
+    removeNoteResource(newResource.localId(), modifiedNote);
 
-    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
     updateNoteOptions = LocalStorageManager::UpdateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateTags |
@@ -1375,7 +1476,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundNote = Note();
+    foundNote = qevercloud::Note();
     foundNote.setGuid(modifiedNote.guid());
 
     QVERIFY2(
@@ -1383,12 +1484,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid is
+     * NOTE: foundNote was searched by guid and might have another local id is
      * the original note doesn't have one. So use this workaround to ensure
-     * the comparison is good for everything without local uid
+     * the comparison is good for everything without local id
      */
-    if (modifiedNote.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (modifiedNote.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     /**
@@ -1398,33 +1499,34 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
      */
     VERIFY2(
         modifiedNote != foundNote,
-        "Detected unexpectedly equal notes: "
-            << "locally modified notes which had its "
-            << "resources list modified but not updated "
-            << "in the local storage and the note found "
-            << "in the local storage"
-            << ": Note updated in the local storage "
-            << "(with resource removed): " << modifiedNote
+        "Detected unexpectedly equal notes: locally modified notes which had "
+            << "its resources list modified but not updated in the local "
+            << "storage and the note found in the local storage: Note updated "
+            << "in the local storage (with resource removed): " << modifiedNote
             << "\nNote found in the local storage: " << foundNote);
 
     modifiedNote.setResources(previousModifiedNoteResources);
 
     VERIFY2(
         modifiedNote == foundNote,
-        "Updated and found in the local storage notes don't match"
-            << ": Note updated in the local storage "
-            << "(without resource metadata after which "
-            << "resources were manually restored): " << modifiedNote
+        "Updated and found in the local storage notes don't match: Note "
+            << "updated in the local storage (without resource metadata after "
+            << "which resources were manually restored): " << modifiedNote
             << "\nNote found in the local storage: " << foundNote);
 
     // Check that resource binary data is not touched unless update resource
     // binary data flag is set on attempt to update note
-    newResource.setDataBody(QByteArray("Fake modified new resource data body"));
-    newResource.setDataSize(newResource.dataBody().size());
+    newResource.setData(qevercloud::Data{});
 
-    Q_UNUSED(modifiedNote.updateResource(newResource))
+    newResource.mutableData()->setBody(
+        QByteArray("Fake modified new resource data body"));
 
-    modifiedNote.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    newResource.mutableData()->setSize(
+        newResource.data()->body()->size());
+
+    putNoteResource(newResource, modifiedNote);
+
+    modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
     updateNoteOptions = LocalStorageManager::UpdateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateTags |
@@ -1435,7 +1537,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             modifiedNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundNote = Note();
+    foundNote = qevercloud::Note();
     foundNote.setGuid(modifiedNote.guid());
 
     QVERIFY2(
@@ -1443,12 +1545,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     /**
-     * NOTE: foundNote was searched by guid and might have another local uid is
+     * NOTE: foundNote was searched by guid and might have another local id is
      * the original note doesn't have one. So use this workaround to ensure
-     * the comparison is good for everything without local uid
+     * the comparison is good for everything without local id
      */
-    if (modifiedNote.localUid().isEmpty()) {
-        foundNote.unsetLocalUid();
+    if (modifiedNote.localId().isEmpty()) {
+        foundNote.setLocalId(QString{});
     }
 
     /**
@@ -1478,11 +1580,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNote found in the local storage: " << foundNote);
 
     // Add one more note to test note counting methods
-    Note newNote;
+    qevercloud::Note newNote;
     newNote.setNotebookGuid(notebook.guid());
     newNote.setTitle(QStringLiteral("New note"));
-    newNote.addTagGuid(tag.guid());
-    newNote.addTagLocalUid(tag.localUid());
+
+    addNoteTagGuid(tag.guid().value(), newNote);
+    addNoteTagLocalId(tag.localId(), newNote);
 
     QVERIFY2(
         localStorageManager.addNote(newNote, errorMessage),
@@ -1529,26 +1632,26 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                        .arg(count)));
 
     // Note count per all tags to return 2 and 1 for first and second tags
-    QHash<QString, int> noteCountsPerTagLocalUid;
+    QHash<QString, int> noteCountsPerTagLocalId;
 
     QVERIFY2(
         localStorageManager.noteCountsPerAllTags(
-            noteCountsPerTagLocalUid, errorMessage),
+            noteCountsPerTagLocalId, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     QVERIFY2(
-        noteCountsPerTagLocalUid.size() == 2,
-        qPrintable(QString::fromUtf8("Unexpected amount of tag local uids "
+        noteCountsPerTagLocalId.size() == 2,
+        qPrintable(QString::fromUtf8("Unexpected amount of tag local ids "
                                      "within the hash of note counts by tag "
-                                     "local uid: expected 2, got %1")
-                       .arg(noteCountsPerTagLocalUid.size())));
+                                     "local id: expected 2, got %1")
+                       .arg(noteCountsPerTagLocalId.size())));
 
-    auto firstTagNoteCountIt = noteCountsPerTagLocalUid.find(tag.localUid());
+    auto firstTagNoteCountIt = noteCountsPerTagLocalId.find(tag.localId());
 
     QVERIFY2(
-        firstTagNoteCountIt != noteCountsPerTagLocalUid.end(),
+        firstTagNoteCountIt != noteCountsPerTagLocalId.end(),
         qPrintable(QStringLiteral(
-            "Can't find the note count for first tag's local uid")));
+            "Can't find the note count for first tag's local id")));
 
     QVERIFY2(
         firstTagNoteCountIt.value() == 2,
@@ -1557,12 +1660,12 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                        .arg(firstTagNoteCountIt.value())));
 
     auto secondTagNoteCountIt =
-        noteCountsPerTagLocalUid.find(newTag.localUid());
+        noteCountsPerTagLocalId.find(newTag.localId());
 
     QVERIFY2(
-        secondTagNoteCountIt != noteCountsPerTagLocalUid.end(),
+        secondTagNoteCountIt != noteCountsPerTagLocalId.end(),
         qPrintable(QStringLiteral(
-            "Can't find the note count for second tag's local uid")));
+            "Can't find the note count for second tag's local id")));
 
     QVERIFY2(
         secondTagNoteCountIt.value() == 1,
@@ -1572,13 +1675,13 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                 .arg(secondTagNoteCountIt.value())));
 
     // noteCountPerNotebooksAndTags to return 1 for new tag
-    QStringList notebookLocalUids;
-    notebookLocalUids << notebook.localUid();
-    QStringList tagLocalUids;
-    tagLocalUids << newTag.localUid();
+    QStringList notebookLocalIds;
+    notebookLocalIds << notebook.localId();
+    QStringList tagLocalIds;
+    tagLocalIds << newTag.localId();
 
     count = localStorageManager.noteCountPerNotebooksAndTags(
-        notebookLocalUids, tagLocalUids, errorMessage);
+        notebookLocalIds, tagLocalIds, errorMessage);
 
     QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
@@ -1590,10 +1693,10 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
                        .arg(count)));
 
     // noteCountPerNotebooksAndTags to return 2 for old tag
-    tagLocalUids << tag.localUid();
+    tagLocalIds << tag.localId();
 
     count = localStorageManager.noteCountPerNotebooksAndTags(
-        notebookLocalUids, tagLocalUids, errorMessage);
+        notebookLocalIds, tagLocalIds, errorMessage);
 
     QVERIFY2(count >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
@@ -1606,7 +1709,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     // Check Delete + Find and check deleted flag
     modifiedNote.setActive(false);
-    modifiedNote.setDeletionTimestamp(1);
+    modifiedNote.setDeleted(1);
     foundNote.setActive(true);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
@@ -1625,7 +1728,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        foundNote.hasActive() && !foundNote.active(),
+        foundNote.active() && !*foundNote.active(),
         "Note which should have been marked "
             << "non-active is not marked so after "
             << "LocalStorageManager::FindNote: "
@@ -1654,7 +1757,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNote found in the local storage: " << foundNote);
 
     // Try to find resource belonging to expunged note (failure expected)
-    foundResource = Resource();
+    foundResource = qevercloud::Resource();
     foundResource.setGuid(newResource.guid());
 
     VERIFY2(
@@ -3314,7 +3417,7 @@ void TestAddingNoteWithoutLocalUid()
         localStorageManager.addNotebook(notebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    // 3) Try to add a note without local uid without tags or resources
+    // 3) Try to add a note without local id without tags or resources
     Note firstNote;
     firstNote.unsetLocalUid();
     firstNote.setGuid(UidGenerator::Generate());
@@ -3331,7 +3434,7 @@ void TestAddingNoteWithoutLocalUid()
     QVERIFY2(
         !firstNote.localUid().isEmpty(),
         qPrintable(QStringLiteral(
-            "Note local uid is empty after LocalStorageManager::addNote method "
+            "Note local id is empty after LocalStorageManager::addNote method "
             "returning")));
 
     // 4) Add some tags in order to test adding notes with tags
@@ -3365,7 +3468,7 @@ void TestAddingNoteWithoutLocalUid()
         localStorageManager.addTag(thirdTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    // 5) Try to add a note without local uid with tag guids
+    // 5) Try to add a note without local id with tag guids
     Note secondNote;
     secondNote.unsetLocalUid();
     secondNote.setGuid(UidGenerator::Generate());
@@ -3382,7 +3485,7 @@ void TestAddingNoteWithoutLocalUid()
         localStorageManager.addNote(secondNote, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    // 6) Try to add a note without local uid with tag guids and with resources
+    // 6) Try to add a note without local id with tag guids and with resources
     Note thirdNote;
     thirdNote.unsetLocalUid();
     thirdNote.setGuid(UidGenerator::Generate());
@@ -3470,7 +3573,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         localStorageManager.addTag(thirdTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    // 4) Add a note without tag local uids but with tag guids
+    // 4) Add a note without tag local ids but with tag guids
     Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setNotebookGuid(notebook.guid());
@@ -3489,7 +3592,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
 
     QVERIFY2(
         firstNote.hasTagLocalUids(),
-        qPrintable(QStringLiteral("Note has no tag local uids after "
+        qPrintable(QStringLiteral("Note has no tag local ids after "
                                   "LocalStorageManager::addNote method "
                                   "returning")));
 
@@ -3498,7 +3601,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     QVERIFY2(
         tagLocalUids.size() == 3,
         qPrintable(QStringLiteral(
-            "Note's tag local uids have improper size not matching the number "
+            "Note's tag local ids have improper size not matching the number "
             "of tag guids after LocalStorageManager::addNote method "
             "returning")));
 
@@ -3507,10 +3610,10 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             tagLocalUids.contains(secondTag.localUid()) &&
             tagLocalUids.contains(thirdTag.localUid()),
         qPrintable(QStringLiteral(
-            "Note doesn't have one of tag local uids it should have after "
+            "Note doesn't have one of tag local ids it should have after "
             "LocalStorageManager::addNote method returning")));
 
-    // 5) Add a note without tag guids but with tag local uids
+    // 5) Add a note without tag guids but with tag local ids
     Note secondNote;
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setNotebookGuid(notebook.guid());
@@ -3539,7 +3642,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         tagGuids.size() == 3,
         qPrintable(QStringLiteral(
             "Note's tag guids have improper size not matching the number of "
-            "tag local uids after LocalStorageManager::addNote method "
+            "tag local ids after LocalStorageManager::addNote method "
             "returning")));
 
     QVERIFY2(
@@ -3568,7 +3671,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     QVERIFY2(
         firstNote.hasTagLocalUids(),
         qPrintable(QStringLiteral(
-            "Note has no tag local uids after LocalStorageManager::updateNote "
+            "Note has no tag local ids after LocalStorageManager::updateNote "
             "method returning")));
 
     const QStringList & updatedTagLocalUids = firstNote.tagLocalUids();
@@ -3576,7 +3679,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     QVERIFY2(
         updatedTagLocalUids.size() == 2,
         qPrintable(QStringLiteral(
-            "Note's tag local uids have improper size not matching the number "
+            "Note's tag local ids have improper size not matching the number "
             "of tag guids after LocalStorageManager::updateNote method "
             "returning")));
 
@@ -3584,7 +3687,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         updatedTagLocalUids.contains(firstTag.localUid()) &&
             updatedTagLocalUids.contains(secondTag.localUid()),
         qPrintable(QStringLiteral(
-            "Note doesn't have one of tag local uids it should have after "
+            "Note doesn't have one of tag local ids it should have after "
             "LocalStorageManager::updateNote method returning")));
 
     // 7) Update note with tag guids
@@ -3613,7 +3716,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         updatedTagGuids.size() == 2,
         qPrintable(QStringLiteral(
             "Note's tag guids have improper size not matching the number of "
-            "tag local uids after LocalStorageManager::updateNote method "
+            "tag local ids after LocalStorageManager::updateNote method "
             "returning")));
 
     QVERIFY2(

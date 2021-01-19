@@ -28,6 +28,7 @@
 namespace qevercloud {
 
 class Note;
+class Resource;
 
 } // namespace qevercloud
 
@@ -67,6 +68,27 @@ noteContentToPlainTextAndListOfWords(
 
 void QUENTIER_EXPORT setNoteTagLocalIds(
     QStringList tagLocalIds, qevercloud::Note & note);
+
+void QUENTIER_EXPORT addNoteTagLocalId(
+    const QString & tagLocalId, qevercloud::Note & note);
+
+void QUENTIER_EXPORT removeNoteTagLocalId(
+    const QString & tagLocalId, qevercloud::Note & note);
+
+void QUENTIER_EXPORT addNoteTagGuid(
+    const QString & tagGuid, qevercloud::Note & note);
+
+void QUENTIER_EXPORT removeNoteTagGuid(
+    const QString & tagGuid, qevercloud::Note & note);
+
+void QUENTIER_EXPORT addNoteResource(
+    qevercloud::Resource resource, qevercloud::Note & note);
+
+void QUENTIER_EXPORT removeNoteResource(
+    const QString & resourceLocalId, qevercloud::Note & note);
+
+void QUENTIER_EXPORT putNoteResource(
+    qevercloud::Resource resource, qevercloud::Note & note);
 
 [[nodiscard]] QUENTIER_EXPORT QByteArray noteThumbnailData(
     const qevercloud::Note & note);
