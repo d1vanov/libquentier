@@ -1778,12 +1778,12 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    LinkedNotebook linkedNotebook;
+    qevercloud::LinkedNotebook linkedNotebook;
 
     linkedNotebook.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-    linkedNotebook.setUpdateSequenceNumber(1);
+    linkedNotebook.setUpdateSequenceNum(1);
     linkedNotebook.setShareName(QStringLiteral("Linked notebook share name"));
     linkedNotebook.setUsername(QStringLiteral("Linked notebook username"));
     linkedNotebook.setShardId(QStringLiteral("Linked notebook shard id"));
@@ -1802,72 +1802,89 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     linkedNotebook.setStack(QStringLiteral("Linked notebook stack"));
     linkedNotebook.setBusinessId(1);
 
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    notebook.setUpdateSequenceNumber(1);
-    notebook.setLinkedNotebookGuid(linkedNotebook.guid());
+    notebook.setUpdateSequenceNum(1);
+    setItemLinkedNotebookGuid(*linkedNotebook.guid(), notebook);
     notebook.setName(QStringLiteral("Fake notebook name"));
-    notebook.setCreationTimestamp(1);
-    notebook.setModificationTimestamp(1);
+    notebook.setServiceCreated(1);
+    notebook.setServiceUpdated(1);
     notebook.setDefaultNotebook(true);
-    notebook.setLastUsed(false);
-    notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
-    notebook.setPublishingOrder(1);
-    notebook.setPublishingAscending(true);
+    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
+    notebook.setPublishing(qevercloud::Publishing{});
+    notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
+    notebook.mutablePublishing()->setOrder(qevercloud::NoteSortOrder::CREATED);
+    notebook.mutablePublishing()->setAscending(true);
 
-    notebook.setPublishingPublicDescription(
+    notebook.mutablePublishing()->setPublicDescription(
         QStringLiteral("Fake public description"));
 
     notebook.setPublished(true);
     notebook.setStack(QStringLiteral("Fake notebook stack"));
 
-    notebook.setBusinessNotebookDescription(
+    notebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+
+    notebook.mutableBusinessNotebook()->setNotebookDescription(
         QStringLiteral("Fake business notebook description"));
 
-    notebook.setBusinessNotebookPrivilegeLevel(1);
-    notebook.setBusinessNotebookRecommended(true);
+    notebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    notebook.mutableBusinessNotebook()->setRecommended(true);
 
     // NotebookRestrictions
-    notebook.setCanReadNotes(true);
-    notebook.setCanCreateNotes(true);
-    notebook.setCanUpdateNotes(true);
-    notebook.setCanExpungeNotes(false);
-    notebook.setCanShareNotes(true);
-    notebook.setCanEmailNotes(true);
-    notebook.setCanSendMessageToRecipients(true);
-    notebook.setCanUpdateNotebook(true);
-    notebook.setCanExpungeNotebook(false);
-    notebook.setCanSetDefaultNotebook(true);
-    notebook.setCanSetNotebookStack(true);
-    notebook.setCanPublishToPublic(true);
-    notebook.setCanPublishToBusinessLibrary(false);
-    notebook.setCanCreateTags(true);
-    notebook.setCanUpdateTags(true);
-    notebook.setCanExpungeTags(false);
-    notebook.setCanSetParentTag(true);
-    notebook.setCanCreateSharedNotebooks(true);
-    notebook.setCanCreateSharedNotebooks(true);
-    notebook.setCanUpdateNotebook(true);
-    notebook.setUpdateWhichSharedNotebookRestrictions(1);
-    notebook.setExpungeWhichSharedNotebookRestrictions(1);
+    notebook.setRestrictions(qevercloud::NotebookRestrictions{});
+    auto & notebookRestrictions = *notebook.mutableRestrictions();
+    notebookRestrictions.setNoReadNotes(false);
+    notebookRestrictions.setNoCreateNotes(false);
+    notebookRestrictions.setNoUpdateNotes(false);
+    notebookRestrictions.setNoExpungeNotes(true);
+    notebookRestrictions.setNoShareNotes(false);
+    notebookRestrictions.setNoEmailNotes(false);
+    notebookRestrictions.setNoSendMessageToRecipients(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
+    notebookRestrictions.setNoExpungeNotebook(true);
+    notebookRestrictions.setNoSetDefaultNotebook(false);
+    notebookRestrictions.setNoSetNotebookStack(false);
+    notebookRestrictions.setNoPublishToPublic(false);
+    notebookRestrictions.setNoPublishToBusinessLibrary(true);
+    notebookRestrictions.setNoCreateTags(false);
+    notebookRestrictions.setNoUpdateTags(false);
+    notebookRestrictions.setNoExpungeTags(true);
+    notebookRestrictions.setNoSetParentTag(false);
+    notebookRestrictions.setNoCreateSharedNotebooks(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
 
-    SharedNotebook sharedNotebook;
+    notebookRestrictions.setUpdateWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::ASSIGNED);
+
+    notebookRestrictions.setExpungeWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::NO_SHARED_NOTEBOOKS);
+
+    qevercloud::SharedNotebook sharedNotebook;
     sharedNotebook.setId(1);
     sharedNotebook.setUserId(1);
     sharedNotebook.setNotebookGuid(notebook.guid());
     sharedNotebook.setEmail(QStringLiteral("Fake shared notebook email"));
-    sharedNotebook.setCreationTimestamp(1);
-    sharedNotebook.setModificationTimestamp(1);
+    sharedNotebook.setServiceCreated(1);
+    sharedNotebook.setServiceUpdated(1);
 
     sharedNotebook.setGlobalId(
         QStringLiteral("Fake shared notebook global id"));
 
     sharedNotebook.setUsername(QStringLiteral("Fake shared notebook username"));
-    sharedNotebook.setPrivilegeLevel(1);
-    sharedNotebook.setReminderNotifyEmail(true);
-    sharedNotebook.setReminderNotifyApp(false);
 
-    notebook.addSharedNotebook(sharedNotebook);
+    sharedNotebook.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    sharedNotebook.setRecipientSettings(
+        qevercloud::SharedNotebookRecipientSettings{});
+
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyEmail(true);
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyInApp(false);
+
+    notebook.setSharedNotebooks(
+        QList<qevercloud::SharedNotebook>() << sharedNotebook);
 
     ErrorString errorMessage;
     QVERIFY2(
@@ -1880,16 +1897,16 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addNotebook(notebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Note note;
+    qevercloud::Note note;
     note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
-    note.setUpdateSequenceNumber(1);
+    note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Fake note title"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-    note.setCreationTimestamp(1);
-    note.setModificationTimestamp(1);
+    note.setCreated(1);
+    note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setNotebookLocalUid(notebook.localUid());
+    note.setParentLocalId(notebook.localId());
 
     errorMessage.clear();
 
@@ -1897,9 +1914,9 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addNote(note, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Tag tag;
+    qevercloud::Tag tag;
     tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
-    tag.setUpdateSequenceNumber(1);
+    tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Fake tag name"));
 
     errorMessage.clear();
@@ -1908,8 +1925,8 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addTag(tag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    note.addTagGuid(tag.guid());
-    note.addTagLocalUid(tag.localUid());
+    addNoteTagGuid(*tag.guid(), note);
+    addNoteTagLocalId(tag.localId(), note);
 
     errorMessage.clear();
 
@@ -1920,15 +1937,11 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.updateNote(note, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    QVERIFY2(
-        notebook.checkParameters(errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
-
     // Check Find
     const QString initialNoteGuid =
         QStringLiteral("00000000-0000-0000-c000-000000000049");
 
-    Note foundNote;
+    qevercloud::Note foundNote;
     foundNote.setGuid(initialNoteGuid);
 
     LocalStorageManager::GetNoteOptions getNoteOptions(
@@ -1939,10 +1952,12 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.findNote(foundNote, getNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Notebook foundNotebook;
+    qevercloud::Notebook foundNotebook;
     foundNotebook.setGuid(notebook.guid());
-    if (notebook.hasLinkedNotebookGuid()) {
-        foundNotebook.setLinkedNotebookGuid(notebook.linkedNotebookGuid());
+
+    const QString notebookLinkedNotebookGuid = itemLinkedNotebookGuid(notebook);
+    if (!notebookLinkedNotebookGuid.isEmpty()) {
+        setItemLinkedNotebookGuid(notebookLinkedNotebookGuid, foundNotebook);
     }
 
     QVERIFY2(
@@ -1956,12 +1971,14 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNotebook found in LocalStorageManager: " << foundNotebook);
 
     // Check Find by name
-    Notebook foundByNameNotebook;
-    foundByNameNotebook.unsetLocalUid();
+    qevercloud::Notebook foundByNameNotebook;
+    foundByNameNotebook.setLocalId(QString{});
     foundByNameNotebook.setName(notebook.name());
-    if (notebook.hasLinkedNotebookGuid()) {
-        foundByNameNotebook.setLinkedNotebookGuid(
-            notebook.linkedNotebookGuid());
+
+    if (!notebookLinkedNotebookGuid.isEmpty()) {
+        setItemLinkedNotebookGuid(
+            notebookLinkedNotebookGuid,
+            foundByNameNotebook);
     }
 
     QVERIFY2(
@@ -1975,13 +1992,14 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << "Notebook found by name: " << foundByNameNotebook
             << "\nOriginal notebook: " << notebook);
 
-    if (notebook.hasLinkedNotebookGuid()) {
+    if (!notebookLinkedNotebookGuid.isEmpty()) {
         // Check Find by linked notebook guid
-        Notebook foundByLinkedNotebookGuidNotebook;
-        foundByLinkedNotebookGuidNotebook.unsetLocalUid();
+        qevercloud::Notebook foundByLinkedNotebookGuidNotebook;
+        foundByLinkedNotebookGuidNotebook.setLocalId(QString{});
 
-        foundByLinkedNotebookGuidNotebook.setLinkedNotebookGuid(
-            notebook.linkedNotebookGuid());
+        setItemLinkedNotebookGuid(
+            notebookLinkedNotebookGuid,
+            foundByLinkedNotebookGuidNotebook);
 
         QVERIFY2(
             localStorageManager.findNotebook(
@@ -1998,14 +2016,14 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     }
 
     // Check FindDefaultNotebook
-    Notebook defaultNotebook;
+    qevercloud::Notebook defaultNotebook;
 
     QVERIFY2(
         localStorageManager.findDefaultNotebook(defaultNotebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     // Check FindLastUsedNotebook (failure expected)
-    Notebook lastUsedNotebook;
+    qevercloud::Notebook lastUsedNotebook;
 
     VERIFY2(
         !localStorageManager.findLastUsedNotebook(
@@ -2014,7 +2032,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << lastUsedNotebook);
 
     // Check FindDefaultOrLastUsedNotebook
-    Notebook defaultOrLastUsedNotebook;
+    qevercloud::Notebook defaultOrLastUsedNotebook;
 
     QVERIFY2(
         localStorageManager.findDefaultOrLastUsedNotebook(
@@ -2030,49 +2048,72 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << ", defaultOrLastUsedNotebook: " << defaultOrLastUsedNotebook);
 
     // Check Update + Find
-    Notebook modifiedNotebook(notebook);
+    qevercloud::Notebook modifiedNotebook(notebook);
 
-    modifiedNotebook.setUpdateSequenceNumber(
-        notebook.updateSequenceNumber() + 1);
+    modifiedNotebook.setUpdateSequenceNum(
+        notebook.updateSequenceNum().value() + 1);
 
-    modifiedNotebook.setLinkedNotebookGuid(QLatin1String(""));
-    modifiedNotebook.setName(notebook.name() + QStringLiteral("_modified"));
+    setItemLinkedNotebookGuid(QLatin1String(""), modifiedNotebook);
+
+    modifiedNotebook.setName(
+        notebook.name().value() + QStringLiteral("_modified"));
+
     modifiedNotebook.setDefaultNotebook(false);
-    modifiedNotebook.setLastUsed(true);
+    modifiedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = true;
 
-    modifiedNotebook.setModificationTimestamp(
-        notebook.modificationTimestamp() + 1);
+    modifiedNotebook.setServiceUpdated(
+        notebook.serviceUpdated().value() + 1);
 
-    modifiedNotebook.setPublishingUri(
-        notebook.publishingUri() + QStringLiteral("_modified"));
+    modifiedNotebook.setPublishing(qevercloud::Publishing{});
 
-    modifiedNotebook.setPublishingAscending(!notebook.isPublishingAscending());
+    modifiedNotebook.mutablePublishing()->setUri(
+        notebook.publishing()->uri().value() +
+        QStringLiteral("_modified"));
 
-    modifiedNotebook.setPublishingPublicDescription(
-        notebook.publishingPublicDescription() + QStringLiteral("_modified"));
+    modifiedNotebook.mutablePublishing()->setAscending(
+        !notebook.publishing()->ascending().value());
 
-    modifiedNotebook.setStack(notebook.stack() + QStringLiteral("_modified"));
+    modifiedNotebook.mutablePublishing()->setPublicDescription(
+        notebook.publishing()->publicDescription().value() +
+        QStringLiteral("_modified"));
 
-    modifiedNotebook.setBusinessNotebookDescription(
-        notebook.businessNotebookDescription() + QStringLiteral("_modified"));
+    modifiedNotebook.setStack(
+        notebook.stack().value() + QStringLiteral("_modified"));
 
-    modifiedNotebook.setBusinessNotebookRecommended(
-        !notebook.isBusinessNotebookRecommended());
+    modifiedNotebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
 
-    modifiedNotebook.setCanExpungeNotes(false);
-    modifiedNotebook.setCanEmailNotes(false);
-    modifiedNotebook.setCanPublishToPublic(false);
-    modifiedNotebook.setFavorited(true);
+    modifiedNotebook.mutableBusinessNotebook()->setNotebookDescription(
+        notebook.businessNotebook()->notebookDescription().value() +
+        QStringLiteral("_modified"));
+
+    modifiedNotebook.mutableBusinessNotebook()->setRecommended(
+        !notebook.businessNotebook()->recommended().value());
+
+    modifiedNotebook.setRestrictions(qevercloud::NotebookRestrictions{});
+
+    auto & modifiedNotebookRestrictions =
+        *modifiedNotebook.mutableRestrictions();
+
+    modifiedNotebookRestrictions.setNoExpungeNotes(true);
+    modifiedNotebookRestrictions.setNoEmailNotes(true);
+    modifiedNotebookRestrictions.setNoPublishToPublic(true);
+
+    modifiedNotebook.setLocallyFavorited(true);
 
     QVERIFY2(
         localStorageManager.updateNotebook(modifiedNotebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundNotebook = Notebook();
+    foundNotebook = qevercloud::Notebook();
     foundNotebook.setGuid(modifiedNotebook.guid());
-    if (modifiedNotebook.hasLinkedNotebookGuid()) {
-        foundNotebook.setLinkedNotebookGuid(
-            modifiedNotebook.linkedNotebookGuid());
+
+    const QString modifiedNotebookLinkedNotebookGuid =
+        itemLinkedNotebookGuid(modifiedNotebook);
+
+    if (!modifiedNotebookLinkedNotebookGuid.isEmpty()) {
+        setItemLinkedNotebookGuid(
+            modifiedNotebookLinkedNotebookGuid,
+            foundNotebook);
     }
 
     QVERIFY2(
@@ -2087,7 +2128,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNotebook found in the local storage: " << foundNotebook);
 
     // Check FindDefaultNotebook (failure expected)
-    defaultNotebook = Notebook();
+    defaultNotebook = qevercloud::Notebook();
 
     VERIFY2(
         !localStorageManager.findDefaultNotebook(defaultNotebook, errorMessage),
@@ -2095,7 +2136,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << defaultNotebook);
 
     // Check FindLastUsedNotebook
-    lastUsedNotebook = Notebook();
+    lastUsedNotebook = qevercloud::Notebook();
 
     QVERIFY2(
         localStorageManager.findLastUsedNotebook(
@@ -2103,7 +2144,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // Check FindDefaultOrLastUsedNotebook
-    defaultOrLastUsedNotebook = Notebook();
+    defaultOrLastUsedNotebook = qevercloud::Notebook();
 
     QVERIFY2(
         localStorageManager.findDefaultOrLastUsedNotebook(
@@ -2155,28 +2196,28 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
 
 void TestFindNotebookByNameWithDiacritics()
 {
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("TestFindNotebookByNameWithDiacriticsFakeUser"),
-        Account::Type::Local);
+        Account::Type::Local};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    Notebook notebook1;
+    qevercloud::Notebook notebook1;
     notebook1.setGuid(UidGenerator::Generate());
-    notebook1.setUpdateSequenceNumber(1);
+    notebook1.setUpdateSequenceNum(1);
     notebook1.setName(QStringLiteral("notebook"));
     notebook1.setDefaultNotebook(false);
-    notebook1.setLastUsed(false);
+    notebook1.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
-    Notebook notebook2;
+    qevercloud::Notebook notebook2;
     notebook2.setGuid(UidGenerator::Generate());
-    notebook2.setUpdateSequenceNumber(2);
+    notebook2.setUpdateSequenceNum(2);
     notebook2.setName(QStringLiteral("notébook"));
     notebook2.setDefaultNotebook(false);
-    notebook2.setLastUsed(false);
+    notebook2.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     ErrorString errorMessage;
 
@@ -2188,8 +2229,8 @@ void TestFindNotebookByNameWithDiacritics()
         localStorageManager.addNotebook(notebook2, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    Notebook notebookToFind;
-    notebookToFind.unsetLocalUid();
+    qevercloud::Notebook notebookToFind;
+    notebookToFind.setLocalId(QString{});
     notebookToFind.setName(notebook1.name());
 
     QVERIFY2(
@@ -2201,8 +2242,8 @@ void TestFindNotebookByNameWithDiacritics()
         "Found wrong notebook by name: expected notebook: "
             << notebook1 << "\nActually found notebook: " << notebookToFind);
 
-    notebookToFind = Notebook();
-    notebookToFind.unsetLocalUid();
+    notebookToFind = qevercloud::Notebook();
+    notebookToFind.setLocalId(QString{});
     notebookToFind.setName(notebook2.name());
 
     QVERIFY2(
@@ -2223,134 +2264,133 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
     Account account(QStringLiteral("CoreTesterFakeUser"), Account::Type::Local);
     LocalStorageManager localStorageManager(account, startupOptions);
 
-    User user;
+    qevercloud::User user;
     user.setId(1);
     user.setUsername(QStringLiteral("fake_user_username"));
     user.setEmail(QStringLiteral("fake_user _mail"));
     user.setName(QStringLiteral("fake_user_name"));
     user.setTimezone(QStringLiteral("fake_user_timezone"));
-    user.setPrivilegeLevel(1);
-    user.setCreationTimestamp(2);
-    user.setModificationTimestamp(3);
+    user.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
+    user.setCreated(2);
+    user.setUpdated(3);
     user.setActive(true);
 
     qevercloud::UserAttributes userAttributes;
 
-    userAttributes.defaultLocationName =
-        QStringLiteral("fake_default_location_name");
+    userAttributes.setDefaultLocationName(
+        QStringLiteral("fake_default_location_name"));
 
-    userAttributes.defaultLatitude = 1.0;
-    userAttributes.defaultLongitude = 2.0;
-    userAttributes.preactivation = false;
+    userAttributes.setDefaultLatitude(1.0);
+    userAttributes.setDefaultLongitude(2.0);
+    userAttributes.setPreactivation(false);
     QList<QString> viewedPromotions;
     viewedPromotions.push_back(QStringLiteral("Viewed promotion 1"));
     viewedPromotions.push_back(QStringLiteral("Viewed promotion 2"));
     viewedPromotions.push_back(QStringLiteral("Viewed promotion 3"));
-    userAttributes.viewedPromotions = viewedPromotions;
+    userAttributes.setViewedPromotions(viewedPromotions);
 
-    userAttributes.incomingEmailAddress =
-        QStringLiteral("fake_incoming_email_address");
+    userAttributes.setIncomingEmailAddress(
+        QStringLiteral("fake_incoming_email_address"));
 
     QList<QString> recentEmailAddresses;
     recentEmailAddresses.push_back(QStringLiteral("recent_email_address_1"));
     recentEmailAddresses.push_back(QStringLiteral("recent_email_address_2"));
-    userAttributes.recentMailedAddresses = recentEmailAddresses;
-    userAttributes.comments = QStringLiteral("Fake comments");
-    userAttributes.dateAgreedToTermsOfService = 1;
-    userAttributes.maxReferrals = 3;
-    userAttributes.refererCode = QStringLiteral("fake_referer_code");
-    userAttributes.sentEmailDate = 5;
-    userAttributes.sentEmailCount = 4;
-    userAttributes.dailyEmailLimit = 2;
-    userAttributes.emailOptOutDate = 6;
-    userAttributes.partnerEmailOptInDate = 7;
-    userAttributes.preferredLanguage = QStringLiteral("ru");
-    userAttributes.preferredCountry = QStringLiteral("Russia");
-    userAttributes.clipFullPage = true;
-    userAttributes.twitterUserName = QStringLiteral("fake_twitter_username");
-    userAttributes.twitterId = QStringLiteral("fake_twitter_id");
-    userAttributes.groupName = QStringLiteral("fake_group_name");
-    userAttributes.recognitionLanguage = QStringLiteral("ru");
+    userAttributes.setRecentMailedAddresses(recentEmailAddresses);
+    userAttributes.setComments(QStringLiteral("Fake comments"));
+    userAttributes.setDateAgreedToTermsOfService(1);
+    userAttributes.setMaxReferrals(3);
+    userAttributes.setRefererCode(QStringLiteral("fake_referer_code"));
+    userAttributes.setSentEmailDate(5);
+    userAttributes.setSentEmailCount(4);
+    userAttributes.setDailyEmailLimit(2);
+    userAttributes.setEmailOptOutDate(6);
+    userAttributes.setPartnerEmailOptInDate(7);
+    userAttributes.setPreferredLanguage(QStringLiteral("ru"));
+    userAttributes.setPreferredCountry(QStringLiteral("Russia"));
+    userAttributes.setClipFullPage(true);
+    userAttributes.setTwitterUserName(QStringLiteral("fake_twitter_username"));
+    userAttributes.setTwitterId(QStringLiteral("fake_twitter_id"));
+    userAttributes.setGroupName(QStringLiteral("fake_group_name"));
+    userAttributes.setRecognitionLanguage(QStringLiteral("ru"));
 
-    userAttributes.referralProof =
-        QStringLiteral("I_have_no_idea_what_this_means");
+    userAttributes.setReferralProof(
+        QStringLiteral("I_have_no_idea_what_this_means"));
 
-    userAttributes.educationalDiscount = false;
-    userAttributes.businessAddress = QStringLiteral("fake_business_address");
-    userAttributes.hideSponsorBilling = true;
-    userAttributes.useEmailAutoFiling = true;
+    userAttributes.setEducationalDiscount(false);
+    userAttributes.setBusinessAddress(QStringLiteral("fake_business_address"));
+    userAttributes.setHideSponsorBilling(true);
+    userAttributes.setUseEmailAutoFiling(true);
 
-    userAttributes.reminderEmailConfig =
-        qevercloud::ReminderEmailConfig::DO_NOT_SEND;
+    userAttributes.setReminderEmailConfig(
+        qevercloud::ReminderEmailConfig::DO_NOT_SEND);
 
-    user.setUserAttributes(std::move(userAttributes));
+    user.setAttributes(std::move(userAttributes));
 
     qevercloud::BusinessUserInfo businessUserInfo;
-    businessUserInfo.businessId = 1;
-    businessUserInfo.businessName = QStringLiteral("Fake business name");
-    businessUserInfo.role = qevercloud::BusinessUserRole::NORMAL;
-    businessUserInfo.email = QStringLiteral("Fake business email");
+    businessUserInfo.setBusinessId(1);
+    businessUserInfo.setBusinessName(QStringLiteral("Fake business name"));
+    businessUserInfo.setRole(qevercloud::BusinessUserRole::NORMAL);
+    businessUserInfo.setEmail(QStringLiteral("Fake business email"));
 
     user.setBusinessUserInfo(std::move(businessUserInfo));
 
     qevercloud::Accounting accounting;
-    accounting.uploadLimitEnd = 9;
-    accounting.uploadLimitNextMonth = 1200;
-    accounting.premiumServiceStatus = qevercloud::PremiumOrderStatus::PENDING;
-    accounting.premiumOrderNumber = QStringLiteral("Fake premium order number");
+    accounting.setUploadLimitEnd(9);
+    accounting.setUploadLimitNextMonth(1200);
+    accounting.setPremiumServiceStatus(qevercloud::PremiumOrderStatus::PENDING);
 
-    accounting.premiumCommerceService =
-        QStringLiteral("Fake premium commerce service");
+    accounting.setPremiumOrderNumber(
+        QStringLiteral("Fake premium order number"));
 
-    accounting.premiumServiceStart = 8;
+    accounting.setPremiumCommerceService(
+        QStringLiteral("Fake premium commerce service"));
 
-    accounting.premiumServiceSKU =
-        QStringLiteral("Fake code associated with the purchase");
+    accounting.setPremiumServiceStart(8);
 
-    accounting.lastSuccessfulCharge = 7;
-    accounting.lastFailedCharge = 5;
-    accounting.lastFailedChargeReason = QStringLiteral("No money, no honey");
-    accounting.nextPaymentDue = 12;
-    accounting.premiumLockUntil = 11;
-    accounting.updated = 10;
+    accounting.setPremiumServiceSKU(
+        QStringLiteral("Fake code associated with the purchase"));
 
-    accounting.premiumSubscriptionNumber =
-        QStringLiteral("Fake premium subscription number");
+    accounting.setLastSuccessfulCharge(7);
+    accounting.setLastFailedCharge(5);
+    accounting.setLastFailedChargeReason(QStringLiteral("No money, no honey"));
+    accounting.setNextPaymentDue(12);
+    accounting.setPremiumLockUntil(11);
+    accounting.setUpdated(10);
 
-    accounting.lastRequestedCharge = 9;
-    accounting.currency = QStringLiteral("USD");
-    accounting.unitPrice = 100;
-    accounting.unitDiscount = 2;
-    accounting.nextChargeDate = 12;
+    accounting.setPremiumSubscriptionNumber(
+        QStringLiteral("Fake premium subscription number"));
+
+    accounting.setLastRequestedCharge(9);
+    accounting.setCurrency(QStringLiteral("USD"));
+    accounting.setUnitPrice(100);
+    accounting.setUnitDiscount(2);
+    accounting.setNextChargeDate(12);
 
     user.setAccounting(std::move(accounting));
 
     qevercloud::AccountLimits accountLimits;
-    accountLimits.userNotebookCountMax = 10;
-    accountLimits.uploadLimit = 2048;
-    accountLimits.noteResourceCountMax = 10;
-    accountLimits.userSavedSearchesMax = 100;
-    accountLimits.noteSizeMax = 4096;
-    accountLimits.userMailLimitDaily = 20;
-    accountLimits.noteTagCountMax = 20;
-    accountLimits.resourceSizeMax = 4096;
-    accountLimits.userTagCountMax = 200;
+    accountLimits.setUserNotebookCountMax(10);
+    accountLimits.setUploadLimit(2048);
+    accountLimits.setNoteResourceCountMax(10);
+    accountLimits.setUserSavedSearchesMax(100);
+    accountLimits.setNoteSizeMax(4096);
+    accountLimits.setUserMailLimitDaily(20);
+    accountLimits.setNoteTagCountMax(20);
+    accountLimits.setResourceSizeMax(4096);
+    accountLimits.setUserTagCountMax(200);
 
     user.setAccountLimits(std::move(accountLimits));
 
     ErrorString errorMessage;
-
-    QVERIFY2(
-        user.checkParameters(errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
 
     // Check Add + Find
     QVERIFY2(
         localStorageManager.addUser(user, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const qint32 initialUserId = user.id();
-    User foundUser;
+    const qint32 initialUserId = user.id().value();
+
+    qevercloud::User foundUser;
     foundUser.setId(initialUserId);
 
     QVERIFY2(
@@ -2364,55 +2404,77 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nIUser found in the local storage: " << foundUser);
 
     // Check Update + Find
-    User modifiedUser;
+    qevercloud::User modifiedUser;
     modifiedUser.setId(user.id());
-    modifiedUser.setUsername(user.username() + QStringLiteral("_modified"));
-    modifiedUser.setEmail(user.email() + QStringLiteral("_modified"));
-    modifiedUser.setName(user.name() + QStringLiteral("_modified"));
-    modifiedUser.setTimezone(user.timezone() + QStringLiteral("_modified"));
-    modifiedUser.setPrivilegeLevel(static_cast<qint8>(user.privilegeLevel()));
-    modifiedUser.setCreationTimestamp(user.creationTimestamp());
-    modifiedUser.setModificationTimestamp(user.modificationTimestamp() + 1);
+
+    modifiedUser.setUsername(
+        user.username().value() + QStringLiteral("_modified"));
+
+    modifiedUser.setEmail(user.email().value() + QStringLiteral("_modified"));
+    modifiedUser.setName(user.name().value() + QStringLiteral("_modified"));
+
+    modifiedUser.setTimezone(
+        user.timezone().value() + QStringLiteral("_modified"));
+
+    modifiedUser.setPrivilege(user.privilege());
+    modifiedUser.setCreated(user.created());
+    modifiedUser.setUpdated(user.updated().value() + 1);
     modifiedUser.setActive(true);
 
     qevercloud::UserAttributes modifiedUserAttributes;
-    modifiedUserAttributes = user.userAttributes();
+    modifiedUserAttributes = *user.attributes();
 
-    modifiedUserAttributes.defaultLocationName->append(
+    modifiedUserAttributes.setDefaultLocationName(
+        user.attributes()->defaultLocationName().value() +
         QStringLiteral("_modified"));
 
-    modifiedUserAttributes.comments->append(QStringLiteral("_modified"));
-
-    modifiedUserAttributes.preferredCountry->append(
+    modifiedUserAttributes.setComments(
+        user.attributes()->comments().value() +
         QStringLiteral("_modified"));
 
-    modifiedUserAttributes.businessAddress->append(QStringLiteral("_modified"));
+    modifiedUserAttributes.setPreferredCountry(
+        user.attributes()->preferredCountry().value() +
+        QStringLiteral("_modified"));
 
-    modifiedUser.setUserAttributes(std::move(modifiedUserAttributes));
+    modifiedUserAttributes.setBusinessAddress(
+        user.attributes()->businessAddress().value() +
+        QStringLiteral("_modified"));
+
+    modifiedUser.setAttributes(std::move(modifiedUserAttributes));
 
     qevercloud::BusinessUserInfo modifiedBusinessUserInfo;
-    modifiedBusinessUserInfo = user.businessUserInfo();
-    modifiedBusinessUserInfo.businessName->append(QStringLiteral("_modified"));
-    modifiedBusinessUserInfo.email->append(QStringLiteral("_modified"));
+    modifiedBusinessUserInfo = user.businessUserInfo().value();
+
+    modifiedBusinessUserInfo.setBusinessName(
+        user.businessUserInfo()->businessName().value() +
+        QStringLiteral("_modified"));
+
+    modifiedBusinessUserInfo.setEmail(
+        user.businessUserInfo()->email().value() +
+        QStringLiteral("_modified"));
 
     modifiedUser.setBusinessUserInfo(std::move(modifiedBusinessUserInfo));
 
     qevercloud::Accounting modifiedAccounting;
-    modifiedAccounting = user.accounting();
-    modifiedAccounting.premiumOrderNumber->append(QStringLiteral("_modified"));
+    modifiedAccounting = user.accounting().value();
 
-    modifiedAccounting.premiumSubscriptionNumber->append(
+    modifiedAccounting.setPremiumOrderNumber(
+        user.accounting()->premiumOrderNumber().value() +
         QStringLiteral("_modified"));
 
-    modifiedAccounting.updated += 1;
+    modifiedAccounting.setPremiumSubscriptionNumber(
+        user.accounting()->premiumSubscriptionNumber().value() +
+        QStringLiteral("_modified"));
+
+    modifiedAccounting.setUpdated(user.accounting()->updated().value() + 1);
 
     modifiedUser.setAccounting(std::move(modifiedAccounting));
 
     qevercloud::AccountLimits modifiedAccountLimits;
-    modifiedAccountLimits = user.accountLimits();
-    modifiedAccountLimits.noteTagCountMax = 2;
-    modifiedAccountLimits.userLinkedNotebookMax = 2;
-    modifiedAccountLimits.userNotebookCountMax = 2;
+    modifiedAccountLimits = user.accountLimits().value();
+    modifiedAccountLimits.setNoteTagCountMax(2);
+    modifiedAccountLimits.setUserLinkedNotebookMax(2);
+    modifiedAccountLimits.setUserNotebookCountMax(2);
 
     modifiedUser.setAccountLimits(std::move(modifiedAccountLimits));
 
@@ -2420,7 +2482,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.updateUser(modifiedUser, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundUser.clear();
+    foundUser = qevercloud::User{};
     foundUser.setId(modifiedUser.id());
 
     QVERIFY2(
@@ -2444,13 +2506,13 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
                        .arg(count)));
 
     // Check Delete + Find
-    modifiedUser.setDeletionTimestamp(5);
+    modifiedUser.setDeleted(5);
 
     QVERIFY2(
         localStorageManager.deleteUser(modifiedUser, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundUser.clear();
+    foundUser = qevercloud::User{};
     foundUser.setId(modifiedUser.id());
 
     QVERIFY2(
@@ -2478,7 +2540,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.expungeUser(modifiedUser, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundUser.clear();
+    foundUser = qevercloud::User{};
     foundUser.setId(modifiedUser.id());
 
     VERIFY2(
