@@ -30,8 +30,6 @@
 #include <QCryptographicHash>
 #include <QtTest/QtTest>
 
-#include <string>
-
 namespace quentier {
 namespace test {
 
@@ -720,7 +718,7 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
     qevercloud::Resource foundResource;
     foundResource.setGuid(resourceGuid);
 
-    const LocalStorageManager::GetResourceOptions getResourceOptions(
+    LocalStorageManager::GetResourceOptions getResourceOptions(
         LocalStorageManager::GetResourceOption::WithBinaryData);
 
     QVERIFY2(
@@ -2555,69 +2553,61 @@ void TestSequentialUpdatesInLocalStorage()
 {
     // 1) Create LocalStorageManager
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("LocalStorageManagerSequentialUpdatesTestFakeUser"),
-        Account::Type::Evernote, 0);
+        Account::Type::Evernote,
+        0};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
     // 2) Create User
-    User user;
+    qevercloud::User user;
     user.setId(1);
     user.setUsername(QStringLiteral("checker"));
     user.setEmail(QStringLiteral("mail@checker.com"));
     user.setTimezone(QStringLiteral("Europe/Moscow"));
-
-    user.setPrivilegeLevel(
-        static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
-
-    user.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    user.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    user.setCreated(QDateTime::currentMSecsSinceEpoch());
+    user.setUpdated(QDateTime::currentMSecsSinceEpoch());
     user.setActive(true);
 
     qevercloud::UserAttributes userAttributes;
-    userAttributes.defaultLocationName = QStringLiteral("Default location");
-    userAttributes.comments = QStringLiteral("My comment");
-    userAttributes.preferredLanguage = QStringLiteral("English");
+    userAttributes.setDefaultLocationName(QStringLiteral("Default location"));
+    userAttributes.setComments(QStringLiteral("My comment"));
+    userAttributes.setPreferredLanguage(QStringLiteral("English"));
+    userAttributes.setViewedPromotions(
+        QStringList() << QStringLiteral("Promotion #1")
+        << QStringLiteral("Promotion #2") << QStringLiteral("Promotion #3"));
 
-    userAttributes.viewedPromotions = QStringList();
-
-    userAttributes.viewedPromotions.ref()
-        << QStringLiteral("Promotion #1") << QStringLiteral("Promotion #2")
-        << QStringLiteral("Promotion #3");
-
-    userAttributes.recentMailedAddresses = QStringList();
-
-    userAttributes.recentMailedAddresses.ref()
-        << QStringLiteral("Recent mailed address #1")
+    userAttributes.setRecentMailedAddresses(
+        QStringList() << QStringLiteral("Recent mailed address #1")
         << QStringLiteral("Recent mailed address #2")
-        << QStringLiteral("Recent mailed address #3");
+        << QStringLiteral("Recent mailed address #3"));
 
-    user.setUserAttributes(std::move(userAttributes));
+    user.setAttributes(std::move(userAttributes));
 
     qevercloud::Accounting accounting;
-    accounting.premiumOrderNumber = QStringLiteral("Premium order number");
+    accounting.setPremiumOrderNumber(QStringLiteral("Premium order number"));
 
-    accounting.premiumSubscriptionNumber =
-        QStringLiteral("Premium subscription number");
+    accounting.setPremiumSubscriptionNumber(
+        QStringLiteral("Premium subscription number"));
 
-    accounting.updated = QDateTime::currentMSecsSinceEpoch();
+    accounting.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
     user.setAccounting(std::move(accounting));
 
     qevercloud::BusinessUserInfo businessUserInfo;
-    businessUserInfo.businessName = QStringLiteral("Business name");
-    businessUserInfo.email = QStringLiteral("Business email");
+    businessUserInfo.setBusinessName(QStringLiteral("Business name"));
+    businessUserInfo.setEmail(QStringLiteral("Business email"));
 
     user.setBusinessUserInfo(std::move(businessUserInfo));
 
     qevercloud::AccountLimits accountLimits;
-    accountLimits.noteResourceCountMax = 20;
-    accountLimits.userNoteCountMax = 200;
-    accountLimits.userSavedSearchesMax = 100;
+    accountLimits.setNoteResourceCountMax(20);
+    accountLimits.setUserNoteCountMax(200);
+    accountLimits.setUserSavedSearchesMax(100);
 
     user.setAccountLimits(std::move(accountLimits));
 
@@ -2630,16 +2620,13 @@ void TestSequentialUpdatesInLocalStorage()
 
     // 4) Create new user without all the supplementary data but with the same
     // id and update it in local storage
-    User updatedUser;
+    qevercloud::User updatedUser;
     updatedUser.setId(1);
     updatedUser.setUsername(QStringLiteral("checker"));
     updatedUser.setEmail(QStringLiteral("mail@checker.com"));
-
-    updatedUser.setPrivilegeLevel(
-        static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
-
-    updatedUser.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    updatedUser.setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
+    updatedUser.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
+    updatedUser.setCreated(QDateTime::currentMSecsSinceEpoch());
+    updatedUser.setUpdated(QDateTime::currentMSecsSinceEpoch());
     updatedUser.setActive(true);
 
     QVERIFY2(
@@ -2648,7 +2635,7 @@ void TestSequentialUpdatesInLocalStorage()
 
     // 5) Find this user in local storage, check whether it has user attributes,
     // accounting, business user info and premium info (it shouldn't)
-    User foundUser;
+    qevercloud::User foundUser;
     foundUser.setId(1);
 
     QVERIFY2(
@@ -2656,7 +2643,7 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        !foundUser.hasUserAttributes(),
+        !foundUser.attributes(),
         "Updated user found the in the local storage "
             << "still has user attributes while it "
             << "shouldn't have them after the update"
@@ -2664,7 +2651,7 @@ void TestSequentialUpdatesInLocalStorage()
             << "\nFound user: " << foundUser);
 
     VERIFY2(
-        !foundUser.hasAccounting(),
+        !foundUser.accounting(),
         "Updated user found in the local storage "
             << "still has accounting while it shouldn't "
             << "have it after the update"
@@ -2672,7 +2659,7 @@ void TestSequentialUpdatesInLocalStorage()
             << "\nFound user: " << foundUser);
 
     VERIFY2(
-        !foundUser.hasBusinessUserInfo(),
+        !foundUser.businessUserInfo(),
         "Updated user found in the local storage "
             << "still has business user info "
             << "while it shouldn't have it after the update"
@@ -2680,7 +2667,7 @@ void TestSequentialUpdatesInLocalStorage()
             << "\nFound user: " << foundUser);
 
     VERIFY2(
-        !foundUser.hasAccountLimits(),
+        !foundUser.accountLimits(),
         "Updated user found in the local storage "
             << "still has account limits while it "
             << "shouldn't have them after the update"
@@ -2688,101 +2675,118 @@ void TestSequentialUpdatesInLocalStorage()
             << "\nFound user: " << foundUser);
 
     // 6) Create Notebook with restrictions and shared notebooks
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
-    notebook.setUpdateSequenceNumber(1);
+    notebook.setUpdateSequenceNum(1);
     notebook.setName(QStringLiteral("Fake notebook name"));
-    notebook.setCreationTimestamp(1);
-    notebook.setModificationTimestamp(1);
+    notebook.setServiceCreated(1);
+    notebook.setServiceUpdated(1);
     notebook.setDefaultNotebook(true);
-    notebook.setLastUsed(false);
-    notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
-    notebook.setPublishingOrder(1);
-    notebook.setPublishingAscending(true);
+    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
-    notebook.setPublishingPublicDescription(
+    notebook.setPublishing(qevercloud::Publishing{});
+    notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
+    notebook.mutablePublishing()->setOrder(qevercloud::NoteSortOrder::CREATED);
+    notebook.mutablePublishing()->setAscending(true);
+    notebook.mutablePublishing()->setPublicDescription(
         QStringLiteral("Fake public description"));
 
     notebook.setPublished(true);
     notebook.setStack(QStringLiteral("Fake notebook stack"));
 
-    notebook.setBusinessNotebookDescription(
+    notebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+    notebook.mutableBusinessNotebook()->setNotebookDescription(
         QStringLiteral("Fake business notebook description"));
-
-    notebook.setBusinessNotebookPrivilegeLevel(1);
-    notebook.setBusinessNotebookRecommended(true);
+    notebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+    notebook.mutableBusinessNotebook()->setRecommended(true);
 
     // NotebookRestrictions
-    notebook.setCanReadNotes(true);
-    notebook.setCanCreateNotes(true);
-    notebook.setCanUpdateNotes(true);
-    notebook.setCanExpungeNotes(false);
-    notebook.setCanShareNotes(true);
-    notebook.setCanEmailNotes(false);
-    notebook.setCanSendMessageToRecipients(true);
-    notebook.setCanUpdateNotebook(true);
-    notebook.setCanExpungeNotebook(false);
-    notebook.setCanSetDefaultNotebook(true);
-    notebook.setCanSetNotebookStack(false);
-    notebook.setCanPublishToPublic(true);
-    notebook.setCanPublishToBusinessLibrary(false);
-    notebook.setCanCreateTags(true);
-    notebook.setCanUpdateTags(true);
-    notebook.setCanExpungeTags(false);
-    notebook.setCanSetParentTag(true);
-    notebook.setCanCreateSharedNotebooks(true);
-    notebook.setCanCreateSharedNotebooks(true);
-    notebook.setCanUpdateNotebook(true);
-    notebook.setUpdateWhichSharedNotebookRestrictions(1);
-    notebook.setExpungeWhichSharedNotebookRestrictions(1);
+    notebook.setRestrictions(qevercloud::NotebookRestrictions{});
+    auto & notebookRestrictions = *notebook.mutableRestrictions();
+    notebookRestrictions.setNoReadNotes(false);
+    notebookRestrictions.setNoCreateNotes(false);
+    notebookRestrictions.setNoUpdateNotes(false);
+    notebookRestrictions.setNoExpungeNotes(true);
+    notebookRestrictions.setNoShareNotes(false);
+    notebookRestrictions.setNoEmailNotes(true);
+    notebookRestrictions.setNoSendMessageToRecipients(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
+    notebookRestrictions.setNoExpungeNotebook(true);
+    notebookRestrictions.setNoSetDefaultNotebook(false);
+    notebookRestrictions.setNoSetNotebookStack(true);
+    notebookRestrictions.setNoPublishToPublic(false);
+    notebookRestrictions.setNoPublishToBusinessLibrary(true);
+    notebookRestrictions.setNoCreateTags(false);
+    notebookRestrictions.setNoUpdateTags(false);
+    notebookRestrictions.setNoExpungeTags(true);
+    notebookRestrictions.setNoSetParentTag(false);
+    notebookRestrictions.setNoCreateSharedNotebooks(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
+    notebookRestrictions.setUpdateWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::ASSIGNED);
+    notebookRestrictions.setExpungeWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::NO_SHARED_NOTEBOOKS);
 
-    SharedNotebook sharedNotebook;
+    qevercloud::SharedNotebook sharedNotebook;
     sharedNotebook.setId(1);
     sharedNotebook.setUserId(1);
     sharedNotebook.setNotebookGuid(notebook.guid());
     sharedNotebook.setEmail(QStringLiteral("Fake shared notebook email"));
-    sharedNotebook.setCreationTimestamp(1);
-    sharedNotebook.setModificationTimestamp(1);
+    sharedNotebook.setServiceCreated(1);
+    sharedNotebook.setServiceUpdated(1);
 
     sharedNotebook.setGlobalId(
         QStringLiteral("Fake shared notebook global id"));
 
     sharedNotebook.setUsername(QStringLiteral("Fake shared notebook username"));
-    sharedNotebook.setPrivilegeLevel(1);
-    sharedNotebook.setReminderNotifyEmail(true);
-    sharedNotebook.setReminderNotifyApp(false);
+    sharedNotebook.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
 
-    notebook.addSharedNotebook(sharedNotebook);
+    sharedNotebook.setRecipientSettings(
+        qevercloud::SharedNotebookRecipientSettings{});
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyEmail(true);
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyInApp(false);
+
+    notebook.setSharedNotebooks(
+        QList<qevercloud::SharedNotebook>() << sharedNotebook);
 
     QVERIFY2(
         localStorageManager.addNotebook(notebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 7) Update notebook: remove restrictions and shared notebooks
-    Notebook updatedNotebook;
-    updatedNotebook.setLocalUid(notebook.localUid());
+    qevercloud::Notebook updatedNotebook;
+    updatedNotebook.setLocalId(notebook.localId());
     updatedNotebook.setGuid(notebook.guid());
-    updatedNotebook.setUpdateSequenceNumber(1);
+    updatedNotebook.setUpdateSequenceNum(1);
     updatedNotebook.setName(QStringLiteral("Fake notebook name"));
-    updatedNotebook.setCreationTimestamp(1);
-    updatedNotebook.setModificationTimestamp(1);
+    updatedNotebook.setServiceCreated(1);
+    updatedNotebook.setServiceUpdated(1);
     updatedNotebook.setDefaultNotebook(true);
-    updatedNotebook.setLastUsed(false);
-    updatedNotebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
-    updatedNotebook.setPublishingOrder(1);
-    updatedNotebook.setPublishingAscending(true);
+    updatedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
-    updatedNotebook.setPublishingPublicDescription(
+    updatedNotebook.setPublishing(qevercloud::Publishing{});
+    updatedNotebook.mutablePublishing()->setUri(
+        QStringLiteral("Fake publishing uri"));
+    updatedNotebook.mutablePublishing()->setOrder(
+        qevercloud::NoteSortOrder::CREATED);
+    updatedNotebook.mutablePublishing()->setAscending(true);
+
+    updatedNotebook.mutablePublishing()->setPublicDescription(
         QStringLiteral("Fake public description"));
 
     updatedNotebook.setPublished(true);
     updatedNotebook.setStack(QStringLiteral("Fake notebook stack"));
 
-    updatedNotebook.setBusinessNotebookDescription(
+    updatedNotebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+    updatedNotebook.mutableBusinessNotebook()->setNotebookDescription(
         QStringLiteral("Fake business notebook description"));
 
-    updatedNotebook.setBusinessNotebookPrivilegeLevel(1);
-    updatedNotebook.setBusinessNotebookRecommended(true);
+    updatedNotebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    updatedNotebook.mutableBusinessNotebook()->setRecommended(true);
 
     QVERIFY2(
         localStorageManager.updateNotebook(updatedNotebook, errorMessage),
@@ -2791,7 +2795,7 @@ void TestSequentialUpdatesInLocalStorage()
     // 8) Find notebook, ensure it doesn't have neither restrictions
     // nor shared notebooks
 
-    Notebook foundNotebook;
+    qevercloud::Notebook foundNotebook;
     foundNotebook.setGuid(notebook.guid());
 
     QVERIFY2(
@@ -2799,7 +2803,8 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        !foundNotebook.hasSharedNotebooks(),
+        !foundNotebook.sharedNotebooks() ||
+        foundNotebook.sharedNotebooks()->isEmpty(),
         "Updated notebook found in the local "
             << "storage has shared notebooks "
             << "while it shouldn't have them"
@@ -2807,7 +2812,7 @@ void TestSequentialUpdatesInLocalStorage()
             << updatedNotebook << "\nFound notebook: " << foundNotebook);
 
     VERIFY2(
-        !foundNotebook.hasRestrictions(),
+        !foundNotebook.restrictions(),
         "Updated notebook found in the local "
             << "storage has restrictions "
             << "while it shouldn't have them"
@@ -2815,9 +2820,9 @@ void TestSequentialUpdatesInLocalStorage()
             << updatedNotebook << "\nFound notebook: " << foundNotebook);
 
     // 9) Create tag
-    Tag tag;
+    qevercloud::Tag tag;
     tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    tag.setUpdateSequenceNumber(1);
+    tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Fake tag name"));
 
     QVERIFY2(
@@ -2825,47 +2830,52 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 10) Create note, add this tag to it along with some resource
-    Note note;
+    qevercloud::Note note;
     note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000045"));
-    note.setUpdateSequenceNumber(1);
+    note.setUpdateSequenceNum(1);
     note.setTitle(QStringLiteral("Fake note title"));
     note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-    note.setCreationTimestamp(1);
-    note.setModificationTimestamp(1);
+    note.setCreated(1);
+    note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
 
-    Resource resource;
+    qevercloud::Resource resource;
     resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000044"));
-    resource.setUpdateSequenceNumber(1);
+    resource.setUpdateSequenceNum(1);
     resource.setNoteGuid(note.guid());
-    resource.setDataBody(QByteArray("Fake resource data body"));
-    resource.setDataSize(resource.dataBody().size());
-    resource.setDataHash(QByteArray("Fake hash      1"));
 
-    note.addResource(resource);
-    note.addTagGuid(tag.guid());
-    note.setNotebookLocalUid(updatedNotebook.localUid());
+    resource.setData(qevercloud::Data{});
+    resource.mutableData()->setBody(QByteArray("Fake resource data body"));
+    resource.mutableData()->setSize(resource.data()->body()->size());
+    resource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.data()->body(),
+            QCryptographicHash::Md5));
+
+    addNoteResource(resource, note);
+    addNoteTagGuid(*tag.guid(), note);
+    note.setParentLocalId(updatedNotebook.localId());
 
     QVERIFY2(
         localStorageManager.addNote(note, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 11) Update note, remove tag guid and resource
-    Note updatedNote;
-    updatedNote.setLocalUid(note.localUid());
+    qevercloud::Note updatedNote;
+    updatedNote.setLocalId(note.localId());
     updatedNote.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000045"));
-    updatedNote.setUpdateSequenceNumber(1);
+    updatedNote.setUpdateSequenceNum(1);
     updatedNote.setTitle(QStringLiteral("Fake note title"));
 
     updatedNote.setContent(
         QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
 
-    updatedNote.setCreationTimestamp(1);
-    updatedNote.setModificationTimestamp(1);
+    updatedNote.setCreated(1);
+    updatedNote.setUpdated(1);
     updatedNote.setActive(true);
     updatedNote.setNotebookGuid(notebook.guid());
-    updatedNote.setNotebookLocalUid(notebook.localUid());
+    updatedNote.setParentLocalId(notebook.localId());
 
     LocalStorageManager::UpdateNoteOptions updateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateTags |
@@ -2879,8 +2889,8 @@ void TestSequentialUpdatesInLocalStorage()
 
     // 12) Find updated note in local storage, ensure it doesn't have
     // neither tag guids, nor resources
-    Note foundNote;
-    foundNote.setLocalUid(updatedNote.localUid());
+    qevercloud::Note foundNote;
+    foundNote.setLocalId(updatedNote.localId());
     foundNote.setGuid(updatedNote.guid());
 
     LocalStorageManager::GetNoteOptions getNoteOptions(
@@ -2891,39 +2901,42 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        !foundNote.hasTagGuids(),
+        !foundNote.tagGuids() || foundNote.tagGuids()->isEmpty(),
         "Updated note found in local storage "
             << "has tag guids while it shouldn't have them"
             << ", original note: " << note << "\nUpdated note: " << updatedNote
             << "\nFound note: " << foundNote);
 
     VERIFY2(
-        !foundNote.hasResources(),
+        !foundNote.resources() || foundNote.resources()->isEmpty(),
         "Updated note found in local storage "
             << "has resources while it shouldn't have them"
             << ", original note: " << note << "\nUpdated note: " << updatedNote
             << "\nFound note: " << foundNote);
 
     // 13) Add resource attributes to the resource and add resource to note
-    auto & resourceAttributes = resource.resourceAttributes();
-    resourceAttributes.applicationData = qevercloud::LazyMap();
-    resourceAttributes.applicationData->keysOnly = QSet<QString>();
-    resourceAttributes.applicationData->fullMap = QMap<QString, QString>();
+    resource.setAttributes(qevercloud::ResourceAttributes{});
 
-    resourceAttributes.applicationData->keysOnly.ref()
-        << QStringLiteral("key_1") << QStringLiteral("key_2")
-        << QStringLiteral("key_3");
+    auto & resourceAttributes = *resource.mutableAttributes();
+    resourceAttributes.setApplicationData(qevercloud::LazyMap{});
 
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("key_1")] =
+    auto & resourceAppData = *resourceAttributes.mutableApplicationData();
+    resourceAppData.setKeysOnly(
+        QSet<QString>() << QStringLiteral("key_1")
+        << QStringLiteral("key_2") << QStringLiteral("key_3"));
+
+    resourceAppData.setFullMap(QMap<QString, QString>{});
+
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_1")] =
         QStringLiteral("value_1");
 
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("key_2")] =
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_2")] =
         QStringLiteral("value_2");
 
-    resourceAttributes.applicationData->fullMap.ref()[QStringLiteral("key_3")] =
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_3")] =
         QStringLiteral("value_3");
 
-    updatedNote.addResource(resource);
+    addNoteResource(resource, updatedNote);
 
     QVERIFY2(
         localStorageManager.updateNote(
@@ -2931,7 +2944,7 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 14) Remove resource attributes from note's resource and update it again
-    QList<Resource> resources = updatedNote.resources();
+    auto resources = *updatedNote.resources();
 
     VERIFY2(
         !resources.empty(),
@@ -2939,8 +2952,11 @@ void TestSequentialUpdatesInLocalStorage()
             << "while it should have contained at least "
             << "one entry, updated note: " << updatedNote);
 
-    Resource & updatedResource = resources[0];
-    auto & underlyngResourceAttributes = updatedResource.resourceAttributes();
+    auto & updatedResource = resources[0];
+
+    auto & underlyngResourceAttributes =
+        updatedResource.mutableAttributes().value();
+
     underlyngResourceAttributes = qevercloud::ResourceAttributes();
 
     updatedNote.setResources(resources);
@@ -2955,7 +2971,7 @@ void TestSequentialUpdatesInLocalStorage()
         localStorageManager.findNote(foundNote, getNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    resources = foundNote.resources();
+    resources = foundNote.resources().value();
 
     VERIFY2(
         !resources.empty(),
@@ -2963,11 +2979,11 @@ void TestSequentialUpdatesInLocalStorage()
             << "while it should have contained "
             << "at least one entry, found note: " << foundNote);
 
-    Resource & foundResource = resources[0];
-    auto & foundResourceAttributes = foundResource.resourceAttributes();
+    auto & foundResource = resources[0];
+    auto & foundResourceAttributes = foundResource.attributes().value();
 
     VERIFY2(
-        !foundResourceAttributes.applicationData.isSet(),
+        !foundResourceAttributes.applicationData(),
         "Resource from updated note has application "
             << "data while it shouldn't have it, found resource: "
             << foundResource);
@@ -2977,12 +2993,13 @@ void TestAccountHighUsnInLocalStorage()
 {
     // 1) Create LocalStorageManager
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("LocalStorageManagerAccountHighUsnTestFakeUser"),
-        Account::Type::Evernote, 0);
+        Account::Type::Evernote,
+        0};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
@@ -2997,32 +3014,32 @@ void TestAccountHighUsnInLocalStorage()
 
     // 3) Create some user's own notebooks with different USNs
 
-    Notebook firstNotebook;
+    qevercloud::Notebook firstNotebook;
     firstNotebook.setGuid(UidGenerator::Generate());
-    firstNotebook.setUpdateSequenceNumber(currentUsn++);
+    firstNotebook.setUpdateSequenceNum(currentUsn++);
     firstNotebook.setName(QStringLiteral("First notebook"));
-    firstNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    firstNotebook.setModificationTimestamp(firstNotebook.creationTimestamp());
+    firstNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
+    firstNotebook.setServiceUpdated(firstNotebook.serviceCreated());
     firstNotebook.setDefaultNotebook(true);
-    firstNotebook.setLastUsed(false);
+    firstNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
-    Notebook secondNotebook;
+    qevercloud::Notebook secondNotebook;
     secondNotebook.setGuid(UidGenerator::Generate());
-    secondNotebook.setUpdateSequenceNumber(currentUsn++);
+    secondNotebook.setUpdateSequenceNum(currentUsn++);
     secondNotebook.setName(QStringLiteral("Second notebook"));
-    secondNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    secondNotebook.setModificationTimestamp(secondNotebook.creationTimestamp());
+    secondNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
+    secondNotebook.setServiceUpdated(secondNotebook.serviceCreated());
     secondNotebook.setDefaultNotebook(false);
-    secondNotebook.setLastUsed(false);
+    secondNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
-    Notebook thirdNotebook;
+    qevercloud::Notebook thirdNotebook;
     thirdNotebook.setGuid(UidGenerator::Generate());
-    thirdNotebook.setUpdateSequenceNumber(currentUsn++);
+    thirdNotebook.setUpdateSequenceNum(currentUsn++);
     thirdNotebook.setName(QStringLiteral("Third notebook"));
-    thirdNotebook.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    thirdNotebook.setModificationTimestamp(thirdNotebook.creationTimestamp());
+    thirdNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
+    thirdNotebook.setServiceUpdated(thirdNotebook.serviceCreated());
     thirdNotebook.setDefaultNotebook(false);
-    thirdNotebook.setLastUsed(true);
+    thirdNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = true;
 
     errorMessage.clear();
 
@@ -3052,29 +3069,29 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == thirdNotebook.updateSequenceNumber(),
+        accountHighUsn == thirdNotebook.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(thirdNotebook.updateSequenceNumber()) << ", got "
-            << QString::number(accountHighUsn));
+            << QString::number(thirdNotebook.updateSequenceNum().value())
+            << ", got " << QString::number(accountHighUsn));
 
     // 5) Create some user's own tags with different USNs
 
-    Tag firstTag;
+    qevercloud::Tag firstTag;
     firstTag.setGuid(UidGenerator::Generate());
     firstTag.setName(QStringLiteral("First tag"));
-    firstTag.setUpdateSequenceNumber(currentUsn++);
+    firstTag.setUpdateSequenceNum(currentUsn++);
 
-    Tag secondTag;
+    qevercloud::Tag secondTag;
     secondTag.setGuid(UidGenerator::Generate());
     secondTag.setName(QStringLiteral("Second tag"));
-    secondTag.setUpdateSequenceNumber(currentUsn++);
+    secondTag.setUpdateSequenceNum(currentUsn++);
 
-    Tag thirdTag;
+    qevercloud::Tag thirdTag;
     thirdTag.setGuid(UidGenerator::Generate());
     thirdTag.setName(QStringLiteral("Third tag"));
-    thirdTag.setUpdateSequenceNumber(currentUsn++);
+    thirdTag.setUpdateSequenceNum(currentUsn++);
     thirdTag.setParentGuid(secondTag.guid());
-    thirdTag.setParentLocalUid(secondTag.localUid());
+    thirdTag.setParentLocalId(secondTag.localId());
 
     errorMessage.clear();
 
@@ -3103,30 +3120,30 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == thirdTag.updateSequenceNumber(),
+        accountHighUsn == thirdTag.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(thirdTag.updateSequenceNumber()) << ", got "
+            << QString::number(thirdTag.updateSequenceNum().value()) << ", got "
             << QString::number(accountHighUsn));
 
     // 7) Create some user's own notes with different USNs
 
-    Note firstNote;
+    qevercloud::Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setTitle(QStringLiteral("First note"));
-    firstNote.setUpdateSequenceNumber(currentUsn++);
-    firstNote.setNotebookLocalUid(firstNotebook.localUid());
+    firstNote.setUpdateSequenceNum(currentUsn++);
+    firstNote.setParentLocalId(firstNotebook.localId());
     firstNote.setNotebookGuid(firstNotebook.guid());
-    firstNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    firstNote.setModificationTimestamp(firstNote.creationTimestamp());
+    firstNote.setCreated(QDateTime::currentMSecsSinceEpoch());
+    firstNote.setUpdated(firstNote.created());
 
-    Note secondNote;
+    qevercloud::Note secondNote;
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setTitle(QStringLiteral("Second note"));
-    secondNote.setUpdateSequenceNumber(currentUsn++);
-    secondNote.setNotebookLocalUid(secondNotebook.localUid());
+    secondNote.setUpdateSequenceNum(currentUsn++);
+    secondNote.setParentLocalId(secondNotebook.localId());
     secondNote.setNotebookGuid(secondNotebook.guid());
-    secondNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    secondNote.setModificationTimestamp(secondNote.creationTimestamp());
+    secondNote.setCreated(QDateTime::currentMSecsSinceEpoch());
+    secondNote.setUpdated(secondNote.created());
 
     errorMessage.clear();
 
@@ -3149,40 +3166,44 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == secondNote.updateSequenceNumber(),
+        accountHighUsn == secondNote.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(secondNote.updateSequenceNumber()) << ", got "
-            << QString::number(accountHighUsn));
+            << QString::number(secondNote.updateSequenceNum().value())
+            << ", got " << QString::number(accountHighUsn));
 
     // 9) Create one more note, this time with a resource which USN
     // is higher than the note's one
 
-    Note thirdNote;
+    qevercloud::Note thirdNote;
     thirdNote.setGuid(UidGenerator::Generate());
-    thirdNote.setUpdateSequenceNumber(currentUsn++);
+    thirdNote.setUpdateSequenceNum(currentUsn++);
     thirdNote.setTitle(QStringLiteral("Third note"));
     thirdNote.setNotebookGuid(thirdNotebook.guid());
-    thirdNote.setNotebookLocalUid(thirdNotebook.localUid());
-    thirdNote.setCreationTimestamp(QDateTime::currentMSecsSinceEpoch());
-    thirdNote.setModificationTimestamp(thirdNote.creationTimestamp());
+    thirdNote.setParentLocalId(thirdNotebook.localId());
+    thirdNote.setCreated(QDateTime::currentMSecsSinceEpoch());
+    thirdNote.setUpdated(thirdNote.created());
 
-    Resource thirdNoteResource;
+    qevercloud::Resource thirdNoteResource;
     thirdNoteResource.setGuid(UidGenerator::Generate());
     thirdNoteResource.setNoteGuid(thirdNote.guid());
-    thirdNoteResource.setNoteLocalUid(thirdNote.localUid());
+    thirdNoteResource.setParentLocalId(thirdNote.localId());
 
-    thirdNoteResource.setDataBody(
-        QByteArray::fromStdString(std::string("Something")));
+    thirdNoteResource.setData(qevercloud::Data{});
+    thirdNoteResource.mutableData()->setBody(
+        QByteArray("Something"));
 
-    thirdNoteResource.setDataSize(thirdNoteResource.dataBody().size());
+    thirdNoteResource.mutableData()->setSize(
+        thirdNoteResource.data()->body()->size());
 
-    thirdNoteResource.setDataHash(QCryptographicHash::hash(
-        thirdNoteResource.dataBody(), QCryptographicHash::Md5));
+    thirdNoteResource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *thirdNoteResource.data()->body(),
+            QCryptographicHash::Md5));
 
     thirdNoteResource.setMime(QStringLiteral("text/plain"));
-    thirdNoteResource.setUpdateSequenceNumber(currentUsn++);
+    thirdNoteResource.setUpdateSequenceNum(currentUsn++);
 
-    thirdNote.addResource(thirdNoteResource);
+    addNoteResource(thirdNoteResource, thirdNote);
 
     errorMessage.clear();
 
@@ -3199,29 +3220,29 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == thirdNoteResource.updateSequenceNumber(),
+        accountHighUsn == thirdNoteResource.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(thirdNoteResource.updateSequenceNumber())
+            << QString::number(thirdNoteResource.updateSequenceNum().value())
             << ", got " << QString::number(accountHighUsn));
 
     // 11) Create some user's own saved sarches with different USNs
 
-    SavedSearch firstSearch;
+    qevercloud::SavedSearch firstSearch;
     firstSearch.setGuid(UidGenerator::Generate());
     firstSearch.setName(QStringLiteral("First search"));
-    firstSearch.setUpdateSequenceNumber(currentUsn++);
+    firstSearch.setUpdateSequenceNum(currentUsn++);
     firstSearch.setQuery(QStringLiteral("First"));
 
-    SavedSearch secondSearch;
+    qevercloud::SavedSearch secondSearch;
     secondSearch.setGuid(UidGenerator::Generate());
     secondSearch.setName(QStringLiteral("Second search"));
-    secondSearch.setUpdateSequenceNumber(currentUsn++);
+    secondSearch.setUpdateSequenceNum(currentUsn++);
     secondSearch.setQuery(QStringLiteral("Second"));
 
-    SavedSearch thirdSearch;
+    qevercloud::SavedSearch thirdSearch;
     thirdSearch.setGuid(UidGenerator::Generate());
     thirdSearch.setName(QStringLiteral("Third search"));
-    thirdSearch.setUpdateSequenceNumber(currentUsn++);
+    thirdSearch.setUpdateSequenceNum(currentUsn++);
     thirdSearch.setQuery(QStringLiteral("Third"));
 
     errorMessage.clear();
@@ -3251,16 +3272,16 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == thirdSearch.updateSequenceNumber(),
+        accountHighUsn == thirdSearch.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(thirdSearch.updateSequenceNumber()) << ", got "
-            << QString::number(accountHighUsn));
+            << QString::number(thirdSearch.updateSequenceNum().value())
+            << ", got " << QString::number(accountHighUsn));
 
     // 13) Create a linked notebook
 
-    LinkedNotebook linkedNotebook;
+    qevercloud::LinkedNotebook linkedNotebook;
     linkedNotebook.setGuid(UidGenerator::Generate());
-    linkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    linkedNotebook.setUpdateSequenceNum(currentUsn++);
     linkedNotebook.setShareName(QStringLiteral("Share name"));
     linkedNotebook.setUsername(QStringLiteral("Username"));
     linkedNotebook.setShardId(UidGenerator::Generate());
@@ -3281,112 +3302,126 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == linkedNotebook.updateSequenceNumber(),
+        accountHighUsn == linkedNotebook.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(linkedNotebook.updateSequenceNumber())
+            << QString::number(linkedNotebook.updateSequenceNum().value())
             << ", got " << QString::number(accountHighUsn));
 
     // 15) Add notebook and some tags and notes corresponding to the linked
     // notebook
 
-    Notebook notebookFromLinkedNotebook;
+    qevercloud::Notebook notebookFromLinkedNotebook;
     notebookFromLinkedNotebook.setGuid(linkedNotebook.sharedNotebookGlobalId());
-    notebookFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
-    notebookFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+
+    setItemLinkedNotebookGuid(
+        linkedNotebook.guid().value(),
+        notebookFromLinkedNotebook);
+
+    notebookFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
     notebookFromLinkedNotebook.setName(
         QStringLiteral("Notebook from linked notebook"));
 
-    notebookFromLinkedNotebook.setCreationTimestamp(
+    notebookFromLinkedNotebook.setServiceCreated(
         QDateTime::currentMSecsSinceEpoch());
 
-    notebookFromLinkedNotebook.setModificationTimestamp(
-        notebookFromLinkedNotebook.creationTimestamp());
+    notebookFromLinkedNotebook.setServiceUpdated(
+        notebookFromLinkedNotebook.serviceCreated());
 
-    Tag firstTagFromLinkedNotebook;
+    qevercloud::Tag firstTagFromLinkedNotebook;
     firstTagFromLinkedNotebook.setGuid(UidGenerator::Generate());
 
     firstTagFromLinkedNotebook.setName(
         QStringLiteral("First tag from linked notebook"));
 
-    firstTagFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
-    firstTagFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    setItemLinkedNotebookGuid(
+        linkedNotebook.guid().value(),
+        firstTagFromLinkedNotebook);
 
-    Tag secondTagFromLinkedNotebook;
+    firstTagFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
+
+    qevercloud::Tag secondTagFromLinkedNotebook;
     secondTagFromLinkedNotebook.setGuid(UidGenerator::Generate());
 
     secondTagFromLinkedNotebook.setName(
         QStringLiteral("Second tag from linked notebook"));
 
-    secondTagFromLinkedNotebook.setLinkedNotebookGuid(linkedNotebook.guid());
-    secondTagFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    setItemLinkedNotebookGuid(
+        linkedNotebook.guid().value(),
+        secondTagFromLinkedNotebook);
 
-    Note firstNoteFromLinkedNotebook;
+    secondTagFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
+
+    qevercloud::Note firstNoteFromLinkedNotebook;
     firstNoteFromLinkedNotebook.setGuid(UidGenerator::Generate());
-    firstNoteFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    firstNoteFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
     firstNoteFromLinkedNotebook.setNotebookGuid(
         notebookFromLinkedNotebook.guid());
 
-    firstNoteFromLinkedNotebook.setNotebookLocalUid(
-        notebookFromLinkedNotebook.localUid());
+    firstNoteFromLinkedNotebook.setParentLocalId(
+        notebookFromLinkedNotebook.localId());
 
     firstNoteFromLinkedNotebook.setTitle(
         QStringLiteral("First note from linked notebook"));
 
-    firstNoteFromLinkedNotebook.setCreationTimestamp(
+    firstNoteFromLinkedNotebook.setCreated(
         QDateTime::currentMSecsSinceEpoch());
 
-    firstNoteFromLinkedNotebook.setModificationTimestamp(
-        firstNoteFromLinkedNotebook.creationTimestamp());
+    firstNoteFromLinkedNotebook.setUpdated(
+        firstNoteFromLinkedNotebook.created());
 
-    firstNoteFromLinkedNotebook.addTagLocalUid(
-        firstTagFromLinkedNotebook.localUid());
+    addNoteTagLocalId(
+        firstTagFromLinkedNotebook.localId(), firstNoteFromLinkedNotebook);
 
-    firstNoteFromLinkedNotebook.addTagGuid(firstTagFromLinkedNotebook.guid());
+    addNoteTagGuid(
+        firstTagFromLinkedNotebook.guid().value(),
+        firstNoteFromLinkedNotebook);
 
-    Note secondNoteFromLinkedNotebook;
+    qevercloud::Note secondNoteFromLinkedNotebook;
     secondNoteFromLinkedNotebook.setGuid(UidGenerator::Generate());
-    secondNoteFromLinkedNotebook.setUpdateSequenceNumber(currentUsn++);
+    secondNoteFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
     secondNoteFromLinkedNotebook.setNotebookGuid(
         notebookFromLinkedNotebook.guid());
 
-    secondNoteFromLinkedNotebook.setNotebookLocalUid(
-        notebookFromLinkedNotebook.localUid());
+    secondNoteFromLinkedNotebook.setParentLocalId(
+        notebookFromLinkedNotebook.localId());
 
     secondNoteFromLinkedNotebook.setTitle(
         QStringLiteral("Second note from linked notebook"));
 
-    secondNoteFromLinkedNotebook.setCreationTimestamp(
+    secondNoteFromLinkedNotebook.setCreated(
         QDateTime::currentMSecsSinceEpoch());
 
-    secondNoteFromLinkedNotebook.setModificationTimestamp(
-        secondNoteFromLinkedNotebook.creationTimestamp());
+    secondNoteFromLinkedNotebook.setUpdated(
+        secondNoteFromLinkedNotebook.created());
 
-    Resource secondNoteFromLinkedNotebookResource;
+    qevercloud::Resource secondNoteFromLinkedNotebookResource;
     secondNoteFromLinkedNotebookResource.setGuid(UidGenerator::Generate());
 
     secondNoteFromLinkedNotebookResource.setNoteGuid(
         secondNoteFromLinkedNotebook.guid());
 
-    secondNoteFromLinkedNotebookResource.setNoteLocalUid(
-        secondNoteFromLinkedNotebook.localUid());
+    secondNoteFromLinkedNotebookResource.setParentLocalId(
+        secondNoteFromLinkedNotebook.localId());
 
-    secondNoteFromLinkedNotebookResource.setDataBody(
-        QByteArray::fromStdString(std::string("Other something")));
+    secondNoteFromLinkedNotebookResource.setData(qevercloud::Data{});
+    secondNoteFromLinkedNotebookResource.mutableData()->setBody(
+        QByteArray("Other something"));
 
-    secondNoteFromLinkedNotebookResource.setDataSize(
-        secondNoteFromLinkedNotebookResource.dataBody().size());
+    secondNoteFromLinkedNotebookResource.mutableData()->setSize(
+        secondNoteFromLinkedNotebookResource.data()->body()->size());
 
-    secondNoteFromLinkedNotebookResource.setDataHash(QCryptographicHash::hash(
-        secondNoteFromLinkedNotebookResource.dataBody(),
-        QCryptographicHash::Md5));
+    secondNoteFromLinkedNotebookResource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *secondNoteFromLinkedNotebookResource.data()->body(),
+            QCryptographicHash::Md5));
 
-    secondNoteFromLinkedNotebookResource.setUpdateSequenceNumber(currentUsn++);
+    secondNoteFromLinkedNotebookResource.setUpdateSequenceNum(currentUsn++);
 
-    secondNoteFromLinkedNotebook.addResource(
-        secondNoteFromLinkedNotebookResource);
+    addNoteResource(
+        secondNoteFromLinkedNotebookResource, secondNoteFromLinkedNotebook);
 
     errorMessage.clear();
 
@@ -3429,9 +3464,9 @@ void TestAccountHighUsnInLocalStorage()
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
-        accountHighUsn == linkedNotebook.updateSequenceNumber(),
+        accountHighUsn == linkedNotebook.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
-            << QString::number(linkedNotebook.updateSequenceNumber())
+            << QString::number(linkedNotebook.updateSequenceNum().value())
             << ", got " << QString::number(accountHighUsn));
 
     // 17) Verify the current value of the account high USN for the linked
@@ -3439,18 +3474,18 @@ void TestAccountHighUsnInLocalStorage()
 
     errorMessage.clear();
 
-    accountHighUsn =
-        localStorageManager.accountHighUsn(linkedNotebook.guid(), errorMessage);
+    accountHighUsn = localStorageManager.accountHighUsn(
+        linkedNotebook.guid().value(), errorMessage);
 
     QVERIFY2(
         accountHighUsn >= 0, qPrintable(errorMessage.nonLocalizedString()));
 
     VERIFY2(
         accountHighUsn ==
-            secondNoteFromLinkedNotebookResource.updateSequenceNumber(),
+            secondNoteFromLinkedNotebookResource.updateSequenceNum().value(),
         "Wrong value of account high USN, expected "
             << QString::number(
-                   secondNoteFromLinkedNotebookResource.updateSequenceNumber())
+                   secondNoteFromLinkedNotebookResource.updateSequenceNum().value())
             << ", got " << QString::number(accountHighUsn));
 }
 
@@ -3458,12 +3493,13 @@ void TestAddingNoteWithoutLocalUid()
 {
     // 1) Create LocalStorageManager
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("LocalStorageManagerAddNoteWithoutLocalUidTestFakeUser"),
-        Account::Type::Evernote, 0);
+        Account::Type::Evernote,
+        0};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
@@ -3471,7 +3507,7 @@ void TestAddingNoteWithoutLocalUid()
 
     // 2) Add a notebook in order to test adding notes
 
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(UidGenerator::Generate());
     notebook.setName(QStringLiteral("First notebook"));
 
@@ -3480,8 +3516,8 @@ void TestAddingNoteWithoutLocalUid()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 3) Try to add a note without local id without tags or resources
-    Note firstNote;
-    firstNote.unsetLocalUid();
+    qevercloud::Note firstNote;
+    firstNote.setLocalId(QString{});
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setNotebookGuid(notebook.guid());
     firstNote.setTitle(QStringLiteral("First note"));
@@ -3494,21 +3530,21 @@ void TestAddingNoteWithoutLocalUid()
         qPrintable(errorMessage.nonLocalizedString()));
 
     QVERIFY2(
-        !firstNote.localUid().isEmpty(),
+        !firstNote.localId().isEmpty(),
         qPrintable(QStringLiteral(
             "Note local id is empty after LocalStorageManager::addNote method "
             "returning")));
 
     // 4) Add some tags in order to test adding notes with tags
-    Tag firstTag;
+    qevercloud::Tag firstTag;
     firstTag.setGuid(UidGenerator::Generate());
     firstTag.setName(QStringLiteral("First"));
 
-    Tag secondTag;
+    qevercloud::Tag secondTag;
     secondTag.setGuid(UidGenerator::Generate());
     secondTag.setName(QStringLiteral("Second"));
 
-    Tag thirdTag;
+    qevercloud::Tag thirdTag;
     thirdTag.setGuid(UidGenerator::Generate());
     thirdTag.setName(QStringLiteral("Third"));
 
@@ -3531,15 +3567,16 @@ void TestAddingNoteWithoutLocalUid()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 5) Try to add a note without local id with tag guids
-    Note secondNote;
-    secondNote.unsetLocalUid();
+    qevercloud::Note secondNote;
+    secondNote.setLocalId(QString{});
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setNotebookGuid(notebook.guid());
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
-    secondNote.addTagGuid(firstTag.guid());
-    secondNote.addTagGuid(secondTag.guid());
-    secondNote.addTagGuid(thirdTag.guid());
+
+    addNoteTagGuid(firstTag.guid().value(), secondNote);
+    addNoteTagGuid(secondTag.guid().value(), secondNote);
+    addNoteTagGuid(thirdTag.guid().value(), secondNote);
 
     errorMessage.clear();
 
@@ -3548,29 +3585,32 @@ void TestAddingNoteWithoutLocalUid()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 6) Try to add a note without local id with tag guids and with resources
-    Note thirdNote;
-    thirdNote.unsetLocalUid();
+    qevercloud::Note thirdNote;
+    thirdNote.setLocalId(QString{});
     thirdNote.setGuid(UidGenerator::Generate());
     thirdNote.setNotebookGuid(notebook.guid());
     thirdNote.setTitle(QStringLiteral("Third note"));
     thirdNote.setContent(QStringLiteral("<en-note>third note</en-note>"));
-    thirdNote.addTagGuid(firstTag.guid());
-    thirdNote.addTagGuid(secondTag.guid());
-    thirdNote.addTagGuid(thirdTag.guid());
 
-    Resource resource;
+    addNoteTagGuid(firstTag.guid().value(), thirdNote);
+    addNoteTagGuid(secondTag.guid().value(), thirdNote);
+    addNoteTagGuid(thirdTag.guid().value(), thirdNote);
+
+    qevercloud::Resource resource;
     resource.setGuid(UidGenerator::Generate());
     resource.setNoteGuid(thirdNote.guid());
-    QByteArray dataBody = QByteArray::fromStdString(std::string("Data"));
-    resource.setDataBody(dataBody);
-    resource.setDataSize(dataBody.size());
 
-    resource.setDataHash(
-        QCryptographicHash::hash(dataBody, QCryptographicHash::Md5));
+    resource.setData(qevercloud::Data{});
+    resource.mutableData()->setBody(QByteArray("Data"));
+    resource.mutableData()->setSize(resource.data()->body()->size());
+    resource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.data()->body(),
+            QCryptographicHash::Md5));
 
     resource.setMime(QStringLiteral("text/plain"));
 
-    thirdNote.addResource(resource);
+    addNoteResource(resource, thirdNote);
 
     errorMessage.clear();
 
@@ -3583,12 +3623,13 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
 {
     // 1) Create LocalStorageManager
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
-    Account account(
+    const Account account{
         QStringLiteral("LocalStorageManagerAddNoteWithoutLocalUidTestFakeUser"),
-        Account::Type::Evernote, 0);
+        Account::Type::Evernote,
+        0};
 
     LocalStorageManager localStorageManager(account, startupOptions);
 
@@ -3596,7 +3637,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
 
     // 2) Add a notebook in order to test adding notes
 
-    Notebook notebook;
+    qevercloud::Notebook notebook;
     notebook.setGuid(UidGenerator::Generate());
     notebook.setName(QStringLiteral("First notebook"));
 
@@ -3605,15 +3646,15 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 3) Add some tags
-    Tag firstTag;
+    qevercloud::Tag firstTag;
     firstTag.setGuid(UidGenerator::Generate());
     firstTag.setName(QStringLiteral("First"));
 
-    Tag secondTag;
+    qevercloud::Tag secondTag;
     secondTag.setGuid(UidGenerator::Generate());
     secondTag.setName(QStringLiteral("Second"));
 
-    Tag thirdTag;
+    qevercloud::Tag thirdTag;
     thirdTag.setGuid(UidGenerator::Generate());
     thirdTag.setName(QStringLiteral("Third"));
 
@@ -3636,15 +3677,15 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 4) Add a note without tag local ids but with tag guids
-    Note firstNote;
+    qevercloud::Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setNotebookGuid(notebook.guid());
     firstNote.setTitle(QStringLiteral("First note"));
     firstNote.setContent(QStringLiteral("<en-note>first note</en-note>"));
 
-    firstNote.addTagGuid(firstTag.guid());
-    firstNote.addTagGuid(secondTag.guid());
-    firstNote.addTagGuid(thirdTag.guid());
+    addNoteTagGuid(firstTag.guid().value(), firstNote);
+    addNoteTagGuid(secondTag.guid().value(), firstNote);
+    addNoteTagGuid(thirdTag.guid().value(), firstNote);
 
     errorMessage.clear();
 
@@ -3652,39 +3693,38 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         localStorageManager.addNote(firstNote, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
+    const auto tagLocalIds = noteTagLocalIds(firstNote);
     QVERIFY2(
-        firstNote.hasTagLocalUids(),
+        !tagLocalIds.isEmpty(),
         qPrintable(QStringLiteral("Note has no tag local ids after "
                                   "LocalStorageManager::addNote method "
                                   "returning")));
 
-    const QStringList & tagLocalUids = firstNote.tagLocalUids();
-
     QVERIFY2(
-        tagLocalUids.size() == 3,
+        tagLocalIds.size() == 3,
         qPrintable(QStringLiteral(
             "Note's tag local ids have improper size not matching the number "
             "of tag guids after LocalStorageManager::addNote method "
             "returning")));
 
     QVERIFY2(
-        tagLocalUids.contains(firstTag.localUid()) &&
-            tagLocalUids.contains(secondTag.localUid()) &&
-            tagLocalUids.contains(thirdTag.localUid()),
+        tagLocalIds.contains(firstTag.localId()) &&
+            tagLocalIds.contains(secondTag.localId()) &&
+            tagLocalIds.contains(thirdTag.localId()),
         qPrintable(QStringLiteral(
             "Note doesn't have one of tag local ids it should have after "
             "LocalStorageManager::addNote method returning")));
 
     // 5) Add a note without tag guids but with tag local ids
-    Note secondNote;
+    qevercloud::Note secondNote;
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setNotebookGuid(notebook.guid());
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
 
-    secondNote.addTagLocalUid(firstTag.localUid());
-    secondNote.addTagLocalUid(secondTag.localUid());
-    secondNote.addTagLocalUid(thirdTag.localUid());
+    addNoteTagLocalId(firstTag.localId(), secondNote);
+    addNoteTagLocalId(secondTag.localId(), secondNote);
+    addNoteTagLocalId(thirdTag.localId(), secondNote);
 
     errorMessage.clear();
 
@@ -3693,12 +3733,12 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         qPrintable(errorMessage.nonLocalizedString()));
 
     QVERIFY2(
-        secondNote.hasTagGuids(),
+        secondNote.tagGuids() && !secondNote.tagGuids()->isEmpty(),
         qPrintable(QStringLiteral(
             "Note has no tag guids after LocalStorageManager::addNote method "
             "returning")));
 
-    const QStringList & tagGuids = secondNote.tagGuids();
+    const QStringList & tagGuids = *secondNote.tagGuids();
 
     QVERIFY2(
         tagGuids.size() == 3,
@@ -3708,17 +3748,18 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             "returning")));
 
     QVERIFY2(
-        tagGuids.contains(firstTag.guid()) &&
-            tagGuids.contains(secondTag.guid()) &&
-            tagGuids.contains(thirdTag.guid()),
+        tagGuids.contains(firstTag.guid().value()) &&
+            tagGuids.contains(secondTag.guid().value()) &&
+            tagGuids.contains(thirdTag.guid().value()),
         qPrintable(QStringLiteral(
             "Note doesn't have one of tag guids it should have after "
             "LocalStorageManager::addNote method returning")));
 
     // 6) Update note with tag guids
     firstNote.setTitle(QStringLiteral("Updated first note"));
-    firstNote.setTagLocalUids(QStringList());
-    firstNote.setTagGuids(QStringList() << firstTag.guid() << secondTag.guid());
+    setNoteTagLocalIds(QStringList{}, firstNote);
+    firstNote.setTagGuids(
+        QStringList() << firstTag.guid().value() << secondTag.guid().value());
 
     errorMessage.clear();
 
@@ -3730,24 +3771,24 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             firstNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
+    const auto updatedTagLocalIds = noteTagLocalIds(firstNote);
+
     QVERIFY2(
-        firstNote.hasTagLocalUids(),
+        !updatedTagLocalIds.isEmpty(),
         qPrintable(QStringLiteral(
             "Note has no tag local ids after LocalStorageManager::updateNote "
             "method returning")));
 
-    const QStringList & updatedTagLocalUids = firstNote.tagLocalUids();
-
     QVERIFY2(
-        updatedTagLocalUids.size() == 2,
+        updatedTagLocalIds.size() == 2,
         qPrintable(QStringLiteral(
             "Note's tag local ids have improper size not matching the number "
             "of tag guids after LocalStorageManager::updateNote method "
             "returning")));
 
     QVERIFY2(
-        updatedTagLocalUids.contains(firstTag.localUid()) &&
-            updatedTagLocalUids.contains(secondTag.localUid()),
+        updatedTagLocalIds.contains(firstTag.localId()) &&
+            updatedTagLocalIds.contains(secondTag.localId()),
         qPrintable(QStringLiteral(
             "Note doesn't have one of tag local ids it should have after "
             "LocalStorageManager::updateNote method returning")));
@@ -3756,8 +3797,9 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     secondNote.setTitle(QStringLiteral("Updated second note"));
     secondNote.setTagGuids(QStringList());
 
-    secondNote.setTagLocalUids(
-        QStringList() << firstTag.localUid() << secondTag.localUid());
+    setNoteTagLocalIds(
+        QStringList() << firstTag.localId() << secondTag.localId(),
+        secondNote);
 
     errorMessage.clear();
 
@@ -3767,12 +3809,12 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         qPrintable(errorMessage.nonLocalizedString()));
 
     QVERIFY2(
-        secondNote.hasTagGuids(),
+        secondNote.tagGuids() && !secondNote.tagGuids()->isEmpty(),
         qPrintable(QStringLiteral(
             "Note has no tag guids after LocalStorageManager::updateNote "
             "method returning")));
 
-    const QStringList & updatedTagGuids = secondNote.tagGuids();
+    const QStringList & updatedTagGuids = *secondNote.tagGuids();
 
     QVERIFY2(
         updatedTagGuids.size() == 2,
@@ -3782,8 +3824,8 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             "returning")));
 
     QVERIFY2(
-        updatedTagGuids.contains(firstTag.guid()) &&
-            updatedTagGuids.contains(secondTag.guid()),
+        updatedTagGuids.contains(firstTag.guid().value()) &&
+            updatedTagGuids.contains(secondTag.guid().value()),
         qPrintable(QStringLiteral(
             "Note doesn't have one of tag guids it should have after "
             "LocalStorageManager::updateNote method returning")));
