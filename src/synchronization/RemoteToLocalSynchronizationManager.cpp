@@ -24,7 +24,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/CommonUtils.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/Compat.h>
@@ -1105,7 +1104,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(
                     resource.guid().value(), *resource.height(),
                     *resource.width(), *note.guid(), *pNotebook);
             }
-            else if (!note.parentLocalId().isEmpty() || note.notebookGuid()) {
+            else if (!note.notebookLocalId().isEmpty() || note.notebookGuid()) {
                 InkNoteResourceData resourceData;
                 resourceData.m_resourceGuid = resource.guid().value();
                 resourceData.m_noteGuid = *note.guid();
@@ -1113,8 +1112,8 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(
                 resourceData.m_resourceWidth = *resource.width();
 
                 qevercloud::Notebook dummyNotebook;
-                if (!note.parentLocalId().isEmpty()) {
-                    dummyNotebook.setLocalId(note.parentLocalId());
+                if (!note.notebookLocalId().isEmpty()) {
+                    dummyNotebook.setLocalId(note.notebookLocalId());
                 }
                 else {
                     dummyNotebook.setLocalId(QString{});
@@ -2256,7 +2255,7 @@ RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
         return QString{};
     }
 
-    setItemLinkedNotebookGuid(it.value(), notebook);
+    notebook.setLinkedNotebookGuid(it.value());
 
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -2295,7 +2294,7 @@ RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
         return QString();
     }
 
-    setItemLinkedNotebookGuid(it.value(), tag);
+    tag.setLinkedNotebookGuid(it.value());
 
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -9510,11 +9509,11 @@ void RemoteToLocalSynchronizationManager::authenticationInfoForNotebook(
 {
     isPublic = notebook.published() && *notebook.published();
 
-    const QString linkedNotebookGuid = itemLinkedNotebookGuid(notebook);
+    const auto linkedNotebookGuid = notebook.linkedNotebookGuid();
 
-    if (!linkedNotebookGuid.isEmpty()) {
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         auto it = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(
-            linkedNotebookGuid);
+            *linkedNotebookGuid);
 
         if (Q_UNLIKELY(
                 it ==
@@ -9570,7 +9569,7 @@ bool RemoteToLocalSynchronizationManager::
         return false;
     }
 
-    const QString notebookLocalId = note.parentLocalId();
+    const QString notebookLocalId = note.notebookLocalId();
     if (Q_UNLIKELY(notebookLocalId.isEmpty() && !note.notebookGuid())) {
         QNWARNING(
             "synchronization:remote_to_local",
@@ -9760,7 +9759,7 @@ bool RemoteToLocalSynchronizationManager::
         return false;
     }
 
-    const QString notebookLocalId = note.parentLocalId();
+    const QString notebookLocalId = note.notebookLocalId();
     if (Q_UNLIKELY(notebookLocalId.isEmpty() && !note.notebookGuid())) {
         QNWARNING(
             "synchronization:remote_to_local",
@@ -9952,7 +9951,7 @@ qevercloud::Note RemoteToLocalSynchronizationManager::createConflictingNote(
             resource.setLocallyModified(true);
             resource.setLocalOnly(false);
             resource.setNoteGuid(std::nullopt);
-            resource.setParentLocalId(conflictingNote.localId());
+            resource.setNoteLocalId(conflictingNote.localId());
         }
     }
 
@@ -10003,7 +10002,7 @@ qevercloud::Note RemoteToLocalSynchronizationManager::createConflictingNote(
                     << "), using the remote note's notebook (guid = "
                     << *pRemoteNote->notebookGuid() << ")");
 
-            conflictingNote.setParentLocalId(QString{});
+            conflictingNote.setNotebookLocalId(QString{});
             conflictingNote.setNotebookGuid(*pRemoteNote->notebookGuid());
         }
     }
@@ -10109,7 +10108,7 @@ void RemoteToLocalSynchronizationManager::checkNonSyncedItemForSmallestUsn(
         return;
     }
 
-    QString itemLinkedNotebookGuid = findLinkedNotebookGuidForItem(item);
+    const QString itemLinkedNotebookGuid = findLinkedNotebookGuidForItem(item);
     if (itemLinkedNotebookGuid != linkedNotebookGuid) {
         QNTRACE(
             "synchronization:remote_to_local",
@@ -10751,12 +10750,12 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
          : QList<qevercloud::Resource>());
 
     QString localNoteLocalId = localNote.localId();
-    QString localNoteParentLocalId = localNote.parentLocalId();
+    QString localNoteNotebookLocalId = localNote.notebookLocalId();
     QHash<QString, QVariant> localNoteLocalData = localNote.localData();
 
     localNote = remoteNote;
     localNote.setLocalId(std::move(localNoteLocalId));
-    localNote.setParentLocalId(std::move(localNoteParentLocalId));
+    localNote.setNotebookLocalId(std::move(localNoteNotebookLocalId));
     localNote.setLocalData(std::move(localNoteLocalData));
     localNote.setLocallyModified(false);
     localNote.setLocalOnly(false);
@@ -10783,7 +10782,7 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
 
             if (*updatedResource.guid() == resource.guid()) {
                 QString resourceLocalId = resource.localId();
-                QString resourceParentLocalId = resource.parentLocalId();
+                QString resourceNoteLocalId = resource.noteLocalId();
 
                 QHash<QString, QVariant> resourceLocalData =
                     resource.localData();
@@ -10791,7 +10790,7 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
                 resource = updatedResource;
 
                 resource.setLocalId(std::move(resourceLocalId));
-                resource.setParentLocalId(std::move(resourceParentLocalId));
+                resource.setNoteLocalId(std::move(resourceNoteLocalId));
                 resource.setLocalData(std::move(resourceLocalData));
 
                 // NOTE: need to not forget to reset the dirty flag since we are
@@ -10836,7 +10835,7 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
         newResource.setLocalId(UidGenerator::Generate());
         newResource.setLocallyModified(false);
         newResource.setLocalOnly(false);
-        newResource.setParentLocalId(localNote.localId());
+        newResource.setNoteLocalId(localNote.localId());
         amendedResources << newResource;
     }
 
@@ -11289,7 +11288,7 @@ void RemoteToLocalSynchronizationManager::
 
         qevercloud::Tag tagCopy = tag;
         tagCopy.setParentGuid(std::nullopt);
-        tagCopy.setParentLocalId(QString{});
+        tagCopy.setParentTagLocalId(QString{});
         tagIndexByGuid.replace(it, tagCopy);
     }
 }
@@ -11403,7 +11402,7 @@ void RemoteToLocalSynchronizationManager::
                 if (tag.parentGuid() && (*tag.parentGuid() == *eit)) {
                     qevercloud::Tag tagWithoutParentGuid = tag;
                     tagWithoutParentGuid.setParentGuid(std::nullopt);
-                    tagWithoutParentGuid.setParentLocalId(QString{});
+                    tagWithoutParentGuid.setParentTagLocalId(QString{});
                     container.replace(iit, tagWithoutParentGuid);
                 }
             }
@@ -12673,18 +12672,19 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     NotebookSyncCache * pCache = nullptr;
-    const QString linkedNotebookGuid = itemLinkedNotebookGuid(localConflict);
+    const auto linkedNotebookGuid = localConflict.linkedNotebookGuid();
 
-    if (!linkedNotebookGuid.isEmpty()) {
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         auto it =
-            m_notebookSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+            m_notebookSyncCachesByLinkedNotebookGuids.find(*linkedNotebookGuid);
 
         if (it == m_notebookSyncCachesByLinkedNotebookGuids.end()) {
             pCache = new NotebookSyncCache(
-                m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+                m_manager.localStorageManagerAsync(), *linkedNotebookGuid,
+                this);
 
             it = m_notebookSyncCachesByLinkedNotebookGuids.insert(
-                linkedNotebookGuid, pCache);
+                *linkedNotebookGuid, pCache);
         }
 
         pCache = it.value();
@@ -12790,15 +12790,17 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     TagSyncCache * pCache = nullptr;
-    const QString linkedNotebookGuid = itemLinkedNotebookGuid(localConflict);
-    if (!linkedNotebookGuid.isEmpty()) {
-        auto it = m_tagSyncCachesByLinkedNotebookGuids.find(linkedNotebookGuid);
+    const auto linkedNotebookGuid = localConflict.linkedNotebookGuid();
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
+        auto it = m_tagSyncCachesByLinkedNotebookGuids.find(
+            *linkedNotebookGuid);
         if (it == m_tagSyncCachesByLinkedNotebookGuids.end()) {
             pCache = new TagSyncCache(
-                m_manager.localStorageManagerAsync(), linkedNotebookGuid, this);
+                m_manager.localStorageManagerAsync(), *linkedNotebookGuid,
+                this);
 
             it = m_tagSyncCachesByLinkedNotebookGuids.insert(
-                linkedNotebookGuid, pCache);
+                *linkedNotebookGuid, pCache);
         }
 
         pCache = it.value();

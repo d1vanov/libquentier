@@ -930,7 +930,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             << "the parent tag is going to be expunged: " << tag);
 
         tag.setParentGuid(std::nullopt);
-        tag.setParentLocalId(QString{});
+        tag.setParentTagLocalId(QString{});
     }
 
     if (m_linkedNotebookGuid.isEmpty() && !m_pSavedSearchSyncCache.isNull()) {

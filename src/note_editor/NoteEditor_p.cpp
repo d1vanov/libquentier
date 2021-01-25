@@ -3783,21 +3783,21 @@ void NoteEditorPrivate::onNoteUpdated(qevercloud::Note note)
         return;
     }
 
-    if (Q_UNLIKELY(note.parentLocalId().isEmpty())) {
+    if (Q_UNLIKELY(note.notebookLocalId().isEmpty())) {
         QNWARNING(
             "note_editor",
-            "Can't handle the update of a note: the updated note has no parent "
-                << "(notebook) local id: " << note);
+            "Can't handle the update of a note: the updated note has no "
+                << "notebook local id: " << note);
         return;
     }
 
     if (Q_UNLIKELY(!m_pNotebook) ||
-        (m_pNotebook->localId() != note.parentLocalId()))
+        (m_pNotebook->localId() != note.notebookLocalId()))
     {
         QNDEBUG(
             "note_editor",
             "Note's notebook has changed: new notebook local id = "
-                << note.parentLocalId());
+                << note.notebookLocalId());
 
         // Re-requesting both note and notebook from
         // NoteEditorLocalStorageBroker
@@ -5674,10 +5674,10 @@ void NoteEditorPrivate::updateResource(
         return;
     }
 
-    if (Q_UNLIKELY(updatedResource.parentLocalId().isEmpty())) {
+    if (Q_UNLIKELY(updatedResource.noteLocalId().isEmpty())) {
         ErrorString error(
             QT_TR_NOOP("Can't update the resource: the updated "
-                       "resource has no parent (note) local id"));
+                       "resource has no note local id"));
         QNWARNING(
             "note_editor", error << ", updated resource: " << updatedResource);
         Q_EMIT notifyError(error);
@@ -9636,7 +9636,7 @@ qevercloud::Resource NoteEditorPrivate::attachResourceToNote(
         resource.mutableAttributes()->setSourceURL(sourceUrl);
     }
 
-    resource.setParentLocalId(m_pNote->localId());
+    resource.setNoteLocalId(m_pNote->localId());
     if (m_pNote->guid()) {
         resource.setNoteGuid(*m_pNote->guid());
     }

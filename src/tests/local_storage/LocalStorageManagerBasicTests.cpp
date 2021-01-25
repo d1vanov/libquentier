@@ -21,7 +21,6 @@
 #include "../TestMacros.h"
 
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/CommonUtils.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -401,7 +400,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
 
     qevercloud::Tag tag;
     tag.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000046"));
-    setItemLinkedNotebookGuid(linkedNotebook.guid().value(), tag);
+    tag.setLinkedNotebookGuid(linkedNotebook.guid().value());
     tag.setUpdateSequenceNum(1);
     tag.setName(QStringLiteral("Fake tag name"));
 
@@ -415,8 +414,8 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     qevercloud::Tag foundTag;
     foundTag.setLocalId(tagLocalId);
 
-    const QString tagLinkedNotebookGuid = itemLinkedNotebookGuid(tag);
-    setItemLinkedNotebookGuid(tagLinkedNotebookGuid, foundTag);
+    const auto tagLinkedNotebookGuid = tag.linkedNotebookGuid();
+    foundTag.setLinkedNotebookGuid(tagLinkedNotebookGuid);
 
     QVERIFY2(
         localStorageManager.findTag(foundTag, errorMessage),
@@ -432,8 +431,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     qevercloud::Tag foundByNameTag;
     foundByNameTag.setLocalId(QString{});
     foundByNameTag.setName(tag.name());
-
-    setItemLinkedNotebookGuid(tagLinkedNotebookGuid, foundByNameTag);
+    foundByNameTag.setLinkedNotebookGuid(tagLinkedNotebookGuid);
 
     QVERIFY2(
         localStorageManager.findTag(foundByNameTag, errorMessage),
@@ -448,8 +446,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     // Check Update + Find
     qevercloud::Tag modifiedTag = tag;
     modifiedTag.setUpdateSequenceNum(tag.updateSequenceNum().value() + 1);
-    setItemLinkedNotebookGuid(QLatin1String(""), modifiedTag);
-
+    modifiedTag.setLinkedNotebookGuid(QString{});
     modifiedTag.setName(tag.name().value() + QStringLiteral("_modified"));
     modifiedTag.setLocallyFavorited(true);
     modifiedTag.setLocalId(QString{});
@@ -458,11 +455,11 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
         localStorageManager.updateTag(modifiedTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const QString modifiedTagLinkedNotebookGuid =
-        itemLinkedNotebookGuid(modifiedTag);
+    const auto modifiedTagLinkedNotebookGuid =
+        modifiedTag.linkedNotebookGuid();
 
-    if (modifiedTagLinkedNotebookGuid.isEmpty()) {
-        setItemLinkedNotebookGuid(QLatin1String(""), foundTag);
+    if (!modifiedTagLinkedNotebookGuid) {
+        foundTag.setLinkedNotebookGuid(std::nullopt);
     }
 
     QVERIFY2(
@@ -491,7 +488,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     qevercloud::Tag newTag;
     newTag.setName(QStringLiteral("New tag"));
     newTag.setParentGuid(tag.guid());
-    newTag.setParentLocalId(tag.localId());
+    newTag.setParentTagLocalId(tag.localId());
 
     QVERIFY2(
         localStorageManager.addTag(newTag, errorMessage),
@@ -620,7 +617,7 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
     note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setParentLocalId(notebook.localId());
+    note.setNotebookLocalId(notebook.localId());
 
     errorMessage.clear();
 
@@ -930,7 +927,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setParentLocalId(notebook.localId());
+    note.setNotebookLocalId(notebook.localId());
 
     note.setAttributes(qevercloud::NoteAttributes{});
     auto & noteAttributes = *note.mutableAttributes();
@@ -1276,7 +1273,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     modifiedNote.mutableResources().value().push_back(newResource);
 
     modifiedNote.setLocalId(QString{});
-    modifiedNote.setParentLocalId(notebook.localId());
+    modifiedNote.setNotebookLocalId(notebook.localId());
 
     QVERIFY2(
         localStorageManager.updateNote(
@@ -1291,7 +1288,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             foundResource, getResourceOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    foundResource.setParentLocalId(QString{});
+    foundResource.setNoteLocalId(QString{});
 
     VERIFY2(
         foundResource == newResource,
@@ -1803,7 +1800,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
     notebook.setUpdateSequenceNum(1);
-    setItemLinkedNotebookGuid(*linkedNotebook.guid(), notebook);
+    notebook.setLinkedNotebookGuid(*linkedNotebook.guid());
     notebook.setName(QStringLiteral("Fake notebook name"));
     notebook.setServiceCreated(1);
     notebook.setServiceUpdated(1);
@@ -1904,7 +1901,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setParentLocalId(notebook.localId());
+    note.setNotebookLocalId(notebook.localId());
 
     errorMessage.clear();
 
@@ -1953,9 +1950,9 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     qevercloud::Notebook foundNotebook;
     foundNotebook.setGuid(notebook.guid());
 
-    const QString notebookLinkedNotebookGuid = itemLinkedNotebookGuid(notebook);
-    if (!notebookLinkedNotebookGuid.isEmpty()) {
-        setItemLinkedNotebookGuid(notebookLinkedNotebookGuid, foundNotebook);
+    const auto notebookLinkedNotebookGuid = notebook.linkedNotebookGuid();
+    if (notebookLinkedNotebookGuid && !notebookLinkedNotebookGuid->isEmpty()) {
+        foundNotebook.setLinkedNotebookGuid(notebookLinkedNotebookGuid);
     }
 
     QVERIFY2(
@@ -1973,10 +1970,8 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     foundByNameNotebook.setLocalId(QString{});
     foundByNameNotebook.setName(notebook.name());
 
-    if (!notebookLinkedNotebookGuid.isEmpty()) {
-        setItemLinkedNotebookGuid(
-            notebookLinkedNotebookGuid,
-            foundByNameNotebook);
+    if (notebookLinkedNotebookGuid && !notebookLinkedNotebookGuid->isEmpty()) {
+        foundByNameNotebook.setLinkedNotebookGuid(notebookLinkedNotebookGuid);
     }
 
     QVERIFY2(
@@ -1990,14 +1985,13 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
             << "Notebook found by name: " << foundByNameNotebook
             << "\nOriginal notebook: " << notebook);
 
-    if (!notebookLinkedNotebookGuid.isEmpty()) {
+    if (notebookLinkedNotebookGuid && !notebookLinkedNotebookGuid->isEmpty()) {
         // Check Find by linked notebook guid
         qevercloud::Notebook foundByLinkedNotebookGuidNotebook;
         foundByLinkedNotebookGuidNotebook.setLocalId(QString{});
 
-        setItemLinkedNotebookGuid(
-            notebookLinkedNotebookGuid,
-            foundByLinkedNotebookGuidNotebook);
+        foundByLinkedNotebookGuidNotebook.setLinkedNotebookGuid(
+            notebookLinkedNotebookGuid);
 
         QVERIFY2(
             localStorageManager.findNotebook(
@@ -2051,7 +2045,7 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     modifiedNotebook.setUpdateSequenceNum(
         notebook.updateSequenceNum().value() + 1);
 
-    setItemLinkedNotebookGuid(QLatin1String(""), modifiedNotebook);
+    modifiedNotebook.setLinkedNotebookGuid(QString{});
 
     modifiedNotebook.setName(
         notebook.name().value() + QStringLiteral("_modified"));
@@ -2105,13 +2099,13 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     foundNotebook = qevercloud::Notebook();
     foundNotebook.setGuid(modifiedNotebook.guid());
 
-    const QString modifiedNotebookLinkedNotebookGuid =
-        itemLinkedNotebookGuid(modifiedNotebook);
+    const auto modifiedNotebookLinkedNotebookGuid =
+        modifiedNotebook.linkedNotebookGuid();
 
-    if (!modifiedNotebookLinkedNotebookGuid.isEmpty()) {
-        setItemLinkedNotebookGuid(
-            modifiedNotebookLinkedNotebookGuid,
-            foundNotebook);
+    if (modifiedNotebookLinkedNotebookGuid &&
+        !modifiedNotebookLinkedNotebookGuid->isEmpty()) {
+        foundNotebook.setLinkedNotebookGuid(
+            modifiedNotebookLinkedNotebookGuid);
     }
 
     QVERIFY2(
@@ -2855,7 +2849,7 @@ void TestSequentialUpdatesInLocalStorage()
 
     addNoteResource(resource, note);
     addNoteTagGuid(*tag.guid(), note);
-    note.setParentLocalId(updatedNotebook.localId());
+    note.setNotebookLocalId(updatedNotebook.localId());
 
     QVERIFY2(
         localStorageManager.addNote(note, errorMessage),
@@ -2875,7 +2869,7 @@ void TestSequentialUpdatesInLocalStorage()
     updatedNote.setUpdated(1);
     updatedNote.setActive(true);
     updatedNote.setNotebookGuid(notebook.guid());
-    updatedNote.setParentLocalId(notebook.localId());
+    updatedNote.setNotebookLocalId(notebook.localId());
 
     LocalStorageManager::UpdateNoteOptions updateNoteOptions(
         LocalStorageManager::UpdateNoteOption::UpdateTags |
@@ -3091,7 +3085,7 @@ void TestAccountHighUsnInLocalStorage()
     thirdTag.setName(QStringLiteral("Third tag"));
     thirdTag.setUpdateSequenceNum(currentUsn++);
     thirdTag.setParentGuid(secondTag.guid());
-    thirdTag.setParentLocalId(secondTag.localId());
+    thirdTag.setParentTagLocalId(secondTag.localId());
 
     errorMessage.clear();
 
@@ -3131,7 +3125,7 @@ void TestAccountHighUsnInLocalStorage()
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setTitle(QStringLiteral("First note"));
     firstNote.setUpdateSequenceNum(currentUsn++);
-    firstNote.setParentLocalId(firstNotebook.localId());
+    firstNote.setNotebookLocalId(firstNotebook.localId());
     firstNote.setNotebookGuid(firstNotebook.guid());
     firstNote.setCreated(QDateTime::currentMSecsSinceEpoch());
     firstNote.setUpdated(firstNote.created());
@@ -3140,7 +3134,7 @@ void TestAccountHighUsnInLocalStorage()
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setUpdateSequenceNum(currentUsn++);
-    secondNote.setParentLocalId(secondNotebook.localId());
+    secondNote.setNotebookLocalId(secondNotebook.localId());
     secondNote.setNotebookGuid(secondNotebook.guid());
     secondNote.setCreated(QDateTime::currentMSecsSinceEpoch());
     secondNote.setUpdated(secondNote.created());
@@ -3179,14 +3173,14 @@ void TestAccountHighUsnInLocalStorage()
     thirdNote.setUpdateSequenceNum(currentUsn++);
     thirdNote.setTitle(QStringLiteral("Third note"));
     thirdNote.setNotebookGuid(thirdNotebook.guid());
-    thirdNote.setParentLocalId(thirdNotebook.localId());
+    thirdNote.setNotebookLocalId(thirdNotebook.localId());
     thirdNote.setCreated(QDateTime::currentMSecsSinceEpoch());
     thirdNote.setUpdated(thirdNote.created());
 
     qevercloud::Resource thirdNoteResource;
     thirdNoteResource.setGuid(UidGenerator::Generate());
     thirdNoteResource.setNoteGuid(thirdNote.guid());
-    thirdNoteResource.setParentLocalId(thirdNote.localId());
+    thirdNoteResource.setNoteLocalId(thirdNote.localId());
 
     thirdNoteResource.setData(qevercloud::Data{});
     thirdNoteResource.mutableData()->setBody(
@@ -3313,9 +3307,8 @@ void TestAccountHighUsnInLocalStorage()
     qevercloud::Notebook notebookFromLinkedNotebook;
     notebookFromLinkedNotebook.setGuid(linkedNotebook.sharedNotebookGlobalId());
 
-    setItemLinkedNotebookGuid(
-        linkedNotebook.guid().value(),
-        notebookFromLinkedNotebook);
+    notebookFromLinkedNotebook.setLinkedNotebookGuid(
+        linkedNotebook.guid().value());
 
     notebookFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
@@ -3334,9 +3327,8 @@ void TestAccountHighUsnInLocalStorage()
     firstTagFromLinkedNotebook.setName(
         QStringLiteral("First tag from linked notebook"));
 
-    setItemLinkedNotebookGuid(
-        linkedNotebook.guid().value(),
-        firstTagFromLinkedNotebook);
+    firstTagFromLinkedNotebook.setLinkedNotebookGuid(
+        linkedNotebook.guid().value());
 
     firstTagFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
@@ -3346,9 +3338,8 @@ void TestAccountHighUsnInLocalStorage()
     secondTagFromLinkedNotebook.setName(
         QStringLiteral("Second tag from linked notebook"));
 
-    setItemLinkedNotebookGuid(
-        linkedNotebook.guid().value(),
-        secondTagFromLinkedNotebook);
+    secondTagFromLinkedNotebook.setLinkedNotebookGuid(
+        linkedNotebook.guid().value());
 
     secondTagFromLinkedNotebook.setUpdateSequenceNum(currentUsn++);
 
@@ -3359,7 +3350,7 @@ void TestAccountHighUsnInLocalStorage()
     firstNoteFromLinkedNotebook.setNotebookGuid(
         notebookFromLinkedNotebook.guid());
 
-    firstNoteFromLinkedNotebook.setParentLocalId(
+    firstNoteFromLinkedNotebook.setNotebookLocalId(
         notebookFromLinkedNotebook.localId());
 
     firstNoteFromLinkedNotebook.setTitle(
@@ -3385,7 +3376,7 @@ void TestAccountHighUsnInLocalStorage()
     secondNoteFromLinkedNotebook.setNotebookGuid(
         notebookFromLinkedNotebook.guid());
 
-    secondNoteFromLinkedNotebook.setParentLocalId(
+    secondNoteFromLinkedNotebook.setNotebookLocalId(
         notebookFromLinkedNotebook.localId());
 
     secondNoteFromLinkedNotebook.setTitle(
@@ -3403,7 +3394,7 @@ void TestAccountHighUsnInLocalStorage()
     secondNoteFromLinkedNotebookResource.setNoteGuid(
         secondNoteFromLinkedNotebook.guid());
 
-    secondNoteFromLinkedNotebookResource.setParentLocalId(
+    secondNoteFromLinkedNotebookResource.setNoteLocalId(
         secondNoteFromLinkedNotebook.localId());
 
     secondNoteFromLinkedNotebookResource.setData(qevercloud::Data{});

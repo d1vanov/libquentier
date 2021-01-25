@@ -1497,12 +1497,12 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
                 "local_storage",
                 "Notebook change detected for note "
                     << note.localId() << ": moved from notebook "
-                    << previousNoteVersion.parentLocalId() << " to notebook "
-                    << note.parentLocalId());
+                    << previousNoteVersion.notebookLocalId() << " to notebook "
+                    << note.notebookLocalId());
 
             Q_EMIT noteMovedToAnotherNotebook(
-                note.localId(), previousNoteVersion.parentLocalId(),
-                note.parentLocalId());
+                note.localId(), previousNoteVersion.notebookLocalId(),
+                note.notebookLocalId());
         }
 
         if (shouldCheckForTagListUpdate) {

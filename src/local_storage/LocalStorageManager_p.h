@@ -129,7 +129,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooks(
         const LocalStorageManager::ListObjectsOptions flag,
@@ -137,7 +137,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListNotebooksOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::SharedNotebook> listAllSharedNotebooks(
         ErrorString & errorDescription) const;
@@ -261,7 +261,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListNotesOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesImpl(
         const ErrorString & errorPrefix, const QString & sqlQueryCondition,
@@ -307,7 +307,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QList<qevercloud::Tag> listTags(
         const LocalStorageManager::ListObjectsOptions flag,
@@ -315,7 +315,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>>
     listTagsWithNoteLocalIds(
@@ -324,7 +324,7 @@ public:
         const std::size_t offset,
         const LocalStorageManager::ListTagsOrder & order,
         const LocalStorageManager::OrderDirection & orderDirection,
-        const QString & linkedNotebookGuid) const;
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] bool expungeTag(
         qevercloud::Tag & tag, QStringList & expungedChildTagLocalIds,

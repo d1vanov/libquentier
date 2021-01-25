@@ -27,7 +27,6 @@
 #include <qevercloud/generated/types/Tag.h>
 #include <qevercloud/generated/types/User.h>
 
-#include <quentier/types/CommonUtils.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Validation.h>
 #include <quentier/utility/Checks.h>
@@ -670,7 +669,8 @@ bool checkTag(
         return false;
     }
 
-    const QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
+    const QString linkedNotebookGuid =
+        tag.linkedNotebookGuid().value_or(QString{});
     if (!linkedNotebookGuid.isEmpty() && !checkGuid(linkedNotebookGuid))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(

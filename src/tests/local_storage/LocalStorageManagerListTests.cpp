@@ -20,7 +20,6 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/CommonUtils.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -642,7 +641,7 @@ void TestListTagsWithNoteLocalUids()
         note.setUpdated(i + 1);
         note.setActive(true);
         note.setNotebookGuid(notebook.guid());
-        note.setParentLocalId(notebook.localId());
+        note.setNotebookLocalId(notebook.localId());
 
         res = localStorageManager.addNote(note, errorMessage);
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
@@ -899,7 +898,7 @@ void TestListAllTagsPerNote()
     note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setParentLocalId(notebook.localId());
+    note.setNotebookLocalId(notebook.localId());
 
     res = localStorageManager.addNote(note, errorMessage);
     QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
@@ -1159,11 +1158,11 @@ void TestListNotes()
 
         if (i != 3) {
             note.setNotebookGuid(notebook.guid());
-            note.setParentLocalId(notebook.localId());
+            note.setNotebookLocalId(notebook.localId());
         }
         else {
             note.setNotebookGuid(secondNotebook.guid());
-            note.setParentLocalId(secondNotebook.localId());
+            note.setNotebookLocalId(secondNotebook.localId());
         }
 
         res = localStorageManager.addNote(note, errorMessage);
@@ -1859,7 +1858,7 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
 
     qevercloud::Notebook notebook;
     notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    setItemLinkedNotebookGuid(linkedNotebook.guid().value(), notebook);
+    notebook.setLinkedNotebookGuid(linkedNotebook.guid().value());
     notebook.setUpdateSequenceNum(1);
     notebook.setName(QStringLiteral("Fake notebook name"));
     notebook.setServiceCreated(1);
@@ -1874,7 +1873,7 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
     note.setUpdated(1);
     note.setActive(true);
     note.setNotebookGuid(notebook.guid());
-    note.setParentLocalId(notebook.localId());
+    note.setNotebookLocalId(notebook.localId());
 
     ErrorString errorMessage;
     bool res =
@@ -1905,7 +1904,7 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
         tag.setName(QStringLiteral("Tag name #") + QString::number(i));
 
         if (i > 2) {
-            setItemLinkedNotebookGuid(linkedNotebook.guid().value(), tag);
+            tag.setLinkedNotebookGuid(linkedNotebook.guid().value());
         }
 
         errorMessage.clear();

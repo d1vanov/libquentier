@@ -580,7 +580,7 @@ qint32 NoteStore::getNote(
             withResourcesRecognition, withResourceAlternateData,
             std::move(ctx));
 
-        note.setLocalId(note.localId());
+        note.setLocalId(localId);
         note.setLocalData(localData);
         note.setLocalOnly(false);
         note.setLocallyModified(false);

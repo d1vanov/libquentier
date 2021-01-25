@@ -29,7 +29,6 @@
 #include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/CommonUtils.h>
 #include <quentier/types/NoteUtils.h>
 #include <quentier/types/ResourceRecognitionIndices.h>
 #include <quentier/types/ResourceUtils.h>
@@ -990,11 +989,11 @@ bool LocalStorageManagerPrivate::findNotebook(
         value = notebook.name()->toUpper();
         searchingByName = true;
     }
-    else if (const QString linkedNotebookGuid =
-             itemLinkedNotebookGuid(notebook); !linkedNotebookGuid.isEmpty())
+    else if (const auto linkedNotebookGuid = notebook.linkedNotebookGuid();
+             linkedNotebookGuid && !linkedNotebookGuid->isEmpty())
     {
         column = QStringLiteral("linkedNotebookGuid");
-        value = linkedNotebookGuid;
+        value = *linkedNotebookGuid;
     }
     else {
         errorDescription.base() = errorPrefix.base();
@@ -1032,7 +1031,8 @@ bool LocalStorageManagerPrivate::findNotebook(
             .arg(column, value);
 
     if (searchingByName) {
-        QString linkedNotebookGuid = itemLinkedNotebookGuid(notebook);
+        QString linkedNotebookGuid =
+            notebook.linkedNotebookGuid().value_or(QString{});
         if (!linkedNotebookGuid.isEmpty()) {
             linkedNotebookGuid = sqlEscapeString(linkedNotebookGuid);
 
@@ -1202,35 +1202,35 @@ QList<qevercloud::Notebook> LocalStorageManagerPrivate::listAllNotebooks(
     ErrorString & errorDescription, const std::size_t limit,
     const std::size_t offset, const ListNotebooksOrder & order,
     const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG("local_storage", "LocalStorageManagerPrivate::listAllNotebooks");
 
     return listNotebooks(
         ListObjectsOption::ListAll, errorDescription, limit, offset, order,
-        orderDirection, linkedNotebookGuid);
+        orderDirection, std::move(linkedNotebookGuid));
 }
 
 QList<qevercloud::Notebook> LocalStorageManagerPrivate::listNotebooks(
     const ListObjectsOptions flag, ErrorString & errorDescription,
     const std::size_t limit, const std::size_t offset,
     const ListNotebooksOrder & order, const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::listNotebooks: flag = " << flag);
 
     QString linkedNotebookGuidSqlQueryCondition;
-    if (!linkedNotebookGuid.isNull()) {
-        if (linkedNotebookGuid.isEmpty()) {
+    if (linkedNotebookGuid) {
+        if (linkedNotebookGuid->isEmpty()) {
             linkedNotebookGuidSqlQueryCondition =
                 QStringLiteral("linkedNotebookGuid IS NULL");
         }
         else {
             linkedNotebookGuidSqlQueryCondition =
                 QString::fromUtf8("linkedNotebookGuid = '%1'")
-                    .arg(sqlEscapeString(linkedNotebookGuid));
+                    .arg(sqlEscapeString(*linkedNotebookGuid));
         }
     }
 
@@ -2129,7 +2129,7 @@ bool LocalStorageManagerPrivate::addNote(
         return false;
     }
 
-    note.setParentLocalId(notebookLocalId);
+    note.setNotebookLocalId(notebookLocalId);
 
     error.clear();
     QString notebookGuid;
@@ -2239,7 +2239,7 @@ bool LocalStorageManagerPrivate::updateNote(
         return false;
     }
 
-    note.setParentLocalId(notebookLocalId);
+    note.setNotebookLocalId(notebookLocalId);
 
     error.clear();
     QString notebookGuid;
@@ -2522,7 +2522,7 @@ bool LocalStorageManagerPrivate::findNote(
                         (resourceIndexNotFound ? resources.back()
                                                : resources[it.value()]);
                     fillResourceFromSqlRecord(rec, resource);
-                    resource.setParentLocalId(note.localId());
+                    resource.setNoteLocalId(note.localId());
 
                     if (withResourceBinaryData &&
                         !readResourceDataFromFiles(resource, errorDescription))
@@ -2856,7 +2856,7 @@ QList<qevercloud::Note> LocalStorageManagerPrivate::listNotes(
     ErrorString & errorDescription, const std::size_t limit,
     const std::size_t offset, const ListNotesOrder & order,
     const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG(
         "local_storage",
@@ -2867,26 +2867,27 @@ QList<qevercloud::Note> LocalStorageManagerPrivate::listNotes(
             << ", with resource binary data = "
             << ((options & GetNoteOption::WithResourceBinaryData) ? "true"
                                                                   : "false")
-            << ", linked notebook guid = " << linkedNotebookGuid);
+            << ", linked notebook guid = "
+            << linkedNotebookGuid.value_or(QStringLiteral("<not set>")));
 
     const ErrorString errorPrefix(
         QT_TR_NOOP("Can't list notes from the local storage"));
 
     QString linkedNotebookGuidSqlQueryCondition;
-    if (!linkedNotebookGuid.isNull()) {
+    if (linkedNotebookGuid) {
         linkedNotebookGuidSqlQueryCondition = QStringLiteral(
             "localUid IN (SELECT DISTINCT Notes.localUid FROM "
             "(Notes LEFT OUTER JOIN Notebooks ON "
             "Notes.notebookLocalUid = Notebooks.localUid) "
             "WHERE Notebooks.linkedNotebookGuid");
 
-        if (linkedNotebookGuid.isEmpty()) {
+        if (linkedNotebookGuid->isEmpty()) {
             linkedNotebookGuidSqlQueryCondition += QStringLiteral(" IS NULL)");
         }
         else {
             linkedNotebookGuidSqlQueryCondition +=
                 QString::fromUtf8(" = '%1')")
-                    .arg(sqlEscapeString(linkedNotebookGuid));
+                    .arg(sqlEscapeString(*linkedNotebookGuid));
         }
     }
 
@@ -2998,7 +2999,7 @@ bool LocalStorageManagerPrivate::expungeNote(
         return false;
     }
 
-    note.setParentLocalId(notebookLocalId);
+    note.setNotebookLocalId(notebookLocalId);
 
     error.clear();
     QString notebookGuid;
@@ -3548,8 +3549,8 @@ bool LocalStorageManagerPrivate::findTag(
             .arg(column, value);
 
     if (searchingByName) {
-        QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
-
+        QString linkedNotebookGuid =
+            tag.linkedNotebookGuid().value_or(QString{});
         if (!linkedNotebookGuid.isEmpty()) {
             linkedNotebookGuid = sqlEscapeString(linkedNotebookGuid);
             queryString += QString::fromUtf8(" AND linkedNotebookGuid = '%1')")
@@ -3706,31 +3707,31 @@ QList<qevercloud::Tag> LocalStorageManagerPrivate::listAllTags(
     ErrorString & errorDescription, const std::size_t limit,
     const std::size_t offset, const ListTagsOrder & order,
     const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG("local_storage", "LocalStorageManagerPrivate::listAllTags");
     return listTags(
         ListObjectsOption::ListAll, errorDescription, limit, offset, order,
-        orderDirection, linkedNotebookGuid);
+        orderDirection, std::move(linkedNotebookGuid));
 }
 
 QList<qevercloud::Tag> LocalStorageManagerPrivate::listTags(
     const ListObjectsOptions flag, ErrorString & errorDescription,
     const std::size_t limit, const std::size_t offset,
     const ListTagsOrder & order, const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::listTags: flag = " << flag);
 
     QString linkedNotebookGuidSqlQueryCondition;
-    if (!linkedNotebookGuid.isNull()) {
+    if (linkedNotebookGuid) {
         linkedNotebookGuidSqlQueryCondition =
-            (linkedNotebookGuid.isEmpty()
+            (linkedNotebookGuid->isEmpty()
                  ? QStringLiteral("linkedNotebookGuid IS NULL")
                  : QString::fromUtf8("linkedNotebookGuid = '%1'")
-                       .arg(sqlEscapeString(linkedNotebookGuid)));
+                       .arg(sqlEscapeString(*linkedNotebookGuid)));
     }
 
     return listObjects<qevercloud::Tag, ListTagsOrder>(
@@ -3743,7 +3744,7 @@ LocalStorageManagerPrivate::listTagsWithNoteLocalIds(
     const ListObjectsOptions flag, ErrorString & errorDescription,
     const std::size_t limit, const std::size_t offset,
     const ListTagsOrder & order, const OrderDirection & orderDirection,
-    const QString & linkedNotebookGuid) const
+    std::optional<QString> linkedNotebookGuid) const
 {
     QNDEBUG(
         "local_storage",
@@ -3751,12 +3752,12 @@ LocalStorageManagerPrivate::listTagsWithNoteLocalIds(
             << flag);
 
     QString linkedNotebookGuidSqlQueryCondition;
-    if (!linkedNotebookGuid.isNull()) {
+    if (linkedNotebookGuid) {
         linkedNotebookGuidSqlQueryCondition =
-            (linkedNotebookGuid.isEmpty()
+            (linkedNotebookGuid->isEmpty()
                  ? QStringLiteral("linkedNotebookGuid IS NULL")
                  : QString::fromUtf8("linkedNotebookGuid = '%1'")
-                       .arg(sqlEscapeString(linkedNotebookGuid)));
+                       .arg(sqlEscapeString(*linkedNotebookGuid)));
     }
 
     using ListTagsOrder = ListTagsOrder;
@@ -4054,7 +4055,7 @@ bool LocalStorageManagerPrivate::expungeEnResource(
         return false;
     }
 
-    resource.setParentLocalId(noteLocalId);
+    resource.setNoteLocalId(noteLocalId);
 
     QString localId = resource.localId();
 
@@ -4731,7 +4732,7 @@ bool LocalStorageManagerPrivate::addEnResource(
         return false;
     }
 
-    if (!resource.noteGuid() && resource.parentLocalId().isEmpty()) {
+    if (!resource.noteGuid() && resource.noteLocalId().isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
             QT_TR_NOOP("both resource's note local id and note guid are "
@@ -4748,7 +4749,7 @@ bool LocalStorageManagerPrivate::addEnResource(
 
     int resourceIndexInNote = -1;
 
-    QString noteLocalId = resource.parentLocalId();
+    QString noteLocalId = resource.noteLocalId();
     noteLocalId = sqlEscapeString(noteLocalId);
 
     const QString queryString =
@@ -4772,7 +4773,10 @@ bool LocalStorageManagerPrivate::addEnResource(
         resourceIndexInNote = 0;
     }
 
-    setResourceIndexInNote(resourceIndexInNote, resource);
+    resource.setIndexInNote(
+        resourceIndexInNote < 0
+        ? std::nullopt
+        : std::make_optional<int>(resourceIndexInNote));
 
     QString resourceLocalId = resource.localId();
 
@@ -4849,7 +4853,7 @@ bool LocalStorageManagerPrivate::updateEnResource(
         return false;
     }
 
-    if (!resource.noteGuid() && resource.parentLocalId().isEmpty()) {
+    if (!resource.noteGuid() && resource.noteLocalId().isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(QT_TR_NOOP(
             "both resource's note local id and note guid are empty"));
@@ -6861,7 +6865,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
             QStringLiteral(":guid"),
             (notebook.guid() ? *notebook.guid() : nullValue));
 
-        const QString linkedNotebookGuid = itemLinkedNotebookGuid(notebook);
+        const QString linkedNotebookGuid =
+            notebook.linkedNotebookGuid().value_or(QString{});
 
         query.bindValue(
             QStringLiteral(":linkedNotebookGuid"),
@@ -7402,8 +7407,8 @@ bool LocalStorageManagerPrivate::getNoteLocalIdFromResource(
 
     noteLocalId.resize(0);
 
-    if (!resource.parentLocalId().isEmpty()) {
-        noteLocalId = resource.parentLocalId();
+    if (!resource.noteLocalId().isEmpty()) {
+        noteLocalId = resource.noteLocalId();
         return true;
     }
 
@@ -7473,8 +7478,8 @@ bool LocalStorageManagerPrivate::getNotebookLocalIdFromNote(
 
     notebookLocalId.resize(0);
 
-    if (!note.parentLocalId().isEmpty()) {
-        notebookLocalId = note.parentLocalId();
+    if (!note.notebookLocalId().isEmpty()) {
+        notebookLocalId = note.notebookLocalId();
         QNTRACE(
             "local_storage",
             "Notebook local id taken from note: " << notebookLocalId);
@@ -7582,7 +7587,7 @@ bool LocalStorageManagerPrivate::getNotebookGuidForNote(
         "Note doesn't have the notebook guid, trying to "
             << "deduce it from notebook local id");
 
-    if (note.parentLocalId().isEmpty()) {
+    if (note.notebookLocalId().isEmpty()) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(
             QT_TR_NOOP("note has neither parent local id nor notebook guid"));
@@ -7590,7 +7595,7 @@ bool LocalStorageManagerPrivate::getNotebookGuidForNote(
         return false;
     }
 
-    const QString notebookLocalId = sqlEscapeString(note.parentLocalId());
+    const QString notebookLocalId = sqlEscapeString(note.notebookLocalId());
 
     const QString queryString =
         QString::fromUtf8("SELECT guid FROM Notebooks where localUid = '%1'")
@@ -7863,8 +7868,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
     const QString localId = sqlEscapeString(note.localId());
 
     QString notebookLocalUid =
-        (!note.parentLocalId().isEmpty() ? sqlEscapeString(note.parentLocalId())
-                                         : QString());
+        (!note.notebookLocalId().isEmpty()
+         ? sqlEscapeString(note.notebookLocalId())
+         : QString());
 
     // Special logic needs to be applied if guid is being cleared from the note
     bool noteGuidIsBeingCleared = false;
@@ -9024,7 +9030,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceTag(
     query.bindValue(
         QStringLiteral(":guid"), (tag.guid() ? *tag.guid() : nullValue));
 
-    const QString linkedNotebookGuid = itemLinkedNotebookGuid(tag);
+    const QString linkedNotebookGuid =
+        tag.linkedNotebookGuid().value_or(QString{});
 
     query.bindValue(
         QStringLiteral(":linkedNotebookGuid"),
@@ -9047,7 +9054,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceTag(
 
     query.bindValue(
         QStringLiteral(":parentLocalUid"),
-        (!tag.parentLocalId().isEmpty() ? tag.parentLocalId() : nullValue));
+        (!tag.parentTagLocalId().isEmpty()
+         ? tag.parentTagLocalId()
+         : nullValue));
 
     query.bindValue(
         QStringLiteral(":isDirty"), (tag.isLocallyModified() ? 1 : 0));
@@ -9113,7 +9122,7 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(
         "local_storage",
         "LocalStorageManagerPrivate::complementTagParentInfo: " << tag);
 
-    if (tag.parentGuid() && !tag.parentLocalId().isEmpty()) {
+    if (tag.parentGuid() && !tag.parentTagLocalId().isEmpty()) {
         QNDEBUG(
             "local_storage",
             "The tag has both parent guid and parent local id, nothing to "
@@ -9121,7 +9130,7 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(
         return true;
     }
 
-    if (!tag.parentGuid() && tag.parentLocalId().isEmpty()) {
+    if (!tag.parentGuid() && tag.parentTagLocalId().isEmpty()) {
         QNDEBUG(
             "local_storage",
             "The tag has neither parent guid nor parent "
@@ -9141,7 +9150,7 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(
                           : QStringLiteral("guid"));
 
     const QString uid =
-        (tag.parentGuid() ? *tag.parentGuid() : tag.parentLocalId());
+        (tag.parentGuid() ? *tag.parentGuid() : tag.parentTagLocalId());
 
     const QString queryString =
         QString::fromUtf8("SELECT %1 FROM Tags WHERE %2='%3'")
@@ -9165,7 +9174,7 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(
         "Tag's parent " << otherColumn << " was retrieved: " << otherUid);
 
     if (tag.parentGuid()) {
-        tag.setParentLocalId(otherUid);
+        tag.setParentTagLocalId(otherUid);
     }
     else {
         tag.setParentGuid(otherUid);
@@ -9199,7 +9208,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
     }
 
     const QString resourceLocalId = resource.localId();
-    const QString noteLocalId = resource.parentLocalId();
+    const QString noteLocalId = resource.noteLocalId();
 
     if (!insertOrReplaceResourceMetadata(
             resource, setResourceBinaryData, errorDescription))
@@ -9346,7 +9355,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
         QT_TR_NOOP("can't insert or replace resource: failed to write resource "
                    "binary data to files"));
 
-    if (resource.parentLocalId().isEmpty()) {
+    if (resource.noteLocalId().isEmpty()) {
         errorDescription = errorPrefix;
         errorDescription.appendBase(
             QT_TR_NOOP("the resource has no note local id set"));
@@ -9387,7 +9396,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
     if (resource.data() && resource.data()->body()) {
         ErrorString error;
         if (!writeResourceBinaryDataToFile(
-                resourceLocalId, resource.parentLocalId(),
+                resourceLocalId, resource.noteLocalId(),
                 *resource.data()->body(),
                 /* is alternate data body = */ false, shouldReplaceOriginalFile,
                 error))
@@ -9403,7 +9412,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
     if (resource.alternateData() && resource.alternateData()->body()) {
         ErrorString error;
         if (!writeResourceBinaryDataToFile(
-                resourceLocalId, resource.parentLocalId(),
+                resourceLocalId, resource.noteLocalId(),
                 *resource.alternateData()->body(),
                 /* is alternate data body = */ true, shouldReplaceOriginalFile,
                 error))
@@ -9449,7 +9458,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
      */
 
     const QString alternateDataStoragePath = storagePath +
-        QStringLiteral("/Resources/alternateData/") + resource.parentLocalId() +
+        QStringLiteral("/Resources/alternateData/") + resource.noteLocalId() +
         QStringLiteral("/") + resourceLocalId + QStringLiteral(".dat");
 
     QString oldFileName = alternateDataStoragePath;
@@ -9488,7 +9497,7 @@ bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
     }
 
     const QString dataStoragePath = storagePath +
-        QStringLiteral("/Resources/data/") + resource.parentLocalId() +
+        QStringLiteral("/Resources/data/") + resource.noteLocalId() +
         QStringLiteral("/") + resourceLocalId + QStringLiteral(".dat");
 
     oldFileName = dataStoragePath;
@@ -9772,7 +9781,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceMetadata(
         QStringLiteral(":noteGuid"),
         (resource.noteGuid() ? *resource.noteGuid() : nullValue));
 
-    query.bindValue(QStringLiteral(":noteLocalUid"), resource.parentLocalId());
+    query.bindValue(QStringLiteral(":noteLocalUid"), resource.noteLocalId());
 
     query.bindValue(
         QStringLiteral(":mime"),
@@ -9813,11 +9822,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceMetadata(
         QStringLiteral(":resourceIsDirty"),
         (resource.isLocallyModified() ? 1 : 0));
 
-    const auto indexInNote = resourceIndexInNote(resource);
+    const auto indexInNote = resource.indexInNote();
 
     query.bindValue(
         QStringLiteral(":resourceIndexInNote"),
-        (indexInNote >= 0 ? indexInNote : nullValue));
+        (indexInNote  ? *indexInNote : nullValue));
 
     query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localId());
 
@@ -9868,7 +9877,7 @@ bool LocalStorageManagerPrivate::updateNoteResources(
     QSqlQuery & query = m_insertOrReplaceNoteResourceQuery;
     DATABASE_CHECK_AND_SET_ERROR()
 
-    query.bindValue(QStringLiteral(":localNote"), resource.parentLocalId());
+    query.bindValue(QStringLiteral(":localNote"), resource.noteLocalId());
 
     query.bindValue(
         QStringLiteral(":note"),
@@ -9895,7 +9904,7 @@ void LocalStorageManagerPrivate::setNoteIdsToNoteResources(
 
     auto resources = *note.resources();
     for (auto & resource: resources) {
-        resource.setParentLocalId(note.localId());
+        resource.setNoteLocalId(note.localId());
         if (note.guid()) {
             resource.setNoteGuid(*note.guid());
         }
@@ -9910,9 +9919,9 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
         "local_storage",
         "LocalStorageManagerPrivate::removeResourceDataFiles: "
             << "resource local id = " << resource.localId()
-            << ", note local id = " << resource.parentLocalId());
+            << ", note local id = " << resource.noteLocalId());
 
-    if (Q_UNLIKELY(resource.parentLocalId().isEmpty())) {
+    if (Q_UNLIKELY(resource.noteLocalId().isEmpty())) {
         errorDescription.setBase(
             QT_TR_NOOP("the resource has no note local id set"));
 
@@ -9927,7 +9936,7 @@ bool LocalStorageManagerPrivate::removeResourceDataFiles(
         return false;
     }
 
-    const QString noteLocalId = resource.parentLocalId();
+    const QString noteLocalId = resource.noteLocalId();
     const QString storagePath = accountPersistentStoragePath(m_currentAccount);
 
     QFile resourceDataFile(
@@ -10751,9 +10760,9 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
         "local_storage",
         "LocalStorageManagerPrivate::readResourceDataFromFiles: "
             << "resource local id = " << resource.localId()
-            << ", note local id = " << resource.parentLocalId());
+            << ", note local id = " << resource.noteLocalId());
 
-    if (Q_UNLIKELY(resource.parentLocalId().isEmpty())) {
+    if (Q_UNLIKELY(resource.noteLocalId().isEmpty())) {
         errorDescription.setBase(
             QT_TR_NOOP("the resource has no note local id set"));
 
@@ -10772,7 +10781,7 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
         QByteArray dataBody;
         ErrorString error;
         auto status = readResourceBinaryDataFromFile(
-            resource.localId(), resource.parentLocalId(),
+            resource.localId(), resource.noteLocalId(),
             /* is alternate data body = */ false, dataBody, error);
 
         if (status != ReadResourceBinaryDataFromFileStatus::Success) {
@@ -10805,7 +10814,7 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
         ErrorString error;
 
         auto status = readResourceBinaryDataFromFile(
-            resource.localId(), resource.parentLocalId(),
+            resource.localId(), resource.noteLocalId(),
             /* is alternate data body = */ true, alternateDataBody, error);
 
         if (status != ReadResourceBinaryDataFromFileStatus::Success) {
@@ -11029,7 +11038,7 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
     CHECK_AND_SET_RESOURCE_PROPERTY(noteGuid, QString, QString, setNoteGuid);
 
     CHECK_AND_SET_RESOURCE_PROPERTY(
-        localNote, QString, QString, setParentLocalId);
+        localNote, QString, QString, setNoteLocalId);
 
     CHECK_AND_SET_RESOURCE_PROPERTY(
         resourceUpdateSequenceNumber, int, qint32, setUpdateSequenceNum);
@@ -11097,7 +11106,10 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
             if (conversionResult) {
-                setResourceIndexInNote(index, resource);
+                resource.setIndexInNote(
+                    index < 0
+                    ? std::nullopt
+                    : std::make_optional<int>(index));
             }
         }
     }
@@ -11966,7 +11978,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
         notebookGuid, setNotebookGuid, QString, QString);
 
     CHECK_AND_SET_NOTE_PROPERTY(
-        notebookLocalUid, setParentLocalId, QString, QString);
+        notebookLocalUid, setNotebookLocalId, QString, QString);
 
     CHECK_AND_SET_NOTE_PROPERTY(title, setTitle, QString, QString);
     CHECK_AND_SET_NOTE_PROPERTY(content, setContent, QString, QString);
@@ -12925,7 +12937,7 @@ bool LocalStorageManagerPrivate::fillTagFromSqlRecord(
         parentGuid, QString, QString, setParentGuid, isRequired);
 
     CHECK_AND_SET_TAG_PROPERTY(
-        parentLocalUid, QString, QString, setParentLocalId, isRequired);
+        parentLocalUid, QString, QString, setParentTagLocalId, isRequired);
 
     isRequired = true;
     CHECK_AND_SET_TAG_PROPERTY(
@@ -12946,7 +12958,7 @@ bool LocalStorageManagerPrivate::fillTagFromSqlRecord(
     if (linkedNotebookGuidIndex >= 0) {
         const QVariant value = rec.value(linkedNotebookGuidIndex);
         if (!value.isNull()) {
-            setItemLinkedNotebookGuid(value.toString(), tag);
+            tag.setLinkedNotebookGuid(value.toString());
         }
     }
     else {
@@ -14324,7 +14336,7 @@ bool LocalStorageManagerPrivate::complementResourceNoteIds(
         QT_TR_NOOP("can't complement resource note ids"));
 
     if (!resource.noteGuid()) {
-        const QString noteLocalId = sqlEscapeString(resource.parentLocalId());
+        const QString noteLocalId = sqlEscapeString(resource.noteLocalId());
 
         const QString queryString =
             QString::fromUtf8("SELECT guid FROM Notes WHERE localUid = '%1'")
@@ -14339,7 +14351,7 @@ bool LocalStorageManagerPrivate::complementResourceNoteIds(
                 query.record().value(QStringLiteral("guid")).toString());
         }
     }
-    else if (resource.parentLocalId().isEmpty()) {
+    else if (resource.noteLocalId().isEmpty()) {
         const QString noteGuid = sqlEscapeString(*resource.noteGuid());
 
         const QString queryString =
@@ -14351,7 +14363,7 @@ bool LocalStorageManagerPrivate::complementResourceNoteIds(
         DATABASE_CHECK_AND_SET_ERROR()
 
         if (query.next()) {
-            resource.setParentLocalId(
+            resource.setNoteLocalId(
                 query.record().value(QStringLiteral("localUid")).toString());
         }
     }
@@ -14428,7 +14440,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
         qevercloud::Resource resource;
 
-        resource.setParentLocalId(
+        resource.setNoteLocalId(
             record.value(resourceLocalUidIndex).toString());
 
         fillResourceFromSqlRecord(record, resource);
@@ -14456,8 +14468,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
             foundResource = true;
 
             bool changed =
-                (resource.parentLocalId() !=
-                 previousNoteResource.parentLocalId());
+                (resource.noteLocalId() !=
+                 previousNoteResource.noteLocalId());
 
 #define COMPARE_RESOURCE_PROPERTY(property)                                    \
     changed = changed ||                                                       \
@@ -14504,8 +14516,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
                 (resource.isLocalOnly() != previousNoteResource.isLocalOnly());
 
             changed |=
-                (resourceIndexInNote(resource) !=
-                 resourceIndexInNote(previousNoteResource));
+                (resource.indexInNote() != previousNoteResource.indexInNote());
 
             if (changed) {
                 updatedResources << resource;
@@ -14554,7 +14565,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
              qAsConst(localIdsForResourcesRemovedFromNote)) {
             qevercloud::Resource resource;
             resource.setLocalId(localId);
-            resource.setParentLocalId(noteLocalId);
+            resource.setNoteLocalId(noteLocalId);
 
             ErrorString error;
             if (!removeResourceDataFiles(resource, error)) {
@@ -15462,7 +15473,7 @@ bool LocalStorageManagerPrivate::ResourceCompareByIndex::operator()(
     const qevercloud::Resource & lhs,
     const qevercloud::Resource & rhs) const noexcept
 {
-    return resourceIndexInNote(lhs) < resourceIndexInNote(rhs);
+    return lhs.indexInNote().value_or(-1) < rhs.indexInNote().value_or(-1);
 }
 
 bool LocalStorageManagerPrivate::QStringIntPairCompareByInt::operator()(

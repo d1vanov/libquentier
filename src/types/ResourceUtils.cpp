@@ -60,38 +60,4 @@ QString preferredFileSuffix(const qevercloud::Resource & resource)
     return {};
 }
 
-int resourceIndexInNote(const qevercloud::Resource & resource)
-{
-    const auto it =
-        resource.localData().constFind(QStringLiteral("indexInNote"));
-
-    if (it != resource.localData().constEnd()) {
-        bool conversionResult = false;
-        const int index = it.value().toInt(&conversionResult);
-        if (conversionResult) {
-            return index;
-        }
-    }
-
-    return -1;
-}
-
-void setResourceIndexInNote(
-    const int indexInNote, qevercloud::Resource & resource)
-{
-    if (indexInNote < 0)
-    {
-        const auto it =
-            resource.localData().constFind(QStringLiteral("indexInNote"));
-
-        if (it != resource.localData().constEnd()) {
-            resource.mutableLocalData().erase(it);
-        }
-
-        return;
-    }
-
-    resource.mutableLocalData()[QStringLiteral("indexInNote")] = indexInNote;
-}
-
 } // namespace quentier

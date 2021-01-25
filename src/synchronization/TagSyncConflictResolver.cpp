@@ -21,7 +21,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/CommonUtils.h>
 
 namespace quentier {
 
@@ -185,7 +184,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(
                     << "to the local storage");
 
             qevercloud::Tag tag = m_remoteTag;
-            setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
+            tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
             tag.setLocallyModified(false);
             tag.setLocalOnly(false);
 
@@ -207,7 +206,7 @@ void TagSyncConflictResolver::onUpdateTagComplete(
             qevercloud::Tag tag = m_remoteTag;
             tag.setLocalId(m_localConflict.localId());
             tag.setLocalData(m_localConflict.localData());
-            setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
+            tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
             tag.setLocallyModified(false);
             tag.setLocalOnly(false);
 
@@ -458,7 +457,7 @@ void TagSyncConflictResolver::processTagsConflictByName(
         "The conflicting tags match by name but not by guid");
 
     const QString localConflictLinkedNotebookGuid =
-        itemLinkedNotebookGuid(localConflict);
+        localConflict.linkedNotebookGuid().value_or(QString{});
 
     if (localConflictLinkedNotebookGuid != m_remoteTagLinkedNotebookGuid) {
         QNDEBUG(
@@ -471,7 +470,7 @@ void TagSyncConflictResolver::processTagsConflictByName(
         m_state = State::PendingRemoteTagAdoptionInLocalStorage;
 
         qevercloud::Tag tag = m_remoteTag;
-        setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
+        tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
         tag.setLocallyModified(false);
         tag.setLocalOnly(false);
 
@@ -540,14 +539,14 @@ void TagSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
     qevercloud::Tag tag = m_remoteTag;
     tag.setLocalId(m_localConflict.localId());
     tag.setLocalData(m_localConflict.localData());
-    setItemLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid, tag);
+    tag.setLinkedNotebookGuid(m_remoteTagLinkedNotebookGuid);
     tag.setLocallyModified(false);
     tag.setLocalOnly(false);
 
     // Clearing the parent local id info: if this tag has parent guid,
     // the parent local id would be complemented by the local storage;
     // otherwise the parent would be removed from this tag
-    tag.setParentLocalId(QString{});
+    tag.setParentTagLocalId(QString{});
 
     m_updateTagRequestId = QUuid::createUuid();
 

@@ -623,7 +623,7 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
 
     localNote = m_remoteNoteAsLocalNote;
     localNote.setLocalId(m_localConflict.localId());
-    localNote.setParentLocalId(m_localConflict.parentLocalId());
+    localNote.setNotebookLocalId(m_localConflict.notebookLocalId());
     localNote.setLocalData(m_localConflict.localData());
 
     // Need to clear out the tag local ids from the local note so that
@@ -662,13 +662,13 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
 
             if (*updatedResource.guid() == *resource.guid()) {
                 const QString localId = resource.localId();
-                const QString parentLocalId = resource.parentLocalId();
+                const QString noteLocalId = resource.noteLocalId();
                 const auto localData = resource.localData();
 
                 resource = updatedResource;
 
                 resource.setLocalId(localId);
-                resource.setParentLocalId(parentLocalId);
+                resource.setNoteLocalId(noteLocalId);
                 resource.setLocalData(localData);
 
                 // NOTE: need to not forget to reset the dirty flag since we are
@@ -711,7 +711,7 @@ void NoteSyncConflictResolver::overrideLocalNoteWithRemoteChanges()
         qevercloud::Resource newResource = updatedResource;
         newResource.setLocallyModified(false);
         newResource.setLocalOnly(false);
-        newResource.setParentLocalId(localNote.localId());
+        newResource.setNoteLocalId(localNote.localId());
 
         amendedResources << newResource;
     }

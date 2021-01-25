@@ -37,20 +37,6 @@ namespace quentier {
 [[nodiscard]] QUENTIER_EXPORT QString preferredFileSuffix(
     const qevercloud::Resource & resource);
 
-/**
- * @return either index in note stored in resource's local data or -1 if
- *         there is no such index in local data
- */
-[[nodiscard]] QUENTIER_EXPORT int resourceIndexInNote(
-    const qevercloud::Resource & resource);
-
-/**
- * Set resource index in note to resource's local data. Values < 0 are
- * equivalent to clearing the index in note from resource's local data
- */
-void QUENTIER_EXPORT setResourceIndexInNote(
-    int indexInNote, qevercloud::Resource & resource);
-
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_RESOURCE_UTILS_H

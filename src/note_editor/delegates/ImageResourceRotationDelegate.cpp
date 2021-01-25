@@ -257,7 +257,7 @@ void ImageResourceRotationDelegate::rotateImageResource()
         &ImageResourceRotationDelegate::onResourceDataSavedToTemporaryFile);
 
     Q_EMIT saveResourceDataToTemporaryFile(
-        m_rotatedResource.parentLocalId(), m_rotatedResource.localId(),
+        m_rotatedResource.noteLocalId(), m_rotatedResource.localId(),
         *m_rotatedResource.data()->body(), QByteArray(),
         m_saveResourceDataToTemporaryFileRequestId,
         /* is image = */ true);

@@ -215,7 +215,6 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
 
             qevercloud::SavedSearch search = m_remoteSavedSearch;
             search.setLocalId(m_localConflict.localId());
-            search.setParentLocalId(m_localConflict.parentLocalId());
             search.setLocalData(m_localConflict.localData());
             search.setLocallyModified(false);
             search.setLocalOnly(false);
@@ -532,7 +531,6 @@ void SavedSearchSyncConflictResolver::overrideLocalChangesWithRemoteChanges()
 
     qevercloud::SavedSearch search = m_remoteSavedSearch;
     search.setLocalId(m_localConflict.localId());
-    search.setParentLocalId(m_localConflict.parentLocalId());
     search.setLocalData(m_localConflict.localData());
     search.setLocallyModified(false);
     search.setLocalOnly(false);

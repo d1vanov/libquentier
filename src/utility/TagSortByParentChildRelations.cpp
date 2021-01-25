@@ -96,7 +96,7 @@ bool sortTagsByParentChildRelations(
         }
         else if (!tag.localId().isEmpty()) {
             const QString localId = tag.localId();
-            const QString parentTagLocalId = tag.parentLocalId();
+            const QString parentTagLocalId = tag.parentTagLocalId();
             QNTRACE(
                 "utility:tar_sort",
                 "Adding tag local id " << localId << " and tag parent local id "

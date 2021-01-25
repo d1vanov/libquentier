@@ -275,7 +275,7 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
             return;
         }
 
-        if (m_secondNotebook.localId() != note.parentLocalId()) {
+        if (m_secondNotebook.localId() != note.notebookLocalId()) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: notebook in "
                 "onAddNoteCompleted doesn't match the original notebook");
@@ -284,7 +284,7 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
                 "tests:local_storage",
                 errorDescription << "; original notebook: " << m_secondNotebook
                                  << "\nFound note's local notebook id: "
-                                 << note.parentLocalId());
+                                 << note.notebookLocalId());
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -376,7 +376,7 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
             return;
         }
 
-        if (m_secondNotebook.localId() != note.parentLocalId()) {
+        if (m_secondNotebook.localId() != note.notebookLocalId()) {
             errorDescription.setBase(
                 "Internal error in LocalStorageCacheAsyncTester: "
                 "note's notebook local uid in onUpdateNoteCompleted doesn't "
@@ -386,7 +386,7 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
                 "tests:local_storage",
                 errorDescription << "; original notebook: " << m_secondNotebook
                                  << "\nUpdated note's notebook local id: "
-                                 << note.parentLocalId());
+                                 << note.notebookLocalId());
 
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
@@ -1167,7 +1167,7 @@ void LocalStorageCacheAsyncTester::addNote()
     m_currentNote.setContent(
         QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
 
-    m_currentNote.setParentLocalId(m_secondNotebook.localId());
+    m_currentNote.setNotebookLocalId(m_secondNotebook.localId());
 
     m_state = State::STATE_SENT_NOTE_ADD_REQUEST;
     Q_EMIT addNoteRequest(m_currentNote, QUuid::createUuid());

@@ -553,14 +553,14 @@ public:
      *                              by default ascending direction is used;
      *                              this parameter has no meaning if order
      *                              is equal to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list
+     * @param linkedNotebookGuid    If it's not set, the method would list
      *                              the notebooks ignoring their belonging
      *                              to the current account or to some
-     *                              linked notebook; if it's empty, only
-     *                              the non-linked notebooks  would be listed;
-     *                              otherwise, the only one notebook from
-     *                              the corresponding linked notebook
-     *                              would be listed
+     *                              linked notebook; if it's set to an empty
+     *                              string, only the non-linked notebooks  would
+     *                              be listed; otherwise, the only one notebook
+     *                              from the corresponding linked notebook would
+     *                              be listed
      * @return                      Either the list of all notebooks within
      *                              the account or empty list in cases of
      *                              error or no notebooks presence within
@@ -571,7 +571,7 @@ public:
         const std::size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = {}) const;
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief listNotebooks attempts to list notebooks within the account
@@ -593,13 +593,14 @@ public:
      *                              default ascending direction is used; this
      *                              parameter has no meaning if order is equal
      *                              to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list
+     * @param linkedNotebookGuid    If it's not set, the method would list
      *                              notebooks ignoring their belonging to
      *                              the current account or to some linked
-     *                              notebook; if it's empty, only the non-linked
-     *                              notebooks would be listed; otherwise,
-     *                              the only one notebook from the corresponding
-     *                              linked notebook would be listed
+     *                              notebook; if it's set to an empty string,
+     *                              only the non-linked notebooks would be
+     *                              listed; otherwise, the only one notebook
+     *                              from the corresponding linked notebook would
+     *                              be listed
      * @return                      Either the list of notebooks within
      *                              the account conforming to the filter or
      *                              empty list in cases of error or no notebooks
@@ -611,7 +612,7 @@ public:
         const std::size_t limit = 0, const std::size_t offset = 0,
         const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = {}) const;
+        const std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief listAllSharedNotebooks attempts to list all shared notebooks
@@ -1330,12 +1331,13 @@ public:
      *                              default ascending direction is used; this
      *                              parameter has no meaning if order is equal
      *                              to NoOrder
-     * @param linkedNotebookGuid    If it's null, notes from both user's own
+     * @param linkedNotebookGuid    If it's not set, notes from both user's own
      *                              notebooks and linked notebooks would be
-     *                              listed; if it's empty, only the notes from
-     *                              non-linked notebooks would be listed;
-     *                              otherwise, only the notes from the specified
-     *                              linked notebook would be listed
+     *                              listed; if it's set to an empty string,
+     *                              only the notes from non-linked notebooks
+     *                              would be listed; otherwise, only the notes
+     *                              from the specified linked notebook would be
+     *                              listed
      * @return                      Either list of notes within the account
      *                              conforming to the filter or empty list in
      *                              cases of error or no notes conforming to
@@ -1347,7 +1349,7 @@ public:
         const std::size_t offset = 0,
         const ListNotesOrder order = ListNotesOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief findNoteLocalIdsWithSearchQuery attempts to find note local ids
@@ -1551,13 +1553,13 @@ public:
      *                              default ascending direction is used; this
      *                              parameter has no meaning if order is equal
      *                              to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list tags
+     * @param linkedNotebookGuid    If it's not set, the method would list tags
      *                              ignoring their belonging to the current
      *                              account or to some linked notebook; if it's
-     *                              empty, only the tags from user's own account
-     *                              would be listed; otherwise, only the tags
-     *                              corresponding to the certain linked notebook
-     *                              would be listed
+     *                              set to an empty string, only the tags from
+     *                              user's own account would be listed;
+     *                              otherwise, only the tags corresponding to
+     *                              the certain linked notebook would be listed
      * @return                      The list of found tags within the account
      */
     [[nodiscard]] QList<qevercloud::Tag> listAllTags(
@@ -1565,7 +1567,7 @@ public:
         const std::size_t offset = 0,
         const ListTagsOrder order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief listTags attempts to list tags within the account according to
@@ -1587,13 +1589,13 @@ public:
      *                              default ascending direction is used; this
      *                              parameter has no meaning if order is equal
      *                              to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list tags
+     * @param linkedNotebookGuid    If it's not set, the method would list tags
      *                              ignoring their belonging to the current
      *                              account or to some linked notebook; if it's
-     *                              empty, only the tags from user's own account
-     *                              would be listed; otherwise, only the tags
-     *                              corresponding to the certain linked notebook
-     *                              would be listed
+     *                              set to an empty string, only the tags from
+     *                              user's own account would be listed;
+     *                              otherwise, only the tags corresponding to
+     *                              the certain linked notebook would be listed
      * @return                      Either list of tags within the account
      *                              conforming to the filter or empty list in
      *                              cases of error or no tags conforming to
@@ -1604,7 +1606,7 @@ public:
         const std::size_t limit = 0, const std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief listTagsWithNoteLocalIds attempts to list tags and their
@@ -1631,13 +1633,13 @@ public:
      *                              default ascending direction is used; this
      *                              parameter has no meaning if order is equal
      *                              to NoOrder
-     * @param linkedNotebookGuid    If it's null, the method would list tags
+     * @param linkedNotebookGuid    If it's not set, the method would list tags
      *                              ignoring their belonging to the current
      *                              account or to some linked notebook; if it's
-     *                              empty, only the tags from user's own account
-     *                              would be listed; otherwise, only the tags
-     *                              corresponding to the certain linked notebook
-     *                              would be listed
+     *                              set to an empty string, only the tags from
+     *                              user's own account would be listed;
+     *                              otherwise, only the tags corresponding to
+     *                              the certain linked notebook would be listed
      * @return                      Either list of tags and note local ids
      *                              within the account conforming to the filter
      *                              or empty list in cases of error or no tags
@@ -1649,7 +1651,7 @@ public:
         const std::size_t limit = 0, const std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection orderDirection = OrderDirection::Ascending,
-        const QString & linkedNotebookGuid = QString()) const;
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief expungeTag permanently deletes tag from the local storage
@@ -1993,9 +1995,9 @@ public:
      *
      * @param linkedNotebookGuid        The guid of the linked notebook for
      *                                  which the highest update sequence number
-     *                                  is requested; if null or empty,
-     *                                  the highest update sequence number for
-     *                                  user's own account is returned
+     *                                  is requested; if empty, the highest
+     *                                  update sequence number for user's own
+     *                                  account is returned
      * @param errorDescription          Error description if account's highest
      *                                  update sequence number could not be
      *                                  returned

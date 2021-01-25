@@ -117,7 +117,7 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(
     }
 
     if (Q_UNLIKELY(
-            pCachedNote->parentLocalId().isEmpty() &&
+            pCachedNote->notebookLocalId().isEmpty() &&
             !pCachedNote->notebookGuid()))
     {
         Q_UNUSED(m_notesCache.remove(noteLocalId))
@@ -130,8 +130,8 @@ void NoteEditorLocalStorageBroker::findNoteAndNotebook(
         return;
     }
 
-    if (!pCachedNote->parentLocalId().isEmpty()) {
-        const QString & notebookLocalId = pCachedNote->parentLocalId();
+    if (!pCachedNote->notebookLocalId().isEmpty()) {
+        const QString & notebookLocalId = pCachedNote->notebookLocalId();
 
         const auto * pCachedNotebook = m_notebooksCache.get(notebookLocalId);
         if (pCachedNotebook) {
@@ -289,7 +289,7 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
         m_findNoteRequestIds.erase(it);
 
         if (Q_UNLIKELY(
-                foundNote.parentLocalId().isEmpty() &&
+                foundNote.notebookLocalId().isEmpty() &&
                 !foundNote.notebookGuid()))
         {
             ErrorString errorDescription(
@@ -306,8 +306,8 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
 
         m_notesCache.put(foundNote.localId(), foundNote);
 
-        if (!foundNote.parentLocalId().isEmpty()) {
-            const QString & notebookLocalId = foundNote.parentLocalId();
+        if (!foundNote.notebookLocalId().isEmpty()) {
+            const QString & notebookLocalId = foundNote.notebookLocalId();
 
             const auto * pCachedNotebook =
                 m_notebooksCache.get(notebookLocalId);
@@ -752,16 +752,16 @@ void NoteEditorLocalStorageBroker::onExpungeNoteComplete(
 
     QStringList resourceLocalIdsToRemoveFromCache;
     for (const auto & pair: m_resourcesCache) {
-        if (Q_UNLIKELY(pair.second.parentLocalId().isEmpty())) {
+        if (Q_UNLIKELY(pair.second.noteLocalId().isEmpty())) {
             QNTRACE(
                 "note_editor",
-                "Detected resource without parent (note) local id; "
+                "Detected resource without note local id; "
                     << "will remove it from the cache: " << pair.second);
             resourceLocalIdsToRemoveFromCache << pair.first;
             continue;
         }
 
-        if (pair.second.parentLocalId() == noteLocalId) {
+        if (pair.second.noteLocalId() == noteLocalId) {
             resourceLocalIdsToRemoveFromCache << pair.first;
         }
     }
@@ -782,16 +782,16 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(
 
     QStringList noteLocalIdsToRemoveFromCache;
     for (const auto & pair: m_notesCache) {
-        if (Q_UNLIKELY(pair.second.parentLocalId().isEmpty())) {
+        if (Q_UNLIKELY(pair.second.notebookLocalId().isEmpty())) {
             QNTRACE(
                 "note_editor",
-                "Detected note without parent (notebook) local id; "
+                "Detected note without notebook local id; "
                     << "will remove it from the cache: " << pair.second);
             noteLocalIdsToRemoveFromCache << pair.first;
             continue;
         }
 
-        if (pair.second.parentLocalId() == notebookLocalId) {
+        if (pair.second.notebookLocalId() == notebookLocalId) {
             noteLocalIdsToRemoveFromCache << pair.first;
         }
     }
