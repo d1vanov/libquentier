@@ -23,7 +23,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QByteArray>
 

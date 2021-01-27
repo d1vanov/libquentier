@@ -66,9 +66,6 @@ noteContentToPlainTextAndListOfWords(
 [[nodiscard]] QUENTIER_EXPORT QStringList noteTagLocalIds(
     const qevercloud::Note & note);
 
-void QUENTIER_EXPORT setNoteTagLocalIds(
-    QStringList tagLocalIds, qevercloud::Note & note);
-
 void QUENTIER_EXPORT addNoteTagLocalId(
     const QString & tagLocalId, qevercloud::Note & note);
 

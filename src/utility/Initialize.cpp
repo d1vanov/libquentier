@@ -24,7 +24,7 @@
 #include "../note_editor/NoteEditorLocalStorageBroker.h"
 #endif
 
-#include <qt5qevercloud/QEverCloud.h>
+#include <qevercloud/QEverCloud.h>
 
 #include <QCoreApplication>
 

@@ -279,13 +279,8 @@ public:
 
     [[nodiscard]] const QFont * defaultFont() const override;
 
-public Q_SLOTS:
+public:
     // INoteEditorBackend interface
-    void initialize(
-        LocalStorageManagerAsync & localStorageManager,
-        SpellChecker & spellChecker, const Account & account,
-        QThread * pBackgroundJobsThread) override;
-
     [[nodiscard]] QObject * object() override
     {
         return this;
@@ -295,6 +290,13 @@ public Q_SLOTS:
     {
         return this;
     }
+
+public Q_SLOTS:
+    void initialize(
+        LocalStorageManagerAsync & localStorageManager,
+        SpellChecker & spellChecker,
+        const Account & account,
+        QThread * pBackgroundJobsThread) override;
 
     void setAccount(const Account & account) override;
     void setUndoStack(QUndoStack * pUndoStack) override;
@@ -415,17 +417,6 @@ public Q_SLOTS:
 
     void onNoteLoadCancelled() override;
 
-    [[nodiscard]] bool print(
-        QPrinter & printer, ErrorString & errorDescription) override;
-
-    [[nodiscard]] bool exportToPdf(
-        const QString & absoluteFilePath,
-        ErrorString & errorDescription) override;
-
-    [[nodiscard]] bool exportToEnex(
-        const QStringList & tagNames, QString & enex,
-        ErrorString & errorDescription) override;
-
     void setCurrentNoteLocalId(const QString & noteLocalId) override;
 
     void clear() override;
@@ -446,6 +437,17 @@ public Q_SLOTS:
     void updateLastInteractionTimestamp();
 
 public:
+    [[nodiscard]] bool print(
+        QPrinter & printer, ErrorString & errorDescription) override;
+
+    [[nodiscard]] bool exportToPdf(
+        const QString & absoluteFilePath,
+        ErrorString & errorDescription) override;
+
+    [[nodiscard]] bool exportToEnex(
+        const QStringList & tagNames, QString & enex,
+        ErrorString & errorDescription) override;
+
     [[nodiscard]] QString currentNoteLocalId() const override;
 
     // private signals:

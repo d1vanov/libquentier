@@ -18,7 +18,7 @@
 
 #include "AccountData.h"
 
-#include <qt5qevercloud/generated/Constants.h>
+#include <qevercloud/generated/Constants.h>
 
 namespace quentier {
 

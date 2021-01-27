@@ -263,7 +263,7 @@ bool exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(QString & error)
         return false;
     }
 
-    setNoteTagLocalIds(QStringList{}, notes[0]);
+    notes[0].setTagLocalIds(QStringList{});
     return compareNotes(notes, importedNotes, error);
 }
 
@@ -1060,9 +1060,8 @@ void setupNoteTags(
     tag2.setName(QStringLiteral("Second tag"));
     tag3.setName(QStringLiteral("Third tag"));
 
-    setNoteTagLocalIds(
-        QStringList() << tag1.localId() << tag2.localId() << tag3.localId(),
-        note);
+    note.setTagLocalIds(
+        QStringList() << tag1.localId() << tag2.localId() << tag3.localId());
 
     tagNamesByTagLocalIds[tag1.localId()] = *tag1.name();
     tagNamesByTagLocalIds[tag2.localId()] = *tag2.name();
@@ -1076,9 +1075,7 @@ void setupNoteTagsV2(
     tag1.setName(QStringLiteral("Cool tag"));
     tag2.setName(QStringLiteral("Even cooler tag"));
 
-    setNoteTagLocalIds(
-        QStringList() << tag1.localId() << tag2.localId(),
-        note);
+    note.setTagLocalIds(QStringList() << tag1.localId() << tag2.localId());
 
     tagNamesByTagLocalIds[tag1.localId()] = *tag1.name();
     tagNamesByTagLocalIds[tag2.localId()] = *tag2.name();
@@ -1116,7 +1113,7 @@ void bindTagsWithNotes(
                 if (tagNamesByTagLocalIdsIt.value() == tagName) {
                     QStringList tagLocalIds = noteTagLocalIds(note);
                     tagLocalIds << tagNamesByTagLocalIdsIt.key();
-                    setNoteTagLocalIds(tagLocalIds, note);
+                    note.setTagLocalIds(tagLocalIds);
                 }
             }
         }

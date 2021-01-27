@@ -2606,7 +2606,7 @@ bool LocalStorageManagerPrivate::findNote(
             tagLocalIds << tagLocalIdsAndIndices[i].first;
         }
 
-        setNoteTagLocalIds(tagLocalIds, result);
+        result.setTagLocalIds(tagLocalIds);
     }
 
     sortSharedNotes(result);
@@ -8423,7 +8423,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
                 note.setTagGuids(tagComplementedIds);
             }
             else {
-                setNoteTagLocalIds(tagComplementedIds, note);
+                note.setTagLocalIds(tagComplementedIds);
             }
         }
 
@@ -13114,7 +13114,7 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
         tagLocalIds << tagLocalIdIndexPairs[i].first;
     }
 
-    setNoteTagLocalIds(tagLocalIds, note);
+    note.setTagLocalIds(tagLocalIds);
 
     // Setting tag guids
 

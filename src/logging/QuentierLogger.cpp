@@ -20,7 +20,7 @@
 
 #include "QuentierLogger_p.h"
 
-#include <qt5qevercloud/Log.h>
+#include <qevercloud/utility/Log.h>
 
 #include <QCoreApplication>
 

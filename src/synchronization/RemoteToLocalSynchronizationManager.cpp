@@ -10739,7 +10739,7 @@ void RemoteToLocalSynchronizationManager::overrideLocalNoteWithRemoteNote(
 
     // Need to clear out the tag local ids from the local note so that
     // the local storage uses tag guids list from the remote note instead
-    setNoteTagLocalIds(QStringList{}, localNote);
+    localNote.setTagLocalIds(QStringList{});
     localNote.mutableLocalData().remove(QStringLiteral("tagLocalIds"));
 
     // NOTE: dealing with resources is tricky: need to not screw up

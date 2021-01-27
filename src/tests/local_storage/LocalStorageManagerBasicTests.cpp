@@ -1014,7 +1014,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
-    setNoteTagLocalIds(QStringList() << tag.localId(), note);
+    note.setTagLocalIds(QStringList() << tag.localId());
 
     errorMessage.clear();
 
@@ -1376,7 +1376,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
             << "\nNote found in the local storage: " << foundNote);
 
     modifiedNote.setTagGuids(tagGuidsBeforeUpdate);
-    setNoteTagLocalIds(tagLocalIdsBeforeUpdate, modifiedNote);
+    modifiedNote.setTagLocalIds(tagLocalIdsBeforeUpdate);
 
     VERIFY2(
         modifiedNote == foundNote,
@@ -3748,7 +3748,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
 
     // 6) Update note with tag guids
     firstNote.setTitle(QStringLiteral("Updated first note"));
-    setNoteTagLocalIds(QStringList{}, firstNote);
+    firstNote.setTagLocalIds(QStringList{});
     firstNote.setTagGuids(
         QStringList() << firstTag.guid().value() << secondTag.guid().value());
 
@@ -3788,9 +3788,8 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     secondNote.setTitle(QStringLiteral("Updated second note"));
     secondNote.setTagGuids(QStringList());
 
-    setNoteTagLocalIds(
-        QStringList() << firstTag.localId() << secondTag.localId(),
-        secondNote);
+    secondNote.setTagLocalIds(
+        QStringList() << firstTag.localId() << secondTag.localId());
 
     errorMessage.clear();
 

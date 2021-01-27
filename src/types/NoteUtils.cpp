@@ -217,11 +217,6 @@ QStringList noteTagLocalIds(const qevercloud::Note & note)
     return {};
 }
 
-void setNoteTagLocalIds(QStringList tagLocalIds, qevercloud::Note & note)
-{
-    note.mutableLocalData()[tagLocalIdsKey] = std::move(tagLocalIds);
-}
-
 void addNoteTagLocalId(const QString & tagLocalId, qevercloud::Note & note)
 {
     auto & localData = note.mutableLocalData();
