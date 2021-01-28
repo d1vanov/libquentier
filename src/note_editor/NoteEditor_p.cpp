@@ -9095,7 +9095,7 @@ void NoteEditorPrivate::setTagIds(
         return;
     }
 
-    const QStringList previousTagLocalIds = noteTagLocalIds(*m_pNote);
+    const QStringList previousTagLocalIds = m_pNote->tagLocalIds();
 
     const QStringList previousTagGuids =
         (m_pNote->tagGuids() ? *m_pNote->tagGuids() : QStringList());

@@ -1318,7 +1318,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     // Check that tags are not touched if update tags flag is not set on attempt
     // to update note
-    QStringList tagLocalIdsBeforeUpdate = noteTagLocalIds(modifiedNote);
+    QStringList tagLocalIdsBeforeUpdate = modifiedNote.tagLocalIds();
 
     QStringList tagGuidsBeforeUpdate =
         modifiedNote.tagGuids().value_or(QStringList());
@@ -3684,7 +3684,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
         localStorageManager.addNote(firstNote, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const auto tagLocalIds = noteTagLocalIds(firstNote);
+    const auto tagLocalIds = firstNote.tagLocalIds();
     QVERIFY2(
         !tagLocalIds.isEmpty(),
         qPrintable(QStringLiteral("Note has no tag local ids after "
@@ -3762,7 +3762,7 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             firstNote, updateNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    const auto updatedTagLocalIds = noteTagLocalIds(firstNote);
+    const auto updatedTagLocalIds = firstNote.tagLocalIds();
 
     QVERIFY2(
         !updatedTagLocalIds.isEmpty(),

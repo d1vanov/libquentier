@@ -1507,9 +1507,9 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
         if (shouldCheckForTagListUpdate) {
             const QStringList previousTagLocalIds =
-                noteTagLocalIds(previousNoteVersion);
+                previousNoteVersion.tagLocalIds();
 
-            const QStringList updatedTagLocalIds = noteTagLocalIds(note);
+            const QStringList updatedTagLocalIds = note.tagLocalIds();
 
             bool tagListUpdated =
                 (previousTagLocalIds.size() != updatedTagLocalIds.size());

@@ -514,8 +514,8 @@ bool compareNoteContents(
         return false;
     }
 
-    const QStringList lhsTagLocalIds = noteTagLocalIds(lhs);
-    const QStringList rhsTagLocalIds = noteTagLocalIds(rhs);
+    const QStringList lhsTagLocalIds = lhs.tagLocalIds();
+    const QStringList rhsTagLocalIds = rhs.tagLocalIds();
 
     if (lhsTagLocalIds.size() != rhsTagLocalIds.size()) {
         error = QStringLiteral(
@@ -1111,7 +1111,7 @@ void bindTagsWithNotes(
                  ++tagNamesByTagLocalIdsIt)
             {
                 if (tagNamesByTagLocalIdsIt.value() == tagName) {
-                    QStringList tagLocalIds = noteTagLocalIds(note);
+                    QStringList tagLocalIds = note.tagLocalIds();
                     tagLocalIds << tagNamesByTagLocalIdsIt.key();
                     note.setTagLocalIds(tagLocalIds);
                 }

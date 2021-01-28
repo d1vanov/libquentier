@@ -1900,7 +1900,7 @@ void SendLocalChangesManager::sendTags()
     // Need to set tag guids for all dirty notes which have the corresponding
     // tags local ids
     for (auto & note: m_notes) {
-        const QStringList tagLocalIds = noteTagLocalIds(note);
+        const QStringList tagLocalIds = note.tagLocalIds();
         if (tagLocalIds.isEmpty()) {
             continue;
         }

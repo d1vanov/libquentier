@@ -63,9 +63,6 @@ noteContentToPlainTextAndListOfWords(
 [[nodiscard]] QUENTIER_EXPORT int noteResourceCount(
     const qevercloud::Note & note);
 
-[[nodiscard]] QUENTIER_EXPORT QStringList noteTagLocalIds(
-    const qevercloud::Note & note);
-
 void QUENTIER_EXPORT addNoteTagLocalId(
     const QString & tagLocalId, qevercloud::Note & note);
 
@@ -86,9 +83,6 @@ void QUENTIER_EXPORT removeNoteResource(
 
 void QUENTIER_EXPORT putNoteResource(
     qevercloud::Resource resource, qevercloud::Note & note);
-
-[[nodiscard]] QUENTIER_EXPORT QByteArray noteThumbnailData(
-    const qevercloud::Note & note);
 
 void QUENTIER_EXPORT setNoteThumbnailData(
     QByteArray thumbnailData, qevercloud::Note & note);

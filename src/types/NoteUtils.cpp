@@ -207,16 +207,6 @@ int noteResourceCount(const qevercloud::Note & note)
     return note.resources()->size();
 }
 
-QStringList noteTagLocalIds(const qevercloud::Note & note)
-{
-    const auto it = note.localData().constFind(tagLocalIdsKey);
-    if (it != note.localData().constEnd()) {
-        return it.value().toStringList();
-    }
-
-    return {};
-}
-
 void addNoteTagLocalId(const QString & tagLocalId, qevercloud::Note & note)
 {
     auto & localData = note.mutableLocalData();
@@ -321,21 +311,6 @@ void putNoteResource(
     else {
         resources << std::move(resource);
     }
-}
-
-QByteArray noteThumbnailData(const qevercloud::Note & note)
-{
-    const auto it = note.localData().constFind(thumbnailDataKey);
-    if (it != note.localData().constEnd()) {
-        return it.value().toByteArray();
-    }
-
-    return {};
-}
-
-void setNoteThumbnailData(QByteArray thumbnailData, qevercloud::Note & note)
-{
-    note.mutableLocalData()[thumbnailDataKey] = std::move(thumbnailData);
 }
 
 } // namespace quentier

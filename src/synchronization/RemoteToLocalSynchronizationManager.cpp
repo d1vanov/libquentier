@@ -3059,7 +3059,7 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
         return;
     }
 
-    setNoteThumbnailData(downloadedThumbnailImageData, note);
+    note.setThumbnailData(downloadedThumbnailImageData);
 
     const QUuid updateNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteWithThumbnailRequestIds.insert(updateNoteRequestId))

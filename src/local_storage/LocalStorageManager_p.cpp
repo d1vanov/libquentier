@@ -8068,7 +8068,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
         query.bindValue(
             QStringLiteral(":hasAttributes"), (note.attributes() ? 1 : 0));
 
-        const QByteArray thumbnailData = noteThumbnailData(note);
+        const QByteArray thumbnailData = note.thumbnailData();
 
         query.bindValue(
             QStringLiteral(":thumbnail"),
@@ -8334,7 +8334,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             DATABASE_CHECK_AND_SET_ERROR()
         }
 
-        const QStringList tagLocalIds = noteTagLocalIds(note);
+        const QStringList tagLocalIds = note.tagLocalIds();
 
         const bool hasTagLocalIds = !tagLocalIds.isEmpty();
         const bool hasTagGuids = (note.tagGuids() != std::nullopt);
@@ -12007,7 +12007,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
 
         const QVariant thumbnailValue = rec.value(indexOfThumbnail);
         if (!thumbnailValue.isNull()) {
-            setNoteThumbnailData(thumbnailValue.toByteArray(), note);
+            note.setThumbnailData(thumbnailValue.toByteArray());
         }
     }
 

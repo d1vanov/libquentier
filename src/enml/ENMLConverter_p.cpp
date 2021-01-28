@@ -1610,7 +1610,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     for (const auto & note: qAsConst(notes)) {
         if (!note.title() && !note.content() &&
             (!note.resources() || note.resources()->isEmpty()) &&
-            noteTagLocalIds(note).isEmpty())
+            note.tagLocalIds().isEmpty())
         {
             continue;
         }
@@ -1675,7 +1675,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
         if (!note.title() && !note.content() &&
             (!note.resources() || note.resources()->isEmpty()) &&
             ((exportTagsOption != ENMLConverter::EnexExportTags::Yes) ||
-             noteTagLocalIds(note).isEmpty()))
+             note.tagLocalIds().isEmpty()))
         {
             QNINFO(
                 "enml",
@@ -1718,7 +1718,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
         if (exportTagsOption == ENMLConverter::EnexExportTags::Yes)
         {
-            const QStringList tagLocalIds = noteTagLocalIds(note);
+            const QStringList tagLocalIds = note.tagLocalIds();
             for (auto tagIt = tagLocalIds.constBegin(),
                       tagEnd = tagLocalIds.constEnd();
                  tagIt != tagEnd; ++tagIt)
