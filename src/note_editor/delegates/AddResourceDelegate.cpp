@@ -176,7 +176,8 @@ void AddResourceDelegate::doStart()
                 << "them to check the number of note resources");
 
         const auto & limits = *pNote->limits();
-        const auto resourceCount = noteResourceCount(*pNote);
+        const auto resourceCount =
+            (pNote->resources() ? pNote->resources()->size() : 0);
         if (limits.noteResourceCountMax() &&
             (*limits.noteResourceCountMax() == resourceCount))
         {
@@ -195,7 +196,9 @@ void AddResourceDelegate::doStart()
                 << "use account-wise limits to check the number of note "
                    "resources");
 
-        const auto resourceCount = noteResourceCount(*pNote);
+        const auto resourceCount =
+            (pNote->resources() ? pNote->resources()->size() : 0);
+
         if ((resourceCount + 1) > pAccount->noteResourceCountMax()) {
             ErrorString error(
                 QT_TR_NOOP("Can't add attachment: the note is already "

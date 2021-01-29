@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,8 @@
 namespace quentier {
 namespace test {
 
-bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription);
+[[nodiscard]] bool localStorageManagerNoteSearchQueryTest(
+    QString & errorDescription);
 
 } // namespace test
 } // namespace quentier

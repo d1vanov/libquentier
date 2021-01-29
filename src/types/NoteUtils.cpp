@@ -33,12 +33,6 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const QString tagLocalIdsKey = QStringLiteral("tagLocalIds");
-static const QString thumbnailDataKey = QStringLiteral("thumbnailData");
-
-////////////////////////////////////////////////////////////////////////////////
-
-
 [[nodiscard]] bool noteContentContainsToDoImpl(
     const QString & noteContent, const bool checked)
 {
@@ -196,121 +190,6 @@ std::pair<QString, QStringList> noteContentToPlainTextAndListOfWords(
     }
 
     return result;
-}
-
-int noteResourceCount(const qevercloud::Note & note)
-{
-    if (!note.resources()) {
-        return 0;
-    }
-
-    return note.resources()->size();
-}
-
-void addNoteTagLocalId(const QString & tagLocalId, qevercloud::Note & note)
-{
-    auto & localData = note.mutableLocalData();
-    auto it = localData.find(tagLocalIdsKey);
-    if (it == localData.end()) {
-        it = localData.insert(tagLocalId, QStringList{});
-    }
-
-    QStringList tagLocalIds = it.value().toStringList();
-    tagLocalIds.push_back(tagLocalId);
-    it.value() = tagLocalIds;
-}
-
-void removeNoteTagLocalId(const QString & tagLocalId, qevercloud::Note & note)
-{
-    auto & localData = note.mutableLocalData();
-    const auto it = localData.find(tagLocalIdsKey);
-    if (it == localData.end()) {
-        return;
-    }
-
-    QStringList tagLocalIds = it.value().toStringList();
-    tagLocalIds.removeAll(tagLocalId);
-    if (tagLocalIds.isEmpty()) {
-        localData.erase(it);
-    }
-    else {
-        it.value() = tagLocalIds;
-    }
-}
-
-void addNoteTagGuid(const QString & tagGuid, qevercloud::Note & note)
-{
-    if (!note.tagGuids()) {
-        note.setTagGuids(QList<qevercloud::Guid>() << tagGuid);
-    }
-    else {
-        note.mutableTagGuids()->push_back(tagGuid);
-    }
-}
-
-void removeNoteTagGuid(const QString & tagGuid, qevercloud::Note & note)
-{
-    if (!note.tagGuids()) {
-        return;
-    }
-
-    auto & tagGuids = *note.mutableTagGuids();
-    tagGuids.removeAll(tagGuid);
-}
-
-void addNoteResource(qevercloud::Resource resource, qevercloud::Note & note)
-{
-    if (!note.resources()) {
-        note.setResources(QList<qevercloud::Resource>() << std::move(resource));
-    }
-    else {
-        *note.mutableResources() << std::move(resource);
-    }
-}
-
-void removeNoteResource(
-    const QString & resourceLocalId, qevercloud::Note & note)
-{
-    if (!note.resources() || note.resources()->isEmpty()) {
-        return;
-    }
-
-    auto & resources = *note.mutableResources();
-    const auto it = std::find_if(
-        resources.begin(),
-        resources.end(),
-        [&resourceLocalId](const qevercloud::Resource & resource)
-        {
-            return resource.localId() == resourceLocalId;
-        });
-    if (it != resources.end()) {
-        resources.erase(it);
-    }
-}
-
-void putNoteResource(
-    qevercloud::Resource resource, qevercloud::Note & note)
-{
-    if (!note.resources() || note.resources()->isEmpty()) {
-        note.setResources(QList<qevercloud::Resource>() << resource);
-        return;
-    }
-
-    const auto resourceLocalId = resource.localId();
-    auto & resources = *note.mutableResources();
-    const auto it = std::find_if(
-        resources.begin(),
-        resources.end(),
-        [&resourceLocalId](const qevercloud::Resource & r)
-        {
-            return r.localId() == resourceLocalId;
-        });
-    if (it != resources.end()) {
-        *it = std::move(resource);
-    }
-    else {
-        resources << std::move(resource);
-    }
 }
 
 } // namespace quentier

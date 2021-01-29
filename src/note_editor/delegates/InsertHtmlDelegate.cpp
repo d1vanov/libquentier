@@ -1013,7 +1013,8 @@ bool InsertHtmlDelegate::addResource(
 
         const auto & limits = *pNote->limits();
         if (limits.noteResourceCountMax() &&
-            (*limits.noteResourceCountMax() == noteResourceCount(*pNote)))
+            (*limits.noteResourceCountMax() ==
+             (pNote->resources() ? pNote->resources()->size() : 0)))
         {
             QNINFO(
                 "note_editor:delegate",
@@ -1030,13 +1031,15 @@ bool InsertHtmlDelegate::addResource(
                 << "use the account-wise limits to check the number "
                 << "of note resources");
 
-        const auto resourceCount = noteResourceCount(*pNote);
+        const auto resourceCount =
+            (pNote->resources() ? pNote->resources()->size() : 0);
+
         if ((resourceCount + 1) > pAccount->noteResourceCountMax()) {
             QNINFO(
                 "note_editor:delegate",
-                "Can't add image from inserted "
-                    << "HTML: the note is already at max allowed number of "
-                    << "attachments (judging by account limits)");
+                "Can't add image from inserted HTML: the note is already at "
+                    << "max allowed number of attachments (judging by account "
+                    << "limits)");
             return false;
         }
     }
@@ -1052,8 +1055,8 @@ bool InsertHtmlDelegate::addResource(
     if (Q_UNLIKELY(!mimeType.isValid())) {
         QNDEBUG(
             "note_editor:delegate",
-            "Could not deduce the resource data's "
-                << "mime type from the data, fallback to image/png");
+            "Could not deduce the resource data's mime type from the data, "
+                << "fallback to image/png");
         mimeType = mimeDatabase.mimeTypeForName(QStringLiteral("image/png"));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,18 +21,19 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/Tag.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/generated/types/Tag.h>
 
 #include <QCryptographicHash>
 
 namespace quentier {
 namespace test {
 
-bool CheckQueryString(
-    const QString & queryString, const QVector<Note> & notes,
+[[nodiscard]] bool checkQueryString(
+    const QString & queryString, const QVector<qevercloud::Note> & notes,
     const QVector<bool> expectedContainedNotesIndices,
     const LocalStorageManager & localStorageManager,
     ErrorString & errorDescription)
@@ -45,11 +46,11 @@ bool CheckQueryString(
 
     errorDescription.clear();
 
-    LocalStorageManager::GetNoteOptions options(
+    const LocalStorageManager::GetNoteOptions options(
         LocalStorageManager::GetNoteOption::WithResourceMetadata |
         LocalStorageManager::GetNoteOption::WithResourceBinaryData);
 
-    NoteList foundNotes = localStorageManager.findNotesWithSearchQuery(
+    auto foundNotes = localStorageManager.findNotesWithSearchQuery(
         noteSearchQuery, options, errorDescription);
 
     if (foundNotes.isEmpty()) {
@@ -114,7 +115,7 @@ bool CheckQueryString(
         errorDescription.details() += noteSearchQuery.toString();
 
         for (int i = 0; i < numFoundNotes; ++i) {
-            const Note & note = foundNotes[i];
+            const auto & note = foundNotes[i];
             errorDescription.details() += QStringLiteral("foundNotes[");
             errorDescription.details() += QString::number(i);
             errorDescription.details() += QStringLiteral("]: ");
@@ -123,7 +124,7 @@ bool CheckQueryString(
         }
 
         for (int i = 0; i < numOriginalNotes; ++i) {
-            const Note & note = notes[i];
+            const auto & note = notes[i];
             errorDescription.details() += QStringLiteral("originalNotes[");
             errorDescription.details() += QString::number(i);
             errorDescription.details() += QStringLiteral("]: ");
@@ -137,38 +138,38 @@ bool CheckQueryString(
     return true;
 }
 
-bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
+bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
 {
     // 1) =========== Create some notebooks ================
 
     int numNotebooks = 3;
-    QVector<Notebook> notebooks;
+    QVector<qevercloud::Notebook> notebooks;
     notebooks.reserve(numNotebooks);
 
     for (int i = 0; i < numNotebooks; ++i) {
-        notebooks << Notebook();
-        Notebook & notebook = notebooks.back();
+        notebooks << qevercloud::Notebook();
+        auto & notebook = notebooks.back();
 
         notebook.setName(
             QString(QStringLiteral("Test notebook #")) + QString::number(i));
 
-        notebook.setUpdateSequenceNumber(i);
+        notebook.setUpdateSequenceNum(i);
         notebook.setDefaultNotebook(i == 0 ? true : false);
-        notebook.setLastUsed(i == 1 ? true : false);
-        notebook.setCreationTimestamp(i);
-        notebook.setModificationTimestamp(i + 1);
+        notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = (i == 1);
+        notebook.setServiceCreated(i);
+        notebook.setServiceUpdated(i + 1);
     }
 
     // 2) =============== Create some tags =================
 
     int numTags = 9;
-    QVector<Tag> tags;
+    QVector<qevercloud::Tag> tags;
     tags.reserve(numTags);
 
     for (int i = 0; i < numTags; ++i) {
-        tags << Tag();
-        Tag & tag = tags.back();
-        tag.setUpdateSequenceNumber(i);
+        tags << qevercloud::Tag();
+        auto & tag = tags.back();
+        tag.setUpdateSequenceNum(i);
     }
 
     tags[0].setName(QStringLiteral("College"));
@@ -194,23 +195,26 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 3) ================= Create some resources ==================
 
     int numResources = 3;
-    QVector<Resource> resources;
+    QVector<qevercloud::Resource> resources;
     resources.reserve(numResources);
 
     for (int i = 0; i < numResources; ++i) {
-        resources << Resource();
-        Resource & resource = resources.back();
+        resources << qevercloud::Resource();
+        auto & resource = resources.back();
 
-        resource.setUpdateSequenceNumber(i);
+        resource.setUpdateSequenceNum(i);
     }
 
-    Resource & res0 = resources[0];
+    auto & res0 = resources[0];
     res0.setMime(QStringLiteral("image/gif"));
-    res0.setDataBody(QByteArray("fake image/gif byte array"));
-    res0.setDataSize(res0.dataBody().size());
+    res0.setData(qevercloud::Data{});
+    res0.mutableData()->setBody(QByteArray("fake image/gif byte array"));
+    res0.mutableData()->setSize(res0.data()->body()->size());
 
-    res0.setDataHash(
-        QCryptographicHash::hash(res0.dataBody(), QCryptographicHash::Md5));
+    res0.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *res0.data()->body(),
+            QCryptographicHash::Md5));
 
     QString recognitionBodyStr = QStringLiteral(
         "<recoIndex docType=\"handwritten\" objType=\"image\" "
@@ -232,21 +236,28 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         "</item>"
         "</recoIndex>");
 
-    res0.setRecognitionDataBody(recognitionBodyStr.toUtf8());
-    res0.setRecognitionDataSize(res0.recognitionDataBody().size());
+    res0.setRecognition(qevercloud::Data{});
+    res0.mutableRecognition()->setBody(recognitionBodyStr.toUtf8());
+    res0.mutableRecognition()->setSize(res0.recognition()->body()->size());
 
-    res0.setRecognitionDataHash(QCryptographicHash::hash(
-        res0.recognitionDataBody(), QCryptographicHash::Md5));
+    res0.mutableRecognition()->setBodyHash(
+        QCryptographicHash::hash(
+            *res0.recognition()->body(),
+            QCryptographicHash::Md5));
 
-    Resource & res1 = resources[1];
+    auto & res1 = resources[1];
     res1.setMime(QStringLiteral("audio/*"));
-    res1.setDataBody(QByteArray("fake audio/* byte array"));
-    res1.setDataSize(res1.dataBody().size());
+    res1.setData(qevercloud::Data{});
+    res1.mutableData()->setBody(QByteArray("fake audio/* byte array"));
+    res1.mutableData()->setSize(res1.data()->body()->size());
 
-    res1.setDataHash(
-        QCryptographicHash::hash(res1.dataBody(), QCryptographicHash::Md5));
+    res1.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *res1.data()->body(),
+            QCryptographicHash::Md5));
 
-    res1.setRecognitionDataBody(
+    res1.setRecognition(qevercloud::Data{});
+    res1.mutableRecognition()->setBody(
         QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
                    "objID=\"fc83e58282d8059be17debabb69be900\" "
                    "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -266,21 +277,26 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
                    "</item>"
                    "</recoIndex>"));
 
-    res1.setRecognitionDataSize(res1.recognitionDataBody().size());
+    res1.mutableRecognition()->setSize(res1.recognition()->body()->size());
 
-    res1.setRecognitionDataHash(QCryptographicHash::hash(
-        res1.recognitionDataBody(), QCryptographicHash::Md5));
+    res1.mutableRecognition()->setBodyHash(
+        QCryptographicHash::hash(
+            *res1.recognition()->body(),
+            QCryptographicHash::Md5));
 
-    Resource & res2 = resources[2];
+    auto & res2 = resources[2];
     res2.setMime(QStringLiteral("application/vnd.evernote.ink"));
 
-    res2.setDataBody(
+    res2.setData(qevercloud::Data{});
+    res2.mutableData()->setBody(
         QByteArray("fake application/vnd.evernote.ink byte array"));
 
-    res2.setDataSize(res2.dataBody().size());
+    res2.mutableData()->setSize(res2.data()->body()->size());
 
-    res2.setDataHash(
-        QCryptographicHash::hash(res2.dataBody(), QCryptographicHash::Md5));
+    res2.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *res2.data()->body(),
+            QCryptographicHash::Md5));
 
     // 4) ============= Create some ranges for note's properties ==============
     int numTitles = 3;
@@ -613,12 +629,12 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 5) ============= Create some notes ================
 
     int numNotes = 9;
-    QVector<Note> notes;
+    QVector<qevercloud::Note> notes;
     notes.reserve(numNotes);
 
     for (int i = 0; i < numNotes; ++i) {
-        notes << Note();
-        Note & note = notes.back();
+        notes << qevercloud::Note();
+        auto & note = notes.back();
 
         note.setTitle(
             titles[i / numTitles] + QStringLiteral(" #") + QString::number(i));
@@ -626,40 +642,50 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         note.setContent(contents[i]);
 
         if (i != 7) {
-            note.setCreationTimestamp(creationTimestamps[i]);
+            note.setCreated(creationTimestamps[i]);
         }
 
-        qevercloud::NoteAttributes & attributes = note.noteAttributes();
+        if (!note.attributes()) {
+            note.setAttributes(qevercloud::NoteAttributes{});
+        }
 
-        attributes.subjectDate =
-            subjectDateTimestamps[i / numSubjectDateTimestamps];
+        auto & attributes = *note.mutableAttributes();
+
+        attributes.setSubjectDate(
+            subjectDateTimestamps[i / numSubjectDateTimestamps]);
 
         if ((i != 6) && (i != 7) && (i != 8)) {
-            attributes.latitude = latitudes[i];
+            attributes.setLatitude(latitudes[i]);
         }
 
-        attributes.longitude = longitudes[i];
-        attributes.altitude = altitudes[i];
-        attributes.author = authors[i / numAuthors];
-        attributes.source = sources[i / numSources];
+        attributes.setLongitude(longitudes[i]);
+        attributes.setAltitude(altitudes[i]);
+        attributes.setAuthor(authors[i / numAuthors]);
+        attributes.setSource(sources[i / numSources]);
 
-        attributes.sourceApplication =
-            sourceApplications[i / numSourceApplications];
+        attributes.setSourceApplication(
+            sourceApplications[i / numSourceApplications]);
 
-        attributes.contentClass = contentClasses[i / numContentClasses];
+        attributes.setContentClass(contentClasses[i / numContentClasses]);
 
         if (i / numPlaceNames != 2) {
-            attributes.placeName = placeNames[i / numPlaceNames];
+            attributes.setPlaceName(placeNames[i / numPlaceNames]);
         }
 
         if ((i != 3) && (i != 4) && (i != 5)) {
-            attributes.applicationData = qevercloud::LazyMap();
-            attributes.applicationData->keysOnly = QSet<QString>();
-            auto & keysOnly = attributes.applicationData->keysOnly.ref();
+            attributes.setApplicationData(qevercloud::LazyMap{});
+            attributes.mutableApplicationData()->setKeysOnly(QSet<QString>{});
+
+            auto & keysOnly =
+                *attributes.mutableApplicationData()->mutableKeysOnly();
+
             keysOnly.insert(applicationData[i / numApplicationData]);
 
-            attributes.applicationData->fullMap = QMap<QString, QString>();
-            auto & fullMap = attributes.applicationData->fullMap.ref();
+            attributes.mutableApplicationData()->setFullMap(
+                QMap<QString, QString>{});
+
+            auto & fullMap =
+                *attributes.mutableApplicationData()->mutableFullMap();
 
             fullMap.insert(
                 applicationData[i / numApplicationData],
@@ -668,18 +694,22 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
 
         if (i == 6) {
-            if (!attributes.applicationData->keysOnly.isSet()) {
-                attributes.applicationData->keysOnly = QSet<QString>();
+            if (!attributes.applicationData()->keysOnly()) {
+                attributes.mutableApplicationData()->setKeysOnly(
+                    QSet<QString>{});
             }
 
-            auto & keysOnly = attributes.applicationData->keysOnly.ref();
+            auto & keysOnly =
+                *attributes.mutableApplicationData()->mutableKeysOnly();
+
             keysOnly.insert(applicationData[1]);
 
-            if (!attributes.applicationData->fullMap.isSet()) {
-                attributes.applicationData->fullMap = QMap<QString, QString>();
+            if (!attributes.applicationData()->fullMap()) {
+                attributes.mutableApplicationData()->setFullMap(QMap<QString, QString>{});
             }
 
-            auto & fullMap = attributes.applicationData->fullMap.ref();
+            auto & fullMap =
+                *attributes.mutableApplicationData()->mutableFullMap();
 
             fullMap.insert(
                 applicationData[1],
@@ -688,32 +718,51 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
         }
 
         if ((i != 0) && (i != 1) && (i != 2)) {
-            attributes.reminderOrder = reminderOrders[i / numReminderOrders];
+            attributes.setReminderOrder(reminderOrders[i / numReminderOrders]);
         }
 
-        attributes.reminderTime = reminderTimes[i / numReminderTimes];
-        attributes.reminderDoneTime =
-            reminderDoneTimes[i / numReminderDoneTimes];
+        attributes.setReminderTime(reminderTimes[i / numReminderTimes]);
+        attributes.setReminderDoneTime(
+            reminderDoneTimes[i / numReminderDoneTimes]);
 
         if (i != (numNotes - 1)) {
             int k = 0;
             while (((i + k) < numTags) && (k < 3)) {
-                note.addTagGuid(tags[i + k].guid());
-                note.addTagLocalUid(tags[i + k].localUid());
+                if (note.tagGuids()) {
+                    note.setTagGuids(
+                        QList<qevercloud::Guid>()
+                        << tags[i + k].guid().value());
+                }
+                else {
+                    note.mutableTagGuids()->append(tags[i + k].guid().value());
+                }
+
+                note.mutableTagLocalIds().append(tags[i + k].localId());
                 ++k;
             }
         }
 
         if (i != 8) {
-            Resource resource = resources[i / numResources];
-            resource.setLocalUid(QUuid::createUuid().toString());
-            note.addResource(resource);
+            auto resource = resources[i / numResources];
+            resource.setLocalId(QUuid::createUuid().toString());
+            if (!note.resources()) {
+                note.setResources(QList<qevercloud::Resource>() << resource);
+            }
+            else {
+                note.mutableResources()->append(resource);
+            }
         }
 
         if (i == 3) {
-            Resource additionalResource = resources[0];
-            additionalResource.setLocalUid(QUuid::createUuid().toString());
-            note.addResource(additionalResource);
+            auto additionalResource = resources[0];
+            additionalResource.setLocalId(QUuid::createUuid().toString());
+            if (!note.resources()) {
+                note.setResources(
+                    QList<qevercloud::Resource>() << additionalResource);
+            }
+            else {
+                note.mutableResources()->append(additionalResource);
+            }
         }
     }
 
@@ -725,11 +774,11 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 6) =========== Create local storage, add created notebooks,
     //                tags and notes there ===========
 
-    Account account(
+    const Account account(
         QStringLiteral("LocalStorageManagerNoteSearchQueryTestFakeUser"),
         Account::Type::Local);
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     LocalStorageManager localStorageManager(account, startupOptions);
@@ -753,8 +802,8 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     }
 
     for (int i = 0; i < numNotes; ++i) {
-        notes[i].setNotebookLocalUid(
-            notebooks[notebookIndexForNoteIndex[i]].localUid());
+        notes[i].setNotebookLocalId(
+            notebooks[notebookIndexForNoteIndex[i]].localId());
 
         bool res = localStorageManager.addNote(notes[i], errorMessage);
         if (!res) {
@@ -769,7 +818,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     bool res = false;
 
 #define RUN_CHECK()                                                            \
-    res = CheckQueryString(                                                    \
+    res = checkQueryString(                                                    \
         queryString, notes, expectedContainedNotesIndices,                     \
         localStorageManager, errorMessage);                                    \
     if (!res) {                                                                \
@@ -955,7 +1004,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.1) Check a single tag
     queryString = QStringLiteral("tag:\"");
-    queryString += tags[1].name();
+    queryString += tags[1].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -969,7 +1018,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.2) Check negative for single tag
     queryString = QStringLiteral("-tag:\"");
-    queryString += tags[2].name();
+    queryString += tags[2].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -984,9 +1033,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.3) Check for multiple tags
     queryString = QStringLiteral("tag:\"");
-    queryString += tags[1].name();
+    queryString += tags[1].name().value();
     queryString += QStringLiteral("\" tag:\"");
-    queryString += tags[3].name();
+    queryString += tags[3].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -999,9 +1048,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.3) Check for multiple tags with any modifier
     queryString = QStringLiteral("any: tag:\"");
-    queryString += tags[1].name();
+    queryString += tags[1].name().value();
     queryString += QStringLiteral("\" tag:\"");
-    queryString += tags[3].name();
+    queryString += tags[3].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -1017,9 +1066,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.4) Check for both positive and negated tags
     queryString = QStringLiteral("tag:\"");
-    queryString += tags[4].name();
+    queryString += tags[4].name().value();
     queryString += QStringLiteral("\" -tag:\"");
-    queryString += tags[2].name();
+    queryString += tags[2].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -1033,9 +1082,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.6.5) Check for both positive and negated tag names with "any:" modifier
     queryString = QStringLiteral("any: tag:\"");
-    queryString += tags[4].name();
+    queryString += tags[4].name().value();
     queryString += QStringLiteral("\" -tag:\"");
-    queryString += tags[2].name();
+    queryString += tags[2].name().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < 2; ++i) {
@@ -1074,7 +1123,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.7.1) Check a single mime type
     queryString = QStringLiteral("resource:\"");
-    queryString += resources[1].mime();
+    queryString += resources[1].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -1086,7 +1135,7 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.7.2) Check negative for single resource mime type
     queryString = QStringLiteral("-resource:\"");
-    queryString += resources[2].mime();
+    queryString += resources[2].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -1100,9 +1149,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.7.3) Check for multiple resource mime types
     queryString = QStringLiteral("resource:\"");
-    queryString += resources[0].mime();
+    queryString += resources[0].mime().value();
     queryString += QStringLiteral("\" resource:\"");
-    queryString += resources[1].mime();
+    queryString += resources[1].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
@@ -1115,9 +1164,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.7.4) Check for multiple resource mime types with "any:" modifier
     queryString = QStringLiteral("any: resource:\"");
-    queryString += resources[0].mime();
+    queryString += resources[0].mime().value();
     queryString += QStringLiteral("\" resource:\"");
-    queryString += resources[1].mime();
+    queryString += resources[1].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < 6; ++i) {
@@ -1132,9 +1181,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
     // 7.7.5) Check for both positive and negated resource mime types
     queryString = QStringLiteral("resource:\"");
-    queryString += resources[0].mime();
+    queryString += resources[0].mime().value();
     queryString += QStringLiteral("\" -resource:\"");
-    queryString += resources[1].mime();
+    queryString += resources[1].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < 3; ++i) {
@@ -1150,9 +1199,9 @@ bool LocalStorageManagerNoteSearchQueryTest(QString & errorDescription)
     // 7.7.6) Check for both positive and negated resource mime types with
     // "any:" modifier
     queryString = QStringLiteral("any: resource:\"");
-    queryString += resources[0].mime();
+    queryString += resources[0].mime().value();
     queryString += QStringLiteral("\" -resource:\"");
-    queryString += resources[1].mime();
+    queryString += resources[1].mime().value();
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < 4; ++i) {

@@ -60,33 +60,6 @@ class ErrorString;
 noteContentToPlainTextAndListOfWords(
     const QString & noteContent, ErrorString * errorDescription = nullptr);
 
-[[nodiscard]] QUENTIER_EXPORT int noteResourceCount(
-    const qevercloud::Note & note);
-
-void QUENTIER_EXPORT addNoteTagLocalId(
-    const QString & tagLocalId, qevercloud::Note & note);
-
-void QUENTIER_EXPORT removeNoteTagLocalId(
-    const QString & tagLocalId, qevercloud::Note & note);
-
-void QUENTIER_EXPORT addNoteTagGuid(
-    const QString & tagGuid, qevercloud::Note & note);
-
-void QUENTIER_EXPORT removeNoteTagGuid(
-    const QString & tagGuid, qevercloud::Note & note);
-
-void QUENTIER_EXPORT addNoteResource(
-    qevercloud::Resource resource, qevercloud::Note & note);
-
-void QUENTIER_EXPORT removeNoteResource(
-    const QString & resourceLocalId, qevercloud::Note & note);
-
-void QUENTIER_EXPORT putNoteResource(
-    qevercloud::Resource resource, qevercloud::Note & note);
-
-void QUENTIER_EXPORT setNoteThumbnailData(
-    QByteArray thumbnailData, qevercloud::Note & note);
-
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_NOTE_UTILS_H

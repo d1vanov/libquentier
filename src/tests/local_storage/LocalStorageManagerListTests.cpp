@@ -612,7 +612,7 @@ void TestListTagsWithNoteLocalUids()
         }
 
 #define APPEND_TAG_TO_NOTE(tagNum)                                             \
-    addNoteTagLocalId(tags[tagNum].localId(), note);                           \
+    note.mutableTagLocalIds().append(tags[tagNum].localId());                  \
     noteLocalIdsByTagLocalId[tags[tagNum].localId()] << note.localId()
 
         if (i == 0) {
@@ -927,8 +927,13 @@ void TestListAllTagsPerNote()
         res = localStorageManager.addTag(tag, errorMessage);
         QVERIFY2(res == true, qPrintable(errorMessage.nonLocalizedString()));
 
-        addNoteTagGuid(tag.guid().value(), note);
-        addNoteTagLocalId(tag.localId(), note);
+        note.mutableTagLocalIds().append(tag.localId());
+        if (!note.tagGuids()) {
+            note.setTagGuids(QList<qevercloud::Guid>() << tag.guid().value());
+        }
+        else {
+            note.mutableTagGuids()->append(tag.guid().value());
+        }
 
         LocalStorageManager::UpdateNoteOptions updateNoteOptions(
             LocalStorageManager::UpdateNoteOption::UpdateTags);
@@ -1139,10 +1144,10 @@ void TestListNotes()
         }
 
         if ((i == 1) || (i == 2) || (i == 4)) {
-            addNoteTagLocalId(firstTestTag.localId(), note);
+            note.mutableTagLocalIds().append(firstTestTag.localId());
         }
         else if (i == 3) {
-            addNoteTagLocalId(secondTestTag.localId(), note);
+            note.mutableTagLocalIds().append(secondTestTag.localId());
         }
 
         note.setUpdated(i + 1);
@@ -1913,8 +1918,13 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
 
         errorMessage.clear();
 
-        addNoteTagGuid(tag.guid().value(), note);
-        addNoteTagLocalId(tag.localId(), note);
+        note.mutableTagLocalIds().append(tag.localId());
+        if (!note.tagGuids()) {
+            note.setTagGuids(QList<qevercloud::Guid>() << tag.guid().value());
+        }
+        else {
+            note.mutableTagGuids()->append(tag.guid().value());
+        }
 
         LocalStorageManager::UpdateNoteOptions updateNoteOptions(
             LocalStorageManager::UpdateNoteOption::UpdateTags);

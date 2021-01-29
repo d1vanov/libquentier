@@ -29,6 +29,8 @@
 #include <QCryptographicHash>
 #include <QtTest/QtTest>
 
+#include <algorithm>
+
 namespace quentier {
 namespace test {
 
@@ -1178,8 +1180,8 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addTag(newTag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    addNoteTagLocalId(newTag.localId(), modifiedNote);
-    addNoteTagGuid(newTag.guid().value(), modifiedNote);
+    modifiedNote.mutableTagLocalIds().append(newTag.localId());
+    modifiedNote.mutableTagGuids().value().append(newTag.guid().value());
 
     qevercloud::Resource newResource;
     newResource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000051"));
@@ -1323,8 +1325,10 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     QStringList tagGuidsBeforeUpdate =
         modifiedNote.tagGuids().value_or(QStringList());
 
-    removeNoteTagLocalId(newTag.localId(), modifiedNote);
-    removeNoteTagGuid(*newTag.guid(), modifiedNote);
+    modifiedNote.mutableTagLocalIds().removeAll(newTag.localId());
+    if (modifiedNote.tagGuids()) {
+        modifiedNote.mutableTagGuids()->removeAll(*newTag.guid());
+    }
 
     // Modify something about the note to make the test a little more
     // interesting
@@ -1393,7 +1397,18 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     auto previousModifiedNoteResources =
         modifiedNote.resources().value_or(QList<qevercloud::Resource>());
 
-    removeNoteResource(newResource.localId(), modifiedNote);
+    if (modifiedNote.resources()) {
+        const auto resource_it = std::find_if(
+            modifiedNote.mutableResources()->begin(),
+            modifiedNote.mutableResources()->end(),
+            [&newResource](const qevercloud::Resource & resource)
+            {
+                return resource.localId() == newResource.localId();
+            });
+        if (resource_it != modifiedNote.mutableResources()->end()) {
+            modifiedNote.mutableResources()->erase(resource_it);
+        }
+    }
 
     // Modify something about the note to make the test a little more
     // interesting
@@ -1458,7 +1473,18 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
      * is not set even if update resource binary data flag is set on attempt
      * to update note
      */
-    removeNoteResource(newResource.localId(), modifiedNote);
+    if (modifiedNote.resources()) {
+        const auto resource_it = std::find_if(
+            modifiedNote.mutableResources()->begin(),
+            modifiedNote.mutableResources()->end(),
+            [&newResource](const qevercloud::Resource & resource)
+            {
+                return resource.localId() == newResource.localId();
+            });
+        if (resource_it != modifiedNote.mutableResources()->end()) {
+            modifiedNote.mutableResources()->erase(resource_it);
+        }
+    }
 
     modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
@@ -1519,7 +1545,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     newResource.mutableData()->setSize(
         newResource.data()->body()->size());
 
-    putNoteResource(newResource, modifiedNote);
+    modifiedNote.mutableResources().value().append(newResource);
 
     modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
@@ -1579,8 +1605,8 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     newNote.setNotebookGuid(notebook.guid());
     newNote.setTitle(QStringLiteral("New note"));
 
-    addNoteTagGuid(tag.guid().value(), newNote);
-    addNoteTagLocalId(tag.localId(), newNote);
+    newNote.mutableTagLocalIds().append(tag.localId());
+    newNote.setTagGuids(QList<qevercloud::Guid>() << tag.guid().value());
 
     QVERIFY2(
         localStorageManager.addNote(newNote, errorMessage),
@@ -1920,8 +1946,8 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.addTag(tag, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    addNoteTagGuid(*tag.guid(), note);
-    addNoteTagLocalId(tag.localId(), note);
+    note.mutableTagLocalIds().append(tag.localId());
+    note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
 
     errorMessage.clear();
 
@@ -2847,8 +2873,8 @@ void TestSequentialUpdatesInLocalStorage()
             *resource.data()->body(),
             QCryptographicHash::Md5));
 
-    addNoteResource(resource, note);
-    addNoteTagGuid(*tag.guid(), note);
+    note.setResources(QList<qevercloud::Resource>() << resource);
+    note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
     note.setNotebookLocalId(updatedNotebook.localId());
 
     QVERIFY2(
@@ -2930,7 +2956,7 @@ void TestSequentialUpdatesInLocalStorage()
     (*resourceAppData.mutableFullMap())[QStringLiteral("key_3")] =
         QStringLiteral("value_3");
 
-    addNoteResource(resource, updatedNote);
+    updatedNote.setResources(QList<qevercloud::Resource>() << resource);
 
     QVERIFY2(
         localStorageManager.updateNote(
@@ -3197,7 +3223,7 @@ void TestAccountHighUsnInLocalStorage()
     thirdNoteResource.setMime(QStringLiteral("text/plain"));
     thirdNoteResource.setUpdateSequenceNum(currentUsn++);
 
-    addNoteResource(thirdNoteResource, thirdNote);
+    thirdNote.setResources(QList<qevercloud::Resource>() << thirdNoteResource);
 
     errorMessage.clear();
 
@@ -3362,12 +3388,11 @@ void TestAccountHighUsnInLocalStorage()
     firstNoteFromLinkedNotebook.setUpdated(
         firstNoteFromLinkedNotebook.created());
 
-    addNoteTagLocalId(
-        firstTagFromLinkedNotebook.localId(), firstNoteFromLinkedNotebook);
+    firstNoteFromLinkedNotebook.mutableTagLocalIds().append(
+        firstTagFromLinkedNotebook.localId());
 
-    addNoteTagGuid(
-        firstTagFromLinkedNotebook.guid().value(),
-        firstNoteFromLinkedNotebook);
+    firstNoteFromLinkedNotebook.setTagGuids(
+        QList<qevercloud::Guid>() << firstTagFromLinkedNotebook.guid().value());
 
     qevercloud::Note secondNoteFromLinkedNotebook;
     secondNoteFromLinkedNotebook.setGuid(UidGenerator::Generate());
@@ -3411,8 +3436,8 @@ void TestAccountHighUsnInLocalStorage()
 
     secondNoteFromLinkedNotebookResource.setUpdateSequenceNum(currentUsn++);
 
-    addNoteResource(
-        secondNoteFromLinkedNotebookResource, secondNoteFromLinkedNotebook);
+    secondNoteFromLinkedNotebook.setResources(
+        QList<qevercloud::Resource>() << secondNoteFromLinkedNotebookResource);
 
     errorMessage.clear();
 
@@ -3565,9 +3590,9 @@ void TestAddingNoteWithoutLocalUid()
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
 
-    addNoteTagGuid(firstTag.guid().value(), secondNote);
-    addNoteTagGuid(secondTag.guid().value(), secondNote);
-    addNoteTagGuid(thirdTag.guid().value(), secondNote);
+    secondNote.setTagGuids(
+        QList<qevercloud::Guid>() << firstTag.guid().value()
+            << secondTag.guid().value() << thirdTag.guid().value());
 
     errorMessage.clear();
 
@@ -3583,9 +3608,9 @@ void TestAddingNoteWithoutLocalUid()
     thirdNote.setTitle(QStringLiteral("Third note"));
     thirdNote.setContent(QStringLiteral("<en-note>third note</en-note>"));
 
-    addNoteTagGuid(firstTag.guid().value(), thirdNote);
-    addNoteTagGuid(secondTag.guid().value(), thirdNote);
-    addNoteTagGuid(thirdTag.guid().value(), thirdNote);
+    thirdNote.setTagGuids(
+        QList<qevercloud::Guid>() << firstTag.guid().value()
+            << secondTag.guid().value() << thirdTag.guid().value());
 
     qevercloud::Resource resource;
     resource.setGuid(UidGenerator::Generate());
@@ -3601,7 +3626,7 @@ void TestAddingNoteWithoutLocalUid()
 
     resource.setMime(QStringLiteral("text/plain"));
 
-    addNoteResource(resource, thirdNote);
+    thirdNote.setResources(QList<qevercloud::Resource>() << resource);
 
     errorMessage.clear();
 
@@ -3674,9 +3699,9 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     firstNote.setTitle(QStringLiteral("First note"));
     firstNote.setContent(QStringLiteral("<en-note>first note</en-note>"));
 
-    addNoteTagGuid(firstTag.guid().value(), firstNote);
-    addNoteTagGuid(secondTag.guid().value(), firstNote);
-    addNoteTagGuid(thirdTag.guid().value(), firstNote);
+    firstNote.setTagGuids(
+        QList<qevercloud::Guid>() << firstTag.guid().value()
+            << secondTag.guid().value() << thirdTag.guid().value());
 
     errorMessage.clear();
 
@@ -3713,9 +3738,9 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
     secondNote.setTitle(QStringLiteral("Second note"));
     secondNote.setContent(QStringLiteral("<en-note>second note</en-note>"));
 
-    addNoteTagLocalId(firstTag.localId(), secondNote);
-    addNoteTagLocalId(secondTag.localId(), secondNote);
-    addNoteTagLocalId(thirdTag.localId(), secondNote);
+    secondNote.mutableTagLocalIds().append(firstTag.localId());
+    secondNote.mutableTagLocalIds().append(secondTag.localId());
+    secondNote.mutableTagLocalIds().append(thirdTag.localId());
 
     errorMessage.clear();
 
