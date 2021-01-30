@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,12 +21,14 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/SharedNotebook.h>
+
+#include <qevercloud/generated/types/Notebook.h>
+
+#include <cstddef>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -35,7 +37,7 @@ class NotebookLocalStorageManagerAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit NotebookLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~NotebookLocalStorageManagerAsyncTester();
+    ~NotebookLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -46,17 +48,15 @@ Q_SIGNALS:
 
     // private signals:
     void getNotebookCountRequest(QUuid requestId);
-    void addNotebookRequest(Notebook notebook, QUuid requestId);
-    void updateNotebookRequest(Notebook notebook, QUuid requestId);
-    void findNotebookRequest(Notebook notebook, QUuid requestId);
-    void findDefaultNotebookRequest(Notebook notebook, QUuid requestId);
-    void findLastUsedNotebookRequest(Notebook notebook, QUuid requestId);
+    void addNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
+    void updateNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
+    void findNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
 
-    void findDefaultOrLastUsedNotebookRequest(
-        Notebook notebook, QUuid requestId);
+    void findDefaultNotebookRequest(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void listAllNotebooksRequest(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QUuid requestId);
@@ -66,7 +66,7 @@ Q_SIGNALS:
     void listSharedNotebooksPerNotebookRequest(
         QString notebookGuid, QUuid requestId);
 
-    void expungeNotebookRequest(Notebook notebook, QUuid requestId);
+    void expungeNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
@@ -75,67 +75,66 @@ private Q_SLOTS:
     void onGetNotebookCountFailed(
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onAddNotebookCompleted(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onUpdateNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onUpdateNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onFindNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onFindNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onFindNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onFindDefaultNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onFindDefaultNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onFindDefaultNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
-
-    void onFindLastUsedNotebookCompleted(Notebook notebook, QUuid requestId);
-
-    void onFindLastUsedNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
-
-    void onFindDefaultOrLastUsedNotebookCompleted(
-        Notebook notebook, QUuid requestId);
-
-    void onFindDefaultOrLastUsedNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onListAllNotebooksCompleted(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Notebook> notebooks, QUuid requestId);
+        QString linkedNotebookGuid, QList<qevercloud::Notebook> notebooks,
+        QUuid requestId);
 
     void onListAllNotebooksFailed(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
     void onListAllSharedNotebooksCompleted(
-        QList<SharedNotebook> sharedNotebooks, QUuid requestId);
+        QList<qevercloud::SharedNotebook> sharedNotebooks, QUuid requestId);
 
     void onListAllSharedNotebooksFailed(
         ErrorString errorDescription, QUuid requestId);
 
     void onListSharedNotebooksPerNotebookGuidCompleted(
-        QString notebookGuid, QList<SharedNotebook> sharedNotebooks,
+        QString notebookGuid, QList<qevercloud::SharedNotebook> sharedNotebooks,
         QUuid requestId);
 
     void onListSharedNotebooksPerNotebookGuidFailed(
         QString notebookGuid, ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onExpungeNotebookCompleted(
+        qevercloud::Notebook notebook, QUuid requestId);
 
     void onExpungeNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
 private:
     void createConnections();
@@ -160,11 +159,7 @@ private:
         STATE_SENT_LIST_ALL_SHARED_NOTEBOOKS_REQUEST,
         STATE_SENT_LIST_SHARED_NOTEBOOKS_PER_NOTEBOOK_REQUEST,
         STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_ADD,
-        STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_ADD,
-        STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_ADD,
-        STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE,
-        STATE_SENT_FIND_LAST_USED_NOTEBOOK_AFTER_UPDATE,
-        STATE_SENT_FIND_DEFAULT_OR_LAST_USED_NOTEBOOK_AFTER_UPDATE
+        STATE_SENT_FIND_DEFAULT_NOTEBOOK_AFTER_UPDATE
     };
 
     State m_state = STATE_UNINITIALIZED;
@@ -174,12 +169,12 @@ private:
 
     qint32 m_userId = 4;
 
-    Notebook m_initialNotebook;
-    Notebook m_foundNotebook;
-    Notebook m_modifiedNotebook;
-    QList<Notebook> m_initialNotebooks;
-    QList<SharedNotebook> m_allInitialSharedNotebooks;
-    QList<SharedNotebook> m_initialSharedNotebooksPerNotebook;
+    qevercloud::Notebook m_initialNotebook;
+    qevercloud::Notebook m_foundNotebook;
+    qevercloud::Notebook m_modifiedNotebook;
+    QList<qevercloud::Notebook> m_initialNotebooks;
+    QList<qevercloud::SharedNotebook> m_allInitialSharedNotebooks;
+    QList<qevercloud::SharedNotebook> m_initialSharedNotebooksPerNotebook;
 };
 
 } // namespace test
