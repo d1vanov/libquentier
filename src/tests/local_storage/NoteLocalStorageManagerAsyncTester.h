@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,14 +20,15 @@
 #define LIB_QUENTIER_TESTS_NOTE_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
 #include <quentier/local_storage/LocalStorageManager.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
 
 #include <QUuid>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -36,7 +37,7 @@ class NoteLocalStorageManagerAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit NoteLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~NoteLocalStorageManagerAsyncTester();
+    ~NoteLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -46,35 +47,37 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
     // private signals
-    void addNotebookRequest(Notebook notebook, QUuid requestId);
+    void addNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
 
     void getNoteCountRequest(
         LocalStorageManager::NoteCountOptions options, QUuid requestId);
 
-    void addNoteRequest(Note note, QUuid requestId);
+    void addNoteRequest(qevercloud::Note note, QUuid requestId);
 
     void updateNoteRequest(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void findNoteRequest(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
     void listNotesPerNotebookRequest(
-        Notebook notebook, LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag, size_t limit,
-        size_t offset, LocalStorageManager::ListNotesOrder order,
+        qevercloud::Notebook notebook,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+        std::size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
-    void expungeNoteRequest(Note note, QUuid requestId);
+    void expungeNoteRequest(qevercloud::Note note, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
-    void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onAddNotebookCompleted(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
     void onGetNoteCountCompleted(
         int count, LocalStorageManager::NoteCountOptions options,
@@ -84,45 +87,47 @@ private Q_SLOTS:
         ErrorString errorDescription,
         LocalStorageManager::NoteCountOptions options, QUuid requestId);
 
-    void onAddNoteCompleted(Note note, QUuid requestId);
+    void onAddNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateNoteCompleted(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onFindNoteCompleted(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         QUuid requestId);
 
     void onFindNoteFailed(
-        Note note, LocalStorageManager::GetNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onListNotesPerNotebookCompleted(
-        Notebook notebook, LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag, size_t limit,
-        size_t offset, LocalStorageManager::ListNotesOrder order,
-        LocalStorageManager::OrderDirection orderDirection, QList<Note> notes,
-        QUuid requestId);
+        qevercloud::Notebook notebook,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+        std::size_t offset, LocalStorageManager::ListNotesOrder order,
+        LocalStorageManager::OrderDirection orderDirection,
+        QList<qevercloud::Note> notes, QUuid requestId);
 
     void onListNotesPerNotebookFailed(
-        Notebook notebook, LocalStorageManager::GetNoteOptions options,
-        LocalStorageManager::ListObjectsOptions flag, size_t limit,
-        size_t offset, LocalStorageManager::ListNotesOrder order,
+        qevercloud::Notebook notebook,
+        LocalStorageManager::GetNoteOptions options,
+        LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+        std::size_t offset, LocalStorageManager::ListNotesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeNoteCompleted(Note note, QUuid requestId);
+    void onExpungeNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onExpungeNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -154,13 +159,13 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook m_notebook;
-    Notebook m_extraNotebook;
-    Note m_initialNote;
-    Note m_foundNote;
-    Note m_modifiedNote;
-    QList<Note> m_initialNotes;
-    QList<Note> m_extraNotes;
+    qevercloud::Notebook m_notebook;
+    qevercloud::Notebook m_extraNotebook;
+    qevercloud::Note m_initialNote;
+    qevercloud::Note m_foundNote;
+    qevercloud::Note m_modifiedNote;
+    QList<qevercloud::Note> m_initialNotes;
+    QList<qevercloud::Note> m_extraNotes;
 };
 
 } // namespace test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QPainter>
 #include <QThread>
@@ -43,13 +42,13 @@ void NoteLocalStorageManagerAsyncTester::onInitTestCase()
     QString username = QStringLiteral("NoteLocalStorageManagerAsyncTester");
     qint32 userId = 5;
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
-    Account account(username, Account::Type::Evernote, userId);
+    const Account account{username, Account::Type::Evernote, userId};
 
     m_pLocalStorageManagerAsync =
         new LocalStorageManagerAsync(account, startupOptions);
@@ -67,46 +66,43 @@ void NoteLocalStorageManagerAsyncTester::onInitTestCase()
 
 void NoteLocalStorageManagerAsyncTester::initialize()
 {
-    m_notebook.clear();
     m_notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    m_notebook.setUpdateSequenceNumber(1);
+    m_notebook.setUpdateSequenceNum(1);
     m_notebook.setName(QStringLiteral("Fake notebook name"));
-    m_notebook.setCreationTimestamp(1);
-    m_notebook.setModificationTimestamp(1);
+    m_notebook.setServiceCreated(1);
+    m_notebook.setServiceUpdated(1);
     m_notebook.setDefaultNotebook(true);
-    m_notebook.setLastUsed(false);
-    m_notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
-    m_notebook.setPublishingOrder(1);
-    m_notebook.setPublishingAscending(true);
+    m_notebook.setPublishing(qevercloud::Publishing{});
 
-    m_notebook.setPublishingPublicDescription(
+    m_notebook.mutablePublishing()->setUri(
+        QStringLiteral("Fake publishing uri"));
+
+    m_notebook.mutablePublishing()->setOrder(
+        qevercloud::NoteSortOrder::CREATED);
+
+    m_notebook.mutablePublishing()->setAscending(true);
+
+    m_notebook.mutablePublishing()->setPublicDescription(
         QStringLiteral("Fake public description"));
 
     m_notebook.setPublished(true);
     m_notebook.setStack(QStringLiteral("Fake notebook stack"));
 
-    m_notebook.setBusinessNotebookDescription(
+    m_notebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+    m_notebook.mutableBusinessNotebook()->setNotebookDescription(
         QStringLiteral("Fake business notebook description"));
 
-    m_notebook.setBusinessNotebookPrivilegeLevel(1);
-    m_notebook.setBusinessNotebookRecommended(true);
+    m_notebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
 
-    ErrorString errorDescription;
-    if (!m_notebook.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid notebook: " << m_notebook
-                                       << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
+    m_notebook.mutableBusinessNotebook()->setRecommended(true);
 
     m_state = STATE_SENT_ADD_NOTEBOOK_REQUEST;
     Q_EMIT addNotebookRequest(m_notebook, QUuid::createUuid());
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -133,42 +129,40 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(
             return;
         }
 
-        m_initialNote.clear();
-
         m_initialNote.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000048"));
 
-        m_initialNote.setUpdateSequenceNumber(1);
+        m_initialNote.setUpdateSequenceNum(1);
         m_initialNote.setTitle(QStringLiteral("Fake note"));
 
         m_initialNote.setContent(
             QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
 
-        m_initialNote.setCreationTimestamp(1);
-        m_initialNote.setModificationTimestamp(1);
+        m_initialNote.setCreated(1);
+        m_initialNote.setUpdated(1);
         m_initialNote.setNotebookGuid(m_notebook.guid());
-        m_initialNote.setNotebookLocalUid(m_notebook.localUid());
+        m_initialNote.setNotebookLocalId(m_notebook.localId());
         m_initialNote.setActive(true);
 
         m_state = STATE_SENT_ADD_REQUEST;
         Q_EMIT addNoteRequest(m_initialNote, QUuid::createUuid());
     }
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST) {
-        Note extraNote;
+        qevercloud::Note extraNote;
 
         extraNote.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000006"));
 
-        extraNote.setUpdateSequenceNumber(6);
+        extraNote.setUpdateSequenceNum(6);
         extraNote.setActive(true);
 
         extraNote.setContent(
             QStringLiteral("<en-note><h1>Hello, world 3</h1></en-note>"));
 
-        extraNote.setCreationTimestamp(3);
-        extraNote.setModificationTimestamp(3);
+        extraNote.setCreated(3);
+        extraNote.setUpdated(3);
         extraNote.setNotebookGuid(m_extraNotebook.guid());
-        extraNote.setNotebookLocalUid(m_extraNotebook.localUid());
+        extraNote.setNotebookLocalId(m_extraNotebook.localId());
         extraNote.setTitle(QStringLiteral("Fake note title three"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_THREE_REQUEST;
@@ -178,7 +172,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -208,9 +203,9 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(
             return;
         }
 
-        m_modifiedNote.setLocal(false);
+        m_modifiedNote.setLocalOnly(false);
         m_modifiedNote.setActive(false);
-        m_modifiedNote.setDeletionTimestamp(3);
+        m_modifiedNote.setDeleted(3);
         m_state = STATE_SENT_DELETE_REQUEST;
 
         Q_EMIT updateNoteRequest(
@@ -234,66 +229,69 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(
             return;
         }
 
-        Note extraNote;
+        qevercloud::Note extraNote;
 
         extraNote.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-        extraNote.setUpdateSequenceNumber(1);
+        extraNote.setUpdateSequenceNum(1);
         extraNote.setActive(true);
 
         extraNote.setContent(
             QStringLiteral("<en-note><h1>Hello, world 1</h1></en-note>"));
 
-        extraNote.setCreationTimestamp(1);
-        extraNote.setModificationTimestamp(1);
+        extraNote.setCreated(1);
+        extraNote.setUpdated(1);
         extraNote.setNotebookGuid(m_notebook.guid());
-        extraNote.setNotebookLocalUid(m_notebook.localUid());
+        extraNote.setNotebookLocalId(m_notebook.localId());
         extraNote.setTitle(QStringLiteral("Fake note title one"));
 
-        Resource resource;
+        qevercloud::Resource resource;
 
         resource.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000002"));
 
-        resource.setUpdateSequenceNumber(2);
+        resource.setUpdateSequenceNum(2);
         resource.setNoteGuid(extraNote.guid());
-        resource.setDataBody(QByteArray("Fake resource data body"));
-        resource.setDataSize(resource.dataBody().size());
-        resource.setDataHash(QByteArray("Fake hash      1"));
+        resource.setData(qevercloud::Data{});
+        resource.mutableData()->setBody(QByteArray("Fake resource data body"));
+        resource.mutableData()->setSize(resource.data()->body()->size());
+        resource.mutableData()->setBodyHash(QByteArray("Fake hash      1"));
         resource.setMime(QStringLiteral("text/plain"));
         resource.setHeight(20);
         resource.setWidth(20);
 
-        extraNote.addResource(resource);
+        extraNote.setResources(QList<qevercloud::Resource>() << resource);
 
-        Resource resource2;
+        qevercloud::Resource resource2;
 
         resource2.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000009"));
 
-        resource2.setUpdateSequenceNumber(3);
+        resource2.setUpdateSequenceNum(3);
         resource2.setNoteGuid(extraNote.guid());
-        resource2.setDataBody(QByteArray("Fake resource data body"));
-        resource2.setDataSize(resource.dataBody().size());
-        resource2.setDataHash(QByteArray("Fake hash      9"));
+        resource2.setData(qevercloud::Data{});
+        resource2.mutableData()->setBody(QByteArray("Fake resource data body"));
+        resource2.mutableData()->setSize(resource.data()->body()->size());
+        resource2.mutableData()->setBodyHash(QByteArray("Fake hash      9"));
         resource2.setMime(QStringLiteral("text/plain"));
         resource2.setHeight(30);
         resource2.setWidth(30);
 
-        extraNote.addResource(resource2);
+        extraNote.mutableResources()->append(resource2);
 
-        auto & noteAttributes = extraNote.noteAttributes();
-        noteAttributes.altitude = 20.0;
-        noteAttributes.latitude = 10.0;
-        noteAttributes.longitude = 30.0;
+        extraNote.setAttributes(qevercloud::NoteAttributes{});
+        auto & noteAttributes = *extraNote.mutableAttributes();
+        noteAttributes.setAltitude(20.0);
+        noteAttributes.setLatitude(10.0);
+        noteAttributes.setLongitude(30.0);
 
-        noteAttributes.author =
-            QStringLiteral("NoteLocalStorageManagerAsyncTester");
+        noteAttributes.setAuthor(
+            QStringLiteral("NoteLocalStorageManagerAsyncTester"));
 
-        noteAttributes.lastEditedBy = QStringLiteral("Same as author");
-        noteAttributes.placeName = QStringLiteral("Testing hall");
-        noteAttributes.sourceApplication = QStringLiteral("tester");
+        noteAttributes.setLastEditedBy(QStringLiteral("Same as author"));
+        noteAttributes.setPlaceName(QStringLiteral("Testing hall"));
+        noteAttributes.setSourceApplication(QStringLiteral("tester"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST;
         Q_EMIT addNoteRequest(extraNote, QUuid::createUuid());
@@ -315,7 +313,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
-    Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -333,8 +331,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
             return;
         }
 
-        m_foundNote = Note();
-        m_foundNote.setLocalUid(note.localUid());
+        m_foundNote = qevercloud::Note();
+        m_foundNote.setLocalId(note.localId());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
 
@@ -347,21 +345,21 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_ONE_REQUEST) {
         m_initialNotes << note;
 
-        Note extraNote;
+        qevercloud::Note extraNote;
 
         extraNote.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000004"));
 
-        extraNote.setUpdateSequenceNumber(4);
+        extraNote.setUpdateSequenceNum(4);
         extraNote.setActive(true);
 
         extraNote.setContent(
             QStringLiteral("<en-note><h1>Hello, world 2</h1></en-note>"));
 
-        extraNote.setCreationTimestamp(2);
-        extraNote.setModificationTimestamp(2);
+        extraNote.setCreated(2);
+        extraNote.setUpdated(2);
         extraNote.setNotebookGuid(m_notebook.guid());
-        extraNote.setNotebookLocalUid(m_notebook.localUid());
+        extraNote.setNotebookLocalId(m_notebook.localId());
         extraNote.setTitle(QStringLiteral("Fake note title two"));
 
         m_state = STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST;
@@ -370,17 +368,14 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
     else if (m_state == STATE_SENT_ADD_EXTRA_NOTE_TWO_REQUEST) {
         m_initialNotes << note;
 
-        m_extraNotebook.clear();
-
         m_extraNotebook.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000005"));
 
-        m_extraNotebook.setUpdateSequenceNumber(1);
+        m_extraNotebook.setUpdateSequenceNum(1);
         m_extraNotebook.setName(QStringLiteral("Fake notebook name two"));
-        m_extraNotebook.setCreationTimestamp(1);
-        m_extraNotebook.setModificationTimestamp(1);
+        m_extraNotebook.setServiceCreated(1);
+        m_extraNotebook.setServiceUpdated(1);
         m_extraNotebook.setDefaultNotebook(false);
-        m_extraNotebook.setLastUsed(true);
 
         m_state = STATE_SENT_ADD_EXTRA_NOTEBOOK_REQUEST;
         Q_EMIT addNotebookRequest(m_extraNotebook, QUuid::createUuid());
@@ -393,7 +388,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
         LocalStorageManager::ListObjectsOptions flag =
             LocalStorageManager::ListObjectsOption::ListAll;
 
-        size_t limit = 0, offset = 0;
+        std::size_t limit = 0, offset = 0;
         auto order = LocalStorageManager::ListNotesOrder::NoOrder;
         auto orderDirection = LocalStorageManager::OrderDirection::Ascending;
 
@@ -409,7 +404,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(
-    Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -420,7 +415,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
-    Note note, LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
+    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
+    QUuid requestId)
 {
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -461,7 +457,7 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
             return;
         }
 
-        m_modifiedNote.setLocal(true);
+        m_modifiedNote.setLocalOnly(true);
         m_state = STATE_SENT_EXPUNGE_REQUEST;
         Q_EMIT expungeNoteRequest(m_modifiedNote, QUuid::createUuid());
     }
@@ -469,7 +465,7 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(
-    Note note, LocalStorageManager::UpdateNoteOptions options,
+    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
     Q_UNUSED(options)
@@ -483,7 +479,8 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
-    Note note, LocalStorageManager::GetNoteOptions options, QUuid requestId)
+    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
+    QUuid requestId)
 {
     Q_UNUSED(requestId)
     Q_UNUSED(options)
@@ -509,11 +506,11 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
         // Ok, found note is good, updating it now
         m_modifiedNote = m_initialNote;
 
-        m_modifiedNote.setUpdateSequenceNumber(
-            m_initialNote.updateSequenceNumber() + 1);
+        m_modifiedNote.setUpdateSequenceNum(
+            m_initialNote.updateSequenceNum().value() + 1);
 
         m_modifiedNote.setTitle(
-            m_initialNote.title() + QStringLiteral("_modified"));
+            m_initialNote.title().value() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
 
@@ -563,7 +560,7 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(
-    Note note, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
@@ -595,11 +592,11 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
-    Notebook notebook, LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
-    LocalStorageManager::OrderDirection orderDirection, QList<Note> notes,
-    QUuid requestId)
+    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
+    LocalStorageManager::OrderDirection orderDirection,
+    QList<qevercloud::Note> notes, QUuid requestId)
 {
     Q_UNUSED(notebook)
     Q_UNUSED(options)
@@ -632,9 +629,9 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
                     "One of found notes has invalid notebook guid");
 
                 errorDescription.details() = QStringLiteral("expected ");
-                errorDescription.details() += m_notebook.guid();
+                errorDescription.details() += m_notebook.guid().value();
                 errorDescription.details() += QStringLiteral(", found: ");
-                errorDescription.details() += note.notebookGuid();
+                errorDescription.details() += note.notebookGuid().value();
                 QNWARNING("tests:local_storage", errorDescription);
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -657,9 +654,9 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
                     "One of found notes has invalid notebook guid");
 
                 errorDescription.details() = QStringLiteral("expected");
-                errorDescription.details() += m_extraNotebook.guid();
+                errorDescription.details() += m_extraNotebook.guid().value();
                 errorDescription.details() += QStringLiteral(", found: ");
-                errorDescription.details() += note.notebookGuid();
+                errorDescription.details() += note.notebookGuid().value();
                 QNWARNING("tests:local_storage", errorDescription);
                 Q_EMIT failure(errorDescription.nonLocalizedString());
                 return;
@@ -672,9 +669,9 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
-    Notebook notebook, LocalStorageManager::GetNoteOptions options,
-    LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
-    LocalStorageManager::ListNotesOrder order,
+    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
+    std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
 {
@@ -703,7 +700,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(
-    Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -730,7 +727,7 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteFailed(
-    Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
