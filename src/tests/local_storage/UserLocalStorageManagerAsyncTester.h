@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,13 +20,14 @@
 #define LIB_QUENTIER_TESTS_USER_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/User.h>
+
+#include <qevercloud/generated/types/User.h>
 
 #include <QUuid>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -35,7 +36,7 @@ class UserLocalStorageManagerAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit UserLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~UserLocalStorageManagerAsyncTester();
+    ~UserLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -46,40 +47,40 @@ Q_SIGNALS:
 
     // private signals:
     void getUserCountRequest(QUuid requestId);
-    void addUserRequest(User user, QUuid requestId);
-    void updateUserRequest(User user, QUuid requestId);
-    void findUserRequest(User user, QUuid requestId);
-    void deleteUserRequest(User user, QUuid requestId);
-    void expungeUserRequest(User user, QUuid requestId);
+    void addUserRequest(qevercloud::User user, QUuid requestId);
+    void updateUserRequest(qevercloud::User user, QUuid requestId);
+    void findUserRequest(qevercloud::User user, QUuid requestId);
+    void deleteUserRequest(qevercloud::User user, QUuid requestId);
+    void expungeUserRequest(qevercloud::User user, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
     void onGetUserCountCompleted(int count, QUuid requestId);
     void onGetUserCountFailed(ErrorString errorDescription, QUuid requestId);
-    void onAddUserCompleted(User user, QUuid requestId);
+    void onAddUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onAddUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onUpdateUserCompleted(User user, QUuid requestId);
+    void onUpdateUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onUpdateUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onFindUserCompleted(User user, QUuid requestId);
+    void onFindUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onFindUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onDeleteUserCompleted(User user, QUuid requestId);
+    void onDeleteUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onDeleteUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeUserCompleted(User user, QUuid requestId);
+    void onExpungeUserCompleted(qevercloud::User user, QUuid requestId);
 
     void onExpungeUserFailed(
-        User user, ErrorString errorDescription, QUuid requestId);
+        qevercloud::User user, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -106,9 +107,9 @@ private:
 
     qint32 m_userId = 3;
 
-    User m_initialUser;
-    User m_foundUser;
-    User m_modifiedUser;
+    qevercloud::User m_initialUser;
+    qevercloud::User m_foundUser;
+    qevercloud::User m_modifiedUser;
 };
 
 } // namespace test

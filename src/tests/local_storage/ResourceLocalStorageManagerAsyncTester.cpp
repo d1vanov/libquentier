@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,9 +45,9 @@ void ResourceLocalStorageManagerAsyncTester::onInitTestCase()
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
-    Account account(username, Account::Type::Evernote, userId);
+    const Account account{username, Account::Type::Evernote, userId};
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     m_pLocalStorageManagerAsync =
@@ -66,46 +66,44 @@ void ResourceLocalStorageManagerAsyncTester::onInitTestCase()
 
 void ResourceLocalStorageManagerAsyncTester::initialize()
 {
-    m_notebook = Notebook();
     m_notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000047"));
-    m_notebook.setUpdateSequenceNumber(1);
+    m_notebook.setUpdateSequenceNum(1);
     m_notebook.setName(QStringLiteral("Fake notebook name"));
-    m_notebook.setCreationTimestamp(1);
-    m_notebook.setModificationTimestamp(1);
+    m_notebook.setServiceCreated(1);
+    m_notebook.setServiceUpdated(1);
     m_notebook.setDefaultNotebook(true);
-    m_notebook.setLastUsed(false);
-    m_notebook.setPublishingUri(QStringLiteral("Fake publishing uri"));
-    m_notebook.setPublishingOrder(1);
-    m_notebook.setPublishingAscending(true);
+    m_notebook.setPublishing(qevercloud::Publishing{});
 
-    m_notebook.setPublishingPublicDescription(
+    m_notebook.mutablePublishing()->setUri(
+        QStringLiteral("Fake publishing uri"));
+
+    m_notebook.mutablePublishing()->setOrder(
+        qevercloud::NoteSortOrder::CREATED);
+
+    m_notebook.mutablePublishing()->setAscending(true);
+
+    m_notebook.mutablePublishing()->setPublicDescription(
         QStringLiteral("Fake public description"));
 
     m_notebook.setPublished(true);
     m_notebook.setStack(QStringLiteral("Fake notebook stack"));
 
-    m_notebook.setBusinessNotebookDescription(
+    m_notebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+
+    m_notebook.mutableBusinessNotebook()->setNotebookDescription(
         QStringLiteral("Fake business notebook description"));
 
-    m_notebook.setBusinessNotebookPrivilegeLevel(1);
-    m_notebook.setBusinessNotebookRecommended(true);
+    m_notebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
 
-    ErrorString errorDescription;
-    if (!m_notebook.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid notebook: " << m_notebook
-                                       << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
+    m_notebook.mutableBusinessNotebook()->setRecommended(true);
 
     m_state = STATE_SENT_ADD_NOTEBOOK_REQUEST;
     Q_EMIT addNotebookRequest(m_notebook, QUuid::createUuid());
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
-    Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -133,18 +131,17 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
             return;
         }
 
-        m_note = Note();
         m_note.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000048"));
-        m_note.setUpdateSequenceNumber(1);
+        m_note.setUpdateSequenceNum(1);
         m_note.setTitle(QStringLiteral("Fake note"));
 
         m_note.setContent(
             QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
 
-        m_note.setCreationTimestamp(1);
-        m_note.setModificationTimestamp(1);
+        m_note.setCreated(1);
+        m_note.setUpdated(1);
         m_note.setNotebookGuid(m_notebook.guid());
-        m_note.setNotebookLocalUid(m_notebook.localUid());
+        m_note.setNotebookLocalId(m_notebook.localId());
         m_note.setActive(true);
 
         m_state = STATE_SENT_ADD_NOTE_REQUEST;
@@ -154,7 +151,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
-    Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -165,7 +163,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
-    Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -186,22 +184,30 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
         m_initialResource.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000048"));
 
-        m_initialResource.setUpdateSequenceNumber(1);
+        m_initialResource.setUpdateSequenceNum(1);
 
-        if (note.hasGuid()) {
+        if (note.guid()) {
             m_initialResource.setNoteGuid(note.guid());
         }
 
-        if (!note.localUid().isEmpty()) {
-            m_initialResource.setNoteLocalUid(note.localUid());
+        if (!note.localId().isEmpty()) {
+            m_initialResource.setNoteLocalId(note.localId());
         }
 
         m_initialResource.setIndexInNote(0);
-        m_initialResource.setDataBody(QByteArray("Fake resource data body"));
-        m_initialResource.setDataSize(m_initialResource.dataBody().size());
-        m_initialResource.setDataHash(QByteArray("Fake hash      1"));
+        m_initialResource.setData(qevercloud::Data{});
 
-        m_initialResource.setRecognitionDataBody(
+        m_initialResource.mutableData()->setBody(
+            QByteArray("Fake resource data body"));
+
+        m_initialResource.mutableData()->setSize(
+            m_initialResource.data()->body()->size());
+
+        m_initialResource.mutableData()->setBodyHash(
+            QByteArray("Fake hash      1"));
+
+        m_initialResource.setRecognition(qevercloud::Data{});
+        m_initialResource.mutableRecognition()->setBody(
             QByteArray("<recoIndex docType=\"handwritten\" objType=\"image\" "
                        "objID=\"fc83e58282d8059be17debabb69be900\" "
                        "engineVersion=\"5.5.22.7\" recoType=\"service\" "
@@ -225,38 +231,39 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
                        "</item>"
                        "</recoIndex>"));
 
-        m_initialResource.setRecognitionDataSize(
-            m_initialResource.recognitionDataBody().size());
+        m_initialResource.mutableRecognition()->setSize(
+            m_initialResource.recognition()->body()->size());
 
-        m_initialResource.setRecognitionDataHash(
+        m_initialResource.mutableRecognition()->setBodyHash(
             QByteArray("Fake hash      2"));
 
         m_initialResource.setMime(QStringLiteral("text/plain"));
         m_initialResource.setWidth(1);
         m_initialResource.setHeight(1);
 
-        auto & attributes = m_initialResource.resourceAttributes();
+        m_initialResource.setAttributes(qevercloud::ResourceAttributes{});
+        auto & attributes = *m_initialResource.mutableAttributes();
 
-        attributes.sourceURL = QStringLiteral("Fake resource source URL");
-        attributes.timestamp = 1;
-        attributes.latitude = 0.0;
-        attributes.longitude = 38.0;
-        attributes.altitude = 12.0;
-        attributes.cameraMake = QStringLiteral("Fake resource camera make");
-        attributes.cameraModel = QStringLiteral("Fake resource camera model");
-        attributes.fileName = QStringLiteral("Fake resource file name");
+        attributes.setSourceURL(QStringLiteral("Fake resource source URL"));
+        attributes.setTimestamp(1);
+        attributes.setLatitude(0.0);
+        attributes.setLongitude(38.0);
+        attributes.setAltitude(12.0);
+        attributes.setCameraMake(QStringLiteral("Fake resource camera make"));
+        attributes.setCameraModel(QStringLiteral("Fake resource camera model"));
+        attributes.setFileName(QStringLiteral("Fake resource file name"));
 
-        attributes.applicationData = qevercloud::LazyMap();
-        qevercloud::LazyMap & appData = attributes.applicationData.ref();
-        appData.keysOnly = QSet<QString>();
-        auto & keysOnly = appData.keysOnly.ref();
+        attributes.setApplicationData(qevercloud::LazyMap{});
+        qevercloud::LazyMap & appData = *attributes.mutableApplicationData();
+        appData.setKeysOnly(QSet<QString>{});
+        auto & keysOnly = *appData.mutableKeysOnly();
         keysOnly.reserve(3);
         keysOnly.insert(QStringLiteral("key_1"));
         keysOnly.insert(QStringLiteral("key_2"));
         keysOnly.insert(QStringLiteral("key_3"));
 
-        appData.fullMap = QMap<QString, QString>();
-        auto & fullMap = appData.fullMap.ref();
+        appData.setFullMap(QMap<QString, QString>{});
+        auto & fullMap = *appData.mutableFullMap();
         fullMap = QMap<QString, QString>();
         fullMap[QStringLiteral("key_1")] = QStringLiteral("value_1");
         fullMap[QStringLiteral("key_2")] = QStringLiteral("value_2");
@@ -269,7 +276,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNoteFailed(
-    Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -329,7 +336,7 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -346,8 +353,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
             return;
         }
 
-        m_foundResource.clear();
-        m_foundResource.setLocalUid(m_initialResource.localUid());
+        m_foundResource = qevercloud::Resource{};
+        m_foundResource.setLocalId(m_initialResource.localId());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
 
@@ -361,7 +368,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
-    Resource resource, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Resource resource, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -372,7 +380,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -390,8 +398,8 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
             return;
         }
 
-        m_foundResource.clear();
-        m_foundResource.setLocalUid(m_modifiedResource.localUid());
+        m_foundResource = qevercloud::Resource{};
+        m_foundResource.setLocalId(m_modifiedResource.localId());
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
 
@@ -408,7 +416,8 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
-    Resource resource, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Resource resource, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -419,8 +428,8 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
-    Resource resource, LocalStorageManager::GetResourceOptions options,
-    QUuid requestId)
+    qevercloud::Resource resource,
+    LocalStorageManager::GetResourceOptions options, QUuid requestId)
 {
     Q_UNUSED(requestId)
     Q_UNUSED(options)
@@ -447,15 +456,19 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
         // Ok, found resource is good, updating it now
         m_modifiedResource = m_initialResource;
 
-        m_modifiedResource.setUpdateSequenceNumber(
-            m_initialResource.updateSequenceNumber() + 1);
+        m_modifiedResource.setUpdateSequenceNum(
+            m_initialResource.updateSequenceNum().value() + 1);
 
-        m_modifiedResource.setHeight(m_initialResource.height() + 1);
-        m_modifiedResource.setWidth(m_initialResource.width() + 1);
+        m_modifiedResource.setHeight(m_initialResource.height().value() + 1);
+        m_modifiedResource.setWidth(m_initialResource.width().value() + 1);
 
-        auto & attributes = m_modifiedResource.resourceAttributes();
-        attributes.cameraMake.ref() += QStringLiteral("_modified");
-        attributes.cameraModel.ref() += QStringLiteral("_modified");
+        auto & attributes = m_modifiedResource.mutableAttributes().value();
+
+        attributes.setCameraMake(
+            attributes.cameraMake().value() + QStringLiteral("_modified"));
+
+        attributes.setCameraModel(
+            attributes.cameraModel().value() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
         Q_EMIT updateResourceRequest(m_modifiedResource, QUuid::createUuid());
@@ -463,8 +476,8 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
     else if (m_state == STATE_SENT_FIND_AFTER_UPDATE_REQUEST) {
         // Find after update was called without binary data, so need to remove
         // it from the modified resource prior to the comparison
-        if (m_modifiedResource.hasDataBody()) {
-            m_modifiedResource.setDataBody(QByteArray());
+        if (m_modifiedResource.data() && m_modifiedResource.data()->body()) {
+            m_modifiedResource.mutableData()->setBody(std::nullopt);
         }
 
         if (resource != m_modifiedResource) {
@@ -504,7 +517,8 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
-    Resource resource, LocalStorageManager::GetResourceOptions options,
+    qevercloud::Resource resource,
+    LocalStorageManager::GetResourceOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
@@ -526,7 +540,7 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
-    Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -552,7 +566,8 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed(
-    Resource resource, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Resource resource, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",

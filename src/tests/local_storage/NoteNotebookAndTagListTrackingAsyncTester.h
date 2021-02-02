@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Dmitry Ivanov
+ * Copyright 2019-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -32,7 +32,7 @@ public:
     explicit NoteNotebookAndTagListTrackingAsyncTester(
         QObject * parent = nullptr);
 
-    ~NoteNotebookAndTagListTrackingAsyncTester();
+    ~NoteNotebookAndTagListTrackingAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -42,43 +42,46 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
     // private signals
-    void addNotebook(Notebook notebook, QUuid requestId);
-    void addTag(Tag tag, QUuid requestId);
-    void addNote(Note note, QUuid requestId);
+    void addNotebook(qevercloud::Notebook notebook, QUuid requestId);
+    void addTag(qevercloud::Tag tag, QUuid requestId);
+    void addNote(qevercloud::Note note, QUuid requestId);
 
     void updateNote(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
-    void onAddNotebookComplete(Notebook notebook, QUuid requestId);
+    void onAddNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
-    void onAddTagComplete(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onAddNoteComplete(Note note, QUuid requestId);
+    void onAddTagComplete(qevercloud::Tag tag, QUuid requestId);
+
+    void onAddTagFailed(
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onAddNoteComplete(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onUpdateNoteComplete(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
 
     void onUpdateNoteFailed(
-        Note note, LocalStorageManager::UpdateNoteOptions options,
+        qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
         ErrorString errorDescription, QUuid requestId);
 
     void onNoteMovedToAnotherNotebook(
-        QString noteLocalUid, QString previousNotebookLocalUid,
-        QString newNotebookLocalUid);
+        QString noteLocalId, QString previousNotebookLocalId,
+        QString newNotebookLocalId);
 
     void onNoteTagListUpdated(
-        QString noteLocalUid, QStringList previousTagLocalUids,
-        QStringList newTagLocalUids);
+        QString noteLocalId, QStringList previousTagLocalIds,
+        QStringList newTagLocalIds);
 
 private:
     void createConnections();
@@ -90,7 +93,7 @@ private:
     void moveNoteToAnotherNotebookAlongWithTagListChange();
 
     bool checkTagsListEqual(
-        const QVector<Tag> & lhs, const QStringList & rhs) const;
+        const QVector<qevercloud::Tag> & lhs, const QStringList & rhs) const;
 
 private:
     enum State
@@ -109,15 +112,15 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook m_firstNotebook;
-    Notebook m_secondNotebook;
+    qevercloud::Notebook m_firstNotebook;
+    qevercloud::Notebook m_secondNotebook;
     int m_addedNotebooksCount = 0;
 
-    QVector<Tag> m_firstNoteTagsSet;
-    QVector<Tag> m_secondNoteTagsSet;
+    QVector<qevercloud::Tag> m_firstNoteTagsSet;
+    QVector<qevercloud::Tag> m_secondNoteTagsSet;
     int m_addedTagsCount = 0;
 
-    Note m_note;
+    qevercloud::Note m_note;
 
     bool m_receivedUpdateNoteCompleteSignal = false;
     bool m_receivedNoteMovedToAnotherNotebookSignal = false;

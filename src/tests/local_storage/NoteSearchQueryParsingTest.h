@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-bool NoteSearchQueryParsingTest(QString & error);
+[[nodiscard]] bool noteSearchQueryParsingTest(QString & error);
 
 } // namespace test
 } // namespace quentier

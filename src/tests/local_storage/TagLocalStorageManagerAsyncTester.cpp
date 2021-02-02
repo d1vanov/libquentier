@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QThread>
 
@@ -39,15 +38,17 @@ TagLocalStorageManagerAsyncTester::~TagLocalStorageManagerAsyncTester()
 
 void TagLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username = QStringLiteral("TagLocalStorageManagerAsyncTester");
-    qint32 userId = 2;
+    const QString username =
+        QStringLiteral("TagLocalStorageManagerAsyncTester");
+
+    const qint32 userId = 2;
 
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
-    Account account(username, Account::Type::Evernote, userId);
+    const Account account{username, Account::Type::Evernote, userId};
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     m_pLocalStorageManagerAsync =
@@ -66,23 +67,11 @@ void TagLocalStorageManagerAsyncTester::onInitTestCase()
 
 void TagLocalStorageManagerAsyncTester::initialize()
 {
-    m_initialTag = Tag();
-
     m_initialTag.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000046"));
 
-    m_initialTag.setUpdateSequenceNumber(3);
+    m_initialTag.setUpdateSequenceNum(3);
     m_initialTag.setName(QStringLiteral("Fake tag name"));
-
-    ErrorString errorDescription;
-    if (!m_initialTag.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid Tag: " << m_initialTag
-                                  << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
 
     m_state = STATE_SENT_ADD_REQUEST;
     Q_EMIT addTagRequest(m_initialTag, QUuid::createUuid());
@@ -116,7 +105,7 @@ void TagLocalStorageManagerAsyncTester::onGetTagCountCompleted(
             return;
         }
 
-        m_modifiedTag.setLocal(true);
+        m_modifiedTag.setLocalOnly(true);
         m_state = STATE_SENT_EXPUNGE_REQUEST;
         Q_EMIT expungeTagRequest(m_modifiedTag, QUuid::createUuid());
     }
@@ -132,12 +121,12 @@ void TagLocalStorageManagerAsyncTester::onGetTagCountCompleted(
             return;
         }
 
-        Tag extraTag;
+        qevercloud::Tag extraTag;
 
         extraTag.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-        extraTag.setUpdateSequenceNumber(1);
+        extraTag.setUpdateSequenceNum(1);
         extraTag.setName(QStringLiteral("Extra tag name one"));
 
         m_state = STATE_SENT_ADD_EXTRA_TAG_ONE_REQUEST;
@@ -157,7 +146,7 @@ void TagLocalStorageManagerAsyncTester::onGetTagCountFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
-    Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -174,8 +163,8 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
             return;
         }
 
-        m_foundTag = Tag();
-        m_foundTag.setLocalUid(tag.localUid());
+        m_foundTag = qevercloud::Tag();
+        m_foundTag.setLocalId(tag.localId());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
         Q_EMIT findTagRequest(m_foundTag, QUuid::createUuid());
@@ -183,12 +172,12 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
     else if (m_state == STATE_SENT_ADD_EXTRA_TAG_ONE_REQUEST) {
         m_initialTags << tag;
 
-        Tag extraTag;
+        qevercloud::Tag extraTag;
 
         extraTag.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000002"));
 
-        extraTag.setUpdateSequenceNumber(2);
+        extraTag.setUpdateSequenceNum(2);
         extraTag.setName(QStringLiteral("Extra tag name two"));
         extraTag.setParentGuid(tag.guid());
 
@@ -199,7 +188,7 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
         m_initialTags << tag;
 
         m_state = STATE_SENT_LIST_TAGS_REQUEST;
-        size_t limit = 0, offset = 0;
+        std::size_t limit = 0, offset = 0;
         auto order = LocalStorageManager::ListTagsOrder::NoOrder;
         auto orderDirection = LocalStorageManager::OrderDirection::Ascending;
         QString linkedNotebookGuid;
@@ -212,7 +201,7 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onAddTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -222,7 +211,7 @@ void TagLocalStorageManagerAsyncTester::onAddTagFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onUpdateTagCompleted(
-    Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -232,8 +221,8 @@ void TagLocalStorageManagerAsyncTester::onUpdateTagCompleted(
         if (m_modifiedTag != tag) {
             errorDescription.setBase(
                 "Internal error in TagLocalStorageManagerAsyncTester: "
-                "tag in onUpdateTagCompleted slot doesn't "
-                "match the original modified Tag");
+                "tag in onUpdateTagCompleted slot doesn't match the original "
+                "modified Tag");
 
             QNWARNING("tests:local_storage", errorDescription);
             Q_EMIT failure(errorDescription.nonLocalizedString());
@@ -247,7 +236,7 @@ void TagLocalStorageManagerAsyncTester::onUpdateTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onUpdateTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -257,7 +246,7 @@ void TagLocalStorageManagerAsyncTester::onUpdateTagFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
-    Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -279,8 +268,8 @@ void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
         }
 
         // Attempt to find tag by name now
-        Tag tagToFindByName;
-        tagToFindByName.unsetLocalUid();
+        qevercloud::Tag tagToFindByName;
+        tagToFindByName.setLocalId(QString{});
         tagToFindByName.setName(m_initialTag.name());
 
         m_state = STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST;
@@ -305,11 +294,11 @@ void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
         // Ok, found tag is good, updating it now
         m_modifiedTag = m_initialTag;
 
-        m_modifiedTag.setUpdateSequenceNumber(
-            m_initialTag.updateSequenceNumber() + 1);
+        m_modifiedTag.setUpdateSequenceNum(
+            m_initialTag.updateSequenceNum().value() + 1);
 
         m_modifiedTag.setName(
-            m_initialTag.name() + QStringLiteral("_modified"));
+            m_initialTag.name().value() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
         Q_EMIT updateTagRequest(m_modifiedTag, QUuid::createUuid());
@@ -350,7 +339,7 @@ void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onFindTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -366,9 +355,10 @@ void TagLocalStorageManagerAsyncTester::onFindTagFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onListAllTagsCompleted(
-    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+    std::size_t limit, std::size_t offset,
+    LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId)
+    QString linkedNotebookGuid, QList<qevercloud::Tag> tags, QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -407,7 +397,8 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(
-    size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+    std::size_t limit, std::size_t offset,
+    LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
 {
@@ -425,7 +416,7 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(
-    Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
 {
     Q_UNUSED(requestId)
     Q_UNUSED(expungedChildTagLocalUids)
@@ -448,7 +439,7 @@ void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onExpungeTagFailed(
-    Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",

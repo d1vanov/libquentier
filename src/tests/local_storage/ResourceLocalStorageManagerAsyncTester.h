@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,13 +21,14 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
+
+#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/generated/types/Resource.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -36,7 +37,7 @@ class ResourceLocalStorageManagerAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit ResourceLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~ResourceLocalStorageManagerAsyncTester();
+    ~ResourceLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -46,57 +47,64 @@ Q_SIGNALS:
     void failure(QString errorDescription);
 
     // private signals:
-    void addNotebookRequest(Notebook notebook, QUuid requestId);
-    void addNoteRequest(Note note, QUuid requestId);
+    void addNotebookRequest(qevercloud::Notebook notebook, QUuid requestId);
+    void addNoteRequest(qevercloud::Note note, QUuid requestId);
     void getResourceCountRequest(QUuid requestId);
-    void addResourceRequest(Resource resource, QUuid requestId);
-    void updateResourceRequest(Resource resource, QUuid requestId);
+    void addResourceRequest(qevercloud::Resource resource, QUuid requestId);
+    void updateResourceRequest(qevercloud::Resource resource, QUuid requestId);
 
     void findResourceRequest(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
-        QUuid requestId);
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
 
-    void expungeResourceRequest(Resource resource, QUuid requestId);
+    void expungeResourceRequest(qevercloud::Resource resource, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
-    void onAddNotebookCompleted(Notebook notebook, QUuid requestId);
+    void onAddNotebookCompleted(qevercloud::Notebook notebook, QUuid requestId);
 
     void onAddNotebookFailed(
-        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Notebook notebook, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onAddNoteCompleted(Note note, QUuid requestId);
+    void onAddNoteCompleted(qevercloud::Note note, QUuid requestId);
 
     void onAddNoteFailed(
-        Note note, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Note note, ErrorString errorDescription, QUuid requestId);
 
     void onGetResourceCountCompleted(int count, QUuid requestId);
 
     void onGetResourceCountFailed(
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddResourceCompleted(Resource resource, QUuid requestId);
+    void onAddResourceCompleted(qevercloud::Resource resource, QUuid requestId);
 
     void onAddResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onUpdateResourceCompleted(Resource resource, QUuid requestId);
-
-    void onUpdateResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onFindResourceCompleted(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource, ErrorString errorDescription,
         QUuid requestId);
 
+    void onUpdateResourceCompleted(
+        qevercloud::Resource resource, QUuid requestId);
+
+    void onUpdateResourceFailed(
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
+
+    void onFindResourceCompleted(
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options, QUuid requestId);
+
     void onFindResourceFailed(
-        Resource resource, LocalStorageManager::GetResourceOptions options,
+        qevercloud::Resource resource,
+        LocalStorageManager::GetResourceOptions options,
         ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeResourceCompleted(Resource resource, QUuid requestId);
+    void onExpungeResourceCompleted(
+        qevercloud::Resource resource, QUuid requestId);
 
     void onExpungeResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Resource resource, ErrorString errorDescription,
+        QUuid requestId);
 
 private:
     void createConnections();
@@ -122,11 +130,11 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook m_notebook;
-    Note m_note;
-    Resource m_initialResource;
-    Resource m_foundResource;
-    Resource m_modifiedResource;
+    qevercloud::Notebook m_notebook;
+    qevercloud::Note m_note;
+    qevercloud::Resource m_initialResource;
+    qevercloud::Resource m_foundResource;
+    qevercloud::Resource m_modifiedResource;
 };
 
 } // namespace test

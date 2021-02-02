@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,6 @@
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QThread>
 
@@ -40,17 +39,17 @@ SavedSearchLocalStorageManagerAsyncTester::
 
 void SavedSearchLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username =
+    const QString username =
         QStringLiteral("SavedSearchLocalStorageManagerAsyncTester");
 
-    qint32 userId = 0;
+    const qint32 userId = 0;
 
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
-    Account account(username, Account::Type::Evernote, userId);
+    const Account account{username, Account::Type::Evernote, userId};
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     m_pLocalStorageManagerAsync =
@@ -69,28 +68,21 @@ void SavedSearchLocalStorageManagerAsyncTester::onInitTestCase()
 
 void SavedSearchLocalStorageManagerAsyncTester::initialize()
 {
-    m_initialSavedSearch = SavedSearch();
-
     m_initialSavedSearch.setGuid(
         QStringLiteral("00000000-0000-0000-c000-000000000046"));
 
-    m_initialSavedSearch.setUpdateSequenceNumber(1);
+    m_initialSavedSearch.setUpdateSequenceNum(1);
     m_initialSavedSearch.setName(QStringLiteral("Fake saved search name"));
     m_initialSavedSearch.setQuery(QStringLiteral("Fake saved search query"));
-    m_initialSavedSearch.setQueryFormat(1);
-    m_initialSavedSearch.setIncludeAccount(true);
-    m_initialSavedSearch.setIncludeBusinessLinkedNotebooks(false);
-    m_initialSavedSearch.setIncludePersonalLinkedNotebooks(true);
+    m_initialSavedSearch.setFormat(qevercloud::QueryFormat::USER);
+    m_initialSavedSearch.setScope(qevercloud::SavedSearchScope{});
+    m_initialSavedSearch.mutableScope()->setIncludeAccount(true);
 
-    ErrorString errorDescription;
-    if (!m_initialSavedSearch.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid SavedSearch: " << m_initialSavedSearch
-                                          << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
+    m_initialSavedSearch.mutableScope()->setIncludeBusinessLinkedNotebooks(
+        false);
+
+    m_initialSavedSearch.mutableScope()->setIncludePersonalLinkedNotebooks(
+        true);
 
     m_state = STATE_SENT_ADD_REQUEST;
     Q_EMIT addSavedSearchRequest(m_initialSavedSearch, QUuid::createUuid());
@@ -139,21 +131,26 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(
             return;
         }
 
-        SavedSearch extraSavedSearch;
+        qevercloud::SavedSearch extraSavedSearch;
 
         extraSavedSearch.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000001"));
 
-        extraSavedSearch.setUpdateSequenceNumber(1);
+        extraSavedSearch.setUpdateSequenceNum(1);
         extraSavedSearch.setName(QStringLiteral("Extra SavedSearch"));
 
         extraSavedSearch.setQuery(
             QStringLiteral("Fake extra saved search query"));
 
-        extraSavedSearch.setQueryFormat(1);
-        extraSavedSearch.setIncludeAccount(true);
-        extraSavedSearch.setIncludeBusinessLinkedNotebooks(true);
-        extraSavedSearch.setIncludePersonalLinkedNotebooks(true);
+        extraSavedSearch.setFormat(qevercloud::QueryFormat::USER);
+        extraSavedSearch.setScope(qevercloud::SavedSearchScope{});
+        extraSavedSearch.mutableScope()->setIncludeAccount(true);
+
+        extraSavedSearch.mutableScope()->setIncludeBusinessLinkedNotebooks(
+            true);
+
+        extraSavedSearch.mutableScope()->setIncludePersonalLinkedNotebooks(
+            true);
 
         m_state = STATE_SENT_ADD_EXTRA_SAVED_SEARCH_ONE_REQUEST;
         Q_EMIT addSavedSearchRequest(extraSavedSearch, QUuid::createUuid());
@@ -172,7 +169,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -190,8 +187,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
             return;
         }
 
-        m_foundSavedSearch = SavedSearch();
-        m_foundSavedSearch.setLocalUid(search.localUid());
+        m_foundSavedSearch = qevercloud::SavedSearch();
+        m_foundSavedSearch.setLocalId(search.localId());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
         Q_EMIT findSavedSearchRequest(m_foundSavedSearch, QUuid::createUuid());
@@ -199,21 +196,27 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
     else if (m_state == STATE_SENT_ADD_EXTRA_SAVED_SEARCH_ONE_REQUEST) {
         m_initialSavedSearches << search;
 
-        SavedSearch extraSavedSearch;
+        qevercloud::SavedSearch extraSavedSearch;
 
         extraSavedSearch.setGuid(
             QStringLiteral("00000000-0000-0000-c000-000000000002"));
 
-        extraSavedSearch.setUpdateSequenceNumber(2);
+        extraSavedSearch.setUpdateSequenceNum(2);
         extraSavedSearch.setName(QStringLiteral("Extra SavedSearch two"));
 
         extraSavedSearch.setQuery(
             QStringLiteral("Fake extra saved search query two"));
 
-        extraSavedSearch.setQueryFormat(1);
-        extraSavedSearch.setIncludeAccount(true);
-        extraSavedSearch.setIncludeBusinessLinkedNotebooks(false);
-        extraSavedSearch.setIncludePersonalLinkedNotebooks(true);
+        extraSavedSearch.setFormat(qevercloud::QueryFormat::USER);
+
+        extraSavedSearch.setScope(qevercloud::SavedSearchScope{});
+        extraSavedSearch.mutableScope()->setIncludeAccount(true);
+
+        extraSavedSearch.mutableScope()->setIncludeBusinessLinkedNotebooks(
+            false);
+
+        extraSavedSearch.mutableScope()->setIncludePersonalLinkedNotebooks(
+            true);
 
         m_state = STATE_SENT_ADD_EXTRA_SAVED_SEARCH_TWO_REQUEST;
         Q_EMIT addSavedSearchRequest(extraSavedSearch, QUuid::createUuid());
@@ -222,12 +225,12 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
         m_initialSavedSearches << search;
 
         m_state = STATE_SENT_LIST_SEARCHES_REQUEST;
-        size_t limit = 0, offset = 0;
+        const std::size_t limit = 0, offset = 0;
 
-        LocalStorageManager::ListSavedSearchesOrder order =
+        const LocalStorageManager::ListSavedSearchesOrder order =
             LocalStorageManager::ListSavedSearchesOrder::NoOrder;
 
-        LocalStorageManager::OrderDirection orderDirection =
+        const LocalStorageManager::OrderDirection orderDirection =
             LocalStorageManager::OrderDirection::Ascending;
 
         Q_EMIT listAllSavedSearchesRequest(
@@ -237,7 +240,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -248,7 +252,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -266,8 +270,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
             return;
         }
 
-        m_foundSavedSearch = SavedSearch();
-        m_foundSavedSearch.setLocalUid(search.localUid());
+        m_foundSavedSearch = qevercloud::SavedSearch();
+        m_foundSavedSearch.setLocalId(search.localId());
 
         m_state = STATE_SENT_FIND_AFTER_UPDATE_REQUEST;
         Q_EMIT findSavedSearchRequest(m_foundSavedSearch, QUuid::createUuid());
@@ -276,7 +280,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -287,7 +292,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -311,8 +316,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
         }
 
         // Attempt to find saved search by name now
-        SavedSearch searchToFindByName;
-        searchToFindByName.unsetLocalUid();
+        qevercloud::SavedSearch searchToFindByName;
+        searchToFindByName.setLocalId(QString{});
         searchToFindByName.setName(search.name());
 
         m_state = STATE_SENT_FIND_BY_NAME_AFTER_ADD_REQUEST;
@@ -339,14 +344,14 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
         // Ok, found search is good, updating it now
         m_modifiedSavedSearch = m_initialSavedSearch;
 
-        m_modifiedSavedSearch.setUpdateSequenceNumber(
-            m_initialSavedSearch.updateSequenceNumber() + 1);
+        m_modifiedSavedSearch.setUpdateSequenceNum(
+            m_initialSavedSearch.updateSequenceNum().value() + 1);
 
         m_modifiedSavedSearch.setName(
-            m_initialSavedSearch.name() + QStringLiteral("_modified"));
+            m_initialSavedSearch.name().value() + QStringLiteral("_modified"));
 
         m_modifiedSavedSearch.setQuery(
-            m_initialSavedSearch.query() + QStringLiteral("_modified"));
+            m_initialSavedSearch.query().value() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
 
@@ -392,7 +397,8 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -409,10 +415,10 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
-    size_t limit, size_t offset,
+    std::size_t limit, std::size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QList<SavedSearch> searches, QUuid requestId)
+    QList<qevercloud::SavedSearch> searches, QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -451,7 +457,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(
-    size_t limit, size_t offset,
+    std::size_t limit, std::size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
     ErrorString errorDescription, QUuid requestId)
@@ -469,7 +475,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(
-    SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId)
 {
     ErrorString errorDescription;
 
@@ -487,15 +493,16 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(
         return;
     }
 
-    m_foundSavedSearch = SavedSearch();
-    m_foundSavedSearch.setLocalUid(search.localUid());
+    m_foundSavedSearch = qevercloud::SavedSearch();
+    m_foundSavedSearch.setLocalId(search.localId());
 
     m_state = STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST;
     Q_EMIT findSavedSearchRequest(m_foundSavedSearch, QUuid::createUuid());
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchFailed(
-    SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription,
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",

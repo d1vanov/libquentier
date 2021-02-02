@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,12 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/SavedSearch.h>
+
+#include <qevercloud/generated/types/SavedSearch.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -36,7 +37,7 @@ public:
     explicit SavedSearchLocalStorageManagerAsyncTester(
         QObject * parent = nullptr);
 
-    ~SavedSearchLocalStorageManagerAsyncTester();
+    ~SavedSearchLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -47,16 +48,21 @@ Q_SIGNALS:
 
     // private signals:
     void getSavedSearchCountRequest(QUuid requestId);
-    void addSavedSearchRequest(SavedSearch search, QUuid requestId);
-    void updateSavedSearchRequest(SavedSearch search, QUuid requestId);
-    void findSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void addSavedSearchRequest(qevercloud::SavedSearch search, QUuid requestId);
+
+    void updateSavedSearchRequest(
+        qevercloud::SavedSearch search, QUuid requestId);
+
+    void findSavedSearchRequest(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void listAllSavedSearchesRequest(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListSavedSearchesOrder order,
         LocalStorageManager::OrderDirection orderDirection, QUuid requestId);
 
-    void expungeSavedSearchRequest(SavedSearch search, QUuid requestId);
+    void expungeSavedSearchRequest(
+        qevercloud::SavedSearch search, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
@@ -65,37 +71,45 @@ private Q_SLOTS:
     void onGetSavedSearchCountFailed(
         ErrorString errorDescription, QUuid requestId);
 
-    void onAddSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onAddSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onAddSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onUpdateSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onUpdateSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onUpdateSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
-    void onFindSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onFindSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onFindSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
     void onListAllSavedSearchesCompleted(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListSavedSearchesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<SavedSearch> searches, QUuid requestId);
+        QList<qevercloud::SavedSearch> searches, QUuid requestId);
 
     void onListAllSavedSearchedFailed(
-        size_t limit, size_t offset,
+        std::size_t limit, std::size_t offset,
         LocalStorageManager::ListSavedSearchesOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         ErrorString errorDescription, QUuid requestId);
 
-    void onExpungeSavedSearchCompleted(SavedSearch search, QUuid requestId);
+    void onExpungeSavedSearchCompleted(
+        qevercloud::SavedSearch search, QUuid requestId);
 
     void onExpungeSavedSearchFailed(
-        SavedSearch search, ErrorString errorDescription, QUuid requestId);
+        qevercloud::SavedSearch search, ErrorString errorDescription,
+        QUuid requestId);
 
 private:
     void createConnections();
@@ -123,10 +137,10 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    SavedSearch m_initialSavedSearch;
-    SavedSearch m_foundSavedSearch;
-    SavedSearch m_modifiedSavedSearch;
-    QList<SavedSearch> m_initialSavedSearches;
+    qevercloud::SavedSearch m_initialSavedSearch;
+    qevercloud::SavedSearch m_foundSavedSearch;
+    qevercloud::SavedSearch m_modifiedSavedSearch;
+    QList<qevercloud::SavedSearch> m_initialSavedSearches;
 };
 
 } // namespace test

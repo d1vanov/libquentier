@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,14 +38,15 @@ UserLocalStorageManagerAsyncTester::~UserLocalStorageManagerAsyncTester()
 
 void UserLocalStorageManagerAsyncTester::onInitTestCase()
 {
-    QString username = QStringLiteral("UserLocalStorageManagerAsyncTester");
+    const QString username =
+        QStringLiteral("UserLocalStorageManagerAsyncTester");
 
     clear();
 
     m_pLocalStorageManagerThread = new QThread(this);
-    Account account(username, Account::Type::Evernote, m_userId);
+    const Account account{username, Account::Type::Evernote, m_userId};
 
-    LocalStorageManager::StartupOptions startupOptions(
+    const LocalStorageManager::StartupOptions startupOptions(
         LocalStorageManager::StartupOption::ClearDatabase);
 
     m_pLocalStorageManagerAsync =
@@ -70,22 +71,11 @@ void UserLocalStorageManagerAsyncTester::initialize()
     m_initialUser.setName(QStringLiteral("Fake user name"));
     m_initialUser.setTimezone(QStringLiteral("Europe/Moscow"));
 
-    m_initialUser.setPrivilegeLevel(
-        static_cast<qint8>(qevercloud::PrivilegeLevel::NORMAL));
+    m_initialUser.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
 
-    m_initialUser.setCreationTimestamp(3);
-    m_initialUser.setModificationTimestamp(3);
+    m_initialUser.setCreated(3);
+    m_initialUser.setUpdated(3);
     m_initialUser.setActive(true);
-
-    ErrorString errorDescription;
-    if (!m_initialUser.checkParameters(errorDescription)) {
-        QNWARNING(
-            "tests:local_storage",
-            "Found invalid user: " << m_initialUser
-                                   << ", error: " << errorDescription);
-        Q_EMIT failure(errorDescription.nonLocalizedString());
-        return;
-    }
 
     m_state = STATE_SENT_ADD_REQUEST;
     Q_EMIT addUserRequest(m_initialUser, QUuid::createUuid());
@@ -117,8 +107,8 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(
             return;
         }
 
-        m_modifiedUser.setLocal(false);
-        m_modifiedUser.setDeletionTimestamp(13);
+        m_modifiedUser.setLocalOnly(false);
+        m_modifiedUser.setDeleted(13);
         m_state = STATE_SENT_DELETE_REQUEST;
         Q_EMIT deleteUserRequest(m_modifiedUser, QUuid::createUuid());
     }
@@ -149,7 +139,7 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
-    User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -166,7 +156,7 @@ void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
             return;
         }
 
-        m_foundUser = User();
+        m_foundUser = qevercloud::User();
         m_foundUser.setId(user.id());
 
         m_state = STATE_SENT_FIND_AFTER_ADD_REQUEST;
@@ -176,7 +166,7 @@ void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onAddUserFailed(
-    User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -187,7 +177,7 @@ void UserLocalStorageManagerAsyncTester::onAddUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
-    User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -212,7 +202,7 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(
-    User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -223,7 +213,7 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
-    User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -248,10 +238,10 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
         m_modifiedUser = m_initialUser;
 
         m_modifiedUser.setUsername(
-            m_initialUser.username() + QStringLiteral("_modified"));
+            m_initialUser.username().value() + QStringLiteral("_modified"));
 
         m_modifiedUser.setName(
-            m_initialUser.name() + QStringLiteral("_modified"));
+            m_initialUser.name().value() + QStringLiteral("_modified"));
 
         m_state = STATE_SENT_UPDATE_REQUEST;
         Q_EMIT updateUserRequest(m_modifiedUser, QUuid::createUuid());
@@ -292,7 +282,7 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onFindUserFailed(
-    User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -309,7 +299,7 @@ void UserLocalStorageManagerAsyncTester::onFindUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
-    User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -330,13 +320,13 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
         return;
     }
 
-    m_modifiedUser.setLocal(true);
+    m_modifiedUser.setLocalOnly(true);
     m_state = STATE_SENT_EXPUNGE_REQUEST;
     Q_EMIT expungeUserRequest(m_modifiedUser, QUuid::createUuid());
 }
 
 void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(
-    User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -347,7 +337,7 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
-    User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId)
 {
     Q_UNUSED(requestId)
 
@@ -368,7 +358,7 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(
-    User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",

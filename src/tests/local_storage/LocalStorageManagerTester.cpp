@@ -69,7 +69,7 @@ void LocalStorageManagerTester::noteSearchQueryTest()
 {
     try {
         QString error;
-        bool res = NoteSearchQueryParsingTest(error);
+        bool res = noteSearchQueryParsingTest(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,11 +21,12 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/Tag.h>
+
+#include <qevercloud/generated/types/Tag.h>
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
+class LocalStorageManagerAsync;
 
 namespace test {
 
@@ -34,7 +35,7 @@ class TagLocalStorageManagerAsyncTester final : public QObject
     Q_OBJECT
 public:
     explicit TagLocalStorageManagerAsyncTester(QObject * parent = nullptr);
-    ~TagLocalStorageManagerAsyncTester();
+    ~TagLocalStorageManagerAsyncTester() override;
 
 public Q_SLOTS:
     void onInitTestCase();
@@ -45,49 +46,56 @@ Q_SIGNALS:
 
     // private signals:
     void getTagCountRequest(QUuid requestId);
-    void addTagRequest(Tag tag, QUuid requestId);
-    void updateTagRequest(Tag tag, QUuid requestId);
-    void findTagRequest(Tag tag, QUuid requestId);
+    void addTagRequest(qevercloud::Tag tag, QUuid requestId);
+    void updateTagRequest(qevercloud::Tag tag, QUuid requestId);
+    void findTagRequest(qevercloud::Tag tag, QUuid requestId);
 
     void listAllTagsRequest(
-        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+        std::size_t limit, std::size_t offset, LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, QUuid requestId);
 
-    void expungeTagRequest(Tag tag, QUuid requestId);
+    void expungeTagRequest(qevercloud::Tag tag, QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
     void onGetTagCountCompleted(int count, QUuid requestId);
     void onGetTagCountFailed(ErrorString errorDescription, QUuid requestId);
-    void onAddTagCompleted(Tag tag, QUuid requestId);
-    void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
-    void onUpdateTagCompleted(Tag tag, QUuid requestId);
+    void onAddTagCompleted(qevercloud::Tag tag, QUuid requestId);
+
+    void onAddTagFailed(
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
     void onUpdateTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
-    void onFindTagCompleted(Tag tag, QUuid requestId);
+    void onFindTagCompleted(qevercloud::Tag tag, QUuid requestId);
 
     void onFindTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
     void onListAllTagsCompleted(
-        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+        std::size_t limit, std::size_t offset,
+        LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QString linkedNotebookGuid, QList<Tag> tags, QUuid requestId);
+        QString linkedNotebookGuid, QList<qevercloud::Tag> tags,
+        QUuid requestId);
 
     void onListAllTagsFailed(
-        size_t limit, size_t offset, LocalStorageManager::ListTagsOrder order,
+        std::size_t limit, std::size_t offset,
+        LocalStorageManager::ListTagsOrder order,
         LocalStorageManager::OrderDirection orderDirection,
         QString linkedNotebookGuid, ErrorString errorDescription,
         QUuid requestId);
 
     void onExpungeTagCompleted(
-        Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId);
+        qevercloud::Tag tag, QStringList expungedChildTagLocalUids,
+        QUuid requestId);
 
     void onExpungeTagFailed(
-        Tag tag, ErrorString errorDescription, QUuid requestId);
+        qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -116,10 +124,10 @@ private:
     LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
     QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Tag m_initialTag;
-    Tag m_foundTag;
-    Tag m_modifiedTag;
-    QList<Tag> m_initialTags;
+    qevercloud::Tag m_initialTag;
+    qevercloud::Tag m_foundTag;
+    qevercloud::Tag m_modifiedTag;
+    QList<qevercloud::Tag> m_initialTags;
 };
 
 } // namespace test

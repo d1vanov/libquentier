@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,14 +24,13 @@
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
-#include <QVector>
 
 #include <bitset>
 
 namespace quentier {
 namespace test {
 
-bool NoteSearchQueryParsingTest(QString & error)
+bool noteSearchQueryParsingTest(QString & error)
 {
     /**
      * Disclaimer: unfortunately, it doesn't seem possible to verify every
@@ -260,22 +259,22 @@ bool NoteSearchQueryParsingTest(QString & error)
     negatedSubjectDate << QStringLiteral("month-2") << QStringLiteral("month-1")
                        << QStringLiteral("month");
 
-    QVector<double> latitudes;
+    QList<double> latitudes;
     latitudes << 32.15 << 17.41 << 12.02;
 
-    QVector<double> negatedLatitudes;
+    QList<double> negatedLatitudes;
     negatedLatitudes << -33.13 << -21.02 << -10.55;
 
-    QVector<double> longitudes;
+    QList<double> longitudes;
     longitudes << 33.14 << 18.92 << 11.04;
 
-    QVector<double> negatedLongitudes;
+    QList<double> negatedLongitudes;
     negatedLongitudes << -35.18 << -21.93 << -13.24;
 
-    QVector<double> altitudes;
+    QList<double> altitudes;
     altitudes << 34.10 << 16.17 << 10.93;
 
-    QVector<double> negatedAltitudes;
+    QList<double> negatedAltitudes;
     negatedAltitudes << -32.96 << -19.15 << -10.25;
 
     QStringList authors;
@@ -336,10 +335,10 @@ bool NoteSearchQueryParsingTest(QString & error)
                            << QStringLiteral("negated application data 3")
                            << QStringLiteral("*");
 
-    QVector<qint64> reminderOrders;
+    QList<qint64> reminderOrders;
     reminderOrders << 1 << 2 << 3;
 
-    QVector<qint64> negatedReminderOrders;
+    QList<qint64> negatedReminderOrders;
     negatedReminderOrders << 4 << 5 << 6;
 
     QStringList reminderTimes;
