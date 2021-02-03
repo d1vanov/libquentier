@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -23,20 +23,20 @@
 
 namespace quentier {
 
-class FakeAuthenticationManager : public IAuthenticationManager
+class FakeAuthenticationManager final: public IAuthenticationManager
 {
     Q_OBJECT
 public:
     FakeAuthenticationManager(QObject * parent = nullptr);
-    virtual ~FakeAuthenticationManager();
+    ~FakeAuthenticationManager() override;
 
-    const QString & authToken() const;
+    [[nodiscard]] const QString & authToken() const noexcept;
     void setAuthToken(QString authToken);
 
-    qevercloud::UserID userId() const;
+    [[nodiscard]] qevercloud::UserID userId() const noexcept;
     void setUserId(const qevercloud::UserID userId);
 
-    QList<QNetworkCookie> userStoreCookies() const;
+    [[nodiscard]] QList<QNetworkCookie> userStoreCookies() const;
     void setUserStoreCookies(QList<QNetworkCookie> cookies);
 
     void failNextRequest();

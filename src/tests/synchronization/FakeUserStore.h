@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,7 @@
 
 #include <quentier/synchronization/IUserStore.h>
 
-#include <quentier/types/User.h>
+#include <qevercloud/generated/types/User.h>
 
 #include <QHash>
 
@@ -30,37 +30,41 @@ namespace quentier {
 class FakeUserStore final : public IUserStore
 {
 public:
-    qint16 edamVersionMajor() const;
+    ~FakeUserStore() override;
+
+    [[nodiscard]] qint16 edamVersionMajor() const noexcept;
     void setEdamVersionMajor(const qint16 edamVersionMajor);
 
-    qint16 edamVersionMinor() const;
+    [[nodiscard]] qint16 edamVersionMinor() const noexcept;
     void setEdamVersionMinor(const qint16 edamVersionMinor);
 
-    const qevercloud::AccountLimits * findAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel) const;
+    [[nodiscard]] const qevercloud::AccountLimits * findAccountLimits(
+        const qevercloud::ServiceLevel serviceLevel) const noexcept;
 
     void setAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
         const qevercloud::AccountLimits & limits);
 
-    const User * findUser(const qint32 id) const;
-    void setUser(const qint32 id, const User & user);
+    [[nodiscard]] const qevercloud::User * findUser(
+        const qint32 id) const noexcept;
+
+    void setUser(const qint32 id, const qevercloud::User & user);
 
 public:
     // IUserStore interface
 
-    virtual void setAuthData(
+    void setAuthData(
         QString authenticationToken, QList<QNetworkCookie> cookies) override;
 
-    virtual bool checkVersion(
+    [[nodiscard]] bool checkVersion(
         const QString & clientName, qint16 edamVersionMajor,
         qint16 edamVersionMinor, ErrorString & errorDescription) override;
 
-    virtual qint32 getUser(
-        User & user, ErrorString & errorDescription,
+    [[nodiscard]] qint32 getUser(
+        qevercloud::User & user, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
-    virtual qint32 getAccountLimits(
+    [[nodiscard]] qint32 getAccountLimits(
         const qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
@@ -73,7 +77,7 @@ private:
     qint16 m_edamVersionMinor = 0;
 
     QHash<qevercloud::ServiceLevel, qevercloud::AccountLimits> m_accountLimits;
-    QHash<qint32, User> m_users;
+    QHash<qint32, qevercloud::User> m_users;
 };
 
 using FakeUserStorePtr = std::shared_ptr<FakeUserStore>;

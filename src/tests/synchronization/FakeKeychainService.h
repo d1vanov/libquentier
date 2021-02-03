@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,31 +27,33 @@
 
 namespace quentier {
 
-class FakeKeychainService : public IKeychainService
+class FakeKeychainService final: public IKeychainService
 {
     Q_OBJECT
 public:
     explicit FakeKeychainService(QObject * parent = nullptr);
 
-    virtual ~FakeKeychainService() override;
+    ~FakeKeychainService() override;
 
-    virtual QUuid startWritePasswordJob(
+    [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;
 
-    virtual QUuid startReadPasswordJob(
+    [[nodiscard]] QUuid startReadPasswordJob(
         const QString & service, const QString & key) override;
 
-    virtual QUuid startDeletePasswordJob(
+    [[nodiscard]] QUuid startDeletePasswordJob(
         const QString & service, const QString & key) override;
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) override;
+    void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     QHash<int, QUuid> m_writePasswordRequestIdByTimerId;
+
     QHash<int, std::pair<QUuid, QString>>
         m_readPasswordRequestIdWithPasswordByTimerId;
+
     QHash<int, std::pair<QUuid, bool>> m_deletePasswordRequestIdByTimerId;
 };
 

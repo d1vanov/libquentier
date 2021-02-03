@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,9 +28,9 @@ FakeAuthenticationManager::FakeAuthenticationManager(QObject * parent) :
     IAuthenticationManager(parent)
 {}
 
-FakeAuthenticationManager::~FakeAuthenticationManager() {}
+FakeAuthenticationManager::~FakeAuthenticationManager() = default;
 
-const QString & FakeAuthenticationManager::authToken() const
+const QString & FakeAuthenticationManager::authToken() const noexcept
 {
     return m_authToken;
 }
@@ -40,7 +40,7 @@ void FakeAuthenticationManager::setAuthToken(QString authToken)
     m_authToken = std::move(authToken);
 }
 
-qevercloud::UserID FakeAuthenticationManager::userId() const
+qevercloud::UserID FakeAuthenticationManager::userId() const noexcept
 {
     return m_userId;
 }
@@ -72,9 +72,9 @@ void FakeAuthenticationManager::onAuthenticationRequest()
         m_failNextRequest = false;
 
         Q_EMIT sendAuthenticationResult(
-            false, m_userId, QString(), qevercloud::Timestamp(0), QString(),
-            QString(), QString(), QList<QNetworkCookie>(),
-            ErrorString("Artificial error"));
+            false, m_userId, QString{}, qevercloud::Timestamp{0}, QString{},
+            QString{}, QString{}, QList<QNetworkCookie>{},
+            ErrorString{"Artificial error"});
 
         return;
     }
@@ -85,7 +85,7 @@ void FakeAuthenticationManager::onAuthenticationRequest()
             QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
         UidGenerator::Generate(), QStringLiteral("note_store_url"),
         QStringLiteral("web_api_url_prefix"), m_userStoreCookies,
-        ErrorString());
+        ErrorString{});
 }
 
 } // namespace quentier

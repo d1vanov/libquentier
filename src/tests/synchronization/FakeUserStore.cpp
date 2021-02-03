@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,9 @@
 
 namespace quentier {
 
-qint16 FakeUserStore::edamVersionMajor() const
+FakeUserStore::~FakeUserStore() = default;
+
+qint16 FakeUserStore::edamVersionMajor() const noexcept
 {
     return m_edamVersionMajor;
 }
@@ -30,7 +32,7 @@ void FakeUserStore::setEdamVersionMajor(const qint16 edamVersionMajor)
     m_edamVersionMajor = edamVersionMajor;
 }
 
-qint16 FakeUserStore::edamVersionMinor() const
+qint16 FakeUserStore::edamVersionMinor() const noexcept
 {
     return m_edamVersionMinor;
 }
@@ -41,7 +43,7 @@ void FakeUserStore::setEdamVersionMinor(const qint16 edamVersionMinor)
 }
 
 const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
-    const qevercloud::ServiceLevel serviceLevel) const
+    const qevercloud::ServiceLevel serviceLevel) const noexcept
 {
     auto it = m_accountLimits.find(serviceLevel);
     if (it != m_accountLimits.end()) {
@@ -58,7 +60,7 @@ void FakeUserStore::setAccountLimits(
     m_accountLimits[serviceLevel] = limits;
 }
 
-const User * FakeUserStore::findUser(const qint32 id) const
+const qevercloud::User * FakeUserStore::findUser(const qint32 id) const noexcept
 {
     auto it = m_users.find(id);
     if (it != m_users.end()) {
@@ -68,7 +70,7 @@ const User * FakeUserStore::findUser(const qint32 id) const
     return nullptr;
 }
 
-void FakeUserStore::setUser(const qint32 id, const User & user)
+void FakeUserStore::setUser(const qint32 id, const qevercloud::User & user)
 {
     m_users[id] = user;
 }
@@ -100,16 +102,17 @@ bool FakeUserStore::checkVersion(
 }
 
 qint32 FakeUserStore::getUser(
-    User & user, ErrorString & errorDescription, qint32 & rateLimitSeconds)
+    qevercloud::User & user, ErrorString & errorDescription,
+    qint32 & rateLimitSeconds)
 {
     Q_UNUSED(rateLimitSeconds)
 
-    if (!user.hasId()) {
+    if (!user.id()) {
         errorDescription.setBase(QStringLiteral("User has no id"));
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
     }
 
-    auto it = m_users.find(user.id());
+    const auto it = m_users.find(*user.id());
     if (it == m_users.end()) {
         errorDescription.setBase(QStringLiteral("User data was not found"));
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_REQUIRED);
@@ -126,7 +129,7 @@ qint32 FakeUserStore::getAccountLimits(
 {
     Q_UNUSED(rateLimitSeconds)
 
-    auto it = m_accountLimits.find(serviceLevel);
+    const auto it = m_accountLimits.find(serviceLevel);
     if (it == m_accountLimits.end()) {
         errorDescription.setBase(
             QStringLiteral("Account limits were not found"));

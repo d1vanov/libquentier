@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@ FakeKeychainService::FakeKeychainService(QObject * parent) :
     IKeychainService(parent)
 {}
 
-FakeKeychainService::~FakeKeychainService() {}
+FakeKeychainService::~FakeKeychainService() = default;
 
 QUuid FakeKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
@@ -38,8 +38,8 @@ QUuid FakeKeychainService::startWritePasswordJob(
     appSettings.setValue(key, password);
     appSettings.endGroup();
 
-    QUuid requestId = QUuid::createUuid();
-    int timerId = startTimer(0);
+    const auto requestId = QUuid::createUuid();
+    const int timerId = startTimer(0);
     m_writePasswordRequestIdByTimerId[timerId] = requestId;
     return requestId;
 }
@@ -52,8 +52,8 @@ QUuid FakeKeychainService::startReadPasswordJob(
     QString password = appSettings.value(key).toString();
     appSettings.endGroup();
 
-    QUuid requestId = QUuid::createUuid();
-    int timerId = startTimer(0);
+    const auto requestId = QUuid::createUuid();
+    const int timerId = startTimer(0);
 
     m_readPasswordRequestIdWithPasswordByTimerId[timerId] =
         std::make_pair(requestId, password);
@@ -75,8 +75,8 @@ QUuid FakeKeychainService::startDeletePasswordJob(
 
     appSettings.endGroup();
 
-    QUuid requestId = QUuid::createUuid();
-    int timerId = startTimer(0);
+    const auto requestId = QUuid::createUuid();
+    const int timerId = startTimer(0);
 
     m_deletePasswordRequestIdByTimerId[timerId] =
         std::make_pair(requestId, keyFound);
@@ -86,40 +86,42 @@ QUuid FakeKeychainService::startDeletePasswordJob(
 
 void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
 {
-    int timerId = pEvent->timerId();
+    const int timerId = pEvent->timerId();
 
-    auto writeIt = m_writePasswordRequestIdByTimerId.find(timerId);
+    const auto writeIt = m_writePasswordRequestIdByTimerId.find(timerId);
     if (writeIt != m_writePasswordRequestIdByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
 
         Q_EMIT writePasswordJobFinished(
             writeIt.value(), IKeychainService::ErrorCode::NoError,
-            ErrorString());
+            ErrorString{});
 
         Q_UNUSED(m_writePasswordRequestIdByTimerId.erase(writeIt))
         return;
     }
 
-    auto readIt = m_readPasswordRequestIdWithPasswordByTimerId.find(timerId);
+    const auto readIt =
+        m_readPasswordRequestIdWithPasswordByTimerId.find(timerId);
+
     if (readIt != m_readPasswordRequestIdWithPasswordByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
 
-        auto errorCode =
+        const auto errorCode =
             (readIt.value().second.isEmpty()
                  ? IKeychainService::ErrorCode::EntryNotFound
                  : IKeychainService::ErrorCode::NoError);
 
         Q_EMIT readPasswordJobFinished(
-            readIt.value().first, errorCode, ErrorString(),
+            readIt.value().first, errorCode, ErrorString{},
             readIt.value().second);
 
         Q_UNUSED(m_readPasswordRequestIdWithPasswordByTimerId.erase(readIt))
         return;
     }
 
-    auto deleteIt = m_deletePasswordRequestIdByTimerId.find(timerId);
+    const auto deleteIt = m_deletePasswordRequestIdByTimerId.find(timerId);
     if (deleteIt != m_deletePasswordRequestIdByTimerId.end()) {
         pEvent->accept();
         killTimer(timerId);
@@ -130,7 +132,7 @@ void FakeKeychainService::timerEvent(QTimerEvent * pEvent)
                  : IKeychainService::ErrorCode::EntryNotFound);
 
         Q_EMIT deletePasswordJobFinished(
-            deleteIt.value().first, errorCode, ErrorString());
+            deleteIt.value().first, errorCode, ErrorString{});
 
         Q_UNUSED(m_deletePasswordRequestIdByTimerId.erase(deleteIt))
         return;
