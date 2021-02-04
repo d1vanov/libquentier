@@ -22,11 +22,13 @@
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/utility/Compat.h>
 
+#include <qevercloud/generated/Constants.h>
 #include <qevercloud/generated/types/LinkedNotebook.h>
 #include <qevercloud/generated/types/Note.h>
 #include <qevercloud/generated/types/Notebook.h>
 #include <qevercloud/generated/types/Resource.h>
 #include <qevercloud/generated/types/SavedSearch.h>
+#include <qevercloud/generated/types/SyncState.h>
 #include <qevercloud/generated/types/Tag.h>
 
 #include <boost/bimap.hpp>
@@ -838,21 +840,62 @@ private:
     struct ResourceByNoteGuid
     {};
 
+    struct ResourceDataExtractor
+    {
+        [[nodiscard]] static QString guid(const qevercloud::Resource & resource)
+        {
+            const auto & guid = resource.guid();
+            if (guid) {
+                return *guid;
+            }
+            else {
+                return {};
+            }
+        }
+
+        [[nodiscard]] static qint32 updateSequenceNumber(
+            const qevercloud::Resource & resource)
+        {
+            const auto & usn = resource.updateSequenceNum();
+            if (usn) {
+                return *usn;
+            }
+            else {
+                return 0;
+            }
+        }
+
+        [[nodiscard]] static QString noteGuid(
+            const qevercloud::Resource & resource)
+        {
+            const auto & noteGuid = resource.noteGuid();
+            if (noteGuid) {
+                return *noteGuid;
+            }
+            else {
+                return {};
+            }
+        }
+    };
+
     using ResourceData = boost::multi_index_container<
-        Resource,
+        qevercloud::Resource,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<ResourceByGuid>,
-                boost::multi_index::const_mem_fun<
-                    Resource, const QString &, &Resource::guid>>,
+                boost::multi_index::global_fun<
+                    const qevercloud::Resource &, QString,
+                    &ResourceDataExtractor::guid>>,
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<ResourceByUSN>,
-                boost::multi_index::const_mem_fun<
-                    Resource, qint32, &Resource::updateSequenceNumber>>,
+                boost::multi_index::global_fun<
+                    const qevercloud::Resource &, qint32,
+                    &ResourceDataExtractor::updateSequenceNumber>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<ResourceByNoteGuid>,
-                boost::multi_index::const_mem_fun<
-                    Resource, const QString &, &Resource::noteGuid>>>>;
+                boost::multi_index::global_fun<
+                    const qevercloud::Resource &, QString,
+                    &ResourceDataExtractor::noteGuid>>>>;
 
     using ResourceDataByGuid = ResourceData::index<ResourceByGuid>::type;
     using ResourceDataByUSN = ResourceData::index<ResourceByUSN>::type;
@@ -863,73 +906,132 @@ private:
     // Linked notebook store
     struct LinkedNotebookByGuid
     {};
+
     struct LinkedNotebookByUSN
     {};
+
     struct LinkedNotebookByShardId
     {};
+
     struct LinkedNotebookByUri
     {};
+
     struct LinkedNotebookByUsername
     {};
+
     struct LinkedNotebookBySharedNotebookGlobalId
     {};
 
-    struct LinkedNotebookShardIdExtractor
+    struct LinkedNotebookDataExtractor
     {
-        static QString shardId(const LinkedNotebook & linkedNotebook)
+        [[nodiscard]] static QString guid(
+            const qevercloud::LinkedNotebook & linkedNotebook)
         {
-            if (!linkedNotebook.hasShardId()) {
-                return QString();
+            const auto & guid = linkedNotebook.guid();
+            if (guid) {
+                return *guid;
             }
-
-            return linkedNotebook.shardId();
+            else {
+                return {};
+            }
         }
-    };
 
-    struct LinkedNotebookUriExtractor
-    {
-        static QString uri(const LinkedNotebook & linkedNotebook)
+        [[nodiscard]] static QString shardId(
+            const qevercloud::LinkedNotebook & linkedNotebook)
         {
-            if (!linkedNotebook.hasUri()) {
-                return QString();
+            const auto & shardId = linkedNotebook.shardId();
+            if (shardId) {
+                return *shardId;
             }
+            else {
+                return {};
+            }
+        }
 
-            return linkedNotebook.uri();
+        [[nodiscard]] static QString uri(
+            const qevercloud::LinkedNotebook & linkedNotebook)
+        {
+            const auto & uri = linkedNotebook.uri();
+            if (uri) {
+                return *uri;
+            }
+            else {
+                return {};
+            }
+        }
+
+        [[nodiscard]] static QString username(
+            const qevercloud::LinkedNotebook & linkedNotebook)
+        {
+            const auto & username = linkedNotebook.username();
+            if (username) {
+                return *username;
+            }
+            else {
+                return {};
+            }
+        }
+
+        [[nodiscard]] static qint32 updateSequenceNumber(
+            const qevercloud::LinkedNotebook & linkedNotebook)
+        {
+            const auto & usn = linkedNotebook.updateSequenceNum();
+            if (usn) {
+                return *usn;
+            }
+            else {
+                return 0;
+            }
+        }
+
+        [[nodiscard]] static QString sharedNotebookGlobalId(
+            const qevercloud::LinkedNotebook & linkedNotebook)
+        {
+            const auto & sharedNotebookGlobalId =
+                linkedNotebook.sharedNotebookGlobalId();
+
+            if (sharedNotebookGlobalId) {
+                return *sharedNotebookGlobalId;
+            }
+            else {
+                return {};
+            }
         }
     };
 
     using LinkedNotebookData = boost::multi_index_container<
-        LinkedNotebook,
+        qevercloud::LinkedNotebook,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookByGuid>,
-                boost::multi_index::const_mem_fun<
-                    LinkedNotebook, const QString &, &LinkedNotebook::guid>>,
+                boost::multi_index::global_fun<
+                    const qevercloud::LinkedNotebook &, QString,
+                    &LinkedNotebookDataExtractor::guid>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<LinkedNotebookByShardId>,
                 boost::multi_index::global_fun<
-                    const LinkedNotebook &, QString,
-                    &LinkedNotebookShardIdExtractor::shardId>>,
+                    const qevercloud::LinkedNotebook &, QString,
+                    &LinkedNotebookDataExtractor::shardId>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<LinkedNotebookByUri>,
                 boost::multi_index::global_fun<
-                    const LinkedNotebook &, QString,
-                    &LinkedNotebookUriExtractor::uri>>,
+                    const qevercloud::LinkedNotebook &, QString,
+                    &LinkedNotebookDataExtractor::uri>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookByUsername>,
-                boost::multi_index::const_mem_fun<
-                    LinkedNotebook, const QString &,
-                    &LinkedNotebook::username>>,
+                boost::multi_index::global_fun<
+                    const qevercloud::LinkedNotebook &, QString,
+                    &LinkedNotebookDataExtractor::username>>,
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<LinkedNotebookByUSN>,
-                boost::multi_index::const_mem_fun<
-                    LinkedNotebook, qint32,
-                    &LinkedNotebook::updateSequenceNumber>>,
+                boost::multi_index::global_fun<
+                    const qevercloud::LinkedNotebook &, qint32,
+                    &LinkedNotebookDataExtractor::updateSequenceNumber>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookBySharedNotebookGlobalId>,
-                boost::multi_index::const_mem_fun<
-                    LinkedNotebook, const QString &,
-                    &LinkedNotebook::sharedNotebookGlobalId>>>>;
+                boost::multi_index::global_fun<
+                    const qevercloud::LinkedNotebook &, QString,
+                    &LinkedNotebookDataExtractor::sharedNotebookGlobalId>>>>;
 
     using LinkedNotebookDataByGuid =
         LinkedNotebookData::index<LinkedNotebookByGuid>::type;
@@ -953,7 +1055,7 @@ private:
     class CompareByUSN
     {
     public:
-        bool operator()(const qint32 usn, const T & item) const
+        [[nodiscard]] bool operator()(const qint32 usn, const T & item) const
         {
             return usn < item.updateSequenceNumber();
         }
@@ -1022,11 +1124,11 @@ private:
     };
 
 private:
-    NoteDataByUSN::const_iterator nextNoteByUsnIterator(
+    [[nodiscard]] NoteDataByUSN::const_iterator nextNoteByUsnIterator(
         NoteDataByUSN::const_iterator it,
         const QString & targetLinkedNotebookGuid = {}) const;
 
-    ResourceDataByUSN::const_iterator nextResourceByUsnIterator(
+    [[nodiscard]] ResourceDataByUSN::const_iterator nextResourceByUsnIterator(
         ResourceDataByUSN::const_iterator it,
         const QString & targetLinkedNotebookGuid = {}) const;
 
