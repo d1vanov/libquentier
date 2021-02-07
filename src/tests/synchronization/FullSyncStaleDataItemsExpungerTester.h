@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ class FullSyncStaleDataItemsExpungerTester : public QObject
     Q_OBJECT
 public:
     FullSyncStaleDataItemsExpungerTester(QObject * parent = nullptr);
-    virtual ~FullSyncStaleDataItemsExpungerTester();
+    ~FullSyncStaleDataItemsExpungerTester() override;
 
 private Q_SLOTS:
     void init();
@@ -86,10 +86,11 @@ private:
     void setupBaseDataItems();
 
     void doTest(
-        const bool useBaseDataItems, const QList<Notebook> & nonSyncedNotebooks,
-        const QList<Tag> & nonSyncedTags,
-        const QList<SavedSearch> & nonSyncedSavedSearches,
-        const QList<Note> & nonSyncedNotes);
+        const bool useBaseDataItems,
+        const QList<qevercloud::Notebook> & nonSyncedNotebooks,
+        const QList<qevercloud::Tag> & nonSyncedTags,
+        const QList<qevercloud::SavedSearch> & nonSyncedSavedSearches,
+        const QList<qevercloud::Note> & nonSyncedNotes);
 
 private:
     Account m_testAccount;
