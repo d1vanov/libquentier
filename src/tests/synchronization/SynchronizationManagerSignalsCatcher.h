@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,8 @@
 
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/ErrorString.h>
-#include <quentier/types/LinkedNotebook.h>
+
+#include <qevercloud/generated/types/LinkedNotebook.h>
 
 #include <QHash>
 #include <QObject>
@@ -29,10 +30,10 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
-QT_FORWARD_DECLARE_CLASS(SynchronizationManager)
+class LocalStorageManagerAsync;
+class SynchronizationManager;
 
-class SynchronizationManagerSignalsCatcher : public QObject
+class SynchronizationManagerSignalsCatcher final: public QObject
 {
     Q_OBJECT
 public:
@@ -41,132 +42,139 @@ public:
         SynchronizationManager & synchronizationManager,
         ISyncStateStorage & syncStateStorage, QObject * parent = nullptr);
 
-    bool receivedStartedSignal() const
+    ~SynchronizationManagerSignalsCatcher() override;
+
+    [[nodiscard]] bool receivedStartedSignal() const noexcept
     {
         return m_receivedStartedSignal;
     }
 
-    bool receivedStoppedSignal() const
+    [[nodiscard]] bool receivedStoppedSignal() const noexcept
     {
         return m_receivedStoppedSignal;
     }
 
-    bool receivedFailedSignal() const
+    [[nodiscard]] bool receivedFailedSignal() const noexcept
     {
         return m_receivedFailedSignal;
     }
 
-    const ErrorString & failureErrorDescription() const
+    [[nodiscard]] const ErrorString & failureErrorDescription() const noexcept
     {
         return m_failureErrorDescription;
     }
 
-    bool receivedFinishedSignal() const
+    [[nodiscard]] bool receivedFinishedSignal() const noexcept
     {
         return m_receivedFinishedSignal;
     }
 
-    const Account & finishedAccount() const
+    [[nodiscard]] const Account & finishedAccount() const noexcept
     {
         return m_finishedAccount;
     }
 
-    bool finishedSomethingDownloaded() const
+    [[nodiscard]] bool finishedSomethingDownloaded() const noexcept
     {
         return m_finishedSomethingDownloaded;
     }
 
-    bool finishedSomethingSent() const
+    [[nodiscard]] bool finishedSomethingSent() const noexcept
     {
         return m_finishedSomethingSent;
     }
 
-    bool receivedAuthenticationRevokedSignal() const
+    [[nodiscard]] bool receivedAuthenticationRevokedSignal() const noexcept
     {
         return m_receivedAuthenticationRevokedSignal;
     }
 
-    bool authenticationRevokeSuccess() const
+    [[nodiscard]] bool authenticationRevokeSuccess() const noexcept
     {
         return m_authenticationRevokeSuccess;
     }
 
-    const ErrorString & authenticationRevokeErrorDescription() const
+    [[nodiscard]] const ErrorString & authenticationRevokeErrorDescription()
+        const noexcept
     {
         return m_authenticationRevokeErrorDescription;
     }
 
-    qevercloud::UserID authenticationRevokeUserId() const
+    [[nodiscard]] qevercloud::UserID authenticationRevokeUserId() const noexcept
     {
         return m_authenticationRevokeUserId;
     }
 
-    bool receivedAuthenticationFinishedSignal() const
+    [[nodiscard]] bool receivedAuthenticationFinishedSignal() const noexcept
     {
         return m_receivedAuthenticationFinishedSignal;
     }
 
-    bool authenticationSuccess() const
+    [[nodiscard]] bool authenticationSuccess() const noexcept
     {
         return m_authenticationSuccess;
     }
 
-    const ErrorString & authenticationErrorDescription() const
+    [[nodiscard]] const ErrorString & authenticationErrorDescription()
+        const noexcept
     {
         return m_authenticationErrorDescription;
     }
 
-    const Account & authenticationAccount() const
+    [[nodiscard]] const Account & authenticationAccount() const noexcept
     {
         return m_authenticationAccount;
     }
 
-    bool receivedRemoteToLocalSyncStopped() const
+    [[nodiscard]] bool receivedRemoteToLocalSyncStopped() const noexcept
     {
         return m_receivedRemoteToLocalSyncStopped;
     }
 
-    bool receivedSendLocalChangedStopped() const
+    [[nodiscard]] bool receivedSendLocalChangedStopped() const noexcept
     {
         return m_receivedSendLocalChangesStopped;
     }
 
-    bool receivedWillRepeatRemoteToLocalSyncAfterSendingChanges() const
+    [[nodiscard]] bool receivedWillRepeatRemoteToLocalSyncAfterSendingChanges()
+        const noexcept
     {
         return m_receivedWillRepeatRemoteToLocalSyncAfterSendingChanges;
     }
 
-    bool receivedDetectedConflictDuringLocalChangesSending() const
+    [[nodiscard]] bool receivedDetectedConflictDuringLocalChangesSending()
+        const noexcept
     {
         return m_receivedDetectedConflictDuringLocalChangesSending;
     }
 
-    bool receivedRateLimitExceeded() const
+    [[nodiscard]] bool receivedRateLimitExceeded() const noexcept
     {
         return m_receivedRateLimitExceeded;
     }
 
-    qint32 rateLimitSeconds() const
+    [[nodiscard]] qint32 rateLimitSeconds() const noexcept
     {
         return m_rateLimitSeconds;
     }
 
-    bool receivedRemoteToLocalSyncDone() const
+    [[nodiscard]] bool receivedRemoteToLocalSyncDone() const noexcept
     {
         return m_receivedRemoteToLocalSyncDone;
     }
 
-    bool remoteToLocalSyncDoneSomethingDownloaded() const
+    [[nodiscard]] bool remoteToLocalSyncDoneSomethingDownloaded() const noexcept
     {
         return m_remoteToLocalSyncDoneSomethingDownloaded;
     }
 
-    bool receivedSyncChunksDownloaded() const
+    [[nodiscard]] bool receivedSyncChunksDownloaded() const noexcept
     {
         return m_receivedSyncChunksDownloaded;
     }
 
-    bool receivedLinkedNotebookSyncChunksDownloaded() const
+    [[nodiscard]] bool receivedLinkedNotebookSyncChunksDownloaded()
+        const noexcept
     {
         return m_receivedLinkedNotebookSyncChunksDownloaded;
     }
@@ -178,13 +186,14 @@ public:
         qint32 m_lastPreviousUsn = 0;
     };
 
-    const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress() const
+    [[nodiscard]] const QVector<SyncChunkDownloadProgress> &
+    syncChunkDownloadProgress() const noexcept
     {
         return m_syncChunkDownloadProgress;
     }
 
-    const QHash<QString, QVector<SyncChunkDownloadProgress>> &
-    linkedNotebookSyncChunksDownloadProgress() const
+    [[nodiscard]] const QHash<QString, QVector<SyncChunkDownloadProgress>> &
+    linkedNotebookSyncChunksDownloadProgress() const noexcept
     {
         return m_linkedNotebookSyncChunkDownloadProgress;
     }
@@ -195,13 +204,14 @@ public:
         quint32 m_totalNotesToDownload = 0;
     };
 
-    const QVector<NoteDownloadProgress> & noteDownloadProgress() const
+    [[nodiscard]] const QVector<NoteDownloadProgress> & noteDownloadProgress()
+        const noexcept
     {
         return m_noteDownloadProgress;
     }
 
-    const QVector<NoteDownloadProgress> & linkedNotebookNoteDownloadProgress()
-        const
+    [[nodiscard]] const QVector<NoteDownloadProgress> &
+    linkedNotebookNoteDownloadProgress() const noexcept
     {
         return m_linkedNotebookNoteDownloadProgress;
     }
@@ -212,23 +222,25 @@ public:
         quint32 m_totalResourcesToDownload = 0;
     };
 
-    const QVector<ResourceDownloadProgress> & resourceDownloadProgress() const
+    [[nodiscard]] const QVector<ResourceDownloadProgress> &
+    resourceDownloadProgress() const noexcept
     {
         return m_resourceDownloadProgress;
     }
 
-    const QVector<ResourceDownloadProgress> &
-    linkedNotebookResourceDownloadProgress() const
+    [[nodiscard]] const QVector<ResourceDownloadProgress> &
+    linkedNotebookResourceDownloadProgress() const noexcept
     {
         return m_linkedNotebookResourceDownloadProgress;
     }
 
-    bool receivedPreparedDirtyObjectsForSending() const
+    [[nodiscard]] bool receivedPreparedDirtyObjectsForSending() const noexcept
     {
         return m_receivedPreparedDirtyObjectsForSending;
     }
 
-    bool receivedPreparedLinkedNotebookDirtyObjectsForSending() const
+    [[nodiscard]] bool receivedPreparedLinkedNotebookDirtyObjectsForSending()
+        const noexcept
     {
         return m_receivedPreparedLinkedNotebookDirtyObjectsForSending;
     }
@@ -239,29 +251,30 @@ public:
         QHash<QString, qint32> m_linkedNotebookUpdateCountsByLinkedNotebookGuid;
     };
 
-    const QVector<PersistedSyncStateUpdateCounts> &
-    persistedSyncStateUpdateCounts() const
+    [[nodiscard]] const QVector<PersistedSyncStateUpdateCounts> &
+    persistedSyncStateUpdateCounts() const noexcept
     {
         return m_persistedSyncStateUpdateCounts;
     }
 
 public:
-    bool checkSyncChunkDownloadProgressOrder(
-        ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkSyncChunkDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkLinkedNotebookSyncChunkDownloadProgressOrder(
-        ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkLinkedNotebookSyncChunkDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkNoteDownloadProgressOrder(ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkNoteDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkLinkedNotebookNoteDownloadProgressOrder(
-        ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkLinkedNotebookNoteDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkResourceDownloadProgressOrder(
-        ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkResourceDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkLinkedNotebookResourceDownloadProgressOrder(
-        ErrorString & errorDescription) const;
+    [[nodiscard]] bool checkLinkedNotebookResourceDownloadProgressOrder(
+        ErrorString & errorDescription) const noexcept;
 
 Q_SIGNALS:
     void ready();
@@ -295,7 +308,7 @@ private Q_SLOTS:
 
     void onLinkedNotebookSyncChunkDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
+        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
     void onNoteDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
@@ -329,29 +342,29 @@ private:
         SynchronizationManager & synchronizationManager,
         ISyncStateStorage & syncStateStorage);
 
-    bool checkSyncChunkDownloadProgressOrderImpl(
+    [[nodiscard]] bool checkSyncChunkDownloadProgressOrderImpl(
         const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkSingleSyncChunkDownloadProgress(
+    [[nodiscard]] bool checkSingleSyncChunkDownloadProgress(
         const SyncChunkDownloadProgress & progress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkNoteDownloadProgressOrderImpl(
+    [[nodiscard]] bool checkNoteDownloadProgressOrderImpl(
         const QVector<NoteDownloadProgress> & noteDownloadProgress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkSingleNoteDownloadProgress(
+    [[nodiscard]] bool checkSingleNoteDownloadProgress(
         const NoteDownloadProgress & progress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkResourceDownloadProgressOrderImpl(
+    [[nodiscard]] bool checkResourceDownloadProgressOrderImpl(
         const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
-    bool checkSingleResourceDownloadProgress(
+    [[nodiscard]] bool checkSingleResourceDownloadProgress(
         const ResourceDownloadProgress & progress,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription) const noexcept;
 
 private:
     bool m_receivedStartedSignal = false;
@@ -390,6 +403,7 @@ private:
     bool m_receivedLinkedNotebookSyncChunksDownloaded = false;
 
     QVector<SyncChunkDownloadProgress> m_syncChunkDownloadProgress;
+
     QHash<QString, QVector<SyncChunkDownloadProgress>>
         m_linkedNotebookSyncChunkDownloadProgress;
 

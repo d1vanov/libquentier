@@ -21,7 +21,6 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/SynchronizationManager.h>
-#include <quentier/utility/Compat.h>
 
 #include <QtTest/QtTest>
 
@@ -37,8 +36,11 @@ SynchronizationManagerSignalsCatcher::SynchronizationManagerSignalsCatcher(
         localStorageManagerAsync, synchronizationManager, syncStateStorage);
 }
 
+SynchronizationManagerSignalsCatcher::~SynchronizationManagerSignalsCatcher() =
+    default;
+
 bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     return checkSyncChunkDownloadProgressOrderImpl(
         m_syncChunkDownloadProgress, errorDescription);
@@ -46,7 +48,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunkDownloadProgressOrder(
 
 bool SynchronizationManagerSignalsCatcher::
     checkLinkedNotebookSyncChunkDownloadProgressOrder(
-        ErrorString & errorDescription) const
+        ErrorString & errorDescription) const noexcept
 {
     for (const auto & it: qevercloud::toRange(
              qAsConst(m_linkedNotebookSyncChunkDownloadProgress)))
@@ -63,7 +65,7 @@ bool SynchronizationManagerSignalsCatcher::
 }
 
 bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     return checkNoteDownloadProgressOrderImpl(
         m_noteDownloadProgress, errorDescription);
@@ -71,14 +73,14 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(
 
 bool SynchronizationManagerSignalsCatcher::
     checkLinkedNotebookNoteDownloadProgressOrder(
-        ErrorString & errorDescription) const
+        ErrorString & errorDescription) const noexcept
 {
     return checkNoteDownloadProgressOrderImpl(
         m_linkedNotebookNoteDownloadProgress, errorDescription);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrder(
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     return checkResourceDownloadProgressOrderImpl(
         m_resourceDownloadProgress, errorDescription);
@@ -86,7 +88,7 @@ bool SynchronizationManagerSignalsCatcher::checkResourceDownloadProgressOrder(
 
 bool SynchronizationManagerSignalsCatcher::
     checkLinkedNotebookResourceDownloadProgressOrder(
-        ErrorString & errorDescription) const
+        ErrorString & errorDescription) const noexcept
 {
     return checkResourceDownloadProgressOrderImpl(
         m_linkedNotebookResourceDownloadProgress, errorDescription);
@@ -214,7 +216,7 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
 void SynchronizationManagerSignalsCatcher::
     onLinkedNotebookSyncChunkDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, LinkedNotebook linkedNotebook)
+        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook)
 {
     QNDEBUG(
         "tests:synchronization",
@@ -226,7 +228,7 @@ void SynchronizationManagerSignalsCatcher::
             << ", linked notebook: " << linkedNotebook);
 
     QVERIFY2(
-        linkedNotebook.hasGuid(),
+        linkedNotebook.guid(),
         "Detected sync chunk download progress "
         "for a linked notebook without guid");
 
@@ -235,7 +237,7 @@ void SynchronizationManagerSignalsCatcher::
     progress.m_highestServerUsn = highestServerUsn;
     progress.m_lastPreviousUsn = lastPreviousUsn;
 
-    m_linkedNotebookSyncChunkDownloadProgress[linkedNotebook.guid()]
+    m_linkedNotebookSyncChunkDownloadProgress[*linkedNotebook.guid()]
         << progress;
 }
 
@@ -452,7 +454,7 @@ void SynchronizationManagerSignalsCatcher::createConnections(
 bool SynchronizationManagerSignalsCatcher::
     checkSyncChunkDownloadProgressOrderImpl(
         const QVector<SyncChunkDownloadProgress> & syncChunkDownloadProgress,
-        ErrorString & errorDescription) const
+        ErrorString & errorDescription) const noexcept
 {
     if (syncChunkDownloadProgress.isEmpty()) {
         return true;
@@ -513,7 +515,7 @@ bool SynchronizationManagerSignalsCatcher::
 
 bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(
     const SyncChunkDownloadProgress & progress,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     if (progress.m_highestDownloadedUsn > progress.m_highestServerUsn) {
         errorDescription.setBase(
@@ -534,7 +536,7 @@ bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(
 
 bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(
     const QVector<NoteDownloadProgress> & noteDownloadProgress,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     if (noteDownloadProgress.isEmpty()) {
         return true;
@@ -581,7 +583,8 @@ bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrderImpl(
 }
 
 bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(
-    const NoteDownloadProgress & progress, ErrorString & errorDescription) const
+    const NoteDownloadProgress & progress,
+    ErrorString & errorDescription) const noexcept
 {
     if (progress.m_notesDownloaded > progress.m_totalNotesToDownload) {
         errorDescription.setBase(
@@ -596,7 +599,7 @@ bool SynchronizationManagerSignalsCatcher::checkSingleNoteDownloadProgress(
 bool SynchronizationManagerSignalsCatcher::
     checkResourceDownloadProgressOrderImpl(
         const QVector<ResourceDownloadProgress> & resourceDownloadProgress,
-        ErrorString & errorDescription) const
+        ErrorString & errorDescription) const noexcept
 {
     if (resourceDownloadProgress.isEmpty()) {
         return true;
@@ -653,7 +656,7 @@ bool SynchronizationManagerSignalsCatcher::
 
 bool SynchronizationManagerSignalsCatcher::checkSingleResourceDownloadProgress(
     const ResourceDownloadProgress & progress,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription) const noexcept
 {
     if (progress.m_resourcesDownloaded > progress.m_totalResourcesToDownload) {
         errorDescription.setBase(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,7 +35,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(SynchronizationManagerSignalsCatcher)
+class SynchronizationManagerSignalsCatcher;
 
 namespace test {
 
@@ -44,7 +44,7 @@ class SynchronizationTester final : public QObject
     Q_OBJECT
 public:
     SynchronizationTester(QObject * parent = nullptr);
-    virtual ~SynchronizationTester();
+    ~SynchronizationTester() override;
 
 private Q_SLOTS:
     void init();
@@ -58,113 +58,150 @@ private Q_SLOTS:
 
     void testIncrementalSyncWithNewRemoteItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithNewRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+
     void testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithModifiedRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithModifiedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
+
     void testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataOnly();
+
     void
     testIncrementalSyncWithModifiedAndNewRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithModifiedAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithNewLocalItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithNewLocalItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewLocalItemsFromUserOwnDataAndLinkedNotebooks();
+
     void testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataOnly();
     void testIncrementalSyncWithModifiedLocalItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
+
     void testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataOnly();
+
     void
     testIncrementalSyncWithNewAndModifiedLocalItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewAndModifiedLocalItemsFromUserOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUsersOwnDataOnly();
+
     void
     testIncrementalSyncWithNewLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewLocalAndNewRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
     void
     testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataOnly();
+
     void
     testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewLocalAndModifiedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
     void
     testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataOnly();
+
     void
     testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithModifiedLocalAndNewRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
     void
     testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataOnly();
+
     void
     testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithModifiedLocalAndModifiedRemoteItemsWithoutConflictsFromUsersOwnDataAndLinkedNotebooks();
 
     void testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataOnly();
     void testIncrementalSyncWithExpungedRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithExpungedRemoteItemsFromUsersOwnDataAndLinkedNotebooks();
 
     void
     testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataOnly();
+
     void
     testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromLinkedNotebooksOnly();
+
     void
     testIncrementalSyncWithNewModifiedAndExpungedRemoteItemsFromUserOwnDataAndLinkedNotebooks();
 
     void
     testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithLargerRemoteUsn();
 
     void
     testIncrementalSyncWithConflictingSavedSearchesFromUserOwnDataOnlyWithSameUsn();
+
     void testIncrementalSyncWithConflictingTagsFromUserOwnDataOnlyWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromUserOwnDataOnlyWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromUserOwnDataOnlyWithSameUsn();
 
     void
     testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithLargerRemoteUsn();
 
     void
     testIncrementalSyncWithConflictingTagsFromLinkedNotebooksOnlyWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromLinkedNotebooksOnlyWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromLinkedNotebooksOnlyWithSameUsn();
 
     void
     testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithLargerRemoteUsn();
 
     void
     testIncrementalSyncWithConflictingTagsFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotebooksFromUserOwnDataAndLinkedNotebooksWithSameUsn();
+
     void
     testIncrementalSyncWithConflictingNotesFromUserOwnDataAndLinkedNotebooksWithSameUsn();
 
@@ -172,26 +209,36 @@ private Q_SLOTS:
     testIncrementalSyncWithExpungedRemoteLinkedNotebookNotesProducingNotelessTags();
 
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncStateAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncStateAttempt();
+
     void testIncrementalSyncWithRateLimitsBreachOnGetUserOwnSyncChunkAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetLinkedNotebookSyncChunkAttempt();
 
     void
     testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingUserOwnSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingUserOwnSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingUserOwnSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingUserOwnSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetNewNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetModifiedNoteAfterDownloadingLinkedNotebookSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetNewResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnGetModifiedResourceAfterDownloadingLinkedNotebookSyncChunksAttempt();
 
@@ -200,8 +247,10 @@ private Q_SLOTS:
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnTagAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnTagAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnCreateTagInLinkedNotebookAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnUpdateTagInLinkedNotebookAttempt();
 
@@ -210,8 +259,10 @@ private Q_SLOTS:
 
     void testIncrementalSyncWithRateLimitsBreachOnCreateUserOwnNoteAttempt();
     void testIncrementalSyncWithRateLimitsBreachOnUpdateUserOwnNoteAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnCreateNoteInLinkedNotebookAttempt();
+
     void
     testIncrementalSyncWithRateLimitsBreachOnUpdateNoteInLinkedNotebookAttempt();
 
@@ -231,8 +282,10 @@ private:
     void setModifiedLinkedNotebookResourcesOnlyToRemoteStorage();
     void setExpungedUserOwnItemsToRemoteStorage();
     void setExpungedLinkedNotebookItemsToRemoteStorage();
+
     void
     setExpungedLinkedNotebookNotesToRemoteStorageToProduceNotelessLinkedNotebookTags();
+
     void expungeNotelessLinkedNotebookTagsFromRemoteStorage();
 
     void setNewUserOwnItemsToLocalStorage();
@@ -407,6 +460,7 @@ private:
 
     QSet<QString>
         m_guidsOfLinkedNotebookNotesToExpungeToProduceNotelessLinkedNotebookTags;
+
     QSet<QString> m_guidsOfLinkedNotebookTagsExpectedToBeAutoExpunged;
 };
 
