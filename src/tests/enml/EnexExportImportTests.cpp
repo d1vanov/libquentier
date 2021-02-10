@@ -1082,7 +1082,7 @@ void setupNoteTagsV2(
 }
 
 void bindTagsWithNotes(
-    QVector<qevercloud::Note> & importedNotes,
+    QList<qevercloud::Note> & importedNotes,
     const QHash<QString, QStringList> & tagNamesByNoteLocalId,
     const QHash<QString, QString> & tagNamesByTagLocalIds)
 {

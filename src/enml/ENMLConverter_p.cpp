@@ -2464,7 +2464,13 @@ bool ENMLConverterPrivate::importEnex(
                         QXmlStreamReader::SkipChildElements);
 
                     QNTRACE("enml", "Note title: " << title);
-                    currentNote.setTitle(title);
+                    if (!title.isEmpty()) {
+                        currentNote.setTitle(title);
+                    }
+                    else {
+                        currentNote.setTitle(std::nullopt);
+                    }
+
                     continue;
                 }
 

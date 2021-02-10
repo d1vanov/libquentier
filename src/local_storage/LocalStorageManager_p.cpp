@@ -12018,6 +12018,10 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
             const bool hasAttributes =
                 static_cast<bool>(qvariant_cast<int>(hasAttributesValue));
             if (hasAttributes) {
+                if (!note.attributes()) {
+                    note.setAttributes(qevercloud::NoteAttributes{});
+                }
+
                 auto & attributes = *note.mutableAttributes();
 
                 fillNoteAttributesFromSqlRecord(rec, attributes);

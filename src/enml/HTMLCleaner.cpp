@@ -46,7 +46,7 @@ namespace quentier {
 class HTMLCleaner::Impl
 {
 public:
-    Impl() : m_tidyDoc(tidyCreate()) {}
+    Impl() : m_tidyOutput(), m_tidyErrorBuffer(), m_tidyDoc(tidyCreate()) {}
 
     ~Impl() noexcept
     {

@@ -1057,7 +1057,7 @@ private:
     public:
         [[nodiscard]] bool operator()(const qint32 usn, const T & item) const
         {
-            return usn < item.updateSequenceNumber();
+            return usn < item.updateSequenceNum().value();
         }
     };
 

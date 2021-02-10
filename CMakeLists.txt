@@ -810,7 +810,7 @@ add_executable(test_${PROJECT_NAME} ${TEST_HEADERS} ${TEST_SOURCES} ${${PROJECT_
 
 # test executable target properties
 set_target_properties(test_${PROJECT_NAME} PROPERTIES
-  CXX_STANDARD 14
+  CXX_STANDARD 17
   CXX_EXTENSIONS OFF)
 
 add_sanitizers(test_${PROJECT_NAME})

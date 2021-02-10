@@ -106,7 +106,7 @@ bool FakeNoteStore::setSavedSearch(
     auto & savedSearchGuidIndex =
         m_data->m_savedSearches.get<SavedSearchByGuid>();
 
-    const auto it = savedSearchGuidIndex.find(search.guid());
+    const auto it = savedSearchGuidIndex.find(*search.guid());
     if (it == savedSearchGuidIndex.end()) {
         Q_UNUSED(m_data->m_savedSearches.insert(search))
     }
@@ -245,7 +245,7 @@ bool FakeNoteStore::setTag(
     }
 
     auto & tagGuidIndex = m_data->m_tags.get<TagByGuid>();
-    const auto tagIt = tagGuidIndex.find(tag.guid());
+    const auto tagIt = tagGuidIndex.find(*tag.guid());
     if (tagIt == tagGuidIndex.end()) {
         Q_UNUSED(m_data->m_tags.insert(tag))
     }
@@ -436,7 +436,7 @@ bool FakeNoteStore::setNotebook(
     }
 
     auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
-    const auto notebookIt = notebookGuidIndex.find(notebook.guid());
+    const auto notebookIt = notebookGuidIndex.find(*notebook.guid());
     if (notebookIt == notebookGuidIndex.end()) {
         Q_UNUSED(m_data->m_notebooks.insert(notebook))
     }
@@ -562,7 +562,7 @@ bool FakeNoteStore::setNote(
     }
 
     const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
-    auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+    auto notebookIt = notebookGuidIndex.find(*note.notebookGuid());
     if (notebookIt == notebookGuidIndex.end()) {
         errorDescription.setBase(
             "Can't set note: no notebook was found for it by guid");
@@ -599,7 +599,7 @@ bool FakeNoteStore::setNote(
     }
 
     auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
-    auto noteIt = noteGuidIndex.find(note.guid());
+    auto noteIt = noteGuidIndex.find(*note.guid());
     if (noteIt == noteGuidIndex.end()) {
         auto insertResult = noteGuidIndex.insert(note);
         noteIt = insertResult.first;
@@ -745,7 +745,7 @@ bool FakeNoteStore::setResource(
     }
 
     auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
-    auto noteIt = noteGuidIndex.find(resource.noteGuid());
+    auto noteIt = noteGuidIndex.find(*resource.noteGuid());
     if (noteIt == noteGuidIndex.end()) {
         errorDescription.setBase(
             "Can't set resource: no note was found for it by guid");
@@ -753,7 +753,7 @@ bool FakeNoteStore::setResource(
     }
 
     const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
-    auto notebookIt = notebookGuidIndex.find(noteIt->notebookGuid());
+    auto notebookIt = notebookGuidIndex.find(*noteIt->notebookGuid());
     if (notebookIt == notebookGuidIndex.end()) {
         errorDescription.setBase(
             "Can't set resource: no notebook was found for resource's note "
@@ -787,7 +787,7 @@ bool FakeNoteStore::setResource(
     }
 
     auto & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
-    const auto it = resourceGuidIndex.find(resource.guid());
+    const auto it = resourceGuidIndex.find(*resource.guid());
     if (it == resourceGuidIndex.end()) {
         Q_UNUSED(resourceGuidIndex.insert(resource))
     }
@@ -911,7 +911,7 @@ bool FakeNoteStore::setLinkedNotebook(
     Q_UNUSED(removeExpungedLinkedNotebookGuid(*linkedNotebook.guid()))
 
     auto & index = m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
-    const auto it = index.find(linkedNotebook.guid());
+    const auto it = index.find(*linkedNotebook.guid());
     if (it == index.end()) {
         Q_UNUSED(index.insert(linkedNotebook))
     }
@@ -1271,7 +1271,9 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
 
             bool matchesByLinkedNotebook = false;
 
-            auto notebookIt = notebookGuidIndex.find(noteIt->notebookGuid());
+            auto notebookIt = notebookGuidIndex.find(
+                noteIt->notebookGuid().value());
+
             if (notebookIt != notebookGuidIndex.end()) {
                 matchesByLinkedNotebook =
                     ((!linkedNotebookGuid.isEmpty() &&
@@ -1326,10 +1328,10 @@ qint32 FakeNoteStore::currentMaxUsn(const QString & linkedNotebookGuid) const
                 "tests:synchronization", "Examing resource: " << *resourceIt);
 
             bool matchesByLinkedNotebook = false;
-            auto noteIt = noteGuidIndex.find(resourceIt->noteGuid());
+            auto noteIt = noteGuidIndex.find(resourceIt->noteGuid().value());
             if (noteIt != noteGuidIndex.end()) {
                 auto notebookIt =
-                    notebookGuidIndex.find(noteIt->notebookGuid());
+                    notebookGuidIndex.find(noteIt->notebookGuid().value());
 
                 if (notebookIt != notebookGuidIndex.end()) {
                     matchesByLinkedNotebook =
@@ -1597,7 +1599,7 @@ FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
     const auto & noteUsnIndex = m_data->m_notes.get<NoteByUSN>();
     const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
     for (const auto & note: noteUsnIndex) {
-        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -1654,7 +1656,7 @@ FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
     const auto & resourceUsnIndex = m_data->m_resources.get<ResourceByUSN>();
     const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
     for (const auto & resource: resourceUsnIndex) {
-        auto noteIt = noteGuidIndex.find(resource.noteGuid());
+        auto noteIt = noteGuidIndex.find(resource.noteGuid().value());
         if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -1663,7 +1665,7 @@ FakeNoteStore::smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
         }
 
         const auto & note = *noteIt;
-        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -1922,7 +1924,7 @@ qint32 FakeNoteStore::updateNotebook(
     }
 
     auto & index = m_data->m_notebooks.get<NotebookByGuid>();
-    auto it = index.find(notebook.guid());
+    auto it = index.find(*notebook.guid());
     if (it == index.end()) {
         errorDescription.setBase(
             "Notebook with the specified guid doesn't exist");
@@ -2119,7 +2121,7 @@ qint32 FakeNoteStore::updateNote(
     }
 
     auto & index = m_data->m_notes.get<NoteByGuid>();
-    auto it = index.find(note.guid());
+    auto it = index.find(*note.guid());
     if (it == index.end()) {
         errorDescription.setBase("Note with the specified guid doesn't exist");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
@@ -2331,7 +2333,7 @@ qint32 FakeNoteStore::updateTag(
     }
 
     auto & index = m_data->m_tags.get<TagByGuid>();
-    auto it = index.find(tag.guid());
+    auto it = index.find(*tag.guid());
     if (it == index.end()) {
         errorDescription.setBase("Tag with the specified guid doesn't exist");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::DATA_CONFLICT);
@@ -2447,7 +2449,7 @@ qint32 FakeNoteStore::updateSavedSearch(
     }
 
     auto & index = m_data->m_savedSearches.get<SavedSearchByGuid>();
-    auto it = index.find(savedSearch.guid());
+    auto it = index.find(*savedSearch.guid());
     if (it == index.end()) {
         errorDescription.setBase(
             "Saved search with the specified guid doesn't exist");
@@ -2699,7 +2701,7 @@ qint32 FakeNoteStore::getNote(
     }
 
     const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
-    auto noteIt = noteGuidIndex.find(note.guid());
+    auto noteIt = noteGuidIndex.find(note.guid().value());
     if (noteIt == noteGuidIndex.end()) {
         errorDescription.setBase("Note was not found");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
@@ -2729,7 +2731,7 @@ qint32 FakeNoteStore::getNote(
                 continue;
             }
 
-            auto resourceIt = resourceGuidIndex.find(resource.guid());
+            auto resourceIt = resourceGuidIndex.find(*resource.guid());
             if (Q_UNLIKELY(resourceIt == resourceGuidIndex.end())) {
                 it = resources.erase(it);
                 continue;
@@ -2862,7 +2864,7 @@ qint32 FakeNoteStore::getResource(
 
     const auto & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
 
-    auto resourceIt = resourceGuidIndex.find(resource.guid());
+    auto resourceIt = resourceGuidIndex.find(*resource.guid());
     if (resourceIt == resourceGuidIndex.end()) {
         errorDescription.setBase("Resource was not found");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
@@ -3282,7 +3284,7 @@ qint32 FakeNoteStore::checkNoteFields(
     }
 
     const auto & notebookIndex = m_data->m_notebooks.get<NotebookByGuid>();
-    auto notebookIt = notebookIndex.find(note.notebookGuid());
+    auto notebookIt = notebookIndex.find(*note.notebookGuid());
     if (notebookIt == notebookIndex.end()) {
         errorDescription.setBase("Note.notebookGuid");
         return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
@@ -3498,7 +3500,7 @@ qint32 FakeNoteStore::checkTagFields(
 
     if (tag.parentGuid()) {
         const TagDataByGuid & index = m_data->m_tags.get<TagByGuid>();
-        auto it = index.find(tag.parentGuid());
+        auto it = index.find(*tag.parentGuid());
         if (it == index.end()) {
             errorDescription.setBase("Parent tag doesn't exist");
             return static_cast<qint32>(qevercloud::EDAMErrorCode::UNKNOWN);
@@ -3832,7 +3834,7 @@ qint32 FakeNoteStore::checkLinkedNotebookAuthTokenForTag(
     const auto & linkedNotebookGuidIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
 
-    auto it = linkedNotebookGuidIndex.find(tag.linkedNotebookGuid());
+    auto it = linkedNotebookGuidIndex.find(*tag.linkedNotebookGuid());
     if (it == linkedNotebookGuidIndex.end()) {
         errorDescription.setBase(
             "Tag belongs to a linked notebook but it was not found by guid");
@@ -4531,7 +4533,7 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
          ++it)
     {
         const auto & note = *it;
-        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -4562,7 +4564,7 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
          it != end; ++it)
     {
         const auto & resource = *it;
-        auto noteIt = noteGuidIndex.find(resource.noteGuid());
+        auto noteIt = noteGuidIndex.find(resource.noteGuid().value());
         if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -4571,7 +4573,7 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
         }
 
         const auto & note = *noteIt;
-        auto notebookIt = notebookGuidIndex.find(note.notebookGuid());
+        auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",

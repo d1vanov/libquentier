@@ -448,7 +448,7 @@ void TestTagAddFindUpdateExpungeInLocalStorage()
     // Check Update + Find
     qevercloud::Tag modifiedTag = tag;
     modifiedTag.setUpdateSequenceNum(tag.updateSequenceNum().value() + 1);
-    modifiedTag.setLinkedNotebookGuid(QString{});
+    modifiedTag.setLinkedNotebookGuid(std::nullopt);
     modifiedTag.setName(tag.name().value() + QStringLiteral("_modified"));
     modifiedTag.setLocallyFavorited(true);
     modifiedTag.setLocalId(QString{});
