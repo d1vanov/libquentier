@@ -74,24 +74,6 @@ namespace {
     return index;
 }
 
-[[nodiscard]] std::optional<int> sharedNoteIndexInNote(
-    const qevercloud::SharedNote & sharedNote) noexcept
-{
-    const auto it =
-        sharedNote.localData().constFind(QStringLiteral("indexInNote"));
-    if (it == sharedNote.localData().constEnd()) {
-        return std::nullopt;
-    }
-
-    bool conversionResult = false;
-    const int index = it.value().toInt(&conversionResult);
-    if (!conversionResult) {
-        return std::nullopt;
-    }
-
-    return index;
-}
-
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2480,18 +2462,26 @@ bool LocalStorageManagerPrivate::findNote(
     QList<std::pair<QString, int>> tagLocalIdsAndIndices;
     QHash<QString, int> tagLocalIdIndexPerId;
 
+    QMap<int, qevercloud::SharedNote> sharedNotesWithIndexesInNote;
+
     std::size_t counter = 0;
     while (query.next()) {
         const QSqlRecord rec = query.record();
 
         ErrorString error;
-        if (!fillNoteFromSqlRecord(rec, result, error)) {
+        std::optional<std::pair<int, qevercloud::SharedNote>> sharedNoteWithIndex;
+        if (!fillNoteFromSqlRecord(rec, result, error, &sharedNoteWithIndex)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
             QNWARNING("local_storage", errorDescription);
             return false;
+        }
+
+        if (sharedNoteWithIndex) {
+            sharedNotesWithIndexesInNote[sharedNoteWithIndex->first] =
+                std::move(sharedNoteWithIndex->second);
         }
 
         ++counter;
@@ -2609,7 +2599,14 @@ bool LocalStorageManagerPrivate::findNote(
         result.setTagLocalIds(tagLocalIds);
     }
 
-    sortSharedNotes(result);
+    if (!sharedNotesWithIndexesInNote.isEmpty()) {
+        auto sharedNotes = QList<qevercloud::SharedNote>{};
+        sharedNotes.reserve(sharedNotesWithIndexesInNote.size());
+        for (const auto it: qevercloud::toRange(sharedNotesWithIndexesInNote)) {
+            sharedNotes << it.value();
+        }
+        result.setSharedNotes(std::move(sharedNotes));
+    }
 
     ErrorString error;
     if (!checkNote(result, error)) {
@@ -8313,11 +8310,13 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 
         if (note.sharedNotes()) {
             const auto sharedNotes = *note.sharedNotes();
+            int index = 0;
             for (const auto & sharedNote: qAsConst(sharedNotes)) {
-                if (!insertOrReplaceSharedNote(sharedNote, errorDescription)) {
+                if (!insertOrReplaceSharedNote(sharedNote, index, errorDescription)) {
                     QNWARNING("local_storage", "Note: " << note);
                     return false;
                 }
+                ++index;
             }
         }
     }
@@ -8472,7 +8471,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
-    const qevercloud::SharedNote & sharedNote, ErrorString & errorDescription)
+    const qevercloud::SharedNote & sharedNote, const int indexInNote,
+    ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage",
@@ -8491,17 +8491,9 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
 
     const QVariant nullValue;
 
-    const QString noteGuid = [&sharedNote] {
-        const auto it =
-            sharedNote.localData().constFind(QStringLiteral("noteGuid"));
-        if (it != sharedNote.localData().constEnd()) {
-            return it.value().toString();
-        }
-
-        return QString{};
-    }();
-
-    query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
+    query.bindValue(
+        QStringLiteral(":sharedNoteNoteGuid"),
+        (sharedNote.noteGuid() ? *sharedNote.noteGuid() : nullValue));
 
     query.bindValue(
         QStringLiteral(":sharedNoteSharerUserId"),
@@ -8627,11 +8619,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceSharedNote(
         (sharedNote.serviceAssigned() ? *sharedNote.serviceAssigned()
                                       : nullValue));
 
-    const auto indexInNote = sharedNoteIndexInNote(sharedNote);
-
-    query.bindValue(
-        QStringLiteral(":indexInNote"),
-        (indexInNote ? *indexInNote : nullValue));
+    query.bindValue(QStringLiteral(":indexInNote"), indexInNote);
 
     res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
@@ -11951,7 +11939,8 @@ bool LocalStorageManagerPrivate::fillUserFromSqlRecord(
 
 bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
     const QSqlRecord & rec, qevercloud::Note & note,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription,
+    std::optional<std::pair<int, qevercloud::SharedNote>> * sharedNoteWithIndex) const
 {
 #define CHECK_AND_SET_NOTE_PROPERTY(                                           \
     propertyLocalName, setter, type, localType)                                \
@@ -12100,24 +12089,17 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
         note.setLimits(std::move(limits));
     }
 
-    if (note.guid()) {
+    if (sharedNoteWithIndex && note.guid()) {
         qevercloud::SharedNote sharedNote;
-        if (!fillSharedNoteFromSqlRecord(rec, sharedNote, errorDescription)) {
+        int indexInNote = -1;
+        if (!fillSharedNoteFromSqlRecord(
+                rec, sharedNote, indexInNote, errorDescription))
+        {
             return false;
         }
 
-        const auto noteGuidIt =
-            sharedNote.localData().constFind(QStringLiteral("noteGuid"));
-
-        if (noteGuidIt != sharedNote.localData().constEnd()) {
-            const auto noteGuid = noteGuidIt.value().toString();
-            if (!noteGuid.isEmpty()) {
-                if (!note.sharedNotes()) {
-                    note.mutableSharedNotes() = QList<qevercloud::SharedNote>();
-                }
-
-                note.mutableSharedNotes()->push_back(sharedNote);
-            }
+        if (sharedNote.noteGuid() && *sharedNote.noteGuid() == *note.guid()) {
+            *sharedNoteWithIndex = std::make_pair(indexInNote, sharedNote);
         }
     }
 
@@ -12126,7 +12108,7 @@ bool LocalStorageManagerPrivate::fillNoteFromSqlRecord(
 
 bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(
     const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
-    ErrorString & errorDescription) const
+    int & indexInNote, ErrorString & errorDescription) const
 {
 #define CHECK_AND_SET_SHARED_NOTE_PROPERTY(property, type, localType, setter)  \
     {                                                                          \
@@ -12249,8 +12231,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(
     if (noteGuidIndex >= 0) {
         const QVariant value = record.value(noteGuidIndex);
         if (!value.isNull()) {
-            sharedNote.mutableLocalData().insert(
-                QStringLiteral("noteGuid"), value.toString());
+            sharedNote.setNoteGuid(value.toString());
         }
     }
 
@@ -12259,7 +12240,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(
         const QVariant value = record.value(indexInNoteIndex);
         if (!value.isNull()) {
             bool conversionResult = false;
-            const int indexInNote = value.toInt(&conversionResult);
+            const int index = value.toInt(&conversionResult);
             if (!conversionResult) {
                 errorDescription.setBase(
                     QT_TR_NOOP("can't convert shared note's index in note to "
@@ -12267,8 +12248,7 @@ bool LocalStorageManagerPrivate::fillSharedNoteFromSqlRecord(
                 QNERROR("local_storage", errorDescription);
                 return false;
             }
-            sharedNote.mutableLocalData().insert(
-                QStringLiteral("indexInNote"), indexInNote);
+            indexInNote = index;
         }
     }
 
@@ -13238,22 +13218,6 @@ void LocalStorageManagerPrivate::sortSharedNotebooks(
         SharedNotebookCompareByIndex());
 
     notebook.setSharedNotebooks(std::move(sharedNotebooks));
-}
-
-void LocalStorageManagerPrivate::sortSharedNotes(qevercloud::Note & note) const
-{
-    if (!note.sharedNotes()) {
-        return;
-    }
-
-    // Sort shared notes to ensure the correct order for proper work of
-    // comparison operators
-    auto sharedNotes = *note.sharedNotes();
-
-    std::sort(
-        sharedNotes.begin(), sharedNotes.end(), SharedNoteCompareByIndex());
-
-    note.setSharedNotes(sharedNotes);
 }
 
 bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
@@ -15188,7 +15152,13 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
     QSqlQuery query, QList<qevercloud::Note> & notes,
     ErrorString & errorDescription) const
 {
-    QMap<QString, int> indexForLocalId;
+    struct NoteData
+    {
+        int indexInList = -1;
+        QMap<int, qevercloud::SharedNote> sharedNotesWithIndexesInNote;
+    };
+
+    QHash<QString, NoteData> noteDataByLocalId;
 
     while (query.next()) {
         const QSqlRecord rec = query.record();
@@ -15209,20 +15179,59 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
             return false;
         }
 
-        const auto it = indexForLocalId.find(localId);
-        const bool notFound = (it == indexForLocalId.end());
+        const auto it = noteDataByLocalId.find(localId);
+        const bool notFound = (it == noteDataByLocalId.end());
+
+        auto & noteData =
+            (notFound
+             ? noteDataByLocalId[localId]
+             : it.value());
+
         if (notFound) {
-            indexForLocalId[localId] = notes.size();
+            noteData.indexInList = notes.size();
             notes << qevercloud::Note();
         }
+        else {
+            Q_ASSERT(
+                noteData.indexInList > 0 &&
+                noteData.indexInList < notes.size());
+        }
 
-        auto & note = (notFound ? notes.back() : notes[it.value()]);
+        auto & note = (notFound ? notes.back() : notes[it.value().indexInList]);
 
-        if (!fillNoteFromSqlRecord(rec, note, errorDescription)) {
+        std::optional<std::pair<int, qevercloud::SharedNote>> sharedNoteWithIndex;
+        if (!fillNoteFromSqlRecord(
+                rec, note, errorDescription, &sharedNoteWithIndex))
+        {
             return false;
         }
 
-        sortSharedNotes(note);
+        if (sharedNoteWithIndex)
+        {
+            noteData.sharedNotesWithIndexesInNote[sharedNoteWithIndex->first] =
+                std::move(sharedNoteWithIndex->second);
+        }
+    }
+
+    for (const auto it: qevercloud::toRange(noteDataByLocalId))
+    {
+        const auto & noteData = it.value();
+        if (noteData.sharedNotesWithIndexesInNote.isEmpty()) {
+            continue;
+        }
+
+        Q_ASSERT(
+            noteData.indexInList > 0 && noteData.indexInList < notes.size());
+
+        auto & note = notes[noteData.indexInList];
+        auto sharedNotes = QList<qevercloud::SharedNote>{};
+        sharedNotes.reserve(noteData.sharedNotesWithIndexesInNote.size());
+        for (const auto it:
+             qevercloud::toRange(noteData.sharedNotesWithIndexesInNote))
+        {
+            sharedNotes << it.value();
+        }
+        note.setSharedNotes(std::move(sharedNotes));
     }
 
     return true;
@@ -15324,7 +15333,6 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Note>(
         return false;
     }
 
-    sortSharedNotes(note);
     return true;
 }
 
@@ -15464,13 +15472,6 @@ bool LocalStorageManagerPrivate::SharedNotebookCompareByIndex::operator()(
 {
     return sharedNotebookIndexInNotebook(lhs) <
         sharedNotebookIndexInNotebook(rhs);
-}
-
-bool LocalStorageManagerPrivate::SharedNoteCompareByIndex::operator()(
-    const qevercloud::SharedNote & lhs,
-    const qevercloud::SharedNote & rhs) const noexcept
-{
-    return (sharedNoteIndexInNote(lhs) < sharedNoteIndexInNote(rhs));
 }
 
 bool LocalStorageManagerPrivate::ResourceCompareByIndex::operator()(

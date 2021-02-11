@@ -504,7 +504,7 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceSharedNote(
-        const qevercloud::SharedNote & sharedNote,
+        const qevercloud::SharedNote & sharedNote, const int indexInNote,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceNoteRestrictions(
@@ -670,11 +670,13 @@ private:
 
     [[nodiscard]] bool fillNoteFromSqlRecord(
         const QSqlRecord & record, qevercloud::Note & note,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription,
+        std::optional<std::pair<int, qevercloud::SharedNote>> * sharedNoteWithIndex = nullptr)
+            const;
 
     [[nodiscard]] bool fillSharedNoteFromSqlRecord(
         const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
-        ErrorString & errorDescription) const;
+        int & indexInNote, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool fillNoteTagIdFromSqlRecord(
         const QSqlRecord & record, const QString & column,
@@ -714,7 +716,6 @@ private:
         ErrorString & errorDescription) const;
 
     void sortSharedNotebooks(qevercloud::Notebook & notebook) const;
-    void sortSharedNotes(qevercloud::Note & note) const;
 
     [[nodiscard]] QList<qevercloud::SharedNotebook>
     listEnSharedNotebooksPerNotebookGuid(
@@ -787,13 +788,6 @@ private:
         [[nodiscard]] bool operator()(
             const qevercloud::SharedNotebook & lhs,
             const qevercloud::SharedNotebook & rhs) const noexcept;
-    };
-
-    struct SharedNoteCompareByIndex
-    {
-        [[nodiscard]] bool operator()(
-            const qevercloud::SharedNote & lhs,
-            const qevercloud::SharedNote & rhs) const noexcept;
     };
 
     struct ResourceCompareByIndex
