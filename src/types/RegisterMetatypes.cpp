@@ -39,6 +39,8 @@
 #include <QSqlError>
 #include <QVector>
 
+#include <cstddef>
+
 namespace quentier {
 
 void registerMetatypes()
@@ -141,6 +143,8 @@ void registerMetatypes()
 
     using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
     qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");
+
+    qRegisterMetaType<std::size_t>("std::size_t");
 }
 
 } // namespace quentier
