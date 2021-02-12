@@ -146,6 +146,9 @@ public:
     listSharedNotebooksPerNotebookGuid(
         const QString & notebookGuid, ErrorString & errorDescription) const;
 
+    [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesPerNoteGuid(
+        const QString & noteGuid, ErrorString & errorDescription) const;
+
     [[nodiscard]] bool expungeNotebook(
         qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
@@ -670,9 +673,7 @@ private:
 
     [[nodiscard]] bool fillNoteFromSqlRecord(
         const QSqlRecord & record, qevercloud::Note & note,
-        ErrorString & errorDescription,
-        std::optional<std::pair<int, qevercloud::SharedNote>> * sharedNoteWithIndex = nullptr)
-            const;
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] bool fillSharedNoteFromSqlRecord(
         const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
@@ -716,10 +717,6 @@ private:
         ErrorString & errorDescription) const;
 
     void sortSharedNotebooks(qevercloud::Notebook & notebook) const;
-
-    [[nodiscard]] QList<qevercloud::SharedNotebook>
-    listEnSharedNotebooksPerNotebookGuid(
-        const QString & notebookGuid, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool noteSearchQueryToSQL(
         const NoteSearchQuery & noteSearchQuery, QString & sql,
