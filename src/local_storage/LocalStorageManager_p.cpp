@@ -1346,21 +1346,25 @@ QList<qevercloud::SharedNote> LocalStorageManagerPrivate::listSharedNotesPerNote
         "LocalStorageManagerPrivate::listSharedNotesPerNoteGuid: guid = "
             << noteGuid);
 
-    QList<qevercloud::SharedNote> sharedNotes;
-
     const ErrorString errorPrefix(
         QT_TR_NOOP("Can't list shared notes per note guid"));
 
     QSqlQuery query(m_sqlDatabase);
 
-    query.prepare(QStringLiteral(
+    bool res = query.prepare(QStringLiteral(
         "SELECT * FROM SharedNotes WHERE sharedNoteNoteGuid=?"));
+    if (!res) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase("can't prepare SQL query");
+        errorDescription.details() = query.lastError().text();
+        return {};
+    }
 
     query.addBindValue(noteGuid);
-    const bool res = query.exec();
+    res = query.exec();
     if (!res) {
         SET_ERROR();
-        return sharedNotes;
+        return {};
     }
 
     QMap<int, qevercloud::SharedNote> sharedNotesByIndex;
@@ -1376,19 +1380,103 @@ QList<qevercloud::SharedNote> LocalStorageManagerPrivate::listSharedNotesPerNote
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
-            return sharedNotes;
+            return {};
         }
 
         sharedNotesByIndex[indexInNote] = sharedNote;
     }
 
+    QList<qevercloud::SharedNote> sharedNotes;
     sharedNotes.reserve(qMax(sharedNotesByIndex.size(), 0));
-    for (const auto it: qevercloud::toRange(sharedNotesByIndex))
-    {
+    for (const auto it: qevercloud::toRange(sharedNotesByIndex)) {
         sharedNotes << it.value();
     }
 
     return sharedNotes;
+}
+
+QList<qevercloud::Resource> LocalStorageManagerPrivate::listResourcesPerNoteLocalId(
+    const QString & noteLocalId, const bool withBinaryData,
+    ErrorString & errorDescription) const
+{
+    QNDEBUG(
+        "local_storage",
+        "LocalStorageManagerPrivate::listResourcesPerNoteGuid: note local id = "
+            << noteLocalId);
+
+    const ErrorString errorPrefix(
+        QT_TR_NOOP("Can't list resources per note local id"));
+
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.prepare(QStringLiteral(
+        "SELECT Resources.resourceLocalUid, resourceGuid, "
+        "noteGuid, resourceUpdateSequenceNumber, resourceIsDirty, "
+        "dataSize, dataHash, mime, width, height, recognitionDataSize, "
+        "recognitionDataHash, alternateDataSize, alternateDataHash, "
+        "resourceIndexInNote, resourceSourceURL, timestamp, "
+        "resourceLatitude, resourceLongitude, resourceAltitude, "
+        "cameraMake, cameraModel, clientWillIndex, fileName, "
+        "attachment, resourceKey, resourceMapKey, resourceValue, "
+        "localNote, recognitionDataBody FROM Resources "
+        "LEFT OUTER JOIN ResourceAttributes ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributes.resourceLocalUid "
+        "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
+        "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributesApplicationDataFullMap.resourceLocalUid "
+        "LEFT OUTER JOIN NoteResources ON "
+        "Resources.resourceLocalUid = NoteResources.localResource "
+        "WHERE Resources.noteLocalUid=?"));
+    if (!res) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase("can't prepare SQL query");
+        errorDescription.details() = query.lastError().text();
+        return {};
+    }
+
+    query.addBindValue(noteLocalId);
+    res = query.exec();
+    if (!res) {
+        SET_ERROR();
+        return {};
+    }
+
+    QMap<int, qevercloud::Resource> resourcesByIndex;
+    while (query.next()) {
+        qevercloud::Resource resource;
+        int indexInNote = -1;
+        ErrorString error;
+        if (!fillResourceFromSqlRecord(
+                query.record(), resource, indexInNote, error))
+        {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return {};
+        }
+
+        resourcesByIndex[indexInNote] = resource;
+    }
+
+    QList<qevercloud::Resource> resources;
+    resources.reserve(qMax(resourcesByIndex.size(), 0));
+    for (const auto & it: qevercloud::toRange(resourcesByIndex)) {
+        resources << it.value();
+    }
+
+    if (withBinaryData) {
+        for (auto & resource: resources) {
+            if (!readResourceDataFromFiles(resource, errorDescription)) {
+                return {};
+            }
+        }
+    }
+
+    return resources;
 }
 
 bool LocalStorageManagerPrivate::expungeNotebook(
@@ -2388,13 +2476,8 @@ bool LocalStorageManagerPrivate::findNote(
     bool withResourceBinaryData =
         (options & GetNoteOption::WithResourceBinaryData);
 
-    QString resourceIndexColumn =
-        (column == QStringLiteral("localUid") ? QStringLiteral("noteLocalUid")
-                                              : QStringLiteral("noteGuid"));
-
-    id = sqlEscapeString(id);
-
-    QString queryString = QStringLiteral(
+    QSqlQuery query(m_sqlDatabase);
+    bool res = query.prepare(QStringLiteral(
         "SELECT localUid, guid, updateSequenceNumber, isDirty, "
         "isLocal, isFavorited, title, content, contentLength, "
         "contentHash, creationTimestamp, modificationTimestamp, "
@@ -2411,58 +2494,28 @@ bool LocalStorageManagerPrivate::findNote(
         "noEmailNote, noShareNote, noShareNotePublicly, "
         "noteResourceCountMax, uploadLimit, resourceSizeMax, "
         "noteSizeMax, uploaded, localNote, note, localTag, tag, "
-        "tagIndexInNote");
-
-    if (withResourceMetadata) {
-        queryString += QStringLiteral(
-            ", Resources.resourceLocalUid, resourceGuid, "
-            "Resources.noteLocalUid, noteGuid, "
-            "resourceUpdateSequenceNumber, resourceIsDirty, "
-            "dataSize, dataHash, mime, width, height, "
-            "recognitionDataSize, recognitionDataHash, "
-            "alternateDataSize, alternateDataHash, "
-            "resourceIndexInNote, resourceSourceURL, timestamp, "
-            "resourceLatitude, resourceLongitude, "
-            "resourceAltitude, cameraMake, cameraModel, "
-            "clientWillIndex, fileName, attachment, "
-            "resourceKey, resourceMapKey, resourceValue, "
-            "recognitionDataBody");
-    }
-
-    queryString += QStringLiteral(
-        " FROM Notes "
+        "tagIndexInNote FROM Notes "
         "LEFT OUTER JOIN NoteRestrictions ON "
         "Notes.localUid = NoteRestrictions.noteLocalUid "
         "LEFT OUTER JOIN NoteLimits ON "
         "Notes.localUid = NoteLimits.noteLocalUid "
         "LEFT OUTER JOIN NoteTags ON "
-        "Notes.localUid = NoteTags.localNote ");
-
-    if (withResourceMetadata) {
-        queryString +=
-            QString::fromUtf8(
-                "LEFT OUTER JOIN Resources ON Notes.%2 = Resources.%1 "
-                "LEFT OUTER JOIN ResourceAttributes ON "
-                "Resources.resourceLocalUid = "
-                "ResourceAttributes.resourceLocalUid "
-                "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
-                "ON Resources.resourceLocalUid = "
-                "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
-                "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
-                "ON Resources.resourceLocalUid = "
-                "ResourceAttributesApplicationDataFullMap.resourceLocalUid ")
-                .arg(resourceIndexColumn, column);
+        "Notes.localUid = NoteTags.localNote "
+        "WHERE ?=?"));
+    if (!res) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase("can't prepare SQL query");
+        errorDescription.details() = query.lastError().text();
+        return false;
     }
 
-    queryString += QString::fromUtf8("WHERE %1 = '%2'").arg(column, id);
-    QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(queryString);
+    query.addBindValue(column);
+    query.addBindValue(id);
+
+    res = query.exec();
     DATABASE_CHECK_AND_SET_ERROR()
 
     qevercloud::Note result;
-
-    QList<qevercloud::Resource> resources;
-    QHash<QString, int> resourceIndexPerLocalId;
 
     QList<std::pair<QString, int>> tagGuidsAndIndices;
     QHash<QString, int> tagGuidIndexPerGuid;
@@ -2487,40 +2540,18 @@ bool LocalStorageManagerPrivate::findNote(
         ++counter;
 
         if (withResourceMetadata) {
-            const int resourceLocalIdIndex =
-                rec.indexOf(QStringLiteral("resourceLocalUid"));
-
-            if (resourceLocalIdIndex >= 0) {
-                const QVariant value = rec.value(resourceLocalIdIndex);
-                if (!value.isNull()) {
-                    const QString resourceLocalId = value.toString();
-
-                    const auto it =
-                        resourceIndexPerLocalId.find(resourceLocalId);
-
-                    const bool resourceIndexNotFound =
-                        (it == resourceIndexPerLocalId.end());
-
-                    if (resourceIndexNotFound) {
-                        const int resourceIndexInList = resources.size();
-                        resourceIndexPerLocalId[resourceLocalId] =
-                            resourceIndexInList;
-                        resources << qevercloud::Resource();
-                    }
-
-                    qevercloud::Resource & resource =
-                        (resourceIndexNotFound ? resources.back()
-                                               : resources[it.value()]);
-                    fillResourceFromSqlRecord(rec, resource);
-                    resource.setNoteLocalId(note.localId());
-
-                    if (withResourceBinaryData &&
-                        !readResourceDataFromFiles(resource, errorDescription))
-                    {
-                        return false;
-                    }
-                }
+            ErrorString error;
+            auto resources = listResourcesPerNoteLocalId(
+                result.localId(), withResourceBinaryData, error);
+            if (!error.isEmpty()) {
+                errorDescription.base() = errorPrefix.base();
+                errorDescription.appendBase(error.base());
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                QNWARNING("local_storage", errorDescription);
+                return false;
             }
+            result.setResources(std::move(resources));
         }
 
         error.clear();
@@ -2556,12 +2587,6 @@ bool LocalStorageManagerPrivate::findNote(
         }
 
         return false;
-    }
-
-    const int numResources = resources.size();
-    if (numResources > 0) {
-        std::sort(resources.begin(), resources.end(), ResourceCompareByIndex());
-        result.setResources(resources);
     }
 
     const int numTagGuids = tagGuidsAndIndices.size();
@@ -4029,7 +4054,18 @@ bool LocalStorageManagerPrivate::findEnResource(
 
     std::size_t counter = 0;
     while (query.next()) {
-        fillResourceFromSqlRecord(query.record(), foundResource);
+        ErrorString error;
+        int indexInNote = -1;
+        if (!fillResourceFromSqlRecord(
+                query.record(), foundResource, indexInNote, error))
+        {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage", errorDescription);
+            return false;
+        }
         ++counter;
     }
 
@@ -11027,8 +11063,9 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
     return ReadResourceBinaryDataFromFileStatus::Success;
 }
 
-void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
-    const QSqlRecord & rec, qevercloud::Resource & resource) const
+bool LocalStorageManagerPrivate::fillResourceFromSqlRecord(
+    const QSqlRecord & rec, qevercloud::Resource & resource,
+    int & indexInNote, ErrorString & errorDescription) const
 {
 #define CHECK_AND_SET_RESOURCE_PROPERTY(property, type, localType, setter)     \
     {                                                                          \
@@ -11117,12 +11154,14 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
         if (!value.isNull()) {
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
-            if (conversionResult) {
-                resource.setIndexInNote(
-                    index < 0
-                    ? std::nullopt
-                    : std::make_optional<int>(index));
+            if (!conversionResult) {
+                errorDescription.setBase(
+                    QT_TR_NOOP("can't convert resource's index in "
+                               "note to int"));
+                QNERROR("local_storage", errorDescription);
+                return false;
             }
+            indexInNote = index;
         }
     }
 
@@ -11141,6 +11180,8 @@ void LocalStorageManagerPrivate::fillResourceFromSqlRecord(
     if (hasAttributes && !resource.attributes()) {
         resource.setAttributes(attributes);
     }
+
+    return true;
 }
 
 bool LocalStorageManagerPrivate::fillResourceAttributesFromSqlRecord(
@@ -14390,70 +14431,21 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     const ErrorString errorPrefix(
         QT_TR_NOOP("can't do the partial update of note's resources"));
 
-    const QString listNoteResourcesQueryString =
-        QString::fromUtf8(
-            "SELECT Resources.resourceLocalUid, resourceGuid, "
-            "noteLocalUid, noteGuid, resourceUpdateSequenceNumber, "
-            "resourceIsDirty, dataSize, dataHash, mime, width, "
-            "height, recognitionDataSize, recognitionDataHash, "
-            "alternateDataSize, alternateDataHash, resourceIndexInNote, "
-            "resourceSourceURL, timestamp, resourceLatitude, "
-            "resourceLongitude, resourceAltitude, cameraMake, "
-            "cameraModel, clientWillIndex, fileName, attachment, "
-            "resourceKey, resourceMapKey, resourceValue "
-            "FROM Resources LEFT OUTER JOIN ResourceAttributes "
-            "ON Resources.resourceLocalUid = "
-            "ResourceAttributes.resourceLocalUid "
-            "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly "
-            "ON Resources.resourceLocalUid = "
-            "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
-            "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap "
-            "ON Resources.resourceLocalUid = "
-            "ResourceAttributesApplicationDataFullMap.resourceLocalUid "
-            "WHERE noteLocalUid='%1'")
-            .arg(sqlEscapeString(noteLocalId));
-
-    QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(listNoteResourcesQueryString);
-    DATABASE_CHECK_AND_SET_ERROR()
-
-    QList<qevercloud::Resource> previousNoteResources;
-
-    QNDEBUG("local_storage", "Starting to process the query results");
-
-    const QString resourceLocalUidProperty = QStringLiteral("resourceLocalUid");
-    while (query.next()) {
-        QNDEBUG("local_storage", "Processing the query result");
-        const QSqlRecord record = query.record();
-
-        const int resourceLocalUidIndex =
-            record.indexOf(resourceLocalUidProperty);
-
-        if (resourceLocalUidIndex < 0) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(
-                QT_TR_NOOP("can't retrieve the resource local id from "
-                           "the query result"));
-            QNWARNING(
-                "local_storage",
-                errorDescription
-                    << ", note local id = " << noteLocalId
-                    << ", note resources: " << updatedNoteResources);
-            return false;
-        }
-
-        qevercloud::Resource resource;
-
-        resource.setNoteLocalId(
-            record.value(resourceLocalUidIndex).toString());
-
-        fillResourceFromSqlRecord(record, resource);
-        previousNoteResources << resource;
+    ErrorString error;
+    auto previousNoteResources = listResourcesPerNoteLocalId(
+        noteLocalId, /* with binary data = */ false, error);
+    if (!error.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage", errorDescription);
+        return false;
     }
 
     // Now figure out which resources were removed from the note
     // and which were added or updated
-    QStringList localIdsForResourcesRemovedFromNote;
+    QSet<QString> localIdsForResourcesRemovedFromNote;
     QList<qevercloud::Resource> addedResources;
     QList<qevercloud::Resource> updatedResources;
 
@@ -14519,9 +14511,6 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
             changed |=
                 (resource.isLocalOnly() != previousNoteResource.isLocalOnly());
 
-            changed |=
-                (resource.indexInNote() != previousNoteResource.indexInNote());
-
             if (changed) {
                 updatedResources << resource;
             }
@@ -14530,8 +14519,58 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         if (!foundResource) {
-            localIdsForResourcesRemovedFromNote
-                << sqlEscapeString(previousNoteResource.localId());
+            localIdsForResourcesRemovedFromNote.insert(
+                sqlEscapeString(previousNoteResource.localId()));
+        }
+    }
+
+    if (!localIdsForResourcesRemovedFromNote.isEmpty()) {
+        // As some resources were removed from note, need to update indexes
+        // of the remaining ones to ensure they start at 0 and step 1 from each
+        // other.
+        // NOTE: an optimization is possible here if all removed resources
+        // are at the end of the resources list; then no indexes of existing
+        // resources need to be changed
+        QSqlQuery query(m_sqlDatabase);
+        bool res = query.prepare(
+            QStringLiteral(
+                "UPDATE Resources SET indexInNote = :indexInNote "
+                "WHERE resourceLocalUid = :resourceLocalUid"));
+        if (!res) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(
+                QT_TR_NOOP("can't prepare SQL query to update resource "
+                           "indexes in note"));
+            errorDescription.details() = query.lastError().text();
+            QNWARNING(
+                "local_storage",
+                errorDescription << ", note local id = " << noteLocalId);
+            return false;
+        }
+
+        previousNoteResources.erase(
+            std::remove_if(
+                previousNoteResources.begin(),
+                previousNoteResources.end(),
+                [&](const qevercloud::Resource & resource)
+                {
+                    return localIdsForResourcesRemovedFromNote.contains(
+                        resource.localId());
+                }),
+            previousNoteResources.end());
+
+        int indexInNote = 0;
+        for (const auto & resource: qAsConst(previousNoteResources))
+        {
+            query.bindValue(
+                QStringLiteral(":resourceLocalUid"), resource.localId());
+
+            query.bindValue(QStringLiteral(":indexInNote"), indexInNote);
+
+            res = query.exec();
+            DATABASE_CHECK_AND_SET_ERROR();
+
+            ++indexInNote;
         }
     }
 
@@ -14556,40 +14595,17 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
     // Now delete the removed resources and add/update the added/updated ones
 
-    if (!localIdsForResourcesRemovedFromNote.isEmpty()) {
-        QString removeResourcesQueryString =
-            QString::fromUtf8(
-                "DELETE FROM Resources WHERE resourceLocalUid IN ('%1')")
-                .arg(localIdsForResourcesRemovedFromNote.join(
-                    QStringLiteral(",")));
-        res = query.exec(removeResourcesQueryString);
-        DATABASE_CHECK_AND_SET_ERROR()
-
-        for (const auto & localId:
-             qAsConst(localIdsForResourcesRemovedFromNote)) {
-            qevercloud::Resource resource;
-            resource.setLocalId(localId);
-            resource.setNoteLocalId(noteLocalId);
-
-            ErrorString error;
-            if (!removeResourceDataFiles(resource, error)) {
-                errorDescription = errorPrefix;
-                errorDescription.appendBase(error.base());
-                errorDescription.appendBase(error.additionalBases());
-                errorDescription.details() = error.details();
-                return false;
-            }
-        }
-    }
-
     const int numAddedResources = addedResources.size();
     const int numUpdatedResources = updatedResources.size();
+    const int numRemovedResources = localIdsForResourcesRemovedFromNote.size();
 
     QNDEBUG(
         "local_storage",
         "Number of added resources = " << numAddedResources
                                        << ", number of updated resources = "
-                                       << numUpdatedResources);
+                                       << numUpdatedResources
+                                       << ", number of removed resources = "
+                                       << numRemovedResources);
 
     if (!updateResourceBinaryData && (numAddedResources != 0)) {
         errorDescription.base() = errorPrefix.base();
@@ -14631,6 +14647,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         error.clear();
+        // TODO: pass proper indexInNote
         if (!insertOrReplaceResource(
                 resource, error, updateResourceBinaryData,
                 /* useSeparateTransaction = */ false))
@@ -14666,6 +14683,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         error.clear();
+        // TODO: pass proper indexInNote
         if (!insertOrReplaceResource(
                 resource, error,
                 /* set resource binary data = */ true,
@@ -14681,6 +14699,39 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
                 "local_storage",
                 errorDescription << ", resource: " << resource);
             return false;
+        }
+    }
+
+    if (!localIdsForResourcesRemovedFromNote.isEmpty()) {
+        QString removeResourcesQueryString =
+            QString::fromUtf8(
+                "DELETE FROM Resources WHERE resourceLocalUid IN ('%1')")
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+                .arg(QStringList::fromSet(localIdsForResourcesRemovedFromNote).join(
+#else
+                .arg(QStringList(
+                        localIdsForResourcesRemovedFromNote.begin(),
+                        localIdsForResourcesRemovedFromNote.end()).join(
+#endif
+                    QStringLiteral(",")));
+        QSqlQuery query(m_sqlDatabase);
+        bool res = query.exec(removeResourcesQueryString);
+        DATABASE_CHECK_AND_SET_ERROR()
+
+        for (const auto & localId:
+             qAsConst(localIdsForResourcesRemovedFromNote)) {
+            qevercloud::Resource resource;
+            resource.setLocalId(localId);
+            resource.setNoteLocalId(noteLocalId);
+
+            ErrorString error;
+            if (!removeResourceDataFiles(resource, error)) {
+                errorDescription = errorPrefix;
+                errorDescription.appendBase(error.base());
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                return false;
+            }
         }
     }
 

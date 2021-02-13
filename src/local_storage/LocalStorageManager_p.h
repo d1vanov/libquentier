@@ -149,6 +149,10 @@ public:
     [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesPerNoteGuid(
         const QString & noteGuid, ErrorString & errorDescription) const;
 
+    [[nodiscard]] QList<qevercloud::Resource> listResourcesPerNoteLocalId(
+        const QString & noteLocalId, const bool withBinaryData,
+        ErrorString & errorDescription) const;
+
     [[nodiscard]] bool expungeNotebook(
         qevercloud::Notebook & notebook, ErrorString & errorDescription);
 
@@ -638,8 +642,9 @@ private:
         const bool isAlternateDataBody, QByteArray & dataBody,
         ErrorString & errorDescription) const;
 
-    void fillResourceFromSqlRecord(
-        const QSqlRecord & rec, qevercloud::Resource & resource) const;
+    [[nodiscard]] bool fillResourceFromSqlRecord(
+        const QSqlRecord & rec, qevercloud::Resource & resource,
+        int & indexInNote, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool fillResourceAttributesFromSqlRecord(
         const QSqlRecord & rec,
