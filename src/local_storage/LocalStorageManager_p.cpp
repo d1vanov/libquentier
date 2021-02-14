@@ -14446,6 +14446,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     // Now figure out which resources were removed from the note
     // and which were added or updated
     QSet<QString> localIdsForResourcesRemovedFromNote;
+    int minRemovedResourceIndexInNote = -1;
+
     QList<qevercloud::Resource> addedResources;
     QList<qevercloud::Resource> updatedResources;
 
@@ -14521,33 +14523,16 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         if (!foundResource) {
             localIdsForResourcesRemovedFromNote.insert(
                 sqlEscapeString(previousNoteResource.localId()));
+
+            if (minRemovedResourceIndexInNote < 0 ||
+                minRemovedResourceIndexInNote > i)
+            {
+                minRemovedResourceIndexInNote = i;
+            }
         }
     }
 
     if (!localIdsForResourcesRemovedFromNote.isEmpty()) {
-        // As some resources were removed from note, need to update indexes
-        // of the remaining ones to ensure they start at 0 and step 1 from each
-        // other.
-        // NOTE: an optimization is possible here if all removed resources
-        // are at the end of the resources list; then no indexes of existing
-        // resources need to be changed
-        QSqlQuery query(m_sqlDatabase);
-        bool res = query.prepare(
-            QStringLiteral(
-                "UPDATE Resources SET indexInNote = :indexInNote "
-                "WHERE resourceLocalUid = :resourceLocalUid"));
-        if (!res) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(
-                QT_TR_NOOP("can't prepare SQL query to update resource "
-                           "indexes in note"));
-            errorDescription.details() = query.lastError().text();
-            QNWARNING(
-                "local_storage",
-                errorDescription << ", note local id = " << noteLocalId);
-            return false;
-        }
-
         previousNoteResources.erase(
             std::remove_if(
                 previousNoteResources.begin(),
@@ -14559,18 +14544,39 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
                 }),
             previousNoteResources.end());
 
-        int indexInNote = 0;
-        for (const auto & resource: qAsConst(previousNoteResources))
+        if (minRemovedResourceIndexInNote < previousNoteResources.size())
         {
-            query.bindValue(
-                QStringLiteral(":resourceLocalUid"), resource.localId());
+            // Indexes of some of remaining resources need to be updated.
+            QSqlQuery query(m_sqlDatabase);
+            bool res = query.prepare(
+                QStringLiteral(
+                    "UPDATE Resources SET indexInNote = :indexInNote "
+                    "WHERE resourceLocalUid = :resourceLocalUid"));
+            if (!res) {
+                errorDescription.base() = errorPrefix.base();
+                errorDescription.appendBase(
+                    QT_TR_NOOP("can't prepare SQL query to update resource "
+                            "indexes in note"));
+                errorDescription.details() = query.lastError().text();
+                QNWARNING(
+                    "local_storage",
+                    errorDescription << ", note local id = " << noteLocalId);
+                return false;
+            }
 
-            query.bindValue(QStringLiteral(":indexInNote"), indexInNote);
+            for (int i = minRemovedResourceIndexInNote;
+                 i < previousNoteResources.size(); ++i)
+            {
+                const auto & resource = qAsConst(previousNoteResources)[i];
 
-            res = query.exec();
-            DATABASE_CHECK_AND_SET_ERROR();
+                query.bindValue(
+                    QStringLiteral(":resourceLocalUid"), resource.localId());
 
-            ++indexInNote;
+                query.bindValue(QStringLiteral(":indexInNote"), i);
+
+                res = query.exec();
+                DATABASE_CHECK_AND_SET_ERROR();
+            }
         }
     }
 
