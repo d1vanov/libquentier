@@ -511,8 +511,8 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceSharedNote(
-        const qevercloud::SharedNote & sharedNote, const int indexInNote,
-        ErrorString & errorDescription);
+        const qevercloud::SharedNote & sharedNote, const QString & noteGuid,
+        const int indexInNote, ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceNoteRestrictions(
         const QString & noteLocalId,
