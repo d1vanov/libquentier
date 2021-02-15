@@ -4830,11 +4830,6 @@ bool LocalStorageManagerPrivate::addEnResource(
         resourceIndexInNote = 0;
     }
 
-    resource.setIndexInNote(
-        resourceIndexInNote < 0
-        ? std::nullopt
-        : std::make_optional<int>(resourceIndexInNote));
-
     QString resourceLocalId = resource.localId();
 
     QString column, id;
@@ -4882,7 +4877,7 @@ bool LocalStorageManagerPrivate::addEnResource(
     }
 
     error.clear();
-    if (!insertOrReplaceResource(resource, error)) {
+    if (!insertOrReplaceResource(resource, resourceIndexInNote, error)) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -4925,6 +4920,38 @@ bool LocalStorageManagerPrivate::updateEnResource(
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
+        QNWARNING("local_storage", errorDescription);
+        return false;
+    }
+
+    int resourceIndexInNote = -1;
+
+    QString noteLocalId = resource.noteLocalId();
+    noteLocalId = sqlEscapeString(noteLocalId);
+
+    const QString queryString =
+        QString::fromUtf8(
+            "SELECT COUNT(*) FROM NoteResources WHERE localNote = '%1'")
+            .arg(noteLocalId);
+
+    QSqlQuery query(m_sqlDatabase);
+    const bool res = query.exec(queryString);
+    DATABASE_CHECK_AND_SET_ERROR()
+
+    if (query.next()) {
+        bool conversionResult = false;
+        resourceIndexInNote = query.record().value(0).toInt(&conversionResult);
+        if (!conversionResult) {
+            SET_INT_CONVERSION_ERROR();
+            return false;
+        }
+    }
+    else {
+        errorDescription.setBase(
+            QT_TR_NOOP("Can't update resource: resource index in note was not "
+                       "found"));
+        errorDescription.details() += QStringLiteral("note local id = ");
+        errorDescription.details() += noteLocalId;
         QNWARNING("local_storage", errorDescription);
         return false;
     }
@@ -4993,7 +5020,7 @@ bool LocalStorageManagerPrivate::updateEnResource(
     }
 
     error.clear();
-    if (!insertOrReplaceResource(resource, error)) {
+    if (!insertOrReplaceResource(resource, resourceIndexInNote, error)) {
         errorDescription.base() = errorPrefix.base();
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
@@ -9232,8 +9259,9 @@ bool LocalStorageManagerPrivate::complementTagParentInfo(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceResource(
-    const qevercloud::Resource & resource, ErrorString & errorDescription,
-    const bool setResourceBinaryData, const bool useSeparateTransaction)
+    const qevercloud::Resource & resource, const int indexInNote,
+    ErrorString & errorDescription, const bool setResourceBinaryData,
+    const bool useSeparateTransaction)
 {
     // NOTE: this method expects to be called after resource is already checked
     // for sanity of its parameters!
@@ -9241,7 +9269,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::insertOrReplaceResource: resource = "
-            << resource << "\nSet resource binary data = "
+            << resource << "\nResource index in note: " << indexInNote
+            << "\nSet resource binary data = "
             << (setResourceBinaryData ? "true" : "false")
             << ", use separate transaction = "
             << (useSeparateTransaction ? "true" : "false"));
@@ -9259,7 +9288,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
     const QString noteLocalId = resource.noteLocalId();
 
     if (!insertOrReplaceResourceMetadata(
-            resource, setResourceBinaryData, errorDescription))
+            resource, indexInNote, setResourceBinaryData, errorDescription))
     {
         return false;
     }
@@ -9797,8 +9826,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(
 }
 
 bool LocalStorageManagerPrivate::insertOrReplaceResourceMetadata(
-    const qevercloud::Resource & resource, const bool setResourceDataProperties,
-    ErrorString & errorDescription)
+    const qevercloud::Resource & resource, const int indexInNote,
+    const bool setResourceDataProperties, ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage",
@@ -9870,12 +9899,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceMetadata(
         QStringLiteral(":resourceIsDirty"),
         (resource.isLocallyModified() ? 1 : 0));
 
-    const auto indexInNote = resource.indexInNote();
-
-    query.bindValue(
-        QStringLiteral(":resourceIndexInNote"),
-        (indexInNote  ? *indexInNote : nullValue));
-
+    query.bindValue(QStringLiteral(":resourceIndexInNote"), indexInNote);
     query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localId());
 
     if (setResourceDataProperties) {
@@ -14449,7 +14473,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     int minRemovedResourceIndexInNote = -1;
 
     QList<qevercloud::Resource> addedResources;
-    QList<qevercloud::Resource> updatedResources;
+    QList<std::pair<qevercloud::Resource, int>> updatedResourcesWithIndexesInNote;
 
     const int numResources = updatedNoteResources.size();
     const int numPreviousResources = previousNoteResources.size();
@@ -14514,7 +14538,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
                 (resource.isLocalOnly() != previousNoteResource.isLocalOnly());
 
             if (changed) {
-                updatedResources << resource;
+                updatedResourcesWithIndexesInNote
+                    << std::make_pair(resource, i);
             }
 
             break;
@@ -14602,7 +14627,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     // Now delete the removed resources and add/update the added/updated ones
 
     const int numAddedResources = addedResources.size();
-    const int numUpdatedResources = updatedResources.size();
+    const int numUpdatedResources = updatedResourcesWithIndexesInNote.size();
     const int numRemovedResources = localIdsForResourcesRemovedFromNote.size();
 
     QNDEBUG(
@@ -14636,7 +14661,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
     }
 
     for (int i = 0; i < numUpdatedResources; ++i) {
-        const auto & resource = updatedResources[i];
+        const auto & resource = updatedResourcesWithIndexesInNote[i].first;
+        const int indexInNote = updatedResourcesWithIndexesInNote[i].second;
 
         ErrorString error;
         if (!checkResource(resource, error)) {
@@ -14653,9 +14679,8 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         error.clear();
-        // TODO: pass proper indexInNote
         if (!insertOrReplaceResource(
-                resource, error, updateResourceBinaryData,
+                resource, indexInNote, error, updateResourceBinaryData,
                 /* useSeparateTransaction = */ false))
         {
             errorDescription.base() = errorPrefix.base();
@@ -14689,9 +14714,9 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         }
 
         error.clear();
-        // TODO: pass proper indexInNote
+        const int indexInNote = previousNoteResources.size() + i;
         if (!insertOrReplaceResource(
-                resource, error,
+                resource, indexInNote, error,
                 /* set resource binary data = */ true,
                 /* useSeparateTransaction = */ false))
         {

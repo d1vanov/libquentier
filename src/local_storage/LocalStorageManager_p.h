@@ -543,8 +543,8 @@ private:
         qevercloud::Tag & tag, ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceResource(
-        const qevercloud::Resource & resource, ErrorString & errorDescription,
-        const bool setResourceBinaryData = true,
+        const qevercloud::Resource & resource, const int indexInNote,
+        ErrorString & errorDescription, const bool setResourceBinaryData = true,
         const bool useSeparateTransaction = true);
 
     [[nodiscard]] bool insertOrReplaceResourceAttributes(
@@ -553,7 +553,7 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool insertOrReplaceResourceMetadata(
-        const qevercloud::Resource & resource,
+        const qevercloud::Resource & resource, const int indexInNote,
         const bool setResourceDataProperties, ErrorString & errorDescription);
 
     [[nodiscard]] bool writeResourceBinaryDataToFiles(
