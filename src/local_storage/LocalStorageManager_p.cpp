@@ -14459,8 +14459,47 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         return false;
     }
 
-    // Now figure out which resources were removed from the note
-    // and which were added or updated
+    // See whether updated resources are completely the same as the existing
+    // ones
+    if (!updateResourceBinaryData)
+    {
+        if (updatedNoteResources == previousNoteResources)
+        {
+            QNDEBUG(
+                "local_storage",
+                "The list of resources for the note did not change");
+            return true;
+        }
+    }
+    else
+    {
+        auto updatedNoteResourcesWithoutBinaryData = updatedNoteResources;
+        for (auto & resource: updatedNoteResourcesWithoutBinaryData)
+        {
+            if (resource.data()) {
+                resource.mutableData()->setBody(std::nullopt);
+            }
+
+            if (resource.alternateData()) {
+                resource.mutableAlternateData()->setBody(std::nullopt);
+            }
+        }
+
+        if (updatedNoteResourcesWithoutBinaryData == previousNoteResources)
+        {
+            QNDEBUG(
+                "local_storage",
+                "The list of resources for the note did not change");
+            return true;
+        }
+    }
+
+    // Something has changed in the list of note's resources, let's figure out
+    // what exactly. Compose three lists:
+    // 1. Local ids of resources which no longer exist in the updated list
+    // 2. Newly added resources for this note
+    // 3. Resources which were somehow updated from the previous version
+
     QSet<QString> localIdsForResourcesRemovedFromNote;
     int minRemovedResourceIndexInNote = -1;
 
@@ -14539,7 +14578,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
         if (!foundResource) {
             localIdsForResourcesRemovedFromNote.insert(
-                sqlEscapeString(previousNoteResource.localId()));
+                previousNoteResource.localId());
 
             if (minRemovedResourceIndexInNote < 0 ||
                 minRemovedResourceIndexInNote > i)
@@ -14727,16 +14766,21 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
     if (!localIdsForResourcesRemovedFromNote.isEmpty()) {
         QString removeResourcesQueryString =
-            QString::fromUtf8(
-                "DELETE FROM Resources WHERE resourceLocalUid IN ('%1')")
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-                .arg(QStringList::fromSet(localIdsForResourcesRemovedFromNote).join(
-#else
-                .arg(QStringList(
-                        localIdsForResourcesRemovedFromNote.begin(),
-                        localIdsForResourcesRemovedFromNote.end()).join(
-#endif
-                    QStringLiteral(",")));
+            QStringLiteral("DELETE FROM Resources WHERE resourceLocalUid IN (");
+
+        static const QChar apostrophe = QChar::fromLatin1('\'');
+        static const QChar comma = QChar::fromLatin1(',');
+        for (const auto & localId: localIdsForResourcesRemovedFromNote)
+        {
+            removeResourcesQueryString += apostrophe;
+            removeResourcesQueryString += sqlEscapeString(localId);
+            removeResourcesQueryString += apostrophe;
+            removeResourcesQueryString += comma;
+        }
+
+        removeResourcesQueryString.chop(1); // remove trailing comma
+        removeResourcesQueryString += QChar::fromLatin1(')');
+
         QSqlQuery query(m_sqlDatabase);
         bool res = query.exec(removeResourcesQueryString);
         DATABASE_CHECK_AND_SET_ERROR()
