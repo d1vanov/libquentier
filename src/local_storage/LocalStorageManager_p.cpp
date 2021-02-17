@@ -129,6 +129,23 @@ void clearBinaryDataFromResource(qevercloud::Resource & resource)
     return true;
 }
 
+template <class T>
+[[nodiscard]] bool checkDuplicatesByLocalId(const QList<T> & lhs)
+{
+    return !std::any_of(
+        lhs.begin(), lhs.end(),
+        [s = QSet<QString>{}] (const auto & item) mutable
+        {
+            const auto & localId = item.localId();
+            if (s.contains(localId)) {
+                return true;
+            }
+
+            Q_UNUSED(s.insert(localId))
+            return false;
+        });
+}
+
 [[nodiscard]] std::optional<int> sharedNotebookIndexInNotebook(
     const qevercloud::SharedNotebook & sharedNotebook) noexcept
 {
@@ -14522,6 +14539,15 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
     const ErrorString errorPrefix(
         QT_TR_NOOP("can't do the partial update of note's resources"));
+
+    if (!checkDuplicatesByLocalId(updatedNoteResources)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(
+            QT_TR_NOOP("the list of note's resources contains resources with "
+                       "the same local id"));
+        QNWARNING("local_storage", errorDescription);
+        return false;
+    }
 
     ErrorString error;
     auto previousNoteResources = listResourcesPerNoteLocalId(
