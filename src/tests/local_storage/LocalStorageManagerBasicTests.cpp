@@ -955,9 +955,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 
     qevercloud::SharedNote sharedNote;
 
-    sharedNote.mutableLocalData()[QStringLiteral("noteGuid")] =
-        note.guid().value();
-
+    sharedNote.setNoteGuid(note.guid().value());
     sharedNote.setSharerUserID(1);
 
     sharedNote.setRecipientIdentity(qevercloud::Identity{});
@@ -1545,7 +1543,9 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
     newResource.mutableData()->setSize(
         newResource.data()->body()->size());
 
-    modifiedNote.mutableResources().value().append(newResource);
+    Q_ASSERT(modifiedNote.resources());
+    Q_ASSERT(!modifiedNote.mutableResources()->isEmpty());
+    modifiedNote.mutableResources()->back() = newResource;
 
     modifiedNote.setUpdated(QDateTime::currentMSecsSinceEpoch());
 
