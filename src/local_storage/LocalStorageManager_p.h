@@ -751,6 +751,25 @@ private:
         const QList<qevercloud::Resource> & updatedNoteResources,
         const bool UpdateResourceBinaryData, ErrorString & errorDescription);
 
+    // Figure out which previous resources are not present in the updated
+    // resources list, which resources in the updated list are new (not present
+    // in the previous resources list) and which resources are present in both
+    // lists - these are being actually updated.
+    void classifyNoteResources(
+        const QList<qevercloud::Resource> & previousNoteResources,
+        const QList<qevercloud::Resource> & updatedNoteResources,
+        QSet<QString> & localIdsOfRemovedResources,
+        QList<qevercloud::Resource> & addedResources,
+        QList<qevercloud::Resource> & updatedResources) const;
+
+    [[nodiscard]] bool expungeResources(
+        const QSet<QString> & localIds, const QString & noteLocalId,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool updateResourceIndexesInNote(
+        const QList<std::pair<QString, int>> & resourceLocalIdsWithIndexesInNote,
+        ErrorString & errorDescription);
+
     template <class T>
     [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
         const LocalStorageManager::ListObjectsOptions & flag,
