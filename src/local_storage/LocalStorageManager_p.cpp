@@ -3025,14 +3025,8 @@ QList<qevercloud::Note> LocalStorageManagerPrivate::listNotesImpl(
 {
     bool withResourceMetadata = (options & GetNoteOption::WithResourceMetadata);
 
-    GetResourceOptions resourceOptions =
-        ((options & GetNoteOption::WithResourceBinaryData)
-             ? GetResourceOption::WithBinaryData
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-             : GetResourceOptions());
-#else
-             : GetResourceOptions(0));
-#endif
+    bool withResourceBinaryData =
+        (options & GetNoteOption::WithResourceBinaryData);
 
     // Will run all the queries from this method and its sub-methods within
     // a single transaction to prevent multiple drops and re-obtainings of
@@ -3067,23 +3061,44 @@ QList<qevercloud::Note> LocalStorageManagerPrivate::listNotesImpl(
             errorDescription.appendBase(error.additionalBases());
             errorDescription.details() = error.details();
             QNWARNING("local_storage", errorDescription);
-            notes.clear();
-            return notes;
+            return {};
         }
 
         if (withResourceMetadata) {
             error.clear();
-            if (!findAndSetResourcesPerNote(note, resourceOptions, error)) {
+            auto resources = listResourcesPerNoteLocalId(
+                note.localId(), withResourceBinaryData, error);
+            if (!error.isEmpty()) {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
                 errorDescription.details() = error.details();
                 QNWARNING("local_storage", errorDescription);
-                notes.clear();
-                return notes;
+                return {};
+            }
+
+            if (!resources.isEmpty()) {
+                note.setResources(std::move(resources));
             }
         }
 
+        if (note.guid()) {
+            error.clear();
+            auto sharedNotes = listSharedNotesPerNoteGuid(*note.guid(), error);
+            if (!error.isEmpty()) {
+                errorDescription.appendBase(error.base());
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                QNWARNING("local_storage", errorDescription);
+                return {};
+            }
+
+            if (!sharedNotes.isEmpty()) {
+                note.setSharedNotes(std::move(sharedNotes));
+            }
+        }
+
+        error.clear();
         if (!checkNote(note, error)) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
@@ -3325,14 +3340,8 @@ NoteList LocalStorageManagerPrivate::findNotesWithSearchQuery(
     const bool withResourceMetadata =
         (options & GetNoteOption::WithResourceMetadata);
 
-    const GetResourceOptions resourceOptions =
-        ((options & GetNoteOption::WithResourceBinaryData)
-             ? GetResourceOption::WithBinaryData
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-             : GetResourceOptions());
-#else
-             : GetResourceOptions(0));
-#endif
+    const bool withResourceBinaryData =
+        (options & GetNoteOption::WithResourceBinaryData);
 
     NoteList notes;
     notes.reserve(qMax(query.size(), 0));
@@ -3371,20 +3380,23 @@ NoteList LocalStorageManagerPrivate::findNotesWithSearchQuery(
 
         if (withResourceMetadata) {
             error.clear();
-            if (!findAndSetResourcesPerNote(note, resourceOptions, error)) {
+            auto resources = listResourcesPerNoteLocalId(
+                note.localId(), withResourceBinaryData, error);
+            if (!error.isEmpty()) {
                 errorDescription.base() = errorPrefix.base();
-                errorDescription.appendBase(
-                    QT_TR_NOOP("can't fetch note's resources"));
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
                 errorDescription.details() = error.details();
                 QNWARNING("local_storage", errorDescription);
                 return {};
             }
+
+            if (!resources.isEmpty()) {
+                note.setResources(std::move(resources));
+            }
         }
 
-        if (note.guid())
-        {
+        if (note.guid()) {
             error.clear();
             auto sharedNotes = listSharedNotesPerNoteGuid(*note.guid(), error);
             if (!error.isEmpty()) {
@@ -13316,78 +13328,6 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
     return true;
 }
 
-bool LocalStorageManagerPrivate::findAndSetResourcesPerNote(
-    qevercloud::Note & note, const GetResourceOptions options,
-    ErrorString & errorDescription) const
-{
-    const ErrorString errorPrefix(QT_TR_NOOP("can't find resources for note"));
-    const QString noteLocalId = note.localId();
-
-    const QString queryString =
-        QString::fromUtf8(
-            "SELECT localResource FROM NoteResources WHERE localNote='%1'")
-            .arg(sqlEscapeString(noteLocalId));
-
-    QSqlQuery query(m_sqlDatabase);
-    const bool res = query.exec(queryString);
-    DATABASE_CHECK_AND_SET_ERROR()
-
-    QStringList resourceLocalIds;
-    resourceLocalIds.reserve(std::max(query.size(), 0));
-
-    while (query.next()) {
-        const QSqlRecord rec = query.record();
-        const int index = rec.indexOf(QStringLiteral("localResource"));
-        if (Q_UNLIKELY(index < 0)) {
-            continue;
-        }
-
-        QVariant value = rec.value(index);
-        if (Q_UNLIKELY(value.isNull())) {
-            continue;
-        }
-
-        const QString resourceLocalId = value.toString();
-        resourceLocalIds << resourceLocalId;
-        QNTRACE(
-            "local_storage", "Found resource's local id: " << resourceLocalId);
-    }
-
-    const int numResources = resourceLocalIds.size();
-    QNTRACE("local_storage", "Found " << numResources << " resources");
-
-    ErrorString error;
-    QList<qevercloud::Resource> resources;
-    resources.reserve(std::max(numResources, 0));
-    for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
-        resources << qevercloud::Resource();
-        auto & resource = resources.back();
-        resource.setLocalId(resourceLocalId);
-
-        error.clear();
-        bool res = findEnResource(resource, options, error);
-        if (Q_UNLIKELY(!res)) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            QNWARNING("local_storage", errorDescription);
-            return false;
-        }
-
-        QNTRACE(
-            "local_storage",
-            "Found resource with local id " << resource.localId()
-                                            << " for note with local id "
-                                            << noteLocalId);
-    }
-
-    std::sort(resources.begin(), resources.end(), ResourceCompareByIndex());
-    note.setResources(resources);
-
-    return true;
-}
-
 void LocalStorageManagerPrivate::sortSharedNotebooks(
     qevercloud::Notebook & notebook) const
 {
@@ -15260,9 +15200,7 @@ QString
 LocalStorageManagerPrivate::listObjectsGenericSqlQuery<qevercloud::Note>() const
 {
     QString result = QStringLiteral(
-        "SELECT * FROM Notes LEFT OUTER JOIN SharedNotes "
-        "ON ((Notes.guid IS NOT NULL) AND "
-        "(Notes.guid = SharedNotes.sharedNoteNoteGuid)) "
+        "SELECT * FROM Notes "
         "LEFT OUTER JOIN NoteRestrictions ON "
         "Notes.localUid = NoteRestrictions.noteLocalUid "
         "LEFT OUTER JOIN NoteLimits ON "

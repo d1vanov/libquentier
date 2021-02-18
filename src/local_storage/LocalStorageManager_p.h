@@ -716,11 +716,6 @@ private:
     [[nodiscard]] bool findAndSetTagIdsPerNote(
         qevercloud::Note & note, ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool findAndSetResourcesPerNote(
-        qevercloud::Note & note,
-        const LocalStorageManager::GetResourceOptions options,
-        ErrorString & errorDescription) const;
-
     void sortSharedNotebooks(qevercloud::Notebook & notebook) const;
 
     [[nodiscard]] bool noteSearchQueryToSQL(
