@@ -411,7 +411,7 @@ private:
 
     [[nodiscard]] bool insertOrReplaceSharedNotebook(
         const qevercloud::SharedNotebook & sharedNotebook,
-        ErrorString & errorDescription);
+        const int indexInNotebook, ErrorString & errorDescription);
 
     [[nodiscard]] bool rowExists(
         const QString & tableName, const QString & uniqueKeyName,
@@ -696,7 +696,7 @@ private:
 
     [[nodiscard]] bool fillSharedNotebookFromSqlRecord(
         const QSqlRecord & record, qevercloud::SharedNotebook & sharedNotebook,
-        ErrorString & errorDescription) const;
+        int & indexInNotebook, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool fillLinkedNotebookFromSqlRecord(
         const QSqlRecord & record, qevercloud::LinkedNotebook & linkedNotebook,
@@ -796,20 +796,6 @@ private:
     void clearDatabaseFile();
 
     void clearCachedQueries();
-
-    struct SharedNotebookCompareByIndex
-    {
-        [[nodiscard]] bool operator()(
-            const qevercloud::SharedNotebook & lhs,
-            const qevercloud::SharedNotebook & rhs) const noexcept;
-    };
-
-    struct ResourceCompareByIndex
-    {
-        [[nodiscard]] bool operator()(
-            const qevercloud::Resource & lhs,
-            const qevercloud::Resource & rhs) const noexcept;
-    };
 
     struct QStringIntPairCompareByInt
     {
