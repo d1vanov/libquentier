@@ -2040,38 +2040,13 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         localStorageManager.findDefaultNotebook(defaultNotebook, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    // Check FindLastUsedNotebook (failure expected)
-    qevercloud::Notebook lastUsedNotebook;
-
-    VERIFY2(
-        !localStorageManager.findLastUsedNotebook(
-            lastUsedNotebook, errorMessage),
-        "Found some last used notebook which shouldn't have been found: "
-            << lastUsedNotebook);
-
-    // Check FindDefaultOrLastUsedNotebook
-    qevercloud::Notebook defaultOrLastUsedNotebook;
-
-    QVERIFY2(
-        localStorageManager.findDefaultOrLastUsedNotebook(
-            defaultOrLastUsedNotebook, errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
-
-    VERIFY2(
-        defaultOrLastUsedNotebook == defaultNotebook,
-        "Found defaultOrLastUsed notebook which "
-            << "should be the same as default notebook "
-            << "right now but it is not. "
-            << "Default notebook: " << defaultNotebook
-            << ", defaultOrLastUsedNotebook: " << defaultOrLastUsedNotebook);
-
     // Check Update + Find
     qevercloud::Notebook modifiedNotebook(notebook);
 
     modifiedNotebook.setUpdateSequenceNum(
         notebook.updateSequenceNum().value() + 1);
 
-    modifiedNotebook.setLinkedNotebookGuid(QString{});
+    modifiedNotebook.setLinkedNotebookGuid(std::nullopt);
 
     modifiedNotebook.setName(
         notebook.name().value() + QStringLiteral("_modified"));
@@ -2152,30 +2127,6 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         !localStorageManager.findDefaultNotebook(defaultNotebook, errorMessage),
         "Found some default notebook which shouldn't have been found: "
             << defaultNotebook);
-
-    // Check FindLastUsedNotebook
-    lastUsedNotebook = qevercloud::Notebook();
-
-    QVERIFY2(
-        localStorageManager.findLastUsedNotebook(
-            lastUsedNotebook, errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
-
-    // Check FindDefaultOrLastUsedNotebook
-    defaultOrLastUsedNotebook = qevercloud::Notebook();
-
-    QVERIFY2(
-        localStorageManager.findDefaultOrLastUsedNotebook(
-            defaultOrLastUsedNotebook, errorMessage),
-        qPrintable(errorMessage.nonLocalizedString()));
-
-    VERIFY2(
-        defaultOrLastUsedNotebook == lastUsedNotebook,
-        "Found defaultOrLastUsed notebook which "
-            << "should be the same as last used notebook "
-            << "right now but it is not. "
-            << "Last used notebook: " << lastUsedNotebook
-            << "\nDefaultOrLastUsedNotebook: " << defaultOrLastUsedNotebook);
 
     // Check notebookCount to return 1
     int count = localStorageManager.notebookCount(errorMessage);

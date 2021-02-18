@@ -1083,8 +1083,6 @@ bool LocalStorageManagerPrivate::findNotebook(
             "SELECT * FROM Notebooks "
             "LEFT OUTER JOIN NotebookRestrictions ON "
             "Notebooks.localUid = NotebookRestrictions.localUid "
-            "LEFT OUTER JOIN SharedNotebooks ON "
-            "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
             "LEFT OUTER JOIN Users ON "
             "Notebooks.contactId = Users.id "
             "LEFT OUTER JOIN UserAttributes ON "
@@ -1127,10 +1125,26 @@ bool LocalStorageManagerPrivate::findNotebook(
     const bool res = query.exec(queryString);
     DATABASE_CHECK_AND_SET_ERROR()
 
-    quint32 counter = 0;
-    while (query.next()) {
-        ErrorString error;
-        if (!fillNotebookFromSqlRecord(query.record(), result, error)) {
+    if (!query.next()) {
+        return false;
+    }
+
+    ErrorString error;
+    if (!fillNotebookFromSqlRecord(query.record(), result, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage", errorDescription);
+        return false;
+    }
+
+    if (result.guid())
+    {
+        error.clear();
+        auto sharedNotebooks = listSharedNotebooksPerNotebookGuid(
+            *result.guid(), error);
+        if (!error.isEmpty()) {
             errorDescription.base() = errorPrefix.base();
             errorDescription.appendBase(error.base());
             errorDescription.appendBase(error.additionalBases());
@@ -1139,14 +1153,11 @@ bool LocalStorageManagerPrivate::findNotebook(
             return false;
         }
 
-        ++counter;
+        if (!sharedNotebooks.isEmpty()) {
+            result.setSharedNotebooks(std::move(sharedNotebooks));
+        }
     }
 
-    if (!counter) {
-        return false;
-    }
-
-    sortSharedNotebooks(result);
     notebook = result;
     return true;
 }
@@ -1162,8 +1173,6 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(
         "SELECT * FROM Notebooks "
         "LEFT OUTER JOIN NotebookRestrictions ON "
         "Notebooks.localUid = NotebookRestrictions.localUid "
-        "LEFT OUTER JOIN SharedNotebooks ON "
-        "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
         "LEFT OUTER JOIN Users ON "
         "Notebooks.contactId = Users.id "
         "LEFT OUTER JOIN UserAttributes ON "
@@ -1200,7 +1209,25 @@ bool LocalStorageManagerPrivate::findDefaultNotebook(
         return false;
     }
 
-    sortSharedNotebooks(result);
+    if (result.guid())
+    {
+        error.clear();
+        auto sharedNotebooks = listSharedNotebooksPerNotebookGuid(
+            *result.guid(), error);
+        if (!error.isEmpty()) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage", errorDescription);
+            return false;
+        }
+
+        if (!sharedNotebooks.isEmpty()) {
+            result.setSharedNotebooks(std::move(sharedNotebooks));
+        }
+    }
+
     notebook = result;
     return true;
 }
@@ -1216,8 +1243,6 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(
         "SELECT * FROM Notebooks "
         "LEFT OUTER JOIN NotebookRestrictions ON "
         "Notebooks.localUid = NotebookRestrictions.localUid "
-        "LEFT OUTER JOIN SharedNotebooks ON "
-        "Notebooks.guid = SharedNotebooks.sharedNotebookNotebookGuid "
         "LEFT OUTER JOIN Users ON "
         "Notebooks.contactId = Users.id "
         "LEFT OUTER JOIN UserAttributes ON "
@@ -1254,7 +1279,25 @@ bool LocalStorageManagerPrivate::findLastUsedNotebook(
         return false;
     }
 
-    sortSharedNotebooks(result);
+    if (result.guid())
+    {
+        error.clear();
+        auto sharedNotebooks = listSharedNotebooksPerNotebookGuid(
+            *result.guid(), error);
+        if (!error.isEmpty()) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage", errorDescription);
+            return false;
+        }
+
+        if (!sharedNotebooks.isEmpty()) {
+            result.setSharedNotebooks(std::move(sharedNotebooks));
+        }
+    }
+
     notebook = result;
     return true;
 }
@@ -7220,6 +7263,15 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
         DATABASE_CHECK_AND_SET_ERROR()
     }
 
+    {
+        QSqlQuery query(m_sqlDatabase);
+        const bool res = query.exec(
+            QString::fromUtf8(
+                "DELETE FROM NotebookRestrictions WHERE localUid='%1'")
+                .arg(localId));
+        DATABASE_CHECK_AND_SET_ERROR()
+    }
+
     if (notebook.restrictions()) {
         ErrorString error;
         if (!insertOrReplaceNotebookRestrictions(
@@ -7232,29 +7284,19 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
             return false;
         }
     }
-    else {
-        const QString queryString =
-            QString::fromUtf8(
-                "DELETE FROM NotebookRestrictions WHERE localUid='%1'")
-                .arg(localId);
-
-        QSqlQuery query(m_sqlDatabase);
-        const bool res = query.exec(queryString);
-        DATABASE_CHECK_AND_SET_ERROR()
-    }
 
     if (notebook.guid()) {
         const QString guid = sqlEscapeString(*notebook.guid());
-        const QString queryString = QString::fromUtf8(
-                                        "DELETE FROM SharedNotebooks WHERE "
-                                        "sharedNotebookNotebookGuid='%1'")
-                                        .arg(guid);
-
         QSqlQuery query(m_sqlDatabase);
-        const bool res = query.exec(queryString);
+        const bool res = query.exec(
+            QString::fromUtf8(
+                "DELETE FROM SharedNotebooks WHERE "
+                "sharedNotebookNotebookGuid='%1'").arg(guid));
         DATABASE_CHECK_AND_SET_ERROR()
 
-        if (notebook.sharedNotebooks()) {
+        if (notebook.sharedNotebooks() &&
+            !notebook.sharedNotebooks()->isEmpty())
+        {
             const auto & sharedNotebooks = *notebook.sharedNotebooks();
             for (int i = 0, size = sharedNotebooks.size(); i < size; ++i) {
                 const auto & sharedNotebook = sharedNotebooks[i];
@@ -12672,8 +12714,7 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
     if (linkedNotebookGuidIndex >= 0) {
         const QVariant value = record.value(linkedNotebookGuidIndex);
         if (!value.isNull()) {
-            notebook.mutableLocalData().insert(
-                QStringLiteral("linkedNotebookGuid"), value.toString());
+            notebook.setLinkedNotebookGuid(value.toString());
         }
     }
 
@@ -12787,23 +12828,6 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
         qevercloud::SharedNotebookInstanceRestrictions)
 
 #undef SET_SHARED_NOTEBOOK_RESTRICTION
-
-    if (notebook.guid()) {
-        qevercloud::SharedNotebook sharedNotebook;
-        if (!fillSharedNotebookFromSqlRecord(
-                record, sharedNotebook, errorDescription)) {
-            return false;
-        }
-
-        if (sharedNotebook.notebookGuid()) {
-            if (!notebook.sharedNotebooks()) {
-                notebook.mutableSharedNotebooks() =
-                    QList<qevercloud::SharedNotebook>();
-            }
-
-            notebook.mutableSharedNotebooks()->push_back(sharedNotebook);
-        }
-    }
 
     return true;
 }
@@ -13326,24 +13350,6 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
     note.setTagGuids(tagGuids);
 
     return true;
-}
-
-void LocalStorageManagerPrivate::sortSharedNotebooks(
-    qevercloud::Notebook & notebook) const
-{
-    if (!notebook.sharedNotebooks()) {
-        return;
-    }
-
-    // Sort shared notebooks to ensure the correct order for proper work
-    // of comparison operators
-    auto sharedNotebooks = *notebook.sharedNotebooks();
-
-    std::sort(
-        sharedNotebooks.begin(), sharedNotebooks.end(),
-        SharedNotebookCompareByIndex());
-
-    notebook.setSharedNotebooks(std::move(sharedNotebooks));
 }
 
 bool LocalStorageManagerPrivate::noteSearchQueryToSQL(
@@ -15483,7 +15489,23 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery<qevercloud::Notebook>(
             return false;
         }
 
-        sortSharedNotebooks(notebook);
+        if (notebook.guid())
+        {
+            ErrorString error;
+            auto sharedNotebooks = listSharedNotebooksPerNotebookGuid(
+                *notebook.guid(), error);
+            if (!error.isEmpty()) {
+                errorDescription.base() = error.base();
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                QNWARNING("local_storage", errorDescription);
+                return false;
+            }
+
+            if (!sharedNotebooks.isEmpty()) {
+                notebook.setSharedNotebooks(std::move(sharedNotebooks));
+            }
+        }
     }
 
     return true;
@@ -15521,12 +15543,7 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Notebook>(
     const QSqlRecord & rec, qevercloud::Notebook & notebook,
     ErrorString & errorDescription) const
 {
-    if (!fillNotebookFromSqlRecord(rec, notebook, errorDescription)) {
-        return false;
-    }
-
-    sortSharedNotebooks(notebook);
-    return true;
+    return fillNotebookFromSqlRecord(rec, notebook, errorDescription);
 }
 
 template <>

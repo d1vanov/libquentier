@@ -716,8 +716,6 @@ private:
     [[nodiscard]] bool findAndSetTagIdsPerNote(
         qevercloud::Note & note, ErrorString & errorDescription) const;
 
-    void sortSharedNotebooks(qevercloud::Notebook & notebook) const;
-
     [[nodiscard]] bool noteSearchQueryToSQL(
         const NoteSearchQuery & noteSearchQuery, QString & sql,
         ErrorString & errorDescription) const;
