@@ -2179,14 +2179,12 @@ void TestFindNotebookByNameWithDiacritics()
     notebook1.setUpdateSequenceNum(1);
     notebook1.setName(QStringLiteral("notebook"));
     notebook1.setDefaultNotebook(false);
-    notebook1.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     qevercloud::Notebook notebook2;
     notebook2.setGuid(UidGenerator::Generate());
     notebook2.setUpdateSequenceNum(2);
     notebook2.setName(QStringLiteral("notébook"));
     notebook2.setDefaultNotebook(false);
-    notebook2.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     ErrorString errorMessage;
 
@@ -2200,7 +2198,7 @@ void TestFindNotebookByNameWithDiacritics()
 
     qevercloud::Notebook notebookToFind;
     notebookToFind.setLocalId(QString{});
-    notebookToFind.setName(notebook1.name());
+    notebookToFind.setName(*notebook1.name());
 
     QVERIFY2(
         localStorageManager.findNotebook(notebookToFind, errorMessage),
@@ -2370,7 +2368,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         user == foundUser,
         "Added and found users in the local storage don't "
             << "match: user added to the local storage: " << user
-            << "\nIUser found in the local storage: " << foundUser);
+            << "\nUser found in the local storage: " << foundUser);
 
     // Check Update + Find
     qevercloud::User modifiedUser;
@@ -2462,7 +2460,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         modifiedUser == foundUser,
         "Updated and found users in the local storage don't match: "
             << "User updated in the local storage: " << modifiedUser
-            << "\nIUser found in the local storage: " << foundUser);
+            << "\nUser found in the local storage: " << foundUser);
 
     // Check userCount to return 1
     int count = localStorageManager.userCount(errorMessage);
@@ -2492,7 +2490,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         modifiedUser == foundUser,
         "Deleted and found users in the local storage don't match"
             << ": User marked deleted in the local storage: " << modifiedUser
-            << "\nIUser found in the local storage: " << foundUser);
+            << "\nUser found in the local storage: " << foundUser);
 
     // Check userCount to return 0 (as it doesn't account for deleted resources)
     count = localStorageManager.userCount(errorMessage);
@@ -2517,7 +2515,7 @@ void TestUserAddFindUpdateDeleteExpungeInLocalStorage()
         "Error: found User which should have "
         "been expunged from the local storage: "
             << "User expunged from the local storage: " << modifiedUser
-            << "\nIUser found in the local storage: " << foundUser);
+            << "\nUser found in the local storage: " << foundUser);
 }
 
 void TestSequentialUpdatesInLocalStorage()
@@ -2915,22 +2913,13 @@ void TestSequentialUpdatesInLocalStorage()
         qPrintable(errorMessage.nonLocalizedString()));
 
     // 14) Remove resource attributes from note's resource and update it again
-    auto resources = *updatedNote.resources();
-
     VERIFY2(
-        !resources.empty(),
+        updatedNote.resources() && !updatedNote.resources()->isEmpty(),
         "Note returned empty list of resources "
             << "while it should have contained at least "
             << "one entry, updated note: " << updatedNote);
 
-    auto & updatedResource = resources[0];
-
-    auto & underlyngResourceAttributes =
-        updatedResource.mutableAttributes().value();
-
-    underlyngResourceAttributes = qevercloud::ResourceAttributes();
-
-    updatedNote.setResources(resources);
+    updatedNote.mutableResources()->begin()->setAttributes(std::nullopt);
 
     QVERIFY2(
         localStorageManager.updateNote(
@@ -2942,7 +2931,7 @@ void TestSequentialUpdatesInLocalStorage()
         localStorageManager.findNote(foundNote, getNoteOptions, errorMessage),
         qPrintable(errorMessage.nonLocalizedString()));
 
-    resources = foundNote.resources().value();
+    auto resources = foundNote.resources().value();
 
     VERIFY2(
         !resources.empty(),
@@ -2951,12 +2940,10 @@ void TestSequentialUpdatesInLocalStorage()
             << "at least one entry, found note: " << foundNote);
 
     auto & foundResource = resources[0];
-    auto & foundResourceAttributes = foundResource.attributes().value();
-
     VERIFY2(
-        !foundResourceAttributes.applicationData(),
-        "Resource from updated note has application "
-            << "data while it shouldn't have it, found resource: "
+        !foundResource.attributes(),
+        "Resource from updated note has attributes "
+            << "while it shouldn't have it, found resource: "
             << foundResource);
 }
 

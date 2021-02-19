@@ -7113,8 +7113,8 @@ bool LocalStorageManagerPrivate::insertOrReplaceNotebook(
 
         query.bindValue(
             QStringLiteral(":isDefault"),
-            (notebook.defaultNotebook()
-                 ? static_cast<int>(*notebook.defaultNotebook())
+            (notebook.defaultNotebook() && *notebook.defaultNotebook()
+                 ? 1
                  : nullValue));
 
         bool isLastUsed = false;
