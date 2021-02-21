@@ -1361,9 +1361,11 @@ LocalStorageManagerPrivate::listAllSharedNotebooks(
         return {};
     }
 
-    QMap<int, qevercloud::SharedNotebook> sharedNotebooksByIndex;
+    QList<qevercloud::SharedNotebook> sharedNotebooks;
+    sharedNotebooks.reserve(qMax(query.size(), 0));
     while (query.next()) {
-        qevercloud::SharedNotebook sharedNotebook;
+        sharedNotebooks << qevercloud::SharedNotebook{};
+        auto & sharedNotebook = sharedNotebooks.back();
         int indexInNotebook = -1;
         ErrorString error;
         if (!fillSharedNotebookFromSqlRecord(
@@ -1375,14 +1377,6 @@ LocalStorageManagerPrivate::listAllSharedNotebooks(
             QNWARNING("local_storage", errorDescription);
             return {};
         }
-
-        sharedNotebooksByIndex[indexInNotebook] = sharedNotebook;
-    }
-
-    QList<qevercloud::SharedNotebook> sharedNotebooks;
-    sharedNotebooks.reserve(qMax(sharedNotebooksByIndex.size(), 0));
-    for (const auto it: qevercloud::toRange(sharedNotebooksByIndex)) {
-        sharedNotebooks << it.value();
     }
 
     const int sharedNotebookCount = sharedNotebooks.size();
@@ -2352,7 +2346,10 @@ bool LocalStorageManagerPrivate::addNote(
         return false;
     }
 
-    note.setNotebookGuid(notebookGuid);
+    note.setNotebookGuid(
+        notebookGuid.isEmpty()
+        ? std::nullopt
+        : std::make_optional(std::move(notebookGuid)));
 
     error.clear();
     if (!checkNote(note, error)) {
@@ -2462,7 +2459,10 @@ bool LocalStorageManagerPrivate::updateNote(
         return false;
     }
 
-    note.setNotebookGuid(notebookGuid);
+    note.setNotebookGuid(
+        notebookGuid.isEmpty()
+        ? std::nullopt
+        : std::make_optional(std::move(notebookGuid)));
 
     error.clear();
     if (!checkNote(note, error)) {
@@ -3174,7 +3174,10 @@ bool LocalStorageManagerPrivate::expungeNote(
         return false;
     }
 
-    note.setNotebookGuid(notebookGuid);
+    note.setNotebookGuid(
+        notebookGuid.isEmpty()
+        ? std::nullopt
+        : std::make_optional(std::move(notebookGuid)));
 
     QString localId = note.localId();
 
@@ -8633,10 +8636,13 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             }
 
             if (hasTagLocalIds) {
-                note.setTagGuids(tagComplementedIds);
+                note.setTagGuids(
+                    tagComplementedIds.isEmpty()
+                    ? std::nullopt
+                    : std::make_optional(std::move(tagComplementedIds)));
             }
             else {
-                note.setTagLocalIds(tagComplementedIds);
+                note.setTagLocalIds(std::move(tagComplementedIds));
             }
         }
 
@@ -12607,19 +12613,17 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
         }                                                                      \
     }
 
-    if (notebook.published() && *notebook.published()) {
-        CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
-            publishingUri, setUri, QString, QString);
+    CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
+        publishingUri, setUri, QString, QString);
 
-        CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
-            publishingNoteSortOrder, setOrder, int, qevercloud::NoteSortOrder);
+    CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
+        publishingNoteSortOrder, setOrder, int, qevercloud::NoteSortOrder);
 
-        CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
-            publishingAscendingSort, setAscending, int, bool);
+    CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
+        publishingAscendingSort, setAscending, int, bool);
 
-        CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
-            publicDescription, setPublicDescription, QString, QString);
-    }
+    CHECK_AND_SET_NOTEBOOK_ATTRIBUTE(
+        publicDescription, setPublicDescription, QString, QString);
 
 #undef CHECK_AND_SET_NOTEBOOK_ATTRIBUTE
 
@@ -13325,7 +13329,10 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
         tagGuids << guid;
     }
 
-    note.setTagGuids(tagGuids);
+    note.setTagGuids(
+        tagGuids.isEmpty()
+        ? std::nullopt
+        : std::make_optional(std::move(tagGuids)));
 
     return true;
 }
