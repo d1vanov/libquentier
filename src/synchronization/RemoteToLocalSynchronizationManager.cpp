@@ -6508,7 +6508,7 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
     }
 
     if (Q_UNLIKELY(m_numNotesDownloaded == m_originalNumberOfNotes)) {
-        QNWARNING(
+        QNDEBUG(
             "synchronization:remote_to_local",
             "The count of downloaded "
                 << "notes (" << m_numNotesDownloaded << ") is already equal to "
