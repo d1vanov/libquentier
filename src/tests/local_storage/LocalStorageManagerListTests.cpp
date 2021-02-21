@@ -1085,7 +1085,7 @@ void TestListNotes()
         QStringLiteral("00000000-0000-0000-c000-000000000049"));
     notebookNotLinkedWithNotes.setUpdateSequenceNum(1);
     notebookNotLinkedWithNotes.setName(
-        QStringLiteral("Fake notebook not linked with notes name name"));
+        QStringLiteral("Fake notebook not linked with notes name"));
     notebookNotLinkedWithNotes.setServiceCreated(1);
     notebookNotLinkedWithNotes.setServiceUpdated(1);
 
@@ -1150,7 +1150,7 @@ void TestListNotes()
             note.mutableTagLocalIds().append(secondTestTag.localId());
         }
 
-        note.setUpdated(i + 1);
+        note.setUpdateSequenceNum(i + 1);
         note.setTitle(QStringLiteral("Fake note title #") + QString::number(i));
 
         note.setContent(
