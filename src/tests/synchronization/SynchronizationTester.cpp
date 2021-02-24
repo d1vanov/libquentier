@@ -4260,6 +4260,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setNotebookGuid(firstNotebook.guid());
+    firstNote.setNotebookLocalId(firstNotebook.localId());
     firstNote.setTitle(QStringLiteral("First note"));
     firstNote.setContent(
         QStringLiteral("<en-note><div>First note</div></en-note>"));
@@ -4276,6 +4277,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note secondNote;
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setNotebookGuid(firstNotebook.guid());
+    secondNote.setNotebookLocalId(firstNotebook.localId());
     secondNote.setTitle(QStringLiteral("Second note"));
 
     secondNote.setContent(
@@ -4293,12 +4295,16 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
         QList<qevercloud::Guid>{} << firstTag.guid().value()
         << secondTag.guid().value());
 
+    secondNote.setTagLocalIds(
+        QStringList{} << firstTag.localId() << secondTag.localId());
+
     res = m_pFakeNoteStore->setNote(secondNote, errorDescription);
     QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
 
     qevercloud::Note thirdNote;
     thirdNote.setGuid(UidGenerator::Generate());
     thirdNote.setNotebookGuid(firstNotebook.guid());
+    thirdNote.setNotebookLocalId(firstNotebook.localId());
     thirdNote.setTitle(QStringLiteral("Third note"));
 
     thirdNote.setContent(
@@ -4312,10 +4318,12 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     thirdNote.setCreated(QDateTime::currentMSecsSinceEpoch());
     thirdNote.setUpdated(*thirdNote.created());
     thirdNote.setTagGuids(QList<qevercloud::Guid>{} << thirdTag.guid().value());
+    thirdNote.setTagLocalIds(QStringList{} << thirdTag.localId());
 
     qevercloud::Resource thirdNoteFirstResource;
     thirdNoteFirstResource.setGuid(UidGenerator::Generate());
     thirdNoteFirstResource.setNoteGuid(thirdNote.guid());
+    thirdNoteFirstResource.setNoteLocalId(thirdNote.localId());
     thirdNoteFirstResource.setMime(QStringLiteral("text/plain"));
 
     thirdNoteFirstResource.setData(qevercloud::Data{});
@@ -4340,6 +4348,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note fourthNote;
     fourthNote.setGuid(UidGenerator::Generate());
     fourthNote.setNotebookGuid(secondNotebook.guid());
+    fourthNote.setNotebookLocalId(secondNotebook.localId());
     fourthNote.setTitle(QStringLiteral("Fourth note"));
 
     fourthNote.setContent(
@@ -4358,6 +4367,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note fifthNote;
     fifthNote.setGuid(UidGenerator::Generate());
     fifthNote.setNotebookGuid(thirdNotebook.guid());
+    fifthNote.setNotebookLocalId(thirdNotebook.localId());
     fifthNote.setTitle(QStringLiteral("Fifth note"));
 
     fifthNote.setContent(
@@ -4376,6 +4386,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note sixthNote;
     sixthNote.setGuid(UidGenerator::Generate());
     sixthNote.setNotebookGuid(fourthNotebook.guid());
+    sixthNote.setNotebookLocalId(fourthNotebook.localId());
     sixthNote.setTitle(QStringLiteral("Sixth note"));
 
     sixthNote.setContent(
@@ -4394,6 +4405,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Note seventhNote;
     seventhNote.setGuid(UidGenerator::Generate());
     seventhNote.setNotebookGuid(fourthNotebook.guid());
+    seventhNote.setNotebookLocalId(fourthNotebook.localId());
     seventhNote.setTitle(QStringLiteral("Seventh note"));
 
     seventhNote.setContent(
@@ -4410,6 +4422,7 @@ void SynchronizationTester::setUserOwnItemsToRemoteStorage()
     qevercloud::Resource seventhNoteFirstResource;
     seventhNoteFirstResource.setGuid(UidGenerator::Generate());
     seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setNoteLocalId(seventhNote.localId());
     seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
 
     seventhNoteFirstResource.setData(qevercloud::Data{});
@@ -4580,6 +4593,9 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     firstLinkedNotebookThirdTag.setParentGuid(
         firstLinkedNotebookSecondTag.guid());
 
+    firstLinkedNotebookThirdTag.setParentTagLocalId(
+        firstLinkedNotebookSecondTag.localId());
+
     res =
         m_pFakeNoteStore->setTag(firstLinkedNotebookThirdTag, errorDescription);
 
@@ -4706,6 +4722,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     qevercloud::Note firstNote;
     firstNote.setGuid(UidGenerator::Generate());
     firstNote.setNotebookGuid(firstNotebook.guid());
+    firstNote.setNotebookLocalId(firstNotebook.localId());
     firstNote.setTitle(QStringLiteral("First linked notebook first note"));
 
     firstNote.setContent(
@@ -4725,6 +4742,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     qevercloud::Note secondNote;
     secondNote.setGuid(UidGenerator::Generate());
     secondNote.setNotebookGuid(firstNotebook.guid());
+    secondNote.setNotebookLocalId(firstNotebook.localId());
     secondNote.setTitle(QStringLiteral("First linked notebook second note"));
 
     secondNote.setContent(
@@ -4744,12 +4762,18 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
         << firstLinkedNotebookSecondTag.guid().value()
         << firstLinkedNotebookThirdTag.guid().value());
 
+    secondNote.setTagLocalIds(
+        QStringList{} << firstLinkedNotebookFirstTag.localId()
+        << firstLinkedNotebookSecondTag.localId()
+        << firstLinkedNotebookThirdTag.localId());
+
     res = m_pFakeNoteStore->setNote(secondNote, errorDescription);
     QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
 
     qevercloud::Note thirdNote;
     thirdNote.setGuid(UidGenerator::Generate());
     thirdNote.setNotebookGuid(secondNotebook.guid());
+    thirdNote.setNotebookLocalId(secondNotebook.localId());
     thirdNote.setTitle(QStringLiteral("Second linked notebook first note"));
 
     thirdNote.setContent(
@@ -4767,9 +4791,14 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
         QList<qevercloud::Guid>() << secondLinkedNotebookFirstTag.guid().value()
         << secondLinkedNotebookSecondTag.guid().value());
 
+    thirdNote.setTagLocalIds(
+        QStringList{} << secondLinkedNotebookFirstTag.localId()
+        << secondLinkedNotebookSecondTag.localId());
+
     qevercloud::Resource thirdNoteFirstResource;
     thirdNoteFirstResource.setGuid(UidGenerator::Generate());
     thirdNoteFirstResource.setNoteGuid(thirdNote.guid());
+    thirdNoteFirstResource.setNoteLocalId(thirdNote.localId());
     thirdNoteFirstResource.setMime(QStringLiteral("text/plain"));
 
     thirdNoteFirstResource.setData(qevercloud::Data{});
@@ -4795,6 +4824,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     qevercloud::Note fourthNote;
     fourthNote.setGuid(UidGenerator::Generate());
     fourthNote.setNotebookGuid(secondNotebook.guid());
+    fourthNote.setNotebookLocalId(secondNotebook.localId());
     fourthNote.setTitle(QStringLiteral("Second linked notebook second note"));
 
     fourthNote.setContent(
@@ -4810,12 +4840,15 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fourthNote.setUpdated(*fourthNote.created());
     fourthNote.setTagGuids(
         QList<qevercloud::Guid>{} << secondLinkedNotebookThirdTag.guid().value());
+    fourthNote.setTagLocalIds(
+        QStringList{} << secondLinkedNotebookThirdTag.localId());
     res = m_pFakeNoteStore->setNote(fourthNote, errorDescription);
     QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
 
     qevercloud::Note fifthNote;
     fifthNote.setGuid(UidGenerator::Generate());
     fifthNote.setNotebookGuid(thirdNotebook.guid());
+    fifthNote.setNotebookLocalId(thirdNotebook.localId());
     fifthNote.setTitle(QStringLiteral("Third linked notebook first note"));
 
     fifthNote.setContent(
@@ -4832,12 +4865,16 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     fifthNote.setTagGuids(
         QList<qevercloud::Guid>{} << thirdLinkedNotebookFirstTag.guid().value()
         << thirdLinkedNotebookSecondTag.guid().value());
+    fifthNote.setTagLocalIds(
+        QStringList{} << thirdLinkedNotebookFirstTag.localId()
+        << thirdLinkedNotebookSecondTag.localId());
     res = m_pFakeNoteStore->setNote(fifthNote, errorDescription);
     QVERIFY2(res, qPrintable(errorDescription.nonLocalizedString()));
 
     qevercloud::Note sixthNote;
     sixthNote.setGuid(UidGenerator::Generate());
     sixthNote.setNotebookGuid(thirdNotebook.guid());
+    sixthNote.setNotebookLocalId(thirdNotebook.localId());
     sixthNote.setTitle(QStringLiteral("Third linked notebook second note"));
 
     sixthNote.setContent(
@@ -4857,6 +4894,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     qevercloud::Note seventhNote;
     seventhNote.setGuid(UidGenerator::Generate());
     seventhNote.setNotebookGuid(thirdNotebook.guid());
+    seventhNote.setNotebookLocalId(thirdNotebook.localId());
     seventhNote.setTitle(QStringLiteral("Third linked notebook third note"));
 
     seventhNote.setContent(
@@ -4874,6 +4912,7 @@ void SynchronizationTester::setLinkedNotebookItemsToRemoteStorage()
     qevercloud::Resource seventhNoteFirstResource;
     seventhNoteFirstResource.setGuid(UidGenerator::Generate());
     seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setNoteLocalId(seventhNote.localId());
     seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
 
     seventhNoteFirstResource.setData(qevercloud::Data{});
@@ -4954,7 +4993,7 @@ void SynchronizationTester::
         newResource.mutableData()->setBodyHash(QCryptographicHash::hash(
             *newResource.data()->body(), QCryptographicHash::Md5));
 
-        newResource.setLocallyModified(true);
+        newResource.setLocallyModified(false);
         newResource.setLocalOnly(false);
 
         qevercloud::Note modifiedNote(*pNote);
@@ -5026,7 +5065,7 @@ void SynchronizationTester::
         newResource.mutableData()->setBodyHash(QCryptographicHash::hash(
             *newResource.data()->body(), QCryptographicHash::Md5));
 
-        newResource.setLocallyModified(true);
+        newResource.setLocallyModified(false);
         newResource.setLocalOnly(false);
 
         qevercloud::Note modifiedNote(*pNote);
@@ -5092,7 +5131,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         modifiedSavedSearch.setName(
             modifiedSavedSearch.name().value() + gModifiedRemotelySuffix);
 
-        modifiedSavedSearch.setLocallyModified(true);
+        modifiedSavedSearch.setLocallyModified(false);
         modifiedSavedSearch.setLocalOnly(false);
         modifiedSavedSearch.setUpdateSequenceNum(std::nullopt);
 
@@ -5122,7 +5161,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         qevercloud::Tag modifiedTag(*pTag);
         modifiedTag.setName(
             modifiedTag.name().value() + gModifiedRemotelySuffix);
-        modifiedTag.setLocallyModified(true);
+        modifiedTag.setLocallyModified(false);
         modifiedTag.setLocalOnly(false);
         modifiedTag.setUpdateSequenceNum(std::nullopt);
 
@@ -5152,7 +5191,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         modifiedNotebook.setName(
             modifiedNotebook.name().value() + gModifiedRemotelySuffix);
 
-        modifiedNotebook.setLocallyModified(true);
+        modifiedNotebook.setLocallyModified(false);
         modifiedNotebook.setLocalOnly(false);
         modifiedNotebook.setUpdateSequenceNum(std::nullopt);
 
@@ -5203,7 +5242,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToRemoteStorage()
         qevercloud::Note modifiedNote(*pNote);
         modifiedNote.setTitle(
             modifiedNote.title().value() + gModifiedRemotelySuffix);
-        modifiedNote.setLocallyModified(true);
+        modifiedNote.setLocallyModified(false);
         modifiedNote.setLocalOnly(false);
         modifiedNote.setUpdateSequenceNum(std::nullopt);
 
@@ -5281,7 +5320,7 @@ void SynchronizationTester::setModifiedUserOwnResourcesOnlyToRemoteStorage()
         modifiedResource.mutableData()->setBodyHash(QCryptographicHash::hash(
             *modifiedResource.data()->body(), QCryptographicHash::Md5));
 
-        modifiedResource.setLocallyModified(true);
+        modifiedResource.setLocallyModified(false);
         modifiedResource.setLocalOnly(false);
         modifiedResource.setUpdateSequenceNum(std::nullopt);
 
@@ -5333,7 +5372,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         modifiedLinkedNotebook.setShareName(
             *modifiedLinkedNotebook.shareName() + gModifiedRemotelySuffix);
 
-        modifiedLinkedNotebook.setLocallyModified(true);
+        modifiedLinkedNotebook.setLocallyModified(false);
         modifiedLinkedNotebook.setUpdateSequenceNum(std::nullopt);
 
         res = m_pFakeNoteStore->setLinkedNotebook(
@@ -5363,7 +5402,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         qevercloud::Tag modifiedTag(*pTag);
         modifiedTag.setName(
             modifiedTag.name().value() + gModifiedRemotelySuffix);
-        modifiedTag.setLocallyModified(true);
+        modifiedTag.setLocallyModified(false);
         modifiedTag.setLocalOnly(false);
         modifiedTag.setUpdateSequenceNum(std::nullopt);
 
@@ -5415,7 +5454,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         modifiedNotebook.setName(
             modifiedNotebook.name().value() + gModifiedRemotelySuffix);
 
-        modifiedNotebook.setLocallyModified(true);
+        modifiedNotebook.setLocallyModified(false);
         modifiedNotebook.setLocalOnly(false);
         modifiedNotebook.setUpdateSequenceNum(std::nullopt);
 
@@ -5488,7 +5527,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToRemoteStorage()
         qevercloud::Note modifiedNote(*pNote);
         modifiedNote.setTitle(
             modifiedNote.title().value() + gModifiedRemotelySuffix);
-        modifiedNote.setLocallyModified(true);
+        modifiedNote.setLocallyModified(false);
         modifiedNote.setLocalOnly(false);
         modifiedNote.setUpdateSequenceNum(std::nullopt);
 
@@ -5590,7 +5629,7 @@ void SynchronizationTester::
         modifiedResource.mutableData()->setBodyHash(QCryptographicHash::hash(
             *modifiedResource.data()->body(), QCryptographicHash::Md5));
 
-        modifiedResource.setLocallyModified(true);
+        modifiedResource.setLocallyModified(false);
         modifiedResource.setLocalOnly(false);
         modifiedResource.setUpdateSequenceNum(std::nullopt);
 
@@ -5989,6 +6028,10 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
     QString secondNotebookGuid;
     QString thirdNotebookGuid;
 
+    QString firstNotebookLocalId;
+    QString secondNotebookLocalId;
+    QString thirdNotebookLocalId;
+
     auto notebooks =
         m_pLocalStorageManagerAsync->localStorageManager()->listAllNotebooks(
             errorDescription);
@@ -6005,12 +6048,15 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
         const QString & linkedNotebookGuid = *notebook.linkedNotebookGuid();
         if (linkedNotebookGuid == linkedNotebooks[0].guid()) {
             firstNotebookGuid = *notebook.guid();
+            firstNotebookLocalId = notebook.localId();
         }
         else if (linkedNotebookGuid == linkedNotebooks[1].guid()) {
             secondNotebookGuid = *notebook.guid();
+            secondNotebookLocalId = notebook.localId();
         }
         else if (linkedNotebookGuid == linkedNotebooks[2].guid()) {
             thirdNotebookGuid = *notebook.guid();
+            thirdNotebookLocalId = notebook.localId();
         }
 
         if (!firstNotebookGuid.isEmpty() && !secondNotebookGuid.isEmpty() &&
@@ -6037,6 +6083,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
 
     qevercloud::Note firstLocalNote;
     firstLocalNote.setNotebookGuid(firstNotebookGuid);
+    firstLocalNote.setNotebookLocalId(firstNotebookLocalId);
 
     firstLocalNote.setTitle(
         QStringLiteral("First local note in a linked notebook"));
@@ -6057,6 +6104,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
 
     qevercloud::Note secondLocalNote;
     secondLocalNote.setNotebookGuid(secondNotebookGuid);
+    secondLocalNote.setNotebookLocalId(secondNotebookLocalId);
 
     secondLocalNote.setTitle(
         QStringLiteral("Second local note in a linked notebook"));
@@ -6080,6 +6128,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
 
     qevercloud::Note thirdLocalNote;
     thirdLocalNote.setNotebookGuid(thirdNotebookGuid);
+    thirdLocalNote.setNotebookLocalId(thirdNotebookLocalId);
 
     thirdLocalNote.setTitle(
         QStringLiteral("Third local note in a linked notebook"));
@@ -6121,6 +6170,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToLocalStorage()
 
     qevercloud::Note fourthLocalNote;
     fourthLocalNote.setNotebookGuid(thirdNotebookGuid);
+    fourthLocalNote.setNotebookLocalId(thirdNotebookLocalId);
 
     fourthLocalNote.setTitle(
         QStringLiteral("Fourth local note in a linked notebook"));
@@ -6171,6 +6221,7 @@ void SynchronizationTester::setNewUserOwnItemsToRemoteStorage()
     qevercloud::Note sixthNote;
     sixthNote.setGuid(UidGenerator::Generate());
     sixthNote.setNotebookGuid(fourthNotebook.guid());
+    sixthNote.setNotebookLocalId(fourthNotebook.localId());
     sixthNote.setTitle(QStringLiteral("Sixth note"));
 
     sixthNote.setContent(
@@ -6189,6 +6240,7 @@ void SynchronizationTester::setNewUserOwnItemsToRemoteStorage()
     qevercloud::Note seventhNote;
     seventhNote.setGuid(UidGenerator::Generate());
     seventhNote.setNotebookGuid(fourthNotebook.guid());
+    seventhNote.setNotebookLocalId(fourthNotebook.localId());
     seventhNote.setTitle(QStringLiteral("Seventh note"));
 
     seventhNote.setContent(
@@ -6205,9 +6257,12 @@ void SynchronizationTester::setNewUserOwnItemsToRemoteStorage()
     seventhNote.setTagGuids(
         QList<qevercloud::Guid>{} << fourthTag.guid().value());
 
+    seventhNote.setTagLocalIds(QStringList{} << fourthTag.localId());
+
     qevercloud::Resource seventhNoteFirstResource;
     seventhNoteFirstResource.setGuid(UidGenerator::Generate());
     seventhNoteFirstResource.setNoteGuid(seventhNote.guid());
+    seventhNoteFirstResource.setNoteLocalId(seventhNote.localId());
     seventhNoteFirstResource.setMime(QStringLiteral("text/plain"));
 
     seventhNoteFirstResource.setData(qevercloud::Data{});
@@ -6262,6 +6317,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
         qevercloud::Note newNote;
         newNote.setGuid(UidGenerator::Generate());
         newNote.setNotebookGuid(pNotebook->guid());
+        newNote.setNotebookLocalId(pNotebook->localId());
 
         newNote.setTitle(
             QStringLiteral("New note for linked notebook with guid ") +
@@ -6279,10 +6335,12 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
         newNote.setCreated(QDateTime::currentMSecsSinceEpoch());
         newNote.setUpdated(newNote.created());
         newNote.setTagGuids(QList<qevercloud::Guid>{} << newTag.guid().value());
+        newNote.setTagLocalIds(QStringList{} << newTag.localId());
 
         qevercloud::Resource newNoteResource;
         newNoteResource.setGuid(UidGenerator::Generate());
         newNoteResource.setNoteGuid(newNote.guid());
+        newNoteResource.setNoteLocalId(newNote.localId());
         newNoteResource.setMime(QStringLiteral("text/plain"));
 
         newNoteResource.setData(qevercloud::Data{});
@@ -6365,6 +6423,9 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
     fourthLinkedNotebookSecondTag.setParentGuid(
         fourthLinkedNotebookFirstTag.guid());
 
+    fourthLinkedNotebookSecondTag.setParentTagLocalId(
+        fourthLinkedNotebookFirstTag.localId());
+
     fourthLinkedNotebookSecondTag.setLinkedNotebookGuid(
         fourthLinkedNotebook.guid());
 
@@ -6381,6 +6442,9 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
 
     fourthLinkedNotebookThirdTag.setParentGuid(
         fourthLinkedNotebookSecondTag.guid());
+
+    fourthLinkedNotebookThirdTag.setParentTagLocalId(
+        fourthLinkedNotebookSecondTag.localId());
 
     fourthLinkedNotebookThirdTag.setLinkedNotebookGuid(
         fourthLinkedNotebook.guid());
@@ -6401,6 +6465,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
     qevercloud::Note note;
     note.setGuid(UidGenerator::Generate());
     note.setNotebookGuid(notebook.guid());
+    note.setNotebookLocalId(notebook.localId());
 
     note.setTitle(
         QStringLiteral("First note for linked notebook with guid ") +
@@ -6423,9 +6488,15 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
         << fourthLinkedNotebookSecondTag.guid().value()
         << fourthLinkedNotebookThirdTag.guid().value());
 
+    note.setTagLocalIds(
+        QStringList() << fourthLinkedNotebookFirstTag.localId()
+        << fourthLinkedNotebookSecondTag.localId()
+        << fourthLinkedNotebookThirdTag.localId());
+
     qevercloud::Resource resource;
     resource.setGuid(UidGenerator::Generate());
     resource.setNoteGuid(note.guid());
+    resource.setNoteLocalId(note.localId());
     resource.setMime(QStringLiteral("text/plain"));
     resource.setData(qevercloud::Data{});
     resource.mutableData()->setBody(

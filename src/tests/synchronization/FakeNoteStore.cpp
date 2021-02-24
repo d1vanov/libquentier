@@ -616,6 +616,10 @@ bool FakeNoteStore::setNote(
                 resource.setNoteGuid(note.guid());
             }
 
+            if (resource.noteLocalId().isEmpty()) {
+                resource.setNoteLocalId(note.localId());
+            }
+
             if (!setResource(resource, errorDescription)) {
                 return false;
             }
@@ -2052,6 +2056,10 @@ qint32 FakeNoteStore::createNote(
                 resource.setNoteGuid(note.guid());
             }
 
+            if (resource.noteLocalId().isEmpty()) {
+                resource.setNoteLocalId(note.localId());
+            }
+
             // NOTE: not really sure it should behave this way but let's try:
             // setting each resource's USN to note's USN
             resource.setUpdateSequenceNum(note.updateSequenceNum().value());
@@ -2159,6 +2167,8 @@ qint32 FakeNoteStore::updateNote(
     ++maxUsn;
     note.setUpdateSequenceNum(maxUsn);
 
+    note.setLocallyModified(false);
+
     Q_UNUSED(index.replace(it, note))
 
     if (note.resources() && !note.resources()->isEmpty()) {
@@ -2170,6 +2180,10 @@ qint32 FakeNoteStore::updateNote(
 
             if (!resource.noteGuid()) {
                 resource.setNoteGuid(note.guid());
+            }
+
+            if (resource.noteLocalId().isEmpty()) {
+                resource.setNoteLocalId(note.localId());
             }
 
             if (!resource.updateSequenceNum()) {
