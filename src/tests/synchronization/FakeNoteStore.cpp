@@ -1857,6 +1857,8 @@ qint32 FakeNoteStore::createNotebook(
     ++maxUsn;
     notebook.setUpdateSequenceNum(maxUsn);
 
+    notebook.setLocallyModified(false);
+
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & guidsOfCompleteSentItems =
             (notebook.linkedNotebookGuid()
@@ -1967,6 +1969,8 @@ qint32 FakeNoteStore::updateNotebook(
     ++maxUsn;
     notebook.setUpdateSequenceNum(maxUsn);
 
+    notebook.setLocallyModified(false);
+
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & guidsOfCompleteSentItems =
             (notebook.linkedNotebookGuid()
@@ -2042,6 +2046,8 @@ qint32 FakeNoteStore::createNote(
 
     ++maxUsn;
     note.setUpdateSequenceNum(maxUsn);
+
+    note.setLocallyModified(false);
 
     auto insertResult = m_data->m_notes.insert(note);
 
@@ -2288,6 +2294,8 @@ qint32 FakeNoteStore::createTag(
     ++maxUsn;
     tag.setUpdateSequenceNum(maxUsn);
 
+    tag.setLocallyModified(false);
+
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & guidsOfCompleteSentItems =
             (tag.linkedNotebookGuid()
@@ -2372,6 +2380,8 @@ qint32 FakeNoteStore::updateTag(
     ++maxUsn;
     tag.setUpdateSequenceNum(maxUsn);
 
+    tag.setLocallyModified(false);
+
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & guidsOfCompleteSentItems =
             (tag.linkedNotebookGuid()
@@ -2424,6 +2434,8 @@ qint32 FakeNoteStore::createSavedSearch(
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     savedSearch.setUpdateSequenceNum(maxUsn);
+
+    savedSearch.setLocallyModified(false);
 
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & savedSearchGuids =
@@ -2490,6 +2502,8 @@ qint32 FakeNoteStore::updateSavedSearch(
     qint32 maxUsn = currentMaxUsn();
     ++maxUsn;
     savedSearch.setUpdateSequenceNum(maxUsn);
+
+    savedSearch.setLocallyModified(false);
 
     if (!m_data->m_onceAPIRateLimitExceedingTriggered) {
         auto & savedSearchGuids =
