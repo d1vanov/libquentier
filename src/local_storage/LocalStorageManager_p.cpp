@@ -947,8 +947,9 @@ bool LocalStorageManagerPrivate::updateNotebook(
 
         if (localId.isEmpty()) {
             ErrorString error;
-            if (localId.isEmpty() ||
-                !getNotebookLocalIdForGuid(id, localId, error)) {
+            if (!getNotebookLocalIdForGuid(id, localId, error) ||
+                localId.isEmpty())
+            {
                 errorDescription.base() = errorPrefix.base();
                 errorDescription.appendBase(error.base());
                 errorDescription.appendBase(error.additionalBases());
