@@ -1490,19 +1490,31 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 
         Q_EMIT updateNoteComplete(note, options, requestId);
 
-        if (shouldCheckForNotebookChange &&
-            (note.notebookGuid() != previousNoteVersion.notebookGuid()))
-        {
-            QNDEBUG(
-                "local_storage",
-                "Notebook change detected for note "
-                    << note.localId() << ": moved from notebook "
-                    << previousNoteVersion.notebookLocalId() << " to notebook "
-                    << note.notebookLocalId());
+        if (shouldCheckForNotebookChange) {
+            bool notebookChanged = false;
+            if (note.notebookGuid() && previousNoteVersion.notebookGuid())
+            {
+                notebookChanged =
+                    (*note.notebookGuid() != *previousNoteVersion.notebookGuid());
+            }
+            else {
+                notebookChanged =
+                    (note.notebookLocalId() !=
+                     previousNoteVersion.notebookLocalId());
+            }
 
-            Q_EMIT noteMovedToAnotherNotebook(
-                note.localId(), previousNoteVersion.notebookLocalId(),
-                note.notebookLocalId());
+            if (notebookChanged) {
+                QNDEBUG(
+                    "local_storage",
+                    "Notebook change detected for note "
+                        << note.localId() << ": moved from notebook "
+                        << previousNoteVersion.notebookLocalId() << " to notebook "
+                        << note.notebookLocalId());
+
+                Q_EMIT noteMovedToAnotherNotebook(
+                    note.localId(), previousNoteVersion.notebookLocalId(),
+                    note.notebookLocalId());
+            }
         }
 
         if (shouldCheckForTagListUpdate) {
