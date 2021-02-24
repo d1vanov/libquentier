@@ -6771,7 +6771,7 @@ void SynchronizationTester::
 
         qevercloud::SavedSearch modifiedSavedSearch(*pSavedSearch);
         modifiedSavedSearch.setName(originalName + gModifiedRemotelySuffix);
-        modifiedSavedSearch.setLocallyModified(true);
+        modifiedSavedSearch.setLocallyModified(false);
         modifiedSavedSearch.setLocalOnly(false);
         modifiedSavedSearch.setUpdateSequenceNum(std::nullopt);
 
@@ -6875,7 +6875,7 @@ void SynchronizationTester::setConflictingTagsToLocalAndRemoteStoragesImpl(
 
         qevercloud::Tag modifiedRemoteTag(*pRemoteTag);
         modifiedRemoteTag.setName(originalName + gModifiedRemotelySuffix);
-        modifiedRemoteTag.setLocallyModified(true);
+        modifiedRemoteTag.setLocallyModified(false);
         modifiedRemoteTag.setLocalOnly(false);
         modifiedRemoteTag.setUpdateSequenceNum(std::nullopt);
 
@@ -6957,7 +6957,7 @@ void SynchronizationTester::setConflictingNotebooksToLocalAndRemoteStoragesImpl(
 
         qevercloud::Notebook modifiedNotebook(*pNotebook);
         modifiedNotebook.setName(originalName + gModifiedRemotelySuffix);
-        modifiedNotebook.setLocallyModified(true);
+        modifiedNotebook.setLocallyModified(false);
         modifiedNotebook.setLocalOnly(false);
         modifiedNotebook.setUpdateSequenceNum(std::nullopt);
 
@@ -7030,7 +7030,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
 
         qevercloud::Note modifiedNote(*pNote);
         modifiedNote.setTitle(originalTitle + gModifiedRemotelySuffix);
-        modifiedNote.setLocallyModified(true);
+        modifiedNote.setLocallyModified(false);
         modifiedNote.setLocalOnly(false);
         modifiedNote.setUpdateSequenceNum(std::nullopt);
 

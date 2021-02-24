@@ -319,11 +319,13 @@ bool FakeNoteStore::removeTag(const QString & guid)
         }
 
         QStringList tagGuids = *note.tagGuids();
+        Q_ASSERT(note.tagLocalIds().size() == tagGuids.size());
         int tagGuidIndex = tagGuids.indexOf(guid);
         if (tagGuidIndex >= 0) {
             tagGuids.removeAt(tagGuidIndex);
             auto noteCopy = note;
             noteCopy.setTagGuids(tagGuids);
+            noteCopy.mutableTagLocalIds().removeAt(tagGuidIndex);
             noteGuidIndex.replace(noteIt, noteCopy);
         }
     }
