@@ -2739,6 +2739,14 @@ qint32 FakeNoteStore::getNote(
 
     note = *noteIt;
 
+    note.setLocalId(UidGenerator::Generate());
+    note.setLocalData({});
+    note.setLocalOnly(false);
+    note.setLocallyModified(false);
+    note.setLocallyFavorited(false);
+    note.setTagLocalIds(QStringList{});
+    note.setNotebookLocalId(QString{});
+
     const auto * pNotebook = findNotebook(*note.notebookGuid());
     if (Q_UNLIKELY(!pNotebook)) {
         errorDescription.setBase("No notebook was found for note");
@@ -2768,6 +2776,13 @@ qint32 FakeNoteStore::getNote(
             }
 
             resource = *resourceIt;
+
+            resource.setLocalId(UidGenerator::Generate());
+            resource.setLocalData({});
+            resource.setLocalOnly(false);
+            resource.setLocallyModified(false);
+            resource.setLocallyFavorited(false);
+            resource.setNoteLocalId(QString{});
 
             if (!withResourcesData && resource.data()) {
                 resource.mutableData()->setBody(std::nullopt);
@@ -2938,6 +2953,13 @@ qint32 FakeNoteStore::getResource(
     }
 
     resource = *resourceIt;
+
+    resource.setLocalId(UidGenerator::Generate());
+    resource.setLocalData({});
+    resource.setLocalOnly(false);
+    resource.setLocallyModified(false);
+    resource.setLocallyFavorited(false);
+    resource.setNoteLocalId(QString{});
 
     if (!withDataBody && resource.data()) {
         resource.mutableData()->setBody(std::nullopt);
@@ -4127,7 +4149,14 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                 syncChunk.setSearches(QList<qevercloud::SavedSearch>{});
             }
 
-            syncChunk.mutableSearches()->append(*savedSearchIt);
+            qevercloud::SavedSearch search = *savedSearchIt;
+            search.setLocalId(UidGenerator::Generate());
+            search.setLocalData({});
+            search.setLocalOnly(false);
+            search.setLocallyModified(false);
+            search.setLocallyFavorited(false);
+
+            syncChunk.mutableSearches()->append(search);
 
             syncChunk.setChunkHighUSN(
                 savedSearchIt->updateSequenceNum().value());
@@ -4152,7 +4181,16 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                 syncChunk.setTags(QList<qevercloud::Tag>{});
             }
 
-            syncChunk.mutableTags()->append(*tagIt);
+            qevercloud::Tag tag = *tagIt;
+            tag.setLocalId(UidGenerator::Generate());
+            tag.setLocalData({});
+            tag.setLocalOnly(false);
+            tag.setLocallyModified(false);
+            tag.setLocallyFavorited(false);
+            tag.setLinkedNotebookGuid(std::nullopt);
+            tag.setParentTagLocalId(QString{});
+
+            syncChunk.mutableTags()->append(tag);
             syncChunk.setChunkHighUSN(tagIt->updateSequenceNum().value());
             QNDEBUG(
                 "tests:synchronization",
@@ -4175,7 +4213,15 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                 syncChunk.setNotebooks(QList<qevercloud::Notebook>{});
             }
 
-            syncChunk.mutableNotebooks()->append(*notebookIt);
+            qevercloud::Notebook notebook = *notebookIt;
+            notebook.setLocalId(UidGenerator::Generate());
+            notebook.setLocalData({});
+            notebook.setLocalOnly(false);
+            notebook.setLocallyModified(false);
+            notebook.setLocallyFavorited(false);
+            notebook.setLinkedNotebookGuid(std::nullopt);
+
+            syncChunk.mutableNotebooks()->append(notebook);
             syncChunk.setChunkHighUSN(notebookIt->updateSequenceNum().value());
 
             QNDEBUG(
@@ -4202,6 +4248,13 @@ qint32 FakeNoteStore::getSyncChunkImpl(
             }
 
             auto qecNote = *noteIt;
+            qecNote.setLocalId(UidGenerator::Generate());
+            qecNote.setLocalData({});
+            qecNote.setLocalOnly(false);
+            qecNote.setLocallyModified(false);
+            qecNote.setLocallyFavorited(false);
+            qecNote.setTagLocalIds(QStringList{});
+            qecNote.setNotebookLocalId(QString{});
 
             if (!filter.includeNoteResources() ||
                 !*filter.includeNoteResources()) {
@@ -4266,6 +4319,13 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                     if (resource.alternateData()) {
                         resource.mutableAlternateData()->setBody(std::nullopt);
                     }
+
+                    resource.setLocalId(UidGenerator::Generate());
+                    resource.setLocalData({});
+                    resource.setLocalOnly(false);
+                    resource.setLocallyModified(false);
+                    resource.setLocallyFavorited(false);
+                    resource.setNoteLocalId(QString{});
                 }
             }
 
@@ -4288,6 +4348,12 @@ qint32 FakeNoteStore::getSyncChunkImpl(
             }
 
             auto qecResource = *resourceIt;
+            qecResource.setLocalId(UidGenerator::Generate());
+            qecResource.setLocalData({});
+            qecResource.setLocalOnly(false);
+            qecResource.setLocallyModified(false);
+            qecResource.setLocallyFavorited(false);
+            qecResource.setNoteLocalId(QString{});
 
             if ((!filter.includeResourceApplicationDataFullMap() ||
                  !*filter.includeResourceApplicationDataFullMap()) &&

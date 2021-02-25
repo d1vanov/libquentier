@@ -7051,6 +7051,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
             m_expectedNoteTitlesByGuid[noteGuid] = modifiedNote.title().value();
         }
 
+        modifiedNote.setLocallyModified(true);
         modifiedNote.setLocalId(QString());
         modifiedNote.setTitle(originalTitle + gModifiedLocallySuffix);
 
@@ -7393,13 +7394,26 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                                   "searches within the remote storage: ") +
                 ToString(it.value())));
 
+        qevercloud::SavedSearch localSavedSearch = it.value();
+        localSavedSearch.setLocalId(QString{});
+        localSavedSearch.setLocalData({});
+        localSavedSearch.setLocalOnly(false);
+        localSavedSearch.setLocallyFavorited(false);
+
+        qevercloud::SavedSearch remoteSavedSearch = rit.value();
+        remoteSavedSearch.setLocalId(QString{});
+        remoteSavedSearch.setLocalData({});
+        remoteSavedSearch.setLocalOnly(false);
+        remoteSavedSearch.setLocallyModified(false);
+        remoteSavedSearch.setLocallyFavorited(false);
+
         QVERIFY2(
-            rit.value() == it.value(),
+            remoteSavedSearch == localSavedSearch,
             qPrintable(
                 QString::fromUtf8("Found mismatch between local and "
                                   "remote saved searches: local one: ") +
-                ToString(it.value()) + QString::fromUtf8("\nRemote one: ") +
-                ToString(rit.value())));
+                ToString(localSavedSearch) + QString::fromUtf8("\nRemote one: ") +
+                ToString(remoteSavedSearch)));
     }
 
     QVERIFY2(
@@ -7423,13 +7437,24 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                                   "notebooks within the remote storage: ") +
                 ToString(it.value())));
 
+        qevercloud::LinkedNotebook localLinkedNotebook = it.value();
+        localLinkedNotebook.setLocalData({});
+        localLinkedNotebook.setLocalOnly(false);
+        localLinkedNotebook.setLocallyFavorited(false);
+
+        qevercloud::LinkedNotebook remoteLinkedNotebook = rit.value();
+        remoteLinkedNotebook.setLocalData({});
+        remoteLinkedNotebook.setLocalOnly(false);
+        remoteLinkedNotebook.setLocallyModified(false);
+        remoteLinkedNotebook.setLocallyFavorited(false);
+
         QVERIFY2(
-            rit.value() == it.value(),
+            remoteLinkedNotebook == localLinkedNotebook,
             qPrintable(
                 QString::fromUtf8("Found mismatch between local and "
                                   "remote linked notebooks: local one: ") +
-                ToString(it.value()) + QString::fromUtf8("\nRemote one: ") +
-                ToString(rit.value())));
+                ToString(localLinkedNotebook) + QString::fromUtf8("\nRemote one: ") +
+                ToString(remoteLinkedNotebook)));
     }
 
     if (localTags.size() != remoteTags.size()) {
@@ -7474,13 +7499,28 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                                   "within the remote storage: ") +
                 ToString(it.value())));
 
+        qevercloud::Tag localTag = it.value();
+        localTag.setLocalId(QString{});
+        localTag.setLocalData({});
+        localTag.setLocalOnly(false);
+        localTag.setLocallyFavorited(false);
+        localTag.setParentTagLocalId(QString{});
+
+        qevercloud::Tag remoteTag = rit.value();
+        remoteTag.setLocalId(QString{});
+        remoteTag.setLocalData({});
+        remoteTag.setLocalOnly(false);
+        remoteTag.setLocallyModified(false);
+        remoteTag.setLocallyFavorited(false);
+        remoteTag.setParentTagLocalId(QString{});
+
         QVERIFY2(
-            rit.value() == it.value(),
+            remoteTag == localTag,
             qPrintable(
                 QString::fromUtf8("Found mismatch between local and "
                                   "remote tags: local one: ") +
-                ToString(it.value()) + QString::fromUtf8("\nRemote one: ") +
-                ToString(rit.value())));
+                ToString(localTag) + QString::fromUtf8("\nRemote one: ") +
+                ToString(remoteTag)));
     }
 
     QVERIFY2(
@@ -7503,13 +7543,26 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                                   "within the remote storage: ") +
                 ToString(it.value())));
 
+        qevercloud::Notebook localNotebook = it.value();
+        localNotebook.setLocalId(QString{});
+        localNotebook.setLocalData({});
+        localNotebook.setLocalOnly(false);
+        localNotebook.setLocallyFavorited(false);
+
+        qevercloud::Notebook remoteNotebook = rit.value();
+        remoteNotebook.setLocalId(QString{});
+        remoteNotebook.setLocalData({});
+        remoteNotebook.setLocalOnly(false);
+        remoteNotebook.setLocallyModified(false);
+        remoteNotebook.setLocallyFavorited(false);
+
         QVERIFY2(
-            rit.value() == it.value(),
+            remoteNotebook == localNotebook,
             qPrintable(
                 QString::fromUtf8("Found mismatch between local and "
                                   "remote notebooks: local one: ") +
-                ToString(it.value()) + QString::fromUtf8("\nRemote one: ") +
-                ToString(rit.value())));
+                ToString(localNotebook) + QString::fromUtf8("\nRemote one: ") +
+                ToString(remoteNotebook)));
     }
 
     QVERIFY2(
@@ -7532,11 +7585,35 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                                   "within the remote storage: ") +
                 ToString(it.value())));
 
-        // NOTE: remote notes lack resource bodies, need to set these manually
-        auto & remoteNote = rit.value();
+        qevercloud::Note localNote = it.value();
+        localNote.setLocalId(QString{});
+        localNote.setLocalData({});
+        localNote.setLocalOnly(false);
+        localNote.setLocallyFavorited(false);
+        localNote.setNotebookLocalId(QString{});
+        localNote.setTagLocalIds(QStringList{});
+
+        if (localNote.resources() && !localNote.resources()->isEmpty()) {
+            for (auto & resource: *localNote.mutableResources()) {
+                resource.setNoteLocalId(QString{});
+                resource.setLocalId(QString{});
+                resource.setLocalData({});
+                resource.setLocalOnly(false);
+                resource.setLocallyFavorited(false);
+            }
+        }
+
+        qevercloud::Note remoteNote = rit.value();
+        remoteNote.setLocalId(QString{});
+        remoteNote.setLocalData({});
+        remoteNote.setLocalOnly(false);
+        remoteNote.setLocallyModified(false);
+        remoteNote.setLocallyFavorited(false);
+        remoteNote.setNotebookLocalId(QString{});
+        remoteNote.setTagLocalIds(QStringList{});
+
         if (remoteNote.resources() && !remoteNote.resources()->isEmpty()) {
-            auto resources = *remoteNote.resources();
-            for (auto & resource: resources) {
+            for (auto & resource: *remoteNote.mutableResources()) {
                 QString resourceGuid = resource.guid().value();
 
                 const auto * pResource =
@@ -7560,27 +7637,32 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
                         *pResource->alternateData()->body());
                 }
 
+                resource.setNoteLocalId(QString{});
+                resource.setLocalId(QString{});
+                resource.setLocalData({});
+                resource.setLocalOnly(false);
+                resource.setLocallyModified(false);
+                resource.setLocallyFavorited(false);
+
                 resource.setUpdateSequenceNum(*pResource->updateSequenceNum());
             }
-
-            remoteNote.setResources(resources);
         }
 
-        if (rit.value() != it.value()) {
+        if (remoteNote != localNote) {
             QNWARNING(
                 "tests:synchronization",
                 "Found mismatch between local and remote notes: local one: "
-                    << it.value()
-                    << "\nRemote one: " << rit.value());
+                    << localNote
+                    << "\nRemote one: " << remoteNote);
         }
 
         QVERIFY2(
-            rit.value() == it.value(),
+            remoteNote == localNote,
             qPrintable(
                 QString::fromUtf8("Found mismatch between local and "
                                   "remote notes: local one: ") +
-                ToString(it.value()) + QString::fromUtf8("\nRemote one: ") +
-                ToString(rit.value())));
+                ToString(localNote) + QString::fromUtf8("\nRemote one: ") +
+                ToString(remoteNote)));
     }
 }
 
