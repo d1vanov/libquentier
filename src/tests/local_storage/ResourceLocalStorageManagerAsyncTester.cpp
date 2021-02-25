@@ -194,7 +194,6 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
             m_initialResource.setNoteLocalId(note.localId());
         }
 
-        m_initialResource.setIndexInNote(0);
         m_initialResource.setData(qevercloud::Data{});
 
         m_initialResource.mutableData()->setBody(
