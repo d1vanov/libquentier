@@ -1135,6 +1135,7 @@ jobs:
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          copy libqt5quentier.pdb "%GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.pdb"
         if: ${{ matrix.target_arch == 'x86' }}
         shell: cmd
 
@@ -1182,6 +1183,7 @@ jobs:
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          copy libqt5quentier.pdb "%GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.pdb"
         if: ${{ matrix.target_arch == 'x64' }}
         shell: cmd
 
