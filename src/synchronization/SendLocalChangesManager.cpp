@@ -2897,6 +2897,13 @@ void SendLocalChangesManager::sendNotes()
             "Successfully sent the note to Evernote");
 
         note.setLocallyModified(false);
+
+        if (note.resources() && !note.resources()->isEmpty()) {
+            for (auto & resource: *note.mutableResources()) {
+                resource.setLocallyModified(false);
+            }
+        }
+
         const QUuid updateNoteRequestId = QUuid::createUuid();
         Q_UNUSED(m_updateNoteRequestIds.insert(updateNoteRequestId))
 
