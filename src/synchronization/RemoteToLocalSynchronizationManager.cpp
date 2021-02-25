@@ -3667,6 +3667,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
     }
 
     resource = qecResource;
+    resource.setLocalId(QString{});
     resource.setLocallyModified(false);
 
     checkAndIncrementResourceDownloadProgress(resourceGuid);
