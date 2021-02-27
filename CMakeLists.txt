@@ -71,6 +71,14 @@ endif()
 
 include_directories(headers)
 
+define_property(SOURCE
+  PROPERTY skip_autoformat
+  BRIEF_DOCS
+  "Source files marked with this property should not be autoformatted"
+  FULL_DOCS
+  "skip_autoformat source property controls whether the source file "
+  "should be not formatted automatically as a part of clang-format target")
+
 if(BUILD_WITH_NOTE_EDITOR)
   set(NOTE_EDITOR_HEADERS
       headers/quentier/note_editor/NoteEditor.h
@@ -334,7 +342,10 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND PRIVATE_HEADERS
-       src/utility/unix/linux/StackTrace.h)
+    src/utility/unix/linux/StackTrace.h)
+  set_source_files_properties(
+    src/utility/unix/linux/StackTrace.h
+    PROPERTIES skip_autoformat ON)
 endif()
 
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
@@ -552,6 +563,9 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/StackTrace.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/SysInfoLinux.cpp)
+  set_source_files_properties(
+    src/utility/unix/linux/StackTrace.cpp
+    PROPERTIES skip_autoformat ON)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/darwin/SysInfoDarwin.cpp)
