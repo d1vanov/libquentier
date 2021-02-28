@@ -157,7 +157,7 @@ QString dumpLinkedNotebookGuidsByTagGuids(
 
     strm << "Linked notebook guids by tag guids:\n";
 
-    for (const auto & it: qevercloud::toRange(linkedNotebookGuidsByTagGuids)) {
+    for (const auto it: qevercloud::toRange(linkedNotebookGuidsByTagGuids)) {
         strm << "    " << it.key() << " -> " << it.value() << "\n";
     }
 
@@ -6348,7 +6348,7 @@ bool RemoteToLocalSynchronizationManager::
 
         FullSyncStaleDataItemsExpunger::SyncedGuids syncedGuids;
 
-        for (const auto & nit: qevercloud::toRange(
+        for (const auto nit: qevercloud::toRange(
                  qAsConst(m_linkedNotebookGuidsByNotebookGuids)))
         {
             const QString & currentLinkedNotebookGuid = nit.value();
@@ -6369,7 +6369,7 @@ bool RemoteToLocalSynchronizationManager::
             }
         }
 
-        for (const auto & tit:
+        for (const auto tit:
              qevercloud::toRange(::qAsConst(m_linkedNotebookGuidsByTagGuids)))
         {
             const QString & currentLinkedNotebookGuid = tit.value();
@@ -6551,7 +6551,7 @@ void RemoteToLocalSynchronizationManager::
     }
 
     for (
-        const auto & it: qevercloud::toRange(qAsConst(
+        const auto it: qevercloud::toRange(qAsConst(
             m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid)))
     {
         if (it.value() == resourceGuid) {
@@ -8187,7 +8187,7 @@ void RemoteToLocalSynchronizationManager::finalize()
             "Last update counts by "
                 << "linked notebook guids: ");
 
-        for (const auto & it: qevercloud::toRange(
+        for (const auto it: qevercloud::toRange(
                  qAsConst(m_lastUpdateCountByLinkedNotebookGuid)))
         {
             QNTRACE(
@@ -8201,7 +8201,7 @@ void RemoteToLocalSynchronizationManager::finalize()
             "Last sync times by linked "
                 << "notebook guids: ");
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(qAsConst(m_lastSyncTimeByLinkedNotebookGuid)))
         {
             QNTRACE(
@@ -8458,7 +8458,7 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_notesToAddPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8466,7 +8466,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_notesToAddPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_notesToUpdatePerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8474,7 +8474,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_notesToUpdatePerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_resourcesToAddWithNotesPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8482,7 +8482,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_resourcesToAddWithNotesPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8490,7 +8490,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_postponedConflictingResourceDataPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8498,7 +8498,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_postponedConflictingResourceDataPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_afterUsnForSyncChunkPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -10263,7 +10263,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<int, Note> & notes, const QString & linkedNotebookGuid,
         qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(qAsConst(notes))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
     }
@@ -10275,7 +10275,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<QString, Note> & notes, const QString & linkedNotebookGuid,
         qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(qAsConst(notes))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
     }
@@ -10287,7 +10287,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<QUuid, Note> & notes, const QString & linkedNotebookGuid,
         qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(qAsConst(notes))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().qevercloudNote(), linkedNotebookGuid, smallestUsn);
     }
@@ -10300,7 +10300,7 @@ void RemoteToLocalSynchronizationManager::
         const NoteDataPerFindNotebookRequestId & notes,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(qAsConst(notes))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first.qevercloudNote(), linkedNotebookGuid, smallestUsn);
     }
@@ -10313,7 +10313,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<QString, qevercloud::Note> & notes,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(::qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(notes))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10326,7 +10326,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<int, std::pair<Resource, Note>> & resources,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(::qAsConst(resources))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(resources))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first.qevercloudResource(), linkedNotebookGuid,
             smallestUsn);

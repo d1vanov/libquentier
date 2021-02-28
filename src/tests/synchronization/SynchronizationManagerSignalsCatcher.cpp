@@ -48,7 +48,7 @@ bool SynchronizationManagerSignalsCatcher::
     checkLinkedNotebookSyncChunkDownloadProgressOrder(
         ErrorString & errorDescription) const
 {
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              qAsConst(m_linkedNotebookSyncChunkDownloadProgress)))
     {
         bool res = checkSyncChunkDownloadProgressOrderImpl(
