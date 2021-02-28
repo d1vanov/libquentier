@@ -2322,7 +2322,7 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
         }
 
         if (d->m_useCache) {
-            for (const auto & it:
+            for (const auto it: // clazy:exclude=range-loop
                  qevercloud::toRange(qAsConst(tagsWithNoteLocalUids))) {
                 d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }

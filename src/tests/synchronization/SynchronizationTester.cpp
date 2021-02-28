@@ -6154,7 +6154,7 @@ void SynchronizationTester::setNewLinkedNotebookItemsToRemoteStorage()
 
     auto existingLinkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(::qAsConst(existingLinkedNotebooks))) {
         const QString & linkedNotebookGuid = it.key();
 
@@ -6939,7 +6939,7 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
 
     // ====== Saved searches ======
     auto searches = m_pFakeNoteStore->savedSearches();
-    for (const auto & it: qevercloud::toRange(::qAsConst(searches))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(searches))) {
         SavedSearch search(it.value());
         search.setDirty(false);
         search.setLocal(false);
@@ -6953,7 +6953,7 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
 
     // ====== Linked notebooks ======
     auto linkedNotebooks = m_pFakeNoteStore->linkedNotebooks();
-    for (const auto & it: qevercloud::toRange(::qAsConst(linkedNotebooks))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(linkedNotebooks))) {
         LinkedNotebook linkedNotebook(it.value());
         linkedNotebook.setDirty(false);
 
@@ -6969,7 +6969,7 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
     QList<qevercloud::Tag> tagsList;
     tagsList.reserve(tags.size());
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(tags))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(tags))) {
         tagsList << it.value();
     }
 
@@ -6995,7 +6995,7 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
     // ====== Notebooks ======
     auto notebooks = m_pFakeNoteStore->notebooks();
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(notebooks))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(notebooks))) {
         Notebook notebook(it.value());
         notebook.setDirty(false);
         notebook.setLocal(false);
@@ -7016,7 +7016,7 @@ void SynchronizationTester::copyRemoteItemsToLocalStorage()
 
     // ====== Notes ======
     auto notes = m_pFakeNoteStore->notes();
-    for (const auto & it: qevercloud::toRange(::qAsConst(notes))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(notes))) {
         Note note(it.value());
         note.setDirty(false);
         note.setLocal(false);
@@ -7176,7 +7176,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         QHash<QString, qevercloud::Tag> currentLocalTags;
         listTagsFromLocalStorage(0, linkedNotebookGuid, currentLocalTags);
 
-        for (const auto & it: qevercloud::toRange(::qAsConst(currentLocalTags)))
+        for (const auto it: qevercloud::toRange(::qAsConst(currentLocalTags)))
         {
             localTags[it.key()] = it.value();
         }
@@ -7186,7 +7186,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         listNotebooksFromLocalStorage(
             0, linkedNotebookGuid, currentLocalNotebooks);
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(::qAsConst(currentLocalNotebooks))) {
             localNotebooks[it.key()] = it.value();
         }
@@ -7194,7 +7194,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         QHash<QString, qevercloud::Note> currentLocalNotes;
         listNotesFromLocalStorage(0, linkedNotebookGuid, currentLocalNotes);
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(::qAsConst(currentLocalNotes))) {
             localNotes[it.key()] = it.value();
         }
@@ -7218,7 +7218,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteSavedSearches.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(localSavedSearches))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(localSavedSearches))) {
         auto rit = remoteSavedSearches.find(it.key());
 
         QVERIFY2(
@@ -7247,7 +7247,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteLinkedNotebooks.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(localLinkedNotebooks)))
+    for (const auto it: qevercloud::toRange(::qAsConst(localLinkedNotebooks)))
     {
         auto rit = remoteLinkedNotebooks.find(it.key());
 
@@ -7276,13 +7276,13 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             << localTags.size() << " local ones vs " << remoteTags.size()
             << " remote ones\nLocal tags:\n";
 
-        for (const auto & it: qevercloud::toRange(::qAsConst(localTags))) {
+        for (const auto it: qevercloud::toRange(::qAsConst(localTags))) {
             strm << it.value() << "\n";
         }
 
         strm << "\nRemote tags:\n";
 
-        for (const auto & it: qevercloud::toRange(::qAsConst(remoteTags))) {
+        for (const auto it: qevercloud::toRange(::qAsConst(remoteTags))) {
             strm << it.value() << "\n";
         }
 
@@ -7299,7 +7299,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteTags.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(localTags))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(localTags))) {
         auto rit = remoteTags.find(it.key());
 
         QVERIFY2(
@@ -7328,7 +7328,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteNotebooks.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(localNotebooks))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(localNotebooks))) {
         auto rit = remoteNotebooks.find(it.key());
 
         QVERIFY2(
@@ -7357,7 +7357,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteNotes.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto & it: qevercloud::toRange(::qAsConst(localNotes))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(localNotes))) {
         auto rit = remoteNotes.find(it.key());
 
         QVERIFY2(
@@ -7584,7 +7584,7 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
     bool res = false;
     bool onceChecked = false;
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedSavedSearchNamesByGuid)))
     {
         SavedSearch search;
@@ -7613,7 +7613,7 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
         onceChecked = true;
     }
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedTagNamesByGuid))) {
         Tag tag;
         tag.setLocalUid(QString());
@@ -7639,7 +7639,7 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
         onceChecked = true;
     }
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedNotebookNamesByGuid)))
     {
         Notebook notebook;
@@ -7669,7 +7669,7 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
     auto * pLocalStorageManager =
         m_pLocalStorageManagerAsync->localStorageManager();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedNoteTitlesByGuid))) {
         Note note;
         note.setLocalUid(QString());
@@ -7706,7 +7706,7 @@ void SynchronizationTester::checkLocalCopiesOfConflictingNotesWereCreated()
 
     QVERIFY(!m_expectedNoteTitlesByGuid.isEmpty());
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedNoteTitlesByGuid))) {
         auto remoteConflictingNotes =
             m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
@@ -7739,7 +7739,7 @@ void SynchronizationTester::checkNoConflictingNotesWereCreated()
 {
     QVERIFY(!m_expectedNoteTitlesByGuid.isEmpty());
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_expectedNoteTitlesByGuid))) {
         auto remoteConflictingNotes =
             m_pFakeNoteStore->getNotesByConflictSourceNoteGuid(it.key());
@@ -7831,7 +7831,7 @@ void SynchronizationTester::checkSyncStatePersistedRightAfterAPIRateLimitBreach(
     QVERIFY(!syncStateUpdateCount
                  .m_linkedNotebookUpdateCountsByLinkedNotebookGuid.isEmpty());
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              qAsConst(syncStateUpdateCount
                           .m_linkedNotebookUpdateCountsByLinkedNotebookGuid)))
     {
@@ -8421,7 +8421,7 @@ void SynchronizationTester::
     listResourcesFromFakeNoteStore(0, linkedNotebookGuid, remoteResources);
 
 #define PRINT_CONTAINER_ITEMS_GUIDS_AND_USNS(container)                        \
-    for (const auto & it: qevercloud::toRange(::qAsConst(container))) {        \
+    for (const auto it: qevercloud::toRange(::qAsConst(container))) {          \
         message += QStringLiteral("    guid = ") % it.key() %                  \
                 QStringLiteral(", USN = ") +                                   \
             (it.value().updateSequenceNum.isSet()                              \
