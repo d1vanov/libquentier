@@ -27,7 +27,8 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -71,7 +72,7 @@ private:
      * removing the resource from the note's content via backspace, that fact
      * would be figured out elsewhere
      */
-    QList<Resource>  m_resources;
+    QList<Resource> m_resources;
 };
 
 } // namespace quentier

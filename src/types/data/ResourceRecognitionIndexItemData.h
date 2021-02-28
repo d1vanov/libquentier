@@ -27,11 +27,18 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceRecognitionIndexItemData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndexItemData final : public QSharedData
 {
 public:
     bool isValid() const;
 
+public:
+    using TextItem = ResourceRecognitionIndexItem::TextItem;
+    using ObjectItem = ResourceRecognitionIndexItem::ObjectItem;
+    using ShapeItem = ResourceRecognitionIndexItem::ShapeItem;
+    using BarcodeItem = ResourceRecognitionIndexItem::BarcodeItem;
+
+public:
     int m_x = -1;
     int m_y = -1;
     int m_h = -1;
@@ -40,19 +47,11 @@ public:
     int m_offset;
     int m_duration;
 
-    QVector<int>    m_strokeList;
-
-    using TextItem = ResourceRecognitionIndexItem::TextItem;
-    QVector<TextItem>   m_textItems;
-
-    using ObjectItem = ResourceRecognitionIndexItem::ObjectItem;
+    QVector<int> m_strokeList;
+    QVector<TextItem> m_textItems;
     QVector<ObjectItem> m_objectItems;
-
-    using ShapeItem = ResourceRecognitionIndexItem::ShapeItem;
-    QVector<ShapeItem>  m_shapeItems;
-
-    using BarcodeItem = ResourceRecognitionIndexItem::BarcodeItem;
-    QVector<BarcodeItem>    m_barcodeItems;
+    QVector<ShapeItem> m_shapeItems;
+    QVector<BarcodeItem> m_barcodeItems;
 };
 
 } // namespace quentier

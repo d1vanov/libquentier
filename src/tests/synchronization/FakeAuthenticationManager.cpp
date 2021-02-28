@@ -17,29 +17,27 @@
  */
 
 #include "FakeAuthenticationManager.h"
+
 #include <quentier/utility/UidGenerator.h>
+
 #include <QDateTime>
 
 namespace quentier {
 
 FakeAuthenticationManager::FakeAuthenticationManager(QObject * parent) :
-    IAuthenticationManager(parent),
-    m_userId(1),
-    m_authToken(),
-    m_failNextRequest(false)
+    IAuthenticationManager(parent)
 {}
 
-FakeAuthenticationManager::~FakeAuthenticationManager()
-{}
+FakeAuthenticationManager::~FakeAuthenticationManager() {}
 
 const QString & FakeAuthenticationManager::authToken() const
 {
     return m_authToken;
 }
 
-void FakeAuthenticationManager::setAuthToken(const QString & authToken)
+void FakeAuthenticationManager::setAuthToken(QString authToken)
 {
-    m_authToken = authToken;
+    m_authToken = std::move(authToken);
 }
 
 qevercloud::UserID FakeAuthenticationManager::userId() const
@@ -72,19 +70,22 @@ void FakeAuthenticationManager::onAuthenticationRequest()
 {
     if (m_failNextRequest) {
         m_failNextRequest = false;
-        Q_EMIT sendAuthenticationResult(false, m_userId, QString(),
-                                        qevercloud::Timestamp(0),
-                                        QString(), QString(), QString(),
-                                        QList<QNetworkCookie>(),
-                                        ErrorString("Artificial error"));
+
+        Q_EMIT sendAuthenticationResult(
+            false, m_userId, QString(), qevercloud::Timestamp(0), QString(),
+            QString(), QString(), QList<QNetworkCookie>(),
+            ErrorString("Artificial error"));
+
         return;
     }
 
     Q_EMIT sendAuthenticationResult(
         true, m_userId, m_authToken,
-        qevercloud::Timestamp(QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
+        qevercloud::Timestamp(
+            QDateTime::currentDateTime().addYears(1).toMSecsSinceEpoch()),
         UidGenerator::Generate(), QStringLiteral("note_store_url"),
-        QStringLiteral("web_api_url_prefix"), m_userStoreCookies, ErrorString());
+        QStringLiteral("web_api_url_prefix"), m_userStoreCookies,
+        ErrorString());
 }
 
 } // namespace quentier

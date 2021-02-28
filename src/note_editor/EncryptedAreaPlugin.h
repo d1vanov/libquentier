@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_NOTE_EDITOR_ENCRYPTED_AREA_PLUGIN_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
 
 #include <QWidget>
 
@@ -33,7 +32,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPluginFactory)
 
-class Q_DECL_HIDDEN EncryptedAreaPlugin: public QWidget
+class Q_DECL_HIDDEN EncryptedAreaPlugin final: public QWidget
 {
     Q_OBJECT
 public:

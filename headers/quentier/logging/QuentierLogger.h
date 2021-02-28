@@ -20,13 +20,18 @@
 #define LIB_QUENTIER_LOGGING_QUENTIER_LOGGER_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QDebug>
+#include <QRegularExpression>
 #include <QString>
+#include <QTextStream>
 
 namespace quentier {
 
+/**
+ * The LogLevel enumeration defines different levels for log entries which are
+ * meant to separate log entries with different importance and meaning
+ */
 enum class LogLevel
 {
     Trace,
@@ -38,78 +43,116 @@ enum class LogLevel
 
 QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const LogLevel logLevel);
 
+QUENTIER_EXPORT QTextStream & operator<<(
+    QTextStream & strm, const LogLevel logLevel);
+
+/**
+ * This function needs to be called once during a process lifetime before
+ * libquentier is used by the process. It initializes some internal data
+ * structures used by libquentier's logging subsystem and prepares to write logs
+ * to rotated files in directory path to which is returned by
+ * QuentierLogFilesDirPath function.
+ */
 void QUENTIER_EXPORT QuentierInitializeLogging();
 
+/**
+ * This function is used to add new log entry to logs written by libquentier
+ */
 void QUENTIER_EXPORT QuentierAddLogEntry(
-    const QString & sourceFileName,
-    const int sourceFileLineNumber,
-    const QString & message,
+    const QString & sourceFileName, const int sourceFileLineNumber,
+    const QString & component, const QString & message,
     const LogLevel logLevel);
 
+/**
+ * Current minimal log level used by libquentier. By default minimal log level
+ * is LogLevel::Info which means that Info, Warning and Error logs are being
+ * output but Debug and Trace ones are not
+ */
 LogLevel QUENTIER_EXPORT QuentierMinLogLevel();
 
+/**
+ * Change the current minimal log level used by libquentier
+ */
 void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel logLevel);
 
+/**
+ * Call this function to write logs not only to rotating files but also to
+ * stdout
+ */
 void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
 
+/**
+ * Check whether log level is active i.e. whether log level is larger than or
+ * equal to the minimal log level
+ */
 bool QUENTIER_EXPORT QuentierIsLogLevelActive(const LogLevel logLevel);
 
+/**
+ * Directory containing rotating log files written by libquentier
+ */
 QString QUENTIER_EXPORT QuentierLogFilesDirPath();
 
+/**
+ * Clear logs accumulated within the existing log file
+ */
 void QUENTIER_EXPORT QuentierRestartLogging();
+
+/**
+ * Current filter specified for log components
+ */
+QRegularExpression QUENTIER_EXPORT QuentierLogComponentFilter();
+
+/**
+ * Change the current filter for log components
+ */
+void QUENTIER_EXPORT
+QuentierSetLogComponentFilter(const QRegularExpression & filter);
 
 } // namespace quentier
 
-#define __QNLOG_QDEBUG_HELPER()                                                \
-    dbg.nospace();                                                             \
-    dbg.noquote()                                                              \
-// __QNLOG_QDEBUG_HELPER
-
-#define __QNLOG_BASE(message, level)                                           \
-    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level))         \
-    {                                                                          \
+#define __QNLOG_BASE(component, message, level)                                \
+    if (quentier::QuentierIsLogLevelActive(quentier::LogLevel::level)) {       \
         QString msg;                                                           \
         QDebug dbg(&msg);                                                      \
-        __QNLOG_QDEBUG_HELPER();                                               \
+        dbg.nospace();                                                         \
+        dbg.noquote();                                                         \
         dbg << message;                                                        \
         quentier::QuentierAddLogEntry(                                         \
-            QStringLiteral(__FILE__),                                          \
-            __LINE__, msg,                                                     \
-            quentier::LogLevel::level);                                        \
+            QStringLiteral(__FILE__), __LINE__, QString::fromUtf8(component),  \
+            msg, quentier::LogLevel::level);                                   \
     }                                                                          \
-// __QNLOG_BASE
+    // __QNLOG_BASE
 
-#define QNTRACE(message)                                                       \
-    __QNLOG_BASE(message, Trace)                                               \
-// QNTRACE
+#define QNTRACE(component, message)                                            \
+    __QNLOG_BASE(component, message, Trace)                                    \
+    // QNTRACE
 
-#define QNDEBUG(message)                                                       \
-    __QNLOG_BASE(message, Debug)                                               \
-// QNDEBUG
+#define QNDEBUG(component, message)                                            \
+    __QNLOG_BASE(component, message, Debug)                                    \
+    // QNDEBUG
 
-#define QNINFO(message)                                                        \
-    __QNLOG_BASE(message, Info)                                                \
-// QNINFO
+#define QNINFO(component, message)                                             \
+    __QNLOG_BASE(component, message, Info)                                     \
+    // QNINFO
 
-#define QNWARNING(message)                                                     \
-    __QNLOG_BASE(message, Warning)                                             \
-// QNWARNING
+#define QNWARNING(component, message)                                          \
+    __QNLOG_BASE(component, message, Warning)                                  \
+    // QNWARNING
 
-#define QNERROR(message)                                                       \
-    __QNLOG_BASE(message, Error)                                               \
-// QNERROR
+#define QNERROR(component, message)                                            \
+    __QNLOG_BASE(component, message, Error)                                    \
+    // QNERROR
 
 #define QUENTIER_SET_MIN_LOG_LEVEL(level)                                      \
-    quentier::QuentierSetMinLogLevel(quentier::LogLevel::level)                \
-// QUENTIER_SET_MIN_LOG_LEVEL
+    quentier::QuentierSetMinLogLevel(                                          \
+        quentier::LogLevel::level) // QUENTIER_SET_MIN_LOG_LEVEL
 
 #define QUENTIER_INITIALIZE_LOGGING()                                          \
-    quentier::QuentierInitializeLogging()                                      \
-// QUENTIER_INITIALIZE_LOGGING
+    quentier::QuentierInitializeLogging() // QUENTIER_INITIALIZE_LOGGING
 
 #define QUENTIER_ADD_STDOUT_LOG_DESTINATION()                                  \
-    quentier::QuentierAddStdOutLogDestination()                                \
-// QUENTIER_ADD_STDOUT_LOG_DESTINATION
+    quentier::                                                                 \
+        QuentierAddStdOutLogDestination() // QUENTIER_ADD_STDOUT_LOG_DESTINATION
 
 #define QNLOG_FILE_LINENUMBER_DELIMITER ":"
 

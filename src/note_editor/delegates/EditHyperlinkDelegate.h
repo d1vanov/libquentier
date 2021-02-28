@@ -23,7 +23,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 
@@ -32,7 +31,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(NoteEditorPage)
 QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
 
-class Q_DECL_HIDDEN EditHyperlinkDelegate: public QObject
+class Q_DECL_HIDDEN EditHyperlinkDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -66,8 +65,8 @@ private:
     using JsCallback = JsResultCallbackFunctor<EditHyperlinkDelegate>;
 
 private:
-    NoteEditorPrivate &     m_noteEditor;
-    const quint64           m_hyperlinkId;
+    NoteEditorPrivate & m_noteEditor;
+    const quint64 m_hyperlinkId;
 };
 
 } // namespace quentier

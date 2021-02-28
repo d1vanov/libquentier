@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_ACTIONS_WATCHER_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QObject>
 
 namespace quentier {
@@ -30,7 +28,7 @@ namespace quentier {
  * to JavaScript in order to notify the C++ code of certain events, including
  * 'cut' and 'paste' actions
  */
-class ActionsWatcher: public QObject
+class ActionsWatcher final : public QObject
 {
     Q_OBJECT
 public:

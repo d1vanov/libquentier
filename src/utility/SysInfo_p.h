@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,11 +26,9 @@ namespace quentier {
 class Q_DECL_HIDDEN SysInfoPrivate
 {
 public:
-    SysInfoPrivate() :
-        m_mutex()
-    {}
+    SysInfoPrivate() = default;
 
-    QMutex  m_mutex;
+    QMutex m_mutex;
 };
 
 } // namespace quentier

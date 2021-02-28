@@ -17,6 +17,7 @@
  */
 
 #include "SpellCorrectionUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -24,22 +25,20 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("SpellCorrectionUndoCommand",                    \
-                              "Can't undo/redo spelling correction: "          \
-                              "can't get note editor's page"));                \
-        QNWARNING(error);                                                      \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "SpellCorrectionUndoCommand",                                      \
+            "Can't undo/redo spelling correction: "                            \
+            "can't get note editor's page"));                                  \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const Callback & callback,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
     m_callback(callback)
 {
@@ -47,14 +46,13 @@ SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(
 }
 
 SpellCorrectionUndoCommand::SpellCorrectionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
-        const QString & text, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const Callback & callback,
+    const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
     m_callback(callback)
 {}
 
-SpellCorrectionUndoCommand::~SpellCorrectionUndoCommand()
-{}
+SpellCorrectionUndoCommand::~SpellCorrectionUndoCommand() {}
 
 void SpellCorrectionUndoCommand::redoImpl()
 {

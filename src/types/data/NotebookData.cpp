@@ -19,38 +19,18 @@
 #include "NotebookData.h"
 
 #include <quentier/types/Notebook.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
+#include <quentier/utility/Compat.h>
 
 namespace quentier {
 
-NotebookData::NotebookData() :
-    FavoritableDataElementData(),
-    m_qecNotebook(),
-    m_isLastUsed(false),
-    m_linkedNotebookGuid()
+NotebookData::NotebookData() : FavoritableDataElementData()
 {
     m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
 }
 
-NotebookData::NotebookData(const NotebookData & other) :
-    FavoritableDataElementData(other),
-    m_qecNotebook(other.m_qecNotebook),
-    m_isLastUsed(other.m_isLastUsed),
-    m_linkedNotebookGuid(other.m_linkedNotebookGuid)
-{}
-
-NotebookData::NotebookData(NotebookData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecNotebook(std::move(other.m_qecNotebook)),
-    m_isLastUsed(std::move(other.m_isLastUsed)),
-    m_linkedNotebookGuid(std::move(other.m_linkedNotebookGuid))
-{}
-
 NotebookData::NotebookData(const qevercloud::Notebook & other) :
-    FavoritableDataElementData(),
-    m_qecNotebook(other),
-    m_isLastUsed(false),
-    m_linkedNotebookGuid()
+    FavoritableDataElementData(), m_qecNotebook(other), m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
         m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
@@ -58,18 +38,13 @@ NotebookData::NotebookData(const qevercloud::Notebook & other) :
 }
 
 NotebookData::NotebookData(qevercloud::Notebook && other) :
-    FavoritableDataElementData(),
-    m_qecNotebook(std::move(other)),
-    m_isLastUsed(false),
+    FavoritableDataElementData(), m_qecNotebook(std::move(other)),
     m_linkedNotebookGuid()
 {
     if (!m_qecNotebook.sharedNotebooks.isSet()) {
         m_qecNotebook.sharedNotebooks = QList<qevercloud::SharedNotebook>();
     }
 }
-
-NotebookData::~NotebookData()
-{}
 
 void NotebookData::clear()
 {
@@ -79,8 +54,7 @@ void NotebookData::clear()
 
 bool NotebookData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecNotebook.guid.isSet() && !checkGuid(m_qecNotebook.guid.ref()))
-    {
+    if (m_qecNotebook.guid.isSet() && !checkGuid(m_qecNotebook.guid.ref())) {
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("NotebookData", "Notebook's guid is invalid"));
 
@@ -91,8 +65,7 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
     if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref()))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "NotebookData",
-            "Notebook's linked notebook guid is invalid"));
+            "NotebookData", "Notebook's linked notebook guid is invalid"));
 
         errorDescription.details() = m_linkedNotebookGuid;
         return false;
@@ -102,11 +75,10 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         !checkUpdateSequenceNumber(m_qecNotebook.updateSequenceNum))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "NotebookData",
-            "Notebook's update sequence number is invalid"));
+            "NotebookData", "Notebook's update sequence number is invalid"));
 
-        errorDescription.details() = QString::number(
-            m_qecNotebook.updateSequenceNum);
+        errorDescription.details() =
+            QString::number(m_qecNotebook.updateSequenceNum);
 
         return false;
     }
@@ -117,21 +89,11 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         return false;
     }
 
-    if (m_qecNotebook.sharedNotebooks.isSet())
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
-        for(const auto & sharedNotebook:
-            qAsConst(m_qecNotebook.sharedNotebooks.ref()))
+    if (m_qecNotebook.sharedNotebooks.isSet()) {
+        for (const auto & sharedNotebook:
+             ::qAsConst(m_qecNotebook.sharedNotebooks.ref()))
         {
-#else
-        for(auto it = m_qecNotebook.sharedNotebooks.ref().constBegin(),
-            end = m_qecNotebook.sharedNotebooks.ref().constEnd();
-            it != end; ++it)
-        {
-            const auto & sharedNotebook = *it;
-#endif
-            if (!sharedNotebook.id.isSet())
-            {
+            if (!sharedNotebook.id.isSet()) {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
                     "NotebookData",
                     "Notebook has shared notebook without share id set"));
@@ -152,17 +114,15 @@ bool NotebookData::checkParameters(ErrorString & errorDescription) const
         }
     }
 
-    if (m_qecNotebook.businessNotebook.isSet())
-    {
-        if (m_qecNotebook.businessNotebook->notebookDescription.isSet())
-        {
+    if (m_qecNotebook.businessNotebook.isSet()) {
+        if (m_qecNotebook.businessNotebook->notebookDescription.isSet()) {
             int businessNotebookDescriptionSize =
                 m_qecNotebook.businessNotebook->notebookDescription->size();
 
-            if ( (businessNotebookDescriptionSize <
-                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MIN) ||
-                 (businessNotebookDescriptionSize >
-                  qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX) )
+            if ((businessNotebookDescriptionSize <
+                 qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MIN) ||
+                (businessNotebookDescriptionSize >
+                 qevercloud::EDAM_BUSINESS_NOTEBOOK_DESCRIPTION_LEN_MAX))
             {
                 errorDescription.setBase(QT_TRANSLATE_NOOP(
                     "NotebookData",

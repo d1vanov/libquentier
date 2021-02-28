@@ -22,20 +22,16 @@
 #define NOTE_EDITOR_SETTINGS_NAME QStringLiteral("NoteEditor")
 
 #define NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY                              \
-    QStringLiteral("AttachmentSaveLocations")                                  \
-// NOTE_EDITOR_ATTACHMENT_SAVE_LOCATIONS_KEY
+    QStringLiteral("AttachmentSaveLocations")
 
 #define NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY                           \
-    QStringLiteral("LastAttachmentAddLocation")                                \
-// NOTE_EDITOR_LAST_ATTACHMENT_ADD_LOCATION_KEY
+    QStringLiteral("LastAttachmentAddLocation")
 
 #define NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION                   \
-    QStringLiteral("Encryption/rememberPassphraseForSession")                  \
-//NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION
+    QStringLiteral("Encryption/rememberPassphraseForSession")
 
 #define NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD                   \
-    QStringLiteral("RemoveResourceUndoDataSizeThreshold")                      \
-// NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_THRESHOLD
+    QStringLiteral("RemoveResourceUndoDataSizeThreshold")
 
 // 100 Mb in bytes
 #define NOTE_EDITOR_REMOVE_RESOURCE_UNDO_DATA_SIZE_DEFAULT_THRESHOLD (104857600)

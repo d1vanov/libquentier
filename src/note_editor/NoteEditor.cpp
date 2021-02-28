@@ -23,18 +23,17 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/note_editor/INoteEditorBackend.h>
 
-#include <QCoreApplication>
-#include <QUndoStack>
-#include <QFont>
 #include <QColor>
-#include <QVBoxLayout>
+#include <QCoreApplication>
 #include <QDragMoveEvent>
+#include <QFont>
+#include <QUndoStack>
+#include <QVBoxLayout>
 
 namespace quentier {
 
 NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
-    QWidget(parent, flags),
-    m_backend(new NoteEditorPrivate(*this))
+    QWidget(parent, flags), m_backend(new NoteEditorPrivate(*this))
 {
     QVBoxLayout * pLayout = new QVBoxLayout;
     pLayout->addWidget(m_backend->widget());
@@ -43,18 +42,14 @@ NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
     setAcceptDrops(true);
 }
 
-NoteEditor::~NoteEditor()
-{}
+NoteEditor::~NoteEditor() {}
 
 void NoteEditor::initialize(
     LocalStorageManagerAsync & localStorageManager, SpellChecker & spellChecker,
     const Account & account, QThread * pBackgroundJobsThread)
 {
     m_backend->initialize(
-        localStorageManager,
-        spellChecker,
-        account,
-        pBackgroundJobsThread);
+        localStorageManager, spellChecker, account, pBackgroundJobsThread);
 }
 
 INoteEditorBackend * NoteEditor::backend()

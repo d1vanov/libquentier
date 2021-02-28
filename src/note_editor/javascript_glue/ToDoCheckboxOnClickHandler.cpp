@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,15 +28,18 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
 
 void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(QString enToDoCheckboxId)
 {
-    QNDEBUG("ToDoCheckboxOnClickHandler::onToDoCheckboxClicked: "
-            << enToDoCheckboxId);
+    QNDEBUG(
+        "note_editor:js_glue",
+        "ToDoCheckboxOnClickHandler"
+            << "::onToDoCheckboxClicked: " << enToDoCheckboxId);
 
     bool conversionResult = false;
     quint64 id = enToDoCheckboxId.toULongLong(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        ErrorString error(QT_TR_NOOP("Error handling todo checkbox click event: "
-                                     "can't convert id from string to number"));
-        QNWARNING(error);
+        ErrorString error(
+            QT_TR_NOOP("Error handling todo checkbox click event: "
+                       "can't convert id from string to number"));
+        QNWARNING("note_editor:js_glue", error);
         Q_EMIT notifyError(error);
         return;
     }

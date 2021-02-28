@@ -23,7 +23,8 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ToDoCheckboxUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ToDoCheckboxUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -41,7 +42,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    quint64     m_enToDoCheckboxId;
+    quint64 m_enToDoCheckboxId;
 };
 
 } // namespace quentier

@@ -20,26 +20,42 @@
 #define LIB_QUENTIER_UTILITY_FILE_COPIER_PRIVATE_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QString>
 
 namespace quentier {
 
-class FileCopierPrivate: public QObject
+class Q_DECL_HIDDEN FileCopierPrivate final : public QObject
 {
     Q_OBJECT
 public:
     explicit FileCopierPrivate(QObject * parent = nullptr);
 
-    bool isIdle() const { return m_idle; }
-    bool isCancelled() const { return m_cancelled; }
+    bool isIdle() const
+    {
+        return m_idle;
+    }
 
-    const QString & sourceFilePath() const { return m_sourcePath; }
-    const QString & destinationFilePath() const { return m_destPath; }
+    bool isCancelled() const
+    {
+        return m_cancelled;
+    }
 
-    double currentProgress() const { return m_currentProgress; }
+    const QString & sourceFilePath() const
+    {
+        return m_sourcePath;
+    }
+
+    const QString & destinationFilePath() const
+    {
+        return m_destPath;
+    }
+
+    double currentProgress() const
+    {
+        return m_currentProgress;
+    }
 
     void copyFile(const QString & sourcePath, const QString & destPath);
     void cancel();
@@ -57,12 +73,12 @@ private:
     Q_DISABLE_COPY(FileCopierPrivate)
 
 private:
-    QString     m_sourcePath;
-    QString     m_destPath;
+    QString m_sourcePath;
+    QString m_destPath;
 
-    bool        m_idle = true;
-    bool        m_cancelled = false;
-    double      m_currentProgress = 0.0;
+    bool m_idle = true;
+    bool m_cancelled = false;
+    double m_currentProgress = 0.0;
 };
 
 } // namespace quentier

@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
 #define LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
 
-#include <quentier/utility/Printable.h>
-#include <quentier/types/ErrorString.h>
 #include <exception>
+#include <quentier/types/ErrorString.h>
+#include <quentier/utility/Printable.h>
 
 namespace quentier {
 
@@ -30,11 +30,12 @@ namespace quentier {
  * specific to libquentier and applications based on it.
  *
  * In addition to standard exception features inherited from std::exception,
- * IQuentierException based exceptions can provide both localized and non-localized
- * error messages.
+ * IQuentierException based exceptions can provide both localized and
+ * non-localized error messages.
  */
-class QUENTIER_EXPORT IQuentierException:
-    public Printable, public std::exception
+class QUENTIER_EXPORT IQuentierException :
+    public Printable,
+    public std::exception
 {
 public:
     explicit IQuentierException(const ErrorString & message);
@@ -50,18 +51,17 @@ public:
 
 protected:
     IQuentierException(const IQuentierException & other);
-    IQuentierException & operator =(const IQuentierException & other);
+    IQuentierException & operator=(const IQuentierException & other);
 
     virtual const QString exceptionDisplayName() const = 0;
 
 private:
-    IQuentierException()  = delete;
+    IQuentierException() = delete;
 
-    ErrorString     m_message;
-    char *          m_whatMessage;
+    ErrorString m_message;
+    char * m_whatMessage;
 };
 
 } // namespace quentier
 
 #endif // LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
-

@@ -19,7 +19,6 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_LINKED_NOTEBOOK_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_LINKED_NOTEBOOK_DATA_H
 
-
 #include <quentier/types/ErrorString.h>
 
 #include <qt5qevercloud/QEverCloud.h>
@@ -28,28 +27,30 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LinkedNotebookData : public QSharedData
+class Q_DECL_HIDDEN LinkedNotebookData final : public QSharedData
 {
 public:
-    LinkedNotebookData();
-    LinkedNotebookData(const LinkedNotebookData & other);
-    LinkedNotebookData(LinkedNotebookData && other);
+    LinkedNotebookData() = default;
+    LinkedNotebookData(const LinkedNotebookData & other) = default;
+    LinkedNotebookData(LinkedNotebookData && other) = default;
+
+    LinkedNotebookData & operator=(const LinkedNotebookData & other) = delete;
+    LinkedNotebookData & operator=(LinkedNotebookData && other) = delete;
+
     LinkedNotebookData(const qevercloud::LinkedNotebook & other);
     LinkedNotebookData(qevercloud::LinkedNotebook && other);
-    virtual ~LinkedNotebookData();
 
-    void clear();
-    bool checkParameters(ErrorString & errorDescription) const;
+    virtual ~LinkedNotebookData() = default;
 
     bool operator==(const LinkedNotebookData & other) const;
     bool operator!=(const LinkedNotebookData & other) const;
 
-    qevercloud::LinkedNotebook    m_qecLinkedNotebook;
-    bool                          m_isDirty;
+    void clear();
+    bool checkParameters(ErrorString & errorDescription) const;
 
-private:
-    LinkedNotebookData & operator=(const LinkedNotebookData & other) = delete;
-    LinkedNotebookData & operator=(LinkedNotebookData && other) = delete;
+public:
+    qevercloud::LinkedNotebook m_qecLinkedNotebook;
+    bool m_isDirty = true;
 };
 
 } // namespace quentier

@@ -20,14 +20,18 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_REMOVE_HYPERLINK_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RemoveHyperlinkUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN RemoveHyperlinkUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     RemoveHyperlinkUndoCommand(
         NoteEditorPrivate & noteEditor, const Callback & callback,
@@ -43,7 +47,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    Callback    m_callback;
+    Callback m_callback;
 };
 
 } // namespace quentier

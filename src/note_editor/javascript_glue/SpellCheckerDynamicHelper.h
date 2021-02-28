@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,15 +19,13 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_SPELL_CHECKER_DYNAMIC_HELPER_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QObject>
 #include <QStringList>
 #include <QVariant>
 
 namespace quentier {
 
-class SpellCheckerDynamicHelper: public QObject
+class SpellCheckerDynamicHelper final : public QObject
 {
     Q_OBJECT
 public:

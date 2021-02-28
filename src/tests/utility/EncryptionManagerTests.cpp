@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,9 +17,10 @@
  */
 
 #include "EncryptionManagerTests.h"
-#include <quentier/utility/EncryptionManager.h>
+
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/EncryptionManager.h>
 
 namespace quentier {
 namespace test {
@@ -28,39 +29,43 @@ bool decryptAesTest(QString & error)
 {
     EncryptionManager manager;
 
-    const QString encryptedText =
-        QStringLiteral("RU5DMI1mnQ7fKjBk9f0a57gSc9Nfbuw3uuwMKs32Y+wJGLZa0N8PcTzf7pu3"
-                       "/2VOBqZMvfkKGh4mnJuGy45ZT2TwOfqt+ey8Tic7BmhGg7b4n+SpJFHntkeL"
-                       "glxFWJt6oIG14i7IpamIuYyE5XcBRkOQs2cr7rg730d1hxx6sW/KqIfdr+0rF4k"
-                       "+rqP7tpI5ha/ALkhaZAuDbIVic39aCRcu6uve6mHHHPA03olCbi7ePVwO7e94mp"
-                       "uvcg2lGTJyDw/NoZmjFycjXESRJgLIr+gGfyD17jYNGcPBLR8Rb0M9vGK1tG9haG"
-                       "+Vem1pTWgRfYXF70mMduEmAd4xXy1JqV6XNUYDddW9iPpffWTZgD409LK9wIZM5C"
-                       "W2rbM2lwM/R0IEnoK7N5X8lCOzqkA9H/HF+8E=");
+    const QString encryptedText = QStringLiteral(
+        "RU5DMI1mnQ7fKjBk9f0a57gSc9Nfbuw3uuwMKs32Y+wJGLZa0N8PcTzf7pu3"
+        "/2VOBqZMvfkKGh4mnJuGy45ZT2TwOfqt+ey8Tic7BmhGg7b4n+SpJFHntkeL"
+        "glxFWJt6oIG14i7IpamIuYyE5XcBRkOQs2cr7rg730d1hxx6sW/KqIfdr+0rF4k"
+        "+rqP7tpI5ha/ALkhaZAuDbIVic39aCRcu6uve6mHHHPA03olCbi7ePVwO7e94mp"
+        "uvcg2lGTJyDw/NoZmjFycjXESRJgLIr+gGfyD17jYNGcPBLR8Rb0M9vGK1tG9haG"
+        "+Vem1pTWgRfYXF70mMduEmAd4xXy1JqV6XNUYDddW9iPpffWTZgD409LK9wIZM5C"
+        "W2rbM2lwM/R0IEnoK7N5X8lCOzqkA9H/HF+8E=");
 
     const QString passphrase =
         QStringLiteral("thisismyriflethisismygunthisisforfortunethisisforfun");
 
-    const QString originalText =
-        QStringLiteral("<span style=\"display: inline !important; float: none; \">"
-                       "Ok, here's some really long text. I can type and type it "
-                       "on and on and it will not stop any time soon just yet. "
-                       "The password is going to be long also.&nbsp;</span>");
+    const QString originalText = QStringLiteral(
+        "<span style=\"display: inline !important; float: none; \">"
+        "Ok, here's some really long text. I can type and type it "
+        "on and on and it will not stop any time soon just yet. "
+        "The password is going to be long also.&nbsp;</span>");
 
     QString decryptedText;
     ErrorString errorMessage;
-    bool res = manager.decrypt(encryptedText, passphrase, QStringLiteral("AES"),
-                               128, decryptedText, errorMessage);
+
+    bool res = manager.decrypt(
+        encryptedText, passphrase, QStringLiteral("AES"), 128, decryptedText,
+        errorMessage);
+
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
     if (decryptedText != originalText) {
         error = QStringLiteral("Decrypted text differs from the original; ") +
-                QStringLiteral("original text = ") + originalText +
-                QStringLiteral("; decrypted text = ") + decryptedText;
-        QNWARNING(error);
+            QStringLiteral("original text = ") + originalText +
+            QStringLiteral("; decrypted text = ") + decryptedText;
+
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
@@ -78,66 +83,76 @@ bool encryptDecryptTest(QString & error)
     QString encryptedText;
     QString cipher;
     size_t keyLength = 0;
-    bool res = manager.encrypt(textToEncrypt, passphrase, cipher, keyLength,
-                               encryptedText, errorMessage);
+
+    bool res = manager.encrypt(
+        textToEncrypt, passphrase, cipher, keyLength, encryptedText,
+        errorMessage);
+
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
     errorMessage.clear();
     QString decryptedText;
-    res = manager.decrypt(encryptedText, passphrase, cipher,
-                          keyLength, decryptedText, errorMessage);
+
+    res = manager.decrypt(
+        encryptedText, passphrase, cipher, keyLength, decryptedText,
+        errorMessage);
+
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
     if (decryptedText != QStringLiteral("Very-very secret")) {
         error = QStringLiteral("Decrypted text differs from the original ") +
-                QStringLiteral("(\"Very-very secret\"): ") + decryptedText;
-        QNWARNING(error);
+            QStringLiteral("(\"Very-very secret\"): ") + decryptedText;
+
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
     return true;
-
 }
 
 bool decryptRc2Test(QString & error)
 {
     EncryptionManager manager;
 
-    const QString encryptedText =
-        QStringLiteral("K+sUXSxI2Mt075+pSDxR/gnCNIEnk5XH1P/D0Eie17"
-                       "JIWgGnNo5QeMo3L0OeBORARGvVtBlmJx6vJY2Ij/2En"
-                       "MVy6/aifSdZXAxRlfnTLvI1IpVgHpTMzEfy6zBVMo+V"
-                       "Bt2KglA+7L0iSjA0hs3GEHI6ZgzhGfGj");
+    const QString encryptedText = QStringLiteral(
+        "K+sUXSxI2Mt075+pSDxR/gnCNIEnk5XH1P/D0Eie17"
+        "JIWgGnNo5QeMo3L0OeBORARGvVtBlmJx6vJY2Ij/2En"
+        "MVy6/aifSdZXAxRlfnTLvI1IpVgHpTMzEfy6zBVMo+V"
+        "Bt2KglA+7L0iSjA0hs3GEHI6ZgzhGfGj");
 
     const QString passphrase = QStringLiteral("my_own_encryption_key_1988");
 
-    const QString originalText =
-        QStringLiteral("<span style=\"display: inline !important; float: none; \">"
-                       "Ok, here's a piece of text I'm going to encrypt now</span>");
+    const QString originalText = QStringLiteral(
+        "<span style=\"display: inline !important; float: none; \">"
+        "Ok, here's a piece of text I'm going to encrypt now</span>");
 
     ErrorString errorMessage;
     QString decryptedText;
-    bool res = manager.decrypt(encryptedText, passphrase, QStringLiteral("RC2"),
-                               64, decryptedText, errorMessage);
+
+    bool res = manager.decrypt(
+        encryptedText, passphrase, QStringLiteral("RC2"), 64, decryptedText,
+        errorMessage);
+
     if (!res) {
         error = errorMessage.nonLocalizedString();
-        QNWARNING(error);
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 
     if (decryptedText != originalText) {
         error = QStringLiteral("Decrypted text differs from the original; ") +
-                QStringLiteral("original text = ") + originalText +
-                QStringLiteral("; decrypted text = ") + decryptedText;
-        QNWARNING(error);
+            QStringLiteral("original text = ") + originalText +
+            QStringLiteral("; decrypted text = ") + decryptedText;
+
+        QNWARNING("tests:utility_encryption", error);
         return false;
     }
 

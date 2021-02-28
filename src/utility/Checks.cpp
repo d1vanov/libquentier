@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,28 +16,35 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FavoritableDataElementData.h"
+#include <quentier/utility/Checks.h>
+
+#include <qt5qevercloud/generated/Constants.h>
+
+#include <limits>
 
 namespace quentier {
 
-FavoritableDataElementData::FavoritableDataElementData() :
-    NoteStoreDataElementData(),
-    m_isFavorited(false)
-{}
+bool checkGuid(const QString & guid)
+{
+    qint32 guidSize = static_cast<qint32>(guid.size());
 
-FavoritableDataElementData::~FavoritableDataElementData()
-{}
+    if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
+        return false;
+    }
 
-FavoritableDataElementData::FavoritableDataElementData(
-        const FavoritableDataElementData & other) :
-    NoteStoreDataElementData(other),
-    m_isFavorited(other.m_isFavorited)
-{}
+    if (guidSize > qevercloud::EDAM_GUID_LEN_MAX) {
+        return false;
+    }
 
-FavoritableDataElementData::FavoritableDataElementData(
-        FavoritableDataElementData && other) :
-    NoteStoreDataElementData(std::move(other)),
-    m_isFavorited(std::move(other.m_isFavorited))
-{}
+    return true;
+}
+
+bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
+{
+    return !(
+        (updateSequenceNumber < 0) ||
+        (updateSequenceNumber == std::numeric_limits<int32_t>::min()) ||
+        (updateSequenceNumber == std::numeric_limits<int32_t>::max()));
+}
 
 } // namespace quentier

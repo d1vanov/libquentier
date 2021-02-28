@@ -27,16 +27,21 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NotebookData: public FavoritableDataElementData
+class Q_DECL_HIDDEN NotebookData final : public FavoritableDataElementData
 {
 public:
     NotebookData();
-    NotebookData(const NotebookData & other);
-    NotebookData(NotebookData && other);
+
+    NotebookData(const NotebookData & other) = default;
+    NotebookData(NotebookData && other) = default;
+
     NotebookData(const qevercloud::Notebook & other);
     NotebookData(qevercloud::Notebook && other);
 
-    virtual ~NotebookData() override;
+    NotebookData & operator=(const NotebookData & other) = delete;
+    NotebookData & operator=(NotebookData && other) = delete;
+
+    virtual ~NotebookData() override = default;
 
     void clear();
     bool checkParameters(ErrorString & errorDescription) const;
@@ -44,13 +49,10 @@ public:
     bool operator==(const NotebookData & other) const;
     bool operator!=(const NotebookData & other) const;
 
-    qevercloud::Notebook            m_qecNotebook;
-    bool                            m_isLastUsed;
-    qevercloud::Optional<QString>   m_linkedNotebookGuid;
-
-private:
-    NotebookData & operator=(const NotebookData & other) = delete;
-    NotebookData & operator=(NotebookData && other) = delete;
+public:
+    qevercloud::Notebook m_qecNotebook;
+    bool m_isLastUsed = false;
+    qevercloud::Optional<QString> m_linkedNotebookGuid;
 };
 
 } // namespace quentier

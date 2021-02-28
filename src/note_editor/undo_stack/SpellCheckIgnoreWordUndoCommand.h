@@ -27,7 +27,8 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SpellChecker)
 
-class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -46,8 +47,8 @@ public:
     virtual void undoImpl() override;
 
 private:
-    QPointer<SpellChecker>  m_pSpellChecker;
-    QString                 m_ignoredWord;
+    QPointer<SpellChecker> m_pSpellChecker;
+    QString m_ignoredWord;
 };
 
 } // namespace quentier

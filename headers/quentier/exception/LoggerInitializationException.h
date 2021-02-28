@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT LoggerInitializationException: public IQuentierException
+class QUENTIER_EXPORT LoggerInitializationException : public IQuentierException
 {
 public:
     explicit LoggerInitializationException(const ErrorString & message);

@@ -19,30 +19,31 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_LOCAL_STORAGE_DATA_ELEMENT_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_LOCAL_STORAGE_DATA_ELEMENT_DATA_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QSharedData>
 #include <QUuid>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN LocalStorageDataElementData: public QSharedData
+class Q_DECL_HIDDEN LocalStorageDataElementData : public QSharedData
 {
 public:
-    LocalStorageDataElementData();
-    virtual ~LocalStorageDataElementData();
+    LocalStorageDataElementData() = default;
 
-    LocalStorageDataElementData(const LocalStorageDataElementData & other);
-    LocalStorageDataElementData(LocalStorageDataElementData && other);
+    LocalStorageDataElementData(const LocalStorageDataElementData & other) =
+        default;
 
-    QUuid m_localUid;
+    LocalStorageDataElementData(LocalStorageDataElementData && other) = default;
 
-private:
-    LocalStorageDataElementData &
-    operator=(const LocalStorageDataElementData & other) = delete;
+    LocalStorageDataElementData & operator=(
+        const LocalStorageDataElementData & other) = delete;
 
-    LocalStorageDataElementData &
-    operator=(LocalStorageDataElementData && other) = delete;
+    LocalStorageDataElementData & operator=(
+        LocalStorageDataElementData && other) = delete;
+
+    virtual ~LocalStorageDataElementData() = default;
+
+public:
+    QUuid m_localUid = QUuid::createUuid();
 };
 
 } // namespace quentier

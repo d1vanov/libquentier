@@ -19,9 +19,8 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_DISPLAY_WIDGET_H
 #define LIB_QUENTIER_NOTE_EDITOR_GENERIC_RESOURCE_DISPLAY_WIDGET_H
 
-#include <quentier/types/ErrorString.h>
 #include <quentier/types/Account.h>
-#include <quentier/utility/Macros.h>
+#include <quentier/types/ErrorString.h>
 
 #include <QUuid>
 #include <QWidget>
@@ -36,7 +35,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
 
-class Q_DECL_HIDDEN GenericResourceDisplayWidget: public QWidget
+class Q_DECL_HIDDEN GenericResourceDisplayWidget final: public QWidget
 {
     Q_OBJECT
 public:

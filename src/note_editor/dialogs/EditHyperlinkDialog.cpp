@@ -24,26 +24,21 @@
 namespace quentier {
 
 EditHyperlinkDialog::EditHyperlinkDialog(
-        QWidget * parent, const QString & startupText,
-        const QString & startupUrl, const quint64 idNumber) :
+    QWidget * parent, const QString & startupText, const QString & startupUrl,
+    const quint64 idNumber) :
     QDialog(parent),
-    m_pUI(new Ui::EditHyperlinkDialog),
-    m_idNumber(idNumber),
+    m_pUI(new Ui::EditHyperlinkDialog), m_idNumber(idNumber),
     m_startupUrlWasEmpty(startupUrl.isEmpty())
 {
     m_pUI->setupUi(this);
     m_pUI->urlErrorLabel->setVisible(false);
 
     QObject::connect(
-        m_pUI->urlLineEdit,
-        &QLineEdit::textEdited,
-        this,
+        m_pUI->urlLineEdit, &QLineEdit::textEdited, this,
         &EditHyperlinkDialog::onUrlEdited);
 
     QObject::connect(
-        m_pUI->urlLineEdit,
-        &QLineEdit::editingFinished,
-        this,
+        m_pUI->urlLineEdit, &QLineEdit::editingFinished, this,
         &EditHyperlinkDialog::onUrlEditingFinished);
 
     if (!startupText.isEmpty()) {
@@ -64,7 +59,7 @@ EditHyperlinkDialog::~EditHyperlinkDialog()
 
 void EditHyperlinkDialog::accept()
 {
-    QNDEBUG("EditHyperlinkDialog::accept");
+    QNDEBUG("note_editor:dialog", "EditHyperlinkDialog::accept");
 
     QUrl url;
     bool res = validateAndGetUrl(url);
@@ -72,11 +67,8 @@ void EditHyperlinkDialog::accept()
         return;
     }
 
-    Q_EMIT accepted(
-        m_pUI->textLineEdit->text(),
-        url,
-        m_idNumber,
-        m_startupUrlWasEmpty);
+    Q_EMIT editHyperlinkAccepted(
+        m_pUI->textLineEdit->text(), url, m_idNumber, m_startupUrlWasEmpty);
 
     QDialog::accept();
 }
@@ -96,12 +88,12 @@ void EditHyperlinkDialog::onUrlEditingFinished()
 
 bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
 {
-    QNDEBUG("EditHyperlinkDialog::validateAndGetUrl");
+    QNDEBUG("note_editor:dialog", "EditHyperlinkDialog::validateAndGetUrl");
 
     url = QUrl();
 
     QString enteredUrl = m_pUI->urlLineEdit->text();
-    QNTRACE("Entered URL string: " << enteredUrl);
+    QNTRACE("note_editor:dialog", "Entered URL string: " << enteredUrl);
 
     if (enteredUrl.isEmpty()) {
         m_pUI->urlErrorLabel->setText(tr("No URL is entered"));
@@ -110,10 +102,11 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
     }
 
     url = QUrl(enteredUrl, QUrl::TolerantMode);
-    QNTRACE("Parsed URL: " << url << ", is empty = "
-        << (url.isEmpty() ? "true" : "false")
-        << ", is valid = "
-        << (url.isValid() ? "true" : "false"));
+    QNTRACE(
+        "note_editor:dialog",
+        "Parsed URL: " << url << ", is empty = "
+                       << (url.isEmpty() ? "true" : "false") << ", is valid = "
+                       << (url.isValid() ? "true" : "false"));
 
     if (url.isEmpty()) {
         m_pUI->urlErrorLabel->setText(tr("Entered URL is empty"));

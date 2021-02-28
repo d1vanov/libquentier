@@ -20,22 +20,23 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_INSERT_HTML_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
-#include <quentier/utility/Macros.h>
-
-#include <QStringList>
 #include <QHash>
+#include <QStringList>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(Resource)
 QT_FORWARD_DECLARE_CLASS(ResourceInfo)
 
-class Q_DECL_HIDDEN InsertHtmlUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN InsertHtmlUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     InsertHtmlUndoCommand(
         const Callback & callback, NoteEditorPrivate & noteEditor,
@@ -48,8 +49,7 @@ public:
     InsertHtmlUndoCommand(
         const Callback & callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalUid,
-        ResourceInfo & resourceInfo,
-        const QString & text,
+        ResourceInfo & resourceInfo, const QString & text,
         const QList<Resource> & addedResources = {},
         const QStringList & resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
@@ -60,12 +60,12 @@ public:
     virtual void redoImpl() override;
 
 private:
-    QList<Resource>     m_addedResources;
-    QStringList         m_resourceFileStoragePaths;
-    Callback            m_callback;
+    QList<Resource> m_addedResources;
+    QStringList m_resourceFileStoragePaths;
+    Callback m_callback;
 
-    QHash<QString, QString> &   m_resourceFileStoragePathsByResourceLocalUid;
-    ResourceInfo &              m_resourceInfo;
+    QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalUid;
+    ResourceInfo & m_resourceInfo;
 };
 
 } // namespace quentier

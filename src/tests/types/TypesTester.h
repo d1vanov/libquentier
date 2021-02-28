@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,18 +19,17 @@
 #ifndef LIB_QUENTIER_TESTS_TYPES_TYPES_TESTER_H
 #define LIB_QUENTIER_TESTS_TYPES_TYPES_TESTER_H
 
-#include <quentier/utility/Macros.h>
 #include <QObject>
 
 namespace quentier {
 namespace test {
 
-class TypesTester: public QObject
+class TypesTester final : public QObject
 {
     Q_OBJECT
 public:
     TypesTester(QObject * parent = nullptr);
-    virtual ~TypesTester();
+    virtual ~TypesTester() override;
 
 private Q_SLOTS:
     void init();

@@ -17,8 +17,8 @@
  */
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/SysInfo.h>
 #include <quentier/utility/QuentierApplication.h>
+#include <quentier/utility/SysInfo.h>
 
 #include <exception>
 
@@ -28,20 +28,19 @@ QuentierApplication::QuentierApplication(int & argc, char * argv[]) :
     QApplication(argc, argv)
 {}
 
-QuentierApplication::~QuentierApplication()
-{}
+QuentierApplication::~QuentierApplication() {}
 
 bool QuentierApplication::notify(QObject * pObject, QEvent * pEvent)
 {
-    try
-    {
+    try {
         return QApplication::notify(pObject, pEvent);
     }
-    catch(const std::exception & e)
-    {
+    catch (const std::exception & e) {
         SysInfo sysInfo;
-        QNERROR("Caught unhandled exception: " << e.what()
-            << ", backtrace: " << sysInfo.stackTrace());
+        QNERROR(
+            "utility:app",
+            "Caught unhandled exception: " << e.what() << ", backtrace: "
+                                           << sysInfo.stackTrace());
         return false;
     }
 }

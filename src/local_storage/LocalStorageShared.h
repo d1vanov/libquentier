@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,15 +24,15 @@
 namespace quentier {
 
 #define DATABASE_CHECK_AND_SET_ERROR()                                         \
-    if (!res)                                                                  \
-    {                                                                          \
+    if (!res) {                                                                \
         errorDescription.base() = errorPrefix.base();                          \
         errorDescription.details() = query.lastError().text();                 \
-        QNERROR(errorDescription << ", last executed query: "                  \
-                << lastExecutedQuery(query));                                  \
+        QNERROR(                                                               \
+            "local_storage",                                                   \
+            errorDescription << ", last executed query: "                      \
+                             << lastExecutedQuery(query));                     \
         return false;                                                          \
-    }                                                                          \
-// DATABASE_CHECK_AND_SET_ERROR
+    }
 
 QString lastExecutedQuery(const QSqlQuery & query);
 

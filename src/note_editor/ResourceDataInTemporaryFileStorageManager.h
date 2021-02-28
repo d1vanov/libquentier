@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/FileSystemWatcher.h>
-#include <quentier/utility/Macros.h>
 
 #include <QHash>
 #include <QObject>
@@ -46,7 +45,8 @@ QT_FORWARD_DECLARE_CLASS(Resource)
  * existence and actuality and also to make it possible to move all the resource
  * file IO into a separate thread.
  */
-class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager: public QObject
+class Q_DECL_HIDDEN ResourceDataInTemporaryFileStorageManager final :
+    public QObject
 {
     Q_OBJECT
 public:
@@ -107,7 +107,8 @@ Q_SIGNALS:
      * @param noteLocalUid          The local uid of the note which resources
      *                              preparation progress is being notified about
      */
-    void noteResourcesPreparationProgress(double progress, QString noteLocalUid);
+    void noteResourcesPreparationProgress(
+        double progress, QString noteLocalUid);
 
     /**
      * @brief noteResourcesPreparationError signal is emitted when some error
@@ -331,17 +332,16 @@ private:
     {
     public:
         PartialUpdateResourceFilesForCurrentNoteProgressFunctor(
-                const int resourceIndex, const int numResources,
-                ResourceDataInTemporaryFileStorageManager & manager) :
+            const int resourceIndex, const int numResources,
+            ResourceDataInTemporaryFileStorageManager & manager) :
             m_resourceIndex(resourceIndex),
-            m_numResources(numResources),
-            m_manager(manager)
+            m_numResources(numResources), m_manager(manager)
         {}
 
         void operator()(const double progress)
         {
-            double doneProgress = static_cast<double>(m_resourceIndex) /
-                                  m_numResources;
+            double doneProgress =
+                static_cast<double>(m_resourceIndex) / m_numResources;
             double normalizedProgress = progress / m_numResources;
             m_manager.emitPartialUpdateResourceFilesForCurrentNoteProgress(
                 doneProgress + normalizedProgress);
@@ -379,8 +379,8 @@ private:
     {
     public:
         OpenResourcePreparationProgressFunctor(
-                const QString & resourceLocalUid,
-                ResourceDataInTemporaryFileStorageManager & manager) :
+            const QString & resourceLocalUid,
+            ResourceDataInTemporaryFileStorageManager & manager) :
             m_resourceLocalUid(resourceLocalUid),
             m_manager(manager)
         {}
@@ -388,12 +388,11 @@ private:
         void operator()(const double progress)
         {
             m_manager.emitOpenResourcePreparationProgress(
-                progress,
-                m_resourceLocalUid);
+                progress, m_resourceLocalUid);
         }
 
     private:
-        QString     m_resourceLocalUid;
+        QString m_resourceLocalUid;
         ResourceDataInTemporaryFileStorageManager & m_manager;
     };
 
@@ -411,40 +410,42 @@ private:
         Off
     };
 
-    using WriteResourceDataCallback = std::function<void(const double)> ;
+    using WriteResourceDataCallback = std::function<void(const double)>;
 
     bool writeResourceDataToTemporaryFile(
         const QString & noteLocalUid, const QString & resourceLocalUid,
         const QByteArray & data, const QByteArray & dataHash,
         const ResourceType resourceType, ErrorString & errorDescription,
         const CheckResourceFileActualityOption checkActualityOption =
-        CheckResourceFileActualityOption::On, WriteResourceDataCallback = 0);
+            CheckResourceFileActualityOption::On,
+        WriteResourceDataCallback = 0);
 
 private:
     Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)
 
 private:
-    QString     m_nonImageResourceFileStorageLocation;
-    QString     m_imageResourceFileStorageLocation;
+    QString m_nonImageResourceFileStorageLocation;
+    QString m_imageResourceFileStorageLocation;
 
-    std::unique_ptr<Note>       m_pCurrentNote;
+    std::unique_ptr<Note> m_pCurrentNote;
 
     /**
      * Local uids of image resources from current note which are pending full
      * binary data extraction from local storage for writing to temporary files
      * for the sake of note editor page loading
      */
-    QSet<QString>               m_resourceLocalUidsPendingFindInLocalStorage;
+    QSet<QString> m_resourceLocalUidsPendingFindInLocalStorage;
 
     /**
      * Local uids of resources from current note which are pending full binary
      * data extraction from local storage for writing to temporary files because
      * these resources were required to be opened in external program
      */
-    QSet<QString>               m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening;
+    QSet<QString>
+        m_resourceLocalUidsPendingFindInLocalStorageForWritingToFileForOpening;
 
-    QHash<QString, QString>     m_resourceLocalUidByFilePath;
-    FileSystemWatcher           m_fileSystemWatcher;
+    QHash<QString, QString> m_resourceLocalUidByFilePath;
+    FileSystemWatcher m_fileSystemWatcher;
 };
 
 } // namespace quentier

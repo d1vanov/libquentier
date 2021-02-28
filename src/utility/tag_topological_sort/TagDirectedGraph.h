@@ -28,7 +28,7 @@ namespace quentier {
 class Q_DECL_HIDDEN TagDirectedGraph
 {
 public:
-    explicit TagDirectedGraph();
+    explicit TagDirectedGraph() = default;
 
     bool isEmpty() const;
     bool empty() const;
@@ -42,7 +42,7 @@ public:
     QStringList allTagIds() const;
 
 private:
-    QHash<QString,QStringList>  m_childTagIdsByParentTagId;
+    QHash<QString, QStringList> m_childTagIdsByParentTagId;
 };
 
 } // namespace quentier

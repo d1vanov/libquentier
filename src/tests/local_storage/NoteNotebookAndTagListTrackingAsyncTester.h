@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2019-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,18 +19,19 @@
 #ifndef LIB_QUENTIER_TESTS_NOTE_NOTEBOOK_AND_TAG_LIST_TRACKING_ASYNC_TESTER_H
 #define LIB_QUENTIER_TESTS_NOTE_NOTEBOOK_AND_TAG_LIST_TRACKING_ASYNC_TESTER_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/types/ErrorString.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/types/ErrorString.h>
 
 namespace quentier {
 namespace test {
 
-class NoteNotebookAndTagListTrackingAsyncTester: public QObject
+class NoteNotebookAndTagListTrackingAsyncTester final : public QObject
 {
     Q_OBJECT
 public:
-    explicit NoteNotebookAndTagListTrackingAsyncTester(QObject * parent = nullptr);
+    explicit NoteNotebookAndTagListTrackingAsyncTester(
+        QObject * parent = nullptr);
+
     ~NoteNotebookAndTagListTrackingAsyncTester();
 
 public Q_SLOTS:
@@ -40,36 +41,44 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals
+    // private signals
     void addNotebook(Notebook notebook, QUuid requestId);
     void addTag(Tag tag, QUuid requestId);
     void addNote(Note note, QUuid requestId);
-    void updateNote(Note note,
-                    LocalStorageManager::UpdateNoteOptions options,
-                    QUuid requestId);
+
+    void updateNote(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
 
 private Q_SLOTS:
     void initialize();
     void onAddNotebookComplete(Notebook notebook, QUuid requestId);
-    void onAddNotebookFailed(Notebook notebook,
-                             ErrorString errorDescription,
-                             QUuid requestId);
+
+    void onAddNotebookFailed(
+        Notebook notebook, ErrorString errorDescription, QUuid requestId);
+
     void onAddTagComplete(Tag tag, QUuid requestId);
     void onAddTagFailed(Tag tag, ErrorString errorDescription, QUuid requestId);
     void onAddNoteComplete(Note note, QUuid requestId);
-    void onAddNoteFailed(Note note, ErrorString errorDescription, QUuid requestId);
-    void onUpdateNoteComplete(Note note,
-                              LocalStorageManager::UpdateNoteOptions options,
-                              QUuid requestId);
-    void onUpdateNoteFailed(Note note,
-                            LocalStorageManager::UpdateNoteOptions options,
-                            ErrorString errorDescription, QUuid requestId);
-    void onNoteMovedToAnotherNotebook(QString noteLocalUid,
-                                      QString previousNotebookLocalUid,
-                                      QString newNotebookLocalUid);
-    void onNoteTagListUpdated(QString noteLocalUid,
-                              QStringList previousTagLocalUids,
-                              QStringList newTagLocalUids);
+
+    void onAddNoteFailed(
+        Note note, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateNoteComplete(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        QUuid requestId);
+
+    void onUpdateNoteFailed(
+        Note note, LocalStorageManager::UpdateNoteOptions options,
+        ErrorString errorDescription, QUuid requestId);
+
+    void onNoteMovedToAnotherNotebook(
+        QString noteLocalUid, QString previousNotebookLocalUid,
+        QString newNotebookLocalUid);
+
+    void onNoteTagListUpdated(
+        QString noteLocalUid, QStringList previousTagLocalUids,
+        QStringList newTagLocalUids);
 
 private:
     void createConnections();
@@ -80,7 +89,8 @@ private:
     void changeNoteTagsList();
     void moveNoteToAnotherNotebookAlongWithTagListChange();
 
-    bool checkTagsListEqual(const QVector<Tag> & lhs, const QStringList & rhs) const;
+    bool checkTagsListEqual(
+        const QVector<Tag> & lhs, const QStringList & rhs) const;
 
 private:
     enum State
@@ -94,27 +104,27 @@ private:
         STATE_PENDING_NOTE_UPDATE_WITH_NOTEBOOK_AND_TAG_LIST_CHANGES
     };
 
-    State   m_state;
+    State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
-    QThread *                   m_pLocalStorageManagerThread;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook        m_firstNotebook;
-    Notebook        m_secondNotebook;
-    int             m_addedNotebooksCount;
+    Notebook m_firstNotebook;
+    Notebook m_secondNotebook;
+    int m_addedNotebooksCount = 0;
 
-    QVector<Tag>    m_firstNoteTagsSet;
-    QVector<Tag>    m_secondNoteTagsSet;
-    int             m_addedTagsCount;
+    QVector<Tag> m_firstNoteTagsSet;
+    QVector<Tag> m_secondNoteTagsSet;
+    int m_addedTagsCount = 0;
 
-    Note            m_note;
+    Note m_note;
 
-    bool            m_receivedUpdateNoteCompleteSignal;
-    bool            m_receivedNoteMovedToAnotherNotebookSignal;
-    bool            m_receivedNoteTagsListChangedSignal;
+    bool m_receivedUpdateNoteCompleteSignal = false;
+    bool m_receivedNoteMovedToAnotherNotebookSignal = false;
+    bool m_receivedNoteTagsListChangedSignal = false;
 
-    int             m_noteMovedToAnotherNotebookSlotInvocationCount;
-    int             m_noteTagsListChangedSlotInvocationCount;
+    int m_noteMovedToAnotherNotebookSlotInvocationCount = 0;
+    int m_noteTagsListChangedSlotInvocationCount = 0;
 };
 
 } // namespace test

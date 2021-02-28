@@ -20,43 +20,40 @@
 #include "LocalStorageManager_p.h"
 #include "patches/LocalStoragePatch1To2.h"
 
-#include <quentier/types/ErrorString.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/types/ErrorString.h>
 
 #include <iterator>
 
 namespace quentier {
 
 LocalStoragePatchManager::LocalStoragePatchManager(
-        const Account & account,
-        LocalStorageManagerPrivate & localStorageManager,
-        QSqlDatabase & database, QObject * parent) :
+    const Account & account, LocalStorageManagerPrivate & localStorageManager,
+    QSqlDatabase & database, QObject * parent) :
     QObject(parent),
-    m_account(account),
-    m_localStorageManager(localStorageManager),
+    m_account(account), m_localStorageManager(localStorageManager),
     m_sqlDatabase(database)
 {}
 
-QVector<std::shared_ptr<ILocalStoragePatch> >
+QVector<std::shared_ptr<ILocalStoragePatch>>
 LocalStoragePatchManager::patchesForCurrentVersion()
 {
-    QVector<std::shared_ptr<ILocalStoragePatch> > result;
+    QVector<std::shared_ptr<ILocalStoragePatch>> result;
 
     ErrorString errorDescription;
     int version = m_localStorageManager.localStorageVersion(errorDescription);
     if (version <= 0) {
-        QNWARNING("LocalStoragePatchManager::"
-            << "patchInfoForCurrentLocalStorageVersion: "
-            << "unable to determine the current local storage version");
+        QNWARNING(
+            "local_storage",
+            "LocalStoragePatchManager::"
+                << "patchInfoForCurrentLocalStorageVersion: "
+                << "unable to determine the current local storage version");
         return result;
     }
 
-    if (version == 1)
-    {
+    if (version == 1) {
         result.append(std::make_shared<LocalStoragePatch1To2>(
-            m_account,
-            m_localStorageManager,
-            m_sqlDatabase));
+            m_account, m_localStorageManager, m_sqlDatabase));
     }
 
     return result;

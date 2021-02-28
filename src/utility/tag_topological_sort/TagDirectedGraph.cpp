@@ -18,11 +18,9 @@
 
 #include "TagDirectedGraph.h"
 
-namespace quentier {
+#include <quentier/utility/Compat.h>
 
-TagDirectedGraph::TagDirectedGraph() :
-    m_childTagIdsByParentTagId()
-{}
+namespace quentier {
 
 bool TagDirectedGraph::isEmpty() const
 {
@@ -42,7 +40,7 @@ void TagDirectedGraph::clear()
 void TagDirectedGraph::addChild(
     const QString & parentTagId, const QString & childTagId)
 {
-    QStringList & childTagIds = m_childTagIdsByParentTagId[parentTagId];
+    auto & childTagIds = m_childTagIdsByParentTagId[parentTagId];
     if (!childTagIds.contains(childTagId)) {
         childTagIds << childTagId;
     }
@@ -62,16 +60,15 @@ QStringList TagDirectedGraph::allTagIds() const
 {
     QStringList result;
 
-    for(auto it = m_childTagIdsByParentTagId.constBegin(),
-        end = m_childTagIdsByParentTagId.constEnd(); it != end; ++it)
+    for (auto it = m_childTagIdsByParentTagId.constBegin(),
+              end = m_childTagIdsByParentTagId.constEnd();
+         it != end; ++it)
     {
         result << it.key();
 
-        const QStringList & childTagIds = it.value();
-        for(auto sit = childTagIds.constBegin(),
-            send = childTagIds.constEnd(); sit != send; ++sit)
-        {
-            result << *sit;
+        const auto & childTagIds = it.value();
+        for (const auto & childTagId: ::qAsConst(childTagIds)) {
+            result << childTagId;
         }
     }
 

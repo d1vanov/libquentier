@@ -20,21 +20,15 @@
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
 
 #include <quentier/utility/FileSystemWatcher.h>
-#include <quentier/utility/SuppressWarnings.h>
 
 #include <QFileSystemWatcher>
 #include <QSet>
 
-SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-
 #include <boost/bimap.hpp>
-
-RESTORE_WARNINGS
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileSystemWatcherPrivate: public QObject
+class Q_DECL_HIDDEN FileSystemWatcherPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -79,17 +73,18 @@ private:
     Q_DISABLE_COPY(FileSystemWatcherPrivate)
 
 private:
-    FileSystemWatcher & m_parent;
-    QFileSystemWatcher  m_watcher;
-    int                 m_removalTimeoutMSec;
-
-    QSet<QString>       m_watchedFiles;
-    QSet<QString>       m_watchedDirectories;
-
     using PathWithTimerId = boost::bimap<QString, int>;
 
-    PathWithTimerId     m_justRemovedFilePathsWithPostRemovalTimerIds;
-    PathWithTimerId     m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
+private:
+    FileSystemWatcher & m_parent;
+    QFileSystemWatcher m_watcher;
+    int m_removalTimeoutMSec;
+
+    QSet<QString> m_watchedFiles;
+    QSet<QString> m_watchedDirectories;
+
+    PathWithTimerId m_justRemovedFilePathsWithPostRemovalTimerIds;
+    PathWithTimerId m_justRemovedDirectoryPathsWithPostRemovalTimerIds;
 };
 
 } // namespace quentier

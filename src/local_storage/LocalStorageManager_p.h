@@ -24,12 +24,11 @@
 #include <quentier/types/LinkedNotebook.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/SharedNotebook.h>
 #include <quentier/types/Tag.h>
-#include <quentier/types/Resource.h>
 #include <quentier/types/User.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SuppressWarnings.h>
 
@@ -41,8 +40,10 @@
 #define BOOST_DATE_TIME_NO_LIB
 
 SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
+
+// clang-format off
 GCC_SUPPRESS_WARNING(-Wtype-limits)
+// clang-format on
 
 #include <boost/interprocess/sync/file_lock.hpp>
 
@@ -53,7 +54,7 @@ namespace quentier {
 QT_FORWARD_DECLARE_CLASS(LocalStoragePatchManager)
 QT_FORWARD_DECLARE_CLASS(NoteSearchQuery)
 
-class Q_DECL_HIDDEN LocalStorageManagerPrivate: public QObject
+class Q_DECL_HIDDEN LocalStorageManagerPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -226,8 +227,7 @@ public:
         const QString & linkedNotebookGuid) const;
 
     QList<Note> listNotesImpl(
-        const ErrorString & errorPrefix,
-        const QString & sqlQueryCondition,
+        const ErrorString & errorPrefix, const QString & sqlQueryCondition,
         const LocalStorageManager::ListObjectsOptions flag,
         const LocalStorageManager::GetNoteOptions options,
         ErrorString & errorDescription, const size_t limit, const size_t offset,
@@ -331,7 +331,7 @@ public Q_SLOTS:
     void processPostTransactionException(ErrorString message, QSqlError error);
 
 private:
-    LocalStorageManagerPrivate()  = delete;
+    LocalStorageManagerPrivate() = delete;
     Q_DISABLE_COPY(LocalStorageManagerPrivate)
 
     void unlockDatabaseFile();
@@ -377,7 +377,10 @@ private:
     bool checkAndPrepareInsertOrReplaceBusinessUserInfoQuery();
     bool checkAndPrepareInsertOrReplaceUserAttributesQuery();
     bool checkAndPrepareInsertOrReplaceUserAttributesViewedPromotionsQuery();
-    bool checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
+
+    bool
+    checkAndPrepareInsertOrReplaceUserAttributesRecentMailedAddressesQuery();
+
     bool checkAndPrepareDeleteUserQuery();
 
     bool insertOrReplaceNotebook(
@@ -500,17 +503,29 @@ private:
     bool removeResourceDataFilesForLinkedNotebook(
         const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
 
-    bool checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
+    bool
+    checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
+
     bool checkAndPrepareUpdateResourceMetadataWithoutDataPropertiesQuery();
     bool checkAndPrepareInsertOrReplaceNoteResourceQuery();
     bool checkAndPrepareDeleteResourceFromResourceRecognitionTypesQuery();
     bool checkAndPrepareInsertOrReplaceIntoResourceRecognitionDataQuery();
     bool checkAndPrepareDeleteResourceFromResourceAttributesQuery();
-    bool checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery();
-    bool checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataFullMapQuery();
+
+    bool
+    checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery();
+
+    bool
+    checkAndPrepareDeleteResourceFromResourceAttributesApplicationDataFullMapQuery();
+
     bool checkAndPrepareInsertOrReplaceResourceAttributesQuery();
-    bool checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataKeysOnlyQuery();
-    bool checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataFullMapQuery();
+
+    bool
+    checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataKeysOnlyQuery();
+
+    bool
+    checkAndPrepareInsertOrReplaceResourceAttributesApplicationDataFullMapQuery();
+
     bool checkAndPrepareResourceCountQuery() const;
 
     bool insertOrReplaceSavedSearch(
@@ -617,8 +632,7 @@ private:
     void sortSharedNotebooks(Notebook & notebook) const;
     void sortSharedNotes(Note & note) const;
 
-    QList<qevercloud::SharedNotebook>
-    listEnSharedNotebooksPerNotebookGuid(
+    QList<qevercloud::SharedNotebook> listEnSharedNotebooksPerNotebookGuid(
         const QString & notebookGuid, ErrorString & errorDescription) const;
 
     bool noteSearchQueryToSQL(
@@ -626,8 +640,8 @@ private:
         ErrorString & errorDescription) const;
 
     bool noteSearchQueryContentSearchTermsToSQL(
-        const NoteSearchQuery & noteSearchQuery,
-        QString & sql, ErrorString & errorDescription) const;
+        const NoteSearchQuery & noteSearchQuery, QString & sql,
+        ErrorString & errorDescription) const;
 
     void contentSearchTermToSQLQueryPart(
         QString & frontSearchTermModifier, QString & searchTerm,
@@ -657,8 +671,8 @@ private:
     template <class T, class TOrderBy>
     QList<T> listObjects(
         const LocalStorageManager::ListObjectsOptions & flag,
-        ErrorString & errorDescription, const size_t limit,
-        const size_t offset, const TOrderBy & orderBy,
+        ErrorString & errorDescription, const size_t limit, const size_t offset,
+        const TOrderBy & orderBy,
         const LocalStorageManager::OrderDirection & orderDirection,
         const QString & additionalSqlQueryCondition = QString()) const;
 
@@ -710,145 +724,153 @@ private:
         HighUsnRequestData() = default;
 
         HighUsnRequestData(
-                QString tableName,
-                QString usnColumnName,
-                QString queryCondition) :
+            QString tableName, QString usnColumnName, QString queryCondition) :
             m_tableName(std::move(tableName)),
             m_usnColumnName(std::move(usnColumnName)),
             m_queryCondition(std::move(queryCondition))
         {}
 
-        QString     m_tableName;
-        QString     m_usnColumnName;
-        QString     m_queryCondition;
+        QString m_tableName;
+        QString m_usnColumnName;
+        QString m_queryCondition;
     };
 
-    Account             m_currentAccount;
-    QString             m_databaseFilePath;
-    QSqlDatabase        m_sqlDatabase;
-    boost::interprocess::file_lock  m_databaseFileLock;
+    Account m_currentAccount;
+    QString m_databaseFilePath;
+    QSqlDatabase m_sqlDatabase;
+    boost::interprocess::file_lock m_databaseFileLock;
 
-    QSqlQuery           m_insertOrReplaceSavedSearchQuery;
-    bool                m_insertOrReplaceSavedSearchQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceSavedSearchQuery;
+    bool m_insertOrReplaceSavedSearchQueryPrepared = false;
 
-    mutable QSqlQuery   m_getSavedSearchCountQuery;
-    mutable bool        m_getSavedSearchCountQueryPrepared = false;
+    mutable QSqlQuery m_getSavedSearchCountQuery;
+    mutable bool m_getSavedSearchCountQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceResourceMetadataWithDataPropertiesQuery;
-    bool                m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceResourceMetadataWithDataPropertiesQuery;
+    bool m_insertOrReplaceResourceMetadataWithDataPropertiesQueryPrepared =
+        false;
 
-    QSqlQuery           m_updateResourceMetadataWithoutDataPropertiesQuery;
-    bool                m_updateResourceMetadataWithoutDataPropertiesQueryPrepared = false;
+    QSqlQuery m_updateResourceMetadataWithoutDataPropertiesQuery;
+    bool m_updateResourceMetadataWithoutDataPropertiesQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNoteResourceQuery;
-    bool                m_insertOrReplaceNoteResourceQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNoteResourceQuery;
+    bool m_insertOrReplaceNoteResourceQueryPrepared = false;
 
-    QSqlQuery           m_deleteResourceFromResourceRecognitionTypesQuery;
-    bool                m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
+    QSqlQuery m_deleteResourceFromResourceRecognitionTypesQuery;
+    bool m_deleteResourceFromResourceRecognitionTypesQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceIntoResourceRecognitionDataQuery;
-    bool                m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceIntoResourceRecognitionDataQuery;
+    bool m_insertOrReplaceIntoResourceRecognitionDataQueryPrepared = false;
 
-    QSqlQuery           m_deleteResourceFromResourceAttributesQuery;
-    bool                m_deleteResourceFromResourceAttributesQueryPrepared = false;
+    QSqlQuery m_deleteResourceFromResourceAttributesQuery;
+    bool m_deleteResourceFromResourceAttributesQueryPrepared = false;
 
-    QSqlQuery           m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery;
-    bool                m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared = false;
+    QSqlQuery
+        m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQuery;
+    bool
+        m_deleteResourceFromResourceAttributesApplicationDataKeysOnlyQueryPrepared =
+            false;
 
-    QSqlQuery           m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery;
-    bool                m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared = false;
+    QSqlQuery m_deleteResourceFromResourceAttributesApplicationDataFullMapQuery;
+    bool
+        m_deleteResourceFromResourceAttributesApplicationDataFullMapQueryPrepared =
+            false;
 
-    QSqlQuery           m_insertOrReplaceResourceAttributesQuery;
-    bool                m_insertOrReplaceResourceAttributesQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceResourceAttributesQuery;
+    bool m_insertOrReplaceResourceAttributesQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery;
-    bool                m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQuery;
+    bool
+        m_insertOrReplaceResourceAttributeApplicationDataKeysOnlyQueryPrepared =
+            false;
 
-    QSqlQuery           m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery;
-    bool                m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceResourceAttributeApplicationDataFullMapQuery;
+    bool m_insertOrReplaceResourceAttributeApplicationDataFullMapQueryPrepared =
+        false;
 
-    mutable QSqlQuery   m_getResourceCountQuery;
-    mutable bool        m_getResourceCountQueryPrepared = false;
+    mutable QSqlQuery m_getResourceCountQuery;
+    mutable bool m_getResourceCountQueryPrepared = false;
 
-    mutable QSqlQuery   m_getTagCountQuery;
-    mutable bool        m_getTagCountQueryPrepared = false;
+    mutable QSqlQuery m_getTagCountQuery;
+    mutable bool m_getTagCountQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceTagQuery;
-    bool                m_insertOrReplaceTagQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceTagQuery;
+    bool m_insertOrReplaceTagQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNoteQuery;
-    bool                m_insertOrReplaceNoteQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNoteQuery;
+    bool m_insertOrReplaceNoteQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceSharedNoteQuery;
-    bool                m_insertOrReplaceSharedNoteQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceSharedNoteQuery;
+    bool m_insertOrReplaceSharedNoteQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNoteRestrictionsQuery;
-    bool                m_insertOrReplaceNoteRestrictionsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNoteRestrictionsQuery;
+    bool m_insertOrReplaceNoteRestrictionsQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNoteLimitsQuery;
-    bool                m_insertOrReplaceNoteLimitsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNoteLimitsQuery;
+    bool m_insertOrReplaceNoteLimitsQueryPrepared = false;
 
-    mutable QSqlQuery   m_canAddNoteToNotebookQuery;
-    mutable bool        m_canAddNoteToNotebookQueryPrepared = false;
+    mutable QSqlQuery m_canAddNoteToNotebookQuery;
+    mutable bool m_canAddNoteToNotebookQueryPrepared = false;
 
-    mutable QSqlQuery   m_canUpdateNoteInNotebookQuery;
-    mutable bool        m_canUpdateNoteInNotebookQueryPrepared = false;
+    mutable QSqlQuery m_canUpdateNoteInNotebookQuery;
+    mutable bool m_canUpdateNoteInNotebookQueryPrepared = false;
 
-    mutable QSqlQuery   m_canExpungeNoteInNotebookQuery;
-    mutable bool        m_canExpungeNoteInNotebookQueryPrepared = false;
+    mutable QSqlQuery m_canExpungeNoteInNotebookQuery;
+    mutable bool m_canExpungeNoteInNotebookQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNoteIntoNoteTagsQuery;
-    bool                m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNoteIntoNoteTagsQuery;
+    bool m_insertOrReplaceNoteIntoNoteTagsQueryPrepared = false;
 
-    mutable QSqlQuery   m_getLinkedNotebookCountQuery;
-    mutable bool        m_getLinkedNotebookCountQueryPrepared = false;
+    mutable QSqlQuery m_getLinkedNotebookCountQuery;
+    mutable bool m_getLinkedNotebookCountQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceLinkedNotebookQuery;
-    bool                m_insertOrReplaceLinkedNotebookQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceLinkedNotebookQuery;
+    bool m_insertOrReplaceLinkedNotebookQueryPrepared = false;
 
-    mutable QSqlQuery   m_getNotebookCountQuery;
-    mutable bool        m_getNotebookCountQueryPrepared = false;
+    mutable QSqlQuery m_getNotebookCountQuery;
+    mutable bool m_getNotebookCountQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNotebookQuery;
-    bool                m_insertOrReplaceNotebookQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNotebookQuery;
+    bool m_insertOrReplaceNotebookQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceNotebookRestrictionsQuery;
-    bool                m_insertOrReplaceNotebookRestrictionsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceNotebookRestrictionsQuery;
+    bool m_insertOrReplaceNotebookRestrictionsQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceSharedNotebookQuery;
-    bool                m_insertOrReplaceSharedNotebookQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceSharedNotebookQuery;
+    bool m_insertOrReplaceSharedNotebookQueryPrepared = false;
 
-    mutable QSqlQuery   m_getUserCountQuery;
-    mutable bool        m_getUserCountQueryPrepared = false;
+    mutable QSqlQuery m_getUserCountQuery;
+    mutable bool m_getUserCountQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceUserQuery;
-    bool                m_insertOrReplaceUserQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceUserQuery;
+    bool m_insertOrReplaceUserQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceUserAttributesQuery;
-    bool                m_insertOrReplaceUserAttributesQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceUserAttributesQuery;
+    bool m_insertOrReplaceUserAttributesQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceAccountingQuery;
-    bool                m_insertOrReplaceAccountingQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceAccountingQuery;
+    bool m_insertOrReplaceAccountingQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceAccountLimitsQuery;
-    bool                m_insertOrReplaceAccountLimitsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceAccountLimitsQuery;
+    bool m_insertOrReplaceAccountLimitsQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceBusinessUserInfoQuery;
-    bool                m_insertOrReplaceBusinessUserInfoQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceBusinessUserInfoQuery;
+    bool m_insertOrReplaceBusinessUserInfoQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceUserAttributesViewedPromotionsQuery;
-    bool                m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceUserAttributesViewedPromotionsQuery;
+    bool m_insertOrReplaceUserAttributesViewedPromotionsQueryPrepared = false;
 
-    QSqlQuery           m_insertOrReplaceUserAttributesRecentMailedAddressesQuery;
-    bool                m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared = false;
+    QSqlQuery m_insertOrReplaceUserAttributesRecentMailedAddressesQuery;
+    bool m_insertOrReplaceUserAttributesRecentMailedAddressesQueryPrepared =
+        false;
 
-    QSqlQuery           m_deleteUserQuery;
-    bool                m_deleteUserQueryPrepared = false;
+    QSqlQuery m_deleteUserQuery;
+    bool m_deleteUserQueryPrepared = false;
 
-    LocalStoragePatchManager *  m_pLocalStoragePatchManager = nullptr;
+    LocalStoragePatchManager * m_pLocalStoragePatchManager = nullptr;
 
-    StringUtils         m_stringUtils;
-    QVector<QChar>      m_preservedAsterisk;
+    StringUtils m_stringUtils;
+    QVector<QChar> m_preservedAsterisk;
 };
 
 } // namespace quentier

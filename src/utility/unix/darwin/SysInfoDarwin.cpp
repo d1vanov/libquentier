@@ -17,7 +17,6 @@
  */
 
 #include <quentier/utility/SysInfo.h>
-#include <quentier/utility/Macros.h>
 
 #include "../../SysInfo_p.h"
 

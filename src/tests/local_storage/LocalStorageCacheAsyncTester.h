@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_CACHE_ASYNC_TESTER_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier/utility/Macros.h>
 
 QT_FORWARD_DECLARE_CLASS(QDebug)
 
@@ -30,7 +29,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageCacheManager)
 
 namespace test {
 
-class LocalStorageCacheAsyncTester: public QObject
+class LocalStorageCacheAsyncTester final : public QObject
 {
     Q_OBJECT
 public:
@@ -44,7 +43,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals
+    // private signals
     void addNotebookRequest(Notebook notebook, QUuid requestId);
     void updateNotebookRequest(Notebook notebook, QUuid requestId);
 
@@ -161,35 +160,35 @@ private:
     friend QDebug & operator<<(QDebug & dbg, const State state);
 
 private:
-    State   m_state = State::STATE_UNINITIALIZED;
-    LocalStorageManagerAsync *          m_pLocalStorageManagerAsync = nullptr;
-    const LocalStorageCacheManager *    m_pLocalStorageCacheManager = nullptr;
-    QThread *                           m_pLocalStorageManagerThread = nullptr;
+    State m_state = State::STATE_UNINITIALIZED;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    const LocalStorageCacheManager * m_pLocalStorageCacheManager = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    Notebook    m_firstNotebook;
-    Notebook    m_secondNotebook;
-    Notebook    m_currentNotebook;
-    size_t      m_addedNotebooksCount = 0;
+    Notebook m_firstNotebook;
+    Notebook m_secondNotebook;
+    Notebook m_currentNotebook;
+    size_t m_addedNotebooksCount = 0;
 
-    Note        m_firstNote;
-    Note        m_secondNote;
-    Note        m_currentNote;
-    size_t      m_addedNotesCount = 0;
+    Note m_firstNote;
+    Note m_secondNote;
+    Note m_currentNote;
+    size_t m_addedNotesCount = 0;
 
-    Tag         m_firstTag;
-    Tag         m_secondTag;
-    Tag         m_currentTag;
-    size_t      m_addedTagsCount = 0;
+    Tag m_firstTag;
+    Tag m_secondTag;
+    Tag m_currentTag;
+    size_t m_addedTagsCount = 0;
 
-    LinkedNotebook      m_firstLinkedNotebook;
-    LinkedNotebook      m_secondLinkedNotebook;
-    LinkedNotebook      m_currentLinkedNotebook;
-    size_t              m_addedLinkedNotebooksCount = 0;
+    LinkedNotebook m_firstLinkedNotebook;
+    LinkedNotebook m_secondLinkedNotebook;
+    LinkedNotebook m_currentLinkedNotebook;
+    size_t m_addedLinkedNotebooksCount = 0;
 
-    SavedSearch         m_firstSavedSearch;
-    SavedSearch         m_secondSavedSearch;
-    SavedSearch         m_currentSavedSearch;
-    size_t              m_addedSavedSearchesCount = 0;
+    SavedSearch m_firstSavedSearch;
+    SavedSearch m_secondSavedSearch;
+    SavedSearch m_currentSavedSearch;
+    size_t m_addedSavedSearchesCount = 0;
 };
 
 } // namespace test

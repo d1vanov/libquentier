@@ -27,25 +27,25 @@
 namespace quentier {
 
 JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
-        WebView & view, QObject * parent) :
+    WebView & view, QObject * parent) :
     QObject(parent),
-    m_view(view),
-    m_javaScriptsQueue(),
-    m_currentPendingCallback(0),
-    m_inProgress(false)
+    m_view(view)
 {}
 
 void JavaScriptInOrderExecutor::append(
-    const QString &script, JavaScriptInOrderExecutor::Callback callback)
+    const QString & script, JavaScriptInOrderExecutor::Callback callback)
 {
-    m_javaScriptsQueue.enqueue(QPair<QString, Callback>(script, callback));
-    QNTRACE("JavaScriptInOrderExecutor: appended new script, there are "
-        << m_javaScriptsQueue.size() << " to execute now");
+    m_javaScriptsQueue.enqueue(std::make_pair(script, callback));
+
+    QNTRACE(
+        "note_editor",
+        "JavaScriptInOrderExecutor: appended new script, there are "
+            << m_javaScriptsQueue.size() << " to execute now");
 }
 
 void JavaScriptInOrderExecutor::start()
 {
-    QPair<QString, Callback> scriptCallbackPair = m_javaScriptsQueue.dequeue();
+    auto scriptCallbackPair = m_javaScriptsQueue.dequeue();
 
     m_inProgress = true;
 
@@ -64,30 +64,33 @@ void JavaScriptInOrderExecutor::start()
 
 void JavaScriptInOrderExecutor::next(const QVariant & data)
 {
-    QNTRACE("JavaScriptInOrderExecutor::next");
+    QNTRACE("note_editor", "JavaScriptInOrderExecutor::next");
 
-    if (!m_currentPendingCallback.empty()) {
+    if (m_currentPendingCallback) {
         m_currentPendingCallback(data);
-        m_currentPendingCallback = 0;
+        m_currentPendingCallback = {};
     }
 
     if (m_javaScriptsQueue.empty()) {
-        QNTRACE("JavaScriptInOrderExecutor: done");
+        QNTRACE("note_editor", "JavaScriptInOrderExecutor: done");
         m_inProgress = false;
         Q_EMIT finished();
         return;
     }
 
-    QNTRACE("JavaScriptInOrderExecutor: "
-        << m_javaScriptsQueue.size()
-        << " more scripts to execute");
+    QNTRACE(
+        "note_editor",
+        "JavaScriptInOrderExecutor: " << m_javaScriptsQueue.size()
+                                      << " more scripts to execute");
     start();
 }
 
 void JavaScriptInOrderExecutor::JavaScriptCallback::operator()(
     const QVariant & result)
 {
-    m_executor.next(result);
+    if (!m_executor.isNull()) {
+        m_executor->next(result);
+    }
 }
 
 } // namespace quentier

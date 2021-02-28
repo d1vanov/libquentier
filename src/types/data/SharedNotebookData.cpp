@@ -20,38 +20,14 @@
 
 namespace quentier {
 
-SharedNotebookData::SharedNotebookData() :
-    QSharedData(),
-    m_qecSharedNotebook(),
-    m_indexInNotebook(-1)
-{}
-
-SharedNotebookData::SharedNotebookData(const SharedNotebookData & other) :
-    QSharedData(other),
-    m_qecSharedNotebook(other.m_qecSharedNotebook),
-    m_indexInNotebook(other.m_indexInNotebook)
-{}
-
-SharedNotebookData::SharedNotebookData(SharedNotebookData && other) :
-    QSharedData(std::move(other)),
-    m_qecSharedNotebook(std::move(other.m_qecSharedNotebook)),
-    m_indexInNotebook(std::move(other.m_indexInNotebook))
-{}
-
 SharedNotebookData::SharedNotebookData(
-        const qevercloud::SharedNotebook & other) :
+    const qevercloud::SharedNotebook & other) :
     QSharedData(),
-    m_qecSharedNotebook(other),
-    m_indexInNotebook(-1)
+    m_qecSharedNotebook(other)
 {}
 
 SharedNotebookData::SharedNotebookData(qevercloud::SharedNotebook && other) :
-    QSharedData(),
-    m_qecSharedNotebook(std::move(other)),
-    m_indexInNotebook(-1)
-{}
-
-SharedNotebookData::~SharedNotebookData()
+    QSharedData(), m_qecSharedNotebook(std::move(other))
 {}
 
 } // namespace quentier

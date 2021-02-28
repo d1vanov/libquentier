@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_SHORTCUT_MANAGER_PRIVATE_H
 
 #include <quentier/types/Account.h>
-#include <quentier/utility/Macros.h>
 
 #include <QKeySequence>
 #include <QObject>
@@ -29,7 +28,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(ShortcutManager)
 
-class Q_DECL_HIDDEN ShortcutManagerPrivate: public QObject
+class Q_DECL_HIDDEN ShortcutManagerPrivate final : public QObject
 {
     Q_OBJECT
 public:

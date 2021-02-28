@@ -20,6 +20,8 @@
 
 #include <QApplication>
 
+#include <memory>
+
 namespace quentier {
 
 int messageBoxImplementation(
@@ -27,7 +29,7 @@ int messageBoxImplementation(
     const QString & briefText, const QString & detailedText,
     QMessageBox::StandardButtons buttons)
 {
-    QScopedPointer<QMessageBox> pMessageBox(new QMessageBox(parent));
+    auto pMessageBox = std::make_unique<QMessageBox>(parent);
     if (parent) {
         pMessageBox->setWindowModality(Qt::WindowModal);
     }
@@ -50,25 +52,15 @@ int genericMessageBox(
     const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
     return messageBoxImplementation(
-        QMessageBox::NoIcon,
-        parent,
-        title,
-        briefText,
-        detailedText,
-        buttons);
+        QMessageBox::NoIcon, parent, title, briefText, detailedText, buttons);
 }
 
 int informationMessageBox(
-    QWidget * parent, const QString & title,
-    const QString & briefText, const QString & detailedText,
-    const QMessageBox::StandardButtons buttons)
+    QWidget * parent, const QString & title, const QString & briefText,
+    const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
     return messageBoxImplementation(
-        QMessageBox::Information,
-        parent,
-        title,
-        briefText,
-        detailedText,
+        QMessageBox::Information, parent, title, briefText, detailedText,
         buttons);
 }
 
@@ -77,46 +69,26 @@ int warningMessageBox(
     const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
     return messageBoxImplementation(
-        QMessageBox::Warning,
-        parent,
-        title,
-        briefText,
-        detailedText,
-        buttons);
+        QMessageBox::Warning, parent, title, briefText, detailedText, buttons);
 }
 
 int criticalMessageBox(
-    QWidget * parent,
-    const QString & title,
-    const QString & briefText,
-    const QString & detailedText,
-    const QMessageBox::StandardButtons buttons)
+    QWidget * parent, const QString & title, const QString & briefText,
+    const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
     return messageBoxImplementation(
-        QMessageBox::Critical,
-        parent,
-        title,
-        briefText,
-        detailedText,
-        buttons);
+        QMessageBox::Critical, parent, title, briefText, detailedText, buttons);
 }
 
 int questionMessageBox(
-    QWidget * parent,
-    const QString & title,
-    const QString & briefText,
-    const QString & detailedText,
-    const QMessageBox::StandardButtons buttons)
+    QWidget * parent, const QString & title, const QString & briefText,
+    const QString & detailedText, const QMessageBox::StandardButtons buttons)
 {
     QMessageBox::StandardButtons actualButtons = buttons;
     actualButtons |= (QMessageBox::Ok | QMessageBox::Cancel);
 
     return messageBoxImplementation(
-        QMessageBox::Question,
-        parent,
-        title,
-        briefText,
-        detailedText,
+        QMessageBox::Question, parent, title, briefText, detailedText,
         actualButtons);
 }
 
@@ -127,15 +99,13 @@ void internalErrorMessageBox(QWidget * parent, QString detailedText)
     }
 
     criticalMessageBox(
-        parent,
-        QObject::tr("Internal error"),
-        QObject::tr("Unfortunately, ") +
-        QApplication::applicationName() + QStringLiteral(" ") +
-        QObject::tr("encountered internal error. Please report "
-                    "the bug to the developers and try restarting "
-                    "the application"),
+        parent, QObject::tr("Internal error"),
+        QObject::tr("Unfortunately, ") + QApplication::applicationName() +
+            QStringLiteral(" ") +
+            QObject::tr("encountered internal error. Please report "
+                        "the bug to the developers and try restarting "
+                        "the application"),
         detailedText);
 }
-
 
 } // namespace quentier

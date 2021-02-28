@@ -21,15 +21,13 @@
 
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 /**
  * This macro defines the name of the environment variable which can be set to
  * override the default persistence storage path used by libquentier
  */
 #define LIBQUENTIER_PERSISTENCE_STORAGE_PATH                                   \
-    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"                                     \
-// LIBQUENTIER_PERSISTENCE_STORAGE_PATH
+    "LIBQUENTIER_PERSISTENCE_STORAGE_PATH"
 
 namespace quentier {
 
@@ -41,8 +39,8 @@ namespace quentier {
  * location is overridden via the environment variable, the bool pointed to
  * by pNonStandardLocation (if any) is set to false
  */
-const QString QUENTIER_EXPORT applicationPersistentStoragePath(
-    bool * pNonStandardLocation = nullptr);
+const QString QUENTIER_EXPORT
+applicationPersistentStoragePath(bool * pNonStandardLocation = nullptr);
 
 /**
  * accountPersistentStoragePath returns the path to account-specific folder
@@ -53,8 +51,8 @@ const QString QUENTIER_EXPORT applicationPersistentStoragePath(
  * @param account   The account for which the path needs to be returned; if
  *                  empty, the application persistent storage path is returned
  */
-const QString QUENTIER_EXPORT accountPersistentStoragePath(
-    const Account & account);
+const QString QUENTIER_EXPORT
+accountPersistentStoragePath(const Account & account);
 
 /**
  * @return          The path to folder in which the application can store

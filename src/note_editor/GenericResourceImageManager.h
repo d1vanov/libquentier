@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QUuid>
@@ -37,7 +36,7 @@ namespace quentier {
  * It would also listen to the current note changes and remove stale generic
  * resource images as appropriate.
  */
-class Q_DECL_HIDDEN GenericResourceImageManager: public QObject
+class Q_DECL_HIDDEN GenericResourceImageManager final : public QObject
 {
     Q_OBJECT
 public:
@@ -63,8 +62,8 @@ private:
     void removeStaleGenericResourceImageFilesFromCurrentNote();
 
 private:
-    QString                 m_storageFolderPath;
-    std::unique_ptr<Note>   m_pCurrentNote;
+    QString m_storageFolderPath;
+    std::unique_ptr<Note> m_pCurrentNote;
 };
 
 } // namespace quentier

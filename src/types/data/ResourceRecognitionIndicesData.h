@@ -31,25 +31,11 @@ QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ResourceRecognitionIndicesData: public QSharedData
+class Q_DECL_HIDDEN ResourceRecognitionIndicesData final : public QSharedData
 {
 public:
     bool isValid() const;
     bool setData(const QByteArray & rawRecognitionIndicesData);
-
-    bool        m_isNull = true;
-
-    QString     m_objectId;
-    QString     m_objectType;
-    QString     m_recoType;
-    QString     m_engineVersion;
-    QString     m_docType;
-    QString     m_lang;
-
-    int         m_objectHeight = -1;
-    int         m_objectWidth = -1;
-
-    QVector<ResourceRecognitionIndexItem>   m_items;
 
 private:
     void clear();
@@ -74,11 +60,25 @@ private:
         ResourceRecognitionIndexItem & item) const;
 
     void parseBarcodeItemAttributesAndData(
-        const QXmlStreamAttributes & attributes,
-        const QString & data, ResourceRecognitionIndexItem & item) const;
+        const QXmlStreamAttributes & attributes, const QString & data,
+        ResourceRecognitionIndexItem & item) const;
+
+public:
+    bool m_isNull = true;
+
+    QString m_objectId;
+    QString m_objectType;
+    QString m_recoType;
+    QString m_engineVersion;
+    QString m_docType;
+    QString m_lang;
+
+    int m_objectHeight = -1;
+    int m_objectWidth = -1;
+
+    QVector<ResourceRecognitionIndexItem> m_items;
 };
 
 } // namespace quentier
 
 #endif // LIB_QUENTIER_TYPES_DATA_RESOURCE_RECOGNITION_INDICES_DATA_H
-

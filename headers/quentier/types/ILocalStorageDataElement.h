@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_TYPES_I_LOCAL_STORAGE_DATA_ELEMENT_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <QString>
@@ -39,34 +38,37 @@ public:
 };
 
 #define DEFINE_LOCAL_UID_GETTER(type)                                          \
-    const QString type::localUid() const {                                     \
+    const QString type::localUid() const                                       \
+    {                                                                          \
         return UidGenerator::UidToString(d->m_localUid);                       \
     }                                                                          \
-// DEFINE_LOCAL_UID_GETTER
+    // DEFINE_LOCAL_UID_GETTER
 
 #define DEFINE_LOCAL_UID_SETTER(type)                                          \
-    void type::setLocalUid(const QString & uid) {                              \
+    void type::setLocalUid(const QString & uid)                                \
+    {                                                                          \
         d->m_localUid = uid;                                                   \
     }                                                                          \
-// DEFINE_LOCAL_UID_SETTER
+    // DEFINE_LOCAL_UID_SETTER
 
 #define DEFINE_LOCAL_UID_UNSETTER(type)                                        \
-    void type::unsetLocalUid() {                                               \
+    void type::unsetLocalUid()                                                 \
+    {                                                                          \
         d->m_localUid = QUuid();                                               \
     }                                                                          \
-// DEFINE_LOCAL_UID_UNSETTER
+    // DEFINE_LOCAL_UID_UNSETTER
 
 #define QN_DECLARE_LOCAL_UID                                                   \
     virtual const QString localUid() const override;                           \
     virtual void setLocalUid(const QString & guid) override;                   \
     virtual void unsetLocalUid() override;                                     \
-// QN_DECLARE_LOCAL_UID
+    // QN_DECLARE_LOCAL_UID
 
 #define QN_DEFINE_LOCAL_UID(type)                                              \
     DEFINE_LOCAL_UID_GETTER(type)                                              \
     DEFINE_LOCAL_UID_SETTER(type)                                              \
     DEFINE_LOCAL_UID_UNSETTER(type)                                            \
-// QN_DEFINE_LOCAL_UID
+    // QN_DEFINE_LOCAL_UID
 
 } // namespace quentier
 

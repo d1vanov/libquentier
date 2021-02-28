@@ -476,8 +476,9 @@ jobs:
           brew unlink cmake
           brew install cmake --force-bottle
           brew link cmake
+          rm -rf /usr/local/bin/2to3
           brew install ninja --force-bottle
-          brew install p7zip --force-bottle
+          brew list p7zip || brew install p7zip --force-bottle
           brew install qt5 --force-bottle
           brew install hunspell --force-bottle
           brew install qtkeychain --force-bottle
@@ -874,6 +875,29 @@ jobs:
         shell: cmd
         if: ${{ matrix.target_arch == 'x86' }}
 
+      - name: Cache Google breakpad x86
+        id: cache_google_breakpad_x86
+        env:
+          GOOGLE_BREAKPAD_CACHE_VERSION: '1'
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/breakpad_win_x86'
+          key: breakpad-win-x86-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
+        if: ${{ matrix.target_arch == 'x86' }}
+
+      - name: Download Google breakpad x86
+        id: download_breakpad_x86
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if not exist %RUNNER_WORKSPACE%\breakpad_win_x86 (set DOWNLOAD_BREAKPAD=1) else (set DOWNLOAD_BREAKPAD=0)
+          if %DOWNLOAD_BREAKPAD%==1 mkdir %RUNNER_WORKSPACE%\breakpad_win_x86
+          if %DOWNLOAD_BREAKPAD%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/breakpad-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\breakpad_win_x86\breakpad-msvc2019_x86.zip
+          if %DOWNLOAD_BREAKPAD%==1 cd %RUNNER_WORKSPACE%\breakpad_win_x86
+          if %DOWNLOAD_BREAKPAD%==1 7z x breakpad-msvc2019_x86.zip
+        shell: cmd
+        if: ${{ matrix.target_arch == 'x86' }}
+
       - name: Cache QEverCloud master x64
         id: cache_qevercloud_master_x64
         env:
@@ -1090,6 +1114,29 @@ jobs:
         shell: cmd
         if: ${{ matrix.target_arch == 'x64' }}
 
+      - name: Cache Google breakpad x64
+        id: cache_google_breakpad_x64
+        env:
+          GOOGLE_BREAKPAD_CACHE_VERSION: '1'
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/breakpad_win_x64'
+          key: breakpad-win-x64-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
+        if: ${{ matrix.target_arch == 'x64' }}
+
+      - name: Download Google breakpad x64
+        id: download_breakpad_x64
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if not exist %RUNNER_WORKSPACE%\breakpad_win_x64 (set DOWNLOAD_BREAKPAD=1) else (set DOWNLOAD_BREAKPAD=0)
+          if %DOWNLOAD_BREAKPAD%==1 mkdir %RUNNER_WORKSPACE%\breakpad_win_x64
+          if %DOWNLOAD_BREAKPAD%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/breakpad-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\breakpad_win_x64\breakpad-msvc2019_x64.zip
+          if %DOWNLOAD_BREAKPAD%==1 cd %RUNNER_WORKSPACE%\breakpad_win_x64
+          if %DOWNLOAD_BREAKPAD%==1 7z x breakpad-msvc2019_x64.zip
+        shell: cmd
+        if: ${{ matrix.target_arch == 'x64' }}
+
       - name: Build, test and install x86
         id: build_test_install_x86
         env:
@@ -1134,6 +1181,7 @@ jobs:
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          %RUNNER_WORKSPACE%\breakpad_win_x86\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.target_arch == 'x86' }}
         shell: cmd
 
@@ -1181,6 +1229,7 @@ jobs:
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          %RUNNER_WORKSPACE%\breakpad_win_x64\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.target_arch == 'x64' }}
         shell: cmd
 

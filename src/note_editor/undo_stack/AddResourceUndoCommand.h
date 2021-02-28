@@ -20,26 +20,28 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_ADD_RESOURCE_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
-#include <quentier/utility/Macros.h>
+
 #include <quentier/types/Resource.h>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AddResourceUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN AddResourceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
+public:
     using Callback = NoteEditorPage::Callback;
+
 public:
     AddResourceUndoCommand(
         const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     AddResourceUndoCommand(
         const Resource & resource, const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text, QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, const QString & text,
+        QUndoCommand * parent = nullptr);
 
     virtual ~AddResourceUndoCommand();
 
@@ -50,8 +52,8 @@ private:
     void init();
 
 private:
-    Resource     m_resource;
-    Callback     m_callback;
+    Resource m_resource;
+    Callback m_callback;
 };
 
 } // namespace quentier

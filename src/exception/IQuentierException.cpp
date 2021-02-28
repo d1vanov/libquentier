@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/exception/IQuentierException.h>
-#include <ostream>
 #include <cstring>
+#include <ostream>
+
+#include <quentier/exception/IQuentierException.h>
 
 namespace quentier {
 
@@ -30,18 +31,12 @@ namespace quentier {
         m_whatMessage = new char[usize + 1];                                   \
         Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize))             \
         m_whatMessage[usize] = '\0';                                           \
-    }                                                                          \
-// INIT_WHAT_MESSAGE
+    }
 
 IQuentierException::IQuentierException(const ErrorString & message) :
-    Printable(),
-    m_message(message),
-    m_whatMessage(nullptr)
-{
-    INIT_WHAT_MESSAGE()
-}
+    Printable(), m_message(message), m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
 
-IQuentierException::~IQuentierException() noexcept
+    IQuentierException::~IQuentierException() noexcept
 {
     delete[] m_whatMessage;
 }
@@ -69,17 +64,13 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
 }
 
 IQuentierException::IQuentierException(const IQuentierException & other) :
-    Printable(other),
-    m_message(other.m_message),
-    m_whatMessage(nullptr)
-{
-    INIT_WHAT_MESSAGE()
-}
+    Printable(other), m_message(other.m_message),
+    m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
 
-IQuentierException & IQuentierException::operator =(const IQuentierException & other)
+        IQuentierException
+        & IQuentierException::operator=(const IQuentierException & other)
 {
-    if (this != &other)
-    {
+    if (this != &other) {
         m_message = other.m_message;
 
         delete m_whatMessage;

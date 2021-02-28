@@ -31,7 +31,7 @@ QT_FORWARD_DECLARE_CLASS(SharedNotebook)
 QT_FORWARD_DECLARE_CLASS(User)
 QT_FORWARD_DECLARE_CLASS(NotebookData)
 
-class QUENTIER_EXPORT Notebook: public IFavoritableDataElement
+class QUENTIER_EXPORT Notebook : public IFavoritableDataElement
 {
 public:
     QN_DECLARE_LOCAL_UID
@@ -107,7 +107,8 @@ public:
 
     bool hasPublishingPublicDescription() const;
     const QString & publishingPublicDescription() const;
-    void setPublishingPublicDescription(const QString & publishingPublicDescription);
+    void setPublishingPublicDescription(
+        const QString & publishingPublicDescription);
 
     bool hasPublished() const;
     bool isPublished() const;
@@ -237,7 +238,8 @@ public:
 
     bool hasRecipientSettings() const;
     const qevercloud::NotebookRecipientSettings & recipientSettings() const;
-    void setNotebookRecipientSettings(qevercloud::NotebookRecipientSettings && settings);
+    void setNotebookRecipientSettings(
+        qevercloud::NotebookRecipientSettings && settings);
 
     virtual QTextStream & print(QTextStream & strm) const override;
 

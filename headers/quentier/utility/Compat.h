@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_MACROS_H
-#define LIB_QUENTIER_UTILITY_MACROS_H
+#ifndef LIB_QUENTIER_UTILITY_COMPAT_H
+#define LIB_QUENTIER_UTILITY_COMPAT_H
 
+#include <QHash>
 #include <QString>
 #include <QtGlobal>
 
@@ -26,30 +27,29 @@
 #include <type_traits>
 #endif
 
+// Compatibility with older Qt versions
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
 
 // this adds const to non-const objects (like std::as_const)
 template <typename T>
-Q_DECL_CONSTEXPR typename std::add_const<T>::type &qAsConst(T &t) Q_DECL_NOTHROW
+Q_DECL_CONSTEXPR typename std::add_const<T>::type & qAsConst(T & t)
+    Q_DECL_NOTHROW
 {
     return t;
 }
 
 // prevent rvalue arguments:
 template <typename T>
-void qAsConst(const T &&)  = delete;
+void qAsConst(const T &&) = delete;
 
 #endif
 
-#ifdef QNSIGNAL
-#undef QNSIGNAL
-#endif
+// Compatibility with boost parts which require to take a hash of QString
 
-#ifdef QNSLOT
-#undef QNSLOT
-#endif
+inline std::size_t hash_value(QString x) noexcept
+{
+    return qHash(x);
+}
 
-#define QNSIGNAL(className, methodName, ...) &className::methodName
-#define QNSLOT(className, methodName, ...) &className::methodName
-
-#endif // LIB_QUENTIER_UTILITY_MACROS_H
+#endif // LIB_QUENTIER_UTILITY_COMPAT_H

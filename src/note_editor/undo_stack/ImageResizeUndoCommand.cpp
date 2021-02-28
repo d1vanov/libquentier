@@ -17,6 +17,7 @@
  */
 
 #include "ImageResizeUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -24,36 +25,33 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("ImageResizeUndoCommand",                        \
-                              "Can't undo/redo image resizing: "               \
-                              "can't get note editor page"));                  \
-        QNWARNING(error);                                                      \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "ImageResizeUndoCommand",                                          \
+            "Can't undo/redo image resizing: "                                 \
+            "can't get note editor page"));                                    \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 ImageResizeUndoCommand::ImageResizeUndoCommand(
-        NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent)
 {}
 
 ImageResizeUndoCommand::ImageResizeUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & text,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent)
 {}
 
-ImageResizeUndoCommand::~ImageResizeUndoCommand()
-{}
+ImageResizeUndoCommand::~ImageResizeUndoCommand() {}
 
 void ImageResizeUndoCommand::redoImpl()
 {
-    QNDEBUG("ImageResizeUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "ImageResizeUndoCommand::redoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resizableImageManager.redo();"));
@@ -61,7 +59,7 @@ void ImageResizeUndoCommand::redoImpl()
 
 void ImageResizeUndoCommand::undoImpl()
 {
-    QNDEBUG("ImageResizeUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "ImageResizeUndoCommand::undoImpl");
 
     GET_PAGE()
     page->executeJavaScript(QStringLiteral("resizableImageManager.undo();"));

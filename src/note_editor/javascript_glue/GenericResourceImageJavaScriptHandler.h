@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,14 +19,12 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_IMAGE_JAVA_SCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_IMAGE_JAVA_SCRIPT_HANDLER_H
 
-#include <quentier/utility/Macros.h>
-
-#include <QObject>
 #include <QHash>
+#include <QObject>
 
 namespace quentier {
 
-class GenericResourceImageJavaScriptHandler: public QObject
+class GenericResourceImageJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:
@@ -34,8 +32,8 @@ public:
         const QHash<QByteArray, QString> & cache, QObject * parent = nullptr);
 
 Q_SIGNALS:
-    void genericResourceImageFound(QByteArray resourceHash,
-                                   QString genericResourceImageFilePath);
+    void genericResourceImageFound(
+        QByteArray resourceHash, QString genericResourceImageFilePath);
 
 public Q_SLOTS:
     void findGenericResourceImage(QByteArray resourceHash);

@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QUndoCommand>
@@ -52,7 +51,7 @@ namespace quentier {
  * QuentierUndoCommand is also QObject, it is for error reporting via
  * notifyError signal
  */
-class QuentierUndoCommand: public QObject, public QUndoCommand
+class QuentierUndoCommand : public QObject, public QUndoCommand
 {
     Q_OBJECT
 public:
@@ -63,7 +62,10 @@ public:
     virtual void undo() override final;
     virtual void redo() override final;
 
-    bool onceUndoExecuted() const { return m_onceUndoExecuted; }
+    bool onceUndoExecuted() const
+    {
+        return m_onceUndoExecuted;
+    }
 
 Q_SIGNALS:
     void notifyError(ErrorString error);
@@ -73,10 +75,9 @@ protected:
     virtual void redoImpl() = 0;
 
 private:
-    bool    m_onceUndoExecuted;
+    bool m_onceUndoExecuted;
 };
 
 } // namespace quentier
 
 #endif // LIB_QUENTIER_UTILITY_QUENTIER_UNDO_COMMAND_H
-

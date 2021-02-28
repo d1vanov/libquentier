@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QEventLoop>
 
@@ -59,8 +58,8 @@ public Q_SLOTS:
     void exitAsTimeout();
 
 private:
-    ExitStatus      m_exitStatus;
-    ErrorString     m_errorDescription;
+    ExitStatus m_exitStatus;
+    ErrorString m_errorDescription;
 };
 
 } // namespace quentier

@@ -25,17 +25,16 @@
 #include <QIcon>
 #include <QMimeDatabase>
 #include <QPointer>
+#include <QVector>
 #include <QWebPluginFactory>
 
 QT_FORWARD_DECLARE_CLASS(QRegExp)
 
 #define RESOURCE_PLUGIN_HTML_OBJECT_TYPE                                       \
-    QStringLiteral("application/vnd.quentier.resource")                        \
-// RESOURCE_PLUGIN_HTML_OBJECT_TYPE
+    QStringLiteral("application/vnd.quentier.resource")
 
 #define ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE                                      \
-    QStringLiteral("application/vnd.quentier.encrypt")                         \
-// ENCRYPTED_AREA_PLUGIN_OBJECT_TYPE
+    QStringLiteral("application/vnd.quentier.encrypt")
 
 namespace quentier {
 
@@ -51,7 +50,7 @@ QT_FORWARD_DECLARE_CLASS(GenericResourceDisplayWidget)
  * @brief The NoteEditorPluginFactory class allows one to install and uninstall
  * custom plugins to/from NoteEditor
  */
-class Q_DECL_HIDDEN NoteEditorPluginFactory: public QWebPluginFactory
+class Q_DECL_HIDDEN NoteEditorPluginFactory final : public QWebPluginFactory
 {
     Q_OBJECT
 public:
@@ -229,25 +228,27 @@ private:
     };
 
 private:
-    NoteEditorPrivate &                     m_noteEditor;
+    NoteEditorPrivate & m_noteEditor;
 
     using ResourcePluginsHash =
-        QHash<ResourcePluginIdentifier, INoteEditorResourcePlugin*>;
+        QHash<ResourcePluginIdentifier, INoteEditorResourcePlugin *>;
 
-    ResourcePluginsHash                     m_resourcePlugins;
-    ResourcePluginIdentifier                m_lastFreeResourcePluginId = 1;
+    ResourcePluginsHash m_resourcePlugins;
+    QVector<INoteEditorResourcePlugin *> m_resourcePluginsInAdditionOrder;
+    ResourcePluginIdentifier m_lastFreeResourcePluginId = 1;
 
-    const Note *                            m_pCurrentNote = nullptr;
+    const Note * m_pCurrentNote = nullptr;
 
-    QIcon                                   m_fallbackResourceIcon;
+    QIcon m_fallbackResourceIcon;
 
-    QMimeDatabase                           m_mimeDatabase;
+    QMimeDatabase m_mimeDatabase;
 
-    mutable QHash<QString, QIcon>           m_resourceIconCache;
-    mutable QHash<QString, QStringList>     m_fileSuffixesCache;
+    mutable QHash<QString, QIcon> m_resourceIconCache;
+    mutable QHash<QString, QStringList> m_fileSuffixesCache;
 
-    mutable QVector<QPointer<GenericResourceDisplayWidget>>      m_genericResourceDisplayWidgetPlugins;
-    mutable QVector<QPointer<EncryptedAreaPlugin>>               m_encryptedAreaPlugins;
+    mutable QVector<QPointer<GenericResourceDisplayWidget>>
+        m_genericResourceDisplayWidgetPlugins;
+    mutable QVector<QPointer<EncryptedAreaPlugin>> m_encryptedAreaPlugins;
 };
 
 } // namespace quentier

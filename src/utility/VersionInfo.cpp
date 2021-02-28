@@ -18,7 +18,7 @@
 
 #include <quentier/utility/VersionInfo.h>
 
-#include <quentier/utility/Macros.h>
+#include <qt5qevercloud/VersionInfo.h>
 
 #include <QtGlobal>
 
@@ -62,6 +62,26 @@ bool libquentierHasAuthenticationManager()
 bool libquentierUsesQtWebEngine()
 {
     return static_cast<bool>(LIB_QUENTIER_USE_QT_WEB_ENGINE);
+}
+
+int libquentierBuiltWithQEverCloudVersionMajor()
+{
+    return QEVERCLOUD_VERSION_MAJOR;
+}
+
+int libquentierBuiltWithQEverCloudVersionMinor()
+{
+    return QEVERCLOUD_VERSION_MINOR;
+}
+
+int libquentierBuiltWithQEverCloudVersionPatch()
+{
+    return QEVERCLOUD_VERSION_PATCH;
+}
+
+QString libquentierBuiltWithQEverCloudBuildInfo()
+{
+    return QStringLiteral(QEVERCLOUD_BUILD_INFO);
 }
 
 } // namespace quentier

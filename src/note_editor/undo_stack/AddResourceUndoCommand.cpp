@@ -17,6 +17,7 @@
  */
 
 #include "AddResourceUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -24,67 +25,56 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditorPrivate.page());   \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("AddResourceUndoCommand",                        \
-                              "Can't undo/redo adding the attachment: "        \
-                              "no note editor page"));                         \
-        QNWARNING(error);                                                      \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditorPrivate.page());  \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "AddResourceUndoCommand",                                          \
+            "Can't undo/redo adding the attachment: "                          \
+            "no note editor page"));                                           \
+        QNWARNING("note_editor:undo", error);                                  \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 AddResourceUndoCommand::AddResourceUndoCommand(
-        const Resource & resource,
-        const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        QUndoCommand * parent) :
+    const Resource & resource, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resource(resource),
-    m_callback(callback)
+    m_resource(resource), m_callback(callback)
 {
     setText(tr("Add attachment"));
 }
 
 AddResourceUndoCommand::AddResourceUndoCommand(
-        const Resource & resource,
-        const Callback & callback,
-        NoteEditorPrivate & noteEditorPrivate,
-        const QString & text,
-        QUndoCommand * parent) :
+    const Resource & resource, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, const QString & text,
+    QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resource(resource),
-    m_callback(callback)
+    m_resource(resource), m_callback(callback)
 {}
 
-AddResourceUndoCommand::~AddResourceUndoCommand()
-{}
+AddResourceUndoCommand::~AddResourceUndoCommand() {}
 
 void AddResourceUndoCommand::undoImpl()
 {
-    QNDEBUG("AddResourceUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "AddResourceUndoCommand::undoImpl");
 
     m_noteEditorPrivate.removeResourceFromNote(m_resource);
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("resourceManager.undo();"),
-        m_callback);
+        QStringLiteral("resourceManager.undo();"), m_callback);
 }
 
 void AddResourceUndoCommand::redoImpl()
 {
-    QNDEBUG("AddResourceUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "AddResourceUndoCommand::redoImpl");
 
     m_noteEditorPrivate.addResourceToNote(m_resource);
 
     GET_PAGE()
     page->executeJavaScript(
-        QStringLiteral("resourceManager.redo();"),
-        m_callback);
+        QStringLiteral("resourceManager.redo();"), m_callback);
 }
 
 } // namespace quentier

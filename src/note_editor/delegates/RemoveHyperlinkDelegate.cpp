@@ -24,55 +24,50 @@
 namespace quentier {
 
 #define GET_PAGE()                                                             \
-    auto * page = qobject_cast<NoteEditorPage*>(m_noteEditor.page());          \
-    if (Q_UNLIKELY(!page))                                                     \
-    {                                                                          \
-        ErrorString error(                                                     \
-            QT_TRANSLATE_NOOP("RemoveHyperlinkDelegate",                       \
-                              "Can't remove hyperlink: no note editor's "      \
-                              "page"));                                        \
-        QNWARNING(error);                                                      \
+    auto * page = qobject_cast<NoteEditorPage *>(m_noteEditor.page());         \
+    if (Q_UNLIKELY(!page)) {                                                   \
+        ErrorString error(QT_TRANSLATE_NOOP(                                   \
+            "RemoveHyperlinkDelegate",                                         \
+            "Can't remove hyperlink: no note editor's "                        \
+            "page"));                                                          \
+        QNWARNING("note_editor:delegate", error);                              \
         Q_EMIT notifyError(error);                                             \
         return;                                                                \
-    }                                                                          \
-// GET_PAGE
+    }
 
 RemoveHyperlinkDelegate::RemoveHyperlinkDelegate(
-        NoteEditorPrivate & noteEditor) :
+    NoteEditorPrivate & noteEditor) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor)
 {}
 
 void RemoveHyperlinkDelegate::start()
 {
-    QNDEBUG("RemoveHyperlinkDelegate::start");
+    QNDEBUG("note_editor:delegate", "RemoveHyperlinkDelegate::start");
 
-    if (m_noteEditor.isEditorPageModified())
-    {
+    if (m_noteEditor.isEditorPageModified()) {
         QObject::connect(
-            &m_noteEditor,
-            &NoteEditorPrivate::convertedToNote,
-            this,
+            &m_noteEditor, &NoteEditorPrivate::convertedToNote, this,
             &RemoveHyperlinkDelegate::onOriginalPageConvertedToNote);
 
         m_noteEditor.convertToNote();
     }
-    else
-    {
+    else {
         findIdOfHyperlinkUnderCursor();
     }
 }
 
 void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 {
-    QNDEBUG("RemoveHyperlinkDelegate::onOriginalPageConvertedToNote");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveHyperlinkDelegate"
+            << "::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
     QObject::disconnect(
-        &m_noteEditor,
-        &NoteEditorPrivate::convertedToNote,
-        this,
+        &m_noteEditor, &NoteEditorPrivate::convertedToNote, this,
         &RemoveHyperlinkDelegate::onOriginalPageConvertedToNote);
 
     findIdOfHyperlinkUnderCursor();
@@ -80,10 +75,13 @@ void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(Note note)
 
 void RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor()
 {
-    QNDEBUG("RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor");
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveHyperlinkDelegate"
+            << "::findIdOfHyperlinkUnderCursor");
 
-    QString javascript = QStringLiteral(
-        "hyperlinkManager.findSelectedHyperlinkId();");
+    QString javascript =
+        QStringLiteral("hyperlinkManager.findSelectedHyperlinkId();");
 
     GET_PAGE()
     page->executeJavaScript(
@@ -93,51 +91,49 @@ void RemoveHyperlinkDelegate::findIdOfHyperlinkUnderCursor()
 
 void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 {
-    QNDEBUG("RemoveHyperlinkDelegate::onHyperlinkIdFound: " << data);
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveHyperlinkDelegate"
+            << "::onHyperlinkIdFound: " << data);
 
     auto resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end()))
-    {
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink data "
                        "request from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     bool res = statusIt.value().toBool();
-    if (!res)
-    {
+    if (!res) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
-        if (Q_UNLIKELY(errorIt == resultMap.end()))
-        {
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink data "
                            "request from JavaScript"));
         }
-        else
-        {
+        else {
             error.setBase(
                 QT_TR_NOOP("Can't get hyperlink data from JavaScript"));
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     auto dataIt = resultMap.find(QStringLiteral("data"));
-    if (Q_UNLIKELY(dataIt == resultMap.end()))
-    {
+    if (Q_UNLIKELY(dataIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("No hyperlink data received from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
@@ -146,12 +142,11 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
     bool conversionResult = false;
     quint64 hyperlinkId = dataStr.toULongLong(&conversionResult);
-    if (!conversionResult)
-    {
+    if (!conversionResult) {
         ErrorString error(
             QT_TR_NOOP("Can't remove hyperlink under cursor: "
                        "can't convert hyperlink id to a number"));
-        QNWARNING(error << ", data from JS: " << data);
+        QNWARNING("note_editor:delegate", error << ", data from JS: " << data);
         Q_EMIT notifyError(error);
         return;
     }
@@ -161,10 +156,9 @@ void RemoveHyperlinkDelegate::onHyperlinkIdFound(const QVariant & data)
 
 void RemoveHyperlinkDelegate::removeHyperlink(const quint64 hyperlinkId)
 {
-    QNDEBUG("RemoveHyperlinkDelegate::removeHyperlink");
+    QNDEBUG("note_editor:delegate", "RemoveHyperlinkDelegate::removeHyperlink");
 
-    QString javascript =
-        QStringLiteral("hyperlinkManager.removeHyperlink(") +
+    QString javascript = QStringLiteral("hyperlinkManager.removeHyperlink(") +
         QString::number(hyperlinkId) + QStringLiteral(", false);");
 
     GET_PAGE()
@@ -175,41 +169,40 @@ void RemoveHyperlinkDelegate::removeHyperlink(const quint64 hyperlinkId)
 
 void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 {
-    QNDEBUG("RemoveHyperlinkDelegate::onHyperlinkRemoved: " << data);
+    QNDEBUG(
+        "note_editor:delegate",
+        "RemoveHyperlinkDelegate"
+            << "::onHyperlinkRemoved: " << data);
 
     auto resultMap = data.toMap();
 
     auto statusIt = resultMap.find(QStringLiteral("status"));
-    if (Q_UNLIKELY(statusIt == resultMap.end()))
-    {
+    if (Q_UNLIKELY(statusIt == resultMap.end())) {
         ErrorString error(
             QT_TR_NOOP("Can't parse the result of hyperlink "
                        "removal from JavaScript"));
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }
 
     bool res = statusIt.value().toBool();
-    if (!res)
-    {
+    if (!res) {
         ErrorString error;
 
         auto errorIt = resultMap.find(QStringLiteral("error"));
-        if (Q_UNLIKELY(errorIt == resultMap.end()))
-        {
+        if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink removal "
                            "from JavaScript"));
         }
-        else
-        {
+        else {
             error.setBase(
                 QT_TR_NOOP("Can't remove hyperlink, JavaScript error"));
             error.details() = errorIt.value().toString();
         }
 
-        QNWARNING(error);
+        QNWARNING("note_editor:delegate", error);
         Q_EMIT notifyError(error);
         return;
     }

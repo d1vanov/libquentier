@@ -17,6 +17,7 @@
  */
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/Compat.h>
 
 #include "data/ErrorStringData.h"
 
@@ -25,23 +26,18 @@
 namespace quentier {
 
 ErrorString::ErrorString(const char * error) :
-    Printable(),
-    d(new ErrorStringData)
+    Printable(), d(new ErrorStringData)
 {
     d->m_base = QString::fromUtf8(error);
 }
 
 ErrorString::ErrorString(const QString & error) :
-    Printable(),
-    d(new ErrorStringData)
+    Printable(), d(new ErrorStringData)
 {
     d->m_base = error;
 }
 
-ErrorString::ErrorString(const ErrorString & other) :
-    Printable(),
-    d(other.d)
-{}
+ErrorString::ErrorString(const ErrorString & other) : Printable(), d(other.d) {}
 
 ErrorString & ErrorString::operator=(const ErrorString & other)
 {
@@ -52,8 +48,7 @@ ErrorString & ErrorString::operator=(const ErrorString & other)
     return *this;
 }
 
-ErrorString::~ErrorString()
-{}
+ErrorString::~ErrorString() {}
 
 const QString & ErrorString::base() const
 {
@@ -122,8 +117,7 @@ void ErrorString::setDetails(const char * error)
 
 bool ErrorString::isEmpty() const
 {
-    return d->m_base.isEmpty() &&
-        d->m_details.isEmpty() &&
+    return d->m_base.isEmpty() && d->m_details.isEmpty() &&
         d->m_additionalBases.isEmpty();
 }
 
@@ -146,15 +140,13 @@ QString ErrorString::localizedString() const
     }
 
     QString additionalBasesStr;
-    for(const auto & additionalBase: qAsConst(d->m_additionalBases))
-    {
+    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }
 
-        QString translatedStr = qApp->translate(
-            "",
-            additionalBase.toLocal8Bit().constData());
+        QString translatedStr =
+            qApp->translate("", additionalBase.toLocal8Bit().constData());
 
         if (additionalBasesStr.isEmpty()) {
             additionalBasesStr = translatedStr;
@@ -175,8 +167,7 @@ QString ErrorString::localizedString() const
         result += QStringLiteral(", ");
     }
 
-    if (result.isEmpty())
-    {
+    if (result.isEmpty()) {
         result += additionalBasesStr;
 
         if (!result.isEmpty()) {
@@ -184,8 +175,7 @@ QString ErrorString::localizedString() const
             result = result.at(0).toUpper() + result.mid(1);
         }
     }
-    else
-    {
+    else {
         result += additionalBasesStr.toLower();
     }
 
@@ -212,8 +202,7 @@ QString ErrorString::nonLocalizedString() const
 {
     QString result = d->m_base;
 
-    for(const auto & additionalBase: qAsConst(d->m_additionalBases))
-    {
+    for (const auto & additionalBase: qAsConst(d->m_additionalBases)) {
         if (additionalBase.isEmpty()) {
             continue;
         }
@@ -241,8 +230,9 @@ QTextStream & ErrorString::print(QTextStream & strm) const
 {
     strm << d->m_base;
 
-    for(auto it = d->m_additionalBases.constBegin(),
-        end = d->m_additionalBases.constEnd(); it != end; ++it)
+    for (auto it = d->m_additionalBases.constBegin(),
+              end = d->m_additionalBases.constEnd();
+         it != end; ++it)
     {
         QString previousStr = d->m_base;
         if (Q_LIKELY(it != d->m_additionalBases.constBegin())) {

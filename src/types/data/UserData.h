@@ -19,30 +19,31 @@
 #ifndef LIB_QUENTIER_TYPES_DATA_USER_DATA_H
 #define LIB_QUENTIER_TYPES_DATA_USER_DATA_H
 
-#include <quentier/utility/Macros.h>
-
 #include <qt5qevercloud/QEverCloud.h>
 
 #include <QSharedData>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN UserData: public QSharedData
+class Q_DECL_HIDDEN UserData final : public QSharedData
 {
 public:
-    UserData();
-    UserData(const UserData & other);
-    UserData(UserData && other);
+    UserData() = default;
+    UserData(const UserData & other) = default;
+    UserData(UserData && other) = default;
+
     UserData(const qevercloud::User & user);
-    virtual ~UserData();
+    UserData(qevercloud::User && user);
 
-    qevercloud::User    m_qecUser;
-    bool                m_isLocal;
-    bool                m_isDirty;
-
-private:
     UserData & operator=(const UserData & other) = delete;
     UserData & operator=(UserData && other) = delete;
+
+    virtual ~UserData() = default;
+
+public:
+    qevercloud::User m_qecUser;
+    bool m_isLocal = true;
+    bool m_isDirty = true;
 };
 
 } // namespace quentier

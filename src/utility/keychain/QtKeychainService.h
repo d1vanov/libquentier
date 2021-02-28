@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,21 +16,22 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
+#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
+#define LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(QtKeychainWrapper)
 
-class KeychainService: public IKeychainService
+class Q_DECL_HIDDEN QtKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:
-    explicit KeychainService(QObject * parent = nullptr);
-    virtual ~KeychainService();
+    explicit QtKeychainService(QObject * parent = nullptr);
+
+    virtual ~QtKeychainService() override;
 
     virtual QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -49,7 +50,8 @@ Q_SIGNALS:
 
     void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
 
-    void notifyStartDeletePasswordJob(QUuid jobId, QString service, QString key);
+    void notifyStartDeletePasswordJob(
+        QUuid jobId, QString service, QString key);
 
 private:
     QtKeychainWrapper * m_pQtKeychainWrapper;
@@ -57,4 +59,4 @@ private:
 
 } // namespace quentier
 
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_SERVICE_H
+#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H

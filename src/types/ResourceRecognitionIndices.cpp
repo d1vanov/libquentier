@@ -17,18 +17,18 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndices.h>
+#include <quentier/utility/Compat.h>
 
 #include "data/ResourceRecognitionIndicesData.h"
 
 namespace quentier {
 
 ResourceRecognitionIndices::ResourceRecognitionIndices() :
-    Printable(),
-    d(new ResourceRecognitionIndicesData)
+    Printable(), d(new ResourceRecognitionIndicesData)
 {}
 
 ResourceRecognitionIndices::ResourceRecognitionIndices(
-        const ResourceRecognitionIndices & other) :
+    const ResourceRecognitionIndices & other) :
     Printable(),
     d(other.d)
 {}
@@ -40,8 +40,8 @@ ResourceRecognitionIndices::ResourceRecognitionIndices(
     d->setData(rawRecognitionIndicesData);
 }
 
-ResourceRecognitionIndices &
-ResourceRecognitionIndices::operator=(const ResourceRecognitionIndices & other)
+ResourceRecognitionIndices & ResourceRecognitionIndices::operator=(
+    const ResourceRecognitionIndices & other)
 {
     if (this != &other) {
         d = other.d;
@@ -50,8 +50,7 @@ ResourceRecognitionIndices::operator=(const ResourceRecognitionIndices & other)
     return *this;
 }
 
-ResourceRecognitionIndices::~ResourceRecognitionIndices()
-{}
+ResourceRecognitionIndices::~ResourceRecognitionIndices() {}
 
 bool ResourceRecognitionIndices::isNull() const
 {
@@ -179,16 +178,14 @@ QTextStream & ResourceRecognitionIndices::print(QTextStream & strm) const
         strm << "  object width is not set;\n";
     }
 
-    if (!d->m_items.isEmpty())
-    {
+    if (!d->m_items.isEmpty()) {
         strm << "  recognition items: \n";
-        for(const auto & item: qAsConst(d->m_items)) {
+        for (const auto & item: qAsConst(d->m_items)) {
             strm << item << "\n";
         }
         strm << "\n";
     }
-    else
-    {
+    else {
         strm << "  no recognition items are set;\n";
     }
 

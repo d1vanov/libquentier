@@ -29,7 +29,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(SavedSearchData)
 
-class QUENTIER_EXPORT SavedSearch: public IFavoritableDataElement
+class QUENTIER_EXPORT SavedSearch : public IFavoritableDataElement
 {
 public:
     QN_DECLARE_LOCAL_UID

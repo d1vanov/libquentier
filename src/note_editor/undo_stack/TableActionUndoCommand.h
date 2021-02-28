@@ -20,14 +20,17 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_TABLE_ACTION_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN TableActionUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN TableActionUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     TableActionUndoCommand(
         NoteEditorPrivate & noteEditorPrivate, Callback callback,
@@ -43,7 +46,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    Callback    m_callback;
+    Callback m_callback;
 };
 
 } // namespace quentier

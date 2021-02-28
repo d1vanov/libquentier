@@ -19,39 +19,16 @@
 #include "TagData.h"
 
 #include <quentier/types/Tag.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
 
 namespace quentier {
 
-TagData::TagData() :
-    FavoritableDataElementData(),
-    m_qecTag(),
-    m_linkedNotebookGuid(),
-    m_parentLocalUid()
-{}
-
-TagData::TagData(const TagData & other) :
-    FavoritableDataElementData(other),
-    m_qecTag(other.m_qecTag),
-    m_linkedNotebookGuid(other.m_linkedNotebookGuid),
-    m_parentLocalUid(other.m_parentLocalUid)
-{}
-
-TagData::TagData(TagData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecTag(std::move(other.m_qecTag)),
-    m_linkedNotebookGuid(std::move(other.m_linkedNotebookGuid)),
-    m_parentLocalUid(std::move(other.m_parentLocalUid))
-{}
-
 TagData::TagData(const qevercloud::Tag & other) :
-    FavoritableDataElementData(),
-    m_qecTag(other),
-    m_linkedNotebookGuid(),
-    m_parentLocalUid()
+    FavoritableDataElementData(), m_qecTag(other)
 {}
 
-TagData::~TagData()
+TagData::TagData(qevercloud::Tag && other) :
+    FavoritableDataElementData(), m_qecTag(std::move(other))
 {}
 
 void TagData::clear()
@@ -62,8 +39,7 @@ void TagData::clear()
 
 bool TagData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecTag.guid.isSet() && !checkGuid(m_qecTag.guid.ref()))
-    {
+    if (m_qecTag.guid.isSet() && !checkGuid(m_qecTag.guid.ref())) {
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("TagData", "Tag's guid is invalid"));
 
@@ -74,8 +50,7 @@ bool TagData::checkParameters(ErrorString & errorDescription) const
     if (m_linkedNotebookGuid.isSet() && !checkGuid(m_linkedNotebookGuid.ref()))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "TagData",
-            "Tag's linked notebook guid is invalid"));
+            "TagData", "Tag's linked notebook guid is invalid"));
 
         errorDescription.details() = m_linkedNotebookGuid;
         return false;
@@ -91,17 +66,15 @@ bool TagData::checkParameters(ErrorString & errorDescription) const
         !checkUpdateSequenceNumber(m_qecTag.updateSequenceNum))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "TagData",
-            "Tag's update sequence number is invalid"));
+            "TagData", "Tag's update sequence number is invalid"));
 
-        errorDescription.details() = QString::number(
-            m_qecTag.updateSequenceNum);
+        errorDescription.details() =
+            QString::number(m_qecTag.updateSequenceNum);
 
         return false;
     }
 
-    if (m_qecTag.parentGuid.isSet() && !checkGuid(m_qecTag.parentGuid.ref()))
-    {
+    if (m_qecTag.parentGuid.isSet() && !checkGuid(m_qecTag.parentGuid.ref())) {
         errorDescription.setBase(
             QT_TRANSLATE_NOOP("TagData", "Tag's parent guid is invalid"));
 
@@ -114,8 +87,7 @@ bool TagData::checkParameters(ErrorString & errorDescription) const
 
 bool TagData::operator==(const TagData & other) const
 {
-    return (m_qecTag == other.m_qecTag) &&
-        (m_isDirty == other.m_isDirty) &&
+    return (m_qecTag == other.m_qecTag) && (m_isDirty == other.m_isDirty) &&
         (m_isLocal == other.m_isLocal) &&
         (m_isFavorited == other.m_isFavorited) &&
         m_linkedNotebookGuid.isEqual(other.m_linkedNotebookGuid) &&

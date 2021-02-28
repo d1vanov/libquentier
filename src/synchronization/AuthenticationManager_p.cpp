@@ -31,58 +31,40 @@
 namespace quentier {
 
 AuthenticationManagerPrivate::AuthenticationManagerPrivate(
-        const QString & consumerKey, const QString & consumerSecret,
-        const QString & host, QObject * parent) :
+    const QString & consumerKey, const QString & consumerSecret,
+    const QString & host, QObject * parent) :
     QObject(parent),
-    m_consumerKey(consumerKey),
-    m_consumerSecret(consumerSecret),
-    m_host(host)
+    m_consumerKey(consumerKey), m_consumerSecret(consumerSecret), m_host(host)
 {}
 
 void AuthenticationManagerPrivate::onAuthenticationRequest()
 {
-    QNDEBUG("AuthenticationManagerPrivate::onAuthenticationRequest");
+    QNDEBUG(
+        "synchronization:authentication",
+        "AuthenticationManagerPrivate::onAuthenticationRequest");
 
-    QWidget * pParentWidget = qobject_cast<QWidget*>(parent());
+    QWidget * pParentWidget = qobject_cast<QWidget *>(parent());
 
     auto pDialog = std::make_unique<qevercloud::EvernoteOAuthDialog>(
-        m_consumerKey,
-        m_consumerSecret,
-        m_host,
-        pParentWidget);
+        m_consumerKey, m_consumerSecret, m_host, pParentWidget);
     pDialog->setWindowModality(Qt::WindowModal);
 
     auto res = pDialog->exec();
-    if (res == QDialog::Accepted)
-    {
+    if (res == QDialog::Accepted) {
         auto result = pDialog->oauthResult();
         Q_EMIT sendAuthenticationResult(
-            /* success = */ true,
-            result.userId,
-            result.authenticationToken,
-            result.expires,
-            result.shardId,
-            result.noteStoreUrl,
-            result.webApiUrlPrefix,
-            result.cookies,
-            ErrorString());
+            /* success = */ true, result.userId, result.authenticationToken,
+            result.expires, result.shardId, result.noteStoreUrl,
+            result.webApiUrlPrefix, result.cookies, ErrorString());
     }
-    else
-    {
+    else {
         ErrorString errorDescription(
             QT_TR_NOOP("Can't authenticate to Evernote"));
         errorDescription.details() = pDialog->oauthError();
 
         Q_EMIT sendAuthenticationResult(
-            /* success = */ false,
-            qevercloud::UserID(-1),
-            {},
-            qevercloud::Timestamp(0),
-            {},
-            {},
-            {},
-            {},
-            errorDescription);
+            /* success = */ false, qevercloud::UserID(-1), {},
+            qevercloud::Timestamp(0), {}, {}, {}, {}, errorDescription);
     }
 }
 

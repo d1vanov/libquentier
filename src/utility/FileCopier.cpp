@@ -32,8 +32,7 @@ namespace {
 template <typename T>
 void printState(T & t, const FileCopier::State state)
 {
-    switch(state)
-    {
+    switch (state) {
     case FileCopier::State::Idle:
         t << "Idle";
         break;
@@ -54,32 +53,20 @@ void printState(T & t, const FileCopier::State state)
 ////////////////////////////////////////////////////////////////////////////////
 
 FileCopier::FileCopier(QObject * parent) :
-    QObject(parent),
-    d_ptr(new FileCopierPrivate(this))
+    QObject(parent), d_ptr(new FileCopierPrivate(this))
 {
     QObject::connect(
-        d_ptr,
-        &FileCopierPrivate::progressUpdate,
-        this,
+        d_ptr, &FileCopierPrivate::progressUpdate, this,
         &FileCopier::progressUpdate);
 
     QObject::connect(
-        d_ptr,
-        &FileCopierPrivate::finished,
-        this,
-        &FileCopier::finished);
+        d_ptr, &FileCopierPrivate::finished, this, &FileCopier::finished);
 
     QObject::connect(
-        d_ptr,
-        &FileCopierPrivate::cancelled,
-        this,
-        &FileCopier::cancelled);
+        d_ptr, &FileCopierPrivate::cancelled, this, &FileCopier::cancelled);
 
     QObject::connect(
-        d_ptr,
-        &FileCopierPrivate::notifyError,
-        this,
-        &FileCopier::notifyError);
+        d_ptr, &FileCopierPrivate::notifyError, this, &FileCopier::notifyError);
 }
 
 FileCopier::State FileCopier::state() const

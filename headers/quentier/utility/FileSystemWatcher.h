@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QStringList>
@@ -31,19 +30,19 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileSystemWatcherPrivate)
 
-class QUENTIER_EXPORT FileSystemWatcher: public QObject
+class QUENTIER_EXPORT FileSystemWatcher : public QObject
 {
     Q_OBJECT
 public:
     explicit FileSystemWatcher(
         const int removalTimeoutMSec =
-        FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
         QObject * parent = nullptr);
 
     explicit FileSystemWatcher(
         const QStringList & paths,
         const int removalTimeoutMSec =
-        FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
+            FILE_SYSTEM_WATCHER_DEFAULT_REMOVAL_TIMEOUT_MSEC,
         QObject * parent = nullptr);
 
     virtual ~FileSystemWatcher() override;

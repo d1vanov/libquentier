@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-DatabaseRequestException::DatabaseRequestException(const ErrorString & message) :
+DatabaseRequestException::DatabaseRequestException(
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

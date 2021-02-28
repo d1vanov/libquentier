@@ -20,23 +20,19 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
-#include <QtWebSockets/QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QtWebSockets/QWebSocket>
 
 WebSocketTransport::WebSocketTransport(QWebSocket * socket) :
-    QWebChannelAbstractTransport(socket),
-    m_socket(socket)
+    QWebChannelAbstractTransport(socket), m_socket(socket)
 {
     QObject::connect(
-        socket,
-        &QWebSocket::textMessageReceived,
-        this,
+        socket, &QWebSocket::textMessageReceived, this,
         &WebSocketTransport::textMessageReceived);
 }
 
-WebSocketTransport::~WebSocketTransport()
-{}
+WebSocketTransport::~WebSocketTransport() {}
 
 void WebSocketTransport::sendMessage(const QJsonObject & message)
 {
@@ -57,15 +53,16 @@ void WebSocketTransport::textMessageReceived(const QString & messageData)
 bool WebSocketTransport::parseMessage(
     QByteArray messageData, QJsonObject & object)
 {
-    QNTRACE("WebSocketTransport::parseMessage: " << messageData);
+    QNTRACE("note_editor", "WebSocketTransport::parseMessage: " << messageData);
 
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(messageData, &error);
-    if (!error.error)
-    {
+    if (!error.error) {
         if (!document.isObject()) {
-            QNWARNING("Failed to parse JSON message that is not an object: "
-                      << messageData);
+            QNWARNING(
+                "note_editor",
+                "Failed to parse JSON message that is "
+                    << "not an object: " << messageData);
             return false;
         }
 
@@ -74,13 +71,17 @@ bool WebSocketTransport::parseMessage(
     }
 
     if (error.error != QJsonParseError::GarbageAtEnd) {
-        QNWARNING("Failed to parse text message as JSON object: "
-            << messageData << "; error is: " << error.errorString());
+        QNWARNING(
+            "note_editor",
+            "Failed to parse text message as JSON object: "
+                << messageData << "; error is: " << error.errorString());
         return false;
     }
 
-    QNTRACE("Detected \"garbage at the end\" JSON parsing error, "
-        << "trying to workaround; message data: " << messageData);
+    QNTRACE(
+        "note_editor",
+        "Detected \"garbage at the end\" JSON parsing "
+            << "error, trying to workaround; message data: " << messageData);
 
     /**
      * NOTE: for some reason which I can't fully comprehend yet the first part
@@ -92,8 +93,10 @@ bool WebSocketTransport::parseMessage(
      */
     int lastOpeningCurvyBraceIndex = messageData.lastIndexOf('{');
     if (lastOpeningCurvyBraceIndex <= 0) {
-        QNWARNING("Failed to workaround \"Garbage at the end\" "
-            << "error, message data: " << messageData);
+        QNWARNING(
+            "note_editor",
+            "Failed to workaround \"Garbage at the end\" "
+                << "error, message data: " << messageData);
         return false;
     }
 

@@ -33,8 +33,7 @@ namespace quentier {
 LogLevel QEverCloudLogLevelToQuentierLogLevel(
     const qevercloud::LogLevel logLevel)
 {
-    switch(logLevel)
-    {
+    switch (logLevel) {
     case qevercloud::LogLevel::Trace:
         return LogLevel::Trace;
     case qevercloud::LogLevel::Debug:
@@ -52,7 +51,7 @@ LogLevel QEverCloudLogLevelToQuentierLogLevel(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class QEverCloudLogger final: public qevercloud::ILogger
+class QEverCloudLogger final : public qevercloud::ILogger
 {
 public:
     virtual bool shouldLog(
@@ -73,9 +72,8 @@ public:
         Q_UNUSED(timestamp)
 
         QuentierAddLogEntry(
-            QString::fromUtf8(fileName),
-            static_cast<int>(lineNumber),
-            message,
+            QString::fromUtf8(fileName), static_cast<int>(lineNumber),
+            QLatin1String(component), message,
             QEverCloudLogLevelToQuentierLogLevel(level));
     }
 
@@ -90,8 +88,7 @@ public:
     virtual qevercloud::LogLevel level() const override
     {
         auto logLevel = QuentierMinLogLevel();
-        switch(logLevel)
-        {
+        switch (logLevel) {
         case LogLevel::Trace:
             return qevercloud::LogLevel::Trace;
         case LogLevel::Debug:
@@ -120,30 +117,33 @@ void QuentierInitializeLogging()
 
 void QuentierAddLogEntry(
     const QString & sourceFileName, const int sourceFileLineNumber,
-    const QString & message, const LogLevel logLevel)
+    const QString & component, const QString & message, const LogLevel logLevel)
 {
+    auto componentFilter = QuentierLogComponentFilter();
+
+    if (componentFilter.isValid() && !component.isEmpty() &&
+        !componentFilter.match(component).hasMatch())
+    {
+        return;
+    }
+
     QString relativeSourceFileName = sourceFileName;
 
     int prefixIndex = relativeSourceFileName.indexOf(
-        QStringLiteral("libquentier"),
-        Qt::CaseInsensitive);
+        QStringLiteral("libquentier"), Qt::CaseInsensitive);
 
     if (prefixIndex < 0) {
         prefixIndex = relativeSourceFileName.indexOf(
-            QStringLiteral("QEverCloud"),
-            Qt::CaseInsensitive);
+            QStringLiteral("QEverCloud"), Qt::CaseInsensitive);
     }
 
-    if (prefixIndex >= 0)
-    {
+    if (prefixIndex >= 0) {
         relativeSourceFileName.remove(0, prefixIndex);
     }
-    else
-    {
+    else {
         QString appName = QCoreApplication::applicationName().toLower();
-        prefixIndex = relativeSourceFileName.indexOf(
-            appName,
-            Qt::CaseInsensitive);
+        prefixIndex =
+            relativeSourceFileName.indexOf(appName, Qt::CaseInsensitive);
 
         if (prefixIndex >= 0) {
             relativeSourceFileName.remove(0, prefixIndex + appName.size() + 1);
@@ -155,29 +155,32 @@ void QuentierAddLogEntry(
     logEntry += QString::number(sourceFileLineNumber);
     logEntry += QStringLiteral(" [");
 
-    switch(logLevel)
-    {
+    switch (logLevel) {
     case LogLevel::Trace:
-        logEntry += QStringLiteral("Trace]: ");
+        logEntry += QStringLiteral("Trace]");
         break;
     case LogLevel::Debug:
-        logEntry += QStringLiteral("Debug]: ");
+        logEntry += QStringLiteral("Debug]");
         break;
     case LogLevel::Info:
-        logEntry += QStringLiteral("Info]: ");
+        logEntry += QStringLiteral("Info]");
         break;
     case LogLevel::Warning:
-        logEntry += QStringLiteral("Warn]: ");
+        logEntry += QStringLiteral("Warn]");
         break;
     case LogLevel::Error:
-        logEntry += QStringLiteral("Error]: ");
+        logEntry += QStringLiteral("Error]");
         break;
     default:
         logEntry += QStringLiteral("Unknown log level: ") +
             QString::number(static_cast<qint64>(logLevel)) +
-            QStringLiteral("]: ");
+            QStringLiteral("]");
         break;
     }
+
+    logEntry += QStringLiteral(" [");
+    logEntry += component;
+    logEntry += QStringLiteral("]: ");
 
     logEntry += message;
 
@@ -219,33 +222,54 @@ void QuentierRestartLogging()
     logger.restartLogging();
 }
 
+QRegularExpression QuentierLogComponentFilter()
+{
+    return QuentierLogger::instance().componentFilterRegex();
+}
+
+void QuentierSetLogComponentFilter(const QRegularExpression & filter)
+{
+    QuentierLogger::instance().setComponentFilterRegex(filter);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 QDebug & operator<<(QDebug & dbg, const LogLevel logLevel)
 {
-    switch(logLevel)
-    {
+    QString str;
+    QTextStream strm(&str);
+
+    strm << logLevel;
+    strm.flush();
+
+    dbg << str;
+    return dbg;
+}
+
+QTextStream & operator<<(QTextStream & strm, const LogLevel logLevel)
+{
+    switch (logLevel) {
     case LogLevel::Trace:
-        dbg << "Trace";
+        strm << "Trace";
         break;
     case LogLevel::Debug:
-        dbg << "Debug";
+        strm << "Debug";
         break;
     case LogLevel::Info:
-        dbg << "Info";
+        strm << "Info";
         break;
     case LogLevel::Warning:
-        dbg << "Warning";
+        strm << "Warning";
         break;
     case LogLevel::Error:
-        dbg << "Error";
+        strm << "Error";
         break;
     default:
-        dbg << "Unknown (" << static_cast<qint64>(logLevel) << ")";
+        strm << "Unknown (" << static_cast<qint64>(logLevel) << ")";
         break;
     }
 
-    return dbg;
+    return strm;
 }
 
 } // namespace quentier

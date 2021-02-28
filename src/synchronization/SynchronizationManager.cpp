@@ -17,159 +17,133 @@
  */
 
 #include <quentier/synchronization/SynchronizationManager.h>
+
 #include "SynchronizationManager_p.h"
+
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
-#include <quentier_private/synchronization/SynchronizationManagerDependencyInjector.h>
 
 namespace quentier {
 
 SynchronizationManager::SynchronizationManager(
-        const QString & host,
-        LocalStorageManagerAsync & localStorageManagerAsync,
-        IAuthenticationManager & authenticationManager,
-        SynchronizationManagerDependencyInjector * pInjector) :
+    QString host, LocalStorageManagerAsync & localStorageManagerAsync,
+    IAuthenticationManager & authenticationManager, QObject * parent,
+    INoteStorePtr pNoteStore, IUserStorePtr pUserStore,
+    IKeychainServicePtr pKeychainService,
+    ISyncStateStoragePtr pSyncStateStorage) :
+    QObject(parent),
     d_ptr(new SynchronizationManagerPrivate(
-        host,
-        localStorageManagerAsync,
-        authenticationManager,
-        pInjector,
-        this))
+        std::move(host), localStorageManagerAsync, authenticationManager, this,
+        std::move(pNoteStore), std::move(pUserStore),
+        std::move(pKeychainService), std::move(pSyncStateStorage)))
 {
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notifyStart,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::notifyStart, this,
         &SynchronizationManager::started);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notifyStop,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::notifyStop, this,
         &SynchronizationManager::stopped);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notifyError,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::notifyError, this,
         &SynchronizationManager::failed);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notifyFinish,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::notifyFinish, this,
         &SynchronizationManager::finished);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::syncChunksDownloaded,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::syncChunksDownloaded, this,
         &SynchronizationManager::syncChunksDownloaded);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::syncChunksDownloadProgress,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::syncChunksDownloadProgress, this,
         &SynchronizationManager::syncChunksDownloadProgress);
 
     QObject::connect(
         d_ptr,
-        &SynchronizationManagerPrivate::linkedNotebookSyncChunksDownloadProgress,
+        &SynchronizationManagerPrivate::
+            linkedNotebookSyncChunksDownloadProgress,
         this,
         &SynchronizationManager::linkedNotebookSyncChunksDownloadProgress);
 
     QObject::connect(
         d_ptr,
         &SynchronizationManagerPrivate::linkedNotebooksSyncChunksDownloaded,
-        this,
-        &SynchronizationManager::linkedNotebooksSyncChunksDownloaded);
+        this, &SynchronizationManager::linkedNotebooksSyncChunksDownloaded);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notesDownloadProgress,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::notesDownloadProgress, this,
         &SynchronizationManager::notesDownloadProgress);
 
     QObject::connect(
         d_ptr,
         &SynchronizationManagerPrivate::linkedNotebooksNotesDownloadProgress,
-        this,
-        &SynchronizationManager::linkedNotebooksNotesDownloadProgress);
+        this, &SynchronizationManager::linkedNotebooksNotesDownloadProgress);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::resourcesDownloadProgress,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::resourcesDownloadProgress, this,
         &SynchronizationManager::resourcesDownloadProgress);
 
     QObject::connect(
         d_ptr,
-        &SynchronizationManagerPrivate::linkedNotebooksResourcesDownloadProgress,
+        &SynchronizationManagerPrivate::
+            linkedNotebooksResourcesDownloadProgress,
         this,
         &SynchronizationManager::linkedNotebooksResourcesDownloadProgress);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::preparedDirtyObjectsForSending,
-        this,
-        &SynchronizationManager::preparedDirtyObjectsForSending);
+        d_ptr, &SynchronizationManagerPrivate::preparedDirtyObjectsForSending,
+        this, &SynchronizationManager::preparedDirtyObjectsForSending);
 
     QObject::connect(
         d_ptr,
-        &SynchronizationManagerPrivate::preparedLinkedNotebooksDirtyObjectsForSending,
+        &SynchronizationManagerPrivate::
+            preparedLinkedNotebooksDirtyObjectsForSending,
         this,
         &SynchronizationManager::preparedLinkedNotebooksDirtyObjectsForSending);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::authenticationFinished,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::authenticationFinished, this,
         &SynchronizationManager::authenticationFinished);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::authenticationRevoked,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::authenticationRevoked, this,
         &SynchronizationManager::authenticationRevoked);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::remoteToLocalSyncStopped,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::remoteToLocalSyncStopped, this,
         &SynchronizationManager::remoteToLocalSyncStopped);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::sendLocalChangesStopped,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::sendLocalChangesStopped, this,
         &SynchronizationManager::sendLocalChangesStopped);
 
     QObject::connect(
         d_ptr,
-        &SynchronizationManagerPrivate::willRepeatRemoteToLocalSyncAfterSendingChanges,
+        &SynchronizationManagerPrivate::
+            willRepeatRemoteToLocalSyncAfterSendingChanges,
         this,
-        &SynchronizationManager::willRepeatRemoteToLocalSyncAfterSendingChanges);
+        &SynchronizationManager::
+            willRepeatRemoteToLocalSyncAfterSendingChanges);
 
     QObject::connect(
         d_ptr,
-        &SynchronizationManagerPrivate::detectedConflictDuringLocalChangesSending,
+        &SynchronizationManagerPrivate::
+            detectedConflictDuringLocalChangesSending,
         this,
         &SynchronizationManager::detectedConflictDuringLocalChangesSending);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::rateLimitExceeded,
-        this,
+        d_ptr, &SynchronizationManagerPrivate::rateLimitExceeded, this,
         &SynchronizationManager::rateLimitExceeded);
 
     QObject::connect(
-        d_ptr,
-        &SynchronizationManagerPrivate::notifyRemoteToLocalSyncDone,
-        this,
-        &SynchronizationManager::remoteToLocalSyncDone);
+        d_ptr, &SynchronizationManagerPrivate::notifyRemoteToLocalSyncDone,
+        this, &SynchronizationManager::remoteToLocalSyncDone);
 }
 
-SynchronizationManager::~SynchronizationManager()
-{}
+SynchronizationManager::~SynchronizationManager() {}
 
 bool SynchronizationManager::active() const
 {

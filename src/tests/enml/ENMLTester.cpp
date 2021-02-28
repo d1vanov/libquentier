@@ -18,8 +18,8 @@
 
 #include "ENMLTester.h"
 
-#include "EnexExportImportTests.h"
 #include "ENMLConverterTests.h"
+#include "EnexExportImportTests.h"
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/RegisterMetatypes.h>
@@ -29,58 +29,38 @@
 #include <QtTest/QTest>
 
 #define CATCH_EXCEPTION()                                                      \
-    catch(const std::exception & exception)                                    \
-    {                                                                          \
+    catch (const std::exception & exception) {                                 \
         SysInfo sysInfo;                                                       \
-        QFAIL(qPrintable(QStringLiteral("Caught exception: ") +                \
+        QFAIL(qPrintable(                                                      \
+            QStringLiteral("Caught exception: ") +                             \
             QString::fromUtf8(exception.what()) +                              \
-            QStringLiteral(", backtrace: ") +                                  \
-            sysInfo.stackTrace()));                                            \
-    }                                                                          \
-// CATCH_EXCEPTION
+            QStringLiteral(", backtrace: ") + sysInfo.stackTrace()));          \
+    }
 
-#if QT_VERSION >= 0x050000
-inline void nullMessageHandler(
+inline void messageHandler(
     QtMsgType type, const QMessageLogContext &, const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
     }
 }
-#else
-inline void nullMessageHandler(QtMsgType type, const char * message)
-{
-    if (type != QtDebugMsg) {
-        QTextStream(stdout) << message << "\n";
-    }
-}
-#endif
 
 namespace quentier {
 namespace test {
 
-ENMLTester::ENMLTester(QObject * parent) :
-    QObject(parent)
-{}
+ENMLTester::ENMLTester(QObject * parent) : QObject(parent) {}
 
-ENMLTester::~ENMLTester()
-{}
+ENMLTester::~ENMLTester() {}
 
 void ENMLTester::init()
 {
     registerMetatypes();
-
-#if QT_VERSION >= 0x050000
-    qInstallMessageHandler(nullMessageHandler);
-#else
-    qInstallMsgHandler(nullMessageHandler);
-#endif
+    qInstallMessageHandler(messageHandler);
 }
 
 void ENMLTester::enmlConverterSimpleTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertSimpleNoteToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -90,8 +70,7 @@ void ENMLTester::enmlConverterSimpleTest()
 
 void ENMLTester::enmlConverterToDoTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertNoteWithToDoTagsToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -101,8 +80,7 @@ void ENMLTester::enmlConverterToDoTest()
 
 void ENMLTester::enmlConverterEnCryptTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertNoteWithEncryptionToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -112,8 +90,7 @@ void ENMLTester::enmlConverterEnCryptTest()
 
 void ENMLTester::enmlConverterEnCryptWithModifiedDecryptedTextTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertHtmlWithModifiedDecryptedTextToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -123,8 +100,7 @@ void ENMLTester::enmlConverterEnCryptWithModifiedDecryptedTextTest()
 
 void ENMLTester::enmlConverterEnMediaTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertNoteWithResourcesToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -134,8 +110,7 @@ void ENMLTester::enmlConverterEnMediaTest()
 
 void ENMLTester::enmlConverterComplexTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertComplexNoteToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -145,8 +120,7 @@ void ENMLTester::enmlConverterComplexTest()
 
 void ENMLTester::enmlConverterComplexTest2()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertComplexNote2ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -156,8 +130,7 @@ void ENMLTester::enmlConverterComplexTest2()
 
 void ENMLTester::enmlConverterComplexTest3()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertComplexNote3ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -167,8 +140,7 @@ void ENMLTester::enmlConverterComplexTest3()
 
 void ENMLTester::enmlConverterComplexTest4()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertComplexNote4ToHtmlAndBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -178,8 +150,7 @@ void ENMLTester::enmlConverterComplexTest4()
 
 void ENMLTester::enmlConverterHtmlWithTableHelperTags()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertHtmlWithTableHelperTagsToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -189,8 +160,7 @@ void ENMLTester::enmlConverterHtmlWithTableHelperTags()
 
 void ENMLTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
 {
-    try
-    {
+    try {
         QString error;
         bool res = convertHtmlWithTableAndHilitorHelperTagsToEnml(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -200,11 +170,10 @@ void ENMLTester::enmlConverterHtmlWithTableAndHilitorHelperTags()
 
 void ENMLTester::enexExportImportSingleSimpleNoteTest()
 {
-    try
-    {
+    try {
         QString error;
-        bool res = exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(
-            error);
+        bool res =
+            exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -212,11 +181,10 @@ void ENMLTester::enexExportImportSingleSimpleNoteTest()
 
 void ENMLTester::enexExportImportSingleNoteWithTagsTest()
 {
-    try
-    {
+    try {
         QString error;
-        bool res = exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(
-            error);
+        bool res =
+            exportSingleNoteWithTagsButNoResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -224,11 +192,10 @@ void ENMLTester::enexExportImportSingleNoteWithTagsTest()
 
 void ENMLTester::enexExportImportSingleNoteWithResourcesTest()
 {
-    try
-    {
+    try {
         QString error;
-        bool res = exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(
-            error);
+        bool res =
+            exportSingleNoteWithResourcesButNoTagsToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -236,11 +203,10 @@ void ENMLTester::enexExportImportSingleNoteWithResourcesTest()
 
 void ENMLTester::enexExportImportSingleNoteWithTagsAndResourcesTest()
 {
-    try
-    {
+    try {
         QString error;
-        bool res = exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(
-            error);
+        bool res =
+            exportSingleNoteWithTagsAndResourcesToEnexAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -248,11 +214,10 @@ void ENMLTester::enexExportImportSingleNoteWithTagsAndResourcesTest()
 
 void ENMLTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
 {
-    try
-    {
+    try {
         QString error;
-        bool res = exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(
-            error);
+        bool res =
+            exportSingleNoteWithTagsToEnexButSkipTagsAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
     }
     CATCH_EXCEPTION();
@@ -260,8 +225,7 @@ void ENMLTester::enexExportImportSingleNoteWithTagsButSkipTagsTest()
 
 void ENMLTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = exportMultipleNotesWithTagsAndResourcesAndImportBack(error);
         QVERIFY2(res == true, qPrintable(error));
@@ -271,8 +235,7 @@ void ENMLTester::enexExportImportMultipleNotesWithTagsAndResourcesTest()
 
 void ENMLTester::importRealWorldEnexTest()
 {
-    try
-    {
+    try {
         QString error;
         bool res = importRealWorldEnex(error);
         QVERIFY2(res == true, qPrintable(error));

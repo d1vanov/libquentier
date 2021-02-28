@@ -21,11 +21,12 @@
 namespace quentier {
 
 ToDoCheckboxAutomaticInsertionHandler::ToDoCheckboxAutomaticInsertionHandler(
-        QObject * parent) :
+    QObject * parent) :
     QObject(parent)
 {}
 
-void ToDoCheckboxAutomaticInsertionHandler::onToDoCheckboxInsertedAutomatically()
+void ToDoCheckboxAutomaticInsertionHandler::
+    onToDoCheckboxInsertedAutomatically()
 {
     Q_EMIT notifyToDoCheckboxInsertedAutomatically();
 }

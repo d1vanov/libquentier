@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT DatabaseOpeningException: public IQuentierException
+class QUENTIER_EXPORT DatabaseOpeningException : public IQuentierException
 {
 public:
     explicit DatabaseOpeningException(const ErrorString & message);
@@ -32,6 +32,6 @@ protected:
     virtual const QString exceptionDisplayName() const override;
 };
 
-}
+} // namespace quentier
 
 #endif // LIB_QUENTIER_EXCEPTION_DATABASE_OPENING_EXCEPTION_H

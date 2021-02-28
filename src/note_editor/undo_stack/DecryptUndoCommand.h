@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_DECRYPT_UNDO_COMMAND_H
 
 #include "EncryptDecryptUndoCommandInfo.h"
+
 #include "INoteEditorUndoCommand.h"
 
 #include "../NoteEditorPage.h"
@@ -30,10 +31,11 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN DecryptUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN DecryptUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
     using Callback = NoteEditorPage::Callback;
+
 public:
     DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
@@ -44,9 +46,8 @@ public:
     DecryptUndoCommand(
         const EncryptDecryptUndoCommandInfo & info,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate,
-        const Callback & callback, const QString & text,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        const QString & text, QUndoCommand * parent = nullptr);
 
     virtual ~DecryptUndoCommand();
 
@@ -54,9 +55,9 @@ public:
     virtual void undoImpl() override;
 
 private:
-    EncryptDecryptUndoCommandInfo           m_info;
-    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
-    Callback                                m_callback;
+    EncryptDecryptUndoCommandInfo m_info;
+    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
+    Callback m_callback;
 };
 
 } // namespace quentier

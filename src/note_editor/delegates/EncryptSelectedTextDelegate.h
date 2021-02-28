@@ -23,7 +23,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
-#include <quentier/utility/Macros.h>
 
 #include <QPointer>
 
@@ -41,7 +40,7 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * encryption considering the details of wrapping this action around the undo
  * stack
  */
-class Q_DECL_HIDDEN EncryptSelectedTextDelegate: public QObject
+class Q_DECL_HIDDEN EncryptSelectedTextDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -74,18 +73,18 @@ private:
     using JsCallback = JsResultCallbackFunctor<EncryptSelectedTextDelegate>;
 
 private:
-    QPointer<NoteEditorPrivate>             m_pNoteEditor;
-    std::shared_ptr<EncryptionManager>      m_encryptionManager;
-    std::shared_ptr<DecryptedTextManager>   m_decryptedTextManager;
+    QPointer<NoteEditorPrivate> m_pNoteEditor;
+    std::shared_ptr<EncryptionManager> m_encryptionManager;
+    std::shared_ptr<DecryptedTextManager> m_decryptedTextManager;
 
-    QString                                 m_encryptedTextHtml;
+    QString m_encryptedTextHtml;
 
-    QString                                 m_selectionHtml;
-    QString                                 m_encryptedText;
-    QString                                 m_cipher;
-    QString                                 m_keyLength;
-    QString                                 m_hint;
-    bool                                    m_rememberForSession = false;
+    QString m_selectionHtml;
+    QString m_encryptedText;
+    QString m_cipher;
+    QString m_keyLength;
+    QString m_hint;
+    bool m_rememberForSession = false;
 };
 
 } // namespace quentier

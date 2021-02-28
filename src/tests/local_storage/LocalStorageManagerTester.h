@@ -19,14 +19,12 @@
 #ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QObject>
 
 namespace quentier {
 namespace test {
 
-class LocalStorageManagerTester: public QObject
+class LocalStorageManagerTester final : public QObject
 {
     Q_OBJECT
 public:

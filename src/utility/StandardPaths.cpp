@@ -28,8 +28,7 @@ namespace quentier {
 const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
 {
     QByteArray envOverride = qgetenv(LIBQUENTIER_PERSISTENCE_STORAGE_PATH);
-    if (!envOverride.isEmpty())
-    {
+    if (!envOverride.isEmpty()) {
         if (pNonStandardLocation) {
             *pNonStandardLocation = true;
         }
@@ -37,15 +36,15 @@ const QString applicationPersistentStoragePath(bool * pNonStandardLocation)
         return QString::fromLocal8Bit(envOverride);
     }
 
-#if defined(Q_OS_MAC) || defined (Q_OS_WIN)
+#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #else // Linux, BSD-derivatives etc
     QString storagePath;
-    storagePath = QStandardPaths::writableLocation(
-        QStandardPaths::HomeLocation);
+    storagePath =
+        QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
-    storagePath += QStringLiteral("/.") +
-        QCoreApplication::applicationName().toLower();
+    storagePath +=
+        QStringLiteral("/.") + QCoreApplication::applicationName().toLower();
 
     return storagePath;
 #endif
@@ -67,13 +66,11 @@ const QString accountPersistentStoragePath(const Account & account)
         return storagePath;
     }
 
-    if (account.type() == Account::Type::Local)
-    {
+    if (account.type() == Account::Type::Local) {
         storagePath += QStringLiteral("/LocalAccounts/");
         storagePath += accountName;
     }
-    else
-    {
+    else {
         storagePath += QStringLiteral("/EvernoteAccounts/");
         storagePath += accountName;
         storagePath += QStringLiteral("_");

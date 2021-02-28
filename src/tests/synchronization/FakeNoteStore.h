@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dmitry Ivanov
+ * Copyright 2018-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,45 +19,40 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H
 
-#include <quentier_private/synchronization/INoteStore.h>
+#include <quentier/synchronization/INoteStore.h>
 
+#include <quentier/types/LinkedNotebook.h>
+#include <quentier/types/Note.h>
+#include <quentier/types/Notebook.h>
+#include <quentier/types/Resource.h>
 #include <quentier/types/SavedSearch.h>
 #include <quentier/types/Tag.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/SuppressWarnings.h>
+#include <quentier/utility/Compat.h>
 
-SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/random_access_index.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/global_fun.hpp>
 #include <boost/bimap.hpp>
+#include <boost/multi_index/global_fun.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/random_access_index.hpp>
+#include <boost/multi_index_container.hpp>
 
-RESTORE_WARNINGS
-
-#include <QSharedPointer>
-#include <QSet>
 #include <QHash>
 #include <QQueue>
+#include <QSet>
+
+#include <memory>
 
 namespace quentier {
 
-class FakeNoteStore: public INoteStore
+class FakeNoteStore : public INoteStore
 {
     Q_OBJECT
 public:
     explicit FakeNoteStore(QObject * parent = nullptr);
 
     // Saved searches
-    QHash<QString,qevercloud::SavedSearch> savedSearches() const;
+    QHash<QString, qevercloud::SavedSearch> savedSearches() const;
 
     bool setSavedSearch(SavedSearch & search, ErrorString & errorDescription);
     const SavedSearch * findSavedSearch(const QString & guid) const;
@@ -68,7 +63,7 @@ public:
     bool removeExpungedSavedSearchGuid(const QString & guid);
 
     // Tags
-    QHash<QString,qevercloud::Tag> tags() const;
+    QHash<QString, qevercloud::Tag> tags() const;
 
     bool setTag(Tag & tag, ErrorString & errorDescription);
     const Tag * findTag(const QString & guid) const;
@@ -79,13 +74,13 @@ public:
     bool removeExpungedTagGuid(const QString & guid);
 
     // Notebooks
-    QHash<QString,qevercloud::Notebook> notebooks() const;
+    QHash<QString, qevercloud::Notebook> notebooks() const;
 
     bool setNotebook(Notebook & notebook, ErrorString & errorDescription);
     const Notebook * findNotebook(const QString & guid) const;
     bool removeNotebook(const QString & guid);
 
-    QList<const Notebook*> findNotebooksForLinkedNotebookGuid(
+    QList<const Notebook *> findNotebooksForLinkedNotebookGuid(
         const QString & linkedNotebookGuid) const;
 
     void setExpungedNotebookGuid(const QString & guid);
@@ -93,7 +88,7 @@ public:
     bool removeExpungedNotebookGuid(const QString & guid);
 
     // Notes
-    QHash<QString,qevercloud::Note> notes() const;
+    QHash<QString, qevercloud::Note> notes() const;
 
     bool setNote(Note & note, ErrorString & errorDescription);
     const Note * findNote(const QString & guid) const;
@@ -107,17 +102,18 @@ public:
         const QString & conflictSourceNoteGuid) const;
 
     // Resources
-    QHash<QString,qevercloud::Resource> resources() const;
+    QHash<QString, qevercloud::Resource> resources() const;
 
     bool setResource(Resource & resource, ErrorString & errorDescription);
     const Resource * findResource(const QString & guid) const;
     bool removeResource(const QString & guid);
 
     // Linked notebooks
-    QHash<QString,qevercloud::LinkedNotebook> linkedNotebooks() const;
+    QHash<QString, qevercloud::LinkedNotebook> linkedNotebooks() const;
 
-    bool setLinkedNotebook(LinkedNotebook & linkedNotebook,
-                           ErrorString & errorDescription);
+    bool setLinkedNotebook(
+        LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+
     const LinkedNotebook * findLinkedNotebook(const QString & guid) const;
     bool removeLinkedNotebook(const QString & guid);
 
@@ -150,128 +146,126 @@ public:
     quint64 maxResourceSize() const;
     void setMaxResourceSize(const quint64 maxResourceSize);
 
-    QString linkedNotebookAuthTokenForNotebook(const QString & notebookGuid) const;
-    void setLinkedNotebookAuthTokenForNotebook(const QString & notebookGuid,
-                                               const QString & linkedNotebookAuthToken);
+    QString linkedNotebookAuthTokenForNotebook(
+        const QString & notebookGuid) const;
+
+    void setLinkedNotebookAuthTokenForNotebook(
+        const QString & notebookGuid, const QString & linkedNotebookAuthToken);
 
     qevercloud::SyncState syncState() const;
     void setSyncState(const qevercloud::SyncState & syncState);
 
     const qevercloud::SyncState * findLinkedNotebookSyncState(
         const QString & linkedNotebookOwner) const;
-    void setLinkedNotebookSyncState(const QString & linkedNotebookOwner,
-                                    const qevercloud::SyncState & syncState);
+
+    void setLinkedNotebookSyncState(
+        const QString & linkedNotebookOwner,
+        const qevercloud::SyncState & syncState);
+
     bool removeLinkedNotebookSyncState(const QString & linkedNotebookOwner);
 
     const QString & authToken() const;
     void setAuthToken(const QString & authToken);
 
     QString linkedNotebookAuthToken(const QString & linkedNotebookOwner) const;
-    void setLinkedNotebookAuthToken(const QString & linkedNotebookOwner,
-                                    const QString & linkedNotebookAuthToken);
+
+    void setLinkedNotebookAuthToken(
+        const QString & linkedNotebookOwner,
+        const QString & linkedNotebookAuthToken);
+
     bool removeLinkedNotebookAuthToken(const QString & linkedNotebookOwner);
 
-    qint32 currentMaxUsn(const QString & linkedNotebookGuid = QString()) const;
+    qint32 currentMaxUsn(const QString & linkedNotebookGuid = {}) const;
 
-    // API rate limits handling
-    struct WhenToTriggerAPIRateLimitsExceeding
+    enum class APIRateLimitsTrigger
     {
-        enum type
-        {
-            Never = 0,
-            OnGetUserOwnSyncStateAttempt,
-            OnGetLinkedNotebookSyncStateAttempt,
-            OnGetUserOwnSyncChunkAttempt,
-            OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks,
-            OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks,
-            OnGetLinkedNotebookSyncChunkAttempt,
-            OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks,
-            OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks,
-            OnCreateSavedSearchAttempt,
-            OnUpdateSavedSearchAttempt,
-            OnCreateTagAttempt,
-            OnUpdateTagAttempt,
-            OnCreateNotebookAttempt,
-            OnUpdateNotebookAttempt,
-            OnCreateNoteAttempt,
-            OnUpdateNoteAttempt,
-            OnAuthenticateToSharedNotebookAttempt
-        };
+        Never,
+        OnGetUserOwnSyncStateAttempt,
+        OnGetLinkedNotebookSyncStateAttempt,
+        OnGetUserOwnSyncChunkAttempt,
+        OnGetNoteAttemptAfterDownloadingUserOwnSyncChunks,
+        OnGetResourceAttemptAfterDownloadingUserOwnSyncChunks,
+        OnGetLinkedNotebookSyncChunkAttempt,
+        OnGetNoteAttemptAfterDownloadingLinkedNotebookSyncChunks,
+        OnGetResourceAttemptAfterDownloadingLinkedNotebookSyncChunks,
+        OnCreateSavedSearchAttempt,
+        OnUpdateSavedSearchAttempt,
+        OnCreateTagAttempt,
+        OnUpdateTagAttempt,
+        OnCreateNotebookAttempt,
+        OnUpdateNotebookAttempt,
+        OnCreateNoteAttempt,
+        OnUpdateNoteAttempt,
+        OnAuthenticateToSharedNotebookAttempt
     };
 
-    WhenToTriggerAPIRateLimitsExceeding::type whenToTriggerAPIRateLimitsExceeding() const;
-    void setAPIRateLimitsExceedingTrigger(
-        const WhenToTriggerAPIRateLimitsExceeding::type trigger);
+    APIRateLimitsTrigger apiRateLimitsTrigger() const;
+
+    void setAPIRateLimitsExceedingTrigger(const APIRateLimitsTrigger trigger);
 
     void considerAllExistingDataItemsSentBeforeRateLimitBreach();
-    qint32 smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
-        const QString & linkedNotebookGuid = QString()) const;
 
-    qint32 maxUsnBeforeAPIRateLimitsExceeding(const QString & linkedNotebookGuid = QString()) const;
+    qint32 smallestUsnOfNotCompletelySentDataItemBeforeRateLimitBreach(
+        const QString & linkedNotebookGuid = {}) const;
+
+    qint32 maxUsnBeforeAPIRateLimitsExceeding(
+        const QString & linkedNotebookGuid = {}) const;
 
 public:
     // INoteStore interface
     virtual INoteStore * create() const override;
 
+    virtual QString noteStoreUrl() const override;
+
+    virtual void setNoteStoreUrl(QString noteStoreUrl) override;
+
+    virtual void setAuthData(
+        QString authenticationToken, QList<QNetworkCookie> cookies) override;
+
     virtual void stop() override;
 
     virtual qint32 createNotebook(
-        Notebook & notebook,
-        ErrorString & errorDescription,
+        Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNotebook(
-        Notebook & notebook,
-        ErrorString & errorDescription,
+        Notebook & notebook, ErrorString & errorDescription,
         qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createNote(
-        Note & note,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateNote(
-        Note & note,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        Note & note, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createTag(
-        Tag & tag,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 updateTag(
-        Tag & tag,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds,
-        const QString & linkedNotebookAuthToken = QString()) override;
+        Tag & tag, ErrorString & errorDescription, qint32 & rateLimitSeconds,
+        QString linkedNotebookAuthToken = {}) override;
 
     virtual qint32 createSavedSearch(
-        SavedSearch & savedSearch,
-        ErrorString & errorDescription,
+        SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 updateSavedSearch(
-        SavedSearch & savedSearch,
-        ErrorString & errorDescription,
+        SavedSearch & savedSearch, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 getSyncState(
-        qevercloud::SyncState & syncState,
-        ErrorString & errorDescription,
+        qevercloud::SyncState & syncState, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 getSyncChunk(
-        const qint32 afterUSN,
-        const qint32 maxEntries,
+        const qint32 afterUSN, const qint32 maxEntries,
         const qevercloud::SyncChunkFilter & filter,
-        qevercloud::SyncChunk & syncChunk,
-        ErrorString & errorDescription,
+        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 getLinkedNotebookSyncState(
@@ -287,50 +281,34 @@ public:
         qint32 & rateLimitSeconds) override;
 
     virtual qint32 getNote(
-        const bool withContent,
-        const bool withResourcesData,
+        const bool withContent, const bool withResourcesData,
         const bool withResourcesRecognition,
-        const bool withResourcesAlternateData,
-        Note & note, ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) override;
+        const bool withResourcesAlternateData, Note & note,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     virtual bool getNoteAsync(
-        const bool withContent,
-        const bool withResourcesData,
+        const bool withContent, const bool withResourcesData,
         const bool withResourcesRecognition,
-        const bool withResourceAlternateData,
-        const bool withSharedNotes,
-        const bool withNoteAppDataValues,
-        const bool withResourceAppDataValues,
-        const bool withNoteLimits,
-        const QString & noteGuid,
-        const QString & authToken,
-        ErrorString & errorDescription) override;
+        const bool withResourceAlternateData, const bool withSharedNotes,
+        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
+        const bool withNoteLimits, const QString & noteGuid,
+        const QString & authToken, ErrorString & errorDescription) override;
 
     virtual qint32 getResource(
-        const bool withDataBody,
-        const bool withRecognitionDataBody,
-        const bool withAlternateDataBody,
-        const bool withAttributes,
-        const QString & authToken,
-        Resource & resource,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) override;
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & authToken, Resource & resource,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     virtual bool getResourceAsync(
-        const bool withDataBody,
-        const bool withRecognitionDataBody,
-        const bool withAlternateDataBody,
-        const bool withAttributes,
-        const QString & resourceGuid,
-        const QString & authToken,
+        const bool withDataBody, const bool withRecognitionDataBody,
+        const bool withAlternateDataBody, const bool withAttributes,
+        const QString & resourceGuid, const QString & authToken,
         ErrorString & errorDescription) override;
 
     virtual qint32 authenticateToSharedNotebook(
-        const QString & shareKey,
-        qevercloud::AuthenticationResult & authResult,
-        ErrorString & errorDescription,
-        qint32 & rateLimitSeconds) override;
+        const QString & shareKey, qevercloud::AuthenticationResult & authResult,
+        ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
     virtual void timerEvent(QTimerEvent * event) override;
@@ -339,23 +317,21 @@ private:
     qint32 checkNotebookFields(
         const Notebook & notebook, ErrorString & errorDescription) const;
 
-    struct CheckNoteFieldsPurpose
+    enum class CheckNoteFieldsPurpose
     {
-        enum type
-        {
-            CreateNote = 0,
-            UpdateNote
-        };
+        CreateNote = 0,
+        UpdateNote
     };
 
     qint32 checkNoteFields(
-        const Note & note, const CheckNoteFieldsPurpose::type purpose,
+        const Note & note, const CheckNoteFieldsPurpose purpose,
         ErrorString & errorDescription) const;
 
     qint32 checkResourceFields(
         const Resource & resource, ErrorString & errorDescription) const;
 
-    qint32 checkTagFields(const Tag & tag, ErrorString & errorDescription) const;
+    qint32 checkTagFields(
+        const Tag & tag, ErrorString & errorDescription) const;
 
     qint32 checkSavedSearchFields(
         const SavedSearch & savedSearch, ErrorString & errorDescription) const;
@@ -365,7 +341,8 @@ private:
         ErrorString & errorDescription) const;
 
     qint32 checkAppData(
-        const qevercloud::LazyMap & appData, ErrorString & errorDescription) const;
+        const qevercloud::LazyMap & appData,
+        ErrorString & errorDescription) const;
 
     qint32 checkAppDataKey(
         const QString & key, const QRegExp & keyRegExp,
@@ -392,11 +369,10 @@ private:
     QString nextName(const QString & name) const;
 
     qint32 getSyncChunkImpl(
-        const qint32 afterUSN, const qint32 maxEntries,
-        const bool fullSyncOnly, const QString & linkedNotebookGuid,
+        const qint32 afterUSN, const qint32 maxEntries, const bool fullSyncOnly,
+        const QString & linkedNotebookGuid,
         const qevercloud::SyncChunkFilter & filter,
-        qevercloud::SyncChunk & syncChunk,
-        ErrorString & errorDescription);
+        qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription);
 
     void considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
         const QString & linkedNotebookGuid = QString());
@@ -416,9 +392,12 @@ private:
 
 private:
     // Saved searches store
-    struct SavedSearchByGuid{};
-    struct SavedSearchByUSN{};
-    struct SavedSearchByNameUpper{};
+    struct SavedSearchByGuid
+    {};
+    struct SavedSearchByUSN
+    {};
+    struct SavedSearchByNameUpper
+    {};
 
     struct SavedSearchNameUpperExtractor
     {
@@ -428,37 +407,42 @@ private:
         }
     };
 
-    typedef boost::multi_index_container<
+    using SavedSearchData = boost::multi_index_container<
         SavedSearch,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<SavedSearchByGuid>,
                 boost::multi_index::const_mem_fun<
-                    SavedSearch,const QString&,&SavedSearch::guid>
-            >,
+                    SavedSearch, const QString &, &SavedSearch::guid>>,
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<SavedSearchByUSN>,
                 boost::multi_index::const_mem_fun<
-                    SavedSearch,qint32,&SavedSearch::updateSequenceNumber>
-            >,
+                    SavedSearch, qint32, &SavedSearch::updateSequenceNumber>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<SavedSearchByNameUpper>,
                 boost::multi_index::global_fun<
-                    const SavedSearch&,QString,&SavedSearchNameUpperExtractor::nameUpper>
-            >
-        >
-    > SavedSearchData;
+                    const SavedSearch &, QString,
+                    &SavedSearchNameUpperExtractor::nameUpper>>>>;
 
-    typedef SavedSearchData::index<SavedSearchByGuid>::type SavedSearchDataByGuid;
-    typedef SavedSearchData::index<SavedSearchByUSN>::type SavedSearchDataByUSN;
-    typedef SavedSearchData::index<SavedSearchByNameUpper>::type SavedSearchDataByNameUpper;
+    using SavedSearchDataByGuid =
+        SavedSearchData::index<SavedSearchByGuid>::type;
+
+    using SavedSearchDataByUSN = SavedSearchData::index<SavedSearchByUSN>::type;
+
+    using SavedSearchDataByNameUpper =
+        SavedSearchData::index<SavedSearchByNameUpper>::type;
 
     // Tag store
-    struct TagByGuid{};
-    struct TagByUSN{};
-    struct TagByNameUpper{};
-    struct TagByParentTagGuid{};
-    struct TagByLinkedNotebookGuid{};
+    struct TagByGuid
+    {};
+    struct TagByUSN
+    {};
+    struct TagByNameUpper
+    {};
+    struct TagByParentTagGuid
+    {};
+    struct TagByLinkedNotebookGuid
+    {};
 
     struct TagNameUpperExtractor
     {
@@ -492,46 +476,49 @@ private:
         }
     };
 
-    typedef boost::multi_index_container<
+    using TagData = boost::multi_index_container<
         Tag,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<TagByGuid>,
-                boost::multi_index::const_mem_fun<Tag,const QString&,&Tag::guid>
-            >,
+                boost::multi_index::const_mem_fun<
+                    Tag, const QString &, &Tag::guid>>,
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<TagByUSN>,
-                boost::multi_index::const_mem_fun<Tag,qint32,&Tag::updateSequenceNumber>
-            >,
+                boost::multi_index::const_mem_fun<
+                    Tag, qint32, &Tag::updateSequenceNumber>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<TagByNameUpper>,
                 boost::multi_index::global_fun<
-                    const Tag&,QString,&TagNameUpperExtractor::nameUpper>
-            >,
+                    const Tag &, QString, &TagNameUpperExtractor::nameUpper>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagByParentTagGuid>,
                 boost::multi_index::global_fun<
-                    const Tag&,QString,&TagParentTagGuidExtractor::parentTagGuid>
-            >,
+                    const Tag &, QString,
+                    &TagParentTagGuidExtractor::parentTagGuid>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<TagByLinkedNotebookGuid>,
                 boost::multi_index::global_fun<
-                    const Tag&,QString,&TagLinkedNotebookGuidExtractor::linkedNotebookGuid>
-            >
-        >
-    > TagData;
+                    const Tag &, QString,
+                    &TagLinkedNotebookGuidExtractor::linkedNotebookGuid>>>>;
 
-    typedef TagData::index<TagByGuid>::type TagDataByGuid;
-    typedef TagData::index<TagByUSN>::type TagDataByUSN;
-    typedef TagData::index<TagByNameUpper>::type TagDataByNameUpper;
-    typedef TagData::index<TagByParentTagGuid>::type TagDataByParentTagGuid;
-    typedef TagData::index<TagByLinkedNotebookGuid>::type TagDataByLinkedNotebookGuid;
+    using TagDataByGuid = TagData::index<TagByGuid>::type;
+    using TagDataByUSN = TagData::index<TagByUSN>::type;
+    using TagDataByNameUpper = TagData::index<TagByNameUpper>::type;
+    using TagDataByParentTagGuid = TagData::index<TagByParentTagGuid>::type;
+
+    using TagDataByLinkedNotebookGuid =
+        TagData::index<TagByLinkedNotebookGuid>::type;
 
     // Notebook store
-    struct NotebookByGuid{};
-    struct NotebookByUSN{};
-    struct NotebookByNameUpper{};
-    struct NotebookByLinkedNotebookGuid{};
+    struct NotebookByGuid
+    {};
+    struct NotebookByUSN
+    {};
+    struct NotebookByNameUpper
+    {};
+    struct NotebookByLinkedNotebookGuid
+    {};
 
     struct NotebookNameUpperExtractor
     {
@@ -553,44 +540,47 @@ private:
         }
     };
 
-    typedef boost::multi_index_container<
+    using NotebookData = boost::multi_index_container<
         Notebook,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NotebookByGuid>,
                 boost::multi_index::const_mem_fun<
-                    Notebook,const QString&,&Notebook::guid>
-            >,
+                    Notebook, const QString &, &Notebook::guid>>,
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NotebookByUSN>,
                 boost::multi_index::const_mem_fun<
-                    Notebook,qint32,&Notebook::updateSequenceNumber>
-            >,
+                    Notebook, qint32, &Notebook::updateSequenceNumber>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NotebookByNameUpper>,
                 boost::multi_index::global_fun<
-                    const Notebook&,QString,
-                    &NotebookNameUpperExtractor::nameUpper>
-            >,
+                    const Notebook &, QString,
+                    &NotebookNameUpperExtractor::nameUpper>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NotebookByLinkedNotebookGuid>,
                 boost::multi_index::global_fun<
-                    const Notebook&,QString,
-                    &NotebookLinkedNotebookGuidExtractor::linkedNotebookGuid>
-            >
-        >
-    > NotebookData;
+                    const Notebook &, QString,
+                    &NotebookLinkedNotebookGuidExtractor::
+                        linkedNotebookGuid>>>>;
 
-    typedef NotebookData::index<NotebookByGuid>::type NotebookDataByGuid;
-    typedef NotebookData::index<NotebookByUSN>::type NotebookDataByUSN;
-    typedef NotebookData::index<NotebookByNameUpper>::type NotebookDataByNameUpper;
-    typedef NotebookData::index<NotebookByLinkedNotebookGuid>::type NotebookDataByLinkedNotebookGuid;
+    using NotebookDataByGuid = NotebookData::index<NotebookByGuid>::type;
+    using NotebookDataByUSN = NotebookData::index<NotebookByUSN>::type;
+
+    using NotebookDataByNameUpper =
+        NotebookData::index<NotebookByNameUpper>::type;
+
+    using NotebookDataByLinkedNotebookGuid =
+        NotebookData::index<NotebookByLinkedNotebookGuid>::type;
 
     // Note store
-    struct NoteByGuid{};
-    struct NoteByUSN{};
-    struct NoteByNotebookGuid{};
-    struct NoteByConflictSourceNoteGuid{};
+    struct NoteByGuid
+    {};
+    struct NoteByUSN
+    {};
+    struct NoteByNotebookGuid
+    {};
+    struct NoteByConflictSourceNoteGuid
+    {};
 
     struct NoteConflictSourceNoteGuidExtractor
     {
@@ -600,7 +590,7 @@ private:
                 return QString();
             }
 
-            const qevercloud::NoteAttributes & noteAttributes = note.noteAttributes();
+            const auto & noteAttributes = note.noteAttributes();
             if (!noteAttributes.conflictSourceNoteGuid.isSet()) {
                 return QString();
             }
@@ -609,75 +599,77 @@ private:
         }
     };
 
-    typedef boost::multi_index_container<
+    using NoteData = boost::multi_index_container<
         Note,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<NoteByGuid>,
                 boost::multi_index::const_mem_fun<
-                    Note,const QString&,&Note::guid>
-            >,
+                    Note, const QString &, &Note::guid>>,
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<NoteByUSN>,
                 boost::multi_index::const_mem_fun<
-                    Note,qint32,&Note::updateSequenceNumber>
-            >,
+                    Note, qint32, &Note::updateSequenceNumber>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteByNotebookGuid>,
                 boost::multi_index::const_mem_fun<
-                    Note,const QString&,&Note::notebookGuid>
-            >,
+                    Note, const QString &, &Note::notebookGuid>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<NoteByConflictSourceNoteGuid>,
                 boost::multi_index::global_fun<
-                    const Note &,QString,
-                &NoteConflictSourceNoteGuidExtractor::guid>
-            >
-        >
-    > NoteData;
+                    const Note &, QString,
+                    &NoteConflictSourceNoteGuidExtractor::guid>>>>;
 
-    typedef NoteData::index<NoteByGuid>::type NoteDataByGuid;
-    typedef NoteData::index<NoteByUSN>::type NoteDataByUSN;
-    typedef NoteData::index<NoteByNotebookGuid>::type NoteDataByNotebookGuid;
-    typedef NoteData::index<NoteByConflictSourceNoteGuid>::type NoteDataByConflictSourceNoteGuid;
+    using NoteDataByGuid = NoteData::index<NoteByGuid>::type;
+    using NoteDataByUSN = NoteData::index<NoteByUSN>::type;
+    using NoteDataByNotebookGuid = NoteData::index<NoteByNotebookGuid>::type;
+
+    using NoteDataByConflictSourceNoteGuid =
+        NoteData::index<NoteByConflictSourceNoteGuid>::type;
 
     // Resource store
-    struct ResourceByGuid{};
-    struct ResourceByUSN{};
-    struct ResourceByNoteGuid{};
+    struct ResourceByGuid
+    {};
+    struct ResourceByUSN
+    {};
+    struct ResourceByNoteGuid
+    {};
 
-    typedef boost::multi_index_container<
+    using ResourceData = boost::multi_index_container<
         Resource,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<ResourceByGuid>,
                 boost::multi_index::const_mem_fun<
-                    Resource,const QString&,&Resource::guid>
-            >,
+                    Resource, const QString &, &Resource::guid>>,
             boost::multi_index::ordered_non_unique<
                 boost::multi_index::tag<ResourceByUSN>,
                 boost::multi_index::const_mem_fun<
-                    Resource,qint32,&Resource::updateSequenceNumber>
-            >,
+                    Resource, qint32, &Resource::updateSequenceNumber>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<ResourceByNoteGuid>,
                 boost::multi_index::const_mem_fun<
-                    Resource,const QString&,&Resource::noteGuid>
-            >
-        >
-    > ResourceData;
+                    Resource, const QString &, &Resource::noteGuid>>>>;
 
-    typedef ResourceData::index<ResourceByGuid>::type ResourceDataByGuid;
-    typedef ResourceData::index<ResourceByUSN>::type ResourceDataByUSN;
-    typedef ResourceData::index<ResourceByNoteGuid>::type ResourceDataByNoteGuid;
+    using ResourceDataByGuid = ResourceData::index<ResourceByGuid>::type;
+    using ResourceDataByUSN = ResourceData::index<ResourceByUSN>::type;
+
+    using ResourceDataByNoteGuid =
+        ResourceData::index<ResourceByNoteGuid>::type;
 
     // Linked notebook store
-    struct LinkedNotebookByGuid{};
-    struct LinkedNotebookByUSN{};
-    struct LinkedNotebookByShardId{};
-    struct LinkedNotebookByUri{};
-    struct LinkedNotebookByUsername{};
-    struct LinkedNotebookBySharedNotebookGlobalId{};
+    struct LinkedNotebookByGuid
+    {};
+    struct LinkedNotebookByUSN
+    {};
+    struct LinkedNotebookByShardId
+    {};
+    struct LinkedNotebookByUri
+    {};
+    struct LinkedNotebookByUsername
+    {};
+    struct LinkedNotebookBySharedNotebookGlobalId
+    {};
 
     struct LinkedNotebookShardIdExtractor
     {
@@ -703,54 +695,56 @@ private:
         }
     };
 
-    typedef boost::multi_index_container<
+    using LinkedNotebookData = boost::multi_index_container<
         LinkedNotebook,
         boost::multi_index::indexed_by<
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookByGuid>,
                 boost::multi_index::const_mem_fun<
-                    LinkedNotebook,const QString&,&LinkedNotebook::guid>
-            >,
+                    LinkedNotebook, const QString &, &LinkedNotebook::guid>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<LinkedNotebookByShardId>,
                 boost::multi_index::global_fun<
-                    const LinkedNotebook&,QString,
-                    &LinkedNotebookShardIdExtractor::shardId>
-            >,
+                    const LinkedNotebook &, QString,
+                    &LinkedNotebookShardIdExtractor::shardId>>,
             boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<LinkedNotebookByUri>,
                 boost::multi_index::global_fun<
-                    const LinkedNotebook&,QString,
-                    &LinkedNotebookUriExtractor::uri>
-            >,
+                    const LinkedNotebook &, QString,
+                    &LinkedNotebookUriExtractor::uri>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookByUsername>,
                 boost::multi_index::const_mem_fun<
-                    LinkedNotebook,const QString&,&LinkedNotebook::username>
-            >,
+                    LinkedNotebook, const QString &,
+                    &LinkedNotebook::username>>,
             boost::multi_index::ordered_unique<
                 boost::multi_index::tag<LinkedNotebookByUSN>,
                 boost::multi_index::const_mem_fun<
-                    LinkedNotebook,qint32,
-                    &LinkedNotebook::updateSequenceNumber>
-            >,
+                    LinkedNotebook, qint32,
+                    &LinkedNotebook::updateSequenceNumber>>,
             boost::multi_index::hashed_unique<
                 boost::multi_index::tag<LinkedNotebookBySharedNotebookGlobalId>,
                 boost::multi_index::const_mem_fun<
-                    LinkedNotebook,const QString&,
-                    &LinkedNotebook::sharedNotebookGlobalId>
-            >
-        >
-    > LinkedNotebookData;
+                    LinkedNotebook, const QString &,
+                    &LinkedNotebook::sharedNotebookGlobalId>>>>;
 
-    typedef LinkedNotebookData::index<LinkedNotebookByGuid>::type LinkedNotebookDataByGuid;
-    typedef LinkedNotebookData::index<LinkedNotebookByUSN>::type LinkedNotebookDataByUSN;
-    typedef LinkedNotebookData::index<LinkedNotebookByShardId>::type LinkedNotebookDataByShardId;
-    typedef LinkedNotebookData::index<LinkedNotebookByUri>::type LinkedNotebookDataByUri;
-    typedef LinkedNotebookData::index<LinkedNotebookByUsername>::type LinkedNotebookDataByUsername;
+    using LinkedNotebookDataByGuid =
+        LinkedNotebookData::index<LinkedNotebookByGuid>::type;
 
-    typedef LinkedNotebookData::index<LinkedNotebookBySharedNotebookGlobalId>::type
-        LinkedNotebookDataBySharedNotebookGlobalId;
+    using LinkedNotebookDataByUSN =
+        LinkedNotebookData::index<LinkedNotebookByUSN>::type;
+
+    using LinkedNotebookDataByShardId =
+        LinkedNotebookData::index<LinkedNotebookByShardId>::type;
+
+    using LinkedNotebookDataByUri =
+        LinkedNotebookData::index<LinkedNotebookByUri>::type;
+
+    using LinkedNotebookDataByUsername =
+        LinkedNotebookData::index<LinkedNotebookByUsername>::type;
+
+    using LinkedNotebookDataBySharedNotebookGlobalId =
+        LinkedNotebookData::index<LinkedNotebookBySharedNotebookGlobalId>::type;
 
     template <class T>
     class CompareByUSN
@@ -762,67 +756,48 @@ private:
         }
     };
 
-    // C++98 style scoped enum used to help maintain the bookkeeping
+    // Enum used to help maintain the bookkeeping
     // on which kind of item should be the next one inserted into
     // the sync chunk
-    struct NextItemType
+    enum class NextItemType
     {
-        enum type
-        {
-            None = 0,
-            SavedSearch,
-            Tag,
-            Notebook,
-            Note,
-            Resource,
-            LinkedNotebook
-        };
+        None = 0,
+        SavedSearch,
+        Tag,
+        Notebook,
+        Note,
+        Resource,
+        LinkedNotebook
     };
 
-    // Struct encapsulating parameters required for a single async getNote request
+    friend QDebug & operator<<(QDebug & dbg, const NextItemType nextItemType);
+
+    // Struct encapsulating parameters required for a single async getNote
+    // request
     struct GetNoteAsyncRequest
     {
-        GetNoteAsyncRequest() :
-            m_withContent(false),
-            m_withResourcesData(false),
-            m_withResourcesRecognition(false),
-            m_withResourcesAlternateData(false),
-            m_withSharedNotes(false),
-            m_withNoteAppDataValues(false),
-            m_withResourceAppDataValues(false),
-            m_withNoteLimits(false),
-            m_noteGuid(),
-            m_authToken()
-        {}
+        bool m_withContent = false;
+        bool m_withResourcesData = false;
+        bool m_withResourcesRecognition = false;
+        bool m_withResourcesAlternateData = false;
+        bool m_withSharedNotes = false;
+        bool m_withNoteAppDataValues = false;
+        bool m_withResourceAppDataValues = false;
+        bool m_withNoteLimits = false;
 
-        bool    m_withContent;
-        bool    m_withResourcesData;
-        bool    m_withResourcesRecognition;
-        bool    m_withResourcesAlternateData;
-        bool    m_withSharedNotes;
-        bool    m_withNoteAppDataValues;
-        bool    m_withResourceAppDataValues;
-        bool    m_withNoteLimits;
         QString m_noteGuid;
         QString m_authToken;
     };
 
-    // Struct encapsulating parameters required for a single async getResource request
+    // Struct encapsulating parameters required for a single async getResource
+    // request
     struct GetResourceAsyncRequest
     {
-        GetResourceAsyncRequest() :
-            m_withDataBody(false),
-            m_withRecognitionDataBody(false),
-            m_withAlternateDataBody(false),
-            m_withAttributes(false),
-            m_resourceGuid(),
-            m_authToken()
-        {}
+        bool m_withDataBody = false;
+        bool m_withRecognitionDataBody = false;
+        bool m_withAlternateDataBody = false;
+        bool m_withAttributes = false;
 
-        bool    m_withDataBody;
-        bool    m_withRecognitionDataBody;
-        bool    m_withAlternateDataBody;
-        bool    m_withAttributes;
         QString m_resourceGuid;
         QString m_authToken;
     };
@@ -835,87 +810,103 @@ private:
     // sent to the synchronizing agent
     struct GuidsOfCompleteSentItems
     {
-        QSet<QString>   m_savedSearchGuids;
-        QSet<QString>   m_tagGuids;
-        QSet<QString>   m_notebookGuids;
-        QSet<QString>   m_linkedNotebookGuids;
-        QSet<QString>   m_noteGuids;
-        QSet<QString>   m_resourceGuids;
+        QSet<QString> m_savedSearchGuids;
+        QSet<QString> m_tagGuids;
+        QSet<QString> m_notebookGuids;
+        QSet<QString> m_linkedNotebookGuids;
+        QSet<QString> m_noteGuids;
+        QSet<QString> m_resourceGuids;
     };
 
 private:
-    NoteDataByUSN::const_iterator
-    nextNoteByUsnIterator(
+    NoteDataByUSN::const_iterator nextNoteByUsnIterator(
         NoteDataByUSN::const_iterator it,
-        const QString & targetLinkedNotebookGuid = QString()) const;
+        const QString & targetLinkedNotebookGuid = {}) const;
 
-    ResourceDataByUSN::const_iterator
-    nextResourceByUsnIterator(
+    ResourceDataByUSN::const_iterator nextResourceByUsnIterator(
         ResourceDataByUSN::const_iterator it,
-        const QString & targetLinkedNotebookGuid = QString()) const;
+        const QString & targetLinkedNotebookGuid = {}) const;
 
 private:
     struct Data
     {
-        Data();
+        SavedSearchData m_savedSearches;
+        QSet<QString> m_expungedSavedSearchGuids;
 
-        SavedSearchData         m_savedSearches;
-        QSet<QString>           m_expungedSavedSearchGuids;
+        TagData m_tags;
+        QSet<QString> m_expungedTagGuids;
 
-        TagData                 m_tags;
-        QSet<QString>           m_expungedTagGuids;
+        NotebookData m_notebooks;
+        QSet<QString> m_expungedNotebookGuids;
 
-        NotebookData            m_notebooks;
-        QSet<QString>           m_expungedNotebookGuids;
+        NoteData m_notes;
+        QSet<QString> m_expungedNoteGuids;
 
-        NoteData                m_notes;
-        QSet<QString>           m_expungedNoteGuids;
+        ResourceData m_resources;
 
-        ResourceData            m_resources;
+        LinkedNotebookData m_linkedNotebooks;
+        QSet<QString> m_expungedLinkedNotebookGuids;
 
-        LinkedNotebookData      m_linkedNotebooks;
-        QSet<QString>           m_expungedLinkedNotebookGuids;
+        bool m_onceGetLinkedNotebookSyncChunkCalled = false;
+        bool m_onceAPIRateLimitExceedingTriggered = false;
 
-        bool                    m_onceGetLinkedNotebookSyncChunkCalled;
-        bool                    m_onceAPIRateLimitExceedingTriggered;
-        WhenToTriggerAPIRateLimitsExceeding::type       m_whenToTriggerAPIRateLimitExceeding;
+        APIRateLimitsTrigger m_APIRateLimitsTrigger =
+            APIRateLimitsTrigger::Never;
 
-        QSet<int>               m_getNoteAsyncDelayTimerIds;
-        QSet<int>               m_getResourceAsyncDelayTimerIds;
+        QSet<int> m_getNoteAsyncDelayTimerIds;
+        QSet<int> m_getResourceAsyncDelayTimerIds;
 
-        quint32                 m_maxNumSavedSearches;
-        quint32                 m_maxNumTags;
-        quint32                 m_maxNumNotebooks;
-        quint32                 m_maxNumNotes;
+        quint32 m_maxNumSavedSearches =
+            static_cast<quint32>(qevercloud::EDAM_USER_SAVED_SEARCHES_MAX);
 
-        quint64                 m_maxNoteSize;
-        quint32                 m_maxNumResourcesPerNote;
-        quint32                 m_maxNumTagsPerNote;
-        quint64                 m_maxResourceSize;
+        quint32 m_maxNumTags =
+            static_cast<quint32>(qevercloud::EDAM_USER_TAGS_MAX);
 
-        qevercloud::SyncState   m_syncState;
-        QHash<QString,qevercloud::SyncState>    m_linkedNotebookSyncStates;
+        quint32 m_maxNumNotebooks =
+            static_cast<quint32>(qevercloud::EDAM_USER_NOTEBOOKS_MAX);
 
-        GuidsOfCompleteSentItems    m_guidsOfUserOwnCompleteSentItems;
-        QHash<QString, GuidsOfCompleteSentItems>    m_guidsOfCompleteSentItemsByLinkedNotebookGuid;
+        quint32 m_maxNumNotes =
+            static_cast<quint32>(qevercloud::EDAM_USER_NOTES_MAX);
 
-        qint32                  m_maxUsnForUserOwnDataBeforeRateLimitBreach;
-        QHash<QString,qint32>   m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach;
+        quint64 m_maxNoteSize =
+            static_cast<quint64>(qevercloud::EDAM_NOTE_SIZE_MAX_FREE);
 
-        QString                 m_authenticationToken;
-        QHash<QString,QString>  m_linkedNotebookAuthTokens;
+        quint32 m_maxNumResourcesPerNote =
+            static_cast<quint32>(qevercloud::EDAM_NOTE_RESOURCES_MAX);
 
-        QQueue<GetNoteAsyncRequest>     m_getNoteAsyncRequests;
+        quint32 m_maxNumTagsPerNote =
+            static_cast<quint32>(qevercloud::EDAM_NOTE_TAGS_MAX);
+
+        quint64 m_maxResourceSize =
+            static_cast<quint64>(qevercloud::EDAM_RESOURCE_SIZE_MAX_FREE);
+
+        qevercloud::SyncState m_syncState;
+        QHash<QString, qevercloud::SyncState> m_linkedNotebookSyncStates;
+
+        GuidsOfCompleteSentItems m_guidsOfUserOwnCompleteSentItems;
+        QHash<QString, GuidsOfCompleteSentItems>
+            m_guidsOfCompleteSentItemsByLinkedNotebookGuid;
+
+        qint32 m_maxUsnForUserOwnDataBeforeRateLimitBreach = 0;
+        QHash<QString, qint32>
+            m_maxUsnsForLinkedNotebooksDataBeforeRateLimitBreach;
+
+        QString m_noteStoreUrl;
+
+        QString m_authenticationToken;
+        QHash<QString, QString> m_linkedNotebookAuthTokens;
+
+        QQueue<GetNoteAsyncRequest> m_getNoteAsyncRequests;
         QQueue<GetResourceAsyncRequest> m_getResourceAsyncRequests;
     };
 
-    FakeNoteStore(const QSharedPointer<Data> & data);
+    FakeNoteStore(std::shared_ptr<Data> data);
 
-    QSharedPointer<Data>    m_data;
+    std::shared_ptr<Data> m_data;
 };
 
-} // namespace quentier
+using FakeNoteStorePtr = std::shared_ptr<FakeNoteStore>;
 
-inline size_t hash_value(const QString & str) { return qHash(str); }
+} // namespace quentier
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_NOTE_STORE_H

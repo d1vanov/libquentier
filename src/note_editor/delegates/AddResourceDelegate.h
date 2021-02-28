@@ -24,7 +24,6 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/utility/Macros.h>
 
 #include <QByteArray>
 #include <QHash>
@@ -44,7 +43,7 @@ QT_FORWARD_DECLARE_CLASS(ResourceDataInTemporaryFileStorageManager)
  * The AddResourceDelegate class wraps a series of asynchronous actions required
  * for adding a resource to the note
  */
-class Q_DECL_HIDDEN AddResourceDelegate: public QObject
+class Q_DECL_HIDDEN AddResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:
@@ -68,10 +67,9 @@ public:
      * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
-     * @param pGenericResourceImageManager  The pointer to GenericResourceImageManager
-     *                                      required for composing the generic
-     *                                      resource image for QWebEngine-based
-     *                                      backend of NoteEditor
+     * @param pGenericResourceImageManager  The pointer to
+     * GenericResourceImageManager required for composing the generic resource
+     * image for QWebEngine-based backend of NoteEditor
      * @param genericResourceImageFilePathsByResourceHash   The hash container
      *                                                      storing generic
      *                                                      resource image file
@@ -83,11 +81,12 @@ public:
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOThreadWorker,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash);
+        QHash<QByteArray, QString> &
+            genericResourceImageFilePathsByResourceHash);
 
     /**
-     * The constructor of AddResourceDelegate class accepting the actual resource
-     * data to be inserted into the note.
+     * The constructor of AddResourceDelegate class accepting the actual
+     * resource data to be inserted into the note.
      *
      * @param resourceData                  The resource data to be added to
      *                                      the note as a new resource
@@ -105,10 +104,9 @@ public:
      * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
-     * @param pGenericResourceImageManager  The pointer to GenericResourceImageManager
-     *                                      required for composing the generic
-     *                                      resource image for QWebEngine-based
-     *                                      backend of NoteEditor
+     * @param pGenericResourceImageManager  The pointer to
+     * GenericResourceImageManager required for composing the generic resource
+     * image for QWebEngine-based backend of NoteEditor
      * @param genericResourceImageFilePathsByResourceHash   The hash container
      *                                                      storing generic
      *                                                      resource file paths
@@ -120,7 +118,8 @@ public:
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
         FileIOProcessorAsync * pFileIOThreadWorker,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray,QString> & genericResourceImageFilePathsByResourceHash);
+        QHash<QByteArray, QString> &
+            genericResourceImageFilePathsByResourceHash);
 
     void start();
 
@@ -128,27 +127,26 @@ Q_SIGNALS:
     void finished(Resource addedResource, QString resourceFileStoragePath);
     void notifyError(ErrorString error);
 
-// private signals
+    // private signals
     void readFileData(QString filePath, QUuid requestId);
 
     void saveResourceDataToTemporaryFile(
-        QString noteLocalUid, QString resourceLocalUid,
-        QByteArray data, QByteArray dataHash,
-        QUuid requestId, bool isImage);
+        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QByteArray dataHash, QUuid requestId, bool isImage);
 
     void writeFile(QString filePath, QByteArray data, QUuid requestId);
 
     void saveGenericResourceImageToFile(
-        QString noteLocalUid, QString resourceLocalUid,
-        QByteArray data, QString fileSuffix, QByteArray dataHash,
-        QString fileStoragePath, QUuid requestId);
+        QString noteLocalUid, QString resourceLocalUid, QByteArray data,
+        QString fileSuffix, QByteArray dataHash, QString fileStoragePath,
+        QUuid requestId);
 
 private Q_SLOTS:
     void onOriginalPageConvertedToNote(Note note);
 
     void onResourceFileRead(
-        bool success, ErrorString errorDescription,
-        QByteArray data, QUuid requestId);
+        bool success, ErrorString errorDescription, QByteArray data,
+        QUuid requestId);
 
     void onResourceDataSavedToTemporaryFile(
         QUuid requestId, QByteArray dataHash, ErrorString errorDescription);
@@ -179,13 +177,14 @@ private:
     typedef JsResultCallbackFunctor<AddResourceDelegate> JsCallback;
 
 private:
-    NoteEditorPrivate &             m_noteEditor;
-    ResourceDataInTemporaryFileStorageManager *     m_pResourceDataInTemporaryFileStorageManager;
-    FileIOProcessorAsync *          m_pFileIOProcessorAsync;
+    NoteEditorPrivate & m_noteEditor;
+    ResourceDataInTemporaryFileStorageManager *
+        m_pResourceDataInTemporaryFileStorageManager;
+    FileIOProcessorAsync * m_pFileIOProcessorAsync;
 
-    QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;
-    GenericResourceImageManager *   m_pGenericResourceImageManager;
-    QUuid                           m_saveResourceImageRequestId;
+    QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
+    GenericResourceImageManager * m_pGenericResourceImageManager;
+    QUuid m_saveResourceImageRequestId;
 
     /**
      * The resource to be added to the note is either stored in some external
@@ -193,16 +192,16 @@ private:
      * empty, it is used as a source of the new resource's data; otherwise
      * m_data is used instead
      */
-    const QString                   m_filePath;
-    QByteArray                      m_data;
+    const QString m_filePath;
+    QByteArray m_data;
 
-    QMimeType                       m_resourceMimeType;
+    QMimeType m_resourceMimeType;
 
-    Resource                        m_resource;
-    QString                         m_resourceFileStoragePath;
+    Resource m_resource;
+    QString m_resourceFileStoragePath;
 
-    QUuid                           m_readResourceFileRequestId;
-    QUuid                           m_saveResourceDataToTemporaryFileRequestId;
+    QUuid m_readResourceFileRequestId;
+    QUuid m_saveResourceDataToTemporaryFileRequestId;
 };
 
 } // namespace quentier

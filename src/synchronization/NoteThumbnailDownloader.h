@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_THUMBNAIL_DOWNLOADER_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -30,7 +29,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteThumbnailDownloader: public QObject
+class Q_DECL_HIDDEN NoteThumbnailDownloader final : public QObject
 {
     Q_OBJECT
 public:
@@ -58,13 +57,13 @@ private Q_SLOTS:
         IRequestContextPtr ctx);
 
 private:
-    QString                     m_host;
-    QString                     m_noteGuid;
-    QString                     m_authToken;
-    QString                     m_shardId;
-    bool                        m_noteFromPublicLinkedNotebook;
-    qevercloud::AsyncResult *   m_pAsyncResult = nullptr;
-    qevercloud::Thumbnail *     m_pThumbnail = nullptr;
+    QString m_host;
+    QString m_noteGuid;
+    QString m_authToken;
+    QString m_shardId;
+    bool m_noteFromPublicLinkedNotebook;
+    qevercloud::AsyncResult * m_pAsyncResult = nullptr;
+    qevercloud::Thumbnail * m_pThumbnail = nullptr;
 };
 
 } // namespace quentier

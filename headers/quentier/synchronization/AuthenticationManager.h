@@ -30,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(AuthenticationManagerPrivate)
  * implementation of IAuthenticationManager interface; internally uses
  * QEverCloud's OAuth widget
  */
-class QUENTIER_EXPORT AuthenticationManager: public IAuthenticationManager
+class QUENTIER_EXPORT AuthenticationManager : public IAuthenticationManager
 {
     Q_OBJECT
 public:
@@ -44,11 +44,11 @@ public Q_SLOTS:
     virtual void onAuthenticationRequest() override;
 
 private:
-    AuthenticationManager()  = delete;
+    AuthenticationManager() = delete;
     Q_DISABLE_COPY(AuthenticationManager)
 
 private:
-    AuthenticationManagerPrivate * const    d_ptr;
+    AuthenticationManagerPrivate * const d_ptr;
     Q_DECLARE_PRIVATE(AuthenticationManager)
 };
 

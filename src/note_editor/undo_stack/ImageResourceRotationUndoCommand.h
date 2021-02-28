@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_IMAGE_RESOURCE_ROTATION_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
 #include <quentier/types/Resource.h>
@@ -28,7 +29,8 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ImageResourceRotationUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ImageResourceRotationUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
 public:
@@ -37,19 +39,16 @@ public:
         const QByteArray & resourceHashBefore,
         const QByteArray & resourceRecognitionDataBefore,
         const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore,
-        const Resource & resourceAfter,
+        const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
         const INoteEditorBackend::Rotation rotationDirection,
-        NoteEditorPrivate & noteEditor,
-        QUndoCommand * parent = nullptr);
+        NoteEditorPrivate & noteEditor, QUndoCommand * parent = nullptr);
 
     ImageResourceRotationUndoCommand(
         const QByteArray & resourceDataBefore,
         const QByteArray & resourceHashBefore,
         const QByteArray & resourceRecognitionDataBefore,
         const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore,
-        const Resource & resourceAfter,
+        const QSize & resourceImageSizeBefore, const Resource & resourceAfter,
         const INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, const QString & text,
         QUndoCommand * parent = nullptr);
@@ -60,13 +59,13 @@ public:
     virtual void undoImpl() override;
 
 private:
-    const QByteArray                        m_resourceDataBefore;
-    const QByteArray                        m_resourceHashBefore;
-    const QByteArray                        m_resourceRecognitionDataBefore;
-    const QByteArray                        m_resourceRecognitionDataHashBefore;
-    const QSize                             m_resourceImageSizeBefore;
-    const Resource                          m_resourceAfter;
-    const INoteEditorBackend::Rotation      m_rotationDirection;
+    const QByteArray m_resourceDataBefore;
+    const QByteArray m_resourceHashBefore;
+    const QByteArray m_resourceRecognitionDataBefore;
+    const QByteArray m_resourceRecognitionDataHashBefore;
+    const QSize m_resourceImageSizeBefore;
+    const Resource m_resourceAfter;
+    const INoteEditorBackend::Rotation m_rotationDirection;
 };
 
 } // namespace quentier

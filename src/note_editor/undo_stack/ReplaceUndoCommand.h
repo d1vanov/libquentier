@@ -20,14 +20,17 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_REPLACE_UNDO_COMMAND_H
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN ReplaceUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN ReplaceUndoCommand final : public INoteEditorUndoCommand
 {
     Q_OBJECT
-    typedef NoteEditorPage::Callback Callback;
+public:
+    using Callback = NoteEditorPage::Callback;
+
 public:
     ReplaceUndoCommand(
         const QString & textToReplace, const bool matchCase,
@@ -45,9 +48,9 @@ public:
     virtual void undoImpl() override;
 
 private:
-    QString     m_textToReplace;
-    bool        m_matchCase;
-    Callback    m_callback;
+    QString m_textToReplace;
+    bool m_matchCase;
+    Callback m_callback;
 };
 
 } // namespace quentier

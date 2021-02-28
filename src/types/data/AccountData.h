@@ -27,43 +27,23 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN AccountData: public QSharedData
+class Q_DECL_HIDDEN AccountData final : public QSharedData
 {
 public:
     explicit AccountData();
-    virtual ~AccountData();
 
-    AccountData(const AccountData & other);
-    AccountData(AccountData && other);
+    AccountData(const AccountData & other) = default;
+    AccountData(AccountData && other) = default;
+
+    virtual ~AccountData() = default;
+
+    AccountData & operator=(const AccountData & other) = delete;
+    AccountData & operator=(AccountData && other) = delete;
 
     void switchEvernoteAccountType(
         const Account::EvernoteAccountType evernoteAccountType);
 
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
-
-    QString     m_name;
-    QString     m_displayName;
-
-    Account::Type   m_accountType = Account::Type::Local;
-
-    Account::EvernoteAccountType    m_evernoteAccountType =
-        Account::EvernoteAccountType::Free;
-
-    qevercloud::UserID  m_userId = -1;
-
-    QString     m_evernoteHost;
-    QString     m_shardId;
-
-    qint32      m_mailLimitDaily = std::numeric_limits<qint32>::max();
-    qint64      m_noteSizeMax = std::numeric_limits<qint64>::max();
-    qint64      m_resourceSizeMax = std::numeric_limits<qint64>::max();
-    qint32      m_linkedNotebookMax = std::numeric_limits<qint32>::max();
-    qint32      m_noteCountMax = std::numeric_limits<qint32>::max();
-    qint32      m_notebookCountMax = std::numeric_limits<qint32>::max();
-    qint32      m_tagCountMax = std::numeric_limits<qint32>::max();
-    qint32      m_noteTagCountMax = std::numeric_limits<qint32>::max();
-    qint32      m_savedSearchCountMax = std::numeric_limits<qint32>::max();
-    qint32      m_noteResourceCountMax = std::numeric_limits<qint32>::max();
 
     qint32 mailLimitDaily() const;
     qint64 noteSizeMax() const;
@@ -76,9 +56,30 @@ public:
     qint32 savedSearchCountMax() const;
     qint32 noteResourceCountMax() const;
 
-private:
-    AccountData & operator=(const AccountData & other)  = delete;
-    AccountData & operator=(AccountData && other)  = delete;
+public:
+    QString m_name;
+    QString m_displayName;
+
+    Account::Type m_accountType = Account::Type::Local;
+
+    Account::EvernoteAccountType m_evernoteAccountType =
+        Account::EvernoteAccountType::Free;
+
+    qevercloud::UserID m_userId = -1;
+
+    QString m_evernoteHost;
+    QString m_shardId;
+
+    qint32 m_mailLimitDaily = std::numeric_limits<qint32>::max();
+    qint64 m_noteSizeMax = std::numeric_limits<qint64>::max();
+    qint64 m_resourceSizeMax = std::numeric_limits<qint64>::max();
+    qint32 m_linkedNotebookMax = std::numeric_limits<qint32>::max();
+    qint32 m_noteCountMax = std::numeric_limits<qint32>::max();
+    qint32 m_notebookCountMax = std::numeric_limits<qint32>::max();
+    qint32 m_tagCountMax = std::numeric_limits<qint32>::max();
+    qint32 m_noteTagCountMax = std::numeric_limits<qint32>::max();
+    qint32 m_savedSearchCountMax = std::numeric_limits<qint32>::max();
+    qint32 m_noteResourceCountMax = std::numeric_limits<qint32>::max();
 };
 
 } // namespace quentier

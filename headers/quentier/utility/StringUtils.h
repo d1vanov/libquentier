@@ -52,7 +52,7 @@ public:
             return m_filteredStrings.contains(str);
         }
 
-        QSet<QString> &     m_filteredStrings;
+        QSet<QString> & m_filteredStrings;
     };
 
 private:

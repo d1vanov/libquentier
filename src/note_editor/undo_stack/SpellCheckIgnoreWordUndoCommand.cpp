@@ -17,41 +17,38 @@
  */
 
 #include "SpellCheckIgnoreWordUndoCommand.h"
+
 #include "../NoteEditor_p.h"
 
-#include <quentier/note_editor/SpellChecker.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/note_editor/SpellChecker.h>
 
 namespace quentier {
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-        SpellChecker * pSpellChecker, QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+    SpellChecker * pSpellChecker, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_pSpellChecker(pSpellChecker),
-    m_ignoredWord(ignoredWord)
+    m_pSpellChecker(pSpellChecker), m_ignoredWord(ignoredWord)
 {
     setText(tr("Ignore word"));
 }
 
 SpellCheckIgnoreWordUndoCommand::SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
-        SpellChecker * pSpellChecker, const QString & text,
-        QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+    SpellChecker * pSpellChecker, const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_pSpellChecker(pSpellChecker),
-    m_ignoredWord(ignoredWord)
+    m_pSpellChecker(pSpellChecker), m_ignoredWord(ignoredWord)
 {}
 
-SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand()
-{}
+SpellCheckIgnoreWordUndoCommand::~SpellCheckIgnoreWordUndoCommand() {}
 
 void SpellCheckIgnoreWordUndoCommand::redoImpl()
 {
-    QNDEBUG("SpellCheckIgnoreWordUndoCommand::redoImpl");
+    QNDEBUG("note_editor:undo", "SpellCheckIgnoreWordUndoCommand::redoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE("No spell checker");
+        QNTRACE("note_editor:undo", "No spell checker");
         return;
     }
 
@@ -65,10 +62,10 @@ void SpellCheckIgnoreWordUndoCommand::redoImpl()
 
 void SpellCheckIgnoreWordUndoCommand::undoImpl()
 {
-    QNDEBUG("SpellCheckIgnoreWordUndoCommand::undoImpl");
+    QNDEBUG("note_editor:undo", "SpellCheckIgnoreWordUndoCommand::undoImpl");
 
     if (Q_UNLIKELY(m_pSpellChecker.isNull())) {
-        QNTRACE("No spell checker");
+        QNTRACE("note_editor:undo", "No spell checker");
         return;
     }
 

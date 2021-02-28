@@ -19,7 +19,7 @@
 #ifndef LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 #define LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
 
-#include <quentier_private/utility/IKeychainService.h>
+#include <quentier/utility/IKeychainService.h>
 
 #include <qt5keychain/keychain.h>
 
@@ -35,43 +35,49 @@ namespace quentier {
  * and is not intended to be moved into any thread past creation. The
  * communication with this wrapper object occurs via signals and slots.
  */
-class QtKeychainWrapper: public QObject
+class Q_DECL_HIDDEN QtKeychainWrapper final : public QObject
 {
     Q_OBJECT
 public:
     QtKeychainWrapper();
     virtual ~QtKeychainWrapper();
 
-    // NOTE: this is required for Qt4 connection syntax, it won't properly
-    // understand IKeychainService::ErrorCode::type
-    typedef IKeychainService::ErrorCode ErrorCode;
-
 public Q_SLOTS:
-    void onStartWritePasswordJob(QUuid jobId, QString service, QString key,
-                                 QString password);
+    void onStartWritePasswordJob(
+        QUuid jobId, QString service, QString key, QString password);
+
     void onStartReadPasswordJob(QUuid jobId, QString service, QString key);
+
     void onStartDeletePasswordJob(QUuid jobId, QString service, QString key);
 
 Q_SIGNALS:
-    void writePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
-                                  ErrorString errorDescription);
-    void readPasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
-                                 ErrorString errorDescription, QString password);
-    void deletePasswordJobFinished(QUuid requestId, ErrorCode::type errorCode,
-                                   ErrorString errorDescription);
+    void writePasswordJobFinished(
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription);
+
+    void readPasswordJobFinished(
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription, QString password);
+
+    void deletePasswordJobFinished(
+        QUuid requestId, IKeychainService::ErrorCode errorCode,
+        ErrorString errorDescription);
 
 private Q_SLOTS:
     void onWritePasswordJobFinished(QKeychain::Job * pJob);
+
     void onReadPasswordJobFinished(QKeychain::Job * pJob);
+
     void onDeletePasswordJobFinished(QKeychain::Job * pJob);
 
 private:
-    ErrorCode::type translateErrorCode(const QKeychain::Error errorCode) const;
+    IKeychainService::ErrorCode translateErrorCode(
+        const QKeychain::Error errorCode) const;
 
 private:
-    QHash<QKeychain::ReadPasswordJob*, QUuid>   m_readPasswordJobs;
-    QHash<QKeychain::WritePasswordJob*, QUuid>  m_writePasswordJobs;
-    QHash<QKeychain::DeletePasswordJob*, QUuid> m_deletePasswordJobs;
+    QHash<QKeychain::ReadPasswordJob *, QUuid> m_readPasswordJobs;
+    QHash<QKeychain::WritePasswordJob *, QUuid> m_writePasswordJobs;
+    QHash<QKeychain::DeletePasswordJob *, QUuid> m_deletePasswordJobs;
 };
 
 } // namespace quentier

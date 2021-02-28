@@ -20,7 +20,8 @@
 #define LIB_QUENTIER_UTILITY_SYS_INFO_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
+
+#include <QString>
 
 namespace quentier {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_TESTS_USER_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 #define LIB_QUENTIER_TESTS_USER_LOCAL_STORAGE_MANAGER_ASYNC_TESTER_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/User.h>
+
 #include <QUuid>
 
 namespace quentier {
@@ -30,7 +30,7 @@ QT_FORWARD_DECLARE_CLASS(LocalStorageManagerAsync)
 
 namespace test {
 
-class UserLocalStorageManagerAsyncTester : public QObject
+class UserLocalStorageManagerAsyncTester final : public QObject
 {
     Q_OBJECT
 public:
@@ -44,7 +44,7 @@ Q_SIGNALS:
     void success();
     void failure(QString errorDescription);
 
-// private signals:
+    // private signals:
     void getUserCountRequest(QUuid requestId);
     void addUserRequest(User user, QUuid requestId);
     void updateUserRequest(User user, QUuid requestId);
@@ -57,15 +57,29 @@ private Q_SLOTS:
     void onGetUserCountCompleted(int count, QUuid requestId);
     void onGetUserCountFailed(ErrorString errorDescription, QUuid requestId);
     void onAddUserCompleted(User user, QUuid requestId);
-    void onAddUserFailed(User user, ErrorString errorDescription, QUuid requestId);
+
+    void onAddUserFailed(
+        User user, ErrorString errorDescription, QUuid requestId);
+
     void onUpdateUserCompleted(User user, QUuid requestId);
-    void onUpdateUserFailed(User user, ErrorString errorDescription, QUuid requestId);
+
+    void onUpdateUserFailed(
+        User user, ErrorString errorDescription, QUuid requestId);
+
     void onFindUserCompleted(User user, QUuid requestId);
-    void onFindUserFailed(User user, ErrorString errorDescription, QUuid requestId);
+
+    void onFindUserFailed(
+        User user, ErrorString errorDescription, QUuid requestId);
+
     void onDeleteUserCompleted(User user, QUuid requestId);
-    void onDeleteUserFailed(User user, ErrorString errorDescription, QUuid requestId);
+
+    void onDeleteUserFailed(
+        User user, ErrorString errorDescription, QUuid requestId);
+
     void onExpungeUserCompleted(User user, QUuid requestId);
-    void onExpungeUserFailed(User user, ErrorString errorDescription, QUuid requestId);
+
+    void onExpungeUserFailed(
+        User user, ErrorString errorDescription, QUuid requestId);
 
 private:
     void createConnections();
@@ -85,16 +99,16 @@ private:
         STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST
     };
 
-    State m_state;
+    State m_state = STATE_UNINITIALIZED;
 
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
-    QThread *                   m_pLocalStorageManagerThread;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    QThread * m_pLocalStorageManagerThread = nullptr;
 
-    qint32                      m_userId;
+    qint32 m_userId = 3;
 
-    User                 m_initialUser;
-    User                 m_foundUser;
-    User                 m_modifiedUser;
+    User m_initialUser;
+    User m_foundUser;
+    User m_modifiedUser;
 };
 
 } // namespace test

@@ -34,8 +34,9 @@ include(PrependPath)
 
 find_package(Sanitizers)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/headers
-                    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/headers
+  ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(THIRDPARTY_LIBS ${QEVERCLOUD_LIBRARIES})
 list(APPEND THIRDPARTY_LIBS ${TIDY_HTML5_LIBRARIES})
@@ -69,6 +70,14 @@ if(LIBCPP)
 endif()
 
 include_directories(headers)
+
+define_property(SOURCE
+  PROPERTY skip_autoformat
+  BRIEF_DOCS
+  "Source files marked with this property should not be autoformatted"
+  FULL_DOCS
+  "skip_autoformat source property controls whether the source file "
+  "should be not formatted automatically as a part of clang-format target")
 
 if(BUILD_WITH_NOTE_EDITOR)
   set(NOTE_EDITOR_HEADERS
@@ -112,8 +121,12 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/NoteSearchQuery.h)
 
 set(SYNCHRONIZATION_HEADERS
-    headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/IAuthenticationManager.h)
+    headers/quentier/synchronization/ForwardDeclarations.h
+    headers/quentier/synchronization/IAuthenticationManager.h
+    headers/quentier/synchronization/INoteStore.h
+    headers/quentier/synchronization/ISyncStateStorage.h
+    headers/quentier/synchronization/IUserStore.h
+    headers/quentier/synchronization/SynchronizationManager.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND SYNCHRONIZATION_HEADERS
@@ -139,28 +152,35 @@ set(EXCEPTION_HEADERS
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
-    headers/quentier/utility/MessageBox.h
-    headers/quentier/utility/StandardPaths.h
+    headers/quentier/utility/Checks.h
+    headers/quentier/utility/Compat.h
+    headers/quentier/utility/DateTime.h
     headers/quentier/utility/EncryptionManager.h
     headers/quentier/utility/EventLoopWithExitStatus.h
     headers/quentier/utility/FileCopier.h
     headers/quentier/utility/FileIOProcessorAsync.h
+    headers/quentier/utility/FileSystem.h
     headers/quentier/utility/FileSystemWatcher.h
+    headers/quentier/utility/ForwardDeclarations.h
+    headers/quentier/utility/IKeychainService.h
+    headers/quentier/utility/Initialize.h
     headers/quentier/utility/LimitedStack.h
     headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
-    headers/quentier/utility/ShortcutManager.h
-    headers/quentier/utility/StringUtils.h
-    headers/quentier/utility/SuppressWarnings.h
-    headers/quentier/utility/SysInfo.h
+    headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h
     headers/quentier/utility/QuentierApplication.h
     headers/quentier/utility/QuentierCheckPtr.h
     headers/quentier/utility/QuentierUndoCommand.h
-    headers/quentier/utility/Macros.h
+    headers/quentier/utility/ShortcutManager.h
+    headers/quentier/utility/Size.h
+    headers/quentier/utility/StandardPaths.h
+    headers/quentier/utility/StringUtils.h
+    headers/quentier/utility/SuppressWarnings.h
+    headers/quentier/utility/SysInfo.h
+    headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
-    headers/quentier/utility/UidGenerator.h
-    headers/quentier/utility/Utility.h)
+    headers/quentier/utility/UidGenerator.h)
 
 set(PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
 list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
@@ -172,11 +192,6 @@ list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
-    headers/quentier_private/synchronization/INoteStore.h
-    headers/quentier_private/synchronization/IUserStore.h
-    headers/quentier_private/synchronization/SynchronizationManagerDependencyInjector.h
-    headers/quentier_private/synchronization/SyncStatePersistenceManager.h
-    headers/quentier_private/utility/IKeychainService.h
     src/local_storage/Transaction.h
     src/logging/QuentierLogger_p.h
     src/types/data/AccountData.h
@@ -212,6 +227,7 @@ set(PRIVATE_HEADERS
     src/synchronization/SendLocalChangesManager.h
     src/synchronization/SynchronizationShared.h
     src/synchronization/SynchronizationManager_p.h
+    src/synchronization/SyncStateStorage.h
     src/synchronization/NotebookSyncConflictResolver.h
     src/synchronization/NotebookSyncCache.h
     src/synchronization/TagSyncConflictResolver.h
@@ -221,18 +237,21 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
+    src/utility/keychain/CompositeKeychainService.h
+    src/utility/keychain/MigratingKeychainService.h
+    src/utility/keychain/QtKeychainService.h
+    src/utility/keychain/ObfuscatingKeychainService.h
+    src/utility/keychain/QtKeychainWrapper.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
-    src/utility/TagSortByParentChildRelationsHelpers.hpp
     src/utility/EncryptionManager_p.h
     src/utility/FileCopier_p.h
     src/utility/FileIOProcessorAsync_p.h
     src/utility/FileSystemWatcher_p.h
-    src/utility/KeychainService.h
-    src/utility/QtKeychainWrapper.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
-    src/utility/StringUtils_p.h)
+    src/utility/StringUtils_p.h
+    src/utility/TagSortByParentChildRelationsHelpers.hpp)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND PRIVATE_HEADERS
@@ -323,7 +342,10 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND PRIVATE_HEADERS
-       src/utility/unix/linux/StackTrace.h)
+    src/utility/unix/linux/StackTrace.h)
+  set_source_files_properties(
+    src/utility/unix/linux/StackTrace.h
+    PROPERTIES skip_autoformat ON)
 endif()
 
 set(${PROJECT_NAME}_HEADERS ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
@@ -346,10 +368,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/User.cpp
     src/types/RegisterMetatypes.cpp
     src/types/data/AccountData.cpp
-    src/types/data/FavoritableDataElementData.cpp
-    src/types/data/LocalStorageDataElementData.cpp
     src/types/data/LinkedNotebookData.cpp
-    src/types/data/NoteStoreDataElementData.cpp
     src/types/data/NoteData.cpp
     src/types/data/NotebookData.cpp
     src/types/data/ResourceData.cpp
@@ -382,6 +401,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
+    src/synchronization/ISyncStateStorage.cpp
     src/synchronization/IUserStore.cpp
     src/synchronization/NoteStore.cpp
     src/synchronization/UserStore.cpp
@@ -389,7 +409,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/SynchronizationShared.cpp
     src/synchronization/SynchronizationManager.cpp
     src/synchronization/SynchronizationManager_p.cpp
-    src/synchronization/SyncStatePersistenceManager.cpp
+    src/synchronization/SyncStateStorage.cpp
     src/synchronization/RemoteToLocalSynchronizationManager.cpp
     src/synchronization/SendLocalChangesManager.cpp
     src/synchronization/NotebookSyncCache.cpp
@@ -413,11 +433,19 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/utility/keychain/CompositeKeychainService.cpp
+    src/utility/keychain/IKeychainService.cpp
+    src/utility/keychain/MigratingKeychainService.cpp
+    src/utility/keychain/QtKeychainService.cpp
+    src/utility/keychain/ObfuscatingKeychainService.cpp
+    src/utility/keychain/QtKeychainWrapper.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
+    src/utility/Checks.cpp
+    src/utility/DateTime.cpp
+    src/utility/Initialize.cpp
     src/utility/MessageBox.cpp
-    src/utility/StandardPaths.cpp
     src/utility/EncryptionManager.cpp
     src/utility/EncryptionManager_p.cpp
     src/utility/EventLoopWithExitStatus.cpp
@@ -425,21 +453,21 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/FileCopier_p.cpp
     src/utility/FileIOProcessorAsync.cpp
     src/utility/FileIOProcessorAsync_p.cpp
+    src/utility/FileSystem.cpp
     src/utility/FileSystemWatcher.cpp
     src/utility/FileSystemWatcher_p.cpp
-    src/utility/IKeychainService.cpp
-    src/utility/KeychainService.cpp
-    src/utility/QtKeychainWrapper.cpp
     src/utility/Printable.cpp
     src/utility/QuentierApplication.cpp
     src/utility/QuentierUndoCommand.cpp
     src/utility/ShortcutManager.cpp
     src/utility/ShortcutManager_p.cpp
+    src/utility/Size.cpp
+    src/utility/StandardPaths.cpp
     src/utility/StringUtils.cpp
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
+    src/utility/System.cpp
     src/utility/TagSortByParentChildRelations.cpp
-    src/utility/Utility.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)
 
@@ -535,6 +563,9 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/StackTrace.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/linux/SysInfoLinux.cpp)
+  set_source_files_properties(
+    src/utility/unix/linux/StackTrace.cpp
+    PROPERTIES skip_autoformat ON)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/SysInfoUnix.cpp)
   list(APPEND ${PROJECT_NAME}_SOURCES src/utility/unix/darwin/SysInfoDarwin.cpp)
@@ -763,6 +794,10 @@ set(TEST_HEADERS
     src/tests/utility/LRUCacheTests.h
     src/tests/utility/TagSortByParentChildRelationsTest.h
     src/tests/utility/UtilityTester.h
+    src/tests/utility/keychain/CompositeKeychainTester.h
+    src/tests/utility/keychain/KeychainServiceMock.h
+    src/tests/utility/keychain/MigratingKeychainTester.h
+    src/tests/utility/keychain/ObfuscatingKeychainTester.h
     src/tests/TestMacros.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
     src/synchronization/TagSyncCache.h
@@ -802,6 +837,10 @@ set(TEST_SOURCES
     src/tests/utility/LRUCacheTests.cpp
     src/tests/utility/TagSortByParentChildRelationsTest.cpp
     src/tests/utility/UtilityTester.cpp
+    src/tests/utility/keychain/CompositeKeychainTester.cpp
+    src/tests/utility/keychain/KeychainServiceMock.cpp
+    src/tests/utility/keychain/MigratingKeychainTester.cpp
+    src/tests/utility/keychain/ObfuscatingKeychainTester.cpp
     src/tests/TestMain.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/TagSyncCache.cpp
@@ -825,6 +864,9 @@ add_sanitizers(test_${PROJECT_NAME})
 add_test(test_${PROJECT_NAME} test_${PROJECT_NAME})
 
 target_link_libraries(test_${PROJECT_NAME} ${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
+
+include(SetupClangFormat)
+include(SetupClangTidy)
 
 # set Doxygen documentation properties
 set(DOXY_INPUT "${CMAKE_CURRENT_SOURCE_DIR}/headers ${CMAKE_CURRENT_SOURCE_DIR}/README.md")

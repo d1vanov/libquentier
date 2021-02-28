@@ -29,13 +29,6 @@ AccountData::AccountData()
     }
 }
 
-AccountData::~AccountData()
-{}
-
-AccountData::AccountData(const AccountData & /* other */) = default;
-
-AccountData::AccountData(AccountData && /* other */) = default;
-
 void AccountData::switchEvernoteAccountType(
     const Account::EvernoteAccountType evernoteAccountType)
 {
@@ -56,52 +49,44 @@ void AccountData::setEvernoteAccountLimits(
     const qevercloud::AccountLimits & limits)
 {
     m_mailLimitDaily =
-        (limits.userMailLimitDaily.isSet()
-         ? limits.userMailLimitDaily.ref()
-         : mailLimitDaily());
+        (limits.userMailLimitDaily.isSet() ? limits.userMailLimitDaily.ref()
+                                           : mailLimitDaily());
 
     m_noteSizeMax =
         (limits.noteSizeMax.isSet() ? limits.noteSizeMax.ref() : noteSizeMax());
 
     m_resourceSizeMax =
-        (limits.resourceSizeMax.isSet()
-         ? limits.resourceSizeMax.ref()
-         : resourceSizeMax());
+        (limits.resourceSizeMax.isSet() ? limits.resourceSizeMax.ref()
+                                        : resourceSizeMax());
 
     m_linkedNotebookMax =
         (limits.userLinkedNotebookMax.isSet()
-         ? limits.userLinkedNotebookMax.ref()
-         : linkedNotebookMax());
+             ? limits.userLinkedNotebookMax.ref()
+             : linkedNotebookMax());
 
     m_noteCountMax =
-        (limits.userNoteCountMax.isSet()
-         ? limits.userNoteCountMax.ref()
-         : noteCountMax());
+        (limits.userNoteCountMax.isSet() ? limits.userNoteCountMax.ref()
+                                         : noteCountMax());
 
     m_notebookCountMax =
-        (limits.userNotebookCountMax.isSet()
-         ? limits.userNotebookCountMax.ref()
-         : notebookCountMax());
+        (limits.userNotebookCountMax.isSet() ? limits.userNotebookCountMax.ref()
+                                             : notebookCountMax());
 
     m_tagCountMax =
-        (limits.userTagCountMax.isSet()
-         ? limits.userTagCountMax.ref()
-         : tagCountMax());
+        (limits.userTagCountMax.isSet() ? limits.userTagCountMax.ref()
+                                        : tagCountMax());
 
     m_noteTagCountMax =
-        (limits.noteTagCountMax.isSet()
-         ? limits.noteTagCountMax.ref()
-         : noteTagCountMax());
+        (limits.noteTagCountMax.isSet() ? limits.noteTagCountMax.ref()
+                                        : noteTagCountMax());
 
     m_savedSearchCountMax =
-        (limits.userSavedSearchesMax.isSet()
-         ? limits.userSavedSearchesMax.ref()
-         : savedSearchCountMax());
+        (limits.userSavedSearchesMax.isSet() ? limits.userSavedSearchesMax.ref()
+                                             : savedSearchCountMax());
 
     m_noteResourceCountMax =
-        (limits.noteResourceCountMax.isSet()
-         ? limits.noteResourceCountMax.ref()
-         : noteResourceCountMax());
+        (limits.noteResourceCountMax.isSet() ? limits.noteResourceCountMax.ref()
+                                             : noteResourceCountMax());
 }
 
 qint32 AccountData::mailLimitDaily() const
@@ -110,8 +95,7 @@ qint32 AccountData::mailLimitDaily() const
         return std::numeric_limits<qint32>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Premium:
         return qevercloud::EDAM_USER_MAIL_LIMIT_DAILY_PREMIUM;
     default:
@@ -125,8 +109,7 @@ qint64 AccountData::noteSizeMax() const
         return std::numeric_limits<qint64>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Premium:
         return qevercloud::EDAM_NOTE_SIZE_MAX_PREMIUM;
     default:
@@ -140,8 +123,7 @@ qint64 AccountData::resourceSizeMax() const
         return std::numeric_limits<qint64>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Premium:
         return qevercloud::EDAM_RESOURCE_SIZE_MAX_PREMIUM;
     default:
@@ -155,8 +137,7 @@ qint32 AccountData::linkedNotebookMax() const
         return std::numeric_limits<qint32>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Premium:
         return qevercloud::EDAM_USER_LINKED_NOTEBOOK_MAX_PREMIUM;
     default:
@@ -170,8 +151,7 @@ qint32 AccountData::noteCountMax() const
         return std::numeric_limits<qint32>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Business:
         return qevercloud::EDAM_BUSINESS_NOTES_MAX;
     default:
@@ -185,8 +165,7 @@ qint32 AccountData::notebookCountMax() const
         return std::numeric_limits<qint32>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Business:
         return qevercloud::EDAM_BUSINESS_NOTEBOOKS_MAX;
     default:
@@ -200,8 +179,7 @@ qint32 AccountData::tagCountMax() const
         return std::numeric_limits<qint32>::max();
     }
 
-    switch(m_evernoteAccountType)
-    {
+    switch (m_evernoteAccountType) {
     case Account::EvernoteAccountType::Business:
         return qevercloud::EDAM_BUSINESS_TAGS_MAX;
     default:

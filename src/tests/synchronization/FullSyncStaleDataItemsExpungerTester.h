@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 namespace quentier {
 namespace test {
 
-class FullSyncStaleDataItemsExpungerTester: public QObject
+class FullSyncStaleDataItemsExpungerTester : public QObject
 {
     Q_OBJECT
 public:
@@ -85,22 +85,22 @@ private Q_SLOTS:
 private:
     void setupBaseDataItems();
 
-    void doTest(const bool useBaseDataItems,
-                const QList<Notebook> & nonSyncedNotebooks,
-                const QList<Tag> & nonSyncedTags,
-                const QList<SavedSearch> & nonSyncedSavedSearches,
-                const QList<Note> & nonSyncedNotes);
+    void doTest(
+        const bool useBaseDataItems, const QList<Notebook> & nonSyncedNotebooks,
+        const QList<Tag> & nonSyncedTags,
+        const QList<SavedSearch> & nonSyncedSavedSearches,
+        const QList<Note> & nonSyncedNotes);
 
 private:
-    Account                     m_testAccount;
-    LocalStorageManagerAsync *  m_pLocalStorageManagerAsync;
-    FullSyncStaleDataItemsExpunger::SyncedGuids     m_syncedGuids;
+    Account m_testAccount;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
+    FullSyncStaleDataItemsExpunger::SyncedGuids m_syncedGuids;
 
-    NotebookSyncCache *         m_pNotebookSyncCache;
-    TagSyncCache *              m_pTagSyncCache;
-    SavedSearchSyncCache *      m_pSavedSearchSyncCache;
+    NotebookSyncCache * m_pNotebookSyncCache = nullptr;
+    TagSyncCache * m_pTagSyncCache = nullptr;
+    SavedSearchSyncCache * m_pSavedSearchSyncCache = nullptr;
 
-    bool    m_detectedTestFailure;
+    bool m_detectedTestFailure;
 };
 
 } // namespace test

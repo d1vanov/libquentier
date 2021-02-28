@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
 #define LIB_QUENTIER_NOTE_EDITOR_DIALOGS_RENAME_RESOURCE_DIALOG_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QDialog>
 
 namespace Ui {
@@ -29,7 +27,7 @@ QT_FORWARD_DECLARE_CLASS(RenameResourceDialog)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN RenameResourceDialog: public QDialog
+class Q_DECL_HIDDEN RenameResourceDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -39,7 +37,7 @@ public:
     virtual ~RenameResourceDialog();
 
 Q_SIGNALS:
-    void accepted(QString newResourceName);
+    void renameAccepted(QString newResourceName);
 
 private Q_SLOTS:
     virtual void accept() override;

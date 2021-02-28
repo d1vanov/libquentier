@@ -17,7 +17,6 @@
  */
 
 #include <quentier/utility/Printable.h>
-#include <quentier/utility/Utility.h>
 
 namespace quentier {
 
@@ -29,28 +28,21 @@ const QString Printable::toString() const
     return str;
 }
 
-Printable::Printable()
-{}
+Printable::Printable() = default;
 
-Printable::Printable(const Printable &)
-{}
+Printable::Printable(const Printable &) = default;
 
-Printable & Printable::operator=(const Printable &)
-{
-    return *this;
-}
+Printable & Printable::operator=(const Printable &) = default;
 
-Printable::~Printable()
-{}
+Printable::~Printable() = default;
 
-QDebug & operator <<(QDebug & debug, const Printable & printable)
+QDebug & operator<<(QDebug & debug, const Printable & printable)
 {
     debug << printable.toString();
     return debug;
 }
 
-QTextStream & operator <<(
-    QTextStream & strm, const Printable & printable)
+QTextStream & operator<<(QTextStream & strm, const Printable & printable)
 {
     return printable.print(strm);
 }

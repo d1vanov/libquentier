@@ -24,7 +24,6 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 #include <quentier/types/Resource.h>
-#include <quentier/utility/Macros.h>
 
 #include <QHash>
 #include <QObject>
@@ -41,14 +40,15 @@ QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
  * the note editor's page considering the details of wrapping this action
  * around undo stack
  */
-class Q_DECL_HIDDEN RenameResourceDelegate: public QObject
+class Q_DECL_HIDDEN RenameResourceDelegate final : public QObject
 {
     Q_OBJECT
 public:
     explicit RenameResourceDelegate(
         const Resource & resource, NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
-        QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
+        QHash<QByteArray, QString> &
+            genericResourceImageFilePathsByResourceHash,
         const bool performingUndo = false);
 
     void start();
@@ -58,8 +58,8 @@ public:
 
 Q_SIGNALS:
     void finished(
-        QString oldResourceName, QString newResourceName,
-        Resource resource, bool performingUndo);
+        QString oldResourceName, QString newResourceName, Resource resource,
+        bool performingUndo);
 
     void cancelled();
     void notifyError(ErrorString);
@@ -97,21 +97,21 @@ private:
     using JsCallback = JsResultCallbackFunctor<RenameResourceDelegate>;
 
 private:
-    NoteEditorPrivate &             m_noteEditor;
-    GenericResourceImageManager *   m_pGenericResourceImageManager;
-    QHash<QByteArray, QString> &    m_genericResourceImageFilePathsByResourceHash;
-    Resource                        m_resource;
+    NoteEditorPrivate & m_noteEditor;
+    GenericResourceImageManager * m_pGenericResourceImageManager;
+    QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;
+    Resource m_resource;
 
-    QString                         m_oldResourceName;
-    QString                         m_newResourceName;
-    bool                            m_shouldGetResourceNameFromDialog = true;
+    QString m_oldResourceName;
+    QString m_newResourceName;
+    bool m_shouldGetResourceNameFromDialog = true;
 
-    bool                            m_performingUndo;
+    bool m_performingUndo;
 
-    Note *                          m_pNote;
+    Note * m_pNote;
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QUuid                           m_genericResourceImageWriterRequestId;
+    QUuid m_genericResourceImageWriterRequestId;
 #endif
 };
 

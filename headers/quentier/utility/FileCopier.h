@@ -21,7 +21,6 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QObject>
 #include <QString>
@@ -33,7 +32,7 @@ namespace quentier {
 
 QT_FORWARD_DECLARE_CLASS(FileCopierPrivate)
 
-class QUENTIER_EXPORT FileCopier: public QObject
+class QUENTIER_EXPORT FileCopier : public QObject
 {
     Q_OBJECT
 public:

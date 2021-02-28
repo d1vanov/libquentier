@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
 #define LIB_QUENTIER_UTILITY_LRU_CACHE_HPP
 
-#include <quentier/utility/Macros.h>
-
 #include <QHash>
 
 #include <cstddef>
@@ -28,18 +26,14 @@
 
 namespace quentier {
 
-template<
-    class Key,
-    class Value,
+template <
+    class Key, class Value,
     class Allocator = std::allocator<std::pair<Key, Value>>>
 class LRUCache
 {
 public:
     LRUCache(const size_t maxSize = 100) :
-        m_container(),
-        m_currentSize(0),
-        m_maxSize(maxSize),
-        m_mapper()
+        m_container(), m_currentSize(0), m_maxSize(maxSize), m_mapper()
     {}
 
     using key_type = Key;
@@ -54,30 +48,68 @@ public:
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    using reference = value_type&;
-    using const_reference = const value_type&;
+    using reference = value_type &;
+    using const_reference = const value_type &;
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
 
     using const_pointer =
         typename std::allocator_traits<allocator_type>::const_pointer;
 
-    iterator begin() { return m_container.begin(); }
-    const_iterator begin() const { return m_container.begin(); }
+    iterator begin()
+    {
+        return m_container.begin();
+    }
+    const_iterator begin() const
+    {
+        return m_container.begin();
+    }
 
-    reverse_iterator rbegin() { return m_container.rbegin(); }
-    const_reverse_iterator rbegin() const { return m_container.rbegin(); }
+    reverse_iterator rbegin()
+    {
+        return m_container.rbegin();
+    }
+    const_reverse_iterator rbegin() const
+    {
+        return m_container.rbegin();
+    }
 
-    iterator end() { return m_container.end(); }
-    const_iterator end() const { return m_container.end(); }
+    iterator end()
+    {
+        return m_container.end();
+    }
+    const_iterator end() const
+    {
+        return m_container.end();
+    }
 
-    reverse_iterator rend() { return m_container.rend(); }
-    const_reverse_iterator rend() const { return m_container.rend(); }
+    reverse_iterator rend()
+    {
+        return m_container.rend();
+    }
+    const_reverse_iterator rend() const
+    {
+        return m_container.rend();
+    }
 
-    bool empty() const { return m_container.empty(); }
-    size_t size() const { return m_currentSize; }
-    size_t max_size() const { return m_maxSize; }
+    bool empty() const
+    {
+        return m_container.empty();
+    }
+    size_t size() const
+    {
+        return m_currentSize;
+    }
+    size_t max_size() const
+    {
+        return m_maxSize;
+    }
 
-    void clear() { m_container.clear(); m_mapper.clear(); m_currentSize = 0; }
+    void clear()
+    {
+        m_container.clear();
+        m_mapper.clear();
+        m_currentSize = 0;
+    }
 
     void put(const key_type & key, const mapped_type & value)
     {
@@ -144,8 +176,7 @@ public:
         }
 
         size_t diff = m_maxSize - maxSize;
-        for(size_t i = 0; (i < diff) && !m_container.empty(); ++i)
-        {
+        for (size_t i = 0; (i < diff) && !m_container.empty(); ++i) {
             auto lastIt = m_container.end();
             --lastIt;
 
@@ -184,11 +215,11 @@ private:
     }
 
 private:
-    mutable container_type      m_container;
-    size_t                      m_currentSize;
-    size_t                      m_maxSize;
+    mutable container_type m_container;
+    size_t m_currentSize;
+    size_t m_maxSize;
 
-    mutable QHash<Key, iterator>    m_mapper;
+    mutable QHash<Key, iterator> m_mapper;
 };
 
 } // namespace quentier

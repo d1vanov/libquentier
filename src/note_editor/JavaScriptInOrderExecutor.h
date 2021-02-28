@@ -19,10 +19,8 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVA_SCRIPT_IN_ORDER_EXECUTOR_H
 
-#include <quentier/utility/Macros.h>
-#include <quentier/utility/SuppressWarnings.h>
-
 #include <QObject>
+#include <QPointer>
 #include <QQueue>
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -31,43 +29,51 @@
 #include <QWebView>
 #endif
 
-SAVE_WARNINGS
-GCC_SUPPRESS_WARNING(-Wdeprecated-declarations)
-
-#include <boost/function.hpp>
-
-RESTORE_WARNINGS
+#include <functional>
+#include <utility>
 
 namespace quentier {
 
-class Q_DECL_HIDDEN JavaScriptInOrderExecutor: public QObject
+class Q_DECL_HIDDEN JavaScriptInOrderExecutor final : public QObject
 {
     Q_OBJECT
 private:
     using WebView =
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-    QWebEngineView;
+        QWebEngineView;
 #else
-    QWebView;
+        QWebView;
 #endif
 
 public:
-    using Callback = boost::function<void (const QVariant&)>;
+    using Callback = std::function<void(const QVariant &)>;
 
     explicit JavaScriptInOrderExecutor(
         WebView & view, QObject * parent = nullptr);
 
     void append(const QString & script, Callback callback = 0);
 
-    int size() const { return m_javaScriptsQueue.size(); }
+    int size() const
+    {
+        return m_javaScriptsQueue.size();
+    }
 
-    bool empty() const { return m_javaScriptsQueue.empty(); }
+    bool empty() const
+    {
+        return m_javaScriptsQueue.empty();
+    }
 
-    void clear() { m_javaScriptsQueue.clear(); }
+    void clear()
+    {
+        m_javaScriptsQueue.clear();
+    }
 
     void start();
 
-    bool inProgress() const { return m_inProgress; }
+    bool inProgress() const
+    {
+        return m_inProgress;
+    }
 
 Q_SIGNALS:
     void finished();
@@ -77,13 +83,13 @@ private:
     {
     public:
         JavaScriptCallback(JavaScriptInOrderExecutor & executor) :
-            m_executor(executor)
+            m_executor(&executor)
         {}
 
         void operator()(const QVariant & result);
 
     private:
-        JavaScriptInOrderExecutor & m_executor;
+        QPointer<JavaScriptInOrderExecutor> m_executor;
     };
 
     friend class JavaScriptCallback;
@@ -91,10 +97,10 @@ private:
     void next(const QVariant & data);
 
 private:
-    WebView &                           m_view;
-    QQueue<QPair<QString, Callback>>    m_javaScriptsQueue;
-    Callback                            m_currentPendingCallback;
-    bool                                m_inProgress;
+    WebView & m_view;
+    QQueue<std::pair<QString, Callback>> m_javaScriptsQueue;
+    Callback m_currentPendingCallback;
+    bool m_inProgress = false;
 };
 
 } // namespace quentier

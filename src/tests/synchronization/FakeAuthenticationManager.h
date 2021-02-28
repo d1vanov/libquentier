@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-class FakeAuthenticationManager: public IAuthenticationManager
+class FakeAuthenticationManager : public IAuthenticationManager
 {
     Q_OBJECT
 public:
@@ -31,7 +31,7 @@ public:
     virtual ~FakeAuthenticationManager();
 
     const QString & authToken() const;
-    void setAuthToken(const QString & authToken);
+    void setAuthToken(QString authToken);
 
     qevercloud::UserID userId() const;
     void setUserId(const qevercloud::UserID userId);
@@ -45,12 +45,14 @@ public Q_SLOTS:
     virtual void onAuthenticationRequest() override;
 
 private:
-    qevercloud::UserID  m_userId;
-    QString             m_authToken;
-    bool                m_failNextRequest;
+    qevercloud::UserID m_userId = 1;
+    QString m_authToken;
+    bool m_failNextRequest = false;
 
-    QList<QNetworkCookie>   m_userStoreCookies;
+    QList<QNetworkCookie> m_userStoreCookies;
 };
+
+using FakeAuthenticationManagerPtr = std::shared_ptr<FakeAuthenticationManager>;
 
 } // namespace quentier
 

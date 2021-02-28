@@ -19,53 +19,46 @@
 #include "FullSyncStaleDataItemsExpunger.h"
 
 #include "NotebookSyncCache.h"
-#include "TagSyncCache.h"
 #include "SavedSearchSyncCache.h"
+#include "TagSyncCache.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Compat.h>
 
 #include <QStringList>
 
 #define __FELOG_BASE(message, level)                                           \
     if (m_linkedNotebookGuid.isEmpty()) {                                      \
-        __QNLOG_BASE(message, level);                                          \
+        __QNLOG_BASE(                                                          \
+            "synchronization:full_sync_stale_expunge", message, level);        \
     }                                                                          \
     else {                                                                     \
-        __QNLOG_BASE("[linked notebook " << m_linkedNotebookGuid               \
-            << "]: " << message, level);                                       \
-    }                                                                          \
-// __FELOG_BASE
+        __QNLOG_BASE(                                                          \
+            "synchronization:full_sync_stale_expunge",                         \
+            "[linked notebook " << m_linkedNotebookGuid << "]: " << message,   \
+            level);                                                            \
+    }
 
-#define FETRACE(message)                                                       \
-    __FELOG_BASE(message, Trace)                                               \
-// FETRACE
+#define FETRACE(message) __FELOG_BASE(message, Trace)
 
-#define FEDEBUG(message)                                                       \
-    __FELOG_BASE(message, Debug)                                               \
-// FEDEBUG
+#define FEDEBUG(message) __FELOG_BASE(message, Debug)
 
-#define FEWARNING(message)                                                     \
-    __FELOG_BASE(message, Warning)                                             \
-// FEWARNING
+#define FEWARNING(message) __FELOG_BASE(message, Warning)
 
 namespace quentier {
 
 FullSyncStaleDataItemsExpunger::FullSyncStaleDataItemsExpunger(
-        LocalStorageManagerAsync & localStorageManagerAsync,
-        NotebookSyncCache & notebookSyncCache,
-        TagSyncCache & tagSyncCache,
-        SavedSearchSyncCache & savedSearchSyncCache,
-        const SyncedGuids & syncedGuids,
-        const QString & linkedNotebookGuid,
-        QObject * parent) :
+    LocalStorageManagerAsync & localStorageManagerAsync,
+    NotebookSyncCache & notebookSyncCache, TagSyncCache & tagSyncCache,
+    SavedSearchSyncCache & savedSearchSyncCache,
+    const SyncedGuids & syncedGuids, const QString & linkedNotebookGuid,
+    QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
-    m_pNotebookSyncCache(&notebookSyncCache),
-    m_pTagSyncCache(&tagSyncCache),
+    m_pNotebookSyncCache(&notebookSyncCache), m_pTagSyncCache(&tagSyncCache),
     m_pSavedSearchSyncCache(&savedSearchSyncCache),
     m_noteSyncCache(localStorageManagerAsync, linkedNotebookGuid),
-    m_syncedGuids(syncedGuids),
-    m_linkedNotebookGuid(linkedNotebookGuid)
+    m_syncedGuids(syncedGuids), m_linkedNotebookGuid(linkedNotebookGuid)
 {}
 
 void FullSyncStaleDataItemsExpunger::start()
@@ -160,7 +153,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete: "
         << "request id = " << requestId << ", notebook: " << notebook);
 
     Q_UNUSED(m_expungeNotebookRequestIds.erase(it))
@@ -175,10 +169,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed: "
-        << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", notebook: " << notebook);
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed: "
+        << "request id = " << requestId << ", error description = "
+        << errorDescription << ", notebook: " << notebook);
 
     Q_EMIT failure(errorDescription);
 }
@@ -191,7 +185,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeTagComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeTagComplete: "
         << "request id = " << requestId << ", tag: " << tag
         << "\nExpunged child tag local uids: "
         << expungedChildTagLocalUids.join(QStringLiteral(", ")));
@@ -208,10 +203,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeTagFailed: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeTagFailed: "
         << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", tag: " << tag);
+        << ", error description = " << errorDescription << ", tag: " << tag);
 
     Q_EMIT failure(errorDescription);
 }
@@ -224,7 +219,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete: "
         << "request id = " << requestId << ", saved search: " << search);
 
     Q_UNUSED(m_expungeSavedSearchRequestIds.erase(it))
@@ -239,10 +235,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed: "
-        << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", search: " << search);
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed: "
+        << "request id = " << requestId << ", error description = "
+        << errorDescription << ", search: " << search);
 
     Q_EMIT failure(errorDescription);
 }
@@ -255,7 +251,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeNoteComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeNoteComplete: "
         << "request id = " << requestId << ", note: " << note);
 
     Q_UNUSED(m_expungeNoteRequestIds.erase(it))
@@ -270,10 +267,10 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onExpungeNoteFailed: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onExpungeNoteFailed: "
         << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", note: " << note);
+        << ", error description = " << errorDescription << ", note: " << note);
 
     Q_EMIT failure(errorDescription);
 }
@@ -286,7 +283,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete: "
         << "request id = " << requestId << ", notebook: " << notebook);
 
     Q_UNUSED(m_updateNotebookRequestId.erase(it))
@@ -301,10 +299,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed: "
-        << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", notebook: " << notebook);
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed: "
+        << "request id = " << requestId << ", error description = "
+        << errorDescription << ", notebook: " << notebook);
 
     Q_EMIT failure(errorDescription);
 }
@@ -317,7 +315,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateTagComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateTagComplete: "
         << "request id = " << requestId << ", tag: " << tag);
 
     Q_UNUSED(m_updateTagRequestIds.erase(it))
@@ -333,10 +332,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateTagFailed: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateTagFailed: "
         << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", tag: " << tag);
+        << ", error description = " << errorDescription << ", tag: " << tag);
 
     Q_EMIT failure(errorDescription);
 }
@@ -349,7 +348,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete: "
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete: "
         << "request id = " << requestId << ", saved search: " << search);
 
     Q_UNUSED(m_updateSavedSearchRequestIds.erase(it))
@@ -364,10 +364,10 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed: "
-        << "request id = " << requestId
-        << ", error description = " << errorDescription
-        << ", saved search: " << search);
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed: "
+        << "request id = " << requestId << ", error description = "
+        << errorDescription << ", saved search: " << search);
 
     Q_EMIT failure(errorDescription);
 }
@@ -380,20 +380,22 @@ void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateNoteComplete: "
-        << "request id = " << requestId
-        << ", update resource metadata = "
-        << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
-            ? "true"
-            : "false")
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateNoteComplete: "
+        << "request id = " << requestId << ", update resource metadata = "
+        << ((options &
+             LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+                ? "true"
+                : "false")
         << ", update resource binary data = "
-        << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
-            ? "true"
-            : "false")
+        << ((options &
+             LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
+                ? "true"
+                : "false")
         << ", update tags = "
         << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags)
-            ? "true"
-            : "false")
+                ? "true"
+                : "false")
         << ", note: " << note);
 
     Q_UNUSED(m_updateNoteRequestIds.erase(it))
@@ -409,22 +411,23 @@ void FullSyncStaleDataItemsExpunger::onUpdateNoteFailed(
         return;
     }
 
-    FEDEBUG("FullSyncStaleDataItemsExpunger::onUpdateNoteFailed: "
-        << "request id = " << requestId
-        << ", update resource metadata = "
-        << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
-            ? "true"
-            : "false")
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::onUpdateNoteFailed: "
+        << "request id = " << requestId << ", update resource metadata = "
+        << ((options &
+             LocalStorageManager::UpdateNoteOption::UpdateResourceMetadata)
+                ? "true"
+                : "false")
         << ", update resource binary data = "
-        << ((options & LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
-            ? "true"
-            : "false")
+        << ((options &
+             LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData)
+                ? "true"
+                : "false")
         << ", update tags = "
         << ((options & LocalStorageManager::UpdateNoteOption::UpdateTags)
-            ? "true"
-            : "false")
-        << ", error description = " << errorDescription
-        << ", note: " << note);
+                ? "true"
+                : "false")
+        << ", error description = " << errorDescription << ", note: " << note);
 
     Q_EMIT failure(errorDescription);
 }
@@ -439,170 +442,141 @@ void FullSyncStaleDataItemsExpunger::connectToLocalStorage()
     }
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeNotebook,
+        this, &FullSyncStaleDataItemsExpunger::expungeNotebook,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeNotebookRequest,
         Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeTag,
+        this, &FullSyncStaleDataItemsExpunger::expungeTag,
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::onExpungeTagRequest,
-        Qt::QueuedConnection);
+        &LocalStorageManagerAsync::onExpungeTagRequest, Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeSavedSearch,
+        this, &FullSyncStaleDataItemsExpunger::expungeSavedSearch,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeSavedSearchRequest,
         Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeNote,
+        this, &FullSyncStaleDataItemsExpunger::expungeNote,
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::onExpungeNoteRequest,
-        Qt::QueuedConnection);
+        &LocalStorageManagerAsync::onExpungeNoteRequest, Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateNotebook,
+        this, &FullSyncStaleDataItemsExpunger::updateNotebook,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNotebookRequest,
         Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateTag,
+        this, &FullSyncStaleDataItemsExpunger::updateTag,
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::onUpdateTagRequest,
-        Qt::QueuedConnection);
+        &LocalStorageManagerAsync::onUpdateTagRequest, Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateSavedSearch,
+        this, &FullSyncStaleDataItemsExpunger::updateSavedSearch,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateSavedSearchRequest,
         Qt::QueuedConnection);
 
     QObject::connect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateNote,
+        this, &FullSyncStaleDataItemsExpunger::updateNote,
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::onUpdateNoteRequest,
-        Qt::QueuedConnection);
+        &LocalStorageManagerAsync::onUpdateNoteRequest, Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeTagComplete,
-        this,
+        &LocalStorageManagerAsync::expungeTagComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeTagComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeTagFailed,
-        this,
+        &LocalStorageManagerAsync::expungeTagFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeTagFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::expungeSavedSearchComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::expungeSavedSearchFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNoteComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNoteComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNoteComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNoteFailed,
-        this,
+        &LocalStorageManagerAsync::expungeNoteFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNoteFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::updateNotebookFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagComplete,
-        this,
+        &LocalStorageManagerAsync::updateTagComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateTagComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
-        &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagFailed,
-        this,
-        &FullSyncStaleDataItemsExpunger::onUpdateTagFailed,
+        &m_localStorageManagerAsync, &LocalStorageManagerAsync::updateTagFailed,
+        this, &FullSyncStaleDataItemsExpunger::onUpdateTagFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteComplete,
-        this,
+        &LocalStorageManagerAsync::updateNoteComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNoteComplete,
         Qt::QueuedConnection);
 
     QObject::connect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteFailed,
-        this,
+        &LocalStorageManagerAsync::updateNoteFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNoteFailed,
         Qt::QueuedConnection);
 
@@ -619,147 +593,122 @@ void FullSyncStaleDataItemsExpunger::disconnectFromLocalStorage()
     }
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeNotebook,
+        this, &FullSyncStaleDataItemsExpunger::expungeNotebook,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeNotebookRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeTag,
+        this, &FullSyncStaleDataItemsExpunger::expungeTag,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeTagRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeSavedSearch,
+        this, &FullSyncStaleDataItemsExpunger::expungeSavedSearch,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeSavedSearchRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::expungeNote,
+        this, &FullSyncStaleDataItemsExpunger::expungeNote,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onExpungeNoteRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateNotebook,
+        this, &FullSyncStaleDataItemsExpunger::updateNotebook,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNotebookRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateTag,
+        this, &FullSyncStaleDataItemsExpunger::updateTag,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateTagRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateSavedSearch,
+        this, &FullSyncStaleDataItemsExpunger::updateSavedSearch,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateSavedSearchRequest);
 
     QObject::disconnect(
-        this,
-        &FullSyncStaleDataItemsExpunger::updateNote,
+        this, &FullSyncStaleDataItemsExpunger::updateNote,
         &m_localStorageManagerAsync,
         &LocalStorageManagerAsync::onUpdateNoteRequest);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::expungeNotebookFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeTagComplete,
-        this,
+        &LocalStorageManagerAsync::expungeTagComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeTagComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeTagFailed,
-        this,
+        &LocalStorageManagerAsync::expungeTagFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeTagFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::expungeSavedSearchComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::expungeSavedSearchFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNoteComplete,
-        this,
+        &LocalStorageManagerAsync::expungeNoteComplete, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNoteComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::expungeNoteFailed,
-        this,
+        &LocalStorageManagerAsync::expungeNoteFailed, this,
         &FullSyncStaleDataItemsExpunger::onExpungeNoteFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookComplete,
-        this,
+        &LocalStorageManagerAsync::updateNotebookComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNotebookFailed,
-        this,
+        &LocalStorageManagerAsync::updateNotebookFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagComplete,
-        this,
+        &LocalStorageManagerAsync::updateTagComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateTagComplete);
 
     QObject::disconnect(
-        &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateTagFailed,
-        this,
-        &FullSyncStaleDataItemsExpunger::onUpdateTagFailed);
+        &m_localStorageManagerAsync, &LocalStorageManagerAsync::updateTagFailed,
+        this, &FullSyncStaleDataItemsExpunger::onUpdateTagFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchComplete,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateSavedSearchFailed,
-        this,
+        &LocalStorageManagerAsync::updateSavedSearchFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteComplete,
-        this,
+        &LocalStorageManagerAsync::updateNoteComplete, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNoteComplete);
 
     QObject::disconnect(
         &m_localStorageManagerAsync,
-        &LocalStorageManagerAsync::updateNoteFailed,
-        this,
+        &LocalStorageManagerAsync::updateNoteFailed, this,
         &FullSyncStaleDataItemsExpunger::onUpdateNoteFailed);
 
     m_connectedToLocalStorage = false;
@@ -770,98 +719,75 @@ void FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling()
     FEDEBUG("FullSyncStaleDataItemsExpunger::checkAndRequestCachesFilling");
 
     if (Q_UNLIKELY(m_pNotebookSyncCache.isNull())) {
-        m_pNotebookSyncCache = QPointer<NotebookSyncCache>(
-            new NotebookSyncCache(
-                m_localStorageManagerAsync,
-                m_linkedNotebookGuid,
-                this));
+        m_pNotebookSyncCache =
+            QPointer<NotebookSyncCache>(new NotebookSyncCache(
+                m_localStorageManagerAsync, m_linkedNotebookGuid, this));
     }
 
-    if (!m_pNotebookSyncCache->isFilled())
-    {
+    if (!m_pNotebookSyncCache->isFilled()) {
         QObject::connect(
-            m_pNotebookSyncCache.data(),
-            &NotebookSyncCache::filled,
-            this,
+            m_pNotebookSyncCache.data(), &NotebookSyncCache::filled, this,
             &FullSyncStaleDataItemsExpunger::onNotebookCacheFilled,
             Qt::QueuedConnection);
 
         m_pendingNotebookSyncCache = true;
         m_pNotebookSyncCache->fill();
     }
-    else
-    {
+    else {
         FEDEBUG("The notebook sync cache is already filled");
     }
 
     if (Q_UNLIKELY(m_pTagSyncCache.isNull())) {
         m_pTagSyncCache = QPointer<TagSyncCache>(new TagSyncCache(
-            m_localStorageManagerAsync,
-            m_linkedNotebookGuid,
-            this));
+            m_localStorageManagerAsync, m_linkedNotebookGuid, this));
     }
 
-    if (!m_pTagSyncCache->isFilled())
-    {
+    if (!m_pTagSyncCache->isFilled()) {
         QObject::connect(
-            m_pTagSyncCache.data(),
-            &TagSyncCache::filled,
-            this,
+            m_pTagSyncCache.data(), &TagSyncCache::filled, this,
             &FullSyncStaleDataItemsExpunger::onTagCacheFilled,
             Qt::QueuedConnection);
 
         m_pendingTagSyncCache = true;
         m_pTagSyncCache->fill();
     }
-    else
-    {
+    else {
         FEDEBUG("The tag sync cache is already filled");
     }
 
     // NOTE: saved searches are not a part of linked notebook content so there's
     // no need to do anything with saved searches if we are working with
     // a linked notebook
-    if (m_linkedNotebookGuid.isEmpty())
-    {
-        if (Q_UNLIKELY( m_pSavedSearchSyncCache.isNull())) {
+    if (m_linkedNotebookGuid.isEmpty()) {
+        if (Q_UNLIKELY(m_pSavedSearchSyncCache.isNull())) {
             m_pSavedSearchSyncCache = QPointer<SavedSearchSyncCache>(
-                new SavedSearchSyncCache(
-                    m_localStorageManagerAsync,
-                    this));
+                new SavedSearchSyncCache(m_localStorageManagerAsync, this));
         }
 
-        if (!m_pSavedSearchSyncCache->isFilled())
-        {
+        if (!m_pSavedSearchSyncCache->isFilled()) {
             QObject::connect(
-                m_pSavedSearchSyncCache.data(),
-                &SavedSearchSyncCache::filled,
-                this,
-                &FullSyncStaleDataItemsExpunger::onSavedSearchCacheFilled,
+                m_pSavedSearchSyncCache.data(), &SavedSearchSyncCache::filled,
+                this, &FullSyncStaleDataItemsExpunger::onSavedSearchCacheFilled,
                 Qt::QueuedConnection);
 
             m_pendingSavedSearchSyncCache = true;
             m_pSavedSearchSyncCache->fill();
         }
-        else
-        {
+        else {
             FEDEBUG("The saved search sync cache is already filled");
         }
     }
 
-    if (!m_noteSyncCache.isFilled())
-    {
+    if (!m_noteSyncCache.isFilled()) {
         QObject::connect(
-            &m_noteSyncCache,
-            &NoteSyncCache::filled,
-            this,
+            &m_noteSyncCache, &NoteSyncCache::filled, this,
             &FullSyncStaleDataItemsExpunger::onNoteCacheFilled,
             Qt::QueuedConnection);
 
         m_pendingNoteSyncCache = true;
         m_noteSyncCache.fill();
     }
-    else
-    {
+    else {
         FEDEBUG("The note sync cache is already filled");
     }
 }
@@ -896,102 +822,97 @@ bool FullSyncStaleDataItemsExpunger::pendingCachesFilling() const
 
 void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 {
-    FEDEBUG("FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult");
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult");
 
-    QSet<QString>   notebookGuidsToExpunge;
-    QSet<QString>   savedSearchGuidsToExpunge;
-    QSet<QString>   noteGuidsToExpunge;
+    QSet<QString> notebookGuidsToExpunge;
+    QSet<QString> savedSearchGuidsToExpunge;
+    QSet<QString> noteGuidsToExpunge;
     m_tagGuidsToExpunge.clear();
 
-    QList<Notebook>     dirtyNotebooksToUpdate;
-    QList<Tag>          dirtyTagsToUpdate;
-    QList<SavedSearch>  dirtySavedSearchesToUpdate;
-    QList<Note>         dirtyNotesToUpdate;
     QHash<QString, QSet<QString>> noteGuidsToExpungeByNotebookGuidsToExpunge;
 
-    if (!m_pNotebookSyncCache.isNull())
-    {
+    QList<Notebook> dirtyNotebooksToUpdate;
+    QList<Tag> dirtyTagsToUpdate;
+    QList<SavedSearch> dirtySavedSearchesToUpdate;
+    QList<Note> dirtyNotesToUpdate;
+
+    if (!m_pNotebookSyncCache.isNull()) {
         const auto & nameByGuidHash = m_pNotebookSyncCache->nameByGuidHash();
 
         const auto & dirtyNotebooksByGuidHash =
             m_pNotebookSyncCache->dirtyNotebooksByGuidHash();
 
-        for(const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash)))
-        {
+        for (const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
             const QString & guid = git.key();
 
             if (m_syncedGuids.m_syncedNotebookGuids.find(guid) !=
                 m_syncedGuids.m_syncedNotebookGuids.end())
             {
-                FETRACE("Found notebook guid " << guid
-                    << " within the synced ones");
+                FETRACE(
+                    "Found notebook guid " << guid
+                                           << " within the synced ones");
                 continue;
             }
 
             auto dirtyNotebookIt = dirtyNotebooksByGuidHash.find(guid);
-            if (dirtyNotebookIt == dirtyNotebooksByGuidHash.end())
-            {
-                FETRACE("Notebook guid " << guid
-                    << " doesn't appear within the list of "
-                    << "dirty notebooks");
+            if (dirtyNotebookIt == dirtyNotebooksByGuidHash.end()) {
+                FETRACE(
+                    "Notebook guid " << guid
+                                     << " doesn't appear within the list of "
+                                     << "dirty notebooks");
                 Q_UNUSED(notebookGuidsToExpunge.insert(guid))
             }
-            else
-            {
-                FETRACE("Notebook guid " << guid
-                    << " appears within the list of dirty notebooks");
+            else {
+                FETRACE(
+                    "Notebook guid "
+                    << guid << " appears within the list of dirty notebooks");
                 dirtyNotebooksToUpdate << dirtyNotebookIt.value();
             }
         }
     }
-    else
-    {
+    else {
         FEWARNING("Notebook sync cache is expired");
     }
 
-    if (!m_pTagSyncCache.isNull())
-    {
+    if (!m_pTagSyncCache.isNull()) {
         const auto & nameByGuidHash = m_pTagSyncCache->nameByGuidHash();
 
         const auto & dirtyTagsByGuidHash =
             m_pTagSyncCache->dirtyTagsByGuidHash();
 
-        for(const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash)))
-        {
+        for (const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
             const QString & guid = git.key();
             if (m_syncedGuids.m_syncedTagGuids.find(guid) !=
                 m_syncedGuids.m_syncedTagGuids.end())
             {
-                FETRACE("Found tag guid " << guid
-                    << " within the synced ones");
+                FETRACE("Found tag guid " << guid << " within the synced ones");
                 continue;
             }
 
             auto dirtyTagIt = dirtyTagsByGuidHash.find(guid);
-            if (dirtyTagIt == dirtyTagsByGuidHash.end())
-            {
-                FETRACE("Tag guid " << guid
-                    << " doesn't appear within the list of dirty tags");
+            if (dirtyTagIt == dirtyTagsByGuidHash.end()) {
+                FETRACE(
+                    "Tag guid "
+                    << guid << " doesn't appear within the list of dirty tags");
                 Q_UNUSED(m_tagGuidsToExpunge.insert(guid))
             }
-            else
-            {
-                FETRACE("Tag guid " << guid
-                    << " appears within the list of dirty tags");
+            else {
+                FETRACE(
+                    "Tag guid " << guid
+                                << " appears within the list of dirty tags");
                 dirtyTagsToUpdate << dirtyTagIt.value();
             }
         }
     }
-    else
-    {
+    else {
         FEWARNING("Tag sync cache is expired");
     }
 
     // Need to check if dirty tags to update have parent guids corresponding
     // to tags which should be expunged; if they do, need to clear these parent
     // guids from them because dirty tags need to be preserved
-    for(auto & tag: dirtyTagsToUpdate)
-    {
+    for (auto & tag: dirtyTagsToUpdate) {
         if (!tag.hasParentGuid()) {
             continue;
         }
@@ -1001,50 +922,51 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             continue;
         }
 
-        FETRACE("Clearing parent guid from dirty tag because "
+        FETRACE(
+            "Clearing parent guid from dirty tag because "
             << "the parent tag is going to be expunged: " << tag);
 
         tag.setParentGuid(QString());
         tag.setParentLocalUid(QString());
     }
 
-    if (m_linkedNotebookGuid.isEmpty() && !m_pSavedSearchSyncCache.isNull())
-    {
+    if (m_linkedNotebookGuid.isEmpty() && !m_pSavedSearchSyncCache.isNull()) {
         const auto & savedSearchNameByGuidHash =
             m_pSavedSearchSyncCache->nameByGuidHash();
 
         const auto & dirtySavedSearchesByGuid =
             m_pSavedSearchSyncCache->dirtySavedSearchesByGuid();
 
-        for(const auto & it:
-            qevercloud::toRange(qAsConst(savedSearchNameByGuidHash)))
-        {
+        for (const auto & it:
+             qevercloud::toRange(qAsConst(savedSearchNameByGuidHash))) {
             const QString & guid = it.key();
             if (m_syncedGuids.m_syncedSavedSearchGuids.find(guid) !=
                 m_syncedGuids.m_syncedSavedSearchGuids.end())
             {
-                FETRACE("Found saved search guid " << guid
-                    << " within the synced ones");
+                FETRACE(
+                    "Found saved search guid " << guid
+                                               << " within the synced ones");
                 continue;
             }
 
             auto dirtySavedSearchIt = dirtySavedSearchesByGuid.find(guid);
-            if (dirtySavedSearchIt == dirtySavedSearchesByGuid.end())
-            {
-                FETRACE("Saved search guid " << guid
+            if (dirtySavedSearchIt == dirtySavedSearchesByGuid.end()) {
+                FETRACE(
+                    "Saved search guid "
+                    << guid
                     << " doesn't appear within the list of dirty searches");
                 Q_UNUSED(savedSearchGuidsToExpunge.insert(guid))
             }
-            else
-            {
-                FETRACE("Saved search guid " << guid
+            else {
+                FETRACE(
+                    "Saved search guid "
+                    << guid
                     << " appears within the list of dirty saved searches");
                 dirtySavedSearchesToUpdate << dirtySavedSearchIt.value();
             }
         }
     }
-    else if (m_linkedNotebookGuid.isEmpty())
-    {
+    else if (m_linkedNotebookGuid.isEmpty()) {
         FEWARNING("Saved search sync cache is expired");
     }
 
@@ -1053,8 +975,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
     const auto & dirtyNotesByGuid = m_noteSyncCache.dirtyNotesByGuid();
 
-    for(const auto & pair: noteGuidToLocalUidBimap.left)
-    {
+    for (const auto & pair: noteGuidToLocalUidBimap.left) {
         const QString & guid = pair.first;
         if (m_syncedGuids.m_syncedNoteGuids.find(guid) !=
             m_syncedGuids.m_syncedNoteGuids.end())
@@ -1067,83 +988,78 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
             m_noteSyncCache.notebookGuidByNoteGuid();
 
         auto notebookGuidIt = notebookGuidByNoteGuid.find(guid);
-        if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end()))
-        {
+        if (Q_UNLIKELY(notebookGuidIt == notebookGuidByNoteGuid.end())) {
             FEWARNING(
-                "Failed to find cached notebook guid for note guid " << guid
-                << ", won't do anything with this note");
+                "Failed to find cached notebook guid for note guid "
+                << guid << ", won't do anything with this note");
             continue;
         }
 
         const QString & notebookGuid = notebookGuidIt.value();
 
         auto dirtyNoteIt = dirtyNotesByGuid.find(guid);
-        if (dirtyNoteIt == dirtyNotesByGuid.end())
-        {
-            FETRACE("Note guid " << guid
-                << " doesn't appear within the list of dirty notes");
+        if (dirtyNoteIt == dirtyNotesByGuid.end()) {
+            FETRACE(
+                "Note guid "
+                << guid << " doesn't appear within the list of dirty notes");
+
             Q_UNUSED(noteGuidsToExpunge.insert(guid))
-            Q_UNUSED(noteGuidsToExpungeByNotebookGuidsToExpunge[notebookGuid].insert(guid))
+            Q_UNUSED(
+                noteGuidsToExpungeByNotebookGuidsToExpunge[notebookGuid].insert(
+                    guid))
         }
-        else
-        {
+        else {
             bool foundActualNotebook = false;
 
-            if (!m_pNotebookSyncCache.isNull())
-            {
+            if (!m_pNotebookSyncCache.isNull()) {
                 if (m_syncedGuids.m_syncedNotebookGuids.find(notebookGuid) !=
                     m_syncedGuids.m_syncedNotebookGuids.end())
                 {
                     FEDEBUG("Found notebook for a dirty note: it is synced");
                     foundActualNotebook = true;
                 }
-                else
-                {
+                else {
                     const auto & dirtyNotebooksByGuidHash =
                         m_pNotebookSyncCache->dirtyNotebooksByGuidHash();
 
-                    auto dirtyNotebookIt = dirtyNotebooksByGuidHash.find(
-                        notebookGuid);
+                    auto dirtyNotebookIt =
+                        dirtyNotebooksByGuidHash.find(notebookGuid);
 
-                    if (dirtyNotebookIt != dirtyNotebooksByGuidHash.end())
-                    {
-                        FEDEBUG("Found notebook for a dirty note: "
+                    if (dirtyNotebookIt != dirtyNotebooksByGuidHash.end()) {
+                        FEDEBUG(
+                            "Found notebook for a dirty note: "
                             << "it is also marked dirty");
                         foundActualNotebook = true;
                     }
                 }
             }
-            else
-            {
+            else {
                 FEWARNING("Notebook sync cache is expired");
             }
 
-            if (foundActualNotebook)
-            {
+            if (foundActualNotebook) {
                 // This means the notebook for the note won't be expunged and
                 // hence we should include the note into the list of those that
                 // need to be updated
-                FETRACE("Note guid " << guid
-                    << " appears within the list of dirty notes");
+                FETRACE(
+                    "Note guid " << guid
+                                 << " appears within the list of dirty notes");
                 dirtyNotesToUpdate << dirtyNoteIt.value();
                 continue;
             }
 
-            FEDEBUG("Found no notebook for the note which should "
+            FEDEBUG(
+                "Found no notebook for the note which should "
                 << "survive the purge; that means the note would "
                 << "be expunged automatically so there's no need "
                 << "to do anything with it; note guid = " << guid);
         }
     }
 
-    if (notebookGuidsToExpunge.isEmpty() &&
-        m_tagGuidsToExpunge.isEmpty() &&
-        savedSearchGuidsToExpunge.isEmpty() &&
-        noteGuidsToExpunge.isEmpty() &&
-        dirtyNotebooksToUpdate.isEmpty() &&
-        dirtyTagsToUpdate.isEmpty() &&
-        dirtySavedSearchesToUpdate.isEmpty() &&
-        dirtyNotesToUpdate.isEmpty())
+    if (notebookGuidsToExpunge.isEmpty() && m_tagGuidsToExpunge.isEmpty() &&
+        savedSearchGuidsToExpunge.isEmpty() && noteGuidsToExpunge.isEmpty() &&
+        dirtyNotebooksToUpdate.isEmpty() && dirtyTagsToUpdate.isEmpty() &&
+        dirtySavedSearchesToUpdate.isEmpty() && dirtyNotesToUpdate.isEmpty())
     {
         FEDEBUG("Nothing is required to be updated or expunged");
 
@@ -1157,17 +1073,16 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
     connectToLocalStorage();
 
-    for(const auto & guid: qAsConst(notebookGuidsToExpunge))
-    {
+    for (const auto & guid: qAsConst(notebookGuidsToExpunge)) {
         Notebook dummyNotebook;
         dummyNotebook.unsetLocalUid();
         dummyNotebook.setGuid(guid);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNotebookRequestIds.insert(requestId))
-        FETRACE("Emitting the request to expunge notebook: "
-            << "request id = " << requestId
-            << ", notebook guid = " << guid);
+        FETRACE(
+            "Emitting the request to expunge notebook: "
+            << "request id = " << requestId << ", notebook guid = " << guid);
         Q_EMIT expungeNotebook(dummyNotebook, requestId);
 
         // If some notes to be expunged belong to the notebook being expunged,
@@ -1186,76 +1101,76 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
     }
 
     // NOTE: won't expunge tags until the dirty ones are updated in order
-    // to prevent the automatic expunging of child tags along with their parents -
-    // updating the dirty tags would remove parents which are going to be expunged
+    // to prevent the automatic expunging of child tags along with their parents
+    // - updating the dirty tags would remove parents which are going to be
+    // expunged
 
-    for(const auto & guid: qAsConst(savedSearchGuidsToExpunge))
-    {
+    for (const auto & guid: qAsConst(savedSearchGuidsToExpunge)) {
         SavedSearch dummySearch;
         dummySearch.unsetLocalUid();
         dummySearch.setGuid(guid);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeSavedSearchRequestIds.insert(requestId))
-        FETRACE("Emitting the request to expunge saved search: "
+        FETRACE(
+            "Emitting the request to expunge saved search: "
             << "request id = " << requestId
             << ", saved search guid = " << guid);
         Q_EMIT expungeSavedSearch(dummySearch, requestId);
     }
 
-    for(const auto & guid: qAsConst(noteGuidsToExpunge))
-    {
+    for (const auto & guid: qAsConst(noteGuidsToExpunge)) {
         Note dummyNote;
         dummyNote.unsetLocalUid();
         dummyNote.setGuid(guid);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeNoteRequestIds.insert(requestId))
-        FETRACE("Emitting the request to expunge note: request id = "
+        FETRACE(
+            "Emitting the request to expunge note: request id = "
             << requestId << ", note guid = " << guid);
         Q_EMIT expungeNote(dummyNote, requestId);
     }
 
-    for(auto & notebook: dirtyNotebooksToUpdate)
-    {
+    for (auto & notebook: dirtyNotebooksToUpdate) {
         notebook.setGuid(QString());
         notebook.setUpdateSequenceNumber(-1);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateNotebookRequestId.insert(requestId))
-        FETRACE("Emitting the request to update notebook: request id = "
+        FETRACE(
+            "Emitting the request to update notebook: request id = "
             << requestId << ", notebook: " << notebook);
         Q_EMIT updateNotebook(notebook, requestId);
     }
 
-    for(auto & tag: dirtyTagsToUpdate)
-    {
+    for (auto & tag: dirtyTagsToUpdate) {
         tag.setGuid(QString());
         tag.setUpdateSequenceNumber(-1);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateTagRequestIds.insert(requestId))
-        FETRACE("Emitting the request to update tag: request id = "
+        FETRACE(
+            "Emitting the request to update tag: request id = "
             << requestId << ", tag: " << tag);
         Q_EMIT updateTag(tag, requestId);
     }
 
     checkTagUpdatesCompletionAndSendExpungeTagRequests();
 
-    for(auto & search: dirtySavedSearchesToUpdate)
-    {
+    for (auto & search: dirtySavedSearchesToUpdate) {
         search.setGuid(QString());
         search.setUpdateSequenceNumber(-1);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateSavedSearchRequestIds.insert(requestId))
-        FETRACE("Emitting the request to update saved search: "
+        FETRACE(
+            "Emitting the request to update saved search: "
             << "request id = " << requestId << ", saved search: " << search);
         Q_EMIT updateSavedSearch(search, requestId);
     }
 
-    for(auto & note: dirtyNotesToUpdate)
-    {
+    for (auto & note: dirtyNotesToUpdate) {
         note.setGuid(QString());
 
         // NOTE: it is just in case one of notebooks stripped off the guid was
@@ -1267,65 +1182,79 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
-        FETRACE("Emitting the request to update note: request id = "
+        FETRACE(
+            "Emitting the request to update note: request id = "
             << requestId << ", note: " << note);
 
         Q_EMIT updateNote(
             note,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            LocalStorageManager::UpdateNoteOptions(),
+#else
             LocalStorageManager::UpdateNoteOptions(0),
+#endif
             requestId);
     }
 }
 
 void FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult()
 {
-    FEDEBUG("FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult");
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult");
 
     if (!m_expungeNotebookRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_expungeNotebookRequestIds.size()
-            << " expunge notebook requests");
+        FEDEBUG(
+            "Still pending " << m_expungeNotebookRequestIds.size()
+                             << " expunge notebook requests");
         return;
     }
 
     if (!m_expungeTagRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_expungeTagRequestIds.size()
-            << " expunge tag requests");
+        FEDEBUG(
+            "Still pending " << m_expungeTagRequestIds.size()
+                             << " expunge tag requests");
         return;
     }
 
     if (!m_expungeNoteRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_expungeNoteRequestIds.size()
-            << " expunge note requests");
+        FEDEBUG(
+            "Still pending " << m_expungeNoteRequestIds.size()
+                             << " expunge note requests");
         return;
     }
 
     if (!m_expungeSavedSearchRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_expungeSavedSearchRequestIds.size()
-            << " expunge saved search requests");
+        FEDEBUG(
+            "Still pending " << m_expungeSavedSearchRequestIds.size()
+                             << " expunge saved search requests");
         return;
     }
 
     if (!m_updateNotebookRequestId.isEmpty()) {
-        FEDEBUG("Still pending " << m_updateNotebookRequestId.size()
-            << " update notebook requests");
+        FEDEBUG(
+            "Still pending " << m_updateNotebookRequestId.size()
+                             << " update notebook requests");
         return;
     }
 
     if (!m_updateTagRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_updateTagRequestIds.size()
-            << " update tag requests");
+        FEDEBUG(
+            "Still pending " << m_updateTagRequestIds.size()
+                             << " update tag requests");
         return;
     }
 
     if (!m_updateNoteRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_updateNoteRequestIds.size()
-            << " update note requests");
+        FEDEBUG(
+            "Still pending " << m_updateNoteRequestIds.size()
+                             << " update note requests");
         return;
     }
 
     if (!m_updateSavedSearchRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_updateSavedSearchRequestIds.size()
-            << " update saved search requests");
+        FEDEBUG(
+            "Still pending " << m_updateSavedSearchRequestIds.size()
+                             << " update saved search requests");
         return;
     }
 
@@ -1336,37 +1265,42 @@ void FullSyncStaleDataItemsExpunger::checkRequestsCompletionAndSendResult()
     Q_EMIT finished();
 }
 
-void FullSyncStaleDataItemsExpunger::checkTagUpdatesCompletionAndSendExpungeTagRequests()
+void FullSyncStaleDataItemsExpunger::
+    checkTagUpdatesCompletionAndSendExpungeTagRequests()
 {
-    FEDEBUG("FullSyncStaleDataItemsExpunger::"
+    FEDEBUG(
+        "FullSyncStaleDataItemsExpunger::"
         << "checkTagUpdatesCompletionAndSendExpungeTagRequests");
 
     if (!m_updateTagRequestIds.isEmpty()) {
-        FEDEBUG("Still pending " << m_updateTagRequestIds.size()
-            << " tag update requests");
+        FEDEBUG(
+            "Still pending " << m_updateTagRequestIds.size()
+                             << " tag update requests");
         return;
     }
 
     if (m_tagGuidsToExpunge.isEmpty()) {
-        FEDEBUG("Detected no pending tag update requests but "
+        FEDEBUG(
+            "Detected no pending tag update requests but "
             << "there are no tags meant to be expunged - "
             << "either there are no such ones or because expunge "
             << "requests have already been sent");
         return;
     }
 
-    FEDEBUG("Detected no pending tag update requests, "
+    FEDEBUG(
+        "Detected no pending tag update requests, "
         << "expunging the tags meant to be expunged");
 
-    for(const auto & guid: qAsConst(m_tagGuidsToExpunge))
-    {
+    for (const auto & guid: qAsConst(m_tagGuidsToExpunge)) {
         Tag dummyTag;
         dummyTag.unsetLocalUid();
         dummyTag.setGuid(guid);
 
         QUuid requestId = QUuid::createUuid();
         Q_UNUSED(m_expungeTagRequestIds.insert(requestId))
-        FETRACE("Emitting the request to expunge tag: request id = "
+        FETRACE(
+            "Emitting the request to expunge tag: request id = "
             << requestId << ", tag guid = " << guid);
         Q_EMIT expungeTag(dummyTag, requestId);
     }

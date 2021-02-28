@@ -20,14 +20,18 @@
 #define LIB_QUENTIER_NOTE_EDITOR_UNDO_STACK_HIDE_DECRYPTED_TEXT_UNDO_COMMAND
 
 #include "INoteEditorUndoCommand.h"
+
 #include "../NoteEditorPage.h"
 
 namespace quentier {
 
-class Q_DECL_HIDDEN HideDecryptedTextUndoCommand: public INoteEditorUndoCommand
+class Q_DECL_HIDDEN HideDecryptedTextUndoCommand final :
+    public INoteEditorUndoCommand
 {
     Q_OBJECT
+public:
     using Callback = NoteEditorPage::Callback;
+
 public:
     HideDecryptedTextUndoCommand(
         NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
@@ -43,7 +47,7 @@ public:
     virtual void undoImpl() override;
 
 private:
-    Callback    m_callback;
+    Callback m_callback;
 };
 
 } // namespace quentier

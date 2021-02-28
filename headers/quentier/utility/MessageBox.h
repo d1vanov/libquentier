@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_MESSAGE_BOX_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QMessageBox>
 
@@ -49,16 +48,16 @@ int QUENTIER_EXPORT criticalMessageBox(
 int QUENTIER_EXPORT questionMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons =
-        QMessageBox::Ok | QMessageBox::Cancel);
+    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok |
+        QMessageBox::Cancel);
 
 /**
  * Convenience function for critical message box due to internal error,
  * has built-in title ("Internal error") and brief text so the caller only
  * needs to provide the detailed text
  */
-void QUENTIER_EXPORT internalErrorMessageBox(
-    QWidget * parent, QString detailedText = {});
+void QUENTIER_EXPORT
+internalErrorMessageBox(QWidget * parent, QString detailedText = {});
 
 } // namespace quentier
 

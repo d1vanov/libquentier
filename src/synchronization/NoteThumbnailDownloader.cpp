@@ -24,13 +24,11 @@
 namespace quentier {
 
 NoteThumbnailDownloader::NoteThumbnailDownloader(
-        const QString & host, const QString & noteGuid,
-        const QString & authToken, const QString & shardId,
-        const bool noteFromPublicLinkedNotebook, QObject * parent) :
+    const QString & host, const QString & noteGuid, const QString & authToken,
+    const QString & shardId, const bool noteFromPublicLinkedNotebook,
+    QObject * parent) :
     QObject(parent),
-    m_host(host),
-    m_noteGuid(noteGuid),
-    m_authToken(authToken),
+    m_host(host), m_noteGuid(noteGuid), m_authToken(authToken),
     m_shardId(shardId),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
@@ -44,16 +42,17 @@ NoteThumbnailDownloader::~NoteThumbnailDownloader()
 
 void NoteThumbnailDownloader::start()
 {
-    QNDEBUG("NoteThumbnailDownloader::start: host = " << m_host
-        << ", note guid = " << m_noteGuid << ", is public = "
-        << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
+    QNDEBUG(
+        "synchronization:thumbnail",
+        "NoteThumbnailDownloader::start: host = "
+            << m_host << ", note guid = " << m_noteGuid << ", is public = "
+            << (m_noteFromPublicLinkedNotebook ? "true" : "false"));
 
 #define SET_ERROR(error)                                                       \
     ErrorString errorDescription(error);                                       \
-    QNDEBUG(errorDescription);                                                 \
+    QNDEBUG("synchronization:thumbnail", errorDescription);                    \
     Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);        \
-    return                                                                     \
-// SET_ERROR
+    return
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
         SET_ERROR(QT_TR_NOOP("host is empty"));
@@ -81,8 +80,7 @@ void NoteThumbnailDownloader::start()
 
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
     m_pAsyncResult = m_pThumbnail->downloadAsync(
-        m_noteGuid,
-        m_noteFromPublicLinkedNotebook,
+        m_noteGuid, m_noteFromPublicLinkedNotebook,
         /* is resource guid = */ false);
 
     if (Q_UNLIKELY(!m_pAsyncResult)) {
@@ -92,19 +90,18 @@ void NoteThumbnailDownloader::start()
     }
 
     QObject::connect(
-        m_pAsyncResult,
-        &qevercloud::AsyncResult::finished,
-        this,
+        m_pAsyncResult, &qevercloud::AsyncResult::finished, this,
         &NoteThumbnailDownloader::onDownloadFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    QVariant result,
-    EverCloudExceptionDataPtr exceptionData,
+    QVariant result, EverCloudExceptionDataPtr exceptionData,
     IRequestContextPtr ctx)
 {
-    QNDEBUG("NoteThumbnailDownloader::onDownloadFinished");
+    QNDEBUG(
+        "synchronization:thumbnail",
+        "NoteThumbnailDownloader::onDownloadFinished");
 
     Q_UNUSED(ctx)
 
@@ -115,12 +112,11 @@ void NoteThumbnailDownloader::onDownloadFinished(
     // the pointer to it here
     m_pAsyncResult = nullptr;
 
-    if (exceptionData)
-    {
+    if (exceptionData) {
         ErrorString errorDescription(
             QT_TR_NOOP("failed to download the note thumbnail"));
         errorDescription.details() = exceptionData->errorMessage;
-        QNDEBUG(errorDescription);
+        QNDEBUG("synchronization:thumbnail", errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;
     }

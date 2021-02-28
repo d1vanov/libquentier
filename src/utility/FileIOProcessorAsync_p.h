@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_FILE_IO_THREAD_WORKER_P_H
 
 #include <quentier/types/ErrorString.h>
-#include <quentier/utility/Macros.h>
 
 #include <QIODevice>
 #include <QObject>
@@ -29,7 +28,7 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate: public QObject
+class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate final : public QObject
 {
     Q_OBJECT
 public:
@@ -58,8 +57,8 @@ private:
     virtual void timerEvent(QTimerEvent * pEvent) override;
 
 private:
-    qint32  m_idleTimePeriodSeconds;
-    qint32  m_postOperationTimerId;
+    qint32 m_idleTimePeriodSeconds = 30;
+    qint32 m_postOperationTimerId = 0;
 };
 
 } // namespace quentier

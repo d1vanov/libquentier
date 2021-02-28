@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,13 +19,12 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_HYPERLINK_CLICK_JAVA_SCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_HYPERLINK_CLICK_JAVA_SCRIPT_HANDLER_H
 
-#include <quentier/utility/Macros.h>
 #include <QObject>
 #include <QString>
 
 namespace quentier {
 
-class HyperlinkClickJavaScriptHandler: public QObject
+class HyperlinkClickJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:

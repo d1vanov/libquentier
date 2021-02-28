@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,11 +19,9 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_RESOURCE_INFO_JAVASCRIPT_HANDLER_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QObject>
-#include <QString>
 #include <QSize>
+#include <QString>
 
 namespace quentier {
 
@@ -33,20 +31,19 @@ QT_FORWARD_DECLARE_CLASS(ResourceInfo)
  * The ResourceInfoJavaScriptHandler is used for communicating the information
  * on resources from C++ to JavaScript on requests coming from JavaScript to C++
  */
-class ResourceInfoJavaScriptHandler: public QObject
+class ResourceInfoJavaScriptHandler final : public QObject
 {
     Q_OBJECT
 public:
-    explicit ResourceInfoJavaScriptHandler(const ResourceInfo & resourceInfo,
-                                           QObject * parent = nullptr);
+    explicit ResourceInfoJavaScriptHandler(
+        const ResourceInfo & resourceInfo, QObject * parent = nullptr);
 
 Q_SIGNALS:
-    void notifyResourceInfo(const QString & resourceHash,
-                            const QString & resourceLocalFilePath,
-                            const QString & resourceDisplayName,
-                            const QString & resourceDisplaySize,
-                            const int resourceImageHeight,
-                            const int resourceImageWidth);
+    void notifyResourceInfo(
+        const QString & resourceHash, const QString & resourceLocalFilePath,
+        const QString & resourceDisplayName,
+        const QString & resourceDisplaySize, const int resourceImageHeight,
+        const int resourceImageWidth);
 
 public Q_SLOTS:
     void findResourceInfo(const QString & resourceHash);

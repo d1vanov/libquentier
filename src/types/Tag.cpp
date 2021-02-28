@@ -27,17 +27,11 @@ QN_DEFINE_FAVORITED(Tag)
 QN_DEFINE_LOCAL(Tag)
 QN_DEFINE_LOCAL_UID(Tag)
 
-Tag::Tag() :
-    d(new TagData)
-{}
+Tag::Tag() : d(new TagData) {}
 
-Tag::Tag(const Tag & other) :
-    d(other.d)
-{}
+Tag::Tag(const Tag & other) : d(other.d) {}
 
-Tag::Tag(Tag && other) :
-    d(std::move(other.d))
-{}
+Tag::Tag(Tag && other) : d(std::move(other.d)) {}
 
 Tag & Tag::operator=(Tag && other)
 {
@@ -48,13 +42,9 @@ Tag & Tag::operator=(Tag && other)
     return *this;
 }
 
-Tag::Tag(const qevercloud::Tag & other) :
-    d(new TagData(other))
-{}
+Tag::Tag(const qevercloud::Tag & other) : d(new TagData(other)) {}
 
-Tag::Tag(qevercloud::Tag && other) :
-    d(new TagData(std::move(other)))
-{}
+Tag::Tag(qevercloud::Tag && other) : d(new TagData(std::move(other))) {}
 
 Tag & Tag::operator=(const Tag & other)
 {
@@ -65,8 +55,7 @@ Tag & Tag::operator=(const Tag & other)
     return *this;
 }
 
-Tag::~Tag()
-{}
+Tag::~Tag() {}
 
 bool Tag::operator==(const Tag & other) const
 {
@@ -109,13 +98,10 @@ void Tag::clear()
 
 bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
 {
-    if (name != name.trimmed())
-    {
-        if (pErrorDescription)
-        {
+    if (name != name.trimmed()) {
+        if (pErrorDescription) {
             pErrorDescription->setBase(QT_TRANSLATE_NOOP(
-                "Tag",
-                "Tag name cannot start or end with whitespace"));
+                "Tag", "Tag name cannot start or end with whitespace"));
 
             pErrorDescription->details() = name;
         }
@@ -124,13 +110,10 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
     }
 
     int len = name.length();
-    if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN)
-    {
-        if (pErrorDescription)
-        {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP(
-                "Tag",
-                "Tag name's length is too small"));
+    if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
+        if (pErrorDescription) {
+            pErrorDescription->setBase(
+                QT_TRANSLATE_NOOP("Tag", "Tag name's length is too small"));
 
             pErrorDescription->details() = name;
         }
@@ -138,13 +121,10 @@ bool Tag::validateName(const QString & name, ErrorString * pErrorDescription)
         return false;
     }
 
-    if (len > qevercloud::EDAM_TAG_NAME_LEN_MAX)
-    {
-        if (pErrorDescription)
-        {
-            pErrorDescription->setBase(QT_TRANSLATE_NOOP(
-                "Tag",
-                "Tag name's length is too large"));
+    if (len > qevercloud::EDAM_TAG_NAME_LEN_MAX) {
+        if (pErrorDescription) {
+            pErrorDescription->setBase(
+                QT_TRANSLATE_NOOP("Tag", "Tag name's length is too large"));
 
             pErrorDescription->details() = name;
         }
@@ -197,11 +177,9 @@ void Tag::setUpdateSequenceNumber(const qint32 usn)
 
 bool Tag::checkParameters(ErrorString & errorDescription) const
 {
-    if (localUid().isEmpty() && !d->m_qecTag.guid.isSet())
-    {
+    if (localUid().isEmpty() && !d->m_qecTag.guid.isSet()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "Tag",
-            "Both tag's local and remote guids are empty"));
+            "Tag", "Both tag's local and remote guids are empty"));
 
         return false;
     }
@@ -293,10 +271,6 @@ QTextStream & Tag::print(QTextStream & strm) const
 {
     strm << "Tag { \n";
 
-#define INSERT_DELIMITER                                                       \
-    strm << "; \n"                                                             \
-// INSERT_DELIMITER
-
     const QString localUid_ = localUid();
     if (!localUid_.isEmpty()) {
         strm << "localUid: " << localUid_;
@@ -304,7 +278,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "localUid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_parentLocalUid.isSet()) {
         strm << "parent local uid: " << d->m_parentLocalUid.ref();
@@ -312,7 +286,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "parent local uid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.guid.isSet()) {
         strm << "guid: " << d->m_qecTag.guid;
@@ -320,7 +294,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "guid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_linkedNotebookGuid.isSet()) {
         strm << "linked notebook guid: " << d->m_linkedNotebookGuid;
@@ -328,7 +302,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "linked notebook guid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.name.isSet()) {
         strm << "name: " << d->m_qecTag.name;
@@ -336,7 +310,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "name is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.parentGuid.isSet()) {
         strm << "parentGuid: " << d->m_qecTag.parentGuid;
@@ -344,7 +318,7 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "parentGuid is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     if (d->m_qecTag.updateSequenceNum.isSet()) {
         strm << "updateSequenceNumber: "
@@ -353,16 +327,16 @@ QTextStream & Tag::print(QTextStream & strm) const
     else {
         strm << "updateSequenceNumber is not set";
     }
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isDirty: " << (isDirty() ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isLocal: " << (d->m_isLocal ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "isFavorited = " << (isFavorited() ? "true" : "false");
-    INSERT_DELIMITER;
+    strm << "; \n";
 
     strm << "}; \n";
     return strm;

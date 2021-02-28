@@ -19,8 +19,6 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
 #define LIB_QUENTIER_NOTE_EDITOR_EDIT_HYPERLINK_DIALOG_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QDialog>
 #include <QUrl>
 
@@ -30,7 +28,7 @@ QT_FORWARD_DECLARE_CLASS(EditHyperlinkDialog)
 
 namespace quentier {
 
-class Q_DECL_HIDDEN EditHyperlinkDialog: public QDialog
+class Q_DECL_HIDDEN EditHyperlinkDialog final : public QDialog
 {
     Q_OBJECT
 public:
@@ -41,7 +39,7 @@ public:
     virtual ~EditHyperlinkDialog();
 
 Q_SIGNALS:
-    void accepted(
+    void editHyperlinkAccepted(
         QString text, QUrl url, quint64 idNumber, bool startupUrlWasEmpty);
 
 private Q_SLOTS:
@@ -55,8 +53,8 @@ private:
 
 private:
     Ui::EditHyperlinkDialog * m_pUI;
-    const quint64       m_idNumber;
-    const bool          m_startupUrlWasEmpty;
+    const quint64 m_idNumber;
+    const bool m_startupUrlWasEmpty;
 };
 
 } // namespace quentier

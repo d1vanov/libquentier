@@ -23,23 +23,22 @@
 #include <quentier/logging/QuentierLogger.h>
 
 #ifndef QUENTIER_CHECK_PTR
-#define QUENTIER_CHECK_PTR(pointer, ...)                                       \
-{                                                                              \
-    if (Q_UNLIKELY(!pointer))                                                  \
+#define QUENTIER_CHECK_PTR(component, pointer, ...)                            \
     {                                                                          \
-        using quentier::NullPtrException;                                      \
-        ErrorString quentier_null_ptr_error(                                   \
-            QT_TRANSLATE_NOOP("", "Detected unintended null pointer"));        \
-        quentier_null_ptr_error.details() = QStringLiteral(__FILE__);          \
-        quentier_null_ptr_error.details() += QStringLiteral(" (");             \
-        quentier_null_ptr_error.details() += QString::number(__LINE__);        \
-        quentier_null_ptr_error.details() += QStringLiteral(") ");             \
-        quentier_null_ptr_error.details() +=                                   \
-            QString::fromUtf8("" #__VA_ARGS__ "");                             \
-        QNERROR(quentier_null_ptr_error);                                      \
-        throw NullPtrException(quentier_null_ptr_error);                       \
+        if (Q_UNLIKELY(!pointer)) {                                            \
+            using quentier::NullPtrException;                                  \
+            ErrorString quentier_null_ptr_error(                               \
+                QT_TRANSLATE_NOOP("", "Detected unintended null pointer"));    \
+            quentier_null_ptr_error.details() = QStringLiteral(__FILE__);      \
+            quentier_null_ptr_error.details() += QStringLiteral(" (");         \
+            quentier_null_ptr_error.details() += QString::number(__LINE__);    \
+            quentier_null_ptr_error.details() += QStringLiteral(") ");         \
+            quentier_null_ptr_error.details() +=                               \
+                QString::fromUtf8("" #__VA_ARGS__ "");                         \
+            QNERROR(component, quentier_null_ptr_error);                       \
+            throw NullPtrException(quentier_null_ptr_error);                   \
+        }                                                                      \
     }                                                                          \
-}                                                                              \
 // QUENTIER_CHECK_PTR
 #endif
 

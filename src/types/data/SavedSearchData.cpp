@@ -19,37 +19,16 @@
 #include "SavedSearchData.h"
 
 #include <quentier/types/SavedSearch.h>
-#include <quentier/utility/Utility.h>
+#include <quentier/utility/Checks.h>
 
 namespace quentier {
 
-SavedSearchData::SavedSearchData() :
-    FavoritableDataElementData(),
-    m_qecSearch()
-{
-}
-
-SavedSearchData::SavedSearchData(const SavedSearchData & other) :
-    FavoritableDataElementData(other),
-    m_qecSearch(other.m_qecSearch)
-{}
-
-SavedSearchData::SavedSearchData(SavedSearchData && other) :
-    FavoritableDataElementData(std::move(other)),
-    m_qecSearch(std::move(other.m_qecSearch))
-{}
-
 SavedSearchData::SavedSearchData(const qevercloud::SavedSearch & other) :
-    FavoritableDataElementData(),
-    m_qecSearch(other)
+    FavoritableDataElementData(), m_qecSearch(other)
 {}
 
 SavedSearchData::SavedSearchData(qevercloud::SavedSearch && other) :
-    FavoritableDataElementData(),
-    m_qecSearch(std::move(other))
-{}
-
-SavedSearchData::~SavedSearchData()
+    FavoritableDataElementData(), m_qecSearch(std::move(other))
 {}
 
 void SavedSearchData::clear()
@@ -59,11 +38,9 @@ void SavedSearchData::clear()
 
 bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 {
-    if (m_qecSearch.guid.isSet() && !checkGuid(m_qecSearch.guid.ref()))
-    {
+    if (m_qecSearch.guid.isSet() && !checkGuid(m_qecSearch.guid.ref())) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "SavedSearchData",
-            "Saved search's guid is invalid"));
+            "SavedSearchData", "Saved search's guid is invalid"));
 
         errorDescription.details() = m_qecSearch.guid;
         return false;
@@ -82,19 +59,18 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
             "SavedSearchData",
             "Saved search's update sequence number is invalid"));
 
-        errorDescription.details() = QString::number(
-            m_qecSearch.updateSequenceNum);
+        errorDescription.details() =
+            QString::number(m_qecSearch.updateSequenceNum);
 
         return false;
     }
 
-    if (m_qecSearch.query.isSet())
-    {
+    if (m_qecSearch.query.isSet()) {
         const QString & query = m_qecSearch.query.ref();
         int querySize = query.size();
 
-        if ( (querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
-             (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX) )
+        if ((querySize < qevercloud::EDAM_SEARCH_QUERY_LEN_MIN) ||
+            (querySize > qevercloud::EDAM_SEARCH_QUERY_LEN_MAX))
         {
             errorDescription.setBase(QT_TRANSLATE_NOOP(
                 "SavedSearchData",
@@ -110,8 +86,7 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
          qevercloud::QueryFormat::USER))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-            "SavedSearchData",
-            "Saved search has unsupported query format"));
+            "SavedSearchData", "Saved search has unsupported query format"));
 
         errorDescription.details() = ToString(m_qecSearch.format.ref());
         return false;
@@ -123,8 +98,7 @@ bool SavedSearchData::checkParameters(ErrorString & errorDescription) const
 bool SavedSearchData::operator==(const SavedSearchData & other) const
 {
     return (m_qecSearch == other.m_qecSearch) &&
-        (m_isDirty == other.m_isDirty) &&
-        (m_isLocal == other.m_isLocal) &&
+        (m_isDirty == other.m_isDirty) && (m_isLocal == other.m_isLocal) &&
         (m_isFavorited == other.m_isFavorited);
 }
 

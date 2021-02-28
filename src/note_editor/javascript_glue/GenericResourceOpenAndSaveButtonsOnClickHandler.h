@@ -19,13 +19,11 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_OPEN_AND_SAVE_BUTTONS_ON_CLICK_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_GENERIC_RESOURCE_OPEN_AND_SAVE_BUTTONS_ON_CLICK_HANDLER_H
 
-#include <quentier/utility/Macros.h>
-
 #include <QObject>
 
 namespace quentier {
 
-class GenericResourceOpenAndSaveButtonsOnClickHandler: public QObject
+class GenericResourceOpenAndSaveButtonsOnClickHandler final : public QObject
 {
     Q_OBJECT
 public:

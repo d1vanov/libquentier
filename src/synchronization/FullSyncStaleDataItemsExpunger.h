@@ -58,16 +58,16 @@ QT_FORWARD_DECLARE_CLASS(TagSyncCache)
  * presented as new data items to the service. That happens during sending
  * the local changes to Evernote service.
  */
-class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger: public QObject
+class Q_DECL_HIDDEN FullSyncStaleDataItemsExpunger final : public QObject
 {
     Q_OBJECT
 public:
     struct SyncedGuids
     {
-        QSet<QString>   m_syncedNotebookGuids;
-        QSet<QString>   m_syncedTagGuids;
-        QSet<QString>   m_syncedNoteGuids;
-        QSet<QString>   m_syncedSavedSearchGuids;
+        QSet<QString> m_syncedNotebookGuids;
+        QSet<QString> m_syncedTagGuids;
+        QSet<QString> m_syncedNoteGuids;
+        QSet<QString> m_syncedSavedSearchGuids;
     };
 
 public:
@@ -78,13 +78,16 @@ public:
         const SyncedGuids & syncedGuids, const QString & linkedNotebookGuid,
         QObject * parent = nullptr);
 
-    const QString & linkedNotebookGuid() const { return m_linkedNotebookGuid; }
+    const QString & linkedNotebookGuid() const
+    {
+        return m_linkedNotebookGuid;
+    }
 
 Q_SIGNALS:
     void finished();
     void failure(ErrorString errorDescription);
 
-// private signals:
+    // private signals:
     void expungeNotebook(Notebook notebook, QUuid requestId);
     void expungeTag(Tag tag, QUuid requestId);
     void expungeSavedSearch(SavedSearch search, QUuid requestId);
@@ -164,36 +167,36 @@ private:
     void checkTagUpdatesCompletionAndSendExpungeTagRequests();
 
 private:
-    LocalStorageManagerAsync &      m_localStorageManagerAsync;
-    bool                            m_connectedToLocalStorage = false;
+    LocalStorageManagerAsync & m_localStorageManagerAsync;
+    bool m_connectedToLocalStorage = false;
 
-    bool                            m_inProgress = false;
+    bool m_inProgress = false;
 
-    QPointer<NotebookSyncCache>     m_pNotebookSyncCache;
-    QPointer<TagSyncCache>          m_pTagSyncCache;
-    QPointer<SavedSearchSyncCache>  m_pSavedSearchSyncCache;
-    NoteSyncCache                   m_noteSyncCache;
+    QPointer<NotebookSyncCache> m_pNotebookSyncCache;
+    QPointer<TagSyncCache> m_pTagSyncCache;
+    QPointer<SavedSearchSyncCache> m_pSavedSearchSyncCache;
+    NoteSyncCache m_noteSyncCache;
 
-    SyncedGuids                     m_syncedGuids;
+    SyncedGuids m_syncedGuids;
 
-    QString                         m_linkedNotebookGuid;
+    QString m_linkedNotebookGuid;
 
-    bool                            m_pendingNotebookSyncCache = false;
-    bool                            m_pendingTagSyncCache = false;
-    bool                            m_pendingSavedSearchSyncCache = false;
-    bool                            m_pendingNoteSyncCache = false;
+    bool m_pendingNotebookSyncCache = false;
+    bool m_pendingTagSyncCache = false;
+    bool m_pendingSavedSearchSyncCache = false;
+    bool m_pendingNoteSyncCache = false;
 
-    QSet<QString>                   m_tagGuidsToExpunge;
+    QSet<QString> m_tagGuidsToExpunge;
 
-    QSet<QUuid>                     m_expungeNotebookRequestIds;
-    QSet<QUuid>                     m_expungeTagRequestIds;
-    QSet<QUuid>                     m_expungeNoteRequestIds;
-    QSet<QUuid>                     m_expungeSavedSearchRequestIds;
+    QSet<QUuid> m_expungeNotebookRequestIds;
+    QSet<QUuid> m_expungeTagRequestIds;
+    QSet<QUuid> m_expungeNoteRequestIds;
+    QSet<QUuid> m_expungeSavedSearchRequestIds;
 
-    QSet<QUuid>                     m_updateNotebookRequestId;
-    QSet<QUuid>                     m_updateTagRequestIds;
-    QSet<QUuid>                     m_updateNoteRequestIds;
-    QSet<QUuid>                     m_updateSavedSearchRequestIds;
+    QSet<QUuid> m_updateNotebookRequestId;
+    QSet<QUuid> m_updateTagRequestIds;
+    QSet<QUuid> m_updateNoteRequestIds;
+    QSet<QUuid> m_updateSavedSearchRequestIds;
 };
 
 } // namespace quentier

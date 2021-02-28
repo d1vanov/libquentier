@@ -20,42 +20,14 @@
 
 namespace quentier {
 
-ResourceData::ResourceData() :
-    NoteStoreDataElementData(),
-    m_qecResource(),
-    m_indexInNote(-1),
-    m_noteLocalUid()
-{}
-
-ResourceData::ResourceData(const ResourceData & other) :
-    NoteStoreDataElementData(other),
-    m_qecResource(other.m_qecResource),
-    m_indexInNote(other.m_indexInNote),
-    m_noteLocalUid(other.m_noteLocalUid)
-{}
-
-ResourceData::ResourceData(ResourceData && other) :
-    NoteStoreDataElementData(std::move(other)),
-    m_qecResource(std::move(other.m_qecResource)),
-    m_indexInNote(std::move(other.m_indexInNote)),
-    m_noteLocalUid(std::move(other.m_noteLocalUid))
-{}
-
 ResourceData::ResourceData(const qevercloud::Resource & other) :
-    NoteStoreDataElementData(),
-    m_qecResource(other),
-    m_indexInNote(-1),
-    m_noteLocalUid()
+    NoteStoreDataElementData(), m_qecResource(other)
 {}
 
 ResourceData::ResourceData(qevercloud::Resource && other) :
-    NoteStoreDataElementData(),
-    m_qecResource(std::move(other)),
-    m_indexInNote(-1),
-    m_noteLocalUid()
+    NoteStoreDataElementData(), m_qecResource(std::move(other))
 {}
 
-ResourceData::~ResourceData()
-{}
+ResourceData::~ResourceData() {}
 
 } // namespace quentier

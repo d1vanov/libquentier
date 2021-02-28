@@ -19,9 +19,9 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 #define LIB_QUENTIER_SYNCHRONIZATION_I_AUTHENTICATION_MANAGER_H
 
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -33,7 +33,7 @@
 
 namespace quentier {
 
-class QUENTIER_EXPORT IAuthenticationManager: public QObject
+class QUENTIER_EXPORT IAuthenticationManager : public QObject
 {
     Q_OBJECT
 protected:
@@ -44,9 +44,9 @@ public:
 
 Q_SIGNALS:
     void sendAuthenticationResult(
-        bool success, qevercloud::UserID userId,
-        QString authToken, qevercloud::Timestamp authTokenExpirationTime,
-        QString shardId, QString noteStoreUrl, QString webApiUrlPrefix,
+        bool success, qevercloud::UserID userId, QString authToken,
+        qevercloud::Timestamp authTokenExpirationTime, QString shardId,
+        QString noteStoreUrl, QString webApiUrlPrefix,
         QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
 public Q_SLOTS:

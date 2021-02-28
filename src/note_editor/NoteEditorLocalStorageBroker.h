@@ -30,7 +30,7 @@
 
 namespace quentier {
 
-class NoteEditorLocalStorageBroker: public QObject
+class NoteEditorLocalStorageBroker : public QObject
 {
     Q_OBJECT
 private:
@@ -65,7 +65,7 @@ Q_SIGNALS:
     void failedToFindResourceData(
         QString resourceLocalUid, ErrorString errorDescription);
 
-// private signals
+    // private signals
     void updateNote(
         Note note, LocalStorageManager::UpdateNoteOptions options,
         QUuid requestId);
@@ -166,49 +166,50 @@ private:
     void saveNoteToLocalStorageImpl(
         const Note & previousNoteVersion, const Note & updatedNoteVersion);
 
-    class SaveNoteInfo: public Printable
+    class SaveNoteInfo : public Printable
     {
     public:
         virtual QTextStream & print(QTextStream & strm) const override;
 
         bool hasPendingResourceOperations() const;
 
-        Note        m_notePendingSaving;
-        quint32     m_pendingAddResourceRequests = 0;
-        quint32     m_pendingUpdateResourceRequests = 0;
-        quint32     m_pendingExpungeResourceRequests = 0;
+        Note m_notePendingSaving;
+        quint32 m_pendingAddResourceRequests = 0;
+        quint32 m_pendingUpdateResourceRequests = 0;
+        quint32 m_pendingExpungeResourceRequests = 0;
     };
 
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
 private:
-    LocalStorageManagerAsync *      m_pLocalStorageManagerAsync = nullptr;
+    LocalStorageManagerAsync * m_pLocalStorageManagerAsync = nullptr;
 
-    QSet<QUuid>     m_findNoteRequestIds;
-    QSet<QUuid>     m_findNotebookRequestIds;
-    QSet<QUuid>     m_findResourceRequestIds;
+    QSet<QUuid> m_findNoteRequestIds;
+    QSet<QUuid> m_findNotebookRequestIds;
+    QSet<QUuid> m_findResourceRequestIds;
 
-    QHash<QUuid, Note>      m_notesPendingSavingByFindNoteRequestIds;
+    QHash<QUuid, Note> m_notesPendingSavingByFindNoteRequestIds;
 
-    NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookLocalUid;
-    NotesPendingNotebookFindingHash     m_notesPendingNotebookFindingByNotebookGuid;
+    NotesPendingNotebookFindingHash
+        m_notesPendingNotebookFindingByNotebookLocalUid;
+    NotesPendingNotebookFindingHash m_notesPendingNotebookFindingByNotebookGuid;
 
-    QHash<QUuid, QString>   m_noteLocalUidsByAddResourceRequestIds;
-    QHash<QUuid, QString>   m_noteLocalUidsByUpdateResourceRequestIds;
-    QHash<QUuid, QString>   m_noteLocalUidsByExpungeResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalUidsByAddResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalUidsByUpdateResourceRequestIds;
+    QHash<QUuid, QString> m_noteLocalUidsByExpungeResourceRequestIds;
 
-    LRUCache<QString, Notebook>     m_notebooksCache;
-    LRUCache<QString, Note>         m_notesCache;
+    LRUCache<QString, Notebook> m_notebooksCache;
+    LRUCache<QString, Note> m_notesCache;
 
     /**
      * This cache stores resources with binary data but only if that data is not
      * too large to prevent spending too much memory on it
      */
-    LRUCache<QString, Resource>     m_resourcesCache;
+    LRUCache<QString, Resource> m_resourcesCache;
 
-    QHash<QString, SaveNoteInfo>    m_saveNoteInfoByNoteLocalUids;
-    QSet<QUuid>     m_updateNoteRequestIds;
+    QHash<QString, SaveNoteInfo> m_saveNoteInfoByNoteLocalUids;
+    QSet<QUuid> m_updateNoteRequestIds;
 };
 
 } // namespace quentier

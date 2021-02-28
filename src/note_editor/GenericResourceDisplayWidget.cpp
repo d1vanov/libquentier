@@ -28,7 +28,6 @@
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/MessageBox.h>
 #include <quentier/utility/QuentierCheckPtr.h>
-#include <quentier/utility/Utility.h>
 
 #include <QCryptographicHash>
 #include <QDesktopServices>
@@ -59,8 +58,8 @@ void GenericResourceDisplayWidget::initialize(
     const QIcon & icon, const QString & name, const QString & size,
     const Resource & resource)
 {
-    QNDEBUG("GenericResourceDisplayWidget::initialize: name = " << name
-        << ", size = " << size);
+    QNDEBUG("note_editor", "GenericResourceDisplayWidget::initialize: name = "
+        << name << ", size = " << size);
 
     m_resourceLocalUid = resource.localUid();
 
@@ -135,11 +134,11 @@ void GenericResourceDisplayWidget::updateResourceSize(const QString & size)
 
 void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 {
-    QNDEBUG("GenericResourceDisplayWidget::"
+    QNDEBUG("note_editor", "GenericResourceDisplayWidget::"
         << "onOpenResourceInExternalAppButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
-        QNDEBUG("Can't open resource: resource hash is empty");
+        QNDEBUG("note_editor", "Can't open resource: resource hash is empty");
         return;
     }
 
@@ -148,11 +147,11 @@ void GenericResourceDisplayWidget::onOpenResourceInExternalAppButtonPressed()
 
 void GenericResourceDisplayWidget::onSaveResourceDataToFileButtonPressed()
 {
-    QNDEBUG("GenericResourceDisplayWidget::"
+    QNDEBUG("note_editor", "GenericResourceDisplayWidget::"
         << "onSaveResourceDataToFileButtonPressed");
 
     if (m_resourceHash.isEmpty()) {
-        QNDEBUG("Can't save resource: resource hash is empty");
+        QNDEBUG("note_editor", "Can't save resource: resource hash is empty");
         return;
     }
 

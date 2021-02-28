@@ -17,32 +17,24 @@
  */
 
 #include <quentier/utility/FileIOProcessorAsync.h>
-#include <quentier/utility/Macros.h>
 
 #include "FileIOProcessorAsync_p.h"
 
 namespace quentier {
 
 FileIOProcessorAsync::FileIOProcessorAsync(QObject * parent) :
-    QObject(parent),
-    d_ptr(new FileIOProcessorAsyncPrivate(this))
+    QObject(parent), d_ptr(new FileIOProcessorAsyncPrivate(this))
 {
     QObject::connect(
-        d_ptr,
-        &FileIOProcessorAsyncPrivate::readyForIO,
-        this,
+        d_ptr, &FileIOProcessorAsyncPrivate::readyForIO, this,
         &FileIOProcessorAsync::readyForIO);
 
     QObject::connect(
-        d_ptr,
-        &FileIOProcessorAsyncPrivate::writeFileRequestProcessed,
-        this,
+        d_ptr, &FileIOProcessorAsyncPrivate::writeFileRequestProcessed, this,
         &FileIOProcessorAsync::writeFileRequestProcessed);
 
     QObject::connect(
-        d_ptr,
-        &FileIOProcessorAsyncPrivate::readFileRequestProcessed,
-        this,
+        d_ptr, &FileIOProcessorAsyncPrivate::readFileRequestProcessed, this,
         &FileIOProcessorAsync::readFileRequestProcessed);
 }
 

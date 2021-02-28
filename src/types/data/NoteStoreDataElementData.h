@@ -23,25 +23,26 @@
 
 namespace quentier {
 
-class Q_DECL_HIDDEN NoteStoreDataElementData:
+class Q_DECL_HIDDEN NoteStoreDataElementData :
     public LocalStorageDataElementData
 {
 public:
-    NoteStoreDataElementData();
-    virtual ~NoteStoreDataElementData() override;
+    NoteStoreDataElementData() = default;
 
-    NoteStoreDataElementData(const NoteStoreDataElementData & other);
-    NoteStoreDataElementData(NoteStoreDataElementData && other);
+    NoteStoreDataElementData(const NoteStoreDataElementData & other) = default;
+    NoteStoreDataElementData(NoteStoreDataElementData && other) = default;
 
-    bool    m_isDirty;
-    bool    m_isLocal;
-
-private:
     NoteStoreDataElementData & operator=(
         const NoteStoreDataElementData & other) = delete;
 
-    NoteStoreDataElementData & operator=(
-        NoteStoreDataElementData && other) = delete;
+    NoteStoreDataElementData & operator=(NoteStoreDataElementData && other) =
+        delete;
+
+    virtual ~NoteStoreDataElementData() override = default;
+
+public:
+    bool m_isDirty = true;
+    bool m_isLocal = false;
 };
 
 } // namespace quentier

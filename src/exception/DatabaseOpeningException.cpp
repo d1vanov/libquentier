@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,7 +20,8 @@
 
 namespace quentier {
 
-DatabaseOpeningException::DatabaseOpeningException(const ErrorString & message) :
+DatabaseOpeningException::DatabaseOpeningException(
+    const ErrorString & message) :
     IQuentierException(message)
 {}
 

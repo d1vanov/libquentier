@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,28 +16,24 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "LocalStorageDataElementData.h"
+#ifndef LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
+#define LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
+
+#include <memory>
 
 namespace quentier {
 
-LocalStorageDataElementData::LocalStorageDataElementData() :
-    QSharedData(),
-    m_localUid(QUuid::createUuid())
-{}
+class IAuthenticationManager;
 
-LocalStorageDataElementData::~LocalStorageDataElementData()
-{}
+class INoteStore;
+using INoteStorePtr = std::shared_ptr<INoteStore>;
 
-LocalStorageDataElementData::LocalStorageDataElementData(
-        const LocalStorageDataElementData & other) :
-    QSharedData(other),
-    m_localUid(other.m_localUid)
-{}
+class ISyncStateStorage;
+using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
 
-LocalStorageDataElementData::LocalStorageDataElementData(
-        LocalStorageDataElementData && other) :
-    QSharedData(std::move(other)),
-    m_localUid(std::move(other.m_localUid))
-{}
+class IUserStore;
+using IUserStorePtr = std::shared_ptr<IUserStore>;
 
 } // namespace quentier
+
+#endif // LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H

@@ -20,7 +20,6 @@
 #define LIB_QUENTIER_UTILITY_PRINTABLE_H
 
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QDebug>
 #include <QHash>
@@ -42,10 +41,10 @@ public:
 
     virtual const QString toString() const;
 
-    friend QUENTIER_EXPORT QTextStream & operator << (
+    friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, const Printable & printable);
 
-    friend QUENTIER_EXPORT QDebug & operator << (
+    friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & debug, const Printable & printable);
 
 protected:
@@ -75,9 +74,9 @@ const QString ToString(const QHash<TKey, TValue> & object)
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << QStringLiteral("QHash: \n");
 
-    typedef typename QHash<TKey,TValue>::const_iterator CIter;
+    typedef typename QHash<TKey, TValue>::const_iterator CIter;
     CIter hashEnd = object.end();
-    for(CIter it = object.begin(); it != hashEnd; ++it) {
+    for (CIter it = object.begin(); it != hashEnd; ++it) {
         strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ")
              << it.value() << QStringLiteral(";\n");
     }
@@ -93,20 +92,20 @@ const QString ToString(const QSet<T> & object)
 
     typedef typename QSet<T>::const_iterator CIter;
     CIter setEnd = object.end();
-    for(CIter it = object.begin(); it != setEnd; ++it) {
+    for (CIter it = object.begin(); it != setEnd; ++it) {
         strm << QStringLiteral("[") << *it << QStringLiteral("];\n");
     }
     return str;
 }
 
 #define QUENTIER_DECLARE_PRINTABLE(type, ...)                                  \
-    QUENTIER_EXPORT QTextStream &                                              \
-    operator << (QTextStream & strm, const type & obj);                        \
-    inline QDebug & operator << (QDebug & debug, const type & obj)             \
+    QUENTIER_EXPORT QTextStream & operator<<(                                  \
+        QTextStream & strm, const type & obj);                                 \
+    inline QDebug & operator<<(QDebug & debug, const type & obj)               \
     {                                                                          \
         debug << ToString<type, ##__VA_ARGS__>(obj);                           \
         return debug;                                                          \
     }                                                                          \
-// QUENTIER_DECLARE_PRINTABLE
+    // QUENTIER_DECLARE_PRINTABLE
 
 #endif // LIB_QUENTIER_UTILITY_PRINTABLE_H

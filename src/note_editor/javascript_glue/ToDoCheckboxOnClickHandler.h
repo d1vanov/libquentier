@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2020 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,14 +19,13 @@
 #ifndef LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_TO_DO_CHECKBOX_ON_CLICK_HANDLER_H
 #define LIB_QUENTIER_NOTE_EDITOR_JAVASCRIPT_GLUE_TO_DO_CHECKBOX_ON_CLICK_HANDLER_H
 
-#include <quentier/utility/Macros.h>
 #include <quentier/types/ErrorString.h>
 
 #include <QObject>
 
 namespace quentier {
 
-class ToDoCheckboxOnClickHandler: public QObject
+class ToDoCheckboxOnClickHandler final : public QObject
 {
     Q_OBJECT
 public:

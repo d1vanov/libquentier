@@ -23,7 +23,6 @@
 #include <quentier/types/Note.h>
 #include <quentier/types/Notebook.h>
 #include <quentier/utility/Linkage.h>
-#include <quentier/utility/Macros.h>
 
 #include <QPrinter>
 #include <QStringList>
@@ -43,11 +42,18 @@ QT_FORWARD_DECLARE_CLASS(SpellChecker)
  * @brief The NoteEditor class is a widget encapsulating all the functionality
  * necessary for showing and editing notes
  */
-class QUENTIER_EXPORT NoteEditor: public QWidget
+class QUENTIER_EXPORT NoteEditor : public QWidget
 {
     Q_OBJECT
 public:
-    explicit NoteEditor(QWidget * parent = nullptr, Qt::WindowFlags flags = 0);
+    explicit NoteEditor(
+        QWidget * parent = nullptr,
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        Qt::WindowFlags flags = {});
+#else
+        Qt::WindowFlags flags = 0);
+#endif
+
     virtual ~NoteEditor() override;
 
     /**
@@ -246,7 +252,8 @@ Q_SIGNALS:
      * @brief inAppNoteLinkClicked signal is emitted when the in-app note link
      * is clicked within the note editor
      */
-    void inAppNoteLinkClicked(QString userId, QString shardId, QString noteGuid);
+    void inAppNoteLinkClicked(
+        QString userId, QString shardId, QString noteGuid);
 
     /**
      * inAppNoteLinkPasteRequested signal is emitted when the note editor
