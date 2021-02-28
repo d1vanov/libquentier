@@ -1159,7 +1159,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
     if (QuentierIsLogLevelActive(LogLevel::Trace)) {
         QNTRACE("enml", "Parsed forbidden attributes per element: ");
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(qAsConst(elementToForbiddenAttributes)))
         {
             QNTRACE("enml", "[" << it.key() << "]: " << it.value());
@@ -1817,7 +1817,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                     if (appData.fullMap.isSet()) {
                         const auto & fullMap = appData.fullMap.ref();
 
-                        for (const auto & mapIt: qevercloud::toRange(fullMap)) {
+                        for (const auto mapIt: qevercloud::toRange(fullMap)) {
                             writer.writeStartElement(
                                 QStringLiteral("application-data"));
                             writer.writeAttribute(
@@ -2037,7 +2037,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
                             if (appData.fullMap.isSet()) {
                                 const auto & fullMap = appData.fullMap.ref();
 
-                                for (const auto & mapIt:
+                                for (const auto mapIt:
                                      qevercloud::toRange(fullMap)) {
                                     writer.writeStartElement(
                                         QStringLiteral("application-data"));

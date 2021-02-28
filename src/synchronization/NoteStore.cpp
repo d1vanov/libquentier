@@ -77,7 +77,7 @@ void NoteStore::stop()
 {
     QNDEBUG("synchronization:note_store", "NoteStore::stop");
 
-    for (const auto & it: qevercloud::toRange(m_noteRequestDataById)) {
+    for (const auto it: qevercloud::toRange(m_noteRequestDataById)) {
         const auto & requestData = it.value();
         if (!requestData.m_asyncResult.isNull()) {
             QObject::disconnect(
@@ -89,7 +89,7 @@ void NoteStore::stop()
 
     m_noteRequestDataById.clear();
 
-    for (const auto & it: qevercloud::toRange(m_resourceRequestDataById)) {
+    for (const auto it: qevercloud::toRange(m_resourceRequestDataById)) {
         const auto & requestData = it.value();
         if (!requestData.m_asyncResult.isNull()) {
             QObject::disconnect(

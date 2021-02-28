@@ -313,7 +313,7 @@ bool NoteData::checkParameters(ErrorString & errorDescription) const
             }
 
             if (applicationData.fullMap.isSet()) {
-                for (const auto & it: qevercloud::toRange(
+                for (const auto it: qevercloud::toRange(
                          qAsConst(applicationData.fullMap.ref())))
                 {
                     int keySize = it.key().size();
