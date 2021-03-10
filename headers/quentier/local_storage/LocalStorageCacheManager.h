@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,8 +38,8 @@ class Tag;
 namespace quentier {
 
 class ILocalStorageCacheExpiryChecker;
-
 class LocalStorageCacheManagerPrivate;
+
 class QUENTIER_EXPORT LocalStorageCacheManager : public Printable
 {
 public:
@@ -61,7 +61,7 @@ public:
     void expungeNote(const qevercloud::Note & note);
 
     [[nodiscard]] const qevercloud::Note * findNote(
-        const QString & uid, const WhichUid whichUid) const;
+        const QString & uid, WhichUid whichUid) const;
 
     void clearAllNotes();
 
@@ -71,7 +71,7 @@ public:
     void expungeResource(const qevercloud::Resource & resource);
 
     [[nodiscard]] const qevercloud::Resource * findResource(
-        const QString & id, const WhichUid whichUid) const;
+        const QString & id, WhichUid whichUid) const;
 
     void clearAllResources();
 
@@ -81,9 +81,11 @@ public:
     void expungeNotebook(const qevercloud::Notebook & notebook);
 
     [[nodiscard]] const qevercloud::Notebook * findNotebook(
-        const QString & uid, const WhichUid whichUid) const;
+        const QString & uid, WhichUid whichUid) const;
 
-    const qevercloud::Notebook * findNotebookByName(const QString & name) const;
+    [[nodiscard]] const qevercloud::Notebook * findNotebookByName(
+        const QString & name) const;
+
     void clearAllNotebooks();
 
     // Tags cache
@@ -92,7 +94,7 @@ public:
     void expungeTag(const qevercloud::Tag & tag);
 
     [[nodiscard]] const qevercloud::Tag * findTag(
-        const QString & uid, const WhichUid whichUid) const;
+        const QString & uid, WhichUid whichUid) const;
 
     [[nodiscard]] const qevercloud::Tag * findTagByName(
         const QString & name) const;
@@ -106,7 +108,7 @@ public:
     void expungeLinkedNotebook(
         const qevercloud::LinkedNotebook & linkedNotebook);
 
-    const qevercloud::LinkedNotebook * findLinkedNotebook(
+    [[nodiscard]] const qevercloud::LinkedNotebook * findLinkedNotebook(
         const QString & guid) const;
 
     void clearAllLinkedNotebooks();
@@ -117,7 +119,7 @@ public:
     void expungeSavedSearch(const qevercloud::SavedSearch & savedSearch);
 
     [[nodiscard]] const qevercloud::SavedSearch * findSavedSearch(
-        const QString & uid, const WhichUid whichUid) const;
+        const QString & uid, WhichUid whichUid) const;
 
     [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByName(
         const QString & name) const;

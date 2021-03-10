@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,8 +35,8 @@ public:
 
     void addEntry(
         const QString & hash, const QString & decryptedText,
-        const bool rememberForSession, const QString & passphrase,
-        const QString & cipher, const size_t keyLength);
+        bool rememberForSession, const QString & passphrase,
+        const QString & cipher, size_t keyLength);
 
     void removeEntry(const QString & hash);
 

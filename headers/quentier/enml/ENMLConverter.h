@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -74,7 +74,7 @@ public:
         };
 
         friend QUENTIER_EXPORT QTextStream & operator<<(
-            QTextStream & strm, const ComparisonRule rule);
+            QTextStream & strm, ComparisonRule rule);
 
         QTextStream & print(QTextStream & strm) const override;
 
@@ -166,22 +166,22 @@ public:
         const QString & plainText);
 
     [[nodiscard]] static QString toDoCheckboxHtml(
-        const bool checked, const quint64 idNumber);
+        bool checked, quint64 idNumber);
 
     [[nodiscard]] static QString encryptedTextHtml(
         const QString & encryptedText, const QString & hint,
-        const QString & cipher, const size_t keyLength,
-        const quint64 enCryptIndex);
+        const QString & cipher, size_t keyLength,
+        quint64 enCryptIndex);
 
     [[nodiscard]] static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher, const size_t keyLength,
-        const quint64 enDecryptedIndex);
+        const QString & hint, const QString & cipher, size_t keyLength,
+        quint64 enDecryptedIndex);
 
     [[nodiscard]] static QString resourceHtml(
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
-    static void escapeString(QString & string, const bool simplify = true);
+    static void escapeString(QString & string, bool simplify = true);
 
     /**
      * @brief The EnexExportTags enum allows to specify whether export of
@@ -224,7 +224,7 @@ public:
     [[nodiscard]] bool exportNotesToEnex(
         const QList<qevercloud::Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalIds,
-        const EnexExportTags exportTagsOption, QString & enex,
+        EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version = {}) const;
 
     /**

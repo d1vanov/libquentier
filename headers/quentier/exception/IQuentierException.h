@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -39,15 +39,14 @@ class QUENTIER_EXPORT IQuentierException :
 {
 public:
     explicit IQuentierException(const ErrorString & message);
-
-    virtual ~IQuentierException() noexcept override;
+    ~IQuentierException() noexcept override;
 
     [[nodiscard]] QString localizedErrorMessage() const;
     [[nodiscard]] QString nonLocalizedErrorMessage() const;
 
-    [[nodiscard]] virtual const char * what() const noexcept override;
+    [[nodiscard]] const char * what() const noexcept override;
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 protected:
     IQuentierException(const IQuentierException & other);
@@ -56,8 +55,6 @@ protected:
     [[nodiscard]] virtual QString exceptionDisplayName() const = 0;
 
 private:
-    IQuentierException() = delete;
-
     ErrorString m_message;
     char * m_whatMessage = nullptr;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ class LocalStorageCacheManager;
 class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker : public Printable
 {
 public:
-    virtual ~ILocalStorageCacheExpiryChecker() noexcept override;
+    ~ILocalStorageCacheExpiryChecker() noexcept override;
 
     /**
      * @return              A pointer to the newly allocated copy of a
@@ -89,7 +89,7 @@ public:
      *                      ILocalStorageCacheExpiryChecker implementation
      *                      instance to the text stream
      */
-    virtual QTextStream & print(QTextStream & strm) const override = 0;
+    QTextStream & print(QTextStream & strm) const override = 0;
 
 protected:
     ILocalStorageCacheExpiryChecker(
@@ -98,7 +98,6 @@ protected:
     const LocalStorageCacheManager & m_localStorageCacheManager;
 
 private:
-    ILocalStorageCacheExpiryChecker() = delete;
     Q_DISABLE_COPY(ILocalStorageCacheExpiryChecker)
 };
 

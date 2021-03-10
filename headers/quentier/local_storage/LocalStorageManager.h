@@ -84,16 +84,16 @@ public:
     Q_DECLARE_FLAGS(StartupOptions, StartupOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const StartupOption option);
+        QTextStream & strm, StartupOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const StartupOption option);
+        QDebug & dbg, StartupOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const StartupOptions options);
+        QTextStream & strm, StartupOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const StartupOptions options);
+        QDebug & dbg, StartupOptions options);
 
     /**
      * @brief LocalStorageManager - constructor. Takes in the account for which
@@ -109,9 +109,9 @@ public:
     explicit LocalStorageManager(
         const Account & account,
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-        const StartupOptions options = {},
+        StartupOptions options = {},
 #else
-        const StartupOptions options = 0,
+        StartupOptions options = 0,
 #endif
         QObject * parent = nullptr);
 
@@ -156,16 +156,16 @@ public:
     Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListObjectsOption option);
+        QTextStream & strm, ListObjectsOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListObjectsOption option);
+        QDebug & dbg, ListObjectsOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListObjectsOptions options);
+        QTextStream & strm, ListObjectsOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListObjectsOptions options);
+        QDebug & dbg, ListObjectsOptions options);
 
     /**
      * @brief switchUser - switches to another local storage database file
@@ -186,9 +186,9 @@ public:
     void switchUser(
         const Account & account,
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-        const StartupOptions options = {});
+        StartupOptions options = {});
 #else
-        const StartupOptions options = 0);
+        StartupOptions options = 0);
 #endif
 
     /**
@@ -509,10 +509,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const OrderDirection orderDirection);
+        QTextStream & strm, OrderDirection orderDirection);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const OrderDirection orderDirection);
+        QDebug & dbg, OrderDirection orderDirection);
 
     /**
      * @brief The ListNotebooksOrder allows to specify the results ordering for
@@ -528,10 +528,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListNotebooksOrder order);
+        QTextStream & strm, ListNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListNotebooksOrder order);
+        QDebug & dbg, ListNotebooksOrder order);
 
     /**
      * @brief listAllNotebooks attempts to list all notebooks within the current
@@ -567,10 +567,10 @@ public:
      *                              the account
      */
     [[nodiscard]] QList<qevercloud::Notebook> listAllNotebooks(
-        ErrorString & errorDescription, const std::size_t limit = 0,
-        const std::size_t offset = 0,
-        const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
+        ErrorString & errorDescription, std::size_t limit = 0,
+        std::size_t offset = 0,
+        ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending,
         std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
@@ -608,11 +608,11 @@ public:
      *                              the account
      */
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooks(
-        const ListObjectsOptions flag, ErrorString & errorDescription,
-        const std::size_t limit = 0, const std::size_t offset = 0,
-        const ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
-        const std::optional<QString> linkedNotebookGuid = std::nullopt) const;
+        ListObjectsOptions flag, ErrorString & errorDescription,
+        std::size_t limit = 0, std::size_t offset = 0,
+        ListNotebooksOrder order = ListNotebooksOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending,
+        std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
      * @brief listAllSharedNotebooks attempts to list all shared notebooks
@@ -750,10 +750,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListLinkedNotebooksOrder order);
+        QTextStream & strm, ListLinkedNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListLinkedNotebooksOrder order);
+        QDebug & strm, ListLinkedNotebooksOrder order);
 
     /**
      * @brief listAllLinkedNotebooks - attempts to list all linked notebooks
@@ -779,11 +779,10 @@ public:
      *                              presence within the account
      */
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listAllLinkedNotebooks(
-        ErrorString & errorDescription, const std::size_t limit = 0,
-        const std::size_t offset = 0,
-        const ListLinkedNotebooksOrder order =
-            ListLinkedNotebooksOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending) const;
+        ErrorString & errorDescription, std::size_t limit = 0,
+        std::size_t offset = 0,
+        ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listLinkedNotebooks attempts to list linked notebooks within
@@ -813,11 +812,10 @@ public:
      *                              within the account
      */
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listLinkedNotebooks(
-        const ListObjectsOptions flag, ErrorString & errorDescription,
-        const std::size_t limit = 0, const std::size_t offset = 0,
-        const ListLinkedNotebooksOrder order =
-            ListLinkedNotebooksOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending) const;
+        ListObjectsOptions flag, ErrorString & errorDescription,
+        std::size_t limit = 0, std::size_t offset = 0,
+        ListLinkedNotebooksOrder order = ListLinkedNotebooksOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief expungeLinkedNotebook permanently deletes specified linked
@@ -852,16 +850,16 @@ public:
     Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const NoteCountOption option);
+        QTextStream & strm, NoteCountOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const NoteCountOption option);
+        QDebug & dbg, NoteCountOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const NoteCountOptions options);
+        QTextStream & strm, NoteCountOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const NoteCountOptions options);
+        QDebug & strm, NoteCountOptions options);
 
     /**
      * @brief noteCount returns the number of notes currently
@@ -877,7 +875,7 @@ public:
      */
     [[nodiscard]] int noteCount(
         ErrorString & errorDescription,
-        const NoteCountOptions options =
+        NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
@@ -898,7 +896,7 @@ public:
      */
     [[nodiscard]] int noteCountPerNotebook(
         const qevercloud::Notebook & notebook, ErrorString & errorDescription,
-        const NoteCountOptions options =
+        NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
@@ -919,7 +917,7 @@ public:
      */
     [[nodiscard]] int noteCountPerTag(
         const qevercloud::Tag & tag, ErrorString & errorDescription,
-        const NoteCountOptions options =
+        NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
@@ -942,7 +940,7 @@ public:
     [[nodiscard]] bool noteCountsPerAllTags(
         QHash<QString, int> & noteCountsPerTagLocalId,
         ErrorString & errorDescription,
-        const NoteCountOptions options =
+        NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
@@ -966,7 +964,7 @@ public:
     [[nodiscard]] int noteCountPerNotebooksAndTags(
         const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
         ErrorString & errorDescription,
-        const NoteCountOptions options =
+        NoteCountOptions options =
             NoteCountOption::IncludeNonDeletedNotes) const;
 
     /**
@@ -1021,16 +1019,16 @@ public:
     Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const UpdateNoteOption option);
+        QTextStream & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const UpdateNoteOption option);
+        QDebug & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const UpdateNoteOptions options);
+        QTextStream & strm, UpdateNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const UpdateNoteOptions options);
+        QDebug & strm, UpdateNoteOptions options);
 
     /**
      * @brief updateNote updates passed in Note in the local storage database.
@@ -1074,7 +1072,7 @@ public:
      *                              false otherwise
      */
     [[nodiscard]] bool updateNote(
-        qevercloud::Note & note, const UpdateNoteOptions options,
+        qevercloud::Note & note, UpdateNoteOptions options,
         ErrorString & errorDescription);
 
     /**
@@ -1107,16 +1105,16 @@ public:
     Q_DECLARE_FLAGS(GetNoteOptions, GetNoteOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const GetNoteOption option);
+        QTextStream & strm, GetNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const GetNoteOption option);
+        QDebug & dbg, GetNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const GetNoteOptions options);
+        QTextStream & strm, GetNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const GetNoteOptions options);
+        QDebug & strm, GetNoteOptions options);
 
     /**
      * @brief findNote - attempts to find note in the local storage database
@@ -1128,7 +1126,7 @@ public:
      * @return true if note was found successfully, false otherwise
      */
     [[nodiscard]] bool findNote(
-        qevercloud::Note & note, const GetNoteOptions options,
+        qevercloud::Note & note, GetNoteOptions options,
         ErrorString & errorDescription) const;
 
     /**
@@ -1151,10 +1149,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListNotesOrder order);
+        QTextStream & strm, ListNotesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListNotesOrder order);
+        QDebug & strm, ListNotesOrder order);
 
     /**
      * @brief listNotesPerNotebook attempts to list notes per given notebook
@@ -1185,10 +1183,10 @@ public:
      *                              in the given notebook
      */
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebook(
-        const qevercloud::Notebook & notebook, const GetNoteOptions options,
+        const qevercloud::Notebook & notebook, GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1221,10 +1219,10 @@ public:
      *                              the given tag presence
      */
     [[nodiscard]] QList<qevercloud::Note> listNotesPerTag(
-        const qevercloud::Tag & tag, const GetNoteOptions options,
+        const qevercloud::Tag & tag, GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1261,9 +1259,9 @@ public:
      */
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebooksAndTags(
         const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
-        const GetNoteOptions options, ErrorString & errorDescription,
+        GetNoteOptions options, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1300,10 +1298,10 @@ public:
      *                              corresponding to given local ids presence
      */
     [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIds(
-        const QStringList & noteLocalIds, const GetNoteOptions options,
+        const QStringList & noteLocalIds, GetNoteOptions options,
         ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListNotesOrder & order = ListNotesOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1344,11 +1342,11 @@ public:
      *                              the filter exist within the account
      */
     [[nodiscard]] QList<qevercloud::Note> listNotes(
-        const ListObjectsOptions flag, const GetNoteOptions options,
-        ErrorString & errorDescription, const std::size_t limit = 0,
-        const std::size_t offset = 0,
-        const ListNotesOrder order = ListNotesOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
+        ListObjectsOptions flag, GetNoteOptions options,
+        ErrorString & errorDescription, std::size_t limit = 0,
+        std::size_t offset = 0,
+        ListNotesOrder order = ListNotesOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending,
         std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
@@ -1382,7 +1380,7 @@ public:
      *                              presence for the given NoteSearchQuery
      */
     [[nodiscard]] NoteList findNotesWithSearchQuery(
-        const NoteSearchQuery & noteSearchQuery, const GetNoteOptions options,
+        const NoteSearchQuery & noteSearchQuery, GetNoteOptions options,
         ErrorString & errorDescription) const;
 
     /**
@@ -1491,10 +1489,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListTagsOrder order);
+        QTextStream & strm, ListTagsOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListTagsOrder order);
+        QDebug & strm, ListTagsOrder order);
 
     /**
      * @brief listAllTagsPerNote lists all tags per given note
@@ -1527,7 +1525,7 @@ public:
     [[nodiscard]] QList<qevercloud::Tag> listAllTagsPerNote(
         const qevercloud::Note & note, ErrorString & errorDescription,
         const ListObjectsOptions & flag = ListObjectsOption::ListAll,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
         const OrderDirection & orderDirection =
             OrderDirection::Ascending) const;
@@ -1563,10 +1561,10 @@ public:
      * @return                      The list of found tags within the account
      */
     [[nodiscard]] QList<qevercloud::Tag> listAllTags(
-        ErrorString & errorDescription, const std::size_t limit = 0,
-        const std::size_t offset = 0,
-        const ListTagsOrder order = ListTagsOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
+        ErrorString & errorDescription, std::size_t limit = 0,
+        std::size_t offset = 0,
+        ListTagsOrder order = ListTagsOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending,
         std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
@@ -1602,10 +1600,10 @@ public:
      *                              the filter exist within the account
      */
     [[nodiscard]] QList<qevercloud::Tag> listTags(
-        const ListObjectsOptions flag, ErrorString & errorDescription,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        ListObjectsOptions flag, ErrorString & errorDescription,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
+        OrderDirection orderDirection = OrderDirection::Ascending,
         std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
@@ -1647,10 +1645,10 @@ public:
      *                              the account
      */
     [[nodiscard]] QList<std::pair<qevercloud::Tag, QStringList>> listTagsWithNoteLocalIds(
-        const ListObjectsOptions flag, ErrorString & errorDescription,
-        const std::size_t limit = 0, const std::size_t offset = 0,
+        ListObjectsOptions flag, ErrorString & errorDescription,
+        std::size_t limit = 0, std::size_t offset = 0,
         const ListTagsOrder & order = ListTagsOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending,
+        OrderDirection orderDirection = OrderDirection::Ascending,
         std::optional<QString> linkedNotebookGuid = std::nullopt) const;
 
     /**
@@ -1770,16 +1768,16 @@ public:
     Q_DECLARE_FLAGS(GetResourceOptions, GetResourceOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const GetResourceOption option);
+        QTextStream & strm, GetResourceOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const GetResourceOption option);
+        QDebug & strm, GetResourceOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const GetResourceOptions options);
+        QTextStream & strm, GetResourceOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const GetResourceOptions options);
+        QDebug & strm, GetResourceOptions options);
 
     /**
      * @brief findEnResource method attempts to find resource in the local
@@ -1800,7 +1798,7 @@ public:
      *                              false otherwise
      */
     [[nodiscard]] bool findEnResource(
-        qevercloud::Resource & resource, const GetResourceOptions options,
+        qevercloud::Resource & resource, GetResourceOptions options,
         ErrorString & errorDescription) const;
 
     /**
@@ -1904,10 +1902,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListSavedSearchesOrder order);
+        QTextStream & strm, ListSavedSearchesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListSavedSearchesOrder order);
+        QDebug & strm, ListSavedSearchesOrder order);
 
     /**
      * @brief listAllSavedSearches lists all saved searches within the account.
@@ -1932,10 +1930,10 @@ public:
      *                                  searches within the account
      */
     [[nodiscard]] QList<qevercloud::SavedSearch> listAllSavedSearches(
-        ErrorString & errorDescription, const std::size_t limit = 0,
-        const std::size_t offset = 0,
-        const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending) const;
+        ErrorString & errorDescription, std::size_t limit = 0,
+        std::size_t offset = 0,
+        ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief listSavedSearches attempts to list saved searches within
@@ -1967,10 +1965,10 @@ public:
      *                                  within the account
      */
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearches(
-        const ListObjectsOptions flag, ErrorString & errorDescription,
-        const std::size_t limit = 0, const std::size_t offset = 0,
-        const ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
-        const OrderDirection orderDirection = OrderDirection::Ascending) const;
+        ListObjectsOptions flag, ErrorString & errorDescription,
+        std::size_t limit = 0, std::size_t offset = 0,
+        ListSavedSearchesOrder order = ListSavedSearchesOrder::NoOrder,
+        OrderDirection orderDirection = OrderDirection::Ascending) const;
 
     /**
      * @brief expungeSavedSearch permanently deletes saved search from the local

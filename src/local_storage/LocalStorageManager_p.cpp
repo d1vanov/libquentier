@@ -334,7 +334,7 @@ bool LocalStorageManagerPrivate::findUser(
         ++counter;
     }
 
-    if (!counter) {
+    if (counter == 0) {
         QNDEBUG("local_storage", errorDescription);
         return false;
     }
@@ -630,12 +630,11 @@ void LocalStorageManagerPrivate::switchUser(
             error.details() = m_databaseFilePath;
             throw DatabaseLockedException(error);
         }
-        else {
-            QNINFO(
-                "local_storage",
-                "Local storage database file "
-                    << m_databaseFilePath << " is locked but nobody cares");
-        }
+
+        QNINFO(
+            "local_storage",
+            "Local storage database file "
+                << m_databaseFilePath << " is locked but nobody cares");
     }
 #endif // Q_OS_WIN
 
@@ -4900,7 +4899,7 @@ bool LocalStorageManagerPrivate::compactLocalStorage(
 }
 
 void LocalStorageManagerPrivate::processPostTransactionException(
-    ErrorString message, QSqlError error)
+    ErrorString message, const QSqlError & error)
 {
     QNERROR("local_storage", message << ": " << error);
     message.details() += error.text();
@@ -7909,20 +7908,20 @@ bool LocalStorageManagerPrivate::getNoteLocalIdForGuid(
 }
 
 bool LocalStorageManagerPrivate::getNoteGuidForLocalId(
-    const QString & noteLocalUid, QString & noteGuid,
+    const QString & noteLocalId, QString & noteGuid,
     ErrorString & errorDescription) const
 {
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::getNoteGuidForLocalId: note local "
-            << "uid = " << noteLocalUid);
+            << "id = " << noteLocalId);
 
     const ErrorString errorPrefix(
         QT_TR_NOOP("can't get note guid for local id"));
 
     const QString queryString =
         QString::fromUtf8("SELECT guid FROM Notes WHERE localUid='%1'")
-            .arg(sqlEscapeString(noteLocalUid));
+            .arg(sqlEscapeString(noteLocalId));
 
     QSqlQuery query(m_sqlDatabase);
     const bool res = query.exec(queryString);
@@ -9217,7 +9216,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceTag(
     const ErrorString errorPrefix(
         QT_TR_NOOP("can't insert or replace tag in the local storage"));
 
-    QString localId = tag.localId();
+    const QString & localId = tag.localId();
 
     bool res = checkAndPrepareInsertOrReplaceTagQuery();
     QSqlQuery & query = m_insertOrReplaceTagQuery;
@@ -9412,11 +9411,11 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
 
     std::unique_ptr<Transaction> pTransaction;
     if (useSeparateTransaction) {
-        pTransaction.reset(new Transaction(
-            m_sqlDatabase, *this, Transaction::Type::Exclusive));
+        pTransaction = std::make_unique<Transaction>(
+            m_sqlDatabase, *this, Transaction::Type::Exclusive);
     }
 
-    const QString resourceLocalId = resource.localId();
+    const QString & resourceLocalId = resource.localId();
     const QString noteLocalId = resource.noteLocalId();
 
     if (!insertOrReplaceResourceMetadata(
@@ -9553,7 +9552,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResource(
 bool LocalStorageManagerPrivate::writeResourceBinaryDataToFiles(
     const qevercloud::Resource & resource, ErrorString & errorDescription)
 {
-    const QString resourceLocalId = resource.localId();
+    const QString & resourceLocalId = resource.localId();
 
     QNDEBUG(
         "local_storage",
@@ -11051,15 +11050,15 @@ bool LocalStorageManagerPrivate::readResourceDataFromFiles(
 
 LocalStorageManagerPrivate::ReadResourceBinaryDataFromFileStatus
 LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
-    const QString & resourceLocalUid, const QString & noteLocalUid,
+    const QString & resourceLocalId, const QString & noteLocalId,
     const bool isAlternateDataBody, QByteArray & dataBody,
     ErrorString & errorDescription) const
 {
     QNDEBUG(
         "local_storage",
         "LocalStorageManagerPrivate::readResourceBinaryDataFromFile: "
-            << "resource local id = " << resourceLocalUid
-            << ", note local id = " << noteLocalUid << ", reading "
+            << "resource local id = " << resourceLocalId
+            << ", note local id = " << noteLocalId << ", reading "
             << (isAlternateDataBody ? "alternate" : "") << " data body");
 
     QString storagePath = accountPersistentStoragePath(m_currentAccount);
@@ -11070,7 +11069,7 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
         storagePath += QStringLiteral("/Resources/data/");
     }
 
-    storagePath += noteLocalUid + QStringLiteral("/") + resourceLocalUid +
+    storagePath += noteLocalId + QStringLiteral("/") + resourceLocalId +
         QStringLiteral(".dat");
 
     QFile resourceDataFile(storagePath);
@@ -11140,9 +11139,9 @@ LocalStorageManagerPrivate::readResourceBinaryDataFromFile(
                 accountPersistentStoragePath(m_currentAccount);
 
             resourceDataStoragePath += QStringLiteral("/Resources/data/");
-            resourceDataStoragePath += noteLocalUid;
+            resourceDataStoragePath += noteLocalId;
             resourceDataStoragePath += QStringLiteral("/");
-            resourceDataStoragePath += resourceLocalUid;
+            resourceDataStoragePath += resourceLocalId;
             resourceDataStoragePath += QStringLiteral(".dat");
 
             const QFileInfo newResourceDataFileInfo(
@@ -12742,7 +12741,7 @@ bool LocalStorageManagerPrivate::fillNotebookFromSqlRecord(
                         qevercloud::NotebookRestrictions{});                   \
                 }                                                              \
                 notebook.mutableRestrictions()->setter(                        \
-                    qvariant_cast<int>(value) > 0 ? true : false);             \
+                    qvariant_cast<int>(value) > 0);                            \
             }                                                                  \
         }                                                                      \
     }
@@ -15096,24 +15095,23 @@ QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions(
 template <>
 QString LocalStorageManagerPrivate::listObjectsOptionsToSqlQueryConditions<
     qevercloud::LinkedNotebook>(
-    const ListObjectsOptions & flag, ErrorString & errorDescription) const
+    const ListObjectsOptions & options, ErrorString & errorDescription) const
 {
     QString result;
     errorDescription.clear();
 
     using ListObjectsOption = ListObjectsOption;
 
-    bool listAll = flag.testFlag(ListObjectsOption::ListAll);
-    bool listDirty = flag.testFlag(ListObjectsOption::ListDirty);
-    bool listNonDirty = flag.testFlag(ListObjectsOption::ListNonDirty);
+    bool listAll = options.testFlag(ListObjectsOption::ListAll);
+    bool listDirty = options.testFlag(ListObjectsOption::ListDirty);
+    bool listNonDirty = options.testFlag(ListObjectsOption::ListNonDirty);
 
     if (!listAll && !listDirty && !listNonDirty) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "LocalStorageManagerPrivate",
-            "Can't list linked notebooks "
-            "by filter: detected incorrect "
-            "filter flag"));
-        errorDescription.details() = QString::number(static_cast<int>(flag));
+            "Can't list linked notebooks by filter: detected incorrect "
+            "filter options"));
+        errorDescription.details() = QString::number(static_cast<int>(options));
         return result;
     }
 
@@ -15360,7 +15358,7 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
+bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery( // NOLINT
     QSqlQuery query, QList<qevercloud::Note> & notes,
     ErrorString & errorDescription) const
 {
@@ -15435,7 +15433,8 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery<qevercloud::Notebook>(
+bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery< // NOLINT
+    qevercloud::Notebook>(
     QSqlQuery query, QList<qevercloud::Notebook> & notebooks,
     ErrorString & errorDescription) const
 {
@@ -15498,7 +15497,7 @@ bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery<qevercloud::Notebook>(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<
+bool LocalStorageManagerPrivate::fillObjectFromSqlRecord< // NOLINT
     qevercloud::SavedSearch>(
     const QSqlRecord & rec, qevercloud::SavedSearch & search,
     ErrorString & errorDescription) const
@@ -15507,7 +15506,8 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Tag>(
+bool LocalStorageManagerPrivate::fillObjectFromSqlRecord< // NOLINT
+    qevercloud::Tag>(
     const QSqlRecord & rec, qevercloud::Tag & tag,
     ErrorString & errorDescription) const
 {
@@ -15515,7 +15515,7 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Tag>(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<
+bool LocalStorageManagerPrivate::fillObjectFromSqlRecord< // NOLINT
     qevercloud::LinkedNotebook>(
     const QSqlRecord & rec, qevercloud::LinkedNotebook & linkedNotebook,
     ErrorString & errorDescription) const
@@ -15525,7 +15525,8 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Notebook>(
+bool LocalStorageManagerPrivate::fillObjectFromSqlRecord< // NOLINT
+    qevercloud::Notebook>(
     const QSqlRecord & rec, qevercloud::Notebook & notebook,
     ErrorString & errorDescription) const
 {
@@ -15533,7 +15534,8 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Notebook>(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Note>(
+bool LocalStorageManagerPrivate::fillObjectFromSqlRecord< // NOLINT
+    qevercloud::Note>(
     const QSqlRecord & rec, qevercloud::Note & note,
     ErrorString & errorDescription) const
 {
@@ -15541,7 +15543,7 @@ bool LocalStorageManagerPrivate::fillObjectFromSqlRecord<qevercloud::Note>(
 }
 
 template <>
-bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery(
+bool LocalStorageManagerPrivate::fillObjectsFromSqlQuery( // NOLINT
     QSqlQuery query,
     QList<std::pair<qevercloud::Tag, QStringList>> & tagsWithNoteLocalIds,
     ErrorString & errorDescription) const
