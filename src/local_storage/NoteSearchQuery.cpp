@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,13 +26,14 @@ NoteSearchQuery::NoteSearchQuery() : d(new NoteSearchQuery::Data) {}
 
 NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & /* other */) = default;
 
-NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && /* other */) = default;
+NoteSearchQuery::NoteSearchQuery(
+    NoteSearchQuery && /* other */) noexcept = default;
 
 NoteSearchQuery & NoteSearchQuery::operator=(
     const NoteSearchQuery & /* other */) = default;
 
-NoteSearchQuery & NoteSearchQuery::operator=(NoteSearchQuery && /* other */) =
-    default;
+NoteSearchQuery & NoteSearchQuery::operator=(
+    NoteSearchQuery && /* other */) noexcept = default;
 
 NoteSearchQuery::~NoteSearchQuery() noexcept = default;
 

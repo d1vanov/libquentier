@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,27 +28,27 @@ namespace quentier {
 [[nodiscard]] int QUENTIER_EXPORT genericMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 [[nodiscard]] int QUENTIER_EXPORT informationMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 [[nodiscard]] int QUENTIER_EXPORT warningMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 [[nodiscard]] int QUENTIER_EXPORT criticalMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok);
 
 [[nodiscard]] int QUENTIER_EXPORT questionMessageBox(
     QWidget * parent, const QString & title, const QString & briefText,
     const QString & detailedText = {},
-    const QMessageBox::StandardButtons standardButtons = QMessageBox::Ok |
+    QMessageBox::StandardButtons standardButtons = QMessageBox::Ok |
         QMessageBox::Cancel);
 
 /**

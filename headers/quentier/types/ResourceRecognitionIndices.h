@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndicesData)
+class ResourceRecognitionIndicesData;
 
 class QUENTIER_EXPORT ResourceRecognitionIndices : public Printable
 {
@@ -41,26 +41,26 @@ public:
     ResourceRecognitionIndices & operator=(
         const ResourceRecognitionIndices & other);
 
-    virtual ~ResourceRecognitionIndices() override;
+    ~ResourceRecognitionIndices() override;
 
-    bool isNull() const;
-    bool isValid() const;
+    [[nodiscard]] bool isNull() const;
+    [[nodiscard]] bool isValid() const;
 
-    QString objectId() const;
-    QString objectType() const;
-    QString recoType() const;
-    QString engineVersion() const;
-    QString docType() const;
-    QString lang() const;
+    [[nodiscard]] QString objectId() const;
+    [[nodiscard]] QString objectType() const;
+    [[nodiscard]] QString recoType() const;
+    [[nodiscard]] QString engineVersion() const;
+    [[nodiscard]] QString docType() const;
+    [[nodiscard]] QString lang() const;
 
-    int objectHeight() const;
-    int objectWidth() const;
+    [[nodiscard]] int objectHeight() const;
+    [[nodiscard]] int objectWidth() const;
 
-    QVector<ResourceRecognitionIndexItem> items() const;
+    [[nodiscard]] QVector<ResourceRecognitionIndexItem> items() const;
 
     bool setData(const QByteArray & rawRecognitionIndicesData);
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ResourceRecognitionIndicesData> d;

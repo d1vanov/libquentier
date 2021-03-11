@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,7 +24,7 @@
 
 // Compatibility with boost parts which require to take a hash of QString
 
-inline std::size_t hash_value(QString x) noexcept
+inline std::size_t hash_value(const QString & x) noexcept
 {
     return qHash(x);
 }

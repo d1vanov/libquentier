@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -109,7 +109,7 @@ bool DecryptedTextManagerPrivate::findDecryptedTextByEncryptedText(
         }
     }
 
-    auto & data = dataIt.value();
+    const auto & data = dataIt.value();
     decryptedText = data.m_decryptedText;
     rememberForSession = data.m_rememberForSession;
     QNTRACE("enml", "Found decrypted text");
@@ -123,7 +123,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     QNDEBUG(
         "enml",
         "DecryptedTextManagerPrivate::modifyDecryptedText: "
-            << "original decrypted text = " << originalEncryptedText);
+            << "original encrypted text = " << originalEncryptedText);
 
     bool foundInDataHash = true;
     auto it = m_dataHash.find(originalEncryptedText);
@@ -141,7 +141,7 @@ bool DecryptedTextManagerPrivate::modifyDecryptedText(
     const QString & passphrase = entry.m_passphrase;
 
     ErrorString errorDescription;
-    bool res = m_encryptionManager.encrypt(
+    const bool res = m_encryptionManager.encrypt(
         newDecryptedText, passphrase, entry.m_cipher, entry.m_keyLength,
         newEncryptedText, errorDescription);
 

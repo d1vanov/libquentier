@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -77,7 +77,7 @@ public:
      */
     ApplicationSettings(
         const Account & account, const char * settingsName,
-        const int settingsNameSize = -1);
+        int settingsNameSize = -1);
 
     /**
      * Destructor
@@ -138,7 +138,7 @@ public:
      * @param size      Size of the prefix sring. If negative (the default),
      *                  the prefix size is taken to be stren(prefix).
      */
-    void beginGroup(const char * prefix, const int size = -1);
+    void beginGroup(const char * prefix, int size = -1);
 
     /**
      * Adds prefix to the current group and starts reading from an array.
@@ -159,7 +159,7 @@ public:
      * @param size      Size of the prefix sring. If negative (the default),
      *                  the prefix size is taken to be stren(prefix)
      */
-    [[nodiscard]] int beginReadArray(const char * prefix, const int size = -1);
+    [[nodiscard]] int beginReadArray(const char * prefix, int size = -1);
 
     /**
      * Adds prefix to the current group and starts writing an array of size
@@ -171,7 +171,7 @@ public:
      *                  (the default), it is automatically determined based on
      *                  the indexes of the entries written.
      */
-    void beginWriteArray(const QString & prefix, const int arraySize = -1);
+    void beginWriteArray(const QString & prefix, int arraySize = -1);
 
     /**
      * Adds prefix to the current group and starts writing an array of size
@@ -188,8 +188,7 @@ public:
      *                      the prefix size is taken to be stren(prefix)
      */
     void beginWriteArray(
-        const char * prefix, const int arraySize = -1,
-        const int prefixSize = -1);
+        const char * prefix, int arraySize = -1, int prefixSize = -1);
 
     /**
      * The call is redirected to QSettings::contains. It is required in
@@ -211,7 +210,7 @@ public:
      * @return          True if there exists a setting called key; false
      *                  otherwise
      */
-    [[nodiscard]] bool contains(const char * key, const int size = -1) const;
+    [[nodiscard]] bool contains(const char * key, int size = -1) const;
 
     /**
      * Removes the setting key and any sub-settings of key.
@@ -231,7 +230,7 @@ public:
      * @param size      Size of the key sring. If negative (the default),
      *                  the key size is taken to be stren(key).
      */
-    void remove(const char * key, const int size = -1);
+    void remove(const char * key, int size = -1);
 
     /**
      * Sets the value of setting.
@@ -254,7 +253,7 @@ public:
      *                  the key size is taken to be strlen(key).
      */
     void setValue(
-        const char * key, const QVariant & value, const int keySize = -1);
+        const char * key, const QVariant & value, int keySize = -1);
 
     /**
      * Fetches the value of setting.
@@ -285,7 +284,7 @@ public:
      */
     [[nodiscard]] QVariant value(
         const char * key, const QVariant & defaultValue = {},
-        const int keySize = -1) const;
+        int keySize = -1) const;
 
 public:
     QTextStream & print(QTextStream & strm) const override;

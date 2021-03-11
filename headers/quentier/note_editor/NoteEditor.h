@@ -52,7 +52,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         Qt::WindowFlags flags = {});
 #else
-        Qt::WindowFlags flags = 0);
+        Qt::WindowFlags flags = 0); // NOLINT
 #endif
 
     ~NoteEditor() noexcept override;
@@ -383,16 +383,16 @@ public Q_SLOTS:
     void alignRight();
     void alignFull();
 
-    void findNext(const QString & text, const bool matchCase) const;
-    void findPrevious(const QString & text, const bool matchCase) const;
+    void findNext(const QString & text, bool matchCase) const;
+    void findPrevious(const QString & text, bool matchCase) const;
 
     void replace(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase);
+        bool matchCase);
 
     void replaceAll(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase);
+        bool matchCase);
 
     void insertToDoCheckbox();
 
@@ -400,10 +400,10 @@ public Q_SLOTS:
         const QString & userId, const QString & shardId,
         const QString & noteGuid, const QString & linkText);
 
-    void setSpellcheck(const bool enabled);
+    void setSpellcheck(bool enabled);
 
     void setFont(const QFont & font);
-    void setFontHeight(const int height);
+    void setFontHeight(int height);
     void setFontColor(const QColor & color);
     void setBackgroundColor(const QColor & color);
 
@@ -445,10 +445,10 @@ public Q_SLOTS:
     void insertTableDialog();
 
     void insertFixedWidthTable(
-        const int rows, const int columns, const int widthInPixels);
+        int rows, int columns, int widthInPixels);
 
     void insertRelativeWidthTable(
-        const int rows, const int columns, const double relativeWidth);
+        int rows, int columns, double relativeWidth);
 
     void insertTableRow();
     void insertTableColumn();
@@ -473,8 +473,8 @@ public Q_SLOTS:
     void onNoteLoadCancelled();
 
 protected:
-    virtual void dragMoveEvent(QDragMoveEvent * pEvent) override;
-    virtual void dropEvent(QDropEvent * pEvent) override;
+    void dragMoveEvent(QDragMoveEvent * pEvent) override;
+    void dropEvent(QDropEvent * pEvent) override;
 
 private:
     INoteEditorBackend * m_backend;

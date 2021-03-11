@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -117,7 +117,7 @@ public:
      *                      the default one (if present as well)
      */
     [[nodiscard]] QKeySequence shortcut(
-        const int key, const Account & account,
+        int key, const Account & account,
         const QString & context = {}) const;
 
     /**
@@ -134,7 +134,7 @@ public:
      *                      otherwise empty key sequence
      */
     [[nodiscard]] QKeySequence defaultShortcut(
-        const int key, const Account & account,
+        int key, const Account & account,
         const QString & context = {}) const;
 
     /**
@@ -150,7 +150,7 @@ public:
      *                      present, otherwise empty key sequence
      */
     [[nodiscard]] QKeySequence userShortcut(
-        const int key, const Account & account,
+        int key, const Account & account,
         const QString & context = {}) const;
 
     /**

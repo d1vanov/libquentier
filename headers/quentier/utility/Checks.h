@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,7 +43,7 @@ namespace quentier {
  *                              is valid, false otherwise
  */
 [[nodiscard]] bool QUENTIER_EXPORT checkUpdateSequenceNumber(
-    const int32_t updateSequenceNumber);
+    qint32 updateSequenceNumber);
 
 } // namespace quentier
 

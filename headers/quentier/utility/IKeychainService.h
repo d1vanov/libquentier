@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,7 +28,7 @@
 
 #include <memory>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+class QDebug;
 
 namespace quentier {
 
@@ -44,7 +44,7 @@ protected:
     explicit IKeychainService(QObject * parent = nullptr);
 
 public:
-    virtual ~IKeychainService() noexcept = default;
+    ~IKeychainService() noexcept override = default;
 
     /**
      * Error codes for results of operations with the keychain service
@@ -86,9 +86,9 @@ public:
     };
 
     friend QTextStream & operator<<(
-        QTextStream & strm, const ErrorCode errorCode);
+        QTextStream & strm, ErrorCode errorCode);
 
-    friend QDebug & operator<<(QDebug & dbg, const ErrorCode errorCode);
+    friend QDebug & operator<<(QDebug & dbg, ErrorCode errorCode);
 
 public:
     /**

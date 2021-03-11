@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,8 +24,8 @@
 
 #include <QEventLoop>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
-QT_FORWARD_DECLARE_CLASS(QTextStream)
+class QDebug;
+class QTextStream;
 
 namespace quentier {
 
@@ -42,10 +42,8 @@ public:
         Timeout
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const ExitStatus status);
-
-    friend QTextStream & operator<<(
-        QTextStream & strm, const ExitStatus status);
+    friend QDebug & operator<<(QDebug & dbg, ExitStatus status);
+    friend QTextStream & operator<<(QTextStream & strm, ExitStatus status);
 
     [[nodiscard]] ExitStatus exitStatus() const;
     [[nodiscard]] const ErrorString & errorDescription() const;

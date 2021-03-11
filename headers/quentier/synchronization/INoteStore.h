@@ -321,7 +321,7 @@ public:
      *                          qevercloud::EDAMErrorCode enumeration instead
      */
     [[nodiscard]] virtual qint32 getSyncChunk(
-        const qint32 afterUSN, const qint32 maxEntries,
+        qint32 afterUSN, qint32 maxEntries,
         const qevercloud::SyncChunkFilter & filter,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;

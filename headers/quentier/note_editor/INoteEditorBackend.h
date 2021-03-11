@@ -92,20 +92,20 @@ public:
     virtual void alignFull() = 0;
 
     [[nodiscard]] virtual QString selectedText() const = 0;
-    virtual bool hasSelection() const = 0;
+    [[nodiscard]] virtual bool hasSelection() const = 0;
 
-    virtual void findNext(const QString & text, const bool matchCase) const = 0;
+    virtual void findNext(const QString & text, bool matchCase) const = 0;
 
     virtual void findPrevious(
-        const QString & text, const bool matchCase) const = 0;
+        const QString & text, bool matchCase) const = 0;
 
     virtual void replace(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase) = 0;
+        bool matchCase) = 0;
 
     virtual void replaceAll(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase) = 0;
+        bool matchCase) = 0;
 
     virtual void insertToDoCheckbox() = 0;
 
@@ -113,11 +113,11 @@ public:
         const QString & userId, const QString & shardId,
         const QString & noteGuid, const QString & linkText) = 0;
 
-    virtual void setSpellcheck(const bool enabled) = 0;
-    virtual bool spellCheckEnabled() const = 0;
+    virtual void setSpellcheck(bool enabled) = 0;
+    [[nodiscard]] virtual bool spellCheckEnabled() const = 0;
 
     virtual void setFont(const QFont & font) = 0;
-    virtual void setFontHeight(const int height) = 0;
+    virtual void setFontHeight(int height) = 0;
     virtual void setFontColor(const QColor & color) = 0;
     virtual void setBackgroundColor(const QColor & color) = 0;
 
@@ -141,10 +141,10 @@ public:
     virtual void insertTableDialog() = 0;
 
     virtual void insertFixedWidthTable(
-        const int rows, const int columns, const int widthInPixels) = 0;
+        int rows, int columns, int widthInPixels) = 0;
 
     virtual void insertRelativeWidthTable(
-        const int rows, const int columns, const double relativeWidth) = 0;
+        int rows, int columns, double relativeWidth) = 0;
 
     virtual void insertTableRow() = 0;
     virtual void insertTableColumn() = 0;
@@ -165,21 +165,21 @@ public:
 
     enum class Rotation
     {
-        Clockwise = 0,
+        Clockwise,
         Counterclockwise
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const Rotation rotation);
+        QTextStream & strm, Rotation rotation);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const Rotation rotation);
+        QDebug & dbg, Rotation rotation);
 
     virtual void rotateImageAttachment(
-        const QByteArray & resourceHash, const Rotation rotationDirection) = 0;
+        const QByteArray & resourceHash, Rotation rotationDirection) = 0;
 
     virtual void rotateImageAttachmentUnderCursor(
-        const Rotation rotationDirection) = 0;
+        Rotation rotationDirection) = 0;
 
     virtual void encryptSelectedText() = 0;
 
@@ -216,8 +216,8 @@ public:
 
     virtual void clear() = 0;
 
-    virtual bool isModified() const = 0;
-    virtual bool isEditorPageModified() const = 0;
+    [[nodiscard]] virtual bool isModified() const = 0;
+    [[nodiscard]] virtual bool isEditorPageModified() const = 0;
 
     virtual void setFocusToEditor() = 0;
 

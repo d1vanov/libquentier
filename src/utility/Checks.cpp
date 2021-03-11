@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@ namespace quentier {
 
 bool checkGuid(const QString & guid)
 {
-    const qint32 guidSize = static_cast<qint32>(guid.size());
+    const auto guidSize = static_cast<qint32>(guid.size());
     if (guidSize < qevercloud::EDAM_GUID_LEN_MIN) {
         return false;
     }
@@ -38,7 +38,7 @@ bool checkGuid(const QString & guid)
     return true;
 }
 
-bool checkUpdateSequenceNumber(const int32_t updateSequenceNumber)
+bool checkUpdateSequenceNumber(const qint32 updateSequenceNumber)
 {
     return !(
         (updateSequenceNumber < 0) ||

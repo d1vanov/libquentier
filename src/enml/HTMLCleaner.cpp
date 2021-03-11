@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,8 +38,8 @@ CLANG_SUPPRESS_WARNING(-Wignored-qualifiers)
 
 RESTORE_WARNINGS
 
-#include <errno.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdio>
 
 namespace quentier {
 
@@ -56,7 +56,7 @@ public:
     }
 
     [[nodiscard]] bool convertHtml(
-        const QString & html, const TidyOptionId outputFormat, QString & output,
+        const QString & html, TidyOptionId outputFormat, QString & output,
         QString & errorDescription);
 
     TidyBuffer m_tidyOutput;

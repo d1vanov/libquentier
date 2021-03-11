@@ -34,8 +34,11 @@ public:
     Data() = default;
     Data(const NoteSearchQuery::Data & other) = default;
 
-    NoteSearchQuery::Data & operator=(const NoteSearchQuery::Data & other) = delete;
-    NoteSearchQuery::Data & operator=(NoteSearchQuery::Data && other) = delete;
+    [[nodiscard]] NoteSearchQuery::Data & operator=(
+        const NoteSearchQuery::Data & other) = delete;
+
+    [[nodiscard]] NoteSearchQuery::Data & operator=(
+        NoteSearchQuery::Data && other) = delete;
 
     ~Data() noexcept override = default;
 

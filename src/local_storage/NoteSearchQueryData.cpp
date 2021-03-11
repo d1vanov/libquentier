@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -133,7 +133,8 @@ bool NoteSearchQuery::Data::parseQueryString(
             "it should be the first term in the search"));
         return false;
     }
-    else if (notebookScopeModifierPosition == 0) {
+
+    if (notebookScopeModifierPosition == 0) {
         m_notebookModifier = words[notebookScopeModifierPosition];
         m_notebookModifier =
             m_notebookModifier.remove(QStringLiteral("notebook:"));
@@ -143,12 +144,7 @@ bool NoteSearchQuery::Data::parseQueryString(
     // NOTE: "any:" scope modifier is not position dependent and affects
     // the whole query
     int anyScopeModifierPosition = words.indexOf(QStringLiteral("any:"));
-    if (anyScopeModifierPosition >= 0) {
-        m_hasAnyModifier = true;
-    }
-    else {
-        m_hasAnyModifier = false;
-    }
+    m_hasAnyModifier = (anyScopeModifierPosition >= 0);
 
     bool res = convertAbsoluteAndRelativeDateTimesToTimestamps(words, error);
     if (!res) {
@@ -751,9 +747,9 @@ void NoteSearchQuery::Data::parseStringValue(
             ++keyIndex;
             continue;
         }
-        else {
-            processedWords << word;
-        }
+
+        processedWords << word;
+
         int positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
@@ -822,9 +818,9 @@ bool NoteSearchQuery::Data::parseIntValue(
             ++keyIndex;
             continue;
         }
-        else {
-            processedWords << word;
-        }
+
+        processedWords << word;
+
         int positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
@@ -856,7 +852,7 @@ bool NoteSearchQuery::Data::parseIntValue(
         }
         else {
             bool conversionResult = false;
-            qint64 value =
+            auto value =
                 static_cast<qint64>(word.toLongLong(&conversionResult));
             if (!conversionResult) {
                 error.setBase(QT_TRANSLATE_NOOP(
@@ -911,9 +907,9 @@ bool NoteSearchQuery::Data::parseDoubleValue(
             ++keyIndex;
             continue;
         }
-        else {
-            processedWords << word;
-        }
+
+        processedWords << word;
+
         int positionInWord = word.indexOf(key + QStringLiteral(":"));
         if (positionInWord < 0) {
             continue;
@@ -945,7 +941,7 @@ bool NoteSearchQuery::Data::parseDoubleValue(
         }
         else {
             bool conversionResult = false;
-            double value =
+            auto value =
                 static_cast<double>(word.toDouble(&conversionResult));
             if (!conversionResult) {
                 error.setBase(QT_TRANSLATE_NOOP(

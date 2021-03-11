@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -81,7 +81,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
  *                              the passed in timestamp
  */
 [[nodiscard]] const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
-    const qint64 timestamp,
+    qint64 timestamp,
     DateTimePrint::Options options = DateTimePrint::Options(
         DateTimePrint::IncludeNumericTimestamp |
         DateTimePrint::IncludeMilliseconds | DateTimePrint::IncludeTimezone),

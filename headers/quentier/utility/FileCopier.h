@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -45,8 +45,8 @@ public:
         Cancelling
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
-    friend QTextStream & operator<<(QTextStream & strm, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
+    friend QTextStream & operator<<(QTextStream & strm, State state);
 
     [[nodiscard]] State state() const;
 

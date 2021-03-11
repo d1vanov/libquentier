@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,10 +41,9 @@ enum class LogLevel
     Error
 };
 
-QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const LogLevel logLevel);
+QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, LogLevel logLevel);
 
-QUENTIER_EXPORT QTextStream & operator<<(
-    QTextStream & strm, const LogLevel logLevel);
+QUENTIER_EXPORT QTextStream & operator<<(QTextStream & strm, LogLevel logLevel);
 
 /**
  * This function needs to be called once during a process lifetime before
@@ -59,9 +58,8 @@ void QUENTIER_EXPORT QuentierInitializeLogging();
  * This function is used to add new log entry to logs written by libquentier
  */
 void QUENTIER_EXPORT QuentierAddLogEntry(
-    const QString & sourceFileName, const int sourceFileLineNumber,
-    const QString & component, const QString & message,
-    const LogLevel logLevel);
+    const QString & sourceFileName, int sourceFileLineNumber,
+    const QString & component, const QString & message, LogLevel logLevel);
 
 /**
  * Current minimal log level used by libquentier. By default minimal log level
@@ -73,7 +71,7 @@ LogLevel QUENTIER_EXPORT QuentierMinLogLevel();
 /**
  * Change the current minimal log level used by libquentier
  */
-void QUENTIER_EXPORT QuentierSetMinLogLevel(const LogLevel logLevel);
+void QUENTIER_EXPORT QuentierSetMinLogLevel(LogLevel logLevel);
 
 /**
  * Call this function to write logs not only to rotating files but also to
@@ -85,8 +83,7 @@ void QUENTIER_EXPORT QuentierAddStdOutLogDestination();
  * Check whether log level is active i.e. whether log level is larger than or
  * equal to the minimal log level
  */
-[[nodiscard]] bool QUENTIER_EXPORT QuentierIsLogLevelActive(
-    const LogLevel logLevel);
+[[nodiscard]] bool QUENTIER_EXPORT QuentierIsLogLevelActive(LogLevel logLevel);
 
 /**
  * Directory containing rotating log files written by libquentier

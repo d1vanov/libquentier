@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -92,7 +92,7 @@ void xmlValidationErrorFunc(void * ctx, const char * msg, va_list args)
 
     QString currentError = QString::asprintf(msg, args);
 
-    QString * pErrorString = reinterpret_cast<QString *>(ctx);
+    auto * pErrorString = reinterpret_cast<QString *>(ctx);
     *pErrorString += currentError;
     QNDEBUG("enml", "Error string: " << *pErrorString);
 }
@@ -891,7 +891,7 @@ bool ENMLConverterPrivate::cleanupExternalHtml(
             lastElementAttributes = reader.attributes();
 
             // Erasing forbidden attributes
-            for (auto it = lastElementAttributes.begin();
+            for (auto it = lastElementAttributes.begin(); // NOLINT
                  it != lastElementAttributes.end();)
             {
                 QStringRef attributeName = it->name();
@@ -1275,7 +1275,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
             const QStringList & forbiddenAttributes = it.value();
 
             // Erasing forbidden attributes
-            for (auto ait = lastElementAttributes.begin();
+            for (auto ait = lastElementAttributes.begin(); // NOLINT
                  ait != lastElementAttributes.end();)
             {
                 QString attributeName = ait->name().toString();
@@ -1653,7 +1653,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     DateTimePrint::Options dateTimePrintOptions;
 #else
-    DateTimePrint::Options dateTimePrintOptions(0);
+    DateTimePrint::Options dateTimePrintOptions(0); // NOLINT
 #endif
 
     qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();
@@ -1718,7 +1718,7 @@ bool ENMLConverterPrivate::exportNotesToEnex(
 
         if (exportTagsOption == ENMLConverter::EnexExportTags::Yes)
         {
-            const QStringList tagLocalIds = note.tagLocalIds();
+            const QStringList & tagLocalIds = note.tagLocalIds();
             for (auto tagIt = tagLocalIds.constBegin(),
                       tagEnd = tagLocalIds.constEnd();
                  tagIt != tagEnd; ++tagIt)
@@ -2188,8 +2188,8 @@ bool ENMLConverterPrivate::importEnex(
 
     const auto readNoteTimestamp =
         [&dateTimeFormat, &reader, &insideNote, &currentNote]
-           (std::function<void(
-                qevercloud::Note*, qevercloud::Timestamp)> setter,
+           (const std::function<void(
+                qevercloud::Note*, qevercloud::Timestamp)> & setter,
             const char * fieldName, ErrorString & errorDescription) -> bool
         {
             if (!insideNote) {
@@ -2226,9 +2226,10 @@ bool ENMLConverterPrivate::importEnex(
     const auto readDoubleNoteOrResourceAttribute =
         [&insideNote, &insideNoteAttributes, &insideResourceAttributes, &reader,
          &currentNote, &currentResource]
-         (std::function<void(
-                 qevercloud::ResourceAttributes *, double)> resourceSetter,
-          std::function<void(qevercloud::NoteAttributes *, double)> noteSetter,
+         (const std::function<void(
+              qevercloud::ResourceAttributes *, double)> & resourceSetter,
+          const std::function<void(
+              qevercloud::NoteAttributes *, double)> & noteSetter,
           const char * fieldName, ErrorString & errorDescription) -> bool
         {
             if (!insideNote) {
@@ -2281,7 +2282,8 @@ bool ENMLConverterPrivate::importEnex(
 
     const auto readStringNoteAttribute =
         [&insideNote, &insideNoteAttributes, &reader, &currentNote]
-        (std::function<void(qevercloud::NoteAttributes *, QString)> setter,
+        (const std::function<void(
+            qevercloud::NoteAttributes *, QString)> & setter,
          const char * fieldName, ErrorString & errorDescription) -> bool
         {
             if (!insideNote || !insideNoteAttributes)
@@ -2308,8 +2310,8 @@ bool ENMLConverterPrivate::importEnex(
     const auto readTimestampNoteAttribute =
         [&insideNote, &insideNoteAttributes, &reader, &currentNote,
          &dateTimeFormat]
-        (std::function<void(
-                qevercloud::NoteAttributes *, qevercloud::Timestamp)> setter,
+        (const std::function<void(
+                qevercloud::NoteAttributes *, qevercloud::Timestamp)> & setter,
          const char * fieldName, ErrorString & errorDescription) -> bool
         {
             if (!insideNote || !insideNoteAttributes)
@@ -2347,7 +2349,8 @@ bool ENMLConverterPrivate::importEnex(
 
     const auto readStringResourceAttribute =
         [&insideResource, &insideResourceAttributes, &reader, &currentResource]
-        (std::function<void(qevercloud::ResourceAttributes *, QString)> setter,
+        (const std::function<void(
+                qevercloud::ResourceAttributes *, QString)> & setter,
          const char * fieldName, ErrorString & errorDescription) -> bool
         {
             if (!insideResource || !insideResourceAttributes)
@@ -2374,9 +2377,10 @@ bool ENMLConverterPrivate::importEnex(
     const auto readStringNoteOrResourceAttribute =
         [&insideNote, &insideNoteAttributes, &insideResource,
          &insideResourceAttributes, &reader, &currentNote, &currentResource]
-        (std::function<void(qevercloud::NoteAttributes *, QString)> noteSetter,
-         std::function<void(
-             qevercloud::ResourceAttributes *, QString)> resourceSetter,
+        (const std::function<void(
+            qevercloud::NoteAttributes *, QString)> & noteSetter,
+         const std::function<void(
+            qevercloud::ResourceAttributes *, QString)> & resourceSetter,
          const char * fieldName, ErrorString & errorDescription)
         {
             if (!insideNote) {
@@ -2521,7 +2525,7 @@ bool ENMLConverterPrivate::importEnex(
                 if (insideNote) {
                     QString tagName = reader.readElementText(
                         QXmlStreamReader::SkipChildElements);
-                    QString noteLocalId = currentNote.localId();
+                    const QString & noteLocalId = currentNote.localId();
 
                     QStringList & tagNames =
                         tagNamesByNoteLocalId[noteLocalId];
@@ -2767,15 +2771,15 @@ bool ENMLConverterPrivate::importEnex(
                                     << key << ", value = " << value);
                             continue;
                         }
-                        else {
-                            errorDescription.setBase(
-                                QT_TR_NOOP("Failed to parse application-data "
-                                           "tag for note: no key attribute"));
-                            QNWARNING("enml", errorDescription);
-                            return false;
-                        }
+
+                        errorDescription.setBase(
+                            QT_TR_NOOP("Failed to parse application-data "
+                                        "tag for note: no key attribute"));
+                        QNWARNING("enml", errorDescription);
+                        return false;
                     }
-                    else if (insideResourceAttributes) {
+
+                    if (insideResourceAttributes) {
                         if (appDataAttributes.hasAttribute(
                                 QStringLiteral("key"))) {
                             const QString key =
@@ -2812,14 +2816,13 @@ bool ENMLConverterPrivate::importEnex(
                                     << "= " << key << ", value = " << value);
                             continue;
                         }
-                        else {
-                            errorDescription.setBase(
-                                QT_TR_NOOP("Failed to parse application-data "
-                                           "tag for resource: no key "
-                                           "attribute"));
-                            QNWARNING("enml", errorDescription);
-                            return false;
-                        }
+
+                        errorDescription.setBase(
+                            QT_TR_NOOP("Failed to parse application-data "
+                                        "tag for resource: no key "
+                                        "attribute"));
+                        QNWARNING("enml", errorDescription);
+                        return false;
                     }
 
                     errorDescription.setBase(
@@ -3867,7 +3870,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
     // NOTE: xmlIOParseDTD should have "consumed" the input buffer so one
     // should not attempt to free it manually
     const std::unique_ptr<xmlDtd, void(*)(xmlDtdPtr)> pDtd(
-        xmlIOParseDTD(NULL, pBuf.release(), XML_CHAR_ENCODING_NONE),
+        xmlIOParseDTD(nullptr, pBuf.release(), XML_CHAR_ENCODING_NONE),
         xmlFreeDtd);
 
     if (!pDtd) {
@@ -4317,7 +4320,7 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
     }
 
     // Erasing forbidden attributes
-    for (auto it = state.m_lastElementAttributes.begin();
+    for (auto it = state.m_lastElementAttributes.begin(); // NOLINT
          it != state.m_lastElementAttributes.end();)
     {
         const QStringRef attributeName = it->name();
@@ -4354,14 +4357,14 @@ ENMLConverterPrivate::processElementForHtmlToNoteContentConversion(
 ////////////////////////////////////////////////////////////////////////////////
 
 QTextStream & operator<<(
-    QTextStream & strm, const QXmlStreamAttributes & attributes)
+    QTextStream & strm, const QXmlStreamAttributes & obj)
 {
-    const int numAttributes = attributes.size();
+    const int numAttributes = obj.size();
 
     strm << "QXmlStreamAttributes(" << numAttributes << "): {\n";
 
     for (int i = 0; i < numAttributes; ++i) {
-        const auto & attribute = attributes[i];
+        const auto & attribute = obj[i];
         strm << "  [" << i << "]: name = " << attribute.name().toString()
              << ", value = " << attribute.value().toString() << "\n";
     }
@@ -4372,23 +4375,23 @@ QTextStream & operator<<(
 
 QTextStream & operator<<(
     QTextStream & strm,
-    const QList<quentier::ENMLConverter::SkipHtmlElementRule> & rules)
+    const QList<quentier::ENMLConverter::SkipHtmlElementRule> & obj)
 {
     strm << "SkipHtmlElementRules";
 
-    if (rules.isEmpty()) {
+    if (obj.isEmpty()) {
         strm << ": <empty>";
         return strm;
     }
 
-    const int numRules = rules.size();
+    const int numRules = obj.size();
 
     strm << "(" << numRules << "): {\n";
 
     using SkipHtmlElementRule = quentier::ENMLConverter::SkipHtmlElementRule;
 
     for (int i = 0; i < numRules; ++i) {
-        const SkipHtmlElementRule & rule = rules[i];
+        const SkipHtmlElementRule & rule = obj[i];
         strm << " [" << i << "]: " << rule << "\n";
     }
 

@@ -111,7 +111,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         StartupOptions options = {},
 #else
-        StartupOptions options = 0,
+        StartupOptions options = 0, // NOLINT
 #endif
         QObject * parent = nullptr);
 
@@ -188,7 +188,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         StartupOptions options = {});
 #else
-        StartupOptions options = 0);
+        StartupOptions options = 0); // NOLINT
 #endif
 
     /**
@@ -504,7 +504,7 @@ public:
      */
     enum class OrderDirection
     {
-        Ascending = 0,
+        Ascending,
         Descending
     };
 
@@ -520,7 +520,7 @@ public:
      */
     enum class ListNotebooksOrder
     {
-        ByUpdateSequenceNumber = 0,
+        ByUpdateSequenceNumber,
         ByNotebookName,
         ByCreationTimestamp,
         ByModificationTimestamp,
@@ -743,7 +743,7 @@ public:
      */
     enum class ListLinkedNotebooksOrder
     {
-        ByUpdateSequenceNumber = 0,
+        ByUpdateSequenceNumber,
         ByShareName,
         ByUsername,
         NoOrder
@@ -1135,7 +1135,7 @@ public:
      */
     enum class ListNotesOrder
     {
-        ByUpdateSequenceNumber = 0,
+        ByUpdateSequenceNumber,
         ByTitle,
         ByCreationTimestamp,
         ByModificationTimestamp,
@@ -1895,7 +1895,7 @@ public:
      */
     enum class ListSavedSearchesOrder
     {
-        ByUpdateSequenceNumber = 0,
+        ByUpdateSequenceNumber,
         ByName,
         ByFormat,
         NoOrder

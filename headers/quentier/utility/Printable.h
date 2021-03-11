@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,7 +59,7 @@ protected:
 // printing operators for existing classes not inheriting from Printable
 
 template <class T>
-[[nodiscard]] const QString ToString(const T & object)
+[[nodiscard]] QString ToString(const T & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
@@ -68,13 +68,13 @@ template <class T>
 }
 
 template <class TKey, class TValue>
-[[nodiscard]] const QString ToString(const QHash<TKey, TValue> & object)
+[[nodiscard]] QString ToString(const QHash<TKey, TValue> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << QStringLiteral("QHash: \n");
 
-    typedef typename QHash<TKey, TValue>::const_iterator CIter;
+    using CIter = typename QHash<TKey, TValue>::const_iterator;
     CIter hashEnd = object.end();
     for (CIter it = object.begin(); it != hashEnd; ++it) {
         strm << QStringLiteral("[") << it.key() << QStringLiteral("] = ")
@@ -84,13 +84,13 @@ template <class TKey, class TValue>
 }
 
 template <class T>
-[[nodiscard]] const QString ToString(const QSet<T> & object)
+[[nodiscard]] QString ToString(const QSet<T> & object)
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << QStringLiteral("QSet: \n");
 
-    typedef typename QSet<T>::const_iterator CIter;
+    using CIter = typename QSet<T>::const_iterator;
     CIter setEnd = object.end();
     for (CIter it = object.begin(); it != setEnd; ++it) {
         strm << QStringLiteral("[") << *it << QStringLiteral("];\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,8 +59,8 @@ public:
     QuentierUndoCommand(const QString & text, QUndoCommand * parent = nullptr);
     ~QuentierUndoCommand() noexcept override;
 
-    void undo() override final;
-    void redo() override final;
+    void undo() final;
+    void redo() final;
 
     [[nodiscard]] bool onceUndoExecuted() const noexcept
     {

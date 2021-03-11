@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -40,35 +40,35 @@ class QUENTIER_EXPORT Account : public Printable
 public:
     enum class Type
     {
-        Local = 0,
+        Local,
         Evernote
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const Type type);
+        QTextStream & strm, Type type);
 
-    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, const Type type);
+    friend QUENTIER_EXPORT QDebug & operator<<(QDebug & dbg, Type type);
 
     enum class EvernoteAccountType
     {
-        Free = 0,
+        Free,
         Plus,
         Premium,
         Business
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const EvernoteAccountType type);
+        QTextStream & strm, EvernoteAccountType type);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const EvernoteAccountType type);
+        QDebug & dbg, EvernoteAccountType type);
 
 public:
     explicit Account();
 
     explicit Account(
-        QString name, const Type type, const qevercloud::UserID userId = -1,
-        const EvernoteAccountType evernoteAccountType =
+        QString name, Type type, qevercloud::UserID userId = -1,
+        EvernoteAccountType evernoteAccountType =
             EvernoteAccountType::Free,
         QString evernoteHost = {}, QString shardId = {});
 
@@ -139,7 +139,7 @@ public:
      */
     [[nodiscard]] QString shardId() const;
 
-    void setEvernoteAccountType(const EvernoteAccountType evernoteAccountType);
+    void setEvernoteAccountType(EvernoteAccountType evernoteAccountType);
     void setEvernoteHost(QString evernoteHost);
     void setShardId(QString shardId);
 

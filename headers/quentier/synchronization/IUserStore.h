@@ -122,7 +122,7 @@ public:
      *                          instead
      */
     [[nodiscard]] virtual qint32 getAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel,
+        qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) = 0;
 };

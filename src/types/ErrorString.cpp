@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -48,9 +48,9 @@ ErrorString & ErrorString::operator=(const ErrorString & other)
     return *this;
 }
 
-ErrorString::~ErrorString() {}
+ErrorString::~ErrorString() = default;
 
-const QString & ErrorString::base() const
+const QString & ErrorString::base() const noexcept
 {
     return d->m_base;
 }
@@ -60,7 +60,7 @@ QString & ErrorString::base()
     return d->m_base;
 }
 
-const QStringList & ErrorString::additionalBases() const
+const QStringList & ErrorString::additionalBases() const noexcept
 {
     return d->m_additionalBases;
 }
@@ -70,7 +70,7 @@ QStringList & ErrorString::additionalBases()
     return d->m_additionalBases;
 }
 
-const QString & ErrorString::details() const
+const QString & ErrorString::details() const noexcept
 {
     return d->m_details;
 }

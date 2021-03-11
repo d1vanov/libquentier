@@ -490,7 +490,6 @@ Q_SIGNALS:
     void setInkNoteImagesStoragePathDone(QString path);
 
 private:
-    SynchronizationManager() = delete;
     Q_DISABLE_COPY(SynchronizationManager)
 
     SynchronizationManagerPrivate * d_ptr;

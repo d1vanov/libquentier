@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,8 +34,7 @@ namespace quentier {
  * @return          The human readable string corresponding to the passed in
  *                  number of bytes
  */
-[[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(
-    const quint64 bytes);
+[[nodiscard]] QString QUENTIER_EXPORT humanReadableSize(quint64 bytes);
 
 } // namespace quentier
 

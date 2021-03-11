@@ -50,21 +50,21 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         LocalStorageManager::StartupOptions options = {},
 #else
-        LocalStorageManager::StartupOptions options = 0,
+        LocalStorageManager::StartupOptions options = 0, // NOLINT
 #endif
         QObject * parent = nullptr);
 
     ~LocalStorageManagerAsync() noexcept override;
 
-    void setUseCache(const bool useCache);
+    void setUseCache(bool useCache);
 
-    const LocalStorageCacheManager * localStorageCacheManager() const;
+    [[nodiscard]] const LocalStorageCacheManager * localStorageCacheManager() const;
 
-    bool installCacheExpiryFunction(
+    [[nodiscard]] bool installCacheExpiryFunction(
         const ILocalStorageCacheExpiryChecker & checker);
 
-    const LocalStorageManager * localStorageManager() const;
-    LocalStorageManager * localStorageManager();
+    [[nodiscard]] const LocalStorageManager * localStorageManager() const;
+    [[nodiscard]] LocalStorageManager * localStorageManager();
 
 Q_SIGNALS:
     // Sent when the initialization is complete
@@ -828,7 +828,6 @@ public Q_SLOTS:
     void onAccountHighUsnRequest(QString linkedNotebookGuid, QUuid requestId);
 
 private:
-    LocalStorageManagerAsync() = delete;
     Q_DISABLE_COPY(LocalStorageManagerAsync)
 
     LocalStorageManagerAsyncPrivate * const d_ptr;

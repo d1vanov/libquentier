@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -38,41 +38,41 @@ public:
     ResourceRecognitionIndexItem & operator=(
         const ResourceRecognitionIndexItem & other);
 
-    virtual ~ResourceRecognitionIndexItem() override;
+    ~ResourceRecognitionIndexItem() override;
 
-    bool isValid() const;
+    [[nodiscard]] bool isValid() const;
 
-    int x() const;
-    void setX(const int x);
+    [[nodiscard]] int x() const;
+    void setX(int x);
 
-    int y() const;
-    void setY(const int y);
+    [[nodiscard]] int y() const;
+    void setY(int y);
 
-    int h() const;
-    void setH(const int h);
+    [[nodiscard]] int h() const;
+    void setH(int h);
 
-    int w() const;
-    void setW(const int w);
+    [[nodiscard]] int w() const;
+    void setW(int w);
 
-    int offset() const;
-    void setOffset(const int offset);
+    [[nodiscard]] int offset() const;
+    void setOffset(int offset);
 
-    int duration() const;
-    void setDuration(const int duration);
+    [[nodiscard]] int duration() const;
+    void setDuration(int duration);
 
-    QVector<int> strokeList() const;
-    int numStrokes() const;
-    bool strokeAt(const int strokeIndex, int & stroke) const;
-    bool setStrokeAt(const int strokeIndex, const int stroke);
+    [[nodiscard]] QVector<int> strokeList() const;
+    [[nodiscard]] int numStrokes() const;
+    [[nodiscard]] bool strokeAt(int strokeIndex, int & stroke) const;
+    [[nodiscard]] bool setStrokeAt(int strokeIndex, int stroke);
     void setStrokeList(const QVector<int> & strokeList);
-    void reserveStrokeListSpace(const int numItems);
-    void addStroke(const int stroke);
-    bool removeStroke(const int stroke);
-    bool removeStrokeAt(const int strokeIndex);
+    void reserveStrokeListSpace(int numItems);
+    void addStroke(int stroke);
+    [[nodiscard]] bool removeStroke(int stroke);
+    [[nodiscard]] bool removeStrokeAt(int strokeIndex);
 
     struct TextItem
     {
-        bool operator==(const TextItem & other) const
+        [[nodiscard]] bool operator==(const TextItem & other) const
         {
             return (m_text == other.m_text) && (m_weight == other.m_weight);
         }
@@ -81,19 +81,22 @@ public:
         int m_weight = -1;
     };
 
-    QVector<TextItem> textItems() const;
-    int numTextItems() const;
-    bool textItemAt(const int textItemIndex, TextItem & textItem) const;
-    bool setTextItemAt(const int textItemIndex, const TextItem & textItem);
+    [[nodiscard]] QVector<TextItem> textItems() const;
+    [[nodiscard]] int numTextItems() const;
+    [[nodiscard]] bool textItemAt(int textItemIndex, TextItem & textItem) const;
+
+    [[nodiscard]] bool setTextItemAt(
+        int textItemIndex, const TextItem & textItem);
+
     void setTextItems(const QVector<TextItem> & textItems);
-    void reserveTextItemsSpace(const int numItems);
+    void reserveTextItemsSpace(int numItems);
     void addTextItem(const TextItem & item);
-    bool removeTextItem(const TextItem & item);
-    bool removeTextItemAt(const int textItemIndex);
+    [[nodiscard]] bool removeTextItem(const TextItem & item);
+    [[nodiscard]] bool removeTextItemAt(int textItemIndex);
 
     struct ObjectItem
     {
-        bool operator==(const ObjectItem & other) const
+        [[nodiscard]] bool operator==(const ObjectItem & other) const
         {
             return (m_objectType == other.m_objectType) &&
                 (m_weight == other.m_weight);
@@ -103,22 +106,24 @@ public:
         int m_weight = -1;
     };
 
-    QVector<ObjectItem> objectItems() const;
-    int numObjectItems() const;
-    bool objectItemAt(const int objectItemIndex, ObjectItem & objectItem) const;
+    [[nodiscard]] QVector<ObjectItem> objectItems() const;
+    [[nodiscard]] int numObjectItems() const;
 
-    bool setObjectItemAt(
-        const int objectItemIndex, const ObjectItem & objectItem);
+    [[nodiscard]] bool objectItemAt(
+        int objectItemIndex, ObjectItem & objectItem) const;
+
+    [[nodiscard]] bool setObjectItemAt(
+        int objectItemIndex, const ObjectItem & objectItem);
 
     void setObjectItems(const QVector<ObjectItem> & objectItems);
-    void reserveObjectItemsSpace(const int numItems);
+    void reserveObjectItemsSpace(int numItems);
     void addObjectItem(const ObjectItem & item);
-    bool removeObjectItem(const ObjectItem & item);
-    bool removeObjectItemAt(const int objectItemIndex);
+    [[nodiscard]] bool removeObjectItem(const ObjectItem & item);
+    [[nodiscard]] bool removeObjectItemAt(int objectItemIndex);
 
     struct ShapeItem
     {
-        bool operator==(const ShapeItem & other) const
+        [[nodiscard]] bool operator==(const ShapeItem & other) const
         {
             return (m_shapeType == other.m_shapeType) &&
                 (m_weight == other.m_weight);
@@ -128,19 +133,24 @@ public:
         int m_weight = -1;
     };
 
-    QVector<ShapeItem> shapeItems() const;
-    int numShapeItems() const;
-    bool shapeItemAt(const int shapeItemIndex, ShapeItem & shapeItem) const;
-    bool setShapeItemAt(const int shapeItemIndex, const ShapeItem & shapeItem);
+    [[nodiscard]] QVector<ShapeItem> shapeItems() const;
+    [[nodiscard]] int numShapeItems() const;
+
+    [[nodiscard]] bool shapeItemAt(
+        int shapeItemIndex, ShapeItem & shapeItem) const;
+
+    [[nodiscard]] bool setShapeItemAt(
+        int shapeItemIndex, const ShapeItem & shapeItem);
+
     void setShapeItems(const QVector<ShapeItem> & shapeItems);
-    void reserveShapeItemsSpace(const int numItems);
+    void reserveShapeItemsSpace(int numItems);
     void addShapeItem(const ShapeItem & item);
-    bool removeShapeItem(const ShapeItem & item);
-    bool removeShapeItemAt(const int shapeItemIndex);
+    [[nodiscard]] bool removeShapeItem(const ShapeItem & item);
+    [[nodiscard]] bool removeShapeItemAt(int shapeItemIndex);
 
     struct BarcodeItem
     {
-        bool operator==(const BarcodeItem & other) const
+        [[nodiscard]] bool operator==(const BarcodeItem & other) const
         {
             return (m_barcode == other.m_barcode) &&
                 (m_weight == other.m_weight);
@@ -150,22 +160,22 @@ public:
         int m_weight = -1;
     };
 
-    QVector<BarcodeItem> barcodeItems() const;
-    int numBarcodeItems() const;
+    [[nodiscard]] QVector<BarcodeItem> barcodeItems() const;
+    [[nodiscard]] int numBarcodeItems() const;
 
-    bool barcodeItemAt(
-        const int barcodeItemIndex, BarcodeItem & barcodeItem) const;
+    [[nodiscard]] bool barcodeItemAt(
+        int barcodeItemIndex, BarcodeItem & barcodeItem) const;
 
-    bool setBarcodeItemAt(
-        const int barcodeItemIndex, const BarcodeItem & barcodeItem);
+    [[nodiscard]] bool setBarcodeItemAt(
+        int barcodeItemIndex, const BarcodeItem & barcodeItem);
 
     void setBarcodeItems(const QVector<BarcodeItem> & barcodeItems);
-    void reserveBarcodeItemsSpace(const int numItems);
+    void reserveBarcodeItemsSpace(int numItems);
     void addBarcodeItem(const BarcodeItem & item);
-    bool removeBarcodeItem(const BarcodeItem & item);
-    bool removeBarcodeItemAt(const int barcodeItemIndex);
+    [[nodiscard]] bool removeBarcodeItem(const BarcodeItem & item);
+    [[nodiscard]] bool removeBarcodeItemAt(int barcodeItemIndex);
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ResourceRecognitionIndexItemData> d;

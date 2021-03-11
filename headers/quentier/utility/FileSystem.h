@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ErrorString)
+class ErrorString;
 
 /**
  * relativePathFromAbsolutePath converts the absolute path to a relative one
@@ -41,7 +41,7 @@ QT_FORWARD_DECLARE_CLASS(ErrorString)
  *                                      the input absolute path and root dir
  *                                      path
  */
-[[nodiscard]] const QString QUENTIER_EXPORT relativePathFromAbsolutePath(
+[[nodiscard]] QString QUENTIER_EXPORT relativePathFromAbsolutePath(
     const QString & absolutePath, const QString & relativePathRootFolderPath);
 
 /**

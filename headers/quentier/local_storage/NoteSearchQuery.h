@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,10 +31,12 @@ class QUENTIER_EXPORT NoteSearchQuery : public Printable
 public:
     NoteSearchQuery();
     NoteSearchQuery(const NoteSearchQuery & other);
-    NoteSearchQuery(NoteSearchQuery && other);
+    NoteSearchQuery(NoteSearchQuery && other) noexcept;
 
     [[nodiscard]] NoteSearchQuery & operator=(const NoteSearchQuery & other);
-    [[nodiscard]] NoteSearchQuery & operator=(NoteSearchQuery && other);
+
+    [[nodiscard]] NoteSearchQuery & operator=(
+        NoteSearchQuery && other) noexcept;
 
     ~NoteSearchQuery() noexcept override;
 

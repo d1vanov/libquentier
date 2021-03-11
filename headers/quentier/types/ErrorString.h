@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,7 +25,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ErrorStringData)
+class ErrorStringData;
 
 /**
  * @brief The ErrorString class encapsulates two (or more) strings which are
@@ -47,16 +47,16 @@ public:
     explicit ErrorString(const QString & error);
     ErrorString(const ErrorString & other);
     ErrorString & operator=(const ErrorString & other);
-    virtual ~ErrorString() override;
+    ~ErrorString() override;
 
-    const QString & base() const;
-    QString & base();
+    [[nodiscard]] const QString & base() const noexcept;
+    [[nodiscard]] QString & base();
 
-    const QStringList & additionalBases() const;
-    QStringList & additionalBases();
+    [[nodiscard]] const QStringList & additionalBases() const noexcept;
+    [[nodiscard]] QStringList & additionalBases();
 
-    const QString & details() const;
-    QString & details();
+    [[nodiscard]] const QString & details() const noexcept;
+    [[nodiscard]] QString & details();
 
     void setBase(const QString & error);
     void setBase(const char * error);
@@ -68,13 +68,13 @@ public:
     void setDetails(const QString & error);
     void setDetails(const char * error);
 
-    bool isEmpty() const;
+    [[nodiscard]] bool isEmpty() const;
     void clear();
 
-    QString localizedString() const;
-    QString nonLocalizedString() const;
+    [[nodiscard]] QString localizedString() const;
+    [[nodiscard]] QString nonLocalizedString() const;
 
-    virtual QTextStream & print(QTextStream & strm) const override;
+    QTextStream & print(QTextStream & strm) const override;
 
 private:
     QSharedDataPointer<ErrorStringData> d;

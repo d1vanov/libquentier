@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,32 +41,13 @@ public:
         QStack<T>(other), m_limit(other.m_limit), m_deleter(other.m_deleter)
     {}
 
-    LimitedStack(LimitedStack<T> && other) :
+    LimitedStack(LimitedStack<T> && other) noexcept :
         QStack<T>(std::move(other)), m_limit(std::move(other.m_limit)),
         m_deleter(std::move(other.m_deleter))
     {}
 
-    LimitedStack<T> & operator=(const LimitedStack<T> & other)
-    {
-        if (this != &other) {
-            QStack<T>::operator=(other);
-            m_limit = other.m_limit;
-            m_deleter = other.m_deleter;
-        }
-
-        return *this;
-    }
-
-    LimitedStack<T> & operator=(LimitedStack<T> && other)
-    {
-        if (this != &other) {
-            QStack<T>::operator=(std::move(other));
-            m_limit = std::move(other.m_limit);
-            m_deleter = std::move(other.m_deleter);
-        }
-
-        return *this;
-    }
+    LimitedStack<T> & operator=(const LimitedStack<T> & other) = default;
+    LimitedStack<T> & operator=(LimitedStack<T> && other) noexcept = default;
 
     ~LimitedStack()
     {
@@ -80,7 +61,7 @@ public:
 
     void swap(const LimitedStack<T> & other)
     {
-        int limit = other.m_limit;
+        const int limit = other.m_limit;
         other.m_limit = m_limit;
         m_limit = limit;
 

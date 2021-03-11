@@ -616,7 +616,7 @@ private:
 
     enum class ReadResourceBinaryDataFromFileStatus
     {
-        Success = 0,
+        Success,
         FileNotFound,
         Failure
     };

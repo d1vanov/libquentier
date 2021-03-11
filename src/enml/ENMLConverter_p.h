@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,7 +42,7 @@ enum class SkipElementOption
     DontSkip = 0x2
 };
 
-QTextStream & operator<<(QTextStream & strm, const SkipElementOption option);
+QTextStream & operator<<(QTextStream & strm, SkipElementOption option);
 
 Q_DECLARE_FLAGS(SkipElementOptions, SkipElementOption);
 
@@ -96,27 +96,27 @@ public:
         const QString & plainText);
 
     [[nodiscard]] static QString toDoCheckboxHtml(
-        const bool checked, const quint64 idNumber);
+        bool checked, quint64 idNumber);
 
     [[nodiscard]] static QString encryptedTextHtml(
         const QString & encryptedText, const QString & hint,
-        const QString & cipher, const size_t keyLength,
-        const quint64 enCryptIndex);
+        const QString & cipher, size_t keyLength,
+        quint64 enCryptIndex);
 
     [[nodiscard]] static QString decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher, const size_t keyLength,
-        const quint64 enDecryptedIndex);
+        const QString & hint, const QString & cipher, size_t keyLength,
+        quint64 enDecryptedIndex);
 
     [[nodiscard]] static QString resourceHtml(
         const qevercloud::Resource & resource, ErrorString & errorDescription);
 
-    static void escapeString(QString & string, const bool simplify);
+    static void escapeString(QString & string, bool simplify);
 
     [[nodiscard]] bool exportNotesToEnex(
         const QList<qevercloud::Note> & notes,
         const QHash<QString, QString> & tagNamesByTagLocalIds,
-        const ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
+        ENMLConverter::EnexExportTags exportTagsOption, QString & enex,
         ErrorString & errorDescription, const QString & version) const;
 
     [[nodiscard]] bool importEnex(
@@ -143,8 +143,8 @@ private:
     // convert ENML en-crypt tag to HTML <object> tag
     [[nodiscard]] bool encryptedTextToHtml(
         const QXmlStreamAttributes & enCryptAttributes,
-        const QStringRef & encryptedTextCharacters, const quint64 enCryptIndex,
-        const quint64 enDecryptedIndex, QXmlStreamWriter & writer,
+        const QStringRef & encryptedTextCharacters, quint64 enCryptIndex,
+        quint64 enDecryptedIndex, QXmlStreamWriter & writer,
         DecryptedTextManager & decryptedTextManager,
         bool & convertedToEnCryptNode) const;
 
@@ -154,13 +154,13 @@ private:
         ErrorString & errorDescription);
 
     void toDoTagsToHtml(
-        const QXmlStreamReader & reader, const quint64 enToDoIndex,
+        const QXmlStreamReader & reader, quint64 enToDoIndex,
         QXmlStreamWriter & writer) const;
 
     static void decryptedTextHtml(
         const QString & decryptedText, const QString & encryptedText,
-        const QString & hint, const QString & cipher, const size_t keyLength,
-        const quint64 enDecryptedIndex, QXmlStreamWriter & writer);
+        const QString & hint, const QString & cipher, size_t keyLength,
+        quint64 enDecryptedIndex, QXmlStreamWriter & writer);
 
     [[nodiscard]] bool validateEnex(
         const QString & enex, ErrorString & errorDescription) const;
