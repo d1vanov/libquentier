@@ -82,7 +82,6 @@ set(TYPES_HEADERS
     headers/quentier/types/Account.h
     headers/quentier/types/ErrorString.h
     headers/quentier/types/NoteUtils.h
-    headers/quentier/types/Resource.h
     headers/quentier/types/ResourceRecognitionIndexItem.h
     headers/quentier/types/ResourceRecognitionIndices.h
     headers/quentier/types/ResourceUtils.h
