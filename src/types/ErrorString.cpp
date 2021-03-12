@@ -37,16 +37,13 @@ ErrorString::ErrorString(const QString & error) :
     d->m_base = error;
 }
 
-ErrorString::ErrorString(const ErrorString & other) : Printable(), d(other.d) {}
+ErrorString::ErrorString(const ErrorString & other) = default;
 
-ErrorString & ErrorString::operator=(const ErrorString & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+ErrorString::ErrorString(ErrorString && other) noexcept = default;
 
-    return *this;
-}
+ErrorString & ErrorString::operator=(const ErrorString & other) = default;
+
+ErrorString & ErrorString::operator=(ErrorString && other) noexcept = default;
 
 ErrorString::~ErrorString() = default;
 

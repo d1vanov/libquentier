@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,7 +36,7 @@ public:
     DefaultLocalStorageCacheExpiryChecker(
         const LocalStorageCacheManager & cacheManager);
 
-    ~DefaultLocalStorageCacheExpiryChecker() noexcept override;
+    ~DefaultLocalStorageCacheExpiryChecker() override;
 
     /**
      * @return              A pointer to the newly allocated copy of the current

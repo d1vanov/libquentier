@@ -27,16 +27,23 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ResourceRecognitionIndexItemData)
+class ResourceRecognitionIndexItemData;
 
 class QUENTIER_EXPORT ResourceRecognitionIndexItem : public Printable
 {
 public:
     explicit ResourceRecognitionIndexItem();
+
     ResourceRecognitionIndexItem(const ResourceRecognitionIndexItem & other);
+
+    ResourceRecognitionIndexItem(
+        ResourceRecognitionIndexItem && other) noexcept;
 
     ResourceRecognitionIndexItem & operator=(
         const ResourceRecognitionIndexItem & other);
+
+    ResourceRecognitionIndexItem & operator=(
+        ResourceRecognitionIndexItem && other) noexcept;
 
     ~ResourceRecognitionIndexItem() override;
 

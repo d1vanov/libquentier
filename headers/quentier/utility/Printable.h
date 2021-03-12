@@ -37,21 +37,17 @@ namespace quentier {
 class QUENTIER_EXPORT Printable
 {
 public:
+    virtual ~Printable() noexcept = default;
+
     virtual QTextStream & print(QTextStream & strm) const = 0;
 
-    [[nodiscard]] virtual const QString toString() const;
+    [[nodiscard]] QString toString() const;
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, const Printable & printable);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & debug, const Printable & printable);
-
-protected:
-    Printable();
-    Printable(const Printable & other);
-    Printable & operator=(const Printable & other);
-    virtual ~Printable() noexcept;
 };
 
 } // namespace quentier

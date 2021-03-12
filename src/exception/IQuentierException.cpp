@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,11 +34,34 @@ namespace quentier {
     }
 
 IQuentierException::IQuentierException(const ErrorString & message) :
-    Printable(), m_message(message), m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
+    m_message(message)
+{
+    INIT_WHAT_MESSAGE()
+}
 
-    IQuentierException::~IQuentierException() noexcept
+IQuentierException::~IQuentierException() noexcept
 {
     delete[] m_whatMessage;
+}
+
+IQuentierException::IQuentierException(const IQuentierException & other) :
+    m_message(other.m_message)
+{
+    INIT_WHAT_MESSAGE()
+}
+
+IQuentierException & IQuentierException::operator=(
+    const IQuentierException & other)
+{
+    if (this != &other) {
+        m_message = other.m_message;
+
+        delete m_whatMessage;
+        m_whatMessage = nullptr;
+        INIT_WHAT_MESSAGE()
+    }
+
+    return *this;
 }
 
 QString IQuentierException::localizedErrorMessage() const
@@ -63,22 +86,5 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
     return strm;
 }
 
-IQuentierException::IQuentierException(const IQuentierException & other) :
-    Printable(other), m_message(other.m_message),
-    m_whatMessage(nullptr){INIT_WHAT_MESSAGE()}
-
-        IQuentierException
-        & IQuentierException::operator=(const IQuentierException & other)
-{
-    if (this != &other) {
-        m_message = other.m_message;
-
-        delete m_whatMessage;
-        m_whatMessage = nullptr;
-        INIT_WHAT_MESSAGE()
-    }
-
-    return *this;
-}
 
 } // namespace quentier

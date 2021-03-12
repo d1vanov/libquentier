@@ -44,7 +44,7 @@ class QUENTIER_EXPORT LocalStorageCacheManager : public Printable
 {
 public:
     LocalStorageCacheManager();
-    ~LocalStorageCacheManager() noexcept override;
+    ~LocalStorageCacheManager() override;
 
     enum WhichUid
     {

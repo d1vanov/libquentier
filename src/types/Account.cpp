@@ -39,16 +39,13 @@ Account::Account(
     d->switchEvernoteAccountType(evernoteAccountType);
 }
 
-Account::Account(const Account & other) : Printable(), d(other.d) {}
+Account::Account(const Account & other) = default;
 
-Account & Account::operator=(const Account & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+Account::Account(Account && other) noexcept = default;
 
-    return *this;
-}
+Account & Account::operator=(const Account & other) = default;
+
+Account & Account::operator=(Account && other) noexcept = default;
 
 Account::~Account() noexcept = default;
 
@@ -92,9 +89,8 @@ bool Account::isEmpty() const
     if (d->m_accountType == Account::Type::Local) {
         return d->m_name.isEmpty();
     }
-    else {
-        return (d->m_userId < 0);
-    }
+
+    return (d->m_userId < 0);
 }
 
 void Account::setEvernoteAccountType(

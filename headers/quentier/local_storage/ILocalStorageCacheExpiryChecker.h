@@ -34,7 +34,7 @@ class LocalStorageCacheManager;
 class QUENTIER_EXPORT ILocalStorageCacheExpiryChecker : public Printable
 {
 public:
-    ~ILocalStorageCacheExpiryChecker() noexcept override;
+    ~ILocalStorageCacheExpiryChecker() override;
 
     /**
      * @return              A pointer to the newly allocated copy of a

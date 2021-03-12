@@ -45,8 +45,13 @@ class QUENTIER_EXPORT ErrorString : public Printable
 public:
     explicit ErrorString(const char * error = nullptr);
     explicit ErrorString(const QString & error);
+
     ErrorString(const ErrorString & other);
+    ErrorString(ErrorString && other) noexcept;
+
     ErrorString & operator=(const ErrorString & other);
+    ErrorString & operator=(ErrorString && other) noexcept;
+
     ~ErrorString() override;
 
     [[nodiscard]] const QString & base() const noexcept;

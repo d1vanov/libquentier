@@ -20,21 +20,13 @@
 
 namespace quentier {
 
-const QString Printable::toString() const
+QString Printable::toString() const
 {
     QString str;
     QTextStream strm(&str, QIODevice::WriteOnly);
     strm << *this;
     return str;
 }
-
-Printable::Printable() = default;
-
-Printable::Printable(const Printable &) = default;
-
-Printable & Printable::operator=(const Printable &) = default;
-
-Printable::~Printable() noexcept = default;
 
 QDebug & operator<<(QDebug & debug, const Printable & printable)
 {

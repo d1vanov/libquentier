@@ -33,13 +33,18 @@ class QUENTIER_EXPORT ResourceRecognitionIndices : public Printable
 {
 public:
     explicit ResourceRecognitionIndices();
-    ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
 
     explicit ResourceRecognitionIndices(
         const QByteArray & rawRecognitionIndicesData);
 
+    ResourceRecognitionIndices(const ResourceRecognitionIndices & other);
+    ResourceRecognitionIndices(ResourceRecognitionIndices && other) noexcept;
+
     ResourceRecognitionIndices & operator=(
         const ResourceRecognitionIndices & other);
+
+    ResourceRecognitionIndices & operator=(
+        ResourceRecognitionIndices && other) noexcept;
 
     ~ResourceRecognitionIndices() override;
 

@@ -29,16 +29,15 @@ namespace quentier {
 class QUENTIER_EXPORT NoteSearchQuery : public Printable
 {
 public:
-    NoteSearchQuery();
+    explicit NoteSearchQuery();
+
     NoteSearchQuery(const NoteSearchQuery & other);
     NoteSearchQuery(NoteSearchQuery && other) noexcept;
 
-    [[nodiscard]] NoteSearchQuery & operator=(const NoteSearchQuery & other);
+    NoteSearchQuery & operator=(const NoteSearchQuery & other);
+    NoteSearchQuery & operator=(NoteSearchQuery && other) noexcept;
 
-    [[nodiscard]] NoteSearchQuery & operator=(
-        NoteSearchQuery && other) noexcept;
-
-    ~NoteSearchQuery() noexcept override;
+    ~NoteSearchQuery() override;
 
     [[nodiscard]] bool isEmpty() const;
 

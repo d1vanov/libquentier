@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,26 +24,22 @@
 namespace quentier {
 
 ResourceRecognitionIndexItem::ResourceRecognitionIndexItem() :
-    Printable(), d(new ResourceRecognitionIndexItemData)
+    d(new ResourceRecognitionIndexItemData)
 {}
 
 ResourceRecognitionIndexItem::ResourceRecognitionIndexItem(
-    const ResourceRecognitionIndexItem & other) :
-    Printable(),
-    d(other.d)
-{}
+    const ResourceRecognitionIndexItem & other) = default;
+
+ResourceRecognitionIndexItem::ResourceRecognitionIndexItem(
+    ResourceRecognitionIndexItem && other) noexcept = default;
 
 ResourceRecognitionIndexItem & ResourceRecognitionIndexItem::operator=(
-    const ResourceRecognitionIndexItem & other)
-{
-    if (this != &other) {
-        d = other.d;
-    }
+    const ResourceRecognitionIndexItem & other) = default;
 
-    return *this;
-}
+ResourceRecognitionIndexItem & ResourceRecognitionIndexItem::operator=(
+    ResourceRecognitionIndexItem && other) noexcept = default;
 
-ResourceRecognitionIndexItem::~ResourceRecognitionIndexItem() {}
+ResourceRecognitionIndexItem::~ResourceRecognitionIndexItem() = default;
 
 bool ResourceRecognitionIndexItem::isValid() const
 {

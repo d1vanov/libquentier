@@ -24,18 +24,17 @@ namespace quentier {
 
 NoteSearchQuery::NoteSearchQuery() : d(new NoteSearchQuery::Data) {}
 
-NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & /* other */) = default;
+NoteSearchQuery::NoteSearchQuery(const NoteSearchQuery & other) = default;
 
-NoteSearchQuery::NoteSearchQuery(
-    NoteSearchQuery && /* other */) noexcept = default;
-
-NoteSearchQuery & NoteSearchQuery::operator=(
-    const NoteSearchQuery & /* other */) = default;
+NoteSearchQuery::NoteSearchQuery(NoteSearchQuery && other) noexcept = default;
 
 NoteSearchQuery & NoteSearchQuery::operator=(
-    NoteSearchQuery && /* other */) noexcept = default;
+    const NoteSearchQuery & other) = default;
 
-NoteSearchQuery::~NoteSearchQuery() noexcept = default;
+NoteSearchQuery & NoteSearchQuery::operator=(
+    NoteSearchQuery && other) noexcept = default;
+
+NoteSearchQuery::~NoteSearchQuery() = default;
 
 bool NoteSearchQuery::isEmpty() const
 {

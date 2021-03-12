@@ -38,7 +38,6 @@ class QUENTIER_EXPORT IQuentierException :
     public std::exception
 {
 public:
-    explicit IQuentierException(const ErrorString & message);
     ~IQuentierException() noexcept override;
 
     [[nodiscard]] QString localizedErrorMessage() const;
@@ -49,6 +48,7 @@ public:
     QTextStream & print(QTextStream & strm) const override;
 
 protected:
+    explicit IQuentierException(const ErrorString & message);
     IQuentierException(const IQuentierException & other);
     IQuentierException & operator=(const IQuentierException & other);
 

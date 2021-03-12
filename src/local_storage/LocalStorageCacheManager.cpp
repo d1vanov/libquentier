@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,7 +29,7 @@ LocalStorageCacheManager::LocalStorageCacheManager() :
     d_ptr(new LocalStorageCacheManagerPrivate(*this))
 {}
 
-LocalStorageCacheManager::~LocalStorageCacheManager() noexcept
+LocalStorageCacheManager::~LocalStorageCacheManager()
 {
     delete d_ptr;
 }

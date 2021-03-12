@@ -73,7 +73,11 @@ public:
         QString evernoteHost = {}, QString shardId = {});
 
     Account(const Account & other);
+    Account(Account && other) noexcept;
+
     Account & operator=(const Account & other);
+    Account & operator=(Account && other) noexcept;
+
     ~Account() noexcept override;
 
     [[nodiscard]] bool operator==(const Account & other) const noexcept;

@@ -67,7 +67,7 @@ public:
     public:
         enum class ComparisonRule
         {
-            Equals = 0,
+            Equals,
             StartsWith,
             EndsWith,
             Contains
