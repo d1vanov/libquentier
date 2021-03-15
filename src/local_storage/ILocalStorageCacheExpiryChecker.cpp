@@ -26,6 +26,6 @@ ILocalStorageCacheExpiryChecker::ILocalStorageCacheExpiryChecker(
     m_localStorageCacheManager(cacheManager)
 {}
 
-ILocalStorageCacheExpiryChecker::~ILocalStorageCacheExpiryChecker() noexcept = default;
+ILocalStorageCacheExpiryChecker::~ILocalStorageCacheExpiryChecker() = default;
 
 } // namespace quentier
