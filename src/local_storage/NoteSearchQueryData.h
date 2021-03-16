@@ -146,6 +146,8 @@ private:
         QVector<double> & negatedContainer, bool & hasAnyValue,
         bool & hasNegatedAnyValue, ErrorString & error) const;
 
+    QDateTime parseDateTime(const QString & str) const;
+
     bool dateTimeStringToTimestamp(
         QString dateTimeString, qint64 & timestamp, ErrorString & error) const;
 
