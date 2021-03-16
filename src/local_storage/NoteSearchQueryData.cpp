@@ -981,6 +981,26 @@ bool NoteSearchQueryData::parseDoubleValue(
     return true;
 }
 
+QDateTime NoteSearchQueryData::parseDateTime(const QString & str) const
+{
+    QDateTime dateTime = QDateTime::fromString(str, Qt::ISODate);
+    if (dateTime.isValid()) {
+        return dateTime;
+    }
+
+    dateTime = QDateTime::fromString(str, QStringLiteral("yyyyMMdd'T'HHmmss'Z'"));
+    if (dateTime.isValid()) {
+        return dateTime;
+    }
+
+    dateTime = QDateTime::fromString(str, QStringLiteral("yyyyMMdd'T'HHmmss"));
+    if (dateTime.isValid()) {
+        return dateTime;
+    }
+
+    return QDateTime::fromString(str, QStringLiteral("yyyyMMdd"));
+}
+
 bool NoteSearchQueryData::dateTimeStringToTimestamp(
     QString dateTimeString, qint64 & timestamp, ErrorString & error) const
 {
@@ -1093,7 +1113,7 @@ bool NoteSearchQueryData::dateTimeStringToTimestamp(
 
     // Getting here means the datetime in the string is actually a datetime
     // in ISO 8601 compact profile
-    dateTime = QDateTime::fromString(dateTimeString, Qt::ISODate);
+    dateTime = parseDateTime(dateTimeString);
     if (!dateTime.isValid()) {
         error.setBase(QT_TRANSLATE_NOOP(
             "NoteSearchQueryData",
