@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -125,7 +125,7 @@ ApplicationSettings::ApplicationSettings(
         QSettings::IniFormat)
 {}
 
-ApplicationSettings::~ApplicationSettings() {}
+ApplicationSettings::~ApplicationSettings() = default;
 
 void ApplicationSettings::beginGroup(const QString & prefix)
 {

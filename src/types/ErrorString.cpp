@@ -21,7 +21,7 @@
 
 #include "data/ErrorStringData.h"
 
-#include <QApplication>
+#include <QCoreApplication>
 
 namespace quentier {
 
@@ -128,7 +128,7 @@ void ErrorString::clear()
 QString ErrorString::localizedString() const
 {
     if (isEmpty()) {
-        return QString();
+        return {};
     }
 
     QString baseStr;
@@ -142,7 +142,7 @@ QString ErrorString::localizedString() const
             continue;
         }
 
-        QString translatedStr =
+        const QString translatedStr =
             qApp->translate("", additionalBase.toLocal8Bit().constData());
 
         if (additionalBasesStr.isEmpty()) {

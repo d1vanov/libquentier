@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,15 +27,15 @@
 #include <QSharedData>
 #include <QString>
 
-QT_FORWARD_DECLARE_CLASS(QXmlStreamAttributes)
+class QXmlStreamAttributes;
 
 namespace quentier {
 
 class Q_DECL_HIDDEN ResourceRecognitionIndicesData final : public QSharedData
 {
 public:
-    bool isValid() const;
-    bool setData(const QByteArray & rawRecognitionIndicesData);
+    [[nodiscard]] bool isValid() const;
+    [[nodiscard]] bool setData(const QByteArray & rawRecognitionIndicesData);
 
 private:
     void clear();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ class Q_DECL_HIDDEN FileIOProcessorAsyncPrivate final : public QObject
 public:
     explicit FileIOProcessorAsyncPrivate(QObject * parent = nullptr);
 
-    void setIdleTimePeriod(const qint32 seconds);
+    void setIdleTimePeriod(qint32 seconds);
 
 Q_SIGNALS:
     void readyForIO();
@@ -54,7 +54,7 @@ public Q_SLOTS:
     void onReadFileRequest(QString absoluteFilePath, QUuid requestId);
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent) override;
+    void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     qint32 m_idleTimePeriodSeconds = 30;

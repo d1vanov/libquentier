@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ qint64 SysInfo::totalMemory()
     const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
-    int rc = sysinfo(&si);
+    const int rc = sysinfo(&si);
     if (rc) {
         return -1;
     }
@@ -55,7 +55,7 @@ qint64 SysInfo::freeMemory()
     const QMutexLocker mutexLocker(&d->m_mutex);
 
     struct sysinfo si;
-    int rc = sysinfo(&si);
+    const int rc = sysinfo(&si);
     if (rc) {
         return -1;
     }
@@ -71,7 +71,7 @@ QString SysInfo::stackTrace()
     fpos_t pos;
 
     QString tmpFile = QDir::tempPath();
-    QString appName = QApplication::applicationName();
+    const QString appName = QApplication::applicationName();
 
     tmpFile += QStringLiteral("/Quentier_") + appName +
         QStringLiteral("_StackTrace.txt");
@@ -96,14 +96,12 @@ QString SysInfo::stackTrace()
     fsetpos(stderr, &pos);
     fclose(fileHandle);
 
-    QFile file(tmpFile);
+    QFile file{tmpFile};
     if (!file.open(QIODevice::ReadOnly)) {
         return QStringLiteral("Cannot open temporary file with stacktrace");
     }
 
-    QByteArray rawOutput = file.readAll();
-    QString output = QString::fromLocal8Bit(rawOutput);
-    return output;
+    return QString::fromLocal8Bit(file.readAll());
 }
 
 } // namespace quentier

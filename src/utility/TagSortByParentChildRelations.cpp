@@ -95,7 +95,7 @@ bool sortTagsByParentChildRelations(
             graph.addChild(parentTagGuid, guid);
         }
         else if (!tag.localId().isEmpty()) {
-            const QString localId = tag.localId();
+            const QString & localId = tag.localId();
             const QString parentTagLocalId = tag.parentTagLocalId();
             QNTRACE(
                 "utility:tar_sort",

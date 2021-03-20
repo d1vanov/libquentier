@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,7 @@
 #include <QTextCodec>
 
 #include <iostream>
+#include <memory>
 
 #if defined Q_OS_WIN
 #include <Windows.h>
@@ -44,7 +45,7 @@ QuentierFileLogWriter::QuentierFileLogWriter(
 {
     const QString logFileDirPath = QuentierLogger::logFilesDirPath();
 
-    QDir logFileDir(logFileDirPath);
+    QDir logFileDir{logFileDirPath};
     if (Q_UNLIKELY(!logFileDir.exists())) {
         if (Q_UNLIKELY(!logFileDir.mkpath(QStringLiteral(".")))) {
             ErrorString error(QT_TR_NOOP("Can't create the log file path"));
@@ -95,8 +96,9 @@ QuentierFileLogWriter::~QuentierFileLogWriter() noexcept
 
 void QuentierFileLogWriter::write(QString message)
 {
-    const DateTimePrint::Options options(
-        DateTimePrint::IncludeMilliseconds | DateTimePrint::IncludeTimezone);
+    const DateTimePrintOptions options(
+        DateTimePrintOption::IncludeMilliseconds |
+        DateTimePrintOption::IncludeTimezone);
 
     message.prepend(
         printableDateTimeFromTimestamp(
@@ -111,7 +113,7 @@ void QuentierFileLogWriter::write(QString message)
     }
 
     if (Q_UNLIKELY(!m_pStream)) {
-        m_pStream.reset(new QTextStream);
+        m_pStream = std::make_unique<QTextStream>();
         m_pStream->setDevice(&m_logFile);
         m_pStream->setCodec(QTextCodec::codecForName("UTF-8"));
     }
@@ -360,7 +362,7 @@ void QuentierLogger::removeLogWriter(IQuentierLogWriter * pLogWriter)
 
 void QuentierLogger::write(QString message)
 {
-    Q_EMIT sendLogMessage(message);
+    Q_EMIT sendLogMessage(message); // NOLINT
 }
 
 void QuentierLogger::setMinLogLevel(const LogLevel minLogLevel)
@@ -371,13 +373,13 @@ void QuentierLogger::setMinLogLevel(const LogLevel minLogLevel)
 
 QRegularExpression QuentierLogger::componentFilterRegex()
 {
-    QReadLocker lock(&m_pImpl->m_componentFilterLock);
+    QReadLocker lock{&m_pImpl->m_componentFilterLock};
     return m_pImpl->m_componentFilterRegex;
 }
 
 void QuentierLogger::setComponentFilterRegex(const QRegularExpression & filter)
 {
-    QWriteLocker lock(&m_pImpl->m_componentFilterLock);
+    QWriteLocker lock{&m_pImpl->m_componentFilterLock};
     m_pImpl->m_componentFilterRegex = filter;
 }
 

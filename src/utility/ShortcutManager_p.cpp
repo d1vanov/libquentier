@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,9 +22,13 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/ShortcutManager.h>
 
-#define SHORTCUT_SETTINGS_NAME QStringLiteral("Shortcuts")
-
 namespace quentier {
+
+namespace {
+
+const QString gShortcutSettingsName = QStringLiteral("Shortcuts");
+
+} // namespace
 
 ShortcutManagerPrivate::ShortcutManagerPrivate(
     ShortcutManager & shortcutManager) :
@@ -100,7 +104,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -129,10 +133,9 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
                     << "default from QKeySequence");
             return QKeySequence(key);
         }
-        else {
-            QNTRACE("utility:shortcut", "Returning empty shortcut");
-            return QKeySequence();
-        }
+
+        QNTRACE("utility:shortcut", "Returning empty shortcut");
+        return {};
     }
 
     QNTRACE("utility:shortcut", "Key sequence: " << keySequence);
@@ -153,7 +156,7 @@ QKeySequence ShortcutManagerPrivate::defaultShortcut(
         return {};
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -195,7 +198,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         return {};
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -235,7 +238,7 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
         return QKeySequence();
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
 
     settings.beginGroup(shortcutGroupString(
         context,
@@ -262,7 +265,8 @@ QKeySequence ShortcutManagerPrivate::userShortcut(
 }
 
 void ShortcutManagerPrivate::setUserShortcut(
-    int key, QKeySequence shortcut, const Account & account, QString context)
+    int key, QKeySequence shortcut, const Account & account, // NOLINT
+    QString context) // NOLINT
 {
     const QString keyString = keyToString(key);
 
@@ -277,7 +281,8 @@ void ShortcutManagerPrivate::setUserShortcut(
         return;
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
+
     settings.beginGroup(shortcutGroupString(
         context,
         /* default shortcut = */ false,
@@ -295,8 +300,8 @@ void ShortcutManagerPrivate::setUserShortcut(
 }
 
 void ShortcutManagerPrivate::setNonStandardUserShortcut(
-    QString nonStandardKey, QKeySequence shortcut, const Account & account,
-    QString context)
+    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    const Account & account, QString context) // NOLINT
 {
     QNDEBUG(
         "utility:shortcut",
@@ -308,7 +313,8 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(
         return;
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
+
     settings.beginGroup(shortcutGroupString(
         context,
         /* default shortcut = */ false,
@@ -329,7 +335,8 @@ void ShortcutManagerPrivate::setNonStandardUserShortcut(
 }
 
 void ShortcutManagerPrivate::setDefaultShortcut(
-    int key, QKeySequence shortcut, const Account & account, QString context)
+    int key, QKeySequence shortcut, const Account & account, // NOLINT
+    QString context) // NOLINT
 {
     const QString keyString = keyToString(key);
 
@@ -344,7 +351,8 @@ void ShortcutManagerPrivate::setDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
+
     settings.beginGroup(shortcutGroupString(
         context,
         /* default shortcut = */ true,
@@ -379,8 +387,8 @@ void ShortcutManagerPrivate::setDefaultShortcut(
 }
 
 void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
-    QString nonStandardKey, QKeySequence shortcut, const Account & account,
-    QString context)
+    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    const Account & account, QString context) // NOLINT
 {
     QNDEBUG(
         "utility:shortcut",
@@ -393,7 +401,8 @@ void ShortcutManagerPrivate::setNonStandardDefaultShortcut(
         return;
     }
 
-    ApplicationSettings settings(account, SHORTCUT_SETTINGS_NAME);
+    ApplicationSettings settings{account, gShortcutSettingsName};
+
     settings.beginGroup(shortcutGroupString(
         context,
         /* default shortcut = */ true,

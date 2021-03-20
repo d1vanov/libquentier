@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -26,7 +26,7 @@
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(ShortcutManager)
+class ShortcutManager;
 
 class Q_DECL_HIDDEN ShortcutManagerPrivate final : public QObject
 {
@@ -35,21 +35,21 @@ public:
     explicit ShortcutManagerPrivate(ShortcutManager & shortcutManager);
 
     [[nodiscard]] QKeySequence shortcut(
-        const int key, const Account & account, const QString & context) const;
+        int key, const Account & account, const QString & context) const;
 
     [[nodiscard]] QKeySequence shortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
     [[nodiscard]] QKeySequence defaultShortcut(
-        const int key, const Account & account, const QString & context) const;
+        int key, const Account & account, const QString & context) const;
 
     [[nodiscard]] QKeySequence defaultShortcut(
         const QString & nonStandardKey, const Account & account,
         const QString & context) const;
 
     [[nodiscard]] QKeySequence userShortcut(
-        const int key, const Account & account, const QString & context) const;
+        int key, const Account & account, const QString & context) const;
 
     [[nodiscard]] QKeySequence userShortcut(
         const QString & nonStandardKey, const Account & account,
@@ -82,11 +82,11 @@ public Q_SLOTS:
         QString context);
 
 private:
-    [[nodiscard]] QString keyToString(const int key) const;
+    [[nodiscard]] QString keyToString(int key) const;
 
     [[nodiscard]] QString shortcutGroupString(
-        const QString & context, const bool defaultShortcut,
-        const bool nonStandardShortcut) const;
+        const QString & context, bool defaultShortcut,
+        bool nonStandardShortcut) const;
 
 private:
     ShortcutManager * const q_ptr;

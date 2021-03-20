@@ -17,7 +17,6 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndices.h>
-#include <quentier/utility/Compat.h>
 
 #include "data/ResourceRecognitionIndicesData.h"
 
@@ -31,7 +30,7 @@ ResourceRecognitionIndices::ResourceRecognitionIndices(
     const QByteArray & rawRecognitionIndicesData) :
     d(new ResourceRecognitionIndicesData)
 {
-    d->setData(rawRecognitionIndicesData);
+    Q_UNUSED(d->setData(rawRecognitionIndicesData))
 }
 
 ResourceRecognitionIndices::ResourceRecognitionIndices(

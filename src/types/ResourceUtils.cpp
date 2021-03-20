@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,8 @@ QString resourceDisplayName(const qevercloud::Resource & resource)
         if (resource.attributes()->fileName()) {
             return *resource.attributes()->fileName();
         }
-        else if (resource.attributes()->sourceURL()) {
+
+        if (resource.attributes()->sourceURL()) {
             return *resource.attributes()->sourceURL();
         }
     }

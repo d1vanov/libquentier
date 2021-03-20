@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,7 +31,7 @@ QString humanReadableSize(const quint64 bytes)
     QStringListIterator it(list);
     QString unit = QStringLiteral("bytes");
 
-    double num = static_cast<double>(bytes);
+    auto num = static_cast<double>(bytes);
     while (num >= 1024.0 && it.hasNext()) {
         unit = it.next();
         num /= 1024.0;

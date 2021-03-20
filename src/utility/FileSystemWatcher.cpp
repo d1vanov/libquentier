@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,7 +34,7 @@ FileSystemWatcher::FileSystemWatcher(
     d_ptr(new FileSystemWatcherPrivate(*this, paths, removalTimeoutMSec))
 {}
 
-FileSystemWatcher::~FileSystemWatcher() {}
+FileSystemWatcher::~FileSystemWatcher() = default;
 
 void FileSystemWatcher::addPath(const QString & path)
 {

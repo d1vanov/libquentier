@@ -31,37 +31,29 @@ namespace quentier {
 }
 
 /**
- * @brief The DateTimePrint class simply wraps the enum containing datetime
- * printing options
+ * Available printing options for datetime
  */
-class QUENTIER_EXPORT DateTimePrint
+enum class DateTimePrintOption
 {
-public:
     /**
-     * Available printing options for datetime
+     * Include the numeric representation of the timestamp into
+     * the printed string
      */
-    enum Option
-    {
-        /**
-         * Include the numeric representation of the timestamp into
-         * the printed string
-         */
-        IncludeNumericTimestamp = 1 << 1,
-        /**
-         * Include milliseconds into the printed string
-         */
-        IncludeMilliseconds = 1 << 2,
-        /**
-         * Include timezone into the printed string
-         * WARNING: currently this option has no effect on Windows platform,
-         * the timezone is not included anyway.
-         */
-        IncludeTimezone = 1 << 3
-    };
-    Q_DECLARE_FLAGS(Options, Option)
+    IncludeNumericTimestamp = 1 << 1,
+    /**
+     * Include milliseconds into the printed string
+     */
+    IncludeMilliseconds = 1 << 2,
+    /**
+     * Include timezone into the printed string
+     * WARNING: currently this option has no effect on Windows platform,
+     * the timezone is not included anyway.
+     */
+    IncludeTimezone = 1 << 3
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
+Q_DECLARE_FLAGS(DateTimePrintOptions, DateTimePrintOption)
+Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrintOptions)
 
 /**
  * printableDateTimeFromTimestamp converts the passed in timestamp into
@@ -80,11 +72,12 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DateTimePrint::Options)
  * @return                      Human readable datetime string corresponding to
  *                              the passed in timestamp
  */
-[[nodiscard]] const QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
+[[nodiscard]] QString QUENTIER_EXPORT printableDateTimeFromTimestamp(
     qint64 timestamp,
-    DateTimePrint::Options options = DateTimePrint::Options(
-        DateTimePrint::IncludeNumericTimestamp |
-        DateTimePrint::IncludeMilliseconds | DateTimePrint::IncludeTimezone),
+    DateTimePrintOptions options = DateTimePrintOptions(
+        DateTimePrintOption::IncludeNumericTimestamp |
+        DateTimePrintOption::IncludeMilliseconds |
+        DateTimePrintOption::IncludeTimezone),
     const char * customFormat = nullptr);
 
 } // namespace quentier

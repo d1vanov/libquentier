@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -151,7 +151,7 @@ private:
     void unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(
         const QString & service, const QString & key);
 
-    bool isServiceKeyPairAvailableInPrimaryKeychain(
+    [[nodiscard]] bool isServiceKeyPairAvailableInPrimaryKeychain(
         const QString & service, const QString & key) const;
 
     void markServiceKeyPairAsUnavailableInSecondaryKeychain(

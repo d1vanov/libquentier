@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,7 +21,6 @@
 #include "ResourceRecognitionIndexItemData.h"
 
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Compat.h>
 
 #include <QStringList>
 #include <QXmlStreamReader>
@@ -33,20 +32,18 @@ bool ResourceRecognitionIndicesData::isValid() const
     if (m_objectId.isEmpty()) {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' object id is not "
-                << "set");
+            "Resource recognition indices' object id is not set");
         return false;
     }
 
     if (m_objectType.isEmpty()) {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' object type is "
-                << "not set");
+            "Resource recognition indices' object type is not set");
         return false;
     }
-    else if (
-        (m_objectType != QStringLiteral("image")) &&
+
+    if ((m_objectType != QStringLiteral("image")) &&
         (m_objectType != QStringLiteral("ink")) &&
         (m_objectType != QStringLiteral("audio")) &&
         (m_objectType != QStringLiteral("video")) &&
@@ -54,26 +51,23 @@ bool ResourceRecognitionIndicesData::isValid() const
     {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' object type is "
-                << "not valid");
+            "Resource recognition indices' object type is not valid");
         return false;
     }
 
     if (m_recoType.isEmpty()) {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' recognition type "
-                << "is not set");
+            "Resource recognition indices' recognition type is not set");
         return false;
     }
-    else if (
-        (m_recoType != QStringLiteral("service")) &&
+
+    if ((m_recoType != QStringLiteral("service")) &&
         (m_recoType != QStringLiteral("client")))
     {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' recognition type "
-                << "is not valid");
+            "Resource recognition indices' recognition type is not valid");
         return false;
     }
 
@@ -84,8 +78,8 @@ bool ResourceRecognitionIndicesData::isValid() const
                 << "set");
         return false;
     }
-    else if (
-        (m_docType != QStringLiteral("printed")) &&
+
+    if ((m_docType != QStringLiteral("printed")) &&
         (m_docType != QStringLiteral("speech")) &&
         (m_docType != QStringLiteral("handwritten")) &&
         (m_docType != QStringLiteral("picture")) &&
@@ -93,8 +87,7 @@ bool ResourceRecognitionIndicesData::isValid() const
     {
         QNTRACE(
             "types:data",
-            "Resource recognition indices' doc type is not "
-                << "valid");
+            "Resource recognition indices' doc type is not valid");
         return false;
     }
 
@@ -115,12 +108,12 @@ bool ResourceRecognitionIndicesData::setData(
         return true;
     }
 
-    QXmlStreamReader reader(rawRecognitionIndicesData);
+    QXmlStreamReader reader{rawRecognitionIndicesData};
 
     QString lastElementName;
     QXmlStreamAttributes lastElementAttributes;
 
-    ResourceRecognitionIndicesData backup(*this);
+    ResourceRecognitionIndicesData backup{*this};
     clear();
 
     while (!reader.atEnd()) {
@@ -158,7 +151,7 @@ bool ResourceRecognitionIndicesData::setData(
                 continue;
             }
 
-            ResourceRecognitionIndexItem & item = m_items.last();
+            auto & item = m_items.last();
 
             if (lastElementName == QStringLiteral("object")) {
                 parseObjectItemAttributes(lastElementAttributes, item);
@@ -172,7 +165,7 @@ bool ResourceRecognitionIndicesData::setData(
         }
 
         if (reader.isCharacters()) {
-            QString chars = reader.text().toString().simplified();
+            const QString chars = reader.text().toString().simplified();
             if (chars.isEmpty()) {
                 continue;
             }
@@ -181,7 +174,7 @@ bool ResourceRecognitionIndicesData::setData(
                 continue;
             }
 
-            ResourceRecognitionIndexItem & item = m_items.last();
+            auto & item = m_items.last();
 
             if (lastElementName == QStringLiteral("t")) {
                 parseTextItemAttributesAndData(
@@ -279,14 +272,14 @@ void ResourceRecognitionIndicesData::parseRecoIndexAttributes(
         }
         else if (name == QStringLiteral("objHeight")) {
             bool conversionResult = false;
-            int objectHeight = value.toInt(&conversionResult);
+            const int objectHeight = value.toInt(&conversionResult);
             if (conversionResult) {
                 m_objectHeight = objectHeight;
             }
         }
         else if (name == QStringLiteral("objWidth")) {
             bool conversionResult = false;
-            int objectWidth = value.toInt(&conversionResult);
+            const int objectWidth = value.toInt(&conversionResult);
             if (conversionResult) {
                 m_objectWidth = objectWidth;
             }
@@ -308,49 +301,49 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
 
         if (name == QStringLiteral("x")) {
             bool conversionResult = false;
-            int x = value.toInt(&conversionResult);
+            const int x = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setX(x);
             }
         }
         else if (name == QStringLiteral("y")) {
             bool conversionResult = false;
-            int y = value.toInt(&conversionResult);
+            const int y = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setY(y);
             }
         }
         else if (name == QStringLiteral("h")) {
             bool conversionResult = false;
-            int h = value.toInt(&conversionResult);
+            const int h = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setH(h);
             }
         }
         else if (name == QStringLiteral("w")) {
             bool conversionResult = false;
-            int w = value.toInt(&conversionResult);
+            const int w = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setW(w);
             }
         }
         else if (name == QStringLiteral("offset")) {
             bool conversionResult = false;
-            int offset = value.toInt(&conversionResult);
+            const int offset = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setOffset(offset);
             }
         }
         else if (name == QStringLiteral("duration")) {
             bool conversionResult = false;
-            int duration = value.toInt(&conversionResult);
+            const int duration = value.toInt(&conversionResult);
             if (conversionResult) {
                 item.setDuration(duration);
             }
         }
         else if (name == QStringLiteral("strokeList")) {
-            QString valueStr = value.toString();
-            QStringList valueList = valueStr.split(
+            const QString valueStr = value.toString();
+            const QStringList valueList = valueStr.split(
                 QStringLiteral(","),
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
                 Qt::SkipEmptyParts);
@@ -361,7 +354,7 @@ void ResourceRecognitionIndicesData::parseCommonItemAttributes(
             for (int i = 0; i < numValues; ++i) {
                 const QString & strokeStr = valueList[i];
                 bool conversionResult = false;
-                int stroke = strokeStr.toInt(&conversionResult);
+                const int stroke = strokeStr.toInt(&conversionResult);
                 if (conversionResult) {
                     item.addStroke(stroke);
                 }
@@ -387,7 +380,7 @@ void ResourceRecognitionIndicesData::parseTextItemAttributesAndData(
 
         if (name == QStringLiteral("w")) {
             bool conversionResult = false;
-            int parsedWeight = value.toInt(&conversionResult);
+            const int parsedWeight = value.toInt(&conversionResult);
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -428,7 +421,7 @@ void ResourceRecognitionIndicesData::parseObjectItemAttributes(
         }
         else if (name == QStringLiteral("w")) {
             bool conversionResult = false;
-            int parsedWeight = value.toString().toInt(&conversionResult);
+            const int parsedWeight = value.toString().toInt(&conversionResult);
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -469,7 +462,7 @@ void ResourceRecognitionIndicesData::parseShapeItemAttributes(
         }
         else if (name == QStringLiteral("w")) {
             bool conversionResult = false;
-            int parsedWeight = value.toInt(&conversionResult);
+            const int parsedWeight = value.toInt(&conversionResult);
             if (conversionResult) {
                 weight = parsedWeight;
             }
@@ -507,7 +500,7 @@ void ResourceRecognitionIndicesData::parseBarcodeItemAttributesAndData(
 
         if (name == QStringLiteral("w")) {
             bool conversionResult = false;
-            int parsedWeight = value.toInt(&conversionResult);
+            const int parsedWeight = value.toInt(&conversionResult);
             if (conversionResult) {
                 weight = parsedWeight;
             }

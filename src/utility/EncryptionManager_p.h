@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -24,17 +24,11 @@
 #include <QList>
 #include <QVector>
 
-// Evernote service defined constants
-#define EN_ITERATIONS   (50000)
-#define EN_AES_KEYSIZE  (16)
-#define EN_RC2_KEYSIZE  (8)
-#define EN_AES_HMACSIZE (32)
-#define EN_RC2_HMACSIZE (16)
-#define EN_IDENT        "ENC0"
-#define MAX_PADDING_LEN (16)
+#include <array>
+#include <cstddef>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
-QT_FORWARD_DECLARE_CLASS(QTextStream)
+class QDebug;
+class QTextStream;
 
 namespace quentier {
 
@@ -46,7 +40,7 @@ public:
 
     [[nodiscard]] bool decrypt(
         const QString & encryptedText, const QString & passphrase,
-        const QString & cipher, const size_t keyLength, QString & decryptedText,
+        const QString & cipher, size_t keyLength, QString & decryptedText,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool encrypt(
@@ -63,20 +57,20 @@ private:
         IV
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const SaltKind kind);
-    friend QTextStream & operator<<(QTextStream & strm, const SaltKind kind);
+    friend QDebug & operator<<(QDebug & dbg, SaltKind kind);
+    friend QTextStream & operator<<(QTextStream & strm, SaltKind kind);
 
     [[nodiscard]] bool generateSalt(
-        const SaltKind saltKind, const size_t saltSize,
+        SaltKind saltKind, size_t saltSize,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool generateKey(
         const QByteArray & passphraseData, const unsigned char * salt,
-        const size_t keySize, ErrorString & errorDescription);
+        size_t keySize, ErrorString & errorDescription);
 
     [[nodiscard]] bool calculateHmac(
         const QByteArray & passphraseData, const unsigned char * salt,
-        const QByteArray & encryptedTextData, const size_t keySize,
+        const QByteArray & encryptedTextData, size_t keySize,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool encyptWithAes(
@@ -88,8 +82,8 @@ private:
         QByteArray & decryptedText, ErrorString & errorDescription);
 
     [[nodiscard]] bool splitEncryptedData(
-        const QString & encryptedData, const size_t saltSize,
-        const size_t hmacSize, QByteArray & encryptedText,
+        const QString & encryptedData, size_t saltSize,
+        size_t hmacSize, QByteArray & encryptedText,
         ErrorString & errorDescription);
 
 private:
@@ -106,17 +100,21 @@ private:
     [[nodiscard]] qint32 crc32(const QString & str) const;
 
 private:
-    unsigned char m_salt[EN_AES_KEYSIZE];
-    unsigned char m_saltmac[EN_AES_KEYSIZE];
-    unsigned char m_iv[EN_AES_KEYSIZE];
+    // Evernote service defined constants
+    static constexpr std::size_t s_aes_keysize = 16;
+    static constexpr std::size_t s_aes_hmacsize = 32;
 
-    unsigned char m_key[EN_AES_KEYSIZE];
-    unsigned char m_hmac[EN_AES_HMACSIZE];
+    std::array<unsigned char, s_aes_keysize> m_salt;
+    std::array<unsigned char, s_aes_keysize> m_saltmac;
+    std::array<unsigned char, s_aes_keysize> m_iv;
+
+    std::array<unsigned char, s_aes_keysize> m_key;
+    std::array<unsigned char, s_aes_hmacsize> m_hmac;
 
     // Cache helpers
     mutable QVector<int> m_cached_xkey;
     mutable QVector<int> m_cached_key;
-    mutable int m_decrypt_rc2_chunk_key_codes[8];
+    mutable std::array<int, 8> m_decrypt_rc2_chunk_key_codes;
     mutable QString m_rc2_chunk_out;
 };
 

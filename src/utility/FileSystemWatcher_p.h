@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,13 +33,13 @@ class Q_DECL_HIDDEN FileSystemWatcherPrivate final : public QObject
     Q_OBJECT
 public:
     explicit FileSystemWatcherPrivate(
-        FileSystemWatcher & parent, const int removalTimeoutMSec);
+        FileSystemWatcher & parent, int removalTimeoutMSec);
 
     explicit FileSystemWatcherPrivate(
         FileSystemWatcher & parent, const QStringList & paths,
-        const int removalTimeoutMSec);
+        int removalTimeoutMSec);
 
-    virtual ~FileSystemWatcherPrivate();
+    ~FileSystemWatcherPrivate() override;
 
     void addPath(const QString & path);
     void addPaths(const QStringList & paths);

@@ -1651,9 +1651,9 @@ bool ENMLConverterPrivate::exportNotesToEnex(
     QXmlStreamAttributes enExportAttributes;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    DateTimePrint::Options dateTimePrintOptions;
+    DateTimePrintOptions dateTimePrintOptions;
 #else
-    DateTimePrint::Options dateTimePrintOptions(0); // NOLINT
+    DateTimePrintOptions dateTimePrintOptions(0); // NOLINT
 #endif
 
     qint64 currentTimestamp = QDateTime::currentMSecsSinceEpoch();

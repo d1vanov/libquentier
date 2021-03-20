@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,6 +31,8 @@
 #include <QMutexLocker>
 #include <QString>
 
+#include <cstddef>
+
 namespace quentier {
 
 qint64 SysInfo::totalMemory()
@@ -42,7 +44,7 @@ qint64 SysInfo::totalMemory()
     int64_t physical_memory;
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
-    size_t length = sizeof(int64_t);
+    std::size_t length = sizeof(int64_t);
     const int rc = sysctl(mib, 2, &physical_memory, &length, NULL, 0);
     if (rc) {
         return -1;

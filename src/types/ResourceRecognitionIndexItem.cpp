@@ -17,7 +17,6 @@
  */
 
 #include <quentier/types/ResourceRecognitionIndexItem.h>
-#include <quentier/utility/Compat.h>
 
 #include "data/ResourceRecognitionIndexItemData.h"
 
@@ -158,7 +157,7 @@ void ResourceRecognitionIndexItem::addStroke(const int stroke)
 bool ResourceRecognitionIndexItem::removeStroke(const int stroke)
 {
     const auto & strokeList = d.constData()->m_strokeList;
-    int index = strokeList.indexOf(stroke);
+    const int index = strokeList.indexOf(stroke);
     if (index < 0) {
         return false;
     }
@@ -231,7 +230,7 @@ void ResourceRecognitionIndexItem::addTextItem(const TextItem & item)
 bool ResourceRecognitionIndexItem::removeTextItem(const TextItem & item)
 {
     const auto & textItems = d.constData()->m_textItems;
-    int index = textItems.indexOf(item);
+    const int index = textItems.indexOf(item);
     if (index < 0) {
         return false;
     }
@@ -305,7 +304,7 @@ void ResourceRecognitionIndexItem::addObjectItem(const ObjectItem & item)
 bool ResourceRecognitionIndexItem::removeObjectItem(const ObjectItem & item)
 {
     const auto & objectItems = d.constData()->m_objectItems;
-    int index = objectItems.indexOf(item);
+    const int index = objectItems.indexOf(item);
     if (index < 0) {
         return false;
     }
@@ -379,7 +378,7 @@ void ResourceRecognitionIndexItem::addShapeItem(const ShapeItem & item)
 bool ResourceRecognitionIndexItem::removeShapeItem(const ShapeItem & item)
 {
     const auto & shapeItems = d.constData()->m_shapeItems;
-    int index = shapeItems.indexOf(item);
+    const int index = shapeItems.indexOf(item);
     if (index < 0) {
         return false;
     }
@@ -454,7 +453,7 @@ void ResourceRecognitionIndexItem::addBarcodeItem(const BarcodeItem & item)
 bool ResourceRecognitionIndexItem::removeBarcodeItem(const BarcodeItem & item)
 {
     const auto & barcodeItems = d.constData()->m_barcodeItems;
-    int index = barcodeItems.indexOf(item);
+    const int index = barcodeItems.indexOf(item);
     if (index < 0) {
         return false;
     }

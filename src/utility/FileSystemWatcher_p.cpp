@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,11 +42,11 @@ FileSystemWatcherPrivate::FileSystemWatcherPrivate(
     createConnections();
 }
 
-FileSystemWatcherPrivate::~FileSystemWatcherPrivate() {}
+FileSystemWatcherPrivate::~FileSystemWatcherPrivate() = default;
 
 void FileSystemWatcherPrivate::addPath(const QString & path)
 {
-    QFileInfo info(path);
+    const QFileInfo info{path};
     if (info.isFile()) {
         Q_UNUSED(m_watchedFiles.insert(path));
     }
@@ -110,7 +110,7 @@ void FileSystemWatcherPrivate::onFileChanged(const QString & path)
         return;
     }
 
-    QFileInfo info(path);
+    QFileInfo info{path};
     if (!info.isFile()) {
         processFileRemoval(path);
     }
@@ -126,9 +126,9 @@ void FileSystemWatcherPrivate::onDirectoryChanged(const QString & path)
         "utility:fs_watcher",
         "FileSystemWatcherPrivate::onDirectoryChanged: " << path);
 
-    auto dirIt = m_watchedDirectories.find(path);
+    const auto dirIt = m_watchedDirectories.find(path);
     if (dirIt != m_watchedDirectories.end()) {
-        QFileInfo info(path);
+        const QFileInfo info{path};
         if (!info.isDir()) {
             processDirectoryRemoval(path);
         }
@@ -233,7 +233,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
 
     if (fileIt != m_justRemovedFilePathsWithPostRemovalTimerIds.right.end()) {
         const QString & filePath = fileIt->second;
-        QFileInfo info(filePath);
+        QFileInfo info{filePath};
         if (!info.isFile()) {
             QNTRACE(
                 "utility:fs_watcher",
@@ -271,7 +271,7 @@ void FileSystemWatcherPrivate::timerEvent(QTimerEvent * pEvent)
     if (dirIt != m_justRemovedDirectoryPathsWithPostRemovalTimerIds.right.end())
     {
         const QString & directoryPath = dirIt->second;
-        QFileInfo info(directoryPath);
+        const QFileInfo info{directoryPath};
         if (!info.isDir()) {
             QNTRACE(
                 "utility:fs_watcher",

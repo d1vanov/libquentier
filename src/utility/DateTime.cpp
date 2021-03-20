@@ -20,12 +20,13 @@
 
 #include <QString>
 
+#include <array>
 #include <ctime>
 
 namespace quentier {
 
-const QString printableDateTimeFromTimestamp(
-    const qint64 timestamp, const DateTimePrint::Options options,
+QString printableDateTimeFromTimestamp(
+    const qint64 timestamp, const DateTimePrintOptions options,
     const char * customFormat)
 {
     if (Q_UNLIKELY(timestamp < 0)) {
@@ -33,7 +34,7 @@ const QString printableDateTimeFromTimestamp(
     }
 
     QString result;
-    if (options & DateTimePrint::IncludeNumericTimestamp) {
+    if (options & DateTimePrintOption::IncludeNumericTimestamp) {
         result += QString::number(timestamp);
         result += QStringLiteral(" (");
     }
@@ -60,15 +61,15 @@ const QString printableDateTimeFromTimestamp(
         return QString::number(timestamp);
     }
 
-    const size_t maxBufSize = 100;
-    char buffer[maxBufSize];
+    std::array<char, 100> buffer;
     const char * format = "%Y-%m-%d %H:%M:%S";
     const size_t size = strftime(
-        buffer, maxBufSize, (customFormat ? customFormat : format), tm);
+        &buffer[0], buffer.size(), (customFormat ? customFormat : format), tm);
 
-    result += QString::fromLocal8Bit(buffer, static_cast<int>(size));
+    result += QString::fromLocal8Bit(
+        &buffer[0], static_cast<int>(size));
 
-    if (options & DateTimePrint::IncludeMilliseconds) {
+    if (options & DateTimePrintOption::IncludeMilliseconds) {
         qint64 msecPart = timestamp - t * 1000;
         result += QStringLiteral(".");
         result += QString::fromUtf8("%1").arg(
@@ -76,7 +77,7 @@ const QString printableDateTimeFromTimestamp(
     }
 
 #ifndef _MSC_VER
-    if (options & DateTimePrint::IncludeTimezone) {
+    if (options & DateTimePrintOption::IncludeTimezone) {
         const char * timezone = tm->tm_zone;
         if (timezone) {
             result += QStringLiteral(" ");
@@ -85,7 +86,7 @@ const QString printableDateTimeFromTimestamp(
     }
 #endif
 
-    if (options & DateTimePrint::IncludeNumericTimestamp) {
+    if (options & DateTimePrintOption::IncludeNumericTimestamp) {
         result += QStringLiteral(")");
     }
 

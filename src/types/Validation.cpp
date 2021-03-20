@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -43,7 +43,7 @@ bool validateNoteTitle(
         return false;
     }
 
-    int len = noteTitle.length();
+    const int len = noteTitle.length();
     if (len < qevercloud::EDAM_NOTE_TITLE_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
@@ -54,7 +54,8 @@ bool validateNoteTitle(
 
         return false;
     }
-    else if (len > qevercloud::EDAM_NOTE_TITLE_LEN_MAX) {
+
+    if (len > qevercloud::EDAM_NOTE_TITLE_LEN_MAX) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
                 "types:validation", "Note title's length is too large"));
@@ -124,7 +125,7 @@ bool validateSavedSearchName(
         return false;
     }
 
-    int len = savedSearchName.length();
+    const int len = savedSearchName.length();
     if (len < qevercloud::EDAM_SAVED_SEARCH_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(
@@ -165,7 +166,7 @@ bool validateTagName(
         return false;
     }
 
-    int len = tagName.length();
+    const int len = tagName.length();
     if (len < qevercloud::EDAM_TAG_NAME_LEN_MIN) {
         if (errorDescription) {
             errorDescription->setBase(QT_TRANSLATE_NOOP(

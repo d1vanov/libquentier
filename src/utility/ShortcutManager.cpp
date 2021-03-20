@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -72,34 +72,37 @@ QKeySequence ShortcutManager::userShortcut(
 }
 
 void ShortcutManager::setUserShortcut(
-    int key, QKeySequence shortcut, const Account & account, QString context)
+    int key, QKeySequence shortcut, const Account & account, // NOLINT
+    QString context)
 {
     Q_D(ShortcutManager);
-    d->setUserShortcut(key, shortcut, account, context);
+    d->setUserShortcut(key, shortcut, account, std::move(context));
 }
 
 void ShortcutManager::setNonStandardUserShortcut(
-    QString nonStandardKey, QKeySequence shortcut, const Account & account,
-    QString context)
+    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    const Account & account, QString context)
 {
     Q_D(ShortcutManager);
-    d->setNonStandardUserShortcut(nonStandardKey, shortcut, account, context);
+    d->setNonStandardUserShortcut(
+        std::move(nonStandardKey), shortcut, account, std::move(context));
 }
 
 void ShortcutManager::setDefaultShortcut(
-    int key, QKeySequence shortcut, const Account & account, QString context)
-{
-    Q_D(ShortcutManager);
-    d->setDefaultShortcut(key, shortcut, account, context);
-}
-
-void ShortcutManager::setNonStandardDefaultShortcut(
-    QString nonStandardKey, QKeySequence shortcut, const Account & account,
+    int key, QKeySequence shortcut, const Account & account, // NOLINT
     QString context)
 {
     Q_D(ShortcutManager);
+    d->setDefaultShortcut(key, shortcut, account, std::move(context));
+}
+
+void ShortcutManager::setNonStandardDefaultShortcut(
+    QString nonStandardKey, QKeySequence shortcut, // NOLINT
+    const Account & account, QString context)
+{
+    Q_D(ShortcutManager);
     d->setNonStandardDefaultShortcut(
-        nonStandardKey, shortcut, account, context);
+        std::move(nonStandardKey), shortcut, account, std::move(context));
 }
 
 } // namespace quentier

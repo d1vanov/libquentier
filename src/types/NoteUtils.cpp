@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -88,7 +88,8 @@ bool isInkNote(const qevercloud::Note & note)
         if (!resource.mime()) {
             return false;
         }
-        else if (
+
+        if (
             *resource.mime() !=
             QStringLiteral("application/vnd.evernote.ink")) {
             return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -72,7 +72,8 @@ void EventLoopWithExitStatus::exitAsTimeout()
     QEventLoop::exit(static_cast<int>(m_exitStatus));
 }
 
-void EventLoopWithExitStatus::exitAsFailureWithError(QString errorDescription)
+void EventLoopWithExitStatus::exitAsFailureWithError(
+    QString errorDescription) // NOLINT
 {
     m_errorDescription = ErrorString(errorDescription);
     m_exitStatus = ExitStatus::Failure;
@@ -82,7 +83,7 @@ void EventLoopWithExitStatus::exitAsFailureWithError(QString errorDescription)
 void EventLoopWithExitStatus::exitAsFailureWithErrorString(
     ErrorString errorDescription)
 {
-    m_errorDescription = errorDescription;
+    m_errorDescription = std::move(errorDescription);
     m_exitStatus = ExitStatus::Failure;
     QEventLoop::exit(static_cast<int>(m_exitStatus));
 }

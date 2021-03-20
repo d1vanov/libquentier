@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,26 +35,26 @@ public:
     AccountData(const AccountData & other) = default;
     AccountData(AccountData && other) = default;
 
-    virtual ~AccountData() = default;
+    ~AccountData() = default;
 
     AccountData & operator=(const AccountData & other) = delete;
     AccountData & operator=(AccountData && other) = delete;
 
     void switchEvernoteAccountType(
-        const Account::EvernoteAccountType evernoteAccountType);
+        Account::EvernoteAccountType evernoteAccountType);
 
     void setEvernoteAccountLimits(const qevercloud::AccountLimits & limits);
 
-    qint32 mailLimitDaily() const;
-    qint64 noteSizeMax() const;
-    qint64 resourceSizeMax() const;
-    qint32 linkedNotebookMax() const;
-    qint32 noteCountMax() const;
-    qint32 notebookCountMax() const;
-    qint32 tagCountMax() const;
-    qint32 noteTagCountMax() const;
-    qint32 savedSearchCountMax() const;
-    qint32 noteResourceCountMax() const;
+    [[nodiscard]] qint32 mailLimitDaily() const;
+    [[nodiscard]] qint64 noteSizeMax() const;
+    [[nodiscard]] qint64 resourceSizeMax() const;
+    [[nodiscard]] qint32 linkedNotebookMax() const;
+    [[nodiscard]] qint32 noteCountMax() const;
+    [[nodiscard]] qint32 notebookCountMax() const;
+    [[nodiscard]] qint32 tagCountMax() const;
+    [[nodiscard]] qint32 noteTagCountMax() const;
+    [[nodiscard]] qint32 savedSearchCountMax() const;
+    [[nodiscard]] qint32 noteResourceCountMax() const;
 
 public:
     QString m_name;

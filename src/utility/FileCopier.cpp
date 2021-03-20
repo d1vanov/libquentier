@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -102,7 +102,7 @@ double FileCopier::currentProgress() const
     return d->currentProgress();
 }
 
-void FileCopier::copyFile(QString sourcePath, QString destPath)
+void FileCopier::copyFile(QString sourcePath, QString destPath) // NOLINT
 {
     Q_D(FileCopier);
     d->copyFile(sourcePath, destPath);

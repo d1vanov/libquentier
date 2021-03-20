@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -54,7 +54,8 @@ void FileIOProcessorAsyncPrivate::setIdleTimePeriod(const qint32 seconds)
             << "operation timer with id " << m_postOperationTimerId)
 
 void FileIOProcessorAsyncPrivate::onWriteFileRequest(
-    QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
+    QString absoluteFilePath, QByteArray data, QUuid requestId, // NOLINT
+    bool append)
 {
     QNDEBUG(
         "utility:file_async",
@@ -62,11 +63,10 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
             << absoluteFilePath << ", request id = " << requestId
             << ", append = " << (append ? "true" : "false"));
 
-    QFileInfo fileInfo(absoluteFilePath);
+    const QFileInfo fileInfo{absoluteFilePath};
     QDir folder = fileInfo.absoluteDir();
     if (!folder.exists()) {
-        bool madeFolder = folder.mkpath(folder.absolutePath());
-        if (!madeFolder) {
+        if (!folder.mkpath(folder.absolutePath())) {
             ErrorString error(
                 QT_TR_NOOP("can't create folder to write file into"));
 
@@ -78,7 +78,7 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
         }
     }
 
-    QFile file(absoluteFilePath);
+    QFile file{absoluteFilePath};
 
     QIODevice::OpenMode mode;
     if (append) {
@@ -117,14 +117,14 @@ void FileIOProcessorAsyncPrivate::onWriteFileRequest(
 }
 
 void FileIOProcessorAsyncPrivate::onReadFileRequest(
-    QString absoluteFilePath, QUuid requestId)
+    QString absoluteFilePath, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "utility:file_async",
         "FileIOProcessorAsyncPrivate::onReadFileRequest: file path = "
             << absoluteFilePath << ", request id = " << requestId);
 
-    QFile file(absoluteFilePath);
+    QFile file{absoluteFilePath};
     if (!file.exists()) {
         QNTRACE(
             "utility:file_async",

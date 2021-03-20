@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -230,7 +230,8 @@ bool CompositeKeychainService::isPrimaryKeychainOperational() const
 }
 
 void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription) // NOLINT
 {
     const auto it = m_writePasswordJobIds.left.find(requestId);
     if (it == m_writePasswordJobIds.left.end()) {
@@ -305,7 +306,8 @@ void CompositeKeychainService::onPrimaryKeychainWritePasswordJobFinished(
 }
 
 void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription) // NOLINT
 {
     const auto it = m_writePasswordJobIds.right.find(requestId);
     if (it == m_writePasswordJobIds.right.end()) {
@@ -388,8 +390,8 @@ void CompositeKeychainService::onSecondaryKeychainWritePasswordJobFinished(
 }
 
 void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-    QString password)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription, QString password) // NOLINT
 {
     const auto it = m_primaryKeychainReadPasswordJobIds.find(requestId);
     if (it == m_primaryKeychainReadPasswordJobIds.end()) {
@@ -414,7 +416,7 @@ void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
         cleanupServiceAndKeyForRequestId(requestId);
 
         Q_EMIT readPasswordJobFinished(
-            requestId, errorCode, errorDescription, password);
+            requestId, errorCode, errorDescription, password); // NOLINT
         return;
     }
 
@@ -438,8 +440,8 @@ void CompositeKeychainService::onPrimaryKeychainReadPasswordJobFinished(
 }
 
 void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-    QString password)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription, QString password) // NOLINT
 {
     const auto it =
         m_secondaryKeychainReadPasswordJobIdsToPrimaryKeychainJobIds.find(
@@ -475,7 +477,7 @@ void CompositeKeychainService::onSecondaryKeychainReadPasswordJobFinished(
     }
 
     Q_EMIT readPasswordJobFinished(
-        requestId, errorCode, errorDescription, password);
+        requestId, errorCode, errorDescription, password); // NOLINT
 }
 
 void CompositeKeychainService::onPrimaryKeychainDeletePasswordJobFinished(
@@ -823,8 +825,8 @@ void CompositeKeychainService::persistUnavailableServiceKeyPairs(
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
 
-        const QString serviceItem = settings.value(keys::service).toString();
-        const QString keyItem = settings.value(keys::service).toString();
+        QString serviceItem = settings.value(keys::service).toString();
+        QString keyItem = settings.value(keys::service).toString();
 
         if (serviceItem == service && keyItem == key) {
             foundItem = true;

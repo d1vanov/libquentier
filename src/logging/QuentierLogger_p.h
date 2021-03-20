@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -62,7 +62,7 @@ class Q_DECL_HIDDEN MaxSizeBytes
 public:
     MaxSizeBytes(const qint64 size) : m_size(size) {}
 
-    [[nodiscard]] qint64 size() const
+    [[nodiscard]] qint64 size() const noexcept
     {
         return m_size;
     }
@@ -79,7 +79,7 @@ class Q_DECL_HIDDEN MaxOldLogFilesCount
 public:
     MaxOldLogFilesCount(const int count) : m_count(count) {}
 
-    [[nodiscard]] int count() const
+    [[nodiscard]] int count() const noexcept
     {
         return m_count;
     }
@@ -131,10 +131,10 @@ public:
     explicit QuentierConsoleLogWriter(QObject * parent = nullptr);
 
 public Q_SLOTS:
-    virtual void write(QString message) override;
+    void write(QString message) override;
 };
 
-QT_FORWARD_DECLARE_CLASS(QuentierLoggerImpl)
+class QuentierLoggerImpl;
 
 class Q_DECL_HIDDEN QuentierLogger final : public QObject
 {
@@ -144,13 +144,13 @@ public:
 
     [[nodiscard]] static QString logFilesDirPath();
 
-    void addLogWriter(IQuentierLogWriter * pWriter);
-    void removeLogWriter(IQuentierLogWriter * pWriter);
+    void addLogWriter(IQuentierLogWriter * pLogWriter);
+    void removeLogWriter(IQuentierLogWriter * pLogWriter);
 
     void write(QString message);
 
     [[nodiscard]] LogLevel minLogLevel() const;
-    void setMinLogLevel(const LogLevel minLogLevel);
+    void setMinLogLevel(LogLevel minLogLevel);
 
     [[nodiscard]] QRegularExpression componentFilterRegex();
     void setComponentFilterRegex(const QRegularExpression & filter);

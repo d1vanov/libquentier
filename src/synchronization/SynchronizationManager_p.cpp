@@ -155,7 +155,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     createConnections(authenticationManager);
 }
 
-SynchronizationManagerPrivate::~SynchronizationManagerPrivate() {}
+SynchronizationManagerPrivate::~SynchronizationManagerPrivate() = default;
 
 bool SynchronizationManagerPrivate::active() const
 {
@@ -360,7 +360,7 @@ void SynchronizationManagerPrivate::setInkNoteImagesStoragePath(
 }
 
 void SynchronizationManagerPrivate::onOAuthResult(
-    bool success, qevercloud::UserID userId, QString authToken,
+    bool success, qevercloud::UserID userId, QString authToken, // NOLINT
     qevercloud::Timestamp authTokenExpirationTime, QString shardId,
     QString noteStoreUrl, QString webApiUrlPrefix,
     QList<QNetworkCookie> cookies, ErrorString errorDescription)
@@ -393,9 +393,9 @@ void SynchronizationManagerPrivate::onOAuthResult(
     authData.m_userId = userId;
     authData.m_authToken = authToken;
     authData.m_expirationTime = authTokenExpirationTime;
-    authData.m_shardId = shardId;
-    authData.m_noteStoreUrl = noteStoreUrl;
-    authData.m_webApiUrlPrefix = webApiUrlPrefix;
+    authData.m_shardId = std::move(shardId);
+    authData.m_noteStoreUrl = std::move(noteStoreUrl);
+    authData.m_webApiUrlPrefix = std::move(webApiUrlPrefix);
     authData.m_cookies = std::move(cookies);
 
     authData.m_authenticationTime =
@@ -622,7 +622,7 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
 
 void SynchronizationManagerPrivate::onReadPasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode errorCode,
-    ErrorString errorDescription, QString password)
+    ErrorString errorDescription, QString password) // NOLINT
 {
     QNDEBUG(
         "synchronization",
@@ -757,7 +757,7 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
 
 void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode errorCode,
-    ErrorString errorDescription)
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization",
@@ -820,7 +820,9 @@ void SynchronizationManagerPrivate::
         "SynchronizationManagerPrivate"
             << "::onRequestAuthenticationTokensForLinkedNotebooks");
 
-    m_linkedNotebookAuthDataPendingAuthentication = linkedNotebookAuthData;
+    m_linkedNotebookAuthDataPendingAuthentication =
+        std::move(linkedNotebookAuthData);
+
     authenticateToLinkedNotebooks();
 }
 
@@ -844,7 +846,7 @@ void SynchronizationManagerPrivate::onRequestLastSyncParameters()
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(
     qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
-    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid,
+    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid, // NOLINT
     QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid)
 {
     QNDEBUG(
@@ -874,7 +876,8 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncFinished(
     m_cachedLinkedNotebookLastUpdateCountByGuid =
         lastUpdateCountByLinkedNotebookGuid;
 
-    m_cachedLinkedNotebookLastSyncTimeByGuid = lastSyncTimeByLinkedNotebookGuid;
+    m_cachedLinkedNotebookLastSyncTimeByGuid =
+        std::move(lastSyncTimeByLinkedNotebookGuid);
 
     updatePersistentSyncSettings();
 
@@ -899,7 +902,7 @@ void SynchronizationManagerPrivate::onRemoteToLocalSyncStopped()
 }
 
 void SynchronizationManagerPrivate::onRemoteToLocalSyncFailure(
-    ErrorString errorDescription)
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization",
@@ -963,7 +966,7 @@ void SynchronizationManagerPrivate::
 
 void SynchronizationManagerPrivate::onLocalChangesSent(
     qint32 lastUpdateCount,
-    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid)
+    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid) // NOLINT
 {
     QNDEBUG(
         "synchronization",
@@ -1017,7 +1020,7 @@ void SynchronizationManagerPrivate::onSendLocalChangesStopped()
 }
 
 void SynchronizationManagerPrivate::onSendLocalChangesFailure(
-    ErrorString errorDescription)
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization",
@@ -1991,11 +1994,7 @@ bool SynchronizationManagerPrivate::checkIfTimestampIsAboutToExpireSoon(
         "Current datetime: "
             << printableDateTimeFromTimestamp(currentTimestamp));
 
-    if ((timestamp - currentTimestamp) < HALF_AN_HOUR_IN_MSEC) {
-        return true;
-    }
-
-    return false;
+    return ((timestamp - currentTimestamp) < HALF_AN_HOUR_IN_MSEC);
 }
 
 void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
@@ -2048,7 +2047,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
     QSet<QString> linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain;
 
-    for (auto it = m_linkedNotebookAuthDataPendingAuthentication.begin();
+    for (auto it = m_linkedNotebookAuthDataPendingAuthentication.begin(); // NOLINT
          it != m_linkedNotebookAuthDataPendingAuthentication.end();)
     {
         const LinkedNotebookAuthData & authData = *it;
@@ -2237,8 +2236,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             ++it;
             continue;
         }
-        else if (
-            errorCode ==
+
+        if (errorCode ==
             static_cast<qint32>(qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED))
         {
             if (rateLimitSeconds < 0) {
@@ -2258,7 +2257,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
             ++it;
             continue;
         }
-        else if (errorCode != 0) {
+
+        if (errorCode != 0) {
             QNWARNING(
                 "synchronization",
                 "Failed to authenticate to shared "

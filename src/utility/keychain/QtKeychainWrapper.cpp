@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -53,7 +53,7 @@ QtKeychainWrapper::~QtKeychainWrapper() noexcept
 }
 
 void QtKeychainWrapper::onStartWritePasswordJob(
-    QUuid jobId, QString service, QString key, QString password)
+    QUuid jobId, QString service, QString key, QString password) // NOLINT
 {
     auto * pJob = new QKeychain::WritePasswordJob(service, this);
     pJob->setKey(key);
@@ -75,7 +75,7 @@ void QtKeychainWrapper::onStartWritePasswordJob(
 }
 
 void QtKeychainWrapper::onStartReadPasswordJob(
-    QUuid jobId, QString service, QString key)
+    QUuid jobId, QString service, QString key) // NOLINT
 {
     auto * pJob = new QKeychain::ReadPasswordJob(service, this);
     pJob->setAutoDelete(false);
@@ -96,7 +96,7 @@ void QtKeychainWrapper::onStartReadPasswordJob(
 }
 
 void QtKeychainWrapper::onStartDeletePasswordJob(
-    QUuid jobId, QString service, QString key)
+    QUuid jobId, QString service, QString key) // NOLINT
 {
     auto * pJob = new QKeychain::DeletePasswordJob(service, this);
     pJob->setAutoDelete(false);

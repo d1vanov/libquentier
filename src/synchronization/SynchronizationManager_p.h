@@ -48,7 +48,7 @@ public:
         IKeychainServicePtr pKeychainService,
         ISyncStateStoragePtr pSyncStateStorage);
 
-    virtual ~SynchronizationManagerPrivate();
+    ~SynchronizationManagerPrivate() override;
 
     [[nodiscard]] bool active() const;
     [[nodiscard]] bool downloadNoteThumbnailsOption() const;
@@ -63,8 +63,8 @@ public:
         AuthToLinkedNotebooks,
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const AuthContext ctx);
-    friend QTextStream & operator<<(QTextStream & dbg, const AuthContext ctx);
+    friend QDebug & operator<<(QDebug & dbg, AuthContext ctx);
+    friend QTextStream & operator<<(QTextStream & strm, AuthContext ctx);
 
 Q_SIGNALS:
     void notifyStart();
@@ -125,10 +125,10 @@ public Q_SLOTS:
     void authenticateCurrentAccount();
     void stop();
 
-    void revokeAuthentication(const qevercloud::UserID userId);
+    void revokeAuthentication(qevercloud::UserID userId);
 
-    void setDownloadNoteThumbnails(const bool flag);
-    void setDownloadInkNoteImages(const bool flag);
+    void setDownloadNoteThumbnails(bool flag);
+    void setDownloadInkNoteImages(bool flag);
     void setInkNoteImagesStoragePath(const QString & path);
 
 Q_SIGNALS:
@@ -204,7 +204,7 @@ private:
     void readLastSyncParameters();
 
     void launchOAuth();
-    void authenticateImpl(const AuthContext authContext);
+    void authenticateImpl(AuthContext authContext);
     void finalizeAuthentication();
 
     class AuthData : public Printable
@@ -219,69 +219,66 @@ private:
         QString m_webApiUrlPrefix;
         QList<QNetworkCookie> m_cookies;
 
-        virtual QTextStream & print(QTextStream & strm) const override;
+        QTextStream & print(QTextStream & strm) const override;
     };
 
     void launchStoreOAuthResult(const AuthData & result);
     void finalizeStoreOAuthResult();
 
-    void finalizeRevokeAuthentication(const qevercloud::UserID userId);
-    void removeNonSecretPersistentAuthInfo(const qevercloud::UserID userId);
+    void finalizeRevokeAuthentication(qevercloud::UserID userId);
+    void removeNonSecretPersistentAuthInfo(qevercloud::UserID userId);
 
     void launchSync();
     void launchFullSync();
     void launchIncrementalSync();
     void sendChanges();
 
-    virtual void timerEvent(QTimerEvent * pTimerEvent);
+    void timerEvent(QTimerEvent * pTimerEvent) override;
 
     void clear();
 
     [[nodiscard]] bool validAuthentication() const;
 
     [[nodiscard]] bool checkIfTimestampIsAboutToExpireSoon(
-        const qevercloud::Timestamp timestamp) const;
+        qevercloud::Timestamp timestamp) const;
 
     void authenticateToLinkedNotebooks();
 
     void onReadAuthTokenFinished(
-        const IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & password);
 
     void onReadShardIdFinished(
-        const IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & password);
 
     void onWriteAuthTokenFinished(
-        const IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription);
 
     void onWriteShardIdFinished(
-        const IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription);
 
     void onDeleteAuthTokenFinished(
-        const IKeychainService::ErrorCode errorCode,
-        const qevercloud::UserID userId, const ErrorString & errorDescription);
+        IKeychainService::ErrorCode errorCode,
+        qevercloud::UserID userId, const ErrorString & errorDescription);
 
     void onDeleteShardIdFinished(
-        const IKeychainService::ErrorCode errorCode,
-        const qevercloud::UserID userId, const ErrorString & errorDescription);
+        IKeychainService::ErrorCode errorCode,
+        qevercloud::UserID userId, const ErrorString & errorDescription);
 
-    [[nodiscard]] bool isReadingAuthToken(
-        const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isReadingAuthToken(qevercloud::UserID userId) const;
 
-    [[nodiscard]] bool isReadingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isReadingShardId(qevercloud::UserID userId) const;
 
-    [[nodiscard]] bool isWritingAuthToken(
-        const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isWritingAuthToken(qevercloud::UserID userId) const;
 
-    [[nodiscard]] bool isWritingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isWritingShardId(qevercloud::UserID userId) const;
 
-    [[nodiscard]] bool isDeletingAuthToken(
-        const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isDeletingAuthToken(qevercloud::UserID userId) const;
 
-    [[nodiscard]] bool isDeletingShardId(const qevercloud::UserID userId) const;
+    [[nodiscard]] bool isDeletingShardId(qevercloud::UserID userId) const;
 
     void tryUpdateLastSyncStatus();
     void updatePersistentSyncSettings();

@@ -31,7 +31,7 @@ namespace quentier {
 class Q_DECL_HIDDEN TagDirectedGraphDepthFirstSearch
 {
 public:
-    TagDirectedGraphDepthFirstSearch(const TagDirectedGraph & graph);
+    TagDirectedGraphDepthFirstSearch(TagDirectedGraph graph);
 
     [[nodiscard]] const TagDirectedGraph & graph() const noexcept;
     [[nodiscard]] bool reached(const QString & tagId) const noexcept;
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-    void depthFirstSearch(const QString & sourceTagGuid);
+    void depthFirstSearch(const QString & sourceTagId);
 
 private:
     TagDirectedGraph m_graph;

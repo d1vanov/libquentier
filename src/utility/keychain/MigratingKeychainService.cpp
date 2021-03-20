@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -83,7 +83,8 @@ QUuid MigratingKeychainService::startDeletePasswordJob(
 }
 
 void MigratingKeychainService::onSinkKeychainWritePasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription) // NOLINT
 {
     const auto it = m_sinkKeychainWriteRequestIds.find(requestId);
 
@@ -144,8 +145,8 @@ void MigratingKeychainService::onSinkKeychainWritePasswordJobFinished(
 }
 
 void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-    QString password)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription, QString password) // NOLINT
 {
     const auto it = m_sinkKeychainReadRequestIdsToServiceAndKey.find(requestId);
     if (it == m_sinkKeychainReadRequestIdsToServiceAndKey.end()) {
@@ -178,8 +179,8 @@ void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
 }
 
 void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
-    QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-    QString password)
+    QUuid requestId, ErrorCode errorCode,
+    ErrorString errorDescription, QString password) // NOLINT
 {
     const auto it = m_sourceKeychainReadRequestData.find(requestId);
     if (it == m_sourceKeychainReadRequestData.end()) {
@@ -195,7 +196,7 @@ void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
     requestId = it.value().m_sinkKeychainReadRequestId;
 
     Q_EMIT readPasswordJobFinished(
-        requestId, errorCode, errorDescription, password);
+        requestId, errorCode, errorDescription, password); // NOLINT
 
     if (errorCode == IKeychainService::ErrorCode::NoError) {
         const auto sinkKeychainWriteRequestId =

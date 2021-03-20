@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -53,8 +53,8 @@ bool EncryptionManager::encrypt(
 }
 
 void EncryptionManager::onDecryptTextRequest(
-    QString encryptedText, QString passphrase, QString cipher, size_t keyLength,
-    QUuid requestId)
+    QString encryptedText, QString passphrase, QString cipher, // NOLINT
+    size_t keyLength, QUuid requestId)
 {
     QString decrypted;
     ErrorString errorDescription;
@@ -67,8 +67,8 @@ void EncryptionManager::onDecryptTextRequest(
 }
 
 void EncryptionManager::onEncryptTextRequest(
-    QString textToEncrypt, QString passphrase, QString cipher, size_t keyLength,
-    QUuid requestId)
+    QString textToEncrypt, QString passphrase, QString cipher, // NOLINT
+    size_t keyLength, QUuid requestId)
 {
     QString encrypted;
     ErrorString errorDescription;
