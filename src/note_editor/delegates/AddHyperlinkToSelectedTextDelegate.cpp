@@ -83,12 +83,11 @@ void AddHyperlinkToSelectedTextDelegate::startWithPresetHyperlink(
 }
 
 void AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "onOriginalPageConvertedToNote");
+        "AddHyperlinkToSelectedTextDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -103,8 +102,7 @@ void AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "addHyperlinkToSelectedText");
+        "AddHyperlinkToSelectedTextDelegate::addHyperlinkToSelectedText");
 
     if (m_shouldGetHyperlinkFromDialog || m_replacementLinkText.isEmpty()) {
         const QString javascript = QStringLiteral("getSelectionHtml();");
@@ -149,8 +147,8 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "raiseAddHyperlinkDialog: initial text = " << initialText);
+        "AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog: "
+            << "initial text = " << initialText);
 
     const auto pEditHyperlinkDialog =
         std::make_unique<EditHyperlinkDialog>(&m_noteEditor, initialText);
@@ -170,7 +168,8 @@ void AddHyperlinkToSelectedTextDelegate::raiseAddHyperlinkDialog(
 }
 
 void AddHyperlinkToSelectedTextDelegate::onAddHyperlinkDialogFinished(
-    QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
+    QString text, QUrl url, quint64 hyperlinkId, // NOLINT
+    bool startupUrlWasEmpty)
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -189,8 +188,8 @@ void AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate::"
-            << "setHyperlinkToSelection: url = " << url << ", text = " << text);
+        "AddHyperlinkToSelectedTextDelegate::setHyperlinkToSelection: "
+            << "url = " << url << ", text = " << text);
 
     const QString javascript =
         QStringLiteral("hyperlinkManager.setHyperlinkToSelection('") + text +
@@ -210,8 +209,7 @@ void AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddHyperlinkToSelectedTextDelegate"
-            << "::onHyperlinkSetToSelection");
+        "AddHyperlinkToSelectedTextDelegate::onHyperlinkSetToSelection");
 
     const auto resultMap = data.toMap();
 

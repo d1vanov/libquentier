@@ -35,7 +35,7 @@ JavaScriptInOrderExecutor::JavaScriptInOrderExecutor(
 void JavaScriptInOrderExecutor::append(
     const QString & script, JavaScriptInOrderExecutor::Callback callback)
 {
-    m_javaScriptsQueue.enqueue(std::make_pair(script, callback));
+    m_javaScriptsQueue.enqueue(std::make_pair(script, std::move(callback)));
 
     QNTRACE(
         "note_editor",

@@ -31,22 +31,23 @@
 namespace quentier {
 
 EncryptionDialog::EncryptionDialog(
-    const QString & textToEncrypt, const Account & account,
+    QString textToEncrypt, Account account,
     std::shared_ptr<EncryptionManager> encryptionManager,
     std::shared_ptr<DecryptedTextManager> decryptedTextManager,
     QWidget * parent) :
     QDialog(parent),
-    m_pUI(new Ui::EncryptionDialog), m_textToEncrypt(textToEncrypt),
-    m_account(account), m_encryptionManager(std::move(encryptionManager)),
+    m_pUI(new Ui::EncryptionDialog), m_textToEncrypt(std::move(textToEncrypt)),
+    m_account(std::move(account)),
+    m_encryptionManager(std::move(encryptionManager)),
     m_decryptedTextManager(std::move(decryptedTextManager))
 {
     m_pUI->setupUi(this);
     QUENTIER_CHECK_PTR("note_editor:dialog", m_encryptionManager.get())
 
     bool rememberPassphraseForSessionDefault = false;
-    ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
 
-    QVariant rememberPassphraseForSessionSetting =
+    const auto rememberPassphraseForSessionSetting =
         appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
 
     if (!rememberPassphraseForSessionSetting.isNull()) {
@@ -96,7 +97,7 @@ void EncryptionDialog::onRememberPassphraseStateChanged(int checked)
 {
     Q_UNUSED(checked)
 
-    ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
     if (!appSettings.isWritable()) {
         QNINFO(
             "note_editor:dialog",

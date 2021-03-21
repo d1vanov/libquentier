@@ -36,11 +36,11 @@ public:
 
 public:
     RemoveResourceUndoCommand(
-        const qevercloud::Resource & resource, const Callback & callback,
+        qevercloud::Resource resource, Callback callback,
         NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     RemoveResourceUndoCommand(
-        const qevercloud::Resource & resource, const Callback & callback,
+        qevercloud::Resource resource, Callback callback,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 

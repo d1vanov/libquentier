@@ -26,19 +26,19 @@
 namespace quentier {
 
 SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
-    NoteEditorPrivate & noteEditor, const QString & word,
+    NoteEditorPrivate & noteEditor, QString word,
     SpellChecker * pSpellChecker, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_pSpellChecker(pSpellChecker), m_word(word)
+    m_pSpellChecker(pSpellChecker), m_word(std::move(word))
 {
     setText(tr("Add to user word list"));
 }
 
 SpellCheckAddToUserWordListUndoCommand::SpellCheckAddToUserWordListUndoCommand(
-    NoteEditorPrivate & noteEditor, const QString & word,
+    NoteEditorPrivate & noteEditor, QString word,
     SpellChecker * pSpellChecker, const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_pSpellChecker(pSpellChecker), m_word(word)
+    m_pSpellChecker(pSpellChecker), m_word(std::move(word))
 {}
 
 SpellCheckAddToUserWordListUndoCommand::

@@ -47,7 +47,7 @@ class Q_DECL_HIDDEN InsertHtmlDelegate final : public QObject
     Q_OBJECT
 public:
     explicit InsertHtmlDelegate(
-        const QString & inputHtml, NoteEditorPrivate & noteEditor,
+        QString inputHtml, NoteEditorPrivate & noteEditor,
         ENMLConverter & enmlConverter,
         ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
@@ -95,6 +95,7 @@ private:
 
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
+
     QHash<QString, QString> & m_resourceFileStoragePathsByResourceLocalId;
     ResourceInfo & m_resourceInfo;
 

@@ -45,7 +45,7 @@ class Q_DECL_HIDDEN SpellCheckerPrivate final : public QObject
     Q_OBJECT
 public:
     SpellCheckerPrivate(
-        FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+        FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     ~SpellCheckerPrivate() override;

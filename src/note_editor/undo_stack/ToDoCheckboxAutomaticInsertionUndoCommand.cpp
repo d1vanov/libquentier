@@ -38,20 +38,20 @@ namespace quentier {
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Insert ToDo checkbox automatically"));
 }
 
 ToDoCheckboxAutomaticInsertionUndoCommand::
     ToDoCheckboxAutomaticInsertionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 ToDoCheckboxAutomaticInsertionUndoCommand::

@@ -27,7 +27,8 @@ SpellCheckerDynamicHelper::SpellCheckerDynamicHelper(QObject * parent) :
 {}
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
-void SpellCheckerDynamicHelper::setLastEnteredWords(const QVariant words)
+void SpellCheckerDynamicHelper::setLastEnteredWords(
+    const QVariant words) // NOLINT
 {
     QNDEBUG(
         "note_editor:js_glue",
@@ -37,7 +38,8 @@ void SpellCheckerDynamicHelper::setLastEnteredWords(const QVariant words)
     Q_EMIT lastEnteredWords(wordsList);
 }
 #else
-void SpellCheckerDynamicHelper::setLastEnteredWords(const QVariantList words)
+void SpellCheckerDynamicHelper::setLastEnteredWords(
+    const QVariantList words) // NOLINT
 {
     QNDEBUG(
         "note_editor:js_glue",

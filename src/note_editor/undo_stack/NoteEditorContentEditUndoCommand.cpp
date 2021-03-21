@@ -26,20 +26,20 @@ namespace quentier {
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
     NoteEditorPrivate & noteEditorPrivate,
-    const QList<qevercloud::Resource> & resources,
+    QList<qevercloud::Resource> resources,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resources(resources)
+    m_resources(std::move(resources))
 {
     init();
 }
 
 NoteEditorContentEditUndoCommand::NoteEditorContentEditUndoCommand(
     NoteEditorPrivate & noteEditorPrivate,
-    const QList<qevercloud::Resource> & resources,
+    QList<qevercloud::Resource> resources,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resources(resources)
+    m_resources(std::move(resources))
 {
     init();
 }

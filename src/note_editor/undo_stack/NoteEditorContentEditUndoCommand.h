@@ -34,15 +34,15 @@ class Q_DECL_HIDDEN NoteEditorContentEditUndoCommand final :
 public:
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<qevercloud::Resource> & resources,
+        QList<qevercloud::Resource> resources,
         QUndoCommand * parent = nullptr);
 
     NoteEditorContentEditUndoCommand(
         NoteEditorPrivate & noteEditorPrivate,
-        const QList<qevercloud::Resource> & resources, const QString & text,
+        QList<qevercloud::Resource> resources, const QString & text,
         QUndoCommand * parent = nullptr);
 
-    ~NoteEditorContentEditUndoCommand() noexcept;
+    ~NoteEditorContentEditUndoCommand() noexcept override;
 
     void redoImpl() override;
     void undoImpl() override;

@@ -23,7 +23,7 @@
 #include <QUrl>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(EditHyperlinkDialog)
+class EditHyperlinkDialog;
 }
 
 namespace quentier {
@@ -34,7 +34,7 @@ class Q_DECL_HIDDEN EditHyperlinkDialog final : public QDialog
 public:
     explicit EditHyperlinkDialog(
         QWidget * parent = nullptr, const QString & startupText = {},
-        const QString & startupUrl = {}, const quint64 idNumber = 0);
+        const QString & startupUrl = {}, quint64 idNumber = 0);
 
     ~EditHyperlinkDialog() noexcept override;
 

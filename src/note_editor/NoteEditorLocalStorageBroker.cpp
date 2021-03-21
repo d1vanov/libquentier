@@ -189,8 +189,8 @@ void NoteEditorLocalStorageBroker::findResourceData(
 }
 
 void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     QNDEBUG(
         "note_editor",
@@ -233,8 +233,9 @@ void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
 }
 
 void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto it = m_updateNoteRequestIds.find(requestId);
     if (it == m_updateNoteRequestIds.end()) {
@@ -253,11 +254,11 @@ void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
 }
 
 void NoteEditorLocalStorageBroker::onUpdateNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
-    QString notebookLocalId = notebook.localId();
+    const QString & notebookLocalId = notebook.localId();
     if (m_notebooksCache.exists(notebookLocalId)) {
         m_notebooksCache.put(notebookLocalId, notebook);
     }
@@ -266,8 +267,8 @@ void NoteEditorLocalStorageBroker::onUpdateNotebookComplete(
 }
 
 void NoteEditorLocalStorageBroker::onFindNoteComplete(
-    qevercloud::Note foundNote, LocalStorageManager::GetNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note foundNote, // NOLINT
+    LocalStorageManager::GetNoteOptions options, QUuid requestId)
 {
     const auto it = m_findNoteRequestIds.find(requestId);
     if (it != m_findNoteRequestIds.end()) {
@@ -360,8 +361,9 @@ void NoteEditorLocalStorageBroker::onFindNoteComplete(
 }
 
 void NoteEditorLocalStorageBroker::onFindNoteFailed(
-    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto it = m_findNoteRequestIds.find(requestId);
     if (it == m_findNoteRequestIds.end()) {
@@ -389,7 +391,7 @@ void NoteEditorLocalStorageBroker::onFindNoteFailed(
 }
 
 void NoteEditorLocalStorageBroker::onFindNotebookComplete(
-    qevercloud::Notebook foundNotebook, QUuid requestId)
+    qevercloud::Notebook foundNotebook, QUuid requestId) // NOLINT
 {
     const auto it = m_findNotebookRequestIds.find(requestId);
     if (it == m_findNotebookRequestIds.end()) {
@@ -404,7 +406,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
 
     m_findNotebookRequestIds.erase(it);
 
-    const QString notebookLocalId = foundNotebook.localId();
+    const QString & notebookLocalId = foundNotebook.localId();
     m_notebooksCache.put(notebookLocalId, foundNotebook);
 
     bool foundNotesPendingNotebookFinding = true;
@@ -460,7 +462,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
 }
 
 void NoteEditorLocalStorageBroker::onFindNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_findNotebookRequestIds.find(requestId);
@@ -477,7 +479,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookFailed(
 
     m_findNotebookRequestIds.erase(it);
 
-    const QString notebookLocalId = notebook.localId();
+    const QString & notebookLocalId = notebook.localId(); // NOLINT
     bool foundNotesPendingNotebookFinding = true;
     bool foundByNotebookGuid = false;
 
@@ -527,7 +529,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookFailed(
 }
 
 void NoteEditorLocalStorageBroker::onAddResourceComplete(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     const auto it = m_noteLocalIdsByAddResourceRequestIds.find(requestId);
     if (it == m_noteLocalIdsByAddResourceRequestIds.end()) {
@@ -571,7 +573,7 @@ void NoteEditorLocalStorageBroker::onAddResourceComplete(
 }
 
 void NoteEditorLocalStorageBroker::onAddResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_noteLocalIdsByAddResourceRequestIds.find(requestId);
@@ -598,7 +600,7 @@ void NoteEditorLocalStorageBroker::onAddResourceFailed(
 }
 
 void NoteEditorLocalStorageBroker::onUpdateResourceComplete(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     if (m_resourcesCache.get(resource.localId())) {
         m_resourcesCache.put(resource.localId(), resource);
@@ -647,7 +649,7 @@ void NoteEditorLocalStorageBroker::onUpdateResourceComplete(
 }
 
 void NoteEditorLocalStorageBroker::onUpdateResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_noteLocalIdsByUpdateResourceRequestIds.find(requestId);
@@ -674,7 +676,7 @@ void NoteEditorLocalStorageBroker::onUpdateResourceFailed(
 }
 
 void NoteEditorLocalStorageBroker::onExpungeResourceComplete(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     Q_UNUSED(m_resourcesCache.remove(resource.localId()))
 
@@ -718,7 +720,7 @@ void NoteEditorLocalStorageBroker::onExpungeResourceComplete(
 }
 
 void NoteEditorLocalStorageBroker::onExpungeResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_noteLocalIdsByExpungeResourceRequestIds.find(requestId);
@@ -744,10 +746,10 @@ void NoteEditorLocalStorageBroker::onExpungeResourceFailed(
 }
 
 void NoteEditorLocalStorageBroker::onExpungeNoteComplete(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
-    const QString noteLocalId = note.localId();
+    const QString & noteLocalId = note.localId();
     Q_UNUSED(m_notesCache.remove(noteLocalId))
 
     QStringList resourceLocalIdsToRemoveFromCache;
@@ -774,10 +776,10 @@ void NoteEditorLocalStorageBroker::onExpungeNoteComplete(
 }
 
 void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
-    const QString notebookLocalId = notebook.localId();
+    const QString & notebookLocalId = notebook.localId();
     Q_UNUSED(m_notebooksCache.remove(notebookLocalId))
 
     QStringList noteLocalIdsToRemoveFromCache;
@@ -812,7 +814,7 @@ void NoteEditorLocalStorageBroker::onExpungeNotebookComplete(
 }
 
 void NoteEditorLocalStorageBroker::onFindResourceComplete(
-    qevercloud::Resource resource,
+    qevercloud::Resource resource, // NOLINT
     LocalStorageManager::GetResourceOptions options,
     QUuid requestId)
 {
@@ -850,9 +852,9 @@ void NoteEditorLocalStorageBroker::onFindResourceComplete(
 }
 
 void NoteEditorLocalStorageBroker::onFindResourceFailed(
-    qevercloud::Resource resource,
+    qevercloud::Resource resource, // NOLINT
     LocalStorageManager::GetResourceOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto it = m_findResourceRequestIds.find(requestId);
     if (it == m_findResourceRequestIds.end()) {
@@ -876,7 +878,7 @@ void NoteEditorLocalStorageBroker::onFindResourceFailed(
 }
 
 void NoteEditorLocalStorageBroker::onSwitchUserComplete(
-    Account account, QUuid requestId)
+    Account account, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "note_editor",
@@ -902,7 +904,7 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(
     m_updateNoteRequestIds.clear();
 }
 
-void NoteEditorLocalStorageBroker::createConnections(
+void NoteEditorLocalStorageBroker::createConnections( // NOLINT
     LocalStorageManagerAsync & localStorageManagerAsync)
 {
     QNDEBUG("note_editor", "NoteEditorLocalStorageBroker::createConnections");
@@ -1031,7 +1033,7 @@ void NoteEditorLocalStorageBroker::createConnections(
         &NoteEditorLocalStorageBroker::onSwitchUserComplete);
 }
 
-void NoteEditorLocalStorageBroker::disconnectFromLocalStorage(
+void NoteEditorLocalStorageBroker::disconnectFromLocalStorage( // NOLINT
     LocalStorageManagerAsync & localStorageManagerAsync)
 {
     QNDEBUG(
@@ -1246,7 +1248,7 @@ void NoteEditorLocalStorageBroker::emitFindNotebookForNoteRequest(
     const QString id =
         notebook.guid() ? *notebook.guid() : notebook.localId();
 
-    const QString noteLocalId = note.localId();
+    const QString & noteLocalId = note.localId();
 
     const auto it = notesPendingNotebookFinding.find(id);
     if (it != notesPendingNotebookFinding.end()) {
@@ -1307,7 +1309,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
             continue;
         }
 
-        const QString resourceLocalId = resource.localId();
+        const QString & resourceLocalId = resource.localId();
         bool foundResourceInPreviousNoteVersion = false;
         bool resourceDataSizeOrHashChanged = false;
 
@@ -1395,7 +1397,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
 
     QStringList expungedResourcesLocalIds;
     for (const auto & previousNoteResource: qAsConst(previousNoteResources)) {
-        const QString previousNoteResourceLocalId =
+        const QString & previousNoteResourceLocalId =
             previousNoteResource.localId();
 
         bool foundResource = false;
@@ -1416,7 +1418,7 @@ void NoteEditorLocalStorageBroker::saveNoteToLocalStorageImpl(
         }
     }
 
-    const QString noteLocalId = updatedNoteVersion.localId();
+    const QString & noteLocalId = updatedNoteVersion.localId();
 
     const int numAddResourceRequests = newResources.size();
     const int numUpdateResourceRequests = updatedResources.size();

@@ -37,7 +37,7 @@ class QUENTIER_EXPORT SpellChecker : public QObject
     Q_OBJECT
 public:
     SpellChecker(
-        FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+        FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
         QObject * parent = nullptr, const QString & userDictionaryPath = {});
 
     // The second bool in the pair indicates whether the dictionary

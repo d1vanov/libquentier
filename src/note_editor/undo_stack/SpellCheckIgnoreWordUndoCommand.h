@@ -33,11 +33,11 @@ class Q_DECL_HIDDEN SpellCheckIgnoreWordUndoCommand final :
     Q_OBJECT
 public:
     SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+        NoteEditorPrivate & noteEditor, QString ignoredWord,
         SpellChecker * pSpellChecker, QUndoCommand * parent = nullptr);
 
     SpellCheckIgnoreWordUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & ignoredWord,
+        NoteEditorPrivate & noteEditor, QString ignoredWord,
         SpellChecker * pSpellChecker, const QString & text,
         QUndoCommand * parent = nullptr);
 

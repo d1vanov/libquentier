@@ -262,7 +262,7 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
 void NoteEditorPluginFactory::setNote(const qevercloud::Note & note)
 {
     QNDEBUG("note_editor", "NoteEditorPluginFactory::setNote: change current "
-        << "note to " << (note.title() ? *note.title() : note.toString()));
+        << "note to " << note.localId());
 
     m_pCurrentNote = &note;
 }

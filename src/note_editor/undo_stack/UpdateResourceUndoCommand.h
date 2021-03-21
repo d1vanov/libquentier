@@ -31,13 +31,13 @@ class Q_DECL_HIDDEN UpdateResourceUndoCommand final :
     Q_OBJECT
 public:
     UpdateResourceUndoCommand(
-        const qevercloud::Resource & resourceBefore,
-        const qevercloud::Resource & resourceAfter,
+        qevercloud::Resource resourceBefore,
+        qevercloud::Resource resourceAfter,
         NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent = nullptr);
 
     UpdateResourceUndoCommand(
-        const qevercloud::Resource & resourceBefore,
-        const qevercloud::Resource & resourceAfter,
+        qevercloud::Resource resourceBefore,
+        qevercloud::Resource resourceAfter,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         QUndoCommand * parent = nullptr);
 

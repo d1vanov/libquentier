@@ -53,36 +53,36 @@ namespace quentier {
     }
 
 AddResourceDelegate::AddResourceDelegate(
-    const QString & filePath, NoteEditorPrivate & noteEditor,
-    ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
+    QString filePath, NoteEditorPrivate & noteEditor,
+    ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
-    m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_filePath(filePath)
+    m_filePath(std::move(filePath))
 {}
 
 AddResourceDelegate::AddResourceDelegate(
-    const QByteArray & resourceData, const QString & mimeType,
+    QByteArray resourceData, const QString & mimeType,
     NoteEditorPrivate & noteEditor,
-    ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
+    ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
     FileIOProcessorAsync * pFileIOProcessorAsync,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash) :
     QObject(&noteEditor),
     m_noteEditor(noteEditor),
-    m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceDataManager),
     m_pFileIOProcessorAsync(pFileIOProcessorAsync),
     m_genericResourceImageFilePathsByResourceHash(
         genericResourceImageFilePathsByResourceHash),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
-    m_data(resourceData)
+    m_data(std::move(resourceData))
 {
     const QMimeDatabase mimeDatabase;
     m_resourceMimeType = mimeDatabase.mimeTypeForName(mimeType);
@@ -120,12 +120,12 @@ void AddResourceDelegate::start()
     }
 }
 
-void AddResourceDelegate::onOriginalPageConvertedToNote(qevercloud::Note note)
+void AddResourceDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "AddResourceDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "AddResourceDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -157,7 +157,8 @@ void AddResourceDelegate::doStart()
         Q_EMIT notifyError(error);
         return;
     }
-    else if (m_filePath.isEmpty() && !m_resourceMimeType.isValid()) {
+
+    if (m_filePath.isEmpty() && !m_resourceMimeType.isValid()) {
         ErrorString error(
             QT_TR_NOOP("Can't add attachment: the mime type of "
                        "the data to be added is invalid"));
@@ -286,7 +287,7 @@ void AddResourceDelegate::doStartUsingFile()
 }
 
 void AddResourceDelegate::onResourceFileRead(
-    bool success, ErrorString errorDescription, QByteArray data,
+    bool success, ErrorString errorDescription, QByteArray data, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_readResourceFileRequestId) {
@@ -507,7 +508,8 @@ void AddResourceDelegate::onResourceDataSavedToTemporaryFile(
 }
 
 void AddResourceDelegate::onGenericResourceImageSaved(
-    bool success, QByteArray resourceImageDataHash, QString filePath,
+    bool success,
+    QByteArray resourceImageDataHash, QString filePath, // NOLINT
     ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_saveResourceImageRequestId) {

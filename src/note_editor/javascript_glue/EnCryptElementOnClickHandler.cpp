@@ -25,10 +25,12 @@ EnCryptElementOnClickHandler::EnCryptElementOnClickHandler(QObject * parent) :
 {}
 
 void EnCryptElementOnClickHandler::onEnCryptElementClicked(
-    const QString encryptedText, const QString cipher, const QString length,
-    const QString hint, const QString enCryptIndex)
+    QString encryptedText, QString cipher, QString length,
+    QString hint, QString enCryptIndex)
 {
-    Q_EMIT decrypt(encryptedText, cipher, length, hint, enCryptIndex, nullptr);
+    Q_EMIT decrypt(
+        std::move(encryptedText), std::move(cipher), std::move(length),
+        std::move(hint), std::move(enCryptIndex), nullptr);
 }
 
 } // namespace quentier

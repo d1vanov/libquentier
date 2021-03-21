@@ -55,10 +55,11 @@
 namespace quentier {
 
 SpellCheckerPrivate::SpellCheckerPrivate(
-    FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+    FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
     QObject * parent, const QString & userDictionaryPath) :
     QObject(parent),
-    m_pFileIOProcessorAsync(pFileIOProcessorAsync), m_currentAccount(account),
+    m_pFileIOProcessorAsync(pFileIOProcessorAsync),
+    m_currentAccount(std::move(account)),
     m_pDictionariesFinderStopFlag(new QAtomicInt)
 {
     initializeUserDictionary(userDictionaryPath);
@@ -283,7 +284,7 @@ bool SpellCheckerPrivate::isReady() const noexcept
 }
 
 void SpellCheckerPrivate::onDictionariesFound(
-    SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files)
+    SpellCheckerDictionariesFinder::DicAndAffFilesByDictionaryName files) // NOLINT
 {
     QNDEBUG("note_editor", "SpellCheckerPrivate::onDictionariesFound");
 
@@ -1076,8 +1077,8 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
 }
 
 void SpellCheckerPrivate::onReadFileRequestProcessed(
-    bool success, ErrorString errorDescription, QByteArray data,
-    QUuid requestId)
+    bool success, ErrorString errorDescription, // NOLINT
+    QByteArray data, QUuid requestId)
 {
     Q_UNUSED(errorDescription)
 
@@ -1134,7 +1135,7 @@ void SpellCheckerPrivate::onReadFileRequestProcessed(
 }
 
 void SpellCheckerPrivate::onWriteFileRequestProcessed(
-    bool success, ErrorString errorDescription, QUuid requestId)
+    bool success, ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     if (requestId == m_appendUserDictionaryPartToFileRequestId) {
         onAppendUserDictionaryPartDone(success, errorDescription);
@@ -1161,7 +1162,7 @@ void SpellCheckerPrivate::onWriteFileRequestProcessed(
 }
 
 void SpellCheckerPrivate::onAppendUserDictionaryPartDone(
-    bool success, ErrorString errorDescription)
+    bool success, ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "note_editor",
@@ -1184,7 +1185,7 @@ void SpellCheckerPrivate::onAppendUserDictionaryPartDone(
 }
 
 void SpellCheckerPrivate::onUpdateUserDictionaryDone(
-    bool success, ErrorString errorDescription)
+    bool success, ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "note_editor",

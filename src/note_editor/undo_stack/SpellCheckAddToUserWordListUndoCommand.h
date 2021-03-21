@@ -33,11 +33,11 @@ class Q_DECL_HIDDEN SpellCheckAddToUserWordListUndoCommand final :
     Q_OBJECT
 public:
     SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
+        NoteEditorPrivate & noteEditor, QString word,
         SpellChecker * pSpellChecker, QUndoCommand * parent = nullptr);
 
     SpellCheckAddToUserWordListUndoCommand(
-        NoteEditorPrivate & noteEditor, const QString & word,
+        NoteEditorPrivate & noteEditor, QString word,
         SpellChecker * pSpellChecker, const QString & text,
         QUndoCommand * parent = nullptr);
 

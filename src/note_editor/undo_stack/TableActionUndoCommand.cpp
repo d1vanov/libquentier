@@ -39,7 +39,7 @@ TableActionUndoCommand::TableActionUndoCommand(
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Table action"));
 }
@@ -48,7 +48,7 @@ TableActionUndoCommand::TableActionUndoCommand(
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 TableActionUndoCommand::~TableActionUndoCommand() noexcept = default;

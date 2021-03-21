@@ -32,7 +32,7 @@ WebSocketTransport::WebSocketTransport(QWebSocket * socket) :
         &WebSocketTransport::textMessageReceived);
 }
 
-WebSocketTransport::~WebSocketTransport() {}
+WebSocketTransport::~WebSocketTransport() = default;
 
 void WebSocketTransport::sendMessage(const QJsonObject & message)
 {

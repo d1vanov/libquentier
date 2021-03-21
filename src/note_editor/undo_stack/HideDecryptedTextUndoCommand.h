@@ -34,11 +34,11 @@ public:
 
 public:
     HideDecryptedTextUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     HideDecryptedTextUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~HideDecryptedTextUndoCommand() noexcept override;

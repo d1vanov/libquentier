@@ -67,15 +67,15 @@ namespace quentier {
     }
 
 DecryptEncryptedTextDelegate::DecryptEncryptedTextDelegate(
-    const QString & encryptedTextId, const QString & encryptedText,
-    const QString & cipher, const QString & length, const QString & hint,
-    NoteEditorPrivate * pNoteEditor,
+    QString encryptedTextId, QString encryptedText, QString cipher,
+    const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
     std::shared_ptr<EncryptionManager> encryptionManager,
     std::shared_ptr<DecryptedTextManager> decryptedTextManager) :
     m_encryptedTextId(std::move(encryptedTextId)),
-    m_encryptedText(std::move(encryptedText)), m_cipher(cipher), m_hint(hint),
-    m_pNoteEditor(pNoteEditor), m_encryptionManager(encryptionManager),
-    m_decryptedTextManager(decryptedTextManager)
+    m_encryptedText(std::move(encryptedText)), m_cipher(std::move(cipher)),
+    m_hint(std::move(hint)), m_pNoteEditor(pNoteEditor),
+    m_encryptionManager(std::move(encryptionManager)),
+    m_decryptedTextManager(std::move(decryptedTextManager))
 {
     if (length.isEmpty()) {
         m_length = 128;
@@ -120,7 +120,7 @@ void DecryptEncryptedTextDelegate::start()
 }
 
 void DecryptEncryptedTextDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -168,8 +168,9 @@ void DecryptEncryptedTextDelegate::raiseDecryptionDialog()
 }
 
 void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
-    QString cipher, size_t keyLength, QString encryptedText, QString passphrase,
-    QString decryptedText, bool rememberForSession, bool decryptPermanently)
+    QString cipher, size_t keyLength, QString encryptedText, // NOLINT
+    QString passphrase, QString decryptedText, bool rememberForSession,
+    bool decryptPermanently)
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -182,8 +183,8 @@ void DecryptEncryptedTextDelegate::onEncryptedTextDecrypted(
 
     CHECK_NOTE_EDITOR()
 
-    m_decryptedText = decryptedText;
-    m_passphrase = passphrase;
+    m_decryptedText = std::move(decryptedText);
+    m_passphrase = std::move(passphrase);
     m_rememberForSession = rememberForSession;
     m_decryptPermanently = decryptPermanently;
 

@@ -33,12 +33,12 @@ public:
 
 public:
     ReplaceAllUndoCommand(
-        const QString & textToReplace, const bool matchCase,
+        QString textToReplace, bool matchCase,
         NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     ReplaceAllUndoCommand(
-        const QString & textToReplace, const bool matchCase,
+        QString textToReplace, bool matchCase,
         NoteEditorPrivate & noteEditorPrivate, const QString & text,
         Callback callback, QUndoCommand * parent = nullptr);
 

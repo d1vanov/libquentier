@@ -22,7 +22,7 @@
 #include <QDialog>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(RenameResourceDialog)
+class RenameResourceDialog;
 }
 
 namespace quentier {

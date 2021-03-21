@@ -37,19 +37,19 @@ namespace quentier {
     }
 
 AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
+    NoteEditorPrivate & noteEditor, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Add hyperlink"));
 }
 
 AddHyperlinkUndoCommand::AddHyperlinkUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
+    NoteEditorPrivate & noteEditor, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 AddHyperlinkUndoCommand::~AddHyperlinkUndoCommand() noexcept = default;

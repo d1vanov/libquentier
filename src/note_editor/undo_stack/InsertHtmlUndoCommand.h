@@ -44,19 +44,19 @@ public:
 
 public:
     InsertHtmlUndoCommand(
-        const Callback & callback, NoteEditorPrivate & noteEditor,
+        Callback callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo,
-        const QList<qevercloud::Resource> & addedResources = {},
-        const QStringList & resourceFileStoragePaths = {},
+        QList<qevercloud::Resource> addedResources = {},
+        QStringList resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
     InsertHtmlUndoCommand(
-        const Callback & callback, NoteEditorPrivate & noteEditor,
+        Callback callback, NoteEditorPrivate & noteEditor,
         QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
         ResourceInfo & resourceInfo, const QString & text,
-        const QList<qevercloud::Resource> & addedResources = {},
-        const QStringList & resourceFileStoragePaths = {},
+        QList<qevercloud::Resource> addedResources = {},
+        QStringList resourceFileStoragePaths = {},
         QUndoCommand * parent = nullptr);
 
     ~InsertHtmlUndoCommand() noexcept override;

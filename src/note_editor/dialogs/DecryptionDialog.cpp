@@ -29,14 +29,14 @@
 namespace quentier {
 
 DecryptionDialog::DecryptionDialog(
-    const QString & encryptedText, const QString & cipher, const QString & hint,
-    const size_t keyLength, const Account & account,
-    std::shared_ptr<EncryptionManager> encryptionManager,
+    QString encryptedText, QString cipher, QString hint, const size_t keyLength,
+    Account account, std::shared_ptr<EncryptionManager> encryptionManager,
     std::shared_ptr<DecryptedTextManager> decryptedTextManager,
     QWidget * parent, bool decryptPermanentlyFlag) :
     QDialog(parent),
-    m_pUI(new Ui::DecryptionDialog), m_encryptedText(encryptedText),
-    m_cipher(cipher), m_hint(hint), m_account(account),
+    m_pUI(new Ui::DecryptionDialog), m_encryptedText(std::move(encryptedText)),
+    m_cipher(std::move(cipher)), m_hint(std::move(hint)),
+    m_account(std::move(account)),
     m_encryptionManager(std::move(encryptionManager)),
     m_decryptedTextManager(std::move(decryptedTextManager)),
     m_keyLength(keyLength)
@@ -49,9 +49,9 @@ DecryptionDialog::DecryptionDialog(
     setHint(m_hint);
 
     bool rememberPassphraseForSessionDefault = false;
-    ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
 
-    QVariant rememberPassphraseForSessionSetting =
+    const auto rememberPassphraseForSessionSetting =
         appSettings.value(NOTE_EDITOR_ENCRYPTION_REMEMBER_PASSWORD_FOR_SESSION);
 
     if (!rememberPassphraseForSessionSetting.isNull()) {
@@ -121,7 +121,7 @@ void DecryptionDialog::onRememberPassphraseStateChanged(int checked)
 {
     Q_UNUSED(checked)
 
-    ApplicationSettings appSettings(m_account, NOTE_EDITOR_SETTINGS_NAME);
+    ApplicationSettings appSettings{m_account, NOTE_EDITOR_SETTINGS_NAME};
     if (!appSettings.isWritable()) {
         QNINFO(
             "note_editor:dialog",

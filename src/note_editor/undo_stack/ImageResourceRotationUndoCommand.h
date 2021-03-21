@@ -35,23 +35,23 @@ class Q_DECL_HIDDEN ImageResourceRotationUndoCommand final :
     Q_OBJECT
 public:
     ImageResourceRotationUndoCommand(
-        const QByteArray & resourceDataBefore,
-        const QByteArray & resourceHashBefore,
-        const QByteArray & resourceRecognitionDataBefore,
-        const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore,
-        const qevercloud::Resource & resourceAfter,
-        const INoteEditorBackend::Rotation rotationDirection,
+        QByteArray resourceDataBefore,
+        QByteArray resourceHashBefore,
+        QByteArray resourceRecognitionDataBefore,
+        QByteArray resourceRecognitionDataHashBefore,
+        QSize resourceImageSizeBefore,
+        qevercloud::Resource resourceAfter,
+        INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, QUndoCommand * parent = nullptr);
 
     ImageResourceRotationUndoCommand(
-        const QByteArray & resourceDataBefore,
-        const QByteArray & resourceHashBefore,
-        const QByteArray & resourceRecognitionDataBefore,
-        const QByteArray & resourceRecognitionDataHashBefore,
-        const QSize & resourceImageSizeBefore,
-        const qevercloud::Resource & resourceAfter,
-        const INoteEditorBackend::Rotation rotationDirection,
+        QByteArray resourceDataBefore,
+        QByteArray resourceHashBefore,
+        QByteArray resourceRecognitionDataBefore,
+        QByteArray resourceRecognitionDataHashBefore,
+        QSize resourceImageSizeBefore,
+        qevercloud::Resource resourceAfter,
+        INoteEditorBackend::Rotation rotationDirection,
         NoteEditorPrivate & noteEditor, const QString & text,
         QUndoCommand * parent = nullptr);
 

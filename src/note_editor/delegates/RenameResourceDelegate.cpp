@@ -95,12 +95,11 @@ void RenameResourceDelegate::startWithPresetNames(
 }
 
 void RenameResourceDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RenameResourceDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "RenameResourceDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -178,7 +177,7 @@ void RenameResourceDelegate::raiseRenameResourceDialog()
 }
 
 void RenameResourceDelegate::onRenameResourceDialogFinished(
-    QString newResourceName)
+    QString newResourceName) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -263,7 +262,7 @@ void RenameResourceDelegate::buildAndSaveGenericResourceImage()
 }
 
 void RenameResourceDelegate::onGenericResourceImageWriterFinished(
-    bool success, QByteArray resourceHash, QString filePath,
+    bool success, QByteArray resourceHash, QString filePath, // NOLINT
     ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_genericResourceImageWriterRequestId) {
@@ -319,8 +318,7 @@ void RenameResourceDelegate::onGenericResourceImageUpdated(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RenameResourceDelegate"
-            << "::onGenericResourceImageUpdated");
+        "RenameResourceDelegate::onGenericResourceImageUpdated");
 
     Q_UNUSED(data)
 

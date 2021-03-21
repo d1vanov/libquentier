@@ -37,19 +37,18 @@ namespace quentier {
     }
 
 SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
-    QUndoCommand * parent) :
+    NoteEditorPrivate & noteEditor, Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Format as source code"));
 }
 
 SourceCodeFormatUndoCommand::SourceCodeFormatUndoCommand(
-    NoteEditorPrivate & noteEditor, const Callback & callback,
+    NoteEditorPrivate & noteEditor, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 SourceCodeFormatUndoCommand::~SourceCodeFormatUndoCommand() noexcept = default;

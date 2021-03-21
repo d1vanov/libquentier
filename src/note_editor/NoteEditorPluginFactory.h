@@ -108,7 +108,7 @@ public:
      */
     [[nodiscard]] ResourcePluginIdentifier addResourcePlugin(
         INoteEditorResourcePlugin * plugin, ErrorString & errorDescription,
-        const bool forceOverrideTypeKeys = false);
+        bool forceOverrideTypeKeys = false);
 
     /**
      * @brief removeResourcePlugin is the method used to uninstall previously
@@ -122,7 +122,7 @@ public:
      *                                  uninstalled, false otherwise
      */
     [[nodiscard]] bool removeResourcePlugin(
-        const ResourcePluginIdentifier id, ErrorString & errorDescription);
+        ResourcePluginIdentifier id, ErrorString & errorDescription);
 
     /**
      * @brief hasResourcePlugin is the method allowing one to find out whether
@@ -134,7 +134,7 @@ public:
      *                                  false otherwise
      */
     [[nodiscard]] bool hasResourcePlugin(
-        const ResourcePluginIdentifier id) const noexcept;
+        ResourcePluginIdentifier id) const noexcept;
 
     /**
      * @brief hasResourcePluginForMimeType is the method allowing one to find
@@ -208,19 +208,21 @@ private:
     virtual QList<QWebPluginFactory::Plugin> plugins() const;
 
 private:
-    QObject * createResourcePlugin(
+    [[nodiscard]] QObject * createResourcePlugin(
         const QStringList & argumentNames,
         const QStringList & argumentValues) const;
 
-    QObject * createEncryptedAreaPlugin(
+    [[nodiscard]] QObject * createEncryptedAreaPlugin(
         const QStringList & argumentNames,
         const QStringList & argumentValues) const;
 
-    QIcon getIconForMimeType(const QString & mimeTypeName) const;
+    [[nodiscard]] QIcon getIconForMimeType(const QString & mimeTypeName) const;
 
-    QStringList getFileSuffixesForMimeType(const QString & mimeType) const;
+    [[nodiscard]] QStringList getFileSuffixesForMimeType(
+        const QString & mimeType) const;
 
-    QString getFilterStringForMimeType(const QString & mimeType) const;
+    [[nodiscard]] QString getFilterStringForMimeType(
+        const QString & mimeType) const;
 
 private:
     class GenericResourceDisplayWidgetFinder
@@ -228,7 +230,7 @@ private:
     public:
         GenericResourceDisplayWidgetFinder(const qevercloud::Resource & resource);
 
-        bool operator()(
+        [[nodiscard]] bool operator()(
             const QPointer<GenericResourceDisplayWidget> & ptr) const;
 
     private:

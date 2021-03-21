@@ -44,14 +44,15 @@ namespace quentier {
     }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-    const Callback & callback, NoteEditorPrivate & noteEditor,
+    Callback callback, NoteEditorPrivate & noteEditor,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo,
-    const QList<qevercloud::Resource> & addedResources,
-    const QStringList & resourceFileStoragePaths, QUndoCommand * parent) :
+    QList<qevercloud::Resource> addedResources,
+    QStringList resourceFileStoragePaths, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_addedResources(addedResources),
-    m_resourceFileStoragePaths(resourceFileStoragePaths), m_callback(callback),
+    m_addedResources(std::move(addedResources)),
+    m_resourceFileStoragePaths(std::move(resourceFileStoragePaths)),
+    m_callback(std::move(callback)),
     m_resourceFileStoragePathsByResourceLocalId(
         resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo)
@@ -60,14 +61,15 @@ InsertHtmlUndoCommand::InsertHtmlUndoCommand(
 }
 
 InsertHtmlUndoCommand::InsertHtmlUndoCommand(
-    const Callback & callback, NoteEditorPrivate & noteEditor,
+    Callback callback, NoteEditorPrivate & noteEditor,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, const QString & text,
-    const QList<qevercloud::Resource> & addedResources,
-    const QStringList & resourceFileStoragePaths, QUndoCommand * parent) :
+    QList<qevercloud::Resource> addedResources,
+    QStringList resourceFileStoragePaths, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_addedResources(addedResources),
-    m_resourceFileStoragePaths(resourceFileStoragePaths), m_callback(callback),
+    m_addedResources(std::move(addedResources)),
+    m_resourceFileStoragePaths(std::move(resourceFileStoragePaths)),
+    m_callback(std::move(callback)),
     m_resourceFileStoragePathsByResourceLocalId(
         resourceFileStoragePathsByResourceLocalId),
     m_resourceInfo(resourceInfo)

@@ -34,11 +34,11 @@ public:
 
 public:
     SpellCorrectionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent = nullptr);
 
     SpellCorrectionUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~SpellCorrectionUndoCommand() noexcept override;

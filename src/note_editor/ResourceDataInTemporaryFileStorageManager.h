@@ -319,8 +319,7 @@ private:
      * Callback for writeResourceDataToTemporaryFile which emits
      * noteResourcesPreparationProgress signal with the given progress value
      */
-    void emitPartialUpdateResourceFilesForCurrentNoteProgress(
-        const double progress);
+    void emitPartialUpdateResourceFilesForCurrentNoteProgress(double progress);
 
     /**
      * Wrapper around emitPartialUpdateResourceFilesForCurrentNoteProgress
@@ -368,7 +367,7 @@ private:
      * the given resource
      */
     void emitOpenResourcePreparationProgress(
-        const double progress, const QString & resourceLocalId);
+        double progress, const QString & resourceLocalId);
 
     /**
      * Wrapper around emitOpenResourcePreparationProgress
@@ -379,9 +378,9 @@ private:
     {
     public:
         OpenResourcePreparationProgressFunctor(
-            const QString & resourceLocalId,
+            QString resourceLocalId,
             ResourceDataInTemporaryFileStorageManager & manager) :
-            m_resourceLocalId(resourceLocalId),
+            m_resourceLocalId(std::move(resourceLocalId)),
             m_manager(manager)
         {}
 
@@ -416,10 +415,10 @@ private:
     [[nodiscard]] bool writeResourceDataToTemporaryFile(
         const QString & noteLocalId, const QString & resourceLocalId,
         const QByteArray & data, const QByteArray & dataHash,
-        const ResourceType resourceType, ErrorString & errorDescription,
-        const CheckResourceFileActualityOption checkActualityOption =
+        ResourceType resourceType, ErrorString & errorDescription,
+        CheckResourceFileActualityOption checkActualityOption =
             CheckResourceFileActualityOption::On,
-        WriteResourceDataCallback = 0);
+        const WriteResourceDataCallback & callback = {});
 
 private:
     Q_DISABLE_COPY(ResourceDataInTemporaryFileStorageManager)

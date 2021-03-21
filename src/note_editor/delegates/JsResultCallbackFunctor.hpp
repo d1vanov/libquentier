@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,7 +27,7 @@ template <class T>
 class Q_DECL_HIDDEN JsResultCallbackFunctor
 {
 public:
-    typedef void (T::*Method)(const QVariant &);
+    using Method = void (T::*)(const QVariant &);
 
     JsResultCallbackFunctor(T & object, Method method) :
         m_object(object), m_method(method)

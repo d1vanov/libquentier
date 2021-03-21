@@ -37,25 +37,27 @@ namespace quentier {
     }
 
 DecryptUndoCommand::DecryptUndoCommand(
-    const EncryptDecryptUndoCommandInfo & info,
+    EncryptDecryptUndoCommandInfo info,
     std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_info(info), m_decryptedTextManager(std::move(decryptedTextManager)),
-    m_callback(callback)
+    m_info(std::move(info)),
+    m_decryptedTextManager(std::move(decryptedTextManager)),
+    m_callback(std::move(callback))
 {
     setText(tr("Decrypt text"));
 }
 
 DecryptUndoCommand::DecryptUndoCommand(
-    const EncryptDecryptUndoCommandInfo & info,
+    EncryptDecryptUndoCommandInfo info,
     std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_info(info), m_decryptedTextManager(std::move(decryptedTextManager)),
-    m_callback(callback)
+    m_info(std::move(info)),
+    m_decryptedTextManager(std::move(decryptedTextManager)),
+    m_callback(std::move(callback))
 {}
 
 DecryptUndoCommand::~DecryptUndoCommand() noexcept = default;

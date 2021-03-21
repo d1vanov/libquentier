@@ -31,11 +31,11 @@ class Q_DECL_HIDDEN EncryptUndoCommand final : public INoteEditorUndoCommand
 
 public:
     EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     EncryptUndoCommand(
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~EncryptUndoCommand() noexcept override;

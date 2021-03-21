@@ -53,7 +53,7 @@ private Q_SLOTS:
 
 private:
     void findIdOfHyperlinkUnderCursor();
-    void removeHyperlink(const quint64 hyperlinkId);
+    void removeHyperlink(quint64 hyperlinkId);
 
 private:
     using JsCallback = JsResultCallbackFunctor<RemoveHyperlinkDelegate>;

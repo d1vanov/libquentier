@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -35,6 +35,6 @@ INoteEditorUndoCommand::INoteEditorUndoCommand(
     m_noteEditorPrivate(noteEditorPrivate)
 {}
 
-INoteEditorUndoCommand::~INoteEditorUndoCommand() {}
+INoteEditorUndoCommand::~INoteEditorUndoCommand() = default;
 
 } // namespace quentier

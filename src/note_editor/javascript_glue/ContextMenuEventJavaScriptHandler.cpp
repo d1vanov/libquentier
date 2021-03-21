@@ -26,13 +26,13 @@ ContextMenuEventJavaScriptHandler::ContextMenuEventJavaScriptHandler(
 {}
 
 void ContextMenuEventJavaScriptHandler::setContextMenuContent(
-    const QString contentType, const QString selectedHtml,
-    const bool insideDecryptedTextFragment, const QStringList extraData,
+    QString contentType, QString selectedHtml,
+    const bool insideDecryptedTextFragment, QStringList extraData,
     const quint64 sequenceNumber)
 {
     Q_EMIT contextMenuEventReply(
-        contentType, selectedHtml, insideDecryptedTextFragment, extraData,
-        sequenceNumber);
+        std::move(contentType), std::move(selectedHtml),
+        insideDecryptedTextFragment, std::move(extraData), sequenceNumber);
 }
 
 } // namespace quentier

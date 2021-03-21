@@ -47,7 +47,7 @@ namespace quentier {
     }
 
 ImageResourceRotationDelegate::ImageResourceRotationDelegate(
-    const QByteArray & resourceHashBefore,
+    QByteArray resourceHashBefore,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, ResourceInfo & resourceInfo,
     ResourceDataInTemporaryFileStorageManager &
@@ -59,7 +59,7 @@ ImageResourceRotationDelegate::ImageResourceRotationDelegate(
         resourceDataInTemporaryFileStorageManager),
     m_resourceFileStoragePathsByLocalId(resourceFileStoragePathsByLocalId),
     m_rotationDirection(rotationDirection),
-    m_resourceHashBefore(resourceHashBefore)
+    m_resourceHashBefore(std::move(resourceHashBefore))
 {}
 
 void ImageResourceRotationDelegate::start()
@@ -79,7 +79,7 @@ void ImageResourceRotationDelegate::start()
 }
 
 void ImageResourceRotationDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",

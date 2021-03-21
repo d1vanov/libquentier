@@ -119,13 +119,13 @@ void EncryptSelectedTextDelegate::raiseEncryptionDialog()
 }
 
 void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
-    QString selectedText, QString encryptedText, QString cipher,
-    size_t keyLength, QString hint, bool rememberForSession)
+    QString selectedText, QString encryptedText, QString cipher, // NOLINT
+    size_t keyLength, QString hint, bool rememberForSession) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EncryptSelectedTextDelegate"
-            << "::onSelectedTextEncrypted: encrypted text = " << encryptedText
+        "EncryptSelectedTextDelegate::onSelectedTextEncrypted: "
+            << "encrypted text = " << encryptedText
             << ", hint = " << hint << ", remember for session = "
             << (rememberForSession ? "true" : "false"));
 
@@ -168,7 +168,7 @@ void EncryptSelectedTextDelegate::onSelectedTextEncrypted(
 }
 
 void EncryptSelectedTextDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -189,8 +189,7 @@ void EncryptSelectedTextDelegate::encryptSelectedText()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EncryptSelectedTextDelegate"
-            << "::encryptSelectedText");
+        "EncryptSelectedTextDelegate::encryptSelectedText");
 
     GET_PAGE()
 
@@ -226,8 +225,7 @@ void EncryptSelectedTextDelegate::onEncryptionScriptDone(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EncryptSelectedTextDelegate"
-            << "::onEncryptionScriptDone: " << data);
+        "EncryptSelectedTextDelegate::onEncryptionScriptDone: " << data);
 
     const auto resultMap = data.toMap();
 

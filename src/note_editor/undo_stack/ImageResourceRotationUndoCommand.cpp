@@ -25,21 +25,23 @@
 namespace quentier {
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    const QByteArray & resourceDataBefore,
-    const QByteArray & resourceHashBefore,
-    const QByteArray & resourceRecognitionDataBefore,
-    const QByteArray & resourceRecognitionDataHashBefore,
-    const QSize & resourceImageSizeBefore,
-    const qevercloud::Resource & resourceAfter,
+    QByteArray resourceDataBefore,
+    QByteArray resourceHashBefore,
+    QByteArray resourceRecognitionDataBefore,
+    QByteArray resourceRecognitionDataHashBefore,
+    QSize resourceImageSizeBefore,
+    qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_resourceDataBefore(resourceDataBefore),
-    m_resourceHashBefore(resourceHashBefore),
-    m_resourceRecognitionDataBefore(resourceRecognitionDataBefore),
-    m_resourceRecognitionDataHashBefore(resourceRecognitionDataHashBefore),
+    m_resourceDataBefore(std::move(resourceDataBefore)),
+    m_resourceHashBefore(std::move(resourceHashBefore)),
+    m_resourceRecognitionDataBefore(std::move(resourceRecognitionDataBefore)),
+    m_resourceRecognitionDataHashBefore(
+        std::move(resourceRecognitionDataHashBefore)),
     m_resourceImageSizeBefore(resourceImageSizeBefore),
-    m_resourceAfter(resourceAfter), m_rotationDirection(rotationDirection)
+    m_resourceAfter(std::move(resourceAfter)),
+    m_rotationDirection(rotationDirection)
 {
     setText(
         QObject::tr("Image resource rotation") + QStringLiteral(" ") +
@@ -49,22 +51,24 @@ ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
 }
 
 ImageResourceRotationUndoCommand::ImageResourceRotationUndoCommand(
-    const QByteArray & resourceDataBefore,
-    const QByteArray & resourceHashBefore,
-    const QByteArray & resourceRecognitionDataBefore,
-    const QByteArray & resourceRecognitionDataHashBefore,
-    const QSize & resourceImageSizeBefore,
-    const qevercloud::Resource & resourceAfter,
+    QByteArray resourceDataBefore,
+    QByteArray resourceHashBefore,
+    QByteArray resourceRecognitionDataBefore,
+    QByteArray resourceRecognitionDataHashBefore,
+    QSize resourceImageSizeBefore,
+    qevercloud::Resource resourceAfter,
     const INoteEditorBackend::Rotation rotationDirection,
     NoteEditorPrivate & noteEditor, const QString & text,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_resourceDataBefore(resourceDataBefore),
-    m_resourceHashBefore(resourceHashBefore),
-    m_resourceRecognitionDataBefore(resourceRecognitionDataBefore),
-    m_resourceRecognitionDataHashBefore(resourceRecognitionDataHashBefore),
+    m_resourceDataBefore(std::move(resourceDataBefore)),
+    m_resourceHashBefore(std::move(resourceHashBefore)),
+    m_resourceRecognitionDataBefore(std::move(resourceRecognitionDataBefore)),
+    m_resourceRecognitionDataHashBefore(
+        std::move(resourceRecognitionDataHashBefore)),
     m_resourceImageSizeBefore(resourceImageSizeBefore),
-    m_resourceAfter(resourceAfter), m_rotationDirection(rotationDirection)
+    m_resourceAfter(std::move(resourceAfter)),
+    m_rotationDirection(rotationDirection)
 {}
 
 ImageResourceRotationUndoCommand::~ImageResourceRotationUndoCommand() noexcept =

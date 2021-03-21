@@ -182,7 +182,7 @@ private:
         const qevercloud::Note & previousNoteVersion,
         const qevercloud::Note & updatedNoteVersion);
 
-    class SaveNoteInfo : public Printable
+    class SaveNoteInfo final : public Printable
     {
     public:
         QTextStream & print(QTextStream & strm) const override;

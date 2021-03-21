@@ -27,7 +27,7 @@ ToDoCheckboxOnClickHandler::ToDoCheckboxOnClickHandler(QObject * parent) :
 {}
 
 void ToDoCheckboxOnClickHandler::onToDoCheckboxClicked(
-    const QString enToDoCheckboxId)
+    const QString enToDoCheckboxId) // NOLINT
 {
     QNDEBUG(
         "note_editor:js_glue",

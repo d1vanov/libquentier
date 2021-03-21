@@ -36,8 +36,8 @@ using WebPage =
     QWebEnginePage;
 #endif
 
-QT_FORWARD_DECLARE_CLASS(NoteEditor)
-QT_FORWARD_DECLARE_CLASS(NoteEditorPrivate)
+class NoteEditor;
+class NoteEditorPrivate;
 
 class Q_DECL_HIDDEN NoteEditorPage final : public WebPage
 {
@@ -95,8 +95,8 @@ public Q_SLOTS:
 #endif
 
     void executeJavaScript(
-        const QString & script, Callback callback = 0,
-        const bool clearPreviousQueue = false);
+        const QString & script, Callback callback = {},
+        bool clearPreviousQueue = false);
 
 private Q_SLOTS:
     void onJavaScriptQueueEmpty();

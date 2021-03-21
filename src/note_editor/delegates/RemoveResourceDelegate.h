@@ -39,8 +39,7 @@ class Q_DECL_HIDDEN RemoveResourceDelegate final : public QObject
     Q_OBJECT
 public:
     explicit RemoveResourceDelegate(
-        const qevercloud::Resource & resourceToRemove,
-        NoteEditorPrivate & noteEditor,
+        qevercloud::Resource resourceToRemove, NoteEditorPrivate & noteEditor,
         LocalStorageManagerAsync & localStorageManager);
 
     void start();

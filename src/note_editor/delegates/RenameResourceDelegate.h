@@ -50,7 +50,7 @@ public:
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash,
-        const bool performingUndo = false);
+        bool performingUndo = false);
 
     void start();
 

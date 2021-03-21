@@ -29,7 +29,7 @@ class Q_DECL_HIDDEN INoteEditorUndoCommand : public QuentierUndoCommand
 {
     Q_OBJECT
 public:
-    virtual ~INoteEditorUndoCommand();
+    ~INoteEditorUndoCommand() override;
 
 protected:
     INoteEditorUndoCommand(

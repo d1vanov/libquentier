@@ -28,13 +28,14 @@
 namespace quentier {
 
 RenameResourceUndoCommand::RenameResourceUndoCommand(
-    const qevercloud::Resource & resource, const QString & previousResourceName,
+    qevercloud::Resource resource, QString previousResourceName,
     NoteEditorPrivate & noteEditor,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, parent),
-    m_resource(resource), m_previousResourceName(previousResourceName),
+    m_resource(std::move(resource)),
+    m_previousResourceName(std::move(previousResourceName)),
     m_newResourceName(resourceDisplayName(resource)),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_genericResourceImageFilePathsByResourceHash(
@@ -44,13 +45,14 @@ RenameResourceUndoCommand::RenameResourceUndoCommand(
 }
 
 RenameResourceUndoCommand::RenameResourceUndoCommand(
-    const qevercloud::Resource & resource, const QString & previousResourceName,
+    qevercloud::Resource resource, QString previousResourceName,
     NoteEditorPrivate & noteEditor,
     GenericResourceImageManager * pGenericResourceImageManager,
     QHash<QByteArray, QString> & genericResourceImageFilePathsByResourceHash,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditor, text, parent),
-    m_resource(resource), m_previousResourceName(previousResourceName),
+    m_resource(std::move(resource)),
+    m_previousResourceName(std::move(previousResourceName)),
     m_newResourceName(resourceDisplayName(resource)),
     m_pGenericResourceImageManager(pGenericResourceImageManager),
     m_genericResourceImageFilePathsByResourceHash(

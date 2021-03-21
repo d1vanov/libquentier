@@ -25,11 +25,11 @@
 namespace quentier {
 
 SpellChecker::SpellChecker(
-    FileIOProcessorAsync * pFileIOProcessorAsync, const Account & account,
+    FileIOProcessorAsync * pFileIOProcessorAsync, Account account,
     QObject * parent, const QString & userDictionaryPath) :
     QObject(parent),
     d_ptr(new SpellCheckerPrivate(
-        pFileIOProcessorAsync, account, this, userDictionaryPath))
+        pFileIOProcessorAsync, std::move(account), this, userDictionaryPath))
 {
     QObject::connect(
         d_ptr, &SpellCheckerPrivate::ready, this, &SpellChecker::ready);

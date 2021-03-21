@@ -37,7 +37,7 @@ class Q_DECL_HIDDEN EditHyperlinkDelegate final : public QObject
     Q_OBJECT
 public:
     explicit EditHyperlinkDelegate(
-        NoteEditorPrivate & noteEditor, const quint64 hyperlinkId);
+        NoteEditorPrivate & noteEditor, quint64 hyperlinkId);
 
     void start();
 

@@ -72,7 +72,7 @@ void EditHyperlinkDialog::accept()
     QDialog::accept();
 }
 
-void EditHyperlinkDialog::onUrlEdited(QString url)
+void EditHyperlinkDialog::onUrlEdited(QString url) // NOLINT
 {
     if (!url.isEmpty()) {
         m_pUI->urlErrorLabel->setVisible(false);
@@ -89,7 +89,7 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
 {
     QNDEBUG("note_editor:dialog", "EditHyperlinkDialog::validateAndGetUrl");
 
-    url = QUrl();
+    url = QUrl{};
 
     const QString enteredUrl = m_pUI->urlLineEdit->text();
     QNTRACE("note_editor:dialog", "Entered URL string: " << enteredUrl);
@@ -100,7 +100,7 @@ bool EditHyperlinkDialog::validateAndGetUrl(QUrl & url)
         return false;
     }
 
-    url = QUrl(enteredUrl, QUrl::TolerantMode);
+    url = QUrl{enteredUrl, QUrl::TolerantMode};
     QNTRACE(
         "note_editor:dialog",
         "Parsed URL: " << url << ", is empty = "

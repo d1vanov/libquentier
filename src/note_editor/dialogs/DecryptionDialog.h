@@ -28,21 +28,20 @@
 #include <memory>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(DecryptionDialog)
+class DecryptionDialog;
 }
 
 namespace quentier {
 
-QT_FORWARD_DECLARE_CLASS(DecryptedTextManager)
+class DecryptedTextManager;
 
 class Q_DECL_HIDDEN DecryptionDialog final : public QDialog
 {
     Q_OBJECT
 public:
     explicit DecryptionDialog(
-        const QString & encryptedText, const QString & cipher,
-        const QString & hint, const size_t keyLength, const Account & account,
-        std::shared_ptr<EncryptionManager> encryptionManager,
+        QString encryptedText, QString cipher, QString hint, size_t keyLength,
+        Account account, std::shared_ptr<EncryptionManager> encryptionManager,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent = nullptr, bool decryptPermanentlyFlag = false);
 

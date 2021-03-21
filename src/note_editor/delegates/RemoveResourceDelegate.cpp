@@ -45,11 +45,11 @@ namespace quentier {
     }
 
 RemoveResourceDelegate::RemoveResourceDelegate(
-    const qevercloud::Resource & resourceToRemove,
-    NoteEditorPrivate & noteEditor,
+    qevercloud::Resource resourceToRemove, NoteEditorPrivate & noteEditor,
     LocalStorageManagerAsync & localStorageManager) :
     m_noteEditor(noteEditor),
-    m_localStorageManager(localStorageManager), m_resource(resourceToRemove)
+    m_localStorageManager(localStorageManager),
+    m_resource(std::move(resourceToRemove))
 {}
 
 void RemoveResourceDelegate::start()
@@ -69,7 +69,7 @@ void RemoveResourceDelegate::start()
 }
 
 void RemoveResourceDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -94,20 +94,20 @@ void RemoveResourceDelegate::onFindResourceComplete(
 
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::onFindResourceComplete: request id = " << requestId);
+        "RemoveResourceDelegate::onFindResourceComplete: request id = "
+            << requestId);
 
     Q_UNUSED(options)
-    m_findResourceRequestId = QUuid();
+    m_findResourceRequestId = QUuid{};
 
-    m_resource = resource;
+    m_resource = std::move(resource);
     removeResourceFromNoteEditorPage();
 }
 
 void RemoveResourceDelegate::onFindResourceFailed(
-    qevercloud::Resource resource,
+    qevercloud::Resource resource, // NOLINT
     LocalStorageManager::GetResourceOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     if (m_findResourceRequestId != requestId) {
         return;
@@ -120,7 +120,7 @@ void RemoveResourceDelegate::onFindResourceFailed(
 
     Q_UNUSED(resource)
     Q_UNUSED(options)
-    m_findResourceRequestId = QUuid();
+    m_findResourceRequestId = QUuid{};
 
     Q_EMIT notifyError(errorDescription);
 }
@@ -228,8 +228,7 @@ void RemoveResourceDelegate::removeResourceFromNoteEditorPage()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::removeResourceFromNoteEditorPage");
+        "RemoveResourceDelegate::removeResourceFromNoteEditorPage");
 
     const QString javascript =
         QStringLiteral("resourceManager.removeResource('") +
@@ -249,8 +248,7 @@ void RemoveResourceDelegate::connectToLocalStorage()
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::connectToLocalStorage");
+        "RemoveResourceDelegate::connectToLocalStorage");
 
     QObject::connect(
         this, &RemoveResourceDelegate::findResource, &m_localStorageManager,
@@ -270,8 +268,7 @@ void RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent(
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveResourceDelegate"
-            << "::onResourceReferenceRemovedFromNoteContent");
+        "RemoveResourceDelegate::onResourceReferenceRemovedFromNoteContent");
 
     const auto resultMap = data.toMap();
 

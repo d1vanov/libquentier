@@ -46,19 +46,17 @@
 namespace quentier {
 
 InsertHtmlDelegate::InsertHtmlDelegate(
-    const QString & inputHtml, NoteEditorPrivate & noteEditor,
+    QString inputHtml, NoteEditorPrivate & noteEditor,
     ENMLConverter & enmlConverter,
-    ResourceDataInTemporaryFileStorageManager *
-        pResourceDataInTemporaryFileStorageManager,
+    ResourceDataInTemporaryFileStorageManager * pResourceFileStorageManager,
     QHash<QString, QString> & resourceFileStoragePathsByResourceLocalId,
     ResourceInfo & resourceInfo, QObject * parent) :
     QObject(parent),
     m_noteEditor(noteEditor), m_enmlConverter(enmlConverter),
-    m_pResourceDataInTemporaryFileStorageManager(
-        pResourceDataInTemporaryFileStorageManager),
+    m_pResourceDataInTemporaryFileStorageManager(pResourceFileStorageManager),
     m_resourceFileStoragePathsByResourceLocalId(
         resourceFileStoragePathsByResourceLocalId),
-    m_resourceInfo(resourceInfo), m_inputHtml(inputHtml)
+    m_resourceInfo(resourceInfo), m_inputHtml(std::move(inputHtml))
 {}
 
 void InsertHtmlDelegate::start()
@@ -77,7 +75,8 @@ void InsertHtmlDelegate::start()
     }
 }
 
-void InsertHtmlDelegate::onOriginalPageConvertedToNote(qevercloud::Note note)
+void InsertHtmlDelegate::onOriginalPageConvertedToNote(
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -364,7 +363,8 @@ void InsertHtmlDelegate::doStart()
             {
                 continue;
             }
-            else if (lastElementName == QStringLiteral("img")) {
+
+            if (lastElementName == QStringLiteral("img")) {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("src")))
                 {
                     QNDEBUG(
@@ -772,7 +772,8 @@ bool InsertHtmlDelegate::adjustImgTagsInHtml()
             {
                 continue;
             }
-            else if (lastElementName == QStringLiteral("img")) {
+
+            if (lastElementName == QStringLiteral("img")) {
                 if (!lastElementAttributes.hasAttribute(QStringLiteral("src")))
                 {
                     QNDEBUG(

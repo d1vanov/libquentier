@@ -246,7 +246,7 @@ public:
     }
 
     void refreshMisSpelledWordsList();
-    void applySpellCheck(const bool applyToSelection = false);
+    void applySpellCheck(bool applyToSelection = false);
     void removeSpellCheck();
     void enableDynamicSpellCheck();
     void disableDynamicSpellCheck();
@@ -260,11 +260,10 @@ public:
     [[nodiscard]] bool searchHighlightEnabled() const;
 
     void setSearchHighlight(
-        const QString & textToFind, const bool matchCase,
-        const bool force = false) const;
+        const QString & textToFind, bool matchCase, bool force = false) const;
 
     void highlightRecognizedImageAreas(
-        const QString & textToFind, const bool matchCase) const;
+        const QString & textToFind, bool matchCase) const;
 
     [[nodiscard]] bool spellCheckEnabled() const override;
 
@@ -326,18 +325,18 @@ public Q_SLOTS:
     void alignFull() override;
 
     void findNext(
-        const QString & text, const bool matchCase) const override;
+        const QString & text, bool matchCase) const override;
 
     void findPrevious(
-        const QString & text, const bool matchCase) const override;
+        const QString & text, bool matchCase) const override;
 
     void replace(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase) override;
+        bool matchCase) override;
 
     void replaceAll(
         const QString & textToReplace, const QString & replacementText,
-        const bool matchCase) override;
+        bool matchCase) override;
 
     void onReplaceJavaScriptDone(const QVariant & data);
 
@@ -347,9 +346,9 @@ public Q_SLOTS:
         const QString & userId, const QString & shardId,
         const QString & noteGuid, const QString & linkText) override;
 
-    void setSpellcheck(const bool enabled) override;
+    void setSpellcheck(bool enabled) override;
     void setFont(const QFont & font) override;
-    void setFontHeight(const int height) override;
+    void setFontHeight(int height) override;
     void setFontColor(const QColor & color) override;
     void setBackgroundColor(const QColor & color) override;
     void setDefaultPalette(const QPalette & pal) override;
@@ -364,10 +363,10 @@ public Q_SLOTS:
     void insertTableDialog() override;
 
     void insertFixedWidthTable(
-        const int rows, const int columns, const int widthInPixels) override;
+        int rows, int columns, int widthInPixels) override;
 
     void insertRelativeWidthTable(
-        const int rows, const int columns, const double relativeWidth) override;
+        int rows, int columns, double relativeWidth) override;
 
     void insertTableRow() override;
     void insertTableColumn() override;
@@ -388,11 +387,9 @@ public Q_SLOTS:
     void renameAttachmentUnderCursor() override;
 
     void rotateImageAttachment(
-        const QByteArray & resourceHash,
-        const Rotation rotationDirection) override;
+        const QByteArray & resourceHash, Rotation rotationDirection) override;
 
-    void rotateImageAttachmentUnderCursor(
-        const Rotation rotationDirection) override;
+    void rotateImageAttachmentUnderCursor(Rotation rotationDirection) override;
 
     void rotateImageAttachmentUnderCursorClockwise();
     void rotateImageAttachmentUnderCursorCounterclockwise();
@@ -432,7 +429,7 @@ public Q_SLOTS:
     void undoPageAction();
     void redoPageAction();
 
-    void flipEnToDoCheckboxState(const quint64 enToDoIdNumber);
+    void flipEnToDoCheckboxState(quint64 enToDoIdNumber);
 
     void updateLastInteractionTimestamp();
 
@@ -796,8 +793,7 @@ private:
 
     template <typename T>
     [[nodiscard]] QString composeHtmlTable(
-        const T width, const T singleColumnWidth, const int rows,
-        const int columns, const bool relative);
+        T width, T singleColumnWidth, int rows, int columns, bool relative);
 
     void onManagedPageActionFinished(
         const QVariant & result,
@@ -805,12 +801,12 @@ private:
 
     void updateJavaScriptBindings();
 
-    void changeFontSize(const bool increase);
-    void changeIndentation(const bool increase);
+    void changeFontSize(bool increase);
+    void changeIndentation(bool increase);
 
     void findText(
-        const QString & textToFind, const bool matchCase,
-        const bool searchBackward = false, NoteEditorPage::Callback = 0) const;
+        const QString & textToFind, bool matchCase,
+        bool searchBackward = false, NoteEditorPage::Callback = {}) const;
 
     /**
      * When no note is set to the editor,
@@ -849,7 +845,7 @@ private:
         InternalError
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const BlankPageKind kind);
+    friend QDebug & operator<<(QDebug & dbg, BlankPageKind kind);
 
     /**
      * Reset the page displayed by the note editor to one of "blank" ones
@@ -861,8 +857,8 @@ private:
      *                              "InternalError"
      */
     void clearEditorContent(
-        const BlankPageKind kind = BlankPageKind::Initial,
-        const ErrorString & errorDescription = ErrorString());
+        BlankPageKind kind = BlankPageKind::Initial,
+        const ErrorString & errorDescription = ErrorString{});
 
     void noteToEditorContent();
     void updateColResizableTableBindings();
@@ -905,7 +901,7 @@ private:
         const QString & id);
 
     void setupActionShortcut(
-        const int key, const QString & context, QAction & action);
+        int key, const QString & context, QAction & action);
 
     void setupFileIO();
     void setupSpellChecker();
@@ -930,10 +926,10 @@ private:
     void determineStatesForCurrentTextCursorPosition();
     void determineContextMenuEventTarget();
 
-    void setPageEditable(const bool editable);
+    void setPageEditable(bool editable);
 
     [[nodiscard]] bool checkContextMenuSequenceNumber(
-        const quint64 sequenceNumber) const;
+        quint64 sequenceNumber) const;
 
     void onPageHtmlReceived(
         const QString & html,
@@ -988,7 +984,7 @@ private:
     [[nodiscard]] bool isNoteReadOnly() const;
 
     void setupAddHyperlinkDelegate(
-        const quint64 hyperlinkId, const QString & presetHyperlink = {},
+        quint64 hyperlinkId, const QString & presetHyperlink = {},
         const QString & replacementLinkText = {});
 
 #ifdef QUENTIER_USE_QT_WEB_ENGINE
@@ -1025,9 +1021,9 @@ private:
             void (NoteEditorPrivate::*method)(
                 const T & result,
                 const QVector<std::pair<QString, QString>> & extraData),
-            const QVector<std::pair<QString, QString>> & extraData = {}) :
+            QVector<std::pair<QString, QString>> extraData = {}) :
             m_pNoteEditor(pNoteEditor),
-            m_method(method), m_extraData(extraData)
+            m_method(method), m_extraData(std::move(extraData))
         {}
 
         NoteEditorCallbackFunctor(const NoteEditorCallbackFunctor<T> & other) :

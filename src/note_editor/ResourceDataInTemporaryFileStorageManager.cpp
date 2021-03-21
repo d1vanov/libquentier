@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <memory>
 #include <string>
 
 // 4 megabytes
@@ -69,7 +70,7 @@ QString ResourceDataInTemporaryFileStorageManager::
 
 void ResourceDataInTemporaryFileStorageManager::
     onSaveResourceDataToTemporaryFileRequest(
-        QString noteLocalId, QString resourceLocalId, QByteArray data,
+        QString noteLocalId, QString resourceLocalId, QByteArray data, // NOLINT
         QByteArray dataHash, QUuid requestId, bool isImage)
 {
     QNDEBUG(
@@ -107,7 +108,8 @@ void ResourceDataInTemporaryFileStorageManager::
 }
 
 void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(
-    QString fileStoragePath, QString resourceLocalId, QUuid requestId)
+    QString fileStoragePath, QString resourceLocalId, // NOLINT
+    QUuid requestId)
 {
     QNDEBUG(
         "note_editor",
@@ -184,7 +186,7 @@ void ResourceDataInTemporaryFileStorageManager::onReadResourceFromFileRequest(
 }
 
 void ResourceDataInTemporaryFileStorageManager::onOpenResourceRequest(
-    QString resourceLocalId)
+    QString resourceLocalId) // NOLINT
 {
     QNDEBUG(
         "note_editor",
@@ -360,7 +362,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(
     m_resourceLocalIdByFilePath.clear();
 
     if (!m_pCurrentNote) {
-        m_pCurrentNote.reset(new qevercloud::Note(std::move(note)));
+        m_pCurrentNote = std::make_unique<qevercloud::Note>(std::move(note));
     }
     else {
         *m_pCurrentNote = std::move(note);
@@ -523,9 +525,9 @@ void ResourceDataInTemporaryFileStorageManager::onFileRemoved(
 }
 
 void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
-    qevercloud::Resource resource)
+    qevercloud::Resource resource) // NOLINT
 {
-    const QString resourceLocalId = resource.localId();
+    const QString & resourceLocalId = resource.localId();
 
     const auto fit =
         m_resourceLocalIdsPendingFindInLocalStorage.find(resourceLocalId);
@@ -652,7 +654,7 @@ void ResourceDataInTemporaryFileStorageManager::onFoundResourceData(
 }
 
 void ResourceDataInTemporaryFileStorageManager::onFailedToFindResourceData(
-    QString resourceLocalId, ErrorString errorDescription)
+    QString resourceLocalId, ErrorString errorDescription) // NOLINT
 {
     const auto fit =
         m_resourceLocalIdsPendingFindInLocalStorage.find(resourceLocalId);
@@ -1053,7 +1055,7 @@ ResourceDataInTemporaryFileStorageManager::
          : QList<qevercloud::Resource>());
 
     for (const auto & resource: qAsConst(resources)) {
-        const QString resourceLocalId = resource.localId();
+        const QString & resourceLocalId = resource.localId();
 
         QNTRACE(
             "note_editor",
@@ -1147,7 +1149,7 @@ ResourceDataInTemporaryFileStorageManager::
     }
 
     for (const auto & previousResource: qAsConst(previousResources)) {
-        const QString resourceLocalId = previousResource.localId();
+        const QString & resourceLocalId = previousResource.localId();
 
         const qevercloud::Resource * pResource = nullptr;
         for (auto uit = resources.constBegin(), uend = resources.constEnd();
@@ -1370,7 +1372,7 @@ bool ResourceDataInTemporaryFileStorageManager::
         const QByteArray & data, const QByteArray & dataHash,
         const ResourceType resourceType, ErrorString & errorDescription,
         const CheckResourceFileActualityOption checkActualityOption,
-        WriteResourceDataCallback callback)
+        const WriteResourceDataCallback & callback)
 {
     QNDEBUG(
         "note_editor",

@@ -64,12 +64,11 @@ void EditHyperlinkDelegate::start()
 }
 
 void EditHyperlinkDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onOriginalPageConvertedToNote");
+        "EditHyperlinkDelegate::onOriginalPageConvertedToNote");
 
     Q_UNUSED(note)
 
@@ -84,8 +83,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "EditHyperlinkDelegate"
-            << "::onHyperlinkDataReceived: data = " << data);
+        "EditHyperlinkDelegate::onHyperlinkDataReceived: data = " << data);
 
     const auto resultMap = data.toMap();
 
@@ -102,7 +100,7 @@ void EditHyperlinkDelegate::onHyperlinkDataReceived(const QVariant & data)
     if (!statusIt.value().toBool()) {
         ErrorString error;
 
-        auto errorIt = resultMap.find(QStringLiteral("error"));
+        const auto errorIt = resultMap.find(QStringLiteral("error"));
         if (Q_UNLIKELY(errorIt == resultMap.end())) {
             error.setBase(
                 QT_TR_NOOP("Can't parse the error of hyperlink data "
@@ -196,7 +194,8 @@ void EditHyperlinkDelegate::raiseEditHyperlinkDialog(
 }
 
 void EditHyperlinkDelegate::onHyperlinkDataEdited(
-    QString text, QUrl url, quint64 hyperlinkId, bool startupUrlWasEmpty)
+    QString text, QUrl url, quint64 hyperlinkId, // NOLINT
+    bool startupUrlWasEmpty)
 {
     QNDEBUG(
         "note_editor:delegate",

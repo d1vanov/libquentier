@@ -31,25 +31,24 @@ void TextCursorPositionJavaScriptHandler::onTextCursorPositionChange()
 }
 
 void TextCursorPositionJavaScriptHandler::setOnImageResourceState(
-    const bool state, const QString resourceHash)
+    const bool state, const QString resourceHash) // NOLINT
 {
     Q_EMIT textCursorPositionOnImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnNonImageResourceState(
-    const bool state, const QString resourceHash)
+    const bool state, const QString resourceHash) // NOLINT
 {
     Q_EMIT textCursorPositionOnNonImageResourceState(
         state, QByteArray::fromHex(resourceHash.toLocal8Bit()));
 }
 
 void TextCursorPositionJavaScriptHandler::setOnEnCryptTagState(
-    const bool state, const QString encryptedText, const QString cipher,
-    const QString length)
+    const bool state, QString encryptedText, QString cipher, QString length)
 {
     Q_EMIT textCursorPositionOnEnCryptTagState(
-        state, encryptedText, cipher, length);
+        state, std::move(encryptedText), std::move(cipher), std::move(length));
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionBoldState(
@@ -120,9 +119,9 @@ void TextCursorPositionJavaScriptHandler::setTextCursorPositionInsideTableState(
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontName(
-    const QString fontSize)
+    QString name)
 {
-    Q_EMIT textCursorPositionFontName(fontSize);
+    Q_EMIT textCursorPositionFontName(std::move(name));
 }
 
 void TextCursorPositionJavaScriptHandler::setTextCursorPositionFontSize(

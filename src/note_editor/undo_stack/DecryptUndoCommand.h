@@ -38,15 +38,15 @@ class Q_DECL_HIDDEN DecryptUndoCommand final : public INoteEditorUndoCommand
 
 public:
     DecryptUndoCommand(
-        const EncryptDecryptUndoCommandInfo & info,
+        EncryptDecryptUndoCommandInfo info,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         QUndoCommand * parent = nullptr);
 
     DecryptUndoCommand(
-        const EncryptDecryptUndoCommandInfo & info,
+        EncryptDecryptUndoCommandInfo info,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
-        NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+        NoteEditorPrivate & noteEditorPrivate, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~DecryptUndoCommand() noexcept override;

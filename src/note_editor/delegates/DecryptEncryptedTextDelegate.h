@@ -45,9 +45,8 @@ class Q_DECL_HIDDEN DecryptEncryptedTextDelegate final : public QObject
     Q_OBJECT
 public:
     explicit DecryptEncryptedTextDelegate(
-        const QString & encryptedTextId, const QString & encryptedText,
-        const QString & cipher, const QString & length, const QString & hint,
-        NoteEditorPrivate * pNoteEditor,
+        QString encryptedTextId, QString encryptedText, QString cipher,
+        const QString & length, QString hint, NoteEditorPrivate * pNoteEditor,
         std::shared_ptr<EncryptionManager> encryptionManager,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager);
 

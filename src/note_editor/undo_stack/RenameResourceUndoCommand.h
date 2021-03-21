@@ -35,7 +35,7 @@ class Q_DECL_HIDDEN RenameResourceUndoCommand final :
     Q_OBJECT
 public:
     RenameResourceUndoCommand(
-        const qevercloud::Resource & resource, const QString & previousResourceName,
+        qevercloud::Resource resource, QString previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
@@ -43,7 +43,7 @@ public:
         QUndoCommand * parent = nullptr);
 
     RenameResourceUndoCommand(
-        const qevercloud::Resource & resource, const QString & previousResourceName,
+        qevercloud::Resource resource, QString previousResourceName,
         NoteEditorPrivate & noteEditor,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &

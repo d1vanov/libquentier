@@ -65,7 +65,7 @@ public:
      *                                      editor page's convenience; it is
      *                                      only actually required if the added
      *                                      resource is an image
-     * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
+     * @param pFileIOProcessorAsync         The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
      * @param pGenericResourceImageManager  The pointer to
@@ -78,9 +78,9 @@ public:
      *                                                      hash
      */
     explicit AddResourceDelegate(
-        const QString & filePath, NoteEditorPrivate & noteEditor,
+        QString filePath, NoteEditorPrivate & noteEditor,
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-        FileIOProcessorAsync * pFileIOThreadWorker,
+        FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash);
@@ -102,7 +102,7 @@ public:
      *                                      editor page's convenience; it is
      *                                      only actually required if the added
      *                                      resource is an image
-     * @param pFileIOThreadWorker           The pointer to FileIOProcessorAsync
+     * @param pFileIOProcessorAsync         The pointer to FileIOProcessorAsync
      *                                      worker performing the actual IO of
      *                                      file data
      * @param pGenericResourceImageManager  The pointer to
@@ -114,10 +114,10 @@ public:
      *                                                      by resource hash
      */
     explicit AddResourceDelegate(
-        const QByteArray & resourceData, const QString & mimeType,
+        QByteArray resourceData, const QString & mimeType,
         NoteEditorPrivate & noteEditor,
         ResourceDataInTemporaryFileStorageManager * pResourceDataManager,
-        FileIOProcessorAsync * pFileIOThreadWorker,
+        FileIOProcessorAsync * pFileIOProcessorAsync,
         GenericResourceImageManager * pGenericResourceImageManager,
         QHash<QByteArray, QString> &
             genericResourceImageFilePathsByResourceHash);
@@ -175,15 +175,17 @@ private:
 
     bool checkResourceDataSize(
         const qevercloud::Note & note, const Account * pAccount,
-        const qint64 size);
+        qint64 size);
 
 private:
-    typedef JsResultCallbackFunctor<AddResourceDelegate> JsCallback;
+    using JsCallback = JsResultCallbackFunctor<AddResourceDelegate>;
 
 private:
     NoteEditorPrivate & m_noteEditor;
+
     ResourceDataInTemporaryFileStorageManager *
         m_pResourceDataInTemporaryFileStorageManager;
+
     FileIOProcessorAsync * m_pFileIOProcessorAsync;
 
     QHash<QByteArray, QString> & m_genericResourceImageFilePathsByResourceHash;

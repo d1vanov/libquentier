@@ -37,21 +37,23 @@ namespace quentier {
     }
 
 ReplaceAllUndoCommand::ReplaceAllUndoCommand(
-    const QString & textToReplace, const bool matchCase,
+    QString textToReplace, const bool matchCase,
     NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
+    m_textToReplace(std::move(textToReplace)), m_matchCase(matchCase),
+    m_callback(std::move(callback))
 {
     setText(tr("Replace all"));
 }
 
 ReplaceAllUndoCommand::ReplaceAllUndoCommand(
-    const QString & textToReplace, const bool matchCase,
+    QString textToReplace, const bool matchCase,
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     Callback callback, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_textToReplace(textToReplace), m_matchCase(matchCase), m_callback(callback)
+    m_textToReplace(std::move(textToReplace)), m_matchCase(matchCase),
+    m_callback(std::move(callback))
 {}
 
 ReplaceAllUndoCommand::~ReplaceAllUndoCommand() noexcept = default;

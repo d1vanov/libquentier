@@ -25,22 +25,24 @@
 namespace quentier {
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-    const qevercloud::Resource & resourceBefore,
-    const qevercloud::Resource & resourceAfter,
+    qevercloud::Resource resourceBefore,
+    qevercloud::Resource resourceAfter,
     NoteEditorPrivate & noteEditorPrivate, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_resourceBefore(resourceBefore), m_resourceAfter(resourceAfter)
+    m_resourceBefore(std::move(resourceBefore)),
+    m_resourceAfter(std::move(resourceAfter))
 {
     init();
 }
 
 UpdateResourceUndoCommand::UpdateResourceUndoCommand(
-    const qevercloud::Resource & resourceBefore,
-    const qevercloud::Resource & resourceAfter,
+    qevercloud::Resource resourceBefore,
+    qevercloud::Resource resourceAfter,
     NoteEditorPrivate & noteEditorPrivate, const QString & text,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_resourceBefore(resourceBefore), m_resourceAfter(resourceAfter)
+    m_resourceBefore(std::move(resourceBefore)),
+    m_resourceAfter(std::move(resourceAfter))
 {
     init();
 }

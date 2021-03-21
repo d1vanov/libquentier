@@ -37,19 +37,19 @@ namespace quentier {
     }
 
 HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {
     setText(tr("Hide decrypted text"));
 }
 
 HideDecryptedTextUndoCommand::HideDecryptedTextUndoCommand(
-    NoteEditorPrivate & noteEditorPrivate, const Callback & callback,
+    NoteEditorPrivate & noteEditorPrivate, Callback callback,
     const QString & text, QUndoCommand * parent) :
     INoteEditorUndoCommand(noteEditorPrivate, text, parent),
-    m_callback(callback)
+    m_callback(std::move(callback))
 {}
 
 HideDecryptedTextUndoCommand::~HideDecryptedTextUndoCommand() noexcept =

@@ -28,7 +28,7 @@
 #include <memory>
 
 namespace Ui {
-QT_FORWARD_DECLARE_CLASS(EncryptionDialog)
+class EncryptionDialog;
 }
 
 namespace quentier {
@@ -40,7 +40,7 @@ class Q_DECL_HIDDEN EncryptionDialog final : public QDialog
     Q_OBJECT
 public:
     explicit EncryptionDialog(
-        const QString & textToEncrypt, const Account & account,
+        QString textToEncrypt, Account account,
         std::shared_ptr<EncryptionManager> encryptionManager,
         std::shared_ptr<DecryptedTextManager> decryptedTextManager,
         QWidget * parent = nullptr);
@@ -59,7 +59,7 @@ Q_SIGNALS:
         size_t keyLength, QString hint, bool rememberForSession);
 
 private Q_SLOTS:
-    void setRememberPassphraseDefaultState(const bool checked);
+    void setRememberPassphraseDefaultState(bool checked);
     void onRememberPassphraseStateChanged(int checked);
 
     void accept() override;

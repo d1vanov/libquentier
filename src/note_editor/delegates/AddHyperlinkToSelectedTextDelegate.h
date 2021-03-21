@@ -44,7 +44,7 @@ class Q_DECL_HIDDEN AddHyperlinkToSelectedTextDelegate final : public QObject
     Q_OBJECT
 public:
     explicit AddHyperlinkToSelectedTextDelegate(
-        NoteEditorPrivate & noteEditor, const quint64 hyperlinkIdToAdd);
+        NoteEditorPrivate & noteEditor, quint64 hyperlinkIdToAdd);
 
     void start();
 

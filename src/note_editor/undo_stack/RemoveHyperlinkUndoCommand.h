@@ -34,11 +34,11 @@ public:
 
 public:
     RemoveHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         QUndoCommand * parent = nullptr);
 
     RemoveHyperlinkUndoCommand(
-        NoteEditorPrivate & noteEditor, const Callback & callback,
+        NoteEditorPrivate & noteEditor, Callback callback,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~RemoveHyperlinkUndoCommand() noexcept override;

@@ -29,7 +29,7 @@ GenericResourceImageJavaScriptHandler::GenericResourceImageJavaScriptHandler(
 {}
 
 void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
-    const QByteArray resourceHash)
+    QByteArray resourceHash)
 {
     QNDEBUG(
         "note_editor:js_glue",
@@ -41,13 +41,12 @@ void GenericResourceImageJavaScriptHandler::findGenericResourceImage(
         QNTRACE(
             "note_editor:js_glue",
             "Found generic resouce image, path is " << it.value());
-        Q_EMIT genericResourceImageFound(resourceHash, it.value());
+        Q_EMIT genericResourceImageFound(std::move(resourceHash), it.value());
     }
     else {
         QNINFO(
             "note_editor:js_glue",
-            "Can't find generic resource image for "
-                << "hash " << resourceHash);
+            "Can't find generic resource image for hash " << resourceHash);
     }
 }
 

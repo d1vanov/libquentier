@@ -51,7 +51,7 @@ public:
     explicit JavaScriptInOrderExecutor(
         WebView & view, QObject * parent = nullptr);
 
-    void append(const QString & script, Callback callback = 0);
+    void append(const QString & script, Callback callback = {});
 
     [[nodiscard]] int size() const noexcept
     {

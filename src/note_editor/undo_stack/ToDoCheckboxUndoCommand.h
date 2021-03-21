@@ -29,11 +29,11 @@ class Q_DECL_HIDDEN ToDoCheckboxUndoCommand final :
     Q_OBJECT
 public:
     ToDoCheckboxUndoCommand(
-        const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+        quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
         QUndoCommand * parent = nullptr);
 
     ToDoCheckboxUndoCommand(
-        const quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
+        quint64 enToDoCheckboxId, NoteEditorPrivate & noteEditorPrivate,
         const QString & text, QUndoCommand * parent = nullptr);
 
     ~ToDoCheckboxUndoCommand() noexcept override;

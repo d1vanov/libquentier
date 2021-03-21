@@ -25,9 +25,9 @@ HyperlinkClickJavaScriptHandler::HyperlinkClickJavaScriptHandler(
     QObject(parent)
 {}
 
-void HyperlinkClickJavaScriptHandler::onHyperlinkClicked(const QString url)
+void HyperlinkClickJavaScriptHandler::onHyperlinkClicked(QString url)
 {
-    Q_EMIT hyperlinkClicked(url);
+    Q_EMIT hyperlinkClicked(std::move(url));
 }
 
 } // namespace quentier

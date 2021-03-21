@@ -27,6 +27,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <memory>
 
 namespace quentier {
 
@@ -46,9 +47,10 @@ void GenericResourceImageManager::setStorageFolderPath(
 }
 
 void GenericResourceImageManager::onGenericResourceImageWriteRequest(
-    QString noteLocalId, QString resourceLocalId,
-    QByteArray resourceImageData, QString resourceFileSuffix,
-    QByteArray resourceActualHash, QString resourceDisplayName, QUuid requestId)
+    QString noteLocalId, QString resourceLocalId, // NOLINT
+    QByteArray resourceImageData, QString resourceFileSuffix, // NOLINT
+    QByteArray resourceActualHash, QString resourceDisplayName, // NOLINT
+    QUuid requestId)
 {
     QNDEBUG(
         "note_editor",
@@ -86,9 +88,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
         RETURN_WITH_ERROR(QT_TR_NOOP("Resource image file suffix is empty"));
     }
 
-    QString resourceFileNameMask =
+    const QString resourceFileNameMask =
         resourceLocalId + QStringLiteral("*.") + resourceFileSuffix;
-    QDir storageDir(m_storageFolderPath + QStringLiteral("/") + noteLocalId);
+    QDir storageDir{m_storageFolderPath + QStringLiteral("/") + noteLocalId};
     if (Q_UNLIKELY(!storageDir.exists())) {
         if (!storageDir.mkpath(storageDir.absolutePath())) {
             RETURN_WITH_ERROR(
@@ -97,14 +99,15 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
         }
     }
 
-    QStringList nameFilter = QStringList() << resourceFileNameMask;
-    QFileInfoList existingResourceImageFileInfos = storageDir.entryInfoList(
-        nameFilter, QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
+    const QStringList nameFilter = QStringList{} << resourceFileNameMask;
+    QFileInfoList existingResourceImageFileInfos =
+        storageDir.entryInfoList(
+            nameFilter, QDir::Files | QDir::Readable | QDir::NoDotAndDotDot);
 
     bool resourceHashChanged = true;
-    QFileInfo resourceHashFileInfo(
+    const QFileInfo resourceHashFileInfo{
         storageDir.absolutePath() + QStringLiteral("/") + resourceLocalId +
-        QStringLiteral(".hash"));
+        QStringLiteral(".hash")};
     bool resourceHashFileExists = resourceHashFileInfo.exists();
     if (resourceHashFileExists) {
         if (Q_UNLIKELY(!resourceHashFileInfo.isWritable())) {
@@ -112,9 +115,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
         }
 
         if (resourceHashFileInfo.isReadable()) {
-            QFile resourceHashFile(resourceHashFileInfo.absoluteFilePath());
+            QFile resourceHashFile{resourceHashFileInfo.absoluteFilePath()};
             Q_UNUSED(resourceHashFile.open(QIODevice::ReadOnly));
-            QByteArray previousResourceHash = resourceHashFile.readAll();
+            const QByteArray previousResourceHash = resourceHashFile.readAll();
 
             if (resourceActualHash == previousResourceHash) {
                 QNTRACE("note_editor", "Resource hash hasn't changed");
@@ -124,9 +127,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
     }
 
     bool resourceDisplayNameChanged = false;
-    QFileInfo resourceNameFileInfo(
+    const QFileInfo resourceNameFileInfo{
         storageDir.absolutePath() + QStringLiteral("/") + resourceLocalId +
-        QStringLiteral(".name"));
+        QStringLiteral(".name")};
 
     if (!resourceHashChanged && resourceNameFileInfo.exists()) {
         if (Q_UNLIKELY(!resourceNameFileInfo.isWritable())) {
@@ -144,9 +147,9 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
             resourceDisplayNameChanged = true;
         }
         else {
-            QFile resourceNameFile(resourceNameFileInfo.absoluteFilePath());
+            QFile resourceNameFile{resourceNameFileInfo.absoluteFilePath()};
             Q_UNUSED(resourceNameFile.open(QIODevice::ReadOnly));
-            QString previousResourceName =
+            const QString previousResourceName =
                 QString::fromLocal8Bit(resourceNameFile.readAll());
 
             if (resourceDisplayName != previousResourceName) {
@@ -179,12 +182,12 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
         "Writing resource image file and helper files with "
             << "hash and display name");
 
-    QString resourceImageFilePath = storageDir.absolutePath() +
+    const QString resourceImageFilePath = storageDir.absolutePath() +
         QStringLiteral("/") + resourceLocalId + QStringLiteral("_") +
         QString::number(QDateTime::currentMSecsSinceEpoch()) +
         QStringLiteral(".") + resourceFileSuffix;
 
-    QFile resourceImageFile(resourceImageFilePath);
+    QFile resourceImageFile{resourceImageFilePath};
     if (Q_UNLIKELY(!resourceImageFile.open(QIODevice::ReadWrite))) {
         RETURN_WITH_ERROR(
             QT_TR_NOOP("Can't open resource image file for writing"));
@@ -192,7 +195,7 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
     resourceImageFile.write(resourceImageData);
     resourceImageFile.close();
 
-    QFile resourceHashFile(resourceHashFileInfo.absoluteFilePath());
+    QFile resourceHashFile{resourceHashFileInfo.absoluteFilePath()};
     if (Q_UNLIKELY(!resourceHashFile.open(QIODevice::ReadWrite))) {
         RETURN_WITH_ERROR(
             QT_TR_NOOP("Can't open resource hash file for writing"));
@@ -200,7 +203,7 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
     resourceHashFile.write(resourceActualHash);
     resourceHashFile.close();
 
-    QFile resourceNameFile(resourceNameFileInfo.absoluteFilePath());
+    QFile resourceNameFile{resourceNameFileInfo.absoluteFilePath()};
     if (Q_UNLIKELY(!resourceNameFile.open(QIODevice::ReadWrite))) {
         RETURN_WITH_ERROR(
             QT_TR_NOOP("Can't open resource name file for writing"));
@@ -225,11 +228,10 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
             QFileInfo & staleResourceImageFileInfo =
                 existingResourceImageFileInfos[i];
 
-            QFile staleResourceImageFile(
-                staleResourceImageFileInfo.absoluteFilePath());
+            QFile staleResourceImageFile{
+                staleResourceImageFileInfo.absoluteFilePath()};
 
-            bool res = staleResourceImageFile.remove();
-            if (Q_UNLIKELY(!res)) {
+            if (Q_UNLIKELY(!staleResourceImageFile.remove())) {
                 QNINFO(
                     "note_editor",
                     "Can't remove stale generic resource "
@@ -242,7 +244,8 @@ void GenericResourceImageManager::onGenericResourceImageWriteRequest(
     }
 }
 
-void GenericResourceImageManager::onCurrentNoteChanged(qevercloud::Note note)
+void GenericResourceImageManager::onCurrentNoteChanged(
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor",
@@ -265,7 +268,7 @@ void GenericResourceImageManager::onCurrentNoteChanged(qevercloud::Note note)
     removeStaleGenericResourceImageFilesFromCurrentNote();
 
     if (!m_pCurrentNote) {
-        m_pCurrentNote.reset(new qevercloud::Note(note));
+        m_pCurrentNote = std::make_unique<qevercloud::Note>(note);
     }
     else {
         *m_pCurrentNote = note;
@@ -287,7 +290,7 @@ void GenericResourceImageManager::
 
     const QString & noteLocalId = m_pCurrentNote->localId();
 
-    QDir storageDir(m_storageFolderPath + QStringLiteral("/") + noteLocalId);
+    QDir storageDir{m_storageFolderPath + QStringLiteral("/") + noteLocalId};
     if (!storageDir.exists()) {
         QNTRACE(
             "note_editor",
@@ -303,7 +306,7 @@ void GenericResourceImageManager::
 
     const int numResources = resources.size();
 
-    QFileInfoList fileInfoList = storageDir.entryInfoList(QDir::Files);
+    const QFileInfoList fileInfoList = storageDir.entryInfoList(QDir::Files);
     const int numFiles = fileInfoList.size();
 
     QNTRACE(
@@ -345,14 +348,14 @@ void GenericResourceImageManager::
         if (resourceIndex >= 0) {
             const auto & resource = resources[resourceIndex];
             if (resource.data() && resource.data()->bodyHash()) {
-                QFileInfo helperHashFileInfo(
+                QFileInfo helperHashFileInfo{
                     fileInfo.absolutePath() + QStringLiteral("/") +
-                    resource.localId() + QStringLiteral(".hash"));
+                    resource.localId() + QStringLiteral(".hash")};
 
                 if (helperHashFileInfo.exists()) {
-                    QFile helperHashFile(helperHashFileInfo.absoluteFilePath());
+                    QFile helperHashFile{helperHashFileInfo.absoluteFilePath()};
                     Q_UNUSED(helperHashFile.open(QIODevice::ReadOnly))
-                    QByteArray storedHash = helperHashFile.readAll();
+                    const QByteArray storedHash = helperHashFile.readAll();
                     if (storedHash == *resource.data()->bodyHash()) {
                         QNTRACE(
                             "note_editor",
@@ -360,15 +363,14 @@ void GenericResourceImageManager::
                                 << " appears to be still actual, will keep it");
                         continue;
                     }
-                    else {
-                        QNTRACE(
-                            "note_editor",
-                            "The stored hash doesn't match "
-                                << "the actual resource data hash: "
-                                << "stored = " << storedHash.toHex()
-                                << ", actual = "
-                                << resource.data()->bodyHash()->toHex());
-                    }
+
+                    QNTRACE(
+                        "note_editor",
+                        "The stored hash doesn't match "
+                            << "the actual resource data hash: "
+                            << "stored = " << storedHash.toHex()
+                            << ", actual = "
+                            << resource.data()->bodyHash()->toHex());
                 }
                 else {
                     QNTRACE(

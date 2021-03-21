@@ -25,7 +25,6 @@
 #include <quentier/utility/QuentierCheckPtr.h>
 
 #include <QAction>
-#include <QApplication>
 #include <QMessageBox>
 
 namespace quentier {
@@ -122,18 +121,15 @@ bool NoteEditorPage::shouldInterruptJavaScript()
     if (reply == QMessageBox::Yes) {
         QNINFO(
             "note_editor",
-            "Note load was cancelled due to too long "
-                << "javascript evaluation");
+            "Note load was cancelled due to too long javascript evaluation");
         Q_EMIT noteLoadCancelled();
         return true;
     }
-    else {
-        QNINFO(
-            "note_editor",
-            "Note load seems to hang but user wished to "
-                << "wait more");
-        return false;
-    }
+
+    QNINFO(
+        "note_editor",
+        "Note load seems to hang but user wished to wait more");
+    return false;
 }
 
 void NoteEditorPage::executeJavaScript(
@@ -143,7 +139,7 @@ void NoteEditorPage::executeJavaScript(
         m_pJavaScriptInOrderExecutor->clear();
     }
 
-    m_pJavaScriptInOrderExecutor->append(script, callback);
+    m_pJavaScriptInOrderExecutor->append(script, std::move(callback));
 
     if (m_javaScriptAutoExecution &&
         !m_pJavaScriptInOrderExecutor->inProgress()) {

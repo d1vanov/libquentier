@@ -58,7 +58,7 @@ void RemoveHyperlinkDelegate::start()
 }
 
 void RemoveHyperlinkDelegate::onOriginalPageConvertedToNote(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "note_editor:delegate",
@@ -169,8 +169,7 @@ void RemoveHyperlinkDelegate::onHyperlinkRemoved(const QVariant & data)
 {
     QNDEBUG(
         "note_editor:delegate",
-        "RemoveHyperlinkDelegate"
-            << "::onHyperlinkRemoved: " << data);
+        "RemoveHyperlinkDelegate::onHyperlinkRemoved: " << data);
 
     const auto resultMap = data.toMap();
 
