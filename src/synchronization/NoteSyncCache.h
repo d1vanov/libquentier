@@ -36,7 +36,7 @@ class Q_DECL_HIDDEN NoteSyncCache final : public QObject
 public:
     NoteSyncCache(
         LocalStorageManagerAsync & localStorageManagerAsync,
-        const QString & linkedNotebookGuid, QObject * parent = nullptr);
+        QString linkedNotebookGuid, QObject * parent = nullptr);
 
     void clear();
 

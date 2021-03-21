@@ -31,10 +31,11 @@
 namespace quentier {
 
 AuthenticationManagerPrivate::AuthenticationManagerPrivate(
-    const QString & consumerKey, const QString & consumerSecret,
-    const QString & host, QObject * parent) :
+    QString consumerKey, QString consumerSecret,
+    QString host, QObject * parent) :
     QObject(parent),
-    m_consumerKey(consumerKey), m_consumerSecret(consumerSecret), m_host(host)
+    m_consumerKey(std::move(consumerKey)),
+    m_consumerSecret(std::move(consumerSecret)), m_host(std::move(host))
 {}
 
 void AuthenticationManagerPrivate::onAuthenticationRequest()

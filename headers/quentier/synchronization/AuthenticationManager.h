@@ -35,8 +35,8 @@ class QUENTIER_EXPORT AuthenticationManager : public IAuthenticationManager
     Q_OBJECT
 public:
     explicit AuthenticationManager(
-        const QString & consumerKey, const QString & consumerSecret,
-        const QString & host, QObject * parent = nullptr);
+        QString consumerKey, QString consumerSecret, QString host,
+        QObject * parent = nullptr);
 
     ~AuthenticationManager() override;
 

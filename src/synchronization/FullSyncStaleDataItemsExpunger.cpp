@@ -50,14 +50,15 @@ FullSyncStaleDataItemsExpunger::FullSyncStaleDataItemsExpunger(
     LocalStorageManagerAsync & localStorageManagerAsync,
     NotebookSyncCache & notebookSyncCache, TagSyncCache & tagSyncCache,
     SavedSearchSyncCache & savedSearchSyncCache,
-    const SyncedGuids & syncedGuids, const QString & linkedNotebookGuid,
+    SyncedGuids syncedGuids, QString linkedNotebookGuid,
     QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
     m_pNotebookSyncCache(&notebookSyncCache), m_pTagSyncCache(&tagSyncCache),
     m_pSavedSearchSyncCache(&savedSearchSyncCache),
     m_noteSyncCache(localStorageManagerAsync, linkedNotebookGuid),
-    m_syncedGuids(syncedGuids), m_linkedNotebookGuid(linkedNotebookGuid)
+    m_syncedGuids(std::move(syncedGuids)),
+    m_linkedNotebookGuid(std::move(linkedNotebookGuid))
 {}
 
 void FullSyncStaleDataItemsExpunger::start()
@@ -145,7 +146,7 @@ void FullSyncStaleDataItemsExpunger::onNoteCacheFilled()
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     const auto it = m_expungeNotebookRequestIds.find(requestId);
     if (it == m_expungeNotebookRequestIds.end()) {
@@ -161,7 +162,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_expungeNotebookRequestIds.find(requestId);
@@ -178,7 +179,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeNotebookFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(
-    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, // NOLINT
+    QUuid requestId)
 {
     const auto it = m_expungeTagRequestIds.find(requestId);
     if (it == m_expungeTagRequestIds.end()) {
@@ -196,7 +198,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     const auto it = m_expungeTagRequestIds.find(requestId);
     if (it == m_expungeTagRequestIds.end()) {
@@ -212,7 +215,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeTagFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     const auto it = m_expungeSavedSearchRequestIds.find(requestId);
     if (it == m_expungeSavedSearchRequestIds.end()) {
@@ -228,7 +231,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_expungeSavedSearchRequestIds.find(requestId);
@@ -245,7 +248,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeSavedSearchFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     const auto it = m_expungeNoteRequestIds.find(requestId);
     if (it == m_expungeNoteRequestIds.end()) {
@@ -261,7 +264,8 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     const auto it = m_expungeNoteRequestIds.find(requestId);
     if (it == m_expungeNoteRequestIds.end()) {
@@ -277,7 +281,7 @@ void FullSyncStaleDataItemsExpunger::onExpungeNoteFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     const auto it = m_updateNotebookRequestId.find(requestId);
     if (it == m_updateNotebookRequestId.end()) {
@@ -293,7 +297,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_updateNotebookRequestId.find(requestId);
@@ -310,7 +314,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateNotebookFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     const auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
@@ -327,7 +331,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     const auto it = m_updateTagRequestIds.find(requestId);
     if (it == m_updateTagRequestIds.end()) {
@@ -343,7 +348,7 @@ void FullSyncStaleDataItemsExpunger::onUpdateTagFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     const auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
@@ -359,7 +364,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     const auto it = m_updateSavedSearchRequestIds.find(requestId);
     if (it == m_updateSavedSearchRequestIds.end()) {
@@ -375,8 +381,8 @@ void FullSyncStaleDataItemsExpunger::onUpdateSavedSearchFailed(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     const auto it = m_updateNoteRequestIds.find(requestId);
     if (it == m_updateNoteRequestIds.end()) {
@@ -406,8 +412,9 @@ void FullSyncStaleDataItemsExpunger::onUpdateNoteComplete(
 }
 
 void FullSyncStaleDataItemsExpunger::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto it = m_updateNoteRequestIds.find(requestId);
     if (it == m_updateNoteRequestIds.end()) {

@@ -24,12 +24,11 @@
 namespace quentier {
 
 NoteThumbnailDownloader::NoteThumbnailDownloader(
-    const QString & host, const QString & noteGuid, const QString & authToken,
-    const QString & shardId, const bool noteFromPublicLinkedNotebook,
-    QObject * parent) :
+    QString host, QString noteGuid, QString authToken, QString shardId,
+    const bool noteFromPublicLinkedNotebook, QObject * parent) :
     QObject(parent),
-    m_host(host), m_noteGuid(noteGuid), m_authToken(authToken),
-    m_shardId(shardId),
+    m_host(std::move(host)), m_noteGuid(std::move(noteGuid)),
+    m_authToken(std::move(authToken)), m_shardId(std::move(shardId)),
     m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
 
@@ -96,8 +95,8 @@ void NoteThumbnailDownloader::start()
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData,
-    IRequestContextPtr ctx)
+    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
+    IRequestContextPtr ctx) // NOLINT
 {
     QNDEBUG(
         "synchronization:thumbnail",

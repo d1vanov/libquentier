@@ -34,16 +34,16 @@
 namespace quentier {
 
 InkNoteImageDownloader::InkNoteImageDownloader(
-    const QString & host, const QString & resourceGuid,
-    const QString & noteGuid, const QString & authToken,
-    const QString & shardId, const int height, const int width,
-    const bool noteFromPublicLinkedNotebook, const QString & storageFolderPath,
+    QString host, QString resourceGuid, QString noteGuid, QString authToken,
+    QString shardId, const int height, const int width,
+    const bool noteFromPublicLinkedNotebook, QString storageFolderPath,
     QObject * parent) :
     QObject(parent),
-    m_host(host), m_resourceGuid(resourceGuid), m_noteGuid(noteGuid),
-    m_authToken(authToken), m_shardId(shardId),
-    m_storageFolderPath(storageFolderPath), m_height(height), m_width(width),
-    m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
+    m_host(std::move(host)), m_resourceGuid(std::move(resourceGuid)),
+    m_noteGuid(std::move(noteGuid)), m_authToken(std::move(authToken)),
+    m_shardId(std::move(shardId)),
+    m_storageFolderPath(std::move(storageFolderPath)), m_height(height),
+    m_width(width), m_noteFromPublicLinkedNotebook(noteFromPublicLinkedNotebook)
 {}
 
 void InkNoteImageDownloader::run()

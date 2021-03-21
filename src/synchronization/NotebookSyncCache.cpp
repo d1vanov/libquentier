@@ -42,10 +42,10 @@ namespace quentier {
 
 NotebookSyncCache::NotebookSyncCache(
     LocalStorageManagerAsync & localStorageManagerAsync,
-    const QString & linkedNotebookGuid, QObject * parent) :
+    QString linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
-    m_linkedNotebookGuid(linkedNotebookGuid)
+    m_linkedNotebookGuid(std::move(linkedNotebookGuid))
 {}
 
 void NotebookSyncCache::clear()
@@ -69,11 +69,7 @@ bool NotebookSyncCache::isFilled() const noexcept
         return false;
     }
 
-    if (m_listNotebooksRequestId.isNull()) {
-        return true;
-    }
-
-    return false;
+    return m_listNotebooksRequestId.isNull();
 }
 
 void NotebookSyncCache::fill()
@@ -95,8 +91,8 @@ void NotebookSyncCache::onListNotebooksComplete(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<qevercloud::Notebook> foundNotebooks,
-    QUuid requestId)
+    QString linkedNotebookGuid, // NOLINT
+    QList<qevercloud::Notebook> foundNotebooks, QUuid requestId)
 {
     if (requestId != m_listNotebooksRequestId) {
         return;
@@ -131,7 +127,8 @@ void NotebookSyncCache::onListNotebooksFailed(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListNotebooksOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_listNotebooksRequestId) {
         return;
@@ -159,7 +156,7 @@ void NotebookSyncCache::onListNotebooksFailed(
 }
 
 void NotebookSyncCache::onAddNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     NCDEBUG(
         "NotebookSyncCache::onAddNotebookComplete: request id = "
@@ -169,7 +166,7 @@ void NotebookSyncCache::onAddNotebookComplete(
 }
 
 void NotebookSyncCache::onUpdateNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     NCDEBUG(
         "NotebookSyncCache::onUpdateNotebookComplete: request id = "
@@ -180,7 +177,7 @@ void NotebookSyncCache::onUpdateNotebookComplete(
 }
 
 void NotebookSyncCache::onExpungeNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     NCDEBUG(
         "NotebookSyncCache::onExpungeNotebookComplete: request id = "

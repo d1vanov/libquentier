@@ -61,8 +61,8 @@ public:
     };
 
     explicit NoteSyncConflictResolver(
-        IManager & manager, const qevercloud::Note & remoteNote,
-        const qevercloud::Note & localConflict, QObject * parent = nullptr);
+        IManager & manager, qevercloud::Note remoteNote,
+        qevercloud::Note localConflict, QObject * parent = nullptr);
 
     void start();
 
@@ -127,7 +127,7 @@ private:
     bool downloadFullRemoteNoteData();
 
 private:
-    virtual void timerEvent(QTimerEvent * pEvent);
+    void timerEvent(QTimerEvent * pEvent) override;
 
 private:
     Q_DISABLE_COPY(NoteSyncConflictResolver)

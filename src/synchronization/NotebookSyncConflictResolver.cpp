@@ -28,14 +28,16 @@
 namespace quentier {
 
 NotebookSyncConflictResolver::NotebookSyncConflictResolver(
-    const qevercloud::Notebook & remoteNotebook,
-    const QString & remoteNotebookLinkedNotebookGuid,
-    const qevercloud::Notebook & localConflict, NotebookSyncCache & cache,
+    qevercloud::Notebook remoteNotebook,
+    QString remoteNotebookLinkedNotebookGuid,
+    qevercloud::Notebook localConflict, NotebookSyncCache & cache,
     LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_cache(cache), m_localStorageManagerAsync(localStorageManagerAsync),
-    m_remoteNotebook(remoteNotebook), m_localConflict(localConflict),
-    m_remoteNotebookLinkedNotebookGuid(remoteNotebookLinkedNotebookGuid)
+    m_remoteNotebook(std::move(remoteNotebook)),
+    m_localConflict(std::move(localConflict)),
+    m_remoteNotebookLinkedNotebookGuid(
+        std::move(remoteNotebookLinkedNotebookGuid))
 {}
 
 void NotebookSyncConflictResolver::start()
@@ -98,7 +100,7 @@ void NotebookSyncConflictResolver::start()
 }
 
 void NotebookSyncConflictResolver::onAddNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     if (requestId != m_addNotebookRequestId) {
         return;
@@ -128,7 +130,7 @@ void NotebookSyncConflictResolver::onAddNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_addNotebookRequestId) {
@@ -145,7 +147,7 @@ void NotebookSyncConflictResolver::onAddNotebookFailed(
 }
 
 void NotebookSyncConflictResolver::onUpdateNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     if (requestId != m_updateNotebookRequestId) {
         return;
@@ -163,7 +165,8 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
         Q_EMIT finished(m_remoteNotebook);
         return;
     }
-    else if (m_state == State::PendingConflictingNotebookRenaming) {
+
+    if (m_state == State::PendingConflictingNotebookRenaming) {
         QNDEBUG(
             "synchronization:notebook_conflict",
             "Successfully renamed the local notebook conflicting by name with "
@@ -261,7 +264,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onUpdateNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_updateNotebookRequestId) {
@@ -278,7 +281,7 @@ void NotebookSyncConflictResolver::onUpdateNotebookFailed(
 }
 
 void NotebookSyncConflictResolver::onFindNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     if (requestId != m_findNotebookRequestId) {
         return;
@@ -296,7 +299,7 @@ void NotebookSyncConflictResolver::onFindNotebookComplete(
 }
 
 void NotebookSyncConflictResolver::onFindNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_findNotebookRequestId) {
@@ -345,7 +348,8 @@ void NotebookSyncConflictResolver::onCacheFilled()
     }
 }
 
-void NotebookSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
+void NotebookSyncConflictResolver::onCacheFailed(
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:notebook_conflict",

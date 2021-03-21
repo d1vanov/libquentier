@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,18 +22,19 @@
 namespace quentier {
 
 AuthenticationManager::AuthenticationManager(
-    const QString & consumerKey, const QString & consumerSecret,
-    const QString & host, QObject * parent) :
+    QString consumerKey, QString consumerSecret,
+    QString host, QObject * parent) :
     IAuthenticationManager(parent),
     d_ptr(new AuthenticationManagerPrivate(
-        consumerKey, consumerSecret, host, this))
+        std::move(consumerKey), std::move(consumerSecret), std::move(host),
+        this))
 {
     QObject::connect(
         d_ptr, &AuthenticationManagerPrivate::sendAuthenticationResult, this,
         &AuthenticationManager::sendAuthenticationResult);
 }
 
-AuthenticationManager::~AuthenticationManager() {}
+AuthenticationManager::~AuthenticationManager() = default;
 
 void AuthenticationManager::onAuthenticationRequest()
 {

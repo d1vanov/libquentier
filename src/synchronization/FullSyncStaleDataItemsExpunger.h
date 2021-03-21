@@ -75,10 +75,10 @@ public:
         LocalStorageManagerAsync & localStorageManagerAsync,
         NotebookSyncCache & notebookSyncCache, TagSyncCache & tagSyncCache,
         SavedSearchSyncCache & savedSearchSyncCache,
-        const SyncedGuids & syncedGuids, const QString & linkedNotebookGuid,
+        SyncedGuids syncedGuids, QString linkedNotebookGuid,
         QObject * parent = nullptr);
 
-    const QString & linkedNotebookGuid() const
+    [[nodiscard]] const QString & linkedNotebookGuid() const noexcept
     {
         return m_linkedNotebookGuid;
     }

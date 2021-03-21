@@ -28,8 +28,8 @@ class Q_DECL_HIDDEN AuthenticationManagerPrivate final : public QObject
     Q_OBJECT
 public:
     explicit AuthenticationManagerPrivate(
-        const QString & consumerKey, const QString & consumerSecret,
-        const QString & host, QObject * parent = nullptr);
+        QString consumerKey, QString consumerSecret,
+        QString host, QObject * parent = nullptr);
 
 Q_SIGNALS:
     void sendAuthenticationResult(

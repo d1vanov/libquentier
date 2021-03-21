@@ -31,10 +31,11 @@
 namespace quentier {
 
 NoteSyncConflictResolver::NoteSyncConflictResolver(
-    IManager & manager, const qevercloud::Note & remoteNote,
-    const qevercloud::Note & localConflict, QObject * parent) :
+    IManager & manager, qevercloud::Note remoteNote,
+    qevercloud::Note localConflict, QObject * parent) :
     QObject(parent),
-    m_manager(manager), m_remoteNote(remoteNote), m_localConflict(localConflict)
+    m_manager(manager), m_remoteNote(std::move(remoteNote)),
+    m_localConflict(std::move(localConflict))
 {}
 
 void NoteSyncConflictResolver::start()
@@ -58,7 +59,8 @@ void NoteSyncConflictResolver::start()
 }
 
 void NoteSyncConflictResolver::onAuthDataUpdated(
-    QString authToken, QString shardId, qevercloud::Timestamp expirationTime)
+    QString authToken, QString shardId, // NOLINT
+    qevercloud::Timestamp expirationTime)
 {
     QNDEBUG(
         "synchronization:note_conflict",
@@ -82,9 +84,9 @@ void NoteSyncConflictResolver::onAuthDataUpdated(
 
 void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(
     QHash<QString, std::pair<QString, QString>>
-        authTokensAndShardIdsByLinkedNotebookGuid,
+        authTokensAndShardIdsByLinkedNotebookGuid, // NOLINT
     QHash<QString, qevercloud::Timestamp>
-        authTokenExpirationTimesByLinkedNotebookGuid)
+        authTokenExpirationTimesByLinkedNotebookGuid) // NOLINT
 {
     QNDEBUG(
         "synchronization:note_conflict",
@@ -106,7 +108,7 @@ void NoteSyncConflictResolver::onLinkedNotebooksAuthDataUpdated(
 }
 
 void NoteSyncConflictResolver::onAddNoteComplete(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     if (requestId != m_addNoteRequestId) {
         return;
@@ -141,7 +143,8 @@ void NoteSyncConflictResolver::onAddNoteComplete(
 }
 
 void NoteSyncConflictResolver::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_addNoteRequestId) {
         return;
@@ -158,8 +161,8 @@ void NoteSyncConflictResolver::onAddNoteFailed(
 }
 
 void NoteSyncConflictResolver::onUpdateNoteComplete(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     if (requestId != m_updateNoteRequestId) {
         return;
@@ -251,7 +254,8 @@ void NoteSyncConflictResolver::onUpdateNoteComplete(
 }
 
 void NoteSyncConflictResolver::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
     if (requestId != m_updateNoteRequestId) {
@@ -320,8 +324,8 @@ void NoteSyncConflictResolver::onUpdateNoteFailed(
 }
 
 void NoteSyncConflictResolver::onGetNoteAsyncFinished(
-    qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds,
-    ErrorString errorDescription)
+    qint32 errorCode, qevercloud::Note qecNote, // NOLINT
+    qint32 rateLimitSeconds, ErrorString errorDescription)
 {
     if (!qecNote.guid() || !m_remoteNote.guid() ||
         (*qecNote.guid() != *m_remoteNote.guid()))
@@ -372,8 +376,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         if (m_manager.syncingLinkedNotebooksContent()) {
@@ -386,7 +390,8 @@ void NoteSyncConflictResolver::onGetNoteAsyncFinished(
         Q_EMIT notifyAuthExpiration();
         return;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         Q_EMIT failure(m_remoteNote, errorDescription);
         return;
     }

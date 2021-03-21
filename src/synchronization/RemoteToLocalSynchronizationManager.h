@@ -64,7 +64,7 @@ public:
     };
 
     explicit RemoteToLocalSynchronizationManager(
-        IManager & manager, const QString & host, QObject * parent = nullptr);
+        IManager & manager, QString host, QObject * parent = nullptr);
 
     ~RemoteToLocalSynchronizationManager() override;
 
@@ -74,8 +74,8 @@ public:
     [[nodiscard]] Account account() const;
 
     [[nodiscard]] bool syncUser(
-        const qevercloud::UserID userId, ErrorString & errorDescription,
-        const bool writeUserDataToLocalStorage = true);
+        qevercloud::UserID userId, ErrorString & errorDescription,
+        bool writeUserDataToLocalStorage = true);
 
     [[nodiscard]] const qevercloud::User & user() const noexcept;
 
@@ -168,8 +168,8 @@ public Q_SLOTS:
         QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid,
         QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid);
 
-    void setDownloadNoteThumbnails(const bool flag);
-    void setDownloadInkNoteImages(const bool flag);
+    void setDownloadNoteThumbnails(bool flag);
+    void setDownloadInkNoteImages(bool flag);
     void setInkNoteImagesStoragePath(const QString & path);
 
     void collectNonProcessedItemsSmallestUsns(
@@ -480,7 +480,7 @@ private Q_SLOTS:
     void onNoteSyncConflictResolvedFailure(
         qevercloud::Note remoteNote, ErrorString errorDescription);
 
-    void onNoteSyncConflictRateLimitExceeded(qint32 secondsToWait);
+    void onNoteSyncConflictRateLimitExceeded(qint32 rateLimitSeconds);
     void onNoteSyncConflictAuthenticationExpired();
 
     // Slots for FullSyncStaleDataItemsExpunger signals
@@ -502,16 +502,16 @@ private:
     [[nodiscard]] bool checkProtocolVersion(ErrorString & errorDescription);
 
     [[nodiscard]] bool syncUserImpl(
-        const bool waitIfRateLimitReached, ErrorString & errorDescription,
-        const bool writeUserDataToLocalStorage = true);
+        bool waitIfRateLimitReached, ErrorString & errorDescription,
+        bool writeUserDataToLocalStorage = true);
 
     void launchWritingUserDataToLocalStorage();
 
     [[nodiscard]] bool checkAndSyncAccountLimits(
-        const bool waitIfRateLimitReached, ErrorString & errorDescription);
+        bool waitIfRateLimitReached, ErrorString & errorDescription);
 
     [[nodiscard]] bool syncAccountLimits(
-        const bool waitIfRateLimitReached, ErrorString & errorDescription);
+        bool waitIfRateLimitReached, ErrorString & errorDescription);
 
     void readSavedAccountLimits();
     void writeAccountLimitsToAppSettings();
@@ -557,12 +557,12 @@ private:
 
     template <class ContainerType, class LocalType>
     void launchDataElementSync(
-        const ContentSource contentSource, const QString & typeName,
+        ContentSource contentSource, const QString & typeName,
         ContainerType & container, QList<QString> & expungedElements);
 
     template <class ContainerType, class LocalType>
     void launchDataElementSyncCommon(
-        const ContentSource contentSource, ContainerType & container,
+        ContentSource contentSource, ContainerType & container,
         QList<QString> & expungedElements);
 
     template <class ElementType>
@@ -621,7 +621,7 @@ private:
 
     template <class ElementType>
     void emitFindByNameRequest(
-        const ElementType & elementToFind, const QString & linkedNotebookGuid);
+        const ElementType & item, const QString & linkedNotebookGuid);
 
     template <
         class ContainerType, class PendingContainerType, class ElementType>
@@ -795,8 +795,8 @@ private:
         const qevercloud::Note & note);
 
     void setupInkNoteImageDownloading(
-        const QString & resourceGuid, const int resourceHeight,
-        const int resourceWidth, const QString & noteGuid,
+        const QString & resourceGuid, int resourceHeight,
+        int resourceWidth, const QString & noteGuid,
         const qevercloud::Notebook & notebook);
 
     bool setupInkNoteImageDownloadingForNote(
@@ -908,8 +908,8 @@ private:
     class Q_DECL_HIDDEN CompareItemByName
     {
     public:
-        CompareItemByName(const QString & name) : m_name(name) {}
-        [[nodiscard]] bool operator()(const T & item) const;
+        CompareItemByName(QString name) : m_name(std::move(name)) {}
+        [[nodiscard]] bool operator()(const T & item) const noexcept;
 
     private:
         const QString m_name;
@@ -919,8 +919,8 @@ private:
     class Q_DECL_HIDDEN CompareItemByGuid
     {
     public:
-        CompareItemByGuid(const QString & guid) : m_guid(guid) {}
-        [[nodiscard]] bool operator()(const T & item) const;
+        CompareItemByGuid(QString guid) : m_guid(std::move(guid)) {}
+        [[nodiscard]] bool operator()(const T & item) const noexcept;
 
     private:
         const QString m_guid;
@@ -933,17 +933,16 @@ private:
     using NotesList = QList<qevercloud::Note>;
     using ResourcesList = QList<qevercloud::Resource>;
 
-    [[nodiscard]] bool sortTagsByParentChildRelations(TagsList & tags);
+    [[nodiscard]] bool sortTagsByParentChildRelations(TagsList & tagList);
 
     struct InkNoteResourceData
     {
         InkNoteResourceData() = default;
 
         InkNoteResourceData(
-            const QString & resourceGuid, const QString & noteGuid, int height,
-            int width) :
-            m_resourceGuid(resourceGuid),
-            m_noteGuid(noteGuid), m_resourceHeight(height),
+            QString resourceGuid, QString noteGuid, int height, int width) :
+            m_resourceGuid(std::move(resourceGuid)),
+            m_noteGuid(std::move(noteGuid)), m_resourceHeight(height),
             m_resourceWidth(width)
         {}
 

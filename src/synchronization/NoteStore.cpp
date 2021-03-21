@@ -912,8 +912,8 @@ qint32 NoteStore::authenticateToSharedNotebook(
 }
 
 void NoteStore::onGetNoteAsyncFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData,
-    IRequestContextPtr ctx)
+    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
+    IRequestContextPtr ctx) // NOLINT
 {
     QNDEBUG("synchronization:note_store", "NoteStore::onGetNoteAsyncFinished");
 
@@ -982,8 +982,8 @@ void NoteStore::onGetNoteAsyncFinished(
 }
 
 void NoteStore::onGetResourceAsyncFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData,
-    IRequestContextPtr ctx)
+    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
+    IRequestContextPtr ctx) // NOLINT
 {
     QNDEBUG(
         "synchronization:note_store",
@@ -1113,8 +1113,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("DATA_CONFLICT exception during "
@@ -1172,8 +1172,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        thrownOnCreation &&
+
+    if (thrownOnCreation &&
         (userException.errorCode() == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
         errorDescription.setBase(
@@ -1192,8 +1192,8 @@ qint32 NoteStore::processEdamUserExceptionForTag(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        !thrownOnCreation &&
+
+    if (!thrownOnCreation &&
         (userException.errorCode() ==
          qevercloud::EDAMErrorCode::PERMISSION_DENIED))
     {
@@ -1294,8 +1294,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("DATA_CONFLICT exception during "
@@ -1338,8 +1338,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        thrownOnCreation &&
+
+    if (thrownOnCreation &&
         (userException.errorCode() == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
         errorDescription.setBase(
@@ -1350,8 +1350,8 @@ qint32 NoteStore::processEdamUserExceptionForSavedSearch(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        !thrownOnCreation &&
+
+    if (!thrownOnCreation &&
         (userException.errorCode() ==
          qevercloud::EDAMErrorCode::PERMISSION_DENIED))
     {
@@ -1455,8 +1455,8 @@ qint32 NoteStore::processEdamUserExceptionForGetNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() ==
+
+    if (userException.errorCode() ==
         qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
         errorDescription.setBase(
@@ -1540,8 +1540,9 @@ qint32 NoteStore::processEdamUserExceptionForGetResource(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::PERMISSION_DENIED)
+
+    if (userException.errorCode() ==
+        qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
         errorDescription.setBase(
             QT_TR_NOOP("PERMISSION_DENIED exception during "
@@ -1678,8 +1679,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("DATA_CONFLICT exception during "
@@ -1732,8 +1733,8 @@ qint32 NoteStore::processEdamUserExceptionForNotebook(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        thrownOnCreation &&
+
+    if (thrownOnCreation &&
         (userException.errorCode() == qevercloud::EDAMErrorCode::LIMIT_REACHED))
     {
         errorDescription.setBase(
@@ -1872,8 +1873,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::DATA_CONFLICT) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("DATA_CONFLICT exception during "
@@ -1908,8 +1909,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::DATA_REQUIRED) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::DATA_REQUIRED) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("DATA_REQUIRED exception during "
@@ -1949,8 +1950,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() ==
+
+    if (userException.errorCode() ==
         qevercloud::EDAMErrorCode::ENML_VALIDATION) {
         if (thrownOnCreation) {
             errorDescription.setBase(
@@ -1973,8 +1974,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::LIMIT_REACHED) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::LIMIT_REACHED) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("LIMIT_REACHED exception during "
@@ -2062,8 +2063,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() ==
+
+    if (userException.errorCode() ==
         qevercloud::EDAMErrorCode::PERMISSION_DENIED)
     {
         if (thrownOnCreation) {
@@ -2114,8 +2115,8 @@ qint32 NoteStore::processEdamUserExceptionForNote(
         // qevercloud::EDAMErrorCode
         return static_cast<int>(userException.errorCode());
     }
-    else if (
-        userException.errorCode() == qevercloud::EDAMErrorCode::QUOTA_REACHED) {
+
+    if (userException.errorCode() == qevercloud::EDAMErrorCode::QUOTA_REACHED) {
         if (thrownOnCreation) {
             errorDescription.setBase(
                 QT_TR_NOOP("QUOTA_REACHED exception during "

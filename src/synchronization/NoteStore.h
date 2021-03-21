@@ -109,7 +109,7 @@ public:
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getSyncChunk(
-        const qint32 afterUSN, const qint32 maxEntries,
+        qint32 afterUSN, qint32 maxEntries,
         const qevercloud::SyncChunkFilter & filter,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
@@ -121,34 +121,32 @@ public:
 
     [[nodiscard]] qint32 getLinkedNotebookSyncChunk(
         const qevercloud::LinkedNotebook & linkedNotebook,
-        const qint32 afterUSN, const qint32 maxEntries,
-        const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+        qint32 afterUSN, qint32 maxEntries,
+        const QString & linkedNotebookAuthToken, bool fullSyncOnly,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getNote(
-        const bool withContent, const bool withResourcesData,
-        const bool withResourcesRecognition,
-        const bool withResourceAlternateData, qevercloud::Note & note,
+        bool withContent, bool withResourcesData, bool withResourcesRecognition,
+        bool withResourceAlternateData, qevercloud::Note & note,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] bool getNoteAsync(
-        const bool withContent, const bool withResourceData,
-        const bool withResourcesRecognition,
-        const bool withResourceAlternateData, const bool withSharedNotes,
-        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-        const bool withNoteLimits, const QString & noteGuid,
+        bool withContent, bool withResourceData, bool withResourcesRecognition,
+        bool withResourceAlternateData, bool withSharedNotes,
+        bool withNoteAppDataValues, bool withResourceAppDataValues,
+        bool withNoteLimits, const QString & noteGuid,
         const QString & authToken, ErrorString & errorDescription) override;
 
     [[nodiscard]] qint32 getResource(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
         const QString & authToken, qevercloud::Resource & resource,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] bool getResourceAsync(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
         const QString & resourceGuid, const QString & authToken,
         ErrorString & errorDescription) override;
 
@@ -202,7 +200,7 @@ private:
 
     [[nodiscard]] qint32 processEdamUserExceptionForGetSyncChunk(
         const qevercloud::EDAMUserException & userException,
-        const qint32 afterUSN, const qint32 maxEntries,
+        qint32 afterUSN, qint32 maxEntries,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] qint32 processEdamUserExceptionForGetNote(

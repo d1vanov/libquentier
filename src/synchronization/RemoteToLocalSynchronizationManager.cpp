@@ -189,9 +189,9 @@ private:
 };
 
 RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(
-    IManager & manager, const QString & host, QObject * parent) :
+    IManager & manager, QString host, QObject * parent) :
     QObject(parent),
-    m_manager(manager), m_host(host),
+    m_manager(manager), m_host(std::move(host)),
     m_tagSyncCache(m_manager.localStorageManagerAsync(), QLatin1String("")),
     m_savedSearchSyncCache(m_manager.localStorageManagerAsync()),
     m_notebookSyncCache(
@@ -522,7 +522,7 @@ void RemoteToLocalSynchronizationManager::stop()
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Tag>(
+void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Tag>( // NOLINT
     const qevercloud::Tag & tag)
 {
     QNDEBUG(
@@ -542,7 +542,7 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Tag>(
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::SavedSearch>(
+void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::SavedSearch>( // NOLINT
     const qevercloud::SavedSearch & search)
 {
     QNDEBUG(
@@ -563,7 +563,7 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::SavedSearch
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::LinkedNotebook>(
+void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::LinkedNotebook>( // NOLINT
     const qevercloud::LinkedNotebook & linkedNotebook)
 {
     QNDEBUG(
@@ -585,7 +585,7 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::LinkedNoteb
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Notebook>(
+void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Notebook>( // NOLINT
     const qevercloud::Notebook & notebook)
 {
     QNDEBUG(
@@ -606,7 +606,7 @@ void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Notebook>(
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Note>(
+void RemoteToLocalSynchronizationManager::emitAddRequest<qevercloud::Note>( // NOLINT
     const qevercloud::Note & note)
 {
     QNDEBUG(
@@ -637,7 +637,7 @@ void RemoteToLocalSynchronizationManager::onFindUserCompleted(
         "RemoteToLocalSynchronizationManager::onFindUserCompleted: user = "
             << user << "\nRequest id = " << requestId);
 
-    m_user = user;
+    m_user = std::move(user);
     m_findUserRequestId = QUuid();
 
     // Updating the user info as user was found in the local storage
@@ -653,7 +653,8 @@ void RemoteToLocalSynchronizationManager::onFindUserCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onFindUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_findUserRequestId) {
         return;
@@ -835,7 +836,7 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onFindNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNTRACE(
@@ -1000,8 +1001,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onFindNoteCompleted(
-    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::GetNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
 
@@ -1199,8 +1200,9 @@ void RemoteToLocalSynchronizationManager::onFindNoteCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onFindNoteFailed(
-    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(options)
     Q_UNUSED(errorDescription)
@@ -1254,7 +1256,7 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onFindTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     const bool foundByGuid = onFoundDuplicateByGuid(
         tag, requestId, QStringLiteral("Tag"), m_tags, m_tagsPendingAddOrUpdate,
@@ -1270,7 +1272,8 @@ void RemoteToLocalSynchronizationManager::onFindTagCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onFindTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     const bool failedToFindByGuid = onNoDuplicateByGuid(
         tag, requestId, errorDescription, QStringLiteral("Tag"), m_tags,
@@ -1423,14 +1426,14 @@ void RemoteToLocalSynchronizationManager::onFindLinkedNotebookCompleted(
     qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
 {
     Q_UNUSED(onFoundDuplicateByGuid(
-        linkedNotebook, requestId, QStringLiteral("LinkedNotebook"),
+        std::move(linkedNotebook), requestId, QStringLiteral("LinkedNotebook"),
         m_linkedNotebooks, m_linkedNotebooksPendingAddOrUpdate,
         m_findLinkedNotebookRequestIds))
 }
 
 void RemoteToLocalSynchronizationManager::onFindLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto rit = m_findLinkedNotebookRequestIds.find(requestId);
     if (rit == m_findLinkedNotebookRequestIds.end()) {
@@ -1460,7 +1463,7 @@ void RemoteToLocalSynchronizationManager::onFindLinkedNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onFindSavedSearchCompleted(
-    qevercloud::SavedSearch savedSearch, QUuid requestId)
+    qevercloud::SavedSearch savedSearch, QUuid requestId) // NOLINT
 {
     const bool foundByGuid = onFoundDuplicateByGuid(
         savedSearch, requestId, QStringLiteral("SavedSearch"), m_savedSearches,
@@ -1476,8 +1479,8 @@ void RemoteToLocalSynchronizationManager::onFindSavedSearchCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onFindSavedSearchFailed(
-    qevercloud::SavedSearch savedSearch, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::SavedSearch savedSearch, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const bool failedToFindByGuid = onNoDuplicateByGuid(
         savedSearch, requestId, errorDescription, QStringLiteral("SavedSearch"),
@@ -1512,7 +1515,7 @@ void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onAddUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     if (requestId != m_addOrUpdateUserRequestId) {
         return;
@@ -1528,7 +1531,8 @@ void RemoteToLocalSynchronizationManager::onAddUserCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onAddUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_addOrUpdateUserRequestId) {
         return;
@@ -1551,14 +1555,14 @@ void RemoteToLocalSynchronizationManager::onAddUserFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     onAddDataElementCompleted(
         tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onAddSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     onAddDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
@@ -1595,7 +1599,8 @@ void RemoteToLocalSynchronizationManager::onAddDataElementFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onAddDataElementFailed(
         tag, requestId, errorDescription, QStringLiteral("Tag"),
@@ -1603,7 +1608,7 @@ void RemoteToLocalSynchronizationManager::onAddTagFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onAddDataElementFailed(
@@ -1612,7 +1617,7 @@ void RemoteToLocalSynchronizationManager::onAddSavedSearchFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     if (requestId != m_addOrUpdateUserRequestId) {
         if (user.id() && m_user.id() && (user.id() == m_user.id())) {
@@ -1637,7 +1642,8 @@ void RemoteToLocalSynchronizationManager::onUpdateUserCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_addOrUpdateUserRequestId) {
         return;
@@ -1682,14 +1688,14 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     onUpdateDataElementCompleted(
         tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     onUpdateDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
@@ -1726,7 +1732,8 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onUpdateDataElementFailed(
         tag, requestId, errorDescription, QStringLiteral("Tag"),
@@ -1734,7 +1741,8 @@ void RemoteToLocalSynchronizationManager::onUpdateTagFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeTagCompleted(
-    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, // NOLINT
+    QUuid requestId)
 {
     Q_UNUSED(expungedChildTagLocalIds)
 
@@ -1743,7 +1751,8 @@ void RemoteToLocalSynchronizationManager::onExpungeTagCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onExpungeDataElementFailed(
         tag, requestId, errorDescription, QStringLiteral("Tag"),
@@ -1791,7 +1800,7 @@ void RemoteToLocalSynchronizationManager::
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onUpdateDataElementFailed(
@@ -1800,7 +1809,7 @@ void RemoteToLocalSynchronizationManager::onUpdateSavedSearchFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     onExpungeDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
@@ -1808,7 +1817,8 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription, QUuid requestId)
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onExpungeDataElementFailed(
         search, requestId, errorDescription, QStringLiteral("SavedSearch"),
@@ -1816,7 +1826,7 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
+void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks< // NOLINT
     qevercloud::Tag>(const qevercloud::Tag & tag)
 {
     QNDEBUG(
@@ -1831,7 +1841,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
+void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks< // NOLINT
     qevercloud::Notebook>(const qevercloud::Notebook & notebook)
 {
     QNDEBUG(
@@ -1845,7 +1855,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
+void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks< // NOLINT
     qevercloud::Note>(const qevercloud::Note & note)
 {
     QNDEBUG(
@@ -1859,7 +1869,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
+void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks< // NOLINT
     qevercloud::Resource>(const qevercloud::Resource & resource)
 {
     QNDEBUG(
@@ -1872,7 +1882,7 @@ void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks<
+void RemoteToLocalSynchronizationManager::performPostAddOrUpdateChecks< // NOLINT
     qevercloud::SavedSearch>(const qevercloud::SavedSearch & search)
 {
     QNDEBUG(
@@ -2233,7 +2243,7 @@ QString RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding(
 
 template <>
 QString
-RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
+RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding< // NOLINT
     qevercloud::Notebook>(qevercloud::Notebook & notebook)
 {
     QNDEBUG(
@@ -2273,7 +2283,7 @@ RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
 
 template <>
 QString
-RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
+RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding< // NOLINT
     qevercloud::Tag>(qevercloud::Tag & tag)
 {
     QNDEBUG(
@@ -2304,7 +2314,7 @@ RemoteToLocalSynchronizationManager::checkAndAddLinkedNotebookBinding<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::Tag>(const qevercloud::Tag & qecTag)
 {
     QNDEBUG(
@@ -2341,7 +2351,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::SavedSearch>(const qevercloud::SavedSearch & qecSearch)
 {
     QNDEBUG(
@@ -2377,7 +2387,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::Notebook>(const qevercloud::Notebook & qecNotebook)
 {
     QNDEBUG(
@@ -2412,7 +2422,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::LinkedNotebook>(
     const qevercloud::LinkedNotebook & qecLinkedNotebook)
 {
@@ -2446,7 +2456,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::Note>(const qevercloud::Note & qecNote)
 {
     QNDEBUG(
@@ -2498,7 +2508,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 template <>
-void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
+void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
     qevercloud::Resource>(const qevercloud::Resource & qecResource)
 {
     QNDEBUG(
@@ -2563,7 +2573,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest<
 }
 
 void RemoteToLocalSynchronizationManager::onAddLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     handleLinkedNotebookAdded(linkedNotebook);
 
@@ -2582,8 +2592,8 @@ void RemoteToLocalSynchronizationManager::onAddLinkedNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onAddLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     onAddDataElementFailed(
         linkedNotebook, requestId, errorDescription,
@@ -2591,7 +2601,7 @@ void RemoteToLocalSynchronizationManager::onAddLinkedNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     handleLinkedNotebookUpdated(linkedNotebook);
 
@@ -2609,8 +2619,8 @@ void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     const auto it = m_updateLinkedNotebookRequestIds.find(requestId);
     if (it != m_updateLinkedNotebookRequestIds.end()) {
@@ -2631,7 +2641,7 @@ void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     onExpungeDataElementCompleted(
         linkedNotebook, requestId, QStringLiteral("Linked notebook"),
@@ -2689,8 +2699,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     onExpungeDataElementFailed(
         linkedNotebook, requestId, errorDescription,
@@ -2716,7 +2726,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(
             << ", requestId = " << requestId);
 
     m_listAllLinkedNotebooksRequestId = QUuid();
-    m_allLinkedNotebooks = linkedNotebooks;
+    m_allLinkedNotebooks = std::move(linkedNotebooks);
     m_allLinkedNotebooksListed = true;
 
     startLinkedNotebooksSync();
@@ -2752,7 +2762,7 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     onAddDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
@@ -2760,7 +2770,7 @@ void RemoteToLocalSynchronizationManager::onAddNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onAddDataElementFailed(
@@ -2769,7 +2779,7 @@ void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     onUpdateDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
@@ -2777,7 +2787,7 @@ void RemoteToLocalSynchronizationManager::onUpdateNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onUpdateDataElementFailed(
@@ -2786,7 +2796,7 @@ void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     onExpungeDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
@@ -2794,7 +2804,7 @@ void RemoteToLocalSynchronizationManager::onExpungeNotebookCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onExpungeDataElementFailed(
@@ -2803,14 +2813,15 @@ void RemoteToLocalSynchronizationManager::onExpungeNotebookFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     onAddDataElementCompleted(
         note, requestId, QStringLiteral("Note"), m_addNoteRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onAddDataElementFailed(
         note, requestId, errorDescription, QStringLiteral("Note"),
@@ -2818,8 +2829,8 @@ void RemoteToLocalSynchronizationManager::onAddNoteFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
 
@@ -2874,8 +2885,9 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(options)
 
@@ -2940,14 +2952,15 @@ void RemoteToLocalSynchronizationManager::onUpdateNoteFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     onExpungeDataElementCompleted(
         note, requestId, QStringLiteral("Note"), m_expungeNoteRequestIds);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     onExpungeDataElementFailed(
         note, requestId, errorDescription, QStringLiteral("Note"),
@@ -2955,7 +2968,7 @@ void RemoteToLocalSynchronizationManager::onExpungeNoteFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onAddResourceCompleted(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     onAddDataElementCompleted(
         resource, requestId, QStringLiteral("Resource"),
@@ -2963,7 +2976,7 @@ void RemoteToLocalSynchronizationManager::onAddResourceCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onAddResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     onAddDataElementFailed(
@@ -2972,7 +2985,7 @@ void RemoteToLocalSynchronizationManager::onAddResourceFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateResourceCompleted(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     onUpdateDataElementCompleted<qevercloud::Resource>(
         resource, requestId, QStringLiteral("Resource"),
@@ -2980,7 +2993,7 @@ void RemoteToLocalSynchronizationManager::onUpdateResourceCompleted(
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     const auto it = m_updateResourceRequestIds.find(requestId);
@@ -3000,8 +3013,8 @@ void RemoteToLocalSynchronizationManager::onUpdateResourceFailed(
 }
 
 void RemoteToLocalSynchronizationManager::onInkNoteImageDownloadFinished(
-    bool status, QString resourceGuid, QString noteGuid,
-    ErrorString errorDescription)
+    bool status, QString resourceGuid, QString noteGuid, // NOLINT
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3029,8 +3042,9 @@ void RemoteToLocalSynchronizationManager::onInkNoteImageDownloadFinished(
 }
 
 void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
-    bool status, QString noteGuid, QByteArray downloadedThumbnailImageData,
-    ErrorString errorDescription)
+    bool status, QString noteGuid, // NOLINT
+    QByteArray downloadedThumbnailImageData,
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3059,7 +3073,7 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
         return;
     }
 
-    note.setThumbnailData(downloadedThumbnailImageData);
+    note.setThumbnailData(std::move(downloadedThumbnailImageData));
 
     const QUuid updateNoteRequestId = QUuid::createUuid();
     Q_UNUSED(m_updateNoteWithThumbnailRequestIds.insert(updateNoteRequestId))
@@ -3080,7 +3094,8 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
 }
 
 void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(
-    QString authToken, QString shardId, qevercloud::Timestamp expirationTime)
+    QString authToken, QString shardId, // NOLINT
+    qevercloud::Timestamp expirationTime)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3108,9 +3123,9 @@ void RemoteToLocalSynchronizationManager::onAuthenticationInfoReceived(
 void RemoteToLocalSynchronizationManager::
     onAuthenticationTokensForLinkedNotebooksReceived(
         QHash<QString, std::pair<QString, QString>>
-            authenticationTokensAndShardIdsByLinkedNotebookGuid,
+            authTokensAndShardIdsByLinkedNotebookGuid, // NOLINT
         QHash<QString, qevercloud::Timestamp>
-            authenticationTokenExpirationTimesByLinkedNotebookGuid)
+            authTokenExpirationTimesByLinkedNotebookGuid) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3120,10 +3135,10 @@ void RemoteToLocalSynchronizationManager::
     const bool wasPending = m_pendingAuthenticationTokensForLinkedNotebooks;
 
     m_authenticationTokensAndShardIdsByLinkedNotebookGuid =
-        authenticationTokensAndShardIdsByLinkedNotebookGuid;
+        authTokensAndShardIdsByLinkedNotebookGuid;
 
     m_authenticationTokenExpirationTimesByLinkedNotebookGuid =
-        authenticationTokenExpirationTimesByLinkedNotebookGuid;
+        authTokenExpirationTimesByLinkedNotebookGuid;
 
     m_pendingAuthenticationTokensForLinkedNotebooks = false;
 
@@ -3135,16 +3150,16 @@ void RemoteToLocalSynchronizationManager::
     }
 
     Q_EMIT linkedNotebookAuthDataUpdated(
-        authenticationTokensAndShardIdsByLinkedNotebookGuid,
-        authenticationTokenExpirationTimesByLinkedNotebookGuid);
+        authTokensAndShardIdsByLinkedNotebookGuid,
+        authTokenExpirationTimesByLinkedNotebookGuid);
 
     startLinkedNotebooksSync();
 }
 
 void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(
     qint32 lastUpdateCount, qevercloud::Timestamp lastSyncTime,
-    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid,
-    QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid)
+    QHash<QString, qint32> lastUpdateCountByLinkedNotebookGuid, // NOLINT
+    QHash<QString, qevercloud::Timestamp> lastSyncTimeByLinkedNotebookGuid) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3183,7 +3198,7 @@ void RemoteToLocalSynchronizationManager::onLastSyncParametersReceived(
     start(m_lastUsnOnStart);
 }
 
-void RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails(
+void RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails( // NOLINT
     const bool flag)
 {
     QNDEBUG(
@@ -3199,7 +3214,7 @@ void RemoteToLocalSynchronizationManager::setDownloadNoteThumbnails(
     appSettings.endGroup();
 }
 
-void RemoteToLocalSynchronizationManager::setDownloadInkNoteImages(
+void RemoteToLocalSynchronizationManager::setDownloadInkNoteImages( // NOLINT
     const bool flag)
 {
     QNDEBUG(
@@ -3329,8 +3344,8 @@ void RemoteToLocalSynchronizationManager::collectNonProcessedItemsSmallestUsns(
 }
 
 void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
-    qint32 errorCode, qevercloud::Note qecNote, qint32 rateLimitSeconds,
-    ErrorString errorDescription)
+    qint32 errorCode, qevercloud::Note qecNote, // NOLINT
+    qint32 rateLimitSeconds, ErrorString errorDescription)
 {
     if (Q_UNLIKELY(!qecNote.guid())) {
         errorDescription.setBase(
@@ -3420,14 +3435,15 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -3544,8 +3560,8 @@ void RemoteToLocalSynchronizationManager::onGetNoteAsyncFinished(
 }
 
 void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
-    qint32 errorCode, qevercloud::Resource qecResource, qint32 rateLimitSeconds,
-    ErrorString errorDescription)
+    qint32 errorCode, qevercloud::Resource qecResource, // NOLINT
+    qint32 rateLimitSeconds, ErrorString errorDescription)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3654,14 +3670,15 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -3676,7 +3693,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
         const QString resourceGuid =
             (resource.guid() ? *resource.guid() : QString{});
 
-        const QString resourceLocalId = resource.localId();
+        const QString & resourceLocalId = resource.localId();
         const auto key = std::make_pair(resourceGuid, resourceLocalId);
 
         const QUuid addResourceRequestId = QUuid::createUuid();
@@ -3773,7 +3790,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncCacheFilled()
 }
 
 void RemoteToLocalSynchronizationManager::onTagSyncCacheFailure(
-    ErrorString errorDescription)
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3784,7 +3801,8 @@ void RemoteToLocalSynchronizationManager::onTagSyncCacheFailure(
 }
 
 void RemoteToLocalSynchronizationManager::
-    onNotebookSyncConflictResolverFinished(qevercloud::Notebook remoteNotebook)
+    onNotebookSyncConflictResolverFinished(
+        qevercloud::Notebook remoteNotebook) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3805,7 +3823,7 @@ void RemoteToLocalSynchronizationManager::
 }
 
 void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure(
-    qevercloud::Notebook remoteNotebook, ErrorString errorDescription)
+    qevercloud::Notebook remoteNotebook, ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3824,7 +3842,7 @@ void RemoteToLocalSynchronizationManager::onNotebookSyncConflictResolverFailure(
 }
 
 void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(
-    qevercloud::Tag remoteTag)
+    qevercloud::Tag remoteTag) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3845,7 +3863,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(
 }
 
 void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure(
-    qevercloud::Tag remoteTag, ErrorString errorDescription)
+    qevercloud::Tag remoteTag, ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3865,7 +3883,7 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFailure(
 
 void RemoteToLocalSynchronizationManager::
     onSavedSearchSyncConflictResolverFinished(
-        qevercloud::SavedSearch remoteSavedSearch)
+        qevercloud::SavedSearch remoteSavedSearch) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3888,7 +3906,8 @@ void RemoteToLocalSynchronizationManager::
 
 void RemoteToLocalSynchronizationManager::
     onSavedSearchSyncConflictResolverFailure(
-        qevercloud::SavedSearch remoteSavedSearch, ErrorString errorDescription)
+        qevercloud::SavedSearch remoteSavedSearch, // NOLINT
+        ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3910,7 +3929,7 @@ void RemoteToLocalSynchronizationManager::
 }
 
 void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolverFinished(
-    qevercloud::Note note)
+    qevercloud::Note note) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -3932,7 +3951,7 @@ void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolverFinished(
 }
 
 void RemoteToLocalSynchronizationManager::onNoteSyncConflictResolvedFailure(
-    qevercloud::Note note, ErrorString errorDescription)
+    qevercloud::Note note, ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -4059,7 +4078,8 @@ void RemoteToLocalSynchronizationManager::
 }
 
 void RemoteToLocalSynchronizationManager::
-    onFullSyncStaleDataItemsExpungerFailure(ErrorString errorDescription)
+    onFullSyncStaleDataItemsExpungerFailure(
+        ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:remote_to_local",
@@ -5264,8 +5284,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(
@@ -5279,7 +5299,8 @@ bool RemoteToLocalSynchronizationManager::syncUserImpl(
         QNINFO("synchronization:remote_to_local", errorDescription);
         return false;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         ErrorString errorMessage(
             QT_TR_NOOP("Failed to download the latest user info"));
         errorMessage.additionalBases().append(errorDescription.base());
@@ -5452,8 +5473,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(
@@ -5467,7 +5488,8 @@ bool RemoteToLocalSynchronizationManager::syncAccountLimits(
         QNWARNING("synchronization:remote_to_local", errorDescription);
         return false;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         ErrorString errorMessage(QT_TR_NOOP(
             "Failed to get the account limits for the current user"));
         errorMessage.additionalBases().append(errorDescription.base());
@@ -5980,12 +6002,11 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<
             // Ok, let's fill the tag sync caches for all linked notebooks which
             // tags have parent tag guids referring to inaccessible parent tags
             std::set<QString> affectedLinkedNotebookGuids;
-            for (auto it = guidsOfTagsWithMissingParentTag.begin(),
-                      end = guidsOfTagsWithMissingParentTag.end();
-                 it != end; ++it)
+            for (const auto & linkedNotebookGuid:
+                 ::qAsConst(guidsOfTagsWithMissingParentTag))
             {
                 const auto linkedNotebookGuidIt =
-                    m_linkedNotebookGuidsByTagGuids.find(*it);
+                    m_linkedNotebookGuidsByTagGuids.find(linkedNotebookGuid);
 
                 if (linkedNotebookGuidIt !=
                     m_linkedNotebookGuidsByTagGuids.end()) {
@@ -6003,12 +6024,9 @@ void RemoteToLocalSynchronizationManager::launchDataElementSync<
                 }
             }
 
-            for (auto it = affectedLinkedNotebookGuids.begin(),
-                      end = affectedLinkedNotebookGuids.end();
-                 it != end; ++it)
+            for (const auto & linkedNotebookGuid:
+                 ::qAsConst(affectedLinkedNotebookGuids))
             {
-                const QString & linkedNotebookGuid = *it;
-
                 auto tagSyncCacheIt =
                     m_tagSyncCachesByLinkedNotebookGuids.find(
                         linkedNotebookGuid);
@@ -6854,9 +6872,9 @@ bool RemoteToLocalSynchronizationManager::
     mapContainerElementsWithLinkedNotebookGuid<
         RemoteToLocalSynchronizationManager::TagsList>(
         const QString & linkedNotebookGuid,
-        const RemoteToLocalSynchronizationManager::TagsList & tags)
+        const RemoteToLocalSynchronizationManager::TagsList & container)
 {
-    for (const auto & tag: ::qAsConst(tags)) {
+    for (const auto & tag: ::qAsConst(container)) {
         if (!tag.guid()) {
             ErrorString error(QT_TRANSLATE_NOOP(
                 "RemoteToLocalSynchronizationManager",
@@ -6883,9 +6901,9 @@ bool RemoteToLocalSynchronizationManager::
     mapContainerElementsWithLinkedNotebookGuid<
         RemoteToLocalSynchronizationManager::NotebooksList>(
         const QString & linkedNotebookGuid,
-        const RemoteToLocalSynchronizationManager::NotebooksList & notebooks)
+        const RemoteToLocalSynchronizationManager::NotebooksList & container)
 {
-    for (const auto & notebook: ::qAsConst(notebooks)) {
+    for (const auto & notebook: ::qAsConst(container)) {
         if (!notebook.guid()) {
             ErrorString error(QT_TRANSLATE_NOOP(
                 "RemoteToLocalSynchronizationManager",
@@ -6914,9 +6932,9 @@ bool RemoteToLocalSynchronizationManager::
     mapContainerElementsWithLinkedNotebookGuid<
         RemoteToLocalSynchronizationManager::NotesList>(
         const QString & linkedNotebookGuid,
-        const RemoteToLocalSynchronizationManager::NotesList & notes)
+        const RemoteToLocalSynchronizationManager::NotesList & container)
 {
-    for (const auto & note: ::qAsConst(notes)) {
+    for (const auto & note: ::qAsConst(container)) {
         if (!note.notebookGuid()) {
             ErrorString error(QT_TRANSLATE_NOOP(
                 "RemoteToLocalSynchronizationManager",
@@ -6944,9 +6962,9 @@ bool RemoteToLocalSynchronizationManager::
     mapContainerElementsWithLinkedNotebookGuid<
         RemoteToLocalSynchronizationManager::ResourcesList>(
         const QString & linkedNotebookGuid,
-        const RemoteToLocalSynchronizationManager::ResourcesList & resources)
+        const RemoteToLocalSynchronizationManager::ResourcesList & container)
 {
-    for (const auto & resource: ::qAsConst(resources)) {
+    for (const auto & resource: ::qAsConst(container)) {
         if (!resource.guid()) {
             ErrorString error(QT_TRANSLATE_NOOP(
                 "RemoteToLocalSynchronizationManager",
@@ -7320,8 +7338,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         asyncWait = true;
         return;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         ErrorString errorMessage(
@@ -7335,7 +7353,8 @@ void RemoteToLocalSynchronizationManager::getLinkedNotebookSyncState(
         error = true;
         return;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         ErrorString errorMessage(
             QT_TR_NOOP("Failed to get linked notebook sync state"));
         errorMessage.additionalBases().append(errorDescription.base());
@@ -7566,8 +7585,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 Q_EMIT rateLimitExceeded(rateLimitSeconds);
                 return false;
             }
-            else if (
-                errorCode ==
+
+            if (errorCode ==
                 static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
             {
                 ErrorString errorMessage(
@@ -7581,7 +7600,8 @@ bool RemoteToLocalSynchronizationManager::downloadLinkedNotebooksSyncChunks()
                 Q_EMIT failure(errorMessage);
                 return false;
             }
-            else if (errorCode != 0) {
+
+            if (errorCode != 0) {
                 ErrorString errorMessage(
                     QT_TR_NOOP("Failed to download the sync chunks for linked "
                                "notebooks content"));
@@ -9205,14 +9225,15 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             Q_EMIT rateLimitExceeded(rateLimitSeconds);
             return;
         }
-        else if (
-            errorCode ==
+
+        if (errorCode ==
             static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
         {
             handleAuthExpiration();
             return;
         }
-        else if (errorCode != 0) {
+
+        if (errorCode != 0) {
             ErrorString errorMessage(
                 QT_TR_NOOP("Failed to download the sync chunks"));
 
@@ -9276,7 +9297,7 @@ RemoteToLocalSynchronizationManager::getNotebookPerNote(
             << note);
 
     const QString noteGuid = (note.guid() ? *note.guid() : QString{});
-    const QString noteLocalId = note.localId();
+    const QString & noteLocalId = note.localId();
 
     const auto key = std::make_pair(noteGuid, noteLocalId);
     const auto it = m_notebooksPerNoteIds.find(key);
@@ -9364,15 +9385,16 @@ bool RemoteToLocalSynchronizationManager::checkUserAccountSyncState(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return false;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         asyncWait = true;
         return false;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         Q_EMIT failure(errorDescription);
         error = true;
         return false;
@@ -9486,15 +9508,14 @@ bool RemoteToLocalSynchronizationManager::checkLinkedNotebooksSyncStates(
                     << "guid " << linkedNotebookGuid);
             continue;
         }
-        else {
-            QNTRACE(
-                "synchronization:remote_to_local",
-                "Detected mismatch in update counts for the linked notebook "
-                    << "with guid " << linkedNotebookGuid
-                    << ": last update count = " << lastUpdateCount
-                    << ", sync state's update count: " << state.updateCount());
-            return true;
-        }
+
+        QNTRACE(
+            "synchronization:remote_to_local",
+            "Detected mismatch in update counts for the linked notebook "
+                << "with guid " << linkedNotebookGuid
+                << ": last update count = " << lastUpdateCount
+                << ", sync state's update count: " << state.updateCount());
+        return true;
     }
 
     QNTRACE(
@@ -9510,7 +9531,7 @@ void RemoteToLocalSynchronizationManager::authenticationInfoForNotebook(
 {
     isPublic = notebook.published() && *notebook.published();
 
-    const auto linkedNotebookGuid = notebook.linkedNotebookGuid();
+    const auto & linkedNotebookGuid = notebook.linkedNotebookGuid();
 
     if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         auto it = m_authenticationTokensAndShardIdsByLinkedNotebookGuid.find(
@@ -10021,13 +10042,13 @@ QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem(
 
 template <>
 QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
-    qevercloud::Notebook>(const qevercloud::Notebook & notebook) const
+    qevercloud::Notebook>(const qevercloud::Notebook & item) const
 {
-    if (Q_UNLIKELY(!notebook.guid())) {
+    if (Q_UNLIKELY(!item.guid())) {
         return QString{};
     }
 
-    const auto it = m_linkedNotebookGuidsByNotebookGuids.find(*notebook.guid());
+    const auto it = m_linkedNotebookGuidsByNotebookGuids.find(*item.guid());
     if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
         return QString{};
     }
@@ -10037,13 +10058,13 @@ QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
 
 template <>
 QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
-    qevercloud::Tag>(const qevercloud::Tag & tag) const
+    qevercloud::Tag>(const qevercloud::Tag & item) const
 {
-    if (Q_UNLIKELY(!tag.guid())) {
+    if (Q_UNLIKELY(!item.guid())) {
         return QString{};
     }
 
-    const auto it = m_linkedNotebookGuidsByTagGuids.find(*tag.guid());
+    const auto it = m_linkedNotebookGuidsByTagGuids.find(*item.guid());
     if (it == m_linkedNotebookGuidsByTagGuids.end()) {
         return QString{};
     }
@@ -10053,14 +10074,14 @@ QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
 
 template <>
 QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
-    qevercloud::Note>(const qevercloud::Note & note) const
+    qevercloud::Note>(const qevercloud::Note & item) const
 {
-    if (Q_UNLIKELY(!note.notebookGuid())) {
+    if (Q_UNLIKELY(!item.notebookGuid())) {
         return QString{};
     }
 
     const auto it =
-        m_linkedNotebookGuidsByNotebookGuids.find(*note.notebookGuid());
+        m_linkedNotebookGuidsByNotebookGuids.find(*item.notebookGuid());
     if (it == m_linkedNotebookGuidsByNotebookGuids.end()) {
         return QString{};
     }
@@ -10070,13 +10091,13 @@ QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
 
 template <>
 QString RemoteToLocalSynchronizationManager::findLinkedNotebookGuidForItem<
-    qevercloud::Resource>(const qevercloud::Resource & resource) const
+    qevercloud::Resource>(const qevercloud::Resource & item) const
 {
-    if (Q_UNLIKELY(!resource.guid())) {
+    if (Q_UNLIKELY(!item.guid())) {
         return QString{};
     }
 
-    const auto it = m_linkedNotebookGuidsByResourceGuids.find(*resource.guid());
+    const auto it = m_linkedNotebookGuidsByResourceGuids.find(*item.guid());
     if (it == m_linkedNotebookGuidsByResourceGuids.end()) {
         return QString{};
     }
@@ -10145,10 +10166,10 @@ void RemoteToLocalSynchronizationManager::
 template <>
 void RemoteToLocalSynchronizationManager::
     checkNonSyncedItemsContainerForSmallestUsn<QHash<int, qevercloud::Note>>(
-        const QHash<int, qevercloud::Note> & notes,
+        const QHash<int, qevercloud::Note> & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10158,10 +10179,10 @@ template <>
 void RemoteToLocalSynchronizationManager::
     checkNonSyncedItemsContainerForSmallestUsn<
         QHash<QString, qevercloud::Note>>(
-            const QHash<QString, qevercloud::Note> & notes,
+            const QHash<QString, qevercloud::Note> & container,
             const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10171,10 +10192,10 @@ template <>
 void RemoteToLocalSynchronizationManager::
     checkNonSyncedItemsContainerForSmallestUsn<
         QHash<QUuid, qevercloud::Note>>(
-            const QHash<QUuid, qevercloud::Note> & notes,
+            const QHash<QUuid, qevercloud::Note> & container,
             const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10184,10 +10205,10 @@ template <>
 void RemoteToLocalSynchronizationManager::
     checkNonSyncedItemsContainerForSmallestUsn<
         RemoteToLocalSynchronizationManager::NoteDataPerFindNotebookRequestId>(
-        const NoteDataPerFindNotebookRequestId & notes,
+        const NoteDataPerFindNotebookRequestId & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(notes))) {
+    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first, linkedNotebookGuid, smallestUsn);
     }
@@ -10197,10 +10218,10 @@ template <>
 void RemoteToLocalSynchronizationManager::
     checkNonSyncedItemsContainerForSmallestUsn<
         QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>>>(
-        const QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>> & resources,
+        const QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>> & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(::qAsConst(resources))) {
+    for (const auto & it: qevercloud::toRange(::qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first, linkedNotebookGuid,
             smallestUsn);
@@ -10907,14 +10928,15 @@ void RemoteToLocalSynchronizationManager::processResourceConflictAsNoteConflict(
         Q_EMIT rateLimitExceeded(rateLimitSeconds);
         return;
     }
-    else if (
-        errorCode ==
+
+    if (errorCode ==
         static_cast<qint32>(qevercloud::EDAMErrorCode::AUTH_EXPIRED))
     {
         handleAuthExpiration();
         return;
     }
-    else if (errorCode != 0) {
+
+    if (errorCode != 0) {
         ErrorString errorMessage(
             QT_TR_NOOP("Failed to download full resource data"));
         errorMessage.additionalBases().append(errorDescription.base());
@@ -11053,7 +11075,7 @@ void RemoteToLocalSynchronizationManager::removeResourceFromSyncChunks(
     }
 }
 
-void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger(
+void RemoteToLocalSynchronizationManager::junkFullSyncStaleDataItemsExpunger( // NOLINT
     FullSyncStaleDataItemsExpunger & expunger)
 {
     QNDEBUG(
@@ -12109,51 +12131,47 @@ RemoteToLocalSynchronizationManager::findItemByGuid<
 
 template <class T>
 bool RemoteToLocalSynchronizationManager::CompareItemByName<T>::operator()(
-    const T & item) const
+    const T & item) const noexcept
 {
     if (item.name()) {
         return (m_name.toUpper() == item.name()->toUpper());
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 template <>
 bool RemoteToLocalSynchronizationManager::CompareItemByName<
-    qevercloud::Note>::operator()(const qevercloud::Note & item) const
+    qevercloud::Note>::operator()(const qevercloud::Note & item) const noexcept
 {
     if (item.title()) {
         return (m_name.toUpper() == item.title()->toUpper());
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 template <class T>
 bool RemoteToLocalSynchronizationManager::CompareItemByGuid<T>::operator()(
-    const T & item) const
+    const T & item) const noexcept
 {
     if (item.guid()) {
         return (m_guid == *item.guid());
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 template <>
 bool RemoteToLocalSynchronizationManager::CompareItemByGuid<
     qevercloud::LinkedNotebook>::operator()(
-        const qevercloud::LinkedNotebook & item) const
+        const qevercloud::LinkedNotebook & item) const noexcept
 {
     if (item.guid()) {
         return (m_guid == *item.guid());
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 template <class ElementType>
@@ -12223,20 +12241,21 @@ void RemoteToLocalSynchronizationManager::extractExpungedElementsFromSyncChunk<
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
     qevercloud::Tag>(
-        const qevercloud::Tag & tag, const QString & linkedNotebookGuid)
+        const qevercloud::Tag & item, const QString & linkedNotebookGuid)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::emitFindByNameRequest<Tag>: "
-            << tag << "\nLinked notebook guid = " << linkedNotebookGuid);
+            << item << "\nLinked notebook guid = " << linkedNotebookGuid);
 
-    if (!tag.name()) {
+    if (!item.name()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Detected tag from the remote storage which needs to be searched "
             "by name in the local storage but it has no name set"));
         QNWARNING(
-            "synchronization:remote_to_local", errorDescription << ": " << tag);
+            "synchronization:remote_to_local", errorDescription << ": "
+                << item);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -12251,30 +12270,30 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
         "synchronization:remote_to_local",
         "Emitting the request to find "
             << "tag in the local storage: request id = " << findElementRequestId
-            << ", tag: " << tag);
+            << ", tag: " << item);
 
-    Q_EMIT findTag(tag, findElementRequestId);
+    Q_EMIT findTag(item, findElementRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
     qevercloud::SavedSearch>(
-        const qevercloud::SavedSearch & search,
+        const qevercloud::SavedSearch & item,
         const QString & /* linked notebook guid */)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::emitFindByNameRequest"
-            << "<qevercloud::SavedSearch>: " << search);
+            << "<qevercloud::SavedSearch>: " << item);
 
-    if (!search.name()) {
+    if (!item.name()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Detected saved search from the remote storage which needs to be "
             "searched by name in the local storage but it has no name set"));
         QNWARNING(
             "synchronization:remote_to_local",
-            errorDescription << ": " << search);
+            errorDescription << ": " << item);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -12286,24 +12305,24 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
         "synchronization:remote_to_local",
         "Emitting the request to find saved search in the local storage: "
             << "request id = " << findElementRequestId << ", saved search: "
-            << search);
+            << item);
 
-    Q_EMIT findSavedSearch(search, findElementRequestId);
+    Q_EMIT findSavedSearch(item, findElementRequestId);
 }
 
 template <>
 void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
     qevercloud::Notebook>(
-        const qevercloud::Notebook & notebook,
+        const qevercloud::Notebook & item,
         const QString & linkedNotebookGuid)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::emitFindByNameRequest"
-            << "<qevercloud::Notebook>: " << notebook
+            << "<qevercloud::Notebook>: " << item
             << "\nLinked notebook guid = " << linkedNotebookGuid);
 
-    if (!notebook.name()) {
+    if (!item.name()) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Detected notebook from the remote storage "
@@ -12311,7 +12330,7 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
             "storage but it has no name set"));
         QNWARNING(
             "synchronization:remote_to_local",
-            errorDescription << ": " << notebook);
+            errorDescription << ": " << item);
         Q_EMIT failure(errorDescription);
         return;
     }
@@ -12326,9 +12345,9 @@ void RemoteToLocalSynchronizationManager::emitFindByNameRequest<
         "synchronization:remote_to_local",
         "Emitting the request to find notebook in the local storage by name: "
             << "request id = " << findElementRequestId << ", notebook: "
-            << notebook);
+            << item);
 
-    Q_EMIT findNotebook(notebook, findElementRequestId);
+    Q_EMIT findNotebook(item, findElementRequestId);
 }
 
 template <class ContainerType, class PendingContainerType, class ElementType>
@@ -12605,23 +12624,23 @@ bool RemoteToLocalSynchronizationManager::onNoDuplicateByName(
 template <>
 RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
-    const qevercloud::Notebook & remoteNotebook,
+    const qevercloud::Notebook & remoteElement,
     const qevercloud::Notebook & localConflict)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::resolveSyncConflict"
-            << "<Notebook>: remote notebook = " << remoteNotebook
+            << "<Notebook>: remote notebook = " << remoteElement
             << "\nLocal conflicting notebook: " << localConflict);
 
-    if (Q_UNLIKELY(!remoteNotebook.guid())) {
+    if (Q_UNLIKELY(!remoteElement.guid())) {
         ErrorString error(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Can't resolve the conflict between remote and "
             "local notebooks: the remote notebook has no guid"));
         QNWARNING(
             "synchronization:remote_to_local",
-            error << ", remote notebook: " << remoteNotebook);
+            error << ", remote notebook: " << remoteElement);
         Q_EMIT failure(error);
         return ResolveSyncConflictStatus::Ready;
     }
@@ -12646,7 +12665,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
             continue;
         }
 
-        if (!resolverRemoteNotebook.guid() != !remoteNotebook.guid()) {
+        if (!resolverRemoteNotebook.guid() != !remoteElement.guid()) {
             QNTRACE(
                 "synchronization:remote_to_local",
                 "Skipping the existing notebook sync conflict resolver "
@@ -12673,7 +12692,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     NotebookSyncCache * pCache = nullptr;
-    const auto linkedNotebookGuid = localConflict.linkedNotebookGuid();
+    const auto & linkedNotebookGuid = localConflict.linkedNotebookGuid();
 
     if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         auto it =
@@ -12697,14 +12716,14 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     QString remoteNotebookLinkedNotebookGuid;
 
     const auto it =
-        m_linkedNotebookGuidsByNotebookGuids.find(*remoteNotebook.guid());
+        m_linkedNotebookGuidsByNotebookGuids.find(*remoteElement.guid());
 
     if (it != m_linkedNotebookGuidsByNotebookGuids.end()) {
         remoteNotebookLinkedNotebookGuid = it.value();
     }
 
     auto * pResolver = new NotebookSyncConflictResolver(
-        remoteNotebook, remoteNotebookLinkedNotebookGuid, localConflict,
+        remoteElement, remoteNotebookLinkedNotebookGuid, localConflict,
         *pCache, m_manager.localStorageManagerAsync(), this);
 
     QObject::connect(
@@ -12727,22 +12746,22 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 template <>
 RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
-    const qevercloud::Tag & remoteTag, const qevercloud::Tag & localConflict)
+    const qevercloud::Tag & remoteElement, const qevercloud::Tag & localConflict)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::resolveSyncConflict<Tag>: "
-            << "remote tag = " << remoteTag
+            << "remote tag = " << remoteElement
             << "\nLocal conflicting tag: " << localConflict);
 
-    if (Q_UNLIKELY(!remoteTag.guid())) {
+    if (Q_UNLIKELY(!remoteElement.guid())) {
         ErrorString error(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Can't resolve the conflict between remote and "
             "local tags: the remote tag has no guid"));
         QNWARNING(
             "synchronization:remote_to_local",
-            error << ", remote tag: " << remoteTag);
+            error << ", remote tag: " << remoteElement);
         Q_EMIT failure(error);
         return ResolveSyncConflictStatus::Ready;
     }
@@ -12765,7 +12784,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
             continue;
         }
 
-        if (*resolverRemoteTag.guid() != *remoteTag.guid()) {
+        if (*resolverRemoteTag.guid() != *remoteElement.guid()) {
             QNTRACE(
                 "synchronization:remote_to_local",
                 "Skipping the existing tag sync conflict resolver processing "
@@ -12791,7 +12810,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     TagSyncCache * pCache = nullptr;
-    const auto linkedNotebookGuid = localConflict.linkedNotebookGuid();
+    const auto & linkedNotebookGuid = localConflict.linkedNotebookGuid();
     if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         auto it = m_tagSyncCachesByLinkedNotebookGuids.find(
             *linkedNotebookGuid);
@@ -12811,13 +12830,13 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     QString remoteTagLinkedNotebookGuid;
-    const auto it = m_linkedNotebookGuidsByTagGuids.find(*remoteTag.guid());
+    const auto it = m_linkedNotebookGuidsByTagGuids.find(*remoteElement.guid());
     if (it != m_linkedNotebookGuidsByTagGuids.end()) {
         remoteTagLinkedNotebookGuid = it.value();
     }
 
     auto * pResolver = new TagSyncConflictResolver(
-        remoteTag, remoteTagLinkedNotebookGuid, localConflict, *pCache,
+        remoteElement, remoteTagLinkedNotebookGuid, localConflict, *pCache,
         m_manager.localStorageManagerAsync(), this);
 
     QObject::connect(
@@ -12837,16 +12856,16 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 template <>
 RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
-    const qevercloud::SavedSearch & remoteSavedSearch,
+    const qevercloud::SavedSearch & remoteElement,
     const qevercloud::SavedSearch & localConflict)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::resolveSyncConflict"
-            << "<SavedSearch>: remote saved search = " << remoteSavedSearch
+            << "<SavedSearch>: remote saved search = " << remoteElement
             << "\nLocal conflicting saved search: " << localConflict);
 
-    if (Q_UNLIKELY(!remoteSavedSearch.guid())) {
+    if (Q_UNLIKELY(!remoteElement.guid())) {
         ErrorString error(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Can't resolve the conflict between "
@@ -12854,7 +12873,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
             "the remote saved search has no guid"));
         QNWARNING(
             "synchronization:remote_to_local",
-            error << ", remote saved search: " << remoteSavedSearch);
+            error << ", remote saved search: " << remoteElement);
         Q_EMIT failure(error);
         return ResolveSyncConflictStatus::Ready;
     }
@@ -12881,7 +12900,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
             continue;
         }
 
-        if (*resolverRemoteSavedSearch.guid() != *remoteSavedSearch.guid()) {
+        if (*resolverRemoteSavedSearch.guid() != *remoteElement.guid()) {
             QNTRACE(
                 "synchronization:remote_to_local",
                 "Skipping the existing saved search sync conflict resolver "
@@ -12908,7 +12927,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     }
 
     auto * pResolver = new SavedSearchSyncConflictResolver(
-        remoteSavedSearch, localConflict, m_savedSearchSyncCache,
+        remoteElement, localConflict, m_savedSearchSyncCache,
         m_manager.localStorageManagerAsync(), this);
 
     QObject::connect(
@@ -12930,42 +12949,42 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
 template <>
 RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
-    const qevercloud::Note & remoteNote, const qevercloud::Note & localConflict)
+    const qevercloud::Note & remoteElement, const qevercloud::Note & localConflict)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::resolveSyncConflict<Note>: "
-            << "remote note = " << remoteNote
+            << "remote note = " << remoteElement
             << "\nLocal conflicting note: " << localConflict);
 
-    if (Q_UNLIKELY(!remoteNote.guid())) {
+    if (Q_UNLIKELY(!remoteElement.guid())) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Found a remote note without guid set"));
         QNWARNING(
             "synchronization:remote_to_local",
-            errorDescription << ", note: " << remoteNote);
+            errorDescription << ", note: " << remoteElement);
         Q_EMIT failure(errorDescription);
         return ResolveSyncConflictStatus::Ready;
     }
 
-    if (Q_UNLIKELY(!remoteNote.updateSequenceNum())) {
+    if (Q_UNLIKELY(!remoteElement.updateSequenceNum())) {
         ErrorString errorDescription(QT_TRANSLATE_NOOP(
             "RemoteToLocalSynchronizationManager",
             "Found a remote note without update sequence "
             "number set"));
         QNWARNING(
             "synchronization:remote_to_local",
-            errorDescription << ", note: " << remoteNote);
+            errorDescription << ", note: " << remoteElement);
         Q_EMIT failure(errorDescription);
         return ResolveSyncConflictStatus::Ready;
     }
 
     if (localConflict.guid() &&
-        (*localConflict.guid() == *remoteNote.guid()) &&
+        (*localConflict.guid() == *remoteElement.guid()) &&
         localConflict.updateSequenceNum() &&
         (*localConflict.updateSequenceNum() >=
-         *remoteNote.updateSequenceNum()))
+         *remoteElement.updateSequenceNum()))
     {
         QNDEBUG(
             "synchronization:remote_to_local",
@@ -12975,21 +12994,21 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
         return ResolveSyncConflictStatus::Ready;
     }
 
-    launchNoteSyncConflictResolver(localConflict, remoteNote);
+    launchNoteSyncConflictResolver(localConflict, remoteElement);
     return ResolveSyncConflictStatus::Pending;
 }
 
 template <>
 RemoteToLocalSynchronizationManager::ResolveSyncConflictStatus
 RemoteToLocalSynchronizationManager::resolveSyncConflict(
-    const qevercloud::LinkedNotebook & remoteLinkedNotebook,
+    const qevercloud::LinkedNotebook & remoteElement,
     const qevercloud::LinkedNotebook & localConflict)
 {
     QNDEBUG(
         "synchronization:remote_to_local",
         "RemoteToLocalSynchronizationManager::resolveSyncConflict"
             << "<LinkedNotebook>: remote linked notebook = "
-            << remoteLinkedNotebook
+            << remoteElement
             << "\nLocal conflicting linked notebook: " << localConflict);
 
     // NOTE: since linked notebook is just a pointer to a notebook in another
@@ -12997,7 +13016,7 @@ RemoteToLocalSynchronizationManager::resolveSyncConflict(
     // potential conflict in favor of local changes - the remote changes
     // should always win
 
-    qevercloud::LinkedNotebook linkedNotebook = remoteLinkedNotebook;
+    qevercloud::LinkedNotebook linkedNotebook = remoteElement;
     linkedNotebook.setLocallyModified(false);
 
     registerLinkedNotebookPendingAddOrUpdate(linkedNotebook);

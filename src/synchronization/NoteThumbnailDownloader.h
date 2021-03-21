@@ -34,8 +34,7 @@ class Q_DECL_HIDDEN NoteThumbnailDownloader final : public QObject
     Q_OBJECT
 public:
     explicit NoteThumbnailDownloader(
-        const QString & host, const QString & noteGuid,
-        const QString & authToken, const QString & shardId,
+        QString host, QString noteGuid, QString authToken, QString shardId,
         bool noteFromPublicLinkedNotebook, QObject * parent = nullptr);
 
     ~NoteThumbnailDownloader() override;

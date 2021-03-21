@@ -44,9 +44,9 @@ class Q_DECL_HIDDEN NotebookSyncConflictResolver final : public QObject
     Q_OBJECT
 public:
     explicit NotebookSyncConflictResolver(
-        const qevercloud::Notebook & remoteNotebook,
-        const QString & remoteNotebookLinkedNotebookGuid,
-        const qevercloud::Notebook & localConflict, NotebookSyncCache & cache,
+        qevercloud::Notebook remoteNotebook,
+        QString remoteNotebookLinkedNotebookGuid,
+        qevercloud::Notebook localConflict, NotebookSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
@@ -111,13 +111,13 @@ private:
 
     enum class State
     {
-        Undefined = 0,
+        Undefined,
         OverrideLocalChangesWithRemoteChanges,
         PendingConflictingNotebookRenaming,
         PendingRemoteNotebookAdoptionInLocalStorage
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
 
 private:
     NotebookSyncCache & m_cache;

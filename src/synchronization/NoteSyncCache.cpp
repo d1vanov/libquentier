@@ -41,10 +41,10 @@ namespace quentier {
 
 NoteSyncCache::NoteSyncCache(
     LocalStorageManagerAsync & localStorageManagerAsync,
-    const QString & linkedNotebookGuid, QObject * parent) :
+    QString linkedNotebookGuid, QObject * parent) :
     QObject(parent),
     m_localStorageManagerAsync(localStorageManagerAsync),
-    m_linkedNotebookGuid(linkedNotebookGuid)
+    m_linkedNotebookGuid(std::move(linkedNotebookGuid))
 {}
 
 void NoteSyncCache::clear()
@@ -66,11 +66,7 @@ bool NoteSyncCache::isFilled() const noexcept
         return false;
     }
 
-    if (m_listNotesRequestId.isNull()) {
-        return true;
-    }
-
-    return false;
+    return m_listNotesRequestId.isNull();
 }
 
 void NoteSyncCache::fill()
@@ -93,7 +89,7 @@ void NoteSyncCache::onListNotesComplete(
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<qevercloud::Note> foundNotes,
+    QString linkedNotebookGuid, QList<qevercloud::Note> foundNotes, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_listNotesRequestId) {
@@ -140,7 +136,8 @@ void NoteSyncCache::onListNotesFailed(
     LocalStorageManager::GetNoteOptions options, size_t limit, size_t offset,
     LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_listNotesRequestId) {
         return;
@@ -175,7 +172,8 @@ void NoteSyncCache::onListNotesFailed(
     Q_EMIT failure(errorDescription);
 }
 
-void NoteSyncCache::onAddNoteComplete(qevercloud::Note note, QUuid requestId)
+void NoteSyncCache::onAddNoteComplete(
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     NSDEBUG(
         "NoteSyncCache::onAddNoteComplete: request id = "
@@ -185,8 +183,8 @@ void NoteSyncCache::onAddNoteComplete(qevercloud::Note note, QUuid requestId)
 }
 
 void NoteSyncCache::onUpdateNoteComplete(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     NSDEBUG(
         "NoteSyncCache::onUpdateNoteComplete: request id = "
@@ -210,7 +208,7 @@ void NoteSyncCache::onUpdateNoteComplete(
 }
 
 void NoteSyncCache::onExpungeNoteComplete(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     NSDEBUG(
         "NoteSyncCache::onExpungeNoteComplete: request id = "

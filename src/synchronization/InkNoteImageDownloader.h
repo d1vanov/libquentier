@@ -33,11 +33,11 @@ class Q_DECL_HIDDEN InkNoteImageDownloader final :
     Q_OBJECT
 public:
     explicit InkNoteImageDownloader(
-        const QString & host, const QString & resourceGuid,
-        const QString & noteGuid, const QString & authToken,
-        const QString & shardId, const int height, const int width,
-        const bool noteFromPublicLinkedNotebook,
-        const QString & storageFolderPath, QObject * parent = nullptr);
+        QString host, QString resourceGuid,
+        QString noteGuid, QString authToken,
+        QString shardId, int height, int width,
+        bool noteFromPublicLinkedNotebook,
+        QString storageFolderPath, QObject * parent = nullptr);
 
     void run() override;
 

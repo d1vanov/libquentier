@@ -42,7 +42,7 @@ class Q_DECL_HIDDEN NotebookSyncCache final : public QObject
 public:
     NotebookSyncCache(
         LocalStorageManagerAsync & localStorageManagerAsync,
-        const QString & linkedNotebookGuid, QObject * parent = nullptr);
+        QString linkedNotebookGuid, QObject * parent = nullptr);
 
     void clear();
 
@@ -52,22 +52,26 @@ public:
      */
     [[nodiscard]] bool isFilled() const noexcept;
 
-    [[nodiscard]] const QHash<QString, QString> & nameByLocalIdHash() const noexcept
+    [[nodiscard]] const QHash<QString, QString> & nameByLocalIdHash()
+        const noexcept
     {
         return m_notebookNameByLocalId;
     }
 
-    [[nodiscard]] const QHash<QString, QString> & nameByGuidHash() const noexcept
+    [[nodiscard]] const QHash<QString, QString> & nameByGuidHash()
+        const noexcept
     {
         return m_notebookNameByGuid;
     }
 
-    [[nodiscard]] const QHash<QString, QString> & guidByNameHash() const noexcept
+    [[nodiscard]] const QHash<QString, QString> & guidByNameHash()
+        const noexcept
     {
         return m_notebookGuidByName;
     }
 
-    [[nodiscard]] const QHash<QString, qevercloud::Notebook> & dirtyNotebooksByGuidHash() const noexcept
+    [[nodiscard]] const QHash<QString, qevercloud::Notebook> &
+    dirtyNotebooksByGuidHash() const noexcept
     {
         return m_dirtyNotebooksByGuid;
     }
@@ -113,8 +117,12 @@ private Q_SLOTS:
         QUuid requestId);
 
     void onAddNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
-    void onUpdateNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
-    void onExpungeNotebookComplete(qevercloud::Notebook notebook, QUuid requestId);
+
+    void onUpdateNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
+
+    void onExpungeNotebookComplete(
+        qevercloud::Notebook notebook, QUuid requestId);
 
 private:
     void connectToLocalStorage();
