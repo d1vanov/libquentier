@@ -26,7 +26,6 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/MessageBox.h>
-#include <quentier/utility/QuentierCheckPtr.h>
 
 #include <qevercloud/generated/types/Resource.h>
 

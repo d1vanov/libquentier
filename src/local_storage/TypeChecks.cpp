@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -460,7 +460,7 @@ bool checkResource(
     }
 
     if (resource.data() && resource.data()->bodyHash()) {
-        qint32 hashSize =
+        const auto hashSize =
             static_cast<qint32>(resource.data()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -476,7 +476,7 @@ bool checkResource(
     }
 
     if (resource.recognition() && resource.recognition()->bodyHash()) {
-        qint32 hashSize =
+        const auto hashSize =
             static_cast<qint32>(resource.recognition()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -493,7 +493,7 @@ bool checkResource(
 
     if (resource.alternateData() && resource.alternateData()->bodyHash())
     {
-        qint32 hashSize =
+        const auto hashSize =
             static_cast<qint32>(resource.alternateData()->bodyHash()->size());
 
         if (hashSize != qevercloud::EDAM_HASH_LEN) {
@@ -509,7 +509,7 @@ bool checkResource(
     }
 
     if (resource.mime()) {
-        int32_t mimeSize = static_cast<int32_t>(resource.mime()->size());
+        const auto mimeSize = static_cast<qint32>(resource.mime()->size());
         if ((mimeSize < qevercloud::EDAM_MIME_LEN_MIN) ||
             (mimeSize > qevercloud::EDAM_MIME_LEN_MAX))
         {
@@ -524,7 +524,7 @@ bool checkResource(
 
     if (resource.attributes()) {
         if (resource.attributes()->sourceURL()) {
-            int32_t sourceURLSize = static_cast<int32_t>(
+            const auto sourceURLSize = static_cast<qint32>(
                 resource.attributes()->sourceURL()->size());
 
             if ((sourceURLSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
@@ -542,7 +542,7 @@ bool checkResource(
         }
 
         if (resource.attributes()->cameraMake()) {
-            int32_t cameraMakeSize = static_cast<int32_t>(
+            auto cameraMakeSize = static_cast<qint32>(
                 resource.attributes()->cameraMake()->size());
 
             if ((cameraMakeSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||
@@ -560,7 +560,7 @@ bool checkResource(
         }
 
         if (resource.attributes()->cameraModel()) {
-            int32_t cameraModelSize = static_cast<int32_t>(
+            auto cameraModelSize = static_cast<qint32>(
                 resource.attributes()->cameraModel()->size());
 
             if ((cameraModelSize < qevercloud::EDAM_ATTRIBUTE_LEN_MIN) ||

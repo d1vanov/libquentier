@@ -78,13 +78,13 @@ void LocalStorageCacheManager::clearAllNotes()
         Q_D(const LocalStorageCacheManager);                                   \
         switch (whichUid) {                                                    \
         case LocalUid:                                                         \
-            return d->find##Type##ByLocalUid(uid);                             \
+            return d->find##Type##ByLocalId(uid);                              \
         case Guid:                                                             \
             return d->find##Type##ByGuid(uid);                                 \
         default:                                                               \
             QNERROR(                                                           \
                 "local_storage",                                               \
-                "Detected incorrect local uid/remote guid "                    \
+                "Detected incorrect local id/remote guid "                     \
                     << "qualifier in local storage cache manager");            \
             return nullptr;                                                    \
         }                                                                      \

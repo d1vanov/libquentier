@@ -24,7 +24,6 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ApplicationSettings.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
 #include <quentier/utility/FileCopier.h>
 #include <quentier/utility/FileSystem.h>
@@ -58,11 +57,17 @@
 
 namespace quentier {
 
+namespace {
+
+const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
+
+} // namespace
+
 LocalStoragePatch1To2::LocalStoragePatch1To2(
-    const Account & account, LocalStorageManagerPrivate & localStorageManager,
+    Account account, LocalStorageManagerPrivate & localStorageManager,
     QSqlDatabase & database, QObject * parent) :
     ILocalStoragePatch(parent),
-    m_account(account), m_localStorageManager(localStorageManager),
+    m_account(std::move(account)), m_localStorageManager(localStorageManager),
     m_sqlDatabase(database)
 {}
 
@@ -95,7 +100,10 @@ QString LocalStoragePatch1To2::patchLongDescription() const
            "resources within your account");
 
     ErrorString errorDescription;
-    int numResources = m_localStorageManager.enResourceCount(errorDescription);
+
+    const int numResources =
+        m_localStorageManager.enResourceCount(errorDescription);
+
     if (Q_UNLIKELY(numResources < 0)) {
         QNWARNING(
             "local_storage:patches",
@@ -152,10 +160,9 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
     m_backupDirPath = storagePath + QStringLiteral("/backup_upgrade_1_to_2_") +
         QDateTime::currentDateTime().toString(Qt::ISODate);
 
-    QDir backupDir(m_backupDirPath);
+    QDir backupDir{m_backupDirPath};
     if (!backupDir.exists()) {
-        bool res = backupDir.mkpath(m_backupDirPath);
-        if (!res) {
+        if (!backupDir.mkpath(m_backupDirPath)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't backup local storage: failed to create "
                            "folder for backup files"));
@@ -168,16 +175,16 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
         }
     }
 
-    QFileInfo shmDbFileInfo(
-        storagePath + QStringLiteral("/qn.storage.sqlite-shm"));
+    const QFileInfo shmDbFileInfo{
+        storagePath + QStringLiteral("/qn.storage.sqlite-shm")};
 
     if (shmDbFileInfo.exists()) {
-        QString shmDbFileName = shmDbFileInfo.fileName();
+        const QString shmDbFileName = shmDbFileInfo.fileName();
 
-        QString shmDbBackupFilePath =
+        const QString shmDbBackupFilePath =
             m_backupDirPath + QStringLiteral("/") + shmDbFileName;
 
-        QFileInfo shmDbBackupFileInfo(shmDbBackupFilePath);
+        const QFileInfo shmDbBackupFileInfo{shmDbBackupFilePath};
         if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't backup local storage: failed to remove "
@@ -190,7 +197,7 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
             return false;
         }
 
-        QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
+        const QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
         if (!QFile::copy(shmDbFilePath, shmDbBackupFilePath)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't backup local storage: "
@@ -204,16 +211,16 @@ bool LocalStoragePatch1To2::backupLocalStorage(ErrorString & errorDescription)
         }
     }
 
-    QFileInfo walDbFileInfo(
-        storagePath + QStringLiteral("/qn.storage.sqlite-wal"));
+    const QFileInfo walDbFileInfo{
+        storagePath + QStringLiteral("/qn.storage.sqlite-wal")};
 
     if (walDbFileInfo.exists()) {
-        QString walDbFileName = walDbFileInfo.fileName();
+        const QString walDbFileName = walDbFileInfo.fileName();
 
-        QString walDbBackupFilePath =
+        const QString walDbBackupFilePath =
             m_backupDirPath + QStringLiteral("/") + walDbFileName;
 
-        QFileInfo walDbBackupFileInfo(walDbBackupFilePath);
+        const QFileInfo walDbBackupFileInfo{walDbBackupFilePath};
         if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't backup local storage: failed to remove "
@@ -353,10 +360,10 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(
     if (walDbBackupFileInfo.exists()) {
         QString walDbBackupFilePath = walDbBackupFileInfo.absoluteFilePath();
 
-        QString walDbFilePath =
+        const QString walDbFilePath =
             storagePath + QStringLiteral("/") + walDbFileName;
 
-        QFileInfo walDbFileInfo(walDbFilePath);
+        const QFileInfo walDbFileInfo{walDbFilePath};
         if (walDbFileInfo.exists() && !removeFile(walDbFilePath)) {
             errorDescription.setBase(
                 QT_TR_NOOP("Can't restore the local storage "
@@ -427,7 +434,7 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(
     QTimer::singleShot(0, this, SLOT(startLocalStorageRestorationFromBackup()));
 
     Q_UNUSED(restoreFromBackupEventLoop.exec())
-    auto status = restoreFromBackupEventLoop.exitStatus();
+    const auto status = restoreFromBackupEventLoop.exitStatus();
 
     if (!pFileCopierQPtr.isNull()) {
         QObject::disconnect(
@@ -452,8 +459,8 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(
 
     bool removedShmDbBackup = true;
 
-    QFileInfo shmDbBackupFileInfo(
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-shm"));
+    const QFileInfo shmDbBackupFileInfo{
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-shm")};
 
     if (shmDbBackupFileInfo.exists() &&
         !removeFile(shmDbBackupFileInfo.absoluteFilePath()))
@@ -468,8 +475,8 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(
 
     bool removedWalDbBackup = true;
 
-    QFileInfo walDbBackupFileInfo(
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-wal"));
+    const QFileInfo walDbBackupFileInfo{
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-wal")};
 
     if (walDbBackupFileInfo.exists() &&
         !removeFile(walDbBackupFileInfo.absoluteFilePath()))
@@ -484,8 +491,8 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(
 
     bool removedDbBackup = true;
 
-    QFileInfo dbBackupFileInfo(
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite"));
+    const QFileInfo dbBackupFileInfo{
+        m_backupDirPath + QStringLiteral("/qn.storage.sqlite")};
 
     if (dbBackupFileInfo.exists() &&
         !removeFile(dbBackupFileInfo.absoluteFilePath()))
@@ -500,7 +507,7 @@ bool LocalStoragePatch1To2::removeLocalStorageBackup(
     }
 
     bool removedBackupDir = true;
-    QDir backupDir(m_backupDirPath);
+    QDir backupDir{m_backupDirPath};
     if (!backupDir.rmdir(m_backupDirPath)) {
         QNWARNING(
             "local_storage:patches",
@@ -525,8 +532,8 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 {
     QNINFO("local_storage:patches", "LocalStoragePatch1To2::apply");
 
-    ApplicationSettings databaseUpgradeInfo(
-        m_account, UPGRADE_1_TO_2_PERSISTENCE);
+    ApplicationSettings databaseUpgradeInfo{
+        m_account, UPGRADE_1_TO_2_PERSISTENCE};
 
     ErrorString errorPrefix(
         QT_TR_NOOP("failed to upgrade local storage "
@@ -535,11 +542,11 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     errorDescription.clear();
 
     double lastProgress = 0.0;
-    QString storagePath = accountPersistentStoragePath(m_account);
+    const QString storagePath = accountPersistentStoragePath(m_account);
 
     QStringList resourceLocalIds;
 
-    bool allResourceDataCopiedFromTablesToFiles =
+    const bool allResourceDataCopiedFromTablesToFiles =
         databaseUpgradeInfo
             .value(
                 UPGRADE_1_TO_2_ALL_RESOURCE_DATA_COPIED_FROM_TABLE_TO_FILES_KEY)
@@ -586,7 +593,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
         for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
             QSqlQuery query(m_sqlDatabase);
 
-            bool res =
+            const bool res =
                 query.exec(QString::fromUtf8("SELECT noteLocalUid, dataBody, "
                                              "alternateDataBody FROM Resources "
                                              "WHERE resourceLocalUid='%1'")
@@ -608,17 +615,17 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                 return false;
             }
 
-            QSqlRecord rec = query.record();
+            const QSqlRecord rec = query.record();
 
-            QString noteLocalUid;
+            QString noteLocalId;
             QByteArray dataBody;
             QByteArray alternateDataBody;
 
 #define EXTRACT_ENTRY(name, type)                                              \
     {                                                                          \
-        int index = rec.indexOf(QStringLiteral(#name));                        \
+        const int index = rec.indexOf(QStringLiteral(#name));                  \
         if (index >= 0) {                                                      \
-            QVariant value = rec.value(index);                                 \
+            const QVariant value = rec.value(index);                           \
             if (!value.isNull()) {                                             \
                 name = qvariant_cast<type>(value);                             \
             }                                                                  \
@@ -636,7 +643,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     }
 
             bool required = true;
-            EXTRACT_ENTRY(noteLocalUid, QString)
+            EXTRACT_ENTRY(noteLocalId, QString)
             EXTRACT_ENTRY(dataBody, QByteArray)
 
             required = false;
@@ -645,12 +652,11 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 #undef EXTRACT_ENTRY
 
             // 3.1 Ensure the existence of dir for note resource's data body
-            QDir noteResourceDataDir(
-                storagePath + QStringLiteral("/Resources/data/") +
-                noteLocalUid);
+            QDir noteResourceDataDir{
+                storagePath + QStringLiteral("/Resources/data/") + noteLocalId};
 
             if (!noteResourceDataDir.exists()) {
-                bool res = noteResourceDataDir.mkpath(
+                const bool res = noteResourceDataDir.mkpath(
                     noteResourceDataDir.absolutePath());
                 if (!res) {
                     errorDescription = errorPrefix;
@@ -660,7 +666,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                    "for some note"));
 
                     errorDescription.details() =
-                        QStringLiteral("note local uid = ") + noteLocalUid;
+                        QStringLiteral("note local id = ") + noteLocalId;
 
                     QNWARNING("tests:local_storage", errorDescription);
                     return false;
@@ -668,9 +674,9 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
             }
 
             // 3.2 Write resource data body to a file
-            QFile resourceDataFile(
+            QFile resourceDataFile{
                 noteResourceDataDir.absolutePath() + QStringLiteral("/") +
-                resourceLocalId + QStringLiteral(".dat"));
+                resourceLocalId + QStringLiteral(".dat")};
 
             if (!resourceDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
@@ -685,7 +691,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                 return false;
             }
 
-            qint64 dataSize = dataBody.size();
+            const qint64 dataSize = dataBody.size();
             qint64 bytesWritten = resourceDataFile.write(dataBody);
             if (bytesWritten < 0) {
                 errorDescription = errorPrefix;
@@ -749,12 +755,12 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
 
             // 3.4 Ensure the existence of dir for note resource's alternate
             // data body
-            QDir noteResourceAlternateDataDir(
+            QDir noteResourceAlternateDataDir{
                 storagePath + QStringLiteral("/Resource/alternateData/") +
-                noteLocalUid);
+                noteLocalId};
 
             if (!noteResourceAlternateDataDir.exists()) {
-                bool res = noteResourceAlternateDataDir.mkpath(
+                const bool res = noteResourceAlternateDataDir.mkpath(
                     noteResourceAlternateDataDir.absolutePath());
 
                 if (!res) {
@@ -764,7 +770,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                                    "alternate data bodies for some note"));
 
                     errorDescription.details() =
-                        QStringLiteral("note local uid = ") + noteLocalUid;
+                        QStringLiteral("note local uid = ") + noteLocalId;
 
                     QNWARNING("tests:local_storage", errorDescription);
                     return false;
@@ -772,10 +778,10 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
             }
 
             // 3.5 Write resource alternate data body to a file
-            QFile resourceAlternateDataFile(
+            QFile resourceAlternateDataFile{
                 noteResourceAlternateDataDir.absolutePath() +
                 QStringLiteral("/") + resourceLocalId +
-                QStringLiteral(".dat"));
+                QStringLiteral(".dat")};
 
             if (!resourceAlternateDataFile.open(QIODevice::WriteOnly)) {
                 errorDescription = errorPrefix;
@@ -790,7 +796,7 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
                 return false;
             }
 
-            qint64 alternateDataSize = alternateDataBody.size();
+            const qint64 alternateDataSize = alternateDataBody.size();
             bytesWritten = resourceAlternateDataFile.write(alternateDataBody);
             if (bytesWritten < 0) {
                 errorDescription = errorPrefix;
@@ -877,8 +883,8 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     if (!allResourceDataRemovedFromTables) {
         // 5.1 Set resource data body and alternate data body to null
         {
-            QSqlQuery query(m_sqlDatabase);
-            bool res =
+            QSqlQuery query{m_sqlDatabase};
+            const bool res =
                 query.exec(QStringLiteral("UPDATE Resources SET dataBody=NULL, "
                                           "alternateDataBody=NULL"));
             DATABASE_CHECK_AND_SET_ERROR()
@@ -915,16 +921,15 @@ bool LocalStoragePatch1To2::apply(ErrorString & errorDescription)
     Q_EMIT progress(0.95);
 
     // Part 6: change the version in local storage database
-    QSqlQuery query(m_sqlDatabase);
-    bool res = query.exec(
+    QSqlQuery query{m_sqlDatabase};
+    const bool res = query.exec(
         QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(2)"));
 
     DATABASE_CHECK_AND_SET_ERROR()
 
     QNDEBUG(
         "local_storage:patches",
-        "Finished upgrading the local storage "
-            << "from version 1 to version 2");
+        "Finished upgrading the local storage from version 1 to version 2");
     return true;
 }
 
@@ -932,9 +937,9 @@ QStringList LocalStoragePatch1To2::
     listResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
         ErrorString & errorDescription)
 {
-    QSqlQuery query(m_sqlDatabase);
+    QSqlQuery query{m_sqlDatabase};
 
-    bool res =
+    const bool res =
         query.exec(QStringLiteral("SELECT resourceLocalUid FROM Resources"));
 
     if (Q_UNLIKELY(!res)) {
@@ -948,13 +953,13 @@ QStringList LocalStoragePatch1To2::
         return QStringList();
     }
 
-    QStringList resourceLocalUids;
-    resourceLocalUids.reserve(std::max(query.size(), 0));
+    QStringList resourceLocalIds;
+    resourceLocalIds.reserve(std::max(query.size(), 0));
 
     while (query.next()) {
-        QSqlRecord rec = query.record();
+        const QSqlRecord rec = query.record();
 
-        QString resourceLocalId =
+        const QString resourceLocalId =
             rec.value(QStringLiteral("resourceLocalUid")).toString();
 
         if (Q_UNLIKELY(resourceLocalId.isEmpty())) {
@@ -963,30 +968,29 @@ QStringList LocalStoragePatch1To2::
                            "needs a transfer of its binary data into another "
                            "table as a part of database upgrade"));
             QNWARNING("tests:local_storage", errorDescription);
-            return QStringList();
+            return {};
         }
 
-        resourceLocalUids << resourceLocalId;
+        resourceLocalIds << resourceLocalId;
     }
 
-    return resourceLocalUids;
+    return resourceLocalIds;
 }
 
 void LocalStoragePatch1To2::
     filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
-        QStringList & resourceLocalUids)
+        QStringList & resourceLocalIds)
 {
     QNDEBUG(
         "local_storage:patches",
-        "LocalStoragePatch1To2"
-            << "::"
-               "filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2"
+        "LocalStoragePatch1To2::"
+            << "filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2"
                );
 
-    ApplicationSettings databaseUpgradeInfo(
-        m_account, UPGRADE_1_TO_2_PERSISTENCE);
+    ApplicationSettings databaseUpgradeInfo{
+        m_account, UPGRADE_1_TO_2_PERSISTENCE};
 
-    int numEntries = databaseUpgradeInfo.beginReadArray(
+    const int numEntries = databaseUpgradeInfo.beginReadArray(
         UPGRADE_1_TO_2_LOCAL_IDS_FOR_RESOURCES_COPIED_TO_FILES_KEY);
 
     QSet<QString> processedResourceLocalUids;
@@ -1001,10 +1005,10 @@ void LocalStoragePatch1To2::
     databaseUpgradeInfo.endArray();
 
     const auto it = std::remove_if(
-        resourceLocalUids.begin(), resourceLocalUids.end(),
+        resourceLocalIds.begin(), resourceLocalIds.end(),
         StringUtils::StringFilterPredicate(processedResourceLocalUids));
 
-    resourceLocalUids.erase(it, resourceLocalUids.end());
+    resourceLocalIds.erase(it, resourceLocalIds.end());
 }
 
 bool LocalStoragePatch1To2::
@@ -1018,11 +1022,11 @@ bool LocalStoragePatch1To2::
                "ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1T"
                "oVersion2");
 
-    QString storagePath = accountPersistentStoragePath(m_account);
+    const QString storagePath = accountPersistentStoragePath(m_account);
 
-    QDir resourcesDataBodyDir(storagePath + QStringLiteral("/Resources/data"));
+    QDir resourcesDataBodyDir{storagePath + QStringLiteral("/Resources/data")};
     if (!resourcesDataBodyDir.exists()) {
-        bool res =
+        const bool res =
             resourcesDataBodyDir.mkpath(resourcesDataBodyDir.absolutePath());
 
         if (!res) {
@@ -1038,11 +1042,11 @@ bool LocalStoragePatch1To2::
         }
     }
 
-    QDir resourcesAlternateDataBodyDir(
-        storagePath + QStringLiteral("/Resources/alternateData"));
+    QDir resourcesAlternateDataBodyDir{
+        storagePath + QStringLiteral("/Resources/alternateData")};
 
     if (!resourcesAlternateDataBodyDir.exists()) {
-        bool res = resourcesAlternateDataBodyDir.mkpath(
+        const bool res = resourcesAlternateDataBodyDir.mkpath(
             resourcesAlternateDataBodyDir.absolutePath());
 
         if (!res) {
@@ -1067,12 +1071,13 @@ void LocalStoragePatch1To2::startLocalStorageBackup()
         "local_storage:patches",
         "LocalStoragePatch1To2::startLocalStorageBackup");
 
-    QString storagePath = accountPersistentStoragePath(m_account);
-    QString dbFileName = QStringLiteral("qn.storage.sqlite");
-    QString sourceDbFilePath = storagePath + QStringLiteral("/") + dbFileName;
+    const QString storagePath = accountPersistentStoragePath(m_account);
 
-    QString backupDbFilePath =
-        m_backupDirPath + QStringLiteral("/") + dbFileName;
+    const QString sourceDbFilePath =
+        storagePath + QStringLiteral("/") + gDbFileName;
+
+    const QString backupDbFilePath =
+        m_backupDirPath + QStringLiteral("/") + gDbFileName;
 
     Q_EMIT copyDbFile(sourceDbFilePath, backupDbFilePath);
 }
@@ -1083,12 +1088,13 @@ void LocalStoragePatch1To2::startLocalStorageRestorationFromBackup()
         "local_storage:patches",
         "LocalStoragePatch1To2::startLocalStorageRestorationFromBackup");
 
-    QString storagePath = accountPersistentStoragePath(m_account);
-    QString dbFileName = QStringLiteral("qn.storage.sqlite");
-    QString sourceDbFilePath = storagePath + QStringLiteral("/") + dbFileName;
+    const QString storagePath = accountPersistentStoragePath(m_account);
 
-    QString backupDbFilePath =
-        m_backupDirPath + QStringLiteral("/") + dbFileName;
+    const QString sourceDbFilePath =
+        storagePath + QStringLiteral("/") + gDbFileName;
+
+    const QString backupDbFilePath =
+        m_backupDirPath + QStringLiteral("/") + gDbFileName;
 
     Q_EMIT copyDbFile(backupDbFilePath, sourceDbFilePath);
 }

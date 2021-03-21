@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,7 +41,7 @@ class Q_DECL_HIDDEN LocalStoragePatchManager final : public QObject
     Q_OBJECT
 public:
     explicit LocalStoragePatchManager(
-        const Account & account,
+        Account account,
         LocalStorageManagerPrivate & localStorageManager,
         QSqlDatabase & database, QObject * parent = nullptr);
 

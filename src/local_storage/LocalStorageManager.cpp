@@ -505,7 +505,7 @@ LocalStorageManager::listTagsWithNoteLocalIds(
     Q_D(const LocalStorageManager);
     return d->listTagsWithNoteLocalIds(
         flag, errorDescription, limit, offset, order, orderDirection,
-        linkedNotebookGuid);
+        std::move(linkedNotebookGuid));
 }
 
 bool LocalStorageManager::expungeTag(

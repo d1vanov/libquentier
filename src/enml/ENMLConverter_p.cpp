@@ -22,7 +22,6 @@
 #include <quentier/enml/HTMLCleaner.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/NoteUtils.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -31,18 +30,16 @@
 #include <qevercloud/utility/ToRange.h>
 
 #include <QApplication>
-#include <QBrush>
 #include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
-#include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QPainter>
 #include <QPen>
 #include <QPixmap>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QString>
 #include <QThread>
 #include <QXmlStreamReader>
@@ -160,8 +157,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
     QString error;
     m_cachedConvertedXml.resize(0);
-    bool res = m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error);
-    if (!res) {
+    if (!m_pHtmlCleaner->htmlToXml(html, m_cachedConvertedXml, error)) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to clean up the note's html"));
         errorDescription.details() = error;
@@ -170,12 +166,11 @@ bool ENMLConverterPrivate::htmlToNoteContent(
 
     QNTRACE("enml", "HTML converted to XML by tidy: " << m_cachedConvertedXml);
 
-    QXmlStreamReader reader(m_cachedConvertedXml);
+    QXmlStreamReader reader{m_cachedConvertedXml};
 
     noteContent.resize(0);
     QBuffer noteContentBuffer;
-    res = noteContentBuffer.open(QIODevice::WriteOnly);
-    if (Q_UNLIKELY(!res)) {
+    if (Q_UNLIKELY(!noteContentBuffer.open(QIODevice::WriteOnly))) {
         errorDescription.setBase(
             QT_TR_NOOP("Failed to open the buffer to write the converted note "
                        "content into"));
@@ -183,7 +178,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
         return false;
     }
 
-    QXmlStreamWriter writer(&noteContentBuffer);
+    QXmlStreamWriter writer{&noteContentBuffer};
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();
@@ -235,7 +230,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
                 continue;
             }
 
-            QString text = reader.text().toString();
+            const QString text = reader.text().toString();
 
             if (reader.isCDATA()) {
                 writer.writeCDATA(text);
@@ -290,8 +285,7 @@ bool ENMLConverterPrivate::htmlToNoteContent(
     QNTRACE("enml", "Converted ENML: " << noteContent);
 
     ErrorString validationError;
-    res = validateAndFixupEnml(noteContent, validationError);
-    if (!res) {
+    if (!validateAndFixupEnml(noteContent, validationError)) {
         errorDescription = validationError;
         QNWARNING(
             "enml",
@@ -652,10 +646,10 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                     if (srcAttr.startsWith(QStringLiteral("qrc:/"))) {
                         QString srcAttrShortened = srcAttr;
                         srcAttrShortened.remove(0, 3);
-                        img = QImage(srcAttrShortened, "PNG");
+                        img = QImage{srcAttrShortened, "PNG"};
                     }
                     else {
-                        QFileInfo imgFileInfo(srcAttr);
+                        const QFileInfo imgFileInfo{srcAttr};
                         if (!imgFileInfo.exists()) {
                             errorDescription.setBase(
                                 QT_TR_NOOP("Couldn't find the file "
@@ -665,7 +659,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                             return false;
                         }
 
-                        img = QImage(srcAttr, "PNG");
+                        img = QImage{srcAttr, "PNG"};
                     }
 
                     shouldAddImgAsResource = true;
@@ -692,7 +686,7 @@ bool ENMLConverterPrivate::htmlToQTextDocument(
                         if (pApp->thread() == pCurrentThread) {
                             auto pixmap = QPixmap::fromImage(img);
 
-                            QPainter painter(&pixmap);
+                            QPainter painter{&pixmap};
                             painter.setRenderHints(
                                 QPainter::Antialiasing,
                                 /* on = */ true);
@@ -1427,7 +1421,7 @@ QStringList ENMLConverterPrivate::plainTextToListOfWords(
 {
     // Simply remove all non-word characters from plain text
     return plainText.split(
-        QRegExp(QStringLiteral("\\W+")),
+        QRegularExpression{QStringLiteral("\\W+")},
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         Qt::SkipEmptyParts);
 #else
@@ -3837,7 +3831,7 @@ bool ENMLConverterPrivate::validateAgainstDtd(
         return false;
     }
 
-    QFile dtdFile(dtdFilePath);
+    QFile dtdFile{dtdFilePath};
     if (!dtdFile.open(QIODevice::ReadOnly)) {
         errorDescription.setBase(
             QT_TR_NOOP("Could not validate document, can't "

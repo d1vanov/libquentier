@@ -753,7 +753,7 @@ public:
         QTextStream & strm, ListLinkedNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListLinkedNotebooksOrder order);
+        QDebug & dbg, ListLinkedNotebooksOrder order);
 
     /**
      * @brief listAllLinkedNotebooks - attempts to list all linked notebooks
@@ -859,7 +859,7 @@ public:
         QTextStream & strm, NoteCountOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, NoteCountOptions options);
+        QDebug & dbg, NoteCountOptions options);
 
     /**
      * @brief noteCount returns the number of notes currently
@@ -1022,13 +1022,13 @@ public:
         QTextStream & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, UpdateNoteOption option);
+        QDebug & dbg, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, UpdateNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, UpdateNoteOptions options);
+        QDebug & dbg, UpdateNoteOptions options);
 
     /**
      * @brief updateNote updates passed in Note in the local storage database.
@@ -1114,7 +1114,7 @@ public:
         QTextStream & strm, GetNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, GetNoteOptions options);
+        QDebug & dbg, GetNoteOptions options);
 
     /**
      * @brief findNote - attempts to find note in the local storage database
@@ -1152,7 +1152,7 @@ public:
         QTextStream & strm, ListNotesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListNotesOrder order);
+        QDebug & dbg, ListNotesOrder order);
 
     /**
      * @brief listNotesPerNotebook attempts to list notes per given notebook
@@ -1492,7 +1492,7 @@ public:
         QTextStream & strm, ListTagsOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListTagsOrder order);
+        QDebug & dbg, ListTagsOrder order);
 
     /**
      * @brief listAllTagsPerNote lists all tags per given note
@@ -1771,13 +1771,13 @@ public:
         QTextStream & strm, GetResourceOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, GetResourceOption option);
+        QDebug & dbg, GetResourceOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, GetResourceOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, GetResourceOptions options);
+        QDebug & dbg, GetResourceOptions options);
 
     /**
      * @brief findEnResource method attempts to find resource in the local
@@ -1905,7 +1905,7 @@ public:
         QTextStream & strm, ListSavedSearchesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListSavedSearchesOrder order);
+        QDebug & dbg, ListSavedSearchesOrder order);
 
     /**
      * @brief listAllSavedSearches lists all saved searches within the account.

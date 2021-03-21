@@ -20,7 +20,6 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/NoteUtils.h>
-#include <quentier/utility/Compat.h>
 #include <quentier/utility/SysInfo.h>
 
 #include <QMetaMethod>
@@ -47,7 +46,7 @@ public:
         m_useCache = useCache;
     }
 
-    void cacheNotes(
+    void cacheNotes( // NOLINT
         const QList<qevercloud::Note> & notes,
         const LocalStorageManager::GetNoteOptions options)
     {
@@ -145,9 +144,8 @@ LocalStorageManagerAsync::localStorageCacheManager() const
     if (!d->m_useCache) {
         return nullptr;
     }
-    else {
-        return d->m_pLocalStorageCacheManager;
-    }
+
+    return d->m_pLocalStorageCacheManager;
 }
 
 bool LocalStorageManagerAsync::installCacheExpiryFunction(
@@ -179,16 +177,12 @@ void LocalStorageManagerAsync::init()
 {
     Q_D(LocalStorageManagerAsync);
 
-    if (d->m_pLocalStorageManager) {
-        delete d->m_pLocalStorageManager;
-    }
+    delete d->m_pLocalStorageManager;
 
     d->m_pLocalStorageManager =
         new LocalStorageManager(d->m_account, d->m_startupOptions);
 
-    if (d->m_pLocalStorageCacheManager) {
-        delete d->m_pLocalStorageCacheManager;
-    }
+    delete d->m_pLocalStorageCacheManager;
 
     d->m_pLocalStorageCacheManager = new LocalStorageCacheManager();
 
@@ -226,8 +220,8 @@ void LocalStorageManagerAsync::onGetUserCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onSwitchUserRequest(
-    Account account, LocalStorageManager::StartupOptions startupOptions,
-    QUuid requestId)
+    Account account, // NOLINT
+    LocalStorageManager::StartupOptions startupOptions, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -257,7 +251,7 @@ void LocalStorageManagerAsync::onSwitchUserRequest(
 }
 
 void LocalStorageManagerAsync::onAddUserRequest(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -286,7 +280,7 @@ void LocalStorageManagerAsync::onAddUserRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateUserRequest(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -344,7 +338,7 @@ void LocalStorageManagerAsync::onFindUserRequest(
 }
 
 void LocalStorageManagerAsync::onDeleteUserRequest(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -373,7 +367,7 @@ void LocalStorageManagerAsync::onDeleteUserRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeUserRequest(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -791,7 +785,7 @@ void LocalStorageManagerAsync::onListNotebooksRequest(
 }
 
 void LocalStorageManagerAsync::onListSharedNotebooksPerNotebookGuidRequest(
-    QString notebookGuid, QUuid requestId)
+    QString notebookGuid, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -891,7 +885,7 @@ void LocalStorageManagerAsync::onGetLinkedNotebookCountRequest(QUuid requestId)
 }
 
 void LocalStorageManagerAsync::onAddLinkedNotebookRequest(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -927,7 +921,7 @@ void LocalStorageManagerAsync::onAddLinkedNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onUpdateLinkedNotebookRequest(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1102,7 +1096,7 @@ void LocalStorageManagerAsync::onListLinkedNotebooksRequest(
 }
 
 void LocalStorageManagerAsync::onExpungeLinkedNotebookRequest(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1171,7 +1165,7 @@ void LocalStorageManagerAsync::onGetNoteCountRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
-    qevercloud::Notebook notebook,
+    qevercloud::Notebook notebook, // NOLINT
     LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1207,8 +1201,8 @@ void LocalStorageManagerAsync::onGetNoteCountPerNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerTagRequest(
-    qevercloud::Tag tag, LocalStorageManager::NoteCountOptions options,
-    QUuid requestId)
+    qevercloud::Tag tag, // NOLINT
+    LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -1275,7 +1269,7 @@ void LocalStorageManagerAsync::onGetNoteCountsPerAllTagsRequest(
 }
 
 void LocalStorageManagerAsync::onGetNoteCountPerNotebooksAndTagsRequest(
-    QStringList notebookLocalIds, QStringList tagLocalIds,
+    QStringList notebookLocalIds, QStringList tagLocalIds, // NOLINT
     LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_D(LocalStorageManagerAsync);
@@ -1518,10 +1512,10 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
         }
 
         if (shouldCheckForTagListUpdate) {
-            const QStringList previousTagLocalIds =
+            const QStringList & previousTagLocalIds =
                 previousNoteVersion.tagLocalIds();
 
-            const QStringList updatedTagLocalIds = note.tagLocalIds();
+            const QStringList & updatedTagLocalIds = note.tagLocalIds();
 
             bool tagListUpdated =
                 (previousTagLocalIds.size() != updatedTagLocalIds.size());
@@ -1684,7 +1678,8 @@ void LocalStorageManagerAsync::onFindNoteRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
-    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Notebook notebook, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1729,7 +1724,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebookRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerTagRequest(
-    qevercloud::Tag tag, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Tag tag, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1773,7 +1769,7 @@ void LocalStorageManagerAsync::onListNotesPerTagRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
-    QStringList notebookLocalIds, QStringList tagLocalIds,
+    QStringList notebookLocalIds, QStringList tagLocalIds, // NOLINT
     LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
@@ -1818,7 +1814,8 @@ void LocalStorageManagerAsync::onListNotesPerNotebooksAndTagsRequest(
 }
 
 void LocalStorageManagerAsync::onListNotesByLocalIdsRequest(
-    QStringList noteLocalIds, LocalStorageManager::GetNoteOptions options,
+    QStringList noteLocalIds, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -1908,7 +1905,7 @@ void LocalStorageManagerAsync::onListNotesRequest(
 }
 
 void LocalStorageManagerAsync::onFindNoteLocalIdsWithSearchQuery(
-    NoteSearchQuery noteSearchQuery, QUuid requestId)
+    NoteSearchQuery noteSearchQuery, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 
@@ -2138,7 +2135,8 @@ void LocalStorageManagerAsync::onFindTagRequest(
 }
 
 void LocalStorageManagerAsync::onListAllTagsPerNoteRequest(
-    qevercloud::Note note, LocalStorageManager::ListObjectsOptions flag,
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::ListObjectsOptions flag,
     std::size_t limit, std::size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection, QUuid requestId)
@@ -2897,7 +2895,7 @@ void LocalStorageManagerAsync::onExpungeSavedSearchRequest(
 }
 
 void LocalStorageManagerAsync::onAccountHighUsnRequest(
-    QString linkedNotebookGuid, QUuid requestId)
+    QString linkedNotebookGuid, QUuid requestId) // NOLINT
 {
     Q_D(LocalStorageManagerAsync);
 

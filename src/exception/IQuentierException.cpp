@@ -16,25 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/exception/IQuentierException.h>
+
+#include <cstddef>
 #include <cstring>
 #include <ostream>
-
-#include <quentier/exception/IQuentierException.h>
 
 namespace quentier {
 
 #define INIT_WHAT_MESSAGE()                                                    \
-    QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();           \
-    int size = bytes.size();                                                   \
+    const QByteArray bytes = m_message.nonLocalizedString().toLocal8Bit();     \
+    const int size = bytes.size();                                             \
     if (size >= 0) {                                                           \
-        size_t usize = static_cast<size_t>(size);                              \
+        std::size_t usize = static_cast<std::size_t>(size);                    \
         m_whatMessage = new char[usize + 1];                                   \
         Q_UNUSED(strncpy(m_whatMessage, bytes.constData(), usize))             \
         m_whatMessage[usize] = '\0';                                           \
     }
 
-IQuentierException::IQuentierException(const ErrorString & message) :
-    m_message(message)
+IQuentierException::IQuentierException(ErrorString message) :
+    m_message(std::move(message))
 {
     INIT_WHAT_MESSAGE()
 }
@@ -85,6 +86,5 @@ QTextStream & IQuentierException::print(QTextStream & strm) const
     strm << "\n message: " << m_message.nonLocalizedString();
     return strm;
 }
-
 
 } // namespace quentier

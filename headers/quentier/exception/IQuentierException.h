@@ -48,7 +48,7 @@ public:
     QTextStream & print(QTextStream & strm) const override;
 
 protected:
-    explicit IQuentierException(const ErrorString & message);
+    explicit IQuentierException(ErrorString message);
     IQuentierException(const IQuentierException & other);
     IQuentierException & operator=(const IQuentierException & other);
 

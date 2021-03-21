@@ -40,31 +40,31 @@ DefaultLocalStorageCacheExpiryChecker::clone() const
 
 bool DefaultLocalStorageCacheExpiryChecker::checkNotes() const
 {
-    size_t numNotes = m_localStorageCacheManager.numCachedNotes();
+    const auto numNotes = m_localStorageCacheManager.numCachedNotes();
     return (numNotes < local_storage::maxNotesToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkResources() const
 {
-    size_t numResources = m_localStorageCacheManager.numCachedResources();
+    const auto numResources = m_localStorageCacheManager.numCachedResources();
     return (numResources < local_storage::maxResourcesToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkNotebooks() const
 {
-    size_t numNotebooks = m_localStorageCacheManager.numCachedNotebooks();
+    const auto numNotebooks = m_localStorageCacheManager.numCachedNotebooks();
     return (numNotebooks < local_storage::maxNotebooksToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkTags() const
 {
-    size_t numTags = m_localStorageCacheManager.numCachedTags();
+    const auto numTags = m_localStorageCacheManager.numCachedTags();
     return (numTags < local_storage::maxTagsToCache);
 }
 
 bool DefaultLocalStorageCacheExpiryChecker::checkLinkedNotebooks() const
 {
-    size_t numCachedLinkedNotebooks =
+    const auto numCachedLinkedNotebooks =
         m_localStorageCacheManager.numCachedLinkedNotebooks();
 
     return (numCachedLinkedNotebooks < local_storage::maxLinkedNotebooksToCache);
@@ -72,7 +72,7 @@ bool DefaultLocalStorageCacheExpiryChecker::checkLinkedNotebooks() const
 
 bool DefaultLocalStorageCacheExpiryChecker::checkSavedSearches() const
 {
-    size_t numCachedSavedSearches =
+    const auto numCachedSavedSearches =
         m_localStorageCacheManager.numCachedSavedSearches();
 
     return (numCachedSavedSearches < local_storage::maxSavedSearchesToCache);

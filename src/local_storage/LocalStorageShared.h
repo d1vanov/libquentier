@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,9 +34,9 @@ namespace quentier {
         return false;                                                          \
     }
 
-QString lastExecutedQuery(const QSqlQuery & query);
+[[nodiscard]] QString lastExecutedQuery(const QSqlQuery & query);
 
-QString sqlEscapeString(const QString & str);
+[[nodiscard]] QString sqlEscapeString(const QString & str);
 
 } // namespace quentier
 

@@ -37,6 +37,7 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
+#include <cstddef>
 #include <memory>
 
 namespace quentier {
@@ -47,18 +48,18 @@ class Q_DECL_HIDDEN LocalStorageCacheManagerPrivate final : public Printable
 public:
     LocalStorageCacheManagerPrivate(LocalStorageCacheManager & q);
 
-    virtual ~LocalStorageCacheManagerPrivate() override;
+    ~LocalStorageCacheManagerPrivate() override;
 
     void clear();
-    bool empty() const;
+    [[nodiscard]] bool empty() const noexcept;
 
     // Notes cache
     [[nodiscard]] std::size_t numCachedNotes() const;
     void cacheNote(const qevercloud::Note & note);
     void expungeNote(const qevercloud::Note & note);
 
-    [[nodiscard]] const qevercloud::Note * findNoteByLocalUid(
-        const QString & localUid) const;
+    [[nodiscard]] const qevercloud::Note * findNoteByLocalId(
+        const QString & localId) const;
 
     [[nodiscard]] const qevercloud::Note * findNoteByGuid(
         const QString & guid) const;
@@ -70,8 +71,8 @@ public:
     void cacheResource(const qevercloud::Resource & resource);
     void expungeResource(const qevercloud::Resource & resource);
 
-    [[nodiscard]] const qevercloud::Resource * findResourceByLocalUid(
-        const QString & localUid) const;
+    [[nodiscard]] const qevercloud::Resource * findResourceByLocalId(
+        const QString & localId) const;
 
     [[nodiscard]] const qevercloud::Resource * findResourceByGuid(
         const QString & guid) const;
@@ -83,8 +84,8 @@ public:
     void cacheNotebook(const qevercloud::Notebook & notebook);
     void expungeNotebook(const qevercloud::Notebook & notebook);
 
-    [[nodiscard]] const qevercloud::Notebook * findNotebookByLocalUid(
-        const QString & localUid) const;
+    [[nodiscard]] const qevercloud::Notebook * findNotebookByLocalId(
+        const QString & localId) const;
 
     [[nodiscard]] const qevercloud::Notebook * findNotebookByGuid(
         const QString & guid) const;
@@ -99,8 +100,8 @@ public:
     void cacheTag(const qevercloud::Tag & tag);
     void expungeTag(const qevercloud::Tag & tag);
 
-    [[nodiscard]] const qevercloud::Tag * findTagByLocalUid(
-        const QString & localUid) const;
+    [[nodiscard]] const qevercloud::Tag * findTagByLocalId(
+        const QString & localId) const;
 
     [[nodiscard]] const qevercloud::Tag * findTagByGuid(
         const QString & guid) const;
@@ -127,8 +128,8 @@ public:
     void cacheSavedSearch(const qevercloud::SavedSearch & savedSearch);
     void expungeSavedSearch(const qevercloud::SavedSearch & savedSearch);
 
-    [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByLocalUid(
-        const QString & localUid) const;
+    [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByLocalId(
+        const QString & localId) const;
 
     [[nodiscard]] const qevercloud::SavedSearch * findSavedSearchByGuid(
         const QString & guid) const;

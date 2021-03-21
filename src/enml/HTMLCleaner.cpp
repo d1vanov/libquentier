@@ -46,7 +46,11 @@ namespace quentier {
 class HTMLCleaner::Impl
 {
 public:
-    Impl() : m_tidyOutput(), m_tidyErrorBuffer(), m_tidyDoc(tidyCreate()) {}
+    Impl() : m_tidyDoc(tidyCreate())
+    {
+        tidyBufInit(&m_tidyOutput);
+        tidyBufInit(&m_tidyErrorBuffer);
+    }
 
     ~Impl() noexcept
     {
@@ -252,9 +256,9 @@ bool HTMLCleaner::Impl::convertHtml(
     }
 
     if (rc < 0) {
-        QString errorPrefix = QStringLiteral("tidy-html5 error");
+        const QString errorPrefix = QStringLiteral("tidy-html5 error");
 
-        QByteArray errorBody = QByteArray(
+        const QByteArray errorBody = QByteArray(
             reinterpret_cast<const char *>(m_tidyErrorBuffer.bp),
             static_cast<int>(m_tidyErrorBuffer.size));
 
@@ -287,7 +291,9 @@ bool HTMLCleaner::Impl::convertHtml(
     bool insertedNbspEntityDeclaration = false;
 
     if (output.startsWith(QStringLiteral("<?xml version"))) {
-        int firstEnclosingBracketIndex = output.indexOf(QChar::fromLatin1('>'));
+        const int firstEnclosingBracketIndex =
+            output.indexOf(QChar::fromLatin1('>'));
+
         if (firstEnclosingBracketIndex > 0) {
             output.insert(
                 firstEnclosingBracketIndex + 1, nbspEntityDeclaration);
@@ -303,7 +309,7 @@ bool HTMLCleaner::Impl::convertHtml(
 
     // Now need to clean up after tidy: it inserts spurious \n characters
     // in some places
-    QXmlStreamReader reader(output);
+    QXmlStreamReader reader{output};
 
     QBuffer fixedUpOutputBuffer;
     if (!fixedUpOutputBuffer.open(QIODevice::WriteOnly)) {
@@ -313,7 +319,7 @@ bool HTMLCleaner::Impl::convertHtml(
         return false;
     }
 
-    QXmlStreamWriter writer(&fixedUpOutputBuffer);
+    QXmlStreamWriter writer{&fixedUpOutputBuffer};
     writer.setAutoFormatting(false);
     writer.setCodec("UTF-8");
     writer.writeStartDocument();

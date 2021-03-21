@@ -33,7 +33,7 @@ class Q_DECL_HIDDEN LocalStoragePatch1To2 final : public ILocalStoragePatch
     Q_OBJECT
 public:
     explicit LocalStoragePatch1To2(
-        const Account & account,
+        Account account,
         LocalStorageManagerPrivate & localStorageManager,
         QSqlDatabase & database, QObject * parent = nullptr);
 
@@ -77,7 +77,7 @@ private:
         ErrorString & errorDescription);
 
     void filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
-        QStringList & resourceLocalUids);
+        QStringList & resourceLocalIds);
 
     [[nodiscard]] bool
     ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
