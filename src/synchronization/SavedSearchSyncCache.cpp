@@ -50,11 +50,7 @@ bool SavedSearchSyncCache::isFilled() const noexcept
         return false;
     }
 
-    if (m_listSavedSearchesRequestId.isNull()) {
-        return true;
-    }
-
-    return false;
+    return m_listSavedSearchesRequestId.isNull();
 }
 
 void SavedSearchSyncCache::fill()
@@ -113,7 +109,7 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     if (requestId != m_listSavedSearchesRequestId) {
         return;
@@ -142,7 +138,7 @@ void SavedSearchSyncCache::onListSavedSearchesFailed(
 }
 
 void SavedSearchSyncCache::onAddSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "synchronization:saved_search_cache",
@@ -153,7 +149,7 @@ void SavedSearchSyncCache::onAddSavedSearchComplete(
 }
 
 void SavedSearchSyncCache::onUpdateSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "synchronization:saved_search_cache",
@@ -165,7 +161,7 @@ void SavedSearchSyncCache::onUpdateSavedSearchComplete(
 }
 
 void SavedSearchSyncCache::onExpungeSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     QNDEBUG(
         "synchronization:saved_search_cache",

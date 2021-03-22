@@ -45,8 +45,7 @@ inline void messageHandler(
     }
 }
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 ENMLTester::ENMLTester(QObject * parent) : QObject(parent) {}
 
@@ -244,5 +243,4 @@ void ENMLTester::importRealWorldEnexTest()
     CATCH_EXCEPTION();
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

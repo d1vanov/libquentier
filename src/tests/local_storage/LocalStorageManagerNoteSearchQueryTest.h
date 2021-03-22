@@ -21,13 +21,11 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool localStorageManagerNoteSearchQueryTest(
     QString & errorDescription);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_NOTE_SEARCH_QUERY_TEST_H

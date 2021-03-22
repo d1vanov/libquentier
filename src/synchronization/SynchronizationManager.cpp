@@ -143,7 +143,7 @@ SynchronizationManager::SynchronizationManager(
         this, &SynchronizationManager::remoteToLocalSyncDone);
 }
 
-SynchronizationManager::~SynchronizationManager() {}
+SynchronizationManager::~SynchronizationManager() = default;
 
 bool SynchronizationManager::active() const
 {
@@ -157,7 +157,7 @@ bool SynchronizationManager::downloadNoteThumbnailsOption() const
     return d->downloadNoteThumbnailsOption();
 }
 
-void SynchronizationManager::setAccount(Account account)
+void SynchronizationManager::setAccount(Account account) // NOLINT
 {
     Q_D(SynchronizationManager);
     d->setAccount(account);
@@ -212,7 +212,7 @@ void SynchronizationManager::setDownloadInkNoteImages(bool flag)
     Q_EMIT setDownloadInkNoteImagesDone(flag);
 }
 
-void SynchronizationManager::setInkNoteImagesStoragePath(QString path)
+void SynchronizationManager::setInkNoteImagesStoragePath(QString path) // NOLINT
 {
     Q_D(SynchronizationManager);
     d->setInkNoteImagesStoragePath(path);

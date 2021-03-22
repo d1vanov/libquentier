@@ -24,8 +24,7 @@
 #include <QPainter>
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 NoteLocalStorageManagerAsyncTester::NoteLocalStorageManagerAsyncTester(
     QObject * parent) :
@@ -102,7 +101,7 @@ void NoteLocalStorageManagerAsyncTester::initialize()
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -172,7 +171,7 @@ void NoteLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -300,8 +299,8 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(
-    ErrorString errorDescription, LocalStorageManager::NoteCountOptions options,
-    QUuid requestId)
+    ErrorString errorDescription, // NOLINT
+    LocalStorageManager::NoteCountOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
 
@@ -313,7 +312,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -404,7 +403,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -415,8 +415,8 @@ void NoteLocalStorageManagerAsyncTester::onAddNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -465,8 +465,9 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(options)
 
@@ -479,8 +480,8 @@ void NoteLocalStorageManagerAsyncTester::onUpdateNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
-    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::GetNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(requestId)
     Q_UNUSED(options)
@@ -560,8 +561,9 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(
-    qevercloud::Note note, LocalStorageManager::GetNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -592,7 +594,8 @@ void NoteLocalStorageManagerAsyncTester::onFindNoteFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
-    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Notebook notebook, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
@@ -669,11 +672,12 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
-    qevercloud::Notebook notebook, LocalStorageManager::GetNoteOptions options,
+    qevercloud::Notebook notebook, // NOLINT
+    LocalStorageManager::GetNoteOptions options,
     LocalStorageManager::ListObjectsOptions flag, std::size_t limit,
     std::size_t offset, LocalStorageManager::ListNotesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(flag)
     Q_UNUSED(limit)
@@ -700,7 +704,7 @@ void NoteLocalStorageManagerAsyncTester::onListNotesPerNotebookFailed(
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -727,7 +731,8 @@ void NoteLocalStorageManagerAsyncTester::onExpungeNoteCompleted(
 }
 
 void NoteLocalStorageManagerAsyncTester::onExpungeNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -869,5 +874,4 @@ void NoteLocalStorageManagerAsyncTester::clear()
     m_state = STATE_UNINITIALIZED;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

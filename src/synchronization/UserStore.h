@@ -63,7 +63,7 @@ public:
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel,
+        qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 

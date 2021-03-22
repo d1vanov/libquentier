@@ -26,13 +26,13 @@
 namespace quentier {
 
 ErrorString::ErrorString(const char * error) :
-    Printable(), d(new ErrorStringData)
+    d(new ErrorStringData)
 {
     d->m_base = QString::fromUtf8(error);
 }
 
 ErrorString::ErrorString(const QString & error) :
-    Printable(), d(new ErrorStringData)
+    d(new ErrorStringData)
 {
     d->m_base = error;
 }

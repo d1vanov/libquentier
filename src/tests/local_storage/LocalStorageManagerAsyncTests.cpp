@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Dmitry Ivanov
+ * Copyright 2019-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,8 +34,7 @@
 
 #include <QTimer>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 void TestSavedSearhAsync()
 {
@@ -63,12 +62,8 @@ void TestSavedSearhAsync()
             &SavedSearchLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &savedSearchAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -111,12 +106,8 @@ void TestLinkedNotebookAsync()
             &LinkedNotebookLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &linkedNotebookAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -157,12 +148,8 @@ void TestTagAsync()
             &tagAsyncTester, &TagLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &tagAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -203,12 +190,8 @@ void TestUserAsync()
             &userAsyncTester, &UserLocalStorageManagerAsyncTester::failure,
             &loop, &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &userAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -251,12 +234,8 @@ void TestNotebookAsync()
             &NotebookLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &notebookAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -297,12 +276,8 @@ void TestNoteAsync()
             &noteAsyncTester, &NoteLocalStorageManagerAsyncTester::failure,
             &loop, &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &noteAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -345,12 +320,8 @@ void TestResourceAsync()
             &ResourceLocalStorageManagerAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &resourceAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -395,12 +366,8 @@ void TestNoteNotebookAndTagListTrackingAsync()
             &NoteNotebookAndTagListTrackingAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &noteNotebookAndTagListTrackingAsycTester,
             SLOT(onInitTestCase()));
 
@@ -449,12 +416,8 @@ void TestCacheAsync()
             &LocalStorageCacheAsyncTester::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &localStorageCacheAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
@@ -471,5 +434,4 @@ void TestCacheAsync()
     }
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

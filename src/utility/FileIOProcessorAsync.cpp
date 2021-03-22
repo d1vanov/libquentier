@@ -48,14 +48,15 @@ void FileIOProcessorAsync::onWriteFileRequest(
     QString absoluteFilePath, QByteArray data, QUuid requestId, bool append)
 {
     Q_D(FileIOProcessorAsync);
-    d->onWriteFileRequest(absoluteFilePath, data, requestId, append);
+    d->onWriteFileRequest(
+        std::move(absoluteFilePath), std::move(data), requestId, append);
 }
 
 void FileIOProcessorAsync::onReadFileRequest(
     QString absoluteFilePath, QUuid requestId)
 {
     Q_D(FileIOProcessorAsync);
-    d->onReadFileRequest(absoluteFilePath, requestId);
+    d->onReadFileRequest(std::move(absoluteFilePath), requestId);
 }
 
 } // namespace quentier

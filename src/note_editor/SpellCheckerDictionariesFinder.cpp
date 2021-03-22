@@ -31,7 +31,7 @@ namespace quentier {
 SpellCheckerDictionariesFinder::SpellCheckerDictionariesFinder(
     std::shared_ptr<QAtomicInt> pStopFlag, QObject * parent) :
     QObject(parent),
-    m_pStopFlag(std::move(pStopFlag)), m_files(), m_localeList(QSet<QString>()
+    m_pStopFlag(std::move(pStopFlag)), m_localeList(QSet<QString>()
 #include "localeList.inl"
                                                   )
 {}

@@ -27,8 +27,7 @@
 
 #include <bitset>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 bool noteSearchQueryParsingTest(QString & error)
 {
@@ -426,10 +425,9 @@ bool noteSearchQueryParsingTest(QString & error)
         }
 
 #define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...)                     \
-    for (int i = 0, size = list.size(); i < size; ++i) {                       \
-        const type & item = list[i];                                           \
+    for (const type & item: list) {                                            \
         queryString += QStringLiteral(#keyword ":");                           \
-        QString itemStr = __VA_ARGS__(item);                                   \
+        const QString & itemStr = __VA_ARGS__(item);                           \
         bool itemContainsSpace = itemStr.contains(QStringLiteral(" "));        \
         if (itemContainsSpace) {                                               \
             queryString += QStringLiteral("\"");                               \
@@ -464,7 +462,8 @@ bool noteSearchQueryParsingTest(QString & error)
         ADD_LIST_TO_QUERY_STRING(
             -longitude, negatedLongitudes, double, QString::number);
 
-        ADD_LIST_TO_QUERY_STRING(altitude, altitudes, double, QString::number);
+        ADD_LIST_TO_QUERY_STRING(
+            altitude, altitudes, double, QString::number);
 
         ADD_LIST_TO_QUERY_STRING(
             -altitude, negatedAltitudes, double, QString::number);
@@ -1024,15 +1023,12 @@ bool noteSearchQueryParsingTest(QString & error)
             QStringLiteral("NoteSearchQuery: " #list                           \
                            " doesn't match the one "                           \
                            "from the original list; original " #list ": ");    \
-        for (int i = 0, size = list.size(); i < size; ++i) {                   \
-            const auto & item = list[i];                                       \
+        for (const auto & item: qAsConst(list)) {                              \
             error += __VA_ARGS__(item);                                        \
             error += QStringLiteral("; ");                                     \
         }                                                                      \
         error += QStringLiteral("; \nNoteSearchQuery's list: ");               \
-        for (int i = 0, size = noteSearchQueryList##list.size(); i < size;     \
-             ++i) {                                                            \
-            const auto & item = noteSearchQueryList##list[i];                  \
+        for (const auto & item: qAsConst(noteSearchQueryList##list)) {         \
             error += __VA_ARGS__(item);                                        \
             error += QStringLiteral("; ");                                     \
         }                                                                      \
@@ -1287,5 +1283,4 @@ bool noteSearchQueryParsingTest(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

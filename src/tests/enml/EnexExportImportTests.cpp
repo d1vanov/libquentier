@@ -34,8 +34,7 @@
 
 #include <cmath>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool compareNoteContents(
     const qevercloud::Note & lhs, const qevercloud::Note & rhs,
@@ -514,8 +513,8 @@ bool compareNoteContents(
         return false;
     }
 
-    const QStringList lhsTagLocalIds = lhs.tagLocalIds();
-    const QStringList rhsTagLocalIds = rhs.tagLocalIds();
+    const QStringList & lhsTagLocalIds = lhs.tagLocalIds();
+    const QStringList & rhsTagLocalIds = rhs.tagLocalIds();
 
     if (lhsTagLocalIds.size() != rhsTagLocalIds.size()) {
         error = QStringLiteral(
@@ -1086,10 +1085,7 @@ void bindTagsWithNotes(
     const QHash<QString, QStringList> & tagNamesByNoteLocalId,
     const QHash<QString, QString> & tagNamesByTagLocalIds)
 {
-    for (auto it = importedNotes.begin(), end = importedNotes.end(); it != end;
-         ++it)
-    {
-        auto & note = *it;
+    for (auto & note: importedNotes) {
         const auto tagIt = tagNamesByNoteLocalId.find(note.localId());
         if (tagIt == tagNamesByNoteLocalId.end()) {
             continue;
@@ -1281,5 +1277,4 @@ void setupNoteResourcesV2(qevercloud::Note & note)
     note.setResources(QList<qevercloud::Resource>() << resource);
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

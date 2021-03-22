@@ -56,10 +56,6 @@ RenameResourceDelegate::RenameResourceDelegate(
     m_resource(resource), m_oldResourceName(resourceDisplayName(resource)),
     m_newResourceName(), m_performingUndo(performingUndo),
     m_pNote(noteEditor.notePtr())
-#ifdef QUENTIER_USE_QT_WEB_ENGINE
-    ,
-    m_genericResourceImageWriterRequestId()
-#endif
 {}
 
 void RenameResourceDelegate::start()

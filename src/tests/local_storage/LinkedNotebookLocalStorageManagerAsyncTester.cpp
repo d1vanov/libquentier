@@ -24,8 +24,7 @@
 #include <QDebug>
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 LinkedNotebookLocalStorageManagerAsyncTester::
     LinkedNotebookLocalStorageManagerAsyncTester(QObject * parent) :
@@ -182,7 +181,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onGetLinkedNotebookCountFailed(
-        ErrorString errorDescription, QUuid requestId)
+        ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -192,7 +191,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook notebook, QUuid requestId)
+    qevercloud::LinkedNotebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -277,7 +276,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookCompleted(
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookFailed(
-    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -290,7 +289,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onAddLinkedNotebookFailed(
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onUpdateLinkedNotebookCompleted(
-        qevercloud::LinkedNotebook notebook, QUuid requestId)
+        qevercloud::LinkedNotebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -316,7 +315,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookFailed(
-    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -329,7 +328,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::onUpdateLinkedNotebookFailed(
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onFindLinkedNotebookCompleted(
-        qevercloud::LinkedNotebook notebook, QUuid requestId)
+        qevercloud::LinkedNotebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -415,7 +414,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 }
 
 void LinkedNotebookLocalStorageManagerAsyncTester::onFindLinkedNotebookFailed(
-    qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
+    qevercloud::LinkedNotebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (m_state == State::STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
@@ -437,7 +436,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
         size_t limit, size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        QList<qevercloud::LinkedNotebook> linkedNotebooks, QUuid requestId)
+        QList<qevercloud::LinkedNotebook> linkedNotebooks, // NOLINT
+        QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -478,7 +478,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
         std::size_t limit, std::size_t offset,
         LocalStorageManager::ListLinkedNotebooksOrder order,
         LocalStorageManager::OrderDirection orderDirection,
-        ErrorString errorDescription, QUuid requestId)
+        ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -494,7 +494,7 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onExpungeLinkedNotebookCompleted(
-        qevercloud::LinkedNotebook notebook, QUuid requestId)
+        qevercloud::LinkedNotebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -519,8 +519,8 @@ void LinkedNotebookLocalStorageManagerAsyncTester::
 
 void LinkedNotebookLocalStorageManagerAsyncTester::
     onExpungeLinkedNotebookFailed(
-        qevercloud::LinkedNotebook notebook, ErrorString errorDescription,
-        QUuid requestId)
+        qevercloud::LinkedNotebook notebook, // NOLINT
+        ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -726,5 +726,4 @@ QDebug & operator<<(
     return dbg;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

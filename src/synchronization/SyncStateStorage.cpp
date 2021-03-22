@@ -145,7 +145,7 @@ void SyncStateStorage::setSyncState(
 {
     QUENTIER_CHECK_PTR("synchronization: state_storage", syncState.get())
 
-    ApplicationSettings appSettings(account, SYNCHRONIZATION_PERSISTENCE_NAME);
+    ApplicationSettings appSettings{account, SYNCHRONIZATION_PERSISTENCE_NAME};
 
     const QString keyGroup = QStringLiteral("Synchronization/") +
         account.evernoteHost() + QStringLiteral("/") +

@@ -142,14 +142,12 @@ private:
     class Q_DECL_HIDDEN Dictionary
     {
     public:
-        Dictionary();
-
         [[nodiscard]] bool isEmpty() const noexcept;
 
     public:
         HunspellWrapper m_hunspellWrapper;
         QString m_dictionaryPath;
-        bool m_enabled;
+        bool m_enabled = true;
     };
 
 private:

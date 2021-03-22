@@ -23,8 +23,7 @@
 
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 ResourceLocalStorageManagerAsyncTester::ResourceLocalStorageManagerAsyncTester(
     QObject * parent) :
@@ -103,7 +102,7 @@ void ResourceLocalStorageManagerAsyncTester::initialize()
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -151,7 +150,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -163,7 +162,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddNotebookFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -275,7 +274,8 @@ void ResourceLocalStorageManagerAsyncTester::onAddNoteCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -325,7 +325,7 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed(
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -335,7 +335,7 @@ void ResourceLocalStorageManagerAsyncTester::onGetResourceCountFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -367,7 +367,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -379,7 +379,7 @@ void ResourceLocalStorageManagerAsyncTester::onAddResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -415,7 +415,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -427,7 +427,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
-    qevercloud::Resource resource,
+    qevercloud::Resource resource, // NOLINT
     LocalStorageManager::GetResourceOptions options, QUuid requestId)
 {
     Q_UNUSED(requestId)
@@ -516,9 +516,9 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
-    qevercloud::Resource resource,
+    qevercloud::Resource resource, // NOLINT
     LocalStorageManager::GetResourceOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -539,7 +539,7 @@ void ResourceLocalStorageManagerAsyncTester::onFindResourceFailed(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
-    qevercloud::Resource resource, QUuid requestId)
+    qevercloud::Resource resource, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -565,7 +565,7 @@ void ResourceLocalStorageManagerAsyncTester::onExpungeResourceCompleted(
 }
 
 void ResourceLocalStorageManagerAsyncTester::onExpungeResourceFailed(
-    qevercloud::Resource resource, ErrorString errorDescription,
+    qevercloud::Resource resource, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -708,5 +708,4 @@ void ResourceLocalStorageManagerAsyncTester::clear()
     m_state = STATE_UNINITIALIZED;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

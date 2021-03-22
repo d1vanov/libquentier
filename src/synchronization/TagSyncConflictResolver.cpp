@@ -25,12 +25,13 @@
 namespace quentier {
 
 TagSyncConflictResolver::TagSyncConflictResolver(
-    const qevercloud::Tag & remoteTag, QString remoteTagLinkedNotebookGuid,
-    const qevercloud::Tag & localConflict, TagSyncCache & cache,
+    qevercloud::Tag remoteTag, QString remoteTagLinkedNotebookGuid,
+    qevercloud::Tag localConflict, TagSyncCache & cache,
     LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_cache(cache), m_localStorageManagerAsync(localStorageManagerAsync),
-    m_remoteTag(remoteTag), m_localConflict(localConflict),
+    m_remoteTag(std::move(remoteTag)),
+    m_localConflict(std::move(localConflict)),
     m_remoteTagLinkedNotebookGuid(std::move(remoteTagLinkedNotebookGuid))
 {}
 
@@ -87,7 +88,7 @@ void TagSyncConflictResolver::start()
 }
 
 void TagSyncConflictResolver::onAddTagComplete(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     if (requestId != m_addTagRequestId) {
         return;
@@ -115,7 +116,8 @@ void TagSyncConflictResolver::onAddTagComplete(
 }
 
 void TagSyncConflictResolver::onAddTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_addTagRequestId) {
         return;
@@ -131,7 +133,7 @@ void TagSyncConflictResolver::onAddTagFailed(
 }
 
 void TagSyncConflictResolver::onUpdateTagComplete(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     if (requestId != m_updateTagRequestId) {
         return;
@@ -149,7 +151,8 @@ void TagSyncConflictResolver::onUpdateTagComplete(
         Q_EMIT finished(m_remoteTag);
         return;
     }
-    else if (m_state == State::PendingConflictingTagRenaming) {
+
+    if (m_state == State::PendingConflictingTagRenaming) {
         QNDEBUG(
             "synchronization:tag_conflict",
             "Successfully renamed the local tag conflicting by name with the "
@@ -240,7 +243,8 @@ void TagSyncConflictResolver::onUpdateTagComplete(
 }
 
 void TagSyncConflictResolver::onUpdateTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_updateTagRequestId) {
         return;
@@ -256,7 +260,7 @@ void TagSyncConflictResolver::onUpdateTagFailed(
 }
 
 void TagSyncConflictResolver::onFindTagComplete(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     if (requestId != m_findTagRequestId) {
         return;
@@ -274,7 +278,8 @@ void TagSyncConflictResolver::onFindTagComplete(
 }
 
 void TagSyncConflictResolver::onFindTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_findTagRequestId) {
         return;
@@ -320,7 +325,8 @@ void TagSyncConflictResolver::onCacheFilled()
     }
 }
 
-void TagSyncConflictResolver::onCacheFailed(ErrorString errorDescription)
+void TagSyncConflictResolver::onCacheFailed(
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:tag_conflict",

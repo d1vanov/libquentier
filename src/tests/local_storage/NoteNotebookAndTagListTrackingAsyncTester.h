@@ -22,8 +22,7 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/types/ErrorString.h>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class NoteNotebookAndTagListTrackingAsyncTester final : public QObject
 {
@@ -92,7 +91,7 @@ private:
     void changeNoteTagsList();
     void moveNoteToAnotherNotebookAlongWithTagListChange();
 
-    bool checkTagsListEqual(
+    [[nodiscard]] bool checkTagsListEqual(
         const QVector<qevercloud::Tag> & lhs, const QStringList & rhs) const;
 
 private:
@@ -130,7 +129,6 @@ private:
     int m_noteTagsListChangedSlotInvocationCount = 0;
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_NOTE_NOTEBOOK_AND_TAG_LIST_TRACKING_ASYNC_TESTER_H

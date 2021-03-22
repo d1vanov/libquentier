@@ -42,8 +42,8 @@ class Q_DECL_HIDDEN TagSyncConflictResolver final : public QObject
     Q_OBJECT
 public:
     explicit TagSyncConflictResolver(
-        const qevercloud::Tag & remoteTag, QString remoteTagLinkedNotebookGuid,
-        const qevercloud::Tag & localConflict, TagSyncCache & cache,
+        qevercloud::Tag remoteTag, QString remoteTagLinkedNotebookGuid,
+        qevercloud::Tag localConflict, TagSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
 
@@ -103,7 +103,7 @@ private:
         PendingRemoteTagAdoptionInLocalStorage
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
 
 private:
     TagSyncCache & m_cache;

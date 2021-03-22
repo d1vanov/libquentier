@@ -23,8 +23,7 @@
 
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 UserLocalStorageManagerAsyncTester::UserLocalStorageManagerAsyncTester(
     QObject * parent) :
@@ -129,7 +128,7 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onGetUserCountFailed(
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -139,7 +138,7 @@ void UserLocalStorageManagerAsyncTester::onGetUserCountFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -166,7 +165,8 @@ void UserLocalStorageManagerAsyncTester::onAddUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onAddUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -177,7 +177,7 @@ void UserLocalStorageManagerAsyncTester::onAddUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -202,7 +202,8 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -213,7 +214,7 @@ void UserLocalStorageManagerAsyncTester::onUpdateUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -282,7 +283,8 @@ void UserLocalStorageManagerAsyncTester::onFindUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onFindUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -299,7 +301,7 @@ void UserLocalStorageManagerAsyncTester::onFindUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -326,7 +328,8 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -337,7 +340,7 @@ void UserLocalStorageManagerAsyncTester::onDeleteUserFailed(
 }
 
 void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
-    qevercloud::User user, QUuid requestId)
+    qevercloud::User user, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -358,7 +361,8 @@ void UserLocalStorageManagerAsyncTester::onExpungeUserCompleted(
 }
 
 void UserLocalStorageManagerAsyncTester::onExpungeUserFailed(
-    qevercloud::User user, ErrorString errorDescription, QUuid requestId)
+    qevercloud::User user, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -487,5 +491,4 @@ void UserLocalStorageManagerAsyncTester::clear()
 
 #undef HANDLE_WRONG_STATE
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

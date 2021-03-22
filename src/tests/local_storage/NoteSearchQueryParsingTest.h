@@ -21,12 +21,10 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool noteSearchQueryParsingTest(QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_NOTE_SEARCH_QUERY_PARSING_TEST_H

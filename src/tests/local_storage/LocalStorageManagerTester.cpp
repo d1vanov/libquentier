@@ -43,21 +43,21 @@
     }
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
     }
 }
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 LocalStorageManagerTester::LocalStorageManagerTester(QObject * parent) :
     QObject(parent)
 {}
 
-LocalStorageManagerTester::~LocalStorageManagerTester() {}
+LocalStorageManagerTester::~LocalStorageManagerTester() = default;
 
 void LocalStorageManagerTester::init()
 {
@@ -350,5 +350,4 @@ void LocalStorageManagerTester::localStorageCacheManagerTest()
     CATCH_EXCEPTION();
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

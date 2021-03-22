@@ -31,8 +31,7 @@
 
 #include <algorithm>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 void TestSavedSearchAddFindUpdateExpungeInLocalStorage()
 {
@@ -3784,5 +3783,4 @@ void TestNoteTagIdsComplementWhenAddingAndUpdatingNote()
             "LocalStorageManager::updateNote method returning")));
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

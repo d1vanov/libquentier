@@ -28,8 +28,7 @@
 
 void initENMLConversionTestResources();
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool convertNoteToHtmlAndBackImpl(
     const QString & noteContent, DecryptedTextManager & decryptedTextManager,
@@ -311,7 +310,7 @@ bool convertNoteToHtmlAndBackImpl(
     const QString & noteContent, DecryptedTextManager & decryptedTextManager,
     QString & error)
 {
-    const QString originalNoteContent = noteContent;
+    const QString & originalNoteContent = noteContent;
 
     ENMLConverter converter;
     QString html;
@@ -414,9 +413,8 @@ bool compareEnml(
                 Q_UNUSED(readerOriginal.readNext());
                 continue;
             }
-            else {
-                checkForEntityReference = false;
-            }
+
+            checkForEntityReference = false;
         }
 
         if (readerOriginal.isStartDocument() &&
@@ -985,8 +983,7 @@ bool convertHtmlWithTableAndHilitorHelperTagsToEnml(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 void initENMLConversionTestResources()
 {

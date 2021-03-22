@@ -394,7 +394,7 @@ LogLevel QuentierLogger::minLogLevel() const
 }
 
 QuentierLoggerImpl::QuentierLoggerImpl(QObject * parent) :
-    QObject(parent), m_logWriterPtrs(),
+    QObject(parent),
     m_minLogLevel(static_cast<int>(LogLevel::Info)),
     m_pLogWriteThread(new QThread)
 {

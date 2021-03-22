@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 void TestSavedSearchAddFindUpdateExpungeInLocalStorage();
 
@@ -50,7 +49,6 @@ void TestAddingNoteWithoutLocalUid();
 
 void TestNoteTagIdsComplementWhenAddingAndUpdatingNote();
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_BASIC_TESTS_H

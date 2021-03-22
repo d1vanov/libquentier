@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,15 +21,14 @@
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class LocalStorageManagerTester final : public QObject
 {
     Q_OBJECT
 public:
     LocalStorageManagerTester(QObject * parent = nullptr);
-    virtual ~LocalStorageManagerTester();
+     ~LocalStorageManagerTester() override;
 
 private Q_SLOTS:
     void init();
@@ -76,7 +75,6 @@ private Q_SLOTS:
     void localStorageCacheManagerTest();
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_LOCAL_STORAGE_MANAGER_TESTER_H

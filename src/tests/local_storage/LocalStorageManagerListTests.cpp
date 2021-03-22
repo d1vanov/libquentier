@@ -25,8 +25,7 @@
 
 #include <QtTest/QtTest>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 void TestListSavedSearches()
 {
@@ -1224,7 +1223,7 @@ void TestListNotes()
     QVERIFY2(
         errorMessage.isEmpty(), qPrintable(errorMessage.nonLocalizedString()));
 
-    if (foundNotes.size() != 0) {
+    if (!foundNotes.empty()) {
         QFAIL(qPrintable(
             QStringLiteral("Found non-zero number of notes in "
                            "the result of LocalStorageManager::"
@@ -1976,5 +1975,4 @@ void TestExpungeNotelessTagsFromLinkedNotebooks()
     }
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

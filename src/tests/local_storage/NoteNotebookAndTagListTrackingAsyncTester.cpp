@@ -22,8 +22,7 @@
 
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 NoteNotebookAndTagListTrackingAsyncTester::
     NoteNotebookAndTagListTrackingAsyncTester(QObject * parent) :
@@ -110,7 +109,7 @@ void NoteNotebookAndTagListTrackingAsyncTester::initialize()
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(notebook)
     Q_UNUSED(requestId)
@@ -139,7 +138,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookComplete(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -151,7 +151,7 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNotebookFailed(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(tag)
     Q_UNUSED(requestId)
@@ -181,7 +181,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddTagComplete(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -193,7 +194,7 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddTagFailed(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -226,7 +227,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -238,8 +240,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteFailed(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -329,8 +331,9 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteComplete(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -343,8 +346,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onUpdateNoteFailed(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
-    QString noteLocalId, QString previousNotebookLocalId,
-    QString newNotebookLocalId)
+    QString noteLocalId, QString previousNotebookLocalId, // NOLINT
+    QString newNotebookLocalId) // NOLINT
 {
     ++m_noteMovedToAnotherNotebookSlotInvocationCount;
     if (Q_UNLIKELY(m_noteMovedToAnotherNotebookSlotInvocationCount > 2)) {
@@ -478,8 +481,8 @@ void NoteNotebookAndTagListTrackingAsyncTester::onNoteMovedToAnotherNotebook(
 }
 
 void NoteNotebookAndTagListTrackingAsyncTester::onNoteTagListUpdated(
-    QString noteLocalId, QStringList previousTagLocalIds,
-    QStringList newTagLocalIds)
+    QString noteLocalId, QStringList previousTagLocalIds, // NOLINT
+    QStringList newTagLocalIds) // NOLINT
 {
     ++m_noteTagsListChangedSlotInvocationCount;
     if (Q_UNLIKELY(m_noteTagsListChangedSlotInvocationCount > 2)) {
@@ -815,5 +818,4 @@ bool NoteNotebookAndTagListTrackingAsyncTester::checkTagsListEqual(
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

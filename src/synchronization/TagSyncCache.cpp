@@ -67,11 +67,7 @@ bool TagSyncCache::isFilled() const noexcept
         return false;
     }
 
-    if (m_listTagsRequestId.isNull()) {
-        return true;
-    }
-
-    return false;
+    return m_listTagsRequestId.isNull();
 }
 
 void TagSyncCache::fill()
@@ -93,7 +89,7 @@ void TagSyncCache::onListTagsComplete(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<qevercloud::Tag> foundTags,
+    QString linkedNotebookGuid, QList<qevercloud::Tag> foundTags, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_listTagsRequestId) {
@@ -129,7 +125,8 @@ void TagSyncCache::onListTagsFailed(
     LocalStorageManager::ListObjectsOptions flag, size_t limit, size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (requestId != m_listTagsRequestId) {
         return;
@@ -156,7 +153,8 @@ void TagSyncCache::onListTagsFailed(
     Q_EMIT failure(errorDescription);
 }
 
-void TagSyncCache::onAddTagComplete(qevercloud::Tag tag, QUuid requestId)
+void TagSyncCache::onAddTagComplete(
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     TCDEBUG(
         "TagSyncCache::onAddTagComplete: request id = " << requestId
@@ -165,7 +163,8 @@ void TagSyncCache::onAddTagComplete(qevercloud::Tag tag, QUuid requestId)
     processTag(tag);
 }
 
-void TagSyncCache::onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId)
+void TagSyncCache::onUpdateTagComplete(
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     TCDEBUG(
         "TagSyncCache::onUpdateTagComplete: request id = " << requestId
@@ -176,7 +175,8 @@ void TagSyncCache::onUpdateTagComplete(qevercloud::Tag tag, QUuid requestId)
 }
 
 void TagSyncCache::onExpungeTagComplete(
-    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalIds, // NOLINT
+    QUuid requestId)
 {
     TCDEBUG(
         "TagSyncCache::onExpungeTagComplete: request id = "

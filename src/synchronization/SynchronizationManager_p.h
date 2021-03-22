@@ -33,7 +33,7 @@
 #include <memory>
 #include <utility>
 
-QT_FORWARD_DECLARE_CLASS(QDebug)
+class QDebug;
 
 namespace quentier {
 

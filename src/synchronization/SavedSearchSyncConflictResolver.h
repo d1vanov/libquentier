@@ -38,8 +38,8 @@ class Q_DECL_HIDDEN SavedSearchSyncConflictResolver final : public QObject
     Q_OBJECT
 public:
     explicit SavedSearchSyncConflictResolver(
-        const qevercloud::SavedSearch & remoteSavedSearch,
-        const qevercloud::SavedSearch & localConflict,
+        qevercloud::SavedSearch remoteSavedSearch,
+        qevercloud::SavedSearch localConflict,
         SavedSearchSyncCache & cache,
         LocalStorageManagerAsync & localStorageManagerAsync,
         QObject * parent = nullptr);
@@ -115,7 +115,7 @@ private:
         PendingRemoteSavedSearchAdoptionInLocalStorage
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
 
 private:
     SavedSearchSyncCache & m_cache;

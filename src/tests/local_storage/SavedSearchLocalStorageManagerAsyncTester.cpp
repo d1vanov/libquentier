@@ -23,8 +23,7 @@
 
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 SavedSearchLocalStorageManagerAsyncTester::
     SavedSearchLocalStorageManagerAsyncTester(QObject * parent) :
@@ -159,7 +158,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountFailed(
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -169,7 +168,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onGetSavedSearchCountFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -240,7 +239,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -252,7 +251,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onAddSavedSearchFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -280,7 +279,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -292,7 +291,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onUpdateSavedSearchFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -397,7 +396,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onFindSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
@@ -418,7 +417,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchesCompleted(
     std::size_t limit, std::size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QList<qevercloud::SavedSearch> searches, QUuid requestId)
+    QList<qevercloud::SavedSearch> searches, QUuid requestId) // NOLINT
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -460,7 +459,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(
     std::size_t limit, std::size_t offset,
     LocalStorageManager::ListSavedSearchesOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -475,7 +474,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onListAllSavedSearchedFailed(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     ErrorString errorDescription;
 
@@ -501,7 +500,7 @@ void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchCompleted(
 }
 
 void SavedSearchLocalStorageManagerAsyncTester::onExpungeSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -644,5 +643,4 @@ void SavedSearchLocalStorageManagerAsyncTester::clear()
 
 #undef HANDLE_WRONG_STATE
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

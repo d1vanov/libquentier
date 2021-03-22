@@ -1992,9 +1992,10 @@ void NoteEditorPrivate::onImageResourceRotationDelegateFinished(
             << ", rotation direction = " << rotationDirection);
 
     auto * pCommand = new ImageResourceRotationUndoCommand(
-        resourceDataBefore, resourceHashBefore, resourceRecognitionDataBefore,
-        resourceRecognitionDataHashBefore, resourceImageSizeBefore,
-        resourceAfter, rotationDirection, *this);
+        std::move(resourceDataBefore), std::move(resourceHashBefore),
+        std::move(resourceRecognitionDataBefore),
+        std::move(resourceRecognitionDataHashBefore),
+        resourceImageSizeBefore, resourceAfter, rotationDirection, *this);
 
     QObject::connect(
         pCommand, &ImageResourceRotationUndoCommand::notifyError, this,

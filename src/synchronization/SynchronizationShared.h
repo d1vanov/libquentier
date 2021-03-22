@@ -122,44 +122,46 @@ template <typename T>
 class OptionalComparator
 {
 public:
-    bool operator()(
+    [[nodiscard]] bool operator()(
         const std::optional<T> & lhs,
-        const std::optional<T> & rhs) const
+        const std::optional<T> & rhs) const noexcept
     {
         if (!lhs && !rhs) {
             return false;
         }
-        else if (!lhs && rhs) {
+
+        if (!lhs && rhs) {
             return true;
         }
-        else if (lhs && !rhs) {
+
+        if (lhs && !rhs) {
             return false;
         }
-        else {
-            return *lhs < *rhs;
-        }
+
+        return *lhs < *rhs;
     }
 };
 
 class OptionalStringCaseInsensitiveComparator
 {
 public:
-    bool operator()(
+    [[nodiscard]] bool operator()(
         const std::optional<QString> & lhs,
         const std::optional<QString> & rhs) const
     {
         if (!lhs && !rhs) {
             return false;
         }
-        else if (!lhs && rhs) {
+
+        if (!lhs && rhs) {
             return true;
         }
-        else if (lhs && !rhs) {
+
+        if (lhs && !rhs) {
             return false;
         }
-        else {
-            return lhs->toUpper() < rhs->toUpper();
-        }
+
+        return lhs->toUpper() < rhs->toUpper();
     }
 };
 

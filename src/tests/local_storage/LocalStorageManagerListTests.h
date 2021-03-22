@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Dmitry Ivanov
+ * Copyright 2019-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,8 +19,7 @@
 #ifndef LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H
 #define LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 void TestListSavedSearches();
 
@@ -40,7 +39,6 @@ void TestListNotebooks();
 
 void TestExpungeNotelessTagsFromLinkedNotebooks();
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_LOCAL_STORAGE_MANAGER_LIST_TESTS_H

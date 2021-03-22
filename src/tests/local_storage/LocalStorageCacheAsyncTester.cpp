@@ -27,8 +27,7 @@
 #include <QDebug>
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 LocalStorageCacheAsyncTester::LocalStorageCacheAsyncTester(QObject * parent) :
     QObject(parent)
@@ -85,7 +84,7 @@ void LocalStorageCacheAsyncTester::initialize()
 }
 
 void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -146,7 +145,8 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
 
             return;
         }
-        else if (m_addedNotebooksCount > 1) {
+
+        if (m_addedNotebooksCount > 1) {
             const qevercloud::Notebook * pNotebook =
                 m_pLocalStorageCacheManager->findNotebook(
                     m_firstNotebook.localId(),
@@ -173,7 +173,7 @@ void LocalStorageCacheAsyncTester::onAddNotebookCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onAddNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -185,7 +185,7 @@ void LocalStorageCacheAsyncTester::onAddNotebookFailed(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateNotebookCompleted(
-    qevercloud::Notebook notebook, QUuid requestId)
+    qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -222,7 +222,8 @@ void LocalStorageCacheAsyncTester::onUpdateNotebookCompleted(
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pNotebook != notebook) {
+
+        if (*pNotebook != notebook) {
             errorDescription.setBase(
                 "Updated notebook does not match the notebook stored in "
                 "the local storage cache");
@@ -242,7 +243,7 @@ void LocalStorageCacheAsyncTester::onUpdateNotebookCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateNotebookFailed(
-    qevercloud::Notebook notebook, ErrorString errorDescription,
+    qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -254,7 +255,7 @@ void LocalStorageCacheAsyncTester::onUpdateNotebookFailed(
 }
 
 void LocalStorageCacheAsyncTester::onAddNoteCompleted(
-    qevercloud::Note note, QUuid requestId)
+    qevercloud::Note note, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -318,7 +319,8 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
 
             return;
         }
-        else if (m_addedNotesCount > 1) {
+
+        if (m_addedNotesCount > 1) {
             const auto * pNote = m_pLocalStorageCacheManager->findNote(
                 m_firstNote.localId(), LocalStorageCacheManager::LocalUid);
 
@@ -342,7 +344,8 @@ void LocalStorageCacheAsyncTester::onAddNoteCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onAddNoteFailed(
-    qevercloud::Note note, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -353,8 +356,8 @@ void LocalStorageCacheAsyncTester::onAddNoteFailed(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options, QUuid requestId)
 {
     Q_UNUSED(options)
     Q_UNUSED(requestId)
@@ -406,7 +409,8 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pNote != note) {
+
+        if (*pNote != note) {
             errorDescription.setBase(
                 "Updated note does not match the note "
                 "stored in the local storage cache");
@@ -425,8 +429,9 @@ void LocalStorageCacheAsyncTester::onUpdateNoteCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateNoteFailed(
-    qevercloud::Note note, LocalStorageManager::UpdateNoteOptions options,
-    ErrorString errorDescription, QUuid requestId)
+    qevercloud::Note note, // NOLINT
+    LocalStorageManager::UpdateNoteOptions options,
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     Q_UNUSED(options)
 
@@ -439,7 +444,7 @@ void LocalStorageCacheAsyncTester::onUpdateNoteFailed(
 }
 
 void LocalStorageCacheAsyncTester::onAddTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -489,7 +494,8 @@ void LocalStorageCacheAsyncTester::onAddTagCompleted(
 
             return;
         }
-        else if (m_addedTagsCount > 1) {
+
+        if (m_addedTagsCount > 1) {
             const auto * pTag = m_pLocalStorageCacheManager->findTag(
                 m_firstTag.localId(), LocalStorageCacheManager::LocalUid);
 
@@ -530,7 +536,8 @@ void LocalStorageCacheAsyncTester::onAddTagCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onAddTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -540,7 +547,7 @@ void LocalStorageCacheAsyncTester::onAddTagFailed(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -575,7 +582,8 @@ void LocalStorageCacheAsyncTester::onUpdateTagCompleted(
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pTag != tag) {
+
+        if (*pTag != tag) {
             errorDescription.setBase(
                 "Updated tag does not match the tag "
                 "stored in the local storage cache");
@@ -595,7 +603,8 @@ void LocalStorageCacheAsyncTester::onUpdateTagCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -605,7 +614,7 @@ void LocalStorageCacheAsyncTester::onUpdateTagFailed(
 }
 
 void LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -660,7 +669,8 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted(
 
             return;
         }
-        else if (m_addedLinkedNotebooksCount > 1) {
+
+        if (m_addedLinkedNotebooksCount > 1) {
             const auto * pLinkedNotebook =
                 m_pLocalStorageCacheManager->findLinkedNotebook(
                     m_firstLinkedNotebook.guid().value());
@@ -686,8 +696,8 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onAddLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -698,7 +708,7 @@ void LocalStorageCacheAsyncTester::onAddLinkedNotebookFailed(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted(
-    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -737,7 +747,8 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted(
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pLinkedNotebook != linkedNotebook) {
+
+        if (*pLinkedNotebook != linkedNotebook) {
             errorDescription.setBase(
                 "Updated linked notebook does not match the linked notebook "
                 "stored in the local storage cache");
@@ -758,8 +769,8 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookFailed(
-    qevercloud::LinkedNotebook linkedNotebook, ErrorString errorDescription,
-    QUuid requestId)
+    qevercloud::LinkedNotebook linkedNotebook, // NOLINT
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -770,7 +781,7 @@ void LocalStorageCacheAsyncTester::onUpdateLinkedNotebookFailed(
 }
 
 void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -826,7 +837,8 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
 
             return;
         }
-        else if (m_addedSavedSearchesCount > 1) {
+
+        if (m_addedSavedSearchesCount > 1) {
             const auto * pSavedSearch =
                 m_pLocalStorageCacheManager->findSavedSearch(
                     m_firstSavedSearch.localId(),
@@ -853,7 +865,7 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onAddSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -865,7 +877,7 @@ void LocalStorageCacheAsyncTester::onAddSavedSearchFailed(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -904,7 +916,8 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
             Q_EMIT failure(errorDescription.nonLocalizedString());
             return;
         }
-        else if (*pSavedSearch != search) {
+
+        if (*pSavedSearch != search) {
             errorDescription.setBase(
                 "Updated saved search does not match the saved search in "
                 "the local storage cache");
@@ -925,7 +938,7 @@ void LocalStorageCacheAsyncTester::onUpdateSavedSearchCompleted(
 }
 
 void LocalStorageCacheAsyncTester::onUpdateSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     QNWARNING(
@@ -1126,8 +1139,7 @@ void LocalStorageCacheAsyncTester::addNotebook()
     m_currentNotebook.setServiceUpdated(
         QDateTime::currentMSecsSinceEpoch());
 
-    m_currentNotebook.setDefaultNotebook(
-        m_addedNotebooksCount == 0 ? true : false);
+    m_currentNotebook.setDefaultNotebook(m_addedNotebooksCount == 0);
 
     m_currentNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
@@ -1332,5 +1344,4 @@ QDebug & operator<<(
     return dbg;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

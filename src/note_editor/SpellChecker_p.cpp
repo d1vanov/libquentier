@@ -1201,10 +1201,6 @@ void SpellCheckerPrivate::onUpdateUserDictionaryDone(
     }
 }
 
-SpellCheckerPrivate::Dictionary::Dictionary() :
-    m_hunspellWrapper(), m_dictionaryPath(), m_enabled(true)
-{}
-
 bool SpellCheckerPrivate::Dictionary::isEmpty() const noexcept
 {
     return m_dictionaryPath.isEmpty() || m_hunspellWrapper.isEmpty();

@@ -21,8 +21,8 @@ if(CLANG_TIDY_BINARY)
 
     foreach(SOURCE IN LISTS ${PROJECT_NAME}_HEADERS ${PROJECT_NAME}_SOURCES TEST_SOURCES TEST_HEADERS)
       # workaround for third party source which triggers a lot of noise
-      if("${SOURCE}" STREQUAL "src/utility/unix/StackTrace.cpp" OR
-          "${SOURCE}" STREQUAL "src/utility/unix/StackTrace.h")
+      if("${SOURCE}" STREQUAL "src/utility/unix/linux/StackTrace.cpp" OR
+          "${SOURCE}" STREQUAL "src/utility/unix/linux/StackTrace.h")
         continue()
       endif()
 

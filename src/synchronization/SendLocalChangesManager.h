@@ -94,7 +94,7 @@ public Q_SLOTS:
 
     void onAuthenticationTokensForLinkedNotebooksReceived(
         QHash<QString, std::pair<QString, QString>>
-            authTokensAndShardIdsByLinkedNotebookGuid,
+            authTokensByLinkedNotebookGuid,
         QHash<QString, qevercloud::Timestamp>
             authTokenExpirationByLinkedNotebookGuid);
 
@@ -287,7 +287,8 @@ private:
     class Q_DECL_HIDDEN CompareLinkedNotebookAuthDataByGuid
     {
     public:
-        CompareLinkedNotebookAuthDataByGuid(const QString & guid) : m_guid(guid)
+        CompareLinkedNotebookAuthDataByGuid(QString guid) :
+            m_guid(std::move(guid))
         {}
 
         [[nodiscard]] bool operator()(

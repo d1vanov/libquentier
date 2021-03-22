@@ -23,8 +23,7 @@
 
 #include <QThread>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 TagLocalStorageManagerAsyncTester::TagLocalStorageManagerAsyncTester(
     QObject * parent) :
@@ -136,7 +135,7 @@ void TagLocalStorageManagerAsyncTester::onGetTagCountCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onGetTagCountFailed(
-    ErrorString errorDescription, QUuid requestId)
+    ErrorString errorDescription, QUuid requestId) // NOLINT
 {
     QNWARNING(
         "tests:local_storage",
@@ -146,7 +145,7 @@ void TagLocalStorageManagerAsyncTester::onGetTagCountFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -201,7 +200,8 @@ void TagLocalStorageManagerAsyncTester::onAddTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onAddTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -211,7 +211,7 @@ void TagLocalStorageManagerAsyncTester::onAddTagFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onUpdateTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -236,7 +236,8 @@ void TagLocalStorageManagerAsyncTester::onUpdateTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onUpdateTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -246,7 +247,7 @@ void TagLocalStorageManagerAsyncTester::onUpdateTagFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
-    qevercloud::Tag tag, QUuid requestId)
+    qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
     Q_UNUSED(requestId)
 
@@ -339,7 +340,8 @@ void TagLocalStorageManagerAsyncTester::onFindTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onFindTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     if (m_state == STATE_SENT_FIND_AFTER_EXPUNGE_REQUEST) {
         m_state = STATE_SENT_GET_COUNT_AFTER_EXPUNGE_REQUEST;
@@ -358,7 +360,8 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsCompleted(
     std::size_t limit, std::size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, QList<qevercloud::Tag> tags, QUuid requestId)
+    QString linkedNotebookGuid, QList<qevercloud::Tag> tags, // NOLINT
+    QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -400,7 +403,8 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(
     std::size_t limit, std::size_t offset,
     LocalStorageManager::ListTagsOrder order,
     LocalStorageManager::OrderDirection orderDirection,
-    QString linkedNotebookGuid, ErrorString errorDescription, QUuid requestId)
+    QString linkedNotebookGuid, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     Q_UNUSED(limit)
     Q_UNUSED(offset)
@@ -416,7 +420,8 @@ void TagLocalStorageManagerAsyncTester::onListAllTagsFailed(
 }
 
 void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(
-    qevercloud::Tag tag, QStringList expungedChildTagLocalUids, QUuid requestId)
+    qevercloud::Tag tag, QStringList expungedChildTagLocalUids, // NOLINT
+    QUuid requestId)
 {
     Q_UNUSED(requestId)
     Q_UNUSED(expungedChildTagLocalUids)
@@ -439,7 +444,8 @@ void TagLocalStorageManagerAsyncTester::onExpungeTagCompleted(
 }
 
 void TagLocalStorageManagerAsyncTester::onExpungeTagFailed(
-    qevercloud::Tag tag, ErrorString errorDescription, QUuid requestId)
+    qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
+    QUuid requestId)
 {
     QNWARNING(
         "tests:local_storage",
@@ -565,5 +571,4 @@ void TagLocalStorageManagerAsyncTester::clear()
 
 #undef HANDLE_WRONG_STATE
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

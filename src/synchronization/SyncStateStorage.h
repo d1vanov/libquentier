@@ -38,24 +38,24 @@ public:
         QHash<QString, qevercloud::Timestamp>
             m_lastSyncTimesByLinkedNotebookGuid;
 
-        [[nodiscard]] virtual qint32 userDataUpdateCount() const override
+        [[nodiscard]] qint32 userDataUpdateCount() const override
         {
             return m_userDataUpdateCount;
         }
 
-        [[nodiscard]] virtual qevercloud::Timestamp userDataLastSyncTime()
+        [[nodiscard]] qevercloud::Timestamp userDataLastSyncTime()
             const override
         {
             return m_userDataLastSyncTime;
         }
 
-        [[nodiscard]] virtual QHash<QString, qint32>
+        [[nodiscard]] QHash<QString, qint32>
         linkedNotebookUpdateCounts() const override
         {
             return m_updateCountsByLinkedNotebookGuid;
         }
 
-        [[nodiscard]] virtual QHash<QString, qevercloud::Timestamp>
+        [[nodiscard]] QHash<QString, qevercloud::Timestamp>
         linkedNotebookLastSyncTimes() const override
         {
             return m_lastSyncTimesByLinkedNotebookGuid;

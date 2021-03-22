@@ -121,7 +121,7 @@ private:
 
     enum class State
     {
-        STATE_UNINITIALIZED = 0,
+        STATE_UNINITIALIZED,
         STATE_SENT_ADD_REQUEST,
         STATE_SENT_FIND_AFTER_ADD_REQUEST,
         STATE_SENT_UPDATE_REQUEST,
@@ -135,7 +135,7 @@ private:
         STATE_SENT_LIST_LINKED_NOTEBOOKS_REQUEST
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
 
 private:
     State m_state = State::STATE_UNINITIALIZED;

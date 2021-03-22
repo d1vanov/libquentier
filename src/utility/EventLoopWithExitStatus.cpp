@@ -41,7 +41,7 @@
 namespace quentier {
 
 EventLoopWithExitStatus::EventLoopWithExitStatus(QObject * parent) :
-    QEventLoop(parent), m_exitStatus(ExitStatus::Success), m_errorDescription()
+    QEventLoop(parent), m_exitStatus(ExitStatus::Success)
 {}
 
 EventLoopWithExitStatus::ExitStatus EventLoopWithExitStatus::exitStatus() const

@@ -25,12 +25,13 @@
 namespace quentier {
 
 SavedSearchSyncConflictResolver::SavedSearchSyncConflictResolver(
-    const qevercloud::SavedSearch & remoteSavedSearch,
-    const qevercloud::SavedSearch & localConflict, SavedSearchSyncCache & cache,
+    qevercloud::SavedSearch remoteSavedSearch,
+    qevercloud::SavedSearch localConflict, SavedSearchSyncCache & cache,
     LocalStorageManagerAsync & localStorageManagerAsync, QObject * parent) :
     QObject(parent),
     m_cache(cache), m_localStorageManagerAsync(localStorageManagerAsync),
-    m_remoteSavedSearch(remoteSavedSearch), m_localConflict(localConflict)
+    m_remoteSavedSearch(std::move(remoteSavedSearch)),
+    m_localConflict(std::move(localConflict))
 {}
 
 void SavedSearchSyncConflictResolver::start()
@@ -95,7 +96,7 @@ void SavedSearchSyncConflictResolver::start()
 }
 
 void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     if (requestId != m_addSavedSearchRequestId) {
         return;
@@ -125,7 +126,7 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onAddSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_addSavedSearchRequestId) {
@@ -142,7 +143,7 @@ void SavedSearchSyncConflictResolver::onAddSavedSearchFailed(
 }
 
 void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     if (requestId != m_updateSavedSearchRequestId) {
         return;
@@ -160,7 +161,8 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
         Q_EMIT finished(m_remoteSavedSearch);
         return;
     }
-    else if (m_state == State::PendingConflictingSavedSearchRenaming) {
+
+    if (m_state == State::PendingConflictingSavedSearchRenaming) {
         QNDEBUG(
             "synchronization:saved_search_conflict",
             "Successfully renamed the local saved search conflicting by name "
@@ -249,7 +251,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_updateSavedSearchRequestId) {
@@ -266,7 +268,7 @@ void SavedSearchSyncConflictResolver::onUpdateSavedSearchFailed(
 }
 
 void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(
-    qevercloud::SavedSearch search, QUuid requestId)
+    qevercloud::SavedSearch search, QUuid requestId) // NOLINT
 {
     if (requestId != m_findSavedSearchRequestId) {
         return;
@@ -284,7 +286,7 @@ void SavedSearchSyncConflictResolver::onFindSavedSearchComplete(
 }
 
 void SavedSearchSyncConflictResolver::onFindSavedSearchFailed(
-    qevercloud::SavedSearch search, ErrorString errorDescription,
+    qevercloud::SavedSearch search, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
     if (requestId != m_findSavedSearchRequestId) {
@@ -334,7 +336,7 @@ void SavedSearchSyncConflictResolver::onCacheFilled()
 }
 
 void SavedSearchSyncConflictResolver::onCacheFailed(
-    ErrorString errorDescription)
+    ErrorString errorDescription) // NOLINT
 {
     QNDEBUG(
         "synchronization:saved_search_conflict",

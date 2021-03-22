@@ -51,17 +51,17 @@ QString libquentierBuiltWithQtVersion() noexcept
 
 bool libquentierHasNoteEditor() noexcept
 {
-    return static_cast<bool>(LIB_QUENTIER_HAS_NOTE_EDITOR);
+    return static_cast<bool>(LIB_QUENTIER_HAS_NOTE_EDITOR); // NOLINT
 }
 
 bool libquentierHasAuthenticationManager() noexcept
 {
-    return static_cast<bool>(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER);
+    return static_cast<bool>(LIB_QUENTIER_HAS_AUTHENTICATION_MANAGER); // NOLINT
 }
 
 bool libquentierUsesQtWebEngine() noexcept
 {
-    return static_cast<bool>(LIB_QUENTIER_USE_QT_WEB_ENGINE);
+    return static_cast<bool>(LIB_QUENTIER_USE_QT_WEB_ENGINE); // NOLINT
 }
 
 int libquentierBuiltWithQEverCloudVersionMajor() noexcept

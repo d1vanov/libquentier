@@ -79,7 +79,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     LocalStorageManager::StartupOptions m_startupOptions;
 #else
-    LocalStorageManager::StartupOptions m_startupOptions = 0;
+    LocalStorageManager::StartupOptions m_startupOptions = 0; // NOLINT
 #endif
 
     LocalStorageManager * m_pLocalStorageManager = nullptr;
@@ -1402,7 +1402,7 @@ void LocalStorageManagerAsync::onUpdateNoteRequest(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
                 LocalStorageManager::GetNoteOptions getNoteOptions;
 #else
-                LocalStorageManager::GetNoteOptions getNoteOptions(0);
+                LocalStorageManager::GetNoteOptions getNoteOptions(0); // NOLINT
 #endif
                 bool res = false;
 

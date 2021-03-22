@@ -35,7 +35,7 @@ namespace quentier {
 NoteEditor::NoteEditor(QWidget * parent, Qt::WindowFlags flags) :
     QWidget(parent, flags), m_backend(new NoteEditorPrivate(*this))
 {
-    QVBoxLayout * pLayout = new QVBoxLayout;
+    auto * pLayout = new QVBoxLayout;
     pLayout->addWidget(m_backend->widget());
     pLayout->setMargin(0);
     setLayout(pLayout);

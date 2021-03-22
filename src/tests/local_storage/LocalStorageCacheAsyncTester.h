@@ -168,7 +168,7 @@ private:
         STATE_SENT_SAVED_SEARCH_UPDATE_REQUEST
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const State state);
+    friend QDebug & operator<<(QDebug & dbg, State state);
 
 private:
     State m_state = State::STATE_UNINITIALIZED;

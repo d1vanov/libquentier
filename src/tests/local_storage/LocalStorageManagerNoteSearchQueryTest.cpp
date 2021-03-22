@@ -29,12 +29,11 @@
 
 #include <QCryptographicHash>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool checkQueryString(
     const QString & queryString, const QVector<qevercloud::Note> & notes,
-    const QVector<bool> expectedContainedNotesIndices,
+    const QVector<bool> & expectedContainedNotesIndices,
     const LocalStorageManager & localStorageManager,
     ErrorString & errorDescription)
 {
@@ -154,7 +153,7 @@ bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
             QString(QStringLiteral("Test notebook #")) + QString::number(i));
 
         notebook.setUpdateSequenceNum(i);
-        notebook.setDefaultNotebook(i == 0 ? true : false);
+        notebook.setDefaultNotebook(i == 0);
         notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = (i == 1);
         notebook.setServiceCreated(i);
         notebook.setServiceUpdated(i + 1);
@@ -1127,8 +1126,7 @@ bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
-        expectedContainedNotesIndices[i] =
-            ((i / numResources == 1) ? true : false);
+        expectedContainedNotesIndices[i] = (i / numResources == 1);
     }
 
     RUN_CHECK()
@@ -1139,8 +1137,7 @@ bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
     queryString += QStringLiteral("\"");
 
     for (int i = 0; i < numNotes; ++i) {
-        expectedContainedNotesIndices[i] =
-            ((i / numResources == 2) ? false : true);
+        expectedContainedNotesIndices[i] = (i / numResources != 2);
     }
 
     expectedContainedNotesIndices[8] = true;
@@ -2174,5 +2171,4 @@ bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
