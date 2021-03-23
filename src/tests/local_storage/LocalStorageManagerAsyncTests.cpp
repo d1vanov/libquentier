@@ -321,8 +321,7 @@ void TestResourceAsync()
             &EventLoopWithExitStatus::exitAsFailureWithError);
 
         timer.start();
-        QTimer::singleShot(
-            0, &resourceAsyncTester, SLOT(onInitTestCase()));
+        QTimer::singleShot(0, &resourceAsyncTester, SLOT(onInitTestCase()));
 
         Q_UNUSED(loop.exec())
         status = loop.exitStatus();

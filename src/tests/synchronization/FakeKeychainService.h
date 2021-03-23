@@ -32,7 +32,6 @@ class FakeKeychainService final: public IKeychainService
     Q_OBJECT
 public:
     explicit FakeKeychainService(QObject * parent = nullptr);
-
     ~FakeKeychainService() override;
 
     [[nodiscard]] QUuid startWritePasswordJob(

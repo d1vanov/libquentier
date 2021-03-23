@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -108,7 +108,7 @@ void SynchronizationManagerSignalsCatcher::onFailure(
     ErrorString errorDescription)
 {
     m_receivedFailedSignal = true;
-    m_failureErrorDescription = errorDescription;
+    m_failureErrorDescription = std::move(errorDescription);
 
     auto * pSyncManager = qobject_cast<SynchronizationManager *>(sender());
     if (pSyncManager) {
@@ -122,7 +122,7 @@ void SynchronizationManagerSignalsCatcher::onFinish(
     Account account, bool somethingDownloaded, bool somethingSent)
 {
     m_receivedFinishedSignal = true;
-    m_finishedAccount = account;
+    m_finishedAccount = std::move(account);
     m_finishedSomethingDownloaded = somethingDownloaded;
     m_finishedSomethingSent = somethingSent;
 
@@ -134,7 +134,7 @@ void SynchronizationManagerSignalsCatcher::onAuthenticationRevoked(
 {
     m_receivedAuthenticationRevokedSignal = true;
     m_authenticationRevokeSuccess = success;
-    m_authenticationRevokeErrorDescription = errorDescription;
+    m_authenticationRevokeErrorDescription = std::move(errorDescription);
     m_authenticationRevokeUserId = userId;
 }
 
@@ -143,8 +143,8 @@ void SynchronizationManagerSignalsCatcher::onAuthenticationFinished(
 {
     m_receivedAuthenticationFinishedSignal = true;
     m_authenticationSuccess = success;
-    m_authenticationErrorDescription = errorDescription;
-    m_authenticationAccount = account;
+    m_authenticationErrorDescription = std::move(errorDescription);
+    m_authenticationAccount = std::move(account);
 }
 
 void SynchronizationManagerSignalsCatcher::onRemoteToLocalSyncStopped()
@@ -216,7 +216,8 @@ void SynchronizationManagerSignalsCatcher::onSyncChunkDownloadProgress(
 void SynchronizationManagerSignalsCatcher::
     onLinkedNotebookSyncChunkDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
-        qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook)
+        qint32 lastPreviousUsn,
+        qevercloud::LinkedNotebook linkedNotebook) // NOLINT
 {
     QNDEBUG(
         "tests:synchronization",
@@ -294,7 +295,7 @@ void SynchronizationManagerSignalsCatcher::
 }
 
 void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(
-    Account account, ISyncStateStorage::ISyncStatePtr syncState)
+    Account account, ISyncStateStorage::ISyncStatePtr syncState) // NOLINT
 {
     Q_UNUSED(account)
 
@@ -308,24 +309,24 @@ void SynchronizationManagerSignalsCatcher::onSyncStatePersisted(
 }
 
 void SynchronizationManagerSignalsCatcher::onNoteMovedToAnotherNotebook(
-    QString noteLocalUid, QString previousNotebookLocalUid,
-    QString newNotebookLocalUid)
+    QString noteLocalId, QString previousNotebookLocalId, // NOLINT
+    QString newNotebookLocalId) // NOLINT
 {
-    Q_UNUSED(noteLocalUid)
-    Q_UNUSED(previousNotebookLocalUid)
-    Q_UNUSED(newNotebookLocalUid)
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(previousNotebookLocalId)
+    Q_UNUSED(newNotebookLocalId)
 }
 
 void SynchronizationManagerSignalsCatcher::onNoteTagListChanged(
-    QString noteLocalUid, QStringList previousNoteTagLocalUids,
-    QStringList newNoteTagLocalUids)
+    QString noteLocalId, QStringList previousNoteTagLocalIds, // NOLINT
+    QStringList newNoteTagLocalIds) // NOLINT
 {
-    Q_UNUSED(noteLocalUid)
-    Q_UNUSED(previousNoteTagLocalUids)
-    Q_UNUSED(newNoteTagLocalUids)
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(previousNoteTagLocalIds)
+    Q_UNUSED(newNoteTagLocalIds)
 }
 
-void SynchronizationManagerSignalsCatcher::createConnections(
+void SynchronizationManagerSignalsCatcher::createConnections( // NOLINT
     LocalStorageManagerAsync & localStorageManagerAsync,
     SynchronizationManager & synchronizationManager,
     ISyncStateStorage & syncStateStorage)

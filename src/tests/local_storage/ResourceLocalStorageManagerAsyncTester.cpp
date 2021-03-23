@@ -405,7 +405,7 @@ void ResourceLocalStorageManagerAsyncTester::onUpdateResourceCompleted(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         LocalStorageManager::GetResourceOptions options;
 #else
-        LocalStorageManager::GetResourceOptions options(0);
+        LocalStorageManager::GetResourceOptions options(0); // NOLINT
 #endif
 
         Q_EMIT findResourceRequest(

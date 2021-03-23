@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,12 +21,10 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 bool parseResourceRecognitionIndicesAndItemsTest(QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_RESOURCE_RECOGNITION_INDICES_PARSING_TESTS_H

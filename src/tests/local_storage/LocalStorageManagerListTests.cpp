@@ -1179,7 +1179,7 @@ void TestListNotes()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     LocalStorageManager::GetNoteOptions getNoteOptions;
 #else
-    LocalStorageManager::GetNoteOptions getNoteOptions = 0;
+    LocalStorageManager::GetNoteOptions getNoteOptions(0); // NOLINT
 #endif
 
     QList<qevercloud::Note> foundNotes =
@@ -1341,7 +1341,7 @@ void TestListNotes()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     getNoteOptions = LocalStorageManager::GetNoteOptions();
 #else
-    getNoteOptions = LocalStorageManager::GetNoteOptions(0);
+    getNoteOptions = LocalStorageManager::GetNoteOptions(0); // NOLINT
 #endif
 
     foundNotes = localStorageManager.listNotes(

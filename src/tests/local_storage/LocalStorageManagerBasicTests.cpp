@@ -842,7 +842,7 @@ void TestResourceAddFindUpdateExpungeInLocalStorage()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     getResourceOptions = LocalStorageManager::GetResourceOptions();
 #else
-    getResourceOptions = LocalStorageManager::GetResourceOptions(0);
+    getResourceOptions = LocalStorageManager::GetResourceOptions(0); // NOLINT
 #endif
 
     QVERIFY2(
@@ -1735,7 +1735,7 @@ void TestNoteAddFindUpdateDeleteExpungeInLocalStorage()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     updateNoteOptions = LocalStorageManager::UpdateNoteOptions();
 #else
-    updateNoteOptions = LocalStorageManager::UpdateNoteOptions(0);
+    updateNoteOptions = LocalStorageManager::UpdateNoteOptions(0); // NOLINT
 #endif
 
     QVERIFY2(

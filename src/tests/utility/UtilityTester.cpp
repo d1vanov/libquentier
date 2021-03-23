@@ -33,15 +33,15 @@
 #include <QTimer>
 #include <QtTest/QTest>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 UtilityTester::UtilityTester(QObject * parent) : QObject(parent) {}
 
 UtilityTester::~UtilityTester() noexcept = default;
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << QStringLiteral("\n");
@@ -136,5 +136,4 @@ void UtilityTester::lruCacheTests()
 
 #undef CATCH_EXCEPTION
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

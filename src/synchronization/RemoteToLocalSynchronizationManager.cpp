@@ -2566,7 +2566,7 @@ void RemoteToLocalSynchronizationManager::emitFindByGuidRequest< // NOLINT
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     LocalStorageManager::GetResourceOptions options;
 #else
-    LocalStorageManager::GetResourceOptions options(0);
+    LocalStorageManager::GetResourceOptions options(0); // NOLINT
 #endif
 
     Q_EMIT findResource(resource, options, requestId);
@@ -3088,7 +3088,7 @@ void RemoteToLocalSynchronizationManager::onNoteThumbnailDownloadingFinished(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         LocalStorageManager::UpdateNoteOptions(),
 #else
-        LocalStorageManager::UpdateNoteOptions(0),
+        LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
         updateNoteRequestId);
 }
@@ -3734,7 +3734,7 @@ void RemoteToLocalSynchronizationManager::onGetResourceAsyncFinished(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         LocalStorageManager::UpdateNoteOptions(),
 #else
-        LocalStorageManager::UpdateNoteOptions(0),
+        LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
         markNoteDirtyRequestId);
 }
@@ -6679,7 +6679,7 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
         !m_postponedConflictingResourceDataPerAPICallPostponeTimerId.isEmpty();
 }
 
-#define PRINT_CONTENT_SOURCE(StreamType)                                       \
+#define PRINT_CONTENT_SOURCE(StreamType, strm)                                 \
     StreamType & operator<<(                                                   \
         StreamType & strm,                                                     \
         const RemoteToLocalSynchronizationManager::ContentSource & obj)        \
@@ -6698,11 +6698,10 @@ bool RemoteToLocalSynchronizationManager::resourcesSyncInProgress() const
         }                                                                      \
                                                                                \
         return strm;                                                           \
-    }                                                                          \
-    // PRINT_CONTENT_SOURCE
+    }
 
-PRINT_CONTENT_SOURCE(QTextStream)
-PRINT_CONTENT_SOURCE(QDebug)
+PRINT_CONTENT_SOURCE(QTextStream, strm)
+PRINT_CONTENT_SOURCE(QDebug, dbg)
 
 #undef PRINT_CONTENT_SOURCE
 
@@ -11345,7 +11344,7 @@ void RemoteToLocalSynchronizationManager::
     syncNextTagPendingProcessing();
 }
 
-#define PRINT_SYNC_MODE(StreamType)                                            \
+#define PRINT_SYNC_MODE(StreamType, strm)                                      \
     StreamType & operator<<(                                                   \
         StreamType & strm,                                                     \
         const RemoteToLocalSynchronizationManager::SyncMode & obj)             \
@@ -11362,11 +11361,10 @@ void RemoteToLocalSynchronizationManager::
             break;                                                             \
         }                                                                      \
         return strm;                                                           \
-    }                                                                          \
-    // PRINT_SYNC_MODE
+    }
 
-PRINT_SYNC_MODE(QTextStream)
-PRINT_SYNC_MODE(QDebug)
+PRINT_SYNC_MODE(QTextStream, strm)
+PRINT_SYNC_MODE(QDebug, dbg)
 
 #undef PRINT_SYNC_MODE
 

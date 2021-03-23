@@ -27,8 +27,7 @@
 #include <QSet>
 #include <QTextStream>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 namespace {
 
@@ -257,13 +256,7 @@ bool tagSortByParentChildRelationsTest(QString & error)
         return false;
     }
 
-    res = checkTagsOrder(tags, error);
-    if (!res) {
-        return false;
-    }
-
-    return true;
+    return checkTagsOrder(tags, error);
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,7 @@
 
 #include <stdexcept>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 MigratingKeychainTester::MigratingKeychainTester(QObject * parent) :
     QObject(parent)
@@ -116,7 +115,7 @@ void MigratingKeychainTester::writePasswordToSinkKeychainOnly()
         migratingKeychain.get(),
         [&migratingKeychainCallbackCalled, &id]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             migratingKeychainCallbackCalled = true;
             QVERIFY(id == requestId);
@@ -196,7 +195,7 @@ void MigratingKeychainTester::readPasswordFromSinkKeychainFirst()
         migratingKeychain.get(),
         [&readPasswordCallbackCalled, &id, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == id);
@@ -329,7 +328,7 @@ void MigratingKeychainTester::readPasswordFromSourceKeychainAsFallback()
         migratingKeychain.get(),
         [&readPasswordCallbackCalled, &id, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == id);
@@ -429,7 +428,7 @@ void MigratingKeychainTester::dontFallbackReadOnSeriousSinkKeychainError()
         migratingKeychain.get(),
         [&readPasswordCallbackCalled, &id]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             Q_UNUSED(password)
             Q_UNUSED(errorDescription)
@@ -523,7 +522,7 @@ void MigratingKeychainTester::attemptToDeletePasswordFromBothKeychains()
         migratingKeychain.get(),
         [&deletePasswordCallbackCalled, &id, &deletePasswordExpectedErrorCode]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             Q_UNUSED(errorDescription)
             deletePasswordCallbackCalled = true;
@@ -606,5 +605,4 @@ void MigratingKeychainTester::attemptToDeletePasswordFromBothKeychains()
     QVERIFY(deleteFromSourceKeychainCalled);
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

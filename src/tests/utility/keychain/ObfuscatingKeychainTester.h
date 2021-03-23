@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,8 +21,7 @@
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class ObfuscatingKeychainTester final : public QObject
 {
@@ -36,7 +35,7 @@ private Q_SLOTS:
     void checkDeletePasswordWithoutWriting();
 
 private:
-    QString settingsGroupName() const;
+    [[nodiscard]] QString settingsGroupName() const;
 
 private:
     const QString m_service = QStringLiteral("service");
@@ -44,7 +43,6 @@ private:
     const QString m_password = QStringLiteral("password");
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_UTILITY_KEYCHAIN_OBFUSCATING_KEYCHAIN_TESTER_H

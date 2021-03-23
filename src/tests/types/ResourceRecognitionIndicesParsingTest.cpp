@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -25,14 +25,13 @@
 #include <QByteArray>
 #include <QFile>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
 {
     QNDEBUG("tests:types", "parseResourceRecognitionIndicesAndItemsTest");
 
-    QFile resource(QStringLiteral(":/tests/recoIndex-all-in-one-example.xml"));
+    QFile resource{QStringLiteral(":/tests/recoIndex-all-in-one-example.xml")};
     if (!resource.open(QIODevice::ReadOnly)) {
         error = QStringLiteral("Can't open test file ") + resource.fileName();
         QNWARNING(
@@ -46,8 +45,7 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     resource.close();
 
     ResourceRecognitionIndices recoIndices;
-    bool res = recoIndices.setData(resourceData);
-    if (!res) {
+    if (!recoIndices.setData(resourceData)) {
         error = QStringLiteral("Failed to parse the recognition indices");
         return false;
     }
@@ -417,5 +415,4 @@ bool parseResourceRecognitionIndicesAndItemsTest(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

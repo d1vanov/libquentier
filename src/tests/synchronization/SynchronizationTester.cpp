@@ -57,7 +57,8 @@ static const QString gModifiedRemotelySuffix =
     }
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
@@ -80,8 +81,7 @@ inline void messageHandler(
             QString::fromUtf8(" unexpectedly returned true")));                \
     }
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 SynchronizationTester::SynchronizationTester(QObject * parent) :
     QObject(parent), m_testAccount(
@@ -6645,7 +6645,7 @@ void SynchronizationTester::setModifiedUserOwnItemsToLocalStorage()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             LocalStorageManager::UpdateNoteOptions(),
 #else
-            LocalStorageManager::UpdateNoteOptions(0),
+            LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
             errorDescription);
 
@@ -6743,7 +6743,7 @@ void SynchronizationTester::setModifiedLinkedNotebookItemsToLocalStorage()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             LocalStorageManager::UpdateNoteOptions(),
 #else
-            LocalStorageManager::UpdateNoteOptions(0),
+            LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
             errorDescription);
 
@@ -7060,7 +7060,7 @@ void SynchronizationTester::setConflictingNotesToLocalAndRemoteStoragesImpl(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             LocalStorageManager::UpdateNoteOptions(),
 #else
-            LocalStorageManager::UpdateNoteOptions(0),
+            LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
             errorDescription);
 
@@ -8743,12 +8743,8 @@ void SynchronizationTester::runTest(
             &catcher, &SynchronizationManagerSignalsCatcher::ready, &loop,
             &EventLoopWithExitStatus::exitAsSuccess);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, m_pSynchronizationManager, &SynchronizationManager::synchronize);
 
         Q_UNUSED(loop.exec())
@@ -8772,5 +8768,4 @@ void SynchronizationTester::runTest(
     }
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

@@ -22,8 +22,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/EncryptionManager.h>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 bool decryptAesTest(QString & error)
 {
@@ -159,5 +158,4 @@ bool decryptRc2Test(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

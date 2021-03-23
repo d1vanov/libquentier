@@ -33,22 +33,21 @@ public:
     ~FakeUserStore() override;
 
     [[nodiscard]] qint16 edamVersionMajor() const noexcept;
-    void setEdamVersionMajor(const qint16 edamVersionMajor);
+    void setEdamVersionMajor(qint16 edamVersionMajor);
 
     [[nodiscard]] qint16 edamVersionMinor() const noexcept;
-    void setEdamVersionMinor(const qint16 edamVersionMinor);
+    void setEdamVersionMinor(qint16 edamVersionMinor);
 
     [[nodiscard]] const qevercloud::AccountLimits * findAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel) const noexcept;
+        qevercloud::ServiceLevel serviceLevel) const noexcept;
 
     void setAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel,
+        qevercloud::ServiceLevel serviceLevel,
         const qevercloud::AccountLimits & limits);
 
-    [[nodiscard]] const qevercloud::User * findUser(
-        const qint32 id) const noexcept;
+    [[nodiscard]] const qevercloud::User * findUser(qint32 id) const noexcept;
 
-    void setUser(const qint32 id, const qevercloud::User & user);
+    void setUser(qint32 id, const qevercloud::User & user);
 
 public:
     // IUserStore interface
@@ -65,7 +64,7 @@ public:
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getAccountLimits(
-        const qevercloud::ServiceLevel serviceLevel,
+        qevercloud::ServiceLevel serviceLevel,
         qevercloud::AccountLimits & limits, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 

@@ -24,8 +24,7 @@
 #include <QSignalSpy>
 #include <QtTest/QTest>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 ObfuscatingKeychainTester::ObfuscatingKeychainTester(QObject * parent) :
     QObject(parent)
@@ -65,7 +64,7 @@ void ObfuscatingKeychainTester::checkWriteReadPassword()
         keychain.get(),
         [password = m_password, &callbackCalled](
             QUuid requestId, IKeychainService::ErrorCode errorCode,
-            ErrorString errorDescription, QString readPassword) {
+            ErrorString errorDescription, QString readPassword) { // NOLINT
             Q_UNUSED(requestId)
 
             QVERIFY(errorCode == IKeychainService::ErrorCode::NoError);
@@ -106,7 +105,7 @@ void ObfuscatingKeychainTester::checkWriteDeletePassword()
         keychain.get(),
         [&callbackCalled](
             QUuid requestId, IKeychainService::ErrorCode errorCode,
-            ErrorString errorDescription) {
+            ErrorString errorDescription) { // NOLINT
             Q_UNUSED(requestId)
 
             QVERIFY(errorCode == IKeychainService::ErrorCode::NoError);
@@ -139,7 +138,7 @@ void ObfuscatingKeychainTester::checkDeletePasswordWithoutWriting()
         keychain.get(),
         [&callbackCalled](
             QUuid requestId, IKeychainService::ErrorCode errorCode,
-            ErrorString errorDescription) {
+            ErrorString errorDescription) { // NOLINT
             Q_UNUSED(requestId)
 
             QVERIFY(errorCode == IKeychainService::ErrorCode::EntryNotFound);
@@ -161,5 +160,4 @@ QString ObfuscatingKeychainTester::settingsGroupName() const
     return m_service + QStringLiteral("/") + m_key;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

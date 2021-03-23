@@ -40,7 +40,7 @@ FakeNoteStore::FakeNoteStore(QObject * parent) :
 {}
 
 FakeNoteStore::FakeNoteStore(std::shared_ptr<Data> data) :
-    INoteStore(), m_data(std::move(data))
+    m_data(std::move(data))
 {}
 
 FakeNoteStore::~FakeNoteStore() = default;
@@ -541,10 +541,9 @@ QHash<QString, qevercloud::Note> FakeNoteStore::notes() const
     result.reserve(static_cast<int>(m_data->m_notes.size()));
 
     const auto & noteDataByGuid = m_data->m_notes.get<NoteByGuid>();
-    for (auto it = noteDataByGuid.begin(), end = noteDataByGuid.end();
-         it != end; ++it)
+    for (const auto & it : noteDataByGuid)
     {
-        result[it->guid().value()] = *it;
+        result[it.guid().value()] = it;
     }
 
     return result;
@@ -728,10 +727,9 @@ QHash<QString, qevercloud::Resource> FakeNoteStore::resources() const
     result.reserve(static_cast<int>(m_data->m_resources.size()));
 
     const auto & resourceDataByGuid = m_data->m_resources.get<ResourceByGuid>();
-    for (auto it = resourceDataByGuid.begin(), end = resourceDataByGuid.end();
-         it != end; ++it)
+    for (const auto & it : resourceDataByGuid)
     {
-        result[it->guid().value()] = *it;
+        result[it.guid().value()] = it;
     }
 
     return result;
@@ -2830,12 +2828,11 @@ qint32 FakeNoteStore::getNote(
 }
 
 bool FakeNoteStore::getNoteAsync(
-    const bool withContent, const bool withResourcesData,
-    const bool withResourcesRecognition, const bool withResourcesAlternateData,
-    const bool withSharedNotes, const bool withNoteAppDataValues,
-    const bool withResourceAppDataValues, const bool withNoteLimits,
-    const QString & noteGuid, const QString & authToken,
-    ErrorString & errorDescription)
+    bool withContent, bool withResourceData, bool withResourcesRecognition,
+    bool withResourceAlternateData, bool withSharedNotes,
+    bool withNoteAppDataValues, bool withResourceAppDataValues,
+    bool withNoteLimits, const QString & noteGuid,
+    const QString & authToken, ErrorString & errorDescription)
 {
     if (Q_UNLIKELY(noteGuid.isEmpty())) {
         errorDescription.setBase("Note guid is empty");
@@ -2844,9 +2841,9 @@ bool FakeNoteStore::getNoteAsync(
 
     GetNoteAsyncRequest request;
     request.m_withContent = withContent;
-    request.m_withResourcesData = withResourcesData;
+    request.m_withResourcesData = withResourceData;
     request.m_withResourcesRecognition = withResourcesRecognition;
-    request.m_withResourcesAlternateData = withResourcesAlternateData;
+    request.m_withResourcesAlternateData = withResourceAlternateData;
     request.m_withSharedNotes = withSharedNotes;
     request.m_withNoteAppDataValues = withNoteAppDataValues;
     request.m_withResourceAppDataValues = withResourceAppDataValues;
@@ -3266,11 +3263,9 @@ qint32 FakeNoteStore::checkNotebookFields(
                 qevercloud::EDAMErrorCode::BAD_DATA_FORMAT);
         }
 
-        for (auto it = qevercloud::EDAM_PUBLISHING_URI_PROHIBITED.begin(),
-                  end = qevercloud::EDAM_PUBLISHING_URI_PROHIBITED.end();
-             it != end; ++it)
+        for (const auto & it : qevercloud::EDAM_PUBLISHING_URI_PROHIBITED)
         {
-            if (publishingUri == *it) {
+            if (publishingUri == it) {
                 errorDescription.setBase(
                     "Prohibited publishing URI value is set");
 
@@ -4280,12 +4275,9 @@ qint32 FakeNoteStore::getSyncChunkImpl(
                      !*filter.includeNoteResourceApplicationDataFullMap()) &&
                     qecNote.resources())
                 {
-                    for (auto it = qecNote.mutableResources()->begin(),
-                              end = qecNote.mutableResources()->end();
-                         it != end; ++it)
+                    for (auto & resource : *qecNote.mutableResources())
                     {
-                        auto & resource = *it;
-                        if (resource.attributes() &&
+                         if (resource.attributes() &&
                             resource.attributes()->applicationData()) {
                             resource.mutableAttributes()
                                 ->mutableApplicationData()
@@ -4305,12 +4297,9 @@ qint32 FakeNoteStore::getSyncChunkImpl(
             // recognition data or resource alternate data
             qecNote.setContent(std::nullopt);
             if (qecNote.resources()) {
-                for (auto it = qecNote.mutableResources()->begin(),
-                          end = qecNote.mutableResources()->end();
-                     it != end; ++it)
+                for (auto & resource : *qecNote.mutableResources())
                 {
-                    auto & resource = *it;
-                    if (resource.data()) {
+                     if (resource.data()) {
                         resource.mutableData()->setBody(std::nullopt);
                     }
                     if (resource.recognition()) {
@@ -4563,11 +4552,9 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
     }
 
     const auto & notebookGuidIndex = m_data->m_notebooks.get<NotebookByGuid>();
-    for (auto it = notebookGuidIndex.begin(), end = notebookGuidIndex.end();
-         it != end; ++it)
+    for (const auto & notebook : notebookGuidIndex)
     {
-        const auto & notebook = *it;
-        if (linkedNotebookGuid.isEmpty() ==
+         if (linkedNotebookGuid.isEmpty() ==
             notebook.linkedNotebookGuid().has_value()) {
             continue;
         }
@@ -4587,10 +4574,8 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
     }
 
     const auto & tagGuidIndex = m_data->m_tags.get<TagByGuid>();
-    for (auto it = tagGuidIndex.begin(), end = tagGuidIndex.end(); it != end;
-         ++it) {
-        const auto & tag = *it;
-        if (linkedNotebookGuid.isEmpty() ==
+    for (const auto & tag : tagGuidIndex) {
+         if (linkedNotebookGuid.isEmpty() ==
             tag.linkedNotebookGuid().has_value()) {
             continue;
         }
@@ -4625,11 +4610,9 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
     }
 
     const auto & noteGuidIndex = m_data->m_notes.get<NoteByGuid>();
-    for (auto it = noteGuidIndex.begin(), end = noteGuidIndex.end(); it != end;
-         ++it)
+    for (const auto & note : noteGuidIndex)
     {
-        const auto & note = *it;
-        auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
+         auto notebookIt = notebookGuidIndex.find(note.notebookGuid().value());
         if (Q_UNLIKELY(notebookIt == notebookGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -4656,11 +4639,9 @@ void FakeNoteStore::considerAllExistingDataItemsSentBeforeRateLimitBreachImpl(
     }
 
     const auto & resourceGuidIndex = m_data->m_resources.get<ResourceByGuid>();
-    for (auto it = resourceGuidIndex.begin(), end = resourceGuidIndex.end();
-         it != end; ++it)
+    for (const auto & resource : resourceGuidIndex)
     {
-        const auto & resource = *it;
-        auto noteIt = noteGuidIndex.find(resource.noteGuid().value());
+         auto noteIt = noteGuidIndex.find(resource.noteGuid().value());
         if (Q_UNLIKELY(noteIt == noteGuidIndex.end())) {
             QNWARNING(
                 "tests:synchronization",
@@ -4706,11 +4687,9 @@ void FakeNoteStore::storeCurrentMaxUsnsAsThoseBeforeRateLimitBreach()
     const auto & linkedNotebookGuidIndex =
         m_data->m_linkedNotebooks.get<LinkedNotebookByGuid>();
 
-    for (auto it = linkedNotebookGuidIndex.begin(),
-              end = linkedNotebookGuidIndex.end();
-         it != end; ++it)
+    for (const auto & it : linkedNotebookGuidIndex)
     {
-        storeCurrentMaxUsnAsThatBeforeRateLimitBreachImpl(it->guid().value());
+        storeCurrentMaxUsnAsThatBeforeRateLimitBreachImpl(it.guid().value());
     }
 }
 
@@ -4793,8 +4772,8 @@ FakeNoteStore::nextNoteByUsnIterator(
             ++it;
             continue;
         }
-        else if (
-            !notebook.linkedNotebookGuid() &&
+
+        if (!notebook.linkedNotebookGuid() &&
             !targetLinkedNotebookGuid.isEmpty())
         {
             ++it;
@@ -4848,8 +4827,8 @@ FakeNoteStore::nextResourceByUsnIterator(
             ++it;
             continue;
         }
-        else if (
-            !notebook.linkedNotebookGuid() &&
+
+        if (!notebook.linkedNotebookGuid() &&
             !targetLinkedNotebookGuid.isEmpty())
         {
             ++it;

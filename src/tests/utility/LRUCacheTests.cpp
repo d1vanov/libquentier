@@ -22,8 +22,7 @@
 
 #include <cstdint>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 bool testEmptyLRUCacheConsistency(QString & error)
 {
@@ -37,7 +36,7 @@ bool testEmptyLRUCacheConsistency(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.size() != 0)) {
+    if (Q_UNLIKELY(!cache.empty())) {
         error =
             QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
             QString::number(cache.size());
@@ -175,10 +174,9 @@ bool testNonEmptyLRUCacheConsistency(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.size() != 0)) {
+    if (Q_UNLIKELY(!cache.empty())) {
         error = QStringLiteral(
-            "LRUCache's size method returns non-zero value "
-            "on cleared cache");
+            "LRUCache's size method returns non-zero value on cleared cache");
 
         return false;
     }
@@ -380,7 +378,7 @@ bool testRemovalFromLRUCache(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.size() != 0)) {
+    if (Q_UNLIKELY(!cache.empty())) {
         error = QStringLiteral(
             "LRUCache's size method returns non-zero value "
             "on cache all items of which were removed");
@@ -456,7 +454,7 @@ bool testItemsAdditionToLRUCacheBeforeReachingMaxSize(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.size() != 0)) {
+    if (Q_UNLIKELY(!cache.empty())) {
         error =
             QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
             QString::number(cache.size());
@@ -646,7 +644,7 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
         return false;
     }
 
-    if (Q_UNLIKELY(cache.size() != 0)) {
+    if (Q_UNLIKELY(!cache.empty())) {
         error =
             QStringLiteral("Empty LRUCache's size method returns non-zero: ") +
             QString::number(cache.size());
@@ -852,5 +850,4 @@ bool testItemsAdditionToLRUCacheAfterReachingMaxSize(QString & error)
     return true;
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

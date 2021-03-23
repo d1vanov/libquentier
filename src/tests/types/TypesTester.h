@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -21,15 +21,14 @@
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class TypesTester final : public QObject
 {
     Q_OBJECT
 public:
     TypesTester(QObject * parent = nullptr);
-    virtual ~TypesTester() override;
+    ~TypesTester() override;
 
 private Q_SLOTS:
     void init();
@@ -39,7 +38,6 @@ private Q_SLOTS:
     void resourceRecognitionIndicesParsingTest();
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_TYPES_TYPES_TESTER_H

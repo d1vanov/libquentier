@@ -21,8 +21,7 @@
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class UtilityTester final : public QObject
 {
@@ -46,7 +45,6 @@ private:
     Q_DISABLE_COPY(UtilityTester)
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_UTILITY_UTILITY_TESTER_H

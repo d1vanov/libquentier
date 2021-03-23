@@ -21,8 +21,7 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool convertSimpleNoteToHtmlAndBack(QString & error);
 [[nodiscard]] bool convertNoteWithToDoTagsToHtmlAndBack(QString & error);
@@ -38,7 +37,6 @@ namespace test {
 [[nodiscard]] bool convertHtmlWithTableAndHilitorHelperTagsToEnml(
     QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_ENML_CONVERTER_TESTS_H

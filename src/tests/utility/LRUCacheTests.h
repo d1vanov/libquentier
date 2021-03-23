@@ -21,8 +21,7 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool testEmptyLRUCacheConsistency(QString & error);
 [[nodiscard]] bool testNonEmptyLRUCacheConsistency(QString & error);
@@ -35,7 +34,6 @@ namespace test {
 [[nodiscard]] bool testItemsAdditionToLRUCacheAfterReachingMaxSize(
     QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_LRU_CACHE_TESTS_H

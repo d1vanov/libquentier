@@ -41,8 +41,7 @@ static const QString gSecondNotebookLocalId =
 static const QString gThirdNotebookLocalId =
     QStringLiteral("7d919756-e83d-4a02-b94f-f6eab8e12885");
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 template <class T>
 struct CompareItemByLocalId
@@ -2234,12 +2233,8 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
             &expunger, &FullSyncStaleDataItemsExpunger::failure, &loop,
             &EventLoopWithExitStatus::exitAsFailureWithErrorString);
 
-        QTimer slotInvokingTimer;
-        slotInvokingTimer.setInterval(500);
-        slotInvokingTimer.setSingleShot(true);
-
         timer.start();
-        slotInvokingTimer.singleShot(
+        QTimer::singleShot(
             0, &expunger, &FullSyncStaleDataItemsExpunger::start);
 
         Q_UNUSED(loop.exec())
@@ -2610,5 +2605,4 @@ void FullSyncStaleDataItemsExpungerTester::doTest(
     }
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

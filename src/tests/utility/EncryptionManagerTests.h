@@ -21,14 +21,12 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool encryptDecryptTest(QString & error);
 [[nodiscard]] bool decryptAesTest(QString & error);
 [[nodiscard]] bool decryptRc2Test(QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_ENCRYPTION_MANAGER_TESTS_H

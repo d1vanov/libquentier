@@ -56,7 +56,7 @@ QUuid FakeKeychainService::startReadPasswordJob(
     const int timerId = startTimer(0);
 
     m_readPasswordRequestIdWithPasswordByTimerId[timerId] =
-        std::make_pair(requestId, password);
+        std::make_pair(requestId, std::move(password));
 
     return requestId;
 }

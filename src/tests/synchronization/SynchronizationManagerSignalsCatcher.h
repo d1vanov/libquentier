@@ -329,12 +329,12 @@ private Q_SLOTS:
         Account account, ISyncStateStorage::ISyncStatePtr syncState);
 
     void onNoteMovedToAnotherNotebook(
-        QString noteLocalUid, QString previousNotebookLocalUid,
-        QString newNotebookLocalUid);
+        QString noteLocalId, QString previousNotebookLocalId,
+        QString newNotebookLocalId);
 
     void onNoteTagListChanged(
-        QString noteLocalUid, QStringList previousNoteTagLocalUids,
-        QStringList newNoteTagLocalUids);
+        QString noteLocalId, QStringList previousNoteTagLocalIds,
+        QStringList newNoteTagLocalIds);
 
 private:
     void createConnections(

@@ -38,7 +38,8 @@
     }
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";

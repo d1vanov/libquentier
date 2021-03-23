@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -41,8 +41,8 @@ using namespace quentier::test;
 int main(int argc, char * argv[])
 {
     quentier::QuentierApplication app(argc, argv);
-    app.setOrganizationName(QStringLiteral("d1vanov"));
-    app.setApplicationName(QStringLiteral("LibquentierTests"));
+    QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
+    QCoreApplication::setApplicationName(QStringLiteral("LibquentierTests"));
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Trace);

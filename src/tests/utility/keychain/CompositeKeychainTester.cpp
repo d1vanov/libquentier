@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,8 +28,7 @@
 
 #include <stdexcept>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 CompositeKeychainTester::CompositeKeychainTester(QObject * parent) :
     QObject(parent)
@@ -116,7 +115,7 @@ void CompositeKeychainTester::writePasswordToBothKeychains()
         compositeKeychain.get(),
         [&compositeKeychainCallbackCalled, &id]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             compositeKeychainCallbackCalled = true;
             QVERIFY(id == requestId);
@@ -196,7 +195,7 @@ void CompositeKeychainTester::readPasswordFromPrimaryKeychainFirst()
         compositeKeychain.get(),
         [&readPasswordCallbackCalled, &id, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == id);
@@ -280,7 +279,7 @@ void CompositeKeychainTester::readPasswordFromSecondaryKeychainAsFallback()
         compositeKeychain.get(),
         [&readPasswordCallbackCalled, &id, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == id);
@@ -368,7 +367,7 @@ void CompositeKeychainTester::
         compositeKeychain.get(),
         [&compositeKeychainWriteCallbackCalled, &writeId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             compositeKeychainWriteCallbackCalled = true;
             QVERIFY(writeId == requestId);
@@ -441,7 +440,7 @@ void CompositeKeychainTester::
         compositeKeychain.get(),
         [&readPasswordCallbackCalled, &readId, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == readId);
@@ -539,7 +538,7 @@ void CompositeKeychainTester::
         [&compositeKeychainWriteCallbackCalled, &writeId,
          &expectedWriteErrorCode]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             Q_UNUSED(errorDescription)
 
@@ -625,7 +624,7 @@ void CompositeKeychainTester::
         [&readPasswordCallbackCalled, &readId, &expectedReadErrorCode,
          &expectedPassword]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             Q_UNUSED(errorDescription)
 
@@ -767,7 +766,7 @@ void CompositeKeychainTester::deletePasswordFromBothKeychains()
         compositeKeychain.get(),
         [&deletePasswordCallbackCalled, &deleteId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             deletePasswordCallbackCalled = true;
             QVERIFY(requestId == deleteId);
@@ -846,7 +845,7 @@ void CompositeKeychainTester::handleDeleteFromPrimaryKeychainError()
         compositeKeychain.get(),
         [&deletePasswordCallbackCalled, &deleteId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             deletePasswordCallbackCalled = true;
             QVERIFY(requestId == deleteId);
@@ -923,7 +922,7 @@ void CompositeKeychainTester::handleDeleteFromPrimaryKeychainError()
         compositeKeychain.get(),
         [&readPasswordCallbackCalled, &readId, expectedPassword=m_password]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             readPasswordCallbackCalled = true;
             QVERIFY(requestId == readId);
@@ -1004,7 +1003,7 @@ void CompositeKeychainTester::handleDeleteFromPrimaryKeychainError()
         compositeKeychain.get(),
         [&compositeKeychainWriteCallbackCalled, &writeId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             compositeKeychainWriteCallbackCalled = true;
             QVERIFY(writeId == requestId);
@@ -1111,7 +1110,7 @@ void CompositeKeychainTester::handleDeleteFromSecondaryKeychainError()
         compositeKeychain.get(),
         [&deletePasswordCallbackCalled, &deleteId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             deletePasswordCallbackCalled = true;
             QVERIFY(requestId == deleteId);
@@ -1189,7 +1188,7 @@ void CompositeKeychainTester::handleDeleteFromSecondaryKeychainError()
         compositeKeychain.get(),
         [&readPasswordCallbackCalled, &readId, &expectedReadErrorCode]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             Q_UNUSED(errorDescription)
             Q_UNUSED(password)
@@ -1272,7 +1271,7 @@ void CompositeKeychainTester::handleDeleteFromSecondaryKeychainError()
         compositeKeychain.get(),
         [&compositeKeychainWriteCallbackCalled, &writeId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             compositeKeychainWriteCallbackCalled = true;
             QVERIFY(writeId == requestId);
@@ -1382,7 +1381,7 @@ void CompositeKeychainTester::handleDeleteFromBothKeychainsErrors()
         compositeKeychain.get(),
         [&deletePasswordCallbackCalled, &deleteId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             deletePasswordCallbackCalled = true;
             QVERIFY(requestId == deleteId);
@@ -1462,7 +1461,7 @@ void CompositeKeychainTester::handleDeleteFromBothKeychainsErrors()
         [&readPasswordCallbackCalled, &readId, &expectedReadErrorCode,
          &expectedPassword]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription, QString password)
+         ErrorString errorDescription, QString password) // NOLINT
         {
             Q_UNUSED(errorDescription)
 
@@ -1545,7 +1544,7 @@ void CompositeKeychainTester::handleDeleteFromBothKeychainsErrors()
         compositeKeychain.get(),
         [&compositeKeychainWriteCallbackCalled, &writeId]
         (QUuid requestId, IKeychainService::ErrorCode errorCode,
-         ErrorString errorDescription)
+         ErrorString errorDescription) // NOLINT
         {
             compositeKeychainWriteCallbackCalled = true;
             QVERIFY(writeId == requestId);
@@ -1607,5 +1606,4 @@ void CompositeKeychainTester::cleanup()
     settings.endGroup();
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

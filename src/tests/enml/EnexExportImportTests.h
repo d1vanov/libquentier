@@ -21,8 +21,7 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool exportSingleNoteWithoutTagsAndResourcesToEnexAndImportBack(
     QString & error);
@@ -44,7 +43,6 @@ namespace test {
 
 [[nodiscard]] bool importRealWorldEnex(QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_ENEX_EXPORT_IMPORT_TESTS_H

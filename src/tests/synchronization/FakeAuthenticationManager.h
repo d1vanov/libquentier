@@ -34,7 +34,7 @@ public:
     void setAuthToken(QString authToken);
 
     [[nodiscard]] qevercloud::UserID userId() const noexcept;
-    void setUserId(const qevercloud::UserID userId);
+    void setUserId(qevercloud::UserID userId);
 
     [[nodiscard]] QList<QNetworkCookie> userStoreCookies() const;
     void setUserStoreCookies(QList<QNetworkCookie> cookies);
@@ -42,7 +42,7 @@ public:
     void failNextRequest();
 
 public Q_SLOTS:
-    virtual void onAuthenticationRequest() override;
+    void onAuthenticationRequest() override;
 
 private:
     qevercloud::UserID m_userId = 1;

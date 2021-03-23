@@ -212,7 +212,7 @@ void NoteLocalStorageManagerAsyncTester::onGetNoteCountCompleted(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
             LocalStorageManager::UpdateNoteOptions(),
 #else
-            LocalStorageManager::UpdateNoteOptions(0),
+            LocalStorageManager::UpdateNoteOptions(0), // NOLINT
 #endif
             QUuid::createUuid());
     }

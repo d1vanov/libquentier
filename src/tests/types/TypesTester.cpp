@@ -39,19 +39,19 @@
     }
 
 inline void messageHandler(
-    QtMsgType type, const QMessageLogContext &, const QString & message)
+    QtMsgType type, const QMessageLogContext & /* context */,
+    const QString & message)
 {
     if (type != QtDebugMsg) {
         QTextStream(stdout) << message << "\n";
     }
 }
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 TypesTester::TypesTester(QObject * parent) : QObject(parent) {}
 
-TypesTester::~TypesTester() {}
+TypesTester::~TypesTester() = default;
 
 void TypesTester::init()
 {
@@ -68,7 +68,7 @@ void TypesTester::noteContainsToDoTest()
             "Completed item<en-todo/>Not yet "
             "completed item</en-note>");
 
-        QString error =
+        const QString error =
             QStringLiteral("Wrong result of Note's containsToDo method");
 
         QVERIFY2(noteContentContainsCheckedToDo(noteContent), qPrintable(error));
@@ -139,14 +139,14 @@ void TypesTester::noteContainsEncryptionTest()
             "NKLHX5yK1MlpzemJQijAN6C4545s2EODx"
             "Q8Bg1r==</en-crypt></en-note>");
 
-        QString error =
+        const QString error =
             QStringLiteral("Wrong result of Note's containsEncryption method");
 
         QVERIFY2(
             noteContentContainsEncryptedFragments(noteContent),
             qPrintable(error));
 
-        QString noteContentWithoutEncryption =
+        const QString noteContentWithoutEncryption =
             QStringLiteral("<en-note><h1>Hello, world!</h1></en-note>");
 
         QVERIFY2(
@@ -164,11 +164,10 @@ void TypesTester::resourceRecognitionIndicesParsingTest()
 {
     try {
         QString error;
-        bool res = parseResourceRecognitionIndicesAndItemsTest(error);
+        const bool res = parseResourceRecognitionIndicesAndItemsTest(error);
         QVERIFY2(res, qPrintable(error));
     }
     CATCH_EXCEPTION();
 }
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test

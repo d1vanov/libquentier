@@ -425,7 +425,7 @@ bool noteSearchQueryParsingTest(QString & error)
         }
 
 #define ADD_LIST_TO_QUERY_STRING(keyword, list, type, ...)                     \
-    for (const type & item: list) {                                            \
+    for (const type & item: qAsConst(list)) {                                  \
         queryString += QStringLiteral(#keyword ":");                           \
         const QString & itemStr = __VA_ARGS__(item);                           \
         bool itemContainsSpace = itemStr.contains(QStringLiteral(" "));        \

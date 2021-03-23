@@ -431,7 +431,8 @@ bool LocalStoragePatch1To2::restoreLocalStorageFromBackup(
 
     pMainDbFileCopier->moveToThread(pMainDbFileCopierThread);
 
-    QTimer::singleShot(0, this, SLOT(startLocalStorageRestorationFromBackup()));
+    QTimer::singleShot(
+        0, this, SLOT(startLocalStorageRestorationFromBackup()));
 
     Q_UNUSED(restoreFromBackupEventLoop.exec())
     const auto status = restoreFromBackupEventLoop.exitStatus();

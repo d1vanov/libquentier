@@ -300,42 +300,42 @@ private:
     };
 
     friend QDebug & operator<<(
-        QDebug & dbg, const ConflictingItemsUsnOption option);
+        QDebug & dbg, ConflictingItemsUsnOption option);
 
     void setConflictingSavedSearchesFromUserOwnDataToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingTagsFromUserOwnDataToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingNotebooksFromUserOwnDataToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingNotesFromUserOwnDataToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingTagsFromLinkedNotebooksToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingNotebooksFromLinkedNotebooksToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingNotesFromLinkedNotebooksToLocalAndRemoteStorages(
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void setConflictingTagsToLocalAndRemoteStoragesImpl(
         const QStringList & sourceTagGuids,
-        const ConflictingItemsUsnOption usnOption,
-        const bool shouldHaveLinkedNotebookGuid);
+        ConflictingItemsUsnOption usnOption,
+        bool shouldHaveLinkedNotebookGuid);
 
     void setConflictingNotebooksToLocalAndRemoteStoragesImpl(
         const QStringList & sourceNotebookGuids,
-        const ConflictingItemsUsnOption usnOption,
-        const bool shouldHaveLinkedNotebookGuid);
+        ConflictingItemsUsnOption usnOption,
+        bool shouldHaveLinkedNotebookGuid);
 
     void setConflictingNotesToLocalAndRemoteStoragesImpl(
         const QStringList & sourceNoteGuids,
-        const ConflictingItemsUsnOption usnOption);
+        ConflictingItemsUsnOption usnOption);
 
     void copyRemoteItemsToLocalStorage();
 
@@ -352,57 +352,57 @@ private:
 
     void checkSyncStatePersistedRightAfterAPIRateLimitBreach(
         const SynchronizationManagerSignalsCatcher & catcher,
-        const int numExpectedSyncStateEntries,
-        const int rateLimitTriggeredSyncStateEntryIndex);
+        int numExpectedSyncStateEntries,
+        int rateLimitTriggeredSyncStateEntryIndex);
 
     // List stuff from local storage
     void listSavedSearchesFromLocalStorage(
-        const qint32 afterUSN,
+        qint32 afterUSN,
         QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
 
     void listTagsFromLocalStorage(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Tag> & tags) const;
 
     void listNotebooksFromLocalStorage(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Notebook> & notebooks) const;
 
     void listNotesFromLocalStorage(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Note> & notes) const;
 
     void listResourcesFromLocalStorage(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Resource> & resources) const;
 
     void listLinkedNotebooksFromLocalStorage(
-        const qint32 afterUSN,
+        qint32 afterUSN,
         QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
 
     // List stuff from fake note store
     void listSavedSearchesFromFakeNoteStore(
-        const qint32 afterUSN,
+        qint32 afterUSN,
         QHash<QString, qevercloud::SavedSearch> & savedSearches) const;
 
     void listTagsFromFakeNoteStore(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Tag> & tags) const;
 
     void listNotebooksFromFakeNoteStore(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Notebook> & notebooks) const;
 
     void listNotesFromFakeNoteStore(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Note> & notes) const;
 
     void listResourcesFromFakeNoteStore(
-        const qint32 afterUSN, const QString & linkedNotebookGuid,
+        qint32 afterUSN, const QString & linkedNotebookGuid,
         QHash<QString, qevercloud::Resource> & resources) const;
 
     void listLinkedNotebooksFromFakeNoteStore(
-        const qint32 afterUSN,
+        qint32 afterUSN,
         QHash<QString, qevercloud::LinkedNotebook> & linkedNotebooks) const;
 
     // Print stuff from both local storage and fake note store into a warning

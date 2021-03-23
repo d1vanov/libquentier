@@ -45,7 +45,7 @@ void FakeUserStore::setEdamVersionMinor(const qint16 edamVersionMinor)
 const qevercloud::AccountLimits * FakeUserStore::findAccountLimits(
     const qevercloud::ServiceLevel serviceLevel) const noexcept
 {
-    auto it = m_accountLimits.find(serviceLevel);
+    const auto it = m_accountLimits.find(serviceLevel);
     if (it != m_accountLimits.end()) {
         return &(it.value());
     }
@@ -62,7 +62,7 @@ void FakeUserStore::setAccountLimits(
 
 const qevercloud::User * FakeUserStore::findUser(const qint32 id) const noexcept
 {
-    auto it = m_users.find(id);
+    const auto it = m_users.find(id);
     if (it != m_users.end()) {
         return &(it.value());
     }

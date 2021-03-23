@@ -21,12 +21,10 @@
 
 #include <QString>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 [[nodiscard]] bool tagSortByParentChildRelationsTest(QString & error);
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_TAG_SORT_BY_PARENT_CHILD_RELATIONS_TEST_H

@@ -21,8 +21,7 @@
 
 #include "../../synchronization/FullSyncStaleDataItemsExpunger.h"
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class FullSyncStaleDataItemsExpungerTester : public QObject
 {
@@ -86,7 +85,7 @@ private:
     void setupBaseDataItems();
 
     void doTest(
-        const bool useBaseDataItems,
+        bool useBaseDataItems,
         const QList<qevercloud::Notebook> & nonSyncedNotebooks,
         const QList<qevercloud::Tag> & nonSyncedTags,
         const QList<qevercloud::SavedSearch> & nonSyncedSavedSearches,
@@ -104,7 +103,6 @@ private:
     bool m_detectedTestFailure;
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FULL_SYNC_STALE_DATA_ITEMS_EXPUNGER_TESTER_H

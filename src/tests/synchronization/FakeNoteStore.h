@@ -153,28 +153,28 @@ public:
 
     // Other
     [[nodiscard]] quint32 maxNumSavedSearches() const;
-    void setMaxNumSavedSearches(const quint32 maxNumSavedSearches);
+    void setMaxNumSavedSearches(quint32 maxNumSavedSearches);
 
     [[nodiscard]] quint32 maxNumTags() const;
-    void setMaxNumTags(const quint32 maxNumTags);
+    void setMaxNumTags(quint32 maxNumTags);
 
     [[nodiscard]] quint32 maxNumNotebooks() const;
-    void setMaxNumNotebooks(const quint32 maxNumNotebooks);
+    void setMaxNumNotebooks(quint32 maxNumNotebooks);
 
     [[nodiscard]] quint32 maxNumNotes() const;
-    void setMaxNumNotes(const quint32 maxNumNotes);
+    void setMaxNumNotes(quint32 maxNumNotes);
 
     [[nodiscard]] quint64 maxNoteSize() const;
-    void setMaxNoteSize(const quint64 maxNoteSize);
+    void setMaxNoteSize(quint64 maxNoteSize);
 
     [[nodiscard]] quint32 maxNumResourcesPerNote() const;
-    void setMaxNumResourcesPerNote(const quint32 maxNumResourcesPerNote);
+    void setMaxNumResourcesPerNote(quint32 maxNumResourcesPerNote);
 
     [[nodiscard]] quint32 maxNumTagsPerNote() const;
-    void setMaxNumTagsPerNote(const quint32 maxNumTagsPerNote);
+    void setMaxNumTagsPerNote(quint32 maxNumTagsPerNote);
 
     [[nodiscard]] quint64 maxResourceSize() const;
-    void setMaxResourceSize(const quint64 maxResourceSize);
+    void setMaxResourceSize(quint64 maxResourceSize);
 
     [[nodiscard]] QString linkedNotebookAuthTokenForNotebook(
         const QString & notebookGuid) const;
@@ -235,7 +235,7 @@ public:
 
     [[nodiscard]] APIRateLimitsTrigger apiRateLimitsTrigger() const;
 
-    void setAPIRateLimitsExceedingTrigger(const APIRateLimitsTrigger trigger);
+    void setAPIRateLimitsExceedingTrigger(APIRateLimitsTrigger trigger);
 
     void considerAllExistingDataItemsSentBeforeRateLimitBreach();
 
@@ -302,7 +302,7 @@ public:
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getSyncChunk(
-        const qint32 afterUSN, const qint32 maxEntries,
+        qint32 afterUSN, qint32 maxEntries,
         const qevercloud::SyncChunkFilter & filter,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
@@ -314,34 +314,32 @@ public:
 
     [[nodiscard]] qint32 getLinkedNotebookSyncChunk(
         const qevercloud::LinkedNotebook & linkedNotebook,
-        const qint32 afterUSN, const qint32 maxEntries,
-        const QString & linkedNotebookAuthToken, const bool fullSyncOnly,
+        qint32 afterUSN, qint32 maxEntries,
+        const QString & linkedNotebookAuthToken, bool fullSyncOnly,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription,
         qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] qint32 getNote(
-        const bool withContent, const bool withResourcesData,
-        const bool withResourcesRecognition,
-        const bool withResourcesAlternateData, qevercloud::Note & note,
+        bool withContent, bool withResourcesData, bool withResourcesRecognition,
+        bool withResourcesAlternateData, qevercloud::Note & note,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] bool getNoteAsync(
-        const bool withContent, const bool withResourcesData,
-        const bool withResourcesRecognition,
-        const bool withResourceAlternateData, const bool withSharedNotes,
-        const bool withNoteAppDataValues, const bool withResourceAppDataValues,
-        const bool withNoteLimits, const QString & noteGuid,
+        bool withContent, bool withResourceData, bool withResourcesRecognition,
+        bool withResourceAlternateData, bool withSharedNotes,
+        bool withNoteAppDataValues, bool withResourceAppDataValues,
+        bool withNoteLimits, const QString & noteGuid,
         const QString & authToken, ErrorString & errorDescription) override;
 
     [[nodiscard]] qint32 getResource(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
         const QString & authToken, qevercloud::Resource & resource,
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
     [[nodiscard]] bool getResourceAsync(
-        const bool withDataBody, const bool withRecognitionDataBody,
-        const bool withAlternateDataBody, const bool withAttributes,
+        bool withDataBody, bool withRecognitionDataBody,
+        bool withAlternateDataBody, bool withAttributes,
         const QString & resourceGuid, const QString & authToken,
         ErrorString & errorDescription) override;
 
@@ -364,7 +362,7 @@ private:
     };
 
     [[nodiscard]] qint32 checkNoteFields(
-        const qevercloud::Note & note, const CheckNoteFieldsPurpose purpose,
+        const qevercloud::Note & note, CheckNoteFieldsPurpose purpose,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] qint32 checkResourceFields(
@@ -411,7 +409,7 @@ private:
     [[nodiscard]] QString nextName(const QString & name) const;
 
     [[nodiscard]] qint32 getSyncChunkImpl(
-        const qint32 afterUSN, const qint32 maxEntries, const bool fullSyncOnly,
+        qint32 afterUSN, qint32 maxEntries, bool fullSyncOnly,
         const QString & linkedNotebookGuid,
         const qevercloud::SyncChunkFilter & filter,
         qevercloud::SyncChunk & syncChunk, ErrorString & errorDescription);
@@ -452,9 +450,8 @@ private:
             if (name) {
                 return *name;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString nameUpper(
@@ -470,9 +467,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -482,9 +478,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
     };
 
@@ -539,9 +534,8 @@ private:
             if (name) {
                 return *name;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString nameUpper(const qevercloud::Tag & tag)
@@ -555,9 +549,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -567,9 +560,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
 
         [[nodiscard]] static QString parentTagGuid(const qevercloud::Tag & tag)
@@ -578,9 +570,8 @@ private:
             if (parentTagGuid) {
                 return *parentTagGuid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString linkedNotebookGuid(
@@ -590,9 +581,8 @@ private:
             if (linkedNotebookGuid) {
                 return *linkedNotebookGuid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
     };
 
@@ -653,9 +643,8 @@ private:
             if (name) {
                 return *name;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString nameUpper(
@@ -670,9 +659,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -682,9 +670,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
 
         [[nodiscard]] static QString linkedNotebookGuid(
@@ -694,9 +681,8 @@ private:
             if (linkedNotebookGuid) {
                 return *linkedNotebookGuid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
     };
 
@@ -754,9 +740,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -766,9 +751,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
 
         [[nodiscard]] static QString notebookGuid(
@@ -778,9 +762,8 @@ private:
             if (notebookGuid) {
                 return *notebookGuid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString conflictSourceNoteGuid(
@@ -848,9 +831,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -860,9 +842,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
 
         [[nodiscard]] static QString noteGuid(
@@ -872,9 +853,8 @@ private:
             if (noteGuid) {
                 return *noteGuid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
     };
 
@@ -931,9 +911,8 @@ private:
             if (guid) {
                 return *guid;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString shardId(
@@ -943,9 +922,8 @@ private:
             if (shardId) {
                 return *shardId;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString uri(
@@ -955,9 +933,8 @@ private:
             if (uri) {
                 return *uri;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static QString username(
@@ -967,9 +944,8 @@ private:
             if (username) {
                 return *username;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
 
         [[nodiscard]] static qint32 updateSequenceNumber(
@@ -979,9 +955,8 @@ private:
             if (usn) {
                 return *usn;
             }
-            else {
-                return 0;
-            }
+
+            return 0;
         }
 
         [[nodiscard]] static QString sharedNotebookGlobalId(
@@ -993,9 +968,8 @@ private:
             if (sharedNotebookGlobalId) {
                 return *sharedNotebookGlobalId;
             }
-            else {
-                return {};
-            }
+
+            return {};
         }
     };
 
@@ -1075,7 +1049,7 @@ private:
         LinkedNotebook
     };
 
-    friend QDebug & operator<<(QDebug & dbg, const NextItemType nextItemType);
+    friend QDebug & operator<<(QDebug & dbg, NextItemType nextItemType);
 
     // Struct encapsulating parameters required for a single async getNote
     // request

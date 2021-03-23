@@ -220,7 +220,7 @@ void NoteNotebookAndTagListTrackingAsyncTester::onAddNoteComplete(
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     LocalStorageManager::UpdateNoteOptions options;
 #else
-    LocalStorageManager::UpdateNoteOptions options(0);
+    LocalStorageManager::UpdateNoteOptions options(0); // NOLINT
 #endif
 
     Q_EMIT updateNote(modifiedNote, options, QUuid::createUuid());
@@ -743,7 +743,7 @@ void NoteNotebookAndTagListTrackingAsyncTester::moveNoteToAnotherNotebook()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     LocalStorageManager::UpdateNoteOptions options;
 #else
-    LocalStorageManager::UpdateNoteOptions options(0);
+    LocalStorageManager::UpdateNoteOptions options(0); // NOLINT
 #endif
 
     Q_EMIT updateNote(modifiedNote, options, QUuid::createUuid());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -22,8 +22,7 @@
 
 #include <stdexcept>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 KeychainServiceMock::KeychainServiceMock(QObject * parent) :
     IKeychainService(parent)
@@ -31,18 +30,18 @@ KeychainServiceMock::KeychainServiceMock(QObject * parent) :
 
 void KeychainServiceMock::setWritePasswordHandler(WritePasswordHandler handler)
 {
-    m_writePasswordHandler = handler;
+    m_writePasswordHandler = std::move(handler);
 }
 
 void KeychainServiceMock::setReadPasswordHandler(ReadPasswordHandler handler)
 {
-    m_readPasswordHandler = handler;
+    m_readPasswordHandler = std::move(handler);
 }
 
 void KeychainServiceMock::setDeletePasswordHandler(
     DeletePasswordHandler handler)
 {
-    m_deletePasswordHandler = handler;
+    m_deletePasswordHandler = std::move(handler);
 }
 
 QUuid KeychainServiceMock::startWritePasswordJob(
@@ -100,5 +99,4 @@ QUuid KeychainServiceMock::startDeletePasswordJob(
     return res.m_requestId;
 }
 
-} // namespace test
 } // namespace quentier

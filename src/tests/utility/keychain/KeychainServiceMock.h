@@ -23,8 +23,7 @@
 
 #include <functional>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class KeychainServiceMock final : public IKeychainService
 {
@@ -85,7 +84,6 @@ private:
     DeletePasswordHandler m_deletePasswordHandler;
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_UTILITY_KEYCHAIN_KEYCHAIN_SERVICE_MOCK_H

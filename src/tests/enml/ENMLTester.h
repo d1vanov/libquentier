@@ -21,8 +21,7 @@
 
 #include <QObject>
 
-namespace quentier {
-namespace test {
+namespace quentier::test {
 
 class ENMLTester final : public QObject
 {
@@ -55,7 +54,6 @@ private Q_SLOTS:
     void importRealWorldEnexTest();
 };
 
-} // namespace test
-} // namespace quentier
+} // namespace quentier::test
 
 #endif // LIB_QUENTIER_TESTS_ENML_ENML_TESTER_H
