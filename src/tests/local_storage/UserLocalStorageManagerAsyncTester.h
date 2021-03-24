@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/User.h>
+#include <qevercloud/types/User.h>
 
 #include <QUuid>
 

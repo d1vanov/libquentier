@@ -22,9 +22,9 @@
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/utility/LRUCache.hpp>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QHash>
 #include <QObject>

@@ -27,7 +27,7 @@
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/MessageBox.h>
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QCryptographicHash>
 #include <QDesktopServices>

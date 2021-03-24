@@ -25,11 +25,11 @@
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/Tag.h>
 
 #include <QObject>
 

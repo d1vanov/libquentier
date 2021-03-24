@@ -19,12 +19,12 @@
 #ifndef LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 #define LIB_QUENTIER_LOCAL_STORAGE_LOCAL_STORAGE_CACHE_MANAGER_PRIVATE_H
 
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/Resource.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/Tag.h>
 
 #include <quentier/local_storage/LocalStorageCacheManager.h>
 #include <quentier/utility/Compat.h>

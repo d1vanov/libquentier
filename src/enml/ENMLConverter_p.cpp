@@ -25,8 +25,8 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 #include <qevercloud/utility/ToRange.h>
 
 #include <QApplication>

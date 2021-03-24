@@ -21,7 +21,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileSystem.h>
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QDateTime>
 #include <QDir>

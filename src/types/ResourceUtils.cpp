@@ -18,7 +18,7 @@
 
 #include <quentier/types/ResourceUtils.h>
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QFileInfo>
 #include <QMimeDatabase>

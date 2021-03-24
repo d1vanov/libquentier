@@ -23,7 +23,7 @@
 
 #include "../NoteEditorPage.h"
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 namespace quentier {
 

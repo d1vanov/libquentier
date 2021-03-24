@@ -22,8 +22,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
 
 #include <QPrinter>
 #include <QStringList>

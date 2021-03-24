@@ -22,8 +22,8 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/FileSystemWatcher.h>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QHash>
 #include <QObject>

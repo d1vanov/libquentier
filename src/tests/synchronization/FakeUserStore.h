@@ -21,7 +21,7 @@
 
 #include <quentier/synchronization/IUserStore.h>
 
-#include <qevercloud/generated/types/User.h>
+#include <qevercloud/types/User.h>
 
 #include <QHash>
 

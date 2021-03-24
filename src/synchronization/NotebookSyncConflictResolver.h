@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/types/Notebook.h>
 
 #include <QObject>
 #include <QUuid>

@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/SavedSearch.h>
+#include <qevercloud/types/SavedSearch.h>
 
 #include <QObject>
 #include <QUuid>

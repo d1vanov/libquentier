@@ -23,7 +23,7 @@
 
 #include "../NoteEditor_p.h"
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QSize>
 

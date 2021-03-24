@@ -18,14 +18,14 @@
 
 #include "TypeChecks.h"
 
-#include <qevercloud/generated/Constants.h>
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/Resource.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/Tag.h>
-#include <qevercloud/generated/types/User.h>
+#include <qevercloud/Constants.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/Tag.h>
+#include <qevercloud/types/User.h>
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Validation.h>

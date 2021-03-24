@@ -24,7 +24,7 @@
 #include <quentier/types/ResourceUtils.h>
 #include <quentier/utility/Size.h>
 
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QCryptographicHash>
 #include <QMimeDatabase>

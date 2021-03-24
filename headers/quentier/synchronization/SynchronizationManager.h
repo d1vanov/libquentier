@@ -25,8 +25,8 @@
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/TypeAliases.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QObject>
 

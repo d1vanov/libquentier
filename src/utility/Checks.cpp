@@ -18,7 +18,7 @@
 
 #include <quentier/utility/Checks.h>
 
-#include <qevercloud/generated/Constants.h>
+#include <qevercloud/Constants.h>
 
 #include <limits>
 

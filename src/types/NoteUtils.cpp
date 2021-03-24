@@ -21,7 +21,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/NoteUtils.h>
 
-#include <qevercloud/generated/types/Note.h>
+#include <qevercloud/types/Note.h>
 
 #include <QXmlStreamReader>
 

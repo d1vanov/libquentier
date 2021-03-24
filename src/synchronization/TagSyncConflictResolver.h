@@ -21,7 +21,7 @@
 
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/types/Tag.h>
 
 #include <QObject>
 #include <QUuid>

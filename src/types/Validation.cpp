@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qevercloud/generated/Constants.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/Constants.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/Tag.h>
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/Validation.h>

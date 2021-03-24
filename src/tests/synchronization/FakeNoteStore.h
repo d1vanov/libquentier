@@ -22,14 +22,14 @@
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/utility/Compat.h>
 
-#include <qevercloud/generated/Constants.h>
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/Resource.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/SyncState.h>
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/Constants.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/SyncState.h>
+#include <qevercloud/types/Tag.h>
 
 #include <boost/bimap.hpp>
 #include <boost/multi_index/global_fun.hpp>

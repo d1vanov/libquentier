@@ -21,7 +21,7 @@
 #include <quentier/synchronization/IUserStore.h>
 
 #include <qevercloud/Exceptions.h>
-#include <qevercloud/generated/Services.h>
+#include <qevercloud/Services.h>
 
 namespace quentier {
 

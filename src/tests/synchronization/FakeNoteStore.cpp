@@ -21,9 +21,9 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <qevercloud/generated/types/AuthenticationResult.h>
-#include <qevercloud/generated/types/SyncChunk.h>
-#include <qevercloud/generated/types/SyncChunkFilter.h>
+#include <qevercloud/types/AuthenticationResult.h>
+#include <qevercloud/types/SyncChunk.h>
+#include <qevercloud/types/SyncChunkFilter.h>
 
 #include <QDateTime>
 #include <QDebug>

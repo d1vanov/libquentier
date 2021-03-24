@@ -21,8 +21,8 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
 
 #include <QUuid>
 

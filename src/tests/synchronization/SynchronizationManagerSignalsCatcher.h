@@ -22,7 +22,7 @@
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/ErrorString.h>
 
-#include <qevercloud/generated/types/LinkedNotebook.h>
+#include <qevercloud/types/LinkedNotebook.h>
 
 #include <QHash>
 #include <QObject>

@@ -20,7 +20,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/TagSortByParentChildRelations.h>
 
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/types/Tag.h>
 
 #include "tag_topological_sort/TagDirectedGraphDepthFirstSearch.h"
 

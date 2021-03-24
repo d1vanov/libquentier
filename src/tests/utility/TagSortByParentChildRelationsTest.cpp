@@ -22,7 +22,7 @@
 #include <quentier/utility/TagSortByParentChildRelations.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <qevercloud/generated/types/Tag.h>
+#include <qevercloud/types/Tag.h>
 
 #include <QSet>
 #include <QTextStream>

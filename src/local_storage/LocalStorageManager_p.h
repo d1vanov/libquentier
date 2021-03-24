@@ -25,14 +25,14 @@
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/SuppressWarnings.h>
 
-#include <qevercloud/generated/types/LinkedNotebook.h>
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Notebook.h>
-#include <qevercloud/generated/types/Resource.h>
-#include <qevercloud/generated/types/SavedSearch.h>
-#include <qevercloud/generated/types/SharedNotebook.h>
-#include <qevercloud/generated/types/Tag.h>
-#include <qevercloud/generated/types/User.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/SharedNotebook.h>
+#include <qevercloud/types/Tag.h>
+#include <qevercloud/types/User.h>
 
 #include <QSqlDatabase>
 #include <QSqlError>

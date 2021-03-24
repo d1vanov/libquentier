@@ -30,8 +30,8 @@
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
 
-#include <qevercloud/generated/types/Note.h>
-#include <qevercloud/generated/types/Resource.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Resource.h>
 
 #include <QFileIconProvider>
 #include <QDir>
