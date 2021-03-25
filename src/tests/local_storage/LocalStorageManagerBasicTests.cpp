@@ -24,7 +24,7 @@
 #include <quentier/types/NoteUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
-#include <qevercloud/Types.h>
+#include <qevercloud/types/All.h>
 
 #include <QCryptographicHash>
 #include <QtTest/QtTest>
