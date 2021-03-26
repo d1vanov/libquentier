@@ -20,7 +20,8 @@
 
 #include <quentier/synchronization/IUserStore.h>
 
-#include <qevercloud/Exceptions.h>
+#include <qevercloud/exceptions/EDAMSystemException.h>
+#include <qevercloud/exceptions/EDAMUserException.h>
 #include <qevercloud/services/IUserStore.h>
 
 namespace quentier {

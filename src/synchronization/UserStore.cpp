@@ -21,6 +21,8 @@
 
 #include <quentier/logging/QuentierLogger.h>
 
+#include <qevercloud/exceptions/All.h>
+
 #define USER_STORE_REQUEST_TIMEOUT_MSEC (-1)
 
 namespace quentier {
