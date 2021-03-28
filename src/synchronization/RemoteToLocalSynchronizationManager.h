@@ -31,6 +31,7 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/synchronization/IUserStore.h>
+#include <quentier/synchronization/SyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -714,6 +715,9 @@ private:
 
     void checkServerDataMergeCompletion();
 
+    void initSyncChunkDataCounters();
+    void updateSyncChunksDataCounters();
+
     void finalize();
     void clear();
     void clearAll();
@@ -965,6 +969,7 @@ private:
     QVector<qevercloud::SyncChunk> m_syncChunks;
     QVector<qevercloud::SyncChunk> m_linkedNotebookSyncChunks;
     QSet<QString> m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
+    SyncChunksDataCounters m_syncChunksDataCounters;
 
     qevercloud::AccountLimits m_accountLimits;
 
@@ -1118,6 +1123,7 @@ private:
 
     QHash<QString, qevercloud::Note>
         m_notesPendingDownloadForAddingToLocalStorage;
+
     QHash<QString, Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
     QHash<QString, std::pair<Resource, Note>>
@@ -1127,8 +1133,10 @@ private:
 
     FullSyncStaleDataItemsExpunger::SyncedGuids
         m_fullSyncStaleDataItemsSyncedGuids;
+
     FullSyncStaleDataItemsExpunger * m_pFullSyncStaleDataItemsExpunger =
         nullptr;
+
     QMap<QString, FullSyncStaleDataItemsExpunger *>
         m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 

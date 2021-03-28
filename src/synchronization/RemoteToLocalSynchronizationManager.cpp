@@ -5125,6 +5125,8 @@ void RemoteToLocalSynchronizationManager::launchSync()
     m_pendingLinkedNotebooksSyncStart = true;
     m_pendingNotebooksSyncStart = true;
 
+    initSyncChunkDataCounters();
+
     launchSavedSearchSync();
     launchLinkedNotebookSync();
 
@@ -5140,10 +5142,8 @@ void RemoteToLocalSynchronizationManager::launchSync()
 
     QNDEBUG(
         "synchronization:remote_to_local",
-        "The local lists of tags and "
-            << "notebooks waiting for adding/updating are empty, checking if "
-               "there "
-            << "are notes to process");
+        "The local lists of tags and notebooks waiting for adding/updating are "
+            << "empty, checking if there are notes to process");
 
     launchNotesSync(ContentSource::UserAccount);
     if (!m_notes.isEmpty() || notesSyncInProgress()) {
@@ -5158,15 +5158,13 @@ void RemoteToLocalSynchronizationManager::launchSync()
 
     QNDEBUG(
         "synchronization:remote_to_local",
-        "The local list of notes "
-            << "waiting for adding/updating is empty");
+        "The local list of notes waiting for adding/updating is empty");
 
     if (m_lastSyncMode != SyncMode::IncrementalSync) {
         QNDEBUG(
             "synchronization:remote_to_local",
-            "Running full sync => no "
-                << "sync for individual resources or expunging stuff is "
-                   "needed");
+            "Running full sync => no sync for individual resources or "
+                << "expunging stuff is needed");
         return;
     }
 
@@ -5176,8 +5174,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
         if (!m_resources.isEmpty() || resourcesSyncInProgress()) {
             QNDEBUG(
                 "synchronization:remote_to_local",
-                "Resources sync in "
-                    << "progress");
+                "Resources sync is in progress");
             return;
         }
     }
@@ -7827,8 +7824,7 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 {
     QNDEBUG(
         "synchronization:remote_to_local",
-        "RemoteToLocalSynchronizationManager"
-            << "::checkServerDataMergeCompletion");
+        "RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion");
 
     // Need to check whether we are still waiting for the response
     // from some add or update request
@@ -8170,6 +8166,42 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
         expungeFromServerToClient();
     }
+}
+
+void RemoteToLocalSynchronizationManager::initSyncChunkDataCounters()
+{
+    m_syncChunksDataCounters = {};
+
+    const auto convert = [](int size)
+    {
+        return static_cast<quint64>(std::max(size, 0));
+    };
+
+    m_syncChunksDataCounters.totalSavedSearches =
+        convert(m_savedSearches.size());
+
+    m_syncChunksDataCounters.totalExpungedSavedSearches =
+        convert(m_expungedSavedSearches.size());
+
+    // m_tags is an instance of boost::multi_index, its size is unsigned
+    m_syncChunksDataCounters.totalTags = static_cast<quint64>(m_tags.size());
+    m_syncChunksDataCounters.totalExpungedTags = convert(m_expungedTags.size());
+
+    m_syncChunksDataCounters.totalLinkedNotebooks =
+        convert(m_linkedNotebooks.size());
+
+    m_syncChunksDataCounters.totalExpungedLinkedNotebooks =
+        convert(m_expungedLinkedNotebooks.size());
+
+    m_syncChunksDataCounters.totalNotebooks = convert(m_notebooks.size());
+
+    m_syncChunksDataCounters.totalExpungedNotebooks =
+        convert(m_expungedNotebooks.size());
+}
+
+void RemoteToLocalSynchronizationManager::updateSyncChunksDataCounters()
+{
+    // TODO: implement
 }
 
 void RemoteToLocalSynchronizationManager::finalize()
@@ -9256,8 +9288,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             afterUsn = pSyncChunk->chunkHighUSN;
             QNTRACE(
                 "synchronization:remote_to_local",
-                "Updated after USN to "
-                    << "sync chunk's high USN: " << pSyncChunk->chunkHighUSN);
+                "Updated after USN to sync chunk's high USN: "
+                    << pSyncChunk->chunkHighUSN);
         }
 
         m_syncChunks.push_back(qevercloud::SyncChunk());
@@ -9360,9 +9392,8 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
 
     QNDEBUG(
         "synchronization:remote_to_local",
-        "Done. Processing tags, saved "
-            << "searches, linked notebooks and notebooks from buffered sync "
-               "chunks");
+        "Done. Processing tags, saved searches, linked notebooks and notebooks "
+            << "from buffered sync chunks");
 
     m_lastSyncChunksDownloadedUsn = afterUsn;
     m_syncChunksDownloaded = true;

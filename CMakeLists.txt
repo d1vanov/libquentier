@@ -126,6 +126,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/ISyncStateStorage.h
     headers/quentier/synchronization/IUserStore.h
+    headers/quentier/synchronization/SyncChunksDataCounters.h
     headers/quentier/synchronization/SynchronizationManager.h)
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
@@ -225,6 +226,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteThumbnailDownloader.h
     src/synchronization/RemoteToLocalSynchronizationManager.h
     src/synchronization/SendLocalChangesManager.h
+    src/synchronization/SyncChunksDataCounters.cpp
     src/synchronization/SynchronizationShared.h
     src/synchronization/SynchronizationManager_p.h
     src/synchronization/SyncStateStorage.h
