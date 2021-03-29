@@ -1501,7 +1501,8 @@ void RemoteToLocalSynchronizationManager::onFindSavedSearchFailed(
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & addElementRequestIds)
+    const QString & typeName, QSet<QUuid> & addElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     auto it = addElementRequestIds.find(requestId);
     if (it != addElementRequestIds.end()) {
@@ -1512,6 +1513,20 @@ void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
                 << " = " << element << ", requestId = " << requestId);
 
         Q_UNUSED(addElementRequestIds.erase(it));
+
+        if (pSyncChunkDataCounter) {
+            ++(*pSyncChunkDataCounter);
+
+            if (syncingLinkedNotebooksContent()) {
+                Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+                    m_linkedNotebookSyncChunksDataCounters);
+            }
+            else {
+                Q_EMIT syncChunksDataProcessingProgress(
+                    m_syncChunksDataCounters);
+            }
+        }
+
         performPostAddOrUpdateChecks<ElementType>(element);
         checkServerDataMergeCompletion();
     }
@@ -1559,8 +1574,13 @@ void RemoteToLocalSynchronizationManager::onAddUserFailed(
 void RemoteToLocalSynchronizationManager::onAddTagCompleted(
     Tag tag, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.addedLinkedNotebooks
+         : m_syncChunksDataCounters.addedLinkedNotebooks);
+
     onAddDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddSavedSearchCompleted(
@@ -1568,7 +1588,8 @@ void RemoteToLocalSynchronizationManager::onAddSavedSearchCompleted(
 {
     onAddDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_addSavedSearchRequestIds);
+        m_addSavedSearchRequestIds,
+        &m_syncChunksDataCounters.addedSavedSearches);
 }
 
 template <class ElementType>
@@ -1668,7 +1689,8 @@ void RemoteToLocalSynchronizationManager::onUpdateUserFailed(
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & updateElementRequestIds)
+    const QString & typeName, QSet<QUuid> & updateElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     auto rit = updateElementRequestIds.find(requestId);
     if (rit == updateElementRequestIds.end()) {
@@ -1682,6 +1704,20 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
             << ", requestId = " << requestId);
 
     Q_UNUSED(updateElementRequestIds.erase(rit));
+
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+
+        if (syncingLinkedNotebooksContent()) {
+            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+                m_linkedNotebookSyncChunksDataCounters);
+        }
+        else {
+            Q_EMIT syncChunksDataProcessingProgress(
+                m_syncChunksDataCounters);
+        }
+    }
+
     performPostAddOrUpdateChecks<ElementType>(element);
     checkServerDataMergeCompletion();
 }
@@ -1689,8 +1725,14 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
 void RemoteToLocalSynchronizationManager::onUpdateTagCompleted(
     Tag tag, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.updatedTags
+         : m_syncChunksDataCounters.updatedTags);
+
     onUpdateDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds,
+        &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(
@@ -1698,7 +1740,8 @@ void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(
 {
     onUpdateDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_updateSavedSearchRequestIds);
+        m_updateSavedSearchRequestIds,
+        &m_syncChunksDataCounters.updatedSavedSearches);
 }
 
 template <class ElementType>
@@ -1743,16 +1786,27 @@ void RemoteToLocalSynchronizationManager::onExpungeTagCompleted(
 {
     Q_UNUSED(expungedChildTagLocalUids)
 
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.expungedTags
+         : m_syncChunksDataCounters.expungedTags);
+
     onExpungeDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_expungeTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_expungeTagRequestIds,
+        &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeTagFailed(
     Tag tag, ErrorString errorDescription, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.expungedTags
+         : m_syncChunksDataCounters.expungedTags);
+
     onExpungeDataElementFailed(
         tag, requestId, errorDescription, QStringLiteral("Tag"),
-        m_expungeTagRequestIds);
+        m_expungeTagRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::
@@ -1808,7 +1862,8 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchCompleted(
 {
     onExpungeDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_expungeSavedSearchRequestIds);
+        m_expungeSavedSearchRequestIds,
+        &m_syncChunksDataCounters.expungedSavedSearches);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
@@ -1816,7 +1871,8 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
 {
     onExpungeDataElementFailed(
         search, requestId, errorDescription, QStringLiteral("SavedSearch"),
-        m_expungeSavedSearchRequestIds);
+        m_expungeSavedSearchRequestIds,
+        &m_syncChunksDataCounters.expungedSavedSearches);
 }
 
 template <>
@@ -1919,7 +1975,8 @@ void RemoteToLocalSynchronizationManager::setNonLocalAndNonDirty<
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & expungeElementRequestIds)
+    const QString & typeName, QSet<QUuid> & expungeElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     auto it = expungeElementRequestIds.find(requestId);
     if (it == expungeElementRequestIds.end()) {
@@ -1932,6 +1989,19 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(
 
     Q_UNUSED(expungeElementRequestIds.erase(it))
 
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+
+        if (syncingLinkedNotebooksContent()) {
+            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+                m_linkedNotebookSyncChunksDataCounters);
+        }
+        else {
+            Q_EMIT syncChunksDataProcessingProgress(
+                m_syncChunksDataCounters);
+        }
+    }
+
     performPostExpungeChecks<ElementType>();
     checkExpungesCompletion();
 }
@@ -1940,7 +2010,7 @@ template <class ElementType>
 void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(
     const ElementType & element, const QUuid & requestId,
     const ErrorString & errorDescription, const QString & typeName,
-    QSet<QUuid> & expungeElementRequestIds)
+    QSet<QUuid> & expungeElementRequestIds, quint64 * pSyncChunkDataCounter)
 {
     Q_UNUSED(element)
     Q_UNUSED(typeName)
@@ -1958,6 +2028,19 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(
             << "existed in the local storage in the first place. "
             << "Error description: " << errorDescription);
     Q_UNUSED(expungeElementRequestIds.erase(it))
+
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+
+        if (syncingLinkedNotebooksContent()) {
+            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+                m_linkedNotebookSyncChunksDataCounters);
+        }
+        else {
+            Q_EMIT syncChunksDataProcessingProgress(
+                m_syncChunksDataCounters);
+        }
+    }
 
     performPostExpungeChecks<ElementType>();
     checkExpungesCompletion();
@@ -2611,6 +2694,10 @@ void RemoteToLocalSynchronizationManager::onAddLinkedNotebookCompleted(
                 << ", request id = " << requestId);
 
         Q_UNUSED(m_addLinkedNotebookRequestIds.erase(it))
+
+        ++m_syncChunksDataCounters.addedLinkedNotebooks;
+        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
+
         checkServerDataMergeCompletion();
     }
 }
@@ -2638,6 +2725,10 @@ void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookCompleted(
                 << linkedNotebook << ", requestId = " << requestId);
 
         Q_UNUSED(m_updateLinkedNotebookRequestIds.erase(it));
+
+        ++m_syncChunksDataCounters.updatedLinkedNotebooks;
+        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
+
         checkServerDataMergeCompletion();
     }
 }
@@ -2669,7 +2760,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
 {
     onExpungeDataElementCompleted(
         linkedNotebook, requestId, QStringLiteral("Linked notebook"),
-        m_expungeLinkedNotebookRequestIds);
+        m_expungeLinkedNotebookRequestIds,
+        &m_syncChunksDataCounters.expungedLinkedNotebooks);
 
     if (Q_UNLIKELY(!linkedNotebook.hasGuid())) {
         QNWARNING(
@@ -2728,7 +2820,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookFailed(
 {
     onExpungeDataElementFailed(
         linkedNotebook, requestId, errorDescription,
-        QStringLiteral("Linked notebook"), m_expungeLinkedNotebookRequestIds);
+        QStringLiteral("Linked notebook"), m_expungeLinkedNotebookRequestIds,
+        &m_syncChunksDataCounters.expungedLinkedNotebooks);
 }
 
 void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(
@@ -2788,9 +2881,14 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(
 void RemoteToLocalSynchronizationManager::onAddNotebookCompleted(
     Notebook notebook, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.addedNotebooks
+         : m_syncChunksDataCounters.addedNotebooks);
+
     onAddDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_addNotebookRequestIds);
+        m_addNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
@@ -2804,9 +2902,14 @@ void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
 void RemoteToLocalSynchronizationManager::onUpdateNotebookCompleted(
     Notebook notebook, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.updatedNotebooks
+         : m_syncChunksDataCounters.updatedNotebooks);
+
     onUpdateDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_updateNotebookRequestIds);
+        m_updateNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
@@ -2820,17 +2923,27 @@ void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
 void RemoteToLocalSynchronizationManager::onExpungeNotebookCompleted(
     Notebook notebook, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.expungedNotebooks
+         : m_syncChunksDataCounters.expungedNotebooks);
+
     onExpungeDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_expungeNotebookRequestIds);
+        m_expungeNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNotebookFailed(
     Notebook notebook, ErrorString errorDescription, QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters.expungedNotebooks
+         : m_syncChunksDataCounters.expungedNotebooks);
+
     onExpungeDataElementFailed(
         notebook, requestId, errorDescription, QStringLiteral("Notebook"),
-        m_expungeNotebookRequestIds);
+        m_expungeNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNoteCompleted(
