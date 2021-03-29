@@ -24,7 +24,7 @@ if(NOT HUNSPELL_INCLUDE_DIR AND NOT HUNSPELL_LIBRARIES)
 endif()
 
 message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
-include_directories(${HUNSPELL_INCLUDE_DIR})
+include_directories(SYSTEM ${HUNSPELL_INCLUDE_DIR})
 
 add_library(Hunspell::Libhunspell SHARED IMPORTED)
 if(MSVC)
