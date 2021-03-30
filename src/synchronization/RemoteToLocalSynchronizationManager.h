@@ -585,7 +585,8 @@ private:
     bool onFoundDuplicateByGuid(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
-        QSet<QUuid> & findByGuidRequestIds);
+        QSet<QUuid> & findByGuidRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByGuid(
@@ -604,7 +605,8 @@ private:
     bool onFoundDuplicateByName(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
-        QSet<QUuid> & findElementRequestIds);
+        QSet<QUuid> & findElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByName(

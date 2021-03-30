@@ -19,6 +19,7 @@
 #ifndef LIB_QUENTIER_SYNCHRONIZATION_SYNC_CHUNKS_DATA_COUNTERS_H
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNC_CHUNKS_DATA_COUNTERS_H
 
+#include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
 
 #include <QtGlobal>
@@ -30,7 +31,7 @@ namespace quentier {
  * representing the current progress on processing the data from downloaded
  * sync chunks
  */
-struct SyncChunksDataCounters: public Printable
+struct QUENTIER_EXPORT SyncChunksDataCounters: public Printable
 {
     // ================= Saved searches =================
 
