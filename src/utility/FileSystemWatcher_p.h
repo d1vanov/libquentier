@@ -20,11 +20,18 @@
 #define LIB_QUENTIER_UTILITY_FILE_SYSTEM_WATCHER_PRIVATE_H
 
 #include <quentier/utility/FileSystemWatcher.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QFileSystemWatcher>
 #include <QSet>
 
+SAVE_WARNINGS
+
+MSVC_SUPPRESS_WARNING(4834)
+
 #include <boost/bimap.hpp>
+
+RESTORE_WARNINGS
 
 namespace quentier {
 
