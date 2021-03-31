@@ -31,6 +31,7 @@
 #include <quentier/utility/QuentierCheckPtr.h>
 #include <quentier/utility/Size.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QFileIconProvider>
 #include <QDir>
@@ -95,7 +96,12 @@ NoteEditorPluginFactory::addResourcePlugin(
         return 0;
     }
 
-    for(const auto & it: qevercloud::toRange(qAsConst(m_resourcePlugins)))
+    // clang-format off
+    SAVE_WARNINGS
+    CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+    // clang-format on
+    for(const auto it: // clazy:exclude=range-loop
+        qevercloud::toRange(qAsConst(m_resourcePlugins)))
     {
         const auto * currentPlugin = it.value();
         if (plugin == currentPlugin) {
@@ -106,6 +112,7 @@ NoteEditorPluginFactory::addResourcePlugin(
             return 0;
         }
     }
+    RESTORE_WARNINGS
 
     const QStringList mimeTypes = plugin->mimeTypes();
     if (mimeTypes.isEmpty())
@@ -121,7 +128,12 @@ NoteEditorPluginFactory::addResourcePlugin(
     {
         const int numMimeTypes = mimeTypes.size();
 
-        for(const auto & it: qevercloud::toRange(qAsConst(m_resourcePlugins)))
+        // clang-format off
+        SAVE_WARNINGS
+        CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+        // clang-format on
+        for(const auto it: // clazy:exclude=range-loop
+            qevercloud::toRange(qAsConst(m_resourcePlugins)))
         {
             const auto * currentPlugin = it.value();
             const auto currentPluginMimeTypes = currentPlugin->mimeTypes();
@@ -142,6 +154,7 @@ NoteEditorPluginFactory::addResourcePlugin(
                 }
             }
         }
+        RESTORE_WARNINGS
     }
 
     plugin->setParent(nullptr);
@@ -222,7 +235,12 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
         return false;
     }
 
-    for(const auto & it: qevercloud::toRange(qAsConst(m_resourcePlugins)))
+    // clang-format off
+    SAVE_WARNINGS
+    CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+    // clang-format on
+    for(const auto it: // clazy:exclude=range-loop
+        qevercloud::toRange(qAsConst(m_resourcePlugins)))
     {
         const auto * plugin = it.value();
         const auto & mimeTypes = plugin->mimeTypes();
@@ -230,6 +248,7 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
             return true;
         }
     }
+    RESTORE_WARNINGS
 
     return false;
 }
@@ -244,7 +263,12 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
         return false;
     }
 
-    for(const auto & it: qevercloud::toRange(qAsConst(m_resourcePlugins)))
+    // clang-format off
+    SAVE_WARNINGS
+    CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+    // clang-format on
+    for(const auto it: // clazy:exclude=range-loop
+        qevercloud::toRange(qAsConst(m_resourcePlugins)))
     {
         const auto * plugin = it.value();
         const auto & mimeTypes = plugin->mimeTypes();
@@ -252,6 +276,7 @@ bool NoteEditorPluginFactory::hasResourcePluginForMimeType(
             return true;
         }
     }
+    RESTORE_WARNINGS
 
     return false;
 }
