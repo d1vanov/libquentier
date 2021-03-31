@@ -24,6 +24,7 @@
 #include "NotebookSyncConflictResolver.h"
 #include "SavedSearchSyncCache.h"
 #include "SavedSearchSyncConflictResolver.h"
+#include "SyncChunksDataCounters.h"
 #include "SynchronizationShared.h"
 #include "TagSyncCache.h"
 #include "TagSyncConflictResolver.h"
@@ -31,7 +32,6 @@
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/synchronization/INoteStore.h>
 #include <quentier/synchronization/IUserStore.h>
-#include <quentier/synchronization/SyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -124,7 +124,7 @@ Q_SIGNALS:
 
     void syncChunksDownloaded();
 
-    void syncChunksDataProcessingProgress(SyncChunksDataCounters counters);
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
 
     void notesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
@@ -142,7 +142,7 @@ Q_SIGNALS:
     void linkedNotebooksSyncChunksDownloaded();
 
     void linkedNotebookSyncChunksDataProcessingProgress(
-        SyncChunksDataCounters counters);
+        ISyncChunksDataCountersPtr counters);
 
     void linkedNotebooksNotesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
@@ -980,8 +980,8 @@ private:
     QVector<qevercloud::SyncChunk> m_syncChunks;
     QVector<qevercloud::SyncChunk> m_linkedNotebookSyncChunks;
     QSet<QString> m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
-    SyncChunksDataCounters m_syncChunksDataCounters;
-    SyncChunksDataCounters m_linkedNotebookSyncChunksDataCounters;
+    std::shared_ptr<SyncChunksDataCounters> m_syncChunksDataCounters;
+    std::shared_ptr<SyncChunksDataCounters> m_linkedNotebookSyncChunksDataCounters;
 
     qevercloud::AccountLimits m_accountLimits;
 

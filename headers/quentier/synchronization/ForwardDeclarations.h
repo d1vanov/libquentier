@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -33,6 +33,9 @@ using ISyncStateStoragePtr = std::shared_ptr<ISyncStateStorage>;
 
 class IUserStore;
 using IUserStorePtr = std::shared_ptr<IUserStore>;
+
+struct ISyncChunksDataCounters;
+using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
 
 } // namespace quentier
 

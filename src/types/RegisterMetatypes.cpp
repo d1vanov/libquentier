@@ -20,8 +20,9 @@
 
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
+#include <quentier/synchronization/ForwardDeclarations.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
-#include <quentier/synchronization/SyncChunksDataCounters.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -150,7 +151,7 @@ void registerMetatypes()
     using ISyncStatePtr = ISyncStateStorage::ISyncStatePtr;
     qRegisterMetaType<ISyncStatePtr>("ISyncStatePtr");
 
-    qRegisterMetaType<SyncChunksDataCounters>("SyncChunksDataCounters");
+    qRegisterMetaType<ISyncChunksDataCountersPtr>("ISyncChunksDataCountersPtr");
 }
 
 } // namespace quentier

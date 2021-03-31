@@ -20,7 +20,7 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_H
 
 #include <quentier/synchronization/ForwardDeclarations.h>
-#include <quentier/synchronization/SyncChunksDataCounters.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/LinkedNotebook.h>
@@ -372,7 +372,7 @@ Q_SIGNALS:
      * This signal is emitted during user own account's downloaded sync chunks
      * contents processing and denotes the progress on that step.
      */
-    void syncChunksDataProcessingProgress(SyncChunksDataCounters counters);
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
 
     /**
      * This signal is emitted during linked notebooks sync chunks downloading
@@ -412,7 +412,7 @@ Q_SIGNALS:
      * contents processing and denotes the progress on that step.
      */
     void linkedNotebookSyncChunksDataProcessingProgress(
-        SyncChunksDataCounters counters);
+        ISyncChunksDataCountersPtr counters);
 
     /**
      * This signal is emitted on each successful download of full note data from
