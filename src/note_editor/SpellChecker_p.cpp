@@ -23,6 +23,7 @@
 #include <quentier/utility/Compat.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <qt5qevercloud/QEverCloud.h>
 
@@ -219,10 +220,16 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     m_userDictionaryPartPendingWriting.removeAll(word);
     m_userDictionary.removeAll(word);
 
+    // clang-format off
+    SAVE_WARNINGS
+    CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+    // clang-format on
     QByteArray dataToWrite;
-    for (const auto it: qevercloud::toRange(qAsConst(m_userDictionary))) {
+    for (const auto it: // clazy:exclude=range-loop
+         qevercloud::toRange(qAsConst(m_userDictionary))) {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
+    RESTORE_WARNINGS
 
     QObject::connect(
         this, &SpellCheckerPrivate::writeFile, m_pFileIOProcessorAsync,

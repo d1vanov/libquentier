@@ -20,6 +20,7 @@
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Compat.h>
+#include <quentier/utility/SuppressWarnings.h>
 #include <quentier/utility/SysInfo.h>
 
 #include <QMetaMethod>
@@ -2322,10 +2323,15 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalUidsRequest(
         }
 
         if (d->m_useCache) {
+            // clang-format off
+            SAVE_WARNINGS
+            CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+            // clang-format off
             for (const auto it: // clazy:exclude=range-loop
                  qevercloud::toRange(qAsConst(tagsWithNoteLocalUids))) {
                 d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }
+            RESTORE_WARNINGS
         }
 
         Q_EMIT listTagsWithNoteLocalUidsComplete(
