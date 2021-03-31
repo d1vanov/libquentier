@@ -17,6 +17,7 @@
  */
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/SuppressWarnings.h>
 #include <quentier/utility/System.h>
 
 #include <QDesktopServices>
@@ -32,6 +33,10 @@
 #include <memory>
 #include <string>
 
+SAVE_WARNINGS
+
+MSVC_SUPPRESS_WARNING(4005)
+
 #include <Lmcons.h>
 #include <QtGui/qwindowdefs_win.h>
 #include <qwindowdefs.h>
@@ -39,6 +44,8 @@
 
 #define SECURITY_WIN32
 #include <security.h>
+
+RESTORE_WARNINGS
 
 #else // defined Q_OS_WIN
 
