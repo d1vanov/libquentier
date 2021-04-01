@@ -31,102 +31,102 @@ namespace quentier {
 struct SyncChunksDataCounters : public ISyncChunksDataCounters
 {
     // ISyncChunksDataCounters
-    [[nodiscard]] quint64 totalSavedSearches() const noexcept override
+    quint64 totalSavedSearches() const noexcept override
     {
         return m_totalSavedSearches;
     }
 
-    [[nodiscard]] quint64 totalExpungedSavedSearches() const noexcept override
+    quint64 totalExpungedSavedSearches() const noexcept override
     {
         return m_totalExpungedSavedSearches;
     }
 
-    [[nodiscard]] quint64 addedSavedSearches() const noexcept override
+    quint64 addedSavedSearches() const noexcept override
     {
         return m_addedSavedSearches;
     }
 
-    [[nodiscard]] quint64 updatedSavedSearches() const noexcept override
+    quint64 updatedSavedSearches() const noexcept override
     {
         return m_updatedSavedSearches;
     }
 
-    [[nodiscard]] quint64 expungedSavedSearches() const noexcept override
+    quint64 expungedSavedSearches() const noexcept override
     {
         return m_expungedSavedSearches;
     }
 
-    [[nodiscard]] quint64 totalTags() const noexcept override
+    quint64 totalTags() const noexcept override
     {
         return m_totalTags;
     }
 
-    [[nodiscard]] quint64 totalExpungedTags() const noexcept override
+    quint64 totalExpungedTags() const noexcept override
     {
         return m_totalExpungedTags;
     }
 
-    [[nodiscard]] quint64 addedTags() const noexcept override
+    quint64 addedTags() const noexcept override
     {
         return m_addedTags;
     }
 
-    [[nodiscard]] quint64 updatedTags() const noexcept override
+    quint64 updatedTags() const noexcept override
     {
         return m_updatedTags;
     }
 
-    [[nodiscard]] quint64 expungedTags() const noexcept override
+    quint64 expungedTags() const noexcept override
     {
         return m_expungedTags;
     }
 
-    [[nodiscard]] quint64 totalLinkedNotebooks() const noexcept override
+    quint64 totalLinkedNotebooks() const noexcept override
     {
         return m_totalLinkedNotebooks;
     }
 
-    [[nodiscard]] quint64 totalExpungedLinkedNotebooks() const noexcept override
+    quint64 totalExpungedLinkedNotebooks() const noexcept override
     {
         return m_totalExpungedLinkedNotebooks;
     }
 
-    [[nodiscard]] quint64 addedLinkedNotebooks() const noexcept override
+    quint64 addedLinkedNotebooks() const noexcept override
     {
         return m_addedLinkedNotebooks;
     }
 
-    [[nodiscard]] quint64 updatedLinkedNotebooks() const noexcept override
+    quint64 updatedLinkedNotebooks() const noexcept override
     {
         return m_updatedLinkedNotebooks;
     }
 
-    [[nodiscard]] quint64 expungedLinkedNotebooks() const noexcept override
+    quint64 expungedLinkedNotebooks() const noexcept override
     {
         return m_expungedLinkedNotebooks;
     }
 
-    [[nodiscard]] quint64 totalNotebooks() const noexcept override
+    quint64 totalNotebooks() const noexcept override
     {
         return m_totalNotebooks;
     }
 
-    [[nodiscard]] quint64 totalExpungedNotebooks() const noexcept override
+    quint64 totalExpungedNotebooks() const noexcept override
     {
         return m_totalExpungedNotebooks;
     }
 
-    [[nodiscard]] quint64 addedNotebooks() const noexcept override
+    quint64 addedNotebooks() const noexcept override
     {
         return m_addedNotebooks;
     }
 
-    [[nodiscard]] quint64 updatedNotebooks() const noexcept override
+    quint64 updatedNotebooks() const noexcept override
     {
         return m_updatedNotebooks;
     }
 
-    [[nodiscard]] quint64 expungedNotebooks() const noexcept override
+    quint64 expungedNotebooks() const noexcept override
     {
         return m_expungedNotebooks;
     }
