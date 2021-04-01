@@ -727,7 +727,8 @@ private:
     void checkServerDataMergeCompletion();
 
     void initSyncChunkDataCounters();
-    void updateSyncChunksDataCounters();
+    void initLinkedNotebookSyncChunksDataCounters();
+    void emitSyncChunkDataCountersUpdate();
 
     void finalize();
     void clear();

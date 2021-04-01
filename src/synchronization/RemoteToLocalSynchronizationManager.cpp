@@ -1533,15 +1533,7 @@ void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
 
         if (pSyncChunkDataCounter) {
             ++(*pSyncChunkDataCounter);
-
-            if (syncingLinkedNotebooksContent()) {
-                Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                    m_linkedNotebookSyncChunksDataCounters);
-            }
-            else {
-                Q_EMIT syncChunksDataProcessingProgress(
-                    m_syncChunksDataCounters);
-            }
+            emitSyncChunkDataCountersUpdate();
         }
 
         performPostAddOrUpdateChecks<ElementType>(element);
@@ -1593,8 +1585,8 @@ void RemoteToLocalSynchronizationManager::onAddTagCompleted(
 {
     quint64 & counter =
         (syncingLinkedNotebooksContent()
-         ? m_linkedNotebookSyncChunksDataCounters->m_addedLinkedNotebooks
-         : m_syncChunksDataCounters->m_addedLinkedNotebooks);
+         ? m_linkedNotebookSyncChunksDataCounters->m_addedTags
+         : m_syncChunksDataCounters->m_addedTags);
 
     onAddDataElementCompleted(
         tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds, &counter);
@@ -1724,15 +1716,7 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
 
     if (pSyncChunkDataCounter) {
         ++(*pSyncChunkDataCounter);
-
-        if (syncingLinkedNotebooksContent()) {
-            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                m_linkedNotebookSyncChunksDataCounters);
-        }
-        else {
-            Q_EMIT syncChunksDataProcessingProgress(
-                m_syncChunksDataCounters);
-        }
+        emitSyncChunkDataCountersUpdate();
     }
 
     performPostAddOrUpdateChecks<ElementType>(element);
@@ -2008,15 +1992,7 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(
 
     if (pSyncChunkDataCounter) {
         ++(*pSyncChunkDataCounter);
-
-        if (syncingLinkedNotebooksContent()) {
-            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                m_linkedNotebookSyncChunksDataCounters);
-        }
-        else {
-            Q_EMIT syncChunksDataProcessingProgress(
-                m_syncChunksDataCounters);
-        }
+        emitSyncChunkDataCountersUpdate();
     }
 
     performPostExpungeChecks<ElementType>();
@@ -2048,15 +2024,7 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(
 
     if (pSyncChunkDataCounter) {
         ++(*pSyncChunkDataCounter);
-
-        if (syncingLinkedNotebooksContent()) {
-            Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                m_linkedNotebookSyncChunksDataCounters);
-        }
-        else {
-            Q_EMIT syncChunksDataProcessingProgress(
-                m_syncChunksDataCounters);
-        }
+        emitSyncChunkDataCountersUpdate();
     }
 
     performPostExpungeChecks<ElementType>();
@@ -2713,7 +2681,7 @@ void RemoteToLocalSynchronizationManager::onAddLinkedNotebookCompleted(
         Q_UNUSED(m_addLinkedNotebookRequestIds.erase(it))
 
         ++m_syncChunksDataCounters->m_addedLinkedNotebooks;
-        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
+        emitSyncChunkDataCountersUpdate();
 
         checkServerDataMergeCompletion();
     }
@@ -2744,7 +2712,7 @@ void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookCompleted(
         Q_UNUSED(m_updateLinkedNotebookRequestIds.erase(it));
 
         ++m_syncChunksDataCounters->m_updatedLinkedNotebooks;
-        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
+        emitSyncChunkDataCountersUpdate();
 
         checkServerDataMergeCompletion();
     }
@@ -3975,13 +3943,11 @@ void RemoteToLocalSynchronizationManager::
 
     if (syncingLinkedNotebooksContent()) {
         ++m_linkedNotebookSyncChunksDataCounters->m_updatedNotebooks;
-        Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-            m_linkedNotebookSyncChunksDataCounters);
     }
     else {
         ++m_syncChunksDataCounters->m_updatedNotebooks;
-        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
     }
+    emitSyncChunkDataCountersUpdate();
 
     unregisterNotebookPendingAddOrUpdate(Notebook(remoteNotebook));
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
@@ -4024,13 +3990,11 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(
 
     if (syncingLinkedNotebooksContent()) {
         ++m_linkedNotebookSyncChunksDataCounters->m_updatedTags;
-        Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-            m_linkedNotebookSyncChunksDataCounters);
     }
     else {
         ++m_syncChunksDataCounters->m_updatedTags;
-        Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
     }
+    emitSyncChunkDataCountersUpdate();
 
     unregisterTagPendingAddOrUpdate(Tag(remoteTag));
     syncNextTagPendingProcessing();
@@ -4077,7 +4041,7 @@ void RemoteToLocalSynchronizationManager::
     }
 
     ++m_syncChunksDataCounters->m_updatedSavedSearches;
-    Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
+    emitSyncChunkDataCountersUpdate();
 
     unregisterSavedSearchPendingAddOrUpdate(SavedSearch(remoteSavedSearch));
     checkServerDataMergeCompletion();
@@ -7276,6 +7240,8 @@ void RemoteToLocalSynchronizationManager::startLinkedNotebooksSync()
         return;
     }
 
+    initLinkedNotebookSyncChunksDataCounters();
+
     launchLinkedNotebooksContentsSync();
 }
 
@@ -8322,38 +8288,102 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
 
 void RemoteToLocalSynchronizationManager::initSyncChunkDataCounters()
 {
-    m_syncChunksDataCounters = {};
+    *m_syncChunksDataCounters = {};
 
     const auto convert = [](int size)
     {
         return static_cast<quint64>(std::max(size, 0));
     };
 
-    m_syncChunksDataCounters->m_totalSavedSearches =
-        convert(m_savedSearches.size());
+    for (const auto & syncChunk: qAsConst(m_syncChunks))
+    {
+        if (syncChunk.searches.isSet()) {
+            m_syncChunksDataCounters->m_totalSavedSearches +=
+                convert(syncChunk.searches.ref().size());
+        }
 
-    m_syncChunksDataCounters->m_totalExpungedSavedSearches =
-        convert(m_expungedSavedSearches.size());
+        if (syncChunk.expungedSearches.isSet()) {
+            m_syncChunksDataCounters->m_totalExpungedSavedSearches +=
+                convert(syncChunk.expungedSearches.ref().size());
+        }
 
-    // m_tags is an instance of boost::multi_index, its size is unsigned
-    m_syncChunksDataCounters->m_totalTags = static_cast<quint64>(m_tags.size());
-    m_syncChunksDataCounters->m_totalExpungedTags = convert(m_expungedTags.size());
+        if (syncChunk.tags.isSet()) {
+            m_syncChunksDataCounters->m_totalTags +=
+                convert(syncChunk.tags.ref().size());
+        }
 
-    m_syncChunksDataCounters->m_totalLinkedNotebooks =
-        convert(m_linkedNotebooks.size());
+        if (syncChunk.expungedTags.isSet()) {
+            m_syncChunksDataCounters->m_totalExpungedTags +=
+                convert(syncChunk.expungedTags.ref().size());
+        }
 
-    m_syncChunksDataCounters->m_totalExpungedLinkedNotebooks =
-        convert(m_expungedLinkedNotebooks.size());
+        if (syncChunk.notebooks.isSet()) {
+            m_syncChunksDataCounters->m_totalNotebooks +=
+                convert(syncChunk.notebooks.ref().size());
+        }
 
-    m_syncChunksDataCounters->m_totalNotebooks = convert(m_notebooks.size());
+        if (syncChunk.expungedNotebooks.isSet()) {
+            m_syncChunksDataCounters->m_totalExpungedNotebooks +=
+                convert(syncChunk.expungedNotebooks.ref().size());
+        }
 
-    m_syncChunksDataCounters->m_totalExpungedNotebooks =
-        convert(m_expungedNotebooks.size());
+        if (syncChunk.linkedNotebooks.isSet()) {
+            m_syncChunksDataCounters->m_totalLinkedNotebooks +=
+                convert(syncChunk.linkedNotebooks.ref().size());
+        }
+
+        if (syncChunk.expungedLinkedNotebooks.isSet()) {
+            m_syncChunksDataCounters->m_totalExpungedLinkedNotebooks +=
+                convert(syncChunk.expungedLinkedNotebooks.ref().size());
+        }
+    }
 }
 
-void RemoteToLocalSynchronizationManager::updateSyncChunksDataCounters()
+void RemoteToLocalSynchronizationManager::initLinkedNotebookSyncChunksDataCounters()
 {
-    // TODO: implement
+    *m_linkedNotebookSyncChunksDataCounters = {};
+
+    const auto convert = [](int size)
+    {
+        return static_cast<quint64>(std::max(size, 0));
+    };
+
+    for (const auto & syncChunk: qAsConst(m_linkedNotebookSyncChunks))
+    {
+        if (syncChunk.tags.isSet()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalTags +=
+                convert(syncChunk.tags.ref().size());
+        }
+
+        if (syncChunk.expungedTags.isSet()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalExpungedTags +=
+                convert(syncChunk.expungedTags.ref().size());
+        }
+
+        if (syncChunk.notebooks.isSet()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalNotebooks +=
+                convert(syncChunk.notebooks.ref().size());
+        }
+
+        if (syncChunk.expungedNotebooks.isSet()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalExpungedNotebooks +=
+                convert(syncChunk.expungedNotebooks.ref().size());
+        }
+    }
+}
+
+void RemoteToLocalSynchronizationManager::emitSyncChunkDataCountersUpdate()
+{
+    if (syncingLinkedNotebooksContent()) {
+        Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+            std::make_shared<SyncChunksDataCounters>(
+                *m_linkedNotebookSyncChunksDataCounters));
+    }
+    else {
+        Q_EMIT syncChunksDataProcessingProgress(
+            std::make_shared<SyncChunksDataCounters>(
+                *m_syncChunksDataCounters));
+    }
 }
 
 void RemoteToLocalSynchronizationManager::finalize()
@@ -12746,14 +12776,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(
         if (pSyncChunkDataCounter)
         {
             ++(*pSyncChunkDataCounter);
-
-            if (syncingLinkedNotebooksContent()) {
-                Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                    m_linkedNotebookSyncChunksDataCounters);
-            }
-            else {
-                Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
-            }
+            emitSyncChunkDataCountersUpdate();
         }
 
         checkServerDataMergeCompletion();
@@ -12827,14 +12850,7 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(
         if (pSyncChunkDataCounter)
         {
             ++(*pSyncChunkDataCounter);
-
-            if (syncingLinkedNotebooksContent()) {
-                Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
-                    m_linkedNotebookSyncChunksDataCounters);
-            }
-            else {
-                Q_EMIT syncChunksDataProcessingProgress(m_syncChunksDataCounters);
-            }
+            emitSyncChunkDataCountersUpdate();
         }
 
         checkServerDataMergeCompletion();
