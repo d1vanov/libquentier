@@ -1,5 +1,5 @@
 find_package(OpenSSL REQUIRED)
-include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(OPENSSL_LIB_DIRS "")
 foreach(OPENSSL_LIB ${OPENSSL_LIBRARIES})

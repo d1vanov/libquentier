@@ -20,11 +20,18 @@
 #define LIB_QUENTIER_UTILITY_KEYCHAIN_MIGRATING_KEYCHAIN_SERVICE_H
 
 #include <quentier/utility/IKeychainService.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QHash>
 #include <QSet>
 
+SAVE_WARNINGS
+
+MSVC_SUPPRESS_WARNING(4834)
+
 #include <boost/bimap.hpp>
+
+RESTORE_WARNINGS
 
 namespace quentier {
 
