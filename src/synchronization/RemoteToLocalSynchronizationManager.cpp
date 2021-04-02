@@ -8295,7 +8295,7 @@ void RemoteToLocalSynchronizationManager::initSyncChunkDataCounters()
         return static_cast<quint64>(std::max(size, 0));
     };
 
-    for (const auto & syncChunk: qAsConst(m_syncChunks))
+    for (const auto & syncChunk: ::qAsConst(m_syncChunks))
     {
         if (syncChunk.searches.isSet()) {
             m_syncChunksDataCounters->m_totalSavedSearches +=
@@ -8348,7 +8348,7 @@ void RemoteToLocalSynchronizationManager::initLinkedNotebookSyncChunksDataCounte
         return static_cast<quint64>(std::max(size, 0));
     };
 
-    for (const auto & syncChunk: qAsConst(m_linkedNotebookSyncChunks))
+    for (const auto & syncChunk: ::qAsConst(m_linkedNotebookSyncChunks))
     {
         if (syncChunk.tags.isSet()) {
             m_linkedNotebookSyncChunksDataCounters->m_totalTags +=
