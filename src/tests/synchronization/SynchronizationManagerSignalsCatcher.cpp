@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -60,6 +60,34 @@ bool SynchronizationManagerSignalsCatcher::
     }
 
     return true;
+}
+
+bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressEmpty(
+    ErrorString & errorDescription) const
+{
+    return checkSyncChunksDataProcessingProgressEmptyImpl(
+        m_syncChunksDataCounters, errorDescription);
+}
+
+bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressOrder(
+    ErrorString & errorDescription) const
+{
+    return checkSyncChunksDataProcessingProgressOrderImpl(
+        m_syncChunksDataCounters, errorDescription);
+}
+
+bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+    ErrorString & errorDescription) const
+{
+    return checkSyncChunksDataProcessingProgressEmptyImpl(
+        m_linkedNotebookSyncChunksDataCounters, errorDescription);
+}
+
+bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+    ErrorString & errorDescription) const
+{
+    return checkSyncChunksDataProcessingProgressOrderImpl(
+        m_linkedNotebookSyncChunksDataCounters, errorDescription);
 }
 
 bool SynchronizationManagerSignalsCatcher::checkNoteDownloadProgressOrder(
@@ -237,6 +265,18 @@ void SynchronizationManagerSignalsCatcher::
 
     m_linkedNotebookSyncChunkDownloadProgress[linkedNotebook.guid()]
         << progress;
+}
+
+void SynchronizationManagerSignalsCatcher::onSyncChunksDataCounters(
+    ISyncChunksDataCountersPtr counters)
+{
+    m_syncChunksDataCounters << counters;
+}
+
+void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDataCounters(
+    ISyncChunksDataCountersPtr counters)
+{
+    m_linkedNotebookSyncChunksDataCounters << counters;
 }
 
 void SynchronizationManagerSignalsCatcher::onNoteDownloadProgress(
@@ -417,6 +457,18 @@ void SynchronizationManagerSignalsCatcher::createConnections(
             onLinkedNotebookSyncChunkDownloadProgress);
 
     QObject::connect(
+        &synchronizationManager,
+        &SynchronizationManager::syncChunksDataProcessingProgress, this,
+        &SynchronizationManagerSignalsCatcher::onSyncChunksDataCounters);
+
+    QObject::connect(
+        &synchronizationManager,
+        &SynchronizationManager::linkedNotebookSyncChunksDataProcessingProgress,
+        this,
+        &SynchronizationManagerSignalsCatcher::
+            onLinkedNotebookSyncChunksDataCounters);
+
+    QObject::connect(
         &synchronizationManager, &SynchronizationManager::notesDownloadProgress,
         this, &SynchronizationManagerSignalsCatcher::onNoteDownloadProgress);
 
@@ -527,6 +579,243 @@ bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(
             QStringLiteral("Detected last previous USN greater than highest "
                            "downloaded USN"));
         return false;
+    }
+
+    return true;
+}
+
+bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressEmptyImpl(
+    const QVector<ISyncChunksDataCountersPtr> & counters,
+    ErrorString & errorDescription) const
+{
+    if (!counters.isEmpty()) {
+        errorDescription.setBase(
+            QStringLiteral("Detected unexpectedly non-empty sync chunks data "
+                           "counters"));
+        return false;
+    }
+
+    return true;
+}
+
+bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressOrderImpl(
+    const QVector<ISyncChunksDataCountersPtr> & counters,
+    ErrorString & errorDescription) const
+{
+    if (counters.isEmpty()) {
+        errorDescription.setBase(
+            QStringLiteral("Detected unexpectedly empty sync chunks data "
+                           "counters"));
+        return false;
+    }
+
+    ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
+    for (const auto & currentCounters: ::qAsConst(counters))
+    {
+        Q_ASSERT(currentCounters);
+
+        if (!lastSyncChunksDataCounters) {
+            lastSyncChunksDataCounters = currentCounters;
+            continue;
+        }
+
+        if (currentCounters->totalSavedSearches() !=
+            lastSyncChunksDataCounters->totalSavedSearches())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total saved searches is "
+                               "different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->totalExpungedSavedSearches() !=
+            lastSyncChunksDataCounters->totalExpungedSavedSearches())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total expunged saved searches is "
+                               "different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->totalTags() !=
+            lastSyncChunksDataCounters->totalTags())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total tags is different in "
+                               "consequent sync chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->totalExpungedTags() !=
+            lastSyncChunksDataCounters->totalExpungedTags())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total expunged tags is "
+                               "different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->totalNotebooks() !=
+            lastSyncChunksDataCounters->totalNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total notebooks is different in "
+                               "consequent sync chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->totalExpungedNotebooks() !=
+            lastSyncChunksDataCounters->totalExpungedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total expunged notebooks is "
+                               "different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->totalLinkedNotebooks() !=
+            lastSyncChunksDataCounters->totalLinkedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total linked notebooks is "
+                               "different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->totalExpungedLinkedNotebooks() !=
+            lastSyncChunksDataCounters->totalExpungedLinkedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of total expunged linked notebooks "
+                               "is different in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->addedSavedSearches() <
+            lastSyncChunksDataCounters->addedSavedSearches())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of added saved searches is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->updatedSavedSearches() <
+            lastSyncChunksDataCounters->updatedSavedSearches())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of updated saved searches is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->expungedSavedSearches() <
+            lastSyncChunksDataCounters->expungedSavedSearches())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of expunged saved searches is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->addedTags() <
+            lastSyncChunksDataCounters->addedTags())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of added tags is unexpectedly "
+                               "declining in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->updatedTags() <
+            lastSyncChunksDataCounters->updatedTags())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of updated tags is unexpectedly "
+                               "declining in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->expungedTags() <
+            lastSyncChunksDataCounters->expungedTags())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of expunged tags is unexpectedly "
+                               "declining in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->addedNotebooks() <
+            lastSyncChunksDataCounters->addedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of added notebooks is unexpectedly "
+                               "declining in consequent sync chunks data "
+                               "counters"));
+            return false;
+        }
+
+        if (currentCounters->updatedNotebooks() <
+            lastSyncChunksDataCounters->updatedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of updated notebooks is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->expungedNotebooks() <
+            lastSyncChunksDataCounters->expungedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of expunged notebooks is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->addedLinkedNotebooks() <
+            lastSyncChunksDataCounters->addedLinkedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of added linked notebooks is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->updatedLinkedNotebooks() <
+            lastSyncChunksDataCounters->updatedLinkedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of updated linked notebooks is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
+
+        if (currentCounters->expungedLinkedNotebooks() <
+            lastSyncChunksDataCounters->expungedLinkedNotebooks())
+        {
+            errorDescription.setBase(
+                QStringLiteral("The number of expunged linked notebooks is "
+                               "unexpectedly declining in consequent sync "
+                               "chunks data counters"));
+            return false;
+        }
     }
 
     return true;
