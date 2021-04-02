@@ -1159,6 +1159,13 @@ void SynchronizationManagerPrivate::createConnections(
 
     QObject::connect(
         m_pRemoteToLocalSyncManager,
+        &RemoteToLocalSynchronizationManager::syncChunksDataProcessingProgress,
+        this,
+        &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+    QObject::connect(
+        m_pRemoteToLocalSyncManager,
         &RemoteToLocalSynchronizationManager::notesDownloadProgress, this,
         &SynchronizationManagerPrivate::notesDownloadProgress,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
@@ -1178,6 +1185,15 @@ void SynchronizationManagerPrivate::createConnections(
             linkedNotebooksSyncChunksDownloaded,
         this,
         &SynchronizationManagerPrivate::linkedNotebooksSyncChunksDownloaded,
+        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+
+    QObject::connect(
+        m_pRemoteToLocalSyncManager,
+        &RemoteToLocalSynchronizationManager::
+            linkedNotebookSyncChunksDataProcessingProgress,
+        this,
+        &SynchronizationManagerPrivate::
+            linkedNotebookSyncChunksDataProcessingProgress,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(

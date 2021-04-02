@@ -24,6 +24,7 @@
 #include "NotebookSyncConflictResolver.h"
 #include "SavedSearchSyncCache.h"
 #include "SavedSearchSyncConflictResolver.h"
+#include "SyncChunksDataCounters.h"
 #include "SynchronizationShared.h"
 #include "TagSyncCache.h"
 #include "TagSyncConflictResolver.h"
@@ -123,6 +124,8 @@ Q_SIGNALS:
 
     void syncChunksDownloaded();
 
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
+
     void notesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
 
@@ -137,6 +140,9 @@ Q_SIGNALS:
         qint32 lastPreviousUsn, LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
+
+    void linkedNotebookSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters);
 
     void linkedNotebooksNotesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
@@ -579,7 +585,8 @@ private:
     bool onFoundDuplicateByGuid(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
-        QSet<QUuid> & findByGuidRequestIds);
+        QSet<QUuid> & findByGuidRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByGuid(
@@ -598,7 +605,8 @@ private:
     bool onFoundDuplicateByName(
         ElementType element, const QUuid & requestId, const QString & typeName,
         ContainerType & container, PendingContainerType & pendingItemsContainer,
-        QSet<QUuid> & findElementRequestIds);
+        QSet<QUuid> & findElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ContainerType, class ElementType>
     bool onNoDuplicateByName(
@@ -614,7 +622,8 @@ private:
     template <class ElementType>
     void onAddDataElementCompleted(
         const ElementType & element, const QUuid & requestId,
-        const QString & typeName, QSet<QUuid> & addElementRequestIds);
+        const QString & typeName, QSet<QUuid> & addElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ElementType>
     void onAddDataElementFailed(
@@ -627,7 +636,8 @@ private:
     template <class ElementType>
     void onUpdateDataElementCompleted(
         const ElementType & element, const QUuid & requestId,
-        const QString & typeName, QSet<QUuid> & updateElementRequestIds);
+        const QString & typeName, QSet<QUuid> & updateElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ElementType>
     void onUpdateDataElementFailed(
@@ -649,13 +659,15 @@ private:
     template <class ElementType>
     void onExpungeDataElementCompleted(
         const ElementType & element, const QUuid & requestId,
-        const QString & typeName, QSet<QUuid> & expungeElementRequestIds);
+        const QString & typeName, QSet<QUuid> & expungeElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     template <class ElementType>
     void onExpungeDataElementFailed(
         const ElementType & element, const QUuid & requestId,
         const ErrorString & errorDescription, const QString & typeName,
-        QSet<QUuid> & expungeElementRequestIds);
+        QSet<QUuid> & expungeElementRequestIds,
+        quint64 * pSyncChunkDataCounter = nullptr);
 
     void expungeTags();
     void expungeSavedSearches();
@@ -713,6 +725,10 @@ private:
     void launchLinkedNotebooksNotebooksSync();
 
     void checkServerDataMergeCompletion();
+
+    void initSyncChunkDataCounters();
+    void initLinkedNotebookSyncChunksDataCounters();
+    void emitSyncChunkDataCountersUpdate();
 
     void finalize();
     void clear();
@@ -965,6 +981,8 @@ private:
     QVector<qevercloud::SyncChunk> m_syncChunks;
     QVector<qevercloud::SyncChunk> m_linkedNotebookSyncChunks;
     QSet<QString> m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
+    std::shared_ptr<SyncChunksDataCounters> m_syncChunksDataCounters;
+    std::shared_ptr<SyncChunksDataCounters> m_linkedNotebookSyncChunksDataCounters;
 
     qevercloud::AccountLimits m_accountLimits;
 
@@ -1118,6 +1136,7 @@ private:
 
     QHash<QString, qevercloud::Note>
         m_notesPendingDownloadForAddingToLocalStorage;
+
     QHash<QString, Note> m_notesPendingDownloadForUpdatingInLocalStorageByGuid;
 
     QHash<QString, std::pair<Resource, Note>>
@@ -1127,8 +1146,10 @@ private:
 
     FullSyncStaleDataItemsExpunger::SyncedGuids
         m_fullSyncStaleDataItemsSyncedGuids;
+
     FullSyncStaleDataItemsExpunger * m_pFullSyncStaleDataItemsExpunger =
         nullptr;
+
     QMap<QString, FullSyncStaleDataItemsExpunger *>
         m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid;
 
