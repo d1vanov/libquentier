@@ -157,7 +157,7 @@ namespace {
 
     strm << "Linked notebook guids by tag guids:\n";
 
-    for (const auto & it: qevercloud::toRange(linkedNotebookGuidsByTagGuids)) {
+    for (const auto it: qevercloud::toRange(linkedNotebookGuidsByTagGuids)) {
         strm << "    " << it.key() << " -> " << it.value() << "\n";
     }
 
@@ -192,6 +192,9 @@ RemoteToLocalSynchronizationManager::RemoteToLocalSynchronizationManager(
     IManager & manager, QString host, QObject * parent) :
     QObject(parent),
     m_manager(manager), m_host(std::move(host)),
+    m_syncChunksDataCounters(std::make_shared<SyncChunksDataCounters>()),
+    m_linkedNotebookSyncChunksDataCounters(
+        std::make_shared<SyncChunksDataCounters>()),
     m_tagSyncCache(m_manager.localStorageManagerAsync(), QLatin1String("")),
     m_savedSearchSyncCache(m_manager.localStorageManagerAsync()),
     m_notebookSyncCache(
@@ -688,9 +691,15 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(
         "RemoteToLocalSynchronizationManager::onFindNotebookCompleted: "
             << "request id = " << requestId << ", notebook: " << notebook);
 
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_updatedNotebooks
+         : m_syncChunksDataCounters->m_updatedNotebooks);
+
     const bool foundByGuid = onFoundDuplicateByGuid(
         notebook, requestId, QStringLiteral("Notebook"), m_notebooks,
-        m_notebooksPendingAddOrUpdate, m_findNotebookByGuidRequestIds);
+        m_notebooksPendingAddOrUpdate, m_findNotebookByGuidRequestIds,
+        &counter);
 
     if (foundByGuid) {
         return;
@@ -698,7 +707,8 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(
 
     const bool foundByName = onFoundDuplicateByName(
         notebook, requestId, QStringLiteral("Notebook"), m_notebooks,
-        m_notebooksPendingAddOrUpdate, m_findNotebookByNameRequestIds);
+        m_notebooksPendingAddOrUpdate, m_findNotebookByNameRequestIds,
+        &counter);
 
     if (foundByName) {
         return;
@@ -710,8 +720,7 @@ void RemoteToLocalSynchronizationManager::onFindNotebookCompleted(
     if (rit != m_notesWithFindRequestIdsPerFindNotebookRequestId.end()) {
         QNDEBUG(
             "synchronization:remote_to_local",
-            "Found notebook needed for "
-                << "note synchronization");
+            "Found notebook needed for note synchronization");
 
         const auto & noteWithFindRequestId = rit.value();
         const qevercloud::Note & note = noteWithFindRequestId.first;
@@ -1258,9 +1267,14 @@ void RemoteToLocalSynchronizationManager::onFindNoteFailed(
 void RemoteToLocalSynchronizationManager::onFindTagCompleted(
     qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_updatedTags
+         : m_syncChunksDataCounters->m_updatedTags);
+
     const bool foundByGuid = onFoundDuplicateByGuid(
         tag, requestId, QStringLiteral("Tag"), m_tags, m_tagsPendingAddOrUpdate,
-        m_findTagByGuidRequestIds);
+        m_findTagByGuidRequestIds, &counter);
 
     if (foundByGuid) {
         return;
@@ -1268,7 +1282,7 @@ void RemoteToLocalSynchronizationManager::onFindTagCompleted(
 
     Q_UNUSED(onFoundDuplicateByName(
         tag, requestId, QStringLiteral("Tag"), m_tags, m_tagsPendingAddOrUpdate,
-        m_findTagByNameRequestIds))
+        m_findTagByNameRequestIds, &counter))
 }
 
 void RemoteToLocalSynchronizationManager::onFindTagFailed(
@@ -1428,7 +1442,8 @@ void RemoteToLocalSynchronizationManager::onFindLinkedNotebookCompleted(
     Q_UNUSED(onFoundDuplicateByGuid(
         std::move(linkedNotebook), requestId, QStringLiteral("LinkedNotebook"),
         m_linkedNotebooks, m_linkedNotebooksPendingAddOrUpdate,
-        m_findLinkedNotebookRequestIds))
+        m_findLinkedNotebookRequestIds,
+        &m_syncChunksDataCounters->m_updatedLinkedNotebooks))
 }
 
 void RemoteToLocalSynchronizationManager::onFindLinkedNotebookFailed(
@@ -1467,7 +1482,8 @@ void RemoteToLocalSynchronizationManager::onFindSavedSearchCompleted(
 {
     const bool foundByGuid = onFoundDuplicateByGuid(
         savedSearch, requestId, QStringLiteral("SavedSearch"), m_savedSearches,
-        m_savedSearchesPendingAddOrUpdate, m_findSavedSearchByGuidRequestIds);
+        m_savedSearchesPendingAddOrUpdate, m_findSavedSearchByGuidRequestIds,
+        &m_syncChunksDataCounters->m_updatedSavedSearches);
 
     if (foundByGuid) {
         return;
@@ -1475,7 +1491,8 @@ void RemoteToLocalSynchronizationManager::onFindSavedSearchCompleted(
 
     Q_UNUSED(onFoundDuplicateByName(
         savedSearch, requestId, QStringLiteral("SavedSearch"), m_savedSearches,
-        m_savedSearchesPendingAddOrUpdate, m_findSavedSearchByNameRequestIds))
+        m_savedSearchesPendingAddOrUpdate, m_findSavedSearchByNameRequestIds,
+        &m_syncChunksDataCounters->m_updatedSavedSearches))
 }
 
 void RemoteToLocalSynchronizationManager::onFindSavedSearchFailed(
@@ -1498,7 +1515,8 @@ void RemoteToLocalSynchronizationManager::onFindSavedSearchFailed(
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & addElementRequestIds)
+    const QString & typeName, QSet<QUuid> & addElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     const auto it = addElementRequestIds.find(requestId);
     if (it != addElementRequestIds.end()) {
@@ -1509,6 +1527,12 @@ void RemoteToLocalSynchronizationManager::onAddDataElementCompleted(
                 << ", requestId = " << requestId);
 
         Q_UNUSED(addElementRequestIds.erase(it));
+
+        if (pSyncChunkDataCounter) {
+            ++(*pSyncChunkDataCounter);
+            emitSyncChunkDataCountersUpdate();
+        }
+
         performPostAddOrUpdateChecks<ElementType>(element);
         checkServerDataMergeCompletion();
     }
@@ -1557,8 +1581,13 @@ void RemoteToLocalSynchronizationManager::onAddUserFailed(
 void RemoteToLocalSynchronizationManager::onAddTagCompleted(
     qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_addedTags
+         : m_syncChunksDataCounters->m_addedTags);
+
     onAddDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_addTagRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddSavedSearchCompleted(
@@ -1566,7 +1595,8 @@ void RemoteToLocalSynchronizationManager::onAddSavedSearchCompleted(
 {
     onAddDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_addSavedSearchRequestIds);
+        m_addSavedSearchRequestIds,
+        &m_syncChunksDataCounters->m_addedSavedSearches);
 }
 
 template <class ElementType>
@@ -1669,7 +1699,8 @@ void RemoteToLocalSynchronizationManager::onUpdateUserFailed(
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & updateElementRequestIds)
+    const QString & typeName, QSet<QUuid> & updateElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     auto rit = updateElementRequestIds.find(requestId);
     if (rit == updateElementRequestIds.end()) {
@@ -1683,6 +1714,12 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
             << ", requestId = " << requestId);
 
     Q_UNUSED(updateElementRequestIds.erase(rit));
+
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+        emitSyncChunkDataCountersUpdate();
+    }
+
     performPostAddOrUpdateChecks<ElementType>(element);
     checkServerDataMergeCompletion();
 }
@@ -1690,8 +1727,14 @@ void RemoteToLocalSynchronizationManager::onUpdateDataElementCompleted(
 void RemoteToLocalSynchronizationManager::onUpdateTagCompleted(
     qevercloud::Tag tag, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_updatedTags
+         : m_syncChunksDataCounters->m_updatedTags);
+
     onUpdateDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_updateTagRequestIds,
+        &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(
@@ -1699,7 +1742,8 @@ void RemoteToLocalSynchronizationManager::onUpdateSavedSearchCompleted(
 {
     onUpdateDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_updateSavedSearchRequestIds);
+        m_updateSavedSearchRequestIds,
+        &m_syncChunksDataCounters->m_updatedSavedSearches);
 }
 
 template <class ElementType>
@@ -1746,17 +1790,28 @@ void RemoteToLocalSynchronizationManager::onExpungeTagCompleted(
 {
     Q_UNUSED(expungedChildTagLocalIds)
 
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_expungedTags
+         : m_syncChunksDataCounters->m_expungedTags);
+
     onExpungeDataElementCompleted(
-        tag, requestId, QStringLiteral("Tag"), m_expungeTagRequestIds);
+        tag, requestId, QStringLiteral("Tag"), m_expungeTagRequestIds,
+        &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeTagFailed(
     qevercloud::Tag tag, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_expungedTags
+         : m_syncChunksDataCounters->m_expungedTags);
+
     onExpungeDataElementFailed(
         tag, requestId, errorDescription, QStringLiteral("Tag"),
-        m_expungeTagRequestIds);
+        m_expungeTagRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::
@@ -1813,7 +1868,8 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchCompleted(
 {
     onExpungeDataElementCompleted(
         search, requestId, QStringLiteral("SavedSearch"),
-        m_expungeSavedSearchRequestIds);
+        m_expungeSavedSearchRequestIds,
+        &m_syncChunksDataCounters->m_expungedSavedSearches);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
@@ -1822,7 +1878,8 @@ void RemoteToLocalSynchronizationManager::onExpungeSavedSearchFailed(
 {
     onExpungeDataElementFailed(
         search, requestId, errorDescription, QStringLiteral("SavedSearch"),
-        m_expungeSavedSearchRequestIds);
+        m_expungeSavedSearchRequestIds,
+        &m_syncChunksDataCounters->m_expungedSavedSearches);
 }
 
 template <>
@@ -1905,7 +1962,8 @@ void RemoteToLocalSynchronizationManager::setNonLocalAndNonDirty(
 template <class ElementType>
 void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(
     const ElementType & element, const QUuid & requestId,
-    const QString & typeName, QSet<QUuid> & expungeElementRequestIds)
+    const QString & typeName, QSet<QUuid> & expungeElementRequestIds,
+    quint64 * pSyncChunkDataCounter)
 {
     const auto it = expungeElementRequestIds.find(requestId);
     if (it == expungeElementRequestIds.end()) {
@@ -1918,6 +1976,11 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementCompleted(
 
     Q_UNUSED(expungeElementRequestIds.erase(it))
 
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+        emitSyncChunkDataCountersUpdate();
+    }
+
     performPostExpungeChecks<ElementType>();
     checkExpungesCompletion();
 }
@@ -1926,7 +1989,7 @@ template <class ElementType>
 void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(
     const ElementType & element, const QUuid & requestId,
     const ErrorString & errorDescription, const QString & typeName,
-    QSet<QUuid> & expungeElementRequestIds)
+    QSet<QUuid> & expungeElementRequestIds, quint64 * pSyncChunkDataCounter)
 {
     Q_UNUSED(element)
     Q_UNUSED(typeName)
@@ -1943,6 +2006,11 @@ void RemoteToLocalSynchronizationManager::onExpungeDataElementFailed(
             << "never existed in the local storage in the first place. "
             << "Error description: " << errorDescription);
     Q_UNUSED(expungeElementRequestIds.erase(it))
+
+    if (pSyncChunkDataCounter) {
+        ++(*pSyncChunkDataCounter);
+        emitSyncChunkDataCountersUpdate();
+    }
 
     performPostExpungeChecks<ElementType>();
     checkExpungesCompletion();
@@ -2587,6 +2655,10 @@ void RemoteToLocalSynchronizationManager::onAddLinkedNotebookCompleted(
                 << ", request id = " << requestId);
 
         Q_UNUSED(m_addLinkedNotebookRequestIds.erase(it))
+
+        ++m_syncChunksDataCounters->m_addedLinkedNotebooks;
+        emitSyncChunkDataCountersUpdate();
+
         checkServerDataMergeCompletion();
     }
 }
@@ -2614,6 +2686,10 @@ void RemoteToLocalSynchronizationManager::onUpdateLinkedNotebookCompleted(
                 << linkedNotebook << ", requestId = " << requestId);
 
         Q_UNUSED(m_updateLinkedNotebookRequestIds.erase(it));
+
+        ++m_syncChunksDataCounters->m_updatedLinkedNotebooks;
+        emitSyncChunkDataCountersUpdate();
+
         checkServerDataMergeCompletion();
     }
 }
@@ -2645,7 +2721,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookCompleted(
 {
     onExpungeDataElementCompleted(
         linkedNotebook, requestId, QStringLiteral("Linked notebook"),
-        m_expungeLinkedNotebookRequestIds);
+        m_expungeLinkedNotebookRequestIds,
+        &m_syncChunksDataCounters->m_expungedLinkedNotebooks);
 
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         QNWARNING(
@@ -2704,7 +2781,8 @@ void RemoteToLocalSynchronizationManager::onExpungeLinkedNotebookFailed(
 {
     onExpungeDataElementFailed(
         linkedNotebook, requestId, errorDescription,
-        QStringLiteral("Linked notebook"), m_expungeLinkedNotebookRequestIds);
+        QStringLiteral("Linked notebook"), m_expungeLinkedNotebookRequestIds,
+        &m_syncChunksDataCounters->m_expungedLinkedNotebooks);
 }
 
 void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksCompleted(
@@ -2764,9 +2842,14 @@ void RemoteToLocalSynchronizationManager::onListAllLinkedNotebooksFailed(
 void RemoteToLocalSynchronizationManager::onAddNotebookCompleted(
     qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_addedNotebooks
+         : m_syncChunksDataCounters->m_addedNotebooks);
+
     onAddDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_addNotebookRequestIds);
+        m_addNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
@@ -2781,9 +2864,14 @@ void RemoteToLocalSynchronizationManager::onAddNotebookFailed(
 void RemoteToLocalSynchronizationManager::onUpdateNotebookCompleted(
     qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_updatedNotebooks
+         : m_syncChunksDataCounters->m_updatedNotebooks);
+
     onUpdateDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_updateNotebookRequestIds);
+        m_updateNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
@@ -2798,18 +2886,28 @@ void RemoteToLocalSynchronizationManager::onUpdateNotebookFailed(
 void RemoteToLocalSynchronizationManager::onExpungeNotebookCompleted(
     qevercloud::Notebook notebook, QUuid requestId) // NOLINT
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_expungedNotebooks
+         : m_syncChunksDataCounters->m_expungedNotebooks);
+
     onExpungeDataElementCompleted(
         notebook, requestId, QStringLiteral("Notebook"),
-        m_expungeNotebookRequestIds);
+        m_expungeNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onExpungeNotebookFailed(
     qevercloud::Notebook notebook, ErrorString errorDescription, // NOLINT
     QUuid requestId)
 {
+    quint64 & counter =
+        (syncingLinkedNotebooksContent()
+         ? m_linkedNotebookSyncChunksDataCounters->m_expungedNotebooks
+         : m_syncChunksDataCounters->m_expungedNotebooks);
+
     onExpungeDataElementFailed(
         notebook, requestId, errorDescription, QStringLiteral("Notebook"),
-        m_expungeNotebookRequestIds);
+        m_expungeNotebookRequestIds, &counter);
 }
 
 void RemoteToLocalSynchronizationManager::onAddNoteCompleted(
@@ -3816,8 +3914,15 @@ void RemoteToLocalSynchronizationManager::
         pResolver->deleteLater();
     }
 
-    unregisterNotebookPendingAddOrUpdate(remoteNotebook);
+    if (syncingLinkedNotebooksContent()) {
+        ++m_linkedNotebookSyncChunksDataCounters->m_updatedNotebooks;
+    }
+    else {
+        ++m_syncChunksDataCounters->m_updatedNotebooks;
+    }
+    emitSyncChunkDataCountersUpdate();
 
+    unregisterNotebookPendingAddOrUpdate(remoteNotebook);
     checkNotebooksAndTagsSyncCompletionAndLaunchNotesAndResourcesSync();
     checkServerDataMergeCompletion();
 }
@@ -3855,6 +3960,14 @@ void RemoteToLocalSynchronizationManager::onTagSyncConflictResolverFinished(
         pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
+
+    if (syncingLinkedNotebooksContent()) {
+        ++m_linkedNotebookSyncChunksDataCounters->m_updatedTags;
+    }
+    else {
+        ++m_syncChunksDataCounters->m_updatedTags;
+    }
+    emitSyncChunkDataCountersUpdate();
 
     unregisterTagPendingAddOrUpdate(remoteTag);
     syncNextTagPendingProcessing();
@@ -3899,6 +4012,9 @@ void RemoteToLocalSynchronizationManager::
         pResolver->setParent(nullptr);
         pResolver->deleteLater();
     }
+
+    ++m_syncChunksDataCounters->m_updatedSavedSearches;
+    emitSyncChunkDataCountersUpdate();
 
     unregisterSavedSearchPendingAddOrUpdate(remoteSavedSearch);
     checkServerDataMergeCompletion();
@@ -5095,6 +5211,8 @@ void RemoteToLocalSynchronizationManager::launchSync()
     m_pendingLinkedNotebooksSyncStart = true;
     m_pendingNotebooksSyncStart = true;
 
+    initSyncChunkDataCounters();
+
     launchSavedSearchSync();
     launchLinkedNotebookSync();
 
@@ -5142,7 +5260,7 @@ void RemoteToLocalSynchronizationManager::launchSync()
         if (!m_resources.isEmpty() || resourcesSyncInProgress()) {
             QNDEBUG(
                 "synchronization:remote_to_local",
-                "Resources sync in progress");
+                "Resources sync is in progress");
             return;
         }
     }
@@ -6282,7 +6400,7 @@ bool RemoteToLocalSynchronizationManager::
 
         FullSyncStaleDataItemsExpunger::SyncedGuids syncedGuids;
 
-        for (const auto & nit: qevercloud::toRange(
+        for (const auto nit: qevercloud::toRange(
                  qAsConst(m_linkedNotebookGuidsByNotebookGuids)))
         {
             const QString & currentLinkedNotebookGuid = nit.value();
@@ -6303,7 +6421,7 @@ bool RemoteToLocalSynchronizationManager::
             }
         }
 
-        for (const auto & tit:
+        for (const auto tit:
              qevercloud::toRange(::qAsConst(m_linkedNotebookGuidsByTagGuids)))
         {
             const QString & currentLinkedNotebookGuid = tit.value();
@@ -6438,7 +6556,7 @@ void RemoteToLocalSynchronizationManager::checkAndIncrementNoteDownloadProgress(
     }
 
     if (Q_UNLIKELY(m_numNotesDownloaded == m_originalNumberOfNotes)) {
-        QNWARNING(
+        QNDEBUG(
             "synchronization:remote_to_local",
             "The count of downloaded notes (" << m_numNotesDownloaded
                 << ") is already equal to the original number of notes ("
@@ -6479,7 +6597,7 @@ void RemoteToLocalSynchronizationManager::
     }
 
     for (
-        const auto & it: qevercloud::toRange(qAsConst(
+        const auto it: qevercloud::toRange(qAsConst(
             m_resourceGuidsPendingFindNotebookForInkNoteImageDownloadPerNoteGuid)))
     {
         if (it.value() == resourceGuid) {
@@ -7043,6 +7161,8 @@ void RemoteToLocalSynchronizationManager::startLinkedNotebooksSync()
     if (!downloadLinkedNotebooksSyncChunks()) {
         return;
     }
+
+    initLinkedNotebookSyncChunksDataCounters();
 
     launchLinkedNotebooksContentsSync();
 }
@@ -8071,6 +8191,106 @@ void RemoteToLocalSynchronizationManager::checkServerDataMergeCompletion()
     }
 }
 
+void RemoteToLocalSynchronizationManager::initSyncChunkDataCounters()
+{
+    *m_syncChunksDataCounters = {};
+
+    const auto convert = [](int size)
+    {
+        return static_cast<quint64>(std::max(size, 0));
+    };
+
+    for (const auto & syncChunk: ::qAsConst(m_syncChunks))
+    {
+        if (syncChunk.searches()) {
+            m_syncChunksDataCounters->m_totalSavedSearches +=
+                convert(syncChunk.searches()->size());
+        }
+
+        if (syncChunk.expungedSearches()) {
+            m_syncChunksDataCounters->m_totalExpungedSavedSearches +=
+                convert(syncChunk.expungedSearches()->size());
+        }
+
+        if (syncChunk.tags()) {
+            m_syncChunksDataCounters->m_totalTags +=
+                convert(syncChunk.tags()->size());
+        }
+
+        if (syncChunk.expungedTags()) {
+            m_syncChunksDataCounters->m_totalExpungedTags +=
+                convert(syncChunk.expungedTags()->size());
+        }
+
+        if (syncChunk.notebooks()) {
+            m_syncChunksDataCounters->m_totalNotebooks +=
+                convert(syncChunk.notebooks()->size());
+        }
+
+        if (syncChunk.expungedNotebooks()) {
+            m_syncChunksDataCounters->m_totalExpungedNotebooks +=
+                convert(syncChunk.expungedNotebooks()->size());
+        }
+
+        if (syncChunk.linkedNotebooks()) {
+            m_syncChunksDataCounters->m_totalLinkedNotebooks +=
+                convert(syncChunk.linkedNotebooks()->size());
+        }
+
+        if (syncChunk.expungedLinkedNotebooks()) {
+            m_syncChunksDataCounters->m_totalExpungedLinkedNotebooks +=
+                convert(syncChunk.expungedLinkedNotebooks()->size());
+        }
+    }
+}
+
+void RemoteToLocalSynchronizationManager::initLinkedNotebookSyncChunksDataCounters()
+{
+    *m_linkedNotebookSyncChunksDataCounters = {};
+
+    const auto convert = [](int size)
+    {
+        return static_cast<quint64>(std::max(size, 0));
+    };
+
+    for (const auto & syncChunk: ::qAsConst(m_linkedNotebookSyncChunks))
+    {
+        if (syncChunk.tags()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalTags +=
+                convert(syncChunk.tags()->size());
+        }
+
+        if (syncChunk.expungedTags()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalExpungedTags +=
+                convert(syncChunk.expungedTags()->size());
+        }
+
+        if (syncChunk.notebooks()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalNotebooks +=
+                convert(syncChunk.notebooks()->size());
+        }
+
+        if (syncChunk.expungedNotebooks()) {
+            m_linkedNotebookSyncChunksDataCounters->m_totalExpungedNotebooks +=
+                convert(syncChunk.expungedNotebooks()->size());
+        }
+    }
+}
+
+void RemoteToLocalSynchronizationManager::emitSyncChunkDataCountersUpdate()
+{
+    if (syncingLinkedNotebooksContent()) {
+        Q_EMIT linkedNotebookSyncChunksDataProcessingProgress(
+            std::make_shared<SyncChunksDataCounters>(
+                *m_linkedNotebookSyncChunksDataCounters));
+    }
+    else {
+        Q_EMIT syncChunksDataProcessingProgress(
+            std::make_shared<SyncChunksDataCounters>(
+                *m_syncChunksDataCounters));
+    }
+}
+
 void RemoteToLocalSynchronizationManager::finalize()
 {
     QNDEBUG(
@@ -8085,7 +8305,7 @@ void RemoteToLocalSynchronizationManager::finalize()
             "synchronization:remote_to_local",
             "Last update counts by linked notebook guids: ");
 
-        for (const auto & it: qevercloud::toRange(
+        for (const auto it: qevercloud::toRange(
                  qAsConst(m_lastUpdateCountByLinkedNotebookGuid)))
         {
             QNTRACE(
@@ -8098,7 +8318,7 @@ void RemoteToLocalSynchronizationManager::finalize()
             "synchronization:remote_to_local",
             "Last sync times by linked notebook guids: ");
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(qAsConst(m_lastSyncTimeByLinkedNotebookGuid)))
         {
             QNTRACE(
@@ -8355,7 +8575,7 @@ void RemoteToLocalSynchronizationManager::clear()
 
     m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_notesToAddPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8363,7 +8583,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_notesToAddPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_notesToUpdatePerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8371,7 +8591,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_notesToUpdatePerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_resourcesToAddWithNotesPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8379,7 +8599,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_resourcesToAddWithNotesPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8387,7 +8607,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_resourcesToUpdateWithNotesPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it: qevercloud::toRange(
+    for (const auto it: qevercloud::toRange(
              m_postponedConflictingResourceDataPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -8395,7 +8615,7 @@ void RemoteToLocalSynchronizationManager::clear()
     }
     m_postponedConflictingResourceDataPerAPICallPostponeTimerId.clear();
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(m_afterUsnForSyncChunkPerAPICallPostponeTimerId))
     {
         int key = it.key();
@@ -9164,7 +9384,7 @@ void RemoteToLocalSynchronizationManager::downloadSyncChunksAndLaunchSync(
             QNTRACE(
                 "synchronization:remote_to_local",
                 "Updated after USN to sync chunk's high USN: "
-                << *pSyncChunk->chunkHighUSN());
+                    << *pSyncChunk->chunkHighUSN());
         }
 
         m_syncChunks.push_back(qevercloud::SyncChunk());
@@ -10168,7 +10388,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<int, qevercloud::Note> & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
+    for (const auto it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10181,7 +10401,7 @@ void RemoteToLocalSynchronizationManager::
             const QHash<QString, qevercloud::Note> & container,
             const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
+    for (const auto it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10194,7 +10414,7 @@ void RemoteToLocalSynchronizationManager::
             const QHash<QUuid, qevercloud::Note> & container,
             const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
+    for (const auto it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value(), linkedNotebookGuid, smallestUsn);
     }
@@ -10207,7 +10427,7 @@ void RemoteToLocalSynchronizationManager::
         const NoteDataPerFindNotebookRequestId & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(qAsConst(container))) {
+    for (const auto it: qevercloud::toRange(qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first, linkedNotebookGuid, smallestUsn);
     }
@@ -10220,7 +10440,7 @@ void RemoteToLocalSynchronizationManager::
         const QHash<int, std::pair<qevercloud::Resource, qevercloud::Note>> & container,
         const QString & linkedNotebookGuid, qint32 & smallestUsn) const
 {
-    for (const auto & it: qevercloud::toRange(::qAsConst(container))) {
+    for (const auto it: qevercloud::toRange(::qAsConst(container))) {
         checkNonSyncedItemForSmallestUsn(
             it.value().first, linkedNotebookGuid,
             smallestUsn);
@@ -12352,7 +12572,7 @@ template <class ContainerType, class PendingContainerType, class ElementType>
 bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(
     ElementType element, const QUuid & requestId, const QString & typeName,
     ContainerType & container, PendingContainerType & pendingItemsContainer,
-    QSet<QUuid> & findElementRequestIds)
+    QSet<QUuid> & findElementRequestIds, quint64 * pSyncChunkDataCounter)
 {
     const auto rit = findElementRequestIds.find(requestId);
     if (rit == findElementRequestIds.end()) {
@@ -12437,6 +12657,12 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByName(
     Q_UNUSED(container.erase(it))
 
     if (status == ResolveSyncConflictStatus::Ready) {
+        if (pSyncChunkDataCounter)
+        {
+            ++(*pSyncChunkDataCounter);
+            emitSyncChunkDataCountersUpdate();
+        }
+
         checkServerDataMergeCompletion();
     }
 
@@ -12447,7 +12673,7 @@ template <class ElementType, class ContainerType, class PendingContainerType>
 bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(
     ElementType element, const QUuid & requestId, const QString & typeName,
     ContainerType & container, PendingContainerType & pendingItemsContainer,
-    QSet<QUuid> & findByGuidRequestIds)
+    QSet<QUuid> & findByGuidRequestIds, quint64 * pSyncChunkDataCounter)
 {
     const auto rit = findByGuidRequestIds.find(requestId);
     if (rit == findByGuidRequestIds.end()) {
@@ -12505,6 +12731,12 @@ bool RemoteToLocalSynchronizationManager::onFoundDuplicateByGuid(
     Q_UNUSED(container.erase(it))
 
     if (status == ResolveSyncConflictStatus::Ready) {
+        if (pSyncChunkDataCounter)
+        {
+            ++(*pSyncChunkDataCounter);
+            emitSyncChunkDataCountersUpdate();
+        }
+
         checkServerDataMergeCompletion();
     }
 

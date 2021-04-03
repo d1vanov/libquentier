@@ -156,6 +156,8 @@ private:
         QList<double> & negatedContainer, bool & hasAnyValue,
         bool & hasNegatedAnyValue, ErrorString & error) const;
 
+    [[nodiscard]] QDateTime parseDateTime(const QString & str) const;
+
     [[nodiscard]] bool dateTimeStringToTimestamp(
         QString dateTimeString, qint64 & timestamp, ErrorString & error) const;
 

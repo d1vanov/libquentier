@@ -19,6 +19,8 @@
 #ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_SIGNALS_CATCHER_H
 #define LIB_QUENTIER_TESTS_SYNCHRONIZATION_SYNCHRONIZATION_MANAGER_SIGNALS_CATCHER_H
 
+#include <quentier/synchronization/Fwd.h>
+#include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/ISyncStateStorage.h>
 #include <quentier/types/ErrorString.h>
 
@@ -198,6 +200,18 @@ public:
         return m_linkedNotebookSyncChunkDownloadProgress;
     }
 
+    [[nodiscard]] const QVector<ISyncChunksDataCountersPtr> &
+    syncChunksDataCounters() const
+    {
+        return m_syncChunksDataCounters;
+    }
+
+    [[nodiscard]] const QVector<ISyncChunksDataCountersPtr> &
+    linkedNotebookSyncChunksDataCounters() const
+    {
+        return m_linkedNotebookSyncChunksDataCounters;
+    }
+
     struct NoteDownloadProgress
     {
         quint32 m_notesDownloaded = 0;
@@ -264,6 +278,18 @@ public:
     [[nodiscard]] bool checkLinkedNotebookSyncChunkDownloadProgressOrder(
         ErrorString & errorDescription) const noexcept;
 
+    [[nodiscard]] bool checkSyncChunksDataProcessingProgressEmpty(
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool checkSyncChunksDataProcessingProgressOrder(
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+        ErrorString & errorDescription) const;
+
     [[nodiscard]] bool checkNoteDownloadProgressOrder(
         ErrorString & errorDescription) const noexcept;
 
@@ -310,6 +336,11 @@ private Q_SLOTS:
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
+    void onSyncChunksDataCounters(ISyncChunksDataCountersPtr counters);
+
+    void onLinkedNotebookSyncChunksDataCounters(
+        ISyncChunksDataCountersPtr counters);
+
     void onNoteDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);
 
@@ -349,6 +380,14 @@ private:
     [[nodiscard]] bool checkSingleSyncChunkDownloadProgress(
         const SyncChunkDownloadProgress & progress,
         ErrorString & errorDescription) const noexcept;
+
+    [[nodiscard]] bool checkSyncChunksDataProcessingProgressEmptyImpl(
+        const QVector<ISyncChunksDataCountersPtr> & counters,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool checkSyncChunksDataProcessingProgressOrderImpl(
+        const QVector<ISyncChunksDataCountersPtr> & counters,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] bool checkNoteDownloadProgressOrderImpl(
         const QVector<NoteDownloadProgress> & noteDownloadProgress,
@@ -406,6 +445,9 @@ private:
 
     QHash<QString, QVector<SyncChunkDownloadProgress>>
         m_linkedNotebookSyncChunkDownloadProgress;
+
+    QVector<ISyncChunksDataCountersPtr> m_syncChunksDataCounters;
+    QVector<ISyncChunksDataCountersPtr> m_linkedNotebookSyncChunksDataCounters;
 
     QVector<NoteDownloadProgress> m_noteDownloadProgress;
     QVector<NoteDownloadProgress> m_linkedNotebookNoteDownloadProgress;

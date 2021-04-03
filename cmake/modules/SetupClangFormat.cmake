@@ -13,6 +13,12 @@ if(CLANG_FORMAT_BINARY)
   endif()
 
   foreach(SOURCE IN LISTS ${PROJECT_NAME}_HEADERS ${PROJECT_NAME}_SOURCES TEST_SOURCES TEST_HEADERS)
+    set(SHOULD_SKIP_AUTOFORMAT OFF)
+    get_source_file_property(SHOULD_SKIP_AUTOFORMAT ${SOURCE} skip_autoformat)
+    if(SHOULD_SKIP_AUTOFORMAT)
+      continue()
+    endif()
+
     string(APPEND CLANG_FORMAT_SCRIPT "${CLANG_FORMAT_BINARY} -style=file -i ${PROJECT_SOURCE_DIR}/${SOURCE}")
     if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
       string(APPEND CLANG_FORMAT_SCRIPT "\r\n")

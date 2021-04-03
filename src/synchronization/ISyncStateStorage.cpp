@@ -35,7 +35,7 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
     if (!updateCountsByLinkedNotebookGuid.isEmpty()) {
         strm << "    update counts by linked notebook guid:\n";
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(::qAsConst(updateCountsByLinkedNotebookGuid)))
         {
             strm << "        [" << it.key() << "] = " << it.value() << "\n";
@@ -48,7 +48,7 @@ QTextStream & ISyncStateStorage::ISyncState::print(QTextStream & strm) const
     if (!lastSyncTimesByLinkedNotebookGuid.isEmpty()) {
         strm << "    last sync times by linked notebook guid:\n";
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(::qAsConst(lastSyncTimesByLinkedNotebookGuid)))
         {
             strm << "        [" << it.key() << "] = " << it.value() << "\n";

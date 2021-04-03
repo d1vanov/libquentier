@@ -20,13 +20,20 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_NOTE_SYNC_CACHE_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <QHash>
 #include <QObject>
 #include <QSet>
 #include <QUuid>
 
+SAVE_WARNINGS
+
+MSVC_SUPPRESS_WARNING(4834)
+
 #include <boost/bimap.hpp>
+
+RESTORE_WARNINGS
 
 namespace quentier {
 

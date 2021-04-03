@@ -22,6 +22,7 @@
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileIOProcessorAsync.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/SuppressWarnings.h>
 
 #include <qevercloud/utility/ToRange.h>
 
@@ -79,7 +80,7 @@ SpellCheckerPrivate::listAvailableDictionaries() const
     QVector<std::pair<QString, bool>> result;
     result.reserve(m_systemDictionaries.size());
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         const QString & language = it.key();
         const Dictionary & dictionary = it.value();
         result << std::pair<QString, bool>(language, dictionary.m_enabled);
@@ -145,7 +146,7 @@ bool SpellCheckerPrivate::checkSpell(const QString & word) const
     const QByteArray wordData = word.toUtf8();
     const QByteArray lowerWordData = word.toLower().toUtf8();
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         const Dictionary & dictionary = it.value();
 
         if (dictionary.isEmpty() || !dictionary.m_enabled) {
@@ -185,7 +186,7 @@ QStringList SpellCheckerPrivate::spellCorrectionSuggestions(
     const QByteArray wordData = misSpelledWord.toUtf8();
 
     QStringList result;
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         const Dictionary & dictionary = it.value();
 
         if (dictionary.isEmpty() || !dictionary.m_enabled) {
@@ -218,10 +219,17 @@ void SpellCheckerPrivate::removeFromUserWordList(const QString & word)
     m_userDictionaryPartPendingWriting.removeAll(word);
     m_userDictionary.removeAll(word);
 
+    // clang-format off
+    SAVE_WARNINGS
+    CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
+    // clang-format on
     QByteArray dataToWrite;
-    for (const auto & it: qevercloud::toRange(qAsConst(m_userDictionary))) {
+    for (const auto it: // clazy:exclude=range-loop
+         qevercloud::toRange(qAsConst(m_userDictionary)))
+    {
         dataToWrite.append(QString(*it + QStringLiteral("\n")).toUtf8());
     }
+    RESTORE_WARNINGS
 
     QObject::connect(
         this, &SpellCheckerPrivate::writeFile, m_pFileIOProcessorAsync,
@@ -250,7 +258,7 @@ void SpellCheckerPrivate::ignoreWord(const QString & word)
 
     const QByteArray wordData = word.toUtf8();
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         Dictionary & dictionary = it.value();
 
         if (dictionary.isEmpty() || !dictionary.m_enabled) {
@@ -267,7 +275,7 @@ void SpellCheckerPrivate::removeWord(const QString & word)
 
     QByteArray wordData = word.toUtf8();
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         Dictionary & dictionary = it.value();
 
         if (dictionary.isEmpty() || !dictionary.m_enabled) {
@@ -990,7 +998,7 @@ void SpellCheckerPrivate::persistEnabledSystemDictionaries()
     QStringList enabledSystemDictionaries;
     enabledSystemDictionaries.reserve(m_systemDictionaries.size());
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         if (it.value().m_enabled) {
             enabledSystemDictionaries << it.key();
         }
@@ -1023,7 +1031,7 @@ void SpellCheckerPrivate::restoreSystemDictionatiesEnabledDisabledSettings()
         appSettings.value(SPELL_CHECKER_ENABLED_SYSTEM_DICTIONARIES_KEY)
             .toStringList();
 
-    for (const auto & it: qevercloud::toRange(m_systemDictionaries)) {
+    for (const auto it: qevercloud::toRange(m_systemDictionaries)) {
         const QString & name = it.key();
 
         if (enabledSystemDictionaries.contains(name)) {

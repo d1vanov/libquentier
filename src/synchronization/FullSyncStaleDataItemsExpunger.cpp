@@ -853,7 +853,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         const auto & dirtyNotebooksByGuidHash =
             m_pNotebookSyncCache->dirtyNotebooksByGuidHash();
 
-        for (const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
+        for (const auto git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
             const QString & guid = git.key();
 
             if (m_syncedGuids.m_syncedNotebookGuids.find(guid) !=
@@ -891,7 +891,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         const auto & dirtyTagsByGuidHash =
             m_pTagSyncCache->dirtyTagsByGuidHash();
 
-        for (const auto & git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
+        for (const auto git: qevercloud::toRange(qAsConst(nameByGuidHash))) {
             const QString & guid = git.key();
             if (m_syncedGuids.m_syncedTagGuids.find(guid) !=
                 m_syncedGuids.m_syncedTagGuids.end())
@@ -947,7 +947,7 @@ void FullSyncStaleDataItemsExpunger::analyzeDataAndSendRequestsOrResult()
         const auto & dirtySavedSearchesByGuid =
             m_pSavedSearchSyncCache->dirtySavedSearchesByGuid();
 
-        for (const auto & it:
+        for (const auto it:
              qevercloud::toRange(qAsConst(savedSearchNameByGuidHash))) {
             const QString & guid = it.key();
             if (m_syncedGuids.m_syncedSavedSearchGuids.find(guid) !=

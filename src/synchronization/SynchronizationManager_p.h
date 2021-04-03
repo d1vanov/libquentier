@@ -25,8 +25,15 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/IKeychainService.h>
+#include <quentier/utility/SuppressWarnings.h>
+
+SAVE_WARNINGS
+
+MSVC_SUPPRESS_WARNING(4834)
 
 #include <boost/bimap.hpp>
+
+RESTORE_WARNINGS
 
 #include <QObject>
 
@@ -82,11 +89,16 @@ Q_SIGNALS:
 
     void syncChunksDownloaded();
 
+    void syncChunksDataProcessingProgress(ISyncChunksDataCountersPtr counters);
+
     void linkedNotebookSyncChunksDownloadProgress(
         qint32 highestDownloadedUsn, qint32 highestServerUsn,
         qint32 lastPreviousUsn, qevercloud::LinkedNotebook linkedNotebook);
 
     void linkedNotebooksSyncChunksDownloaded();
+
+    void linkedNotebookSyncChunksDataProcessingProgress(
+        ISyncChunksDataCountersPtr counters);
 
     void notesDownloadProgress(
         quint32 notesDownloaded, quint32 totalNotesToDownload);

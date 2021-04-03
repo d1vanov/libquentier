@@ -353,7 +353,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(
         return;
     }
 
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_resourceLocalIdByFilePath)))
     {
         m_fileSystemWatcher.removePath(it.key());
@@ -423,7 +423,7 @@ void ResourceDataInTemporaryFileStorageManager::onRequestDiagnostics(
     strm << "ResourceDataInTemporaryFileStorageManager diagnostics: {\n";
 
     strm << "  Resource local ids by file paths: \n";
-    for (const auto & it:
+    for (const auto it:
          qevercloud::toRange(qAsConst(m_resourceLocalIdByFilePath)))
     {
         strm << "    [" << it.key() << "]: " << it.value() << "\n";

@@ -57,6 +57,6 @@ endif()
 set(TIDY_HTML5_LIBRARIES "tidy_html5")
 
 message(STATUS "Found tidy-html5 library: ${TIDY_HTML5_LIB_DIR}/${TIDY_HTML5_LIB_NAME}")
-include_directories(${TIDY_HTML5_INCLUDE_DIR})
+include_directories(SYSTEM ${TIDY_HTML5_INCLUDE_DIR})
 
 set(TIDY_HTML5_FOUND TRUE)

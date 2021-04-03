@@ -476,8 +476,9 @@ jobs:
           brew unlink cmake
           brew install cmake --force-bottle
           brew link cmake
+          rm -rf /usr/local/bin/2to3
           brew install ninja --force-bottle
-          brew install p7zip --force-bottle
+          brew list p7zip || brew install p7zip --force-bottle
           brew install qt5 --force-bottle
           brew install hunspell --force-bottle
           brew install qtkeychain --force-bottle
@@ -613,6 +614,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache boost 1.75.0
+        id: cache_boost
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/boost'
+          key: ${{ runner.os }}-BoostCache
+
+      - name: Install boost 1.75.0
+        id: install_boost
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if exist %RUNNER_WORKSPACE%\boost (set BOOST_CACHED=1) else (set BOOST_CACHED=0)
+          if %BOOST_CACHED%==0 mkdir %RUNNER_WORKSPACE%\boost
+          if %BOOST_CACHED%==0 cmd.exe /c curl -fsSL https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.7z -o %RUNNER_WORKSPACE%\boost\boost_1_75_0.7z
+          if %BOOST_CACHED%==0 cd %RUNNER_WORKSPACE%\boost
+          if %BOOST_CACHED%==0 7z x boost_1_75_0.7z
+        shell: cmd
 
       - name: Cache Qt 5.12.9 x86
         id: cache_qt_x86
@@ -822,9 +842,9 @@ jobs:
         run: |
           if not exist %RUNNER_WORKSPACE%\openssl_win_x86 (set DOWNLOAD_OPENSSL=1) else (set DOWNLOAD_OPENSSL=0)
           if %DOWNLOAD_OPENSSL%==1 mkdir %RUNNER_WORKSPACE%\openssl_win_x86
-          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1h-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\openssl_win_x86\openssl-1_1_1h-msvc2019_x86.zip
+          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1i-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\openssl_win_x86\openssl-1_1_1i-msvc2019_x86.zip
           if %DOWNLOAD_OPENSSL%==1 cd %RUNNER_WORKSPACE%\openssl_win_x86
-          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1h-msvc2019_x86.zip
+          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1i-msvc2019_x86.zip
         shell: cmd
         if: ${{ matrix.target_arch == 'x86' }}
 
@@ -871,6 +891,29 @@ jobs:
           if %DOWNLOAD_TIDY_HTML5%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/tidy-html5-5.6.0-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\tidy_html5_win_x86\tidy-html5-5.6.0-msvc2019_x86.zip
           if %DOWNLOAD_TIDY_HTML5%==1 cd %RUNNER_WORKSPACE%\tidy_html5_win_x86
           if %DOWNLOAD_TIDY_HTML5%==1 7z x tidy-html5-5.6.0-msvc2019_x86.zip
+        shell: cmd
+        if: ${{ matrix.target_arch == 'x86' }}
+
+      - name: Cache Google breakpad x86
+        id: cache_google_breakpad_x86
+        env:
+          GOOGLE_BREAKPAD_CACHE_VERSION: '1'
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/breakpad_win_x86'
+          key: breakpad-win-x86-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
+        if: ${{ matrix.target_arch == 'x86' }}
+
+      - name: Download Google breakpad x86
+        id: download_breakpad_x86
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if not exist %RUNNER_WORKSPACE%\breakpad_win_x86 (set DOWNLOAD_BREAKPAD=1) else (set DOWNLOAD_BREAKPAD=0)
+          if %DOWNLOAD_BREAKPAD%==1 mkdir %RUNNER_WORKSPACE%\breakpad_win_x86
+          if %DOWNLOAD_BREAKPAD%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/breakpad-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\breakpad_win_x86\breakpad-msvc2019_x86.zip
+          if %DOWNLOAD_BREAKPAD%==1 cd %RUNNER_WORKSPACE%\breakpad_win_x86
+          if %DOWNLOAD_BREAKPAD%==1 7z x breakpad-msvc2019_x86.zip
         shell: cmd
         if: ${{ matrix.target_arch == 'x86' }}
 
@@ -1038,9 +1081,9 @@ jobs:
         run: |
           if not exist %RUNNER_WORKSPACE%\openssl_win_x64 (set DOWNLOAD_OPENSSL=1) else (set DOWNLOAD_OPENSSL=0)
           if %DOWNLOAD_OPENSSL%==1 mkdir %RUNNER_WORKSPACE%\openssl_win_x64
-          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1h-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\openssl_win_x64\openssl-1_1_1h-msvc2019_x64.zip
+          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1i-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\openssl_win_x64\openssl-1_1_1i-msvc2019_x64.zip
           if %DOWNLOAD_OPENSSL%==1 cd %RUNNER_WORKSPACE%\openssl_win_x64
-          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1h-msvc2019_x64.zip
+          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1i-msvc2019_x64.zip
         shell: cmd
         if: ${{ matrix.target_arch == 'x64' }}
 
@@ -1090,6 +1133,29 @@ jobs:
         shell: cmd
         if: ${{ matrix.target_arch == 'x64' }}
 
+      - name: Cache Google breakpad x64
+        id: cache_google_breakpad_x64
+        env:
+          GOOGLE_BREAKPAD_CACHE_VERSION: '1'
+        uses: actions/cache@v1
+        with:
+          path: '${{ runner.workspace }}/breakpad_win_x64'
+          key: breakpad-win-x64-${{ env.GOOGLE_BREAKPAD_CACHE_VERSION }}
+        if: ${{ matrix.target_arch == 'x64' }}
+
+      - name: Download Google breakpad x64
+        id: download_breakpad_x64
+        env:
+          RUNNER_WORKSPACE: ${{ runner.workspace }}
+        run: |
+          if not exist %RUNNER_WORKSPACE%\breakpad_win_x64 (set DOWNLOAD_BREAKPAD=1) else (set DOWNLOAD_BREAKPAD=0)
+          if %DOWNLOAD_BREAKPAD%==1 mkdir %RUNNER_WORKSPACE%\breakpad_win_x64
+          if %DOWNLOAD_BREAKPAD%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/breakpad-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\breakpad_win_x64\breakpad-msvc2019_x64.zip
+          if %DOWNLOAD_BREAKPAD%==1 cd %RUNNER_WORKSPACE%\breakpad_win_x64
+          if %DOWNLOAD_BREAKPAD%==1 7z x breakpad-msvc2019_x64.zip
+        shell: cmd
+        if: ${{ matrix.target_arch == 'x64' }}
+
       - name: Build, test and install x86
         id: build_test_install_x86
         env:
@@ -1128,12 +1194,13 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT=%BOOST_ROOT_1_72_0% -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x86" ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_75_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x86" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          %RUNNER_WORKSPACE%\breakpad_win_x86\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.target_arch == 'x86' }}
         shell: cmd
 
@@ -1175,12 +1242,13 @@ jobs:
           cd %GITHUB_WORKSPACE%
           md build
           cd build
-          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT=%BOOST_ROOT_1_72_0% -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x64" ..
+          cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%\build\installdir" -DCMAKE_PREFIX_PATH="%CMAKE_PREFIX_PATH%" -DQEverCloud-qt5_DIR="%QEVERCLOUD_DIR%\CMake" -DBOOST_ROOT="%RUNNER_WORKSPACE%\boost\boost_1_75_0" -DTIDY_HTML5_ROOT="%RUNNER_WORKSPACE%\tidy_html5_win_x64" ..
           cmake --build . --target all
           cmake --build . --target lupdate
           cmake --build . --target lrelease
           cmake --build . --target check
           cmake --build . --target install
+          %RUNNER_WORKSPACE%\breakpad_win_x64\bin\dump_syms %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.dll > %GITHUB_WORKSPACE%\build\installdir\bin\libqt5quentier.syms
         if: ${{ matrix.target_arch == 'x64' }}
         shell: cmd
 

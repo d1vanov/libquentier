@@ -444,7 +444,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookComplete(
     }
 
     const NotesHash & notes = pendingNotesIt.value();
-    for (const auto & noteIt: qevercloud::toRange(notes)) {
+    for (const auto noteIt: qevercloud::toRange(notes)) {
         QNTRACE(
             "note_editor",
             "Found pending note, emitting "
@@ -515,7 +515,7 @@ void NoteEditorLocalStorageBroker::onFindNotebookFailed(
     }
 
     const auto & notes = pendingNotesIt.value();
-    for (const auto & noteIt: qevercloud::toRange(notes)) {
+    for (const auto noteIt: qevercloud::toRange(notes)) {
         Q_EMIT failedToFindNoteOrNotebook(
             noteIt.value().localId(), errorDescription);
     }

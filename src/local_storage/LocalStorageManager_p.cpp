@@ -8357,7 +8357,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
                     QString fullMapKeysString;
                     QString fullMapValuesString;
 
-                    for (const auto & it: qevercloud::toRange(fullMap)) {
+                    for (const auto it: qevercloud::toRange(fullMap)) {
                         fullMapKeysString += QStringLiteral("'");
                         fullMapKeysString += it.key();
                         fullMapKeysString += QStringLiteral("'");
@@ -8404,7 +8404,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
             if (attributes.classifications()) {
                 const auto & classifications = *attributes.classifications();
                 QString classificationKeys, classificationValues;
-                for (const auto & it: qevercloud::toRange(classifications)) {
+                for (const auto it: qevercloud::toRange(classifications)) {
                     classificationKeys += QStringLiteral("'");
                     classificationKeys += it.key();
                     classificationKeys += QStringLiteral("'");
@@ -9943,8 +9943,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceResourceAttributes(
             query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
 
             const auto & fullMap = *attributes.applicationData()->fullMap();
-            for (auto it = fullMap.constBegin(), end = fullMap.constEnd();
-                 it != end; ++it) {
+            for (const auto it: qevercloud::toRange(fullMap)) {
                 query.bindValue(QStringLiteral(":resourceMapKey"), it.key());
                 query.bindValue(QStringLiteral(":resourceValue"), it.value());
                 res = query.exec();
@@ -13288,7 +13287,7 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
     const int numTagLocalIds = tagLocalIdsAndIndices.size();
     QList<std::pair<QString, int>> tagLocalIdIndexPairs;
     tagLocalIdIndexPairs.reserve(std::max(numTagLocalIds, 0));
-    for (const auto & it: qevercloud::toRange(tagLocalIdsAndIndices)) {
+    for (const auto it: qevercloud::toRange(tagLocalIdsAndIndices)) {
         tagLocalIdIndexPairs << std::make_pair(it.value(), it.key());
     }
 
@@ -13310,7 +13309,7 @@ bool LocalStorageManagerPrivate::findAndSetTagIdsPerNote(
     QList<std::pair<QString, int>> tagGuidIndexPairs;
     tagGuidIndexPairs.reserve(std::max(numTagGuids, 0));
 
-    for (const auto & it: qevercloud::toRange(tagGuidsAndIndices)) {
+    for (const auto it: qevercloud::toRange(tagGuidsAndIndices)) {
         tagGuidIndexPairs << std::make_pair(it.value(), it.key());
     }
 

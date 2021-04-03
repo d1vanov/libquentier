@@ -344,6 +344,18 @@ private:
     void checkProgressNotificationsOrder(
         const SynchronizationManagerSignalsCatcher & catcher);
 
+    void checkSyncChunksDataProcessingProgressEmpty(
+        const SynchronizationManagerSignalsCatcher & catcher);
+
+    void checkSyncChunksDataProcessingProgressOrder(
+        const SynchronizationManagerSignalsCatcher & catcher);
+
+    void checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+        const SynchronizationManagerSignalsCatcher & catcher);
+
+    void checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+        const SynchronizationManagerSignalsCatcher & catcher);
+
     void checkIdentityOfLocalAndRemoteItems();
     void checkPersistentSyncState();
     void checkExpectedNamesOfConflictingItemsAfterSync();
