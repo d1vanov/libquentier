@@ -24,11 +24,14 @@
 
 #include <qevercloud/QEverCloud.h>
 
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QHash>
 #include <QObject>
 #include <QPointer>
 #include <QQueue>
 #include <QUuid>
+#include <QVariant>
 
 namespace quentier {
 
@@ -158,14 +161,15 @@ private:
     using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
-private Q_SLOTS:
     void onGetNoteAsyncFinished(
-        QVariant result, EverCloudExceptionDataPtr exceptionData,
-        IRequestContextPtr ctx);
+        const QVariant & result,
+        const EverCloudExceptionDataPtr & exceptionData,
+        const IRequestContextPtr & ctx);
 
     void onGetResourceAsyncFinished(
-        QVariant result, EverCloudExceptionDataPtr exceptionData,
-        IRequestContextPtr ctx);
+        const QVariant & result,
+        const EverCloudExceptionDataPtr & exceptionData,
+        const IRequestContextPtr & ctx);
 
 private:
     enum class UserExceptionSource
@@ -239,7 +243,8 @@ private:
     struct RequestData
     {
         QString m_guid;
-        QPointer<qevercloud::AsyncResult> m_asyncResult;
+        QFuture<QVariant> m_future;
+        QFutureWatcher<QVariant> * m_pFutureWatcher;
     };
 
     struct GetNoteRequest

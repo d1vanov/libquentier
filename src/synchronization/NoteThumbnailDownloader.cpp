@@ -35,8 +35,6 @@ NoteThumbnailDownloader::NoteThumbnailDownloader(
 NoteThumbnailDownloader::~NoteThumbnailDownloader()
 {
     delete m_pThumbnail;
-
-    // NOTE: m_pAsyncResult deletes itself automatically
 }
 
 void NoteThumbnailDownloader::start()
@@ -72,44 +70,43 @@ void NoteThumbnailDownloader::start()
     delete m_pThumbnail;
     m_pThumbnail = nullptr;
 
-    if (m_pAsyncResult) {
-        // NOTE: m_pAsyncResult deletes itself automatically
-        m_pAsyncResult = nullptr;
-    }
-
     m_pThumbnail = new qevercloud::Thumbnail(m_host, m_shardId, m_authToken);
-    m_pAsyncResult = m_pThumbnail->downloadAsync(
+    m_future = m_pThumbnail->downloadAsync(
         m_noteGuid, m_noteFromPublicLinkedNotebook,
         /* is resource guid = */ false);
 
-    if (Q_UNLIKELY(!m_pAsyncResult)) {
-        SET_ERROR(
-            QT_TR_NOOP("failed to download the note thumbnail, QEverCloud "
-                       "returned null pointer to AsyncResult"));
-    }
-
+    m_futureWatcher.setFuture(m_future);
     QObject::connect(
-        m_pAsyncResult, &qevercloud::AsyncResult::finished, this,
-        &NoteThumbnailDownloader::onDownloadFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
+        &m_futureWatcher,
+        &QFutureWatcher<QVariant>::finished,
+        this,
+        [this]
+        {
+            qevercloud::EverCloudExceptionDataPtr exceptionData;
+            QVariant value;
+
+            try
+            {
+                value = m_future.result();
+            }
+            catch (const qevercloud::EverCloudException & e)
+            {
+                exceptionData = e.exceptionData();
+            }
+
+            onDownloadFinished(value, exceptionData);
+        });
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
-    IRequestContextPtr ctx) // NOLINT
+    const QVariant & result, const EverCloudExceptionDataPtr & exceptionData)
 {
     QNDEBUG(
         "synchronization:thumbnail",
         "NoteThumbnailDownloader::onDownloadFinished");
 
-    Q_UNUSED(ctx)
-
     delete m_pThumbnail;
     m_pThumbnail = nullptr;
-
-    // NOTE: after AsyncResult finishes, it destroys itself so must lose
-    // the pointer to it here
-    m_pAsyncResult = nullptr;
 
     if (exceptionData) {
         ErrorString errorDescription(

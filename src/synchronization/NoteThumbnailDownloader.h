@@ -24,8 +24,11 @@
 #include <qevercloud/QEverCloud.h>
 
 #include <QByteArray>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QObject>
 #include <QString>
+#include <QVariant>
 
 namespace quentier {
 
@@ -50,10 +53,9 @@ private:
     using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
-private Q_SLOTS:
     void onDownloadFinished(
-        QVariant result, EverCloudExceptionDataPtr exceptionData,
-        IRequestContextPtr ctx);
+        const QVariant & result,
+        const EverCloudExceptionDataPtr & exceptionData);
 
 private:
     QString m_host;
@@ -61,7 +63,10 @@ private:
     QString m_authToken;
     QString m_shardId;
     bool m_noteFromPublicLinkedNotebook;
-    qevercloud::AsyncResult * m_pAsyncResult = nullptr;
+
+    QFuture<QVariant> m_future;
+    QFutureWatcher<QVariant> m_futureWatcher;
+
     qevercloud::Thumbnail * m_pThumbnail = nullptr;
 };
 

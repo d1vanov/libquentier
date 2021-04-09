@@ -73,24 +73,22 @@ void NoteStore::stop()
     QNDEBUG("synchronization:note_store", "NoteStore::stop");
 
     for (const auto it: qevercloud::toRange(m_noteRequestDataById)) {
-        const auto & requestData = it.value();
-        if (!requestData.m_asyncResult.isNull()) {
-            QObject::disconnect(
-                requestData.m_asyncResult.data(),
-                &qevercloud::AsyncResult::finished, this,
-                &NoteStore::onGetNoteAsyncFinished);
+        auto & requestData = it.value();
+        if (requestData.m_pFutureWatcher) {
+            requestData.m_pFutureWatcher->disconnect(this);
+            requestData.m_pFutureWatcher->deleteLater();
+            requestData.m_pFutureWatcher = nullptr;
         }
     }
 
     m_noteRequestDataById.clear();
 
     for (const auto it: qevercloud::toRange(m_resourceRequestDataById)) {
-        const auto & requestData = it.value();
-        if (!requestData.m_asyncResult.isNull()) {
-            QObject::disconnect(
-                requestData.m_asyncResult.data(),
-                &qevercloud::AsyncResult::finished, this,
-                &NoteStore::onGetResourceAsyncFinished);
+        auto & requestData = it.value();
+        if (requestData.m_pFutureWatcher) {
+            requestData.m_pFutureWatcher->disconnect(this);
+            requestData.m_pFutureWatcher->deleteLater();
+            requestData.m_pFutureWatcher = nullptr;
         }
     }
 
@@ -682,25 +680,46 @@ bool NoteStore::getNoteAsync(
     auto ctx = qevercloud::newRequestContext(
         authToken, NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-    qevercloud::AsyncResult * pAsyncResult =
-        m_pNoteStore->getNoteWithResultSpecAsync(noteGuid, noteResultSpec, ctx);
-
-    if (Q_UNLIKELY(!pAsyncResult)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't get full note data: internal error, QEverCloud "
-                       "library returned null pointer to asynchronous "
-                       "result object"));
-        return false;
-    }
-
     auto & requestData = m_noteRequestDataById[ctx->requestId()];
     requestData.m_guid = noteGuid;
-    requestData.m_asyncResult = pAsyncResult;
+    requestData.m_future = m_pNoteStore->getNoteWithResultSpecAsync(
+        noteGuid, noteResultSpec, ctx);
+
+    if (requestData.m_pFutureWatcher) {
+        requestData.m_pFutureWatcher->disconnect(this);
+        requestData.m_pFutureWatcher->deleteLater();
+    }
+
+    requestData.m_pFutureWatcher = new QFutureWatcher<QVariant>(this);
+    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
-        pAsyncResult, &qevercloud::AsyncResult::finished, this,
-        &NoteStore::onGetNoteAsyncFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
+        requestData.m_pFutureWatcher,
+        &QFutureWatcher<QVariant>::finished,
+        this,
+        [this, ctx]
+        {
+            auto it = m_noteRequestDataById.find(ctx->requestId());
+            if (it == m_noteRequestDataById.end()) {
+                return;
+            }
+
+            auto * pWatcher = it->m_pFutureWatcher;
+
+            qevercloud::EverCloudExceptionDataPtr exceptionData;
+            QVariant value;
+
+            try
+            {
+                value = pWatcher->result();
+            }
+            catch (const qevercloud::EverCloudException & e)
+            {
+                exceptionData = e.exceptionData();
+            }
+
+            onGetNoteAsyncFinished(value, exceptionData, ctx);
+        });
 
     ++m_getNoteAsyncRequestCount;
     return true;
@@ -794,26 +813,47 @@ bool NoteStore::getResourceAsync(
     auto ctx = qevercloud::newRequestContext(
         authToken, NOTE_STORE_REQUEST_TIMEOUT_MSEC);
 
-    qevercloud::AsyncResult * pAsyncResult = m_pNoteStore->getResourceAsync(
+    auto & requestData = m_resourceRequestDataById[ctx->requestId()];
+    requestData.m_guid = resourceGuid;
+    requestData.m_future = m_pNoteStore->getResourceAsync(
         resourceGuid, withDataBody, withRecognitionDataBody, withAttributes,
         withAlternateDataBody, ctx);
 
-    if (Q_UNLIKELY(!pAsyncResult)) {
-        errorDescription.setBase(
-            QT_TR_NOOP("Can't get full resource data: internal "
-                       "error, QEverCloud library returned "
-                       "null pointer to asynchronous result object"));
-        return false;
+    if (requestData.m_pFutureWatcher) {
+        requestData.m_pFutureWatcher->disconnect(this);
+        requestData.m_pFutureWatcher->deleteLater();
     }
 
-    auto & requestData = m_resourceRequestDataById[ctx->requestId()];
-    requestData.m_guid = resourceGuid;
-    requestData.m_asyncResult = pAsyncResult;
+    requestData.m_pFutureWatcher = new QFutureWatcher<QVariant>(this);
+    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
-        pAsyncResult, &qevercloud::AsyncResult::finished, this,
-        &NoteStore::onGetResourceAsyncFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::DirectConnection));
+        requestData.m_pFutureWatcher,
+        &QFutureWatcher<QVariant>::finished,
+        this,
+        [this, ctx]
+        {
+            auto it = m_resourceRequestDataById.find(ctx->requestId());
+            if (it == m_resourceRequestDataById.end()) {
+                return;
+            }
+
+            auto * pWatcher = it->m_pFutureWatcher;
+
+            qevercloud::EverCloudExceptionDataPtr exceptionData;
+            QVariant value;
+
+            try
+            {
+                value = pWatcher->result();
+            }
+            catch (const qevercloud::EverCloudException & e)
+            {
+                exceptionData = e.exceptionData();
+            }
+
+            onGetResourceAsyncFinished(value, exceptionData, ctx);
+        });
 
     return true;
 }
@@ -912,8 +952,9 @@ qint32 NoteStore::authenticateToSharedNotebook(
 }
 
 void NoteStore::onGetNoteAsyncFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
-    IRequestContextPtr ctx) // NOLINT
+    const QVariant & result,
+    const EverCloudExceptionDataPtr & exceptionData,
+    const IRequestContextPtr & ctx)
 {
     QNDEBUG("synchronization:note_store", "NoteStore::onGetNoteAsyncFinished");
 
@@ -932,8 +973,9 @@ void NoteStore::onGetNoteAsyncFinished(
     const auto & requestData = it.value();
     qevercloud::Note note;
     note.setGuid(requestData.m_guid);
-    if (!requestData.m_asyncResult.isNull()) {
-        requestData.m_asyncResult.data()->disconnect(this);
+    if (requestData.m_pFutureWatcher) {
+        requestData.m_pFutureWatcher->disconnect(this);
+        requestData.m_pFutureWatcher->deleteLater();
     }
 
     m_noteRequestDataById.erase(it);
@@ -982,8 +1024,8 @@ void NoteStore::onGetNoteAsyncFinished(
 }
 
 void NoteStore::onGetResourceAsyncFinished(
-    QVariant result, EverCloudExceptionDataPtr exceptionData, // NOLINT
-    IRequestContextPtr ctx) // NOLINT
+    const QVariant & result, const EverCloudExceptionDataPtr & exceptionData,
+    const IRequestContextPtr & ctx)
 {
     QNDEBUG(
         "synchronization:note_store",
@@ -993,18 +1035,17 @@ void NoteStore::onGetResourceAsyncFinished(
     if (Q_UNLIKELY(it == m_resourceRequestDataById.end())) {
         QNWARNING(
             "synchronization:note_store",
-            "Received "
-                << "getResourceAsyncFinished event for unidentified request "
-                   "id: "
-                << ctx->requestId());
+            "Received getResourceAsyncFinished event for unidentified request "
+                << "id: " << ctx->requestId());
         return;
     }
 
     const auto & requestData = it.value();
     qevercloud::Resource resource;
     resource.setGuid(requestData.m_guid);
-    if (!requestData.m_asyncResult.isNull()) {
-        requestData.m_asyncResult.data()->disconnect(this);
+    if (requestData.m_pFutureWatcher) {
+        requestData.m_pFutureWatcher->disconnect(this);
+        requestData.m_pFutureWatcher->deleteLater();
     }
 
     m_resourceRequestDataById.erase(it);
