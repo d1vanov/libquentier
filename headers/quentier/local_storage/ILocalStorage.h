@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <qt5qevercloud/generated/Types.h>
+#include <qevercloud/types/All.h>
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
@@ -28,10 +28,11 @@
 #include <QFlags>
 #include <QFuture>
 #include <QHash>
+#include <QList>
 #include <QStringList>
 #include <QThreadPool>
-#include <QVector>
 
+#include <optional>
 #include <utility>
 
 class QTextStream;
@@ -53,16 +54,16 @@ public:
     Q_DECLARE_FLAGS(StartupOptions, StartupOption);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const StartupOption option);
+        QTextStream & strm, StartupOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const StartupOption option);
+        QDebug & dbg, StartupOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const StartupOptions options);
+        QTextStream & strm, StartupOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const StartupOptions options);
+        QDebug & dbg, StartupOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -81,16 +82,16 @@ public:
     Q_DECLARE_FLAGS(ListObjectsOptions, ListObjectsOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListObjectsOption option);
+        QTextStream & strm, ListObjectsOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListObjectsOption option);
+        QDebug & dbg, ListObjectsOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListObjectsOptions options);
+        QTextStream & strm, ListObjectsOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListObjectsOptions options);
+        QDebug & dbg, ListObjectsOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -101,82 +102,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const OrderDirection orderDirection);
+        QTextStream & strm, OrderDirection orderDirection);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const OrderDirection orderDirection);
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    enum class FindNotebookBy
-    {
-        LocalUid,
-        Guid,
-        Name
-    };
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FindNotebookBy what);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FindNotebookBy what);
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    enum class FindTagBy
-    {
-        LocalUid,
-        Guid,
-        Name
-    };
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FindTagBy what);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FindTagBy what);
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    enum class FindNoteBy
-    {
-        LocalUid,
-        Guid,
-    };
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FindNoteBy what);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FindNoteBy what);
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    enum class FindResourceBy
-    {
-        LocalUid,
-        Guid
-    };
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FindResourceBy what);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FindResourceBy what);
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    enum class FindSavedSearchBy
-    {
-        LocalUid,
-        Guid
-    };
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FindSavedSearchBy what);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FindSavedSearchBy what);
+        QDebug & dbg, OrderDirection orderDirection);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -190,10 +119,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListNotebooksOrder order);
+        QTextStream & strm, ListNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const ListNotebooksOrder order);
+        QDebug & dbg, ListNotebooksOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -206,10 +135,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListLinkedNotebooksOrder order);
+        QTextStream & strm, ListLinkedNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListLinkedNotebooksOrder order);
+        QDebug & strm, ListLinkedNotebooksOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -221,10 +150,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListTagsOrder order);
+        QTextStream & strm, ListTagsOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListTagsOrder order);
+        QDebug & strm, ListTagsOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -244,10 +173,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListNotesOrder order);
+        QTextStream & strm, ListNotesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListNotesOrder order);
+        QDebug & strm, ListNotesOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -260,10 +189,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListSavedSearchesOrder order);
+        QTextStream & strm, ListSavedSearchesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListSavedSearchesOrder order);
+        QDebug & strm, ListSavedSearchesOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -297,11 +226,11 @@ public:
 
     template <class Order>
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const ListOptions<Order> options);
+        QTextStream & strm, ListOptions<Order> options);
 
     template <class Order>
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const ListOptions<Order> options);
+        QDebug & strm, ListOptions<Order> options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -313,16 +242,16 @@ public:
     Q_DECLARE_FLAGS(NoteCountOptions, NoteCountOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const NoteCountOption option);
+        QTextStream & strm, NoteCountOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const NoteCountOption option);
+        QDebug & dbg, NoteCountOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const NoteCountOptions options);
+        QTextStream & strm, NoteCountOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const NoteCountOptions options);
+        QDebug & strm, NoteCountOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -335,16 +264,16 @@ public:
     Q_DECLARE_FLAGS(UpdateNoteOptions, UpdateNoteOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const UpdateNoteOption option);
+        QTextStream & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const UpdateNoteOption option);
+        QDebug & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const UpdateNoteOptions options);
+        QTextStream & strm, UpdateNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const UpdateNoteOptions options);
+        QDebug & strm, UpdateNoteOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -356,16 +285,16 @@ public:
     Q_DECLARE_FLAGS(FetchNoteOptions, FetchNoteOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FetchNoteOption option);
+        QTextStream & strm, FetchNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FetchNoteOption option);
+        QDebug & dbg, FetchNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FetchNoteOptions options);
+        QTextStream & strm, FetchNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const FetchNoteOptions options);
+        QDebug & strm, FetchNoteOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -376,16 +305,16 @@ public:
     Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption)
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FetchResourceOption option);
+        QTextStream & strm, FetchResourceOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const FetchResourceOption option);
+        QDebug & dbg, FetchResourceOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const FetchResourceOptions options);
+        QTextStream & strm, FetchResourceOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, const FetchResourceOptions options);
+        QDebug & strm, FetchResourceOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -396,125 +325,150 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, const HighestUsnOption option);
+        QTextStream & strm, HighestUsnOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, const HighestUsnOption option);
+        QDebug & dbg, HighestUsnOption option);
 
 public:
     // Versions/upgrade API
-    virtual QFuture<Result<bool>> isVersionTooHigh() = 0;
-    virtual QFuture<Result<bool>> requiresUpgrade() = 0;
+    [[nodiscard]] virtual QFuture<bool> isVersionTooHigh() const = 0;
+    [[nodiscard]] virtual QFuture<bool> requiresUpgrade() const = 0;
 
-    virtual QFuture<Result<QVector<ILocalStoragePatchPtr>>>
-        requiredPatches() = 0;
+    [[nodiscard]] virtual QFuture<QList<ILocalStoragePatchPtr>>
+        requiredPatches() const = 0;
 
-    virtual QFuture<Result<qint32>> version() = 0;
-    virtual QFuture<qint32> highestSupportedVersion() = 0;
+    [[nodiscard]] virtual QFuture<qint32> version() const = 0;
+    [[nodiscard]] virtual QFuture<qint32> highestSupportedVersion() const = 0;
 
     // Users API
-    virtual QFuture<Result<size_t>> userCount() = 0;
-    virtual QFuture<Result<void>> putUser(qevercloud::User user) = 0;
-    virtual QFuture<Result<qevercloud::User>> findUser(qevercloud::UserID userId) = 0;
-    virtual QFuture<Result<void>> expungeUser(qevercloud::UserID userId) = 0;
-    virtual QFuture<Result<QVector<qevercloud::User>>> listUsers() = 0;
+    [[nodiscard]] virtual QFuture<quint32> userCount() const = 0;
+    [[nodiscard]] virtual QFuture<void> putUser(qevercloud::User user) = 0;
+
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::User>> findUserById(
+        qevercloud::UserID userId) const = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeUserById(
+        qevercloud::UserID userId) = 0;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::User>> listUsers()
+        const = 0;
 
     // Notebooks API
-    virtual QFuture<Result<size_t>> notebookCount() = 0;
-    virtual QFuture<Result<void>> putNotebook(qevercloud::Notebook notebook) = 0;
+    [[nodiscard]] virtual QFuture<quint32> notebookCount() const = 0;
 
-    virtual QFuture<Result<qevercloud::Notebook>> findNotebook(
-        FindNotebookBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<void> putNotebook(
+        qevercloud::Notebook notebook) = 0;
 
-    virtual QFuture<Result<qevercloud::Notebook>> findDefaultNotebook() = 0;
-    virtual QFuture<Result<qevercloud::Notebook>> findLastUsedNotebook() = 0;
-    virtual QFuture<Result<qevercloud::Notebook>> findDefaultOrLastUsedNotebook() = 0;
-    virtual QFuture<Result<void>> expungeNotebook(qevercloud::Notebook notebook) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByLocalId(QString notebookLocalId) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Notebook>>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options = {}) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::SharedNotebook>>> listSharedNotebooks(
-        QString notebookGuid = {}) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findDefaultNotebook() const = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeNotebookByLocalId(
+        QString notebookLocalId) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeNotebookByGuid(
+        qevercloud::Guid notebookGuid) = 0;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
+        ListOptions<ListNotebooksOrder> options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QVector<qevercloud::SharedNotebook>>
+        listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const = 0;
 
     // Linked notebooks API
-    virtual QFuture<Result<size_t>> linkedNotebookCount() = 0;
+    [[nodiscard]] virtual QFuture<quint32> linkedNotebookCount() const = 0;
 
-    virtual QFuture<Result<void>> putLinkedNotebook(
+    [[nodiscard]] virtual QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) = 0;
 
-    virtual QFuture<Result<qevercloud::LinkedNotebook>> findLinkedNotebook(
-        QString guid) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    virtual QFuture<Result<void>> expungeLinkedNotebook(QString guid) = 0;
+    [[nodiscard]] virtual QFuture<void> expungeLinkedNotebookByGuid(
+        qevercloud::Guid guid) = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::LinkedNotebook>>> listLinkedNotebooks(
-        ListOptions<ListLinkedNotebooksOrder> options = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::LinkedNotebook>>
+        listLinkedNotebooks(
+            ListOptions<ListLinkedNotebooksOrder> options = {}) const = 0;
 
     // Notes API
-    virtual QFuture<Result<size_t>> noteCount(
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<quint32> noteCount(
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<size_t>> noteCountPerNotebook(
-        FindNotebookBy notebookSearchCriteria,
-        QString notebookSearchCriteriaValue,
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<quint32> noteCountPerNotebookLocalId(
+        QString notebookLocalId,
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<size_t>> noteCountPerTag(
-        FindTagBy tagSearchCriteria, QString tagSearchCriteriaValue,
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<quint32> noteCountPerTagLocalId(
+        QString tagLocalId,
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<QHash<QString, size_t>>> noteCountsPerTags(
-        ListOptions<ListTagsOrder> listTagsOptions = {},
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<QHash<QString, quint32>>
+        noteCountsPerTagLocalIds(
+            ListOptions<ListTagsOrder> listTagsOptions = {},
+            NoteCountOptions options = NoteCountOptions(
+                NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<size_t>> noteCountPerNotebooksAndTags(
-        QStringList notebookLocalUids, QStringList tagLocalUids,
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<quint32> noteCountPerNotebookAndTagLocalIds(
+        QStringList notebookLocalIds, QStringList tagLocalIds,
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<void>> putNote(qevercloud::Note note) = 0;
+    [[nodiscard]] virtual QFuture<void> putNote(qevercloud::Note note) = 0;
 
-    virtual QFuture<Result<void>> updateNote(
+    [[nodiscard]] virtual QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) = 0;
 
-    virtual QFuture<Result<qevercloud::Note>> findNote(
-        FindNoteBy searchCriteria, QString searchCriteriaValue,
-        FetchNoteOptions options);
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+        findNoteByLocalId(
+            QString noteLocalId, FetchNoteOptions options) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotes(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+        findNoteByGuid(
+            qevercloud::Guid noteGuid, FetchNoteOptions options) const = 0;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {});
+        ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerNotebook(
-        FindNotebookBy notebookSearchCriteria,
-        QString notebookSearchCriteriaValue, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
+        listNotesPerNotebookLocalId(
+            QString notebookLocalId, FetchNoteOptions fetchOptions,
+            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerTag(
-        FindTagBy tagSearchCriteria, QString tagSearchCriteriaValue,
-        FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
+        listNotesPerTagLocalId(
+            QString tagLocalId, FetchNoteOptions fetchOptions,
+            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> listNotesPerNotebooksAndTags(
-        QStringList notebookLocalUids, QStringList tagLocalUids,
-        FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
+        listNotesPerNotebookAndTagLocalIds(
+            QStringList notebookLocalIds, QStringList tagLocalIds,
+            FetchNoteOptions fetchOptions,
+            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> searchNotes(
-        FindNoteBy searchCriteria, QStringList searchCriteriaValues,
-        FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
+        listNotesByLocalIds(
+            QStringList noteLocalIds, FetchNoteOptions fetchOptions,
+            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Note>>> queryNotes(
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) = 0;
 
-    virtual QFuture<Result<void>> expungeNote(
-        FindNoteBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<void> expungeNoteByLocalId(
+        QString noteLocalId) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeNoteByGuid(
+        qevercloud::Guid noteGuid) = 0;
 
     // Tags API
     virtual QFuture<Result<size_t>> tagCount() = 0;
