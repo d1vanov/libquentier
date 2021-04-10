@@ -26,7 +26,6 @@
 namespace quentier {
 
 class ErrorString;
-class LocalStorageDatabaseUpgrader;
 
 /**
  * @brief The ILocalStoragePatch class represents the interface for patches of
@@ -47,13 +46,13 @@ public:
      * @return      Version of local storage to which the patch needs to be
      *              applied
      */
-    [[nodiscard]] virtual int fromVersion() const = 0;
+    [[nodiscard]] virtual int fromVersion() const noexcept = 0;
 
     /**
      * @return      Version of local storage to which the patch would upgrade
      *              the local storage
      */
-    [[nodiscard]] virtual int toVersion() const = 0;
+    [[nodiscard]] virtual int toVersion() const noexcept = 0;
 
     /**
      * @return      Short description of the patch
@@ -116,8 +115,6 @@ public:
      * application, false otherwise
      */
     [[nodiscard]] virtual bool apply(ErrorString & errorDescription) = 0;
-
-    friend class LocalStorageDatabaseUpgrader;
 
 Q_SIGNALS:
     /**

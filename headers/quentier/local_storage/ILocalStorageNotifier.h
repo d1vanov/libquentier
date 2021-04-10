@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,16 +18,7 @@
 
 #pragma once
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/types/LinkedNotebook.h>
-#include <quentier/types/Note.h>
-#include <quentier/types/Notebook.h>
-#include <quentier/types/Resource.h>
-#include <quentier/types/SavedSearch.h>
-#include <quentier/types/SharedNotebook.h>
-#include <quentier/types/Tag.h>
-#include <quentier/types/User.h>
-#include <quentier/utility/Linkage.h>
+#include <quentier/local_storage/ILocalStorage.h>
 
 #include <QObject>
 
@@ -37,54 +28,50 @@ class QUENTIER_EXPORT ILocalStorageNotifier : public QObject
 {
     Q_OBJECT
 public:
-    virtual ~ILocalStorageNotifier() = default;
+    ~ILocalStorageNotifier() override = default;
 
 Q_SIGNALS:
     // Notifications about user related events
-    void userAdded(User user);
-    void userUpdated(User user);
+    void userPut(qevercloud::User user);
     void userExpunged(qint32 userId);
 
     // Notifications about notebook related events
-    void notebookAdded(Notebook notebook);
-    void notebookUpdated(Notebook notebook);
-    void notebookExpunged(QString notebookLocalUid);
+    void notebookPut(qevercloud::Notebook notebook);
+    void notebookExpunged(QString notebookLocalId);
 
     // Notifications about linked notebooks
-    void linkedNotebookAdded(LinkedNotebook linkedNotebook);
-    void linkedNotebookUpdated(LinkedNotebook linkedNotebook);
-    void linkedNotebookExpunged(QString linkedNotebookGuid);
+    void linkedNotebookPut(qevercloud::LinkedNotebook linkedNotebook);
+    void linkedNotebookExpunged(qevercloud::Guid linkedNotebookGuid);
 
     // Notifications about note related events
-    void noteAdded(Note note);
-    void noteUpdated(Note note);
+    void notePut(qevercloud::Note note);
 
-    void noteMovedToAnotherNotebook(
-        QString noteLocalUid, QString previousNotebookLocalUid,
-        QString newNotebookLocalUid);
+    void noteUpdated(
+        qevercloud::Note note, ILocalStorage::UpdateNoteOptions options);
+
+    void noteNotebookChanged(
+        QString noteLocalId, QString previousNotebookLocalId,
+        QString newNotebookLocalId);
 
     void noteTagListChanged(
-        QString noteLocalUid, QStringList previousNoteTagLocalUids,
-        QStringList newNoteTagLocalUids);
+        QString noteLocalId, QStringList previousNoteTagLocalIds,
+        QStringList newNoteTagLocalIds);
 
-    void noteExpunged(QString noteLocalUid);
+    void noteExpunged(QString noteLocalId);
 
     // Notifications about tag related events
-    void tagAdded(Tag tag);
-    void tagUpdated(Tag tag);
+    void tagPut(qevercloud::Tag tag);
 
     void tagExpunged(
-        QString tagLocalUid, QStringList expungedChildTagLocalUids);
+        QString tagLocalId, QStringList expungedChildTagLocalIds);
 
     // Notifications about resource related events
-    void resourceAdded(Resource resource);
-    void resourceUpdated(Resource resource);
-    void resourceExpunged(QString resourceLocalUid);
+    void resourcePut(qevercloud::Resource resource);
+    void resourceExpunged(QString resourceLocalId);
 
     // Notifications about saved search related events
-    void savedSearchAdded(SavedSearch savedSearch);
-    void savedSearchUpdated(SavedSearch savedSearch);
-    void savedSearchExpunged(QString savedSearchLocalUid);
+    void savedSearchPut(qevercloud::SavedSearch savedSearch);
+    void savedSearchExpunged(QString savedSearchLocalId);
 };
 
 } // namespace quentier::local_storage

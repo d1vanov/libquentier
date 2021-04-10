@@ -18,11 +18,17 @@
 
 #pragma once
 
-#include <qevercloud/types/All.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
+#include <qevercloud/types/SharedNotebook.h>
+#include <qevercloud/types/Tag.h>
+#include <qevercloud/types/User.h>
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
-#include <quentier/local_storage/Result.h>
 #include <quentier/utility/Linkage.h>
 
 #include <QFlags>
@@ -367,6 +373,9 @@ public:
         findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByName(QString notebookName) const = 0;
+
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findDefaultNotebook() const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByLocalId(
@@ -462,7 +471,7 @@ public:
             ListOptions<ListNotesOrder> listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
-        NoteSearchQuery query, FetchNoteOptions fetchOptions) = 0;
+        NoteSearchQuery query, FetchNoteOptions fetchOptions) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNoteByLocalId(
         QString noteLocalId) = 0;
@@ -471,63 +480,85 @@ public:
         qevercloud::Guid noteGuid) = 0;
 
     // Tags API
-    virtual QFuture<Result<size_t>> tagCount() = 0;
-    virtual QFuture<Result<void>> putTag(qevercloud::Tag tag) = 0;
+    [[nodiscard]] virtual QFuture<quint32> tagCount() const = 0;
+    [[nodiscard]] virtual QFuture<void> putTag(qevercloud::Tag tag) = 0;
 
-    virtual QFuture<Result<qevercloud::Tag>> findTag(
-        FindTagBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+        findTagByLocalId(QString tagLocalId) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Tag>>> listTags(
-        ListOptions<ListTagsOrder> options = {}) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+        findTagByGuid(qevercloud::Guid tagGuid) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::Tag>>> listTagsPerNote(
-        FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue,
-        ListOptions<ListTagsOrder> options = {}) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+        findTagByName(QString tagName) const = 0;
 
-    virtual QFuture<Result<void>> expungeTag(
-        FindTagBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>> listTags(
+        ListOptions<ListTagsOrder> options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>>
+        listTagsPerNoteLocalId(
+            QString noteLocalId,
+            ListOptions<ListTagsOrder> options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeTagByLocalId(
+        QString tagLocalId) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeTagByGuid(
+        QString tagGuid) = 0;
 
     // Resources API
-    virtual QFuture<Result<size_t>> resourceCount(
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) = 0;
+    [[nodiscard]] virtual QFuture<quint32> resourceCount(
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    virtual QFuture<Result<size_t>> resourceCountPerNote(
-        FindNoteBy noteSearchCriteria, QString noteSearchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<quint32> resourceCountPerNoteLocalId(
+        QString noteLocalId) const = 0;
 
-    virtual QFuture<Result<void>> putResource(qevercloud::Resource resource) = 0;
+    [[nodiscard]] virtual QFuture<void> putResource(
+        qevercloud::Resource resource) = 0;
 
-    virtual QFuture<Result<qevercloud::Resource>> findResource(
-        FindResourceBy searchCriteria, QString searchCriteriaValue,
-        FetchResourceOptions options = {}) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+        findResourceByLocalId(
+            QString resourceLocalId,
+            FetchResourceOptions options = {}) const = 0;
 
-    virtual QFuture<Result<void>> expungeResource(
-        FindResourceBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+        findResourceByGuid(
+            QString resourceGuid,
+            FetchResourceOptions options = {}) const = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeResourceByLocalId(
+        QString resourceLocalId) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeResourceByGuid(
+        QString resourceGuid) = 0;
 
     // Saved searches API
-    virtual QFuture<Result<size_t>> savedSearchCount() = 0;
+    [[nodiscard]] virtual QFuture<quint32> savedSearchCount() const = 0;
 
-    virtual QFuture<Result<void>> putSavedSearch(qevercloud::SavedSearch search) = 0;
+    [[nodiscard]] virtual QFuture<void> putSavedSearch(
+        qevercloud::SavedSearch search) = 0;
 
-    virtual QFuture<Result<qevercloud::SavedSearch>> findSavedSearch(
-        FindSavedSearchBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByLocalId(QString savedSearchLocalId) const = 0;
 
-    virtual QFuture<Result<QVector<qevercloud::SavedSearch>>> listSavedSearches(
-        ListOptions<ListSavedSearchesOrder> options = {}) = 0;
+    [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
+        listSavedSearches(
+            ListOptions<ListSavedSearchesOrder> options = {}) const = 0;
 
-    virtual QFuture<Result<void>> expungeSavedSearch(
-        FindSavedSearchBy searchCriteria, QString searchCriteriaValue) = 0;
+    [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
+        QString savedSearchLocalId) = 0;
 
-    // Auxiliary methods for synchronization
-    virtual QFuture<Result<qint32>> highestUpdateSequenceNumber(
-        HighestUsnOption option) = 0;
+    // Synchronization API
+    [[nodiscard]] virtual QFuture<qint32> highestUpdateSequenceNumber(
+        HighestUsnOption option) const = 0;
 
-    virtual QFuture<Result<qint32>> highestUpdateSequenceNumber(
-        QString linkedNotebookGuid) = 0;
+    [[nodiscard]] virtual QFuture<qint32> highestUpdateSequenceNumber(
+        qevercloud::Guid linkedNotebookGuid) const = 0;
 
     // Notifications about events occurring in local storage are done via
     // signals emitted by ILocalStorageNotifier
-    virtual ILocalStorageNotifier * notifier() = 0;
+    [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
 
 } // namespace quentier::local_storage
