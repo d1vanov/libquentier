@@ -149,17 +149,13 @@ qint32 UserStore::processEdamUserException(
         break;
     }
 
-    const auto exceptionData = userException.exceptionData();
-
     if (userException.parameter()) {
         errorDescription.details() += QStringLiteral(", parameter: ");
         errorDescription.details() += *userException.parameter();
     }
 
-    if (exceptionData && !exceptionData->errorMessage.isEmpty()) {
-        errorDescription.details() += QStringLiteral(", message: ");
-        errorDescription.details() += exceptionData->errorMessage;
-    }
+    errorDescription.details() += QStringLiteral(", message: ");
+    errorDescription.details() += QString::fromUtf8(userException.what());
 
     // FIXME: should actually return properly typed qevercloud::EDAMErrorCode
     return static_cast<int>(userException.errorCode());

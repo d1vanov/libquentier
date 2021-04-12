@@ -158,17 +158,16 @@ public:
         ErrorString & errorDescription, qint32 & rateLimitSeconds) override;
 
 private:
-    using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
     void onGetNoteAsyncFinished(
         const QVariant & result,
-        const EverCloudExceptionDataPtr & exceptionData,
+        const std::exception_ptr & e,
         const IRequestContextPtr & ctx);
 
     void onGetResourceAsyncFinished(
         const QVariant & result,
-        const EverCloudExceptionDataPtr & exceptionData,
+        const std::exception_ptr & e,
         const IRequestContextPtr & ctx);
 
 private:

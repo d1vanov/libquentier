@@ -30,6 +30,8 @@
 #include <QString>
 #include <QVariant>
 
+#include <exception>
+
 namespace quentier {
 
 class Q_DECL_HIDDEN NoteThumbnailDownloader final : public QObject
@@ -50,12 +52,10 @@ Q_SIGNALS:
         ErrorString errorDescription);
 
 private:
-    using EverCloudExceptionDataPtr = qevercloud::EverCloudExceptionDataPtr;
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
     void onDownloadFinished(
-        const QVariant & result,
-        const EverCloudExceptionDataPtr & exceptionData);
+        const QVariant & result, const std::exception_ptr & e);
 
 private:
     QString m_host;

@@ -88,10 +88,8 @@ void InkNoteImageDownloader::run()
         ErrorString errorDescription(
             QT_TR_NOOP("Caught EverCloudException on attempt to download "
                        "the ink note image data"));
-        auto exceptionData = everCloudException.exceptionData();
-        if (exceptionData) {
-            errorDescription.details() = exceptionData->errorMessage;
-        }
+        errorDescription.details() =
+            QString::fromUtf8(everCloudException.what());
 
         Q_EMIT finished(false, m_resourceGuid, m_noteGuid, errorDescription);
         return;

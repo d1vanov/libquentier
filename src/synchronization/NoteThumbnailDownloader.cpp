@@ -82,24 +82,24 @@ void NoteThumbnailDownloader::start()
         this,
         [this]
         {
-            qevercloud::EverCloudExceptionDataPtr exceptionData;
+            std::exception_ptr e;
             QVariant value;
 
             try
             {
                 value = m_future.result();
             }
-            catch (const qevercloud::EverCloudException & e)
+            catch (...)
             {
-                exceptionData = e.exceptionData();
+                e = std::current_exception();
             }
 
-            onDownloadFinished(value, exceptionData);
+            onDownloadFinished(value, e);
         });
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(
-    const QVariant & result, const EverCloudExceptionDataPtr & exceptionData)
+    const QVariant & result, const std::exception_ptr & e)
 {
     QNDEBUG(
         "synchronization:thumbnail",
@@ -108,10 +108,19 @@ void NoteThumbnailDownloader::onDownloadFinished(
     delete m_pThumbnail;
     m_pThumbnail = nullptr;
 
-    if (exceptionData) {
+    if (e) {
         ErrorString errorDescription(
             QT_TR_NOOP("failed to download the note thumbnail"));
-        errorDescription.details() = exceptionData->errorMessage;
+
+        try
+        {
+            std::rethrow_exception(e);
+        }
+        catch (const std::exception & exc)
+        {
+            errorDescription.details() = QString::fromUtf8(exc.what());
+        }
+
         QNDEBUG("synchronization:thumbnail", errorDescription);
         Q_EMIT finished(false, m_noteGuid, QByteArray(), errorDescription);
         return;

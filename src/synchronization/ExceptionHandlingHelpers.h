@@ -41,10 +41,8 @@
     catch (const qevercloud::EvernoteException & evernoteException) {          \
         errorDescription.setBase(QT_TRANSLATE_NOOP(                            \
             "synchronization", "QEverCloud Evernote exception"));              \
-        if (evernoteException.exceptionData()) {                               \
-            errorDescription.details() =                                       \
-                evernoteException.exceptionData()->errorMessage;               \
-        }                                                                      \
+        errorDescription.details() =                                           \
+            QString::fromUtf8(evernoteException.what());                       \
         QNWARNING("synchronization", errorDescription);                        \
         __VA_ARGS__;                                                           \
     }
