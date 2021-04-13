@@ -23,7 +23,7 @@
 
 #include <QObject>
 
-namespace quentier {
+namespace quentier::local_storage {
 
 class ErrorString;
 
@@ -140,6 +140,6 @@ Q_SIGNALS:
     void restoreBackupProgress(double progress);
 };
 
-} // namespace quentier
+} // namespace quentier::local_storage
 
 #endif // LIB_QUENTIER_LOCAL_STORAGE_I_LOCAL_STORAGE_PATCH_H

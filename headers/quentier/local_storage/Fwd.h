@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace quentier {
+namespace quentier::local_storage {
 
 class ILocalStorage;
 using ILocalStoragePtr = std::shared_ptr<ILocalStorage>;
@@ -34,6 +34,6 @@ using ILocalStoragePatchPtr = std::shared_ptr<ILocalStoragePatch>;
 class LocalStorageManager;
 class LocalStorageManagerAsync;
 
-} // namespace quentier
+} // namespace quentier::local_storage
 
 #endif // LIB_QUENTIER_LOCAL_STORAGE_FWD_H
