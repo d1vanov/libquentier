@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,15 +16,23 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_LINKAGE_H
-#define LIB_QUENTIER_UTILITY_LINKAGE_H
+#include <gtest/gtest.h>
 
-#include <QtGlobal>
+#include <QCoreApplication>
+#include <QTimer>
 
-#if defined(BUILDING_QUENTIER_DLL)
-#define QUENTIER_EXPORT Q_DECL_EXPORT
-#else
-#define QUENTIER_EXPORT Q_DECL_IMPORT
-#endif
+int main(int argc, char * argv[])
+{
+    QCoreApplication app(argc, argv);
+    QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
+    QCoreApplication::setApplicationName(QString::fromUtf8(argv[0]));
 
-#endif // LIB_QUENTIER_UTILITY_LINKAGE_H
+    QTimer::singleShot(0, [&]() // clazy:exclude=connect-3arg-lambda
+    {
+        ::testing::InitGoogleTest(&argc, argv); // NOLINT
+        auto testResult = RUN_ALL_TESTS();
+        QCoreApplication::exit(testResult);
+    });
+
+    return QCoreApplication::exec();
+}

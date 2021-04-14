@@ -39,12 +39,12 @@ public:
 
     ~LocalStoragePatch1To2() noexcept override = default;
 
-    [[nodiscard]] int fromVersion() const override
+    [[nodiscard]] int fromVersion() const noexcept override
     {
         return 1;
     }
 
-    [[nodiscard]] int toVersion() const override
+    [[nodiscard]] int toVersion() const noexcept override
     {
         return 2;
     }

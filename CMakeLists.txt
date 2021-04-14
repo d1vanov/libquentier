@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.10.2)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/sanitizers ${CMAKE_MODULE_PATH})
@@ -68,6 +68,12 @@ if(LIBCPP)
   get_filename_component(LIBCPP_LIB_DIR "${LIBCPP}" PATH)
   list(APPEND THIRDPARTY_LIB_DIRS ${LIBCPP_LIB_DIR})
 endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 include_directories(headers)
 
@@ -158,7 +164,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/IKeychainService.h
     headers/quentier/utility/Initialize.h
     headers/quentier/utility/LimitedStack.h
-    headers/quentier/utility/Linkage.h
     headers/quentier/utility/LRUCache.hpp
     headers/quentier/utility/MessageBox.h
     headers/quentier/utility/Printable.h
@@ -687,6 +692,33 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_RESOURCES_RCC}
             ${${PROJECT_NAME}_FORMS_HEADERS})
 
+add_library(${LIBNAME}_interface INTERFACE)
+
+target_include_directories(${LIBNAME}_interface
+  INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/headers
+  ${CMAKE_CURRENT_BINARY_DIR})
+
+include(GenerateExportHeader)
+
+generate_export_header(
+  ${LIBNAME}
+  BASE_NAME ${LIBNAME}
+  EXPORT_MACRO_NAME QUENTIER_EXPORT
+  EXPORT_FILE_NAME quentier/utility/Linkage.h
+  STATIC_DEFINE BUILDING_LIBQUENTIER_STATIC_LIBRARY)
+
+find_package(GMock)
+find_package(GTest)
+
+add_subdirectory(src/local_storage/sql)
+
+target_link_libraries(${LIBNAME}
+  PUBLIC
+  ${QT_LIBRARIES}
+  PRIVATE
+  ${THIRDPARTY_LIBS})
+
 add_sanitizers(${LIBNAME})
 
 # installation settings, needed for target properties
@@ -724,9 +756,7 @@ set_target_properties(${LIBNAME} PROPERTIES
   CXX_EXTENSIONS OFF
   MACOSX_RPATH 1
   INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-  COMPILE_DEFINITIONS "BUILDING_QUENTIER_DLL=1")
-
-target_link_libraries(${LIBNAME} ${QT_LIBRARIES} ${THIRDPARTY_LIBS})
+  COMPILE_DEFINITIONS "${LIBNAME}_EXPORTS")
 
 add_definitions("-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII")
 add_definitions("-DQT_NO_CAST_FROM_BYTEARRAY -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT")
@@ -939,6 +969,8 @@ endforeach()
 foreach(ITEM ${UTILITY_HEADERS})
   install(FILES ${ITEM} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
 endforeach()
+
+install(FILES ${PROJECT_BINARY_DIR}/quentier/utility/Linkage.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
 
 # install translations
 foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})

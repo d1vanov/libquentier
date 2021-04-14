@@ -42,14 +42,14 @@ ConnectionPool::ConnectionPool(
     m_sqlDriverName{std::move(sqlDriverName)}
 {
     const bool isSqlDriverAvailable =
-        QSqlDatabase::isDriverAvailable(sqlDriverName);
+        QSqlDatabase::isDriverAvailable(m_sqlDriverName);
 
     if (Q_UNLIKELY(!isSqlDriverAvailable)) {
         ErrorString error(QT_TRANSLATE_NOOP(
             "ConnectionPool",
             "SQLdatabase driver is not available"));
 
-        error.details() += sqlDriverName;
+        error.details() += m_sqlDriverName;
         error.details() += QStringLiteral("; available SQL drivers: ");
 
         const QStringList drivers = QSqlDatabase::drivers();
@@ -118,8 +118,6 @@ QSqlDatabase ConnectionPool::database()
             QWriteLocker lock{&self->m_connectionsLock};
             auto it = self->m_connections.find(pCurrentThread);
             if (Q_LIKELY(it != self->m_connections.end())) {
-                auto db = QSqlDatabase::database(it.value().m_connectionName);
-                db.close();
                 QSqlDatabase::removeDatabase(it.value().m_connectionName);
                 self->m_connections.erase(it);
             }
