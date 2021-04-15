@@ -7,7 +7,9 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   ConnectionPool.cpp
-  ConnectionPool.h)
+  ConnectionPool.h
+  TablesInitializer.cpp
+  TablesInitializer.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
