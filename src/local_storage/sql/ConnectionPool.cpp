@@ -20,6 +20,7 @@
 
 #include <quentier/exception/DatabaseOpeningException.h>
 #include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
 #include <QObject>
@@ -30,7 +31,7 @@
 #include <sstream>
 #include <thread>
 
-namespace quentier::local_storage {
+namespace quentier::local_storage::sql {
 
 ConnectionPool::ConnectionPool(
     QString hostName, QString userName, QString password,
@@ -46,7 +47,7 @@ ConnectionPool::ConnectionPool(
 
     if (Q_UNLIKELY(!isSqlDriverAvailable)) {
         ErrorString error(QT_TRANSLATE_NOOP(
-            "ConnectionPool",
+            "quentier::local_storage::sql::ConnectionPool",
             "SQLdatabase driver is not available"));
 
         error.details() += m_sqlDriverName;
@@ -60,6 +61,7 @@ ConnectionPool::ConnectionPool(
             }
         }
 
+        QNWARNING("local_storage:sql:connection_pool", error);
         throw DatabaseRequestException(error);
     }
 }
@@ -132,17 +134,19 @@ QSqlDatabase ConnectionPool::database()
 
     if (Q_UNLIKELY(!database.open())) {
         ErrorString error(QT_TRANSLATE_NOOP(
-            "ConnectionPool",
+            "quentier::local_storage::sql::ConnectionPool",
             "Failed to open the database"));
 
         const auto lastError = database.lastError();
         error.details() += lastError.text();
         error.details() += QStringLiteral("; native error code = ");
         error.details() += lastError.nativeErrorCode();
+
+        QNWARNING("local_storage:sql:connection_pool", error);
         throw DatabaseOpeningException(error);
     }
 
     return database;
 }
 
-} // namespace quentier::local_storage
+} // namespace quentier::local_storage::sql

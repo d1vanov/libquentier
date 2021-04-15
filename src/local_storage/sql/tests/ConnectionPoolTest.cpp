@@ -35,7 +35,7 @@
 #include <chrono>
 #include <cstddef>
 
-namespace quentier::local_storage::tests {
+namespace quentier::local_storage::sql::tests {
 
 TEST(ConnectionPoolTest, Ctor)
 {
@@ -220,4 +220,4 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     }
 }
 
-} // namespace quentier::local_storage::tests
+} // namespace quentier::local_storage::sql::tests

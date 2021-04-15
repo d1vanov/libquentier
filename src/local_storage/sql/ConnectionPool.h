@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace quentier::local_storage {
+namespace quentier::local_storage::sql {
 
 class ConnectionPool final: public std::enable_shared_from_this<ConnectionPool>
 {
@@ -56,4 +56,4 @@ private:
     QHash<QThread*, ConnectionData> m_connections;
 };
 
-} // namespace quentier::local_storage
+} // namespace quentier::local_storage::sql
