@@ -20,6 +20,8 @@
 
 #include <memory>
 
+class QSqlDatabase;
+
 namespace quentier::local_storage::sql {
 
 class ConnectionPool;

@@ -8,6 +8,7 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   ConnectionPool.cpp
   ConnectionPool.h
+  ErrorHandling.h
   TablesInitializer.cpp
   TablesInitializer.h)
 

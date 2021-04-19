@@ -31,7 +31,7 @@ public:
     void initializeTables();
 
 private:
-
+    void initializeAuxiliaryTable(QSqlDatabase & databaseConnection);
 
 private:
     DatabaseInfo m_databaseInfo;
