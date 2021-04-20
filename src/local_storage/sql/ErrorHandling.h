@@ -20,7 +20,7 @@
 
 #define ENSURE_DB_REQUEST(res, query, component, message)                      \
     if (Q_UNLIKELY(!res)) {                                                    \
-        ErrorString error(QT_TRANSLATE_NOOP("quentier::" component, message)); \
+        ErrorString error(message);                                            \
         const auto lastQueryError = query.lastError();                         \
         error.details() = lastQueryError.text();                               \
         error.details() += QStringLiteral(" (native error code = ");           \
