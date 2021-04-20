@@ -23,7 +23,7 @@
 
 namespace quentier {
 
-void QUENTIER_EXPORT registerMetatypes();
+QUENTIER_EXPORT void registerMetatypes();
 
 } // namespace quentier
 

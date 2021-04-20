@@ -25,6 +25,7 @@
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/types/Account.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/RegisterMetatypes.h>
 #include <quentier/utility/IKeychainService.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
