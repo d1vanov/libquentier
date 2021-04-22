@@ -34,6 +34,7 @@ private:
     void initializeAuxiliaryTable(QSqlDatabase & databaseConnection);
     void initializeUserTables(QSqlDatabase & databaseConnection);
     void initializeNotebookTables(QSqlDatabase & databaseConnection);
+    void initializeNoteTables(QSqlDatabase & databaseConnection);
 
 private:
     DatabaseInfo m_databaseInfo;

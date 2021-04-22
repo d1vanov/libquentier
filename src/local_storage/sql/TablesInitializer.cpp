@@ -64,6 +64,7 @@ void TablesInitializer::initializeTables()
     initializeAuxiliaryTable(databaseConnection);
     initializeUserTables(databaseConnection);
     initializeNotebookTables(databaseConnection);
+    initializeNoteTables(databaseConnection);
 
     // TODO: continue from here
 }
@@ -473,6 +474,233 @@ void TablesInitializer::initializeNotebookTables(
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
             "Cannot create SharedNotebooks table in the local storage "
+            "database"));
+}
+
+void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
+{
+    QSqlQuery query{databaseConnection};
+
+    bool res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Notes("
+        "  localUid                        TEXT PRIMARY KEY     NOT NULL "
+        "UNIQUE, "
+        "  guid                            TEXT                 DEFAULT NULL "
+        "UNIQUE, "
+        "  updateSequenceNumber            INTEGER              DEFAULT NULL, "
+        "  isDirty                         INTEGER              NOT NULL, "
+        "  isLocal                         INTEGER              NOT NULL, "
+        "  isFavorited                     INTEGER              NOT NULL, "
+        "  title                           TEXT                 DEFAULT NULL, "
+        "  titleNormalized                 TEXT                 DEFAULT NULL, "
+        "  content                         TEXT                 DEFAULT NULL, "
+        "  contentLength                   INTEGER              DEFAULT NULL, "
+        "  contentHash                     TEXT                 DEFAULT NULL, "
+        "  contentPlainText                TEXT                 DEFAULT NULL, "
+        "  contentListOfWords              TEXT                 DEFAULT NULL, "
+        "  contentContainsFinishedToDo     INTEGER              DEFAULT NULL, "
+        "  contentContainsUnfinishedToDo   INTEGER              DEFAULT NULL, "
+        "  contentContainsEncryption       INTEGER              DEFAULT NULL, "
+        "  creationTimestamp               INTEGER              DEFAULT NULL, "
+        "  modificationTimestamp           INTEGER              DEFAULT NULL, "
+        "  deletionTimestamp               INTEGER              DEFAULT NULL, "
+        "  isActive                        INTEGER              DEFAULT NULL, "
+        "  hasAttributes                   INTEGER              NOT NULL, "
+        "  thumbnail                       BLOB                 DEFAULT NULL, "
+        "  notebookLocalUid REFERENCES Notebooks(localUid) ON UPDATE CASCADE, "
+        "  notebookGuid REFERENCES Notebooks(guid) ON UPDATE CASCADE, "
+        "  subjectDate                     INTEGER              DEFAULT NULL, "
+        "  latitude                        REAL                 DEFAULT NULL, "
+        "  longitude                       REAL                 DEFAULT NULL, "
+        "  altitude                        REAL                 DEFAULT NULL, "
+        "  author                          TEXT                 DEFAULT NULL, "
+        "  source                          TEXT                 DEFAULT NULL, "
+        "  sourceURL                       TEXT                 DEFAULT NULL, "
+        "  sourceApplication               TEXT                 DEFAULT NULL, "
+        "  shareDate                       INTEGER              DEFAULT NULL, "
+        "  reminderOrder                   INTEGER              DEFAULT NULL, "
+        "  reminderDoneTime                INTEGER              DEFAULT NULL, "
+        "  reminderTime                    INTEGER              DEFAULT NULL, "
+        "  placeName                       TEXT                 DEFAULT NULL, "
+        "  contentClass                    TEXT                 DEFAULT NULL, "
+        "  lastEditedBy                    TEXT                 DEFAULT NULL, "
+        "  creatorId                       INTEGER              DEFAULT NULL, "
+        "  lastEditorId                    INTEGER              DEFAULT NULL, "
+        "  sharedWithBusiness              INTEGER              DEFAULT NULL, "
+        "  conflictSourceNoteGuid          TEXT                 DEFAULT NULL, "
+        "  noteTitleQuality                INTEGER              DEFAULT NULL, "
+        "  applicationDataKeysOnly         TEXT                 DEFAULT NULL, "
+        "  applicationDataKeysMap          TEXT                 DEFAULT NULL, "
+        "  applicationDataValues           TEXT                 DEFAULT NULL, "
+        "  classificationKeys              TEXT                 DEFAULT NULL, "
+        "  classificationValues            TEXT                 DEFAULT NULL, "
+        "  UNIQUE(localUid, guid)"
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create Notes table in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS SharedNotes("
+        "  sharedNoteNoteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
+        "  sharedNoteSharerUserId               INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientIdentityId        INTEGER DEFAULT NULL UNIQUE, "
+        "  sharedNoteRecipientContactName       TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactId         TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactType       INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientContactPhotoUrl   TEXT    DEFAULT NULL, "
+        "  sharedNoteRecipientContactPhotoLastUpdated   INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientContactMessagingPermit    BLOB    DEFAULT NULL, "
+        "  sharedNoteRecipientContactMessagingPermitExpires "
+        "INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientUserId            INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientDeactivated       INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientSameBusiness      INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientBlocked           INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientUserConnected     INTEGER DEFAULT NULL, "
+        "  sharedNoteRecipientEventId           INTEGER DEFAULT NULL, "
+        "  sharedNotePrivilegeLevel             INTEGER DEFAULT NULL, "
+        "  sharedNoteCreationTimestamp          INTEGER DEFAULT NULL, "
+        "  sharedNoteModificationTimestamp      INTEGER DEFAULT NULL, "
+        "  sharedNoteAssignmentTimestamp        INTEGER DEFAULT NULL, "
+        "  indexInNote                          INTEGER DEFAULT NULL, "
+        "  UNIQUE(sharedNoteNoteGuid, sharedNoteRecipientIdentityId) "
+        "ON CONFLICT REPLACE)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create SharedNotes table in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteRestrictions("
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noUpdateNoteTitle                INTEGER         DEFAULT NULL, "
+        "  noUpdateNoteContent              INTEGER         DEFAULT NULL, "
+        "  noEmailNote                      INTEGER         DEFAULT NULL, "
+        "  noShareNote                      INTEGER         DEFAULT NULL, "
+        "  noShareNotePublicly              INTEGER         DEFAULT NULL)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteRestrictions table in the local storage "
+            "database"));
+
+    // clang-format off
+    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS "
+                                  "NoteRestrictionsByNoteLocalUid ON "
+                                  "NoteRestrictions(noteLocalUid)"));
+    // clang-format on
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteRestrictionsByNoteLocalUid index in the local "
+            "storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteLimits("
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noteResourceCountMax             INTEGER         DEFAULT NULL, "
+        "  uploadLimit                      INTEGER         DEFAULT NULL, "
+        "  resourceSizeMax                  INTEGER         DEFAULT NULL, "
+        "  noteSizeMax                      INTEGER         DEFAULT NULL, "
+        "  uploaded                         INTEGER         DEFAULT NULL)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteLimits table in the local storage database"));
+
+    // clang-format off
+    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NotesNotebooks "
+                                    "ON Notes(notebookLocalUid)"));
+    // clang-format on
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NotesNotebooks index in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS NoteFTS "
+                       "USING FTS4(content=\"Notes\", localUid, "
+                       "titleNormalized, contentListOfWords, "
+                       "contentContainsFinishedToDo, "
+                       "contentContainsUnfinishedToDo, "
+                       "contentContainsEncryption, creationTimestamp, "
+                       "modificationTimestamp, isActive, "
+                       "notebookLocalUid, notebookGuid, subjectDate, "
+                       "latitude, longitude, altitude, author, source, "
+                       "sourceApplication, reminderOrder, reminderDoneTime, "
+                       "reminderTime, placeName, contentClass, "
+                       "applicationDataKeysOnly, "
+                       "applicationDataKeysMap, applicationDataValues)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteFTS table in the local storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "NoteFTS_BeforeDeleteTrigger "
+                       "BEFORE DELETE ON Notes "
+                       "BEGIN "
+                       "DELETE FROM NoteFTS WHERE localUid=old.localUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteFTS before delete trigger in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "NoteFTS_AfterInsertTrigger "
+                       "AFTER INSERT ON Notes "
+                       "BEGIN "
+                       "INSERT INTO NoteFTS(NoteFTS) VALUES('rebuild'); "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteFTS after insert trigger in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "on_notebook_delete_trigger "
+                       "BEFORE DELETE ON Notebooks "
+                       "BEGIN "
+                       "DELETE FROM NotebookRestrictions WHERE "
+                       "NotebookRestrictions.localUid=OLD.localUid; "
+                       "DELETE FROM SharedNotebooks WHERE "
+                       "SharedNotebooks.sharedNotebookNotebookGuid=OLD.guid; "
+                       "DELETE FROM Notes WHERE "
+                       "Notes.notebookLocalUid=OLD.localUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create on notebook delete trigger in the local storage "
             "database"));
 }
 
