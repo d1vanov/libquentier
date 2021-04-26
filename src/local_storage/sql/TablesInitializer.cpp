@@ -65,6 +65,7 @@ void TablesInitializer::initializeTables()
     initializeUserTables(databaseConnection);
     initializeNotebookTables(databaseConnection);
     initializeNoteTables(databaseConnection);
+    initializeResourceTables(databaseConnection);
 
     // TODO: continue from here
 }
@@ -702,6 +703,230 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
             "quentier::local_storage::sql::tables_initializer",
             "Cannot create on notebook delete trigger in the local storage "
             "database"));
+}
+
+void TablesInitializer::initializeResourceTables(
+    QSqlDatabase & databaseConnection)
+{
+    QSqlQuery query{databaseConnection};
+
+    bool res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Resources("
+        "  resourceLocalUid                TEXT PRIMARY KEY NOT NULL UNIQUE, "
+        "  resourceGuid                    TEXT         DEFAULT NULL UNIQUE, "
+        "  noteLocalUid REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  noteGuid REFERENCES Notes(guid) ON UPDATE CASCADE, "
+        "  resourceUpdateSequenceNumber    INTEGER          DEFAULT NULL, "
+        "  resourceIsDirty                 INTEGER          NOT NULL, "
+        "  dataSize                        INTEGER          DEFAULT NULL, "
+        "  dataHash                        TEXT             DEFAULT NULL, "
+        "  mime                            TEXT             DEFAULT NULL, "
+        "  width                           INTEGER          DEFAULT NULL, "
+        "  height                          INTEGER          DEFAULT NULL, "
+        "  recognitionDataBody             TEXT             DEFAULT NULL, "
+        "  recognitionDataSize             INTEGER          DEFAULT NULL, "
+        "  recognitionDataHash             TEXT             DEFAULT NULL, "
+        "  alternateDataSize               INTEGER          DEFAULT NULL, "
+        "  alternateDataHash               TEXT             DEFAULT NULL, "
+        "  resourceIndexInNote             INTEGER          DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceGuid)"
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create Resources table in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS ResourceMimeIndex ON Resources(mime)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourcesMimeIndex table in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceRecognitionData("
+                       "  resourceLocalUid REFERENCES "
+                       "Resources(resourceLocalUid) ON UPDATE CASCADE, "
+                       "  noteLocalUid REFERENCES Notes(localUid)              "
+                       "   ON UPDATE CASCADE, "
+                       "  recognitionData                 TEXT                 "
+                       "   DEFAULT NULL)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceRecognitionData table in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS "
+                       "ResourceRecognitionDataIndex "
+                       "ON ResourceRecognitionData(recognitionData)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceRecognitionDataIndex table in the local "
+            "storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS "
+                       "ResourceRecognitionDataFTS USING FTS4"
+                       "(content=\"ResourceRecognitionData\", "
+                       "resourceLocalUid, noteLocalUid, recognitionData)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceRecognitionDataFTS table in the local "
+            "storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "ResourceRecognitionDataFTS_BeforeDeleteTrigger "
+                       "BEFORE DELETE ON ResourceRecognitionData "
+                       "BEGIN "
+                       "DELETE FROM ResourceRecognitionDataFTS "
+                       "WHERE recognitionData=old.recognitionData; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceRecognitionDataFTS before delete trigger in "
+            "the local storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "ResourceRecognitionDataFTS_AfterInsertTrigger "
+                       "AFTER INSERT ON ResourceRecognitionData "
+                       "BEGIN "
+                       "INSERT INTO ResourceRecognitionDataFTS("
+                       "ResourceRecognitionDataFTS) VALUES('rebuild'); "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceRecognitionDataFTS after insert trigger in "
+            "the local storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS "
+                       "ResourceMimeFTS USING FTS4(content=\"Resources\", "
+                       "resourceLocalUid, mime)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceMimeFTS virtual table in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "ResourceMimeFTS_BeforeDeleteTrigger "
+                       "BEFORE DELETE ON Resources "
+                       "BEGIN "
+                       "DELETE FROM ResourceMimeFTS WHERE mime=old.mime; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceMimeFTS before delete trigger in the local "
+            "storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "ResourceMimeFTS_AfterInsertTrigger "
+                       "AFTER INSERT ON Resources "
+                       "BEGIN "
+                       "INSERT INTO ResourceMimeFTS(ResourceMimeFTS) "
+                       "VALUES('rebuild'); "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceMimeFTS after insert trigger in the local "
+            "storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS ResourceNote ON Resources(noteLocalUid)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceNote index in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributes("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE "
+        "CASCADE, "
+        "  resourceSourceURL       TEXT                DEFAULT NULL, "
+        "  timestamp               INTEGER             DEFAULT NULL, "
+        "  resourceLatitude        REAL                DEFAULT NULL, "
+        "  resourceLongitude       REAL                DEFAULT NULL, "
+        "  resourceAltitude        REAL                DEFAULT NULL, "
+        "  cameraMake              TEXT                DEFAULT NULL, "
+        "  cameraModel             TEXT                DEFAULT NULL, "
+        "  clientWillIndex         INTEGER             DEFAULT NULL, "
+        "  fileName                TEXT                DEFAULT NULL, "
+        "  attachment              INTEGER             DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid) "
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceAttributes table in the local storage "
+            "database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataKeysOnly("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE "
+        "CASCADE, "
+        "  resourceKey             TEXT                DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceKey)"
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceAttributesApplicationDataKeysOnly table in "
+            "the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceAttributesApplicationDataFullMap("
+        "  resourceLocalUid REFERENCES Resources(resourceLocalUid) ON UPDATE "
+        "CASCADE, "
+        "  resourceMapKey          TEXT                DEFAULT NULL, "
+        "  resourceValue           TEXT                DEFAULT NULL, "
+        "  UNIQUE(resourceLocalUid, resourceMapKey) ON CONFLICT REPLACE"
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create ResourceAttributesApplicationDataFullMap table in "
+            "the local storage database"));
 }
 
 } // namespace quentier::local_storage::sql
