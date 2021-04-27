@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "DatabaseInfo.h"
 #include "Fwd.h"
 
 namespace quentier::local_storage::sql {
@@ -26,19 +25,17 @@ namespace quentier::local_storage::sql {
 class TablesInitializer
 {
 public:
-    explicit TablesInitializer(DatabaseInfo databaseInfo);
-
-    void initializeTables();
+    static void initializeTables(QSqlDatabase & databaseConnection);
 
 private:
-    void initializeAuxiliaryTable(QSqlDatabase & databaseConnection);
-    void initializeUserTables(QSqlDatabase & databaseConnection);
-    void initializeNotebookTables(QSqlDatabase & databaseConnection);
-    void initializeNoteTables(QSqlDatabase & databaseConnection);
-    void initializeResourceTables(QSqlDatabase & databaseConnection);
-
-private:
-    DatabaseInfo m_databaseInfo;
+    static void initializeAuxiliaryTable(QSqlDatabase & databaseConnection);
+    static void initializeUserTables(QSqlDatabase & databaseConnection);
+    static void initializeNotebookTables(QSqlDatabase & databaseConnection);
+    static void initializeNoteTables(QSqlDatabase & databaseConnection);
+    static void initializeResourceTables(QSqlDatabase & databaseConnection);
+    static void initializeTagsTables(QSqlDatabase & databaseConnection);
+    static void initializeSavedSearchTables(QSqlDatabase & databaseConnection);
+    static void initializeExtraTriggers(QSqlDatabase & databaseConnection);
 };
 
 } // namespace quentier::local_storage::sql

@@ -34,40 +34,16 @@
 
 namespace quentier::local_storage::sql {
 
-TablesInitializer::TablesInitializer(DatabaseInfo databaseInfo)
-    : m_databaseInfo{std::move(databaseInfo)}
+void TablesInitializer::initializeTables(QSqlDatabase & databaseConnection)
 {
-    if (Q_UNLIKELY(!m_databaseInfo.connectionPool)) {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::TablesInitializer",
-            "Cannot create TablesInitializer: connection pool is null"));
-
-        QNWARNING("local_storage:sql:tables_initializer", error);
-        throw DatabaseOpeningException{error};
-    }
-
-    if (Q_UNLIKELY(!m_databaseInfo.writerMutex)) {
-        ErrorString error(QT_TRANSLATE_NOOP(
-            "quentier::local_storage::sql::TablesInitializer",
-            "Cannot create TablesInitializer: writer mutex is null"));
-
-        QNWARNING("local_storage:sql:tables_initializer", error);
-        throw DatabaseOpeningException{error};
-    }
-}
-
-void TablesInitializer::initializeTables()
-{
-    auto databaseConnection = m_databaseInfo.connectionPool->database();
-
-    QMutexLocker lock{m_databaseInfo.writerMutex.get()};
     initializeAuxiliaryTable(databaseConnection);
     initializeUserTables(databaseConnection);
     initializeNotebookTables(databaseConnection);
     initializeNoteTables(databaseConnection);
     initializeResourceTables(databaseConnection);
-
-    // TODO: continue from here
+    initializeTagsTables(databaseConnection);
+    initializeSavedSearchTables(databaseConnection);
+    initializeExtraTriggers(databaseConnection);
 }
 
 void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnection)
@@ -745,7 +721,7 @@ void TablesInitializer::initializeResourceTables(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
-            "Cannot create ResourcesMimeIndex table in the local storage "
+            "Cannot create ResourcesMimeIndex index in the local storage "
             "database"));
 
     res = query.exec(
@@ -773,7 +749,7 @@ void TablesInitializer::initializeResourceTables(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
-            "Cannot create ResourceRecognitionDataIndex table in the local "
+            "Cannot create ResourceRecognitionDataIndex index in the local "
             "storage database"));
 
     res = query.exec(
@@ -927,6 +903,282 @@ void TablesInitializer::initializeResourceTables(
             "quentier::local_storage::sql::tables_initializer",
             "Cannot create ResourceAttributesApplicationDataFullMap table in "
             "the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteResources("
+        "  localNote     REFERENCES Notes(localUid)             ON UPDATE "
+        "CASCADE, "
+        "  note          REFERENCES Notes(guid)                 ON UPDATE "
+        "CASCADE, "
+        "  localResource REFERENCES Resources(resourceLocalUid) ON UPDATE "
+        "CASCADE, "
+        "  resource      REFERENCES Resources(resourceGuid)     ON UPDATE "
+        "CASCADE, "
+        "  UNIQUE(localNote, localResource) ON CONFLICT REPLACE)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteResources table in the local storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE INDEX IF NOT EXISTS NoteResourcesNote ON "
+                       "NoteResources(localNote)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteResourcesNote index in the local storage "
+            "database"));
+}
+
+void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
+{
+    QSqlQuery query{databaseConnection};
+
+    bool res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS Tags("
+        "  localUid              TEXT PRIMARY KEY     NOT NULL UNIQUE, "
+        "  guid                  TEXT                 DEFAULT NULL UNIQUE, "
+        "  linkedNotebookGuid REFERENCES LinkedNotebooks(guid) ON UPDATE "
+        "CASCADE, "
+        "  updateSequenceNumber  INTEGER              DEFAULT NULL, "
+        "  name                  TEXT                 DEFAULT NULL, "
+        "  nameLower             TEXT                 DEFAULT NULL, "
+        "  parentGuid REFERENCES Tags(guid)           ON UPDATE CASCADE "
+        "DEFAULT NULL, "
+        "  parentLocalUid REFERENCES Tags(localUid)   ON UPDATE CASCADE "
+        "DEFAULT NULL, "
+        "  isDirty               INTEGER              NOT NULL, "
+        "  isLocal               INTEGER              NOT NULL, "
+        "  isFavorited           INTEGER              NOT NULL, "
+        "  UNIQUE(localUid, guid), "
+        "  UNIQUE(nameLower, linkedNotebookGuid) "
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create Tags table in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE INDEX IF NOT EXISTS TagNameUpperIndex ON Tags(nameLower)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create TagNameUpperIndex index in the local storage "
+            "database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS TagFTS "
+        "USING FTS4(content=\"Tags\", localUid, guid, nameLower)"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create TagFTS virtual table in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "TagFTS_BeforeDeleteTrigger "
+                       "BEFORE DELETE ON Tags "
+                       "BEGIN "
+                       "DELETE FROM TagFTS WHERE localUid=old.localUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create TagFTS before delete trigger in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "TagFTS_AfterInsertTrigger AFTER INSERT ON Tags "
+                       "BEGIN "
+                       "INSERT INTO TagFTS(TagFTS) VALUES('rebuild'); "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create TagFTS after insert trigger in the local storage "
+            "database"));
+
+    // clang-format off
+    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS TagsSearchName "
+                                    "ON Tags(nameLower)"));
+    // clang-format on
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create TagSearchName index in the local storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS NoteTags("
+        "  localNote REFERENCES Notes(localUid) ON UPDATE CASCADE, "
+        "  note REFERENCES Notes(guid)          ON UPDATE CASCADE, "
+        "  localTag REFERENCES Tags(localUid)   ON UPDATE CASCADE, "
+        "  tag  REFERENCES Tags(guid)           ON UPDATE CASCADE, "
+        "  tagIndexInNote        INTEGER        DEFAULT NULL, "
+        "  UNIQUE(localNote, localTag) ON CONFLICT REPLACE"
+        ")"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteTags table in the local storage database"));
+
+    // clang-format off
+    res = query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS NoteTagsNote "
+                                    "ON NoteTags(localNote)"));
+    // clang-format on
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create NoteTagsNote index in the local storage database"));
+}
+
+void TablesInitializer::initializeSavedSearchTables(
+    QSqlDatabase & databaseConnection)
+{
+    QSqlQuery query{databaseConnection};
+
+    bool res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS SavedSearches("
+        "  localUid                        TEXT PRIMARY KEY    NOT NULL "
+        "UNIQUE, "
+        "  guid                            TEXT                DEFAULT NULL "
+        "UNIQUE, "
+        "  name                            TEXT                DEFAULT NULL, "
+        "  nameLower                       TEXT                DEFAULT NULL "
+        "UNIQUE, "
+        "  query                           TEXT                DEFAULT NULL, "
+        "  format                          INTEGER             DEFAULT NULL, "
+        "  updateSequenceNumber            INTEGER             DEFAULT NULL, "
+        "  isDirty                         INTEGER             NOT NULL, "
+        "  isLocal                         INTEGER             NOT NULL, "
+        "  includeAccount                  INTEGER             DEFAULT NULL, "
+        "  includePersonalLinkedNotebooks  INTEGER             DEFAULT NULL, "
+        "  includeBusinessLinkedNotebooks  INTEGER             DEFAULT NULL, "
+        "  isFavorited                     INTEGER             NOT NULL, "
+        "  UNIQUE(localUid, guid))"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create SavedSearches table in the local storage database"));
+}
+
+void TablesInitializer::initializeExtraTriggers(
+    QSqlDatabase & databaseConnection)
+{
+    QSqlQuery query{databaseConnection};
+
+    // clang-format off
+    bool res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "on_linked_notebook_delete_trigger "
+                       "BEFORE DELETE ON LinkedNotebooks "
+                       "BEGIN "
+                       "DELETE FROM Notebooks WHERE "
+                       "Notebooks.linkedNotebookGuid=OLD.guid; "
+                       "DELETE FROM Tags WHERE "
+                       "Tags.linkedNotebookGuid=OLD.guid; "
+                       "END"));
+    // clang-format on
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create on linked notebook delete trigger in the local "
+            "storage database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS "
+                       "on_note_delete_trigger "
+                       "BEFORE DELETE ON Notes "
+                       "BEGIN "
+                       "DELETE FROM Resources WHERE "
+                       "Resources.noteLocalUid=OLD.localUid; "
+                       "DELETE FROM ResourceRecognitionData WHERE "
+                       "ResourceRecognitionData.noteLocalUid=OLD.localUid; "
+                       "DELETE FROM NoteTags WHERE "
+                       "NoteTags.localNote=OLD.localUid; "
+                       "DELETE FROM NoteResources WHERE "
+                       "NoteResources.localNote=OLD.localUid; "
+                       "DELETE FROM SharedNotes WHERE "
+                       "SharedNotes.sharedNoteNoteGuid=OLD.guid; "
+                       "DELETE FROM NoteRestrictions WHERE "
+                       "NoteRestrictions.noteLocalUid=OLD.localUid; "
+                       "DELETE FROM NoteLimits WHERE "
+                       "NoteLimits.noteLocalUid=OLD.localUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create on note delete trigger in the local storage "
+            "database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TRIGGER IF NOT EXISTS "
+        "on_resource_delete_trigger "
+        "BEFORE DELETE ON Resources "
+        "BEGIN "
+        "DELETE FROM ResourceRecognitionData "
+        "WHERE ResourceRecognitionData.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributes WHERE "
+        "ResourceAttributes.resourceLocalUid=OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributesApplicationDataKeysOnly WHERE "
+        "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM ResourceAttributesApplicationDataFullMap WHERE "
+        "ResourceAttributesApplicationDataFullMap.resourceLocalUid="
+        "OLD.resourceLocalUid; "
+        "DELETE FROM NoteResources WHERE "
+        "NoteResources.localResource=OLD.resourceLocalUid; "
+        "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create on resource delete trigger in the local storage "
+            "database"));
+
+    res = query.exec(
+        QStringLiteral("CREATE TRIGGER IF NOT EXISTS on_tag_delete_trigger "
+                       "BEFORE DELETE ON Tags "
+                       "BEGIN "
+                       "DELETE FROM NoteTags WHERE "
+                       "NoteTags.localTag=OLD.localUid; "
+                       "END"));
+
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tables_initializer",
+            "Cannot create on tag delete trigger in the local storage "
+            "database"));
 }
 
 } // namespace quentier::local_storage::sql

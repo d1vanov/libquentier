@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.10.2)
 
 set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
+set(TESTS_RESOURCES_NAME ${TESTS_NAME}_resources)
+
+qt5_add_resources(${TESTS_RESOURCES_NAME}
+  tests.qrc)
 
 add_executable(${TESTS_NAME}
   ConnectionPoolTest.cpp
-  main.cpp)
+  main.cpp
+  TablesInitializerTest.cpp
+  ${${TESTS_RESOURCES_NAME}})
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE
