@@ -178,6 +178,7 @@ set(UTILITY_HEADERS
     headers/quentier/utility/SysInfo.h
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
+    headers/quentier/utility/Threading.h
     headers/quentier/utility/UidGenerator.h)
 
 set(PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
