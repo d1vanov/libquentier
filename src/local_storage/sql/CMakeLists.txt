@@ -10,7 +10,9 @@ target_sources(${LIBRARY_NAME}
   ConnectionPool.h
   ErrorHandling.h
   TablesInitializer.cpp
-  TablesInitializer.h)
+  TablesInitializer.h
+  VersionHandler.cpp
+  VersionHandler.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

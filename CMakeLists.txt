@@ -241,6 +241,11 @@ set(PRIVATE_HEADERS
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
 
+if(NOT BUILD_WITH_QT6)
+  list(APPEND PRIVATE_HEADERS
+    src/utility/Qt5Promise.h)
+endif()
+
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND PRIVATE_HEADERS
        src/synchronization/AuthenticationManager_p.h)
@@ -442,6 +447,7 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
     src/utility/System.cpp
+    src/utility/Threading.cpp
     src/utility/TagSortByParentChildRelations.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)

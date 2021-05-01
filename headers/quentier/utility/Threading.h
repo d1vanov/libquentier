@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/utility/Linkage.h>
+
 #include <QAbstractEventDispatcher>
 #include <QObject>
 
@@ -27,6 +29,10 @@
 #include <QThread>
 #endif
 
+#include <functional>
+
+class QRunnable;
+
 namespace quentier::utility {
 
 template <typename Function>
@@ -35,7 +41,7 @@ void postToObject(QObject * pObject, Function && function)
     Q_ASSERT(pObject);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QMetaObject::invoke(pObject, std::forward<Function>(function));
+    QMetaObject::invokeMethod(pObject, std::forward<Function>(function));
 #else
     QObject src;
     QObject::connect(
@@ -61,5 +67,12 @@ void postToThread(QThread * pThread, Function && function)
         Qt::QueuedConnection);
 #endif
 }
+
+/**
+ * Create QRunnable from a function - sort of a workaround for Qt < 5.15
+ * where QRunnable::create does the same job
+ */
+[[nodiscard]] QUENTIER_EXPORT QRunnable * createFunctionRunnable(
+    std::function<void()> function);
 
 } // namespace quentier::utility
