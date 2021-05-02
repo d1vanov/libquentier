@@ -239,7 +239,8 @@ set(PRIVATE_HEADERS
     src/utility/FileSystemWatcher_p.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
-    src/utility/StringUtils_p.h)
+    src/utility/StringUtils_p.h
+    src/utility/ThreadingPrivate.h)
 
 if(NOT BUILD_WITH_QT6)
   list(APPEND PRIVATE_HEADERS

@@ -27,6 +27,7 @@
 
 #include <memory>
 
+class QSqlDatabase;
 class QThreadPool;
 
 namespace quentier::local_storage::sql {
@@ -46,8 +47,9 @@ public:
     [[nodiscard]] QFuture<qint32> highestSupportedVersion() const;
 
 private:
-    [[nodiscard]] qint32 versionImpl() const;
-    [[nodiscard]] qint32 highestSupportedVersionImpl() const;
+    [[nodiscard]] qint32 versionImpl(QSqlDatabase & databaseConnection) const;
+
+    [[nodiscard]] qint32 highestSupportedVersionImpl() const noexcept;
 
 private:
     ConnectionPoolPtr m_pConnectionPool;

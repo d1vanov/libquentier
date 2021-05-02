@@ -21,6 +21,7 @@
 #include <quentier/utility/Linkage.h>
 
 #include <QAbstractEventDispatcher>
+#include <QFuture>
 #include <QObject>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)

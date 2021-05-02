@@ -17,8 +17,12 @@
  */
 
 #include "ConnectionPool.h"
+#include "ErrorHandling.h"
 #include "VersionHandler.h"
 
+#include "../src/utility/ThreadingPrivate.h"
+
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/Threading.h>
 
 #include <QException>
@@ -29,6 +33,8 @@
 #include "../../utility/Qt5Promise.h"
 #endif
 
+#include <QSqlQuery>
+#include <QSqlRecord>
 #include <QThreadPool>
 
 namespace quentier::local_storage::sql {
@@ -87,7 +93,9 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
                 return;
             }
 
-            const qint32 currentVersion = self->versionImpl();
+            auto databaseConnection = self->m_pConnectionPool->database();
+
+            const qint32 currentVersion = self->versionImpl(databaseConnection);
             if (currentVersion < 0) {
                 pResultPromise->addResult(false);
                 pResultPromise->finish();
@@ -107,66 +115,159 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
 QFuture<bool> VersionHandler::requiresUpgrade() const
 {
-    // TODO: implement
-    QPromise<bool> promise;
-    QFuture<bool> future = promise.future();
+    auto pResultPromise= std::make_shared<QPromise<bool>>();
+    QFuture<bool> future = pResultPromise->future();
 
-    promise.start();
-    promise.addResult(false);
-    promise.finish();
+    auto * pRunnable = utility::createFunctionRunnable(
+        [pResultPromise = std::move(pResultPromise),
+         self_weak = weak_from_this()] () mutable
+        {
+            pResultPromise->start();
 
+            const auto self = self_weak.lock();
+            if (!self) {
+                pResultPromise->setException(VersionHandlerDeadException());
+                pResultPromise->finish();
+                return;
+            }
+
+            auto databaseConnection = self->m_pConnectionPool->database();
+
+            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            if (currentVersion < 0) {
+                pResultPromise->addResult(false);
+                pResultPromise->finish();
+                return;
+            }
+
+            const qint32 highestSupportedVersion =
+                self->highestSupportedVersionImpl();
+
+            pResultPromise->addResult(currentVersion < highestSupportedVersion);
+            pResultPromise->finish();
+        });
+
+    m_pThreadPool->start(pRunnable);
     return future;
 }
 
 QFuture<QList<ILocalStoragePatchPtr>> VersionHandler::requiredPatches() const
 {
-    // TODO: implement
-    QPromise<QList<ILocalStoragePatchPtr>> promise;
-    QFuture<QList<ILocalStoragePatchPtr>> future = promise.future();
+    auto pResultPromise= std::make_shared<QPromise<QList<ILocalStoragePatchPtr>>>();
+    QFuture<QList<ILocalStoragePatchPtr>> future = pResultPromise->future();
 
-    promise.start();
-    promise.addResult(QList<ILocalStoragePatchPtr>{});
-    promise.finish();
+    auto * pRunnable = utility::createFunctionRunnable(
+        [pResultPromise = std::move(pResultPromise),
+         self_weak = weak_from_this()] () mutable
+        {
+            pResultPromise->start();
 
+            const auto self = self_weak.lock();
+            if (!self) {
+                pResultPromise->setException(VersionHandlerDeadException());
+                pResultPromise->finish();
+                return;
+            }
+
+            auto databaseConnection = self->m_pConnectionPool->database();
+
+            const qint32 currentVersion = self->versionImpl(databaseConnection);
+
+            QList<ILocalStoragePatchPtr> patches;
+            if (currentVersion == 1) {
+                // TODO: append patch from 1 to 2 when all the interface
+                // problems get figured out
+                /*
+                patches.append(std::make_shared<LocalStoragePatch1To2>(
+                        m_account, m_localStorageManager, m_sqlDatabase));
+                */
+            }
+
+            pResultPromise->addResult(patches);
+            pResultPromise->finish();
+        });
+
+    m_pThreadPool->start(pRunnable);
     return future;
 }
 
 QFuture<qint32> VersionHandler::version() const
 {
-    // TODO: implement
-    QPromise<qint32> promise;
-    QFuture<qint32> future = promise.future();
+    auto pResultPromise= std::make_shared<QPromise<qint32>>();
+    QFuture<qint32> future = pResultPromise->future();
 
-    promise.start();
-    promise.addResult(false);
-    promise.finish();
+    auto * pRunnable = utility::createFunctionRunnable(
+        [pResultPromise = std::move(pResultPromise),
+         self_weak = weak_from_this()] () mutable
+        {
+            pResultPromise->start();
 
+            const auto self = self_weak.lock();
+            if (!self) {
+                pResultPromise->setException(VersionHandlerDeadException());
+                pResultPromise->finish();
+                return;
+            }
+
+            auto databaseConnection = self->m_pConnectionPool->database();
+
+            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            pResultPromise->addResult(currentVersion);
+            pResultPromise->finish();
+        });
+
+    m_pThreadPool->start(pRunnable);
     return future;
 }
 
 QFuture<qint32> VersionHandler::highestSupportedVersion() const
 {
-    // TODO: implement
-    QPromise<qint32> promise;
-    QFuture<qint32> future = promise.future();
-
-    promise.start();
-    promise.addResult(false);
-    promise.finish();
-
-    return future;
+    return utility::makeReadyFuture(highestSupportedVersionImpl());
 }
 
-qint32 VersionHandler::versionImpl() const
+qint32 VersionHandler::versionImpl(QSqlDatabase & databaseConnection) const
 {
-    // TODO: implement
-    return 0;
+    const QString queryString =
+        QStringLiteral("SELECT version FROM Auxiliary LIMIT 1");
+
+    QSqlQuery query{databaseConnection};
+    bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST(
+        res, query, "local_storage::sql::version_handler",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::version_handler",
+            "failed to execute SQL query checking whether "
+             "the database requires an upgrade"));
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::version_handler",
+            "No version was found within the local "
+                << "storage database, assuming version 1");
+        return 1;
+    }
+
+    const QVariant value = query.record().value(QStringLiteral("version"));
+    bool conversionResult = false;
+    const int version = value.toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        ErrorString errorDescription{QT_TRANSLATE_NOOP(
+                "quentier::local_storage::sql::version_handler",
+                "failed to decode the current local storage database "
+                "version")};
+        QNWARNING(
+            "local_storage::sql::version_handler",
+            errorDescription << ", value = " << value);
+        throw DatabaseRequestException{errorDescription};
+    }
+
+    QNDEBUG("local_storage::sql::version_handler", "Version = " << version);
+    return version;
 }
 
-qint32 VersionHandler::highestSupportedVersionImpl() const
+qint32 VersionHandler::highestSupportedVersionImpl() const noexcept
 {
-    // TODO: implement
-    return 0;
+    return 2;
 }
 
 } // namespace quentier::local_storage::sql

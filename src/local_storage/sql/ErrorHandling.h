@@ -18,6 +18,11 @@
 
 #pragma once
 
+#include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/types/ErrorString.h>
+
+#include <QSqlError>
+
 #define ENSURE_DB_REQUEST(res, query, component, message)                      \
     if (Q_UNLIKELY(!res)) {                                                    \
         ErrorString error(message);                                            \
@@ -25,6 +30,7 @@
         error.details() = lastQueryError.text();                               \
         error.details() += QStringLiteral(" (native error code = ");           \
         error.details() += lastQueryError.nativeErrorCode();                   \
+        error.details() += QStringLiteral(")");                                \
         QNWARNING(component, error);                                           \
         throw DatabaseRequestException{error};                                 \
     }
