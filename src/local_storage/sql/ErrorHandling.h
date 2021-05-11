@@ -34,3 +34,15 @@
         QNWARNING(component, error);                                           \
         throw DatabaseRequestException{error};                                 \
     }
+
+#define CHECK_DB_REQUEST(res, query, component, message)                       \
+    if (Q_UNLIKELY(!res)) {                                                    \
+        ErrorString error(message);                                            \
+        const auto lastQueryError = query.lastError();                         \
+        error.details() = lastQueryError.text();                               \
+        error.details() += QStringLiteral(" (native error code = ");           \
+        error.details() += lastQueryError.nativeErrorCode();                   \
+        error.details() += QStringLiteral(")");                                \
+        QNWARNING(component, error);                                           \
+        return false;                                                          \
+    }
