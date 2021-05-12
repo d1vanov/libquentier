@@ -21,6 +21,7 @@
 #include "Fwd.h"
 
 #include <quentier/local_storage/Fwd.h>
+#include <quentier/types/Account.h>
 
 #include <QFuture>
 #include <QtGlobal>
@@ -36,7 +37,8 @@ class VersionHandler final: public std::enable_shared_from_this<VersionHandler>
 {
 public:
     explicit VersionHandler(
-        ConnectionPoolPtr pConnectionPool, QThreadPool * pThreadPool);
+        Account account, ConnectionPoolPtr pConnectionPool,
+        QThreadPool * pThreadPool);
 
     [[nodiscard]] QFuture<bool> isVersionTooHigh() const;
     [[nodiscard]] QFuture<bool> requiresUpgrade() const;
@@ -52,6 +54,7 @@ private:
     [[nodiscard]] qint32 highestSupportedVersionImpl() const noexcept;
 
 private:
+    Account m_account;
     ConnectionPoolPtr m_pConnectionPool;
     QThreadPool * m_pThreadPool;
 };

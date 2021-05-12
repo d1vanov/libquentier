@@ -37,12 +37,12 @@
 
 #define CHECK_DB_REQUEST(res, query, component, message)                       \
     if (Q_UNLIKELY(!res)) {                                                    \
-        ErrorString error(message);                                            \
+        errorDescription.setBase(message);                                     \
         const auto lastQueryError = query.lastError();                         \
-        error.details() = lastQueryError.text();                               \
-        error.details() += QStringLiteral(" (native error code = ");           \
-        error.details() += lastQueryError.nativeErrorCode();                   \
-        error.details() += QStringLiteral(")");                                \
-        QNWARNING(component, error);                                           \
+        errorDescription.details() = lastQueryError.text();                    \
+        errorDescription.details() += QStringLiteral(" (native error code = ");\
+        errorDescription.details() += lastQueryError.nativeErrorCode();        \
+        errorDescription.details() += QStringLiteral(")");                     \
+        QNWARNING(component, errorDescription);                                \
         return false;                                                          \
     }

@@ -707,6 +707,10 @@ target_include_directories(${LIBNAME}_interface
   ${CMAKE_CURRENT_SOURCE_DIR}/headers
   ${CMAKE_CURRENT_BINARY_DIR})
 
+target_link_libraries(${LIBNAME}_interface
+  INTERFACE
+  QEverCloud::qt5qevercloud)
+
 include(GenerateExportHeader)
 
 generate_export_header(

@@ -20,6 +20,8 @@
 #include "ErrorHandling.h"
 #include "VersionHandler.h"
 
+#include "patches/Patch1To2.h"
+
 #include "../src/utility/ThreadingPrivate.h"
 
 #include <quentier/logging/QuentierLogger.h>
@@ -67,10 +69,13 @@ private:
 };
 
 VersionHandler::VersionHandler(
-    ConnectionPoolPtr pConnectionPool, QThreadPool * pThreadPool) :
+    Account account, ConnectionPoolPtr pConnectionPool,
+    QThreadPool * pThreadPool) :
+    m_account{std::move(account)},
     m_pConnectionPool{std::move(pConnectionPool)},
     m_pThreadPool{pThreadPool}
 {
+    Q_ASSERT(!m_account.isEmpty());
     Q_ASSERT(m_pConnectionPool);
     Q_ASSERT(m_pThreadPool);
 }
@@ -175,12 +180,8 @@ QFuture<QList<ILocalStoragePatchPtr>> VersionHandler::requiredPatches() const
 
             QList<ILocalStoragePatchPtr> patches;
             if (currentVersion == 1) {
-                // TODO: append patch from 1 to 2 when all the interface
-                // problems get figured out
-                /*
-                patches.append(std::make_shared<LocalStoragePatch1To2>(
-                        m_account, m_localStorageManager, m_sqlDatabase));
-                */
+                patches.append(std::make_shared<Patch1To2>(
+                    self->m_account, self->m_pConnectionPool));
             }
 
             pResultPromise->addResult(patches);

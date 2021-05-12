@@ -27,6 +27,7 @@ namespace quentier::local_storage::sql {
 
 class Q_DECL_HIDDEN Patch1To2 final : public ILocalStoragePatch
 {
+    Q_OBJECT
 public:
     explicit Patch1To2(
         Account account, ConnectionPoolPtr pConnectionPool,

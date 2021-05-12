@@ -12,7 +12,9 @@ target_sources(${LIBRARY_NAME}
   TablesInitializer.cpp
   TablesInitializer.h
   VersionHandler.cpp
-  VersionHandler.h)
+  VersionHandler.h
+  patches/Patch1To2.cpp
+  patches/Patch1To2.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
