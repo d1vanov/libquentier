@@ -31,6 +31,12 @@
 class QSqlDatabase;
 class QThreadPool;
 
+namespace quentier {
+
+class ErrorString;
+
+} // namespace quentier
+
 namespace quentier::local_storage::sql {
 
 class VersionHandler final: public std::enable_shared_from_this<VersionHandler>
@@ -49,7 +55,9 @@ public:
     [[nodiscard]] QFuture<qint32> highestSupportedVersion() const;
 
 private:
-    [[nodiscard]] qint32 versionImpl(QSqlDatabase & databaseConnection) const;
+    [[nodiscard]] qint32 versionImpl(
+        QSqlDatabase & databaseConnection,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] qint32 highestSupportedVersionImpl() const noexcept;
 

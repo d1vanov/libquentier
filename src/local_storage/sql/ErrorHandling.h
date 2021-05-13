@@ -23,7 +23,7 @@
 
 #include <QSqlError>
 
-#define ENSURE_DB_REQUEST(res, query, component, message)                      \
+#define ENSURE_DB_REQUEST_THROW(res, query, component, message)                \
     if (Q_UNLIKELY(!res)) {                                                    \
         ErrorString error(message);                                            \
         const auto lastQueryError = query.lastError();                         \
@@ -35,7 +35,7 @@
         throw DatabaseRequestException{error};                                 \
     }
 
-#define CHECK_DB_REQUEST(res, query, component, message)                       \
+#define ENSURE_DB_REQUEST_RETURN(res, query, component, message, retval)       \
     if (Q_UNLIKELY(!res)) {                                                    \
         errorDescription.setBase(message);                                     \
         const auto lastQueryError = query.lastError();                         \
@@ -44,5 +44,5 @@
         errorDescription.details() += lastQueryError.nativeErrorCode();        \
         errorDescription.details() += QStringLiteral(")");                     \
         QNWARNING(component, errorDescription);                                \
-        return false;                                                          \
+        return retval;                                                         \
     }

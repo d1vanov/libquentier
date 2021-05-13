@@ -56,16 +56,16 @@ QString accountPersistentStoragePath(const Account & account)
 {
     QString storagePath = applicationPersistentStoragePath();
     if (Q_UNLIKELY(storagePath.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     if (Q_UNLIKELY(account.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     QString accountName = account.name();
     if (Q_UNLIKELY(accountName.isEmpty())) {
-        return storagePath;
+        return {};
     }
 
     if (account.type() == Account::Type::Local) {

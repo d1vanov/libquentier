@@ -100,7 +100,10 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
             auto databaseConnection = self->m_pConnectionPool->database();
 
-            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            ErrorString errorDescription;
+            const qint32 currentVersion = self->versionImpl(
+                databaseConnection, errorDescription);
+
             if (currentVersion < 0) {
                 pResultPromise->addResult(false);
                 pResultPromise->finish();
@@ -138,7 +141,10 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
             auto databaseConnection = self->m_pConnectionPool->database();
 
-            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            ErrorString errorDescription;
+            const qint32 currentVersion = self->versionImpl(
+                databaseConnection, errorDescription);
+
             if (currentVersion < 0) {
                 pResultPromise->addResult(false);
                 pResultPromise->finish();
@@ -176,7 +182,9 @@ QFuture<QList<ILocalStoragePatchPtr>> VersionHandler::requiredPatches() const
 
             auto databaseConnection = self->m_pConnectionPool->database();
 
-            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            ErrorString errorDescription;
+            const qint32 currentVersion = self->versionImpl(
+                databaseConnection, errorDescription);
 
             QList<ILocalStoragePatchPtr> patches;
             if (currentVersion == 1) {
@@ -212,7 +220,18 @@ QFuture<qint32> VersionHandler::version() const
 
             auto databaseConnection = self->m_pConnectionPool->database();
 
-            const qint32 currentVersion = self->versionImpl(databaseConnection);
+            ErrorString errorDescription;
+            const qint32 currentVersion = self->versionImpl(
+                databaseConnection, errorDescription);
+
+            if (currentVersion < 0) {
+                pResultPromise->setException(
+                    DatabaseRequestException{errorDescription});
+
+                pResultPromise->finish();
+                return;
+            }
+
             pResultPromise->addResult(currentVersion);
             pResultPromise->finish();
         });
@@ -226,19 +245,22 @@ QFuture<qint32> VersionHandler::highestSupportedVersion() const
     return utility::makeReadyFuture(highestSupportedVersionImpl());
 }
 
-qint32 VersionHandler::versionImpl(QSqlDatabase & databaseConnection) const
+qint32 VersionHandler::versionImpl(
+    QSqlDatabase & databaseConnection, ErrorString & errorDescription) const
 {
     const QString queryString =
         QStringLiteral("SELECT version FROM Auxiliary LIMIT 1");
 
     QSqlQuery query{databaseConnection};
     bool res = query.exec(queryString);
-    ENSURE_DB_REQUEST(
+
+    ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::version_handler",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::version_handler",
             "failed to execute SQL query checking whether "
-             "the database requires an upgrade"));
+             "the database requires an upgrade"),
+        -1);
 
     if (!query.next()) {
         QNDEBUG(
@@ -252,14 +274,14 @@ qint32 VersionHandler::versionImpl(QSqlDatabase & databaseConnection) const
     bool conversionResult = false;
     const int version = value.toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                "quentier::local_storage::sql::version_handler",
-                "failed to decode the current local storage database "
-                "version")};
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::version_handler",
+            "failed to decode the current local storage database "
+            "version"));
         QNWARNING(
             "local_storage::sql::version_handler",
             errorDescription << ", value = " << value);
-        throw DatabaseRequestException{errorDescription};
+        return -1;
     }
 
     QNDEBUG("local_storage::sql::version_handler", "Version = " << version);

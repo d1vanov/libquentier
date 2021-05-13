@@ -52,7 +52,7 @@ void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnecti
     bool res = query.exec(
         QStringLiteral("SELECT name FROM sqlite_master WHERE name='Auxiliary'"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -75,7 +75,7 @@ void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnecti
                         "'X' CHECK (lock='X'), "
                         "  version INTEGER              NOT NULL DEFAULT 2"
                         ")"));
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -84,7 +84,7 @@ void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnecti
     res = query.exec(
         QStringLiteral("INSERT INTO Auxiliary (version) VALUES(2)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -116,7 +116,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  userPhotoLastUpdateTimestamp INTEGER             DEFAULT NULL"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -158,7 +158,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  salesforcePushEnabled      INTEGER               DEFAULT NULL, "
         "  shouldLogClientEvent       INTEGER               DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -170,7 +170,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
         "  promotion               TEXT                    DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -182,7 +182,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  id REFERENCES Users(id) ON UPDATE CASCADE, "
         "  address                 TEXT                    DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -213,7 +213,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  nextChargeDate              INTEGER             DEFAULT NULL, "
         "  availablePoints             INTEGER             DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -234,7 +234,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  userSavedSearchesMax        INTEGER             DEFAULT NULL, "
         "  noteResourceCountMax        INTEGER             DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -248,7 +248,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "  role                    INTEGER                 DEFAULT NULL, "
         "  businessInfoEmail       TEXT                    DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -267,7 +267,7 @@ void TablesInitializer::initializeUserTables(QSqlDatabase & databaseConnection)
         "DELETE FROM BusinessUserInfo WHERE id=OLD.id; "
         "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -296,7 +296,7 @@ void TablesInitializer::initializeNotebookTables(
         "  businessId                      INTEGER           DEFAULT NULL"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -340,7 +340,7 @@ void TablesInitializer::initializeNotebookTables(
         "  UNIQUE(notebookNameUpper, linkedNotebookGuid) "
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -351,7 +351,7 @@ void TablesInitializer::initializeNotebookTables(
                        "USING FTS4(content=\"Notebooks\", "
                        "localUid, guid, notebookName)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -365,7 +365,7 @@ void TablesInitializer::initializeNotebookTables(
                        "DELETE FROM NotebookFTS WHERE localUid=old.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -380,7 +380,7 @@ void TablesInitializer::initializeNotebookTables(
         "INSERT INTO NotebookFTS(NotebookFTS) VALUES('rebuild'); "
         "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -414,7 +414,7 @@ void TablesInitializer::initializeNotebookTables(
         "  expungeWhichSharedNotebookRestrictions   INTEGER     DEFAULT NULL "
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -446,7 +446,7 @@ void TablesInitializer::initializeNotebookTables(
         "  UNIQUE(sharedNotebookShareId, sharedNotebookNotebookGuid) ON "
         "CONFLICT REPLACE)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -514,7 +514,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         "  UNIQUE(localUid, guid)"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -547,7 +547,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         "  UNIQUE(sharedNoteNoteGuid, sharedNoteRecipientIdentityId) "
         "ON CONFLICT REPLACE)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -562,7 +562,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         "  noShareNote                      INTEGER         DEFAULT NULL, "
         "  noShareNotePublicly              INTEGER         DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -575,7 +575,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                                   "NoteRestrictions(noteLocalUid)"));
     // clang-format on
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -591,7 +591,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
         "  noteSizeMax                      INTEGER         DEFAULT NULL, "
         "  uploaded                         INTEGER         DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -602,7 +602,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                                     "ON Notes(notebookLocalUid)"));
     // clang-format on
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -624,7 +624,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                        "applicationDataKeysOnly, "
                        "applicationDataKeysMap, applicationDataValues)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -638,7 +638,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                        "DELETE FROM NoteFTS WHERE localUid=old.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -653,7 +653,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                        "INSERT INTO NoteFTS(NoteFTS) VALUES('rebuild'); "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -673,7 +673,7 @@ void TablesInitializer::initializeNoteTables(QSqlDatabase & databaseConnection)
                        "Notes.notebookLocalUid=OLD.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -708,7 +708,7 @@ void TablesInitializer::initializeResourceTables(
         "  UNIQUE(resourceLocalUid, resourceGuid)"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -717,7 +717,7 @@ void TablesInitializer::initializeResourceTables(
     res = query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS ResourceMimeIndex ON Resources(mime)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -733,7 +733,7 @@ void TablesInitializer::initializeResourceTables(
                        "  recognitionData                 TEXT                 "
                        "   DEFAULT NULL)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -745,7 +745,7 @@ void TablesInitializer::initializeResourceTables(
                        "ResourceRecognitionDataIndex "
                        "ON ResourceRecognitionData(recognitionData)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -758,7 +758,7 @@ void TablesInitializer::initializeResourceTables(
                        "(content=\"ResourceRecognitionData\", "
                        "resourceLocalUid, noteLocalUid, recognitionData)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -774,7 +774,7 @@ void TablesInitializer::initializeResourceTables(
                        "WHERE recognitionData=old.recognitionData; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -790,7 +790,7 @@ void TablesInitializer::initializeResourceTables(
                        "ResourceRecognitionDataFTS) VALUES('rebuild'); "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -802,7 +802,7 @@ void TablesInitializer::initializeResourceTables(
                        "ResourceMimeFTS USING FTS4(content=\"Resources\", "
                        "resourceLocalUid, mime)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -817,7 +817,7 @@ void TablesInitializer::initializeResourceTables(
                        "DELETE FROM ResourceMimeFTS WHERE mime=old.mime; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -833,7 +833,7 @@ void TablesInitializer::initializeResourceTables(
                        "VALUES('rebuild'); "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -843,7 +843,7 @@ void TablesInitializer::initializeResourceTables(
     res = query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS ResourceNote ON Resources(noteLocalUid)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -866,7 +866,7 @@ void TablesInitializer::initializeResourceTables(
         "  UNIQUE(resourceLocalUid) "
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -881,7 +881,7 @@ void TablesInitializer::initializeResourceTables(
         "  UNIQUE(resourceLocalUid, resourceKey)"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -897,7 +897,7 @@ void TablesInitializer::initializeResourceTables(
         "  UNIQUE(resourceLocalUid, resourceMapKey) ON CONFLICT REPLACE"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -916,7 +916,7 @@ void TablesInitializer::initializeResourceTables(
         "CASCADE, "
         "  UNIQUE(localNote, localResource) ON CONFLICT REPLACE)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -926,7 +926,7 @@ void TablesInitializer::initializeResourceTables(
         QStringLiteral("CREATE INDEX IF NOT EXISTS NoteResourcesNote ON "
                        "NoteResources(localNote)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -958,7 +958,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         "  UNIQUE(nameLower, linkedNotebookGuid) "
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -967,7 +967,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
     res = query.exec(QStringLiteral(
         "CREATE INDEX IF NOT EXISTS TagNameUpperIndex ON Tags(nameLower)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -978,7 +978,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         "CREATE VIRTUAL TABLE IF NOT EXISTS TagFTS "
         "USING FTS4(content=\"Tags\", localUid, guid, nameLower)"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -993,7 +993,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
                        "DELETE FROM TagFTS WHERE localUid=old.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1007,7 +1007,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
                        "INSERT INTO TagFTS(TagFTS) VALUES('rebuild'); "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1019,7 +1019,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
                                     "ON Tags(nameLower)"));
     // clang-format on
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1035,7 +1035,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
         "  UNIQUE(localNote, localTag) ON CONFLICT REPLACE"
         ")"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1046,7 +1046,7 @@ void TablesInitializer::initializeTagsTables(QSqlDatabase & databaseConnection)
                                     "ON NoteTags(localNote)"));
     // clang-format on
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1078,7 +1078,7 @@ void TablesInitializer::initializeSavedSearchTables(
         "  isFavorited                     INTEGER             NOT NULL, "
         "  UNIQUE(localUid, guid))"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1103,7 +1103,7 @@ void TablesInitializer::initializeExtraTriggers(
                        "END"));
     // clang-format on
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1131,7 +1131,7 @@ void TablesInitializer::initializeExtraTriggers(
                        "NoteLimits.noteLocalUid=OLD.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1158,7 +1158,7 @@ void TablesInitializer::initializeExtraTriggers(
         "NoteResources.localResource=OLD.resourceLocalUid; "
         "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
@@ -1173,7 +1173,7 @@ void TablesInitializer::initializeExtraTriggers(
                        "NoteTags.localTag=OLD.localUid; "
                        "END"));
 
-    ENSURE_DB_REQUEST(
+    ENSURE_DB_REQUEST_THROW(
         res, query, "local_storage::sql::tables_initializer",
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",

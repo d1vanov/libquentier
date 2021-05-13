@@ -606,11 +606,12 @@ bool Patch1To2::apply(ErrorString & errorDescription)
                                              "WHERE resourceLocalUid='%1'")
                                .arg(resourceLocalId));
 
-            CHECK_DB_REQUEST(
+            ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::1_to_2",
                 QT_TR_NOOP(
                     "failed to execute SQL query fetching resource data bodies "
-                    "from tables"));
+                    "from tables"),
+                false);
 
             if (Q_UNLIKELY(!query.next())) {
                 errorDescription = errorPrefix;
@@ -890,11 +891,12 @@ bool Patch1To2::apply(ErrorString & errorDescription)
             const bool res =
                 query.exec(QStringLiteral("UPDATE Resources SET dataBody=NULL, "
                                           "alternateDataBody=NULL"));
-            CHECK_DB_REQUEST(
+            ENSURE_DB_REQUEST_RETURN(
                 res, query, "local_storage::sql::patches::1_to_2",
                 QT_TR_NOOP(
                     "failed to execute SQL query setting resource data bodies "
-                    "in tables to null"));
+                    "in tables to null"),
+                false);
         }
 
         QNDEBUG(
@@ -932,10 +934,11 @@ bool Patch1To2::apply(ErrorString & errorDescription)
     const bool res = query.exec(
         QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(2)"));
 
-    CHECK_DB_REQUEST(
+    ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::1_to_2",
         QT_TR_NOOP(
-            "failed to execute SQL query increasing local storage version"));
+            "failed to execute SQL query increasing local storage version"),
+        false);
 
     QNDEBUG(
         "local_storage:patches",
@@ -952,10 +955,10 @@ int Patch1To2::resourceCount(
     const bool res = query.exec(
         QStringLiteral("SELECT COUNT(*) FROM Resources"));
 
-    CHECK_DB_REQUEST(
+    ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::1_to_2",
-        QT_TR_NOOP(
-            "failed to execute SQL query fetching resource count"));
+        QT_TR_NOOP("failed to execute SQL query fetching resource count"),
+        false);
 
     if (!query.next()) {
         QNDEBUG(
@@ -983,11 +986,12 @@ bool Patch1To2::compactDatabase(
 
     const bool res = query.exec(QStringLiteral("VACUUM"));
 
-    CHECK_DB_REQUEST(
+    ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::patches::1_to_2",
         QT_TR_NOOP(
             "failed to execute SQL query compacting the local storage "
-            "database"));
+            "database"),
+        false);
 
     return true;
 }
