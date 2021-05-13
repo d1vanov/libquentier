@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,9 @@ class QUENTIER_EXPORT DatabaseLockFailedException : public IQuentierException
 {
 public:
     explicit DatabaseLockFailedException(const ErrorString & message);
+
+    [[nodiscard]] DatabaseLockFailedException * clone() const override;
+    void raise() const override;
 
 protected:
     [[nodiscard]] QString exceptionDisplayName() const override;

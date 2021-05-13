@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,6 +31,9 @@ class QUENTIER_EXPORT DatabaseRequestException : public IQuentierException
 {
 public:
     explicit DatabaseRequestException(const ErrorString & message);
+
+    [[nodiscard]] DatabaseRequestException * clone() const override;
+    void raise() const override;
 
 protected:
     [[nodiscard]] QString exceptionDisplayName() const override;

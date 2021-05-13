@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,16 @@ LoggerInitializationException::LoggerInitializationException(
 QString LoggerInitializationException::exceptionDisplayName() const
 {
     return QStringLiteral("LoggerInitializationException");
+}
+
+LoggerInitializationException * LoggerInitializationException::clone() const
+{
+    return new LoggerInitializationException{errorMessage()};
+}
+
+void LoggerInitializationException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

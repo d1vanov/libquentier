@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,16 @@ NullPtrException::NullPtrException(const ErrorString & message) :
 QString NullPtrException::exceptionDisplayName() const
 {
     return QStringLiteral("NullPtrException");
+}
+
+NullPtrException * NullPtrException::clone() const
+{
+    return new NullPtrException{errorMessage()};
+}
+
+void NullPtrException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

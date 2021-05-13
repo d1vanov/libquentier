@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,16 @@ DatabaseOpeningException::DatabaseOpeningException(
 QString DatabaseOpeningException::exceptionDisplayName() const
 {
     return QStringLiteral("DatabaseOpeningException");
+}
+
+DatabaseOpeningException * DatabaseOpeningException::clone() const
+{
+    return new DatabaseOpeningException{errorMessage()};
+}
+
+void DatabaseOpeningException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,16 @@ ApplicationSettingsInitializationException::
 QString ApplicationSettingsInitializationException::exceptionDisplayName() const
 {
     return QStringLiteral("ApplicationSettingsInitializationException");
+}
+
+ApplicationSettingsInitializationException * ApplicationSettingsInitializationException::clone() const
+{
+    return new ApplicationSettingsInitializationException{errorMessage()};
+}
+
+void ApplicationSettingsInitializationException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

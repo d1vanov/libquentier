@@ -19,9 +19,10 @@
 #ifndef LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
 #define LIB_QUENTIER_EXCEPTION_I_QUENTIER_EXCEPTION_H
 
-#include <exception>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Printable.h>
+
+#include <QException>
 
 namespace quentier {
 
@@ -33,13 +34,12 @@ namespace quentier {
  * IQuentierException based exceptions can provide both localized and
  * non-localized error messages.
  */
-class QUENTIER_EXPORT IQuentierException :
-    public Printable,
-    public std::exception
+class QUENTIER_EXPORT IQuentierException : public Printable, public QException
 {
 public:
     ~IQuentierException() noexcept override;
 
+    [[nodiscard]] ErrorString errorMessage() const;
     [[nodiscard]] QString localizedErrorMessage() const;
     [[nodiscard]] QString nonLocalizedErrorMessage() const;
 

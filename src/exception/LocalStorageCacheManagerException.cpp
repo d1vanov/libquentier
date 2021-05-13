@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,6 +28,17 @@ LocalStorageCacheManagerException::LocalStorageCacheManagerException(
 QString LocalStorageCacheManagerException::exceptionDisplayName() const
 {
     return QStringLiteral("LocalStorageCacheManagerException");
+}
+
+LocalStorageCacheManagerException * LocalStorageCacheManagerException::clone()
+    const
+{
+    return new LocalStorageCacheManagerException{errorMessage()};
+}
+
+void LocalStorageCacheManagerException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

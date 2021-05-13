@@ -65,6 +65,11 @@ IQuentierException & IQuentierException::operator=(
     return *this;
 }
 
+ErrorString IQuentierException::errorMessage() const
+{
+    return m_message;
+}
+
 QString IQuentierException::localizedErrorMessage() const
 {
     return m_message.localizedString();

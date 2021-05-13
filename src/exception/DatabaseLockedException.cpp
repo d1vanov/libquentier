@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,16 @@ DatabaseLockedException::DatabaseLockedException(const ErrorString & message) :
 QString DatabaseLockedException::exceptionDisplayName() const
 {
     return QStringLiteral("DatabaseLockedException");
+}
+
+DatabaseLockedException * DatabaseLockedException::clone() const
+{
+    return new DatabaseLockedException{errorMessage()};
+}
+
+void DatabaseLockedException::raise() const
+{
+    throw *this;
 }
 
 } // namespace quentier

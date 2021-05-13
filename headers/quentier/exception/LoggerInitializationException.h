@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2021 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -27,6 +27,9 @@ class QUENTIER_EXPORT LoggerInitializationException : public IQuentierException
 {
 public:
     explicit LoggerInitializationException(const ErrorString & message);
+
+    [[nodiscard]] LoggerInitializationException * clone() const override;
+    void raise() const override;
 
 protected:
     [[nodiscard]] QString exceptionDisplayName() const override;
