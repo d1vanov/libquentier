@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/Threading.h>
+#include "Threading.h"
 
 #include <QRunnable>
 #include <QtGlobal>

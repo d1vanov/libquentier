@@ -21,10 +21,13 @@
 #include <memory>
 
 class QSqlDatabase;
+class QThread;
 
 namespace quentier::local_storage::sql {
 
 class ConnectionPool;
 using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
+
+using QThreadPtr = std::shared_ptr<QThread>;
 
 } // namespace quentier::local_storage::sql

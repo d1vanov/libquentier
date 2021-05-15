@@ -178,7 +178,6 @@ set(UTILITY_HEADERS
     headers/quentier/utility/SysInfo.h
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
-    headers/quentier/utility/Threading.h
     headers/quentier/utility/UidGenerator.h)
 
 set(PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
@@ -240,7 +239,7 @@ set(PRIVATE_HEADERS
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h
-    src/utility/ThreadingPrivate.h)
+    src/utility/Threading.h)
 
 if(NOT BUILD_WITH_QT6)
   list(APPEND PRIVATE_HEADERS
@@ -700,6 +699,8 @@ add_library(${LIBNAME} SHARED
             ${${PROJECT_NAME}_RESOURCES_RCC}
             ${${PROJECT_NAME}_FORMS_HEADERS})
 
+# Interface library exposing project's public interface features to internal
+# project parts
 add_library(${LIBNAME}_interface INTERFACE)
 
 target_include_directories(${LIBNAME}_interface
@@ -710,6 +711,19 @@ target_include_directories(${LIBNAME}_interface
 target_link_libraries(${LIBNAME}_interface
   INTERFACE
   QEverCloud::qt5qevercloud)
+
+# Interface library exposing private project's features (not included in the API
+# of the shared library) to internal project parts
+add_library(${LIBNAME}_private INTERFACE)
+
+target_include_directories(${LIBNAME}_private
+  INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# Project parts using private features automatically use public features as well
+target_link_libraries(${LIBNAME}_private
+  INTERFACE
+  ${LIBNAME}_interface)
 
 include(GenerateExportHeader)
 

@@ -37,14 +37,14 @@ public:
 
     Q_DISABLE_COPY(QPromise)
 
-    QPromise(QPromise<T> && other) : d(other.d)
+    QPromise(QPromise<T> && other) noexcept : d(other.d)
     {
         other.d = QFutureInterface<T>();
     }
 
     QPromise(QFutureInterface<T> & other) : d(other) {}
 
-    QPromise& operator=(QPromise<T> && other)
+    QPromise& operator=(QPromise<T> && other) noexcept
     {
         QPromise<T> tmp(std::move(other));
         tmp.swap(*this);

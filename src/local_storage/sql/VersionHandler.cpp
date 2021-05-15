@@ -22,10 +22,9 @@
 
 #include "patches/Patch1To2.h"
 
-#include "../src/utility/ThreadingPrivate.h"
-
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/utility/Threading.h>
+
+#include <utility/Threading.h>
 
 #include <QException>
 
@@ -70,10 +69,11 @@ private:
 
 VersionHandler::VersionHandler(
     Account account, ConnectionPoolPtr pConnectionPool,
-    QThreadPool * pThreadPool) :
+    QThreadPool * pThreadPool, QThreadPtr pWriterThread) :
     m_account{std::move(account)},
     m_pConnectionPool{std::move(pConnectionPool)},
-    m_pThreadPool{pThreadPool}
+    m_pThreadPool{pThreadPool},
+    m_pWriterThread{std::move(pWriterThread)}
 {
     Q_ASSERT(!m_account.isEmpty());
     Q_ASSERT(m_pConnectionPool);
@@ -162,10 +162,10 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
     return future;
 }
 
-QFuture<QList<ILocalStoragePatchPtr>> VersionHandler::requiredPatches() const
+QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 {
-    auto pResultPromise= std::make_shared<QPromise<QList<ILocalStoragePatchPtr>>>();
-    QFuture<QList<ILocalStoragePatchPtr>> future = pResultPromise->future();
+    auto pResultPromise= std::make_shared<QPromise<QList<IPatchPtr>>>();
+    auto future = pResultPromise->future();
 
     auto * pRunnable = utility::createFunctionRunnable(
         [pResultPromise = std::move(pResultPromise),
@@ -186,10 +186,11 @@ QFuture<QList<ILocalStoragePatchPtr>> VersionHandler::requiredPatches() const
             const qint32 currentVersion = self->versionImpl(
                 databaseConnection, errorDescription);
 
-            QList<ILocalStoragePatchPtr> patches;
+            QList<IPatchPtr> patches;
             if (currentVersion == 1) {
                 patches.append(std::make_shared<Patch1To2>(
-                    self->m_account, self->m_pConnectionPool));
+                    self->m_account, self->m_pConnectionPool,
+                    self->m_pWriterThread));
             }
 
             pResultPromise->addResult(patches);

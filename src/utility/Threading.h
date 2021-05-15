@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <quentier/utility/Linkage.h>
-
 #include <QAbstractEventDispatcher>
 #include <QFuture>
 #include <QObject>
@@ -28,6 +26,12 @@
 #include <QMetaObject>
 #else
 #include <QThread>
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include "Qt5Promise.h"
 #endif
 
 #include <functional>
@@ -70,10 +74,26 @@ void postToThread(QThread * pThread, Function && function)
 }
 
 /**
+ * Create QFuture already containing the result
+ */
+template <class T>
+[[nodiscard]] QFuture<T> makeReadyFuture(T && t)
+{
+    QPromise<T> promise;
+    QFuture<T> future = promise.future();
+
+    promise.start();
+    promise.addResult(std::forward<T>(t));
+    promise.finish();
+
+    return future;
+}
+
+/**
  * Create QRunnable from a function - sort of a workaround for Qt < 5.15
  * where QRunnable::create does the same job
  */
-[[nodiscard]] QUENTIER_EXPORT QRunnable * createFunctionRunnable(
+[[nodiscard]] QRunnable * createFunctionRunnable(
     std::function<void()> function);
 
 } // namespace quentier::utility

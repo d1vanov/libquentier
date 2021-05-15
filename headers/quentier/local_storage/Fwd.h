@@ -36,6 +36,9 @@ using ILocalStoragePtr = std::shared_ptr<ILocalStorage>;
 
 class ILocalStorageNotifier;
 
+class IPatch;
+using IPatchPtr = std::shared_ptr<IPatch>;
+
 } // namespace local_storage
 } // namespace quentier
 

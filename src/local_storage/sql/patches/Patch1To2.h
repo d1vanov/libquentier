@@ -20,18 +20,34 @@
 
 #include "../Fwd.h"
 
-#include <quentier/local_storage/ILocalStoragePatch.h>
+#include <quentier/local_storage/IPatch.h>
 #include <quentier/types/Account.h>
+
+#include <QCoreApplication>
+#include <QPointer>
+
+#include <memory>
+
+template <class T>
+class QPromise;
+
+namespace quentier {
+
+class ErrorString;
+
+} // namespace quentier
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN Patch1To2 final : public ILocalStoragePatch
+class Q_DECL_HIDDEN Patch1To2 final :
+    public IPatch,
+    public std::enable_shared_from_this<Patch1To2>
 {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(Patch1To2)
 public:
     explicit Patch1To2(
         Account account, ConnectionPoolPtr pConnectionPool,
-        QObject * parent = nullptr);
+        QThreadPtr pWriterThread);
 
     ~Patch1To2() noexcept override = default;
 
@@ -48,39 +64,37 @@ public:
     [[nodiscard]] QString patchShortDescription() const override;
     [[nodiscard]] QString patchLongDescription() const override;
 
-    [[nodiscard]] bool backupLocalStorage(
-        ErrorString & errorDescription) override;
+    [[nodiscard]] QFuture<void> backupLocalStorage() override;
 
-    [[nodiscard]] bool restoreLocalStorageFromBackup(
-        ErrorString & errorDescription) override;
+    [[nodiscard]] QFuture<void> restoreLocalStorageFromBackup() override;
 
-    [[nodiscard]] bool removeLocalStorageBackup(
-        ErrorString & errorDescription) override;
+    [[nodiscard]] QFuture<void> removeLocalStorageBackup() override;
 
-    [[nodiscard]] bool apply(ErrorString & errorDescription) override;
-
-    // private
-Q_SIGNALS:
-    void copyDbFile(QString sourcePath, QString destPath);
-
-private Q_SLOTS:
-    void startLocalStorageBackup();
-    void startLocalStorageRestorationFromBackup();
+    [[nodiscard]] QFuture<void> apply() override;
 
 private:
-    [[nodiscard]] QStringList
-    listResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
+    [[nodiscard]] bool backupLocalStorageImpl(
+        QPromise<void> & promise, // for progress updates and cancel tracking
         ErrorString & errorDescription);
 
-    void filterResourceLocalIdsForDatabaseUpgradeFromVersion1ToVersion2(
-        QStringList & resourceLocalIds);
-
-    [[nodiscard]] bool
-    ensureExistenceOfResouceDataDirsForDatabaseUpgradeFromVersion1ToVersion2(
+    [[nodiscard]] bool restoreLocalStorageFromBackupImpl(
+        QPromise<void> & promise, // for progress updates
         ErrorString & errorDescription);
 
-    [[nodiscard]] int resourceCount(
+    [[nodiscard]] bool removeLocalStorageBackupImpl(
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool applyImpl(
+        QPromise<void> & promise, // for progress updates
+        ErrorString & errorDescription);
+
+    [[nodiscard]] QStringList listResourceLocalIds(
         QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    void filterResourceLocalIds(QStringList & resourceLocalIds) const;
+
+    [[nodiscard]] bool ensureExistenceOfResouceDataDirs(
+        ErrorString & errorDescription);
 
     [[nodiscard]] bool compactDatabase(
         QSqlDatabase & database, ErrorString & errorDescription);
@@ -92,6 +106,7 @@ private:
     Account m_account;
     ConnectionPoolPtr m_pConnectionPool;
     QString m_backupDirPath;
+    QThreadPtr m_pWriterThread;
 };
 
 } // namespace quentier::local_storage::sql
