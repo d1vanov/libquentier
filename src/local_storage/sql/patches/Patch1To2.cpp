@@ -117,8 +117,26 @@ Patch1To2::Patch1To2(
     m_pConnectionPool{std::move(pConnectionPool)},
     m_pWriterThread{std::move(pWriterThread)}
 {
-    Q_ASSERT(m_pConnectionPool);
-    Q_ASSERT(m_pWriterThread);
+    if (Q_UNLIKELY(m_account.isEmpty())) {
+        throw Patch1To2Exception{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::patches::Patch1To2",
+                "Patch1To2 ctor: account is empty")}};
+    }
+
+    if (Q_UNLIKELY(!m_pConnectionPool)) {
+        throw Patch1To2Exception{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::patches::Patch1To2",
+                "Patch1To2 ctor: connection pool is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_pWriterThread)) {
+        throw Patch1To2Exception{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::patches::Patch1To2",
+                "Patch1To2 ctor: writer thread is null")}};
+    }
 }
 
 QString Patch1To2::patchShortDescription() const
