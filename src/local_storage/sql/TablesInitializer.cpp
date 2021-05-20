@@ -57,7 +57,7 @@ void TablesInitializer::initializeAuxiliaryTable(QSqlDatabase & databaseConnecti
         QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::tables_initializer",
             "Cannot check the existence of Auxiliary table in the local storage"
-            "database"));
+            " database"));
 
     const bool auxiliaryTableExists = query.next();
     QNDEBUG(
