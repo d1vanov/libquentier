@@ -35,6 +35,7 @@
 #endif
 
 #include <functional>
+#include <memory>
 
 class QRunnable;
 
@@ -61,6 +62,23 @@ void postToThread(QThread * pThread, Function && function)
     Q_ASSERT(pThread);
 
     QObject * pObject = QAbstractEventDispatcher::instance(pThread);
+    if (!pObject) {
+        // Thread's event loop has not been started yet. Create a dummy QObject,
+        // move it to the target thread, set things up so that it would be
+        // destroyed after the job is done and use postToObject.
+        auto pDummyObj = std::make_unique<QObject>();
+        pDummyObj->moveToThread(pThread);
+        auto * pObj = pDummyObj.release();
+        postToObject(
+            pObj,
+            [pObj, function = std::forward<Function>(function)] () mutable
+            {
+                function();
+                pObj->deleteLater();
+            });
+        return;
+    }
+
     Q_ASSERT(pObject);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
