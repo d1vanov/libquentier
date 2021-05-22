@@ -204,13 +204,12 @@ QFuture<void> Patch1To2::backupLocalStorage()
     auto future = promise.future();
 
     promise.setProgressRange(0, 100);
+    promise.start();
 
     utility::postToThread(
         m_pWriterThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
-            promise.start();
-
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QT_TRANSLATE_NOOP(
@@ -252,13 +251,12 @@ QFuture<void> Patch1To2::restoreLocalStorageFromBackup()
     auto future = promise.future();
 
     promise.setProgressRange(0, 100);
+    promise.start();
 
     utility::postToThread(
         m_pWriterThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
-            promise.start();
-
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QT_TRANSLATE_NOOP(
@@ -298,13 +296,12 @@ QFuture<void> Patch1To2::removeLocalStorageBackup()
 
     QPromise<void> promise;
     auto future = promise.future();
+    promise.start();
 
     utility::postToThread(
         m_pWriterThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
-            promise.start();
-
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QT_TRANSLATE_NOOP(
@@ -344,13 +341,12 @@ QFuture<void> Patch1To2::apply()
     auto future = promise.future();
 
     promise.setProgressRange(0, 100);
+    promise.start();
 
     utility::postToThread(
         m_pWriterThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
-            promise.start();
-
             auto self = self_weak.lock();
             if (!self) {
                 ErrorString errorDescription{QT_TRANSLATE_NOOP(
@@ -401,6 +397,21 @@ bool Patch1To2::backupLocalStorageImpl(
     m_backupDirPath = storagePath +
         QStringLiteral("/backup_upgrade_1_to_2_") +
         QDateTime::currentDateTime().toString(Qt::ISODate);
+
+    QDir backupDir{m_backupDirPath};
+    if (!backupDir.exists()) {
+        if (!backupDir.mkpath(m_backupDirPath)) {
+            errorDescription.setBase(
+                QT_TR_NOOP("Cannot create a backup copy of the local storage: "
+                           "failed to create folder for backup files"));
+
+            errorDescription.details() =
+                QDir::toNativeSeparators(m_backupDirPath);
+
+            QNWARNING("local_storage:sql:patches", errorDescription);
+            return false;
+        }
+    }
 
     // First sort out shm and wal files; they are typically quite small
     // compared to the main db file so won't even bother computing the progress
