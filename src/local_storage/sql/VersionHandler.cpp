@@ -82,19 +82,19 @@ VersionHandler::VersionHandler(
 
 QFuture<bool> VersionHandler::isVersionTooHigh() const
 {
-    auto pResultPromise= std::make_shared<QPromise<bool>>();
-    QFuture<bool> future = pResultPromise->future();
+    auto promise = std::make_shared<QPromise<bool>>();
+    const auto future = promise->future();
+
+    promise->start();
 
     auto * pRunnable = utility::createFunctionRunnable(
-        [pResultPromise = std::move(pResultPromise),
+        [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
-            pResultPromise->start();
-
             const auto self = self_weak.lock();
             if (!self) {
-                pResultPromise->setException(VersionHandlerDeadException());
-                pResultPromise->finish();
+                promise->setException(VersionHandlerDeadException());
+                promise->finish();
                 return;
             }
 
@@ -105,16 +105,16 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
                 databaseConnection, errorDescription);
 
             if (currentVersion < 0) {
-                pResultPromise->addResult(false);
-                pResultPromise->finish();
+                promise->addResult(false);
+                promise->finish();
                 return;
             }
 
             const qint32 highestSupportedVersion =
                 self->highestSupportedVersionImpl();
 
-            pResultPromise->addResult(currentVersion > highestSupportedVersion);
-            pResultPromise->finish();
+            promise->addResult(currentVersion > highestSupportedVersion);
+            promise->finish();
         });
 
     m_pThreadPool->start(pRunnable);
@@ -123,19 +123,19 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
 QFuture<bool> VersionHandler::requiresUpgrade() const
 {
-    auto pResultPromise= std::make_shared<QPromise<bool>>();
-    QFuture<bool> future = pResultPromise->future();
+    auto promise = std::make_shared<QPromise<bool>>();
+    const auto future = promise->future();
+
+    promise->start();
 
     auto * pRunnable = utility::createFunctionRunnable(
-        [pResultPromise = std::move(pResultPromise),
+        [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
-            pResultPromise->start();
-
             const auto self = self_weak.lock();
             if (!self) {
-                pResultPromise->setException(VersionHandlerDeadException());
-                pResultPromise->finish();
+                promise->setException(VersionHandlerDeadException());
+                promise->finish();
                 return;
             }
 
@@ -146,16 +146,16 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
                 databaseConnection, errorDescription);
 
             if (currentVersion < 0) {
-                pResultPromise->addResult(false);
-                pResultPromise->finish();
+                promise->addResult(false);
+                promise->finish();
                 return;
             }
 
             const qint32 highestSupportedVersion =
                 self->highestSupportedVersionImpl();
 
-            pResultPromise->addResult(currentVersion < highestSupportedVersion);
-            pResultPromise->finish();
+            promise->addResult(currentVersion < highestSupportedVersion);
+            promise->finish();
         });
 
     m_pThreadPool->start(pRunnable);
@@ -164,19 +164,19 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
 QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 {
-    auto pResultPromise= std::make_shared<QPromise<QList<IPatchPtr>>>();
-    auto future = pResultPromise->future();
+    auto promise = std::make_shared<QPromise<QList<IPatchPtr>>>();
+    const auto future = promise->future();
+
+    promise->start();
 
     auto * pRunnable = utility::createFunctionRunnable(
-        [pResultPromise = std::move(pResultPromise),
+        [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
-            pResultPromise->start();
-
             const auto self = self_weak.lock();
             if (!self) {
-                pResultPromise->setException(VersionHandlerDeadException());
-                pResultPromise->finish();
+                promise->setException(VersionHandlerDeadException());
+                promise->finish();
                 return;
             }
 
@@ -193,8 +193,8 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
                     self->m_pWriterThread));
             }
 
-            pResultPromise->addResult(patches);
-            pResultPromise->finish();
+            promise->addResult(patches);
+            promise->finish();
         });
 
     m_pThreadPool->start(pRunnable);
@@ -203,19 +203,19 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 
 QFuture<qint32> VersionHandler::version() const
 {
-    auto pResultPromise= std::make_shared<QPromise<qint32>>();
-    QFuture<qint32> future = pResultPromise->future();
+    auto promise = std::make_shared<QPromise<qint32>>();
+    const auto future = promise->future();
+
+    promise->start();
 
     auto * pRunnable = utility::createFunctionRunnable(
-        [pResultPromise = std::move(pResultPromise),
+        [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
-            pResultPromise->start();
-
             const auto self = self_weak.lock();
             if (!self) {
-                pResultPromise->setException(VersionHandlerDeadException());
-                pResultPromise->finish();
+                promise->setException(VersionHandlerDeadException());
+                promise->finish();
                 return;
             }
 
@@ -226,15 +226,15 @@ QFuture<qint32> VersionHandler::version() const
                 databaseConnection, errorDescription);
 
             if (currentVersion < 0) {
-                pResultPromise->setException(
+                promise->setException(
                     DatabaseRequestException{errorDescription});
 
-                pResultPromise->finish();
+                promise->finish();
                 return;
             }
 
-            pResultPromise->addResult(currentVersion);
-            pResultPromise->finish();
+            promise->addResult(currentVersion);
+            promise->finish();
         });
 
     m_pThreadPool->start(pRunnable);
