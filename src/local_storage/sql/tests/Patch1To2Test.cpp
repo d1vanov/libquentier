@@ -24,6 +24,7 @@
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
 
 #include <gtest/gtest.h>
@@ -187,7 +188,6 @@ TEST(Patch1To2Test, BackupLocalStorageTest)
         QDir::tempPath() + QStringLiteral("/") + gTestDbConnectionName};
 
     Q_ASSERT(testLocalStorageDir.isValid());
-    testLocalStorageDir.setAutoRemove(false);
 
     auto connectionPool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), gTestAccountName,
@@ -214,7 +214,7 @@ TEST(Patch1To2Test, BackupLocalStorageTest)
 
     bool foundLocalStorageBackup = false;
     QDir dir{localStorageDirPath};
-    const auto dirInfos = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    auto dirInfos = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     EXPECT_FALSE(dirInfos.isEmpty());
     for (const auto & dirInfo: qAsConst(dirInfos)) {
         if (dirInfo.fileName().startsWith(
@@ -236,6 +236,80 @@ TEST(Patch1To2Test, BackupLocalStorageTest)
     }
 
     EXPECT_TRUE(foundLocalStorageBackup);
+
+    // Now ensure the ability to restore the backup
+
+    EXPECT_TRUE(removeFile(
+        localStorageDirPath + QStringLiteral("/") + gTestDatabaseFileName));
+
+    auto restoreLocalStorageFromBackupFuture =
+        patch->restoreLocalStorageFromBackup();
+
+    restoreLocalStorageFromBackupFuture.waitForFinished();
+
+    auto fileInfos = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    EXPECT_FALSE(fileInfos.isEmpty());
+    bool foundRestoredFromBackupLocalStorage = false;
+
+    for (const auto & fileInfo: qAsConst(fileInfos)) {
+        if (fileInfo.fileName() == gTestDatabaseFileName) {
+            foundRestoredFromBackupLocalStorage = true;
+            break;
+        }
+    }
+
+    dirInfos = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const auto & dirInfo: qAsConst(dirInfos)) {
+        if (dirInfo.fileName().startsWith(
+                QStringLiteral("backup_upgrade_1_to_2_")))
+        {
+            QDir backupDir{dir.absoluteFilePath(dirInfo.fileName())};
+
+            const auto files =
+                backupDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+            EXPECT_FALSE(files.isEmpty());
+
+            for (const auto & file: qAsConst(files)) {
+                EXPECT_TRUE(file.fileName().startsWith(gTestDatabaseFileName));
+            }
+
+            foundLocalStorageBackup = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundRestoredFromBackupLocalStorage);
+    EXPECT_TRUE(foundLocalStorageBackup);
+
+    // Now ensure the backup is deleted properly
+
+    auto removeLocalStorageBackupFuture =
+        patch->removeLocalStorageBackup();
+
+    removeLocalStorageBackupFuture.waitForFinished();
+
+    const auto entries = dir.entryInfoList(
+        QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+
+    foundLocalStorageBackup = false;
+    foundRestoredFromBackupLocalStorage = false;
+
+    for (const auto & entryInfo: qAsConst(entries)) {
+        if (entryInfo.fileName().startsWith(
+                QStringLiteral("backup_upgrade_1_to_2_")))
+        {
+            foundLocalStorageBackup = true;
+            break;
+        }
+
+        if (entryInfo.fileName() == gTestDatabaseFileName) {
+            foundRestoredFromBackupLocalStorage = true;
+        }
+    }
+
+    EXPECT_TRUE(foundRestoredFromBackupLocalStorage);
+    EXPECT_FALSE(foundLocalStorageBackup);
+
     writerThread->quit();
     writerThread->wait();
 }
