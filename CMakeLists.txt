@@ -238,8 +238,7 @@ set(PRIVATE_HEADERS
     src/utility/FileSystemWatcher_p.h
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
-    src/utility/StringUtils_p.h
-    src/utility/Threading.h)
+    src/utility/StringUtils_p.h)
 
 if(NOT BUILD_WITH_QT6)
   list(APPEND PRIVATE_HEADERS
@@ -447,7 +446,6 @@ set(${PROJECT_NAME}_SOURCES
     src/utility/StringUtils_p.cpp
     src/utility/SysInfo.cpp
     src/utility/System.cpp
-    src/utility/Threading.cpp
     src/utility/TagSortByParentChildRelations.cpp
     src/utility/UidGenerator.cpp
     src/utility/VersionInfo.cpp)
@@ -738,6 +736,7 @@ find_package(GMock)
 find_package(GTest)
 
 add_subdirectory(src/local_storage/sql)
+add_subdirectory(src/utility)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
