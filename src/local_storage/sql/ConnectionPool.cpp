@@ -35,12 +35,13 @@ namespace quentier::local_storage::sql {
 
 ConnectionPool::ConnectionPool(
     QString hostName, QString userName, QString password,
-    QString databaseName, QString sqlDriverName) :
+    QString databaseName, QString sqlDriverName, QString connectionOptions) :
     m_hostName{std::move(hostName)},
     m_userName{std::move(userName)},
     m_password{std::move(password)},
     m_databaseName{std::move(databaseName)},
-    m_sqlDriverName{std::move(sqlDriverName)}
+    m_sqlDriverName{std::move(sqlDriverName)},
+    m_connectionOptions{std::move(connectionOptions)}
 {
     const bool isSqlDriverAvailable =
         QSqlDatabase::isDriverAvailable(m_sqlDriverName);
@@ -81,9 +82,9 @@ QSqlDatabase ConnectionPool::database()
         QReadLocker lock{&m_connectionsLock};
 
         auto it = m_connections.find(pCurrentThread);
-        if (it != m_connections.end())
-        {
-            return QSqlDatabase::database(it->m_connectionName, /* open = */ true);
+        if (it != m_connections.end()) {
+            return QSqlDatabase::database(
+                it->m_connectionName, /* open = */ true);
         }
     }
 
@@ -104,7 +105,8 @@ QSqlDatabase ConnectionPool::database()
         QStringLiteral("quentier_local_storage_db_connection_") +
         QString::fromStdString(sstrm.str());
 
-    m_connections[pCurrentThread] = ConnectionData{QPointer{pCurrentThread}, connectionName};
+    m_connections[pCurrentThread] =
+        ConnectionData{QPointer{pCurrentThread}, connectionName};
 
     QObject::connect(
         pCurrentThread,
@@ -131,6 +133,7 @@ QSqlDatabase ConnectionPool::database()
     database.setUserName(m_userName);
     database.setPassword(m_password);
     database.setDatabaseName(m_databaseName);
+    database.setConnectOptions(m_connectionOptions);
 
     if (Q_UNLIKELY(!database.open())) {
         ErrorString error(QT_TRANSLATE_NOOP(

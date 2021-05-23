@@ -33,7 +33,8 @@ class ConnectionPool final: public std::enable_shared_from_this<ConnectionPool>
 public:
     explicit ConnectionPool(
         QString hostName, QString userName, QString password,
-        QString databaseName, QString sqlDriverName);
+        QString databaseName, QString sqlDriverName,
+        QString connectionOptions = {});
 
     ~ConnectionPool();
 
@@ -51,6 +52,7 @@ private:
     const QString m_password;
     const QString m_databaseName;
     const QString m_sqlDriverName;
+    const QString m_connectionOptions;
 
     QReadWriteLock m_connectionsLock;
     QHash<QThread*, ConnectionData> m_connections;
