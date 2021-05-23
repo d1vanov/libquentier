@@ -11,6 +11,7 @@ add_executable(${TESTS_NAME}
   main.cpp
   Patch1To2Test.cpp
   TablesInitializerTest.cpp
+  VersionHandlerTest.cpp
   ${${TESTS_RESOURCES_NAME}})
 
 target_link_libraries(${TESTS_NAME}

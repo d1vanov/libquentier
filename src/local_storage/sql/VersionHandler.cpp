@@ -78,6 +78,7 @@ VersionHandler::VersionHandler(
     Q_ASSERT(!m_account.isEmpty());
     Q_ASSERT(m_pConnectionPool);
     Q_ASSERT(m_pThreadPool);
+    Q_ASSERT(m_pWriterThread);
 }
 
 QFuture<bool> VersionHandler::isVersionTooHigh() const
