@@ -63,6 +63,7 @@ TEST(TablesInitializerTest, InitializeTables)
     const auto referenceMasterTable = QString::fromUtf8(referenceMasterTableFile.readAll()).simplified();
 
     EXPECT_EQ(masterTable, referenceMasterTable);
+    db.close();
 }
 
 } // namespace quentier::local_storage::sql::tests
