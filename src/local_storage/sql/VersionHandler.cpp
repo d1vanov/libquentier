@@ -22,6 +22,7 @@
 
 #include "patches/Patch1To2.h"
 
+#include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
 
 #include <utility/Threading.h>
@@ -40,31 +41,27 @@
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN VersionHandlerDeadException final: public QException
+class Q_DECL_HIDDEN VersionHandlerException final: public IQuentierException
 {
 public:
-    VersionHandlerDeadException()
-        : m_errorDescription{
-            "quentier::local_storage::sql::VersionHandler is dead"}
+    VersionHandlerException(ErrorString errorDescription)
+        : IQuentierException{std::move(errorDescription)}
     {}
+
+    [[nodiscard]] QString exceptionDisplayName() const override
+    {
+        return QStringLiteral("VersionHandlerException");
+    }
 
     void raise() const override
     {
         throw *this;
     }
 
-    [[nodiscard]] VersionHandlerDeadException * clone() const override
+    [[nodiscard]] VersionHandlerException * clone() const override
     {
-        return new VersionHandlerDeadException;
+        return new VersionHandlerException(errorMessage());
     }
-
-    [[nodiscard]] const char * what() const noexcept override
-    {
-        return m_errorDescription.constData();
-    }
-
-private:
-    QByteArray m_errorDescription;
 };
 
 VersionHandler::VersionHandler(
@@ -75,10 +72,33 @@ VersionHandler::VersionHandler(
     m_pThreadPool{pThreadPool},
     m_pWriterThread{std::move(pWriterThread)}
 {
-    Q_ASSERT(!m_account.isEmpty());
-    Q_ASSERT(m_pConnectionPool);
-    Q_ASSERT(m_pThreadPool);
-    Q_ASSERT(m_pWriterThread);
+    if (Q_UNLIKELY(m_account.isEmpty())) {
+        throw VersionHandlerException{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::VersionHandler",
+                "VersionHandler ctor: account is empty")}};
+    }
+
+    if (Q_UNLIKELY(!m_pConnectionPool)) {
+        throw VersionHandlerException{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::VersionHandler",
+                "VersionHandler ctor: connection pool is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_pThreadPool)) {
+        throw VersionHandlerException{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::VersionHandler",
+                "VersionHandler ctor: thread pool is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_pWriterThread)) {
+        throw VersionHandlerException{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::VersionHandler",
+                "VersionHandler ctor: writer thread is null")}};
+    }
 }
 
 QFuture<bool> VersionHandler::isVersionTooHigh() const
@@ -94,7 +114,10 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerDeadException());
+                promise->setException(VersionHandlerException(ErrorString{
+                    QT_TRANSLATE_NOOP(
+                        "local_storage::sql::VersionHandler",
+                        "VersionHandler is dead")}));
                 promise->finish();
                 return;
             }
@@ -106,7 +129,8 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
                 databaseConnection, errorDescription);
 
             if (currentVersion < 0) {
-                promise->addResult(false);
+                promise->setException(
+                    DatabaseRequestException{errorDescription});
                 promise->finish();
                 return;
             }
@@ -135,7 +159,10 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerDeadException());
+                promise->setException(VersionHandlerException(ErrorString{
+                    QT_TRANSLATE_NOOP(
+                        "local_storage::sql::VersionHandler",
+                        "VersionHandler is dead")}));
                 promise->finish();
                 return;
             }
@@ -147,7 +174,8 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
                 databaseConnection, errorDescription);
 
             if (currentVersion < 0) {
-                promise->addResult(false);
+                promise->setException(
+                    DatabaseRequestException{errorDescription});
                 promise->finish();
                 return;
             }
@@ -176,7 +204,10 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerDeadException());
+                promise->setException(VersionHandlerException(ErrorString{
+                    QT_TRANSLATE_NOOP(
+                        "local_storage::sql::VersionHandler",
+                        "VersionHandler is dead")}));
                 promise->finish();
                 return;
             }
@@ -186,6 +217,13 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
             ErrorString errorDescription;
             const qint32 currentVersion = self->versionImpl(
                 databaseConnection, errorDescription);
+
+            if (currentVersion < 0) {
+                promise->setException(
+                    DatabaseRequestException{errorDescription});
+                promise->finish();
+                return;
+            }
 
             QList<IPatchPtr> patches;
             if (currentVersion == 1) {
@@ -215,7 +253,10 @@ QFuture<qint32> VersionHandler::version() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerDeadException());
+                promise->setException(VersionHandlerException(ErrorString{
+                    QT_TRANSLATE_NOOP(
+                        "local_storage::sql::VersionHandler",
+                        "VersionHandler is dead")}));
                 promise->finish();
                 return;
             }
@@ -229,7 +270,6 @@ QFuture<qint32> VersionHandler::version() const
             if (currentVersion < 0) {
                 promise->setException(
                     DatabaseRequestException{errorDescription});
-
                 promise->finish();
                 return;
             }

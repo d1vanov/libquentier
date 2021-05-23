@@ -20,6 +20,8 @@
 #include "../TablesInitializer.h"
 #include "../VersionHandler.h"
 
+#include <quentier/exception/IQuentierException.h>
+
 #include <gtest/gtest.h>
 
 #include <QCoreApplication>
@@ -48,6 +50,8 @@ protected:
 
         m_writerThread = std::make_shared<QThread>();
         m_writerThread->start();
+
+        m_account = Account{gTestAccountName, Account::Type::Local};
     }
 
     void TearDown() override
@@ -62,16 +66,57 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
+    Account m_account;
 };
 
 } // namespace
 
+TEST_F(VersionHandlerTest, Ctor)
+{
+    EXPECT_NO_THROW(
+        const auto versionHandler = std::make_shared<VersionHandler>(
+            m_account, m_connectionPool, QThreadPool::globalInstance(),
+            m_writerThread));
+}
+
+TEST_F(VersionHandlerTest, CtorEmptyAccount)
+{
+    EXPECT_THROW(
+        const auto versionHandler = std::make_shared<VersionHandler>(
+            Account{}, m_connectionPool, QThreadPool::globalInstance(),
+            m_writerThread),
+        IQuentierException);
+}
+
+TEST_F(VersionHandlerTest, CtorNullConnectionPool)
+{
+    EXPECT_THROW(
+        const auto versionHandler = std::make_shared<VersionHandler>(
+            m_account, nullptr, QThreadPool::globalInstance(), m_writerThread),
+        IQuentierException);
+}
+
+TEST_F(VersionHandlerTest, CtorNullThreadPool)
+{
+    EXPECT_THROW(
+        const auto versionHandler = std::make_shared<VersionHandler>(
+            m_account, m_connectionPool, nullptr, m_writerThread),
+        IQuentierException);
+}
+
+TEST_F(VersionHandlerTest, CtorNullWriterThread)
+{
+    EXPECT_THROW(
+        const auto versionHandler = std::make_shared<VersionHandler>(
+            m_account, m_connectionPool, QThreadPool::globalInstance(),
+            nullptr),
+        IQuentierException);
+}
+
 TEST_F(VersionHandlerTest, HandleEmptyNewlyCreatedDatabase)
 {
-    Account account{gTestAccountName, Account::Type::Local};
-
     const auto versionHandler = std::make_shared<VersionHandler>(
-        account, m_connectionPool, QThreadPool::globalInstance(),
+        m_account, m_connectionPool, QThreadPool::globalInstance(),
         m_writerThread);
 
     auto isVersionTooHighFuture = versionHandler->isVersionTooHigh();
