@@ -142,12 +142,14 @@ set(EXCEPTION_HEADERS
     headers/quentier/exception/DatabaseOpeningException.h
     headers/quentier/exception/DatabaseRequestException.h
     headers/quentier/exception/EmptyDataElementException.h
+    headers/quentier/exception/InvalidArgument.h
     headers/quentier/exception/IQuentierException.h
     headers/quentier/exception/LocalStorageCacheManagerException.h
     headers/quentier/exception/LoggerInitializationException.h
     headers/quentier/exception/NoteEditorInitializationException.h
     headers/quentier/exception/NoteEditorPluginInitializationException.h
-    headers/quentier/exception/NullPtrException.h)
+    headers/quentier/exception/NullPtrException.h
+    headers/quentier/exception/RuntimeError.h)
 
 set(UTILITY_HEADERS
     headers/quentier/utility/ApplicationSettings.h
@@ -354,12 +356,14 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/DatabaseLockFailedException.cpp
     src/exception/DatabaseOpeningException.cpp
     src/exception/DatabaseRequestException.cpp
+    src/exception/InvalidArgument.cpp
     src/exception/IQuentierException.cpp
     src/exception/NoteEditorInitializationException.cpp
     src/exception/NoteEditorPluginInitializationException.cpp
     src/exception/NullPtrException.cpp
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
+    src/exception/RuntimeError.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
     src/local_storage/LocalStorageManager.cpp
