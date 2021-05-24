@@ -22,7 +22,8 @@
 
 #include "patches/Patch1To2.h"
 
-#include <quentier/exception/IQuentierException.h>
+#include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 
 #include <utility/Threading.h>
@@ -41,29 +42,6 @@
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN VersionHandlerException final: public IQuentierException
-{
-public:
-    VersionHandlerException(ErrorString errorDescription)
-        : IQuentierException{std::move(errorDescription)}
-    {}
-
-    [[nodiscard]] QString exceptionDisplayName() const override
-    {
-        return QStringLiteral("VersionHandlerException");
-    }
-
-    void raise() const override
-    {
-        throw *this;
-    }
-
-    [[nodiscard]] VersionHandlerException * clone() const override
-    {
-        return new VersionHandlerException(errorMessage());
-    }
-};
-
 VersionHandler::VersionHandler(
     Account account, ConnectionPoolPtr pConnectionPool,
     QThreadPool * pThreadPool, QThreadPtr pWriterThread) :
@@ -73,28 +51,28 @@ VersionHandler::VersionHandler(
     m_pWriterThread{std::move(pWriterThread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw VersionHandlerException{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(!m_pConnectionPool)) {
-        throw VersionHandlerException{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_pThreadPool)) {
-        throw VersionHandlerException{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_pWriterThread)) {
-        throw VersionHandlerException{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: writer thread is null")}};
@@ -114,7 +92,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerException(ErrorString{
+                promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
                         "VersionHandler is dead")}));
@@ -159,7 +137,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerException(ErrorString{
+                promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
                         "VersionHandler is dead")}));
@@ -204,7 +182,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerException(ErrorString{
+                promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
                         "VersionHandler is dead")}));
@@ -253,7 +231,7 @@ QFuture<qint32> VersionHandler::version() const
         {
             const auto self = self_weak.lock();
             if (!self) {
-                promise->setException(VersionHandlerException(ErrorString{
+                promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
                         "VersionHandler is dead")}));
