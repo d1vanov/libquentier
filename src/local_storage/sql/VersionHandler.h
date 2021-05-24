@@ -43,8 +43,8 @@ class VersionHandler final: public std::enable_shared_from_this<VersionHandler>
 {
 public:
     explicit VersionHandler(
-        Account account, ConnectionPoolPtr pConnectionPool,
-        QThreadPool * pThreadPool, QThreadPtr pWriterThread);
+        Account account, ConnectionPoolPtr connectionPool,
+        QThreadPool * threadPool, QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<bool> isVersionTooHigh() const;
     [[nodiscard]] QFuture<bool> requiresUpgrade() const;
@@ -63,9 +63,9 @@ private:
 
 private:
     Account m_account;
-    ConnectionPoolPtr m_pConnectionPool;
-    QThreadPool * m_pThreadPool;
-    QThreadPtr m_pWriterThread;
+    ConnectionPoolPtr m_connectionPool;
+    QThreadPool * m_threadPool;
+    QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

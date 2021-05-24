@@ -43,12 +43,12 @@
 namespace quentier::local_storage::sql {
 
 VersionHandler::VersionHandler(
-    Account account, ConnectionPoolPtr pConnectionPool,
-    QThreadPool * pThreadPool, QThreadPtr pWriterThread) :
+    Account account, ConnectionPoolPtr connectionPool,
+    QThreadPool * threadPool, QThreadPtr writerThread) :
     m_account{std::move(account)},
-    m_pConnectionPool{std::move(pConnectionPool)},
-    m_pThreadPool{pThreadPool},
-    m_pWriterThread{std::move(pWriterThread)}
+    m_connectionPool{std::move(connectionPool)},
+    m_threadPool{threadPool},
+    m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{
@@ -57,21 +57,21 @@ VersionHandler::VersionHandler(
                 "VersionHandler ctor: account is empty")}};
     }
 
-    if (Q_UNLIKELY(!m_pConnectionPool)) {
+    if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_pThreadPool)) {
+    if (Q_UNLIKELY(!m_threadPool)) {
         throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
                 "VersionHandler ctor: thread pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_pWriterThread)) {
+    if (Q_UNLIKELY(!m_writerThread)) {
         throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::VersionHandler",
@@ -100,7 +100,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
                 return;
             }
 
-            auto databaseConnection = self->m_pConnectionPool->database();
+            auto databaseConnection = self->m_connectionPool->database();
 
             ErrorString errorDescription;
             const qint32 currentVersion = self->versionImpl(
@@ -120,7 +120,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
             promise->finish();
         });
 
-    m_pThreadPool->start(pRunnable);
+    m_threadPool->start(pRunnable);
     return future;
 }
 
@@ -145,7 +145,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
                 return;
             }
 
-            auto databaseConnection = self->m_pConnectionPool->database();
+            auto databaseConnection = self->m_connectionPool->database();
 
             ErrorString errorDescription;
             const qint32 currentVersion = self->versionImpl(
@@ -165,7 +165,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
             promise->finish();
         });
 
-    m_pThreadPool->start(pRunnable);
+    m_threadPool->start(pRunnable);
     return future;
 }
 
@@ -190,7 +190,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
                 return;
             }
 
-            auto databaseConnection = self->m_pConnectionPool->database();
+            auto databaseConnection = self->m_connectionPool->database();
 
             ErrorString errorDescription;
             const qint32 currentVersion = self->versionImpl(
@@ -206,15 +206,15 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
             QList<IPatchPtr> patches;
             if (currentVersion == 1) {
                 patches.append(std::make_shared<Patch1To2>(
-                    self->m_account, self->m_pConnectionPool,
-                    self->m_pWriterThread));
+                    self->m_account, self->m_connectionPool,
+                    self->m_writerThread));
             }
 
             promise->addResult(patches);
             promise->finish();
         });
 
-    m_pThreadPool->start(pRunnable);
+    m_threadPool->start(pRunnable);
     return future;
 }
 
@@ -239,7 +239,7 @@ QFuture<qint32> VersionHandler::version() const
                 return;
             }
 
-            auto databaseConnection = self->m_pConnectionPool->database();
+            auto databaseConnection = self->m_connectionPool->database();
 
             ErrorString errorDescription;
             const qint32 currentVersion = self->versionImpl(
@@ -256,7 +256,7 @@ QFuture<qint32> VersionHandler::version() const
             promise->finish();
         });
 
-    m_pThreadPool->start(pRunnable);
+    m_threadPool->start(pRunnable);
     return future;
 }
 

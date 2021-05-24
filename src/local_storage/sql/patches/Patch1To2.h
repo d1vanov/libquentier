@@ -46,8 +46,8 @@ class Q_DECL_HIDDEN Patch1To2 final :
     Q_DECLARE_TR_FUNCTIONS(Patch1To2)
 public:
     explicit Patch1To2(
-        Account account, ConnectionPoolPtr pConnectionPool,
-        QThreadPtr pWriterThread);
+        Account account, ConnectionPoolPtr connectionPool,
+        QThreadPtr writerThread);
 
     ~Patch1To2() noexcept override = default;
 
@@ -104,9 +104,9 @@ private:
 
 private:
     Account m_account;
-    ConnectionPoolPtr m_pConnectionPool;
+    ConnectionPoolPtr m_connectionPool;
     QString m_backupDirPath;
-    QThreadPtr m_pWriterThread;
+    QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

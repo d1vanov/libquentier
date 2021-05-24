@@ -43,7 +43,7 @@ public:
 private:
     struct ConnectionData
     {
-        QPointer<QThread> m_pThread;
+        QPointer<QThread> m_thread;
         QString m_connectionName;
     };
 

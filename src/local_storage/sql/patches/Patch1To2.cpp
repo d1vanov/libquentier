@@ -111,11 +111,11 @@ protected:
 } // namespace
 
 Patch1To2::Patch1To2(
-    Account account, ConnectionPoolPtr pConnectionPool,
-    QThreadPtr pWriterThread) :
+    Account account, ConnectionPoolPtr connectionPool,
+    QThreadPtr writerThread) :
     m_account{std::move(account)},
-    m_pConnectionPool{std::move(pConnectionPool)},
-    m_pWriterThread{std::move(pWriterThread)}
+    m_connectionPool{std::move(connectionPool)},
+    m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw Patch1To2Exception{ErrorString{
@@ -124,14 +124,14 @@ Patch1To2::Patch1To2(
                 "Patch1To2 ctor: account is empty")}};
     }
 
-    if (Q_UNLIKELY(!m_pConnectionPool)) {
+    if (Q_UNLIKELY(!m_connectionPool)) {
         throw Patch1To2Exception{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
                 "Patch1To2 ctor: connection pool is null")}};
     }
 
-    if (Q_UNLIKELY(!m_pWriterThread)) {
+    if (Q_UNLIKELY(!m_writerThread)) {
         throw Patch1To2Exception{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
@@ -207,7 +207,7 @@ QFuture<void> Patch1To2::backupLocalStorage()
     promise.start();
 
     utility::postToThread(
-        m_pWriterThread.get(),
+        m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
             auto self = self_weak.lock();
@@ -254,7 +254,7 @@ QFuture<void> Patch1To2::restoreLocalStorageFromBackup()
     promise.start();
 
     utility::postToThread(
-        m_pWriterThread.get(),
+        m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
             auto self = self_weak.lock();
@@ -299,7 +299,7 @@ QFuture<void> Patch1To2::removeLocalStorageBackup()
     promise.start();
 
     utility::postToThread(
-        m_pWriterThread.get(),
+        m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
             auto self = self_weak.lock();
@@ -344,7 +344,7 @@ QFuture<void> Patch1To2::apply()
     promise.start();
 
     utility::postToThread(
-        m_pWriterThread.get(),
+        m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
             auto self = self_weak.lock();
@@ -753,7 +753,7 @@ bool Patch1To2::applyImpl(
             .value(gUpgrade1To2AllResourceDataCopiedFromTablesToFilesKey)
             .toBool();
 
-    auto database = m_pConnectionPool->database();
+    auto database = m_connectionPool->database();
 
     if (!allResourceDataCopiedFromTablesToFiles) {
         // Part 1: extract the list of resource local uids from the local
