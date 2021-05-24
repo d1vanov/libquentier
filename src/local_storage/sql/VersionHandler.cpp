@@ -33,7 +33,7 @@
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
-#include "../../utility/Qt5Promise.h"
+#include <utility/Qt5Promise.h>
 #endif
 
 #include <QSqlQuery>
@@ -86,7 +86,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
     promise->start();
 
-    auto * pRunnable = utility::createFunctionRunnable(
+    auto * runnable = utility::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -120,7 +120,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
             promise->finish();
         });
 
-    m_threadPool->start(pRunnable);
+    m_threadPool->start(runnable);
     return future;
 }
 
@@ -131,7 +131,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
     promise->start();
 
-    auto * pRunnable = utility::createFunctionRunnable(
+    auto * runnable = utility::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -165,7 +165,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
             promise->finish();
         });
 
-    m_threadPool->start(pRunnable);
+    m_threadPool->start(runnable);
     return future;
 }
 
@@ -176,7 +176,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 
     promise->start();
 
-    auto * pRunnable = utility::createFunctionRunnable(
+    auto * runnable = utility::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -214,7 +214,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
             promise->finish();
         });
 
-    m_threadPool->start(pRunnable);
+    m_threadPool->start(runnable);
     return future;
 }
 
@@ -225,7 +225,7 @@ QFuture<qint32> VersionHandler::version() const
 
     promise->start();
 
-    auto * pRunnable = utility::createFunctionRunnable(
+    auto * runnable = utility::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -256,7 +256,7 @@ QFuture<qint32> VersionHandler::version() const
             promise->finish();
         });
 
-    m_threadPool->start(pRunnable);
+    m_threadPool->start(runnable);
     return future;
 }
 

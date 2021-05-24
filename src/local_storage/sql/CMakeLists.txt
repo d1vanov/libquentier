@@ -13,6 +13,8 @@ target_sources(${LIBRARY_NAME}
   TablesInitializer.h
   VersionHandler.cpp
   VersionHandler.h
+  UsersHandler.cpp
+  UsersHandler.h
   patches/Patch1To2.cpp
   patches/Patch1To2.h)
 
