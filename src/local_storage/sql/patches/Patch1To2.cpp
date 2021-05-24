@@ -20,7 +20,8 @@
 #include "../ConnectionPool.h"
 #include "../ErrorHandling.h"
 
-#include <quentier/exception/IQuentierException.h>
+#include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ApplicationSettings.h>
@@ -84,30 +85,6 @@ bool extractEntry(
     return false;
 }
 
-class Q_DECL_HIDDEN Patch1To2Exception final: public IQuentierException
-{
-public:
-    explicit Patch1To2Exception(ErrorString errorDescription) :
-        IQuentierException(std::move(errorDescription))
-    {}
-
-    [[nodiscard]] Patch1To2Exception * clone() const override
-    {
-        return new Patch1To2Exception{errorMessage()};
-    }
-
-    void raise() const override
-    {
-        throw *this;
-    }
-
-protected:
-    [[nodiscard]] QString exceptionDisplayName() const override
-    {
-        return QStringLiteral("Patch1To2Exception");
-    }
-};
-
 } // namespace
 
 Patch1To2::Patch1To2(
@@ -118,21 +95,21 @@ Patch1To2::Patch1To2(
     m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw Patch1To2Exception{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
                 "Patch1To2 ctor: account is empty")}};
     }
 
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw Patch1To2Exception{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
                 "Patch1To2 ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw Patch1To2Exception{ErrorString{
+        throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
                 "Patch1To2 ctor: writer thread is null")}};
@@ -219,7 +196,7 @@ QFuture<void> Patch1To2::backupLocalStorage()
                 QNWARNING("local_storage:sql:patches", errorDescription);
 
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -230,7 +207,7 @@ QFuture<void> Patch1To2::backupLocalStorage()
 
             if (!res) {
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -266,7 +243,7 @@ QFuture<void> Patch1To2::restoreLocalStorageFromBackup()
                 QNWARNING("local_storage:sql:patches", errorDescription);
 
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -277,7 +254,7 @@ QFuture<void> Patch1To2::restoreLocalStorageFromBackup()
 
             if (!res) {
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -311,7 +288,7 @@ QFuture<void> Patch1To2::removeLocalStorageBackup()
                 QNWARNING("local_storage:sql:patches", errorDescription);
 
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -322,7 +299,7 @@ QFuture<void> Patch1To2::removeLocalStorageBackup()
 
             if (!res) {
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -356,7 +333,7 @@ QFuture<void> Patch1To2::apply()
                 QNWARNING("local_storage:sql:patches", errorDescription);
 
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
@@ -365,7 +342,7 @@ QFuture<void> Patch1To2::apply()
             const bool res = self->applyImpl(promise, errorDescription);
             if (!res) {
                 promise.setException(
-                    Patch1To2Exception{std::move(errorDescription)});
+                    RuntimeError{std::move(errorDescription)});
                 promise.finish();
                 return;
             }
