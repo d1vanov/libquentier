@@ -64,6 +64,17 @@ private:
         const qevercloud::User & user, QSqlDatabase & database,
         ErrorString & errorDescription);
 
+    [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
+        qevercloud::UserID userId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool expungeUserByIdImpl(
+        qevercloud::UserID userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] QList<qevercloud::User> listUsersImpl(
+        QSqlDatabase & database, ErrorString & errorDescription) const;
+
 private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;

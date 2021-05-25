@@ -95,7 +95,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
                 promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
-                        "VersionHandler is dead")}));
+                        "VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -140,7 +140,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
                 promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
-                        "VersionHandler is dead")}));
+                        "VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -185,7 +185,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
                 promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
-                        "VersionHandler is dead")}));
+                        "VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }
@@ -234,7 +234,7 @@ QFuture<qint32> VersionHandler::version() const
                 promise->setException(RuntimeError(ErrorString{
                     QT_TRANSLATE_NOOP(
                         "local_storage::sql::VersionHandler",
-                        "VersionHandler is dead")}));
+                        "VersionHandler is already destroyed")}));
                 promise->finish();
                 return;
             }

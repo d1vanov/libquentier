@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/exception/DatabaseRequestException.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
 #include <QSqlError>
