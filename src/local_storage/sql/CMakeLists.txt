@@ -9,6 +9,8 @@ target_sources(${LIBRARY_NAME}
   ConnectionPool.cpp
   ConnectionPool.h
   ErrorHandling.h
+  Notifier.cpp
+  Notifier.h
   TablesInitializer.cpp
   TablesInitializer.h
   VersionHandler.cpp

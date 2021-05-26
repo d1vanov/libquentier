@@ -557,7 +557,9 @@ public:
         qevercloud::Guid linkedNotebookGuid) const = 0;
 
     // Notifications about events occurring in local storage are done via
-    // signals emitted by ILocalStorageNotifier
+    // signals emitted by ILocalStorageNotifier.
+    // ILocalStorageNotifier must be alive for at least as much as ILocalStorage
+    // itself.
     [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
 

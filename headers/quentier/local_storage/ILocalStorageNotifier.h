@@ -27,13 +27,16 @@ namespace quentier::local_storage {
 class QUENTIER_EXPORT ILocalStorageNotifier : public QObject
 {
     Q_OBJECT
+protected:
+    ILocalStorageNotifier(QObject * parent = nullptr) : QObject(parent) {}
+
 public:
     ~ILocalStorageNotifier() override = default;
 
 Q_SIGNALS:
     // Notifications about user related events
     void userPut(qevercloud::User user);
-    void userExpunged(qint32 userId);
+    void userExpunged(qevercloud::UserID userId);
 
     // Notifications about notebook related events
     void notebookPut(qevercloud::Notebook notebook);
