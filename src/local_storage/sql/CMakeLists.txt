@@ -15,6 +15,8 @@ target_sources(${LIBRARY_NAME}
   NotifierProxy.h
   TablesInitializer.cpp
   TablesInitializer.h
+  Transaction.cpp
+  Transaction.h
   TypeChecks.cpp
   TypeChecks.h
   VersionHandler.cpp
