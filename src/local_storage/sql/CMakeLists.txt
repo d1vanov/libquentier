@@ -11,6 +11,8 @@ target_sources(${LIBRARY_NAME}
   ErrorHandling.h
   Notifier.cpp
   Notifier.h
+  NotifierProxy.cpp
+  NotifierProxy.h
   TablesInitializer.cpp
   TablesInitializer.h
   VersionHandler.cpp

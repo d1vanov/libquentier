@@ -28,6 +28,8 @@ namespace quentier::local_storage::sql {
 class ConnectionPool;
 using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
 
+class Notifier;
+
 using QThreadPtr = std::shared_ptr<QThread>;
 
 } // namespace quentier::local_storage::sql
