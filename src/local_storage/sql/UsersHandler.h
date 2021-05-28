@@ -75,6 +75,15 @@ private:
     [[nodiscard]] QList<qevercloud::User> listUsersImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
+    [[nodiscard]] bool putCommonUserData(
+        const qevercloud::User & user, const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool putUserAttributes(
+        const qevercloud::UserAttributes & userAttributes,
+        const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
 private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
