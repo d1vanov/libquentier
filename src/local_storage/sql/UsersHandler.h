@@ -73,6 +73,18 @@ private:
         const QString & userId,
         QSqlDatabase & database, ErrorString & errorDescription);
 
+    [[nodiscard]] bool removeUserAttributes(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool putAccounting(
+        const qevercloud::Accounting & accounting, const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeAccounting(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription) const;

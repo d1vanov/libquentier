@@ -345,6 +345,26 @@ bool UsersHandler::putUserImpl(
         return false;
     }
 
+    if (user.attributes()) {
+        if (!putUserAttributes(
+                *user.attributes(), userId, database, errorDescription)) {
+            return false;
+        }
+    }
+    else if (!removeUserAttributes(userId, database, errorDescription)) {
+        return false;
+    }
+
+    if (user.accounting()) {
+        if (!putAccounting(
+                *user.accounting(), userId, database, errorDescription)) {
+            return false;
+        }
+    }
+    else if (!removeAccounting(userId, database, errorDescription)) {
+        return false;
+    }
+
     // TODO: implement further
     Q_UNUSED(user)
     Q_UNUSED(database)
@@ -704,6 +724,254 @@ bool UsersHandler::putUserAttributes(
     return true;
 }
 
+bool UsersHandler::removeUserAttributes(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // Clear entries from UserAttributesViewedPromotions table
+    {
+        const QString queryString =
+            QString::fromUtf8(
+                "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
+                .arg(userId);
+
+        QSqlQuery query{database};
+        const bool res = query.exec(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::UsersHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Cannot remove user' viewed promotions from "
+                "the local storage database"),
+            false);
+    }
+
+    // Clear entries from UserAttributesRecentMailedAddresses table
+    {
+        const QString queryString =
+            QString::fromUtf8(
+                "DELETE FROM UserAttributesRecentMailedAddresses WHERE "
+                "id=%1")
+                .arg(userId);
+
+        QSqlQuery query{database};
+        const bool res = query.exec(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::UsersHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Cannot remove user' recent mailed addresses from "
+                "the local storage database"),
+            false);
+    }
+
+    // Clear entries from UserAttributes table
+    {
+        const QString queryString =
+            QString::fromUtf8("DELETE FROM UserAttributes WHERE id=%1")
+                .arg(userId);
+
+        QSqlQuery query{database};
+        const bool res = query.exec(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::UsersHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Cannot remove user attributes from the local storage "
+                "database"),
+            false);
+    }
+
+    return true;
+}
+
+bool UsersHandler::putAccounting(
+    const qevercloud::Accounting & accounting, const QString & userId,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Accounting"
+        "(id, uploadLimitEnd, uploadLimitNextMonth, "
+        "premiumServiceStatus, premiumOrderNumber, "
+        "premiumCommerceService, premiumServiceStart, "
+        "premiumServiceSKU, lastSuccessfulCharge, "
+        "lastFailedCharge, lastFailedChargeReason, nextPaymentDue, "
+        "premiumLockUntil, updated, premiumSubscriptionNumber, "
+        "lastRequestedCharge, currency, unitPrice, unitDiscount, "
+        "nextChargeDate, availablePoints) "
+        "VALUES(:id, :uploadLimitEnd, :uploadLimitNextMonth, "
+        ":premiumServiceStatus, :premiumOrderNumber, "
+        ":premiumCommerceService, :premiumServiceStart, "
+        ":premiumServiceSKU, :lastSuccessfulCharge, "
+        ":lastFailedCharge, :lastFailedChargeReason, "
+        ":nextPaymentDue, :premiumLockUntil, :updated, "
+        ":premiumSubscriptionNumber, :lastRequestedCharge, "
+        ":currency, :unitPrice, :unitDiscount, :nextChargeDate, "
+        ":availablePoints)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user's accounting data into the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    query.bindValue(
+        ":uploadLimitEnd",
+        accounting.uploadLimitEnd()
+        ? *accounting.uploadLimitEnd()
+        : gNullValue);
+
+    query.bindValue(
+        ":uploadLimitNextMonth",
+        accounting.uploadLimitNextMonth()
+        ? *accounting.uploadLimitNextMonth()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumServiceStatus",
+        accounting.premiumServiceStatus()
+        ? static_cast<int>(*accounting.premiumServiceStatus())
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumOrderNumber",
+        accounting.premiumOrderNumber()
+        ? *accounting.premiumOrderNumber()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumCommerceService",
+        accounting.premiumCommerceService()
+        ? *accounting.premiumCommerceService()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumServiceStart",
+        accounting.premiumServiceStart()
+        ? *accounting.premiumServiceStart()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumServiceSKU",
+        accounting.premiumServiceSKU()
+        ? *accounting.premiumServiceSKU()
+        : gNullValue);
+
+    query.bindValue(
+        ":lastSuccessfulCharge",
+        accounting.lastSuccessfulCharge()
+        ? *accounting.lastSuccessfulCharge()
+        : gNullValue);
+
+    query.bindValue(
+        ":lastFailedCharge",
+        accounting.lastFailedCharge()
+        ? *accounting.lastFailedCharge()
+        : gNullValue);
+
+    query.bindValue(
+        ":lastFailedChargeReason",
+        accounting.lastFailedChargeReason()
+        ? *accounting.lastFailedChargeReason()
+        : gNullValue);
+
+    query.bindValue(
+        ":nextPaymentDue",
+        accounting.nextPaymentDue()
+        ? *accounting.nextPaymentDue()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumLockUntil",
+        accounting.premiumLockUntil()
+        ? *accounting.premiumLockUntil()
+        : gNullValue);
+
+    query.bindValue(
+        ":updated",
+        accounting.updated()
+        ? *accounting.updated()
+        : gNullValue);
+
+    query.bindValue(
+        ":premiumSubscriptionNumber",
+        accounting.premiumSubscriptionNumber()
+        ? *accounting.premiumSubscriptionNumber()
+        : gNullValue);
+
+    query.bindValue(
+        ":lastRequestedCharge",
+        accounting.lastRequestedCharge()
+        ? *accounting.lastRequestedCharge()
+        : gNullValue);
+
+    query.bindValue(
+        ":currency",
+        accounting.currency()
+        ? *accounting.currency()
+        : gNullValue);
+
+    query.bindValue(
+        ":unitPrice",
+        accounting.unitPrice()
+        ? *accounting.unitPrice()
+        : gNullValue);
+
+    query.bindValue(
+        ":unitDiscount",
+        accounting.unitDiscount()
+        ? *accounting.unitDiscount()
+        : gNullValue);
+
+    query.bindValue(
+        ":nextChargeDate",
+        accounting.nextChargeDate()
+        ? *accounting.nextChargeDate()
+        : gNullValue);
+
+    query.bindValue(
+        ":availablePoints",
+        accounting.availablePoints()
+        ? *accounting.availablePoints()
+        : gNullValue);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user's accounting data into the local storage "
+            "database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::removeAccounting(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    const QString queryString =
+        QString::fromUtf8("DELETE FROM Accounting WHERE id=%1").arg(userId);
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user's accounting data from the local storage "
+            "database"),
+        false);
+
+    return true;
+}
 
 std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     const qevercloud::UserID userId, QSqlDatabase & database,
