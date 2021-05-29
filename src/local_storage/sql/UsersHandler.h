@@ -64,6 +64,15 @@ private:
         const qevercloud::User & user, QSqlDatabase & database,
         ErrorString & errorDescription);
 
+    [[nodiscard]] bool putCommonUserData(
+        const qevercloud::User & user, const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool putUserAttributes(
+        const qevercloud::UserAttributes & userAttributes,
+        const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
@@ -74,15 +83,6 @@ private:
 
     [[nodiscard]] QList<qevercloud::User> listUsersImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
-
-    [[nodiscard]] bool putCommonUserData(
-        const qevercloud::User & user, const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool putUserAttributes(
-        const qevercloud::UserAttributes & userAttributes,
-        const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
 
 private:
     ConnectionPoolPtr m_connectionPool;

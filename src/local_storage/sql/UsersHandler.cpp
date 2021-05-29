@@ -352,37 +352,6 @@ bool UsersHandler::putUserImpl(
     return true;
 }
 
-std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
-    const qevercloud::UserID userId, QSqlDatabase & database,
-    ErrorString & errorDescription) const
-{
-    // TODO: implement
-    Q_UNUSED(userId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
-}
-
-bool UsersHandler::expungeUserByIdImpl(
-    qevercloud::UserID userId, QSqlDatabase & database,
-    ErrorString & errorDescription)
-{
-    // TODO: implement
-    Q_UNUSED(userId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return true;
-}
-
-QList<qevercloud::User> UsersHandler::listUsersImpl(
-    QSqlDatabase & database, ErrorString & errorDescription) const
-{
-    // TODO: implement
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
-}
-
 bool UsersHandler::putCommonUserData(
     const qevercloud::User & user, const QString & userId,
     QSqlDatabase & database, ErrorString & errorDescription)
@@ -733,6 +702,38 @@ bool UsersHandler::putUserAttributes(
         false);
 
     return true;
+}
+
+
+std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
+    const qevercloud::UserID userId, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    // TODO: implement
+    Q_UNUSED(userId)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return {};
+}
+
+bool UsersHandler::expungeUserByIdImpl(
+    qevercloud::UserID userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(userId)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+QList<qevercloud::User> UsersHandler::listUsersImpl(
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    // TODO: implement
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return {};
 }
 
 } // namespace quentier::local_storage::sql
