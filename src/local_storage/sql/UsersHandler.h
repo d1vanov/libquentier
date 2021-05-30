@@ -85,6 +85,14 @@ private:
         const QString & userId, QSqlDatabase & database,
         ErrorString & errorDescription);
 
+    [[nodiscard]] bool putAccountLimits(
+        const qevercloud::AccountLimits & accountLimits, const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeAccountLimits(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription) const;

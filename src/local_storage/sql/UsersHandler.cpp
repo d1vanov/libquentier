@@ -35,6 +35,7 @@
 #include <utility/Qt5Promise.h>
 #endif
 
+#include <QGlobalStatic>
 #include <QSqlQuery>
 #include <QThreadPool>
 
@@ -42,7 +43,7 @@ namespace quentier::local_storage::sql {
 
 namespace {
 
-const auto gNullValue = QVariant{};
+Q_GLOBAL_STATIC(QVariant, gNullValue)
 
 } // namespace
 
@@ -365,6 +366,16 @@ bool UsersHandler::putUserImpl(
         return false;
     }
 
+    if (user.accountLimits()) {
+        if (!putAccountLimits(
+                *user.accountLimits(), userId, database, errorDescription)) {
+            return false;
+        }
+    }
+    else if (!removeAccountLimits(userId, database, errorDescription)) {
+        return false;
+    }
+
     // TODO: implement further
     Q_UNUSED(user)
     Q_UNUSED(database)
@@ -376,7 +387,7 @@ bool UsersHandler::putCommonUserData(
     const qevercloud::User & user, const QString & userId,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    const QString queryString = QStringLiteral(
+    static const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Users"
         "(id, username, email, name, timezone, privilege, "
         "serviceLevel, userCreationTimestamp, "
@@ -403,36 +414,36 @@ bool UsersHandler::putCommonUserData(
 
     query.bindValue(
         QStringLiteral(":username"),
-        (user.username() ? *user.username() : gNullValue));
+        (user.username() ? *user.username() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":email"),
-        (user.email() ? *user.email() : gNullValue));
+        (user.email() ? *user.email() : *gNullValue));
 
     query.bindValue(
-        QStringLiteral(":name"), (user.name() ? *user.name() : gNullValue));
+        QStringLiteral(":name"), (user.name() ? *user.name() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":timezone"),
-        (user.timezone() ? *user.timezone() : gNullValue));
+        (user.timezone() ? *user.timezone() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":privilege"),
         (user.privilege() ? static_cast<int>(*user.privilege())
-                            : gNullValue));
+                            : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":serviceLevel"),
         (user.serviceLevel() ? static_cast<int>(*user.serviceLevel())
-                                : gNullValue));
+                                : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userCreationTimestamp"),
-        (user.created() ? *user.created() : gNullValue));
+        (user.created() ? *user.created() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userModificationTimestamp"),
-        (user.updated() ? *user.updated() : gNullValue));
+        (user.updated() ? *user.updated() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userIsDirty"), (user.isLocallyModified() ? 1 : 0));
@@ -442,23 +453,23 @@ bool UsersHandler::putCommonUserData(
 
     query.bindValue(
         QStringLiteral(":userDeletionTimestamp"),
-        (user.deleted() ? *user.deleted() : gNullValue));
+        (user.deleted() ? *user.deleted() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userIsActive"),
-        (user.active() ? (*user.active() ? 1 : 0) : gNullValue));
+        (user.active() ? (*user.active() ? 1 : 0) : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userShardId"),
-        (user.shardId() ? *user.shardId() : gNullValue));
+        (user.shardId() ? *user.shardId() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userPhotoUrl"),
-        (user.photoUrl() ? *user.photoUrl() : gNullValue));
+        (user.photoUrl() ? *user.photoUrl() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userPhotoLastUpdateTimestamp"),
-        (user.photoLastUpdated() ? *user.photoLastUpdated() : gNullValue));
+        (user.photoLastUpdated() ? *user.photoLastUpdated() : *gNullValue));
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -476,7 +487,7 @@ bool UsersHandler::putUserAttributes(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    const QString queryString = QStringLiteral(
+    static const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO UserAttributes"
         "(id, defaultLocationName, defaultLatitude, "
         "defaultLongitude, preactivation, "
@@ -525,193 +536,193 @@ bool UsersHandler::putUserAttributes(
         QStringLiteral(":defaultLocationName"),
         (userAttributes.defaultLocationName()
          ? *userAttributes.defaultLocationName()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":defaultLatitude"),
         (userAttributes.defaultLatitude()
          ? *userAttributes.defaultLatitude()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":defaultLongitude"),
         (userAttributes.defaultLongitude()
          ? *userAttributes.defaultLongitude()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":incomingEmailAddress"),
         (userAttributes.incomingEmailAddress()
          ? *userAttributes.incomingEmailAddress()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":comments"),
         (userAttributes.comments()
          ? *userAttributes.comments()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":dateAgreedToTermsOfService"),
         (userAttributes.dateAgreedToTermsOfService()
          ? *userAttributes.dateAgreedToTermsOfService()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":maxReferrals"),
         (userAttributes.maxReferrals()
         ? *userAttributes.maxReferrals()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":referralCount"),
         (userAttributes.referralCount()
          ? *userAttributes.referralCount()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":refererCode"),
         (userAttributes.refererCode()
          ? *userAttributes.refererCode()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":sentEmailDate"),
         (userAttributes.sentEmailDate()
          ? *userAttributes.sentEmailDate()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":sentEmailCount"),
         (userAttributes.sentEmailCount()
          ? *userAttributes.sentEmailCount()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":dailyEmailLimit"),
         (userAttributes.dailyEmailLimit()
          ? *userAttributes.dailyEmailLimit()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":emailOptOutDate"),
         (userAttributes.emailOptOutDate()
          ? *userAttributes.emailOptOutDate()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":partnerEmailOptInDate"),
         (userAttributes.partnerEmailOptInDate()
         ? *userAttributes.partnerEmailOptInDate()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preferredLanguage"),
         (userAttributes.preferredLanguage()
         ? *userAttributes.preferredLanguage()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preferredCountry"),
         (userAttributes.preferredCountry()
         ? *userAttributes.preferredCountry()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":twitterUserName"),
         (userAttributes.twitterUserName()
         ? *userAttributes.twitterUserName()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":twitterId"),
         (userAttributes.twitterId()
         ? *userAttributes.twitterId()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":groupName"),
         (userAttributes.groupName()
         ? *userAttributes.groupName()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recognitionLanguage"),
         (userAttributes.recognitionLanguage()
         ? *userAttributes.recognitionLanguage()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":referralProof"),
         (userAttributes.referralProof()
         ? *userAttributes.referralProof()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":businessAddress"),
         (userAttributes.businessAddress()
         ? *userAttributes.businessAddress()
-        : gNullValue));
+        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":reminderEmailConfig"),
         (userAttributes.reminderEmailConfig()
          ? static_cast<int>(*userAttributes.reminderEmailConfig())
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":emailAddressLastConfirmed"),
         (userAttributes.emailAddressLastConfirmed()
          ? *userAttributes.emailAddressLastConfirmed()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":passwordUpdated"),
         (userAttributes.passwordUpdated()
          ? *userAttributes.passwordUpdated()
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preactivation"),
         (userAttributes.preactivation()
          ? (*userAttributes.preactivation() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":clipFullPage"),
         (userAttributes.clipFullPage()
          ? (*userAttributes.clipFullPage() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":educationalDiscount"),
         (userAttributes.educationalDiscount()
          ? (*userAttributes.educationalDiscount() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":hideSponsorBilling"),
         (userAttributes.hideSponsorBilling()
          ? (*userAttributes.hideSponsorBilling() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":useEmailAutoFiling"),
         (userAttributes.useEmailAutoFiling()
          ? (*userAttributes.useEmailAutoFiling() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":salesforcePushEnabled"),
         (userAttributes.salesforcePushEnabled()
          ? (*userAttributes.salesforcePushEnabled() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":shouldLogClientEvent"),
         (userAttributes.shouldLogClientEvent()
          ? (*userAttributes.shouldLogClientEvent() ? 1 : 0)
-         : gNullValue));
+         : *gNullValue));
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -730,7 +741,7 @@ bool UsersHandler::removeUserAttributes(
 {
     // Clear entries from UserAttributesViewedPromotions table
     {
-        const QString queryString =
+        static const QString queryString =
             QString::fromUtf8(
                 "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
                 .arg(userId);
@@ -748,7 +759,7 @@ bool UsersHandler::removeUserAttributes(
 
     // Clear entries from UserAttributesRecentMailedAddresses table
     {
-        const QString queryString =
+        static const QString queryString =
             QString::fromUtf8(
                 "DELETE FROM UserAttributesRecentMailedAddresses WHERE "
                 "id=%1")
@@ -767,7 +778,7 @@ bool UsersHandler::removeUserAttributes(
 
     // Clear entries from UserAttributes table
     {
-        const QString queryString =
+        static const QString queryString =
             QString::fromUtf8("DELETE FROM UserAttributes WHERE id=%1")
                 .arg(userId);
 
@@ -789,7 +800,7 @@ bool UsersHandler::putAccounting(
     const qevercloud::Accounting & accounting, const QString & userId,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    const QString queryString = QStringLiteral(
+    static const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO Accounting"
         "(id, uploadLimitEnd, uploadLimitNextMonth, "
         "premiumServiceStatus, premiumOrderNumber, "
@@ -825,121 +836,121 @@ bool UsersHandler::putAccounting(
         ":uploadLimitEnd",
         accounting.uploadLimitEnd()
         ? *accounting.uploadLimitEnd()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":uploadLimitNextMonth",
         accounting.uploadLimitNextMonth()
         ? *accounting.uploadLimitNextMonth()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumServiceStatus",
         accounting.premiumServiceStatus()
         ? static_cast<int>(*accounting.premiumServiceStatus())
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumOrderNumber",
         accounting.premiumOrderNumber()
         ? *accounting.premiumOrderNumber()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumCommerceService",
         accounting.premiumCommerceService()
         ? *accounting.premiumCommerceService()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumServiceStart",
         accounting.premiumServiceStart()
         ? *accounting.premiumServiceStart()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumServiceSKU",
         accounting.premiumServiceSKU()
         ? *accounting.premiumServiceSKU()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":lastSuccessfulCharge",
         accounting.lastSuccessfulCharge()
         ? *accounting.lastSuccessfulCharge()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":lastFailedCharge",
         accounting.lastFailedCharge()
         ? *accounting.lastFailedCharge()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":lastFailedChargeReason",
         accounting.lastFailedChargeReason()
         ? *accounting.lastFailedChargeReason()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":nextPaymentDue",
         accounting.nextPaymentDue()
         ? *accounting.nextPaymentDue()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumLockUntil",
         accounting.premiumLockUntil()
         ? *accounting.premiumLockUntil()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":updated",
         accounting.updated()
         ? *accounting.updated()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":premiumSubscriptionNumber",
         accounting.premiumSubscriptionNumber()
         ? *accounting.premiumSubscriptionNumber()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":lastRequestedCharge",
         accounting.lastRequestedCharge()
         ? *accounting.lastRequestedCharge()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":currency",
         accounting.currency()
         ? *accounting.currency()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":unitPrice",
         accounting.unitPrice()
         ? *accounting.unitPrice()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":unitDiscount",
         accounting.unitDiscount()
         ? *accounting.unitDiscount()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":nextChargeDate",
         accounting.nextChargeDate()
         ? *accounting.nextChargeDate()
-        : gNullValue);
+        : *gNullValue);
 
     query.bindValue(
         ":availablePoints",
         accounting.availablePoints()
         ? *accounting.availablePoints()
-        : gNullValue);
+        : *gNullValue);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -957,7 +968,7 @@ bool UsersHandler::removeAccounting(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    const QString queryString =
+    static const QString queryString =
         QString::fromUtf8("DELETE FROM Accounting WHERE id=%1").arg(userId);
 
     QSqlQuery query{database};
@@ -967,6 +978,132 @@ bool UsersHandler::removeAccounting(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::UsersHandler",
             "Cannot remove user's accounting data from the local storage "
+            "database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::putAccountLimits(
+    const qevercloud::AccountLimits & accountLimits, const QString & userId,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO AccountLimits"
+        "(id, userMailLimitDaily, noteSizeMax, resourceSizeMax, "
+        "userLinkedNotebookMax, uploadLimit, userNoteCountMax, "
+        "userNotebookCountMax, userTagCountMax, noteTagCountMax, "
+        "userSavedSearchesMax, noteResourceCountMax) "
+        "VALUES(:id, :userMailLimitDaily, :noteSizeMax, "
+        ":resourceSizeMax, :userLinkedNotebookMax, :uploadLimit, "
+        ":userNoteCountMax, :userNotebookCountMax, "
+        ":userTagCountMax, :noteTagCountMax, "
+        ":userSavedSearchesMax, :noteResourceCountMax)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user's account limits into the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    query.bindValue(
+        QStringLiteral(":userMailLimitDaily"),
+        accountLimits.userMailLimitDaily()
+        ? *accountLimits.userMailLimitDaily()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":noteSizeMax"),
+        accountLimits.noteSizeMax()
+        ? *accountLimits.noteSizeMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":resourceSizeMax"),
+        accountLimits.resourceSizeMax()
+        ? *accountLimits.resourceSizeMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":userLinkedNotebookMax"),
+        accountLimits.userLinkedNotebookMax()
+        ? *accountLimits.userLinkedNotebookMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":uploadLimit"),
+        accountLimits.uploadLimit()
+        ? *accountLimits.uploadLimit()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":userNoteCountMax"),
+        accountLimits.userNoteCountMax()
+        ? *accountLimits.userNoteCountMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":userNotebookCountMax"),
+        accountLimits.userNotebookCountMax()
+        ? *accountLimits.userNotebookCountMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":userTagCountMax"),
+        accountLimits.userTagCountMax()
+        ? *accountLimits.userTagCountMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":noteTagCountMax"),
+        accountLimits.noteTagCountMax()
+        ? *accountLimits.noteTagCountMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":userSavedSearchesMax"),
+        accountLimits.userSavedSearchesMax()
+        ? *accountLimits.userSavedSearchesMax()
+        : *gNullValue);
+
+    query.bindValue(
+        QStringLiteral(":noteResourceCountMax"),
+        accountLimits.noteResourceCountMax()
+        ? *accountLimits.noteResourceCountMax()
+        : *gNullValue);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user's account limits into the local storage database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::removeAccountLimits(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString =
+        QString::fromUtf8("DELETE FROM AccountLimits WHERE id=%1")
+        .arg(userId);
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user's account limits from the local storage "
             "database"),
         false);
 
