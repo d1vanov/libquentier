@@ -321,6 +321,10 @@ bool UsersHandler::putUserImpl(
     const qevercloud::User & user, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    QNDEBUG(
+        "local_storage::sql::UsersHandler",
+        "UsersHandler::putUserImpl: " << user);
+
     const ErrorString errorPrefix(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::UsersHandler",
@@ -376,10 +380,25 @@ bool UsersHandler::putUserImpl(
         return false;
     }
 
-    // TODO: implement further
-    Q_UNUSED(user)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    if (user.businessUserInfo()) {
+        if (!putBusinessUserInfo(
+                *user.businessUserInfo(), userId, database, errorDescription)) {
+            return false;
+        }
+    }
+    else if (!removeBusinessUserInfo(userId, database, errorDescription)) {
+        return false;
+    }
+
+    const bool res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user into the local storage database, failed to "
+            "commit"),
+        false);
+
     return true;
 }
 
@@ -1104,6 +1123,75 @@ bool UsersHandler::removeAccountLimits(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::UsersHandler",
             "Cannot remove user's account limits from the local storage "
+            "database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::putBusinessUserInfo(
+    const qevercloud::BusinessUserInfo & info, const QString & userId,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO BusinessUserInfo"
+        "(id, businessId, businessName, role, businessInfoEmail) "
+        "VALUES(:id, :businessId, :businessName, :role, :businessInfoEmail)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put business user info into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    query.bindValue(
+        QStringLiteral(":businessId"),
+        (info.businessId() ? *info.businessId() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessName"),
+        (info.businessName() ? *info.businessName() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":role"),
+        (info.role() ? static_cast<int>(*info.role()) : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessInfoEmail"),
+        (info.email() ? *info.email() : *gNullValue));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put business user info into the local storage database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::removeBusinessUserInfo(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString =
+        QString::fromUtf8("DELETE FROM BusinessUserInfo WHERE id=%1")
+            .arg(userId);
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove business user info from the local storage "
             "database"),
         false);
 

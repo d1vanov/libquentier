@@ -93,6 +93,14 @@ private:
         const QString & userId, QSqlDatabase & database,
         ErrorString & errorDescription);
 
+    [[nodiscard]] bool putBusinessUserInfo(
+        const qevercloud::BusinessUserInfo & info, const QString & userId,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeBusinessUserInfo(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
