@@ -18,15 +18,35 @@
 
 #include "Transaction.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 
+#include <QSqlDriver>
 #include <QSqlError>
 
 namespace quentier::local_storage::sql {
 
 Transaction::Transaction(const QSqlDatabase & database) :
     m_database{database}
-{}
+{
+    const auto * driver = m_database.driver();
+    if (Q_UNLIKELY(!driver)) {
+        throw InvalidArgument{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::Transaction",
+                "Failed to create local storage transaction: no SQL driver")}};
+    }
+
+    if (Q_UNLIKELY(!driver->hasFeature(QSqlDriver::Transactions))) {
+        auto errorDescription = ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::Transaction",
+                "Failed to create local storage transaction: SQL driver "
+                "doesn't support transactions")};
+        errorDescription.details() = database.driverName();
+        throw InvalidArgument{std::move(errorDescription)};
+    }
+}
 
 Transaction::~Transaction()
 {
