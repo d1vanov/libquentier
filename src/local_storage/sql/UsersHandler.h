@@ -31,6 +31,7 @@
 #include <optional>
 
 class QSqlDatabase;
+class QSqlRecord;
 
 namespace quentier {
 
@@ -103,6 +104,10 @@ private:
 
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool fillUserFromSqlRecord(
+        const QSqlRecord & record, qevercloud::User & user,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeUserByIdImpl(

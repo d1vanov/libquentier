@@ -36,14 +36,59 @@
 #endif
 
 #include <QGlobalStatic>
+#include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
+
+#include <optional>
+#include <type_traits>
 
 namespace quentier::local_storage::sql {
 
 namespace {
 
 Q_GLOBAL_STATIC(QVariant, gNullValue)
+
+template <class VariantType, class LocalType = VariantType>
+bool fillUserValue(
+    const QSqlRecord & record, const QString & column, qevercloud::User & user,
+    std::function<void(qevercloud::User&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    bool valueFound = false;
+    const int index = record.indexOf(column);
+    if (index >= 0) {
+        const QVariant & value = record.value(column);
+        if (!value.isNull()) {
+            if constexpr (
+                std::is_same_v<LocalType, VariantType> ||
+                std::is_convertible_v<VariantType, LocalType>) {
+                setter(
+                    user,
+                    qvariant_cast<VariantType>(value));
+            }
+            else {
+                setter(
+                    user,
+                    static_cast<LocalType>(qvariant_cast<VariantType>(value)));
+            }
+            valueFound = true;
+        }
+    }
+
+    if (!valueFound && errorDescription) {
+        errorDescription->setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "User field missing in the record received from the local "
+                "storage database"));
+        errorDescription->details() = column;
+        QNWARNING("local_storage:sql:UsersHandler", *errorDescription);
+        return false;
+    }
+
+    return valueFound;
+}
 
 } // namespace
 
@@ -1202,11 +1247,116 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     const qevercloud::UserID userId, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(userId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QNDEBUG(
+        "local_storage::sql::UsersHandler",
+        "UsersHandler::findUserByIdImpl: user id = " << userId);
+
+    static const QString queryString = QStringLiteral(
+        "SELECT * FROM Users LEFT OUTER JOIN UserAttributes "
+        "ON Users.id = UserAttributes.id "
+        "LEFT OUTER JOIN UserAttributesViewedPromotions "
+        "ON Users.id = UserAttributesViewedPromotions.id "
+        "LEFT OUTER JOIN UserAttributesRecentMailedAddresses "
+        "ON Users.id = UserAttributesRecentMailedAddresses.id "
+        "LEFT OUTER JOIN Accounting ON Users.id = Accounting.id "
+        "LEFT OUTER JOIN AccountLimits ON Users.id = AccountLimits.id "
+        "LEFT OUTER JOIN BusinessUserInfo ON Users.id = BusinessUserInfo.id "
+        "WHERE Users.id = :id");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user in the local storage database: failed to prepare "
+            "query"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::User user;
+    user.setId(userId);
+    ErrorString error;
+    if (!fillUserFromSqlRecord(record, user, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Failed to find user by id in the local storage database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::UsersHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return user;
+}
+
+bool UsersHandler::fillUserFromSqlRecord(
+    const QSqlRecord & record, qevercloud::User & user,
+    ErrorString & errorDescription) const
+{
+    using qevercloud::User;
+
+    if (!fillUserValue<int, bool>(
+            record, QStringLiteral("userIsDirty"), user,
+            &User::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillUserValue<int, bool>(
+            record, QStringLiteral("userIsLocal"), user,
+            &User::setLocalOnly, &errorDescription))
+    {
+        return false;
+    }
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(User &, std::optional<QString>)> setter) {
+            fillUserValue<QString, std::optional<QString>>(
+                record, column, user, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("username"), &User::setUsername);
+    fillOptStringValue(QStringLiteral("email"), &User::setEmail);
+    fillOptStringValue(QStringLiteral("name"), &User::setName);
+    fillOptStringValue(QStringLiteral("timezone"), &User::setTimezone);
+    fillOptStringValue(QStringLiteral("userShardId"), &User::setShardId);
+    fillOptStringValue(QStringLiteral("photoUrl"), &User::setPhotoUrl);
+
+    fillUserValue<int, qevercloud::PrivilegeLevel>(
+        record, QStringLiteral("privilege"), user, &User::setPrivilege);
+
+    const auto fillOptTimestampvalue =
+        [&](const QString & column,
+            std::function<void(User &, qevercloud::Timestamp)> setter) {
+            fillUserValue<qint64, qevercloud::Timestamp>(
+                record, column, user, std::move(setter));
+        };
+
+    fillOptTimestampvalue(
+        QStringLiteral("userCreationTimestamp"), &User::setCreated);
+
+    fillOptTimestampvalue(
+        QStringLiteral("userModificationTimestamp"), &User::setUpdated);
+
+    fillOptTimestampvalue(
+        QStringLiteral("userDeletionTimestamp"), &User::setDeleted);
+
+    fillOptTimestampvalue(
+        QStringLiteral("photoLastUpdated"), &User::setPhotoLastUpdated);
+
+    fillUserValue<int, bool>(
+        record, QStringLiteral("userIsActive"), user, &User::setActive);
+
+    // TODO: implement further: fill attributes
+    return true;
 }
 
 bool UsersHandler::expungeUserByIdImpl(
