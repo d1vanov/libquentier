@@ -90,11 +90,11 @@ bool fillUserValue(
     return valueFound;
 }
 
-template <class VariantType, class LocalType = VariantType>
-void fillUserAttributeValue(
+template <class VariantType, class ClassType, class LocalType = VariantType>
+void fillValue(
     const QSqlRecord & record, const QString & column,
-    std::optional<qevercloud::UserAttributes> & userAttributes,
-    std::function<void(qevercloud::UserAttributes&, LocalType)> setter)
+    std::optional<ClassType> & object,
+    std::function<void(ClassType&, LocalType)> setter)
 {
     const int index = record.indexOf(column);
     if (index < 0) {
@@ -106,22 +106,32 @@ void fillUserAttributeValue(
         return;
     }
 
-    if (!userAttributes) {
-        userAttributes.emplace(qevercloud::UserAttributes{});
+    if (!object) {
+        object.emplace(ClassType{});
     }
 
     if constexpr (
         std::is_same_v<LocalType, VariantType> ||
         std::is_convertible_v<VariantType, LocalType>) {
         setter(
-            *userAttributes,
+            *object,
             qvariant_cast<VariantType>(value));
     }
     else {
         setter(
-            *userAttributes,
+            *object,
             static_cast<LocalType>(qvariant_cast<VariantType>(value)));
     }
+}
+
+template <class VariantType, class LocalType = VariantType>
+void fillUserAttributeValue(
+    const QSqlRecord & record, const QString & column,
+    std::optional<qevercloud::UserAttributes> & userAttributes,
+    std::function<void(qevercloud::UserAttributes&, LocalType)> setter)
+{
+    fillValue<VariantType, qevercloud::UserAttributes, LocalType>(
+        record, column, userAttributes, std::move(setter));
 }
 
 template <class VariantType, class LocalType = VariantType>
@@ -130,32 +140,8 @@ void fillAccountingValue(
     std::optional<qevercloud::Accounting> & accounting,
     std::function<void(qevercloud::Accounting&, LocalType)> setter)
 {
-    const int index = record.indexOf(column);
-    if (index < 0) {
-        return;
-    }
-
-    const QVariant value = record.value(index);
-    if (value.isNull()) {
-        return;
-    }
-
-    if (!accounting) {
-        accounting.emplace(qevercloud::Accounting{});
-    }
-
-    if constexpr (
-        std::is_same_v<LocalType, VariantType> ||
-        std::is_convertible_v<VariantType, LocalType>) {
-        setter(
-            *accounting,
-            qvariant_cast<VariantType>(value));
-    }
-    else {
-        setter(
-            *accounting,
-            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
-    }
+    fillValue<VariantType, qevercloud::Accounting, LocalType>(
+        record, column, accounting, std::move(setter));
 }
 
 template <class VariantType, class LocalType = VariantType>
@@ -164,32 +150,18 @@ void fillBusinessUserInfoValue(
     std::optional<qevercloud::BusinessUserInfo> & businessUserInfo,
     std::function<void(qevercloud::BusinessUserInfo&, LocalType)> setter)
 {
-    const int index = record.indexOf(column);
-    if (index < 0) {
-        return;
-    }
+    fillValue<VariantType, qevercloud::BusinessUserInfo, LocalType>(
+        record, column, businessUserInfo, std::move(setter));
+}
 
-    const QVariant value = record.value(index);
-    if (value.isNull()) {
-        return;
-    }
-
-    if (!businessUserInfo) {
-        businessUserInfo.emplace(qevercloud::BusinessUserInfo{});
-    }
-
-    if constexpr (
-        std::is_same_v<LocalType, VariantType> ||
-        std::is_convertible_v<VariantType, LocalType>) {
-        setter(
-            *businessUserInfo,
-            qvariant_cast<VariantType>(value));
-    }
-    else {
-        setter(
-            *businessUserInfo,
-            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
-    }
+template <class VariantType, class LocalType = VariantType>
+void fillAccountLimitsValue(
+    const QSqlRecord & record, const QString & column,
+    std::optional<qevercloud::AccountLimits> & accountLimits,
+    std::function<void(qevercloud::AccountLimits&, LocalType)> setter)
+{
+    fillValue<VariantType, qevercloud::AccountLimits, LocalType>(
+        record, column, accountLimits, std::move(setter));
 }
 
 } // namespace
@@ -1469,8 +1441,10 @@ bool UsersHandler::fillUserFromSqlRecord(
     fillBusinessUserInfoFromSqlRecord(record, businessUserInfo);
     user.setBusinessUserInfo(std::move(businessUserInfo));
 
-    // TODO: implement further: fill accounting, account limits and business
-    // user info
+    std::optional<qevercloud::AccountLimits> accountLimits;
+    fillAccountLimitsFromSqlRecord(record, accountLimits);
+    user.setAccountLimits(std::move(accountLimits));
+
     return true;
 }
 
@@ -1787,6 +1761,68 @@ void UsersHandler::fillBusinessUserInfoFromSqlRecord(
     fillBusinessUserInfoValue<QString, QString>(
         record, QStringLiteral("businessInfoEmail"), businessUserInfo,
         &BusinessUserInfo::setEmail);
+}
+
+void UsersHandler::fillAccountLimitsFromSqlRecord(
+    const QSqlRecord & record,
+    std::optional<qevercloud::AccountLimits> & accountLimits) const
+{
+    using qevercloud::AccountLimits;
+
+    const auto fillInt64Value =
+        [&](const QString & column,
+            std::function<void(AccountLimits &, std::optional<qint64>)>
+                setter) {
+            fillAccountLimitsValue<qint64, std::optional<qint64>>(
+                record, column, accountLimits, std::move(setter));
+        };
+
+    fillInt64Value(
+        QStringLiteral("noteSizeMax"), &AccountLimits::setNoteSizeMax);
+
+    fillInt64Value(
+        QStringLiteral("resourceSizeMax"), &AccountLimits::setResourceSizeMax);
+
+    fillInt64Value(
+        QStringLiteral("uploadLimit"), &AccountLimits::setUploadLimit);
+
+    const auto fillInt32Value =
+        [&](const QString & column,
+            std::function<void(AccountLimits &, std::optional<qint32>)>
+                setter) {
+            fillAccountLimitsValue<int, std::optional<qint32>>(
+                record, column, accountLimits, std::move(setter));
+        };
+
+    fillInt32Value(
+        QStringLiteral("userMailLimitDaily"),
+        &AccountLimits::setUserMailLimitDaily);
+
+    fillInt32Value(
+        QStringLiteral("userLinkedNotebookMax"),
+        &AccountLimits::setUserLinkedNotebookMax);
+
+    fillInt32Value(
+        QStringLiteral("userNoteCountMax"),
+        &AccountLimits::setUserNoteCountMax);
+
+    fillInt32Value(
+        QStringLiteral("userNotebookCountMax"),
+        &AccountLimits::setUserNotebookCountMax);
+
+    fillInt32Value(
+        QStringLiteral("userTagCountMax"), &AccountLimits::setUserTagCountMax);
+
+    fillInt32Value(
+        QStringLiteral("noteTagCountMax"), &AccountLimits::setNoteTagCountMax);
+
+    fillInt32Value(
+        QStringLiteral("userSavedSearchesMax"),
+        &AccountLimits::setUserSavedSearchesMax);
+
+    fillInt32Value(
+        QStringLiteral("noteResourceCountMax"),
+        &AccountLimits::setNoteResourceCountMax);
 }
 
 bool UsersHandler::expungeUserByIdImpl(
