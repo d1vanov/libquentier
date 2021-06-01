@@ -110,6 +110,10 @@ private:
         const QSqlRecord & record, qevercloud::User & user,
         ErrorString & errorDescription) const;
 
+    void fillUserAttributesFromSqlRecord(
+        const QSqlRecord & record,
+        std::optional<qevercloud::UserAttributes> & userAttributes) const;
+
     [[nodiscard]] bool expungeUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription);

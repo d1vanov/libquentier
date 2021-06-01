@@ -90,6 +90,40 @@ bool fillUserValue(
     return valueFound;
 }
 
+template <class VariantType, class LocalType = VariantType>
+void fillUserAttributeValue(
+    const QSqlRecord & record, const QString & column,
+    std::optional<qevercloud::UserAttributes> & userAttributes,
+    std::function<void(qevercloud::UserAttributes&, LocalType)> setter)
+{
+    const int index = record.indexOf(column);
+    if (index < 0) {
+        return;
+    }
+
+    const QVariant value = record.value(index);
+    if (value.isNull()) {
+        return;
+    }
+
+    if (!userAttributes) {
+        userAttributes.emplace(qevercloud::UserAttributes{});
+    }
+
+    if constexpr (
+        std::is_same_v<LocalType, VariantType> ||
+        std::is_convertible_v<VariantType, LocalType>) {
+        setter(
+            *userAttributes,
+            qvariant_cast<VariantType>(value));
+    }
+    else {
+        setter(
+            *userAttributes,
+            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
+    }
+}
+
 } // namespace
 
 UsersHandler::UsersHandler(
@@ -1355,8 +1389,213 @@ bool UsersHandler::fillUserFromSqlRecord(
     fillUserValue<int, bool>(
         record, QStringLiteral("userIsActive"), user, &User::setActive);
 
-    // TODO: implement further: fill attributes
+    std::optional<qevercloud::UserAttributes> userAttributes;
+    fillUserAttributesFromSqlRecord(record, userAttributes);
+    user.setAttributes(std::move(userAttributes));
+
+    // TODO: implement further: fill accounting, account limits and business
+    // user info
     return true;
+}
+
+void UsersHandler::fillUserAttributesFromSqlRecord(
+    const QSqlRecord & record,
+    std::optional<qevercloud::UserAttributes> & userAttributes) const
+{
+    using qevercloud::UserAttributes;
+
+    const auto & attributes =
+        [&userAttributes]() -> UserAttributes & {
+        if (!userAttributes) {
+            userAttributes.emplace(UserAttributes{});
+        }
+
+        return *userAttributes;
+    };
+
+    const int promotionIndex = record.indexOf(QStringLiteral("promotion"));
+    if (promotionIndex >= 0) {
+        const QVariant value = record.value(promotionIndex);
+        if (!value.isNull()) {
+            auto & attrs = attributes();
+            if (!attrs.viewedPromotions()) {
+                attrs.setViewedPromotions({});
+            }
+
+            QString valueString = value.toString();
+            if (!attrs.viewedPromotions()->contains(valueString)) {
+                *attrs.mutableViewedPromotions() << valueString;
+            }
+        }
+    }
+
+    const int addressIndex = record.indexOf(QStringLiteral("address"));
+    if (addressIndex >= 0) {
+        const QVariant value = record.value(addressIndex);
+        if (!value.isNull()) {
+            auto & attrs = attributes();
+            if (!attrs.recentMailedAddresses()) {
+                attrs.setRecentMailedAddresses(QStringList{});
+            }
+
+            QString valueString = value.toString();
+            if (!attrs.recentMailedAddresses()->contains(valueString)) {
+                *attrs.mutableRecentMailedAddresses() << valueString;
+            }
+        }
+    }
+
+    const auto fillStringValue =
+        [&](const QString & column,
+            std::function<void(UserAttributes &, std::optional<QString>)> setter) {
+            fillUserAttributeValue<QString, std::optional<QString>>(
+                record, column, userAttributes, std::move(setter));
+        };
+
+    fillStringValue(
+        QStringLiteral("defaultLocationName"),
+        &UserAttributes::setDefaultLocationName);
+
+    fillStringValue(
+        QStringLiteral("incomingEmailAddress"),
+        &UserAttributes::setIncomingEmailAddress);
+
+    fillStringValue(
+        QStringLiteral("comments"), &UserAttributes::setComments);
+
+    fillStringValue(
+        QStringLiteral("refererCode"), &UserAttributes::setRefererCode);
+
+    fillStringValue(
+        QStringLiteral("preferredLanguage"),
+        &UserAttributes::setPreferredLanguage);
+
+    fillStringValue(
+        QStringLiteral("preferredCountry"),
+        &UserAttributes::setPreferredCountry);
+
+    fillStringValue(
+        QStringLiteral("twitterUserName"),
+        &UserAttributes::setTwitterUserName);
+
+    fillStringValue(
+        QStringLiteral("twitterId"), &UserAttributes::setTwitterId);
+
+    fillStringValue(
+        QStringLiteral("groupName"), &UserAttributes::setGroupName);
+
+    fillStringValue(
+        QStringLiteral("recognitionLanguage"),
+        &UserAttributes::setRecognitionLanguage);
+
+    fillStringValue(
+        QStringLiteral("referralProof"), &UserAttributes::setReferralProof);
+
+    fillStringValue(
+        QStringLiteral("businessAddress"), &UserAttributes::setBusinessAddress);
+
+    const auto fillDoubleValue =
+        [&](const QString & column,
+            std::function<void(UserAttributes &, std::optional<double>)>
+                setter) {
+            fillUserAttributeValue<double, std::optional<double>>(
+                record, column, userAttributes, std::move(setter));
+        };
+
+    fillDoubleValue(
+        QStringLiteral("defaultLatitude"), &UserAttributes::setDefaultLatitude);
+
+    fillDoubleValue(
+        QStringLiteral("defaultLongitude"),
+        &UserAttributes::setDefaultLongitude);
+
+    const auto fillBoolValue =
+        [&](const QString & column,
+            std::function<void(UserAttributes &, std::optional<bool>)> setter) {
+            fillUserAttributeValue<int, std::optional<bool>>(
+                record, column, userAttributes, std::move(setter));
+        };
+
+    fillBoolValue(
+        QStringLiteral("preactivation"), &UserAttributes::setPreactivation);
+
+    fillBoolValue(
+        QStringLiteral("clipFullPage"), &UserAttributes::setClipFullPage);
+
+    fillBoolValue(
+        QStringLiteral("educationalDiscount"),
+        &UserAttributes::setEducationalDiscount);
+
+    fillBoolValue(
+        QStringLiteral("hideSponsorBilling"),
+        &UserAttributes::setHideSponsorBilling);
+
+    fillBoolValue(
+        QStringLiteral("useEmailAutoFiling"),
+        &UserAttributes::setUseEmailAutoFiling);
+
+    fillBoolValue(
+        QStringLiteral("salesforcePushEnabled"),
+        &UserAttributes::setSalesforcePushEnabled);
+
+    fillBoolValue(
+        QStringLiteral("shouldLogClientEvent"),
+        &UserAttributes::setShouldLogClientEvent);
+
+    const auto fillTimestampValue =
+        [&](const QString & column,
+            std::function<void(
+                UserAttributes &, std::optional<qevercloud::Timestamp>)>
+                setter) {
+            fillUserAttributeValue<
+                qint64, std::optional<qevercloud::Timestamp>>(
+                record, column, userAttributes, std::move(setter));
+        };
+
+    fillTimestampValue(
+        QStringLiteral("dateAgreedToTermsOfService"),
+        &UserAttributes::setDateAgreedToTermsOfService);
+
+    fillTimestampValue(
+        QStringLiteral("sentEmailDate"), &UserAttributes::setSentEmailDate);
+
+    fillTimestampValue(
+        QStringLiteral("emailOptOutDate"), &UserAttributes::setEmailOptOutDate);
+
+    fillTimestampValue(
+        QStringLiteral("partnerEmailOptInDate"),
+        &UserAttributes::setPartnerEmailOptInDate);
+
+    fillTimestampValue(
+        QStringLiteral("emailAddressLastConfirmed"),
+        &UserAttributes::setEmailAddressLastConfirmed);
+
+    fillTimestampValue(
+        QStringLiteral("passwordUpdated"), &UserAttributes::setPasswordUpdated);
+
+    const auto fillIntValue =
+        [&](const QString & column,
+            std::function<void(UserAttributes &, std::optional<qint32>)>
+                setter) {
+            fillUserAttributeValue<qint32, std::optional<qint32>>(
+                record, column, userAttributes, std::move(setter));
+        };
+
+    fillIntValue(
+        QStringLiteral("maxReferrals"), &UserAttributes::setMaxReferrals);
+
+    fillIntValue(
+        QStringLiteral("referralCount"), &UserAttributes::setReferralCount);
+
+    fillIntValue(
+        QStringLiteral("sentEmailCount"), &UserAttributes::setSentEmailCount);
+
+    fillIntValue(
+        QStringLiteral("dailyEmailLimit"), &UserAttributes::setDailyEmailLimit);
+
+    fillUserAttributeValue<qint32, qevercloud::ReminderEmailConfig>(
+        record, QStringLiteral("reminderEmailConfig"), userAttributes,
+        &UserAttributes::setReminderEmailConfig);
 }
 
 bool UsersHandler::expungeUserByIdImpl(
