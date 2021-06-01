@@ -23,12 +23,12 @@
 
 #include <quentier/exception/IQuentierException.h>
 
-#include <gtest/gtest.h>
-
 #include <QCoreApplication>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QThreadPool>
+
+#include <gtest/gtest.h>
 
 namespace quentier::local_storage::sql::tests {
 

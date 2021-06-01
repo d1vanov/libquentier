@@ -12,6 +12,7 @@ add_executable(${TESTS_NAME}
   Patch1To2Test.cpp
   TablesInitializerTest.cpp
   VersionHandlerTest.cpp
+  UsersHandlerTest.cpp
   ${${TESTS_RESOURCES_NAME}})
 
 target_link_libraries(${TESTS_NAME}
