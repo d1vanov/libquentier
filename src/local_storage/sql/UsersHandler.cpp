@@ -158,6 +158,40 @@ void fillAccountingValue(
     }
 }
 
+template <class VariantType, class LocalType = VariantType>
+void fillBusinessUserInfoValue(
+    const QSqlRecord & record, const QString & column,
+    std::optional<qevercloud::BusinessUserInfo> & businessUserInfo,
+    std::function<void(qevercloud::BusinessUserInfo&, LocalType)> setter)
+{
+    const int index = record.indexOf(column);
+    if (index < 0) {
+        return;
+    }
+
+    const QVariant value = record.value(index);
+    if (value.isNull()) {
+        return;
+    }
+
+    if (!businessUserInfo) {
+        businessUserInfo.emplace(qevercloud::BusinessUserInfo{});
+    }
+
+    if constexpr (
+        std::is_same_v<LocalType, VariantType> ||
+        std::is_convertible_v<VariantType, LocalType>) {
+        setter(
+            *businessUserInfo,
+            qvariant_cast<VariantType>(value));
+    }
+    else {
+        setter(
+            *businessUserInfo,
+            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
+    }
+}
+
 } // namespace
 
 UsersHandler::UsersHandler(
@@ -1431,6 +1465,10 @@ bool UsersHandler::fillUserFromSqlRecord(
     fillAccountingFromSqlRecord(record, accounting);
     user.setAccounting(std::move(accounting));
 
+    std::optional<qevercloud::BusinessUserInfo> businessUserInfo;
+    fillBusinessUserInfoFromSqlRecord(record, businessUserInfo);
+    user.setBusinessUserInfo(std::move(businessUserInfo));
+
     // TODO: implement further: fill accounting, account limits and business
     // user info
     return true;
@@ -1726,6 +1764,29 @@ void UsersHandler::fillAccountingFromSqlRecord(
     fillAccountingValue<int, qint32>(
         record, QStringLiteral("unitDiscount"), accounting,
         &Accounting::setUnitDiscount);
+}
+
+void UsersHandler::fillBusinessUserInfoFromSqlRecord(
+    const QSqlRecord & record,
+    std::optional<qevercloud::BusinessUserInfo> & businessUserInfo) const
+{
+    using qevercloud::BusinessUserInfo;
+
+    fillBusinessUserInfoValue<qint32, qint32>(
+        record, QStringLiteral("businessId"), businessUserInfo,
+        &BusinessUserInfo::setBusinessId);
+
+    fillBusinessUserInfoValue<QString, QString>(
+        record, QStringLiteral("businessName"), businessUserInfo,
+        &BusinessUserInfo::setBusinessName);
+
+    fillBusinessUserInfoValue<int, qevercloud::BusinessUserRole>(
+        record, QStringLiteral("role"), businessUserInfo,
+        &BusinessUserInfo::setRole);
+
+    fillBusinessUserInfoValue<QString, QString>(
+        record, QStringLiteral("businessInfoEmail"), businessUserInfo,
+        &BusinessUserInfo::setEmail);
 }
 
 bool UsersHandler::expungeUserByIdImpl(
