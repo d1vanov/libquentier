@@ -55,7 +55,6 @@ public:
         qevercloud::UserID userId) const;
 
     [[nodiscard]] QFuture<void> expungeUserById(qevercloud::UserID userId);
-    [[nodiscard]] QFuture<QList<qevercloud::User>> listUsers() const;
 
 private:
     [[nodiscard]] std::optional<quint32> userCountImpl(
@@ -129,9 +128,6 @@ private:
     [[nodiscard]] bool expungeUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription);
-
-    [[nodiscard]] QList<qevercloud::User> listUsersImpl(
-        QSqlDatabase & database, ErrorString & errorDescription) const;
 
 private:
     ConnectionPoolPtr m_connectionPool;

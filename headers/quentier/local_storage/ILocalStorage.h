@@ -357,9 +357,6 @@ public:
     [[nodiscard]] virtual QFuture<void> expungeUserById(
         qevercloud::UserID userId) = 0;
 
-    [[nodiscard]] virtual QFuture<QList<qevercloud::User>> listUsers()
-        const = 0;
-
     // Notebooks API
     [[nodiscard]] virtual QFuture<quint32> notebookCount() const = 0;
 
