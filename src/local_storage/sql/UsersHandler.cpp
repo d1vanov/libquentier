@@ -124,6 +124,40 @@ void fillUserAttributeValue(
     }
 }
 
+template <class VariantType, class LocalType = VariantType>
+void fillAccountingValue(
+    const QSqlRecord & record, const QString & column,
+    std::optional<qevercloud::Accounting> & accounting,
+    std::function<void(qevercloud::Accounting&, LocalType)> setter)
+{
+    const int index = record.indexOf(column);
+    if (index < 0) {
+        return;
+    }
+
+    const QVariant value = record.value(index);
+    if (value.isNull()) {
+        return;
+    }
+
+    if (!accounting) {
+        accounting.emplace(qevercloud::Accounting{});
+    }
+
+    if constexpr (
+        std::is_same_v<LocalType, VariantType> ||
+        std::is_convertible_v<VariantType, LocalType>) {
+        setter(
+            *accounting,
+            qvariant_cast<VariantType>(value));
+    }
+    else {
+        setter(
+            *accounting,
+            static_cast<LocalType>(qvariant_cast<VariantType>(value)));
+    }
+}
+
 } // namespace
 
 UsersHandler::UsersHandler(
@@ -1393,6 +1427,10 @@ bool UsersHandler::fillUserFromSqlRecord(
     fillUserAttributesFromSqlRecord(record, userAttributes);
     user.setAttributes(std::move(userAttributes));
 
+    std::optional<qevercloud::Accounting> accounting;
+    fillAccountingFromSqlRecord(record, accounting);
+    user.setAccounting(std::move(accounting));
+
     // TODO: implement further: fill accounting, account limits and business
     // user info
     return true;
@@ -1404,7 +1442,7 @@ void UsersHandler::fillUserAttributesFromSqlRecord(
 {
     using qevercloud::UserAttributes;
 
-    const auto & attributes =
+    const auto & attributesRef =
         [&userAttributes]() -> UserAttributes & {
         if (!userAttributes) {
             userAttributes.emplace(UserAttributes{});
@@ -1417,14 +1455,14 @@ void UsersHandler::fillUserAttributesFromSqlRecord(
     if (promotionIndex >= 0) {
         const QVariant value = record.value(promotionIndex);
         if (!value.isNull()) {
-            auto & attrs = attributes();
-            if (!attrs.viewedPromotions()) {
-                attrs.setViewedPromotions({});
+            auto & attributes = attributesRef();
+            if (!attributes.viewedPromotions()) {
+                attributes.setViewedPromotions({});
             }
 
             QString valueString = value.toString();
-            if (!attrs.viewedPromotions()->contains(valueString)) {
-                *attrs.mutableViewedPromotions() << valueString;
+            if (!attributes.viewedPromotions()->contains(valueString)) {
+                *attributes.mutableViewedPromotions() << valueString;
             }
         }
     }
@@ -1433,21 +1471,22 @@ void UsersHandler::fillUserAttributesFromSqlRecord(
     if (addressIndex >= 0) {
         const QVariant value = record.value(addressIndex);
         if (!value.isNull()) {
-            auto & attrs = attributes();
-            if (!attrs.recentMailedAddresses()) {
-                attrs.setRecentMailedAddresses(QStringList{});
+            auto & attributes = attributesRef();
+            if (!attributes.recentMailedAddresses()) {
+                attributes.setRecentMailedAddresses(QStringList{});
             }
 
             QString valueString = value.toString();
-            if (!attrs.recentMailedAddresses()->contains(valueString)) {
-                *attrs.mutableRecentMailedAddresses() << valueString;
+            if (!attributes.recentMailedAddresses()->contains(valueString)) {
+                *attributes.mutableRecentMailedAddresses() << valueString;
             }
         }
     }
 
     const auto fillStringValue =
         [&](const QString & column,
-            std::function<void(UserAttributes &, std::optional<QString>)> setter) {
+            std::function<void(UserAttributes &, std::optional<QString>)>
+                setter) {
             fillUserAttributeValue<QString, std::optional<QString>>(
                 record, column, userAttributes, std::move(setter));
         };
@@ -1596,6 +1635,97 @@ void UsersHandler::fillUserAttributesFromSqlRecord(
     fillUserAttributeValue<qint32, qevercloud::ReminderEmailConfig>(
         record, QStringLiteral("reminderEmailConfig"), userAttributes,
         &UserAttributes::setReminderEmailConfig);
+}
+
+void UsersHandler::fillAccountingFromSqlRecord(
+    const QSqlRecord & record,
+    std::optional<qevercloud::Accounting> & accounting) const
+{
+    using qevercloud::Accounting;
+
+    const auto fillStringValue =
+        [&](const QString & column,
+            std::function<void(Accounting &, std::optional<QString>)> setter) {
+            fillAccountingValue<QString, std::optional<QString>>(
+                record, column, accounting, std::move(setter));
+        };
+
+    fillStringValue(
+        QStringLiteral("premiumOrderNumber"),
+        &Accounting::setPremiumOrderNumber);
+
+    fillStringValue(
+        QStringLiteral("premiumCommerceService"),
+        &Accounting::setPremiumCommerceService);
+
+    fillStringValue(
+        QStringLiteral("premiumServiceSKU"), &Accounting::setPremiumServiceSKU);
+
+    fillStringValue(
+        QStringLiteral("lastFailedChargeReason"),
+        &Accounting::setLastFailedChargeReason);
+
+    fillStringValue(
+        QStringLiteral("premiumSubscriptionNumber"),
+        &Accounting::setPremiumSubscriptionNumber);
+
+    fillStringValue(
+        QStringLiteral("currency"), &Accounting::setCurrency);
+
+    const auto fillTimestampValue =
+        [&](const QString & column,
+            std::function<void(
+                Accounting &, std::optional<qevercloud::Timestamp>)>
+                setter) {
+            fillAccountingValue<
+                qint64, std::optional<qevercloud::Timestamp>>(
+                record, column, accounting, std::move(setter));
+        };
+
+    fillTimestampValue(
+        QStringLiteral("uploadLimitEnd"), &Accounting::setUploadLimitEnd);
+
+    fillTimestampValue(
+        QStringLiteral("premiumServiceStart"),
+        &Accounting::setPremiumServiceStart);
+
+    fillTimestampValue(
+        QStringLiteral("lastSuccessfulCharge"),
+        &Accounting::setLastSuccessfulCharge);
+
+    fillTimestampValue(
+        QStringLiteral("lastFailedCharge"), &Accounting::setLastFailedCharge);
+
+    fillTimestampValue(
+        QStringLiteral("nextPaymentDue"), &Accounting::setNextPaymentDue);
+
+    fillTimestampValue(
+        QStringLiteral("premiumLockUntil"), &Accounting::setPremiumLockUntil);
+
+    fillTimestampValue(QStringLiteral("updated"), &Accounting::setUpdated);
+
+    fillTimestampValue(
+        QStringLiteral("lastRequestedCharge"),
+        &Accounting::setLastRequestedCharge);
+
+    fillTimestampValue(
+        QStringLiteral("nextChargeDate"), &Accounting::setNextChargeDate);
+
+    fillAccountingValue<qint64, qint64>(
+        record, QStringLiteral("uploadLimitNextMonth"), accounting,
+        &Accounting::setUploadLimitNextMonth);
+
+    fillAccountingValue<int, qevercloud::PremiumOrderStatus>(
+        record, QStringLiteral("premiumServiceStatus"), accounting,
+        &Accounting::setPremiumServiceStatus);
+
+    fillAccountingValue<int, qint32>(
+        record, QStringLiteral("unitPrice"), accounting,
+        &Accounting::setUnitPrice);
+
+    fillAccountingValue<int, qint32>(
+        record, QStringLiteral("unitDiscount"), accounting,
+        &Accounting::setUnitDiscount);
 }
 
 bool UsersHandler::expungeUserByIdImpl(

@@ -114,6 +114,10 @@ private:
         const QSqlRecord & record,
         std::optional<qevercloud::UserAttributes> & userAttributes) const;
 
+    void fillAccountingFromSqlRecord(
+        const QSqlRecord & record,
+        std::optional<qevercloud::Accounting> & accounting) const;
+
     [[nodiscard]] bool expungeUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription);
