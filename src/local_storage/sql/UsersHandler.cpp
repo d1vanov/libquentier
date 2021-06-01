@@ -416,7 +416,7 @@ std::optional<quint32> UsersHandler::userCountImpl(
 
     if (!query.next()) {
         QNDEBUG(
-            "local_storage:sql",
+            "local_storage::sql::UsersHandler",
             "Found no users in the local storage database");
         return 0;
     }
@@ -1829,10 +1829,33 @@ bool UsersHandler::expungeUserByIdImpl(
     qevercloud::UserID userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(userId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    QNDEBUG(
+        "local_storage::sql::UsersHandler",
+        "UsersHandler::expungeUserByIdImpl: user id = " << userId);
+
+    static const QString queryString =
+        QStringLiteral("DELETE FROM Users WHERE id=:id");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot expunge user from the local storage database: failed to "
+            "prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), QString::number(userId));
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot expunge user from the local storage database: failed to "
+            "prepare query"),
+        false);
+
     return true;
 }
 
