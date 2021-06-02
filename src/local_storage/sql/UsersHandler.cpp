@@ -584,6 +584,20 @@ bool UsersHandler::putUserAttributes(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    if (!putUserAttributesViewedPromotions(
+            userId, userAttributes.viewedPromotions(), database,
+            errorDescription))
+    {
+        return false;
+    }
+
+    if (!putUserAttributesRecentMailedAddresses(
+            userId, userAttributes.recentMailedAddresses(), database,
+            errorDescription))
+    {
+        return false;
+    }
+
     static const QString queryString = QStringLiteral(
         "INSERT OR REPLACE INTO UserAttributes"
         "(id, defaultLocationName, defaultLatitude, "
@@ -832,45 +846,153 @@ bool UsersHandler::putUserAttributes(
     return true;
 }
 
-bool UsersHandler::removeUserAttributes(
-    const QString & userId, QSqlDatabase & database,
-    ErrorString & errorDescription)
+bool UsersHandler::putUserAttributesViewedPromotions(
+    const QString & userId, const std::optional<QStringList> & viewedPromotions,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // Clear entries from UserAttributesViewedPromotions table
-    {
-        static const QString queryString =
-            QString::fromUtf8(
-                "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
-                .arg(userId);
+    if (!removeUserAttributesViewedPromotions(
+            userId, database, errorDescription)) {
+        return false;
+    }
 
-        QSqlQuery query{database};
-        const bool res = query.exec(queryString);
+    if (!viewedPromotions || viewedPromotions->isEmpty()) {
+        return true;
+    }
+
+    const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO UserAttributesViewedPromotions"
+        "(id, promotion) VALUES(:id, :promotion)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user attributes' viewer promotions into the local "
+            "storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    for (const auto & viewedPromotion: *viewedPromotions) {
+        query.bindValue(QStringLiteral(":promotion"), viewedPromotion);
+        res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::UsersHandler",
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::UsersHandler",
-                "Cannot remove user' viewed promotions from "
+                "Cannot put user attributes' viewer promotions into the local "
+                "storage database"),
+            false);
+    }
+
+    return true;
+}
+
+bool UsersHandler::putUserAttributesRecentMailedAddresses(
+    const QString & userId,
+    const std::optional<QStringList> & recentMailedAddresses,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (!removeUserAttributesRecentMailedAddresses(
+            userId, database, errorDescription)) {
+        return false;
+    }
+
+    if (!recentMailedAddresses || recentMailedAddresses->isEmpty()) {
+        return true;
+    }
+
+    const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO UserAttributesRecentMailedAddresses"
+        "(id, address) VALUES(:id, :address)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot put user attributes' recent mailed addresses into "
+            "the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    for (const auto & recentMailedAddress: *recentMailedAddresses) {
+        query.bindValue(QStringLiteral(":address"), recentMailedAddress);
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::UsersHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Cannot put user attributes' recent mailed addresses into "
                 "the local storage database"),
             false);
     }
 
-    // Clear entries from UserAttributesRecentMailedAddresses table
-    {
-        static const QString queryString =
-            QString::fromUtf8(
-                "DELETE FROM UserAttributesRecentMailedAddresses WHERE "
-                "id=%1")
-                .arg(userId);
+    return true;
+}
 
-        QSqlQuery query{database};
-        const bool res = query.exec(queryString);
-        ENSURE_DB_REQUEST_RETURN(
-            res, query, "local_storage::sql::UsersHandler",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::UsersHandler",
-                "Cannot remove user' recent mailed addresses from "
-                "the local storage database"),
-            false);
+bool UsersHandler::removeUserAttributesViewedPromotions(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString =
+        QString::fromUtf8(
+            "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
+        .arg(userId);
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' viewed promotions from "
+            "the local storage database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::removeUserAttributesRecentMailedAddresses(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString =
+        QString::fromUtf8(
+            "DELETE FROM UserAttributesRecentMailedAddresses WHERE "
+            "id=%1")
+            .arg(userId);
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' recent mailed addresses from "
+            "the local storage database"),
+        false);
+
+    return true;
+}
+
+bool UsersHandler::removeUserAttributes(
+    const QString & userId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    if (!removeUserAttributesViewedPromotions(
+            userId, database, errorDescription)) {
+        return false;
+    }
+
+    if (!removeUserAttributesRecentMailedAddresses(
+            userId, database, errorDescription))
+    {
+        return false;
     }
 
     // Clear entries from UserAttributes table
@@ -1287,10 +1409,6 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     static const QString queryString = QStringLiteral(
         "SELECT * FROM Users LEFT OUTER JOIN UserAttributes "
         "ON Users.id = UserAttributes.id "
-        "LEFT OUTER JOIN UserAttributesViewedPromotions "
-        "ON Users.id = UserAttributesViewedPromotions.id "
-        "LEFT OUTER JOIN UserAttributesRecentMailedAddresses "
-        "ON Users.id = UserAttributesRecentMailedAddresses.id "
         "LEFT OUTER JOIN Accounting ON Users.id = Accounting.id "
         "LEFT OUTER JOIN AccountLimits ON Users.id = AccountLimits.id "
         "LEFT OUTER JOIN BusinessUserInfo ON Users.id = BusinessUserInfo.id "
@@ -1304,6 +1422,17 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
             "local_storage::sql::UsersHandler",
             "Cannot find user in the local storage database: failed to prepare "
             "query"),
+        std::nullopt);
+
+    const auto id = QString::number(userId);
+    query.bindValue(":id", id);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user in the local storage database"),
         std::nullopt);
 
     if (!query.next()) {
@@ -1326,7 +1455,124 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
         return std::nullopt;
     }
 
+    if (user.attributes())
+    {
+        if (!findUserAttributesViewedPromotionsById(
+                id, database, *user.mutableAttributes(), errorDescription)) {
+            return std::nullopt;
+        }
+
+        if (!findUserAttributesRecentMailedAddressesById(
+                id, database, *user.mutableAttributes(), errorDescription)) {
+            return std::nullopt;
+        }
+    }
+
     return user;
+}
+
+bool UsersHandler::findUserAttributesViewedPromotionsById(
+    const QString & userId, QSqlDatabase & database,
+    qevercloud::UserAttributes & userAttributes,
+    ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT * FROM UserAttributesViewedPromotions WHERE id = :id");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user attributes' viewed promotions in the local "
+            "storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user attributes' viewed promotions in the local "
+            "storage database"),
+        false);
+
+    while (query.next())
+    {
+        const auto record = query.record();
+        const int promotionIndex = record.indexOf(QStringLiteral("promotion"));
+        if (promotionIndex < 0) {
+            continue;
+        }
+
+        const QVariant value = record.value(promotionIndex);
+        if (value.isNull()) {
+            continue;
+        }
+
+        if (!userAttributes.viewedPromotions()) {
+            userAttributes.setViewedPromotions(QStringList{});
+        }
+
+        *userAttributes.mutableViewedPromotions() << value.toString();
+    }
+
+    return true;
+}
+
+bool UsersHandler::findUserAttributesRecentMailedAddressesById(
+    const QString & userId, QSqlDatabase & database,
+    qevercloud::UserAttributes & userAttributes,
+    ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT * FROM UserAttributesRecentMailedAddresses WHERE id = :id");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user attributes' recent mailed addresses in the local "
+            "storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot find user attributes' recent mailed addresses in the local "
+            "storage database"),
+        false);
+
+    while (query.next())
+    {
+        const auto record = query.record();
+        const int addressIndex = record.indexOf(QStringLiteral("address"));
+        if (addressIndex < 0) {
+            continue;
+        }
+
+        const QVariant value = record.value(addressIndex);
+        if (value.isNull()) {
+            continue;
+        }
+
+        if (!userAttributes.recentMailedAddresses()) {
+            userAttributes.setRecentMailedAddresses(QStringList{});
+        }
+
+        *userAttributes.mutableRecentMailedAddresses() << value.toString();
+    }
+
+    return true;
 }
 
 bool UsersHandler::fillUserFromSqlRecord(
@@ -1412,47 +1658,6 @@ void UsersHandler::fillUserAttributesFromSqlRecord(
     std::optional<qevercloud::UserAttributes> & userAttributes) const
 {
     using qevercloud::UserAttributes;
-
-    const auto & attributesRef =
-        [&userAttributes]() -> UserAttributes & {
-        if (!userAttributes) {
-            userAttributes.emplace(UserAttributes{});
-        }
-
-        return *userAttributes;
-    };
-
-    const int promotionIndex = record.indexOf(QStringLiteral("promotion"));
-    if (promotionIndex >= 0) {
-        const QVariant value = record.value(promotionIndex);
-        if (!value.isNull()) {
-            auto & attributes = attributesRef();
-            if (!attributes.viewedPromotions()) {
-                attributes.setViewedPromotions({});
-            }
-
-            QString valueString = value.toString();
-            if (!attributes.viewedPromotions()->contains(valueString)) {
-                *attributes.mutableViewedPromotions() << valueString;
-            }
-        }
-    }
-
-    const int addressIndex = record.indexOf(QStringLiteral("address"));
-    if (addressIndex >= 0) {
-        const QVariant value = record.value(addressIndex);
-        if (!value.isNull()) {
-            auto & attributes = attributesRef();
-            if (!attributes.recentMailedAddresses()) {
-                attributes.setRecentMailedAddresses(QStringList{});
-            }
-
-            QString valueString = value.toString();
-            if (!attributes.recentMailedAddresses()->contains(valueString)) {
-                *attributes.mutableRecentMailedAddresses() << valueString;
-            }
-        }
-    }
 
     const auto fillStringValue =
         [&](const QString & column,

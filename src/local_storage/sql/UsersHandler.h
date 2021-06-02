@@ -73,6 +73,24 @@ private:
         const QString & userId,
         QSqlDatabase & database, ErrorString & errorDescription);
 
+    [[nodiscard]] bool putUserAttributesViewedPromotions(
+        const QString & userId,
+        const std::optional<QStringList> & viewedPromotions,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool putUserAttributesRecentMailedAddresses(
+        const QString & userId,
+        const std::optional<QStringList> & recentMailedAddresses,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeUserAttributesViewedPromotions(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeUserAttributesRecentMailedAddresses(
+        const QString & userId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
     [[nodiscard]] bool removeUserAttributes(
         const QString & userId, QSqlDatabase & database,
         ErrorString & errorDescription);
@@ -103,6 +121,16 @@ private:
 
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool findUserAttributesViewedPromotionsById(
+        const QString & userId, QSqlDatabase & database,
+        qevercloud::UserAttributes & userAttributes,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool findUserAttributesRecentMailedAddressesById(
+        const QString & userId, QSqlDatabase & database,
+        qevercloud::UserAttributes & userAttributes,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool fillUserFromSqlRecord(
