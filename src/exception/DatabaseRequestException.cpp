@@ -21,8 +21,8 @@
 namespace quentier {
 
 DatabaseRequestException::DatabaseRequestException(
-    const ErrorString & message) :
-    IQuentierException(message)
+    ErrorString message) :
+    IQuentierException(std::move(message))
 {}
 
 QString DatabaseRequestException::exceptionDisplayName() const

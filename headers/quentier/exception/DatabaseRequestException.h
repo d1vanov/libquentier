@@ -30,7 +30,7 @@ namespace quentier {
 class QUENTIER_EXPORT DatabaseRequestException : public IQuentierException
 {
 public:
-    explicit DatabaseRequestException(const ErrorString & message);
+    explicit DatabaseRequestException(ErrorString message);
 
     [[nodiscard]] DatabaseRequestException * clone() const override;
     void raise() const override;
