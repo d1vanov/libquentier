@@ -18,6 +18,7 @@
 
 #include "Transaction.h"
 
+#include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
 
@@ -31,10 +32,12 @@ Transaction::Transaction(const QSqlDatabase & database) :
 {
     const auto * driver = m_database.driver();
     if (Q_UNLIKELY(!driver)) {
-        throw InvalidArgument{ErrorString{
+        auto errorDescription = ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::Transaction",
-                "Failed to create local storage transaction: no SQL driver")}};
+                "Failed to create local storage transaction: no SQL driver")};
+        QNWARNING("local_storage::sql::Transaction", errorDescription);
+        throw InvalidArgument{std::move(errorDescription)};
     }
 
     if (Q_UNLIKELY(!driver->hasFeature(QSqlDriver::Transactions))) {
@@ -44,7 +47,23 @@ Transaction::Transaction(const QSqlDatabase & database) :
                 "Failed to create local storage transaction: SQL driver "
                 "doesn't support transactions")};
         errorDescription.details() = database.driverName();
+        QNWARNING("local_storage::sql::Transaction", errorDescription);
         throw InvalidArgument{std::move(errorDescription)};
+    }
+
+    const bool res = m_database.transaction();
+    if (Q_UNLIKELY(!res)) {
+        auto errorDescription = ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::Transaction",
+                "Failed to start local storage transaction")};
+        const auto lastError = m_database.lastError();
+        errorDescription.details() = lastError.text();
+        errorDescription.details() += QStringLiteral(" (native error code = ");
+        errorDescription.details() += lastError.nativeErrorCode();
+        errorDescription.details() += QStringLiteral(")");
+        QNWARNING("local_storage::sql::Transaction", errorDescription);
+        throw DatabaseRequestException{std::move(errorDescription)};
     }
 }
 
