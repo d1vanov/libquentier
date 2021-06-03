@@ -23,30 +23,18 @@
 #include <quentier/exception/IQuentierException.h>
 
 #include <QCoreApplication>
+#include <QFlags>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QThreadPool>
 
 #include <gtest/gtest.h>
 
+#include <array>
+
 namespace quentier::local_storage::sql::tests {
 
 namespace {
-
-[[nodiscard]] qevercloud::User createUser()
-{
-    qevercloud::User user;
-    user.setId(1);
-    user.setUsername(QStringLiteral("fake_user_username"));
-    user.setEmail(QStringLiteral("fake_user _mail"));
-    user.setName(QStringLiteral("fake_user_name"));
-    user.setTimezone(QStringLiteral("fake_user_timezone"));
-    user.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
-    user.setCreated(2);
-    user.setUpdated(3);
-    user.setActive(true);
-    return user;
-}
 
 [[nodiscard]] qevercloud::UserAttributes createUserAttributes()
 {
@@ -101,6 +89,112 @@ namespace {
     userAttributes.setShouldLogClientEvent(false);
 
     return userAttributes;
+}
+
+[[nodiscard]] qevercloud::Accounting createAccounting()
+{
+    qevercloud::Accounting accounting;
+    accounting.setUploadLimitEnd(qevercloud::Timestamp{1});
+    accounting.setUploadLimitNextMonth(100L);
+    accounting.setPremiumServiceStatus(qevercloud::PremiumOrderStatus::ACTIVE);
+    accounting.setPremiumOrderNumber(QStringLiteral("premiumOrderNumber"));
+
+    accounting.setPremiumCommerceService(
+        QStringLiteral("premiumCommerceService"));
+
+    accounting.setPremiumServiceStart(qevercloud::Timestamp{2});
+    accounting.setPremiumServiceSKU(QStringLiteral("premiumServiceSKU"));
+    accounting.setLastSuccessfulCharge(qevercloud::Timestamp{3});
+    accounting.setLastFailedCharge(qevercloud::Timestamp{4});
+
+    accounting.setLastFailedChargeReason(
+        QStringLiteral("lastFailedChargeReason"));
+
+    accounting.setNextPaymentDue(qevercloud::Timestamp{5});
+    accounting.setPremiumLockUntil(qevercloud::Timestamp{6});
+    accounting.setUpdated(qevercloud::Timestamp{7});
+
+    accounting.setPremiumSubscriptionNumber(
+        QStringLiteral("premiumSubscriptionNumber"));
+
+    accounting.setLastRequestedCharge(qevercloud::Timestamp{8});
+    accounting.setCurrency(QStringLiteral("USD"));
+    accounting.setUnitPrice(90);
+    accounting.setUnitDiscount(2);
+    accounting.setNextChargeDate(qevercloud::Timestamp{9});
+    accounting.setAvailablePoints(3);
+
+    return accounting;
+}
+
+[[nodiscard]] qevercloud::AccountLimits createAccountLimits()
+{
+    qevercloud::AccountLimits accountLimits;
+    accountLimits.setUserMailLimitDaily(1);
+    accountLimits.setNoteSizeMax(2);
+    accountLimits.setResourceSizeMax(3);
+    accountLimits.setUserLinkedNotebookMax(4);
+    accountLimits.setUploadLimit(5);
+    accountLimits.setUserNoteCountMax(6);
+    accountLimits.setUserNotebookCountMax(7);
+    accountLimits.setUserTagCountMax(8);
+    accountLimits.setNoteTagCountMax(9);
+    accountLimits.setUserSavedSearchesMax(10);
+    accountLimits.setNoteResourceCountMax(11);
+    return accountLimits;
+}
+
+[[nodiscard]] qevercloud::BusinessUserInfo createBusinessUserInfo()
+{
+    qevercloud::BusinessUserInfo businessUserInfo;
+    businessUserInfo.setBusinessId(1);
+    businessUserInfo.setBusinessName(QStringLiteral("businessName"));
+    businessUserInfo.setRole(qevercloud::BusinessUserRole::NORMAL);
+    businessUserInfo.setEmail(QStringLiteral("email"));
+    return businessUserInfo;
+}
+
+enum class CreateUserOption
+{
+    WithUserAttributes,
+    WithAccounting,
+    WithAccountLimits,
+    WithBusinessUserInfo
+};
+
+Q_DECLARE_FLAGS(CreateUserOptions, CreateUserOption);
+
+[[nodiscard]] qevercloud::User createUser(
+    const CreateUserOptions & createUserOptions = {})
+{
+    qevercloud::User user;
+    user.setId(1);
+    user.setUsername(QStringLiteral("fake_user_username"));
+    user.setEmail(QStringLiteral("fake_user _mail"));
+    user.setName(QStringLiteral("fake_user_name"));
+    user.setTimezone(QStringLiteral("fake_user_timezone"));
+    user.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
+    user.setCreated(2);
+    user.setUpdated(3);
+    user.setActive(true);
+
+    if (createUserOptions & CreateUserOption::WithUserAttributes) {
+        user.setAttributes(createUserAttributes());
+    }
+
+    if (createUserOptions & CreateUserOption::WithAccounting) {
+        user.setAccounting(createAccounting());
+    }
+
+    if (createUserOptions & CreateUserOption::WithAccountLimits) {
+        user.setAccountLimits(createAccountLimits());
+    }
+
+    if (createUserOptions & CreateUserOption::WithBusinessUserInfo) {
+        user.setBusinessUserInfo(createBusinessUserInfo());
+    }
+
+    return user;
 }
 
 class UsersHandlerTest : public testing::Test
@@ -197,34 +291,69 @@ TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
     EXPECT_NO_THROW(expungeUserFuture.waitForFinished());
 }
 
-TEST_F(UsersHandlerTest, PutNewUser)
+class UsersHandlerPutNewUserTest :
+    public UsersHandlerTest,
+    public testing::WithParamInterface<qevercloud::User>
+{};
+
+const std::array put_new_user_test_values{
+    createUser(),
+    createUser(CreateUserOptions{CreateUserOption::WithUserAttributes}),
+    createUser(CreateUserOptions{CreateUserOption::WithAccounting}),
+    createUser(CreateUserOptions{CreateUserOption::WithAccountLimits}),
+    createUser(CreateUserOptions{CreateUserOption::WithBusinessUserInfo}),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithUserAttributes),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithBusinessUserInfo),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithAccountLimits),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithUserAttributes} |
+        CreateUserOption::WithBusinessUserInfo),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithUserAttributes} |
+        CreateUserOption::WithAccountLimits),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithBusinessUserInfo} |
+        CreateUserOption::WithAccountLimits),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithBusinessUserInfo |
+        CreateUserOption::WithUserAttributes),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithBusinessUserInfo |
+        CreateUserOption::WithAccountLimits),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithUserAttributes} |
+        CreateUserOption::WithBusinessUserInfo |
+        CreateUserOption::WithAccountLimits),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithAccountLimits |
+        CreateUserOption::WithUserAttributes),
+    createUser(CreateUserOptions{
+        CreateUserOption::WithAccounting} |
+        CreateUserOption::WithAccountLimits |
+        CreateUserOption::WithBusinessUserInfo |
+        CreateUserOption::WithUserAttributes),
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    UsersHandlerPutNewUserTestInstance,
+    UsersHandlerPutNewUserTest,
+    testing::ValuesIn(put_new_user_test_values));
+
+TEST_P(UsersHandlerPutNewUserTest, PutNewUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
         m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
 
-    const auto user = createUser();
-    auto putUserFuture = usersHandler->putUser(user);
-    EXPECT_NO_THROW(putUserFuture.waitForFinished());
-
-    auto userCountFuture = usersHandler->userCount();
-    userCountFuture.waitForFinished();
-    EXPECT_EQ(userCountFuture.result(), 1U);
-
-    auto foundUserFuture = usersHandler->findUserById(*user.id());
-    foundUserFuture.waitForFinished();
-    const auto foundUser = foundUserFuture.result();
-    EXPECT_TRUE(foundUser);
-    EXPECT_EQ(*foundUser, user);
-}
-
-TEST_F(UsersHandlerTest, PutNewUserWithUserAttributes)
-{
-    const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
-
-    auto user = createUser();
-    user.setAttributes(createUserAttributes());
-
+    const auto user = GetParam();
     auto putUserFuture = usersHandler->putUser(user);
     EXPECT_NO_THROW(putUserFuture.waitForFinished());
 
