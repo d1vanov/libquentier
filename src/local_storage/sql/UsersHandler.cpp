@@ -1902,6 +1902,10 @@ void UsersHandler::fillAccountingFromSqlRecord(
     fillAccountingValue<int, qint32>(
         record, QStringLiteral("unitDiscount"), accounting,
         &Accounting::setUnitDiscount);
+
+    fillAccountingValue<int, qint32>(
+        record, QStringLiteral("availablePoints"), accounting,
+        &Accounting::setAvailablePoints);
 }
 
 void UsersHandler::fillBusinessUserInfoFromSqlRecord(
