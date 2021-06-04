@@ -291,12 +291,12 @@ TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
     EXPECT_NO_THROW(expungeUserFuture.waitForFinished());
 }
 
-class UsersHandlerPutNewUserTest :
+class UsersHandlerSingleUserTest :
     public UsersHandlerTest,
     public testing::WithParamInterface<qevercloud::User>
 {};
 
-const std::array put_new_user_test_values{
+const std::array single_user_test_values{
     createUser(),
     createUser(CreateUserOptions{CreateUserOption::WithUserAttributes}),
     createUser(CreateUserOptions{CreateUserOption::WithAccounting}),
@@ -344,11 +344,11 @@ const std::array put_new_user_test_values{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    UsersHandlerPutNewUserTestInstance,
-    UsersHandlerPutNewUserTest,
-    testing::ValuesIn(put_new_user_test_values));
+    UsersHandlerSingleUserTestInstance,
+    UsersHandlerSingleUserTest,
+    testing::ValuesIn(single_user_test_values));
 
-TEST_P(UsersHandlerPutNewUserTest, PutNewUser)
+TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
         m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
@@ -366,6 +366,17 @@ TEST_P(UsersHandlerPutNewUserTest, PutNewUser)
     const auto foundUser = foundUserFuture.result();
     EXPECT_TRUE(foundUser);
     EXPECT_EQ(*foundUser, user);
+
+    auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
+    expungeUserFuture.waitForFinished();
+
+    userCountFuture = usersHandler->userCount();
+    userCountFuture.waitForFinished();
+    EXPECT_EQ(userCountFuture.result(), 0U);
+
+    foundUserFuture = usersHandler->findUserById(*user.id());
+    foundUserFuture.waitForFinished();
+    EXPECT_EQ(foundUserFuture.resultCount(), 0);
 }
 
 } // namespace quentier::local_storage::sql::tests
