@@ -24,6 +24,7 @@
 
 #include <QCoreApplication>
 #include <QFlags>
+#include <QFutureSynchronizer>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QThreadPool>
@@ -31,6 +32,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <iterator>
 
 namespace quentier::local_storage::sql::tests {
 
@@ -296,7 +298,7 @@ class UsersHandlerSingleUserTest :
     public testing::WithParamInterface<qevercloud::User>
 {};
 
-const std::array single_user_test_values{
+const std::array user_test_values{
     createUser(),
     createUser(CreateUserOptions{CreateUserOption::WithUserAttributes}),
     createUser(CreateUserOptions{CreateUserOption::WithAccounting}),
@@ -346,7 +348,7 @@ const std::array single_user_test_values{
 INSTANTIATE_TEST_SUITE_P(
     UsersHandlerSingleUserTestInstance,
     UsersHandlerSingleUserTest,
-    testing::ValuesIn(single_user_test_values));
+    testing::ValuesIn(user_test_values));
 
 TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
@@ -377,6 +379,53 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
     foundUserFuture = usersHandler->findUserById(*user.id());
     foundUserFuture.waitForFinished();
     EXPECT_EQ(foundUserFuture.resultCount(), 0);
+}
+
+TEST_F(UsersHandlerTest, HandleMultipleUsers)
+{
+    const auto usersHandler = std::make_shared<UsersHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto users = user_test_values;
+    for (auto it = std::next(users.begin()); it != users.end(); ++it) { // NOLINT
+        const auto prevIt = std::prev(it); // NOLINT
+        it->setId(prevIt->id().value() + 1);
+    }
+
+    QFutureSynchronizer<void> putUsersSynchronizer;
+    for (auto user: users) {
+        auto putUserFuture = usersHandler->putUser(std::move(user));
+        putUsersSynchronizer.addFuture(putUserFuture);
+    }
+
+    EXPECT_NO_THROW(putUsersSynchronizer.waitForFinished());
+
+    auto userCountFuture = usersHandler->userCount();
+    userCountFuture.waitForFinished();
+    EXPECT_EQ(userCountFuture.result(), users.size());
+
+    for (const auto & user: users) {
+        auto foundUserFuture = usersHandler->findUserById(*user.id());
+        foundUserFuture.waitForFinished();
+        const auto foundUser = foundUserFuture.result();
+        EXPECT_TRUE(foundUser);
+        EXPECT_EQ(*foundUser, user);
+    }
+
+    for (const auto & user: users) {
+        auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
+        expungeUserFuture.waitForFinished();
+    }
+
+    userCountFuture = usersHandler->userCount();
+    userCountFuture.waitForFinished();
+    EXPECT_EQ(userCountFuture.result(), 0U);
+
+    for (const auto & user: users) {
+        auto foundUserFuture = usersHandler->findUserById(*user.id());
+        foundUserFuture.waitForFinished();
+        EXPECT_EQ(foundUserFuture.resultCount(), 0);
+    }
 }
 
 } // namespace quentier::local_storage::sql::tests
