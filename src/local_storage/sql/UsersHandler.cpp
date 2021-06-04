@@ -277,12 +277,10 @@ QFuture<void> UsersHandler::putUser(qevercloud::User user)
     return future;
 }
 
-QFuture<std::optional<qevercloud::User>> UsersHandler::findUserById(
+QFuture<qevercloud::User> UsersHandler::findUserById(
     qevercloud::UserID userId) const
 {
-    auto promise =
-        std::make_shared<QPromise<std::optional<qevercloud::User>>>();
-
+    auto promise = std::make_shared<QPromise<qevercloud::User>>();
     auto future = promise->future();
 
     promise->start();

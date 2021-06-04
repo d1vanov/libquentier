@@ -366,8 +366,7 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
     auto foundUserFuture = usersHandler->findUserById(*user.id());
     foundUserFuture.waitForFinished();
     const auto foundUser = foundUserFuture.result();
-    EXPECT_TRUE(foundUser);
-    EXPECT_EQ(*foundUser, user);
+    EXPECT_EQ(foundUser, user);
 
     auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
     expungeUserFuture.waitForFinished();
@@ -408,8 +407,7 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         auto foundUserFuture = usersHandler->findUserById(*user.id());
         foundUserFuture.waitForFinished();
         const auto foundUser = foundUserFuture.result();
-        EXPECT_TRUE(foundUser);
-        EXPECT_EQ(*foundUser, user);
+        EXPECT_EQ(foundUser, user);
     }
 
     for (const auto & user: users) {
