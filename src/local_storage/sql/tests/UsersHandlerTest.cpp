@@ -34,6 +34,8 @@
 #include <array>
 #include <iterator>
 
+// clazy:excludeall=non-pod-global-static
+
 namespace quentier::local_storage::sql::tests {
 
 namespace {
