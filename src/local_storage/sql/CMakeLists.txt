@@ -9,6 +9,8 @@ target_sources(${LIBRARY_NAME}
   ConnectionPool.cpp
   ConnectionPool.h
   ErrorHandling.h
+  NotebooksHandler.cpp
+  NotebooksHandler.h
   Notifier.cpp
   Notifier.h
   NotifierProxy.cpp
