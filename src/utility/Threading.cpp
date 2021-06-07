@@ -46,4 +46,15 @@ private:
     return new FunctionRunnable(std::move(function));
 }
 
+[[nodiscard]] QFuture<void> makeReadyFuture()
+{
+    QPromise<void> promise;
+    QFuture<void> future = promise.future();
+
+    promise.start();
+    promise.finish();
+
+    return future;
+}
+
 } // namespace quentier::utility

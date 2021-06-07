@@ -107,6 +107,8 @@ template <class T>
     return future;
 }
 
+[[nodiscard]] QFuture<void> makeReadyFuture();
+
 /**
  * Create QRunnable from a function - sort of a workaround for Qt < 5.15
  * where QRunnable::create does the same job
