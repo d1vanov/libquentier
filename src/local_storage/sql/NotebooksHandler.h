@@ -68,6 +68,45 @@ public:
         ListOptions<ListNotebooksOrder> options) const;
 
 private:
+    [[nodiscard]] std::optional<quint32> notebookCountImpl(
+        QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool putNotebookImpl(
+        const qevercloud::Notebook & notebook, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByLocalIdImpl(
+        QString localId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByGuidImpl(
+        qevercloud::Guid guid, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByNameImpl(
+        QString name, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
+        QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool expungeNotebookByLocalIdImpl(
+        QString localId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool expungeNotebookByGuidImpl(
+        qevercloud::Guid guid, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool expungeNotebookByNameImpl(
+        QString name, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
+        ListOptions<ListNotebooksOrder> options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     QThreadPtr m_writerThread;
