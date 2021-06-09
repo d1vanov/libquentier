@@ -72,8 +72,24 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool putNotebookImpl(
+        qevercloud::Notebook notebook, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool putCommonNotebookData(
         const qevercloud::Notebook & notebook, QSqlDatabase & database,
         ErrorString & errorDescription);
+
+    [[nodiscard]] bool putNotebookRestrictions(
+        const qevercloud::NotebookRestrictions & notebookRestrictions,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeNotebookRestrictions(
+        const QString & localId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] QString notebookLocalId(
+        const qevercloud::Notebook & notebook, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByLocalIdImpl(
         QString localId, QSqlDatabase & database,

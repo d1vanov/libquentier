@@ -19,9 +19,12 @@
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "NotebooksHandler.h"
+#include "Transaction.h"
+#include "TypeChecks.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/logging/QuentierLogger.h>
 
 #include <utility/Threading.h>
 
@@ -30,6 +33,10 @@
 #else
 #include <utility/Qt5Promise.h>
 #endif
+
+#include <QSqlRecord>
+#include <QSqlQuery>
+#include <QThreadPool>
 
 namespace quentier::local_storage::sql {
 
@@ -115,7 +122,7 @@ QFuture<void> NotebooksHandler::putNotebook(qevercloud::Notebook notebook)
         m_writerThread.get(),
         [promise = std::move(promise),
          self_weak = weak_from_this(),
-         notebook = std::move(notebook)]
+         notebook = std::move(notebook)] () mutable
          {
              const auto self = self_weak.lock();
              if (!self) {
@@ -131,7 +138,7 @@ QFuture<void> NotebooksHandler::putNotebook(qevercloud::Notebook notebook)
 
              ErrorString errorDescription;
              const bool res = self->putNotebookImpl(
-                 notebook, databaseConnection, errorDescription);
+                 std::move(notebook), databaseConnection, errorDescription);
 
              if (!res) {
                  promise->setException(
@@ -477,13 +484,87 @@ QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
 std::optional<quint32> NotebooksHandler::notebookCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    QSqlQuery query{database};
+    const bool res = query.exec(
+        QStringLiteral("SELECT COUNT(localUid) FROM Notebooks"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot count notebooks in the local storage database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::NotebooksHandler",
+            "Found no notebooks in the local storage database");
+        return 0;
+    }
+
+    bool conversionResult = false;
+    const int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "Cannot count notebooks in the local storage database: failed "
+                "to convert notebook count to int"));
+        QNWARNING("local_storage:sql", errorDescription);
+        return std::nullopt;
+    }
+
+    return count;
 }
 
 bool NotebooksHandler::putNotebookImpl(
+    qevercloud::Notebook notebook, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "NotebooksHandler::putNotebookImpl: " << notebook);
+
+    const ErrorString errorPrefix(
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Can't put notebook into the local storage database"));
+
+    ErrorString error;
+    if (!checkNotebook(notebook, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage:sql:NotebooksHandler",
+            error << "\nNotebook: " << notebook);
+        return false;
+    }
+
+    const auto localId = notebookLocalId(notebook, database, errorDescription);
+    notebook.setLocalId(localId);
+
+    Transaction transaction{database};
+
+    if (!putCommonNotebookData(notebook, database, errorDescription)) {
+        return false;
+    }
+
+    if (notebook.restrictions()) {
+        if (!putNotebookRestrictions(*notebook.restrictions(), database, errorDescription)) {
+            return false;
+        }
+    }
+    else if (!removeNotebookRestrictions(localId, database, errorDescription)) {
+        return false;
+    }
+
+    // TODO: implement further
+    return true;
+}
+
+bool NotebooksHandler::putCommonNotebookData(
     const qevercloud::Notebook & notebook, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
@@ -492,6 +573,80 @@ bool NotebooksHandler::putNotebookImpl(
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return true;
+}
+
+bool NotebooksHandler::putNotebookRestrictions(
+    const qevercloud::NotebookRestrictions & notebookRestrictions,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(notebookRestrictions)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool NotebooksHandler::removeNotebookRestrictions(
+    const QString & localId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(localId)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+QString NotebooksHandler::notebookLocalId(
+    const qevercloud::Notebook & notebook, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    auto localId = notebook.localId();
+    if (!localId.isEmpty())
+    {
+        return localId;
+    }
+
+    // Notebook's local id is empty. Will try to find local id of this notebook
+    // by its guid in the local storage database.
+    if (!notebook.guid())
+    {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "Cannot find notebook's local id: notebook has no guid"));
+        QNWARNING(
+            "local_storage::sql::NotebooksHandler",
+            errorDescription << ": " << notebook);
+        return {};
+    }
+
+    QSqlQuery query{database};
+    bool res = query.prepare(
+        QStringLiteral("SELECT localUid FROM Notebooks WHERE guid = :guid"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot find notebook's local id in the local storage database: "
+            "failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":guid"), *notebook.guid());
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot find notebook's local id in the local storage database"),
+        {});
+
+    if (!query.next()) {
+        return {};
+    }
+
+    return query.value(0).toString();
 }
 
 std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
