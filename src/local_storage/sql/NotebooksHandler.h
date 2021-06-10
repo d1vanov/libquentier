@@ -80,11 +80,21 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool putNotebookRestrictions(
+        const QString & localId,
         const qevercloud::NotebookRestrictions & notebookRestrictions,
         QSqlDatabase & database, ErrorString & errorDescription);
 
+    [[nodiscard]] bool putSharedNotebook(
+        const qevercloud::SharedNotebook & sharedNotebook,
+        int indexInNotebook, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
     [[nodiscard]] bool removeNotebookRestrictions(
         const QString & localId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool removeSharedNotebooks(
+        const QString & notebookGuid, QSqlDatabase & database,
         ErrorString & errorDescription);
 
     [[nodiscard]] QString notebookLocalId(
