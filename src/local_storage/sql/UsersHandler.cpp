@@ -937,13 +937,22 @@ bool UsersHandler::removeUserAttributesViewedPromotions(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString =
-        QString::fromUtf8(
-            "DELETE FROM UserAttributesViewedPromotions WHERE id=%1")
-        .arg(userId);
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM UserAttributesViewedPromotions WHERE id=:id");
 
     QSqlQuery query{database};
-    const bool res = query.exec(queryString);
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' viewed promotions from "
+            "the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -959,14 +968,22 @@ bool UsersHandler::removeUserAttributesRecentMailedAddresses(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString =
-        QString::fromUtf8(
-            "DELETE FROM UserAttributesRecentMailedAddresses WHERE "
-            "id=%1")
-            .arg(userId);
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM UserAttributesRecentMailedAddresses WHERE id=:id");
 
     QSqlQuery query{database};
-    const bool res = query.exec(queryString);
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' recent mailed addresses from "
+            "the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -995,12 +1012,22 @@ bool UsersHandler::removeUserAttributes(
 
     // Clear entries from UserAttributes table
     {
-        static const QString queryString =
-            QString::fromUtf8("DELETE FROM UserAttributes WHERE id=%1")
-                .arg(userId);
+        static const QString queryString = QStringLiteral(
+            "DELETE FROM UserAttributes WHERE id=:id");
 
         QSqlQuery query{database};
-        const bool res = query.exec(queryString);
+        bool res = query.prepare(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::UsersHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "Cannot remove user attributes from "
+                "the local storage database: failed to prepare query"),
+            false);
+
+        query.bindValue(QStringLiteral(":id"), userId);
+
+        res = query.exec();
         ENSURE_DB_REQUEST_RETURN(
             res, query, "local_storage::sql::UsersHandler",
             QT_TRANSLATE_NOOP(
@@ -1185,11 +1212,22 @@ bool UsersHandler::removeAccounting(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString =
-        QString::fromUtf8("DELETE FROM Accounting WHERE id=%1").arg(userId);
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Accounting WHERE id=:id");
 
     QSqlQuery query{database};
-    const bool res = query.exec(queryString);
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' accounting data from "
+            "the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -1310,12 +1348,22 @@ bool UsersHandler::removeAccountLimits(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString =
-        QString::fromUtf8("DELETE FROM AccountLimits WHERE id=%1")
-        .arg(userId);
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM AccountLimits WHERE id=:id");
 
     QSqlQuery query{database};
-    const bool res = query.exec(queryString);
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove user' account limits from the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -1379,12 +1427,22 @@ bool UsersHandler::removeBusinessUserInfo(
     const QString & userId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString =
-        QString::fromUtf8("DELETE FROM BusinessUserInfo WHERE id=%1")
-            .arg(userId);
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM BusinessUserInfo WHERE id=:id");
 
     QSqlQuery query{database};
-    const bool res = query.exec(queryString);
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::UsersHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "Cannot remove business user info from the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":id"), userId);
+
+    res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
         QT_TRANSLATE_NOOP(
@@ -2013,6 +2071,7 @@ bool UsersHandler::expungeUserByIdImpl(
         false);
 
     query.bindValue(QStringLiteral(":id"), QString::number(userId));
+
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::UsersHandler",
