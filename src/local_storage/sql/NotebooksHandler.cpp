@@ -1163,10 +1163,30 @@ bool NotebooksHandler::removeNotebookRestrictions(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM NotebookRestrictions WHERE localUid=:localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot remove notebook restrictions from the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot remove notebook restrictions from the local storage "
+            "database"),
+        false);
+
     return true;
 }
 
@@ -1174,10 +1194,29 @@ bool NotebooksHandler::removeSharedNotebooks(
     const QString & notebookGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(notebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM SharedNotebooks WHERE sharedNotebookNotebookGuid=:guid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot remove shared notebooks from the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":guid"), notebookGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot remove shared notebooks from the local storage database"),
+        false);
+
     return true;
 }
 
