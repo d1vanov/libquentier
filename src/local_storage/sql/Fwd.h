@@ -30,6 +30,8 @@ using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
 
 class Notifier;
 
+struct TaskContext;
+
 using QThreadPtr = std::shared_ptr<QThread>;
 
 } // namespace quentier::local_storage::sql

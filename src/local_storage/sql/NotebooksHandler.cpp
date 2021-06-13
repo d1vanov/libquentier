@@ -19,6 +19,7 @@
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "NotebooksHandler.h"
+#include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
 
@@ -78,416 +79,147 @@ NotebooksHandler::NotebooksHandler(
 
 QFuture<quint32> NotebooksHandler::notebookCount() const
 {
-    auto promise = std::make_shared<QPromise<quint32>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise),
-         self_weak = weak_from_this()]
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const auto userCount = self->notebookCountImpl(
-                 databaseConnection, errorDescription);
-
-             if (!userCount) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-                 promise->finish();
-                 return;
-             }
-
-             promise->addResult(*userCount);
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<quint32>(
+        makeTaskContext(),
+        weak_from_this(),
+        [](const NotebooksHandler & handler, QSqlDatabase & database,
+           ErrorString & errorDescription)
+        {
+            return handler.notebookCountImpl(database, errorDescription);
+        });
 }
 
 QFuture<void> NotebooksHandler::putNotebook(qevercloud::Notebook notebook)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise),
-         self_weak = weak_from_this(),
-         notebook = std::move(notebook)] () mutable
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->putNotebookImpl(
-                 std::move(notebook), databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    return future;
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [notebook = std::move(notebook)]
+        (NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
+        {
+            return handler.putNotebookImpl(
+                std::move(notebook), database, errorDescription);
+        });
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalId(
     QString localId) const
 {
-    auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         localId = std::move(localId)] () mutable
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto notebook = self->findNotebookByLocalIdImpl(
-                 std::move(localId), databaseConnection, errorDescription);
-
-             if (notebook) {
-                 promise->addResult(std::move(*notebook));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<qevercloud::Notebook>(
+        makeTaskContext(),
+        weak_from_this(),
+        [localId = std::move(localId)]
+        (const NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
+        {
+            return handler.findNotebookByLocalIdImpl(
+                std::move(localId), database, errorDescription);
+        });
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByGuid(
     qevercloud::Guid guid) const
 {
-    auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         guid = std::move(guid)] () mutable
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto notebook = self->findNotebookByGuidImpl(
-                 std::move(guid), databaseConnection, errorDescription);
-
-             if (notebook) {
-                 promise->addResult(std::move(*notebook));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<qevercloud::Notebook>(
+        makeTaskContext(),
+        weak_from_this(),
+        [guid = std::move(guid)]
+        (const NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
+        {
+            return handler.findNotebookByGuidImpl(
+                std::move(guid), database, errorDescription);
+        });
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
     QString name, QString linkedNotebookGuid) const
 {
-    auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         name = std::move(name),
-         linkedNotebookGuid = std::move(linkedNotebookGuid)] () mutable
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto notebook = self->findNotebookByNameImpl(
-                 std::move(name), std::move(linkedNotebookGuid),
-                 databaseConnection, errorDescription);
-
-             if (notebook) {
-                 promise->addResult(std::move(*notebook));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<qevercloud::Notebook>(
+        makeTaskContext(),
+        weak_from_this(),
+        [name = std::move(name),
+         linkedNotebookGuid = std::move(linkedNotebookGuid)]
+        (const NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
+        {
+            return handler.findNotebookByNameImpl(
+                std::move(name), std::move(linkedNotebookGuid), database,
+                errorDescription);
+        });
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findDefaultNotebook() const
 {
-    auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this()]
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto notebook = self->findDefaultNotebookImpl(
-                 databaseConnection, errorDescription);
-
-             if (notebook) {
-                 promise->addResult(std::move(*notebook));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<qevercloud::Notebook>(
+        makeTaskContext(),
+        weak_from_this(),
+        [](const NotebooksHandler & handler, QSqlDatabase & database,
+           ErrorString & errorDescription)
+        {
+            return handler.findDefaultNotebookImpl(database, errorDescription);
+        });
 }
 
 QFuture<void> NotebooksHandler::expungeNotebookByLocalId(QString localId)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         localId = std::move(localId)] () mutable
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [localId = std::move(localId)]
+        (NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->expungeNotebookByLocalIdImpl(
-                 std::move(localId), databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
+            return handler.expungeNotebookByLocalIdImpl(
+                std::move(localId), database, errorDescription);
         });
-
-    return future;
 }
 
 QFuture<void> NotebooksHandler::expungeNotebookByGuid(qevercloud::Guid guid)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         guid = std::move(guid)] () mutable
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [guid = std::move(guid)]
+        (NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->expungeNotebookByGuidImpl(
-                 std::move(guid), databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
+            return handler.expungeNotebookByGuidImpl(
+                std::move(guid), database, errorDescription);
         });
-
-    return future;
 }
 
-QFuture<void> NotebooksHandler::expungeNotebookByName(QString name)
+QFuture<void> NotebooksHandler::expungeNotebookByName(
+    QString name, QString linkedNotebookGuid)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         name = std::move(name)] () mutable
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [name = std::move(name),
+         linkedNotebookGuid = std::move(linkedNotebookGuid)]
+        (NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->expungeNotebookByNameImpl(
-                 std::move(name), databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
+            return handler.expungeNotebookByNameImpl(
+                std::move(name), std::move(linkedNotebookGuid), database,
+                errorDescription);
         });
-
-    return future;
 }
 
 QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
     ListOptions<ListNotebooksOrder> options) const
 {
-    auto promise = std::make_shared<QPromise<QList<qevercloud::Notebook>>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this(),
-         options = std::move(options)] () mutable
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::NotebooksHandler",
-                         "NotebooksHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto notebooks = self->listNotebooksImpl(
-                 std::move(options), databaseConnection, errorDescription);
-
-             if (!notebooks.isEmpty()) {
-                 promise->addResult(std::move(notebooks));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<QList<qevercloud::Notebook>>(
+        makeTaskContext(),
+        weak_from_this(),
+        [options = std::move(options)]
+        (const NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription) mutable
+        {
+            return handler.listNotebooksImpl(
+                std::move(options), database, errorDescription);
+        });
 }
 
 std::optional<quint32> NotebooksHandler::notebookCountImpl(
@@ -1302,6 +1034,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
 {
     // TODO: implement
     Q_UNUSED(name)
+    Q_UNUSED(linkedNotebookGuid)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return std::nullopt;
@@ -1339,11 +1072,12 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
 }
 
 bool NotebooksHandler::expungeNotebookByNameImpl(
-    QString name, QSqlDatabase & database,
+    QString name, QString linkedNotebookGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
     // TODO: implement
     Q_UNUSED(name)
+    Q_UNUSED(linkedNotebookGuid)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return true;
@@ -1358,6 +1092,20 @@ QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return {};
+}
+
+TaskContext NotebooksHandler::makeTaskContext() const
+{
+    return TaskContext{
+        m_threadPool,
+        m_writerThread,
+        m_connectionPool,
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "NotebooksHandler is already destroyed")},
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

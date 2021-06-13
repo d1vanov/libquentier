@@ -157,6 +157,8 @@ private:
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription);
 
+    [[nodiscard]] TaskContext makeTaskContext() const;
+
 private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;

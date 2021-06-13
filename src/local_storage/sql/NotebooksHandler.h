@@ -57,7 +57,9 @@ public:
 
     [[nodiscard]] QFuture<void> expungeNotebookByLocalId(QString localId);
     [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid);
-    [[nodiscard]] QFuture<void> expungeNotebookByName(QString name);
+
+    [[nodiscard]] QFuture<void> expungeNotebookByName(
+        QString name, QString linkedNotebookGuid = {});
 
     template <class T>
     using ListOptions = ILocalStorage::ListOptions<T>;
@@ -125,12 +127,14 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool expungeNotebookByNameImpl(
-        QString name, QSqlDatabase & database,
+        QString name, QString linkedNotebookGuid, QSqlDatabase & database,
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
         ListOptions<ListNotebooksOrder> options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
+
+    [[nodiscard]] TaskContext makeTaskContext() const;
 
 private:
     ConnectionPoolPtr m_connectionPool;

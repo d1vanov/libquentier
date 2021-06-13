@@ -18,6 +18,7 @@
 
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
+#include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
 #include "UsersHandler.h"
@@ -197,164 +198,53 @@ UsersHandler::UsersHandler(
 
 QFuture<quint32> UsersHandler::userCount() const
 {
-    auto promise = std::make_shared<QPromise<quint32>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise),
-         self_weak = weak_from_this()]
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::UsersHandler",
-                         "UsersHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const auto userCount = self->userCountImpl(
-                 databaseConnection, errorDescription);
-
-             if (!userCount) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-                 promise->finish();
-                 return;
-             }
-
-             promise->addResult(*userCount);
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<quint32>(
+        makeTaskContext(),
+        weak_from_this(),
+        [](const UsersHandler & handler, QSqlDatabase & database,
+           ErrorString & errorDescription)
+        {
+            return handler.userCountImpl(database, errorDescription);
+        });
 }
 
 QFuture<void> UsersHandler::putUser(qevercloud::User user)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise),
-         self_weak = weak_from_this(),
-         user = std::move(user)]
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::UsersHandler",
-                         "UsersHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->putUserImpl(
-                 user, databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    return future;
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [user = std::move(user)]
+        (UsersHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription)
+        {
+            return handler.putUserImpl(user, database, errorDescription);
+        });
 }
 
 QFuture<qevercloud::User> UsersHandler::findUserById(
     qevercloud::UserID userId) const
 {
-    auto promise = std::make_shared<QPromise<qevercloud::User>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    auto * runnable = utility::createFunctionRunnable(
-        [promise = std::move(promise), self_weak = weak_from_this(), userId]
-         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::UsersHandler",
-                         "UsersHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             auto user = self->findUserByIdImpl(
-                 userId, databaseConnection, errorDescription);
-
-             if (user) {
-                 promise->addResult(std::move(*user));
-             }
-             else if (!errorDescription.isEmpty()) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
-         });
-
-    m_threadPool->start(runnable);
-    return future;
+    return makeReadTask<qevercloud::User>(
+        makeTaskContext(),
+        weak_from_this(),
+        [userId](const UsersHandler & handler, QSqlDatabase & database,
+                 ErrorString & errorDescription)
+        {
+            return handler.findUserByIdImpl(userId, database, errorDescription);
+        });
 }
 
 QFuture<void> UsersHandler::expungeUserById(qevercloud::UserID userId)
 {
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [promise = std::move(promise), self_weak = weak_from_this(), userId]
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [userId](UsersHandler & handler, QSqlDatabase & database,
+                 ErrorString & errorDescription)
         {
-             const auto self = self_weak.lock();
-             if (!self) {
-                 promise->setException(RuntimeError(ErrorString{
-                     QT_TRANSLATE_NOOP(
-                         "local_storage::sql::UsersHandler",
-                         "UsersHandler is already destroyed")}));
-                 promise->finish();
-                 return;
-             }
-
-             auto databaseConnection = self->m_connectionPool->database();
-
-             ErrorString errorDescription;
-             const bool res = self->expungeUserByIdImpl(
-                 userId, databaseConnection, errorDescription);
-
-             if (!res) {
-                 promise->setException(
-                     DatabaseRequestException{errorDescription});
-             }
-
-             promise->finish();
+            return handler.expungeUserByIdImpl(
+                userId, database, errorDescription);
         });
-
-    return future;
 }
 
 std::optional<quint32> UsersHandler::userCountImpl(
@@ -2082,6 +1972,18 @@ bool UsersHandler::expungeUserByIdImpl(
         false);
 
     return true;
+}
+
+TaskContext UsersHandler::makeTaskContext() const
+{
+    return TaskContext{
+        m_threadPool, m_writerThread, m_connectionPool,
+        ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::UsersHandler",
+            "UsersHandler is already destroyed")},
+        ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Request has been calceled")}};
 }
 
 } // namespace quentier::local_storage::sql
