@@ -1558,23 +1558,23 @@ bool UsersHandler::fillUserFromSqlRecord(
     fillUserValue<int, qevercloud::PrivilegeLevel>(
         record, QStringLiteral("privilege"), user, &User::setPrivilege);
 
-    const auto fillOptTimestampvalue =
+    const auto fillOptTimestampValue =
         [&](const QString & column,
             std::function<void(User &, qevercloud::Timestamp)> setter) {
             fillUserValue<qint64, qevercloud::Timestamp>(
                 record, column, user, std::move(setter));
         };
 
-    fillOptTimestampvalue(
+    fillOptTimestampValue(
         QStringLiteral("userCreationTimestamp"), &User::setCreated);
 
-    fillOptTimestampvalue(
+    fillOptTimestampValue(
         QStringLiteral("userModificationTimestamp"), &User::setUpdated);
 
-    fillOptTimestampvalue(
+    fillOptTimestampValue(
         QStringLiteral("userDeletionTimestamp"), &User::setDeleted);
 
-    fillOptTimestampvalue(
+    fillOptTimestampValue(
         QStringLiteral("photoLastUpdated"), &User::setPhotoLastUpdated);
 
     fillUserValue<int, bool>(
