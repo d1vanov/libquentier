@@ -370,7 +370,8 @@ public:
         findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
-        findNotebookByName(QString notebookName) const = 0;
+        findNotebookByName(
+            QString notebookName, QString linkedNotebookGuid = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findDefaultNotebook() const = 0;

@@ -245,7 +245,7 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByGuid(
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
-    QString name) const
+    QString name, QString linkedNotebookGuid) const
 {
     auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
     auto future = promise->future();
@@ -254,7 +254,8 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
 
     auto * runnable = utility::createFunctionRunnable(
         [promise = std::move(promise), self_weak = weak_from_this(),
-         name = std::move(name)] () mutable
+         name = std::move(name),
+         linkedNotebookGuid = std::move(linkedNotebookGuid)] () mutable
          {
              const auto self = self_weak.lock();
              if (!self) {
@@ -270,7 +271,8 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
 
              ErrorString errorDescription;
              auto notebook = self->findNotebookByNameImpl(
-                 std::move(name), databaseConnection, errorDescription);
+                 std::move(name), std::move(linkedNotebookGuid),
+                 databaseConnection, errorDescription);
 
              if (notebook) {
                  promise->addResult(std::move(*notebook));
@@ -1295,7 +1297,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
 }
 
 std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
-    QString name, QSqlDatabase & database,
+    QString name, QString linkedNotebookGuid, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
     // TODO: implement

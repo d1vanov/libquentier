@@ -51,7 +51,7 @@ public:
         qevercloud::Guid guid) const;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name) const;
+        QString name, QString linkedNotebookGuid = {}) const;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const;
 
@@ -110,7 +110,7 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByNameImpl(
-        QString name, QSqlDatabase & database,
+        QString name, QString linkedNotebookGuid, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
