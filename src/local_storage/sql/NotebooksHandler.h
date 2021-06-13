@@ -31,6 +31,8 @@
 #include <memory>
 #include <optional>
 
+class QSqlRecord;
+
 namespace quentier::local_storage::sql {
 
 class NotebooksHandler final :
@@ -104,7 +106,7 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByLocalIdImpl(
-        QString localId, QSqlDatabase & database,
+        const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByGuidImpl(
@@ -117,6 +119,10 @@ private:
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool fillNotebookFromSqlRecord(
+        const QSqlRecord & record, qevercloud::Notebook & notebook,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeNotebookByLocalIdImpl(
         QString localId, QSqlDatabase & database,
