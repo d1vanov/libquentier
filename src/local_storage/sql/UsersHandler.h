@@ -31,7 +31,6 @@
 #include <optional>
 
 class QSqlDatabase;
-class QSqlRecord;
 
 namespace quentier {
 
@@ -132,26 +131,6 @@ private:
         const QString & userId, QSqlDatabase & database,
         qevercloud::UserAttributes & userAttributes,
         ErrorString & errorDescription) const;
-
-    [[nodiscard]] bool fillUserFromSqlRecord(
-        const QSqlRecord & record, qevercloud::User & user,
-        ErrorString & errorDescription) const;
-
-    void fillUserAttributesFromSqlRecord(
-        const QSqlRecord & record,
-        std::optional<qevercloud::UserAttributes> & userAttributes) const;
-
-    void fillAccountingFromSqlRecord(
-        const QSqlRecord & record,
-        std::optional<qevercloud::Accounting> & accounting) const;
-
-    void fillBusinessUserInfoFromSqlRecord(
-        const QSqlRecord & record,
-        std::optional<qevercloud::BusinessUserInfo> & businessUserInfo) const;
-
-    void fillAccountLimitsFromSqlRecord(
-        const QSqlRecord & record,
-        std::optional<qevercloud::AccountLimits> & accountLimits) const;
 
     [[nodiscard]] bool expungeUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,

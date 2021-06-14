@@ -27,7 +27,9 @@ target_sources(${LIBRARY_NAME}
   UsersHandler.cpp
   UsersHandler.h
   patches/Patch1To2.cpp
-  patches/Patch1To2.h)
+  patches/Patch1To2.h
+  utils/FillFromSqlRecordUtils.cpp
+  utils/FillFromSqlRecordUtils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
