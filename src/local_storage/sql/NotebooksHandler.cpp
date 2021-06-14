@@ -23,6 +23,8 @@
 #include "Transaction.h"
 #include "TypeChecks.h"
 
+#include "utils/FillFromSqlRecordUtils.h"
+
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -45,48 +47,6 @@ namespace quentier::local_storage::sql {
 namespace {
 
 Q_GLOBAL_STATIC(QVariant, gNullValue)
-
-template <class VariantType, class LocalType = VariantType>
-bool fillNotebookValue(
-    const QSqlRecord & record, const QString & column,
-    qevercloud::Notebook & notebook,
-    std::function<void(qevercloud::Notebook&, LocalType)> setter,
-    ErrorString * errorDescription = nullptr)
-{
-    bool valueFound = false;
-    const int index = record.indexOf(column);
-    if (index >= 0) {
-        const QVariant & value = record.value(column);
-        if (!value.isNull()) {
-            if constexpr (
-                std::is_same_v<LocalType, VariantType> ||
-                std::is_convertible_v<VariantType, LocalType>) {
-                setter(
-                    notebook,
-                    qvariant_cast<VariantType>(value));
-            }
-            else {
-                setter(
-                    notebook,
-                    static_cast<LocalType>(qvariant_cast<VariantType>(value)));
-            }
-            valueFound = true;
-        }
-    }
-
-    if (!valueFound && errorDescription) {
-        errorDescription->setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotebooksHandler",
-                "Notebook field missing in the record received from the local "
-                "storage database"));
-        errorDescription->details() = column;
-        QNWARNING("local_storage:sql:NotebooksHandler", *errorDescription);
-        return false;
-    }
-
-    return valueFound;
-}
 
 } // namespace
 
@@ -261,6 +221,21 @@ QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
         {
             return handler.listNotebooksImpl(
                 std::move(options), database, errorDescription);
+        });
+}
+
+QFuture<QList<qevercloud::SharedNotebook>> NotebooksHandler::listSharedNotebooks(
+    qevercloud::Guid notebookGuid) const
+{
+    return makeReadTask<QList<qevercloud::SharedNotebook>>(
+        makeTaskContext(),
+        weak_from_this(),
+        [notebookGuid = std::move(notebookGuid)]
+        (const NotebooksHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription)
+        {
+            return handler.listSharedNotebooksImpl(
+                notebookGuid, database, errorDescription);
         });
 }
 
@@ -1100,7 +1075,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
     qevercloud::Notebook notebook;
     notebook.setLocalId(localId);
     ErrorString error;
-    if (!fillNotebookFromSqlRecord(record, notebook, error)) {
+    if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
         errorDescription.setBase(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::NotebooksHandler",
@@ -1113,7 +1088,25 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
         return std::nullopt;
     }
 
-    // TODO: implement further
+    if (notebook.guid())
+    {
+        ErrorString error;
+        auto sharedNotebooks = listSharedNotebooksImpl(
+            *notebook.guid(), database, error);
+
+        if (!error.isEmpty()) {
+            errorDescription.base() = error.base();
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotebooksHandler", errorDescription);
+            return std::nullopt;
+        }
+
+        if (!sharedNotebooks.isEmpty()) {
+            notebook.setSharedNotebooks(std::move(sharedNotebooks));
+        }
+    }
+
     return notebook;
 }
 
@@ -1147,247 +1140,6 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findDefaultNotebookImpl(
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return std::nullopt;
-}
-
-bool NotebooksHandler::fillNotebookFromSqlRecord(
-    const QSqlRecord & record, qevercloud::Notebook & notebook,
-    ErrorString & errorDescription) const
-{
-    using qevercloud::BusinessNotebook;
-    using qevercloud::Notebook;
-    using qevercloud::Publishing;
-    using qevercloud::NotebookRecipientSettings;
-
-    if (!fillNotebookValue<int, bool>(
-            record, QStringLiteral("isDirty"), notebook,
-            &Notebook::setLocallyModified, &errorDescription))
-    {
-        return false;
-    }
-
-    if (!fillNotebookValue<int, bool>(
-            record, QStringLiteral("isLocal"), notebook,
-            &Notebook::setLocalOnly, &errorDescription))
-    {
-        return false;
-    }
-
-    if (!fillNotebookValue<QString, QString>(
-            record, QStringLiteral("localUid"), notebook,
-            &Notebook::setLocalId, &errorDescription))
-    {
-        return false;
-    }
-
-    const auto fillOptStringValue =
-        [&](const QString & column,
-            std::function<void(Notebook &, std::optional<QString>)> setter) {
-            fillNotebookValue<QString, std::optional<QString>>(
-                record, column, notebook, std::move(setter));
-        };
-
-    fillOptStringValue(QStringLiteral("notebookName"), &Notebook::setName);
-    fillOptStringValue(QStringLiteral("guid"), &Notebook::setGuid);
-    fillOptStringValue(QStringLiteral("stack"), &Notebook::setStack);
-
-    fillOptStringValue(
-        QStringLiteral("linkedNotebookGuid"), &Notebook::setLinkedNotebookGuid);
-
-    const auto fillOptTimestampValue =
-        [&](const QString & column,
-            std::function<void(Notebook &, qevercloud::Timestamp)> setter) {
-            fillNotebookValue<qint64, qevercloud::Timestamp>(
-                record, column, notebook, std::move(setter));
-        };
-
-    fillOptTimestampValue(
-        QStringLiteral("creationTimestamp"), &Notebook::setServiceCreated);
-
-    fillOptTimestampValue(
-        QStringLiteral("modificationTimestamp"), &Notebook::setServiceUpdated);
-
-    const auto fillOptBoolValue =
-        [&](const QString & column,
-            std::function<void(Notebook &, bool)> setter) {
-            fillNotebookValue<int, bool>(
-                record, column, notebook, std::move(setter));
-        };
-
-    fillOptBoolValue(
-        QStringLiteral("isFavorited"), &Notebook::setLocallyFavorited);
-
-    fillOptBoolValue(
-        QStringLiteral("isDefault"), &Notebook::setDefaultNotebook);
-
-    fillOptBoolValue(
-        QStringLiteral("isPublished"), &Notebook::setPublished);
-
-    fillNotebookValue<qint32, qint32>(
-        record, QStringLiteral("updateSequenceNumber"), notebook,
-        &Notebook::setUpdateSequenceNum);
-
-    const auto setNotebookPublishingValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.publishing()) {
-                notebook.setPublishing(Publishing{});
-            }
-            setter(*notebook.mutablePublishing());
-        };
-
-    fillOptStringValue(
-        QStringLiteral("publishingUri"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
-            setNotebookPublishingValue(
-                notebook,
-                [&value](Publishing & publishing)
-                {
-                    publishing.setUri(std::move(value));
-                });
-        });
-
-    fillOptStringValue(
-        QStringLiteral("publicDescription"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
-            setNotebookPublishingValue(
-                notebook,
-                [&value](Publishing & publishing)
-                {
-                    publishing.setPublicDescription(std::move(value));
-                });
-        });
-
-    fillNotebookValue<int, qevercloud::NoteSortOrder>(
-        record, QStringLiteral("publishingNoteSortOrder"), notebook,
-        [&](Notebook & notebook, std::optional<qevercloud::NoteSortOrder> order)
-        {
-            setNotebookPublishingValue(
-                notebook,
-                [order](Publishing & publishing)
-                {
-                    publishing.setOrder(order);
-                });
-        });
-
-    fillNotebookValue<int, bool>(
-        record, QStringLiteral("publishingAscendingSort"), notebook,
-        [&](Notebook & notebook, std::optional<bool> ascendingSort)
-        {
-            setNotebookPublishingValue(
-                notebook,
-                [ascendingSort](Publishing & publishing)
-                {
-                    publishing.setAscending(ascendingSort);
-                });
-        });
-
-    const auto setBusinessNotebookValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.businessNotebook()) {
-                notebook.setBusinessNotebook(BusinessNotebook{});
-            }
-            setter(*notebook.mutableBusinessNotebook());
-        };
-
-    fillOptStringValue(
-        QStringLiteral("businessNotebookDescription"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
-            setBusinessNotebookValue(
-                notebook,
-                [&value](BusinessNotebook & businessNotebook)
-                {
-                    businessNotebook.setNotebookDescription(std::move(value));
-                });
-        });
-
-    fillNotebookValue<int, qevercloud::SharedNotebookPrivilegeLevel>(
-        record, QStringLiteral("businessNotebookPrivilegeLevel"), notebook,
-        [&](Notebook & notebook,
-            std::optional<qevercloud::SharedNotebookPrivilegeLevel> level)
-        {
-            setBusinessNotebookValue(
-                notebook,
-                [level](BusinessNotebook & businessNotebook)
-                {
-                    businessNotebook.setPrivilege(level);
-                });
-        });
-
-    fillNotebookValue<int, bool>(
-        record, QStringLiteral("businessNotebookIsRecommended"), notebook,
-        [&](Notebook & notebook, std::optional<bool> recommended)
-        {
-            setBusinessNotebookValue(
-                notebook,
-                [recommended](BusinessNotebook & businessNotebook)
-                {
-                    businessNotebook.setRecommended(recommended);
-                });
-        });
-
-    const auto setNotebookRecipientSettingValue =
-        [](Notebook & notebook, auto setter)
-        {
-            if (!notebook.recipientSettings()) {
-                notebook.setRecipientSettings(NotebookRecipientSettings{});
-            }
-            setter(*notebook.mutableRecipientSettings());
-        };
-
-    fillOptStringValue(
-        QStringLiteral("recipientStack"),
-        [&](Notebook & notebook, std::optional<QString> value)
-        {
-            setNotebookRecipientSettingValue(
-                notebook,
-                [&value](NotebookRecipientSettings & settings)
-                {
-                    settings.setStack(std::move(value));
-                });
-        });
-
-    fillNotebookValue<int, bool>(
-        record, QStringLiteral("recipientReminderNotifyEmail"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
-            setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
-                    settings.setReminderNotifyEmail(value);
-                });
-        });
-
-    fillNotebookValue<int, bool>(
-        record, QStringLiteral("recipientReminderNotifyInApp"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
-            setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
-                    settings.setReminderNotifyInApp(value);
-                });
-        });
-
-    fillNotebookValue<int, bool>(
-        record, QStringLiteral("recipientInMyList"), notebook,
-        [&](Notebook & notebook, std::optional<bool> value)
-        {
-            setNotebookRecipientSettingValue(
-                notebook,
-                [value](NotebookRecipientSettings & settings)
-                {
-                    settings.setInMyList(value);
-                });
-        });
-
-    // TODO: implement further
-    return true;
 }
 
 bool NotebooksHandler::expungeNotebookByLocalIdImpl(
@@ -1430,6 +1182,17 @@ QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
 {
     // TODO: implement
     Q_UNUSED(options)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return {};
+}
+
+QList<qevercloud::SharedNotebook> NotebooksHandler::listSharedNotebooksImpl(
+    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    // TODO: implement
+    Q_UNUSED(notebookGuid)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return {};

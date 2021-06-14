@@ -18,6 +18,7 @@
 
 #include "FillFromSqlRecordUtils.h"
 
+#include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/User.h>
 
 #include <quentier/logging/QuentierLogger.h>
@@ -102,7 +103,7 @@ bool fillNotebookValue(
     std::function<void(qevercloud::Notebook&, LocalType)> setter,
     ErrorString * errorDescription = nullptr)
 {
-    return fillValue<qevercloud::User, VariantType, LocalType>(
+    return fillValue<qevercloud::Notebook, VariantType, LocalType>(
         record, column, notebook, std::move(setter),
         *gMissingNotebookFieldErrorMessage, errorDescription);
 }
@@ -599,6 +600,464 @@ void fillAccountLimitsFromSqlRecord(
     fillInt32Value(
         QStringLiteral("noteResourceCountMax"),
         &AccountLimits::setNoteResourceCountMax);
+}
+
+bool fillNotebookFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Notebook & notebook,
+    ErrorString & errorDescription)
+{
+    using qevercloud::BusinessNotebook;
+    using qevercloud::Notebook;
+    using qevercloud::Publishing;
+    using qevercloud::NotebookRecipientSettings;
+    using qevercloud::NotebookRestrictions;
+
+    if (!fillNotebookValue<int, bool>(
+            record, QStringLiteral("isDirty"), notebook,
+            &Notebook::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillNotebookValue<int, bool>(
+            record, QStringLiteral("isLocal"), notebook,
+            &Notebook::setLocalOnly, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillNotebookValue<QString, QString>(
+            record, QStringLiteral("localUid"), notebook,
+            &Notebook::setLocalId, &errorDescription))
+    {
+        return false;
+    }
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(Notebook &, std::optional<QString>)> setter) {
+            fillNotebookValue<QString, std::optional<QString>>(
+                record, column, notebook, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("notebookName"), &Notebook::setName);
+    fillOptStringValue(QStringLiteral("guid"), &Notebook::setGuid);
+    fillOptStringValue(QStringLiteral("stack"), &Notebook::setStack);
+
+    fillOptStringValue(
+        QStringLiteral("linkedNotebookGuid"), &Notebook::setLinkedNotebookGuid);
+
+    const auto fillOptTimestampValue =
+        [&](const QString & column,
+            std::function<void(Notebook &, qevercloud::Timestamp)> setter) {
+            fillNotebookValue<qint64, qevercloud::Timestamp>(
+                record, column, notebook, std::move(setter));
+        };
+
+    fillOptTimestampValue(
+        QStringLiteral("creationTimestamp"), &Notebook::setServiceCreated);
+
+    fillOptTimestampValue(
+        QStringLiteral("modificationTimestamp"), &Notebook::setServiceUpdated);
+
+    const auto fillOptBoolValue =
+        [&](const QString & column,
+            std::function<void(Notebook &, bool)> setter) {
+            fillNotebookValue<int, bool>(
+                record, column, notebook, std::move(setter));
+        };
+
+    fillOptBoolValue(
+        QStringLiteral("isFavorited"), &Notebook::setLocallyFavorited);
+
+    fillOptBoolValue(
+        QStringLiteral("isDefault"), &Notebook::setDefaultNotebook);
+
+    fillOptBoolValue(
+        QStringLiteral("isPublished"), &Notebook::setPublished);
+
+    fillNotebookValue<qint32, qint32>(
+        record, QStringLiteral("updateSequenceNumber"), notebook,
+        &Notebook::setUpdateSequenceNum);
+
+    const auto setNotebookPublishingValue =
+        [](Notebook & notebook, auto setter)
+        {
+            if (!notebook.publishing()) {
+                notebook.setPublishing(Publishing{});
+            }
+            setter(*notebook.mutablePublishing());
+        };
+
+    fillOptStringValue(
+        QStringLiteral("publishingUri"),
+        [&](Notebook & notebook, std::optional<QString> value)
+        {
+            setNotebookPublishingValue(
+                notebook,
+                [&value](Publishing & publishing)
+                {
+                    publishing.setUri(std::move(value));
+                });
+        });
+
+    fillOptStringValue(
+        QStringLiteral("publicDescription"),
+        [&](Notebook & notebook, std::optional<QString> value)
+        {
+            setNotebookPublishingValue(
+                notebook,
+                [&value](Publishing & publishing)
+                {
+                    publishing.setPublicDescription(std::move(value));
+                });
+        });
+
+    fillNotebookValue<int, qevercloud::NoteSortOrder>(
+        record, QStringLiteral("publishingNoteSortOrder"), notebook,
+        [&](Notebook & notebook, std::optional<qevercloud::NoteSortOrder> order)
+        {
+            setNotebookPublishingValue(
+                notebook,
+                [order](Publishing & publishing)
+                {
+                    publishing.setOrder(order);
+                });
+        });
+
+    fillNotebookValue<int, bool>(
+        record, QStringLiteral("publishingAscendingSort"), notebook,
+        [&](Notebook & notebook, std::optional<bool> ascendingSort)
+        {
+            setNotebookPublishingValue(
+                notebook,
+                [ascendingSort](Publishing & publishing)
+                {
+                    publishing.setAscending(ascendingSort);
+                });
+        });
+
+    const auto setBusinessNotebookValue =
+        [](Notebook & notebook, auto setter)
+        {
+            if (!notebook.businessNotebook()) {
+                notebook.setBusinessNotebook(BusinessNotebook{});
+            }
+            setter(*notebook.mutableBusinessNotebook());
+        };
+
+    fillOptStringValue(
+        QStringLiteral("businessNotebookDescription"),
+        [&](Notebook & notebook, std::optional<QString> value)
+        {
+            setBusinessNotebookValue(
+                notebook,
+                [&value](BusinessNotebook & businessNotebook)
+                {
+                    businessNotebook.setNotebookDescription(std::move(value));
+                });
+        });
+
+    fillNotebookValue<int, qevercloud::SharedNotebookPrivilegeLevel>(
+        record, QStringLiteral("businessNotebookPrivilegeLevel"), notebook,
+        [&](Notebook & notebook,
+            std::optional<qevercloud::SharedNotebookPrivilegeLevel> level)
+        {
+            setBusinessNotebookValue(
+                notebook,
+                [level](BusinessNotebook & businessNotebook)
+                {
+                    businessNotebook.setPrivilege(level);
+                });
+        });
+
+    fillNotebookValue<int, bool>(
+        record, QStringLiteral("businessNotebookIsRecommended"), notebook,
+        [&](Notebook & notebook, std::optional<bool> recommended)
+        {
+            setBusinessNotebookValue(
+                notebook,
+                [recommended](BusinessNotebook & businessNotebook)
+                {
+                    businessNotebook.setRecommended(recommended);
+                });
+        });
+
+    const auto setNotebookRecipientSettingValue =
+        [](Notebook & notebook, auto setter)
+        {
+            if (!notebook.recipientSettings()) {
+                notebook.setRecipientSettings(NotebookRecipientSettings{});
+            }
+            setter(*notebook.mutableRecipientSettings());
+        };
+
+    fillOptStringValue(
+        QStringLiteral("recipientStack"),
+        [&](Notebook & notebook, std::optional<QString> value)
+        {
+            setNotebookRecipientSettingValue(
+                notebook,
+                [&value](NotebookRecipientSettings & settings)
+                {
+                    settings.setStack(std::move(value));
+                });
+        });
+
+    fillNotebookValue<int, bool>(
+        record, QStringLiteral("recipientReminderNotifyEmail"), notebook,
+        [&](Notebook & notebook, std::optional<bool> value)
+        {
+            setNotebookRecipientSettingValue(
+                notebook,
+                [value](NotebookRecipientSettings & settings)
+                {
+                    settings.setReminderNotifyEmail(value);
+                });
+        });
+
+    fillNotebookValue<int, bool>(
+        record, QStringLiteral("recipientReminderNotifyInApp"), notebook,
+        [&](Notebook & notebook, std::optional<bool> value)
+        {
+            setNotebookRecipientSettingValue(
+                notebook,
+                [value](NotebookRecipientSettings & settings)
+                {
+                    settings.setReminderNotifyInApp(value);
+                });
+        });
+
+    fillNotebookValue<int, bool>(
+        record, QStringLiteral("recipientInMyList"), notebook,
+        [&](Notebook & notebook, std::optional<bool> value)
+        {
+            setNotebookRecipientSettingValue(
+                notebook,
+                [value](NotebookRecipientSettings & settings)
+                {
+                    settings.setInMyList(value);
+                });
+        });
+
+    if (record.contains(QStringLiteral("contactId")) &&
+        !record.isNull(QStringLiteral("contactId")))
+    {
+        if (notebook.contact()) {
+            auto & contact = *notebook.mutableContact();
+            contact.setId(qvariant_cast<qint32>(
+                record.value(QStringLiteral("contactId"))));
+        }
+        else {
+            qevercloud::User contact;
+            contact.setId(qvariant_cast<qint32>(
+                record.value(QStringLiteral("contactId"))));
+            notebook.setContact(contact);
+        }
+
+        auto & user = *notebook.mutableContact();
+        if (!fillUserFromSqlRecord(record, user, errorDescription)) {
+            return false;
+        }
+    }
+
+    const auto setNotebookRestrictionValue =
+        [](Notebook & notebook, auto setter)
+        {
+            if (!notebook.restrictions()) {
+                notebook.setRestrictions(NotebookRestrictions{});
+            }
+            setter(*notebook.mutableRestrictions());
+        };
+
+    const auto fillNotebookRestrictionBoolValue =
+        [&](const QString & column, auto setter)
+        {
+            fillNotebookValue<int, bool>(
+                record, column, notebook,
+                [&](Notebook & notebook, std::optional<bool> value)
+                {
+                    setNotebookRestrictionValue(
+                        notebook,
+                        [value, setter = std::move(setter)]
+                        (NotebookRestrictions & restrictions)
+                        {
+                            setter(restrictions, value);
+                        });
+                });
+        };
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noReadNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoReadNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noCreateNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoCreateNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noUpdateNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoUpdateNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noExpungeNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoExpungeNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noShareNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoShareNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noEmailNotes"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoEmailNotes(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noSendMessageToRecipients"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoSendMessageToRecipients(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noUpdateNotebook"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoUpdateNotebook(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noExpungeNotebook"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoExpungeNotebook(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noSetDefaultNotebook"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoSetDefaultNotebook(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noSetNotebookStack"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoSetNotebookStack(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noPublishToPublic"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoPublishToPublic(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noPublishToBusinessLibrary"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoPublishToBusinessLibrary(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noCreateTags"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoCreateTags(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noUpdateTags"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoUpdateTags(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noExpungeTags"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoExpungeTags(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noSetParentTag"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoSetParentTag(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noCreateSharedNotebooks"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoCreateSharedNotebooks(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noShareNotesWithBusiness"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoShareNotesWithBusiness(value);
+        });
+
+    fillNotebookRestrictionBoolValue(
+        QStringLiteral("noRenameNotebook"),
+        [](NotebookRestrictions & restrictions, std::optional<bool> value)
+        {
+            restrictions.setNoRenameNotebook(value);
+        });
+
+    fillNotebookValue<int, qevercloud::SharedNotebookInstanceRestrictions>(
+        record, QStringLiteral("updateWhichSharedNotebookRestrictions"),
+        notebook,
+        [&](Notebook & notebook,
+            std::optional<qevercloud::SharedNotebookInstanceRestrictions> value)
+        {
+            setNotebookRestrictionValue(
+                notebook,
+                [value](NotebookRestrictions & restrictions)
+                {
+                    restrictions.setUpdateWhichSharedNotebookRestrictions(
+                        value);
+                });
+        });
+
+    fillNotebookValue<int, qevercloud::SharedNotebookInstanceRestrictions>(
+        record, QStringLiteral("expungeWhichSharedNotebookRestrictions"),
+        notebook,
+        [&](Notebook & notebook,
+            std::optional<qevercloud::SharedNotebookInstanceRestrictions> value)
+        {
+            setNotebookRestrictionValue(
+                notebook,
+                [value](NotebookRestrictions & restrictions)
+                {
+                    restrictions.setExpungeWhichSharedNotebookRestrictions(
+                        value);
+                });
+        });
+
+    return true;
 }
 
 } // namespace quentier::local_storage::sql::utils

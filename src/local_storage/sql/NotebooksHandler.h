@@ -31,8 +31,6 @@
 #include <memory>
 #include <optional>
 
-class QSqlRecord;
-
 namespace quentier::local_storage::sql {
 
 class NotebooksHandler final :
@@ -70,6 +68,9 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListOptions<ListNotebooksOrder> options) const;
+
+    [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
+        listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const;
 
 private:
     [[nodiscard]] std::optional<quint32> notebookCountImpl(
@@ -120,10 +121,6 @@ private:
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool fillNotebookFromSqlRecord(
-        const QSqlRecord & record, qevercloud::Notebook & notebook,
-        ErrorString & errorDescription) const;
-
     [[nodiscard]] bool expungeNotebookByLocalIdImpl(
         QString localId, QSqlDatabase & database,
         ErrorString & errorDescription);
@@ -138,6 +135,10 @@ private:
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
         ListOptions<ListNotebooksOrder> options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooksImpl(
+        const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;

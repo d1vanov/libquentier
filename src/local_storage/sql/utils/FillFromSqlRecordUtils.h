@@ -52,4 +52,8 @@ void fillAccountLimitsFromSqlRecord(
     const QSqlRecord & record,
     std::optional<qevercloud::AccountLimits> & accountLimits);
 
+[[nodiscard]] bool fillNotebookFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Notebook & notebook,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils
