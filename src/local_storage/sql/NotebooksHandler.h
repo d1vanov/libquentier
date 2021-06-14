@@ -111,15 +111,19 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByGuidImpl(
-        qevercloud::Guid guid, QSqlDatabase & database,
+        const qevercloud::Guid & guid, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByNameImpl(
-        QString name, QString linkedNotebookGuid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const QString & name, const QString & linkedNotebookGuid,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    [[nodiscard]] std::optional<qevercloud::Notebook> fillSharedNotebooks(
+        qevercloud::Notebook & notebook, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeNotebookByLocalIdImpl(
         QString localId, QSqlDatabase & database,
