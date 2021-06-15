@@ -108,6 +108,17 @@ bool fillNotebookValue(
         *gMissingNotebookFieldErrorMessage, errorDescription);
 }
 
+template <class VariantType, class LocalType = VariantType>
+bool fillSharedNotebookValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::SharedNotebook & sharedNotebook,
+    std::function<void(qevercloud::SharedNotebook&, LocalType)> setter)
+{
+    return fillValue<qevercloud::SharedNotebook, VariantType, LocalType>(
+        record, column, sharedNotebook, std::move(setter),
+        *gMissingNotebookFieldErrorMessage);
+}
+
 template <class FieldType, class VariantType, class LocalType = VariantType>
 void fillOptionalFieldValue(
     const QSqlRecord & record, const QString & column,
@@ -1056,6 +1067,104 @@ bool fillNotebookFromSqlRecord(
                         value);
                 });
         });
+
+    return true;
+}
+
+bool fillSharedNotebookFromSqlRecord(
+    const QSqlRecord & record, qevercloud::SharedNotebook & sharedNotebook,
+    int & indexInNotebook, ErrorString & errorDescription)
+{
+    using qevercloud::SharedNotebook;
+
+    fillSharedNotebookValue<qint64, qint64>(
+        record, QStringLiteral("sharedNotebookShareId"), sharedNotebook,
+        &SharedNotebook::setId);
+
+    fillSharedNotebookValue<qint32, qint32>(
+        record, QStringLiteral("sharedNotebookUserId"), sharedNotebook,
+        &SharedNotebook::setUserId);
+
+    fillSharedNotebookValue<QString, QString>(
+        record, QStringLiteral("sharedNotebookNotebookGuid"), sharedNotebook,
+        &SharedNotebook::setNotebookGuid);
+
+    fillSharedNotebookValue<QString, QString>(
+        record, QStringLiteral("sharedNotebookEmail"), sharedNotebook,
+        &SharedNotebook::setEmail);
+
+    fillSharedNotebookValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNotebookCreationTimestamp"),
+        sharedNotebook, &SharedNotebook::setServiceCreated);
+
+    fillSharedNotebookValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNotebookModificationTimestamp"),
+        sharedNotebook, &SharedNotebook::setServiceUpdated);
+
+    fillSharedNotebookValue<QString, QString>(
+        record, QStringLiteral("sharedNotebookGlobalId"), sharedNotebook,
+        &SharedNotebook::setGlobalId);
+
+    fillSharedNotebookValue<QString, QString>(
+        record, QStringLiteral("sharedNotebookUsername"), sharedNotebook,
+        &SharedNotebook::setUsername);
+
+    fillSharedNotebookValue<int, qevercloud::SharedNotebookPrivilegeLevel>(
+        record, QStringLiteral("sharedNotebookPrivilegeLevel"), sharedNotebook,
+        &SharedNotebook::setPrivilege);
+
+    fillSharedNotebookValue<qint32, qint32>(
+        record, QStringLiteral("sharedNotebookSharerUserId"), sharedNotebook,
+        &SharedNotebook::setSharerUserId);
+
+    fillSharedNotebookValue<QString, QString>(
+        record, QStringLiteral("sharedNotebookRecipientUsername"),
+        sharedNotebook, &SharedNotebook::setRecipientUsername);
+
+    fillSharedNotebookValue<qint32, qint32>(
+        record, QStringLiteral("sharedNotebookRecipientUserId"), sharedNotebook,
+        &SharedNotebook::setRecipientUserId);
+
+    fillSharedNotebookValue<qint64, qint64>(
+        record, QStringLiteral("sharedNotebookRecipientIdentityId"),
+        sharedNotebook, &SharedNotebook::setRecipientIdentityId);
+
+    fillSharedNotebookValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNotebookAssignmentTimestamp"),
+        sharedNotebook, &SharedNotebook::setServiceAssigned);
+
+    fillOptionalFieldValue<qevercloud::SharedNotebookRecipientSettings, int, bool>(
+        record, QStringLiteral("sharedNotebookRecipientReminderNotifyEmail"),
+        sharedNotebook.mutableRecipientSettings(),
+        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value)
+        {
+            settings.setReminderNotifyEmail(value);
+        });
+
+    fillOptionalFieldValue<qevercloud::SharedNotebookRecipientSettings, int, bool>(
+        record, QStringLiteral("sharedNotebookRecipientReminderNotifyInApp"),
+        sharedNotebook.mutableRecipientSettings(),
+        [](qevercloud::SharedNotebookRecipientSettings & settings, bool value)
+        {
+            settings.setReminderNotifyInApp(value);
+        });
+
+    const int recordIndex = record.indexOf(QStringLiteral("indexInNotebook"));
+    if (recordIndex >= 0) {
+        const QVariant value = record.value(recordIndex);
+        if (!value.isNull()) {
+            bool conversionResult = false;
+            const int index = value.toInt(&conversionResult);
+            if (!conversionResult) {
+                errorDescription.setBase(
+                    QT_TR_NOOP("can't convert shared notebook's index in "
+                               "notebook to int"));
+                QNERROR("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+            indexInNotebook = index;
+        }
+    }
 
     return true;
 }

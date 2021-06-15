@@ -24,6 +24,7 @@
 #include "TypeChecks.h"
 
 #include "utils/FillFromSqlRecordUtils.h"
+#include "utils/ResourceDataFilesUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -37,10 +38,15 @@
 #include <utility/Qt5Promise.h>
 #endif
 
+#include <qevercloud/utility/ToRange.h>
+
 #include <QGlobalStatic>
+#include <QMap>
 #include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
+
+#include <algorithm>
 
 namespace quentier::local_storage::sql {
 
@@ -52,10 +58,11 @@ Q_GLOBAL_STATIC(QVariant, gNullValue)
 
 NotebooksHandler::NotebooksHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    QThreadPtr writerThread) :
+    QThreadPtr writerThread, const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
-    m_writerThread{std::move(writerThread)}
+    m_writerThread{std::move(writerThread)},
+    m_localStorageDir{localStorageDirPath}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
@@ -76,6 +83,23 @@ NotebooksHandler::NotebooksHandler(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::NotebooksHandler",
                 "NotebooksHandler ctor: writer thread is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_localStorageDir.isReadable())) {
+        throw InvalidArgument{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "NotebooksHandler ctor: local storage dir is not readable")}};
+    }
+
+    if (Q_UNLIKELY(
+            !m_localStorageDir.exists() &&
+            !m_localStorageDir.mkpath(m_localStorageDir.absolutePath())))
+    {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "NotebooksHandler ctor: local storage dir does not exist and "
+            "cannot be created")}};
     }
 }
 
@@ -131,12 +155,12 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByGuid(
          ErrorString & errorDescription) mutable
         {
             return handler.findNotebookByGuidImpl(
-                std::move(guid), database, errorDescription);
+                guid, database, errorDescription);
         });
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
-    QString name, QString linkedNotebookGuid) const
+    QString name, std::optional<QString> linkedNotebookGuid) const
 {
     return makeReadTask<qevercloud::Notebook>(
         makeTaskContext(),
@@ -147,8 +171,7 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
          ErrorString & errorDescription) mutable
         {
             return handler.findNotebookByNameImpl(
-                std::move(name), std::move(linkedNotebookGuid), database,
-                errorDescription);
+                name, linkedNotebookGuid, database, errorDescription);
         });
 }
 
@@ -171,10 +194,10 @@ QFuture<void> NotebooksHandler::expungeNotebookByLocalId(QString localId)
         weak_from_this(),
         [localId = std::move(localId)]
         (NotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
+         ErrorString & errorDescription)
         {
             return handler.expungeNotebookByLocalIdImpl(
-                std::move(localId), database, errorDescription);
+                localId, database, errorDescription);
         });
 }
 
@@ -185,15 +208,15 @@ QFuture<void> NotebooksHandler::expungeNotebookByGuid(qevercloud::Guid guid)
         weak_from_this(),
         [guid = std::move(guid)]
         (NotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
+         ErrorString & errorDescription)
         {
             return handler.expungeNotebookByGuidImpl(
-                std::move(guid), database, errorDescription);
+                guid, database, errorDescription);
         });
 }
 
 QFuture<void> NotebooksHandler::expungeNotebookByName(
-    QString name, QString linkedNotebookGuid)
+    QString name, std::optional<QString> linkedNotebookGuid)
 {
     return makeWriteTask<void>(
         makeTaskContext(),
@@ -201,26 +224,28 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
         [name = std::move(name),
          linkedNotebookGuid = std::move(linkedNotebookGuid)]
         (NotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
+         ErrorString & errorDescription)
         {
             return handler.expungeNotebookByNameImpl(
-                std::move(name), std::move(linkedNotebookGuid), database,
-                errorDescription);
+                name, linkedNotebookGuid, database, errorDescription);
         });
 }
 
 QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
-    ListOptions<ListNotebooksOrder> options) const
+    ListOptions<ListNotebooksOrder> options,
+    std::optional<QString> linkedNotebookGuid) const
 {
     return makeReadTask<QList<qevercloud::Notebook>>(
         makeTaskContext(),
         weak_from_this(),
-        [options = std::move(options)]
+        [options = std::move(options),
+         linkedNotebookGuid = std::move(linkedNotebookGuid)]
         (const NotebooksHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
+         ErrorString & errorDescription)
         {
             return handler.listNotebooksImpl(
-                std::move(options), database, errorDescription);
+                options, linkedNotebookGuid, database,
+                errorDescription);
         });
 }
 
@@ -981,20 +1006,24 @@ QString NotebooksHandler::notebookLocalId(
         return localId;
     }
 
-    // Notebook's local id is empty. Will try to find local id of this notebook
-    // by its guid in the local storage database.
-    if (!notebook.guid())
-    {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotebooksHandler",
-                "Cannot find notebook's local id: notebook has no guid"));
-        QNWARNING(
-            "local_storage::sql::NotebooksHandler",
-            errorDescription << ": " << notebook);
-        return {};
+    if (notebook.guid()) {
+        return notebookLocalIdByGuid(
+            *notebook.guid(), database, errorDescription);
     }
 
+    if (notebook.name()) {
+        return notebookLocalIdByName(
+            *notebook.name(), notebook.linkedNotebookGuid(), database,
+            errorDescription);
+    }
+
+    return {};
+}
+
+QString NotebooksHandler::notebookLocalIdByGuid(
+    const qevercloud::Guid & guid, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
     QSqlQuery query{database};
     bool res = query.prepare(
         QStringLiteral("SELECT localUid FROM Notebooks WHERE guid = :guid"));
@@ -1003,18 +1032,64 @@ QString NotebooksHandler::notebookLocalId(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::NotebooksHandler",
-            "Cannot find notebook's local id in the local storage database: "
-            "failed to prepare query"),
+            "Cannot find notebook's local id by guid in the local storage "
+            "database: failed to prepare query"),
         {});
 
-    query.bindValue(QStringLiteral(":guid"), *notebook.guid());
+    query.bindValue(QStringLiteral(":guid"), guid);
+
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::NotebooksHandler",
-            "Cannot find notebook's local id in the local storage database"),
+            "Cannot find notebook's local id by guid in the local storage "
+            "database"),
         {});
+
+    if (!query.next()) {
+        return {};
+    }
+
+    return query.value(0).toString();
+}
+
+QString NotebooksHandler::notebookLocalIdByName(
+    const QString & name, const std::optional<QString> & linkedNotebookGuid,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    QString queryString = QStringLiteral(
+        "SELECT localUid FROM Notebooks "
+        "WHERE (notebookNameUpper = :notebookNameUpper)");
+
+    if (linkedNotebookGuid) {
+        queryString.chop(1);
+
+        if (!linkedNotebookGuid->isEmpty()) {
+            queryString += QStringLiteral(
+                " AND linkedNotebookGuid = :linkedNotebookGuid)");
+        }
+        else {
+            queryString += QStringLiteral(" AND linkedNotebookGuid IS NULL)");
+        }
+    }
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot find notebook's local id by name and linked notebook guid "
+            "in the local storage database: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":notebookNameUpper"), name.toUpper());
+
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
+        query.bindValue(
+            QStringLiteral(":linkedNotebookGuid"), *linkedNotebookGuid);
+    }
 
     if (!query.next()) {
         return {};
@@ -1158,7 +1233,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
 }
 
 std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
-    const QString & name, const QString & linkedNotebookGuid,
+    const QString & name, const std::optional<QString> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     QString queryString = QStringLiteral(
@@ -1181,11 +1256,11 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
         "Notebooks.contactId = BusinessUserInfo.id "
         "WHERE (Notebooks.notebookNameUpper = :notebookNameUpper)");
 
-    if (!linkedNotebookGuid.isNull()) {
+    if (linkedNotebookGuid) {
         queryString.chop(1);
         queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid ");
 
-        if (linkedNotebookGuid.isEmpty()) {
+        if (linkedNotebookGuid->isEmpty()) {
             queryString += QStringLiteral("IS NULL)");
         }
         else {
@@ -1205,9 +1280,9 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
 
     query.bindValue(QStringLiteral(":notebookNameUpper"), name.toUpper());
 
-    if (!linkedNotebookGuid.isEmpty()) {
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         query.bindValue(
-            QStringLiteral(":linkedNotebookGuid"), linkedNotebookGuid);
+            QStringLiteral(":linkedNotebookGuid"), *linkedNotebookGuid);
     }
 
     res = query.exec();
@@ -1244,10 +1319,65 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
 std::optional<qevercloud::Notebook> NotebooksHandler::findDefaultNotebookImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    static const QString queryString = QStringLiteral(
+        "SELECT * FROM Notebooks "
+        "LEFT OUTER JOIN NotebookRestrictions ON "
+        "Notebooks.localUid = NotebookRestrictions.localUid "
+        "LEFT OUTER JOIN Users ON "
+        "Notebooks.contactId = Users.id "
+        "LEFT OUTER JOIN UserAttributes ON "
+        "Notebooks.contactId = UserAttributes.id "
+        "LEFT OUTER JOIN UserAttributesViewedPromotions ON "
+        "Notebooks.contactId = UserAttributesViewedPromotions.id "
+        "LEFT OUTER JOIN UserAttributesRecentMailedAddresses ON "
+        "Notebooks.contactId = UserAttributesRecentMailedAddresses.id "
+        "LEFT OUTER JOIN Accounting ON "
+        "Notebooks.contactId = Accounting.id "
+        "LEFT OUTER JOIN AccountLimits ON "
+        "Notebooks.contactId = AccountLimits.id "
+        "LEFT OUTER JOIN BusinessUserInfo ON "
+        "Notebooks.contactId = BusinessUserInfo.id "
+        "WHERE isDefault = 1 LIMIT 1");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot find default notebook in the local storage database: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot find default notebook in the local storage database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::Notebook notebook;
+    ErrorString error;
+    if (!utils::fillNotebookFromSqlRecord(record, notebook, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "Failed to find default notebook in the local storage "
+                "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::NotebooksHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return fillSharedNotebooks(notebook, database, errorDescription);
 }
 
 std::optional<qevercloud::Notebook> NotebooksHandler::fillSharedNotebooks(
@@ -1275,45 +1405,147 @@ std::optional<qevercloud::Notebook> NotebooksHandler::fillSharedNotebooks(
 
 
 bool NotebooksHandler::expungeNotebookByLocalIdImpl(
-    QString localId, QSqlDatabase & database,
+    const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "NotebooksHandler::expungeNotebookByLocalIdImpl: local id = "
+            << localId);
+
+    const auto noteLocalIds = listNoteLocalIdsByNotebookLocalId(
+        localId, database, errorDescription);
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Notebooks WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot expunge notebook by local id from the local storage "
+            "database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot expunge notebook by local id from the local storage "
+            "database"),
+        false);
+
+    for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
+        if (!utils::removeResourceDataFilesForNote(
+                noteLocalId, m_localStorageDir, errorDescription)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
 bool NotebooksHandler::expungeNotebookByGuidImpl(
-    qevercloud::Guid guid, QSqlDatabase & database,
+    const qevercloud::Guid & guid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(guid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return true;
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "NotebooksHandler::expungeNotebookByGuidImpl: guid = " << guid);
+
+    const auto localId = notebookLocalIdByGuid(guid, database, errorDescription);
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    if (localId.isEmpty()) {
+        // No such notebook exists in the local storage
+        return true;
+    }
+
+    return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
 }
 
 bool NotebooksHandler::expungeNotebookByNameImpl(
-    QString name, QString linkedNotebookGuid, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    const QString & name, const std::optional<QString> & linkedNotebookGuid,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(name)
-    Q_UNUSED(linkedNotebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return true;
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "NotebooksHandler::expungeNotebookByNameImpl: name = "
+            << name << ", linked notebook guid = "
+            << linkedNotebookGuid.value_or(QStringLiteral("<not set>")));
+
+    const auto localId = notebookLocalIdByName(
+        name, linkedNotebookGuid, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    if (localId.isEmpty()) {
+        // No such notebook exists in the local storage
+        return true;
+    }
+
+    return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+}
+
+QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(
+    const QString & notebookLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid FROM Notes "
+        "WHERE notebookLocalUid = :notebookLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot list note local ids by notebook local id from the local "
+            "storage database: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot list note local ids by notebook local id from the local "
+            "storage database"),
+        {});
+
+    QStringList noteLocalIds;
+    noteLocalIds.reserve(std::max(query.size(), 0));
+
+    while (query.next()) {
+        noteLocalIds << query.value(0).toString();
+    }
+
+    return noteLocalIds;
 }
 
 QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
-    ListOptions<ListNotebooksOrder> options, QSqlDatabase & database,
-    ErrorString & errorDescription) const
+    const ListOptions<ListNotebooksOrder> & options,
+    const std::optional<QString> & linkedNotebookGuid,
+    QSqlDatabase & database, ErrorString & errorDescription) const
 {
     // TODO: implement
     Q_UNUSED(options)
+    Q_UNUSED(linkedNotebookGuid)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return {};
@@ -1323,11 +1555,52 @@ QList<qevercloud::SharedNotebook> NotebooksHandler::listSharedNotebooksImpl(
     const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(notebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QSqlQuery query{database};
+    bool res = query.prepare(QStringLiteral(
+        "SELECT * FROM SharedNotebooks "
+        "WHERE sharedNotebookNotebookGuid = :sharedNotebookNotebookGuid"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot list shared notebooks by notebook guid from the local "
+            "storage database: failed to prepare query"),
+        {});
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookNotebookGuid"), notebookGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "Cannot list shared notebooks by notebook guid from the local "
+            "storage database"),
+        {});
+
+    QMap<int, qevercloud::SharedNotebook> sharedNotebooksByIndex;
+    while (query.next()) {
+        qevercloud::SharedNotebook sharedNotebook;
+        int indexInNotebook = -1;
+        ErrorString error;
+        if (!utils::fillSharedNotebookFromSqlRecord(
+                query.record(), sharedNotebook, indexInNotebook,
+                errorDescription)) {
+            return {};
+        }
+
+        sharedNotebooksByIndex[indexInNotebook] = sharedNotebook;
+    }
+
+    QList<qevercloud::SharedNotebook> sharedNotebooks;
+    sharedNotebooks.reserve(qMax(sharedNotebooksByIndex.size(), 0));
+    for (const auto it: qevercloud::toRange(sharedNotebooksByIndex)) {
+        sharedNotebooks << it.value();
+    }
+
+    return sharedNotebooks;
 }
 
 TaskContext NotebooksHandler::makeTaskContext() const

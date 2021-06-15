@@ -29,7 +29,9 @@ target_sources(${LIBRARY_NAME}
   patches/Patch1To2.cpp
   patches/Patch1To2.h
   utils/FillFromSqlRecordUtils.cpp
-  utils/FillFromSqlRecordUtils.h)
+  utils/FillFromSqlRecordUtils.h
+  utils/ResourceDataFilesUtils.cpp
+  utils/ResourceDataFilesUtils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

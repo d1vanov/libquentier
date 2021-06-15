@@ -25,6 +25,7 @@
 
 #include <qevercloud/types/Notebook.h>
 
+#include <QDir>
 #include <QFuture>
 #include <QtGlobal>
 
@@ -39,7 +40,7 @@ class NotebooksHandler final :
 public:
     explicit NotebooksHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        QThreadPtr writerThread);
+        QThreadPtr writerThread, const QString & localStorageDirPath);
 
     [[nodiscard]] QFuture<quint32> notebookCount() const;
     [[nodiscard]] QFuture<void> putNotebook(qevercloud::Notebook notebook);
@@ -51,7 +52,7 @@ public:
         qevercloud::Guid guid) const;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name, QString linkedNotebookGuid = {}) const;
+        QString name, std::optional<QString> linkedNotebookGuid = {}) const;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const;
 
@@ -59,7 +60,7 @@ public:
     [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid);
 
     [[nodiscard]] QFuture<void> expungeNotebookByName(
-        QString name, QString linkedNotebookGuid = {});
+        QString name, std::optional<QString> linkedNotebookGuid = {});
 
     template <class T>
     using ListOptions = ILocalStorage::ListOptions<T>;
@@ -67,7 +68,8 @@ public:
     using ListNotebooksOrder = ILocalStorage::ListNotebooksOrder;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options) const;
+        ListOptions<ListNotebooksOrder> options,
+        std::optional<QString> linkedNotebookGuid) const;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const;
@@ -106,6 +108,14 @@ private:
         const qevercloud::Notebook & notebook, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
+    [[nodiscard]] QString notebookLocalIdByGuid(
+        const qevercloud::Guid & guid, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] QString notebookLocalIdByName(
+        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
+
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
@@ -115,7 +125,7 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByNameImpl(
-        const QString & name, const QString & linkedNotebookGuid,
+        const QString & name, const std::optional<QString> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
@@ -126,20 +136,25 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeNotebookByLocalIdImpl(
-        QString localId, QSqlDatabase & database,
+        const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool expungeNotebookByGuidImpl(
-        qevercloud::Guid guid, QSqlDatabase & database,
+        const qevercloud::Guid & guid, QSqlDatabase & database,
         ErrorString & errorDescription);
 
     [[nodiscard]] bool expungeNotebookByNameImpl(
-        QString name, QString linkedNotebookGuid, QSqlDatabase & database,
-        ErrorString & errorDescription);
+        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
+    [[nodiscard]] QStringList listNoteLocalIdsByNotebookLocalId(
+        const QString & notebookLocalId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
-        ListOptions<ListNotebooksOrder> options, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const ListOptions<ListNotebooksOrder> & options,
+        const std::optional<QString> & linkedNotebookGuid,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooksImpl(
         const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
@@ -151,6 +166,7 @@ private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
     QThreadPtr m_writerThread;
+    QDir m_localStorageDir;
 };
 
 } // namespace quentier::local_storage::sql
