@@ -59,65 +59,6 @@ private:
     [[nodiscard]] std::optional<quint32> userCountImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool putUserImpl(
-        const qevercloud::User & user, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putCommonUserData(
-        const qevercloud::User & user, const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool putUserAttributes(
-        const qevercloud::UserAttributes & userAttributes,
-        const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool putUserAttributesViewedPromotions(
-        const QString & userId,
-        const std::optional<QStringList> & viewedPromotions,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool putUserAttributesRecentMailedAddresses(
-        const QString & userId,
-        const std::optional<QStringList> & recentMailedAddresses,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeUserAttributesViewedPromotions(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeUserAttributesRecentMailedAddresses(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeUserAttributes(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putAccounting(
-        const qevercloud::Accounting & accounting, const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeAccounting(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putAccountLimits(
-        const qevercloud::AccountLimits & accountLimits, const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeAccountLimits(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putBusinessUserInfo(
-        const qevercloud::BusinessUserInfo & info, const QString & userId,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeBusinessUserInfo(
-        const QString & userId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
     [[nodiscard]] std::optional<qevercloud::User> findUserByIdImpl(
         qevercloud::UserID userId, QSqlDatabase & database,
         ErrorString & errorDescription) const;

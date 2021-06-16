@@ -78,44 +78,6 @@ private:
     [[nodiscard]] std::optional<quint32> notebookCountImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
-    [[nodiscard]] bool putNotebookImpl(
-        qevercloud::Notebook notebook, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putCommonNotebookData(
-        const qevercloud::Notebook & notebook, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool putNotebookRestrictions(
-        const QString & localId,
-        const qevercloud::NotebookRestrictions & notebookRestrictions,
-        QSqlDatabase & database, ErrorString & errorDescription);
-
-    [[nodiscard]] bool putSharedNotebook(
-        const qevercloud::SharedNotebook & sharedNotebook,
-        int indexInNotebook, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeNotebookRestrictions(
-        const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeSharedNotebooks(
-        const QString & notebookGuid, QSqlDatabase & database,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] QString notebookLocalId(
-        const qevercloud::Notebook & notebook, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
-
-    [[nodiscard]] QString notebookLocalIdByGuid(
-        const qevercloud::Guid & guid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
-
-    [[nodiscard]] QString notebookLocalIdByName(
-        const QString & name, const std::optional<QString> & linkedNotebookGuid,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
-
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription) const;

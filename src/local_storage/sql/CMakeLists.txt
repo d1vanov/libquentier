@@ -30,6 +30,12 @@ target_sources(${LIBRARY_NAME}
   patches/Patch1To2.h
   utils/FillFromSqlRecordUtils.cpp
   utils/FillFromSqlRecordUtils.h
+  utils/NotebookUtils.cpp
+  utils/NotebookUtils.h
+  utils/PutToDatabaseUtils.cpp
+  utils/PutToDatabaseUtils.h
+  utils/RemoveFromDatabaseUtils.cpp
+  utils/RemoveFromDatabaseUtils.h
   utils/ResourceDataFilesUtils.cpp
   utils/ResourceDataFilesUtils.h)
 
