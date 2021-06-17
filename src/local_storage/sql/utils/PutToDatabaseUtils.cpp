@@ -924,7 +924,7 @@ bool putNotebook(
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING(
-            "local_storage:sql:NotebooksHandler",
+            "local_storage::sql::utils",
             error << "\nNotebook: " << notebook);
         return false;
     }
@@ -978,6 +978,12 @@ bool putNotebook(
                 ++indexInNotebook;
             }
         }
+    }
+
+    if (notebook.contact() &&
+        !putUser(*notebook.contact(), database, errorDescription))
+    {
+        return false;
     }
 
     return true;

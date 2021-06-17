@@ -118,10 +118,6 @@ private:
         const std::optional<QString> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
-    [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooksImpl(
-        const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
-
     [[nodiscard]] TaskContext makeTaskContext() const;
 
 private:

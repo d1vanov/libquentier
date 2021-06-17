@@ -24,6 +24,7 @@
 #include "TypeChecks.h"
 
 #include "utils/FillFromSqlRecordUtils.h"
+#include "utils/ListFromDatabaseUtils.h"
 #include "utils/NotebookUtils.h"
 #include "utils/PutToDatabaseUtils.h"
 #include "utils/ResourceDataFilesUtils.h"
@@ -255,7 +256,7 @@ QFuture<QList<qevercloud::SharedNotebook>> NotebooksHandler::listSharedNotebooks
         (const NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
-            return handler.listSharedNotebooksImpl(
+            return utils::listSharedNotebooks(
                 notebookGuid, database, errorDescription);
         });
 }
@@ -586,7 +587,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::fillSharedNotebooks(
         return notebook;
     }
 
-    auto sharedNotebooks = listSharedNotebooksImpl(
+    auto sharedNotebooks = utils::listSharedNotebooks(
         *notebook.guid(), database, errorDescription);
 
     if (!errorDescription.isEmpty()) {
@@ -747,58 +748,6 @@ QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return {};
-}
-
-QList<qevercloud::SharedNotebook> NotebooksHandler::listSharedNotebooksImpl(
-    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
-    ErrorString & errorDescription) const
-{
-    QSqlQuery query{database};
-    bool res = query.prepare(QStringLiteral(
-        "SELECT * FROM SharedNotebooks "
-        "WHERE sharedNotebookNotebookGuid = :sharedNotebookNotebookGuid"));
-
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "Cannot list shared notebooks by notebook guid from the local "
-            "storage database: failed to prepare query"),
-        {});
-
-    query.bindValue(
-        QStringLiteral(":sharedNotebookNotebookGuid"), notebookGuid);
-
-    res = query.exec();
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotebooksHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
-            "Cannot list shared notebooks by notebook guid from the local "
-            "storage database"),
-        {});
-
-    QMap<int, qevercloud::SharedNotebook> sharedNotebooksByIndex;
-    while (query.next()) {
-        qevercloud::SharedNotebook sharedNotebook;
-        int indexInNotebook = -1;
-        ErrorString error;
-        if (!utils::fillSharedNotebookFromSqlRecord(
-                query.record(), sharedNotebook, indexInNotebook,
-                errorDescription)) {
-            return {};
-        }
-
-        sharedNotebooksByIndex[indexInNotebook] = sharedNotebook;
-    }
-
-    QList<qevercloud::SharedNotebook> sharedNotebooks;
-    sharedNotebooks.reserve(qMax(sharedNotebooksByIndex.size(), 0));
-    for (const auto it: qevercloud::toRange(sharedNotebooksByIndex)) {
-        sharedNotebooks << it.value();
-    }
-
-    return sharedNotebooks;
 }
 
 TaskContext NotebooksHandler::makeTaskContext() const

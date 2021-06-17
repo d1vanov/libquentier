@@ -17,6 +17,7 @@
  */
 
 #include "FillFromSqlRecordUtils.h"
+#include "ListFromDatabaseUtils.h"
 
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/User.h>
@@ -26,6 +27,7 @@
 
 #include <QGlobalStatic>
 #include <QSqlRecord>
+#include <QSqlQuery>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -1163,6 +1165,98 @@ bool fillSharedNotebookFromSqlRecord(
                 return false;
             }
             indexInNotebook = index;
+        }
+    }
+
+    return true;
+}
+
+template <>
+bool fillObjectFromSqlRecord<qevercloud::Notebook>(
+    const QSqlRecord & rec, qevercloud::Notebook & object,
+    ErrorString & errorDescription)
+{
+    return fillNotebookFromSqlRecord(rec, object, errorDescription);
+}
+
+template <class T>
+bool fillObjectsFromSqlQuery(
+    QSqlQuery query, QList<T> & objects, ErrorString & errorDescription)
+{
+    objects.reserve(std::max(query.size(), 0));
+
+    while (query.next()) {
+        QSqlRecord rec = query.record();
+
+        objects << T();
+        T & object = objects.back();
+
+        bool res = fillObjectFromSqlRecord(rec, object, errorDescription);
+        if (!res) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template <>
+bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
+    QSqlQuery & query, QSqlDatabase & database,
+    QList<qevercloud::Notebook> & objects, ErrorString & errorDescription)
+{
+    QMap<QString, int> indexForLocalId;
+
+    while (query.next()) {
+        const QSqlRecord rec = query.record();
+
+        const int localIdIndex = rec.indexOf(QStringLiteral("localUid"));
+        if (localIdIndex < 0) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "no localUid field in SQL record for notebook"));
+            QNWARNING("local_storage::sql::utils", errorDescription);
+            return false;
+        }
+
+        const QString localId = rec.value(localIdIndex).toString();
+        if (localId.isEmpty()) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "found empty localUid field in SQL record for Notebook"));
+            QNWARNING("local_storage::sql::utils", errorDescription);
+            return false;
+        }
+
+        const auto it = indexForLocalId.find(localId);
+        const bool notFound = (it == indexForLocalId.end());
+        if (notFound) {
+            indexForLocalId[localId] = objects.size();
+            objects << qevercloud::Notebook{};
+        }
+
+        auto & notebook = (notFound ? objects.back() : objects[it.value()]);
+
+        if (!fillNotebookFromSqlRecord(rec, notebook, errorDescription)) {
+            return false;
+        }
+
+        if (notebook.guid())
+        {
+            ErrorString error;
+            auto sharedNotebooks = listSharedNotebooks(
+                *notebook.guid(), database, error);
+            if (!error.isEmpty()) {
+                errorDescription.base() = error.base();
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                QNWARNING("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+
+            if (!sharedNotebooks.isEmpty()) {
+                notebook.setSharedNotebooks(std::move(sharedNotebooks));
+            }
         }
     }
 

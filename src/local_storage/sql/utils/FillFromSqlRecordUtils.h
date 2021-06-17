@@ -20,9 +20,13 @@
 
 #include <qevercloud/types/Fwd.h>
 
+#include <QList>
+
 #include <optional>
 
+class QSqlDatabase;
 class QSqlRecord;
+class QSqlQuery;
 
 namespace quentier {
 
@@ -59,5 +63,15 @@ void fillAccountLimitsFromSqlRecord(
 [[nodiscard]] bool fillSharedNotebookFromSqlRecord(
     const QSqlRecord & record, qevercloud::SharedNotebook & sharedNotebook,
     int & indexInNotebook, ErrorString & errorDescription);
+
+template <class T>
+[[nodiscard]] bool fillObjectFromSqlRecord(
+    const QSqlRecord & record, T & object,
+    ErrorString & errorDescription);
+
+template <class T>
+bool fillObjectsFromSqlQuery(
+    QSqlQuery & query, QSqlDatabase & database, QList<T> & objects,
+    ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils
