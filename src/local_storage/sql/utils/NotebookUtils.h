@@ -47,4 +47,8 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::Notebook & notebook, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooks(
+    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

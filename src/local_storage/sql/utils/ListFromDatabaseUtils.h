@@ -26,10 +26,6 @@
 
 namespace quentier::local_storage::sql::utils {
 
-[[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooks(
-    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
-    ErrorString & errorDescription);
-
 template <class T>
 [[nodiscard]] QString listObjectsGenericSqlQuery();
 
@@ -39,7 +35,7 @@ template <class TOrderBy>
 template <class T>
 [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
     const ILocalStorage::ListObjectsOptions & options,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    ErrorString & errorDescription)
 {
     QString result;
     errorDescription.clear();
@@ -119,6 +115,5 @@ template <class T>
 
     return result;
 }
-
 
 } // namespace quentier::local_storage::sql::utils

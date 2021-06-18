@@ -19,15 +19,12 @@
 #include "FillFromSqlRecordUtils.h"
 #include "ListFromDatabaseUtils.h"
 
-#include <qevercloud/types/Notebook.h>
-#include <qevercloud/types/User.h>
-
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
+#include <qevercloud/types/User.h>
+
 #include <QGlobalStatic>
-#include <QSqlRecord>
-#include <QSqlQuery>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -1177,27 +1174,6 @@ bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     ErrorString & errorDescription)
 {
     return fillNotebookFromSqlRecord(rec, object, errorDescription);
-}
-
-template <class T>
-bool fillObjectsFromSqlQuery(
-    QSqlQuery query, QList<T> & objects, ErrorString & errorDescription)
-{
-    objects.reserve(std::max(query.size(), 0));
-
-    while (query.next()) {
-        QSqlRecord rec = query.record();
-
-        objects << T();
-        T & object = objects.back();
-
-        bool res = fillObjectFromSqlRecord(rec, object, errorDescription);
-        if (!res) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 template <>

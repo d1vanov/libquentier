@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "FillFromSqlRecordUtils.h"
 #include "NotebookUtils.h"
 
 #include "../ErrorHandling.h"
@@ -23,8 +24,10 @@
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QSqlDatabase>
+#include <QSqlRecord>
 #include <QSqlQuery>
 
 namespace quentier::local_storage::sql::utils {
@@ -38,9 +41,9 @@ namespace quentier::local_storage::sql::utils {
         QStringLiteral("SELECT localUid FROM Notebooks WHERE guid = :guid"));
 
     ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotebooksHandler",
+        res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+            "local_storage::sql::utils",
             "Cannot find notebook's local id by guid in the local storage "
             "database: failed to prepare query"),
         {});
@@ -49,9 +52,9 @@ namespace quentier::local_storage::sql::utils {
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotebooksHandler",
+        res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+            "local_storage::sql::utils",
             "Cannot find notebook's local id by guid in the local storage "
             "database"),
         {});
@@ -86,9 +89,9 @@ namespace quentier::local_storage::sql::utils {
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
     ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotebooksHandler",
+        res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotebooksHandler",
+            "local_storage::sql::utils",
             "Cannot find notebook's local id by name and linked notebook guid "
             "in the local storage database: failed to prepare query"),
         {});
@@ -130,5 +133,58 @@ namespace quentier::local_storage::sql::utils {
 
     return {};
 }
+
+QList<qevercloud::SharedNotebook> listSharedNotebooks(
+    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QSqlQuery query{database};
+    bool res = query.prepare(QStringLiteral(
+        "SELECT * FROM SharedNotebooks "
+        "WHERE sharedNotebookNotebookGuid = :sharedNotebookNotebookGuid"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot list shared notebooks by notebook guid from the local "
+            "storage database: failed to prepare query"),
+        {});
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookNotebookGuid"), notebookGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot list shared notebooks by notebook guid from the local "
+            "storage database"),
+        {});
+
+    QMap<int, qevercloud::SharedNotebook> sharedNotebooksByIndex;
+    while (query.next()) {
+        qevercloud::SharedNotebook sharedNotebook;
+        int indexInNotebook = -1;
+        ErrorString error;
+        if (!utils::fillSharedNotebookFromSqlRecord(
+                query.record(), sharedNotebook, indexInNotebook,
+                errorDescription)) {
+            return {};
+        }
+
+        sharedNotebooksByIndex[indexInNotebook] = sharedNotebook;
+    }
+
+    QList<qevercloud::SharedNotebook> sharedNotebooks;
+    sharedNotebooks.reserve(qMax(sharedNotebooksByIndex.size(), 0));
+    for (const auto it: qevercloud::toRange(sharedNotebooksByIndex)) {
+        sharedNotebooks << it.value();
+    }
+
+    return sharedNotebooks;
+}
+
 
 } // namespace quentier::local_storage::sql::utils

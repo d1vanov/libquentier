@@ -253,7 +253,7 @@ QFuture<QList<qevercloud::SharedNotebook>> NotebooksHandler::listSharedNotebooks
         makeTaskContext(),
         weak_from_this(),
         [notebookGuid = std::move(notebookGuid)]
-        (const NotebooksHandler & handler, QSqlDatabase & database,
+        (const NotebooksHandler & /* handler */, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
             return utils::listSharedNotebooks(

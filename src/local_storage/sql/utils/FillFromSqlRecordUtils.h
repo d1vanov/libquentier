@@ -18,15 +18,20 @@
 
 #pragma once
 
+#include "NotebookUtils.h"
+
 #include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/Notebook.h>
 
 #include <QList>
+#include <QMap>
+#include <QSqlRecord>
+#include <QSqlQuery>
 
+#include <algorithm>
 #include <optional>
 
 class QSqlDatabase;
-class QSqlRecord;
-class QSqlQuery;
 
 namespace quentier {
 
@@ -71,7 +76,29 @@ template <class T>
 
 template <class T>
 bool fillObjectsFromSqlQuery(
-    QSqlQuery & query, QSqlDatabase & database, QList<T> & objects,
-    ErrorString & errorDescription);
+    QSqlQuery & query, QSqlDatabase & /* database */, QList<T> & objects,
+    ErrorString & errorDescription)
+{
+    objects.reserve(std::max(query.size(), 0));
+
+    while (query.next()) {
+        QSqlRecord rec = query.record();
+
+        objects << T();
+        T & object = objects.back();
+
+        bool res = fillObjectFromSqlRecord(rec, object, errorDescription);
+        if (!res) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template <>
+bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
+    QSqlQuery & query, QSqlDatabase & database,
+    QList<qevercloud::Notebook> & objects, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils
