@@ -364,6 +364,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/LocalStorageCacheManagerException.cpp
     src/exception/LoggerInitializationException.cpp
     src/exception/RuntimeError.cpp
+    src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
     src/local_storage/LocalStorageManager.cpp

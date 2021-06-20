@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "NotebookUtils.h"
-
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Notebook.h>
 

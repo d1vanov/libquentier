@@ -28,6 +28,7 @@
 #include "utils/NotebookUtils.h"
 #include "utils/PutToDatabaseUtils.h"
 #include "utils/ResourceDataFilesUtils.h"
+#include "utils/SqlUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -229,19 +230,17 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
 }
 
 QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
-    ListOptions<ListNotebooksOrder> options,
-    std::optional<QString> linkedNotebookGuid) const
+    ListOptions<ListNotebooksOrder> options) const
 {
     return makeReadTask<QList<qevercloud::Notebook>>(
         makeTaskContext(),
         weak_from_this(),
-        [options = std::move(options),
-         linkedNotebookGuid = std::move(linkedNotebookGuid)]
+        [options = std::move(options)]
         (const NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
             return handler.listNotebooksImpl(
-                options, linkedNotebookGuid, database,
+                options, database,
                 errorDescription);
         });
 }
@@ -739,15 +738,26 @@ QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(
 
 QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
     const ListOptions<ListNotebooksOrder> & options,
-    const std::optional<QString> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(options)
-    Q_UNUSED(linkedNotebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QString linkedNotebookGuidSqlQueryCondition;
+    if (options.m_linkedNotebookGuid) {
+        if (options.m_linkedNotebookGuid->isEmpty()) {
+            linkedNotebookGuidSqlQueryCondition =
+                QStringLiteral("linkedNotebookGuid IS NULL");
+        }
+        else {
+            linkedNotebookGuidSqlQueryCondition =
+                QString::fromUtf8("linkedNotebookGuid = '%1'")
+                    .arg(utils::sqlEscape(*options.m_linkedNotebookGuid));
+        }
+    }
+
+    return utils::listObjects<
+        qevercloud::Notebook, ILocalStorage::ListNotebooksOrder>(
+        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_direction, linkedNotebookGuidSqlQueryCondition, database,
+        errorDescription);
 }
 
 TaskContext NotebooksHandler::makeTaskContext() const

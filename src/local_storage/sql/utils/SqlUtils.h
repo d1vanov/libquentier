@@ -18,33 +18,10 @@
 
 #pragma once
 
-#include <qevercloud/types/Fwd.h>
-#include <qevercloud/types/TypeAliases.h>
-
-#include <optional>
-
-class QSqlDatabase;
-class QString;
-class QStringList;
-
-namespace quentier {
-
-class ErrorString;
-
-} // namespace quentier
+#include <QString>
 
 namespace quentier::local_storage::sql::utils {
 
-[[nodiscard]] QString notebookLocalIdByGuid(
-    const qevercloud::Guid & guid, QSqlDatabase & database,
-    ErrorString & errorDescription);
-
-[[nodiscard]] QString notebookLocalIdByName(
-    const QString & name, const std::optional<QString> & linkedNotebookGuid,
-    QSqlDatabase & database, ErrorString & errorDescription);
-
-[[nodiscard]] QString notebookLocalId(
-    const qevercloud::Notebook & notebook, QSqlDatabase & database,
-    ErrorString & errorDescription);
+[[nodiscard]] QString sqlEscape(QString source);
 
 } // namespace quentier::local_storage::sql::utils

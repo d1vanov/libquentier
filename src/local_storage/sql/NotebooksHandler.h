@@ -68,8 +68,7 @@ public:
     using ListNotebooksOrder = ILocalStorage::ListNotebooksOrder;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options,
-        std::optional<QString> linkedNotebookGuid) const;
+        ListOptions<ListNotebooksOrder> options) const;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const;
@@ -115,7 +114,6 @@ private:
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
         const ListOptions<ListNotebooksOrder> & options,
-        const std::optional<QString> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;

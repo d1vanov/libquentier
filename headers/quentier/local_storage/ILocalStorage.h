@@ -144,7 +144,7 @@ public:
         QTextStream & strm, ListLinkedNotebooksOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListLinkedNotebooksOrder order);
+        QDebug & dbg, ListLinkedNotebooksOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -159,7 +159,7 @@ public:
         QTextStream & strm, ListTagsOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListTagsOrder order);
+        QDebug & dbg, ListTagsOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -182,7 +182,7 @@ public:
         QTextStream & strm, ListNotesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListNotesOrder order);
+        QDebug & dbg, ListNotesOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -198,7 +198,7 @@ public:
         QTextStream & strm, ListSavedSearchesOrder order);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListSavedSearchesOrder order);
+        QDebug & dbg, ListSavedSearchesOrder order);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -206,9 +206,9 @@ public:
     {
         ListOptionsBase() noexcept;
 
-        ListObjectsOptions m_options;
-        size_t m_limit;
-        size_t m_offset;
+        ListObjectsOptions m_flags;
+        quint64 m_limit;
+        quint64 m_offset;
         OrderDirection m_direction;
     };
 
@@ -218,7 +218,7 @@ public:
         ListOptions() noexcept;
 
         Order m_order;
-        QString m_linkedNotebookGuid;
+        std::optional<QString> m_linkedNotebookGuid;
     };
 
     template <>
@@ -236,7 +236,7 @@ public:
 
     template <class Order>
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, ListOptions<Order> options);
+        QDebug & dbg, ListOptions<Order> options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -257,7 +257,7 @@ public:
         QTextStream & strm, NoteCountOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, NoteCountOptions options);
+        QDebug & dbg, NoteCountOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -273,13 +273,13 @@ public:
         QTextStream & strm, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, UpdateNoteOption option);
+        QDebug & dbg, UpdateNoteOption option);
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, UpdateNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, UpdateNoteOptions options);
+        QDebug & dbg, UpdateNoteOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -300,7 +300,7 @@ public:
         QTextStream & strm, FetchNoteOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, FetchNoteOptions options);
+        QDebug & dbg, FetchNoteOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -320,7 +320,7 @@ public:
         QTextStream & strm, FetchResourceOptions options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & strm, FetchResourceOptions options);
+        QDebug & dbg, FetchResourceOptions options);
 
     ////////////////////////////////////////////////////////////////////////////
 

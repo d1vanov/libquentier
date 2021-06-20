@@ -31,6 +31,7 @@ target_sources(${LIBRARY_NAME}
   utils/FillFromSqlRecordUtils.cpp
   utils/FillFromSqlRecordUtils.h
   utils/ListFromDatabaseUtils.h
+  utils/ListFromDatabaseUtils.cpp
   utils/NotebookUtils.cpp
   utils/NotebookUtils.h
   utils/PutToDatabaseUtils.cpp
@@ -38,7 +39,9 @@ target_sources(${LIBRARY_NAME}
   utils/RemoveFromDatabaseUtils.cpp
   utils/RemoveFromDatabaseUtils.h
   utils/ResourceDataFilesUtils.cpp
-  utils/ResourceDataFilesUtils.h)
+  utils/ResourceDataFilesUtils.h
+  utils/SqlUtils.cpp
+  utils/SqlUtils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

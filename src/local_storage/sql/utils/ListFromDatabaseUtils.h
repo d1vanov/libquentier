@@ -18,19 +18,35 @@
 
 #pragma once
 
+#include "FillFromSqlRecordUtils.h"
+
 #include <quentier/local_storage/ILocalStorage.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
 #include <QSqlDatabase>
+#include <QSqlError>
 #include <QSqlQuery>
 
 namespace quentier::local_storage::sql::utils {
 
+[[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooks(
+    const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 template <class T>
 [[nodiscard]] QString listObjectsGenericSqlQuery();
 
+template <>
+[[nodiscard]] QString listObjectsGenericSqlQuery<qevercloud::Notebook>();
+
 template <class TOrderBy>
 [[nodiscard]] QString orderByToSqlTableColumn(const TOrderBy & orderBy);
+
+template <>
+[[nodiscard]] QString
+    orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(
+        const ILocalStorage::ListNotebooksOrder & order);
 
 template <class T>
 [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(
@@ -114,6 +130,125 @@ template <class T>
     }
 
     return result;
+}
+
+template <class T, class TOrderBy>
+QList<T> listObjects(
+    const ILocalStorage::ListObjectsOptions & flag,
+    quint64 limit, quint64 offset, const TOrderBy & orderBy,
+    const ILocalStorage::OrderDirection & orderDirection,
+    const QString & additionalSqlQueryCondition,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "Listing " << T::staticMetaObject.className() << " objects: flag = "
+            << flag << ", limit = " << limit << ", offset = " << offset
+            << ", order by " << orderBy <<  ", order direction = "
+            << orderDirection << ", additional SQL query condition = "
+            << additionalSqlQueryCondition);
+
+    ErrorString flagError;
+
+    QString sqlQueryConditions =
+        listObjectsOptionsToSqlQueryConditions<T>(flag, flagError);
+
+    if (sqlQueryConditions.isEmpty() && !flagError.isEmpty()) {
+        errorDescription = flagError;
+        return QList<T>();
+    }
+
+    QString sumSqlQueryConditions;
+    if (!sqlQueryConditions.isEmpty()) {
+        sumSqlQueryConditions += sqlQueryConditions;
+    }
+
+    if (!additionalSqlQueryCondition.isEmpty()) {
+        if (!sumSqlQueryConditions.isEmpty() &&
+            !sumSqlQueryConditions.endsWith(QStringLiteral(" AND ")))
+        {
+            sumSqlQueryConditions += QStringLiteral(" AND ");
+        }
+
+        sumSqlQueryConditions += additionalSqlQueryCondition;
+    }
+
+    if (sumSqlQueryConditions.endsWith(QStringLiteral(" AND "))) {
+        sumSqlQueryConditions.chop(5);
+    }
+
+    QString queryString = listObjectsGenericSqlQuery<T>();
+    if (!sumSqlQueryConditions.isEmpty()) {
+        sumSqlQueryConditions.prepend(QStringLiteral("("));
+        sumSqlQueryConditions.append(QStringLiteral(")"));
+        queryString += QStringLiteral(" WHERE ");
+        queryString += sumSqlQueryConditions;
+    }
+
+    QString orderByColumn = orderByToSqlTableColumn<TOrderBy>(orderBy);
+    if (!orderByColumn.isEmpty()) {
+        queryString += QStringLiteral(" ORDER BY ");
+        queryString += orderByColumn;
+
+        switch (orderDirection) {
+        case ILocalStorage::OrderDirection::Descending:
+            queryString += QStringLiteral(" DESC");
+            break;
+        case ILocalStorage::OrderDirection::Ascending:
+            [[fallthrough]];
+        default:
+            queryString += QStringLiteral(" ASC");
+            break;
+        }
+    }
+
+    if (limit != 0) {
+        queryString += QStringLiteral(" LIMIT ") + QString::number(limit);
+    }
+
+    if (offset != 0) {
+        queryString += QStringLiteral(" OFFSET ") + QString::number(offset);
+    }
+
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "Listing " << T::staticMetaObject.className() << " objects with SQL "
+        "query: " << queryString);
+
+    QList<T> objects;
+
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "can't list objects from the local storage database by filter"));
+
+    QSqlQuery query{database};
+    if (!query.exec(queryString)) {
+        errorDescription.base() = errorPrefix.base();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << ", last query = " << query.lastQuery()
+                             << ", last error = " << query.lastError());
+        errorDescription.details() = query.lastError().text();
+        return objects;
+    }
+
+    ErrorString error;
+    if (!fillObjectsFromSqlQuery<T>(query, database, objects, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        objects.clear();
+        return objects;
+    }
+
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "Found " << objects.size() << " " << T::staticMetaObject.className()
+            << " objects");
+
+    return objects;
 }
 
 } // namespace quentier::local_storage::sql::utils
