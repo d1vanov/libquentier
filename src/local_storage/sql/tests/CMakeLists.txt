@@ -9,6 +9,7 @@ qt5_add_resources(${TESTS_RESOURCES_NAME}
 add_executable(${TESTS_NAME}
   ConnectionPoolTest.cpp
   main.cpp
+  NotebooksHandlerTest.cpp
   Patch1To2Test.cpp
   TablesInitializerTest.cpp
   VersionHandlerTest.cpp
