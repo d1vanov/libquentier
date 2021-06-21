@@ -21,6 +21,7 @@
 #include "../NotebooksHandler.h"
 
 #include <quentier/exception/IQuentierException.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <QCoreApplication>
 #include <QSqlDatabase>
@@ -102,6 +103,129 @@ TEST_F(NotebooksHandlerTest, CtorNullWriterThread)
             m_connectionPool, QThreadPool::globalInstance(), nullptr,
             m_temporaryDir.path()),
         IQuentierException);
+}
+
+TEST_F(NotebooksHandlerTest, ShouldHaveZeroNotebookCountWhenThereAreNoNotebooks)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebookCountFuture = notebooksHandler->notebookCount();
+    notebookCountFuture.waitForFinished();
+    EXPECT_EQ(notebookCountFuture.result(), 0U);
+}
+
+TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebookFuture = notebooksHandler->findNotebookByLocalId(
+        UidGenerator::Generate());
+
+    notebookFuture.waitForFinished();
+    EXPECT_EQ(notebookFuture.resultCount(), 0);
+}
+
+TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebookFuture = notebooksHandler->findNotebookByGuid(
+        UidGenerator::Generate());
+
+    notebookFuture.waitForFinished();
+    EXPECT_EQ(notebookFuture.resultCount(), 0);
+}
+
+TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebookFuture = notebooksHandler->findNotebookByName(
+        QStringLiteral("My notebook"));
+
+    notebookFuture.waitForFinished();
+    EXPECT_EQ(notebookFuture.resultCount(), 0);
+}
+
+TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentDefaultNotebook)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebookFuture = notebooksHandler->findDefaultNotebook();
+    notebookFuture.waitForFinished();
+    EXPECT_EQ(notebookFuture.resultCount(), 0);
+}
+
+TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByLocalId(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
+}
+
+TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByGuid(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
+}
+
+TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
+        QStringLiteral("My notebook"));
+
+    EXPECT_NO_THROW(expungeNotebookFuture.waitForFinished());
+}
+
+TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto listNotebooksFuture = notebooksHandler->listNotebooks(
+        NotebooksHandler::ListOptions<NotebooksHandler::ListNotebooksOrder>{});
+
+    listNotebooksFuture.waitForFinished();
+    EXPECT_TRUE(listNotebooksFuture.result().isEmpty());
+}
+
+TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto sharedNotebooksFuture = notebooksHandler->listSharedNotebooks(
+        UidGenerator::Generate());
+
+    sharedNotebooksFuture.waitForFinished();
+    EXPECT_TRUE(sharedNotebooksFuture.result().isEmpty());
 }
 
 } // namespace quentier::local_storage::sql::tests
