@@ -318,7 +318,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
         "Notebooks.contactId = AccountLimits.id "
         "LEFT OUTER JOIN BusinessUserInfo ON "
         "Notebooks.contactId = BusinessUserInfo.id "
-        "WHERE (Notebooks.localUid = :localUid");
+        "WHERE (Notebooks.localUid = :localUid)");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -385,7 +385,7 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
         "Notebooks.contactId = AccountLimits.id "
         "LEFT OUTER JOIN BusinessUserInfo ON "
         "Notebooks.contactId = BusinessUserInfo.id "
-        "WHERE (Notebooks.guid = :guid");
+        "WHERE (Notebooks.guid = :guid)");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
