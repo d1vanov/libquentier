@@ -204,8 +204,6 @@ public:
 
     struct QUENTIER_EXPORT ListOptionsBase
     {
-        ListOptionsBase() noexcept;
-
         ListObjectsOptions m_flags;
         quint64 m_limit;
         quint64 m_offset;
@@ -215,8 +213,6 @@ public:
     template <class Order>
     struct QUENTIER_EXPORT ListOptions : ListOptionsBase
     {
-        ListOptions() noexcept;
-
         Order m_order;
         std::optional<QString> m_linkedNotebookGuid;
     };
@@ -225,8 +221,6 @@ public:
     struct QUENTIER_EXPORT ListOptions<ListLinkedNotebooksOrder> :
         ListOptionsBase
     {
-        ListOptions() noexcept;
-
         ListLinkedNotebooksOrder m_order;
     };
 
