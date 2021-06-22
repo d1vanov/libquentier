@@ -24,6 +24,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -34,6 +35,91 @@
 namespace quentier::local_storage::sql::tests {
 
 namespace {
+
+[[nodiscard]] QList<qevercloud::SharedNotebook> createSharedNotebooks(
+    const qevercloud::Guid & notebookGuid)
+{
+    qevercloud::SharedNotebook sharedNotebook1;
+    sharedNotebook1.setLocallyModified(false);
+    sharedNotebook1.setLocalOnly(false);
+    sharedNotebook1.setLocallyFavorited(false);
+    sharedNotebook1.setId(2L);
+    sharedNotebook1.setUserId(qevercloud::UserID{1});
+    sharedNotebook1.setSharerUserId(qevercloud::UserID{3});
+    sharedNotebook1.setNotebookGuid(notebookGuid);
+    sharedNotebook1.setEmail(QStringLiteral("example1@example.com"));
+    sharedNotebook1.setRecipientIdentityId(qevercloud::IdentityID{3});
+    sharedNotebook1.setGlobalId(QStringLiteral("globalId1"));
+    sharedNotebook1.setRecipientUsername(QStringLiteral("recipientUsername1"));
+    sharedNotebook1.setRecipientUserId(qevercloud::UserID{4});
+    sharedNotebook1.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::READ_NOTEBOOK);
+
+    qevercloud::SharedNotebookRecipientSettings recipientSettings;
+    recipientSettings.setReminderNotifyEmail(true);
+    recipientSettings.setReminderNotifyInApp(false);
+    sharedNotebook1.setRecipientSettings(recipientSettings);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    sharedNotebook1.setServiceCreated(now);
+    sharedNotebook1.setServiceUpdated(now + 1);
+    sharedNotebook1.setServiceAssigned(now + 2);
+
+    qevercloud::SharedNotebook sharedNotebook2;
+    sharedNotebook2.setLocallyModified(true);
+    sharedNotebook2.setLocalOnly(false);
+    sharedNotebook2.setLocallyFavorited(true);
+    sharedNotebook2.setId(5L);
+    sharedNotebook2.setUserId(qevercloud::UserID{6});
+    sharedNotebook2.setSharerUserId(qevercloud::UserID{7});
+    sharedNotebook2.setNotebookGuid(notebookGuid);
+    sharedNotebook2.setEmail(QStringLiteral("example2@example.com"));
+    sharedNotebook2.setRecipientIdentityId(qevercloud::IdentityID{8});
+    sharedNotebook2.setGlobalId(QStringLiteral("globalId2"));
+    sharedNotebook2.setRecipientUsername(QStringLiteral("recipientUsername2"));
+    sharedNotebook2.setRecipientUserId(qevercloud::UserID{9});
+    sharedNotebook2.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    recipientSettings.setReminderNotifyEmail(false);
+    recipientSettings.setReminderNotifyInApp(true);
+    sharedNotebook2.setRecipientSettings(recipientSettings);
+
+    sharedNotebook2.setServiceCreated(now + 3);
+    sharedNotebook2.setServiceUpdated(now + 4);
+    sharedNotebook2.setServiceAssigned(now + 5);
+
+    return QList<qevercloud::SharedNotebook>{} << sharedNotebook1
+                                               << sharedNotebook2;
+}
+
+[[nodiscard]] qevercloud::BusinessNotebook createBusinessNotebook()
+{
+    qevercloud::BusinessNotebook businessNotebook;
+    businessNotebook.setRecommended(true);
+    businessNotebook.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::BUSINESS_FULL_ACCESS);
+
+    businessNotebook.setNotebookDescription(
+        QStringLiteral("notebookDescription"));
+
+    return businessNotebook;
+}
+
+[[nodiscard]] qevercloud::User createContact()
+{
+    qevercloud::User user;
+    user.setId(1);
+    user.setUsername(QStringLiteral("fake_user_username"));
+    user.setEmail(QStringLiteral("fake_user _mail"));
+    user.setName(QStringLiteral("fake_user_name"));
+    user.setTimezone(QStringLiteral("fake_user_timezone"));
+    user.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
+    user.setCreated(2);
+    user.setUpdated(3);
+    user.setActive(true);
+    return user;
+}
 
 class NotebooksHandlerTest : public testing::Test
 {
