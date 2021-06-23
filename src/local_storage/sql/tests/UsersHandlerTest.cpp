@@ -160,10 +160,10 @@ namespace {
 
 enum class CreateUserOption
 {
-    WithUserAttributes,
-    WithAccounting,
-    WithAccountLimits,
-    WithBusinessUserInfo
+    WithUserAttributes = 1 << 0,
+    WithAccounting = 1 << 2,
+    WithAccountLimits = 1 << 3,
+    WithBusinessUserInfo = 1 << 4
 };
 
 Q_DECLARE_FLAGS(CreateUserOptions, CreateUserOption);
