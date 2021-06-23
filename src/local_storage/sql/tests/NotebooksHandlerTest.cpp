@@ -25,6 +25,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QFlags>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -119,6 +120,133 @@ namespace {
     user.setUpdated(3);
     user.setActive(true);
     return user;
+}
+
+[[nodiscard]] qevercloud::NotebookRestrictions createNotebookRestrictions()
+{
+    qevercloud::NotebookRestrictions restrictions;
+    restrictions.setNoReadNotes(false);
+    restrictions.setNoCreateNotes(true);
+    restrictions.setNoUpdateNotes(true);
+    restrictions.setNoExpungeNotes(true);
+    restrictions.setNoShareNotes(false);
+    restrictions.setNoEmailNotes(false);
+    restrictions.setNoSendMessageToRecipients(false);
+    restrictions.setNoUpdateNotebook(false);
+    restrictions.setNoExpungeNotebook(true);
+    restrictions.setNoSetDefaultNotebook(true);
+    restrictions.setNoSetNotebookStack(false);
+    restrictions.setNoPublishToPublic(true);
+    restrictions.setNoPublishToBusinessLibrary(false);
+    restrictions.setNoCreateTags(false);
+    restrictions.setNoUpdateTags(true);
+    restrictions.setNoExpungeTags(false);
+    restrictions.setNoSetParentTag(true);
+    restrictions.setNoCreateSharedNotebooks(false);
+    restrictions.setNoShareNotesWithBusiness(false);
+    restrictions.setNoRenameNotebook(false);
+    restrictions.setNoSetInMyList(false);
+    restrictions.setNoChangeContact(true);
+
+    restrictions.setUpdateWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::ASSIGNED);
+
+    restrictions.setExpungeWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::NO_SHARED_NOTEBOOKS);
+
+    return restrictions;
+}
+
+[[nodiscard]] qevercloud::NotebookRecipientSettings
+    createNotebookRecipientSettings()
+{
+    qevercloud::NotebookRecipientSettings settings;
+    settings.setReminderNotifyEmail(true);
+    settings.setReminderNotifyInApp(true);
+    settings.setInMyList(false);
+    settings.setStack(QStringLiteral("stack1"));
+    return settings;
+}
+
+[[nodiscard]] qevercloud::Publishing createPublishing()
+{
+    qevercloud::Publishing publishing;
+    publishing.setUri(QStringLiteral("uri"));
+    publishing.setOrder(qevercloud::NoteSortOrder::CREATED);
+    publishing.setAscending(true);
+    publishing.setPublicDescription(QStringLiteral("public description"));
+    return publishing;
+}
+
+enum class CreateNotebookOption
+{
+    WithSharedNotebooks = 1 << 0,
+    WithBusinessNotebook = 1 << 1,
+    WithContact = 1 << 2,
+    WithRestrictions = 1 << 3,
+    WithRecipientSettings = 1 << 4,
+    WithPublishing = 1 << 5,
+    WithLinkedNotebookGuid = 1 << 6
+};
+
+Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
+
+[[nodiscard]] qevercloud::Notebook createNotebook(
+    const CreateNotebookOptions & createOptions = {})
+{
+    qevercloud::Notebook notebook;
+    notebook.setLocallyModified(true);
+    notebook.setLocalOnly(false);
+    notebook.setLocallyFavorited(true);
+
+    QHash<QString, QVariant> localData;
+    localData[QStringLiteral("hey")] = QStringLiteral("hi");
+    notebook.setLocalData(std::move(localData));
+
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("name"));
+    notebook.setUpdateSequenceNum(1);
+    notebook.setDefaultNotebook(false);
+    notebook.setStack(QStringLiteral("stack1"));
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    notebook.setServiceCreated(now);
+    notebook.setServiceUpdated(now);
+
+    if (createOptions & CreateNotebookOption::WithPublishing) {
+        notebook.setPublished(true);
+        notebook.setPublishing(createPublishing());
+    }
+    else {
+        notebook.setPublished(false);
+    }
+
+    if (createOptions & CreateNotebookOption::WithSharedNotebooks) {
+        notebook.setSharedNotebooks(
+            createSharedNotebooks(notebook.guid().value()));
+    }
+
+    if (createOptions & CreateNotebookOption::WithBusinessNotebook) {
+        notebook.setBusinessNotebook(createBusinessNotebook());
+    }
+
+    if (createOptions & CreateNotebookOption::WithContact) {
+        notebook.setContact(createContact());
+    }
+
+    if (createOptions & CreateNotebookOption::WithRestrictions) {
+        notebook.setRestrictions(createNotebookRestrictions());
+    }
+
+    if (createOptions & CreateNotebookOption::WithRecipientSettings) {
+        notebook.setRecipientSettings(createNotebookRecipientSettings());
+    }
+
+    if (createOptions & CreateNotebookOption::WithLinkedNotebookGuid) {
+        notebook.setLinkedNotebookGuid(UidGenerator::Generate());
+    }
+
+    return notebook;
 }
 
 class NotebooksHandlerTest : public testing::Test
