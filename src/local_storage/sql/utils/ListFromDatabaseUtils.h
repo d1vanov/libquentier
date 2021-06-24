@@ -155,6 +155,7 @@ QList<T> listObjects(
 
     if (sqlQueryConditions.isEmpty() && !flagError.isEmpty()) {
         errorDescription = flagError;
+        QNWARNING("local_storage::sql::utils", flagError);
         return QList<T>();
     }
 

@@ -33,6 +33,10 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+
+// clazy:excludeall=non-pod-global-static
+
 namespace quentier::local_storage::sql::tests {
 
 namespace {
@@ -206,7 +210,7 @@ Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
     notebook.setGuid(UidGenerator::Generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
-    notebook.setDefaultNotebook(false);
+    notebook.setDefaultNotebook(true);
     notebook.setStack(QStringLiteral("stack1"));
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
@@ -422,8 +426,14 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
         m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
         m_temporaryDir.path());
 
-    auto listNotebooksFuture = notebooksHandler->listNotebooks(
-        NotebooksHandler::ListOptions<NotebooksHandler::ListNotebooksOrder>{});
+    auto listNotebooksOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+
+    listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto listNotebooksFuture =
+        notebooksHandler->listNotebooks(listNotebooksOptions);
 
     listNotebooksFuture.waitForFinished();
     EXPECT_TRUE(listNotebooksFuture.result().isEmpty());
@@ -440,6 +450,179 @@ TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
 
     sharedNotebooksFuture.waitForFinished();
     EXPECT_TRUE(sharedNotebooksFuture.result().isEmpty());
+}
+
+class NotebooksHandlerSingleNotebookTest :
+    public NotebooksHandlerTest,
+    public testing::WithParamInterface<qevercloud::Notebook>
+{};
+
+const std::array notebook_test_values{
+    createNotebook(),
+        /*
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithContact}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithRestrictions}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithRecipientSettings}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithPublishing}),
+    createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithLinkedNotebookGuid}),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithBusinessNotebook),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithContact),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithRestrictions),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithRecipientSettings),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithPublishing),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithSharedNotebooks} |
+        CreateNotebookOption::WithLinkedNotebookGuid),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithBusinessNotebook} |
+        CreateNotebookOption::WithContact |
+        CreateNotebookOption::WithRestrictions),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithBusinessNotebook} |
+        CreateNotebookOption::WithRestrictions |
+        CreateNotebookOption::WithPublishing),
+    createNotebook(CreateNotebookOptions{
+        CreateNotebookOption::WithContact} |
+        CreateNotebookOption::WithRestrictions |
+        CreateNotebookOption::WithPublishing |
+        CreateNotebookOption::WithLinkedNotebookGuid)
+        */
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    NotebooksHandlerSingleNotebookTestInstance,
+    NotebooksHandlerSingleNotebookTest,
+    testing::ValuesIn(notebook_test_values));
+
+TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    const auto notebook = GetParam();
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+    putNotebookFuture.waitForFinished();
+
+    auto notebookCountFuture = notebooksHandler->notebookCount();
+    notebookCountFuture.waitForFinished();
+    EXPECT_EQ(notebookCountFuture.result(), 1U);
+
+    auto foundByLocalIdNotebookFuture = notebooksHandler->findNotebookByLocalId(
+        notebook.localId());
+
+    foundByLocalIdNotebookFuture.waitForFinished();
+    EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
+
+    auto foundByGuidNotebookFuture = notebooksHandler->findNotebookByGuid(
+        notebook.guid().value());
+
+    foundByGuidNotebookFuture.waitForFinished();
+    EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
+
+    auto foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook.name().value());
+
+    foundByNameNotebookFuture.waitForFinished();
+    EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
+
+    auto foundDefaultNotebookFuture = notebooksHandler->findDefaultNotebook();
+    foundDefaultNotebookFuture.waitForFinished();
+    EXPECT_EQ(foundDefaultNotebookFuture.result(), notebook);
+
+    auto listNotebooksOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+
+    listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto listNotebooksFuture =
+        notebooksHandler->listNotebooks(listNotebooksOptions);
+
+    listNotebooksFuture.waitForFinished();
+    auto notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 1);
+    EXPECT_EQ(notebooks[0], notebook);
+
+    auto expungeNotebookByLocalIdFuture =
+        notebooksHandler->expungeNotebookByLocalId(notebook.localId());
+
+    expungeNotebookByLocalIdFuture.waitForFinished();
+
+    auto checkNotebookDeleted = [&]
+    {
+        notebookCountFuture = notebooksHandler->notebookCount();
+        notebookCountFuture.waitForFinished();
+        EXPECT_EQ(notebookCountFuture.result(), 0U);
+
+        foundByLocalIdNotebookFuture = notebooksHandler->findNotebookByLocalId(
+            notebook.localId());
+
+        foundByLocalIdNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdNotebookFuture.resultCount(), 0);
+
+        foundByGuidNotebookFuture = notebooksHandler->findNotebookByGuid(
+            notebook.guid().value());
+
+        foundByGuidNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidNotebookFuture.resultCount(), 0);
+
+        foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
+            notebook.name().value());
+
+        foundByNameNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByNameNotebookFuture.resultCount(), 0);
+
+        foundDefaultNotebookFuture = notebooksHandler->findDefaultNotebook();
+        foundDefaultNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundDefaultNotebookFuture.resultCount(), 0);
+
+        listNotebooksFuture =
+            notebooksHandler->listNotebooks(listNotebooksOptions);
+
+        listNotebooksFuture.waitForFinished();
+        EXPECT_TRUE(listNotebooksFuture.result().isEmpty());
+    };
+
+    checkNotebookDeleted();
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook);
+    putNotebookFuture.waitForFinished();
+
+    auto expungeNotebookByGuidFuture =
+        notebooksHandler->expungeNotebookByGuid(notebook.guid().value());
+
+    expungeNotebookByGuidFuture.waitForFinished();
+    checkNotebookDeleted();
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook);
+    putNotebookFuture.waitForFinished();
+
+    auto expungeNotebookByNameFuture = notebooksHandler->expungeNotebookByName(
+        notebook.name().value(),
+        notebook.linkedNotebookGuid());
+
+    expungeNotebookByNameFuture.waitForFinished();
+    checkNotebookDeleted();
 }
 
 } // namespace quentier::local_storage::sql::tests

@@ -986,6 +986,15 @@ bool putNotebook(
         return false;
     }
 
+    const bool res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put notebook into the local storage database, failed to "
+            "commit"),
+        false);
+
     return true;
 }
 

@@ -103,6 +103,15 @@ namespace quentier::local_storage::sql::utils {
             QStringLiteral(":linkedNotebookGuid"), *linkedNotebookGuid);
     }
 
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot find notebook's local id by name and linked notebook guid "
+            "in the local storage database"),
+        {});
+
     if (!query.next()) {
         return {};
     }

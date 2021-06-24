@@ -665,10 +665,15 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
     }
 
     if (localId.isEmpty()) {
-        // No such notebook exists in the local storage
+        QNDEBUG(
+            "local_storage::sql::NotebooksHandler",
+            "Found no notebook local id for guid " << guid);
         return true;
     }
 
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "Found notebook local id for guid " << guid << ": " << localId);
     return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
 }
 
@@ -690,10 +695,15 @@ bool NotebooksHandler::expungeNotebookByNameImpl(
     }
 
     if (localId.isEmpty()) {
-        // No such notebook exists in the local storage
+        QNDEBUG(
+            "local_storage::sql::NotebooksHandler",
+            "Found no notebook local id for name " << name);
         return true;
     }
 
+    QNDEBUG(
+        "local_storage::sql::NotebooksHandler",
+        "Found notebook local id for name " << name << ": " << localId);
     return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
 }
 
