@@ -459,7 +459,6 @@ const std::array notebook_test_values{
         CreateNotebookOptions{CreateNotebookOption::WithContact}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRestrictions}),
-    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRecipientSettings}),
     createNotebook(
@@ -497,7 +496,6 @@ const std::array notebook_test_values{
         CreateNotebookOption::WithRestrictions |
         CreateNotebookOption::WithPublishing |
         CreateNotebookOption::WithLinkedNotebookGuid)
-    */
 };
 
 INSTANTIATE_TEST_SUITE_P(
