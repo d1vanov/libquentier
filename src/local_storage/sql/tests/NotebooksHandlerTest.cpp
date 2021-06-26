@@ -143,8 +143,6 @@ namespace {
     restrictions.setNoCreateSharedNotebooks(false);
     restrictions.setNoShareNotesWithBusiness(false);
     restrictions.setNoRenameNotebook(false);
-    restrictions.setNoSetInMyList(false);
-    restrictions.setNoChangeContact(true);
 
     restrictions.setUpdateWhichSharedNotebookRestrictions(
         qevercloud::SharedNotebookInstanceRestrictions::ASSIGNED);
@@ -459,9 +457,9 @@ const std::array notebook_test_values{
         CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithContact}),
-    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRestrictions}),
+    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRecipientSettings}),
     createNotebook(

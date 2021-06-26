@@ -1243,6 +1243,7 @@ bool putNotebookRestrictions(
         "noSetNotebookStack, noPublishToPublic, "
         "noPublishToBusinessLibrary, noCreateTags, noUpdateTags, "
         "noExpungeTags, noSetParentTag, noCreateSharedNotebooks, "
+        "noShareNotesWithBusiness, noRenameNotebook, "
         "updateWhichSharedNotebookRestrictions, "
         "expungeWhichSharedNotebookRestrictions) "
         "VALUES(:localUid, :noReadNotes, :noCreateNotes, "
@@ -1253,6 +1254,7 @@ bool putNotebookRestrictions(
         ":noPublishToPublic, :noPublishToBusinessLibrary, "
         ":noCreateTags, :noUpdateTags, :noExpungeTags, "
         ":noSetParentTag, :noCreateSharedNotebooks, "
+        ":noShareNotesWithBusiness, :noRenameNotebook, "
         ":updateWhichSharedNotebookRestrictions, "
         ":expungeWhichSharedNotebookRestrictions)");
 
