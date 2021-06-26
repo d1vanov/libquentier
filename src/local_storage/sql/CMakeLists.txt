@@ -28,6 +28,7 @@ target_sources(${LIBRARY_NAME}
   UsersHandler.h
   patches/Patch1To2.cpp
   patches/Patch1To2.h
+  utils/Common.h
   utils/FillFromSqlRecordUtils.cpp
   utils/FillFromSqlRecordUtils.h
   utils/ListFromDatabaseUtils.h

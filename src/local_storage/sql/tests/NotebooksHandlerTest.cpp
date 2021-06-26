@@ -457,9 +457,9 @@ const std::array notebook_test_values{
         CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook}),
-    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithContact}),
+    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithRestrictions}),
     createNotebook(

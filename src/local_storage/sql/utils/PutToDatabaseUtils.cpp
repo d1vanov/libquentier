@@ -44,7 +44,7 @@ Q_GLOBAL_STATIC(QVariant, gNullValue);
 
 bool putUser(
     const qevercloud::User & user, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    ErrorString & errorDescription, const TransactionOption transactionOption)
 {
     QNDEBUG(
         "local_storage::sql::utils",
@@ -67,7 +67,10 @@ bool putUser(
         return false;
     }
 
-    Transaction transaction{database};
+    std::optional<Transaction> transaction;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transaction.emplace(database);
+    }
 
     const QString userId = QString::number(*user.id());
 
@@ -115,14 +118,16 @@ bool putUser(
         return false;
     }
 
-    const bool res = transaction.commit();
-    ENSURE_DB_REQUEST_RETURN(
-        res, database, "local_storage::sql::utils",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot put user into the local storage database, failed to "
-            "commit"),
-        false);
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        const bool res = transaction->commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, database, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot put user into the local storage database, failed to "
+                "commit"),
+            false);
+    }
 
     return true;
 }
@@ -981,7 +986,9 @@ bool putNotebook(
     }
 
     if (notebook.contact() &&
-        !putUser(*notebook.contact(), database, errorDescription))
+        !putUser(
+            *notebook.contact(), database, errorDescription,
+            TransactionOption::DontUseSeparateTransaction))
     {
         return false;
     }

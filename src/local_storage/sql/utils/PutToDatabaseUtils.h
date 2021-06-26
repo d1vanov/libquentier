@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "Common.h"
+
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
@@ -37,7 +39,9 @@ namespace quentier::local_storage::sql::utils {
 
 [[nodiscard]] bool putUser(
     const qevercloud::User & user, QSqlDatabase & database,
-    ErrorString & errorDescription);
+    ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
 
 [[nodiscard]] bool putCommonUserData(
     const qevercloud::User & user, const QString & userId,
