@@ -26,6 +26,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFlags>
+#include <QFutureSynchronizer>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -34,6 +35,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <iterator>
 
 // clazy:excludeall=non-pod-global-static
 
@@ -613,6 +615,101 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     expungeNotebookByNameFuture.waitForFinished();
     checkNotebookDeleted();
+}
+
+TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
+        m_temporaryDir.path());
+
+    auto notebooks = notebook_test_values;
+    int notebookCounter = 2;
+    qint64 sharedNotebookIdCounter = 6U;
+    for (auto it = std::next(notebooks.begin()); it != notebooks.end(); ++it) { // NOLINT
+        auto & notebook = *it;
+        notebook.setLocalId(UidGenerator::Generate());
+        notebook.setGuid(UidGenerator::Generate());
+
+        notebook.setName(
+            notebooks.begin()->name().value() + QStringLiteral(" #") +
+            QString::number(notebookCounter));
+
+        if (notebook.sharedNotebooks() && !notebook.sharedNotebooks()->isEmpty()) {
+            for (auto & sharedNotebook: *notebook.mutableSharedNotebooks()) {
+                sharedNotebook.setNotebookGuid(notebook.guid());
+                sharedNotebook.setId(sharedNotebookIdCounter);
+                ++sharedNotebookIdCounter;
+            }
+        }
+
+        if (notebook.contact()) {
+            notebook.setContact(std::nullopt);
+        }
+
+        notebook.setUpdateSequenceNum(notebookCounter);
+        ++notebookCounter;
+
+        notebook.setDefaultNotebook(std::nullopt);
+    }
+
+    QFutureSynchronizer<void> putNotebooksSynchronizer;
+    for (auto notebook: notebooks) {
+        auto putNotebookFuture = notebooksHandler->putNotebook(
+            std::move(notebook));
+
+        putNotebooksSynchronizer.addFuture(putNotebookFuture);
+    }
+
+    EXPECT_NO_THROW(putNotebooksSynchronizer.waitForFinished());
+
+    auto notebookCountFuture = notebooksHandler->notebookCount();
+    notebookCountFuture.waitForFinished();
+    EXPECT_EQ(notebookCountFuture.result(), notebooks.size());
+
+    for (const auto & notebook: notebooks) {
+        auto foundByLocalIdNotebookFuture =
+            notebooksHandler->findNotebookByLocalId(notebook.localId());
+        foundByLocalIdNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
+
+        auto foundByGuidNotebookFuture =
+            notebooksHandler->findNotebookByGuid(notebook.guid().value());
+        foundByGuidNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
+
+        auto foundByNameNotebookFuture =
+            notebooksHandler->findNotebookByName(notebook.name().value());
+        foundByNameNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
+    }
+
+    for (const auto & notebook: notebooks) {
+        auto expungeNotebookByLocalIdFuture =
+            notebooksHandler->expungeNotebookByLocalId(notebook.localId());
+        expungeNotebookByLocalIdFuture.waitForFinished();
+    }
+
+    notebookCountFuture = notebooksHandler->notebookCount();
+    notebookCountFuture.waitForFinished();
+    EXPECT_EQ(notebookCountFuture.result(), 0U);
+
+    for (const auto & notebook: notebooks) {
+        auto foundByLocalIdNotebookFuture =
+            notebooksHandler->findNotebookByLocalId(notebook.localId());
+        foundByLocalIdNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdNotebookFuture.resultCount(), 0);
+
+        auto foundByGuidNotebookFuture =
+            notebooksHandler->findNotebookByGuid(notebook.guid().value());
+        foundByGuidNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidNotebookFuture.resultCount(), 0);
+
+        auto foundByNameNotebookFuture =
+            notebooksHandler->findNotebookByName(notebook.name().value());
+        foundByNameNotebookFuture.waitForFinished();
+        EXPECT_EQ(foundByNameNotebookFuture.resultCount(), 0);
+    }
 }
 
 } // namespace quentier::local_storage::sql::tests
