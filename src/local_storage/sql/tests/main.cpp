@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/Initialize.h>
 
 #include <QCoreApplication>
 #include <QTimer>
@@ -27,6 +28,8 @@ int main(int argc, char * argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("d1vanov"));
+
+    quentier::initializeLibquentier();
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Info);

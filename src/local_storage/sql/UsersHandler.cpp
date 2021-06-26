@@ -18,6 +18,7 @@
 
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
+#include "Notifier.h"
 #include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
@@ -51,9 +52,10 @@ namespace quentier::local_storage::sql {
 
 UsersHandler::UsersHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    QThreadPtr writerThread) :
+    Notifier * notifier, QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
+    m_notifier{notifier},
     m_writerThread{std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
@@ -68,6 +70,13 @@ UsersHandler::UsersHandler(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::UsersHandler",
                 "UsersHandler ctor: thread pool is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_notifier)) {
+        throw InvalidArgument{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::UsersHandler",
+                "UsersHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
@@ -96,10 +105,14 @@ QFuture<void> UsersHandler::putUser(qevercloud::User user)
         makeTaskContext(),
         weak_from_this(),
         [user = std::move(user)]
-        (UsersHandler & /* handler */, QSqlDatabase & database,
+        (UsersHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
-            return utils::putUser(user, database, errorDescription);
+            const bool res = utils::putUser(user, database, errorDescription);
+            if (res) {
+                handler.m_notifier->notifyUserPut(user);
+            }
+            return res;
         });
 }
 
@@ -124,8 +137,12 @@ QFuture<void> UsersHandler::expungeUserById(qevercloud::UserID userId)
         [userId](UsersHandler & handler, QSqlDatabase & database,
                  ErrorString & errorDescription)
         {
-            return handler.expungeUserByIdImpl(
+            const bool res = handler.expungeUserByIdImpl(
                 userId, database, errorDescription);
+            if (res) {
+                handler.m_notifier->notifyUserExpunged(userId);
+            }
+            return res;
         });
 }
 

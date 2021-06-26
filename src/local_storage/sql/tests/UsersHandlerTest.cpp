@@ -17,6 +17,7 @@
  */
 
 #include "../ConnectionPool.h"
+#include "../Notifier.h"
 #include "../TablesInitializer.h"
 #include "../UsersHandler.h"
 
@@ -25,6 +26,7 @@
 #include <QCoreApplication>
 #include <QFlags>
 #include <QFutureSynchronizer>
+#include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QThreadPool>
@@ -37,6 +39,40 @@
 // clazy:excludeall=non-pod-global-static
 
 namespace quentier::local_storage::sql::tests {
+
+class NotifierListener : public QObject
+{
+    Q_OBJECT
+public:
+    explicit NotifierListener(QObject * parent = nullptr) :
+        QObject(parent)
+    {}
+
+    [[nodiscard]] const QList<qevercloud::User> & putUsers() const
+    {
+        return m_putUsers;
+    }
+
+    [[nodiscard]] const QList<qevercloud::UserID> & expungeUserIds() const
+    {
+        return m_expungedUserIds;
+    }
+
+public Q_SLOTS:
+    void onUserPut(qevercloud::User user) // NOLINT
+    {
+        m_putUsers << user;
+    }
+
+    void onUserExpunged(qevercloud::UserID userId)
+    {
+        m_expungedUserIds << userId;
+    }
+
+private:
+    QList<qevercloud::User> m_putUsers;
+    QList<qevercloud::UserID> m_expungedUserIds;
+};
 
 namespace {
 
@@ -216,6 +252,16 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+
+        m_notifier = new Notifier;
+        m_notifier->moveToThread(m_writerThread.get());
+
+        QObject::connect(
+            m_writerThread.get(),
+            &QThread::finished,
+            m_notifier,
+            &QObject::deleteLater);
+
         m_writerThread->start();
     }
 
@@ -231,6 +277,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
+    Notifier * m_notifier;
 };
 
 } // namespace
@@ -239,14 +286,15 @@ TEST_F(UsersHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread));
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread));
 }
 
 TEST_F(UsersHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            nullptr, QThreadPool::globalInstance(), m_writerThread),
+            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread),
         IQuentierException);
 }
 
@@ -254,7 +302,16 @@ TEST_F(UsersHandlerTest, CtorNullThreadPool)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, nullptr, m_writerThread),
+            m_connectionPool, nullptr, m_notifier, m_writerThread),
+        IQuentierException);
+}
+
+TEST_F(UsersHandlerTest, CtorNullNotifier)
+{
+    EXPECT_THROW(
+        const auto usersHandler = std::make_shared<UsersHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), nullptr,
+            m_writerThread),
         IQuentierException);
 }
 
@@ -262,14 +319,16 @@ TEST_F(UsersHandlerTest, CtorNullWriterThread)
 {
     EXPECT_THROW(
         const auto usersHandler = std::make_shared<UsersHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), nullptr),
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            nullptr),
         IQuentierException);
 }
 
 TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
 
     auto userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
@@ -279,7 +338,8 @@ TEST_F(UsersHandlerTest, ShouldHaveZeroUserCountWhenThereAreNoUsers)
 TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
 
     auto userFuture = usersHandler->findUserById(qevercloud::UserID{1});
     userFuture.waitForFinished();
@@ -289,7 +349,8 @@ TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
 
     auto expungeUserFuture = usersHandler->findUserById(qevercloud::UserID{1});
     EXPECT_NO_THROW(expungeUserFuture.waitForFinished());
@@ -355,11 +416,30 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    NotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::userPut,
+        &notifierListener,
+        &NotifierListener::onUserPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::userExpunged,
+        &notifierListener,
+        &NotifierListener::onUserExpunged);
 
     const auto user = GetParam();
     auto putUserFuture = usersHandler->putUser(user);
     EXPECT_NO_THROW(putUserFuture.waitForFinished());
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putUsers().size(), 1);
+    EXPECT_EQ(notifierListener.putUsers()[0], user);
 
     auto userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
@@ -373,6 +453,10 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
     auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
     expungeUserFuture.waitForFinished();
 
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungeUserIds().size(), 1);
+    EXPECT_EQ(notifierListener.expungeUserIds()[0], user.id().value());
+
     userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
     EXPECT_EQ(userCountFuture.result(), 0U);
@@ -385,13 +469,28 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 TEST_F(UsersHandlerTest, HandleMultipleUsers)
 {
     const auto usersHandler = std::make_shared<UsersHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
 
     auto users = user_test_values;
     for (auto it = std::next(users.begin()); it != users.end(); ++it) { // NOLINT
         const auto prevIt = std::prev(it); // NOLINT
         it->setId(prevIt->id().value() + 1);
     }
+
+    NotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::userPut,
+        &notifierListener,
+        &NotifierListener::onUserPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::userExpunged,
+        &notifierListener,
+        &NotifierListener::onUserExpunged);
 
     QFutureSynchronizer<void> putUsersSynchronizer;
     for (auto user: users) {
@@ -400,6 +499,9 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
     }
 
     EXPECT_NO_THROW(putUsersSynchronizer.waitForFinished());
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putUsers().size(), users.size());
 
     auto userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
@@ -417,6 +519,9 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         expungeUserFuture.waitForFinished();
     }
 
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungeUserIds().size(), users.size());
+
     userCountFuture = usersHandler->userCount();
     userCountFuture.waitForFinished();
     EXPECT_EQ(userCountFuture.result(), 0U);
@@ -429,3 +534,5 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
 }
 
 } // namespace quentier::local_storage::sql::tests
+
+#include "UsersHandlerTest.moc"

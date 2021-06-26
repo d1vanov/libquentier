@@ -45,7 +45,7 @@ class UsersHandler final: public std::enable_shared_from_this<UsersHandler>
 public:
     explicit UsersHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-        QThreadPtr writerThread);
+        Notifier * notifier, QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<quint32> userCount() const;
     [[nodiscard]] QFuture<void> putUser(qevercloud::User user);
@@ -82,6 +82,7 @@ private:
 private:
     ConnectionPoolPtr m_connectionPool;
     QThreadPool * m_threadPool;
+    Notifier * m_notifier;
     QThreadPtr m_writerThread;
 };
 
