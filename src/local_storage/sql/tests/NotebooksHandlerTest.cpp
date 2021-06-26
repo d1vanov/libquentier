@@ -45,9 +45,6 @@ namespace {
     const qevercloud::Guid & notebookGuid)
 {
     qevercloud::SharedNotebook sharedNotebook1;
-    sharedNotebook1.setLocallyModified(false);
-    sharedNotebook1.setLocalOnly(false);
-    sharedNotebook1.setLocallyFavorited(false);
     sharedNotebook1.setId(2L);
     sharedNotebook1.setUserId(qevercloud::UserID{1});
     sharedNotebook1.setSharerUserId(qevercloud::UserID{3});
@@ -71,9 +68,6 @@ namespace {
     sharedNotebook1.setServiceAssigned(now + 2);
 
     qevercloud::SharedNotebook sharedNotebook2;
-    sharedNotebook2.setLocallyModified(true);
-    sharedNotebook2.setLocalOnly(false);
-    sharedNotebook2.setLocallyFavorited(true);
     sharedNotebook2.setId(5L);
     sharedNotebook2.setUserId(qevercloud::UserID{6});
     sharedNotebook2.setSharerUserId(qevercloud::UserID{7});
@@ -459,11 +453,11 @@ class NotebooksHandlerSingleNotebookTest :
 
 const std::array notebook_test_values{
     createNotebook(),
-        /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks}),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithBusinessNotebook}),
+    /*
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithContact}),
     createNotebook(
@@ -505,7 +499,7 @@ const std::array notebook_test_values{
         CreateNotebookOption::WithRestrictions |
         CreateNotebookOption::WithPublishing |
         CreateNotebookOption::WithLinkedNotebookGuid)
-        */
+    */
 };
 
 INSTANTIATE_TEST_SUITE_P(
