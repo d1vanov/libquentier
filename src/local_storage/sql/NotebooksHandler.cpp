@@ -45,9 +45,6 @@
 
 #include <qevercloud/utility/ToRange.h>
 
-#include <QGlobalStatic>
-#include <QMap>
-#include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
 

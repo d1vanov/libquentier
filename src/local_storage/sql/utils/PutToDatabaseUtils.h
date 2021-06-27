@@ -92,4 +92,8 @@ namespace quentier::local_storage::sql::utils {
     int indexInNotebook, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool putTag(
+    qevercloud::Tag tag, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

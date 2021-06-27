@@ -27,6 +27,7 @@
 #include <quentier/types/ErrorString.h>
 
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
 
 #include <QGlobalStatic>
@@ -1562,6 +1563,17 @@ bool putSharedNotebook(
             "Cannot put shared notebook into the local storage database"),
         false);
 
+    return true;
+}
+
+bool putTag(
+    qevercloud::Tag tag, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(tag)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
     return true;
 }
 
