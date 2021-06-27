@@ -40,6 +40,9 @@ template <class T>
 template <>
 [[nodiscard]] QString listObjectsGenericSqlQuery<qevercloud::Notebook>();
 
+template <>
+[[nodiscard]] QString listObjectsGenericSqlQuery<qevercloud::Tag>();
+
 template <class TOrderBy>
 [[nodiscard]] QString orderByToSqlTableColumn(const TOrderBy & orderBy);
 
@@ -47,6 +50,10 @@ template <>
 [[nodiscard]] QString
     orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(
         const ILocalStorage::ListNotebooksOrder & order);
+
+template <>
+[[nodiscard]] QString orderByToSqlTableColumn<ILocalStorage::ListTagsOrder>(
+    const ILocalStorage::ListTagsOrder & order);
 
 template <class T>
 [[nodiscard]] QString listObjectsOptionsToSqlQueryConditions(

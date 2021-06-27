@@ -1168,6 +1168,17 @@ bool fillSharedNotebookFromSqlRecord(
     return true;
 }
 
+bool fillTagFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Tag & tag,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(tag)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 template <>
 bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     const QSqlRecord & rec, qevercloud::Notebook & object,

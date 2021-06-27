@@ -24,7 +24,11 @@
 #include "Transaction.h"
 #include "TypeChecks.h"
 
+#include "utils/FillFromSqlRecordUtils.h"
+#include "utils/ListFromDatabaseUtils.h"
 #include "utils/PutToDatabaseUtils.h"
+#include "utils/SqlUtils.h"
+#include "utils/TagUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -38,8 +42,11 @@
 #include <utility/Qt5Promise.h>
 #endif
 
+#include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
+
+#include <algorithm>
 
 namespace quentier::local_storage::sql {
 
@@ -253,89 +260,424 @@ QFuture<QList<qevercloud::Tag>> TagsHandler::listTagsPerNoteLocalId(
 std::optional<quint32> TagsHandler::tagCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    QSqlQuery query{database};
+    const bool res = query.exec(
+        QStringLiteral("SELECT COUNT(localUid) FROM Tags"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot count tags in the local storage database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::TagsHandler",
+            "Found no tags in the local storage database");
+        return 0;
+    }
+
+    bool conversionResult = false;
+    const int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::TagsHandler",
+                "Cannot count tags in the local storage database: failed "
+                "to convert tag count to int"));
+        QNWARNING("local_storage:sql", errorDescription);
+        return std::nullopt;
+    }
+
+    return count;
 }
 
 std::optional<qevercloud::Tag> TagsHandler::findTagByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid, guid, linkedNotebookGuid, "
+        "updateSequenceNumber, name, parentGuid, "
+        "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
+        "FROM Tags WHERE (localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by local id: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by local id"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::Tag tag;
+    ErrorString error;
+    if (!utils::fillTagFromSqlRecord(record, tag, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::TagsHandler",
+                "Failed to find tag by local id in the local storage "
+                "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::TagsHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return tag;
 }
 
 std::optional<qevercloud::Tag> TagsHandler::findTagByGuidImpl(
     const qevercloud::Guid & guid, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(guid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid, guid, linkedNotebookGuid, "
+        "updateSequenceNumber, name, parentGuid, "
+        "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
+        "FROM Tags WHERE (guid = :guid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by guid: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":guid"), guid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by guid"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::Tag tag;
+    ErrorString error;
+    if (!utils::fillTagFromSqlRecord(record, tag, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::TagsHandler",
+                "Failed to find tag by guid in the local storage database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::TagsHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return tag;
 }
 
 std::optional<qevercloud::Tag> TagsHandler::findTagByNameImpl(
     const QString & name, const std::optional<QString> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(name)
-    Q_UNUSED(linkedNotebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    QString queryString = QStringLiteral(
+        "SELECT localUid, guid, linkedNotebookGuid, "
+        "updateSequenceNumber, name, parentGuid, "
+        "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
+        "FROM Tags WHERE (localUid = :localUid");
+
+    if (linkedNotebookGuid) {
+        queryString.chop(1);
+        queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid ");
+
+        if (linkedNotebookGuid->isEmpty()) {
+            queryString += QStringLiteral("IS NULL)");
+        }
+        else {
+            queryString += QStringLiteral(" = :linkedNotebookGuid)");
+        }
+    }
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by name: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":nameLower"), name.toLower());
+
+    if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
+        query.bindValue(
+            QStringLiteral(":linkedNotebookGuid"), *linkedNotebookGuid);
+    }
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot find tag in the local storage database by name"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::Tag tag;
+    ErrorString error;
+    if (!utils::fillTagFromSqlRecord(record, tag, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::TagsHandler",
+                "Failed to find tag by name in the local storage database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::TagsHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return tag;
+}
+
+QStringList TagsHandler::listChildTagLocalIds(
+    const QString & tagLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid FROM Tags WHERE parentLocalUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot list child tag local ids from the local storage database: "
+            "failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":localUid"), tagLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot list child tag local ids from the local storage database"),
+        {});
+
+    QStringList result;
+    result.reserve(std::max(query.size(), 0));
+    while (query.next()) {
+        const QSqlRecord record = query.record();
+
+        const int index = record.indexOf(QStringLiteral("localUid"));
+        if (Q_UNLIKELY(index < 0)) {
+            continue;
+        }
+
+        const QVariant value = record.value(index);
+        if (Q_UNLIKELY(value.isNull())) {
+            continue;
+        }
+
+        const QString childTagLocalId = value.toString();
+        if (Q_UNLIKELY(childTagLocalId.isEmpty())) {
+            continue;
+        }
+
+        result << childTagLocalId;
+    }
+
+    return result;
 }
 
 TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    ErrorString & errorDescription,
+    const utils::TransactionOption transactionOption)
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QNDEBUG(
+        "local_storage::sql::TagsHandler",
+        "TagsHandler::expungeTagByLocalIdImpl: local id = " << localId);
+
+    ErrorString error;
+    const auto childTagLocalIds =
+        listChildTagLocalIds(localId, database, error);
+
+    if (childTagLocalIds.isEmpty() && !error.isEmpty()) {
+        errorDescription = error;
+        return ExpungeTagResult{false, {}, {}};
+    }
+
+    ExpungeTagResult result;
+
+    std::optional<Transaction> transaction;
+    if (transactionOption == utils::TransactionOption::UseSeparateTransaction) {
+        transaction.emplace(database);
+    }
+
+    for (const auto & childTagLocalId: qAsConst(childTagLocalIds)) {
+        ErrorString error;
+        const auto res = expungeTagByLocalIdImpl(
+            childTagLocalId, database, error,
+            utils::TransactionOption::DontUseSeparateTransaction);
+
+        if (!res.status) {
+            errorDescription.setBase(
+                QT_TRANSLATE_NOOP(
+                    "local_storage::sql::TagsHandler",
+                    "Cannot expunge tag from the local storage database: "
+                    "failed to expunge one of child tags"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::TagsHandler", errorDescription);
+            return ExpungeTagResult{false, {}, {}};
+        }
+
+        result.expungedChildTagLocalIds << childTagLocalId;
+        result.expungedChildTagLocalIds << res.expungedChildTagLocalIds;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Tags WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot expunge tag from the local storage database by local id: "
+            "failed to prepare query"),
+        (ExpungeTagResult{false, {}, {}}));
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::TagsHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TagsHandler",
+            "Cannot expunge tag from the local storage database by local id"),
+        (ExpungeTagResult{false, {}, {}}));
+
+    result.status = true;
+    result.expungedTagLocalId = localId;
+    return result;
 }
 
 TagsHandler::ExpungeTagResult TagsHandler::expungeTagByGuidImpl(
     const qevercloud::Guid & guid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(guid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QNDEBUG(
+        "local_storage::sql::TagsHandler",
+        "TagsHandler::expungeTagByGuidImpl: guid = " << guid);
+
+    const auto localId =
+        utils::tagLocalIdByGuid(guid, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return ExpungeTagResult{false, {}, {}};
+    }
+
+    if (localId.isEmpty()) {
+        QNDEBUG(
+            "local_storage::sql::TagsHandler",
+            "Found no tag local id for guid " << guid);
+        return ExpungeTagResult{true, {}, {}};
+    }
+
+    QNDEBUG(
+        "local_storage::sql::TagsHandler",
+        "Found tag local id for guid " << guid << ": " << localId);
+
+    return expungeTagByLocalIdImpl(localId, database, errorDescription);
 }
 
 TagsHandler::ExpungeTagResult TagsHandler::expungeTagByNameImpl(
     const QString & name, const std::optional<QString> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(name)
-    Q_UNUSED(linkedNotebookGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QNDEBUG(
+        "local_storage::sql::TagHandler",
+        "TagsHandler::expungeTagByNameImpl: name = "
+            << name << ", linked notebook guid = "
+            << linkedNotebookGuid.value_or(QStringLiteral("<not set>")));
+
+    const auto localId = utils::tagLocalIdByName(
+        name, linkedNotebookGuid, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return ExpungeTagResult{false, {}, {}};
+    }
+
+    if (localId.isEmpty()) {
+        QNDEBUG(
+            "local_storage::sql::TagsHandler",
+            "Found no tag local id for name " << name);
+        return ExpungeTagResult{true, {}, {}};
+    }
+
+    QNDEBUG(
+        "local_storage::sql::TagsHandler",
+        "Found tag local id for name " << name << ": " << localId);
+
+    return expungeTagByLocalIdImpl(localId, database, errorDescription);
 }
 
 QList<qevercloud::Tag> TagsHandler::listTagsImpl(
     const ListOptions<ListTagsOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QString linkedNotebookGuidSqlQueryCondition;
+    if (options.m_linkedNotebookGuid) {
+        if (options.m_linkedNotebookGuid->isEmpty()) {
+            linkedNotebookGuidSqlQueryCondition =
+                QStringLiteral("linkedNotebookGuid IS NULL");
+        }
+        else {
+            linkedNotebookGuidSqlQueryCondition =
+                QString::fromUtf8("linkedNotebookGuid = '%1'")
+                    .arg(utils::sqlEscape(*options.m_linkedNotebookGuid));
+        }
+    }
+
+    return utils::listObjects<
+        qevercloud::Tag, ILocalStorage::ListTagsOrder>(
+        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_direction, linkedNotebookGuidSqlQueryCondition, database,
+        errorDescription);
 }
 
 QList<qevercloud::Tag> TagsHandler::listTagsPerNoteLocalIdImpl(

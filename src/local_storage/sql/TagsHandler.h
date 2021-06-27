@@ -20,6 +20,8 @@
 
 #include "Fwd.h"
 
+#include "utils/Common.h"
+
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/ILocalStorage.h>
 
@@ -83,6 +85,10 @@ private:
         const QString & name, const std::optional<QString> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
+    [[nodiscard]] QStringList listChildTagLocalIds(
+        const QString & tagLocalId, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
     struct ExpungeTagResult
     {
         bool status = false;
@@ -92,7 +98,9 @@ private:
 
     [[nodiscard]] ExpungeTagResult expungeTagByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription);
+        ErrorString & errorDescription,
+        utils::TransactionOption transactionOption =
+            utils::TransactionOption::UseSeparateTransaction);
 
     [[nodiscard]] ExpungeTagResult expungeTagByGuidImpl(
         const qevercloud::Guid & guid, QSqlDatabase & database,

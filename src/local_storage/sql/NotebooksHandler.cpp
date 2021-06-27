@@ -21,7 +21,6 @@
 #include "NotebooksHandler.h"
 #include "Notifier.h"
 #include "Tasks.h"
-#include "Transaction.h"
 #include "TypeChecks.h"
 
 #include "utils/FillFromSqlRecordUtils.h"
@@ -45,6 +44,7 @@
 
 #include <qevercloud/utility/ToRange.h>
 
+#include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
 

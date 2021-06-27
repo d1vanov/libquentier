@@ -44,7 +44,9 @@ target_sources(${LIBRARY_NAME}
   utils/ResourceDataFilesUtils.cpp
   utils/ResourceDataFilesUtils.h
   utils/SqlUtils.cpp
-  utils/SqlUtils.h)
+  utils/SqlUtils.h
+  utils/TagUtils.cpp
+  utils/TagUtils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
