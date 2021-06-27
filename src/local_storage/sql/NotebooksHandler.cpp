@@ -19,6 +19,7 @@
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "NotebooksHandler.h"
+#include "Notifier.h"
 #include "Tasks.h"
 #include "Transaction.h"
 #include "TypeChecks.h"
@@ -56,9 +57,11 @@ namespace quentier::local_storage::sql {
 
 NotebooksHandler::NotebooksHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
-    QThreadPtr writerThread, const QString & localStorageDirPath) :
+    Notifier * notifier, QThreadPtr writerThread,
+    const QString & localStorageDirPath) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
+    m_notifier{notifier},
     m_writerThread{std::move(writerThread)},
     m_localStorageDir{localStorageDirPath}
 {
@@ -74,6 +77,13 @@ NotebooksHandler::NotebooksHandler(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::NotebooksHandler",
                 "NotebooksHandler ctor: thread pool is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_notifier)) {
+        throw InvalidArgument{ErrorString{
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotebooksHandler",
+                "NotebooksHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
@@ -119,11 +129,17 @@ QFuture<void> NotebooksHandler::putNotebook(qevercloud::Notebook notebook)
         makeTaskContext(),
         weak_from_this(),
         [notebook = std::move(notebook)]
-        (NotebooksHandler & /* handler */, QSqlDatabase & database,
+        (NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription) mutable
         {
-            return utils::putNotebook(
-                std::move(notebook), database, errorDescription);
+            const bool res = utils::putNotebook(
+                notebook, database, errorDescription);
+
+            if (res) {
+                handler.m_notifier->notifyNotebookPut(notebook);
+            }
+
+            return res;
         });
 }
 
@@ -194,8 +210,14 @@ QFuture<void> NotebooksHandler::expungeNotebookByLocalId(QString localId)
         (NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
-            return handler.expungeNotebookByLocalIdImpl(
+            const bool res = handler.expungeNotebookByLocalIdImpl(
                 localId, database, errorDescription);
+
+            if (res) {
+                handler.m_notifier->notifyNotebookExpunged(localId);
+            }
+
+            return res;
         });
 }
 
@@ -674,7 +696,15 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
     QNDEBUG(
         "local_storage::sql::NotebooksHandler",
         "Found notebook local id for guid " << guid << ": " << localId);
-    return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+
+    const bool res =
+        expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+
+    if (res) {
+        m_notifier->notifyNotebookExpunged(localId);
+    }
+
+    return res;
 }
 
 bool NotebooksHandler::expungeNotebookByNameImpl(
@@ -704,7 +734,15 @@ bool NotebooksHandler::expungeNotebookByNameImpl(
     QNDEBUG(
         "local_storage::sql::NotebooksHandler",
         "Found notebook local id for name " << name << ": " << localId);
-    return expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+
+    const bool res =
+        expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+
+    if (res) {
+        m_notifier->notifyNotebookExpunged(localId);
+    }
+
+    return res;
 }
 
 QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(

@@ -935,7 +935,9 @@ bool putNotebook(
     }
 
     const auto localId = notebookLocalId(notebook, database, errorDescription);
-    notebook.setLocalId(localId);
+    if (notebook.localId() != localId) {
+        notebook.setLocalId(localId);
+    }
 
     Transaction transaction{database};
 

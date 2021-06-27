@@ -17,8 +17,9 @@
  */
 
 #include "../ConnectionPool.h"
-#include "../TablesInitializer.h"
 #include "../NotebooksHandler.h"
+#include "../Notifier.h"
+#include "../TablesInitializer.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
@@ -27,6 +28,7 @@
 #include <QDateTime>
 #include <QFlags>
 #include <QFutureSynchronizer>
+#include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -40,6 +42,40 @@
 // clazy:excludeall=non-pod-global-static
 
 namespace quentier::local_storage::sql::tests {
+
+class NotebooksHandlerTestNotifierListener : public QObject
+{
+    Q_OBJECT
+public:
+    explicit NotebooksHandlerTestNotifierListener(QObject * parent = nullptr) :
+        QObject(parent)
+    {}
+
+    [[nodiscard]] const QList<qevercloud::Notebook> & putNotebooks() const
+    {
+        return m_putNotebooks;
+    }
+
+    [[nodiscard]] const QStringList & expungeNotebookLocalIds() const
+    {
+        return m_expungedNotebookLocalIds;
+    }
+
+public Q_SLOTS:
+    void onNotebookPut(qevercloud::Notebook notebook) // NOLINT
+    {
+        m_putNotebooks << notebook;
+    }
+
+    void onNotebookExpunged(QString notebookLocalId) // NOLINT
+    {
+        m_expungedNotebookLocalIds << notebookLocalId;
+    }
+
+private:
+    QList<qevercloud::Notebook> m_putNotebooks;
+    QStringList m_expungedNotebookLocalIds;
+};
 
 namespace {
 
@@ -262,6 +298,16 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+
+        m_notifier = new Notifier;
+        m_notifier->moveToThread(m_writerThread.get());
+
+        QObject::connect(
+            m_writerThread.get(),
+            &QThread::finished,
+            m_notifier,
+            &QObject::deleteLater);
+
         m_writerThread->start();
     }
 
@@ -278,6 +324,7 @@ protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
     QTemporaryDir m_temporaryDir;
+    Notifier * m_notifier;
 };
 
 } // namespace
@@ -286,15 +333,15 @@ TEST_F(NotebooksHandlerTest, Ctor)
 {
     EXPECT_NO_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-            m_temporaryDir.path()));
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path()));
 }
 
 TEST_F(NotebooksHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            nullptr, QThreadPool::globalInstance(), m_writerThread,
+            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread,
             m_temporaryDir.path()),
         IQuentierException);
 }
@@ -303,8 +350,17 @@ TEST_F(NotebooksHandlerTest, CtorNullThreadPool)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, nullptr, m_writerThread,
+            m_connectionPool, nullptr, m_notifier, m_writerThread,
             m_temporaryDir.path()),
+        IQuentierException);
+}
+
+TEST_F(NotebooksHandlerTest, CtorNullNotifier)
+{
+    EXPECT_THROW(
+        const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), nullptr,
+            m_writerThread, m_temporaryDir.path()),
         IQuentierException);
 }
 
@@ -312,16 +368,16 @@ TEST_F(NotebooksHandlerTest, CtorNullWriterThread)
 {
     EXPECT_THROW(
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-            m_connectionPool, QThreadPool::globalInstance(), nullptr,
-            m_temporaryDir.path()),
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            nullptr, m_temporaryDir.path()),
         IQuentierException);
 }
 
 TEST_F(NotebooksHandlerTest, ShouldHaveZeroNotebookCountWhenThereAreNoNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
@@ -331,8 +387,8 @@ TEST_F(NotebooksHandlerTest, ShouldHaveZeroNotebookCountWhenThereAreNoNotebooks)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto notebookFuture = notebooksHandler->findNotebookByLocalId(
         UidGenerator::Generate());
@@ -344,8 +400,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByLocalId)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto notebookFuture = notebooksHandler->findNotebookByGuid(
         UidGenerator::Generate());
@@ -357,8 +413,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByGuid)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto notebookFuture = notebooksHandler->findNotebookByName(
         QStringLiteral("My notebook"));
@@ -370,8 +426,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentNotebookByName)
 TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentDefaultNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto notebookFuture = notebooksHandler->findDefaultNotebook();
     notebookFuture.waitForFinished();
@@ -381,8 +437,8 @@ TEST_F(NotebooksHandlerTest, ShouldNotFindNonexistentDefaultNotebook)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto expungeNotebookFuture = notebooksHandler->expungeNotebookByLocalId(
         UidGenerator::Generate());
@@ -393,8 +449,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByLocalId)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto expungeNotebookFuture = notebooksHandler->expungeNotebookByGuid(
         UidGenerator::Generate());
@@ -405,8 +461,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByGuid)
 TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
         QStringLiteral("My notebook"));
@@ -417,8 +473,8 @@ TEST_F(NotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentNotebookByName)
 TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto listNotebooksOptions =
         ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
@@ -436,8 +492,8 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
 TEST_F(NotebooksHandlerTest, ShouldListNoSharedNotebooksForNonexistentNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
 
     auto sharedNotebooksFuture = notebooksHandler->listSharedNotebooks(
         UidGenerator::Generate());
@@ -508,12 +564,30 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    NotebooksHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookPut,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookExpunged,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     const auto notebook = GetParam();
     auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putNotebooks().size(), 1);
+    EXPECT_EQ(notifierListener.putNotebooks()[0], notebook);
 
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
@@ -560,6 +634,12 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     expungeNotebookByLocalIdFuture.waitForFinished();
 
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 1);
+
+    EXPECT_EQ(
+        notifierListener.expungeNotebookLocalIds()[0], notebook.localId());
+
     auto checkNotebookDeleted = [&]
     {
         notebookCountFuture = notebooksHandler->notebookCount();
@@ -600,28 +680,64 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
 
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putNotebooks().size(), 2);
+    EXPECT_EQ(notifierListener.putNotebooks()[1], notebook);
+
     auto expungeNotebookByGuidFuture =
         notebooksHandler->expungeNotebookByGuid(notebook.guid().value());
 
     expungeNotebookByGuidFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 2);
+
+    EXPECT_EQ(
+        notifierListener.expungeNotebookLocalIds()[1], notebook.localId());
+
     checkNotebookDeleted();
 
     putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putNotebooks().size(), 3);
+    EXPECT_EQ(notifierListener.putNotebooks()[2], notebook);
 
     auto expungeNotebookByNameFuture = notebooksHandler->expungeNotebookByName(
         notebook.name().value(),
         notebook.linkedNotebookGuid());
 
     expungeNotebookByNameFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 3);
+
+    EXPECT_EQ(
+        notifierListener.expungeNotebookLocalIds()[2], notebook.localId());
+
     checkNotebookDeleted();
 }
 
 TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 {
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
-        m_connectionPool, QThreadPool::globalInstance(), m_writerThread,
-        m_temporaryDir.path());
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    NotebooksHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookPut,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookExpunged,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     auto notebooks = notebook_test_values;
     int notebookCounter = 2;
@@ -663,6 +779,9 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 
     EXPECT_NO_THROW(putNotebooksSynchronizer.waitForFinished());
 
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putNotebooks().size(), notebooks.size());
+
     auto notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
     EXPECT_EQ(notebookCountFuture.result(), notebooks.size());
@@ -690,6 +809,11 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
         expungeNotebookByLocalIdFuture.waitForFinished();
     }
 
+    QCoreApplication::processEvents();
+
+    EXPECT_EQ(
+        notifierListener.expungeNotebookLocalIds().size(), notebooks.size());
+
     notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();
     EXPECT_EQ(notebookCountFuture.result(), 0U);
@@ -713,3 +837,5 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
 }
 
 } // namespace quentier::local_storage::sql::tests
+
+#include "NotebooksHandlerTest.moc"

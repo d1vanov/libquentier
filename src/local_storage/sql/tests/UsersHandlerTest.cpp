@@ -40,11 +40,11 @@
 
 namespace quentier::local_storage::sql::tests {
 
-class NotifierListener : public QObject
+class UsersHandlerTestNotifierListener : public QObject
 {
     Q_OBJECT
 public:
-    explicit NotifierListener(QObject * parent = nullptr) :
+    explicit UsersHandlerTestNotifierListener(QObject * parent = nullptr) :
         QObject(parent)
     {}
 
@@ -419,19 +419,19 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    NotifierListener notifierListener;
+    UsersHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
         m_notifier,
         &Notifier::userPut,
         &notifierListener,
-        &NotifierListener::onUserPut);
+        &UsersHandlerTestNotifierListener::onUserPut);
 
     QObject::connect(
         m_notifier,
         &Notifier::userExpunged,
         &notifierListener,
-        &NotifierListener::onUserExpunged);
+        &UsersHandlerTestNotifierListener::onUserExpunged);
 
     const auto user = GetParam();
     auto putUserFuture = usersHandler->putUser(user);
@@ -478,19 +478,19 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         it->setId(prevIt->id().value() + 1);
     }
 
-    NotifierListener notifierListener;
+    UsersHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
         m_notifier,
         &Notifier::userPut,
         &notifierListener,
-        &NotifierListener::onUserPut);
+        &UsersHandlerTestNotifierListener::onUserPut);
 
     QObject::connect(
         m_notifier,
         &Notifier::userExpunged,
         &notifierListener,
-        &NotifierListener::onUserExpunged);
+        &UsersHandlerTestNotifierListener::onUserExpunged);
 
     QFutureSynchronizer<void> putUsersSynchronizer;
     for (auto user: users) {
