@@ -19,12 +19,14 @@
 #include "NotebookUtils.h"
 #include "PutToDatabaseUtils.h"
 #include "RemoveFromDatabaseUtils.h"
+#include "TagUtils.h"
 
 #include "../ErrorHandling.h"
 #include "../Transaction.h"
 #include "../TypeChecks.h"
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/StringUtils.h>
 
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Tag.h>
@@ -49,7 +51,7 @@ bool putUser(
 {
     QNDEBUG(
         "local_storage::sql::utils",
-        "UsersHandler::putUser: " << user);
+        "putUser: " << user);
 
     const ErrorString errorPrefix(
         QT_TRANSLATE_NOOP(
@@ -63,7 +65,7 @@ bool putUser(
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING(
-            "local_storage:sql:UsersHandler",
+            "local_storage:sql:utils",
             error << "\nUser: " << user);
         return false;
     }
@@ -920,7 +922,7 @@ bool putNotebook(
 
     const ErrorString errorPrefix(
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::UsersHandler",
+            "local_storage::sql::utils",
             "Can't put notebook into the local storage database"));
 
     ErrorString error;
@@ -1570,10 +1572,121 @@ bool putTag(
     qevercloud::Tag tag, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(tag)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "putTag: " << tag);
+
+    const ErrorString errorPrefix(
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put tag into the local storage database"));
+
+    ErrorString error;
+    if (!checkTag(tag, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::utils", error << "\nTag: " << tag);
+        return false;
+    }
+
+    const auto localId = tagLocalId(tag, database, errorDescription);
+    if (tag.localId() != localId) {
+        tag.setLocalId(localId);
+    }
+
+    if (!complementTagParentInfo(tag, database, errorDescription)) {
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Tags "
+        "(localUid, guid, linkedNotebookGuid, updateSequenceNumber, "
+        "name, nameLower, parentGuid, parentLocalUid, isDirty, "
+        "isLocal, isFavorited) "
+        "VALUES(:localUid, :guid, :linkedNotebookGuid, "
+        ":updateSequenceNumber, :name, :nameLower, "
+        ":parentGuid, :parentLocalUid, :isDirty, :isLocal, :isFavorited)");
+
+    Transaction transaction{database};
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put tag into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    QString tagNameNormalized;
+    if (tag.name()) {
+        tagNameNormalized = tag.name()->toLower();
+        StringUtils stringUtils;
+        stringUtils.removeDiacritics(tagNameNormalized);
+    }
+
+    query.bindValue(
+        QStringLiteral(":localUid"),
+        (localId.isEmpty() ? *gNullValue : localId));
+
+    query.bindValue(
+        QStringLiteral(":guid"), (tag.guid() ? *tag.guid() : *gNullValue));
+
+    const QString linkedNotebookGuid =
+        tag.linkedNotebookGuid().value_or(QString{});
+
+    query.bindValue(
+        QStringLiteral(":linkedNotebookGuid"),
+        (!linkedNotebookGuid.isEmpty() ? linkedNotebookGuid : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":updateSequenceNumber"),
+        (tag.updateSequenceNum() ? *tag.updateSequenceNum() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":name"), (tag.name() ? *tag.name() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":nameLower"),
+        (tag.name() ? tagNameNormalized : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":parentGuid"),
+        (tag.parentGuid() ? *tag.parentGuid() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":parentLocalUid"),
+        (!tag.parentTagLocalId().isEmpty()
+         ? tag.parentTagLocalId()
+         : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isDirty"), (tag.isLocallyModified() ? 1 : 0));
+
+    query.bindValue(QStringLiteral(":isLocal"), (tag.isLocalOnly() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":isFavorited"), (tag.isLocallyFavorited() ? 1 : 0));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put tag into the local storage database"),
+        false);
+
+    res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put tag into the local storage database, failed to commit"),
+        false);
+
     return true;
 }
 

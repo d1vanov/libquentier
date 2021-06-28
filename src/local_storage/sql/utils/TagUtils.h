@@ -47,4 +47,8 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::Tag & tag, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool complementTagParentInfo(
+    qevercloud::Tag & tag, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

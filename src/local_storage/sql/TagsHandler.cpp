@@ -684,12 +684,14 @@ QList<qevercloud::Tag> TagsHandler::listTagsPerNoteLocalIdImpl(
     const QString & noteLocalId, const ListOptions<ListTagsOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    const auto noteLocalIdSqlQueryCondition = QString::fromUtf8(
+        "localNote = '%1'").arg(utils::sqlEscape(noteLocalId));
+
+    return utils::listObjects<
+        qevercloud::Tag, ILocalStorage::ListTagsOrder>(
+        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_direction, noteLocalIdSqlQueryCondition, database,
+        errorDescription);
 }
 
 TaskContext TagsHandler::makeTaskContext() const

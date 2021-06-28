@@ -20,6 +20,7 @@
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Tag.h>
 
 #include <QList>
 #include <QMap>

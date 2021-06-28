@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "SqlUtils.h"
 #include "TagUtils.h"
 
 #include "../ErrorHandling.h"
@@ -138,6 +139,65 @@ namespace quentier::local_storage::sql::utils {
     }
 
     return {};
+}
+
+bool complementTagParentInfo(
+    qevercloud::Tag & tag, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    if (tag.parentGuid() && !tag.parentTagLocalId().isEmpty()) {
+        return true;
+    }
+
+    if (!tag.parentGuid() && tag.parentTagLocalId().isEmpty()) {
+        return true;
+    }
+
+    const ErrorString errorPrefix(
+        QT_TR_NOOP("can't complement the parent info for a tag"));
+
+    const QString existingColumn =
+        (tag.parentGuid() ? QStringLiteral("guid")
+                          : QStringLiteral("localUid"));
+
+    const QString otherColumn =
+        (tag.parentGuid() ? QStringLiteral("localUid")
+                          : QStringLiteral("guid"));
+
+    const QString uid = sqlEscape(
+        (tag.parentGuid() ? *tag.parentGuid() : tag.parentTagLocalId()));
+
+    const QString queryString =
+        QString::fromUtf8("SELECT %1 FROM Tags WHERE %2='%3'")
+            .arg(otherColumn, existingColumn, uid);
+
+    QSqlQuery query{database};
+    bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot complement tag parent info"),
+        false);
+
+    res = query.next();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot complement tag parent info: no data"),
+        false);
+
+    const QString otherUid = query.record().value(otherColumn).toString();
+
+    if (tag.parentGuid()) {
+        tag.setParentTagLocalId(otherUid);
+    }
+    else {
+        tag.setParentGuid(otherUid);
+    }
+
+    return true;
 }
 
 } // namespace quentier::local_storage::sql::utils

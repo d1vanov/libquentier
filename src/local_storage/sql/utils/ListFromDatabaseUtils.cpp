@@ -53,7 +53,9 @@ QString listObjectsGenericSqlQuery<qevercloud::Notebook>()
 template <>
 QString listObjectsGenericSqlQuery<qevercloud::Tag>()
 {
-    return QStringLiteral("SELECT * FROM Tags");
+    return QStringLiteral(
+        "SELECT * FROM Tags LEFT OUTER JOIN NoteTags "
+        "ON Tags.localUid = NoteTags.localTag");
 }
 
 template <>
