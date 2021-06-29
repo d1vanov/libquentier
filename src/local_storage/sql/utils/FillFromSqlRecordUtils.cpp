@@ -22,6 +22,8 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 
+#include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
 
 #include <QGlobalStatic>
@@ -45,6 +47,14 @@ Q_GLOBAL_STATIC_WITH_ARGS(
         "local_storage::sql::utils",
         "Notebook field missing in the record received from the local "
         "storage database")));
+
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingTagFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Tag field missing in the record received from the local storage "
+        "database")));
 
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
@@ -116,6 +126,18 @@ bool fillSharedNotebookValue(
     return fillValue<qevercloud::SharedNotebook, VariantType, LocalType>(
         record, column, sharedNotebook, std::move(setter),
         *gMissingNotebookFieldErrorMessage);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillTagValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::Tag & tag,
+    std::function<void(qevercloud::Tag&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::Tag, VariantType, LocalType>(
+        record, column, tag, std::move(setter),
+        *gMissingTagFieldErrorMessage, errorDescription);
 }
 
 template <class FieldType, class VariantType, class LocalType = VariantType>
@@ -1172,10 +1194,58 @@ bool fillTagFromSqlRecord(
     const QSqlRecord & record, qevercloud::Tag & tag,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(tag)
-    Q_UNUSED(errorDescription)
+    using qevercloud::Tag;
+
+    if (!fillTagValue<QString, QString>(
+            record, QStringLiteral("localUid"), tag,
+            &Tag::setLocalId, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillTagValue<int, bool>(
+            record, QStringLiteral("isDirty"), tag,
+            &Tag::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillTagValue<int, bool>(
+            record, QStringLiteral("isLocal"), tag,
+            &Tag::setLocalOnly, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillTagValue<int, bool>(
+            record, QStringLiteral("isFavorited"), tag,
+            &Tag::setLocallyFavorited, &errorDescription))
+    {
+        return false;
+    }
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(Tag&, std::optional<QString>)> setter) {
+            fillTagValue<QString, std::optional<QString>>(
+                record, column, tag, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("guid"), &Tag::setGuid);
+    fillOptStringValue(QStringLiteral("name"), &Tag::setName);
+    fillOptStringValue(QStringLiteral("parentGuid"), &Tag::setParentGuid);
+
+    fillOptStringValue(
+        QStringLiteral("linkedNotebookGuid"), &Tag::setLinkedNotebookGuid);
+
+    fillTagValue<QString, QString>(
+        record, QStringLiteral("parentLocalUid"), tag,
+        &Tag::setParentTagLocalId);
+
+    fillTagValue<qint32, qint32>(
+        record, QStringLiteral("updateSequenceNumber"), tag,
+        &Tag::setUpdateSequenceNum);
+
     return true;
 }
 
@@ -1185,6 +1255,14 @@ bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     ErrorString & errorDescription)
 {
     return fillNotebookFromSqlRecord(rec, object, errorDescription);
+}
+
+template <>
+bool fillObjectFromSqlRecord<qevercloud::Tag>(
+    const QSqlRecord & rec, qevercloud::Tag & object,
+    ErrorString & errorDescription)
+{
+    return fillTagFromSqlRecord(rec, object, errorDescription);
 }
 
 template <>
