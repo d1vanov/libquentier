@@ -56,7 +56,7 @@ public:
         return m_putNotebooks;
     }
 
-    [[nodiscard]] const QStringList & expungeNotebookLocalIds() const
+    [[nodiscard]] const QStringList & expungedNotebookLocalIds() const
     {
         return m_expungedNotebookLocalIds;
     }
@@ -226,7 +226,7 @@ enum class CreateNotebookOption
 Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
 
 [[nodiscard]] qevercloud::Notebook createNotebook(
-    const CreateNotebookOptions & createOptions = {})
+    const CreateNotebookOptions createOptions = {})
 {
     qevercloud::Notebook notebook;
     notebook.setLocallyModified(true);
@@ -635,10 +635,10 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     expungeNotebookByLocalIdFuture.waitForFinished();
 
     QCoreApplication::processEvents();
-    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 1);
+    EXPECT_EQ(notifierListener.expungedNotebookLocalIds().size(), 1);
 
     EXPECT_EQ(
-        notifierListener.expungeNotebookLocalIds()[0], notebook.localId());
+        notifierListener.expungedNotebookLocalIds()[0], notebook.localId());
 
     auto checkNotebookDeleted = [&]
     {
@@ -690,10 +690,10 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     expungeNotebookByGuidFuture.waitForFinished();
 
     QCoreApplication::processEvents();
-    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 2);
+    EXPECT_EQ(notifierListener.expungedNotebookLocalIds().size(), 2);
 
     EXPECT_EQ(
-        notifierListener.expungeNotebookLocalIds()[1], notebook.localId());
+        notifierListener.expungedNotebookLocalIds()[1], notebook.localId());
 
     checkNotebookDeleted();
 
@@ -711,10 +711,10 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     expungeNotebookByNameFuture.waitForFinished();
 
     QCoreApplication::processEvents();
-    EXPECT_EQ(notifierListener.expungeNotebookLocalIds().size(), 3);
+    EXPECT_EQ(notifierListener.expungedNotebookLocalIds().size(), 3);
 
     EXPECT_EQ(
-        notifierListener.expungeNotebookLocalIds()[2], notebook.localId());
+        notifierListener.expungedNotebookLocalIds()[2], notebook.localId());
 
     checkNotebookDeleted();
 }
@@ -812,7 +812,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
     QCoreApplication::processEvents();
 
     EXPECT_EQ(
-        notifierListener.expungeNotebookLocalIds().size(), notebooks.size());
+        notifierListener.expungedNotebookLocalIds().size(), notebooks.size());
 
     notebookCountFuture = notebooksHandler->notebookCount();
     notebookCountFuture.waitForFinished();

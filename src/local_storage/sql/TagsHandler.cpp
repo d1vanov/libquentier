@@ -301,7 +301,7 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByLocalIdImpl(
         "SELECT localUid, guid, linkedNotebookGuid, "
         "updateSequenceNumber, name, parentGuid, "
         "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
-        "FROM Tags WHERE (localUid = :localUid");
+        "FROM Tags WHERE (localUid = :localUid)");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -354,7 +354,7 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByGuidImpl(
         "SELECT localUid, guid, linkedNotebookGuid, "
         "updateSequenceNumber, name, parentGuid, "
         "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
-        "FROM Tags WHERE (guid = :guid");
+        "FROM Tags WHERE (guid = :guid)");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -406,7 +406,7 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByNameImpl(
         "SELECT localUid, guid, linkedNotebookGuid, "
         "updateSequenceNumber, name, parentGuid, "
         "parentLocalUid, isDirty, isLocal, isLocal, isFavorited "
-        "FROM Tags WHERE (localUid = :localUid");
+        "FROM Tags WHERE (nameLower = :nameLower)");
 
     if (linkedNotebookGuid) {
         queryString.chop(1);

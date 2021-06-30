@@ -205,7 +205,7 @@ enum class CreateUserOption
 Q_DECLARE_FLAGS(CreateUserOptions, CreateUserOption);
 
 [[nodiscard]] qevercloud::User createUser(
-    const CreateUserOptions & createUserOptions = {})
+    const CreateUserOptions createUserOptions = {})
 {
     qevercloud::User user;
     user.setId(1);
