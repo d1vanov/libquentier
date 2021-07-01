@@ -507,7 +507,7 @@ class NotebooksHandlerSingleNotebookTest :
     public testing::WithParamInterface<qevercloud::Notebook>
 {};
 
-const std::array notebook_test_values{
+const std::array gNotebookTestValues{
     createNotebook(),
     createNotebook(
         CreateNotebookOptions{CreateNotebookOption::WithSharedNotebooks}),
@@ -559,7 +559,7 @@ const std::array notebook_test_values{
 INSTANTIATE_TEST_SUITE_P(
     NotebooksHandlerSingleNotebookTestInstance,
     NotebooksHandlerSingleNotebookTest,
-    testing::ValuesIn(notebook_test_values));
+    testing::ValuesIn(gNotebookTestValues));
 
 TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 {
@@ -606,7 +606,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
 
     auto foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
-        notebook.name().value());
+        notebook.name().value(),  notebook.linkedNotebookGuid());
 
     foundByNameNotebookFuture.waitForFinished();
     EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
@@ -705,8 +705,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     EXPECT_EQ(notifierListener.putNotebooks()[2], notebook);
 
     auto expungeNotebookByNameFuture = notebooksHandler->expungeNotebookByName(
-        notebook.name().value(),
-        notebook.linkedNotebookGuid());
+        notebook.name().value(), notebook.linkedNotebookGuid());
 
     expungeNotebookByNameFuture.waitForFinished();
 
@@ -739,7 +738,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
         &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
-    auto notebooks = notebook_test_values;
+    auto notebooks = gNotebookTestValues;
     int notebookCounter = 2;
     qint64 sharedNotebookIdCounter = 6U;
     for (auto it = std::next(notebooks.begin()); it != notebooks.end(); ++it) { // NOLINT

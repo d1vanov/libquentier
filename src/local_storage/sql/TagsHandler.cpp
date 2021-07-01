@@ -410,7 +410,7 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByNameImpl(
 
     if (linkedNotebookGuid) {
         queryString.chop(1);
-        queryString += QStringLiteral(" AND Notebooks.linkedNotebookGuid ");
+        queryString += QStringLiteral(" AND linkedNotebookGuid ");
 
         if (linkedNotebookGuid->isEmpty()) {
             queryString += QStringLiteral("IS NULL)");
@@ -593,6 +593,18 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
 
     result.status = true;
     result.expungedTagLocalId = localId;
+
+    if (transactionOption == utils::TransactionOption::UseSeparateTransaction) {
+        res = transaction->commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, database, "local_storage::sql::TagsHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::TagsHandler",
+                "Cannot expunge tag from the local storage database, failed to "
+                "commit"),
+            (ExpungeTagResult{false, {}, {}}));
+    }
+
     return result;
 }
 

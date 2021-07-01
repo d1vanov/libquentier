@@ -312,6 +312,153 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
     EXPECT_TRUE(listTagsFuture.result().isEmpty());
 }
 
+class TagsHandlerSingleTagTest :
+    public TagsHandlerTest,
+    public testing::WithParamInterface<qevercloud::Tag>
+{};
+
+const std::array gTagTestValues{
+    createTag(),
+    createTag(CreateTagOptions{CreateTagOption::WithLinkedNotebookGuid})
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    TagsHandlerSingleTagTestInstance,
+    TagsHandlerSingleTagTest,
+    testing::ValuesIn(gTagTestValues));
+
+TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    TagsHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagPut,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagExpunged,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagExpunged);
+
+    const auto tag = GetParam();
+    auto putTagFuture = tagsHandler->putTag(tag);
+    putTagFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putTags().size(), 1);
+    EXPECT_EQ(notifierListener.putTags()[0], tag);
+
+    auto tagCountFuture = tagsHandler->tagCount();
+    tagCountFuture.waitForFinished();
+    EXPECT_EQ(tagCountFuture.result(), 1U);
+
+    auto foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
+    foundByLocalIdTagFuture.waitForFinished();
+    EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
+
+    auto foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
+    foundByGuidTagFuture.waitForFinished();
+    EXPECT_EQ(foundByGuidTagFuture.result(), tag);
+
+    auto foundByNameTagFuture = tagsHandler->findTagByName(
+        tag.name().value(), tag.linkedNotebookGuid());
+
+    foundByNameTagFuture.waitForFinished();
+    EXPECT_EQ(foundByNameTagFuture.result(), tag);
+
+    auto listTagsOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    auto tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 1);
+    EXPECT_EQ(tags[0], tag);
+
+    auto expungeTagByLocalIdFuture =
+        tagsHandler->expungeTagByLocalId(tag.localId());
+
+    expungeTagByLocalIdFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedTagLocalIds().size(), 1);
+    EXPECT_EQ(notifierListener.expungedTagLocalIds()[0], tag.localId());
+
+    auto checkTagDeleted = [&]
+    {
+        tagCountFuture = tagsHandler->tagCount();
+        tagCountFuture.waitForFinished();
+        EXPECT_EQ(tagCountFuture.result(), 0U);
+
+        foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
+        foundByLocalIdTagFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdTagFuture.resultCount(), 0);
+
+        foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
+        foundByGuidTagFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidTagFuture.resultCount(), 0);
+
+        foundByNameTagFuture = tagsHandler->findTagByName(
+            tag.name().value(), tag.linkedNotebookGuid());
+
+        foundByNameTagFuture.waitForFinished();
+        EXPECT_EQ(foundByNameTagFuture.resultCount(), 0);
+
+        listTagsFuture = tagsHandler->listTags(listTagsOptions);
+        listTagsFuture.waitForFinished();
+        EXPECT_TRUE(listTagsFuture.result().isEmpty());
+    };
+
+    checkTagDeleted();
+
+    putTagFuture = tagsHandler->putTag(tag);
+    putTagFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putTags().size(), 2);
+    EXPECT_EQ(notifierListener.putTags()[1], tag);
+
+    auto expungeTagByGuidFuture =
+        tagsHandler->expungeTagByGuid(tag.guid().value());
+
+    expungeTagByGuidFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedTagLocalIds().size(), 2);
+    EXPECT_EQ(notifierListener.expungedTagLocalIds()[1], tag.localId());
+
+    checkTagDeleted();
+
+    putTagFuture = tagsHandler->putTag(tag);
+    putTagFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putTags().size(), 3);
+    EXPECT_EQ(notifierListener.putTags()[2], tag);
+
+    auto expungeTagByNameFuture = tagsHandler->expungeTagByName(
+        tag.name().value(), tag.linkedNotebookGuid());
+
+    expungeTagByNameFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedTagLocalIds().size(), 3);
+    EXPECT_EQ(notifierListener.expungedTagLocalIds()[2], tag.localId());
+
+    checkTagDeleted();
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "TagsHandlerTest.moc"

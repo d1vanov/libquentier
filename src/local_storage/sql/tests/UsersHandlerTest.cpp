@@ -361,7 +361,7 @@ class UsersHandlerSingleUserTest :
     public testing::WithParamInterface<qevercloud::User>
 {};
 
-const std::array user_test_values{
+const std::array gUserTestValues{
     createUser(),
     createUser(CreateUserOptions{CreateUserOption::WithUserAttributes}),
     createUser(CreateUserOptions{CreateUserOption::WithAccounting}),
@@ -411,7 +411,7 @@ const std::array user_test_values{
 INSTANTIATE_TEST_SUITE_P(
     UsersHandlerSingleUserTestInstance,
     UsersHandlerSingleUserTest,
-    testing::ValuesIn(user_test_values));
+    testing::ValuesIn(gUserTestValues));
 
 TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 {
@@ -472,7 +472,7 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto users = user_test_values;
+    auto users = gUserTestValues;
     for (auto it = std::next(users.begin()); it != users.end(); ++it) { // NOLINT
         const auto prevIt = std::prev(it); // NOLINT
         it->setId(prevIt->id().value() + 1);
