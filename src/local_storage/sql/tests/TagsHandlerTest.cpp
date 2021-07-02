@@ -459,6 +459,197 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     checkTagDeleted();
 }
 
+TEST_F(TagsHandlerTest, HandleMultipleTags)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    TagsHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagPut,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagExpunged,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagExpunged);
+
+    auto tags = gTagTestValues;
+
+    QFutureSynchronizer<void> putTagsSynchronizer;
+    for (auto tag: tags)
+    {
+        auto putTagFuture = tagsHandler->putTag(std::move(tag));
+        putTagsSynchronizer.addFuture(putTagFuture);
+    }
+
+    EXPECT_NO_THROW(putTagsSynchronizer.waitForFinished());
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putTags().size(), tags.size());
+
+    auto tagCountFuture = tagsHandler->tagCount();
+    tagCountFuture.waitForFinished();
+    EXPECT_EQ(tagCountFuture.result(), tags.size());
+
+    for (const auto & tag: tags)
+    {
+        auto foundByLocalIdTagFuture =
+            tagsHandler->findTagByLocalId(tag.localId());
+        foundByLocalIdTagFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
+
+        auto foundByGuidTagFuture =
+            tagsHandler->findTagByGuid(tag.guid().value());
+        foundByGuidTagFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidTagFuture.result(), tag);
+
+        auto foundByNameTagFuture = tagsHandler->findTagByName(
+            tag.name().value(), tag.linkedNotebookGuid());
+        foundByNameTagFuture.waitForFinished();
+        EXPECT_EQ(foundByNameTagFuture.result(), tag);
+    }
+
+    for (const auto & tag: tags) {
+        auto expungeTagByLocalIdFuture =
+            tagsHandler->expungeTagByLocalId(tag.localId());
+        expungeTagByLocalIdFuture.waitForFinished();
+    }
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedTagLocalIds().size(), tags.size());
+
+    tagCountFuture = tagsHandler->tagCount();
+    tagCountFuture.waitForFinished();
+    EXPECT_EQ(tagCountFuture.result(), 0U);
+
+    for (const auto & tag: tags) {
+        auto foundByLocalIdTagFuture =
+            tagsHandler->findTagByLocalId(tag.localId());
+        foundByLocalIdTagFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdTagFuture.resultCount(), 0);
+
+        auto foundByGuidTagFuture =
+            tagsHandler->findTagByGuid(tag.guid().value());
+        foundByGuidTagFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidTagFuture.resultCount(), 0);
+
+        auto foundByNameTagFuture = tagsHandler->findTagByName(
+            tag.name().value(), tag.linkedNotebookGuid());
+        foundByNameTagFuture.waitForFinished();
+        EXPECT_EQ(foundByNameTagFuture.resultCount(), 0);
+    }
+}
+
+TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    TagsHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagPut,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::tagExpunged,
+        &notifierListener,
+        &TagsHandlerTestNotifierListener::onTagExpunged);
+
+    auto tag1 = createTag();
+
+    auto tag2 = createTag(
+        CreateTagOptions{CreateTagOption::WithLinkedNotebookGuid});
+
+    auto putTagFuture = tagsHandler->putTag(tag1);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(tag2);
+    putTagFuture.waitForFinished();
+
+    auto findTagFuture = tagsHandler->findTagByName(
+        tag1.name().value(), QString{});
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.result(), tag1);
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.result(), tag2);
+
+    auto expungeTagFuture = tagsHandler->expungeTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    expungeTagFuture.waitForFinished();
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag1.name().value(), QString{});
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.result(), tag1);
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+
+    expungeTagFuture = tagsHandler->expungeTagByName(
+        tag1.name().value(), QString{});
+    expungeTagFuture.waitForFinished();
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag1.name().value(), QString{});
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+
+    putTagFuture = tagsHandler->putTag(tag1);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(tag2);
+    putTagFuture.waitForFinished();
+
+    expungeTagFuture = tagsHandler->expungeTagByName(
+        tag1.name().value(), QString{});
+    expungeTagFuture.waitForFinished();
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag1.name().value(), QString{});
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.result(), tag2);
+
+    expungeTagFuture = tagsHandler->expungeTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    expungeTagFuture.waitForFinished();
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag1.name().value(), QString{});
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+
+    findTagFuture = tagsHandler->findTagByName(
+        tag2.name().value(), tag2.linkedNotebookGuid());
+    findTagFuture.waitForFinished();
+    EXPECT_EQ(findTagFuture.resultCount(), 0);
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "TagsHandlerTest.moc"

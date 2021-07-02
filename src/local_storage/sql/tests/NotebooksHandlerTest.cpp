@@ -835,6 +835,112 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
     }
 }
 
+TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    NotebooksHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookPut,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notebookExpunged,
+        &notifierListener,
+        &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
+
+    auto notebook1 = createNotebook();
+
+    auto notebook2 = createNotebook(
+        CreateNotebookOptions{CreateNotebookOption::WithLinkedNotebookGuid});
+
+    notebook2.setDefaultNotebook(std::nullopt);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook1);
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook2);
+    putNotebookFuture.waitForFinished();
+
+    auto findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook1.name().value(), QString{});
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.result(), notebook1);
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.result(), notebook2);
+
+    auto expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    expungeNotebookFuture.waitForFinished();
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook1.name().value(), QString{});
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.result(), notebook1);
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+
+    expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
+        notebook1.name().value(), QString{});
+    expungeNotebookFuture.waitForFinished();
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook1.name().value(), QString{});
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook1);
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook2);
+    putNotebookFuture.waitForFinished();
+
+    expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
+        notebook1.name().value(), QString{});
+    expungeNotebookFuture.waitForFinished();
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook1.name().value(), QString{});
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.result(), notebook2);
+
+    expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    expungeNotebookFuture.waitForFinished();
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook1.name().value(), QString{});
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+
+    findNotebookFuture = notebooksHandler->findNotebookByName(
+        notebook2.name().value(), notebook2.linkedNotebookGuid());
+    findNotebookFuture.waitForFinished();
+    EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "NotebooksHandlerTest.moc"
