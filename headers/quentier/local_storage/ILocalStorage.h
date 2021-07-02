@@ -509,12 +509,12 @@ public:
     [[nodiscard]] virtual QFuture<void> putResource(
         qevercloud::Resource resource) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+    [[nodiscard]] virtual QFuture<qevercloud::Resource>
         findResourceByLocalId(
             QString resourceLocalId,
             FetchResourceOptions options = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+    [[nodiscard]] virtual QFuture<qevercloud::Resource>
         findResourceByGuid(
             QString resourceGuid,
             FetchResourceOptions options = {}) const = 0;
