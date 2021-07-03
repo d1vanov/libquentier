@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NotebookUtils.h"
 #include "PutToDatabaseUtils.h"
+#include "NotebookUtils.h"
 #include "RemoveFromDatabaseUtils.h"
 #include "TagUtils.h"
 
@@ -28,6 +28,7 @@
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/StringUtils.h>
 
+#include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
@@ -49,14 +50,11 @@ bool putUser(
     const qevercloud::User & user, QSqlDatabase & database,
     ErrorString & errorDescription, const TransactionOption transactionOption)
 {
-    QNDEBUG(
-        "local_storage::sql::utils",
-        "putUser: " << user);
+    QNDEBUG("local_storage::sql::utils", "putUser: " << user);
 
-    const ErrorString errorPrefix(
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't put user into the local storage database"));
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put user into the local storage database"));
 
     ErrorString error;
     if (!checkUser(user, error)) {
@@ -64,9 +62,7 @@ bool putUser(
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING(
-            "local_storage:sql:utils",
-            error << "\nUser: " << user);
+        QNWARNING("local_storage:sql:utils", error << "\nUser: " << user);
         return false;
     }
 
@@ -103,7 +99,8 @@ bool putUser(
 
     if (user.accountLimits()) {
         if (!putAccountLimits(
-                *user.accountLimits(), userId, database, errorDescription)) {
+                *user.accountLimits(), userId, database, errorDescription))
+        {
             return false;
         }
     }
@@ -113,7 +110,8 @@ bool putUser(
 
     if (user.businessUserInfo()) {
         if (!putBusinessUserInfo(
-                *user.businessUserInfo(), userId, database, errorDescription)) {
+                *user.businessUserInfo(), userId, database, errorDescription))
+        {
             return false;
         }
     }
@@ -169,8 +167,7 @@ bool putCommonUserData(
         (user.username() ? *user.username() : *gNullValue));
 
     query.bindValue(
-        QStringLiteral(":email"),
-        (user.email() ? *user.email() : *gNullValue));
+        QStringLiteral(":email"), (user.email() ? *user.email() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":name"), (user.name() ? *user.name() : *gNullValue));
@@ -181,13 +178,12 @@ bool putCommonUserData(
 
     query.bindValue(
         QStringLiteral(":privilege"),
-        (user.privilege() ? static_cast<int>(*user.privilege())
-                            : *gNullValue));
+        (user.privilege() ? static_cast<int>(*user.privilege()) : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":serviceLevel"),
         (user.serviceLevel() ? static_cast<int>(*user.serviceLevel())
-                                : *gNullValue));
+                             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":userCreationTimestamp"),
@@ -235,8 +231,7 @@ bool putCommonUserData(
 }
 
 bool putUserAttributes(
-    const qevercloud::UserAttributes & userAttributes,
-    const QString & userId,
+    const qevercloud::UserAttributes & userAttributes, const QString & userId,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
     if (!putUserAttributesViewedPromotions(
@@ -301,194 +296,176 @@ bool putUserAttributes(
     query.bindValue(
         QStringLiteral(":defaultLocationName"),
         (userAttributes.defaultLocationName()
-         ? *userAttributes.defaultLocationName()
-         : *gNullValue));
+             ? *userAttributes.defaultLocationName()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":defaultLatitude"),
-        (userAttributes.defaultLatitude()
-         ? *userAttributes.defaultLatitude()
-         : *gNullValue));
+        (userAttributes.defaultLatitude() ? *userAttributes.defaultLatitude()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":defaultLongitude"),
-        (userAttributes.defaultLongitude()
-         ? *userAttributes.defaultLongitude()
-         : *gNullValue));
+        (userAttributes.defaultLongitude() ? *userAttributes.defaultLongitude()
+                                           : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":incomingEmailAddress"),
         (userAttributes.incomingEmailAddress()
-         ? *userAttributes.incomingEmailAddress()
-         : *gNullValue));
+             ? *userAttributes.incomingEmailAddress()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":comments"),
-        (userAttributes.comments()
-         ? *userAttributes.comments()
-         : *gNullValue));
+        (userAttributes.comments() ? *userAttributes.comments() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":dateAgreedToTermsOfService"),
         (userAttributes.dateAgreedToTermsOfService()
-         ? *userAttributes.dateAgreedToTermsOfService()
-         : *gNullValue));
+             ? *userAttributes.dateAgreedToTermsOfService()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":maxReferrals"),
-        (userAttributes.maxReferrals()
-        ? *userAttributes.maxReferrals()
-        : *gNullValue));
+        (userAttributes.maxReferrals() ? *userAttributes.maxReferrals()
+                                       : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":referralCount"),
-        (userAttributes.referralCount()
-         ? *userAttributes.referralCount()
-         : *gNullValue));
+        (userAttributes.referralCount() ? *userAttributes.referralCount()
+                                        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":refererCode"),
-        (userAttributes.refererCode()
-         ? *userAttributes.refererCode()
-         : *gNullValue));
+        (userAttributes.refererCode() ? *userAttributes.refererCode()
+                                      : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":sentEmailDate"),
-        (userAttributes.sentEmailDate()
-         ? *userAttributes.sentEmailDate()
-         : *gNullValue));
+        (userAttributes.sentEmailDate() ? *userAttributes.sentEmailDate()
+                                        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":sentEmailCount"),
-        (userAttributes.sentEmailCount()
-         ? *userAttributes.sentEmailCount()
-         : *gNullValue));
+        (userAttributes.sentEmailCount() ? *userAttributes.sentEmailCount()
+                                         : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":dailyEmailLimit"),
-        (userAttributes.dailyEmailLimit()
-         ? *userAttributes.dailyEmailLimit()
-         : *gNullValue));
+        (userAttributes.dailyEmailLimit() ? *userAttributes.dailyEmailLimit()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":emailOptOutDate"),
-        (userAttributes.emailOptOutDate()
-         ? *userAttributes.emailOptOutDate()
-         : *gNullValue));
+        (userAttributes.emailOptOutDate() ? *userAttributes.emailOptOutDate()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":partnerEmailOptInDate"),
         (userAttributes.partnerEmailOptInDate()
-        ? *userAttributes.partnerEmailOptInDate()
-        : *gNullValue));
+             ? *userAttributes.partnerEmailOptInDate()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preferredLanguage"),
         (userAttributes.preferredLanguage()
-        ? *userAttributes.preferredLanguage()
-        : *gNullValue));
+             ? *userAttributes.preferredLanguage()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preferredCountry"),
-        (userAttributes.preferredCountry()
-        ? *userAttributes.preferredCountry()
-        : *gNullValue));
+        (userAttributes.preferredCountry() ? *userAttributes.preferredCountry()
+                                           : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":twitterUserName"),
-        (userAttributes.twitterUserName()
-        ? *userAttributes.twitterUserName()
-        : *gNullValue));
+        (userAttributes.twitterUserName() ? *userAttributes.twitterUserName()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":twitterId"),
-        (userAttributes.twitterId()
-        ? *userAttributes.twitterId()
-        : *gNullValue));
+        (userAttributes.twitterId() ? *userAttributes.twitterId()
+                                    : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":groupName"),
-        (userAttributes.groupName()
-        ? *userAttributes.groupName()
-        : *gNullValue));
+        (userAttributes.groupName() ? *userAttributes.groupName()
+                                    : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recognitionLanguage"),
         (userAttributes.recognitionLanguage()
-        ? *userAttributes.recognitionLanguage()
-        : *gNullValue));
+             ? *userAttributes.recognitionLanguage()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":referralProof"),
-        (userAttributes.referralProof()
-        ? *userAttributes.referralProof()
-        : *gNullValue));
+        (userAttributes.referralProof() ? *userAttributes.referralProof()
+                                        : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":businessAddress"),
-        (userAttributes.businessAddress()
-        ? *userAttributes.businessAddress()
-        : *gNullValue));
+        (userAttributes.businessAddress() ? *userAttributes.businessAddress()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":reminderEmailConfig"),
         (userAttributes.reminderEmailConfig()
-         ? static_cast<int>(*userAttributes.reminderEmailConfig())
-         : *gNullValue));
+             ? static_cast<int>(*userAttributes.reminderEmailConfig())
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":emailAddressLastConfirmed"),
         (userAttributes.emailAddressLastConfirmed()
-         ? *userAttributes.emailAddressLastConfirmed()
-         : *gNullValue));
+             ? *userAttributes.emailAddressLastConfirmed()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":passwordUpdated"),
-        (userAttributes.passwordUpdated()
-         ? *userAttributes.passwordUpdated()
-         : *gNullValue));
+        (userAttributes.passwordUpdated() ? *userAttributes.passwordUpdated()
+                                          : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":preactivation"),
         (userAttributes.preactivation()
-         ? (*userAttributes.preactivation() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.preactivation() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":clipFullPage"),
         (userAttributes.clipFullPage()
-         ? (*userAttributes.clipFullPage() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.clipFullPage() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":educationalDiscount"),
         (userAttributes.educationalDiscount()
-         ? (*userAttributes.educationalDiscount() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.educationalDiscount() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":hideSponsorBilling"),
         (userAttributes.hideSponsorBilling()
-         ? (*userAttributes.hideSponsorBilling() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.hideSponsorBilling() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":useEmailAutoFiling"),
         (userAttributes.useEmailAutoFiling()
-         ? (*userAttributes.useEmailAutoFiling() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.useEmailAutoFiling() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":salesforcePushEnabled"),
         (userAttributes.salesforcePushEnabled()
-         ? (*userAttributes.salesforcePushEnabled() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.salesforcePushEnabled() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":shouldLogClientEvent"),
         (userAttributes.shouldLogClientEvent()
-         ? (*userAttributes.shouldLogClientEvent() ? 1 : 0)
-         : *gNullValue));
+             ? (*userAttributes.shouldLogClientEvent() ? 1 : 0)
+             : *gNullValue));
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -502,8 +479,7 @@ bool putUserAttributes(
 }
 
 bool putUserAttributesViewedPromotions(
-    const QString & userId,
-    const std::optional<QStringList> & viewedPromotions,
+    const QString & userId, const std::optional<QStringList> & viewedPromotions,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
     if (!removeUserAttributesViewedPromotions(
@@ -552,7 +528,8 @@ bool putUserAttributesRecentMailedAddresses(
     QSqlDatabase & database, ErrorString & errorDescription)
 {
     if (!removeUserAttributesRecentMailedAddresses(
-            userId, database, errorDescription)) {
+            userId, database, errorDescription))
+    {
         return false;
     }
 
@@ -629,123 +606,102 @@ bool putAccounting(
 
     query.bindValue(
         ":uploadLimitEnd",
-        accounting.uploadLimitEnd()
-        ? *accounting.uploadLimitEnd()
-        : *gNullValue);
+        accounting.uploadLimitEnd() ? *accounting.uploadLimitEnd()
+                                    : *gNullValue);
 
     query.bindValue(
         ":uploadLimitNextMonth",
-        accounting.uploadLimitNextMonth()
-        ? *accounting.uploadLimitNextMonth()
-        : *gNullValue);
+        accounting.uploadLimitNextMonth() ? *accounting.uploadLimitNextMonth()
+                                          : *gNullValue);
 
     query.bindValue(
         ":premiumServiceStatus",
         accounting.premiumServiceStatus()
-        ? static_cast<int>(*accounting.premiumServiceStatus())
-        : *gNullValue);
+            ? static_cast<int>(*accounting.premiumServiceStatus())
+            : *gNullValue);
 
     query.bindValue(
         ":premiumOrderNumber",
-        accounting.premiumOrderNumber()
-        ? *accounting.premiumOrderNumber()
-        : *gNullValue);
+        accounting.premiumOrderNumber() ? *accounting.premiumOrderNumber()
+                                        : *gNullValue);
 
     query.bindValue(
         ":premiumCommerceService",
         accounting.premiumCommerceService()
-        ? *accounting.premiumCommerceService()
-        : *gNullValue);
+            ? *accounting.premiumCommerceService()
+            : *gNullValue);
 
     query.bindValue(
         ":premiumServiceStart",
-        accounting.premiumServiceStart()
-        ? *accounting.premiumServiceStart()
-        : *gNullValue);
+        accounting.premiumServiceStart() ? *accounting.premiumServiceStart()
+                                         : *gNullValue);
 
     query.bindValue(
         ":premiumServiceSKU",
-        accounting.premiumServiceSKU()
-        ? *accounting.premiumServiceSKU()
-        : *gNullValue);
+        accounting.premiumServiceSKU() ? *accounting.premiumServiceSKU()
+                                       : *gNullValue);
 
     query.bindValue(
         ":lastSuccessfulCharge",
-        accounting.lastSuccessfulCharge()
-        ? *accounting.lastSuccessfulCharge()
-        : *gNullValue);
+        accounting.lastSuccessfulCharge() ? *accounting.lastSuccessfulCharge()
+                                          : *gNullValue);
 
     query.bindValue(
         ":lastFailedCharge",
-        accounting.lastFailedCharge()
-        ? *accounting.lastFailedCharge()
-        : *gNullValue);
+        accounting.lastFailedCharge() ? *accounting.lastFailedCharge()
+                                      : *gNullValue);
 
     query.bindValue(
         ":lastFailedChargeReason",
         accounting.lastFailedChargeReason()
-        ? *accounting.lastFailedChargeReason()
-        : *gNullValue);
+            ? *accounting.lastFailedChargeReason()
+            : *gNullValue);
 
     query.bindValue(
         ":nextPaymentDue",
-        accounting.nextPaymentDue()
-        ? *accounting.nextPaymentDue()
-        : *gNullValue);
+        accounting.nextPaymentDue() ? *accounting.nextPaymentDue()
+                                    : *gNullValue);
 
     query.bindValue(
         ":premiumLockUntil",
-        accounting.premiumLockUntil()
-        ? *accounting.premiumLockUntil()
-        : *gNullValue);
+        accounting.premiumLockUntil() ? *accounting.premiumLockUntil()
+                                      : *gNullValue);
 
     query.bindValue(
-        ":updated",
-        accounting.updated()
-        ? *accounting.updated()
-        : *gNullValue);
+        ":updated", accounting.updated() ? *accounting.updated() : *gNullValue);
 
     query.bindValue(
         ":premiumSubscriptionNumber",
         accounting.premiumSubscriptionNumber()
-        ? *accounting.premiumSubscriptionNumber()
-        : *gNullValue);
+            ? *accounting.premiumSubscriptionNumber()
+            : *gNullValue);
 
     query.bindValue(
         ":lastRequestedCharge",
-        accounting.lastRequestedCharge()
-        ? *accounting.lastRequestedCharge()
-        : *gNullValue);
+        accounting.lastRequestedCharge() ? *accounting.lastRequestedCharge()
+                                         : *gNullValue);
 
     query.bindValue(
         ":currency",
-        accounting.currency()
-        ? *accounting.currency()
-        : *gNullValue);
+        accounting.currency() ? *accounting.currency() : *gNullValue);
 
     query.bindValue(
         ":unitPrice",
-        accounting.unitPrice()
-        ? *accounting.unitPrice()
-        : *gNullValue);
+        accounting.unitPrice() ? *accounting.unitPrice() : *gNullValue);
 
     query.bindValue(
         ":unitDiscount",
-        accounting.unitDiscount()
-        ? *accounting.unitDiscount()
-        : *gNullValue);
+        accounting.unitDiscount() ? *accounting.unitDiscount() : *gNullValue);
 
     query.bindValue(
         ":nextChargeDate",
-        accounting.nextChargeDate()
-        ? *accounting.nextChargeDate()
-        : *gNullValue);
+        accounting.nextChargeDate() ? *accounting.nextChargeDate()
+                                    : *gNullValue);
 
     query.bindValue(
         ":availablePoints",
-        accounting.availablePoints()
-        ? *accounting.availablePoints()
-        : *gNullValue);
+        accounting.availablePoints() ? *accounting.availablePoints()
+                                     : *gNullValue);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -789,69 +745,62 @@ bool putAccountLimits(
 
     query.bindValue(
         QStringLiteral(":userMailLimitDaily"),
-        accountLimits.userMailLimitDaily()
-        ? *accountLimits.userMailLimitDaily()
-        : *gNullValue);
+        accountLimits.userMailLimitDaily() ? *accountLimits.userMailLimitDaily()
+                                           : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":noteSizeMax"),
-        accountLimits.noteSizeMax()
-        ? *accountLimits.noteSizeMax()
-        : *gNullValue);
+        accountLimits.noteSizeMax() ? *accountLimits.noteSizeMax()
+                                    : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":resourceSizeMax"),
-        accountLimits.resourceSizeMax()
-        ? *accountLimits.resourceSizeMax()
-        : *gNullValue);
+        accountLimits.resourceSizeMax() ? *accountLimits.resourceSizeMax()
+                                        : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":userLinkedNotebookMax"),
         accountLimits.userLinkedNotebookMax()
-        ? *accountLimits.userLinkedNotebookMax()
-        : *gNullValue);
+            ? *accountLimits.userLinkedNotebookMax()
+            : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":uploadLimit"),
-        accountLimits.uploadLimit()
-        ? *accountLimits.uploadLimit()
-        : *gNullValue);
+        accountLimits.uploadLimit() ? *accountLimits.uploadLimit()
+                                    : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":userNoteCountMax"),
-        accountLimits.userNoteCountMax()
-        ? *accountLimits.userNoteCountMax()
-        : *gNullValue);
+        accountLimits.userNoteCountMax() ? *accountLimits.userNoteCountMax()
+                                         : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":userNotebookCountMax"),
         accountLimits.userNotebookCountMax()
-        ? *accountLimits.userNotebookCountMax()
-        : *gNullValue);
+            ? *accountLimits.userNotebookCountMax()
+            : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":userTagCountMax"),
-        accountLimits.userTagCountMax()
-        ? *accountLimits.userTagCountMax()
-        : *gNullValue);
+        accountLimits.userTagCountMax() ? *accountLimits.userTagCountMax()
+                                        : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":noteTagCountMax"),
-        accountLimits.noteTagCountMax()
-        ? *accountLimits.noteTagCountMax()
-        : *gNullValue);
+        accountLimits.noteTagCountMax() ? *accountLimits.noteTagCountMax()
+                                        : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":userSavedSearchesMax"),
         accountLimits.userSavedSearchesMax()
-        ? *accountLimits.userSavedSearchesMax()
-        : *gNullValue);
+            ? *accountLimits.userSavedSearchesMax()
+            : *gNullValue);
 
     query.bindValue(
         QStringLiteral(":noteResourceCountMax"),
         accountLimits.noteResourceCountMax()
-        ? *accountLimits.noteResourceCountMax()
-        : *gNullValue);
+            ? *accountLimits.noteResourceCountMax()
+            : *gNullValue);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -916,14 +865,11 @@ bool putNotebook(
     qevercloud::Notebook notebook, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    QNDEBUG(
-        "local_storage::sql::utils",
-        "putNotebook: " << notebook);
+    QNDEBUG("local_storage::sql::utils", "putNotebook: " << notebook);
 
-    const ErrorString errorPrefix(
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't put notebook into the local storage database"));
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put notebook into the local storage database"));
 
     ErrorString error;
     if (!checkNotebook(notebook, error)) {
@@ -932,8 +878,7 @@ bool putNotebook(
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING(
-            "local_storage::sql::utils",
-            error << "\nNotebook: " << notebook);
+            "local_storage::sql::utils", error << "\nNotebook: " << notebook);
         return false;
     }
 
@@ -959,8 +904,7 @@ bool putNotebook(
         return false;
     }
 
-    if (notebook.guid())
-    {
+    if (notebook.guid()) {
         if (!removeSharedNotebooks(
                 *notebook.guid(), database, errorDescription)) {
             return false;
@@ -975,13 +919,15 @@ bool putNotebook(
                     QNWARNING(
                         "local_storage::sql::utils",
                         "Found shared notebook without primary identifier "
-                        "of the share set, skipping it: " << sharedNotebook);
+                        "of the share set, skipping it: "
+                            << sharedNotebook);
                     continue;
                 }
 
                 if (!putSharedNotebook(
                         sharedNotebook, indexInNotebook, database,
-                        errorDescription)) {
+                        errorDescription))
+                {
                     return false;
                 }
 
@@ -1069,7 +1015,7 @@ bool putCommonNotebookData(
     query.bindValue(
         QStringLiteral(":updateSequenceNumber"),
         (notebook.updateSequenceNum() ? *notebook.updateSequenceNum()
-         : *gNullValue));
+                                      : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":notebookName"),
@@ -1081,13 +1027,11 @@ bool putCommonNotebookData(
 
     query.bindValue(
         QStringLiteral(":creationTimestamp"),
-        (notebook.serviceCreated() ? *notebook.serviceCreated()
-         : *gNullValue));
+        (notebook.serviceCreated() ? *notebook.serviceCreated() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":modificationTimestamp"),
-        (notebook.serviceUpdated() ? *notebook.serviceUpdated()
-         : *gNullValue));
+        (notebook.serviceUpdated() ? *notebook.serviceUpdated() : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":isDirty"), (notebook.isLocallyModified() ? 1 : 0));
@@ -1098,12 +1042,12 @@ bool putCommonNotebookData(
     query.bindValue(
         QStringLiteral(":isDefault"),
         (notebook.defaultNotebook() && *notebook.defaultNotebook()
-         ? 1
-         : *gNullValue));
+             ? 1
+             : *gNullValue));
 
     bool isLastUsed = false;
     if (const auto it =
-        notebook.localData().constFind(QStringLiteral("lastUsed"));
+            notebook.localData().constFind(QStringLiteral("lastUsed"));
         it != notebook.localData().constEnd())
     {
         isLastUsed = it.value().toBool();
@@ -1119,38 +1063,38 @@ bool putCommonNotebookData(
     query.bindValue(
         QStringLiteral(":publishingUri"),
         (notebook.publishing()
-         ? (notebook.publishing()->uri() ? *notebook.publishing()->uri()
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.publishing()->uri() ? *notebook.publishing()->uri()
+                                             : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":publishingNoteSortOrder"),
         (notebook.publishing()
-         ? (notebook.publishing()->order()
-            ? static_cast<int>(*notebook.publishing()->order())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.publishing()->order()
+                    ? static_cast<int>(*notebook.publishing()->order())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":publishingAscendingSort"),
         (notebook.publishing()
-         ? (notebook.publishing()->ascending()
-            ? static_cast<int>(*notebook.publishing()->ascending())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.publishing()->ascending()
+                    ? static_cast<int>(*notebook.publishing()->ascending())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":publicDescription"),
         (notebook.publishing()
-         ? (notebook.publishing()->publicDescription()
-            ? *notebook.publishing()->publicDescription()
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.publishing()->publicDescription()
+                    ? *notebook.publishing()->publicDescription()
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":isPublished"),
         (notebook.published() ? static_cast<int>(*notebook.published())
-         : *gNullValue));
+                              : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":stack"),
@@ -1159,69 +1103,69 @@ bool putCommonNotebookData(
     query.bindValue(
         QStringLiteral(":businessNotebookDescription"),
         (notebook.businessNotebook()
-         ? (notebook.businessNotebook()->notebookDescription()
-            ? *notebook.businessNotebook()->notebookDescription()
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.businessNotebook()->notebookDescription()
+                    ? *notebook.businessNotebook()->notebookDescription()
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":businessNotebookPrivilegeLevel"),
         (notebook.businessNotebook()
-         ? (notebook.businessNotebook()->privilege()
-            ? static_cast<int>(
-                *notebook.businessNotebook()->privilege())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.businessNotebook()->privilege()
+                    ? static_cast<int>(
+                          *notebook.businessNotebook()->privilege())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":businessNotebookIsRecommended"),
         (notebook.businessNotebook()
-         ? (notebook.businessNotebook()->recommended()
-            ? static_cast<int>(
-                *notebook.businessNotebook()->recommended())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.businessNotebook()->recommended()
+                    ? static_cast<int>(
+                          *notebook.businessNotebook()->recommended())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":contactId"),
         ((notebook.contact() && notebook.contact()->id())
-         ? *notebook.contact()->id()
-         : *gNullValue));
+             ? *notebook.contact()->id()
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recipientReminderNotifyEmail"),
         (notebook.recipientSettings()
-         ? (notebook.recipientSettings()->reminderNotifyEmail()
-            ? static_cast<int>(*notebook.recipientSettings()
-                               ->reminderNotifyEmail())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.recipientSettings()->reminderNotifyEmail()
+                    ? static_cast<int>(
+                          *notebook.recipientSettings()->reminderNotifyEmail())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recipientReminderNotifyInApp"),
         (notebook.recipientSettings()
-         ? (notebook.recipientSettings()->reminderNotifyInApp()
-            ? static_cast<int>(*notebook.recipientSettings()
-                               ->reminderNotifyInApp())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.recipientSettings()->reminderNotifyInApp()
+                    ? static_cast<int>(
+                          *notebook.recipientSettings()->reminderNotifyInApp())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recipientInMyList"),
         (notebook.recipientSettings()
-         ? (notebook.recipientSettings()->inMyList()
-            ? static_cast<int>(
-                *notebook.recipientSettings()->inMyList())
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.recipientSettings()->inMyList()
+                    ? static_cast<int>(
+                          *notebook.recipientSettings()->inMyList())
+                    : *gNullValue)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":recipientStack"),
         (notebook.recipientSettings()
-         ? (notebook.recipientSettings()->stack()
-            ? *notebook.recipientSettings()->stack()
-            : *gNullValue)
-         : *gNullValue));
+             ? (notebook.recipientSettings()->stack()
+                    ? *notebook.recipientSettings()->stack()
+                    : *gNullValue)
+             : *gNullValue));
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -1280,122 +1224,122 @@ bool putNotebookRestrictions(
     query.bindValue(
         QStringLiteral(":noReadNotes"),
         (notebookRestrictions.noReadNotes()
-         ? (*notebookRestrictions.noReadNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noReadNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noCreateNotes"),
         (notebookRestrictions.noCreateNotes()
-         ? (*notebookRestrictions.noCreateNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noCreateNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noUpdateNotes"),
         (notebookRestrictions.noUpdateNotes()
-         ? (*notebookRestrictions.noUpdateNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noUpdateNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noExpungeNotes"),
         (notebookRestrictions.noExpungeNotes()
-         ? (*notebookRestrictions.noExpungeNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noExpungeNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noShareNotes"),
         (notebookRestrictions.noShareNotes()
-         ? (*notebookRestrictions.noShareNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noShareNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noEmailNotes"),
         (notebookRestrictions.noEmailNotes()
-         ? (*notebookRestrictions.noEmailNotes() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noEmailNotes() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noSendMessageToRecipients"),
         (notebookRestrictions.noSendMessageToRecipients()
-         ? (*notebookRestrictions.noSendMessageToRecipients() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noSendMessageToRecipients() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noUpdateNotebook"),
         (notebookRestrictions.noUpdateNotebook()
-         ? (*notebookRestrictions.noUpdateNotebook() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noUpdateNotebook() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noExpungeNotebook"),
         (notebookRestrictions.noExpungeNotebook()
-         ? (*notebookRestrictions.noExpungeNotebook() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noExpungeNotebook() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noSetDefaultNotebook"),
         (notebookRestrictions.noSetDefaultNotebook()
-         ? (*notebookRestrictions.noSetDefaultNotebook() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noSetDefaultNotebook() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noSetNotebookStack"),
         (notebookRestrictions.noSetNotebookStack()
-         ? (*notebookRestrictions.noSetNotebookStack() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noSetNotebookStack() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noPublishToPublic"),
         (notebookRestrictions.noPublishToPublic()
-         ? (*notebookRestrictions.noPublishToPublic() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noPublishToPublic() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noPublishToBusinessLibrary"),
         (notebookRestrictions.noPublishToBusinessLibrary()
-         ? (*notebookRestrictions.noPublishToBusinessLibrary() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noPublishToBusinessLibrary() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noCreateTags"),
         (notebookRestrictions.noCreateTags()
-         ? (*notebookRestrictions.noCreateTags() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noCreateTags() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noUpdateTags"),
         (notebookRestrictions.noUpdateTags()
-         ? (*notebookRestrictions.noUpdateTags() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noUpdateTags() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noExpungeTags"),
         (notebookRestrictions.noExpungeTags()
-         ? (*notebookRestrictions.noExpungeTags() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noExpungeTags() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noSetParentTag"),
         (notebookRestrictions.noSetParentTag()
-         ? (*notebookRestrictions.noSetParentTag() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noSetParentTag() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noCreateSharedNotebooks"),
         (notebookRestrictions.noCreateSharedNotebooks()
-         ? (*notebookRestrictions.noCreateSharedNotebooks() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noCreateSharedNotebooks() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noShareNotesWithBusiness"),
         (notebookRestrictions.noShareNotesWithBusiness()
-         ? (*notebookRestrictions.noShareNotesWithBusiness() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noShareNotesWithBusiness() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":noRenameNotebook"),
         (notebookRestrictions.noRenameNotebook()
-         ? (*notebookRestrictions.noRenameNotebook() ? 1 : 0)
-         : *gNullValue));
+             ? (*notebookRestrictions.noRenameNotebook() ? 1 : 0)
+             : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":updateWhichSharedNotebookRestrictions"),
@@ -1572,14 +1516,11 @@ bool putTag(
     qevercloud::Tag tag, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    QNDEBUG(
-        "local_storage::sql::utils",
-        "putTag: " << tag);
+    QNDEBUG("local_storage::sql::utils", "putTag: " << tag);
 
-    const ErrorString errorPrefix(
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Can't put tag into the local storage database"));
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put tag into the local storage database"));
 
     ErrorString error;
     if (!checkTag(tag, error)) {
@@ -1659,9 +1600,8 @@ bool putTag(
 
     query.bindValue(
         QStringLiteral(":parentLocalUid"),
-        (!tag.parentTagLocalId().isEmpty()
-         ? tag.parentTagLocalId()
-         : *gNullValue));
+        (!tag.parentTagLocalId().isEmpty() ? tag.parentTagLocalId()
+                                           : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":isDirty"), (tag.isLocallyModified() ? 1 : 0));
@@ -1685,6 +1625,117 @@ bool putTag(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",
             "Cannot put tag into the local storage database, failed to commit"),
+        false);
+
+    return true;
+}
+
+bool putLinkedNotebook(
+    const qevercloud::LinkedNotebook & linkedNotebook, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QNDEBUG(
+        "local_storage::sql::utils", "putLinkedNotebook: " << linkedNotebook);
+
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put linked notebook into the local storage database"));
+
+    ErrorString error;
+    if (!checkLinkedNotebook(linkedNotebook, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            error << "\nLinked notebook: " << linkedNotebook);
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO LinkedNotebooks "
+        "(guid, updateSequenceNumber, shareName, "
+        "username, shardId, sharedNotebookGlobalId, "
+        "uri, noteStoreUrl, webApiUrlPrefix, stack, "
+        "businessId, isDirty) VALUES(:guid, "
+        ":updateSequenceNumber, :shareName, :username, "
+        ":shardId, :sharedNotebookGlobalId, :uri, "
+        ":noteStoreUrl, :webApiUrlPrefix, :stack, "
+        ":businessId, :isDirty)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put linked notebook into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(
+        QStringLiteral(":guid"),
+        (linkedNotebook.guid() ? *linkedNotebook.guid() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":updateSequenceNumber"),
+        (linkedNotebook.updateSequenceNum()
+             ? *linkedNotebook.updateSequenceNum()
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":shareName"),
+        (linkedNotebook.shareName() ? *linkedNotebook.shareName()
+                                    : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":username"),
+        (linkedNotebook.username() ? *linkedNotebook.username() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":shardId"),
+        (linkedNotebook.shardId() ? *linkedNotebook.shardId() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":sharedNotebookGlobalId"),
+        (linkedNotebook.sharedNotebookGlobalId()
+             ? *linkedNotebook.sharedNotebookGlobalId()
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":uri"),
+        (linkedNotebook.uri() ? *linkedNotebook.uri() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":noteStoreUrl"),
+        (linkedNotebook.noteStoreUrl() ? *linkedNotebook.noteStoreUrl()
+                                       : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":webApiUrlPrefix"),
+        (linkedNotebook.webApiUrlPrefix() ? *linkedNotebook.webApiUrlPrefix()
+                                          : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":stack"),
+        (linkedNotebook.stack() ? *linkedNotebook.stack() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":businessId"),
+        (linkedNotebook.businessId() ? *linkedNotebook.businessId()
+                                     : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isDirty"),
+        (linkedNotebook.isLocallyModified() ? 1 : 0));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put linked notebook into the local storage database"),
         false);
 
     return true;

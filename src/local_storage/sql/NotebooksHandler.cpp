@@ -259,8 +259,7 @@ QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
          ErrorString & errorDescription)
         {
             return handler.listNotebooksImpl(
-                options, database,
-                errorDescription);
+                options, database, errorDescription);
         });
 }
 

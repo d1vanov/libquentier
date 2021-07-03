@@ -56,6 +56,14 @@ Q_GLOBAL_STATIC_WITH_ARGS(
         "Tag field missing in the record received from the local storage "
         "database")));
 
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingLinkedNotebookFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "LinkedNotebook field missing in the record received from the local "
+        "storage database")));
+
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
     const QSqlRecord & record, const QString & column, Type & typeValue,
@@ -138,6 +146,18 @@ bool fillTagValue(
     return fillValue<qevercloud::Tag, VariantType, LocalType>(
         record, column, tag, std::move(setter),
         *gMissingTagFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillLinkedNotebookValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::LinkedNotebook & linkedNotebook,
+    std::function<void(qevercloud::LinkedNotebook&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::LinkedNotebook, VariantType, LocalType>(
+        record, column, linkedNotebook, std::move(setter),
+        *gMissingLinkedNotebookFieldErrorMessage, errorDescription);
 }
 
 template <class FieldType, class VariantType, class LocalType = VariantType>
@@ -1249,20 +1269,87 @@ bool fillTagFromSqlRecord(
     return true;
 }
 
-template <>
-bool fillObjectFromSqlRecord<qevercloud::Notebook>(
-    const QSqlRecord & rec, qevercloud::Notebook & object,
+bool fillLinkedNotebookFromSqlRecord(
+    const QSqlRecord & record, qevercloud::LinkedNotebook & linkedNotebook,
     ErrorString & errorDescription)
 {
-    return fillNotebookFromSqlRecord(rec, object, errorDescription);
+    using qevercloud::LinkedNotebook;
+
+    if (!fillLinkedNotebookValue<QString, QString>(
+            record, QStringLiteral("guid"), linkedNotebook,
+            &LinkedNotebook::setGuid, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillLinkedNotebookValue<int, bool>(
+            record, QStringLiteral("isDirty"), linkedNotebook,
+            &LinkedNotebook::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(LinkedNotebook &, std::optional<QString>)>
+                setter) {
+            fillLinkedNotebookValue<QString, std::optional<QString>>(
+                record, column, linkedNotebook, std::move(setter));
+        };
+
+    fillOptStringValue(
+        QStringLiteral("shareName"), &LinkedNotebook::setShareName);
+
+    fillOptStringValue(
+        QStringLiteral("username"), &LinkedNotebook::setUsername);
+
+    fillOptStringValue(QStringLiteral("shardId"), &LinkedNotebook::setShardId);
+    fillOptStringValue(QStringLiteral("uri"), &LinkedNotebook::setUri);
+    fillOptStringValue(QStringLiteral("stack"), &LinkedNotebook::setStack);
+
+    fillOptStringValue(
+        QStringLiteral("noteStoreUrl"), &LinkedNotebook::setNoteStoreUrl);
+
+    fillOptStringValue(
+        QStringLiteral("webApiUrlPrefix"), &LinkedNotebook::setWebApiUrlPrefix);
+
+    fillOptStringValue(
+        QStringLiteral("sharedNotebookGlobalId"),
+        &LinkedNotebook::setSharedNotebookGlobalId);
+
+    fillLinkedNotebookValue<qint32, qint32>(
+        record, QStringLiteral("updateSequenceNumber"), linkedNotebook,
+        &LinkedNotebook::setUpdateSequenceNum);
+
+    fillLinkedNotebookValue<qint32, qint32>(
+        record, QStringLiteral("businessId"), linkedNotebook,
+        &LinkedNotebook::setBusinessId);
+
+    return true;
+}
+
+template <>
+bool fillObjectFromSqlRecord<qevercloud::Notebook>(
+    const QSqlRecord & record, qevercloud::Notebook & object,
+    ErrorString & errorDescription)
+{
+    return fillNotebookFromSqlRecord(record, object, errorDescription);
 }
 
 template <>
 bool fillObjectFromSqlRecord<qevercloud::Tag>(
-    const QSqlRecord & rec, qevercloud::Tag & object,
+    const QSqlRecord & record, qevercloud::Tag & object,
     ErrorString & errorDescription)
 {
-    return fillTagFromSqlRecord(rec, object, errorDescription);
+    return fillTagFromSqlRecord(record, object, errorDescription);
+}
+
+template <>
+bool fillObjectFromSqlRecord<qevercloud::LinkedNotebook>(
+    const QSqlRecord & record, qevercloud::LinkedNotebook & object,
+    ErrorString & errorDescription)
+{
+    return fillLinkedNotebookFromSqlRecord(record, object, errorDescription);
 }
 
 template <>

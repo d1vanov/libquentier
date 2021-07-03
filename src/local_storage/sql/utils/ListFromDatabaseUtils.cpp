@@ -59,6 +59,12 @@ QString listObjectsGenericSqlQuery<qevercloud::Tag>()
 }
 
 template <>
+QString listObjectsGenericSqlQuery<qevercloud::LinkedNotebook>()
+{
+    return QStringLiteral("SELECT * FROM LinkedNotebooks");
+}
+
+template <>
 QString orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(
     const ILocalStorage::ListNotebooksOrder & order)
 {
@@ -98,6 +104,30 @@ QString orderByToSqlTableColumn<ILocalStorage::ListTagsOrder>(
         break;
     case ListTagsOrder::ByName:
         result = QStringLiteral("nameLower");
+        break;
+    default:
+        break;
+    }
+
+    return result;
+}
+
+template <>
+QString orderByToSqlTableColumn<ILocalStorage::ListLinkedNotebooksOrder>(
+    const ILocalStorage::ListLinkedNotebooksOrder & order)
+{
+    QString result;
+
+    using ListLinkedNotebooksOrder = ILocalStorage::ListLinkedNotebooksOrder;
+    switch (order) {
+    case ListLinkedNotebooksOrder::ByUpdateSequenceNumber:
+        result = QStringLiteral("updateSequenceNumber");
+        break;
+    case ListLinkedNotebooksOrder::ByShareName:
+        result = QStringLiteral("shareName");
+        break;
+    case ListLinkedNotebooksOrder::ByUsername:
+        result = QStringLiteral("username");
         break;
     default:
         break;
