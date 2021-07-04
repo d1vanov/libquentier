@@ -50,6 +50,7 @@ void registerMetatypes()
 {
     qRegisterMetaType<Account>("Account");
 
+    qRegisterMetaType<qevercloud::Guid>("qevercloud::Guid");
     qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
     qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
     qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
