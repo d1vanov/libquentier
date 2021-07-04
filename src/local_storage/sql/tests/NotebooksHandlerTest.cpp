@@ -17,6 +17,7 @@
  */
 
 #include "../ConnectionPool.h"
+#include "../LinkedNotebooksHandler.h"
 #include "../NotebooksHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
@@ -582,6 +583,22 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
     const auto notebook = GetParam();
+
+    if (notebook.linkedNotebookGuid()) {
+        const auto linkedNotebooksHandler =
+            std::make_shared<LinkedNotebooksHandler>(
+                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_writerThread, m_temporaryDir.path());
+
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(notebook.linkedNotebookGuid());
+
+        auto putLinkedNotebookFuture =
+            linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+        putLinkedNotebookFuture.waitForFinished();
+    }
+
     auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
     putNotebookFuture.waitForFinished();
 
@@ -738,6 +755,7 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
         &notifierListener,
         &NotebooksHandlerTestNotifierListener::onNotebookExpunged);
 
+    QStringList linkedNotebookGuids;
     auto notebooks = gNotebookTestValues;
     int notebookCounter = 2;
     qint64 sharedNotebookIdCounter = 6U;
@@ -766,6 +784,25 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
         ++notebookCounter;
 
         notebook.setDefaultNotebook(std::nullopt);
+
+        if (notebook.linkedNotebookGuid()) {
+            linkedNotebookGuids << *notebook.linkedNotebookGuid();
+        }
+    }
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(linkedNotebookGuid);
+
+        auto putLinkedNotebookFuture =
+            linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+        putLinkedNotebookFuture.waitForFinished();
     }
 
     QFutureSynchronizer<void> putNotebooksSynchronizer;
@@ -861,6 +898,19 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
         CreateNotebookOptions{CreateNotebookOption::WithLinkedNotebookGuid});
 
     notebook2.setDefaultNotebook(std::nullopt);
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    qevercloud::LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(notebook2.linkedNotebookGuid());
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+    putLinkedNotebookFuture.waitForFinished();
 
     auto putNotebookFuture = notebooksHandler->putNotebook(notebook1);
     putNotebookFuture.waitForFinished();

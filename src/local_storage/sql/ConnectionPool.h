@@ -53,6 +53,7 @@ private:
     const QString m_databaseName;
     const QString m_sqlDriverName;
     const QString m_connectionOptions;
+    const qint64 m_pageSize;
 
     QReadWriteLock m_connectionsLock;
     QHash<QThread*, ConnectionData> m_connections;

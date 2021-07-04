@@ -17,6 +17,7 @@
  */
 
 #include "../ConnectionPool.h"
+#include "../LinkedNotebooksHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
 #include "../TagsHandler.h"
@@ -31,6 +32,7 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QTemporaryDir>
 #include <QThreadPool>
 
 #include <gtest/gtest.h>
@@ -150,6 +152,7 @@ protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
     Notifier * m_notifier;
+    QTemporaryDir m_temporaryDir;
 };
 
 } // namespace
@@ -349,6 +352,22 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
         &TagsHandlerTestNotifierListener::onTagExpunged);
 
     const auto tag = GetParam();
+
+    if (tag.linkedNotebookGuid()) {
+        const auto linkedNotebooksHandler =
+            std::make_shared<LinkedNotebooksHandler>(
+                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_writerThread, m_temporaryDir.path());
+
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(tag.linkedNotebookGuid());
+
+        auto putLinkedNotebookFuture =
+            linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+        putLinkedNotebookFuture.waitForFinished();
+    }
+
     auto putTagFuture = tagsHandler->putTag(tag);
     putTagFuture.waitForFinished();
 
@@ -480,7 +499,28 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
         &notifierListener,
         &TagsHandlerTestNotifierListener::onTagExpunged);
 
+    QStringList linkedNotebookGuids;
     auto tags = gTagTestValues;
+    for (const auto & tag: qAsConst(tags)) {
+        if (tag.linkedNotebookGuid()) {
+            linkedNotebookGuids << *tag.linkedNotebookGuid();
+        }
+    }
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(linkedNotebookGuid);
+
+        auto putLinkedNotebookFuture =
+            linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+        putLinkedNotebookFuture.waitForFinished();
+    }
 
     QFutureSynchronizer<void> putTagsSynchronizer;
     for (auto tag: tags)
@@ -571,6 +611,19 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
 
     auto tag2 = createTag(
         CreateTagOptions{CreateTagOption::WithLinkedNotebookGuid});
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    qevercloud::LinkedNotebook linkedNotebook;
+    linkedNotebook.setGuid(tag2.linkedNotebookGuid());
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+    putLinkedNotebookFuture.waitForFinished();
 
     auto putTagFuture = tagsHandler->putTag(tag1);
     putTagFuture.waitForFinished();
@@ -710,6 +763,20 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
     findTagFuture = tagsHandler->findTagByName(tag2.name().value());
     findTagFuture.waitForFinished();
     EXPECT_EQ(findTagFuture.resultCount(), 0);
+}
+
+TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    auto tag = createTag();
+    tag.setParentTagLocalId(UidGenerator::Generate());
+    tag.setParentGuid(UidGenerator::Generate());
+
+    auto putTagFuture = tagsHandler->putTag(tag);
+    EXPECT_THROW(putTagFuture.waitForFinished(), IQuentierException);
 }
 
 } // namespace quentier::local_storage::sql::tests

@@ -22,10 +22,12 @@
 #include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/SysInfo.h>
 
 #include <QObject>
 #include <QReadLocker>
 #include <QSqlError>
+#include <QSqlQuery>
 #include <QWriteLocker>
 
 #include <sstream>
@@ -41,7 +43,8 @@ ConnectionPool::ConnectionPool(
     m_password{std::move(password)},
     m_databaseName{std::move(databaseName)},
     m_sqlDriverName{std::move(sqlDriverName)},
-    m_connectionOptions{std::move(connectionOptions)}
+    m_connectionOptions{std::move(connectionOptions)},
+    m_pageSize{[]{ SysInfo sysInfo; return sysInfo.pageSize(); }()}
 {
     const bool isSqlDriverAvailable =
         QSqlDatabase::isDriverAvailable(m_sqlDriverName);
@@ -147,6 +150,39 @@ QSqlDatabase ConnectionPool::database()
 
         QNWARNING("local_storage:sql:connection_pool", error);
         throw DatabaseOpeningException(error);
+    }
+
+    QSqlQuery query{database};
+    if (Q_UNLIKELY(!query.exec(QStringLiteral("PRAGMA foreign_keys = ON")))) {
+        ErrorString error(QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::ConnectionPool",
+            "Failed to enable foreign keys for the local storage database "
+            "connection"));
+
+        const auto lastError = query.lastError();
+        error.details() += lastError.text();
+        error.details() += QStringLiteral("; native error code = ");
+        error.details() += lastError.nativeErrorCode();
+
+        QNWARNING("local_storage:sql:connection_pool", error);
+        throw DatabaseRequestException(error);
+    }
+
+    if (Q_UNLIKELY(!query.exec(
+            QString::fromUtf8("PRAGMA page_size = %1").arg(m_pageSize))))
+    {
+        ErrorString error(QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::ConnectionPool",
+            "Failed to set page size for the local storage database "
+            "connection"));
+
+        const auto lastError = query.lastError();
+        error.details() += lastError.text();
+        error.details() += QStringLiteral("; native error code = ");
+        error.details() += lastError.nativeErrorCode();
+
+        QNWARNING("local_storage:sql:connection_pool", error);
+        throw DatabaseRequestException(error);
     }
 
     return database;
