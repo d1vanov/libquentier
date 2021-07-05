@@ -23,6 +23,7 @@
 #include "Tasks.h"
 #include "TypeChecks.h"
 
+#include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
 #include "utils/ListFromDatabaseUtils.h"
 #include "utils/NotebookUtils.h"
@@ -307,7 +308,7 @@ std::optional<quint32> NotebooksHandler::notebookCountImpl(
                 "local_storage::sql::NotebooksHandler",
                 "Cannot count notebooks in the local storage database: failed "
                 "to convert notebook count to int"));
-        QNWARNING("local_storage:sql", errorDescription);
+        QNWARNING("local_storage::sql::NotebooksHandler", errorDescription);
         return std::nullopt;
     }
 
@@ -318,6 +319,8 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
+    utils::SelectTransactionGuard transactionGuard{database};
+
     static const QString queryString = QStringLiteral(
         "SELECT * FROM Notebooks "
         "LEFT OUTER JOIN NotebookRestrictions ON "

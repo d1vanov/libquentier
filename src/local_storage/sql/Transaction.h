@@ -25,16 +25,33 @@ namespace quentier::local_storage::sql {
 class Transaction
 {
 public:
-    explicit Transaction(const QSqlDatabase & database);
+    enum class Type
+    {
+        Default = 0,
+        Selection,
+        Immediate,
+        Exclusive
+    };
+
+    explicit Transaction(
+        const QSqlDatabase & database, Type type = Type::Default);
+
     ~Transaction();
 
     [[nodiscard]] bool commit();
     [[nodiscard]] bool rollback();
+    [[nodiscard]] bool end();
+
+private:
+    void init();
 
 private:
     QSqlDatabase m_database;
+    const Type m_type;
+
     bool m_committed = false;
     bool m_rolledBack = false;
+    bool m_ended = false;
 };
 
 } // namespace quentier::local_storage::sql

@@ -24,6 +24,7 @@
 #include "TypeChecks.h"
 #include "UsersHandler.h"
 
+#include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
 #include "utils/PutToDatabaseUtils.h"
 #include "utils/RemoveFromDatabaseUtils.h"
@@ -189,6 +190,8 @@ std::optional<qevercloud::User> UsersHandler::findUserByIdImpl(
     QNDEBUG(
         "local_storage::sql::UsersHandler",
         "UsersHandler::findUserByIdImpl: user id = " << userId);
+
+    utils::SelectTransactionGuard transactionGuard{database};
 
     static const QString queryString = QStringLiteral(
         "SELECT * FROM Users LEFT OUTER JOIN UserAttributes "

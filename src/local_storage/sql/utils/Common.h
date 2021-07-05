@@ -18,12 +18,28 @@
 
 #pragma once
 
+#include "../Transaction.h"
+
 namespace quentier::local_storage::sql::utils {
 
 enum class TransactionOption
 {
     UseSeparateTransaction,
     DontUseSeparateTransaction
+};
+
+struct SelectTransactionGuard
+{
+    SelectTransactionGuard(const QSqlDatabase & database) :
+        m_transaction(database, Transaction::Type::Selection)
+    {}
+
+    ~SelectTransactionGuard()
+    {
+        Q_UNUSED(m_transaction.end())
+    }
+
+    Transaction m_transaction;
 };
 
 } // namespace quentier::local_storage::sql::utils
