@@ -1741,4 +1741,15 @@ bool putLinkedNotebook(
     return true;
 }
 
+bool putResource(
+    const qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(resource)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 } // namespace quentier::local_storage::sql::utils

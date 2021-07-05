@@ -100,4 +100,8 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::LinkedNotebook & linkedNotebook, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool putResource(
+    const qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

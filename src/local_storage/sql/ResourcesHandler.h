@@ -49,37 +49,32 @@ public:
         const QString & localStorageDirPath);
 
     [[nodiscard]] QFuture<quint32> resourceCount(
-        NoteCountOptions options = NoteCountOptions(
-            NoteCountOption::IncludeNonDeletedNotes)) const;
+        NoteCountOptions options = NoteCountOptions{
+            NoteCountOption::IncludeNonDeletedNotes}) const;
 
     [[nodiscard]] QFuture<quint32> resourceCountPerNoteLocalId(
         QString noteLocalId) const;
 
     [[nodiscard]] QFuture<void> putResource(qevercloud::Resource resource);
 
-    [[nodiscard]] QFuture<qevercloud::Resource>
-        findResourceByLocalId(
-            QString resourceLocalId,
-            FetchResourceOptions options = {}) const;
+    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
+        QString resourceLocalId, FetchResourceOptions options = {}) const;
 
-    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
-        findResourceByGuid(
-            QString resourceGuid,
-            FetchResourceOptions options = {}) const;
+    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
+        qevercloud::Guid resourceGuid, FetchResourceOptions options = {}) const;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId);
 
-    [[nodiscard]] QFuture<void> expungeResourceByGuid(
-        QString resourceGuid);
+    [[nodiscard]] QFuture<void> expungeResourceByGuid(QString resourceGuid);
 
 private:
     [[nodiscard]] std::optional<quint32> resourceCountImpl(
-        NoteCountOptions noteCountOptions,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        NoteCountOptions noteCountOptions, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<quint32> resourceCountPerNoteLocalIdImpl(
-        QString noteLocalId, QSqlDatabase & database,
+        const QString & noteLocalId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalIdImpl(
@@ -89,6 +84,14 @@ private:
     [[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuidImpl(
         const qevercloud::Guid & guid, QSqlDatabase & database,
         ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
+        const QString & localId, qevercloud::ResourceAttributes & attributes,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool findResourceAttributesApplicationDataFullMapByLocalId(
+        const QString & localId, qevercloud::ResourceAttributes & attributes,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeResourceByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,

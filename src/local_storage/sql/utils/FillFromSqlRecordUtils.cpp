@@ -1328,6 +1328,17 @@ bool fillLinkedNotebookFromSqlRecord(
     return true;
 }
 
+bool fillResourceFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Resource & resource,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(resource)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 template <>
 bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     const QSqlRecord & record, qevercloud::Notebook & object,
@@ -1350,6 +1361,14 @@ bool fillObjectFromSqlRecord<qevercloud::LinkedNotebook>(
     ErrorString & errorDescription)
 {
     return fillLinkedNotebookFromSqlRecord(record, object, errorDescription);
+}
+
+template <>
+bool fillObjectFromSqlRecord<qevercloud::Resource>(
+    const QSqlRecord & record, qevercloud::Resource & object,
+    ErrorString & errorDescription)
+{
+    return fillResourceFromSqlRecord(record, object, errorDescription);
 }
 
 template <>
