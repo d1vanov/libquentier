@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <qevercloud/types/Fwd.h>
+
 #include <QString>
 
 class QDir;
@@ -33,5 +35,13 @@ namespace quentier::local_storage::sql::utils {
 [[nodiscard]] bool removeResourceDataFilesForNote(
     const QString & noteLocalId, const QDir & localStorageDir,
     ErrorString & errorDescription);
+
+[[nodiscard]] bool readResourceDataFromFiles(
+    qevercloud::Resource & resource, const QDir & localStorageDir,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeResourceDataFiles(
+    const QString & noteLocalId, const QString & resourceLocalId,
+    const QDir & localStorageDir, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils

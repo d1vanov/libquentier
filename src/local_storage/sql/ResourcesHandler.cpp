@@ -16,16 +16,18 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ResourcesHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
-#include "ResourcesHandler.h"
 #include "Tasks.h"
 #include "TypeChecks.h"
 
 #include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
 #include "utils/PutToDatabaseUtils.h"
+#include "utils/ResourceDataFilesUtils.h"
+#include "utils/ResourceUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -39,9 +41,11 @@
 #include <utility/Qt5Promise.h>
 #endif
 
+#include <QReadLocker>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QThreadPool>
+#include <QWriteLocker>
 
 namespace quentier::local_storage::sql {
 
@@ -127,6 +131,7 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
         [resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
+            QWriteLocker locker{&handler.m_resourceDataFilesLock};
             bool res = utils::putResource(resource, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);
@@ -144,7 +149,7 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             return handler.findResourceByLocalIdImpl(
-                resourceLocalId, database, errorDescription);
+                resourceLocalId, options, database, errorDescription);
         });
 }
 
@@ -157,7 +162,7 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByGuid(
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             return handler.findResourceByGuidImpl(
-                resourceGuid, database, errorDescription);
+                resourceGuid, options, database, errorDescription);
         });
 }
 
@@ -169,6 +174,7 @@ QFuture<void> ResourcesHandler::expungeResourceByLocalId(
         [resourceLocalId = std::move(resourceLocalId)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
+            QWriteLocker locker{&handler.m_resourceDataFilesLock};
             return handler.expungeResourceByLocalIdImpl(
                 resourceLocalId, database, errorDescription);
         });
@@ -182,6 +188,7 @@ QFuture<void> ResourcesHandler::expungeResourceByGuid(
         [resourceGuid = std::move(resourceGuid)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
+            QWriteLocker locker{&handler.m_resourceDataFilesLock};
             return handler.expungeResourceByGuidImpl(
                 resourceGuid, database, errorDescription);
         });
@@ -200,8 +207,7 @@ std::optional<quint32> ResourcesHandler::resourceCountImpl(
         queryString =
             QStringLiteral("SELECT COUNT(resourceLocalUid) FROM Resources");
     }
-    else
-    {
+    else {
         queryString = QStringLiteral(
             "SELECT COUNT(resourceLocalUid) FROM Resources "
             "WHERE resourceLocalUid IN (SELECT resourceLocalUid "
@@ -236,12 +242,11 @@ std::optional<quint32> ResourcesHandler::resourceCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::ResourcesHandler",
-                "Cannot count resources corresponding to note count options "
-                "in the local storage database: failed to convert resource "
-                "count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot count resources corresponding to note count options "
+            "in the local storage database: failed to convert resource "
+            "count to int"));
         QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
         return std::nullopt;
     }
@@ -288,12 +293,11 @@ std::optional<quint32> ResourcesHandler::resourceCountPerNoteLocalIdImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::ResourcesHandler",
-                "Cannot count resources corresponding to note local id "
-                "in the local storage database: failed to convert resource "
-                "count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot count resources corresponding to note local id "
+            "in the local storage database: failed to convert resource "
+            "count to int"));
         QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
         return std::nullopt;
     }
@@ -302,9 +306,14 @@ std::optional<quint32> ResourcesHandler::resourceCountPerNoteLocalIdImpl(
 }
 
 std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
-    const QString & resourceLocalId, QSqlDatabase & database,
-    ErrorString & errorDescription) const
+    const QString & resourceLocalId, const FetchResourceOptions options,
+    QSqlDatabase & database, ErrorString & errorDescription) const
 {
+    std::optional<QReadLocker> locker;
+    if (options.testFlag(FetchResourceOption::WithBinaryData)) {
+        locker.emplace(&m_resourceDataFilesLock);
+    }
+
     utils::SelectTransactionGuard transactionGuard{database};
 
     static const QString queryString = QStringLiteral(
@@ -348,14 +357,12 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
 
     const auto record = query.record();
     qevercloud::Resource resource;
-    resource.setLocalId(resourceLocalId);
     ErrorString error;
     if (!utils::fillResourceFromSqlRecord(record, resource, error)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::ResourcesHandler",
-                "Failed to find resource by local id in the local storage "
-                "database"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Failed to find resource by local id in the local storage "
+            "database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -365,17 +372,312 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
 
     if (resource.attributes()) {
         if (!findResourceAttributesApplicationDataKeysOnlyByLocalId(
-                resourceLocalId, *resource.mutableAttributes(), database, errorDescription)) {
+                resourceLocalId, *resource.mutableAttributes(), database,
+                errorDescription))
+        {
             return std::nullopt;
         }
 
         if (!findResourceAttributesApplicationDataFullMapByLocalId(
-                resourceLocalId, *resource.mutableAttributes(), database, errorDescription)) {
+                resourceLocalId, *resource.mutableAttributes(), database,
+                errorDescription))
+        {
             return std::nullopt;
         }
     }
 
+    if (options.testFlag(FetchResourceOption::WithBinaryData) &&
+        !utils::readResourceDataFromFiles(
+            resource, m_localStorageDir, errorDescription))
+    {
+        return std::nullopt;
+    }
+
     return resource;
+}
+
+std::optional<qevercloud::Resource> ResourcesHandler::findResourceByGuidImpl(
+    const qevercloud::Guid & resourceGuid, const FetchResourceOptions options,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    std::optional<QReadLocker> locker;
+    if (options.testFlag(FetchResourceOption::WithBinaryData)) {
+        locker.emplace(&m_resourceDataFilesLock);
+    }
+
+    utils::SelectTransactionGuard transactionGuard{database};
+
+    static const QString queryString = QStringLiteral(
+        "SELECT Resources.resourceLocalUid, resourceGuid, "
+        "noteGuid, resourceUpdateSequenceNumber, resourceIsDirty, "
+        "dataSize, dataHash, mime, width, height, recognitionDataSize, "
+        "recognitionDataHash, alternateDataSize, alternateDataHash, "
+        "resourceIndexInNote, resourceSourceURL, timestamp, "
+        "resourceLatitude, resourceLongitude, resourceAltitude, "
+        "cameraMake, cameraModel, clientWillIndex, fileName, "
+        "attachment, resourceKey, resourceMapKey, resourceValue, "
+        "localNote, recognitionDataBody FROM Resources "
+        "LEFT OUTER JOIN NoteResources ON "
+        "Resources.resourceLocalUid = NoteResources.localResource "
+        "LEFT OUTER JOIN ResourceAttributes ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributes.resourceLocalUid "
+        "WHERE Resources.resourceGuid = :resourceGuid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource by guid in the local storage "
+            "database: failed to prepare query"));
+
+    query.bindValue(QStringLiteral(":resourceGuid"), resourceGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource by guid in the local storage database"));
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::Resource resource;
+    ErrorString error;
+    if (!utils::fillResourceFromSqlRecord(record, resource, error)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Failed to find resource by guid in the local storage "
+            "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    if (resource.attributes()) {
+        const auto & resourceLocalId = resource.localId();
+
+        if (!findResourceAttributesApplicationDataKeysOnlyByLocalId(
+                resourceLocalId, *resource.mutableAttributes(), database,
+                errorDescription))
+        {
+            return std::nullopt;
+        }
+
+        if (!findResourceAttributesApplicationDataFullMapByLocalId(
+                resourceLocalId, *resource.mutableAttributes(), database,
+                errorDescription))
+        {
+            return std::nullopt;
+        }
+    }
+
+    if (options.testFlag(FetchResourceOption::WithBinaryData) &&
+        !utils::readResourceDataFromFiles(
+            resource, m_localStorageDir, errorDescription))
+    {
+        return std::nullopt;
+    }
+
+    return resource;
+}
+
+bool ResourcesHandler::findResourceAttributesApplicationDataKeysOnlyByLocalId(
+    const QString & localId, qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT resourceKey FROM ResourceAttributesApplicationDataKeysOnly "
+        "WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource application data keys only part in the local "
+            "storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource application data keys only part in the local "
+            "storage database"),
+        false);
+
+    if (!query.next()) {
+        return true;
+    }
+
+    if (!attributes.applicationData()) {
+        attributes.setApplicationData(qevercloud::LazyMap{});
+    }
+
+    auto & appData = *attributes.mutableApplicationData();
+    if (!appData.keysOnly()) {
+        appData.setKeysOnly(QSet<QString>{});
+    }
+
+    appData.mutableKeysOnly()->insert(query.value(0).toString());
+    return true;
+}
+
+bool ResourcesHandler::findResourceAttributesApplicationDataFullMapByLocalId(
+    const QString & localId, qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT resourceMapKey, resourceValue "
+        "FROM ResourceAttributesApplicationDataFullMap "
+        "WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource application data full map part in the local "
+            "storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot find resource application data full map part in the local "
+            "storage database"),
+        false);
+
+    if (!query.next()) {
+        return true;
+    }
+
+    const auto record = query.record();
+    const int keyIndex = record.indexOf(QStringLiteral("resourceMapKey"));
+    const int valueIndex = record.indexOf(QStringLiteral("resourceValue"));
+
+    if (keyIndex < 0 || valueIndex < 0) {
+        return true;
+    }
+
+    if (!attributes.applicationData()) {
+        attributes.setApplicationData(qevercloud::LazyMap{});
+    }
+
+    auto & appData = *attributes.mutableApplicationData();
+    if (!appData.fullMap()) {
+        appData.setFullMap(QMap<QString, QString>{});
+    }
+
+    appData.mutableFullMap()->insert(
+        record.value(keyIndex).toString(), record.value(valueIndex).toString());
+
+    return true;
+}
+
+bool ResourcesHandler::expungeResourceByLocalIdImpl(
+    const QString & localId, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    std::optional<Transaction> transaction)
+{
+    if (!transaction) {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
+
+    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
+        localId, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Resources WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot expunge resource from the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot expunge resource from the local storage database"),
+        false);
+
+    res = transaction->commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::ResourcesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot expunge resource from the local storage database, failed "
+            "to commit transaction"),
+        false);
+
+    if (!utils::removeResourceDataFiles(
+            noteLocalId, localId, m_localStorageDir, errorDescription))
+    {
+        QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
+    }
+
+    return true;
+}
+
+bool ResourcesHandler::expungeResourceByGuidImpl(
+    const qevercloud::Guid & guid, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
+    const auto localId =
+        utils::resourceLocalIdByGuid(guid, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    return expungeResourceByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction));
+}
+
+TaskContext ResourcesHandler::makeTaskContext() const
+{
+    return TaskContext{
+        m_threadPool,
+        m_writerThread,
+        m_connectionPool,
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::ResourcessHandler",
+                "ResourcesHandler is already destroyed")},
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::ResourcesHandler",
+                "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

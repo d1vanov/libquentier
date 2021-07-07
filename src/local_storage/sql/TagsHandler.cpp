@@ -601,7 +601,7 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::TagsHandler",
                 "Cannot expunge tag from the local storage database, failed to "
-                "commit"),
+                "commit transaction"),
             (ExpungeTagResult{false, {}, {}}));
     }
 

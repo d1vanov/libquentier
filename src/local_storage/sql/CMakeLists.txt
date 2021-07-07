@@ -17,6 +17,8 @@ target_sources(${LIBRARY_NAME}
   Notifier.h
   NotifierProxy.cpp
   NotifierProxy.h
+  ResourcesHandler.cpp
+  ResourcesHandler.h
   TablesInitializer.cpp
   TablesInitializer.h
   TagsHandler.cpp
@@ -45,6 +47,8 @@ target_sources(${LIBRARY_NAME}
   utils/RemoveFromDatabaseUtils.h
   utils/ResourceDataFilesUtils.cpp
   utils/ResourceDataFilesUtils.h
+  utils/ResourceUtils.cpp
+  utils/ResourceUtils.h
   utils/SqlUtils.cpp
   utils/SqlUtils.h
   utils/TagUtils.cpp

@@ -63,4 +63,26 @@ bool removeResourceDataFilesForNote(
     return true;
 }
 
+bool readResourceDataFromFiles(
+    qevercloud::Resource & resource, const QDir & localStorageDir,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(resource)
+    Q_UNUSED(localStorageDir)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool removeResourceDataFiles(
+    const QString & noteLocalId, const QString & resourceLocalId,
+    const QDir & localStorageDir, ErrorString & errorDescription)
+{
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(resourceLocalId)
+    Q_UNUSED(localStorageDir)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 } // namespace quentier::local_storage::sql::utils

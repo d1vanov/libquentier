@@ -18,22 +18,28 @@
 
 #pragma once
 
-#include <memory>
+#include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
+
+#include <optional>
 
 class QSqlDatabase;
-class QThread;
+class QString;
 
-namespace quentier::local_storage::sql {
+namespace quentier {
 
-class ConnectionPool;
-using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
+class ErrorString;
 
-class Notifier;
+} // namespace quentier
 
-class Transaction;
+namespace quentier::local_storage::sql::utils {
 
-struct TaskContext;
+[[nodiscard]] QString noteLocalIdByResourceLocalId(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
 
-using QThreadPtr = std::shared_ptr<QThread>;
+[[nodiscard]] QString resourceLocalIdByGuid(
+    const QString & resourceGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
 
-} // namespace quentier::local_storage::sql
+} // namespace quentier::local_storage::sql::utils

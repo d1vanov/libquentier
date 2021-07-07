@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Fwd.h"
+#include "Transaction.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -26,6 +27,7 @@
 #include <qevercloud/types/Resource.h>
 
 #include <QDir>
+#include <QReadWriteLock>
 
 #include <memory>
 #include <optional>
@@ -78,12 +80,12 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalIdImpl(
-        const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const QString & localId, FetchResourceOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuidImpl(
-        const qevercloud::Guid & guid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const qevercloud::Guid & guid, FetchResourceOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
         const QString & localId, qevercloud::ResourceAttributes & attributes,
@@ -95,7 +97,8 @@ private:
 
     [[nodiscard]] bool expungeResourceByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription);
+        ErrorString & errorDescription,
+        std::optional<Transaction> transaction = std::nullopt);
 
     [[nodiscard]] bool expungeResourceByGuidImpl(
         const qevercloud::Guid & guid, QSqlDatabase & database,
@@ -109,6 +112,7 @@ private:
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
     QDir m_localStorageDir;
+    mutable QReadWriteLock m_resourceDataFilesLock;
 };
 
 } // namespace quentier::local_storage::sql
