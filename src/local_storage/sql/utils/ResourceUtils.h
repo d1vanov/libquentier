@@ -38,6 +38,10 @@ namespace quentier::local_storage::sql::utils {
     const QString & resourceLocalId, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] QString resourceLocalId(
+    const qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 [[nodiscard]] QString resourceLocalIdByGuid(
     const QString & resourceGuid, QSqlDatabase & database,
     ErrorString & errorDescription);

@@ -19,6 +19,7 @@
 #include "PutToDatabaseUtils.h"
 #include "NotebookUtils.h"
 #include "RemoveFromDatabaseUtils.h"
+#include "ResourceUtils.h"
 #include "TagUtils.h"
 
 #include "../ErrorHandling.h"
@@ -30,6 +31,7 @@
 
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/Resource.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
 
@@ -52,9 +54,9 @@ bool putUser(
 {
     QNDEBUG("local_storage::sql::utils", "putUser: " << user);
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
-        "Can't put user into the local storage database"));
+        "Can't put user into the local storage database")};
 
     ErrorString error;
     if (!checkUser(user, error)) {
@@ -68,7 +70,7 @@ bool putUser(
 
     std::optional<Transaction> transaction;
     if (transactionOption == TransactionOption::UseSeparateTransaction) {
-        transaction.emplace(database);
+        transaction.emplace(database, Transaction::Type::Exclusive);
     }
 
     const QString userId = QString::number(*user.id());
@@ -867,9 +869,9 @@ bool putNotebook(
 {
     QNDEBUG("local_storage::sql::utils", "putNotebook: " << notebook);
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
-        "Can't put notebook into the local storage database"));
+        "Can't put notebook into the local storage database")};
 
     ErrorString error;
     if (!checkNotebook(notebook, error)) {
@@ -882,12 +884,24 @@ bool putNotebook(
         return false;
     }
 
-    const auto localId = notebookLocalId(notebook, database, errorDescription);
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
+    error.clear();
+    const auto localId = notebookLocalId(notebook, database, error);
+    if (localId.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << "\nNotebook: " << notebook);
+        return false;
+    }
+
     if (notebook.localId() != localId) {
         notebook.setLocalId(localId);
     }
-
-    Transaction transaction{database};
 
     if (!putCommonNotebookData(notebook, database, errorDescription)) {
         return false;
@@ -1518,9 +1532,9 @@ bool putTag(
 {
     QNDEBUG("local_storage::sql::utils", "putTag: " << tag);
 
-    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
-        "Can't put tag into the local storage database"));
+        "Can't put tag into the local storage database")};
 
     ErrorString error;
     if (!checkTag(tag, error)) {
@@ -1528,11 +1542,25 @@ bool putTag(
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
-        QNWARNING("local_storage::sql::utils", error << "\nTag: " << tag);
+        QNWARNING(
+            "local_storage::sql::utils", errorDescription << "\nTag: " << tag);
         return false;
     }
 
-    const auto localId = tagLocalId(tag, database, errorDescription);
+    Transaction transaction{database};
+
+    error.clear();
+    const auto localId = tagLocalId(tag, database, error);
+    if (localId.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils", errorDescription << "\nTag: " << tag);
+        return false;
+    }
+
     if (tag.localId() != localId) {
         tag.setLocalId(localId);
     }
@@ -1549,8 +1577,6 @@ bool putTag(
         "VALUES(:localUid, :guid, :linkedNotebookGuid, "
         ":updateSequenceNumber, :name, :nameLower, "
         ":parentGuid, :parentLocalUid, :isDirty, :isLocal, :isFavorited)");
-
-    Transaction transaction{database};
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -1742,11 +1768,137 @@ bool putLinkedNotebook(
 }
 
 bool putResource(
+    qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription, const TransactionOption transactionOption)
+{
+    QNDEBUG("local_storage::sql::utils", "putResource: " << resource);
+
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put resource into the local storage database")};
+
+    ErrorString error;
+    if (!checkResource(resource, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils", error << "\nResource: " << resource);
+        return false;
+    }
+
+    std::optional<Transaction> transaction;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
+
+    error.clear();
+    const auto localId = resourceLocalId(resource, database, error);
+    if (localId.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << "\nResource: " << resource);
+        return false;
+    }
+
+    if (resource.localId() != localId) {
+        resource.setLocalId(localId);
+    }
+
+    if (!putCommonResourceData(resource, database, errorDescription)) {
+        return false;
+    }
+
+    if (resource.attributes()) {
+        if (!putResourceAttributes(
+                localId, *resource.attributes(), database, errorDescription)) {
+            return false;
+        }
+    }
+    else {
+        if (!removeResourceAttributes(localId, database, errorDescription)) {
+            return false;
+        }
+
+        if (!removeResourceAttributesAppDataKeysOnly(
+                localId, database, errorDescription))
+        {
+            return false;
+        }
+
+        if (!removeResourceAttributesAppDataFullMap(
+                localId, database, errorDescription))
+        {
+            return false;
+        }
+    }
+
+    if (resource.data() && resource.data()->body()) {
+        // TODO: write resource data body into a file with .new suffix
+    }
+
+    if (resource.alternateData() && resource.alternateData()->body()) {
+        // TODO: write resource alternate data body into a file with .new suffix
+    }
+
+    if (transaction) {
+        const bool res = transaction->commit();
+        if (!res) {
+            if (resource.data() && resource.data()->body()) {
+                // TODO: remove resource data body file with .new suffix
+            }
+
+            if (resource.alternateData() && resource.alternateData()->body()) {
+                // TODO: remove resource alternate data body file with .new
+                // suffix
+            }
+        }
+
+        ENSURE_DB_REQUEST_RETURN(
+            res, database, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot put resource into the local storage database, failed to "
+                "commit"),
+            false);
+    }
+
+    if (resource.data() && resource.data()->body()) {
+        // TODO: rename resource data body file with .new suffix to a name
+        // without suffix
+    }
+
+    if (resource.alternateData() && resource.alternateData()->body()) {
+        // TODO: rename resource data body with .new suffix to a name without
+        // suffix
+    }
+
+    return true;
+}
+
+bool putCommonResourceData(
     const qevercloud::Resource & resource, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
     // TODO: implement
     Q_UNUSED(resource)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool putResourceAttributes(
+    const QString & localId, const qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(localId)
+    Q_UNUSED(attributes)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return true;

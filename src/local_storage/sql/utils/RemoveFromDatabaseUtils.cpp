@@ -289,4 +289,99 @@ bool removeSharedNotebooks(
     return true;
 }
 
+bool removeResourceAttributes(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM ResourceAttributes "
+        "WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes by resource local id: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes by resource local id"),
+        false);
+
+    return true;
+}
+
+bool removeResourceAttributesAppDataKeysOnly(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM ResourceAttributesApplicationDataKeysOnly "
+        "WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes app data keys only by resource "
+            "local id: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes app data keys only by resource "
+            "local id"),
+        false);
+
+    return true;
+}
+
+bool removeResourceAttributesAppDataFullMap(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM ResourceAttributesApplicationDataFullMap "
+        "WHERE resourceLocalUid = :resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes app data full map by resource "
+            "local id: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot delete resource attributes app data full map by resource "
+            "local id"),
+        false);
+
+    return true;
+}
+
 } // namespace quentier::local_storage::sql::utils

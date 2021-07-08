@@ -101,7 +101,17 @@ namespace quentier::local_storage::sql::utils {
     ErrorString & errorDescription);
 
 [[nodiscard]] bool putResource(
+    qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
+
+[[nodiscard]] bool putCommonResourceData(
     const qevercloud::Resource & resource, QSqlDatabase & database,
     ErrorString & errorDescription);
+
+[[nodiscard]] bool putResourceAttributes(
+    const QString & localId, const qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils

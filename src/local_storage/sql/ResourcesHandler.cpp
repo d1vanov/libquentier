@@ -130,7 +130,7 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
         makeTaskContext(), weak_from_this(),
         [resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
-            ErrorString & errorDescription) {
+            ErrorString & errorDescription) mutable {
             QWriteLocker locker{&handler.m_resourceDataFilesLock};
             bool res = utils::putResource(resource, database, errorDescription);
             if (res) {

@@ -140,6 +140,8 @@ namespace quentier::local_storage::sql::utils {
             errorDescription);
     }
 
+    errorDescription.setBase(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils", "cannot infer notebook's local id"));
     return {};
 }
 

@@ -16,9 +16,13 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ResourceUtils.h"
+
 #include "../ErrorHandling.h"
 
 #include <quentier/types/ErrorString.h>
+
+#include <qevercloud/types/Resource.h>
 
 #include <QSqlQuery>
 
@@ -65,6 +69,23 @@ QString noteLocalIdByResourceLocalId(
     }
 
     return query.value(0).toString();
+}
+
+QString resourceLocalId(
+    const qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    auto localId = resource.localId();
+    if (!localId.isEmpty()) {
+        return localId;
+    }
+
+    if (resource.guid()) {
+        return resourceLocalIdByGuid(
+            *resource.guid(), database, errorDescription);
+    }
+
+    return {};
 }
 
 QString resourceLocalIdByGuid(

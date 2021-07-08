@@ -61,4 +61,16 @@ namespace quentier::local_storage::sql::utils {
     const QString & notebookGuid, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool removeResourceAttributes(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeResourceAttributesAppDataKeysOnly(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeResourceAttributesAppDataFullMap(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils
