@@ -62,6 +62,11 @@ TEST(TablesInitializerTest, InitializeTables)
     EXPECT_TRUE(referenceMasterTableFile.open(QIODevice::ReadOnly));
     const auto referenceMasterTable = QString::fromUtf8(referenceMasterTableFile.readAll()).simplified();
 
+    QFile updatedMasterTable{QStringLiteral("/tmp/master_table_schema.txt")};
+    EXPECT_TRUE(updatedMasterTable.open(QIODevice::WriteOnly));
+    updatedMasterTable.write(masterTable.toUtf8());
+    updatedMasterTable.close();
+
     EXPECT_EQ(masterTable, referenceMasterTable);
     db.close();
 }

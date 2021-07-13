@@ -737,7 +737,7 @@ void TablesInitializer::initializeResourceTables(
             "storage database"));
 
     res = query.exec(QStringLiteral(
-        "CREATE TABLE I F NOT EXIST ResourceAlternateDataBodyVersionIds("
+        "CREATE TABLE IF NOT EXISTS ResourceAlternateDataBodyVersionIds("
         "  resourceLocalUid                 TEXT PRIMARY KEY NOT NULL UNIQUE, "
         "  versionId                        TEXT NOT NULL)"));
 
