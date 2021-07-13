@@ -724,6 +724,30 @@ void TablesInitializer::initializeResourceTables(
             "Cannot create ResourcesMimeIndex index in the local storage "
             "database"));
 
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS ResourceDataBodyVersionIds("
+        "  resourceLocalUid                 TEXT PRIMARY KEY NOT NULL UNIQUE, "
+        "  versionId                        TEXT NOT NULL)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TablesInitializer",
+            "Cannot create ResourceDataBodyVersionIds table in the local "
+            "storage database"));
+
+    res = query.exec(QStringLiteral(
+        "CREATE TABLE I F NOT EXIST ResourceAlternateDataBodyVersionIds("
+        "  resourceLocalUid                 TEXT PRIMARY KEY NOT NULL UNIQUE, "
+        "  versionId                        TEXT NOT NULL)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tables_initializer",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::TablesInitializer",
+            "Cannot create ResourceAlternateDataBodyVersionIds table in the "
+            "local storage database"));
+
     res = query.exec(
         QStringLiteral("CREATE TABLE IF NOT EXISTS ResourceRecognitionData("
                        "  resourceLocalUid REFERENCES "

@@ -17,6 +17,7 @@
  */
 
 #include "Patch1To2.h"
+
 #include "../ConnectionPool.h"
 #include "../ErrorHandling.h"
 
