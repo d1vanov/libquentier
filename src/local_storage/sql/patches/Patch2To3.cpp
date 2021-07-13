@@ -17,6 +17,7 @@
  */
 
 #include "Patch2To3.h"
+#include "PatchUtils.h"
 
 #include "../ConnectionPool.h"
 #include "../ErrorHandling.h"
@@ -317,157 +318,18 @@ bool Patch2To3::backupLocalStorageImpl(
         "local_storage:sql:patches",
         "Patch2To3::backupLocalStorageImpl");
 
-    if (promise.isCanceled()) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch2To3",
-                "Local storage backup has been canceled"));
-        QNINFO("local_storage:sql:patches", errorDescription);
-        return false;
-    }
-
     QString storagePath = accountPersistentStoragePath(m_account);
 
     m_backupDirPath = storagePath +
         QStringLiteral("/backup_upgrade_2_to_3_") +
         QDateTime::currentDateTime().toString(Qt::ISODate);
 
-    QDir backupDir{m_backupDirPath};
-    if (!backupDir.exists()) {
-        if (!backupDir.mkpath(m_backupDirPath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Cannot create a backup copy of the local storage: "
-                           "failed to create folder for backup files"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(m_backupDirPath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-    }
-
-    // First sort out shm and wal files; they are typically quite small
-    // compared to the main db file so won't even bother computing the progress
-    // for their copying separately
-
-    const QFileInfo shmDbFileInfo{
-        storagePath + QStringLiteral("/qn.storage.sqlite-shm")};
-
-    if (shmDbFileInfo.exists()) {
-        const QString shmDbFileName = shmDbFileInfo.fileName();
-
-        const QString shmDbBackupFilePath =
-            m_backupDirPath + QStringLiteral("/") + shmDbFileName;
-
-        const QFileInfo shmDbBackupFileInfo{shmDbBackupFilePath};
-        if (shmDbBackupFileInfo.exists() && !removeFile(shmDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: failed to remove "
-                           "pre-existing SQLite shm backup file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(shmDbBackupFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-
-        const QString shmDbFilePath = shmDbFileInfo.absoluteFilePath();
-        if (!QFile::copy(shmDbFilePath, shmDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: "
-                           "failed to backup SQLite shm file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(shmDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-    }
-
-    const QFileInfo walDbFileInfo{
-        storagePath + QStringLiteral("/qn.storage.sqlite-wal")};
-
-    if (walDbFileInfo.exists()) {
-        const QString walDbFileName = walDbFileInfo.fileName();
-
-        const QString walDbBackupFilePath =
-            m_backupDirPath + QStringLiteral("/") + walDbFileName;
-
-        const QFileInfo walDbBackupFileInfo{walDbBackupFilePath};
-        if (walDbBackupFileInfo.exists() && !removeFile(walDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: failed to remove "
-                           "pre-existing SQLite wal backup file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(walDbBackupFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-
-        QString walDbFilePath = walDbFileInfo.absoluteFilePath();
-        if (!QFile::copy(walDbFilePath, walDbBackupFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't backup local storage: "
-                           "failed to backup SQLite wal file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(walDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-    }
-
-    // Check if the process needs to continue i.e. that it was not canceled
-
-    if (promise.isCanceled())
-    {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch2To3",
-                "Local storage backup has been canceled"));
-        QNINFO("local_storage:sql:patches", errorDescription);
-        return false;
-    }
-
-    // Copy the main db file's contents to the backup location
-    auto pFileCopier = std::make_unique<FileCopier>();
-
-    QObject::connect(
-        pFileCopier.get(), &FileCopier::progressUpdate, pFileCopier.get(),
-        [&](double progress) {
-            promise.setProgressValue(std::clamp(
-                static_cast<int>(std::round(progress * 100.0)), 0, 100));
-        });
-
-    bool detectedError = false;
-
-    QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError,
-        pFileCopier.get(),
-        [&detectedError, &errorDescription](ErrorString error) {
-            errorDescription = std::move(error);
-            detectedError = true;
-        });
-
-    const QString sourceDbFilePath =
-        storagePath + QStringLiteral("/") + gDbFileName;
-
-    const QString backupDbFilePath =
-        m_backupDirPath + QStringLiteral("/") + gDbFileName;
-
-    pFileCopier->copyFile(sourceDbFilePath, backupDbFilePath);
-    return !detectedError;
+    return utils::backupLocalStorageDatabaseFiles(
+        storagePath, m_backupDirPath, promise, errorDescription);
 }
 
 bool Patch2To3::restoreLocalStorageFromBackupImpl(
-    QPromise<void> & promise,
-    ErrorString & errorDescription)
+    QPromise<void> & promise, ErrorString & errorDescription)
 {
     QNDEBUG(
         "local_storage:sql:patches",
@@ -475,117 +337,8 @@ bool Patch2To3::restoreLocalStorageFromBackupImpl(
 
     QString storagePath = accountPersistentStoragePath(m_account);
 
-    // First sort out shm and wal files; they are typically quite small
-    // compared to the main db file so won't even bother computing the progress
-    // for their restoration from backup separately
-
-    QString shmDbFileName = QStringLiteral("qn.storage.sqlite-shm");
-
-    QFileInfo shmDbBackupFileInfo{
-        m_backupDirPath + QStringLiteral("/") + shmDbFileName};
-
-    if (shmDbBackupFileInfo.exists()) {
-        QString shmDbBackupFilePath = shmDbBackupFileInfo.absoluteFilePath();
-
-        QString shmDbFilePath =
-            storagePath + QStringLiteral("/") + shmDbFileName;
-
-        QFileInfo shmDbFileInfo{shmDbFilePath};
-        if (shmDbFileInfo.exists() && !removeFile(shmDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to remove "
-                           "the pre-existing SQLite shm file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(shmDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-
-        if (!QFile::copy(shmDbBackupFilePath, shmDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to restore "
-                           "the SQLite shm file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(shmDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-    }
-
-    QString walDbFileName = QStringLiteral("qn.storage.sqlite-wal");
-
-    QFileInfo walDbBackupFileInfo{
-        m_backupDirPath + QStringLiteral("/") + walDbFileName};
-
-    if (walDbBackupFileInfo.exists()) {
-        QString walDbBackupFilePath = walDbBackupFileInfo.absoluteFilePath();
-
-        const QString walDbFilePath =
-            storagePath + QStringLiteral("/") + walDbFileName;
-
-        const QFileInfo walDbFileInfo{walDbFilePath};
-        if (walDbFileInfo.exists() && !removeFile(walDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to remove "
-                           "the pre-existing SQLite wal file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(walDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-
-        if (!QFile::copy(walDbBackupFilePath, walDbFilePath)) {
-            errorDescription.setBase(
-                QT_TR_NOOP("Can't restore the local storage "
-                           "from backup: failed to restore "
-                           "the SQLite wal file"));
-
-            errorDescription.details() =
-                QDir::toNativeSeparators(walDbFilePath);
-
-            QNWARNING("local_storage:sql:patches", errorDescription);
-            return false;
-        }
-    }
-
-    // Restore the main db file's contents from the backup location
-
-    auto pFileCopier = std::make_unique<FileCopier>();
-
-    QObject::connect(
-        pFileCopier.get(), &FileCopier::progressUpdate, pFileCopier.get(),
-        [&](double progress) {
-            promise.setProgressValue(std::clamp(
-                static_cast<int>(std::round(progress * 100.0)), 0, 100));
-        });
-
-    bool detectedError = false;
-
-    QObject::connect(
-        pFileCopier.get(), &FileCopier::notifyError,
-        pFileCopier.get(),
-        [&detectedError, &errorDescription](ErrorString error) {
-            errorDescription = std::move(error);
-            detectedError = true;
-        });
-
-    const QString sourceDbFilePath =
-        storagePath + QStringLiteral("/") + gDbFileName;
-
-    const QString backupDbFilePath =
-        m_backupDirPath + QStringLiteral("/") + gDbFileName;
-
-    pFileCopier->copyFile(backupDbFilePath, sourceDbFilePath);
-    return !detectedError;
+    return utils::restoreLocalStorageDatabaseFilesFromBackup(
+        storagePath, m_backupDirPath, promise, errorDescription);
 }
 
 bool Patch2To3::removeLocalStorageBackupImpl(
@@ -595,74 +348,8 @@ bool Patch2To3::removeLocalStorageBackupImpl(
         "local_storage:sql:patches",
         "Patch2To3::removeLocalStorageBackup");
 
-    bool removedShmDbBackup = true;
-
-    const QFileInfo shmDbBackupFileInfo{
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-shm")};
-
-    if (shmDbBackupFileInfo.exists() &&
-        !removeFile(shmDbBackupFileInfo.absoluteFilePath()))
-    {
-        QNDEBUG(
-            "local_storage:sql:patches",
-            "Failed to remove the SQLite shm file's backup: "
-                << shmDbBackupFileInfo.absoluteFilePath());
-
-        removedShmDbBackup = false;
-    }
-
-    bool removedWalDbBackup = true;
-
-    const QFileInfo walDbBackupFileInfo{
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite-wal")};
-
-    if (walDbBackupFileInfo.exists() &&
-        !removeFile(walDbBackupFileInfo.absoluteFilePath()))
-    {
-        QNDEBUG(
-            "local_storage:sql:patches",
-            "Failed to remove the SQLite wal file's backup: "
-                << walDbBackupFileInfo.absoluteFilePath());
-
-        removedWalDbBackup = false;
-    }
-
-    bool removedDbBackup = true;
-
-    const QFileInfo dbBackupFileInfo{
-        m_backupDirPath + QStringLiteral("/qn.storage.sqlite")};
-
-    if (dbBackupFileInfo.exists() &&
-        !removeFile(dbBackupFileInfo.absoluteFilePath()))
-    {
-        QNWARNING(
-            "local_storage:sql:patches",
-            "Failed to remove the SQLite database's backup: "
-                << dbBackupFileInfo.absoluteFilePath());
-
-        removedDbBackup = false;
-    }
-
-    bool removedBackupDir = true;
-    QDir backupDir{m_backupDirPath};
-    if (!backupDir.rmdir(m_backupDirPath)) {
-        QNWARNING(
-            "local_storage:sql:patches",
-            "Failed to remove the SQLite database's backup folder: "
-                << m_backupDirPath);
-
-        removedBackupDir = false;
-    }
-
-    if (!removedShmDbBackup || !removedWalDbBackup || !removedDbBackup ||
-        !removedBackupDir)
-    {
-        errorDescription.setBase(
-            QT_TR_NOOP("Failed to remove some of SQLite database's backups"));
-        return false;
-    }
-
-    return true;
+    return utils::removeLocalStorageDatabaseFilesBackup(
+        m_backupDirPath, errorDescription);
 }
 
 bool Patch2To3::applyImpl(

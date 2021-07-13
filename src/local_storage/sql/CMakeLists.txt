@@ -36,6 +36,8 @@ target_sources(${LIBRARY_NAME}
   patches/Patch1To2.h
   patches/Patch2To3.cpp
   patches/Patch2To3.h
+  patches/PatchUtils.cpp
+  patches/PatchUtils.h
   utils/Common.h
   utils/FillFromSqlRecordUtils.cpp
   utils/FillFromSqlRecordUtils.h
