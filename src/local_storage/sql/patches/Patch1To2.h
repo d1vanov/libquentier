@@ -18,30 +18,15 @@
 
 #pragma once
 
-#include "../Fwd.h"
+#include "PatchBase.h"
 
-#include <quentier/local_storage/IPatch.h>
 #include <quentier/types/Account.h>
 
-#include <QCoreApplication>
 #include <QPointer>
-
-#include <memory>
-
-template <class T>
-class QPromise;
-
-namespace quentier {
-
-class ErrorString;
-
-} // namespace quentier
 
 namespace quentier::local_storage::sql {
 
-class Q_DECL_HIDDEN Patch1To2 final :
-    public IPatch,
-    public std::enable_shared_from_this<Patch1To2>
+class Q_DECL_HIDDEN Patch1To2 final : public PatchBase
 {
     Q_DECLARE_TR_FUNCTIONS(Patch1To2)
 public:
@@ -64,29 +49,21 @@ public:
     [[nodiscard]] QString patchShortDescription() const override;
     [[nodiscard]] QString patchLongDescription() const override;
 
-    [[nodiscard]] QFuture<void> backupLocalStorage() override;
-
-    [[nodiscard]] QFuture<void> restoreLocalStorageFromBackup() override;
-
-    [[nodiscard]] QFuture<void> removeLocalStorageBackup() override;
-
-    [[nodiscard]] QFuture<void> apply() override;
-
 private:
-    [[nodiscard]] bool backupLocalStorageImpl(
+    [[nodiscard]] bool backupLocalStorageSync(
         QPromise<void> & promise, // for progress updates and cancel tracking
-        ErrorString & errorDescription);
+        ErrorString & errorDescription) override;
 
-    [[nodiscard]] bool restoreLocalStorageFromBackupImpl(
+    [[nodiscard]] bool restoreLocalStorageFromBackupSync(
         QPromise<void> & promise, // for progress updates
-        ErrorString & errorDescription);
+        ErrorString & errorDescription) override;
 
-    [[nodiscard]] bool removeLocalStorageBackupImpl(
-        ErrorString & errorDescription);
+    [[nodiscard]] bool removeLocalStorageBackupSync(
+        ErrorString & errorDescription) override;
 
-    [[nodiscard]] bool applyImpl(
+    [[nodiscard]] bool applySync(
         QPromise<void> & promise, // for progress updates
-        ErrorString & errorDescription);
+        ErrorString & errorDescription) override;
 
     [[nodiscard]] QStringList listResourceLocalIds(
         QSqlDatabase & database, ErrorString & errorDescription) const;
@@ -100,13 +77,7 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription);
 
 private:
-    Q_DISABLE_COPY(Patch1To2)
-
-private:
     Account m_account;
-    ConnectionPoolPtr m_connectionPool;
-    QString m_backupDirPath;
-    QThreadPtr m_writerThread;
 };
 
 } // namespace quentier::local_storage::sql

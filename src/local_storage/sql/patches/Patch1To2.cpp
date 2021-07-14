@@ -39,8 +39,6 @@
 #include <utility/Qt5Promise.h>
 #endif
 
-#include <QDir>
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #endif
@@ -92,29 +90,19 @@ bool extractEntry(
 Patch1To2::Patch1To2(
     Account account, ConnectionPoolPtr connectionPool,
     QThreadPtr writerThread) :
-    m_account{std::move(account)},
-    m_connectionPool{std::move(connectionPool)},
-    m_writerThread{std::move(writerThread)}
+    PatchBase(
+        std::move(connectionPool), std::move(writerThread),
+        accountPersistentStoragePath(account),
+        accountPersistentStoragePath(account) +
+            QStringLiteral("/backup_upgrade_1_to_2_") +
+            QDateTime::currentDateTime().toString(Qt::ISODate)),
+    m_account{std::move(account)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
         throw InvalidArgument{ErrorString{
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::patches::Patch1To2",
                 "Patch1To2 ctor: account is empty")}};
-    }
-
-    if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch1To2",
-                "Patch1To2 ctor: connection pool is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch1To2",
-                "Patch1To2 ctor: writer thread is null")}};
     }
 }
 
@@ -174,232 +162,45 @@ QString Patch1To2::patchLongDescription() const
     return result;
 }
 
-QFuture<void> Patch1To2::backupLocalStorage()
-{
-    QNINFO(
-        "local_storage:sql:patches", "Patch1To2::backupLocalStorage");
-
-    QPromise<void> promise;
-    auto future = promise.future();
-
-    promise.setProgressRange(0, 100);
-    promise.start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
-            auto self = self_weak.lock();
-            if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::Patch1To2",
-                    "Cannot backup local storage: Patch1To2 object is "
-                    "destroyed")};
-                QNWARNING("local_storage:sql:patches", errorDescription);
-
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            ErrorString errorDescription;
-            const bool res = self->backupLocalStorageImpl(
-                promise, errorDescription);
-
-            if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            promise.finish();
-        });
-
-    return future;
-}
-
-QFuture<void> Patch1To2::restoreLocalStorageFromBackup()
-{
-    QNINFO(
-        "local_storage:sql:patches",
-        "Patch1To2::restoreLocalStorageFromBackup");
-
-    QPromise<void> promise;
-    auto future = promise.future();
-
-    promise.setProgressRange(0, 100);
-    promise.start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
-            auto self = self_weak.lock();
-            if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::Patch1To2",
-                    "Cannot restore local storage from backup: Patch1To2 "
-                    "object is destroyed")};
-                QNWARNING("local_storage:sql:patches", errorDescription);
-
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            ErrorString errorDescription;
-            const bool res = self->restoreLocalStorageFromBackupImpl(
-                promise, errorDescription);
-
-            if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            promise.finish();
-        });
-
-    return future;
-}
-
-QFuture<void> Patch1To2::removeLocalStorageBackup()
-{
-    QNDEBUG(
-        "local_storage:sql:patches",
-        "Patch1To2::removeLocalStorageBackup");
-
-    QPromise<void> promise;
-    auto future = promise.future();
-    promise.start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
-            auto self = self_weak.lock();
-            if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::Patch1To2",
-                    "Cannot remove local storage backup: Patch1To2 object is "
-                    "destroyed")};
-                QNWARNING("local_storage:sql:patches", errorDescription);
-
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            ErrorString errorDescription;
-            const bool res = self->removeLocalStorageBackupImpl(
-                errorDescription);
-
-            if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            promise.finish();
-        });
-
-    return future;
-}
-
-QFuture<void> Patch1To2::apply()
-{
-    QNINFO("local_storage:sql:patches", "Patch1To2::apply");
-
-    QPromise<void> promise;
-    auto future = promise.future();
-
-    promise.setProgressRange(0, 100);
-    promise.start();
-
-    utility::postToThread(
-        m_writerThread.get(),
-        [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
-        {
-            auto self = self_weak.lock();
-            if (!self) {
-                ErrorString errorDescription{QT_TRANSLATE_NOOP(
-                    "local_storage::sql::patches::Patch1To2",
-                    "Cannot apply local storage patch: Patch1To2 object is "
-                    "destroyed")};
-                QNWARNING("local_storage:sql:patches", errorDescription);
-
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            ErrorString errorDescription;
-            const bool res = self->applyImpl(promise, errorDescription);
-            if (!res) {
-                promise.setException(
-                    RuntimeError{std::move(errorDescription)});
-                promise.finish();
-                return;
-            }
-
-            promise.finish();
-        });
-
-    return future;
-}
-
-bool Patch1To2::backupLocalStorageImpl(
+bool Patch1To2::backupLocalStorageSync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
     QNDEBUG(
-        "local_storage:sql:patches",
-        "Patch1To2::backupLocalStorageImpl");
-
-    const QString storagePath = accountPersistentStoragePath(m_account);
-
-    m_backupDirPath = storagePath +
-        QStringLiteral("/backup_upgrade_1_to_2_") +
-        QDateTime::currentDateTime().toString(Qt::ISODate);
+        "local_storage::sql::patches",
+        "Patch1To2::backupLocalStorageSync");
 
     return utils::backupLocalStorageDatabaseFiles(
-        storagePath, m_backupDirPath, promise, errorDescription);
+        m_localStorageDir.absolutePath(), m_backupDir.absolutePath(), promise,
+        errorDescription);
 }
 
-bool Patch1To2::restoreLocalStorageFromBackupImpl(
+bool Patch1To2::restoreLocalStorageFromBackupSync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
     QNINFO(
-        "local_storage:sql:patches",
-        "Patch1To2::restoreLocalStorageFromBackupImpl");
-
-    QString storagePath = accountPersistentStoragePath(m_account);
+        "local_storage::sql::patches",
+        "Patch1To2::restoreLocalStorageFromBackupSync");
 
     return utils::restoreLocalStorageDatabaseFilesFromBackup(
-        storagePath, m_backupDirPath, promise, errorDescription);
+        m_localStorageDir.absolutePath(), m_backupDir.absolutePath(), promise,
+        errorDescription);
 }
 
-bool Patch1To2::removeLocalStorageBackupImpl(
+bool Patch1To2::removeLocalStorageBackupSync(
     ErrorString & errorDescription)
 {
     QNINFO(
-        "local_storage:sql:patches",
-        "Patch1To2::removeLocalStorageBackup");
+        "local_storage::sql::patches",
+        "Patch1To2::removeLocalStorageBackupSync");
 
     return utils::removeLocalStorageDatabaseFilesBackup(
-        m_backupDirPath, errorDescription);
+        m_backupDir.absolutePath(), errorDescription);
 }
 
-bool Patch1To2::applyImpl(
+bool Patch1To2::applySync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
-    QNDEBUG("local_storage:sql:patches", "Patch1To2::applyImpl");
+    QNDEBUG("local_storage::sql::patches", "Patch1To2::applySync");
 
     ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade1To2Persistence};
 
@@ -484,7 +285,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -497,7 +298,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.appendBase(
                     QT_TR_NOOP("failed to get note local id corresponding "
                                "to a resource"));
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -507,7 +308,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.appendBase(
                     QT_TR_NOOP("failed to get data body corresponding "
                                "to a resource"));
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -532,7 +333,7 @@ bool Patch1To2::applyImpl(
                     errorDescription.details() =
                         QStringLiteral("note local id = ") + noteLocalId;
 
-                    QNWARNING("local_storage:sql:patches", errorDescription);
+                    QNWARNING("local_storage::sql::patches", errorDescription);
                     return false;
                 }
             }
@@ -551,7 +352,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -566,7 +367,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -579,7 +380,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -592,7 +393,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local uid = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -608,7 +409,7 @@ bool Patch1To2::applyImpl(
                     std::round(singleResourceProgressFraction * 100.0));
 
                 QNDEBUG(
-                    "local_storage:sql:patches",
+                    "local_storage::sql::patches",
                     "Processed resource data (no alternate data) for resource "
                         << "local id "
                         << resourceLocalId << "; updated progress to "
@@ -637,7 +438,7 @@ bool Patch1To2::applyImpl(
                     errorDescription.details() =
                         QStringLiteral("note local uid = ") + noteLocalId;
 
-                    QNWARNING("local_storage:sql:patches", errorDescription);
+                    QNWARNING("local_storage::sql::patches", errorDescription);
                     return false;
                 }
             }
@@ -657,7 +458,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -673,7 +474,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -687,7 +488,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -701,7 +502,7 @@ bool Patch1To2::applyImpl(
                 errorDescription.details() =
                     QStringLiteral("resource local id = ") + resourceLocalId;
 
-                QNWARNING("local_storage:sql:patches", errorDescription);
+                QNWARNING("local_storage::sql::patches", errorDescription);
                 return false;
             }
 
@@ -714,7 +515,7 @@ bool Patch1To2::applyImpl(
                 std::round(singleResourceProgressFraction * 100.0));
 
             QNDEBUG(
-                "local_storage:sql:patches",
+                "local_storage::sql::patches",
                 "Processed resource data and alternate data for resource local "
                     << "id " << resourceLocalId << "; updated progress to "
                     << lastProgress);
@@ -725,7 +526,7 @@ bool Patch1To2::applyImpl(
         pProcessedResourceLocalIdsDatabaseUpgradeInfoCloser.reset(nullptr);
 
         QNDEBUG(
-            "local_storage:sql:patches",
+            "local_storage::sql::patches",
             "Copied data bodies and alternate "
                 << "data bodies of all resources from database to files");
 
@@ -763,7 +564,7 @@ bool Patch1To2::applyImpl(
         }
 
         QNDEBUG(
-            "local_storage:sql:patches",
+            "local_storage::sql::patches",
             "Set data bodies and alternate data bodies for resources to null "
                 << "in the database table");
 
@@ -777,12 +578,12 @@ bool Patch1To2::applyImpl(
             errorDescription.appendBase(compactionError.base());
             errorDescription.appendBase(compactionError.additionalBases());
             errorDescription.details() = compactionError.details();
-            QNWARNING("local_storage:sql:patches", errorDescription);
+            QNWARNING("local_storage::sql::patches", errorDescription);
             return false;
         }
 
         QNDEBUG(
-            "local_storage:sql:patches",
+            "local_storage::sql::patches",
             "Compacted the local storage database");
 
         promise.setProgressValue(90);
@@ -806,7 +607,7 @@ bool Patch1To2::applyImpl(
         false);
 
     QNDEBUG(
-        "local_storage:sql:patches",
+        "local_storage::sql::patches",
         "Finished upgrading the local storage from version 1 to version 2");
 
     return true;
