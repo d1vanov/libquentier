@@ -21,12 +21,15 @@
 
 #include "../ConnectionPool.h"
 #include "../ErrorHandling.h"
+#include "../Transaction.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileCopier.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <utility/Threading.h>
 
@@ -36,12 +39,26 @@
 #include <QPromise>
 #endif
 
+#include <qevercloud/utility/ToRange.h>
+
+#include <QSqlQuery>
+#include <QTextStream>
+
 #include <algorithm>
 #include <cmath>
 
 namespace quentier::local_storage::sql {
 
 namespace {
+
+const QString gUpgrade2To3Persistence =
+    QStringLiteral("LocalStorageDatabaseUpgradeFromVersion2ToVersion3");
+
+const QString gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey =
+    QStringLiteral("ResourceBodyVersionIdTablesCreated");
+
+const QString gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey =
+    QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase");
 
 const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
 
@@ -157,9 +174,248 @@ bool Patch2To3::removeLocalStorageBackupSync(
 bool Patch2To3::applySync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(promise)
-    Q_UNUSED(errorDescription)
+    QNDEBUG(
+        "local_storage::sql::patches", "Patch2To3::applySync");
+
+    ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade2To3Persistence};
+
+    ErrorString errorPrefix{
+        QT_TR_NOOP("failed to upgrade local storage "
+                   "from version 2 to version 3")};
+
+    errorDescription.clear();
+
+    int lastProgress = 0;
+    const bool resourceBodyVersionIdTablesCreated =
+        databaseUpgradeInfo
+            .value(gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey)
+            .toBool();
+
+    if (!resourceBodyVersionIdTablesCreated) {
+        auto database = m_connectionPool->database();
+        Transaction transaction{database, Transaction::Type::Exclusive};
+
+        QSqlQuery query{database};
+        bool res = query.exec(QStringLiteral(
+            "CREATE TABLE IF NOT EXISTS ResourceDataBodyVersionIds("
+            "  resourceLocalUid         TEXT PRIMARY KEY NOT NULL UNIQUE, "
+            "  versionId                TEXT NOT NULL)"));
+
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::patches",
+            QT_TR_NOOP(
+                "Cannot create ResourceDataBodyVersionIds table "
+                "in the local storage database"),
+            false);
+
+        res = query.exec(QStringLiteral(
+            "CREATE TABLE IF NOT EXISTS ResourceAlternateDataBodyVersionIds("
+            "  resourceLocalUid         TEXT PRIMARY KEY NOT NULL UNIQUE, "
+            "  versionId                TEXT NOT NULL)"));
+
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::tables_initializer",
+            QT_TR_NOOP(
+                "Cannot create ResourceAlternateDataBodyVersionIds table "
+                "in the local storage database"),
+            false);
+
+        res = transaction.commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::tables_initializer",
+            QT_TR_NOOP(
+                "Cannot create tables for resource data and alternate data "
+                "body version ids in the local storage database: failed to "
+                "commit transaction"),
+            false);
+
+        databaseUpgradeInfo.setValue(
+            gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey, true);
+
+        databaseUpgradeInfo.sync();
+
+        lastProgress = 5;
+        promise.setProgressValue(lastProgress);
+    }
+
+    const bool committedResourceBodyVersionIdsToDatabase =
+        databaseUpgradeInfo
+            .value(gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey)
+            .toBool();
+
+    QHash<QString, ResourceVersionIds> resourceVersionIds;
+    if (!committedResourceBodyVersionIdsToDatabase) {
+        resourceVersionIds = generateVersionIds();
+        if (!putVersionIdsToDatabase(resourceVersionIds, errorDescription)) {
+            return false;
+        }
+
+        databaseUpgradeInfo.setValue(
+            gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey,
+            true);
+
+        databaseUpgradeInfo.sync();
+    }
+    else {
+        // TODO: fill resource version ids from the database
+    }
+
+    // TODO: move resource files according to version ids unless already done
+    return true;
+}
+
+QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
+    const
+{
+    QHash<QString, Patch2To3::ResourceVersionIds> resourceVersionIds;
+    const QString localStorageDirPath = m_localStorageDir.absolutePath();
+
+    QDir resourceDataBodiesDir{
+        localStorageDirPath + QStringLiteral("/Resources/data")};
+
+    const auto resourceDataBodiesDirSubdirs =
+        resourceDataBodiesDir.entryInfoList();
+    for (const auto & noteLocalIdSubdir: qAsConst(resourceDataBodiesDirSubdirs))
+    {
+        if (!noteLocalIdSubdir.isDir()) {
+            continue;
+        }
+
+        const auto resourceFiles =
+            noteLocalIdSubdir.dir().entryInfoList();
+        for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
+        {
+            if (!resourceDataBodyFile.isFile()) {
+                continue;
+            }
+
+            if (resourceDataBodyFile.completeSuffix() != QStringLiteral("dat"))
+            {
+                continue;
+            }
+
+            // File's base name is resource's local id
+            resourceVersionIds[resourceDataBodyFile.baseName()]
+                .m_dataBodyVersionId = UidGenerator::Generate();
+        }
+    }
+
+    QDir resourceAlternateDataBodiesDir{
+        localStorageDirPath + QStringLiteral("/Resources/alternateData")};
+
+    const auto resourceAlternateDataBodiesDirSubdirs =
+        resourceAlternateDataBodiesDir.entryInfoList();
+    for (const auto & noteLocalIdSubdir:
+         qAsConst(resourceAlternateDataBodiesDirSubdirs))
+    {
+        if (!noteLocalIdSubdir.isDir()) {
+            continue;
+        }
+
+        const auto resourceFiles =
+            noteLocalIdSubdir.dir().entryInfoList();
+        for (const auto & resourceAlternateDataBodyFile: qAsConst(resourceFiles))
+        {
+            if (!resourceAlternateDataBodyFile.isFile()) {
+                continue;
+            }
+
+            if (resourceAlternateDataBodyFile.completeSuffix() !=
+                QStringLiteral("dat")) {
+                continue;
+            }
+
+            // File's base name is resource's local id
+            resourceVersionIds[resourceAlternateDataBodyFile.baseName()]
+                .m_alternateDataBodyVersionId = UidGenerator::Generate();
+        }
+    }
+
+    return resourceVersionIds;
+}
+
+bool Patch2To3::putVersionIdsToDatabase(
+    const QHash<QString, ResourceVersionIds> & resourceVersionIds,
+    ErrorString & errorDescription)
+{
+    auto database = m_connectionPool->database();
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
+    for (const auto it: qevercloud::toRange(qAsConst(resourceVersionIds))) {
+        const auto & resourceLocalId = it.key();
+        const auto & resourceBodyVersionIds = it.value();
+
+        if (!resourceBodyVersionIds.m_dataBodyVersionId.isEmpty()) {
+            QSqlQuery query{database};
+            static const QString queryString = QStringLiteral(
+                "INSERT OR REPLACE INTO ResourceDataBodyVersionIds("
+                "resourceLocalUid, versionId) VALUES(:resourceLocalUid, "
+                ":versionId)");
+
+            bool res = query.prepare(queryString);
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches",
+                QT_TR_NOOP(
+                    "Cannot put resource body version id to the local "
+                    "storage database: failed to prepare query"),
+                false);
+
+            query.bindValue(
+                QStringLiteral(":resouceLocalUid"), resourceLocalId);
+
+            query.bindValue(
+                QStringLiteral(":versionId"),
+                resourceBodyVersionIds.m_dataBodyVersionId);
+
+            res = query.exec();
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches",
+                QT_TR_NOOP(
+                    "Cannot put resource body version id to the local "
+                    "storage database"),
+                false);
+        }
+
+        if (!resourceBodyVersionIds.m_alternateDataBodyVersionId.isEmpty()) {
+            QSqlQuery query{database};
+            static const QString queryString = QStringLiteral(
+                "INSERT OR REPLACE INTO ResourceAlternateDataBodyVersionIds("
+                "resourceLocalUid, versionId) VALUES(:resourceLocalUid, "
+                ":versionId)");
+
+            bool res = query.prepare(queryString);
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches",
+                QT_TR_NOOP(
+                    "Cannot put resource alternate body version id to "
+                    "the local storage database: failed to prepare query"),
+                false);
+
+            query.bindValue(
+                QStringLiteral(":resouceLocalUid"), resourceLocalId);
+
+            query.bindValue(
+                QStringLiteral(":versionId"),
+                resourceBodyVersionIds.m_alternateDataBodyVersionId);
+
+            res = query.exec();
+            ENSURE_DB_REQUEST_RETURN(
+                res, query, "local_storage::sql::patches",
+                QT_TR_NOOP(
+                    "Cannot put resource alternate body version id to "
+                    "the local storage database"),
+                false);
+        }
+    }
+
+    const bool res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::patches",
+        QT_TR_NOOP(
+            "Cannot put resource body version ids to "
+            "the local storage database: failed to commit transaction"),
+        false);
+
     return true;
 }
 

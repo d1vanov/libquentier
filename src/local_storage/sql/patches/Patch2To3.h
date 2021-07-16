@@ -65,6 +65,18 @@ private:
         QPromise<void> & promise, // for progress updates
         ErrorString & errorDescription) override;
 
+    struct ResourceVersionIds
+    {
+        QString m_dataBodyVersionId;
+        QString m_alternateDataBodyVersionId;
+    };
+
+    [[nodiscard]] QHash<QString, ResourceVersionIds> generateVersionIds() const;
+
+    [[nodiscard]] bool putVersionIdsToDatabase(
+        const QHash<QString, ResourceVersionIds> & resourceVersionIds,
+        ErrorString & errorDescription);
+
 private:
     Q_DISABLE_COPY(Patch2To3)
 
