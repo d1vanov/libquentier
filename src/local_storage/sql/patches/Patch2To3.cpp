@@ -42,6 +42,7 @@
 #include <qevercloud/utility/ToRange.h>
 
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QTextStream>
 
 #include <algorithm>
@@ -60,6 +61,9 @@ const QString gUpgrade2To3ResourceBodyVersionIdTablesCreatedKey =
 const QString gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey =
     QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase");
 
+const QString gUpgrade2To3MovedResourceBodyFilesKey =
+    QStringLiteral("ResourceBodyFilesMovedToVersionIdFolders");
+
 const QString gDbFileName = QStringLiteral("qn.storage.sqlite");
 
 } // namespace
@@ -76,10 +80,9 @@ Patch2To3::Patch2To3(
     m_account{std::move(account)}
 {
     if (Q_UNLIKELY(m_account.isEmpty())) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::patches::Patch2To3",
-                "Patch2To3 ctor: account is empty")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::patches::2_to_3::Patch2To3",
+            "Patch2To3 ctor: account is empty")}};
     }
 }
 
@@ -93,15 +96,17 @@ QString Patch2To3::patchLongDescription() const
 {
     QString result;
 
-    result += tr("This patch slightly changes the placement of attachment data "
-                 "files within the local storage directory: it adds one more "
-                 "intermediate dir which has the meaning of unique version id "
-                 "of the attachment file.");
+    result +=
+        tr("This patch slightly changes the placement of attachment data "
+           "files within the local storage directory: it adds one more "
+           "intermediate dir which has the meaning of unique version id "
+           "of the attachment file.");
 
     result += QStringLiteral("\n");
 
-    result += tr("Prior to this patch resource data files were stored "
-                 "according to the following scheme:");
+    result +=
+        tr("Prior to this patch resource data files were stored "
+           "according to the following scheme:");
 
     result += QStringLiteral("\n\n");
 
@@ -110,8 +115,9 @@ QString Patch2To3::patchLongDescription() const
 
     result += QStringLiteral("\n\n");
 
-    result += tr("After this patch there would be one additional element "
-                 "in the path:");
+    result +=
+        tr("After this patch there would be one additional element "
+           "in the path:");
 
     result += QStringLiteral("\n\n");
 
@@ -120,18 +126,20 @@ QString Patch2To3::patchLongDescription() const
 
     result += QStringLiteral("\n\n");
 
-    result += tr("The change is required in order to implement full support "
-                 "for transactional updates and removals of resource data "
-                 "files. Without this change interruptions of local storage "
-                 "operations (such as application crashes, computer switching "
-                 "off due to power failure etc.) could leave it in "
-                 "inconsistent state.");
+    result +=
+        tr("The change is required in order to implement full support "
+           "for transactional updates and removals of resource data "
+           "files. Without this change interruptions of local storage "
+           "operations (such as application crashes, computer switching "
+           "off due to power failure etc.) could leave it in "
+           "inconsistent state.");
 
     result += QStringLiteral("\n\n");
 
-    result += tr("The patch should not take long to apply as it just "
-                 "creates a couple more helper tables in the database and "
-                 "creates subdirs for existing resource data files");
+    result +=
+        tr("The patch should not take long to apply as it just "
+           "creates a couple more helper tables in the database and "
+           "creates subdirs for existing resource data files");
 
     return result;
 }
@@ -140,7 +148,7 @@ bool Patch2To3::backupLocalStorageSync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
     QNDEBUG(
-        "local_storage::sql::patches",
+        "local_storage::sql::patches::2_to_3",
         "Patch2To3::backupLocalStorageSync");
 
     return utils::backupLocalStorageDatabaseFiles(
@@ -152,7 +160,7 @@ bool Patch2To3::restoreLocalStorageFromBackupSync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
     QNDEBUG(
-        "local_storage::sql::patches",
+        "local_storage::sql::patches::2_to_3",
         "Patch2To3::restoreLocalStorageFromBackupImpl");
 
     return utils::restoreLocalStorageDatabaseFilesFromBackup(
@@ -160,11 +168,10 @@ bool Patch2To3::restoreLocalStorageFromBackupSync(
         errorDescription);
 }
 
-bool Patch2To3::removeLocalStorageBackupSync(
-    ErrorString & errorDescription)
+bool Patch2To3::removeLocalStorageBackupSync(ErrorString & errorDescription)
 {
     QNINFO(
-        "local_storage::sql::patches",
+        "local_storage::sql::patches::2_to_3",
         "Patch2To3::removeLocalStorageBackupSync");
 
     return utils::removeLocalStorageDatabaseFilesBackup(
@@ -174,8 +181,7 @@ bool Patch2To3::removeLocalStorageBackupSync(
 bool Patch2To3::applySync(
     QPromise<void> & promise, ErrorString & errorDescription)
 {
-    QNDEBUG(
-        "local_storage::sql::patches", "Patch2To3::applySync");
+    QNDEBUG("local_storage::sql::patches::2_to_3", "Patch2To3::applySync");
 
     ApplicationSettings databaseUpgradeInfo{m_account, gUpgrade2To3Persistence};
 
@@ -202,10 +208,9 @@ bool Patch2To3::applySync(
             "  versionId                TEXT NOT NULL)"));
 
         ENSURE_DB_REQUEST_RETURN(
-            res, query, "local_storage::sql::patches",
-            QT_TR_NOOP(
-                "Cannot create ResourceDataBodyVersionIds table "
-                "in the local storage database"),
+            res, query, "local_storage::sql::patches::2_to_3",
+            QT_TR_NOOP("Cannot create ResourceDataBodyVersionIds table "
+                       "in the local storage database"),
             false);
 
         res = query.exec(QStringLiteral(
@@ -234,9 +239,14 @@ bool Patch2To3::applySync(
 
         databaseUpgradeInfo.sync();
 
-        lastProgress = 5;
-        promise.setProgressValue(lastProgress);
+        QNINFO(
+            "local_storage::sql::patches::2_to_3",
+            "Patch2To3: created tables for resource body version ids tracking "
+            "in the local storage database");
     }
+
+    lastProgress = 5;
+    promise.setProgressValue(lastProgress);
 
     const bool committedResourceBodyVersionIdsToDatabase =
         databaseUpgradeInfo
@@ -251,16 +261,201 @@ bool Patch2To3::applySync(
         }
 
         databaseUpgradeInfo.setValue(
-            gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey,
-            true);
+            gUpgrade2To3CommittedResourceBodyVersionIdsToDatabaseKey, true);
 
         databaseUpgradeInfo.sync();
+
+        QNINFO(
+            "local_storage::sql::patches::2_to_3",
+            "Patch2To3: generated version ids for existing resource body files "
+            "and saved them in the local storage database");
     }
     else {
-        // TODO: fill resource version ids from the database
+        auto versionIds = fetchVersionIdsFromDatabase(errorDescription);
+        if (!versionIds) {
+            return false;
+        }
+
+        resourceVersionIds = std::move(*versionIds);
     }
 
-    // TODO: move resource files according to version ids unless already done
+    lastProgress = 15;
+    promise.setProgressValue(lastProgress);
+
+    const bool movedResourceBodyFilesToVersionFolders =
+        databaseUpgradeInfo.value(gUpgrade2To3MovedResourceBodyFilesKey)
+            .toBool();
+
+    if (!movedResourceBodyFilesToVersionFolders) {
+        const QString localStorageDirPath = m_localStorageDir.absolutePath();
+
+        enum class ResourceBodyFileKind
+        {
+            Data,
+            AlternateData
+        };
+
+        // clang-format off
+        const auto moveResourceBodyFile =
+            [&resourceVersionIds, &errorDescription](
+                const QFileInfo & resourceBodyFileInfo,
+                const ResourceBodyFileKind kind) -> bool
+            {
+                if (resourceBodyFileInfo.completeSuffix() !=
+                    QStringLiteral("dat"))
+                {
+                    return true;
+                }
+
+                // File's base name is resource's local id
+                const auto resourceLocalId = resourceBodyFileInfo.baseName();
+                auto it = resourceVersionIds.find(resourceLocalId);
+                if (Q_UNLIKELY(it == resourceVersionIds.end())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Detected resource body file which has no "
+                        "corresponding version id: "
+                            << resourceBodyFileInfo.absoluteFilePath());
+                    return true;
+                }
+
+                const auto & versionId =
+                    (kind == ResourceBodyFileKind::AlternateData
+                     ? it.value().m_alternateDataBodyVersionId
+                     : it.value().m_dataBodyVersionId);
+
+                if (Q_UNLIKELY(versionId.isEmpty())) {
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        "Detected resource body file which has empty "
+                        "corresponding version id: "
+                            << resourceBodyFileInfo.absoluteFilePath());
+                    return true;
+                }
+
+                QDir versionIdDir{
+                    resourceBodyFileInfo.absolutePath() + QStringLiteral("/") +
+                    versionId};
+
+                if (!versionIdDir.exists() &&
+                    !versionIdDir.mkpath(versionIdDir.absolutePath()))
+                {
+                    errorDescription.setBase(QT_TR_NOOP(
+                        "Failed to create version id dir for a resource "
+                        "body file"));
+                    errorDescription.details() =
+                        resourceBodyFileInfo.absoluteFilePath();
+                    errorDescription.details() +=
+                        QStringLiteral(", version id: ");
+                    errorDescription.details() += versionId;
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        errorDescription);
+                    return false;
+                }
+
+                QFile resourceBodyFile{
+                    resourceBodyFileInfo.absoluteFilePath()};
+                bool res = resourceBodyFile.rename(
+                    versionIdDir.absoluteFilePath(resourceLocalId));
+                if (!res) {
+                    errorDescription.setBase(QT_TR_NOOP(
+                        "Failed to move resource body file into version id "
+                        "dir"));
+                    errorDescription.details() =
+                        resourceBodyFileInfo.absoluteFilePath();
+                    errorDescription.details() +=
+                        QStringLiteral(", version id: ");
+                    errorDescription.details() += versionId;
+                    QNWARNING(
+                        "local_storage::sql::patches::2_to_3",
+                        errorDescription);
+                    return false;
+                }
+
+                return true;
+            };
+        // clang-format on
+
+        {
+            QDir resourceDataBodiesDir{
+                localStorageDirPath + QStringLiteral("/Resources/data")};
+
+            const auto resourceDataBodiesDirSubdirs =
+                resourceDataBodiesDir.entryInfoList(
+                    QDir::Dirs | QDir::NoDotAndDotDot);
+
+            for (const auto & noteLocalIdSubdir:
+                 qAsConst(resourceDataBodiesDirSubdirs)) {
+                const auto resourceFiles =
+                    noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+
+                for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
+                {
+                    if (!moveResourceBodyFile(
+                            resourceDataBodyFile, ResourceBodyFileKind::Data)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        {
+            QDir resourceAlternateDataBodiesDir{
+                localStorageDirPath +
+                QStringLiteral("/Resources/alternateData")};
+
+            const auto resourceAlternateDataBodiesDirSubdirs =
+                resourceAlternateDataBodiesDir.entryInfoList(
+                    QDir::Dirs | QDir::NoDotAndDotDot);
+
+            for (const auto & noteLocalIdSubdir:
+                 qAsConst(resourceAlternateDataBodiesDirSubdirs))
+            {
+                const auto resourceFiles =
+                    noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+
+                for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
+                {
+                    if (!moveResourceBodyFile(
+                            resourceDataBodyFile,
+                            ResourceBodyFileKind::AlternateData))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        databaseUpgradeInfo.setValue(
+            gUpgrade2To3MovedResourceBodyFilesKey, true);
+
+        databaseUpgradeInfo.sync();
+
+        QNINFO(
+            "local_storage::sql::patches::2_to_3",
+            "Patch2To3: moved resource body files to version id dirs");
+    }
+
+    lastProgress = 95;
+    promise.setProgressValue(lastProgress);
+
+    // Update version in the Auxiliary table
+    auto database = m_connectionPool->database();
+    QSqlQuery query{database};
+    const bool res = query.exec(
+        QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(3)"));
+
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::patches::2_to_3",
+        QT_TR_NOOP(
+            "failed to execute SQL query increasing local storage version"),
+        false);
+
+    QNDEBUG(
+        "local_storage::sql::patches::2_to_3",
+        "Finished upgrading the local storage from version 2 to version 3");
+
     return true;
 }
 
@@ -274,21 +469,12 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
         localStorageDirPath + QStringLiteral("/Resources/data")};
 
     const auto resourceDataBodiesDirSubdirs =
-        resourceDataBodiesDir.entryInfoList();
+        resourceDataBodiesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const auto & noteLocalIdSubdir: qAsConst(resourceDataBodiesDirSubdirs))
     {
-        if (!noteLocalIdSubdir.isDir()) {
-            continue;
-        }
-
         const auto resourceFiles =
-            noteLocalIdSubdir.dir().entryInfoList();
-        for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
-        {
-            if (!resourceDataBodyFile.isFile()) {
-                continue;
-            }
-
+            noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+        for (const auto & resourceDataBodyFile: qAsConst(resourceFiles)) {
             if (resourceDataBodyFile.completeSuffix() != QStringLiteral("dat"))
             {
                 continue;
@@ -312,10 +498,9 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
             continue;
         }
 
-        const auto resourceFiles =
-            noteLocalIdSubdir.dir().entryInfoList();
-        for (const auto & resourceAlternateDataBodyFile: qAsConst(resourceFiles))
-        {
+        const auto resourceFiles = noteLocalIdSubdir.dir().entryInfoList();
+        for (const auto & resourceAlternateDataBodyFile:
+             qAsConst(resourceFiles)) {
             if (!resourceAlternateDataBodyFile.isFile()) {
                 continue;
             }
@@ -332,6 +517,89 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
     }
 
     return resourceVersionIds;
+}
+
+std::optional<QHash<QString, Patch2To3::ResourceVersionIds>>
+    Patch2To3::fetchVersionIdsFromDatabase(ErrorString & errorDescription) const
+{
+    auto database = m_connectionPool->database();
+    Transaction transaction{database, Transaction::Type::Selection};
+
+    QHash<QString, ResourceVersionIds> result;
+
+    // clang-format off
+    const auto fillValues = [](const QSqlRecord & record)
+        -> std::optional<std::pair<QString, QString>>
+    {
+        const int localIdIndex =
+            record.indexOf(QStringLiteral("resourceLocalUid"));
+        if (localIdIndex < 0) {
+            return std::nullopt;
+        }
+
+        const int versionIdIndex =
+            record.indexOf(QStringLiteral("versionId"));
+        if (versionIdIndex < 0) {
+            return std::nullopt;
+        }
+
+        return std::make_pair(
+            record.value(localIdIndex).toString(),
+            record.value(versionIdIndex).toString());
+    };
+    // clang-format on
+
+    {
+        static const QString queryString = QStringLiteral(
+            "SELECT resourceLocalUid, versionId FROM "
+            "ResourceDataBodyVersionIds");
+
+        QSqlQuery query{database};
+        bool res = query.exec(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::patches::2_to_3",
+            QT_TR_NOOP(
+                "Cannot select resource data body version ids from the local "
+                "storage database"),
+            std::nullopt);
+
+        while (query.next()) {
+            auto values = fillValues(query.record());
+            if (!values) {
+                continue;
+            }
+
+            result[values->first].m_dataBodyVersionId =
+                std::move(values->second);
+        }
+    }
+
+    {
+        static const QString queryString = QStringLiteral(
+            "SELECT resourceLocalUid, versionId FROM "
+            "ResourceAlternateDataBodyVersionIds");
+
+        QSqlQuery query{database};
+        bool res = query.exec(queryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::patches::2_to_3",
+            QT_TR_NOOP(
+                "Cannot select resource alternate data body version ids from "
+                "the local storage database"),
+            std::nullopt);
+
+        while (query.next()) {
+            auto values = fillValues(query.record());
+            if (!values) {
+                continue;
+            }
+
+            result[values->first].m_alternateDataBodyVersionId =
+                std::move(values->second);
+        }
+    }
+
+    return result;
 }
 
 bool Patch2To3::putVersionIdsToDatabase(
@@ -354,10 +622,9 @@ bool Patch2To3::putVersionIdsToDatabase(
 
             bool res = query.prepare(queryString);
             ENSURE_DB_REQUEST_RETURN(
-                res, query, "local_storage::sql::patches",
-                QT_TR_NOOP(
-                    "Cannot put resource body version id to the local "
-                    "storage database: failed to prepare query"),
+                res, query, "local_storage::sql::patches::2_to_3",
+                QT_TR_NOOP("Cannot put resource body version id to the local "
+                           "storage database: failed to prepare query"),
                 false);
 
             query.bindValue(
@@ -369,10 +636,9 @@ bool Patch2To3::putVersionIdsToDatabase(
 
             res = query.exec();
             ENSURE_DB_REQUEST_RETURN(
-                res, query, "local_storage::sql::patches",
-                QT_TR_NOOP(
-                    "Cannot put resource body version id to the local "
-                    "storage database"),
+                res, query, "local_storage::sql::patches::2_to_3",
+                QT_TR_NOOP("Cannot put resource body version id to the local "
+                           "storage database"),
                 false);
         }
 
@@ -385,7 +651,7 @@ bool Patch2To3::putVersionIdsToDatabase(
 
             bool res = query.prepare(queryString);
             ENSURE_DB_REQUEST_RETURN(
-                res, query, "local_storage::sql::patches",
+                res, query, "local_storage::sql::patches::2_to_3",
                 QT_TR_NOOP(
                     "Cannot put resource alternate body version id to "
                     "the local storage database: failed to prepare query"),
@@ -400,20 +666,18 @@ bool Patch2To3::putVersionIdsToDatabase(
 
             res = query.exec();
             ENSURE_DB_REQUEST_RETURN(
-                res, query, "local_storage::sql::patches",
-                QT_TR_NOOP(
-                    "Cannot put resource alternate body version id to "
-                    "the local storage database"),
+                res, query, "local_storage::sql::patches::2_to_3",
+                QT_TR_NOOP("Cannot put resource alternate body version id to "
+                           "the local storage database"),
                 false);
         }
     }
 
     const bool res = transaction.commit();
     ENSURE_DB_REQUEST_RETURN(
-        res, database, "local_storage::sql::patches",
-        QT_TR_NOOP(
-            "Cannot put resource body version ids to "
-            "the local storage database: failed to commit transaction"),
+        res, database, "local_storage::sql::patches::2_to_3",
+        QT_TR_NOOP("Cannot put resource body version ids to "
+                   "the local storage database: failed to commit transaction"),
         false);
 
     return true;

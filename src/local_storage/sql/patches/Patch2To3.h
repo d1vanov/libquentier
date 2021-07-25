@@ -73,6 +73,9 @@ private:
 
     [[nodiscard]] QHash<QString, ResourceVersionIds> generateVersionIds() const;
 
+    [[nodiscard]] std::optional<QHash<QString, ResourceVersionIds>>
+        fetchVersionIdsFromDatabase(ErrorString & errorDescription) const;
+
     [[nodiscard]] bool putVersionIdsToDatabase(
         const QHash<QString, ResourceVersionIds> & resourceVersionIds,
         ErrorString & errorDescription);
