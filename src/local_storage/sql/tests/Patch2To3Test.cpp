@@ -22,7 +22,7 @@
 #include "../ErrorHandling.h"
 #include "../Fwd.h"
 #include "../TablesInitializer.h"
-#include "../patches/Patch1To2.h"
+#include "../patches/Patch2To3.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -43,11 +43,53 @@ namespace quentier::local_storage::sql::tests {
 namespace {
 
 const QString gTestDbConnectionName =
-    QStringLiteral("libquentier_local_storage_sql_patch1to2_test_db");
+    QStringLiteral("libquentier_local_storage_sql_patch2to3_test_db");
+
+
+// Removes ResourceDataBodyVersionIds and ResourceAlternateDataBodyVersionIds
+// tables from the local storage database in order to set up the situation
+// as before applying the 2 to 3 patch
+void removeBodyVersionIdTables(QSqlDatabase & database)
+{
+    QSqlQuery query{database};
+
+    bool res = query.exec(QStringLiteral(
+        "DROP TABLE IF EXISTS ResourceDataBodyVersionIds"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tests::Patch2To3Test",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tests::Patch2To3Test",
+            "Failed to drop ResourceDataBodyVersionIds table"));
+
+    res = query.exec(QStringLiteral(
+        "DROP TABLE IF EXISTS ResourceAlternateDataBodyVersionIds"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::tests::Patch2To3Test",
+        QT_TRANSLATE_NOOP(
+            "quentier::local_storage::sql::tests::Patch2To3Test",
+            "Failed to drop ResourceAlternateDataBodyVersionIds table"));
+}
+
+// Prepares local storage database corresponding to version 2 in a temporary dir
+// so that it can be upgraded from version 2 to version 3
+// TODO: remove maybe_unused attribute later when more tests are added
+[[maybe_unused]] void prepareLocalStorageForUpgrade(
+    const QString & localStorageDirPath,
+    ConnectionPool & connectionPool)
+{
+    utils::prepareLocalStorage(localStorageDirPath, connectionPool);
+
+    auto database = connectionPool.database();
+    removeBodyVersionIdTables(database);
+
+    // TODO: fill the database with test content
+}
 
 } // namespace
 
-TEST(Patch1To2Test, Ctor)
+TEST(Patch2To3Test, Ctor)
 {
     Account account{*utils::gTestAccountName, Account::Type::Local};
 
@@ -58,12 +100,12 @@ TEST(Patch1To2Test, Ctor)
 
     auto pWriterThread = std::make_shared<QThread>();
 
-    EXPECT_NO_THROW(const auto patch = std::make_shared<Patch1To2>(
+    EXPECT_NO_THROW(const auto patch = std::make_shared<Patch2To3>(
         std::move(account), std::move(connectionPool),
         std::move(pWriterThread)));
 }
 
-TEST(Patch1To2Test, CtorEmptyAccount)
+TEST(Patch2To3Test, CtorEmptyAccount)
 {
     auto connectionPool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), QStringLiteral("user"),
@@ -73,24 +115,24 @@ TEST(Patch1To2Test, CtorEmptyAccount)
     auto pWriterThread = std::make_shared<QThread>();
 
     EXPECT_THROW(
-        const auto patch = std::make_shared<Patch1To2>(
+        const auto patch = std::make_shared<Patch2To3>(
             Account{}, std::move(connectionPool), std::move(pWriterThread)),
         IQuentierException);
 }
 
-TEST(Patch1To2Test, CtorNullConnectionPool)
+TEST(Patch2To3Test, CtorNullConnectionPool)
 {
     Account account{*utils::gTestAccountName, Account::Type::Local};
 
     auto pWriterThread = std::make_shared<QThread>();
 
     EXPECT_THROW(
-        const auto patch = std::make_shared<Patch1To2>(
+        const auto patch = std::make_shared<Patch2To3>(
             std::move(account), nullptr, std::move(pWriterThread)),
         IQuentierException);
 }
 
-TEST(Patch1To2Test, CtorNullWriterThread)
+TEST(Patch2To3Test, CtorNullWriterThread)
 {
     Account account{*utils::gTestAccountName, Account::Type::Local};
 
@@ -100,7 +142,7 @@ TEST(Patch1To2Test, CtorNullWriterThread)
         QStringLiteral("QSQLITE"));
 
     EXPECT_THROW(
-        const auto patch = std::make_shared<Patch1To2>(
+        const auto patch = std::make_shared<Patch2To3>(
             std::move(account), std::move(connectionPool), nullptr),
         IQuentierException);
 }

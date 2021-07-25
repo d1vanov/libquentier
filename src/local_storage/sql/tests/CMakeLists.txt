@@ -12,10 +12,14 @@ add_executable(${TESTS_NAME}
   main.cpp
   NotebooksHandlerTest.cpp
   Patch1To2Test.cpp
+  Patch2To3Test.cpp
+  PatchUtilsTest.cpp
   TablesInitializerTest.cpp
   TagsHandlerTest.cpp
   VersionHandlerTest.cpp
   UsersHandlerTest.cpp
+  Utils.cpp
+  Utils.h
   ${${TESTS_RESOURCES_NAME}})
 
 target_link_libraries(${TESTS_NAME}
