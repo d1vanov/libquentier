@@ -41,6 +41,7 @@
 #include <utility/Qt5Promise.h>
 #endif
 
+#include <QCryptographicHash>
 #include <QReadLocker>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -386,10 +387,11 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
         }
     }
 
-    if (options.testFlag(FetchResourceOption::WithBinaryData) &&
-        !utils::readResourceDataFromFiles(
-            resource, m_localStorageDir, errorDescription))
-    {
+    if (!options.testFlag(FetchResourceOption::WithBinaryData)) {
+        return resource;
+    }
+
+    if (!fillResourceData(resource, database, errorDescription)) {
         return std::nullopt;
     }
 
@@ -479,14 +481,116 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByGuidImpl(
         }
     }
 
-    if (options.testFlag(FetchResourceOption::WithBinaryData) &&
-        !utils::readResourceDataFromFiles(
-            resource, m_localStorageDir, errorDescription))
-    {
+    if (!options.testFlag(FetchResourceOption::WithBinaryData)) {
+        return resource;
+    }
+
+    if (!fillResourceData(resource, database, errorDescription)) {
         return std::nullopt;
     }
 
     return resource;
+}
+
+bool ResourcesHandler::fillResourceData(
+    qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    const QString & resourceLocalId = resource.localId();
+
+    QString resourceDataBodyVersionId;
+    if (!utils::findResourceDataBodyVersionId(
+            resourceLocalId, database, resourceDataBodyVersionId,
+            errorDescription))
+    {
+        return false;
+    }
+
+    QString resourceAlternateDataBodyVersionId;
+    if (!utils::findResourceAlternateDataBodyVersionId(
+            resourceLocalId, database, resourceAlternateDataBodyVersionId,
+            errorDescription))
+    {
+        return false;
+    }
+
+    if (!resourceDataBodyVersionId.isEmpty()) {
+        QByteArray resourceDataBody;
+        if (!utils::readResourceDataBodyFromFile(
+                m_localStorageDir, resource.noteLocalId(), resourceLocalId,
+                resourceDataBodyVersionId, resourceDataBody, errorDescription))
+        {
+            return false;
+        }
+
+        if (!resourceDataBody.isEmpty()) {
+            if (!resource.data()) {
+                resource.setData(qevercloud::Data{});
+            }
+
+            auto & data = *resource.mutableData();
+            if (!data.size()) {
+                data.setSize(resourceDataBody.size());
+            }
+            else {
+                Q_ASSERT(*data.size() == resourceDataBody.size());
+            }
+
+            if (!data.bodyHash()) {
+                data.setBodyHash(QCryptographicHash::hash(
+                    resourceDataBody, QCryptographicHash::Md5));
+            }
+            else {
+                Q_ASSERT(
+                    *data.bodyHash() ==
+                    QCryptographicHash::hash(
+                        resourceDataBody, QCryptographicHash::Md5));
+            }
+
+            data.setBody(std::move(resourceDataBody));
+        }
+    }
+
+    if (!resourceAlternateDataBodyVersionId.isEmpty()) {
+        QByteArray resourceAlternateDataBody;
+        if (!utils::readResourceAlternateDataBodyFromFile(
+                m_localStorageDir, resource.noteLocalId(), resourceLocalId,
+                resourceAlternateDataBodyVersionId, resourceAlternateDataBody,
+                errorDescription))
+        {
+            return false;
+        }
+
+        if (!resourceAlternateDataBody.isEmpty()) {
+            if (!resource.alternateData()) {
+                resource.setAlternateData(qevercloud::Data{});
+            }
+
+            auto & alternateData = *resource.mutableAlternateData();
+            if (!alternateData.size()) {
+                alternateData.setSize(resourceAlternateDataBody.size());
+            }
+            else {
+                Q_ASSERT(
+                    *alternateData.size() == resourceAlternateDataBody.size());
+            }
+
+            if (!alternateData.bodyHash()) {
+                alternateData.setBodyHash(QCryptographicHash::hash(
+                    resourceAlternateDataBody, QCryptographicHash::Md5));
+            }
+            else {
+                Q_ASSERT(
+                    *alternateData.bodyHash() ==
+                    QCryptographicHash::hash(
+                        resourceAlternateDataBody, QCryptographicHash::Md5));
+            }
+
+            alternateData.setBody(std::move(resourceAlternateDataBody));
+        }
+    }
+
+    return true;
 }
 
 bool ResourcesHandler::findResourceAttributesApplicationDataKeysOnlyByLocalId(
@@ -594,8 +698,7 @@ bool ResourcesHandler::findResourceAttributesApplicationDataFullMapByLocalId(
 
 bool ResourcesHandler::expungeResourceByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
-    ErrorString & errorDescription,
-    std::optional<Transaction> transaction)
+    ErrorString & errorDescription, std::optional<Transaction> transaction)
 {
     if (!transaction) {
         transaction.emplace(database, Transaction::Type::Exclusive);
@@ -669,15 +772,13 @@ bool ResourcesHandler::expungeResourceByGuidImpl(
 TaskContext ResourcesHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool,
-        m_writerThread,
-        m_connectionPool,
+        m_threadPool, m_writerThread, m_connectionPool,
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::ResourcessHandler",
-                "ResourcesHandler is already destroyed")},
+            "local_storage::sql::ResourcessHandler",
+            "ResourcesHandler is already destroyed")},
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::ResourcesHandler",
-                "Request has been canceled")}};
+            "local_storage::sql::ResourcesHandler",
+            "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

@@ -18,12 +18,11 @@
 
 #pragma once
 
-#include <qevercloud/types/Fwd.h>
+#include "../Fwd.h"
 
+#include <QByteArray>
 #include <QDir>
 #include <QString>
-
-#include <vector>
 
 namespace quentier {
 
@@ -33,67 +32,26 @@ class ErrorString;
 
 namespace quentier::local_storage::sql::utils {
 
-/**
- * @brief The ResourceDataFileTransaction class supports transactional changes
- * to resource data files. It allows to accumulate potentially many changes
- * to resource data files and then to either apply them all or roll them back.
- *
- * @note The methods of this class are not thread-safe.
- */
-class ResourceDataFileTransaction
-{
-public:
-    explicit ResourceDataFileTransaction(const QDir & localStorageDir);
-    ~ResourceDataFileTransaction();
+[[nodiscard]] bool findResourceDataBodyVersionId(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    QString & versionId, ErrorString & errorDescription);
 
-    [[nodiscard]] bool putResourceDataBodyToFile(
-        const QString & noteLocalId, const QString & resourceLocalId,
-        const QByteArray & resourceDataBody, ErrorString & errorDescription);
+[[nodiscard]] bool findResourceAlternateDataBodyVersionId(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    QString & versionId, ErrorString & errorDescription);
 
-    [[nodiscard]] bool putResourceAlternateDataBodyToFile(
-        const QString & noteLocalId, const QString & resourceLocalId,
-        const QByteArray & alternateDataBody, ErrorString & errorDescription);
+[[nodiscard]] bool readResourceDataBodyFromFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    QByteArray & resourceDataBody, ErrorString & errorDescription);
 
-    [[nodiscard]] bool removeResourceDataBodyFile(
-        const QString & noteLocalId, const QString & resourceLocalId,
-        ErrorString & errorDescription);
-
-    [[nodiscard]] bool removeResourceAlternateDataBodyFile(
-        const QString & noteLocalId, const QString & resourceLocalId,
-        ErrorString & errorDescription);
-
-    void commit();
-    void rollback();
-
-private:
-    struct PendingPutRequest
-    {
-        QString noteLocalId;
-        QString resourceLocalId;
-    };
-
-    struct PendingRemoveRequest
-    {
-        QString noteLocalId;
-        QString resourceLocalId;
-    };
-
-private:
-    // Unique identifier of the transaction
-    const QString m_id;
-    QDir m_resourcesDataDir;
-    std::vector<PendingPutRequest> m_pendingDataBodyRequests;
-    std::vector<PendingPutRequest> m_pendingAlternateDataBodyRequests;
-    bool m_committed = false;
-    bool m_rolledBack = false;
-};
+[[nodiscard]] bool readResourceAlternateDataBodyFromFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    QByteArray & resourceAlternateDataBody, ErrorString & errorDescription);
 
 [[nodiscard]] bool removeResourceDataFilesForNote(
     const QString & noteLocalId, const QDir & localStorageDir,
-    ErrorString & errorDescription);
-
-[[nodiscard]] bool readResourceDataFromFiles(
-    qevercloud::Resource & resource, const QDir & localStorageDir,
     ErrorString & errorDescription);
 
 [[nodiscard]] bool removeResourceDataFiles(

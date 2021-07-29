@@ -333,21 +333,18 @@ bool Patch2To3::applySync(
                     return true;
                 }
 
-                QDir versionIdDir{
-                    resourceBodyFileInfo.absolutePath() + QStringLiteral("/") +
-                    versionId};
+                QDir resourceLocalIdDir{
+                    resourceBodyFileInfo.dir().absolutePath() +
+                    QStringLiteral("/") + resourceLocalId};
 
-                if (!versionIdDir.exists() &&
-                    !versionIdDir.mkpath(versionIdDir.absolutePath()))
+                if (!resourceLocalIdDir.exists() &&
+                    !resourceLocalIdDir.mkpath(
+                        resourceLocalIdDir.absolutePath()))
                 {
                     errorDescription.setBase(QT_TR_NOOP(
-                        "Failed to create version id dir for a resource "
-                        "body file"));
+                        "Failed to create dir for resource body files"));
                     errorDescription.details() =
                         resourceBodyFileInfo.absoluteFilePath();
-                    errorDescription.details() +=
-                        QStringLiteral(", version id: ");
-                    errorDescription.details() += versionId;
                     QNWARNING(
                         "local_storage::sql::patches::2_to_3",
                         errorDescription);
@@ -357,11 +354,10 @@ bool Patch2To3::applySync(
                 QFile resourceBodyFile{
                     resourceBodyFileInfo.absoluteFilePath()};
                 bool res = resourceBodyFile.rename(
-                    versionIdDir.absoluteFilePath(resourceLocalId));
+                    resourceLocalIdDir.absoluteFilePath(versionId));
                 if (!res) {
                     errorDescription.setBase(QT_TR_NOOP(
-                        "Failed to move resource body file into version id "
-                        "dir"));
+                        "Failed to move resource body file"));
                     errorDescription.details() =
                         resourceBodyFileInfo.absoluteFilePath();
                     errorDescription.details() +=

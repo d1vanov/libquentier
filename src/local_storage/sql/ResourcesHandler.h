@@ -87,6 +87,10 @@ private:
         const qevercloud::Guid & guid, FetchResourceOptions options,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
+    [[nodiscard]] bool fillResourceData(
+        qevercloud::Resource & resource, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
     [[nodiscard]] bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
         const QString & localId, qevercloud::ResourceAttributes & attributes,
         QSqlDatabase & database, ErrorString & errorDescription) const;
