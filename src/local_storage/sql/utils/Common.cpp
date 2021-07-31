@@ -16,34 +16,25 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "Common.h"
 
-#include "../Transaction.h"
-
-class QDebug;
+#include <QDebug>
 
 namespace quentier::local_storage::sql::utils {
 
-enum class TransactionOption
+QDebug & operator<<(QDebug & dbg, const TransactionOption transactionOption)
 {
-    UseSeparateTransaction,
-    DontUseSeparateTransaction
-};
-
-QDebug & operator<<(QDebug & dbg, TransactionOption transactionOption);
-
-struct SelectTransactionGuard
-{
-    SelectTransactionGuard(const QSqlDatabase & database) :
-        m_transaction(database, Transaction::Type::Selection)
-    {}
-
-    ~SelectTransactionGuard()
+    switch (transactionOption)
     {
-        Q_UNUSED(m_transaction.end())
+    case TransactionOption::UseSeparateTransaction:
+        dbg << "Use separate transaction";
+        break;
+    case TransactionOption::DontUseSeparateTransaction:
+        dbg << "Don't use separate transaction";
+        break;
     }
 
-    Transaction m_transaction;
-};
+    return dbg;
+}
 
 } // namespace quentier::local_storage::sql::utils

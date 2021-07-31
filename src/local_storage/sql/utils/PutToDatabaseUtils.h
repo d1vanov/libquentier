@@ -25,6 +25,7 @@
 
 #include <optional>
 
+class QDebug;
 class QSqlDatabase;
 class QString;
 class QStringList;
@@ -100,9 +101,19 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::LinkedNotebook & linkedNotebook, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+enum class PutResourceBinaryDataOption
+{
+    WithBinaryData,
+    WithoutBinaryData
+};
+
+QDebug & operator<<(QDebug & dbg, PutResourceBinaryDataOption option);
+
 [[nodiscard]] bool putResource(
     qevercloud::Resource & resource, QSqlDatabase & database,
     ErrorString & errorDescription,
+    PutResourceBinaryDataOption putResourceBinaryDataOption =
+        PutResourceBinaryDataOption::WithBinaryData,
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);
 

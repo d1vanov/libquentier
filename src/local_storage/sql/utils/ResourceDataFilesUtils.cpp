@@ -101,6 +101,70 @@ bool findResourceAlternateDataBodyVersionId(
     return true;
 }
 
+bool putResourceDataBodyVersionId(
+    const QString & resourceLocalId, const QString & versionId,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceDataBodyVersionIds"
+        "(resourceLocalUid, versionId) VALUES(:resourceLocalUid, :versionId)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource data body version id: failed to prepare "
+            "query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+    query.bindValue(QStringLiteral(":versionId"), versionId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource data body version id"),
+        false);
+
+    return true;
+}
+
+bool putResourceAlternateDataBodyVersionId(
+    const QString & resourceLocalId, const QString & versionId,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceAlternateDataBodyVersionIds"
+        "(resourceLocalUid, versionId) VALUES(:resourceLocalUid, :versionId)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource alternate data body version id: failed to "
+            "prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+    query.bindValue(QStringLiteral(":versionId"), versionId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource alternate data body version id"),
+        false);
+
+    return true;
+}
+
 bool readResourceDataBodyFromFile(
     const QDir & localStorageDir, const QString & noteLocalId,
     const QString & resourceLocalId, const QString & versionId,

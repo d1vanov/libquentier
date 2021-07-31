@@ -40,6 +40,14 @@ namespace quentier::local_storage::sql::utils {
     const QString & resourceLocalId, QSqlDatabase & database,
     QString & versionId, ErrorString & errorDescription);
 
+[[nodiscard]] bool putResourceDataBodyVersionId(
+    const QString & resourceLocalId, const QString & versionId,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool putResourceAlternateDataBodyVersionId(
+    const QString & resourceLocalId, const QString & versionId,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
 [[nodiscard]] bool readResourceDataBodyFromFile(
     const QDir & localStorageDir, const QString & noteLocalId,
     const QString & resourceLocalId, const QString & versionId,

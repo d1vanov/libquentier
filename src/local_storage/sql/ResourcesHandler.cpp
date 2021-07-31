@@ -141,6 +141,25 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
         });
 }
 
+QFuture<void> ResourcesHandler::putResourceMetadata(
+    qevercloud::Resource resource)
+{
+    return makeWriteTask<void>(
+        makeTaskContext(), weak_from_this(),
+        [resource = std::move(resource)](
+            const ResourcesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) mutable {
+            bool res = utils::putResource(
+                resource, database, errorDescription,
+                utils::PutResourceBinaryDataOption::WithoutBinaryData);
+            if (res) {
+                handler.m_notifier->notifyResourcePut(resource);
+            }
+            return res;
+        });
+
+}
+
 QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
     QString resourceLocalId, FetchResourceOptions options) const
 {

@@ -19,6 +19,7 @@
 #include "PutToDatabaseUtils.h"
 #include "NotebookUtils.h"
 #include "RemoveFromDatabaseUtils.h"
+#include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
 #include "TagUtils.h"
 
@@ -28,6 +29,7 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/StringUtils.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Notebook.h>
@@ -1769,9 +1771,15 @@ bool putLinkedNotebook(
 
 bool putResource(
     qevercloud::Resource & resource, QSqlDatabase & database,
-    ErrorString & errorDescription, const TransactionOption transactionOption)
+    ErrorString & errorDescription,
+    const PutResourceBinaryDataOption putResourceBinaryDataOption,
+    const TransactionOption transactionOption)
 {
-    QNDEBUG("local_storage::sql::utils", "putResource: " << resource);
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "putResource: " << resource << "\nPut resource binary data option: "
+            << putResourceBinaryDataOption << ", transaction option: "
+            << transactionOption);
 
     const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
@@ -1838,44 +1846,63 @@ bool putResource(
         }
     }
 
-    if (resource.data() && resource.data()->body()) {
-        // TODO: write resource data body into a file with .new suffix
-    }
+    QString resourceDataBodyVersionId;
+    QString resourceAlternateDataBodyVersionId;
 
-    if (resource.alternateData() && resource.alternateData()->body()) {
-        // TODO: write resource alternate data body into a file with .new suffix
+    if (putResourceBinaryDataOption ==
+        PutResourceBinaryDataOption::WithBinaryData) {
+        if (resource.data() && resource.data()->body()) {
+            resourceDataBodyVersionId = UidGenerator::Generate();
+            if (!putResourceDataBodyVersionId(
+                    localId, resourceDataBodyVersionId, database,
+                    errorDescription))
+            {
+                return false;
+            }
+            // TODO: write resource data body into a file with corresponding version id
+        }
+
+        if (resource.alternateData() && resource.alternateData()->body()) {
+            resourceAlternateDataBodyVersionId = UidGenerator::Generate();
+            if (!putResourceAlternateDataBodyVersionId(
+                    localId, resourceAlternateDataBodyVersionId, database,
+                    errorDescription))
+            {
+                return false;
+            }
+            // TODO: write resource alternate data body into a file with corresponding version id
+        }
     }
 
     if (transaction) {
         const bool res = transaction->commit();
         if (!res) {
-            if (resource.data() && resource.data()->body()) {
-                // TODO: remove resource data body file with .new suffix
+            if (putResourceBinaryDataOption ==
+                PutResourceBinaryDataOption::WithBinaryData) {
+                if (resource.data() && resource.data()->body()) {
+                    // TODO: remove resource data body file corresponding to resourceDataBodyVersionId
+                }
+
+                if (resource.alternateData() && resource.alternateData()->body()) {
+                    // TODO: remove resource alternate data body file corresponding to resourceAlternateDataBodyVersionId
+                }
             }
 
-            if (resource.alternateData() && resource.alternateData()->body()) {
-                // TODO: remove resource alternate data body file with .new
-                // suffix
-            }
+            ENSURE_DB_REQUEST_RETURN(
+                res, database, "local_storage::sql::utils",
+                QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "Cannot put resource into the local storage database, failed to "
+                    "commit"),
+                false);
         }
-
-        ENSURE_DB_REQUEST_RETURN(
-            res, database, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot put resource into the local storage database, failed to "
-                "commit"),
-            false);
-    }
-
-    if (resource.data() && resource.data()->body()) {
-        // TODO: rename resource data body file with .new suffix to a name
-        // without suffix
-    }
-
-    if (resource.alternateData() && resource.alternateData()->body()) {
-        // TODO: rename resource data body with .new suffix to a name without
-        // suffix
+        else if (
+            putResourceBinaryDataOption ==
+            PutResourceBinaryDataOption::WithBinaryData)
+        {
+            // TODO: find and delete data and alternate data body files
+            // corresponding to stale version ids
+        }
     }
 
     return true;
@@ -1902,6 +1929,20 @@ bool putResourceAttributes(
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return true;
+}
+
+QDebug & operator<<(QDebug & dbg, const PutResourceBinaryDataOption option)
+{
+    switch (option)
+    {
+    case PutResourceBinaryDataOption::WithBinaryData:
+        dbg << "With binary data";
+        break;
+    case PutResourceBinaryDataOption::WithoutBinaryData:
+        dbg << "Without binary data";
+        break;
+    }
+    return dbg;
 }
 
 } // namespace quentier::local_storage::sql::utils

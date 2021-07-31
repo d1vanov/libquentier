@@ -59,6 +59,9 @@ public:
 
     [[nodiscard]] QFuture<void> putResource(qevercloud::Resource resource);
 
+    [[nodiscard]] QFuture<void> putResourceMetadata(
+        qevercloud::Resource resource);
+
     [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
         QString resourceLocalId, FetchResourceOptions options = {}) const;
 

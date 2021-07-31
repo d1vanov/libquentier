@@ -40,6 +40,7 @@ target_sources(${LIBRARY_NAME}
   patches/PatchBase.h
   patches/PatchUtils.cpp
   patches/PatchUtils.h
+  utils/Common.cpp
   utils/Common.h
   utils/FillFromSqlRecordUtils.cpp
   utils/FillFromSqlRecordUtils.h
