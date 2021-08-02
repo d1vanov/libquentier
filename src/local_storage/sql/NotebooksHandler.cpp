@@ -664,7 +664,7 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
 
     for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
         if (!utils::removeResourceDataFilesForNote(
-                noteLocalId, m_localStorageDir, errorDescription)) {
+                m_localStorageDir, noteLocalId, errorDescription)) {
             QNWARNING("local_storage::sql::NotebooksHandler", errorDescription);
         }
     }

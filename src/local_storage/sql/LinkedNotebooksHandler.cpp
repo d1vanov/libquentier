@@ -361,7 +361,7 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
 
     for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
         if (!utils::removeResourceDataFilesForNote(
-                noteLocalId, m_localStorageDir, errorDescription)) {
+                m_localStorageDir, noteLocalId, errorDescription)) {
             return false;
         }
     }

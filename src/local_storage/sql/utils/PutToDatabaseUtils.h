@@ -26,6 +26,7 @@
 #include <optional>
 
 class QDebug;
+class QDir;
 class QSqlDatabase;
 class QString;
 class QStringList;
@@ -110,8 +111,8 @@ enum class PutResourceBinaryDataOption
 QDebug & operator<<(QDebug & dbg, PutResourceBinaryDataOption option);
 
 [[nodiscard]] bool putResource(
-    qevercloud::Resource & resource, QSqlDatabase & database,
-    ErrorString & errorDescription,
+    const QDir & localStorageDir, qevercloud::Resource & resource,
+    QSqlDatabase & database, ErrorString & errorDescription,
     PutResourceBinaryDataOption putResourceBinaryDataOption =
         PutResourceBinaryDataOption::WithBinaryData,
     TransactionOption transactionOption =

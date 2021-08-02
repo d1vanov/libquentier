@@ -129,11 +129,12 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
 {
     return makeWriteTask<void>(
         makeTaskContext(), weak_from_this(),
-        [resource = std::move(resource)](
+        [this, resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
             QWriteLocker locker{&handler.m_resourceDataFilesLock};
-            bool res = utils::putResource(resource, database, errorDescription);
+            bool res = utils::putResource(
+                m_localStorageDir, resource, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);
             }
@@ -146,18 +147,17 @@ QFuture<void> ResourcesHandler::putResourceMetadata(
 {
     return makeWriteTask<void>(
         makeTaskContext(), weak_from_this(),
-        [resource = std::move(resource)](
+        [this, resource = std::move(resource)](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
             bool res = utils::putResource(
-                resource, database, errorDescription,
+                m_localStorageDir, resource, database, errorDescription,
                 utils::PutResourceBinaryDataOption::WithoutBinaryData);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);
             }
             return res;
         });
-
 }
 
 QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
@@ -763,7 +763,7 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
         false);
 
     if (!utils::removeResourceDataFiles(
-            noteLocalId, localId, m_localStorageDir, errorDescription))
+            m_localStorageDir, noteLocalId, localId, errorDescription))
     {
         QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
     }

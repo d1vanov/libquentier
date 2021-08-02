@@ -1770,8 +1770,8 @@ bool putLinkedNotebook(
 }
 
 bool putResource(
-    qevercloud::Resource & resource, QSqlDatabase & database,
-    ErrorString & errorDescription,
+    const QDir & localStorageDir, qevercloud::Resource & resource,
+    QSqlDatabase & database, ErrorString & errorDescription,
     const PutResourceBinaryDataOption putResourceBinaryDataOption,
     const TransactionOption transactionOption)
 {
@@ -1859,7 +1859,14 @@ bool putResource(
             {
                 return false;
             }
-            // TODO: write resource data body into a file with corresponding version id
+
+            if (!writeResourceDataBodyToFile(
+                    localStorageDir, resource.noteLocalId(), localId,
+                    resourceDataBodyVersionId, *resource.data()->body(),
+                    errorDescription))
+            {
+                return false;
+            }
         }
 
         if (resource.alternateData() && resource.alternateData()->body()) {
@@ -1870,7 +1877,14 @@ bool putResource(
             {
                 return false;
             }
-            // TODO: write resource alternate data body into a file with corresponding version id
+
+            if (!writeResourceAlternateDataBodyToFile(
+                    localStorageDir, resource.noteLocalId(), localId,
+                    resourceDataBodyVersionId,
+                    *resource.alternateData()->body(), errorDescription))
+            {
+                return false;
+            }
         }
     }
 
@@ -1879,12 +1893,21 @@ bool putResource(
         if (!res) {
             if (putResourceBinaryDataOption ==
                 PutResourceBinaryDataOption::WithBinaryData) {
-                if (resource.data() && resource.data()->body()) {
-                    // TODO: remove resource data body file corresponding to resourceDataBodyVersionId
+                if (resource.data() && resource.data()->body() &&
+                    !removeResourceDataBodyFile(
+                        localStorageDir, resource.noteLocalId(), localId,
+                        resourceDataBodyVersionId, errorDescription))
+                {
+                    return false;
                 }
 
-                if (resource.alternateData() && resource.alternateData()->body()) {
-                    // TODO: remove resource alternate data body file corresponding to resourceAlternateDataBodyVersionId
+                if (resource.alternateData() &&
+                    resource.alternateData()->body() &&
+                    !removeResourceAlternateDataBodyFile(
+                        localStorageDir, resource.noteLocalId(), localId,
+                        resourceAlternateDataBodyVersionId, errorDescription))
+                {
+                    return false;
                 }
             }
 
@@ -1892,8 +1915,8 @@ bool putResource(
                 res, database, "local_storage::sql::utils",
                 QT_TRANSLATE_NOOP(
                     "local_storage::sql::utils",
-                    "Cannot put resource into the local storage database, failed to "
-                    "commit"),
+                    "Cannot put resource into the local storage database, "
+                    "failed to commit"),
                 false);
         }
         else if (

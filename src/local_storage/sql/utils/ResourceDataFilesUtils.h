@@ -58,12 +58,33 @@ namespace quentier::local_storage::sql::utils {
     const QString & resourceLocalId, const QString & versionId,
     QByteArray & resourceAlternateDataBody, ErrorString & errorDescription);
 
+[[nodiscard]] bool writeResourceDataBodyToFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    const QByteArray & resourceDataBody, ErrorString & errorDescription);
+
+[[nodiscard]] bool writeResourceAlternateDataBodyToFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    const QByteArray & resourceAlternateDataBody,
+    ErrorString & errorDescription);
+
 [[nodiscard]] bool removeResourceDataFilesForNote(
-    const QString & noteLocalId, const QDir & localStorageDir,
+    const QDir & localStorageDir, const QString & noteLocalId,
     ErrorString & errorDescription);
 
 [[nodiscard]] bool removeResourceDataFiles(
-    const QString & noteLocalId, const QString & resourceLocalId,
-    const QDir & localStorageDir, ErrorString & errorDescription);
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, ErrorString & errorDescription);
+
+[[nodiscard]] bool removeResourceDataBodyFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeResourceAlternateDataBodyFile(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & versionId,
+    ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils
