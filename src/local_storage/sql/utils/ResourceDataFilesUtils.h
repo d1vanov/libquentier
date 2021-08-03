@@ -87,4 +87,12 @@ namespace quentier::local_storage::sql::utils {
     const QString & resourceLocalId, const QString & versionId,
     ErrorString & errorDescription);
 
+void removeStaleResourceDataBodyFiles(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & actualVersionId);
+
+void removeStaleResourceAlternateDataBodyFiles(
+    const QDir & localStorageDir, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & actualVersionId);
+
 } // namespace quentier::local_storage::sql::utils

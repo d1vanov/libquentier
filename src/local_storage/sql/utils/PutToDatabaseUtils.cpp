@@ -1923,8 +1923,13 @@ bool putResource(
             putResourceBinaryDataOption ==
             PutResourceBinaryDataOption::WithBinaryData)
         {
-            // TODO: find and delete data and alternate data body files
-            // corresponding to stale version ids
+            removeStaleResourceDataBodyFiles(
+                localStorageDir, resource.noteLocalId(), localId,
+                resourceDataBodyVersionId);
+
+            removeStaleResourceAlternateDataBodyFiles(
+                localStorageDir, resource.noteLocalId(), localId,
+                resourceAlternateDataBodyVersionId);
         }
     }
 
