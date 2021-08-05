@@ -112,18 +112,34 @@ QDebug & operator<<(QDebug & dbg, PutResourceBinaryDataOption option);
 
 [[nodiscard]] bool putResource(
     const QDir & localStorageDir, qevercloud::Resource & resource,
-    QSqlDatabase & database, ErrorString & errorDescription,
+    int indexInNote, QSqlDatabase & database, ErrorString & errorDescription,
     PutResourceBinaryDataOption putResourceBinaryDataOption =
         PutResourceBinaryDataOption::WithBinaryData,
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);
 
+enum class PutResourceMetadataOption
+{
+    WithBinaryDataProperties,
+    WithoutBinaryDataProperties
+};
+
 [[nodiscard]] bool putCommonResourceData(
-    const qevercloud::Resource & resource, QSqlDatabase & database,
-    ErrorString & errorDescription);
+    const qevercloud::Resource & resource, int indexInNote,
+    PutResourceMetadataOption putResourceMetadataOption,
+    QSqlDatabase & database, ErrorString & errorDescription);
 
 [[nodiscard]] bool putResourceAttributes(
     const QString & localId, const qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool putResourceAttributesAppDataKeysOnly(
+    const QString & localId, const std::optional<QSet<QString>> & keysOnly,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool putResourceAttributesAppDataFullMap(
+    const QString & localId,
+    const std::optional<QMap<QString, QString>> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils

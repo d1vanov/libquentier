@@ -57,10 +57,11 @@ public:
     [[nodiscard]] QFuture<quint32> resourceCountPerNoteLocalId(
         QString noteLocalId) const;
 
-    [[nodiscard]] QFuture<void> putResource(qevercloud::Resource resource);
+    [[nodiscard]] QFuture<void> putResource(
+        qevercloud::Resource resource, int indexInNote);
 
     [[nodiscard]] QFuture<void> putResourceMetadata(
-        qevercloud::Resource resource);
+        qevercloud::Resource resource, int indexInNote);
 
     [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
         QString resourceLocalId, FetchResourceOptions options = {}) const;

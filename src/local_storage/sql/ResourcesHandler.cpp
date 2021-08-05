@@ -125,16 +125,18 @@ QFuture<quint32> ResourcesHandler::resourceCountPerNoteLocalId(
         });
 }
 
-QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
+QFuture<void> ResourcesHandler::putResource(
+    qevercloud::Resource resource, const int indexInNote)
 {
     return makeWriteTask<void>(
         makeTaskContext(), weak_from_this(),
-        [this, resource = std::move(resource)](
+        [this, resource = std::move(resource), indexInNote](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
             QWriteLocker locker{&handler.m_resourceDataFilesLock};
             bool res = utils::putResource(
-                m_localStorageDir, resource, database, errorDescription);
+                m_localStorageDir, resource, indexInNote, database,
+                errorDescription);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);
             }
@@ -143,15 +145,15 @@ QFuture<void> ResourcesHandler::putResource(qevercloud::Resource resource)
 }
 
 QFuture<void> ResourcesHandler::putResourceMetadata(
-    qevercloud::Resource resource)
+    qevercloud::Resource resource, const int indexInNote)
 {
     return makeWriteTask<void>(
         makeTaskContext(), weak_from_this(),
-        [this, resource = std::move(resource)](
+        [this, resource = std::move(resource), indexInNote](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
             bool res = utils::putResource(
-                m_localStorageDir, resource, database, errorDescription,
+                m_localStorageDir, resource, indexInNote, database, errorDescription,
                 utils::PutResourceBinaryDataOption::WithoutBinaryData);
             if (res) {
                 handler.m_notifier->notifyResourcePut(resource);

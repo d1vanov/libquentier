@@ -507,7 +507,7 @@ public:
         QString noteLocalId) const = 0;
 
     [[nodiscard]] virtual QFuture<void> putResource(
-        qevercloud::Resource resource) = 0;
+        qevercloud::Resource resource, int indexInNote) = 0;
 
     [[nodiscard]] virtual QFuture<qevercloud::Resource>
         findResourceByLocalId(

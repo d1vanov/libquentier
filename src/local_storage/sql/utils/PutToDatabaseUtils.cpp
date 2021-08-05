@@ -1771,7 +1771,8 @@ bool putLinkedNotebook(
 
 bool putResource(
     const QDir & localStorageDir, qevercloud::Resource & resource,
-    QSqlDatabase & database, ErrorString & errorDescription,
+    const int indexInNote, QSqlDatabase & database,
+    ErrorString & errorDescription,
     const PutResourceBinaryDataOption putResourceBinaryDataOption,
     const TransactionOption transactionOption)
 {
@@ -1818,7 +1819,14 @@ bool putResource(
         resource.setLocalId(localId);
     }
 
-    if (!putCommonResourceData(resource, database, errorDescription)) {
+    if (!putCommonResourceData(
+            resource, indexInNote,
+            (putResourceBinaryDataOption ==
+                     PutResourceBinaryDataOption::WithBinaryData
+                 ? PutResourceMetadataOption::WithBinaryDataProperties
+                 : PutResourceMetadataOption::WithoutBinaryDataProperties),
+            database, errorDescription))
+    {
         return false;
     }
 
@@ -1826,6 +1834,37 @@ bool putResource(
         if (!putResourceAttributes(
                 localId, *resource.attributes(), database, errorDescription)) {
             return false;
+        }
+
+        if (resource.attributes()->applicationData()) {
+            if (!putResourceAttributesAppDataKeysOnly(
+                    localId,
+                    resource.attributes()->applicationData()->keysOnly(),
+                    database, errorDescription))
+            {
+                return false;
+            }
+
+            if (!putResourceAttributesAppDataFullMap(
+                    localId,
+                    resource.attributes()->applicationData()->fullMap(),
+                    database, errorDescription))
+            {
+                return false;
+            }
+        }
+        else {
+            if (!removeResourceAttributesAppDataKeysOnly(
+                    localId, database, errorDescription))
+            {
+                return false;
+            }
+
+            if (!removeResourceAttributesAppDataFullMap(
+                    localId, database, errorDescription))
+            {
+                return false;
+            }
         }
     }
     else {
@@ -1937,13 +1976,140 @@ bool putResource(
 }
 
 bool putCommonResourceData(
-    const qevercloud::Resource & resource, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    const qevercloud::Resource & resource, const int indexInNote,
+    const PutResourceMetadataOption putResourceMetadataOption,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(resource)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    QString queryString;
+    {
+        QTextStream strm{&queryString};
+
+        strm << "INSERT OR REPLACE INTO Resources (resourceGuid, "
+            << "noteGuid, noteLocalUid, mime, "
+            << "width, height, recognitionDataBody, recognitionDataSize, "
+            << "recognitionDataHash, resourceUpdateSequenceNumber, "
+            << "resourceIsDirty, resourceIndexInNote, resourceLocalUid";
+
+        if (putResourceMetadataOption ==
+            PutResourceMetadataOption::WithBinaryDataProperties)
+        {
+            strm << ", dataSize, dataHash, alternateDataSize, "
+                << "alternateDataHash";
+        }
+
+        strm << ") VALUES(:resourceGuid, :noteGuid, :noteLocalUid, "
+            << ":mime, :width, :height, "
+            << ":recognitionDataBody, :recognitionDataSize, "
+            << ":recognitionDataHash, :resourceUpdateSequenceNumber, "
+            << ":resourceIsDirty, :resourceIndexInNote, :resourceLocalUid";
+
+        if (putResourceMetadataOption ==
+            PutResourceMetadataOption::WithBinaryDataProperties)
+        {
+            strm << ":dataSize, :dataHash, :alternateDataSize, "
+                << ":alternateDataHash";
+        }
+
+        strm << ")";
+    }
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource metadata into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(
+        QStringLiteral(":resourceGuid"),
+        (resource.guid() ? *resource.guid() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":noteGuid"),
+        (resource.noteGuid() ? *resource.noteGuid() : *gNullValue));
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), resource.noteLocalId());
+
+    query.bindValue(
+        QStringLiteral(":mime"),
+        (resource.mime() ? *resource.mime() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":width"),
+        (resource.width() ? *resource.width() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":height"),
+        (resource.height() ? *resource.height() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":recognitionDataBody"),
+        ((resource.recognition() && resource.recognition()->body())
+             ? *resource.recognition()->body()
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":recognitionDataSize"),
+        ((resource.recognition() && resource.recognition()->size())
+             ? *resource.recognition()->size()
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":recognitionDataHash"),
+        ((resource.recognition() && resource.recognition()->bodyHash())
+             ? *resource.recognition()->bodyHash()
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":resourceUpdateSequenceNumber"),
+        (resource.updateSequenceNum() ? *resource.updateSequenceNum()
+                                      : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":resourceIsDirty"),
+        (resource.isLocallyModified() ? 1 : 0));
+
+    query.bindValue(QStringLiteral(":resourceIndexInNote"), indexInNote);
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localId());
+
+    if (putResourceMetadataOption ==
+        PutResourceMetadataOption::WithBinaryDataProperties) {
+        query.bindValue(
+            QStringLiteral(":dataSize"),
+            ((resource.data() && resource.data()->size())
+                 ? *resource.data()->size()
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":dataHash"),
+            ((resource.data() && resource.data()->bodyHash())
+                 ? *resource.data()->bodyHash()
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":alternateDataSize"),
+            ((resource.alternateData() && resource.alternateData()->size())
+                 ? *resource.alternateData()->size()
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":alternateDataHash"),
+            ((resource.alternateData() && resource.alternateData()->bodyHash())
+                 ? *resource.alternateData()->bodyHash()
+                 : *gNullValue));
+    }
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource metadata into the local storage database"),
+        false);
+
     return true;
 }
 
@@ -1951,9 +2117,100 @@ bool putResourceAttributes(
     const QString & localId, const qevercloud::ResourceAttributes & attributes,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // TODO: implement
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceAttributes"
+        "(resourceLocalUid, resourceSourceURL, timestamp, "
+        "resourceLatitude, resourceLongitude, resourceAltitude, "
+        "cameraMake, cameraModel, clientWillIndex, "
+        "fileName, attachment) VALUES(:resourceLocalUid, "
+        ":resourceSourceURL, :timestamp, :resourceLatitude, "
+        ":resourceLongitude, :resourceAltitude, :cameraMake, "
+        ":cameraModel, :clientWillIndex, :fileName, :attachment)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource attributes into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    query.bindValue(
+        QStringLiteral(":resourceSourceURL"),
+        (attributes.sourceURL() ? *attributes.sourceURL() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":timestamp"),
+        (attributes.timestamp() ? *attributes.timestamp() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":resourceLatitude"),
+        (attributes.latitude() ? *attributes.latitude() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":resourceLongitude"),
+        (attributes.longitude() ? *attributes.longitude() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":resourceAltitude"),
+        (attributes.altitude() ? *attributes.altitude() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":cameraMake"),
+        (attributes.cameraMake() ? *attributes.cameraMake() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":cameraModel"),
+        (attributes.cameraModel() ? *attributes.cameraModel() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":clientWillIndex"),
+        (attributes.clientWillIndex()
+                ? (*attributes.clientWillIndex() ? 1 : 0)
+                : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":fileName"),
+        (attributes.fileName() ? *attributes.fileName() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":attachment"),
+        (attributes.attachment() ? (*attributes.attachment() ? 1 : 0)
+                                    : *gNullValue));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource attributes into the local storage database"),
+        false);
+
+    return true;
+}
+
+bool putResourceAttributesAppDataKeysOnly(
+    const QString & localId, const std::optional<QSet<QString>> & keysOnly,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
     Q_UNUSED(localId)
-    Q_UNUSED(attributes)
+    Q_UNUSED(keysOnly)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool putResourceAttributesAppDataFullMap(
+    const QString & localId,
+    const std::optional<QMap<QString, QString>> & fullMap,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    Q_UNUSED(localId)
+    Q_UNUSED(fullMap)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
     return true;
