@@ -36,6 +36,7 @@
 #include <qevercloud/types/Resource.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QGlobalStatic>
 #include <QSqlDatabase>
@@ -1837,17 +1838,39 @@ bool putResource(
         }
 
         if (resource.attributes()->applicationData()) {
-            if (!putResourceAttributesAppDataKeysOnly(
+            if (!removeResourceAttributesAppDataKeysOnly(
+                    localId, database, errorDescription))
+            {
+                return false;
+            }
+
+            if (resource.attributes()->applicationData()->keysOnly() &&
+                !resource.attributes()
+                     ->applicationData()
+                     ->keysOnly()
+                     ->isEmpty() &&
+                !putResourceAttributesAppDataKeysOnly(
                     localId,
-                    resource.attributes()->applicationData()->keysOnly(),
+                    *resource.attributes()->applicationData()->keysOnly(),
                     database, errorDescription))
             {
                 return false;
             }
 
-            if (!putResourceAttributesAppDataFullMap(
+            if (!removeResourceAttributesAppDataFullMap(
+                    localId, database, errorDescription))
+            {
+                return false;
+            }
+
+            if (resource.attributes()->applicationData()->fullMap() &&
+                !resource.attributes()
+                     ->applicationData()
+                     ->fullMap()
+                     ->isEmpty() &&
+                !putResourceAttributesAppDataFullMap(
                     localId,
-                    resource.attributes()->applicationData()->fullMap(),
+                    *resource.attributes()->applicationData()->fullMap(),
                     database, errorDescription))
             {
                 return false;
@@ -2194,25 +2217,83 @@ bool putResourceAttributes(
 }
 
 bool putResourceAttributesAppDataKeysOnly(
-    const QString & localId, const std::optional<QSet<QString>> & keysOnly,
+    const QString & localId, const QSet<QString> & keysOnly,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    Q_UNUSED(localId)
-    Q_UNUSED(keysOnly)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    if (keysOnly.isEmpty()) {
+        return true;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceAttributesApplicationDataKeysOnly"
+        "(resourceLocalUid, resourceKey) VALUES(:resourceLocalUid, "
+        ":resourceKey)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource attributes' application data keys only "
+            "into the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    for (const auto & key: keysOnly) {
+        query.bindValue(QStringLiteral(":resourceKey"), key);
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot put resource attributes' application data keys only "
+                "into the local storage database"),
+            false);
+    }
+
     return true;
 }
 
 bool putResourceAttributesAppDataFullMap(
-    const QString & localId,
-    const std::optional<QMap<QString, QString>> & fullMap,
+    const QString & localId, const QMap<QString, QString> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
-    Q_UNUSED(localId)
-    Q_UNUSED(fullMap)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    if (fullMap.isEmpty()) {
+        return true;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceAttributesApplicationDataFullMap"
+        "(resourceLocalUid, resourceMapKey, resourceValue) "
+        "VALUES(:resourceLocalUid, :resourceMapKey, :resourceValue)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource attributes' application data full map "
+            "into the local storage database: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), localId);
+
+    for (const auto it: qevercloud::toRange(fullMap)) {
+        query.bindValue(QStringLiteral(":resourceMapKey"), it.key());
+        query.bindValue(QStringLiteral(":resourceValue"), it.value());
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot put resource attributes' application data full map "
+                "into the local storage database"),
+            false);
+    }
+
     return true;
 }
 

@@ -134,12 +134,12 @@ enum class PutResourceMetadataOption
     QSqlDatabase & database, ErrorString & errorDescription);
 
 [[nodiscard]] bool putResourceAttributesAppDataKeysOnly(
-    const QString & localId, const std::optional<QSet<QString>> & keysOnly,
+    const QString & localId, const QSet<QString> & keysOnly,
     QSqlDatabase & database, ErrorString & errorDescription);
 
 [[nodiscard]] bool putResourceAttributesAppDataFullMap(
     const QString & localId,
-    const std::optional<QMap<QString, QString>> & fullMap,
+    const QMap<QString, QString> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils
