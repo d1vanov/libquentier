@@ -64,6 +64,14 @@ Q_GLOBAL_STATIC_WITH_ARGS(
         "LinkedNotebook field missing in the record received from the local "
         "storage database")));
 
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingResourceFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Resource field missing in the record received from the local "
+        "storage database")));
+
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
     const QSqlRecord & record, const QString & column, Type & typeValue,
@@ -158,6 +166,18 @@ bool fillLinkedNotebookValue(
     return fillValue<qevercloud::LinkedNotebook, VariantType, LocalType>(
         record, column, linkedNotebook, std::move(setter),
         *gMissingLinkedNotebookFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillResourceValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::Resource & resource,
+    std::function<void(qevercloud::Resource&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::Resource, VariantType, LocalType>(
+        record, column, resource, std::move(setter),
+        *gMissingResourceFieldErrorMessage, errorDescription);
 }
 
 template <class FieldType, class VariantType, class LocalType = VariantType>
@@ -1197,9 +1217,10 @@ bool fillSharedNotebookFromSqlRecord(
             bool conversionResult = false;
             const int index = value.toInt(&conversionResult);
             if (!conversionResult) {
-                errorDescription.setBase(
-                    QT_TR_NOOP("can't convert shared notebook's index in "
-                               "notebook to int"));
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "cannot convert shared notebook's index in notebook to "
+                    "int"));
                 QNERROR("local_storage::sql::utils", errorDescription);
                 return false;
             }
@@ -1330,12 +1351,139 @@ bool fillLinkedNotebookFromSqlRecord(
 
 bool fillResourceFromSqlRecord(
     const QSqlRecord & record, qevercloud::Resource & resource,
-    ErrorString & errorDescription)
+    int & indexInNote, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(resource)
-    Q_UNUSED(errorDescription)
+    using qevercloud::Resource;
+
+    if (!fillResourceValue<QString, QString>(
+            record, QStringLiteral("resourceLocalUid"), resource,
+            &Resource::setLocalId, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillResourceValue<int, bool>(
+            record, QStringLiteral("resourceIsDirty"), resource,
+            &Resource::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    fillResourceValue<QString, QString>(
+        record, QStringLiteral("localNote"), resource,
+        &Resource::setNoteLocalId);
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(Resource &, std::optional<QString>)> setter) {
+            fillResourceValue<QString, std::optional<QString>>(
+                record, column, resource, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("noteGuid"), &Resource::setNoteGuid);
+    fillOptStringValue(QStringLiteral("mime"), &Resource::setMime);
+    fillOptStringValue(QStringLiteral("resourceGuid"), &Resource::setGuid);
+
+    fillResourceValue<int, qint32>(
+        record, QStringLiteral("resourceUpdateSequenceNumber"), resource,
+        &Resource::setUpdateSequenceNum);
+
+    fillResourceValue<int, qint16>(
+        record, QStringLiteral("width"), resource, &Resource::setWidth);
+
+    fillResourceValue<int, qint16>(
+        record, QStringLiteral("height"), resource, &Resource::setHeight);
+
+    fillResourceValue<int, qint32>(
+        record, QStringLiteral("dataSize"), resource,
+        [](Resource & resource, const qint32 dataSize)
+        {
+            if (!resource.data()) {
+                resource.setData(qevercloud::Data{});
+            }
+            resource.mutableData()->setSize(dataSize);
+        });
+
+    fillResourceValue<QByteArray, QByteArray>(
+        record, QStringLiteral("dataHash"), resource,
+        [](Resource & resource, QByteArray dataHash)
+        {
+            if (!resource.data()) {
+                resource.setData(qevercloud::Data{});
+            }
+            resource.mutableData()->setBodyHash(std::move(dataHash));
+        });
+
+    fillResourceValue<int, qint32>(
+        record, QStringLiteral("recognitionDataSize"), resource,
+        [](Resource & resource, const qint32 dataSize)
+        {
+            if (!resource.recognition()) {
+                resource.setRecognition(qevercloud::Data{});
+            }
+            resource.mutableRecognition()->setSize(dataSize);
+        });
+
+    fillResourceValue<QByteArray, QByteArray>(
+        record, QStringLiteral("recognitionDataHash"), resource,
+        [](Resource & resource, QByteArray dataHash)
+        {
+            if (!resource.recognition()) {
+                resource.setRecognition(qevercloud::Data{});
+            }
+            resource.mutableRecognition()->setBodyHash(std::move(dataHash));
+        });
+
+    fillResourceValue<QByteArray, QByteArray>(
+        record, QStringLiteral("recognitionDataBody"), resource,
+        [](Resource & resource, QByteArray dataBody)
+        {
+            if (!resource.recognition()) {
+                resource.setRecognition(qevercloud::Data{});
+            }
+            resource.mutableRecognition()->setBody(std::move(dataBody));
+        });
+
+    fillResourceValue<int, qint32>(
+        record, QStringLiteral("alternateDataSize"), resource,
+        [](Resource & resource, const qint32 dataSize)
+        {
+            if (!resource.alternateData()) {
+                resource.setAlternateData(qevercloud::Data{});
+            }
+            resource.mutableAlternateData()->setSize(dataSize);
+        });
+
+    fillResourceValue<QByteArray, QByteArray>(
+        record, QStringLiteral("alternateDataHash"), resource,
+        [](Resource & resource, QByteArray dataHash)
+        {
+            if (!resource.alternateData()) {
+                resource.setAlternateData(qevercloud::Data{});
+            }
+            resource.mutableAlternateData()->setBodyHash(std::move(dataHash));
+        });
+
+    const int recordIndex =
+        record.indexOf(QStringLiteral("resourceIndexInNote"));
+    if (recordIndex >= 0) {
+        const QVariant value = record.value(recordIndex);
+        if (!value.isNull()) {
+            bool conversionResult = false;
+            const int index = value.toInt(&conversionResult);
+            if (!conversionResult) {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "cannot convert resource's index in note to int"));
+                QNERROR("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+            indexInNote = index;
+        }
+    }
+
+    // TODO: implement further: fill resource attributes including application
+    // data
     return true;
 }
 
@@ -1368,7 +1516,9 @@ bool fillObjectFromSqlRecord<qevercloud::Resource>(
     const QSqlRecord & record, qevercloud::Resource & object,
     ErrorString & errorDescription)
 {
-    return fillResourceFromSqlRecord(record, object, errorDescription);
+    int indexInNote = -1;
+    return fillResourceFromSqlRecord(
+        record, object, indexInNote, errorDescription);
 }
 
 template <>

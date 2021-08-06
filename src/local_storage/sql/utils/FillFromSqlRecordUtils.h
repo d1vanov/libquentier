@@ -78,7 +78,7 @@ void fillAccountLimitsFromSqlRecord(
 
 [[nodiscard]] bool fillResourceFromSqlRecord(
     const QSqlRecord & record, qevercloud::Resource & resource,
-    ErrorString & errorDescription);
+    int & indexInNote, ErrorString & errorDescription);
 
 template <class T>
 [[nodiscard]] bool fillObjectFromSqlRecord(

@@ -380,7 +380,9 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
     const auto record = query.record();
     qevercloud::Resource resource;
     ErrorString error;
-    if (!utils::fillResourceFromSqlRecord(record, resource, error)) {
+    int indexInNote = -1;
+    if (!utils::fillResourceFromSqlRecord(record, resource, indexInNote, error))
+    {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::ResourcesHandler",
             "Failed to find resource by local id in the local storage "
@@ -472,7 +474,9 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByGuidImpl(
     const auto record = query.record();
     qevercloud::Resource resource;
     ErrorString error;
-    if (!utils::fillResourceFromSqlRecord(record, resource, error)) {
+    int indexInNote = -1;
+    if (!utils::fillResourceFromSqlRecord(record, resource, indexInNote, error))
+    {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::ResourcesHandler",
             "Failed to find resource by guid in the local storage "
