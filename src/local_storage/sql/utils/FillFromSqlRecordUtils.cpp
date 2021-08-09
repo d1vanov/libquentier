@@ -86,7 +86,9 @@ bool fillValue(
         if (!value.isNull()) {
             if constexpr (
                 std::is_same_v<LocalType, VariantType> ||
-                std::is_convertible_v<VariantType, LocalType>) {
+                (std::is_convertible_v<VariantType, LocalType> &&
+                 sizeof(LocalType) >= sizeof(VariantType)))
+            {
                 setter(
                     typeValue,
                     qvariant_cast<VariantType>(value));
@@ -177,6 +179,22 @@ bool fillResourceValue(
 {
     return fillValue<qevercloud::Resource, VariantType, LocalType>(
         record, column, resource, std::move(setter),
+        *gMissingResourceFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillResourceAttributeValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::Resource & resource,
+    std::function<void(qevercloud::ResourceAttributes&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    if (!resource.attributes()) {
+        resource.setAttributes(qevercloud::ResourceAttributes{});
+    }
+
+    return fillValue<qevercloud::ResourceAttributes, VariantType, LocalType>(
+        record, column, *resource.mutableAttributes(), std::move(setter),
         *gMissingResourceFieldErrorMessage, errorDescription);
 }
 
@@ -1482,8 +1500,48 @@ bool fillResourceFromSqlRecord(
         }
     }
 
-    // TODO: implement further: fill resource attributes including application
-    // data
+    using qevercloud::ResourceAttributes;
+
+    fillResourceAttributeValue<QString, QString>(
+        record, QStringLiteral("resourceSourceURL"), resource,
+        &ResourceAttributes::setSourceURL);
+
+    fillResourceAttributeValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("timestamp"), resource,
+        &ResourceAttributes::setTimestamp);
+
+    fillResourceAttributeValue<double, double>(
+        record, QStringLiteral("resourceLatitude"), resource,
+        &ResourceAttributes::setLatitude);
+
+    fillResourceAttributeValue<double, double>(
+        record, QStringLiteral("resourceLongitude"), resource,
+        &ResourceAttributes::setLongitude);
+
+    fillResourceAttributeValue<double, double>(
+        record, QStringLiteral("resourceAltitude"), resource,
+        &ResourceAttributes::setAltitude);
+
+    fillResourceAttributeValue<QString, QString>(
+        record, QStringLiteral("cameraMake"), resource,
+        &ResourceAttributes::setCameraMake);
+
+    fillResourceAttributeValue<QString, QString>(
+        record, QStringLiteral("cameraModel"), resource,
+        &ResourceAttributes::setCameraModel);
+
+    fillResourceAttributeValue<int, bool>(
+        record, QStringLiteral("clientWillIndex"), resource,
+        &ResourceAttributes::setClientWillIndex);
+
+    fillResourceAttributeValue<QString, QString>(
+        record, QStringLiteral("fileName"), resource,
+        &ResourceAttributes::setFileName);
+
+    fillResourceAttributeValue<int, bool>(
+        record, QStringLiteral("attachment"), resource,
+        &ResourceAttributes::setAttachment);
+
     return true;
 }
 
