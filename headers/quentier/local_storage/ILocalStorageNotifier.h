@@ -70,6 +70,7 @@ Q_SIGNALS:
 
     // Notifications about resource related events
     void resourcePut(qevercloud::Resource resource);
+    void resourceMetadataPut(qevercloud::Resource resource);
     void resourceExpunged(QString resourceLocalId);
 
     // Notifications about saved search related events

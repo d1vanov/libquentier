@@ -59,6 +59,7 @@ public:
         QString tagLocalId, QStringList expungedChildTagLocalIds);
 
     void notifyResourcePut(qevercloud::Resource resource);
+    void notifyResourceMetadataPut(qevercloud::Resource resource);
     void notifyResourceExpunged(QString resourceLocalId);
 
     void notifySavedSearchPut(qevercloud::SavedSearch savedSearch);

@@ -105,6 +105,11 @@ void Notifier::notifyResourcePut(qevercloud::Resource resource)
     Q_EMIT resourcePut(std::move(resource));
 }
 
+void Notifier::notifyResourceMetadataPut(qevercloud::Resource resource)
+{
+    Q_EMIT resourceMetadataPut(std::move(resource));
+}
+
 void Notifier::notifyResourceExpunged(QString resourceLocalId)
 {
     Q_EMIT resourceExpunged(std::move(resourceLocalId));
