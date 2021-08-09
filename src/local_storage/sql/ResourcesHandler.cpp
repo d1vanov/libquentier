@@ -156,7 +156,7 @@ QFuture<void> ResourcesHandler::putResourceMetadata(
                 m_localStorageDir, resource, indexInNote, database, errorDescription,
                 utils::PutResourceBinaryDataOption::WithoutBinaryData);
             if (res) {
-                handler.m_notifier->notifyResourcePut(resource);
+                handler.m_notifier->notifyResourceMetadataPut(resource);
             }
             return res;
         });
