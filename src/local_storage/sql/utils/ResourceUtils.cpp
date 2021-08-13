@@ -58,13 +58,10 @@ QString noteLocalIdByResourceLocalId(
         {});
 
     if (!query.next()) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Could not find note local id corresponding to resource "
-                "local id"));
-        errorDescription.details() = resourceLocalId;
-        QNWARNING("local_storage::sql::utils", errorDescription);
+        QNDEBUG(
+            "local_storage::sql::utils",
+            "Could not find note local id corresponding to resource local id "
+                << resourceLocalId);
         return {};
     }
 
@@ -94,7 +91,7 @@ QString resourceLocalIdByGuid(
 {
     static const QString queryString = QStringLiteral(
         "SELECT resourceLocalUid FROM Resources "
-        "WHERE resouceGuid = :resourceGuid");
+        "WHERE resourceGuid = :resourceGuid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -118,13 +115,10 @@ QString resourceLocalIdByGuid(
         {});
 
     if (!query.next()) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Could not find resource local id corresponding to resource "
-                "guid"));
-        errorDescription.details() = resourceGuid;
-        QNWARNING("local_storage::sql::utils", errorDescription);
+        QNDEBUG(
+            "local_storage::sql::utils",
+            "Could not find resource local id corresponding to resource guid "
+                << resourceGuid);
         return {};
     }
 

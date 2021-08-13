@@ -178,6 +178,85 @@ TEST_F(ResourcesHandlerTest, CtorNullWriterThread)
         IQuentierException);
 }
 
+TEST_F(ResourcesHandlerTest, ShouldHaveZeroResourceCountWhenThereAreNoResources)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    auto resourceCountFuture = resourcesHandler->resourceCount(
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeNonDeletedNotes);
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 0U);
+}
+
+TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    auto resourceFuture = resourcesHandler->findResourceByLocalId(
+        UidGenerator::Generate());
+
+    resourceFuture.waitForFinished();
+    EXPECT_EQ(resourceFuture.resultCount(), 0);
+
+    resourceFuture = resourcesHandler->findResourceByLocalId(
+        UidGenerator::Generate(),
+        ILocalStorage::FetchResourceOption::WithBinaryData);
+
+    resourceFuture.waitForFinished();
+    EXPECT_EQ(resourceFuture.resultCount(), 0);
+}
+
+TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    auto resourceFuture = resourcesHandler->findResourceByGuid(
+        UidGenerator::Generate());
+
+    resourceFuture.waitForFinished();
+    EXPECT_EQ(resourceFuture.resultCount(), 0);
+
+    resourceFuture = resourcesHandler->findResourceByGuid(
+        UidGenerator::Generate(),
+        ILocalStorage::FetchResourceOption::WithBinaryData);
+
+    resourceFuture.waitForFinished();
+    EXPECT_EQ(resourceFuture.resultCount(), 0);
+}
+
+TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    auto expungeResourceFuture = resourcesHandler->expungeResourceByLocalId(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
+}
+
+TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path());
+
+    auto expungeResourceFuture = resourcesHandler->expungeResourceByGuid(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "ResourcesHandlerTest.moc"

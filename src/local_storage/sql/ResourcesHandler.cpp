@@ -345,8 +345,7 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
         "recognitionDataHash, alternateDataSize, alternateDataHash, "
         "resourceIndexInNote, resourceSourceURL, timestamp, "
         "resourceLatitude, resourceLongitude, resourceAltitude, "
-        "cameraMake, cameraModel, clientWillIndex, fileName, "
-        "attachment, resourceKey, resourceMapKey, resourceValue, "
+        "cameraMake, cameraModel, clientWillIndex, fileName, attachment, "
         "localNote, recognitionDataBody FROM Resources "
         "LEFT OUTER JOIN NoteResources ON "
         "Resources.resourceLocalUid = NoteResources.localResource "
@@ -439,8 +438,7 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByGuidImpl(
         "recognitionDataHash, alternateDataSize, alternateDataHash, "
         "resourceIndexInNote, resourceSourceURL, timestamp, "
         "resourceLatitude, resourceLongitude, resourceAltitude, "
-        "cameraMake, cameraModel, clientWillIndex, fileName, "
-        "attachment, resourceKey, resourceMapKey, resourceValue, "
+        "cameraMake, cameraModel, clientWillIndex, fileName, attachment, "
         "localNote, recognitionDataBody FROM Resources "
         "LEFT OUTER JOIN NoteResources ON "
         "Resources.resourceLocalUid = NoteResources.localResource "
@@ -729,13 +727,6 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
         transaction.emplace(database, Transaction::Type::Exclusive);
     }
 
-    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
-        localId, database, errorDescription);
-
-    if (!errorDescription.isEmpty()) {
-        return false;
-    }
-
     static const QString queryString = QStringLiteral(
         "DELETE FROM Resources WHERE resourceLocalUid = :resourceLocalUid");
 
@@ -768,6 +759,13 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
             "to commit transaction"),
         false);
 
+    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
+        localId, database, errorDescription);
+
+    if (noteLocalId.isEmpty()) {
+        return errorDescription.isEmpty();
+    }
+
     if (!utils::removeResourceDataFiles(
             m_localStorageDir, noteLocalId, localId, errorDescription))
     {
@@ -786,8 +784,8 @@ bool ResourcesHandler::expungeResourceByGuidImpl(
     const auto localId =
         utils::resourceLocalIdByGuid(guid, database, errorDescription);
 
-    if (!errorDescription.isEmpty()) {
-        return false;
+    if (localId.isEmpty()) {
+        return errorDescription.isEmpty();
     }
 
     return expungeResourceByLocalIdImpl(

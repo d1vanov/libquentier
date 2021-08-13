@@ -33,6 +33,7 @@ int main(int argc, char * argv[])
 
     QUENTIER_INITIALIZE_LOGGING();
     QUENTIER_SET_MIN_LOG_LEVEL(Info);
+    QUENTIER_ADD_STDOUT_LOG_DESTINATION();
 
     QTimer::singleShot(0, [&]() // clazy:exclude=connect-3arg-lambda
     {
