@@ -102,6 +102,10 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::LinkedNotebook & linkedNotebook, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool putSavedSearch(
+    qevercloud::SavedSearch savedSearch, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 enum class PutResourceBinaryDataOption
 {
     WithBinaryData,

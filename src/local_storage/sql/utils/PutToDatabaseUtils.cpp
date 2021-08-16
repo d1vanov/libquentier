@@ -34,6 +34,7 @@
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Resource.h>
+#include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
 #include <qevercloud/types/User.h>
 #include <qevercloud/utility/ToRange.h>
@@ -1767,6 +1768,17 @@ bool putLinkedNotebook(
             "Cannot put linked notebook into the local storage database"),
         false);
 
+    return true;
+}
+
+bool putSavedSearch(
+    qevercloud::SavedSearch savedSearch, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(savedSearch)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
     return true;
 }
 

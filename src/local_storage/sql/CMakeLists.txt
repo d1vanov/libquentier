@@ -19,6 +19,8 @@ target_sources(${LIBRARY_NAME}
   NotifierProxy.h
   ResourcesHandler.cpp
   ResourcesHandler.h
+  SavedSearchesHandler.cpp
+  SavedSearchesHandler.h
   TablesInitializer.cpp
   TablesInitializer.h
   TagsHandler.cpp
