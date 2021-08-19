@@ -72,6 +72,14 @@ Q_GLOBAL_STATIC_WITH_ARGS(
         "Resource field missing in the record received from the local "
         "storage database")));
 
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingSavedSearchFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Saved search field missing in the record received from the local "
+        "storage database")));
+
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
     const QSqlRecord & record, const QString & column, Type & typeValue,
@@ -196,6 +204,18 @@ bool fillResourceAttributeValue(
     return fillValue<qevercloud::ResourceAttributes, VariantType, LocalType>(
         record, column, *resource.mutableAttributes(), std::move(setter),
         *gMissingResourceFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillSavedSearchValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::SavedSearch & savedSearch,
+    std::function<void(qevercloud::SavedSearch&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::SavedSearch, VariantType, LocalType>(
+        record, column, savedSearch, std::move(setter),
+        *gMissingSavedSearchFieldErrorMessage, errorDescription);
 }
 
 template <class FieldType, class VariantType, class LocalType = VariantType>
@@ -1541,6 +1561,106 @@ bool fillResourceFromSqlRecord(
     fillResourceAttributeValue<int, bool>(
         record, QStringLiteral("attachment"), resource,
         &ResourceAttributes::setAttachment);
+
+    return true;
+}
+
+bool fillSavedSearchFromSqlRecord(
+    const QSqlRecord & record, qevercloud::SavedSearch & savedSearch,
+    ErrorString & errorDescription)
+{
+    using qevercloud::SavedSearch;
+
+    if (!fillSavedSearchValue<int, bool>(
+            record, QStringLiteral("isDirty"), savedSearch,
+            &SavedSearch::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillSavedSearchValue<int, bool>(
+            record, QStringLiteral("isLocal"), savedSearch,
+            &SavedSearch::setLocalOnly, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillSavedSearchValue<int, bool>(
+            record, QStringLiteral("isFavorited"), savedSearch,
+            &SavedSearch::setLocallyFavorited, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillSavedSearchValue<QString, QString>(
+            record, QStringLiteral("localUid"), savedSearch,
+            &SavedSearch::setLocalId, &errorDescription))
+    {
+        return false;
+    }
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(SavedSearch &, std::optional<QString>)> setter) {
+            fillSavedSearchValue<QString, std::optional<QString>>(
+                record, column, savedSearch, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("guid"), &SavedSearch::setGuid);
+    fillOptStringValue(QStringLiteral("name"), &SavedSearch::setName);
+    fillOptStringValue(QStringLiteral("query"), &SavedSearch::setQuery);
+
+    fillSavedSearchValue<int, qevercloud::QueryFormat>(
+        record, QStringLiteral("format"), savedSearch, &SavedSearch::setFormat);
+
+    fillSavedSearchValue<qint32, qint32>(
+        record, QStringLiteral("updateSequenceNumber"), savedSearch,
+        &SavedSearch::setUpdateSequenceNum);
+
+    const auto setSavedSearchScopeValue =
+        [](SavedSearch & savedSearch, auto setter)
+        {
+            if (!savedSearch.scope()) {
+                savedSearch.setScope(qevercloud::SavedSearchScope{});
+            }
+            setter(*savedSearch.mutableScope());
+        };
+
+    fillSavedSearchValue<int, bool>(
+        record, QStringLiteral("includeAccount"), savedSearch,
+        [&](SavedSearch & savedSearch, bool value)
+        {
+            setSavedSearchScopeValue(
+                savedSearch,
+                [value](qevercloud::SavedSearchScope & scope)
+                {
+                    scope.setIncludeAccount(value);
+                });
+        });
+
+    fillSavedSearchValue<int, bool>(
+        record, QStringLiteral("includePersonalLinkedNotebooks"), savedSearch,
+        [&](SavedSearch & savedSearch, bool value)
+        {
+            setSavedSearchScopeValue(
+                savedSearch,
+                [value](qevercloud::SavedSearchScope & scope)
+                {
+                    scope.setIncludePersonalLinkedNotebooks(value);
+                });
+        });
+
+    fillSavedSearchValue<int, bool>(
+        record, QStringLiteral("includeBusinessLinkedNotebooks"), savedSearch,
+        [&](SavedSearch & savedSearch, bool value)
+        {
+            setSavedSearchScopeValue(
+                savedSearch,
+                [value](qevercloud::SavedSearchScope & scope)
+                {
+                    scope.setIncludeBusinessLinkedNotebooks(value);
+                });
+        });
 
     return true;
 }

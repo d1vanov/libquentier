@@ -23,6 +23,8 @@
 #include "Tasks.h"
 #include "TypeChecks.h"
 
+#include "utils/FillFromSqlRecordUtils.h"
+#include "utils/ListFromDatabaseUtils.h"
 #include "utils/PutToDatabaseUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
@@ -167,10 +169,38 @@ QFuture<void> SavedSearchesHandler::expungeSavedSearchByLocalId(
 std::optional<quint32> SavedSearchesHandler::savedSearchCountImpl(
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    static const QString queryString =
+        QStringLiteral("SELECT COUNT(localUid) FROM SavedSearches");
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot count saved searches in the local storage database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::SavedSearchesHandler",
+            "Found no saved searches in the local storage database");
+        return 0;
+    }
+
+    bool conversionResult = false;
+    const int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::SavedSearchesHandler",
+                "Cannot count saved searches in the local storage database: "
+                "failed to convert saved search count to int"));
+        QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return count;
 }
 
 std::optional<qevercloud::SavedSearch>
@@ -178,21 +208,85 @@ std::optional<qevercloud::SavedSearch>
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return std::nullopt;
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid, guid, name, query, format, "
+        "updateSequenceNumber, isDirty, isLocal, "
+        "includeAccount, includePersonalLinkedNotebooks, "
+        "includeBusinessLinkedNotebooks, isFavorited FROM "
+        "SavedSearches WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot find saved search in the local storage database by local "
+            "id: failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot find saved search in the local storage database by local "
+            "id"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::SavedSearch savedSearch;
+    ErrorString error;
+    if (!utils::fillSavedSearchFromSqlRecord(record, savedSearch, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::SavedSearchesHandler",
+                "Failed to find saved search by local id in the local storage "
+                "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return savedSearch;
 }
 
 bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM SavedSearches WHERE localUid=:localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot expunge saved search from the local storage database by "
+            "local id: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot expunge saved search from the local storage database by "
+            "local id"),
+        false);
+
     return true;
 }
 
@@ -200,10 +294,10 @@ QList<qevercloud::SavedSearch> SavedSearchesHandler::listSavedSearchesImpl(
     const ListOptions<ListSavedSearchesOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    return utils::listObjects<
+        qevercloud::SavedSearch, ILocalStorage::ListSavedSearchesOrder>(
+            options.m_flags, options.m_limit, options.m_offset, options.m_order,
+            options.m_direction, QString{}, database, errorDescription);
 }
 
 TaskContext SavedSearchesHandler::makeTaskContext() const
