@@ -15,6 +15,7 @@ add_executable(${TESTS_NAME}
   Patch2To3Test.cpp
   PatchUtilsTest.cpp
   ResourcesHandlerTest.cpp
+  SavedSearchesHandlerTest.cpp
   TablesInitializerTest.cpp
   TagsHandlerTest.cpp
   VersionHandlerTest.cpp
