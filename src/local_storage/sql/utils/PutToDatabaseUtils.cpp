@@ -1775,10 +1775,119 @@ bool putSavedSearch(
     qevercloud::SavedSearch savedSearch, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(savedSearch)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    QNDEBUG("local_storage::sql::utils", "putSavedSearch: " << savedSearch);
+
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put saved search into the local storage database"));
+
+    ErrorString error;
+    if (!checkSavedSearch(savedSearch, error)) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            error << "\nSaved search: " << savedSearch);
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO SavedSearches"
+        "(localUid, guid, name, nameLower, query, format, "
+        "updateSequenceNumber, isDirty, isLocal, includeAccount, "
+        "includePersonalLinkedNotebooks, "
+        "includeBusinessLinkedNotebooks, isFavorited) VALUES("
+        ":localUid, :guid, :name, :nameLower, :query, :format, "
+        ":updateSequenceNumber, :isDirty, :isLocal, "
+        ":includeAccount, :includePersonalLinkedNotebooks, "
+        ":includeBusinessLinkedNotebooks, :isFavorited)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put saved search into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), savedSearch.localId());
+
+    query.bindValue(
+        QStringLiteral(":guid"),
+        (savedSearch.guid() ? *savedSearch.guid() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":name"),
+        (savedSearch.name() ? *savedSearch.name() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":nameLower"),
+        (savedSearch.name() ? savedSearch.name()->toLower() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":query"),
+        (savedSearch.query() ? *savedSearch.query() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":format"),
+        (savedSearch.format() ? static_cast<int>(*savedSearch.format())
+                              : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":updateSequenceNumber"),
+        (savedSearch.updateSequenceNum() ? *savedSearch.updateSequenceNum()
+                                         : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isDirty"), (savedSearch.isLocallyModified() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":isLocal"), (savedSearch.isLocalOnly() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":includeAccount"),
+        (savedSearch.scope()
+             ? (savedSearch.scope()->includeAccount()
+                    ? (*savedSearch.scope()->includeAccount() ? 1 : 0)
+                    : *gNullValue)
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":includePersonalLinkedNotebooks"),
+        (savedSearch.scope()
+             ? (savedSearch.scope()->includePersonalLinkedNotebooks()
+                    ? (*savedSearch.scope()->includePersonalLinkedNotebooks()
+                           ? 1
+                           : 0)
+                    : *gNullValue)
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":includeBusinessLinkedNotebooks"),
+        (savedSearch.scope()
+             ? (savedSearch.scope()->includeBusinessLinkedNotebooks()
+                    ? (*savedSearch.scope()->includeBusinessLinkedNotebooks()
+                           ? 1
+                           : 0)
+                    : *gNullValue)
+             : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isFavorited"),
+        (savedSearch.isLocallyFavorited() ? 1 : 0));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put saved search into the local storage database"),
+        false);
+
     return true;
 }
 
@@ -1792,8 +1901,8 @@ bool putResource(
     QNDEBUG(
         "local_storage::sql::utils",
         "putResource: " << resource << "\nPut resource binary data option: "
-            << putResourceBinaryDataOption << ", transaction option: "
-            << transactionOption);
+                        << putResourceBinaryDataOption
+                        << ", transaction option: " << transactionOption);
 
     const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
         "local_storage::sql::utils",
@@ -1845,7 +1954,8 @@ bool putResource(
 
     if (resource.attributes()) {
         if (!putResourceAttributes(
-                localId, *resource.attributes(), database, errorDescription)) {
+                localId, *resource.attributes(), database, errorDescription))
+        {
             return false;
         }
 
@@ -2020,29 +2130,29 @@ bool putCommonResourceData(
         QTextStream strm{&queryString};
 
         strm << "INSERT OR REPLACE INTO Resources (resourceGuid, "
-            << "noteGuid, noteLocalUid, mime, "
-            << "width, height, recognitionDataBody, recognitionDataSize, "
-            << "recognitionDataHash, resourceUpdateSequenceNumber, "
-            << "resourceIsDirty, resourceIndexInNote, resourceLocalUid";
+             << "noteGuid, noteLocalUid, mime, "
+             << "width, height, recognitionDataBody, recognitionDataSize, "
+             << "recognitionDataHash, resourceUpdateSequenceNumber, "
+             << "resourceIsDirty, resourceIndexInNote, resourceLocalUid";
 
         if (putResourceMetadataOption ==
             PutResourceMetadataOption::WithBinaryDataProperties)
         {
             strm << ", dataSize, dataHash, alternateDataSize, "
-                << "alternateDataHash";
+                 << "alternateDataHash";
         }
 
         strm << ") VALUES(:resourceGuid, :noteGuid, :noteLocalUid, "
-            << ":mime, :width, :height, "
-            << ":recognitionDataBody, :recognitionDataSize, "
-            << ":recognitionDataHash, :resourceUpdateSequenceNumber, "
-            << ":resourceIsDirty, :resourceIndexInNote, :resourceLocalUid";
+             << ":mime, :width, :height, "
+             << ":recognitionDataBody, :recognitionDataSize, "
+             << ":recognitionDataHash, :resourceUpdateSequenceNumber, "
+             << ":resourceIsDirty, :resourceIndexInNote, :resourceLocalUid";
 
         if (putResourceMetadataOption ==
             PutResourceMetadataOption::WithBinaryDataProperties)
         {
             strm << ":dataSize, :dataHash, :alternateDataSize, "
-                << ":alternateDataHash";
+                 << ":alternateDataHash";
         }
 
         strm << ")";
@@ -2111,7 +2221,8 @@ bool putCommonResourceData(
     query.bindValue(QStringLiteral(":resourceLocalUid"), resource.localId());
 
     if (putResourceMetadataOption ==
-        PutResourceMetadataOption::WithBinaryDataProperties) {
+        PutResourceMetadataOption::WithBinaryDataProperties)
+    {
         query.bindValue(
             QStringLiteral(":dataSize"),
             ((resource.data() && resource.data()->size())
@@ -2204,9 +2315,8 @@ bool putResourceAttributes(
 
     query.bindValue(
         QStringLiteral(":clientWillIndex"),
-        (attributes.clientWillIndex()
-                ? (*attributes.clientWillIndex() ? 1 : 0)
-                : *gNullValue));
+        (attributes.clientWillIndex() ? (*attributes.clientWillIndex() ? 1 : 0)
+                                      : *gNullValue));
 
     query.bindValue(
         QStringLiteral(":fileName"),
@@ -2215,7 +2325,7 @@ bool putResourceAttributes(
     query.bindValue(
         QStringLiteral(":attachment"),
         (attributes.attachment() ? (*attributes.attachment() ? 1 : 0)
-                                    : *gNullValue));
+                                 : *gNullValue));
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
@@ -2311,8 +2421,7 @@ bool putResourceAttributesAppDataFullMap(
 
 QDebug & operator<<(QDebug & dbg, const PutResourceBinaryDataOption option)
 {
-    switch (option)
-    {
+    switch (option) {
     case PutResourceBinaryDataOption::WithBinaryData:
         dbg << "With binary data";
         break;
