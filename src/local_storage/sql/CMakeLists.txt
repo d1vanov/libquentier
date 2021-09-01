@@ -58,6 +58,8 @@ target_sources(${LIBRARY_NAME}
   utils/ResourceDataFilesUtils.h
   utils/ResourceUtils.cpp
   utils/ResourceUtils.h
+  utils/SavedSearchUtils.cpp
+  utils/SavedSearchUtils.h
   utils/SqlUtils.cpp
   utils/SqlUtils.h
   utils/TagUtils.cpp

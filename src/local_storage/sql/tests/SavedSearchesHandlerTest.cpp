@@ -316,6 +316,12 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     foundSavedSearchByLocalIdFuture.waitForFinished();
     EXPECT_EQ(foundSavedSearchByLocalIdFuture.result(), savedSearch);
 
+    auto foundSavedSearchByGuidFuture =
+        savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
+
+    foundSavedSearchByGuidFuture.waitForFinished();
+    EXPECT_EQ(foundSavedSearchByGuidFuture.result(), savedSearch);
+
     auto listSavedSearchesOptions =
         ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder>{};
 
@@ -330,11 +336,11 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
     EXPECT_EQ(savedSearches.size(), 1);
     EXPECT_EQ(savedSearches[0], savedSearch);
 
-    auto expungeSavedSearchFuture =
+    auto expungeSavedSearchByLocalIdFuture =
         savedSearchesHandler->expungeSavedSearchByLocalId(
             savedSearch.localId());
 
-    expungeSavedSearchFuture.waitForFinished();
+    expungeSavedSearchByLocalIdFuture.waitForFinished();
 
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.expungedSavedSearchLocalIds().size(), 1);
@@ -343,21 +349,154 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
         notifierListener.expungedSavedSearchLocalIds()[0],
         savedSearch.localId());
 
+    auto checkSavedSearchDeleted = [&]
+    {
+        savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
+        savedSearchCountFuture.waitForFinished();
+        EXPECT_EQ(savedSearchCountFuture.result(), 0U);
+
+        foundSavedSearchByLocalIdFuture =
+            savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
+
+        foundSavedSearchByLocalIdFuture.waitForFinished();
+        EXPECT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 0U);
+
+        foundSavedSearchByGuidFuture =
+            savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
+
+        foundSavedSearchByGuidFuture.waitForFinished();
+        EXPECT_EQ(foundSavedSearchByGuidFuture.resultCount(), 0U);
+
+        listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
+            listSavedSearchesOptions);
+
+        listSavedSearchesFuture.waitForFinished();
+        EXPECT_TRUE(listSavedSearchesFuture.result().isEmpty());
+    };
+
+    checkSavedSearchDeleted();
+
+    putSavedSearchFuture = savedSearchesHandler->putSavedSearch(savedSearch);
+    putSavedSearchFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putSavedSearches().size(), 2);
+    EXPECT_EQ(notifierListener.putSavedSearches()[1], savedSearch);
+
+    auto expungeSavedSearchByGuidFuture =
+        savedSearchesHandler->expungeSavedSearchByGuid(
+            savedSearch.guid().value());
+
+    expungeSavedSearchByGuidFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedSavedSearchLocalIds().size(), 2);
+
+    EXPECT_EQ(
+        notifierListener.expungedSavedSearchLocalIds()[1],
+        savedSearch.localId());
+
+    checkSavedSearchDeleted();
+}
+
+TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
+{
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    SavedSearchesHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::savedSearchPut,
+        &notifierListener,
+        &SavedSearchesHandlerTestNotifierListener::onSavedSearchPut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::savedSearchExpunged,
+        &notifierListener,
+        &SavedSearchesHandlerTestNotifierListener::onSavedSearchExpunged);
+
+    auto savedSearches = gSavedSearchTestValues;
+    int savedSearchCounter = 2;
+    for (auto it = std::next(savedSearches.begin()); it != savedSearches.end(); // NOLINT
+         ++it)
+    {
+        auto & savedSearch = *it;
+        savedSearch.setLocalId(UidGenerator::Generate());
+        savedSearch.setGuid(UidGenerator::Generate());
+
+        savedSearch.setName(
+            savedSearches.begin()->name().value() + QStringLiteral(" #") +
+            QString::number(savedSearchCounter));
+
+        savedSearch.setUpdateSequenceNum(savedSearchCounter);
+        ++savedSearchCounter;
+    }
+
+    QFutureSynchronizer<void> putSavedSearchesSynchronizer;
+    for (auto savedSearch: savedSearches) {
+        auto putSavedSearchFuture = savedSearchesHandler->putSavedSearch(
+            std::move(savedSearch));
+
+        putSavedSearchesSynchronizer.addFuture(putSavedSearchFuture);
+    }
+
+    EXPECT_NO_THROW(putSavedSearchesSynchronizer.waitForFinished());
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.putSavedSearches().size(), savedSearches.size());
+
+    auto savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
+    savedSearchCountFuture.waitForFinished();
+    EXPECT_EQ(savedSearchCountFuture.result(), savedSearches.size());
+
+    for (const auto & savedSearch: qAsConst(savedSearches)) {
+        auto foundByLocalIdSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByLocalId(
+                savedSearch.localId());
+        foundByLocalIdSavedSearchFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdSavedSearchFuture.result(), savedSearch);
+
+        auto foundByGuidSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByGuid(
+                savedSearch.guid().value());
+        foundByGuidSavedSearchFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidSavedSearchFuture.result(), savedSearch);
+    }
+
+    for (const auto & savedSearch: qAsConst(savedSearches)) {
+        auto expungeSavedSearchByLocalIdFuture =
+            savedSearchesHandler->expungeSavedSearchByLocalId(
+                savedSearch.localId());
+        expungeSavedSearchByLocalIdFuture.waitForFinished();
+    }
+
+    QCoreApplication::processEvents();
+
+    EXPECT_EQ(
+        notifierListener.expungedSavedSearchLocalIds().size(),
+        savedSearches.size());
+
     savedSearchCountFuture = savedSearchesHandler->savedSearchCount();
     savedSearchCountFuture.waitForFinished();
     EXPECT_EQ(savedSearchCountFuture.result(), 0U);
 
-    foundSavedSearchByLocalIdFuture =
-        savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
+    for (const auto & savedSearch: qAsConst(savedSearches)) {
+        auto foundByLocalIdSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByLocalId(
+                savedSearch.localId());
+        foundByLocalIdSavedSearchFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdSavedSearchFuture.resultCount(), 0);
 
-    foundSavedSearchByLocalIdFuture.waitForFinished();
-    EXPECT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 0U);
-
-    listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
-        listSavedSearchesOptions);
-
-    listSavedSearchesFuture.waitForFinished();
-    EXPECT_TRUE(listSavedSearchesFuture.result().isEmpty());
+        auto foundByGuidSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByGuid(
+                savedSearch.guid().value());
+        foundByGuidSavedSearchFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidSavedSearchFuture.resultCount(), 0);
+    }
 }
 
 } // namespace quentier::local_storage::sql::tests

@@ -26,6 +26,7 @@
 #include "utils/FillFromSqlRecordUtils.h"
 #include "utils/ListFromDatabaseUtils.h"
 #include "utils/PutToDatabaseUtils.h"
+#include "utils/SavedSearchUtils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -130,6 +131,21 @@ QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByLocalId(
         });
 }
 
+QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByGuid(
+    qevercloud::Guid guid) const
+{
+    return makeReadTask<qevercloud::SavedSearch>(
+        makeTaskContext(),
+        weak_from_this(),
+        [guid = std::move(guid)]
+        (const SavedSearchesHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription)
+        {
+            return handler.findSavedSearchByGuidImpl(
+                guid, database, errorDescription);
+        });
+}
+
 QFuture<QList<qevercloud::SavedSearch>> SavedSearchesHandler::listSavedSearches(
     ListOptions<ListSavedSearchesOrder> options) const
 {
@@ -163,6 +179,21 @@ QFuture<void> SavedSearchesHandler::expungeSavedSearchByLocalId(
             }
 
             return res;
+        });
+}
+
+QFuture<void> SavedSearchesHandler::expungeSavedSearchByGuid(
+    qevercloud::Guid guid)
+{
+    return makeWriteTask<void>(
+        makeTaskContext(),
+        weak_from_this(),
+        [guid = std::move(guid)]
+        (SavedSearchesHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription)
+        {
+            return handler.expungeSavedSearchByGuidImpl(
+                guid, database, errorDescription);
         });
 }
 
@@ -259,6 +290,61 @@ std::optional<qevercloud::SavedSearch>
     return savedSearch;
 }
 
+std::optional<qevercloud::SavedSearch>
+    SavedSearchesHandler::findSavedSearchByGuidImpl(
+        const qevercloud::Guid & guid, QSqlDatabase & database,
+        ErrorString & errorDescription) const
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid, guid, name, query, format, "
+        "updateSequenceNumber, isDirty, isLocal, "
+        "includeAccount, includePersonalLinkedNotebooks, "
+        "includeBusinessLinkedNotebooks, isFavorited FROM "
+        "SavedSearches WHERE guid = :guid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot find saved search in the local storage database by guid: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":guid"), guid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::SavedSearchesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot find saved search in the local storage database by guid"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    qevercloud::SavedSearch savedSearch;
+    ErrorString error;
+    if (!utils::fillSavedSearchFromSqlRecord(record, savedSearch, error)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::SavedSearchesHandler",
+                "Failed to find saved search by guid in the local storage "
+                "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return savedSearch;
+}
+
 bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription)
@@ -288,6 +374,42 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
         false);
 
     return true;
+}
+
+bool SavedSearchesHandler::expungeSavedSearchByGuidImpl(
+    const qevercloud::Guid & guid, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QNDEBUG(
+        "local_storage::sql::SavedSearchesHandler",
+        "SavedSearchesHandler::expungeSavedSearchByGuidImpl: guid = " << guid);
+
+    const auto localId =
+        utils::savedSearchLocalIdByGuid(guid, database, errorDescription);
+
+    if (!errorDescription.isEmpty()) {
+        return false;
+    }
+
+    if (localId.isEmpty()) {
+        QNDEBUG(
+            "local_storage::sql::SavedSearchesHandler",
+            "Found no saved search local id for guid " << guid);
+        return true;
+    }
+
+    QNDEBUG(
+        "local_storage::sql::SavedSearchesHandler",
+        "Found saved search local id for guid " << guid << ": " << localId);
+
+    const bool res =
+        expungeSavedSearchByLocalIdImpl(localId, database, errorDescription);
+
+    if (res) {
+        m_notifier->notifySavedSearchExpunged(localId);
+    }
+
+    return res;
 }
 
 QList<qevercloud::SavedSearch> SavedSearchesHandler::listSavedSearchesImpl(

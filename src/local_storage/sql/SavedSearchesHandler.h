@@ -45,6 +45,9 @@ public:
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByLocalId(
         QString localId) const;
 
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
+        qevercloud::Guid guid) const;
+
     template <class T>
     using ListOptions = ILocalStorage::ListOptions<T>;
 
@@ -55,6 +58,8 @@ public:
 
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(QString localId);
 
+    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(qevercloud::Guid guid);
+
 private:
     [[nodiscard]] std::optional<quint32> savedSearchCountImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
@@ -64,8 +69,17 @@ private:
             const QString & localId, QSqlDatabase & database,
             ErrorString & errorDescription) const;
 
+    [[nodiscard]] std::optional<qevercloud::SavedSearch>
+        findSavedSearchByGuidImpl(
+            const qevercloud::Guid & guid, QSqlDatabase & database,
+            ErrorString & errorDescription) const;
+
     [[nodiscard]] bool expungeSavedSearchByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
+        ErrorString & errorDescription);
+
+    [[nodiscard]] bool expungeSavedSearchByGuidImpl(
+        const qevercloud::Guid & guid, QSqlDatabase & database,
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearchesImpl(
