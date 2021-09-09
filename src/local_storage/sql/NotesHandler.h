@@ -27,6 +27,7 @@
 
 #include <QDir>
 #include <QFuture>
+#include <QReadWriteLock>
 #include <QtGlobal>
 
 #include <memory>
@@ -218,6 +219,7 @@ private:
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
     QDir m_localStorageDir;
+    mutable QReadWriteLock m_resourceDataFilesLock;
 };
 
 } // namespace quentier::local_storage::sql

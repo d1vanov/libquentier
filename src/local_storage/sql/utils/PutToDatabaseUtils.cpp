@@ -1772,7 +1772,7 @@ bool putLinkedNotebook(
 }
 
 bool putSavedSearch(
-    qevercloud::SavedSearch savedSearch, QSqlDatabase & database,
+    const qevercloud::SavedSearch & savedSearch, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
     QNDEBUG("local_storage::sql::utils", "putSavedSearch: " << savedSearch);
@@ -2416,6 +2416,19 @@ bool putResourceAttributesAppDataFullMap(
             false);
     }
 
+    return true;
+}
+
+bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
+    QSqlDatabase & database, ErrorString & errorDescription,
+    TransactionOption transactionOption)
+{
+    // TODO: implement
+    Q_UNUSED(localStorageDir)
+    Q_UNUSED(note)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    Q_UNUSED(transactionOption)
     return true;
 }
 

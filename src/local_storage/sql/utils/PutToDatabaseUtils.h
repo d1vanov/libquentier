@@ -103,7 +103,7 @@ namespace quentier::local_storage::sql::utils {
     ErrorString & errorDescription);
 
 [[nodiscard]] bool putSavedSearch(
-    qevercloud::SavedSearch savedSearch, QSqlDatabase & database,
+    const qevercloud::SavedSearch & savedSearch, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 enum class PutResourceBinaryDataOption
@@ -145,5 +145,11 @@ enum class PutResourceMetadataOption
     const QString & localId,
     const QMap<QString, QString> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool putNote(
+    const QDir & localStorageDir, qevercloud::Note & note,
+    QSqlDatabase & database, ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
 
 } // namespace quentier::local_storage::sql::utils
