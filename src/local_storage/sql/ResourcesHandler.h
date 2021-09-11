@@ -48,7 +48,8 @@ public:
     explicit ResourcesHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread,
-        const QString & localStorageDirPath);
+        const QString & localStorageDirPath,
+        QReadWriteLockPtr resourceDataFilesLock);
 
     [[nodiscard]] QFuture<quint32> resourceCount(
         NoteCountOptions options = NoteCountOptions{
@@ -120,7 +121,7 @@ private:
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
     QDir m_localStorageDir;
-    mutable QReadWriteLock m_resourceDataFilesLock;
+    QReadWriteLockPtr m_resourceDataFilesLock;
 };
 
 } // namespace quentier::local_storage::sql

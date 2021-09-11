@@ -53,11 +53,13 @@ namespace quentier::local_storage::sql {
 ResourcesHandler::ResourcesHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
     Notifier * notifier, QThreadPtr writerThread,
-    const QString & localStorageDirPath) :
+    const QString & localStorageDirPath,
+    QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool}, m_notifier{notifier},
-    m_writerThread{std::move(writerThread)}, m_localStorageDir{
-                                                 localStorageDirPath}
+    m_writerThread{std::move(writerThread)},
+    m_localStorageDir{localStorageDirPath},
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -98,6 +100,12 @@ ResourcesHandler::ResourcesHandler(
             "ResourcesHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
     }
+
+    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "ResourcesHandler ctor: resource data files lock is null")}};
+    }
 }
 
 QFuture<quint32> ResourcesHandler::resourceCount(NoteCountOptions options) const
@@ -133,7 +141,7 @@ QFuture<void> ResourcesHandler::putResource(
         [this, resource = std::move(resource), indexInNote](
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            QWriteLocker locker{&handler.m_resourceDataFilesLock};
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             bool res = utils::putResource(
                 m_localStorageDir, resource, indexInNote, database,
                 errorDescription);
@@ -196,7 +204,7 @@ QFuture<void> ResourcesHandler::expungeResourceByLocalId(
         [resourceLocalId = std::move(resourceLocalId)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{&handler.m_resourceDataFilesLock};
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeResourceByLocalIdImpl(
                 resourceLocalId, database, errorDescription);
         });
@@ -210,7 +218,7 @@ QFuture<void> ResourcesHandler::expungeResourceByGuid(
         [resourceGuid = std::move(resourceGuid)](
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
-            QWriteLocker locker{&handler.m_resourceDataFilesLock};
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeResourceByGuidImpl(
                 resourceGuid, database, errorDescription);
         });
@@ -333,7 +341,7 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByLocalIdImpl(
 {
     std::optional<QReadLocker> locker;
     if (options.testFlag(FetchResourceOption::WithBinaryData)) {
-        locker.emplace(&m_resourceDataFilesLock);
+        locker.emplace(m_resourceDataFilesLock.get());
     }
 
     utils::SelectTransactionGuard transactionGuard{database};
@@ -426,7 +434,7 @@ std::optional<qevercloud::Resource> ResourcesHandler::findResourceByGuidImpl(
 {
     std::optional<QReadLocker> locker;
     if (options.testFlag(FetchResourceOption::WithBinaryData)) {
-        locker.emplace(&m_resourceDataFilesLock);
+        locker.emplace(m_resourceDataFilesLock.get());
     }
 
     utils::SelectTransactionGuard transactionGuard{database};

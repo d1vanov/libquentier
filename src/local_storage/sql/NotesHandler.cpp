@@ -56,12 +56,14 @@ namespace quentier::local_storage::sql {
 NotesHandler::NotesHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
     Notifier * notifier, QThreadPtr writerThread,
-    const QString & localStorageDirPath) :
+    const QString & localStorageDirPath,
+    QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
     m_notifier{notifier},
     m_writerThread{std::move(writerThread)},
-    m_localStorageDir{localStorageDirPath}
+    m_localStorageDir{localStorageDirPath},
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
@@ -106,6 +108,12 @@ NotesHandler::NotesHandler(
             "local_storage::sql::NotesHandler",
             "NotesHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
+    }
+
+    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "NotesHandler ctor: resource data files lock is null")}};
     }
 }
 
@@ -181,13 +189,98 @@ QFuture<void> NotesHandler::putNote(qevercloud::Note note)
         [note = std::move(note)](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
-            QWriteLocker locker{&handler.m_resourceDataFilesLock};
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             bool res = utils::putNote(
                 handler.m_localStorageDir, note, database, errorDescription);
             if (res) {
                 handler.m_notifier->notifyNotePut(note);
             }
             return res;
+        });
+}
+
+QFuture<void> NotesHandler::updateNote(
+    qevercloud::Note note, UpdateNoteOptions options)
+{
+    return makeWriteTask<void>(
+        makeTaskContext(), weak_from_this(),
+        [note = std::move(note), options](
+            NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) mutable {
+            std::optional<QWriteLocker> locker;
+            if (options.testFlag(UpdateNoteOption::UpdateResourceBinaryData)) {
+                locker.emplace(handler.m_resourceDataFilesLock.get());
+            }
+            bool res = handler.updateNoteImpl(
+                note, options, database, errorDescription);
+            if (res) {
+                handler.m_notifier->notifyNoteUpdated(note, options);
+            }
+            return res;
+        });
+}
+
+QFuture<qevercloud::Note> NotesHandler::findNoteByLocalId(
+    QString localId, FetchNoteOptions options) const
+{
+    return makeReadTask<qevercloud::Note>(
+        makeTaskContext(), weak_from_this(),
+        [localId = std::move(localId), options](
+            NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            std::optional<QReadLocker> locker;
+            if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
+                locker.emplace(handler.m_resourceDataFilesLock.get());
+            }
+            return handler.findNoteByLocalIdImpl(
+                localId, options, database, errorDescription);
+        });
+}
+
+QFuture<qevercloud::Note> NotesHandler::findNoteByGuid(
+    qevercloud::Guid guid, FetchNoteOptions options) const
+{
+    return makeReadTask<qevercloud::Note>(
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid), options](
+            NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            std::optional<QReadLocker> locker;
+            if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
+                locker.emplace(handler.m_resourceDataFilesLock.get());
+            }
+            return handler.findNoteByGuidImpl(
+                guid, options, database, errorDescription);
+        });
+}
+
+QFuture<void> NotesHandler::expungeNoteByLocalId(QString localId)
+{
+    return makeWriteTask<void>(
+        makeTaskContext(), weak_from_this(),
+        [localId = std::move(localId)](
+            NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
+            bool res = handler.expungeNoteByLocalIdImpl(
+                localId, database, errorDescription);
+            if (res) {
+                handler.m_notifier->notifyNoteExpunged(localId);
+            }
+            return res;
+        });
+}
+
+QFuture<void> NotesHandler::expungeNoteByGuid(qevercloud::Guid guid)
+{
+    return makeWriteTask<void>(
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid)](
+            NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
+            return handler.expungeNoteByGuidImpl(
+                guid, database, errorDescription);
         });
 }
 

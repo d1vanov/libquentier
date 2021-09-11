@@ -20,6 +20,7 @@
 
 #include <memory>
 
+class QReadWriteLock;
 class QSqlDatabase;
 class QThread;
 
@@ -33,6 +34,8 @@ class Notifier;
 class Transaction;
 
 struct TaskContext;
+
+using QReadWriteLockPtr = std::shared_ptr<QReadWriteLock>;
 
 using QThreadPtr = std::shared_ptr<QThread>;
 

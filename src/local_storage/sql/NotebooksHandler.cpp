@@ -48,6 +48,7 @@
 #include <QSqlRecord>
 #include <QSqlQuery>
 #include <QThreadPool>
+#include <QWriteLocker>
 
 #include <algorithm>
 
@@ -56,12 +57,14 @@ namespace quentier::local_storage::sql {
 NotebooksHandler::NotebooksHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
     Notifier * notifier, QThreadPtr writerThread,
-    const QString & localStorageDirPath) :
+    const QString & localStorageDirPath,
+    QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
     m_threadPool{threadPool},
     m_notifier{notifier},
     m_writerThread{std::move(writerThread)},
-    m_localStorageDir{localStorageDirPath}
+    m_localStorageDir{localStorageDirPath},
+    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{
@@ -106,6 +109,12 @@ NotebooksHandler::NotebooksHandler(
             "local_storage::sql::NotebooksHandler",
             "NotebooksHandler ctor: local storage dir does not exist and "
             "cannot be created")}};
+    }
+
+    if (Q_UNLIKELY(!m_resourceDataFilesLock)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotebooksHandler",
+            "NotebooksHandler ctor: resource data files lock is null")}};
     }
 }
 
@@ -208,13 +217,12 @@ QFuture<void> NotebooksHandler::expungeNotebookByLocalId(QString localId)
         (NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             const bool res = handler.expungeNotebookByLocalIdImpl(
                 localId, database, errorDescription);
-
             if (res) {
                 handler.m_notifier->notifyNotebookExpunged(localId);
             }
-
             return res;
         });
 }
@@ -228,6 +236,7 @@ QFuture<void> NotebooksHandler::expungeNotebookByGuid(qevercloud::Guid guid)
         (NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeNotebookByGuidImpl(
                 guid, database, errorDescription);
         });
@@ -244,6 +253,7 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
         (NotebooksHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
+            QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
             return handler.expungeNotebookByNameImpl(
                 name, linkedNotebookGuid, database, errorDescription);
         });

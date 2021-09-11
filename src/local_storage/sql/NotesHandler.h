@@ -42,7 +42,8 @@ public:
     explicit NotesHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread,
-        const QString & localStorageDirPath);
+        const QString & localStorageDirPath,
+        QReadWriteLockPtr resourceDataFilesLock);
 
     using NoteCountOption = ILocalStorage::NoteCountOption;
     using NoteCountOptions = ILocalStorage::NoteCountOptions;
@@ -85,19 +86,19 @@ public:
     [[nodiscard]] QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options);
 
+    using FetchNoteOption = ILocalStorage::FetchNoteOption;
+    using FetchNoteOptions = ILocalStorage::FetchNoteOptions;
+
     [[nodiscard]] QFuture<qevercloud::Note> findNoteByLocalId(
-        QString localId) const;
+        QString localId, FetchNoteOptions options) const;
 
     [[nodiscard]] QFuture<qevercloud::Note> findNoteByGuid(
-        qevercloud::Guid guid) const;
+        qevercloud::Guid guid, FetchNoteOptions options) const;
 
     [[nodiscard]] QFuture<void> expungeNoteByLocalId(QString localId);
     [[nodiscard]] QFuture<void> expungeNoteByGuid(qevercloud::Guid guid);
 
     using ListNotesOrder = ILocalStorage::ListNotesOrder;
-
-    using FetchNoteOption = ILocalStorage::FetchNoteOption;
-    using FetchNoteOptions = ILocalStorage::FetchNoteOptions;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
@@ -153,13 +154,17 @@ private:
         NoteCountOptions options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
+    [[nodiscard]] bool updateNoteImpl(
+        qevercloud::Note & note, UpdateNoteOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription);
+
     [[nodiscard]] std::optional<qevercloud::Note> findNoteByLocalIdImpl(
-        const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const QString & localId, FetchNoteOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Note> findNoteByGuidImpl(
-        const qevercloud::Guid & guid, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        const qevercloud::Guid & guid, FetchNoteOptions options,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Note> fillSharedNotes(
         qevercloud::Note & note, QSqlDatabase & database,
@@ -219,7 +224,7 @@ private:
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
     QDir m_localStorageDir;
-    mutable QReadWriteLock m_resourceDataFilesLock;
+    QReadWriteLockPtr m_resourceDataFilesLock;
 };
 
 } // namespace quentier::local_storage::sql

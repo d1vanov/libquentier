@@ -41,7 +41,8 @@ public:
     explicit NotebooksHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread,
-        const QString & localStorageDirPath);
+        const QString & localStorageDirPath,
+        QReadWriteLockPtr resourceDataFilesLock);
 
     [[nodiscard]] QFuture<quint32> notebookCount() const;
     [[nodiscard]] QFuture<void> putNotebook(qevercloud::Notebook notebook);
@@ -125,6 +126,7 @@ private:
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
     QDir m_localStorageDir;
+    QReadWriteLockPtr m_resourceDataFilesLock;
 };
 
 } // namespace quentier::local_storage::sql
