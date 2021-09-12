@@ -484,4 +484,127 @@ std::optional<quint32> NotesHandler::noteCountImpl(
     return count;
 }
 
+std::optional<quint32> NotesHandler::noteCountPerNotebookLocalIdImpl(
+    const QString & notebookLocalId, NoteCountOptions options,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    const QString queryString = [&]
+    {
+        QString queryString = QStringLiteral(
+            "SELECT COUNT(*) FROM Notes WHERE "
+            "notebookLocalUid = :notebookLocalUid");
+        const QString condition = noteCountOptionsToSqlQueryPart(options);
+        if (!condition.isEmpty()) {
+            queryString += QStringLiteral(" AND ");
+            queryString += condition;
+        }
+        return queryString;
+    }();
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per notebook local id in the local storage "
+            "database: failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":notebookLocalUid"), notebookLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per notebook local id in the local storage "
+            "database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::NotesHandler",
+            "Found no notes per notebook local id in the local storage "
+                << "database, notebook local id = " << notebookLocalId);
+        return 0;
+    }
+
+    bool conversionResult = false;
+    const int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotesHandler",
+                "Cannot count notes per notebook local id in the local storage "
+                "database: failed to convert note count to int"));
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return count;
+}
+
+std::optional<quint32> NotesHandler::noteCountPerTagLocalIdImpl(
+    const QString & tagLocalId, NoteCountOptions options,
+    QSqlDatabase & database, ErrorString & errorDescription) const
+{
+    const QString queryString = [&]
+    {
+        QString queryString = QStringLiteral(
+            "SELECT COUNT(*) FROM Notes WHERE "
+            "(localUid IN (SELECT DISTINCT "
+            "localNote FROM NoteTags WHERE localTag = :localTag))");
+        const QString condition = noteCountOptionsToSqlQueryPart(options);
+        if (!condition.isEmpty()) {
+            queryString += QStringLiteral(" AND ");
+            queryString += condition;
+        }
+        return queryString;
+    }();
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per tag local id in the local storage "
+            "database: failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":localTag"), tagLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per tag local id in the local storage "
+            "database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::NotesHandler",
+            "Found no notes per tag local id in the local storage "
+                << "database, tag local id = " << tagLocalId);
+        return 0;
+    }
+
+    bool conversionResult = false;
+    const int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotesHandler",
+                "Cannot count notes per tag local id in the local storage "
+                "database: failed to convert note count to int"));
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    return count;
+}
+
 } // namespace quentier::local_storage::sql
