@@ -50,6 +50,8 @@ target_sources(${LIBRARY_NAME}
   utils/ListFromDatabaseUtils.cpp
   utils/NotebookUtils.cpp
   utils/NotebookUtils.h
+  utils/NoteUtils.cpp
+  utils/NoteUtils.h
   utils/PutToDatabaseUtils.cpp
   utils/PutToDatabaseUtils.h
   utils/RemoveFromDatabaseUtils.cpp
