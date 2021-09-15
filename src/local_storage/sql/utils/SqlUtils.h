@@ -20,8 +20,22 @@
 
 #include <QString>
 
+class QSqlDatabase;
+class QVariant;
+
+namespace quentier {
+
+class ErrorString;
+
+} // namespace quentier
+
 namespace quentier::local_storage::sql::utils {
 
 [[nodiscard]] QString sqlEscape(QString source);
+
+[[nodiscard]] bool rowExists(
+    const QString & tableName, const QString & columnName,
+    const QVariant & value, QSqlDatabase & database,
+    ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils

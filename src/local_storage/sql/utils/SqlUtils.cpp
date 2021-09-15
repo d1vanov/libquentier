@@ -18,11 +18,63 @@
 
 #include "SqlUtils.h"
 
+#include "../ErrorHandling.h"
+
+#include <quentier/types/ErrorString.h>
+
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QVariant>
+
 namespace quentier::local_storage::sql::utils {
 
 QString sqlEscape(QString source)
 {
     return source.replace(QStringLiteral("\'"), QStringLiteral("\'\'"));
+}
+
+bool rowExists(
+    const QString & tableName, const QString & columnName,
+    const QVariant & value, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QSqlQuery query{database};
+    bool res = query.prepare(QStringLiteral(
+        "SELECT COUNT(*) FROM :tableName WHERE :columnName = :value"));
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot check row existence: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":tableName"), tableName);
+    query.bindValue(QStringLiteral(":columnName"), columnName);
+    query.bindValue(QStringLiteral(":value"), value);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot check row existence"),
+        false);
+
+    if (!query.next()) {
+        return false;
+    }
+
+    bool conversionResult = false;
+    int count = query.value(0).toInt(&conversionResult);
+    if (!conversionResult) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot check row existence: failed to convert result to int"));
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return false;
+    }
+
+    return count > 0;
 }
 
 } // namespace quentier::local_storage::sql::utils

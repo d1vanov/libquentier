@@ -2421,13 +2421,14 @@ bool putResourceAttributesAppDataFullMap(
 
 bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
     QSqlDatabase & database, ErrorString & errorDescription,
-    TransactionOption transactionOption)
+    PutNoteOptions putNoteOptions, TransactionOption transactionOption)
 {
     // TODO: implement
     Q_UNUSED(localStorageDir)
     Q_UNUSED(note)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
+    Q_UNUSED(putNoteOptions)
     Q_UNUSED(transactionOption)
     return true;
 }

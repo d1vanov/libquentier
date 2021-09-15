@@ -27,6 +27,7 @@
 #include "utils/Common.h"
 #include "utils/FillFromSqlRecordUtils.h"
 #include "utils/ListFromDatabaseUtils.h"
+#include "utils/NoteUtils.h"
 #include "utils/PutToDatabaseUtils.h"
 #include "utils/ResourceDataFilesUtils.h"
 #include "utils/SqlUtils.h"
@@ -871,6 +872,128 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     }
 
     return count;
+}
+
+bool NotesHandler::updateNoteImpl(
+    qevercloud::Note & note, UpdateNoteOptions options, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::NotesHandler", "Cannot update note"));
+
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
+    ErrorString error;
+    const QString notebookLocalId =
+        utils::notebookLocalId(note, database, error);
+    if (notebookLocalId.isEmpty()) {
+        errorDescription.setBase(errorPrefix.base());
+        if (error.isEmpty()) {
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotesHandler",
+                "notebook local id is empty for note"));
+            errorDescription.details() = note.localId();
+        }
+        else {
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+        }
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return false;
+    }
+
+    note.setNotebookLocalId(notebookLocalId);
+
+    error.clear();
+    const QString notebookGuid = utils::notebookGuid(note, database, error);
+    if (notebookGuid.isEmpty() && !error.isEmpty()) {
+        errorDescription.setBase(errorPrefix.base());
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return false;
+    }
+
+    note.setNotebookGuid(
+        notebookGuid.isEmpty() ? std::nullopt
+                               : std::make_optional(notebookGuid));
+
+    error.clear();
+    if (!checkNote(note, error)) {
+        errorDescription.setBase(errorPrefix.base());
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return false;
+    }
+
+    const QString noteLocalId = note.localId();
+    const auto & noteGuid = note.guid();
+
+    if (note.resources()) {
+        auto & resources = *note.mutableResources();
+        for (auto & resource: resources) {
+            resource.setNoteLocalId(noteLocalId);
+            resource.setNoteGuid(noteGuid);
+        }
+    }
+
+    error.clear();
+    if (!utils::rowExists(
+            QStringLiteral("Notes"), QStringLiteral("localUid"), noteLocalId,
+            database, error))
+    {
+        if (!error.isEmpty()) {
+            errorDescription.setBase(errorPrefix.base());
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+            return false;
+        }
+
+        errorDescription.setBase(errorPrefix.base());
+        errorDescription.appendBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "cannot update note which doesn't exist in the local storage "
+            "database"));
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return false;
+    }
+
+    utils::PutNoteOptions putNoteOptions;
+    if (options.testFlag(UpdateNoteOption::UpdateResourceMetadata)) {
+        putNoteOptions.setFlag(utils::PutNoteOption::PutResourceMetadata);
+    }
+
+    if (options.testFlag(UpdateNoteOption::UpdateResourceBinaryData)) {
+        putNoteOptions.setFlag(utils::PutNoteOption::PutResourceBinaryData);
+    }
+
+    if (options.testFlag(UpdateNoteOption::UpdateTags)) {
+        putNoteOptions.setFlag(utils::PutNoteOption::PutTagIds);
+    }
+
+    bool res = utils::putNote(
+        m_localStorageDir, note, database, errorDescription, putNoteOptions,
+        utils::TransactionOption::DontUseSeparateTransaction);
+    if (!res) {
+        return false;
+    }
+
+    res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot update note in the local storage database: failed to "
+            "commit transaction"),
+        false);
+
+    return true;
 }
 
 } // namespace quentier::local_storage::sql

@@ -146,9 +146,21 @@ enum class PutResourceMetadataOption
     const QMap<QString, QString> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription);
 
+enum class PutNoteOption
+{
+    PutResourceMetadata = 1 << 1,
+    PutResourceBinaryData = 1 << 2,
+    PutTagIds = 1 << 3
+};
+
+Q_DECLARE_FLAGS(PutNoteOptions, PutNoteOption)
+
 [[nodiscard]] bool putNote(
     const QDir & localStorageDir, qevercloud::Note & note,
     QSqlDatabase & database, ErrorString & errorDescription,
+    PutNoteOptions putNoteOptions =
+        PutNoteOptions{PutNoteOption::PutResourceMetadata} |
+        PutNoteOption::PutResourceBinaryData | PutNoteOption::PutTagIds,
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);
 
