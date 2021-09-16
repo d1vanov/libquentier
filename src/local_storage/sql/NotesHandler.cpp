@@ -380,15 +380,17 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerTagLocalId(
         });
 }
 
-QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookAndTagLocalIds(
-    QStringList notebookLocalIds, QStringList tagLocalIds,
-    FetchNoteOptions fetchOptions, ListOptions<ListNotesOrder> options) const
+QFuture<QList<qevercloud::Note>>
+    NotesHandler::listNotesPerNotebookAndTagLocalIds(
+        QStringList notebookLocalIds, QStringList tagLocalIds,
+        FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [notebookLocalIds = std::move(notebookLocalIds),
-         tagLocalIds = std::move(tagLocalIds),
-         options = std::move(options), fetchOptions](
+         tagLocalIds = std::move(tagLocalIds), options = std::move(options),
+         fetchOptions](
             NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -397,9 +399,9 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookAndTagLocalId
                 locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             return handler.listNotesPerNotebookAndTagLocalIdsImpl(
-                notebookLocalIds, tagLocalIds, fetchOptions, options,
-                database, errorDescription);
-         });
+                notebookLocalIds, tagLocalIds, fetchOptions, options, database,
+                errorDescription);
+        });
 }
 
 QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
@@ -420,7 +422,7 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
             return handler.listNotesByLocalIdsImpl(
                 noteLocalIds, fetchOptions, options, database,
                 errorDescription);
-         });
+        });
 }
 
 QFuture<QList<qevercloud::Note>> NotesHandler::queryNotes(
@@ -445,9 +447,9 @@ std::optional<quint32> NotesHandler::noteCountImpl(
     NoteCountOptions options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    const QString queryString = [&]
-    {
-        QString queryString = QStringLiteral("SELECT COUNT(localUid) FROM Notes");
+    const QString queryString = [&] {
+        QString queryString =
+            QStringLiteral("SELECT COUNT(localUid) FROM Notes");
         const QString condition = noteCountOptionsToSqlQueryPart(options);
         if (!condition.isEmpty()) {
             queryString += QStringLiteral(" WHERE ");
@@ -475,11 +477,10 @@ std::optional<quint32> NotesHandler::noteCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Cannot count notes in the local storage database: failed "
-                "to convert note count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes in the local storage database: failed "
+            "to convert note count to int"));
         QNWARNING("local_storage::sql::NotesHandler", errorDescription);
         return std::nullopt;
     }
@@ -491,8 +492,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookLocalIdImpl(
     const QString & notebookLocalId, NoteCountOptions options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    const QString queryString = [&]
-    {
+    const QString queryString = [&] {
         QString queryString = QStringLiteral(
             "SELECT COUNT(localUid) FROM Notes WHERE "
             "notebookLocalUid = :notebookLocalUid");
@@ -536,11 +536,10 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookLocalIdImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Cannot count notes per notebook local id in the local storage "
-                "database: failed to convert note count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per notebook local id in the local storage "
+            "database: failed to convert note count to int"));
         QNWARNING("local_storage::sql::NotesHandler", errorDescription);
         return std::nullopt;
     }
@@ -552,8 +551,7 @@ std::optional<quint32> NotesHandler::noteCountPerTagLocalIdImpl(
     const QString & tagLocalId, NoteCountOptions options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    const QString queryString = [&]
-    {
+    const QString queryString = [&] {
         QString queryString = QStringLiteral(
             "SELECT COUNT(localUid) FROM Notes WHERE "
             "(localUid IN (SELECT DISTINCT "
@@ -598,11 +596,10 @@ std::optional<quint32> NotesHandler::noteCountPerTagLocalIdImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Cannot count notes per tag local id in the local storage "
-                "database: failed to convert note count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per tag local id in the local storage "
+            "database: failed to convert note count to int"));
         QNWARNING("local_storage::sql::NotesHandler", errorDescription);
         return std::nullopt;
     }
@@ -617,12 +614,11 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
 {
     Transaction transaction{database, Transaction::Type::Selection};
 
-    const QList<qevercloud::Tag> tags = utils::listObjects<
-        qevercloud::Tag, ILocalStorage::ListTagsOrder>(
-        listTagsOptions.m_flags, listTagsOptions.m_limit,
-        listTagsOptions.m_offset, listTagsOptions.m_order,
-        listTagsOptions.m_direction, QString{}, database,
-        errorDescription);
+    const QList<qevercloud::Tag> tags =
+        utils::listObjects<qevercloud::Tag, ILocalStorage::ListTagsOrder>(
+            listTagsOptions.m_flags, listTagsOptions.m_limit,
+            listTagsOptions.m_offset, listTagsOptions.m_order,
+            listTagsOptions.m_direction, QString{}, database, errorDescription);
 
     if (tags.isEmpty()) {
         QNDEBUG(
@@ -631,14 +627,13 @@ std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
         return QHash<QString, quint32>{};
     }
 
-    const QString queryString = [&]
-    {
+    const QString queryString = [&] {
         QString queryString;
         QTextStream strm{&queryString};
 
         strm << "SELECT localTag, COUNT(localTag) AS noteCount FROM "
-            << "NoteTags LEFT OUTER JOIN Notes "
-            << "ON NoteTags.localNote = Notes.localUid WHERE (localTag IN ";
+             << "NoteTags LEFT OUTER JOIN Notes "
+             << "ON NoteTags.localNote = Notes.localUid WHERE (localTag IN ";
 
         int counter = 0;
         for (const qevercloud::Tag & tag: qAsConst(tags)) {
@@ -753,8 +748,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     NoteCountOptions options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    const QString queryString = [&]
-    {
+    const QString queryString = [&] {
         QString queryString;
         QTextStream strm{&queryString};
 
@@ -786,7 +780,7 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
             }
 
             strm << "(localUid IN (SELECT DISTINCT localNote "
-                "FROM NoteTags WHERE localTag IN (";
+                    "FROM NoteTags WHERE localTag IN (";
 
             int tagCounter = 0;
             for (const auto & tagLocalId: tagLocalIds) {
@@ -828,7 +822,8 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     int notebookCounter = 0;
     for (const QString & notebookLocalId: qAsConst(notebookLocalIds)) {
         query.bindValue(
-            QStringLiteral(":notebookLocalUid") + QString::number(notebookCounter),
+            QStringLiteral(":notebookLocalUid") +
+                QString::number(notebookCounter),
             notebookLocalId);
         ++notebookCounter;
     }
@@ -861,12 +856,11 @@ std::optional<quint32> NotesHandler::noteCountPerNotebookAndTagLocalIdsImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Cannot count notes per notebook and tag local ids in "
-                "the local storage database: failed to convert note count to "
-                "int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot count notes per notebook and tag local ids in "
+            "the local storage database: failed to convert note count to "
+            "int"));
         QNWARNING("local_storage::sql::NotesHandler", errorDescription);
         return std::nullopt;
     }
@@ -994,6 +988,102 @@ bool NotesHandler::updateNoteImpl(
         false);
 
     return true;
+}
+
+std::optional<qevercloud::Note> NotesHandler::findNoteByLocalIdImpl(
+    const QString & localId, FetchNoteOptions options, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    utils::SelectTransactionGuard transactionGuard{database};
+
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid, guid, updateSequenceNumber, isDirty, "
+        "isLocal, isFavorited, title, content, contentLength, "
+        "contentHash, creationTimestamp, modificationTimestamp, "
+        "deletionTimestamp, isActive, hasAttributes, thumbnail, "
+        "notebookLocalUid, notebookGuid, subjectDate, latitude, "
+        "longitude, altitude, author, source, sourceURL, "
+        "sourceApplication, shareDate, reminderOrder, "
+        "reminderDoneTime, reminderTime, placeName, contentClass, "
+        "lastEditedBy, creatorId, lastEditorId, sharedWithBusiness, "
+        "conflictSourceNoteGuid, noteTitleQuality, "
+        "applicationDataKeysOnly, applicationDataKeysMap, "
+        "applicationDataValues, classificationKeys, "
+        "classificationValues, noUpdateNoteTitle, noUpdateNoteContent, "
+        "noEmailNote, noShareNote, noShareNotePublicly, "
+        "noteResourceCountMax, uploadLimit, resourceSizeMax, "
+        "noteSizeMax, uploaded, localNote, note, localTag, tag, "
+        "tagIndexInNote FROM Notes "
+        "LEFT OUTER JOIN NoteRestrictions ON "
+        "Notes.localUid = NoteRestrictions.noteLocalUid "
+        "LEFT OUTER JOIN NoteLimits ON "
+        "Notes.localUid = NoteLimits.noteLocalUid "
+        "WHERE Notes.localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot find note in the local storage database by local id: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot find note in the local storage database by local id"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    const auto record = query.record();
+    std::optional<qevercloud::Note> note = qevercloud::Note{};
+    ErrorString error;
+    if (!utils::fillNoteFromSqlRecord(record, *note, error)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Failed to find note by local id in the local storage "
+            "database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return std::nullopt;
+    }
+
+    note = fillSharedNotes(*note, database, errorDescription);
+    if (!note) {
+        return std::nullopt;
+    }
+
+    note = fillTagIds(*note, database, errorDescription);
+    if (!note) {
+        return std::nullopt;
+    }
+
+    if (options.testFlag(FetchNoteOption::WithResourceMetadata) ||
+        options.testFlag(FetchNoteOption::WithResourceBinaryData))
+    {
+        using FetchResourceOption = ILocalStorage::FetchResourceOption;
+        using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
+
+        FetchResourceOptions resourceOptions;
+        if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
+            resourceOptions.setFlag(FetchResourceOption::WithBinaryData);
+        }
+
+        // TODO: fill resources
+    }
+
+    return note;
 }
 
 } // namespace quentier::local_storage::sql

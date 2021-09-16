@@ -170,6 +170,10 @@ private:
         qevercloud::Note & note, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
+    [[nodiscard]] std::optional<qevercloud::Note> fillTagIds(
+        qevercloud::Note & note, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
     [[nodiscard]] bool expungeNoteByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription);
