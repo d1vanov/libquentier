@@ -18,11 +18,16 @@
 
 #pragma once
 
+#include "../Fwd.h"
+
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
 #include <optional>
 
+#include <QFlags>
+
+class QDir;
 class QSqlDatabase;
 class QString;
 
@@ -45,5 +50,35 @@ namespace quentier::local_storage::sql::utils {
 [[nodiscard]] QString resourceLocalIdByGuid(
     const QString & resourceGuid, QSqlDatabase & database,
     ErrorString & errorDescription);
+
+enum class FetchResourceOption
+{
+    WithBinaryData = 1 << 0
+};
+Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption);
+
+[[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalId(
+    const QString & resourceLocalId, FetchResourceOptions options,
+    const QDir & localStorageDir,
+    const QReadWriteLockPtr & resourceDataFilesLock, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuid(
+    const qevercloud::Guid & resourceGuid, FetchResourceOptions options,
+    const QDir & localStorageDir,
+    const QReadWriteLockPtr & resourceDataFilesLock, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool fillResourceData(
+    qevercloud::Resource & resource, const QDir & localStorageDir,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
+    const QString & localId, qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
+[[nodiscard]] bool findResourceAttributesApplicationDataFullMapByLocalId(
+    const QString & localId, qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils

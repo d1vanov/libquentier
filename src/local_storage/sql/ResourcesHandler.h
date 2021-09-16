@@ -84,26 +84,6 @@ private:
         const QString & noteLocalId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalIdImpl(
-        const QString & localId, FetchResourceOptions options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
-
-    [[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuidImpl(
-        const qevercloud::Guid & guid, FetchResourceOptions options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
-
-    [[nodiscard]] bool fillResourceData(
-        qevercloud::Resource & resource, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
-
-    [[nodiscard]] bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
-        const QString & localId, qevercloud::ResourceAttributes & attributes,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
-
-    [[nodiscard]] bool findResourceAttributesApplicationDataFullMapByLocalId(
-        const QString & localId, qevercloud::ResourceAttributes & attributes,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
-
     [[nodiscard]] bool expungeResourceByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription,

@@ -84,6 +84,10 @@ void fillAccountLimitsFromSqlRecord(
     const QSqlRecord & record, qevercloud::SavedSearch & savedSearch,
     ErrorString & errorDescription);
 
+[[nodiscard]] bool fillNoteFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Note & note,
+    ErrorString & errorDescription);
+
 template <class T>
 [[nodiscard]] bool fillObjectFromSqlRecord(
     const QSqlRecord & record, T & object,

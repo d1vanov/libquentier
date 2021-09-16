@@ -1665,6 +1665,17 @@ bool fillSavedSearchFromSqlRecord(
     return true;
 }
 
+bool fillNoteFromSqlRecord(
+    const QSqlRecord & record, qevercloud::Note & note,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(note)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 template <>
 bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     const QSqlRecord & record, qevercloud::Notebook & object,
