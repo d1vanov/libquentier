@@ -179,13 +179,15 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             utils::FetchResourceOptions resourceOptions;
+            std::optional<QReadLocker> locker;
             if (options.testFlag(FetchResourceOption::WithBinaryData)) {
                 resourceOptions.setFlag(
                     utils::FetchResourceOption::WithBinaryData);
+                locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             return utils::findResourceByLocalId(
                 resourceLocalId, resourceOptions, handler.m_localStorageDir,
-                handler.m_resourceDataFilesLock, database, errorDescription);
+                database, errorDescription);
         });
 }
 
@@ -198,13 +200,15 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByGuid(
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             utils::FetchResourceOptions resourceOptions;
+            std::optional<QReadLocker> locker;
             if (options.testFlag(FetchResourceOption::WithBinaryData)) {
                 resourceOptions.setFlag(
                     utils::FetchResourceOption::WithBinaryData);
+                locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             return utils::findResourceByLocalId(
                 resourceGuid, resourceOptions, handler.m_localStorageDir,
-                handler.m_resourceDataFilesLock, database, errorDescription);
+                database, errorDescription);
         });
 }
 

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "../Fwd.h"
+#include "Common.h"
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -59,15 +59,17 @@ Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption);
 
 [[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalId(
     const QString & resourceLocalId, FetchResourceOptions options,
-    const QDir & localStorageDir,
-    const QReadWriteLockPtr & resourceDataFilesLock, QSqlDatabase & database,
-    ErrorString & errorDescription);
+    const QDir & localStorageDir, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
 
 [[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuid(
     const qevercloud::Guid & resourceGuid, FetchResourceOptions options,
-    const QDir & localStorageDir,
-    const QReadWriteLockPtr & resourceDataFilesLock, QSqlDatabase & database,
-    ErrorString & errorDescription);
+    const QDir & localStorageDir, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
 
 [[nodiscard]] bool fillResourceData(
     qevercloud::Resource & resource, const QDir & localStorageDir,

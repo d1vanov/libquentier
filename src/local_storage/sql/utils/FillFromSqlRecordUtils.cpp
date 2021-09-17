@@ -1676,6 +1676,18 @@ bool fillNoteFromSqlRecord(
     return true;
 }
 
+bool fillSharedNoteFromSqlRecord(
+    const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
+    int & indexInNote, ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(sharedNote)
+    Q_UNUSED(indexInNote)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 template <>
 bool fillObjectFromSqlRecord<qevercloud::Notebook>(
     const QSqlRecord & record, qevercloud::Notebook & object,

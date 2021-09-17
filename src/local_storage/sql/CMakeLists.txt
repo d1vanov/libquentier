@@ -13,6 +13,8 @@ target_sources(${LIBRARY_NAME}
   LinkedNotebooksHandler.h
   NotebooksHandler.cpp
   NotebooksHandler.h
+  NotesHandler.cpp
+  NotesHandler.h
   Notifier.cpp
   Notifier.h
   NotifierProxy.cpp

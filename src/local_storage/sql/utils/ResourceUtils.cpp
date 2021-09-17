@@ -28,7 +28,6 @@
 #include <qevercloud/types/Resource.h>
 
 #include <QCryptographicHash>
-#include <QReadLocker>
 #include <QSqlRecord>
 #include <QSqlQuery>
 
@@ -133,16 +132,14 @@ QString resourceLocalIdByGuid(
 
 std::optional<qevercloud::Resource> findResourceByLocalId(
     const QString & resourceLocalId, const FetchResourceOptions options,
-    const QDir & localStorageDir,
-    const QReadWriteLockPtr & resourceDataFilesLock,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    const QDir & localStorageDir, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    const TransactionOption transactionOption)
 {
-    std::optional<QReadLocker> locker;
-    if (options.testFlag(FetchResourceOption::WithBinaryData)) {
-        locker.emplace(resourceDataFilesLock.get());
+    std::optional<SelectTransactionGuard> transactionGuard;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transactionGuard.emplace(database);
     }
-
-    SelectTransactionGuard transactionGuard{database};
 
     static const QString queryString = QStringLiteral(
         "SELECT Resources.resourceLocalUid, resourceGuid, "
@@ -230,15 +227,13 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
 std::optional<qevercloud::Resource> findResourceByGuid(
     const qevercloud::Guid & resourceGuid, const FetchResourceOptions options,
     const QDir & localStorageDir,
-    const QReadWriteLockPtr & resourceDataFilesLock,
-    QSqlDatabase & database, ErrorString & errorDescription)
+    QSqlDatabase & database, ErrorString & errorDescription,
+    const TransactionOption transactionOption)
 {
-    std::optional<QReadLocker> locker;
-    if (options.testFlag(FetchResourceOption::WithBinaryData)) {
-        locker.emplace(resourceDataFilesLock.get());
+    std::optional<SelectTransactionGuard> transactionGuard;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transactionGuard.emplace(database);
     }
-
-    SelectTransactionGuard transactionGuard{database};
 
     static const QString queryString = QStringLiteral(
         "SELECT Resources.resourceLocalUid, resourceGuid, "

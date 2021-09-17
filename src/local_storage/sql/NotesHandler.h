@@ -33,6 +33,8 @@
 #include <memory>
 #include <optional>
 
+class QSqlQuery;
+
 namespace quentier::local_storage::sql {
 
 class NotesHandler final :
@@ -166,12 +168,20 @@ private:
         const qevercloud::Guid & guid, FetchNoteOptions options,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
+    [[nodiscard]] std::optional<qevercloud::Note> fillNoteData(
+        FetchNoteOptions options, QSqlQuery & query, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
     [[nodiscard]] std::optional<qevercloud::Note> fillSharedNotes(
         qevercloud::Note & note, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Note> fillTagIds(
         qevercloud::Note & note, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] QStringList listResourceLocalIdsPerNoteLocalId(
+        const QString & noteLocalId, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeNoteByLocalIdImpl(
@@ -197,24 +207,24 @@ private:
 
     [[nodiscard]] QList<qevercloud::Note> listNotesPerNotebookLocalIdImpl(
         const QString & notebookLocalId, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options, QSqlDatabase & database,
+        const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesPerTagLocalIdImpl(
         const QString & tagLocalId, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options, QSqlDatabase & database,
+        const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note>
         listNotesPerNotebookAndTagLocalIdsImpl(
             const QStringList & notebookLocalIds,
             const QStringList & tagLocalIds, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options, QSqlDatabase & database,
-            ErrorString & errorDescription) const;
+            const ListOptions<ListNotesOrder> & options,
+            QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIdsImpl(
         const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options, QSqlDatabase & database,
+        const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Note> queryNotesImpl(
