@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Fwd.h"
+#include "Transaction.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -172,11 +173,16 @@ private:
         FetchNoteOptions options, QSqlQuery & query, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] std::optional<qevercloud::Note> fillSharedNotes(
+    [[nodiscard]] bool fillSharedNotes(
         qevercloud::Note & note, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
-    [[nodiscard]] std::optional<qevercloud::Note> fillTagIds(
+    [[nodiscard]] bool fillTagIds(
+        qevercloud::Note & note, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
+
+    [[nodiscard]] bool fillResources(
+        FetchNoteOptions fetchOptions, const ErrorString & errorPrefix,
         qevercloud::Note & note, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
@@ -186,20 +192,18 @@ private:
 
     [[nodiscard]] bool expungeNoteByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription);
+        ErrorString & errorDescription,
+        std::optional<Transaction> transaction = std::nullopt);
 
     [[nodiscard]] bool expungeNoteByGuidImpl(
         const qevercloud::Guid & guid, QSqlDatabase & database,
         ErrorString & errorDescription);
 
-    [[nodiscard]] QStringList listNoteLocalIdsByNoteLocalId(
-        const QString & noteLocalId, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
-
     [[nodiscard]] QList<qevercloud::Note> listNotesImpl(
         FetchNoteOptions fetchOptions,
         const ListOptions<ListNotesOrder> & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        QSqlDatabase & database, ErrorString & errorDescription,
+        const QString & sqlQueryCondition = {}) const;
 
     [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesImpl(
         const qevercloud::Guid & noteGuid, QSqlDatabase & database,

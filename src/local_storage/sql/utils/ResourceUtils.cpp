@@ -91,7 +91,7 @@ QString resourceLocalId(
 }
 
 QString resourceLocalIdByGuid(
-    const QString & resourceGuid, QSqlDatabase & database,
+    const qevercloud::Guid & resourceGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
     static const QString queryString = QStringLiteral(

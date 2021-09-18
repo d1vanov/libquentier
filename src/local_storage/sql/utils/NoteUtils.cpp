@@ -157,4 +157,37 @@ QString notebookGuid(
     return query.value(0).toString();
 }
 
+QString noteLocalIdByGuid(
+    const qevercloud::Guid & noteGuid, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT localUid FROM Notes WHERE guid = :guid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot find note local id by guid: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":guid"), noteGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot find note local id by guid"),
+        {});
+
+    if (!query.next()) {
+        return {};
+    }
+
+    return query.value(0).toString();
+}
+
 } // namespace quentier::local_storage::sql::utils

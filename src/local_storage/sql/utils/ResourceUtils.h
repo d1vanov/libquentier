@@ -48,7 +48,7 @@ namespace quentier::local_storage::sql::utils {
     ErrorString & errorDescription);
 
 [[nodiscard]] QString resourceLocalIdByGuid(
-    const QString & resourceGuid, QSqlDatabase & database,
+    const qevercloud::Guid & resourceGuid, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 enum class FetchResourceOption

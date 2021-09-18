@@ -40,4 +40,8 @@ namespace quentier::local_storage::sql::utils {
     const qevercloud::Note & note, QSqlDatabase & database,
     ErrorString & errorDescription);
 
+[[nodiscard]] QString noteLocalIdByGuid(
+    const qevercloud::Guid & noteGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

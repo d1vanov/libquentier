@@ -21,7 +21,6 @@
 #include "NotesHandler.h"
 #include "Notifier.h"
 #include "Tasks.h"
-#include "Transaction.h"
 #include "TypeChecks.h"
 
 #include "utils/Common.h"
@@ -1106,13 +1105,12 @@ std::optional<qevercloud::Note> NotesHandler::fillNoteData(
     }
 
     const auto record = query.record();
-    std::optional<qevercloud::Note> note = qevercloud::Note{};
+    qevercloud::Note note;
     ErrorString error;
-    if (!utils::fillNoteFromSqlRecord(record, *note, error)) {
+    if (!utils::fillNoteFromSqlRecord(record, note, error)) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::NotesHandler",
-            "Failed to find note by local id in the local storage "
-            "database"));
+            "Failed to find note in the local storage database by local id "));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -1120,136 +1118,51 @@ std::optional<qevercloud::Note> NotesHandler::fillNoteData(
         return std::nullopt;
     }
 
-    note = fillSharedNotes(*note, database, errorDescription);
-    if (!note) {
+    if (!fillSharedNotes(note, database, errorDescription)) {
         return std::nullopt;
     }
 
-    note = fillTagIds(*note, database, errorDescription);
-    if (!note) {
+    if (!fillTagIds(note, database, errorDescription)) {
         return std::nullopt;
     }
 
-    if (options.testFlag(FetchNoteOption::WithResourceMetadata) ||
-        options.testFlag(FetchNoteOption::WithResourceBinaryData))
-    {
-        ErrorString error;
-        const auto resourceLocalIds = listResourceLocalIdsPerNoteLocalId(
-            note->localId(), database, error);
-        if (resourceLocalIds.isEmpty() && !error.isEmpty())
-        {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
+    if (!fillResources(
+            options,
+            ErrorString{QT_TRANSLATE_NOOP(
                 "local_storage::sql::NotesHandler",
-                "Cannot find note in the local storage database: failed to "
-                "list resource local ids per note"));
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
-            return std::nullopt;
-        }
-
-        if (!resourceLocalIds.isEmpty()) {
-            utils::FetchResourceOptions resourceOptions;
-            if (options.testFlag(FetchNoteOption::WithResourceBinaryData)) {
-                resourceOptions.setFlag(
-                    utils::FetchResourceOption::WithBinaryData);
-            }
-
-            if (!note->resources()) {
-                note->setResources(QList<qevercloud::Resource>{});
-            }
-
-            for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
-                error.clear();
-                auto resource = utils::findResourceByLocalId(
-                    resourceLocalId, resourceOptions, m_localStorageDir,
-                    database, error,
-                    utils::TransactionOption::DontUseSeparateTransaction);
-                if (!resource) {
-                    errorDescription.setBase(QT_TRANSLATE_NOOP(
-                            "local_storage::sql::NotesHandler",
-                            "Cannot find note in the local storage database: "
-                            "failed to find one of note's resources"));
-                    errorDescription.appendBase(error.base());
-                    errorDescription.appendBase(error.additionalBases());
-                    errorDescription.details() = error.details();
-                    QNWARNING("local_storage::sql::NotesHandler", errorDescription);
-                    return std::nullopt;
-                }
-                note->mutableResources()->append(*resource);
-            }
-        }
+                "Cannot find note in the local storage database by local id")},
+            note, database, errorDescription))
+    {
+        return std::nullopt;
     }
 
     return note;
 }
 
-std::optional<qevercloud::Note> NotesHandler::fillSharedNotes(
+bool NotesHandler::fillSharedNotes(
     qevercloud::Note & note, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
     if (!note.guid()) {
-        return note;
+        return true;
     }
 
-    static const QString queryString = QStringLiteral(
-        "SELECT * FROM SharedNotes "
-        "WHERE sharedNoteNoteGuid = :sharedNoteNoteGuid");
-
-    QSqlQuery query{database};
-    bool res = query.prepare(queryString);
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotesHandler",
-            "Cannot find shared notes by note guid: failed to prepare query"),
-        std::nullopt);
-
-    query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), *note.guid());
-
-    res = query.exec();
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::NotesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::NotesHandler",
-            "Cannot find shared notes by note guid"),
-        std::nullopt);
-
-    QMap<int, qevercloud::SharedNote> sharedNotesByIndex;
-
-    while (query.next()) {
-        qevercloud::SharedNote sharedNote;
-        int indexInNote = -1;
-        ErrorString error;
-        if (!utils::fillSharedNoteFromSqlRecord(
-                query.record(), sharedNote, indexInNote, error))
-        {
-            errorDescription.base() = QT_TRANSLATE_NOOP(
-                "local_storage::sql::NotesHandler",
-                "Cannot find shared notes by note guid: failed to fill shared "
-                "note from SQL record");
-
-            errorDescription.appendBase(error.base());
-            errorDescription.appendBase(error.additionalBases());
-            errorDescription.details() = error.details();
-            return {};
+    auto sharedNotes =
+        listSharedNotesImpl(*note.guid(), database, errorDescription);
+    if (sharedNotes.isEmpty()) {
+        if (!errorDescription.isEmpty()) {
+            return false;
         }
 
-        sharedNotesByIndex[indexInNote] = sharedNote;
+        note.setSharedNotes(std::nullopt);
+        return true;
     }
 
-    note.mutableSharedNotes().emplace(QList<qevercloud::SharedNote>());
-    auto & sharedNotes = *note.mutableSharedNotes();
-    sharedNotes.reserve(std::max(sharedNotesByIndex.size(), 0));
-    for (const auto it: qevercloud::toRange(sharedNotesByIndex)) {
-        sharedNotes << it.value();
-    }
-
-    return note;
+    note.setSharedNotes(std::move(sharedNotes));
+    return true;
 }
 
-std::optional<qevercloud::Note> NotesHandler::fillTagIds(
+bool NotesHandler::fillTagIds(
     qevercloud::Note & note, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
@@ -1264,7 +1177,7 @@ std::optional<qevercloud::Note> NotesHandler::fillTagIds(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::NotesHandler",
             "Cannot fill note tag ids: failed to prepare query"),
-        std::nullopt);
+        false);
 
     query.bindValue(QStringLiteral(":localNote"), note.localId());
 
@@ -1274,7 +1187,7 @@ std::optional<qevercloud::Note> NotesHandler::fillTagIds(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::NotesHandler",
             "Cannot fill note tag ids"),
-        std::nullopt);
+        false);
 
     struct TagIdData
     {
@@ -1305,7 +1218,7 @@ std::optional<qevercloud::Note> NotesHandler::fillTagIds(
                 "Cannot list tag ids by note local id: failed to convert tag "
                 "index in note to int"));
             QNWARNING("local_storage::sql::NotesHandler", errorDescription);
-            return std::nullopt;
+            return false;
         }
         
         const int tagLocalIdIndex = record.indexOf(QStringLiteral("localTag"));
@@ -1356,75 +1269,288 @@ std::optional<qevercloud::Note> NotesHandler::fillTagIds(
         note.setTagGuids(std::nullopt);
     }
 
-    return note;
+    return true;
+}
+
+bool NotesHandler::fillResources(
+    FetchNoteOptions fetchOptions, const ErrorString & errorPrefix,
+    qevercloud::Note & note, QSqlDatabase & database,
+    ErrorString & errorDescription) const
+{
+    if (!fetchOptions.testFlag(FetchNoteOption::WithResourceMetadata) &&
+        !fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData))
+    {
+        return true;
+    }
+
+    ErrorString error;
+    const auto resourceLocalIds = listResourceLocalIdsPerNoteLocalId(
+        note.localId(), database, error);
+    if (resourceLocalIds.isEmpty())
+    {
+        if (error.isEmpty()) {
+            return true;
+        }
+
+        errorDescription = errorPrefix;
+        errorDescription.appendBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "failed to list resource local ids by note local id"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+        return false;
+    }
+
+    utils::FetchResourceOptions resourceOptions;
+    if (fetchOptions.testFlag(FetchNoteOption::WithResourceBinaryData)) {
+        resourceOptions.setFlag(
+            utils::FetchResourceOption::WithBinaryData);
+    }
+
+    if (!note.resources()) {
+        note.setResources(QList<qevercloud::Resource>{});
+    }
+
+    for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
+        error.clear();
+        auto resource = utils::findResourceByLocalId(
+            resourceLocalId, resourceOptions, m_localStorageDir,
+            database, error,
+            utils::TransactionOption::DontUseSeparateTransaction);
+        if (!resource) {
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::NotesHandler",
+                    "failed to find one of note's resources"));
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+            return false;
+        }
+        note.mutableResources()->append(*resource);
+    }
+
+    return true;
 }
 
 QStringList NotesHandler::listResourceLocalIdsPerNoteLocalId(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    static const QString queryString = QStringLiteral(
+        "SELECT localResource FROM NoteResources WHERE localNote = :localNote");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot list resource local ids by note local id: failed to "
+            "prepare query"),
+        QStringList{});
+
+    query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot list resource local ids by note local id"),
+        QStringList{});
+
+    QStringList resourceLocalIds;
+    resourceLocalIds.reserve(std::max(query.size(), 0));
+    while (query.next()) {
+        resourceLocalIds << query.value(0).toString();
+    }
+
+    return resourceLocalIds;
 }
 
 bool NotesHandler::expungeNoteByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    ErrorString & errorDescription, std::optional<Transaction> transaction)
 {
-    // TODO: implement
-    Q_UNUSED(localId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return false;
+    if (!transaction) {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
+
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Notes WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot expunge note from the local storage database by local id: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), localId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot expunge note from the local storage database by local id"),
+        false);
+
+    res = transaction->commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot expunge note from the local storage database by local id, "
+            "failed to commit transaction"),
+        false);
+
+    if (!utils::removeResourceDataFilesForNote(
+            m_localStorageDir, localId, errorDescription))
+    {
+        QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+    }
+
+    return true;
 }
 
 bool NotesHandler::expungeNoteByGuidImpl(
     const qevercloud::Guid & guid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(guid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return false;
-}
+    Transaction transaction{database, Transaction::Type::Exclusive};
 
-QStringList NotesHandler::listNoteLocalIdsByNoteLocalId(
-    const QString & noteLocalId, QSqlDatabase & database,
-    ErrorString & errorDescription) const
-{
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    const auto localId =
+        utils::noteLocalIdByGuid(guid, database, errorDescription);
+
+    if (localId.isEmpty()) {
+        return errorDescription.isEmpty();
+    }
+
+    return expungeNoteByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction));
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesImpl(
     FetchNoteOptions fetchOptions,
     const ListOptions<ListNotesOrder> & options,
-    QSqlDatabase & database, ErrorString & errorDescription) const
+    QSqlDatabase & database, ErrorString & errorDescription,
+    const QString & sqlQueryCondition) const
 {
-    // TODO: implement
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    const Transaction transaction{database, Transaction::Type::Selection};
+
+    auto notes = utils::listObjects<qevercloud::Note, ListNotesOrder>(
+        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_direction, sqlQueryCondition, database, errorDescription);
+
+    if (notes.isEmpty()) {
+        return {};
+    }
+
+    ErrorString error;
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
+        "local_storage::sql::NotesHandler",
+        "Cannot list notes from the local storage database")};
+
+    for (auto & note: notes) {
+        error.clear();
+        if (!fillSharedNotes(note, database, error)) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+            return {};
+        }
+
+        error.clear();
+        if (!fillTagIds(note, database, error)) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+            return {};
+        }
+
+        error.clear();
+        if (!fillResources(
+                fetchOptions, errorPrefix, note, database, errorDescription)) {
+            errorDescription = errorPrefix;
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::NotesHandler", errorDescription);
+            return {};
+        }
+    }
+
+    return notes;
 }
 
 QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(noteGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    static const QString queryString = QStringLiteral(
+        "SELECT * FROM SharedNotes "
+        "WHERE sharedNoteNoteGuid = :sharedNoteNoteGuid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot list shared notes by note guid: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot list shared notes by note guid"),
+        {});
+
+    QMap<int, qevercloud::SharedNote> sharedNotesByIndex;
+    while (query.next()) {
+        qevercloud::SharedNote sharedNote;
+        int indexInNote = -1;
+        ErrorString error;
+        if (!utils::fillSharedNoteFromSqlRecord(
+                query.record(), sharedNote, indexInNote, error))
+        {
+            errorDescription.base() = QT_TRANSLATE_NOOP(
+                "local_storage::sql::NotesHandler",
+                "Cannot list shared notes by note guid: failed to fill shared "
+                "note from SQL record");
+
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return {};
+        }
+
+        sharedNotesByIndex[indexInNote] = sharedNote;
+    }
+
+    QList<qevercloud::SharedNote> sharedNotes;
+    sharedNotes.reserve(std::max(sharedNotesByIndex.size(), 0));
+    for (const auto it: qevercloud::toRange(sharedNotesByIndex)) {
+        sharedNotes << it.value();
+    }
+
+    return sharedNotes;
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesPerNotebookLocalIdImpl(
