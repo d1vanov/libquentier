@@ -134,6 +134,9 @@ public:
     [[nodiscard]] QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const;
 
+    [[nodiscard]] QFuture<QStringList> queryNoteLocalIds(
+        NoteSearchQuery query) const;
+
 private:
     [[nodiscard]] std::optional<quint32> noteCountImpl(
         NoteCountOptions options, QSqlDatabase & database,

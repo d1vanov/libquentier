@@ -443,6 +443,20 @@ QFuture<QList<qevercloud::Note>> NotesHandler::queryNotes(
         });
 }
 
+QFuture<QStringList> NotesHandler::queryNoteLocalIds(
+    NoteSearchQuery query) const
+{
+    return makeReadTask<QStringList>(
+        makeTaskContext(), weak_from_this(),
+        [query = std::move(query)](
+            const NotesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
+            Q_UNUSED(handler)
+            return utils::queryNoteLocalIds(
+                query, database, errorDescription);
+        });
+}
+
 std::optional<quint32> NotesHandler::noteCountImpl(
     NoteCountOptions options, QSqlDatabase & database,
     ErrorString & errorDescription) const
@@ -1220,7 +1234,7 @@ bool NotesHandler::fillTagIds(
             QNWARNING("local_storage::sql::NotesHandler", errorDescription);
             return false;
         }
-        
+
         const int tagLocalIdIndex = record.indexOf(QStringLiteral("localTag"));
         if (tagLocalIdIndex < 0) {
             QNWARNING(
@@ -1558,13 +1572,10 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookLocalIdImpl(
     const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(notebookLocalId)
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    return listNotesImpl(
+        fetchOptions, options, database, errorDescription,
+        QString::fromUtf8("notebookLocalUid = '%1'")
+            .arg(utils::sqlEscape(notebookLocalId)));
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesPerTagLocalIdImpl(
@@ -1572,13 +1583,12 @@ QList<qevercloud::Note> NotesHandler::listNotesPerTagLocalIdImpl(
     const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(tagLocalId)
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    return listNotesImpl(
+        fetchOptions, options, database, errorDescription,
+        QString::fromUtf8(
+            "localUid IN (SELECT DISTINCT localNote FROM NoteTags WHERE "
+            "localTag = '%1')")
+            .arg(utils::sqlEscape(tagLocalId)));
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
@@ -1586,14 +1596,63 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
     FetchNoteOptions fetchOptions, const ListOptions<ListNotesOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(notebookLocalIds)
-    Q_UNUSED(tagLocalIds)
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QString notebooksAndTagsSqlQueryCondition;
+    QTextStream strm{&notebooksAndTagsSqlQueryCondition};
+
+    if (!notebookLocalIds.isEmpty() && tagLocalIds.isEmpty()) {
+        strm << "localUid IN (SELECT DISTINCT Notes.localUid FROM "
+            << "Notes WHERE Notes.notebookLocalUid IN (";
+
+        for (const auto & notebookLocalId: notebookLocalIds) {
+            strm << "'" << utils::sqlEscape(notebookLocalId) << "'";
+            if (&notebookLocalId != &notebookLocalIds.constLast()) {
+                strm << ", ";
+            }
+        }
+
+        strm << "))";
+    }
+    else if (notebookLocalIds.isEmpty() && !tagLocalIds.isEmpty()) {
+        strm << "localUid IN (SELECT DISTINCT NoteTags.localNote FROM "
+            << "NoteTags WHERE NoteTags.localTag IN (";
+
+        for (const auto & tagLocalId: tagLocalIds) {
+            strm << "'" << utils::sqlEscape(tagLocalId) << "'";
+            if (&tagLocalId != &tagLocalIds.constLast()) {
+                strm << ", ";
+            }
+        }
+
+        strm << "))";
+    }
+    else {
+        strm << "localUid IN (SELECT DISTINCT Notes.localUid FROM "
+            << "(Notes LEFT OUTER JOIN NoteTags ON "
+            << "Notes.localUid = NoteTags.localNote) "
+            << "WHERE Notes.notebookLocalUid IN (";
+
+        for (const auto & notebookLocalId: notebookLocalIds) {
+            strm << "'" << utils::sqlEscape(notebookLocalId) << "'";
+            if (&notebookLocalId != &notebookLocalIds.constLast()) {
+                strm << ", ";
+            }
+        }
+
+        strm << ") AND NoteTags.localTag IN(";
+
+        for (const auto & tagLocalId: tagLocalIds) {
+            strm << "'" << utils::sqlEscape(tagLocalId) << "'";
+            if (&tagLocalId != &tagLocalIds.constLast()) {
+                strm << ", ";
+            }
+        }
+
+        strm << "))";
+    }
+
+    return listNotesImpl(
+        fetchOptions, options, database, errorDescription,
+        notebooksAndTagsSqlQueryCondition);
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
@@ -1601,13 +1660,22 @@ QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
     const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalIds)
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(options)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    QString noteLocalIdsSqlQueryCondition;
+    QTextStream strm{&noteLocalIdsSqlQueryCondition};
+
+    strm << "localUid IN (";
+    for (const auto & noteLocalId: noteLocalIds) {
+        strm << "'" << utils::sqlEscape(noteLocalId) + "'";
+        if (&noteLocalId != &noteLocalIds.constLast()) {
+            strm << ", ";
+        }
+    }
+
+    strm << ")";
+
+    return listNotesImpl(
+        fetchOptions, options, database, errorDescription,
+        noteLocalIdsSqlQueryCondition);
 }
 
 QList<qevercloud::Note> NotesHandler::queryNotesImpl(

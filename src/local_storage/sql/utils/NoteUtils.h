@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <qevercloud/types/Fwd.h>
-#include <qevercloud/types/TypeAliases.h>
+#include "Common.h"
+
+#include <quentier/local_storage/ILocalStorage.h>
 
 class QSqlDatabase;
-class QString;
 
 namespace quentier {
 
@@ -43,5 +43,11 @@ namespace quentier::local_storage::sql::utils {
 [[nodiscard]] QString noteLocalIdByGuid(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription);
+
+[[nodiscard]] QStringList queryNoteLocalIds(
+    const NoteSearchQuery & noteSearchQuery, QSqlDatabase & database,
+    ErrorString & errorDescription,
+    TransactionOption transactionOption =
+        TransactionOption::UseSeparateTransaction);
 
 } // namespace quentier::local_storage::sql::utils

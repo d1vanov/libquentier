@@ -465,6 +465,9 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const = 0;
 
+    [[nodiscard]] virtual QFuture<QStringList> queryNoteLocalIds(
+        NoteSearchQuery query) const = 0;
+
     [[nodiscard]] virtual QFuture<void> expungeNoteByLocalId(
         QString noteLocalId) = 0;
 

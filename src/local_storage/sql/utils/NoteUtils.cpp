@@ -17,6 +17,7 @@
  */
 
 #include "NoteUtils.h"
+#include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
 
@@ -25,10 +26,107 @@
 #include <qevercloud/types/Note.h>
 
 #include <QSqlDatabase>
+#include <QSqlRecord>
 #include <QSqlQuery>
-#include <QString>
+#include <QTextStream>
 
 namespace quentier::local_storage::sql::utils {
+
+namespace {
+
+QString noteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QString queryString;
+    QTextStream strm{&queryString};
+
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "can't convert note search query string into SQL query"});
+
+    // 1) Setting up initial templates
+    const QString sqlPrefix = QStringLiteral("SELECT DISTINCT localUid ");
+
+    // 2) Determining whether "any:" modifier takes effect
+
+    const bool queryHasAnyModifier = noteSearchQuery.hasAnyModifier();
+
+    const QString uniteOperator =
+        (queryHasAnyModifier ? QStringLiteral("OR") : QStringLiteral("AND"));
+
+    // 3) Processing notebook modifier (if present)
+
+    const QString notebookName = noteSearchQuery.notebookModifier();
+    QString notebookLocalId;
+    if (!notebookName.isEmpty()) {
+        QSqlQuery query{database};
+        const QString notebookQueryString =
+            QString::fromUtf8(
+                "SELECT localUid FROM NotebookFTS WHERE "
+                "notebookName MATCH '%1' LIMIT 1")
+                .arg(utils::sqlEscape(notebookName));
+
+        const bool res = query.exec(notebookQueryString);
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot find note local ids by note search query: failed to "
+                "find notebook by name"),
+            {});
+
+        if (Q_UNLIKELY(!query.next())) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "notebook with the provided name was not found"));
+            return {};
+        }
+
+        const QSqlRecord rec = query.record();
+        const int index = rec.indexOf(QStringLiteral("localUid"));
+        if (Q_UNLIKELY(index < 0)) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "cannot find notebook's local id by notebook name: "
+                "SQL query record doesn't contain the requested item"));
+            return {};
+        }
+
+        const QVariant value = rec.value(index);
+        if (Q_UNLIKELY(value.isNull())) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "found null notebook's local id corresponding to notebook's "
+                "name"));
+            return {};
+        }
+
+        notebookLocalId = value.toString();
+        if (Q_UNLIKELY(notebookLocalId.isEmpty())) {
+            errorDescription.base() = errorPrefix.base();
+            errorDescription.appendBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "found empty notebook's local id corresponding to notebook's "
+                "name"));
+            return {};
+        }
+    }
+
+    if (!notebookLocalId.isEmpty()) {
+        strm << "(notebookLocalUid = '";
+        strm << utils::sqlEscape(notebookLocalId);
+        strm << "') AND ";
+    }
+
+    // TODO: continue from here
+    return {};
+}
+
+} // namespace
 
 QString notebookLocalId(
     const qevercloud::Note & note, QSqlDatabase & database,
@@ -188,6 +286,69 @@ QString noteLocalIdByGuid(
     }
 
     return query.value(0).toString();
+}
+
+QStringList queryNoteLocalIds(
+    const NoteSearchQuery & noteSearchQuery, QSqlDatabase & database,
+    ErrorString & errorDescription, const TransactionOption transactionOption)
+{
+    if (!noteSearchQuery.isMatcheable()) {
+        return {};
+    }
+
+    std::optional<Transaction> transaction;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transaction.emplace(database, Transaction::Type::Selection);
+    }
+
+    const ErrorString errorPrefix{QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't find notes with the note search query")};
+
+    ErrorString error;
+    const QString queryString =
+        noteSearchQueryToSql(noteSearchQuery, database, error);
+    if (queryString.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return QStringList();
+    }
+
+    QSqlQuery query{database};
+    const bool res = query.exec(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot list note local ids with note search query"),
+        {});
+
+    QSet<QString> foundLocalIds;
+    while (query.next()) {
+        const QSqlRecord rec = query.record();
+        const int index = rec.indexOf(QStringLiteral("localUid"));
+        if (index < 0) {
+            continue;
+        }
+
+        const QString value = rec.value(index).toString();
+        if (value.isEmpty() || foundLocalIds.contains(value)) {
+            continue;
+        }
+
+        foundLocalIds.insert(value);
+    }
+
+    QStringList result;
+    result.reserve(foundLocalIds.size());
+    for (const auto & localId: foundLocalIds) {
+        result << localId;
+    }
+
+    return result;
 }
 
 } // namespace quentier::local_storage::sql::utils
