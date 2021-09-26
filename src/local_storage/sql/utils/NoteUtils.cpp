@@ -17,7 +17,9 @@
  */
 
 #include "NoteUtils.h"
+#include "NotebookUtils.h"
 #include "SqlUtils.h"
+#include "TagUtils.h"
 
 #include "../ErrorHandling.h"
 
@@ -26,8 +28,8 @@
 #include <qevercloud/types/Note.h>
 
 #include <QSqlDatabase>
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QTextStream>
 
 namespace quentier::local_storage::sql::utils {
@@ -58,60 +60,32 @@ QString noteSearchQueryToSql(
     // 3) Processing notebook modifier (if present)
 
     const QString notebookName = noteSearchQuery.notebookModifier();
+
+    const auto extendError = [&](ErrorString & error,
+                                 const QString & defaultBase,
+                                 QString defaultDetails) {
+        if (error.isEmpty()) {
+            error.setBase(defaultBase);
+            error.details() = std::move(defaultDetails);
+        }
+        errorDescription = errorPrefix;
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+    };
+
     QString notebookLocalId;
     if (!notebookName.isEmpty()) {
-        QSqlQuery query{database};
-        const QString notebookQueryString =
-            QString::fromUtf8(
-                "SELECT localUid FROM NotebookFTS WHERE "
-                "notebookName MATCH '%1' LIMIT 1")
-                .arg(utils::sqlEscape(notebookName));
-
-        const bool res = query.exec(notebookQueryString);
-        ENSURE_DB_REQUEST_RETURN(
-            res, query, "local_storage::sql::utils",
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot find note local ids by note search query: failed to "
-                "find notebook by name"),
-            {});
-
-        if (Q_UNLIKELY(!query.next())) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "notebook with the provided name was not found"));
-            return {};
-        }
-
-        const QSqlRecord rec = query.record();
-        const int index = rec.indexOf(QStringLiteral("localUid"));
-        if (Q_UNLIKELY(index < 0)) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "cannot find notebook's local id by notebook name: "
-                "SQL query record doesn't contain the requested item"));
-            return {};
-        }
-
-        const QVariant value = rec.value(index);
-        if (Q_UNLIKELY(value.isNull())) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "found null notebook's local id corresponding to notebook's "
-                "name"));
-            return {};
-        }
-
-        notebookLocalId = value.toString();
-        if (Q_UNLIKELY(notebookLocalId.isEmpty())) {
-            errorDescription.base() = errorPrefix.base();
-            errorDescription.appendBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "found empty notebook's local id corresponding to notebook's "
-                "name"));
+        ErrorString error;
+        notebookLocalId =
+            notebookLocalIdByName(notebookName, std::nullopt, database, error);
+        if (notebookLocalId.isEmpty()) {
+            extendError(
+                error,
+                QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils", "No notebook with such name"),
+                notebookName);
+            QNWARNING("local_storage::sql::utils", errorDescription);
             return {};
         }
     }
@@ -120,6 +94,156 @@ QString noteSearchQueryToSql(
         strm << "(notebookLocalUid = '";
         strm << utils::sqlEscape(notebookLocalId);
         strm << "') AND ";
+    }
+
+    const auto localIdsToSqlList = [](const QStringList & localIds,
+                                      QTextStream & strm) {
+        for (const QString & localId: qAsConst(localIds)) {
+            strm << "'" << sqlEscape(localId) << "'";
+            if (&localId != localIds.constLast()) {
+                strm << ", ";
+            }
+        }
+    };
+
+    if (noteSearchQuery.hasAnyTag()) {
+        strm << "(NoteTags.localTag IS NOT NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+    else if (noteSearchQuery.hasNegatedAnyTag()) {
+        strm << "(NoteTags.localTag IS NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+    else {
+        QStringList tagLocalIds;
+        QStringList tagNegatedLocalIds;
+
+        const QStringList & tagNames = noteSearchQuery.tagNames();
+        if (!tagNames.isEmpty()) {
+            ErrorString error;
+            for (const auto & tagName: qAsConst(tagNames)) {
+                error.clear();
+                auto tagLocalId =
+                    tagLocalIdByName(tagName, std::nullopt, database, error);
+                if (tagLocalId.isEmpty()) {
+                    extendError(
+                        error,
+                        QT_TRANSLATE_NOOP(
+                            "local_storage::sql::utils",
+                            "No tag with such name"),
+                        tagName);
+                    QNWARNING("local_storage::sql::utils", errorDescription);
+                    return {};
+                }
+            }
+        }
+
+        if (!tagLocalIds.isEmpty()) {
+            if (!queryHasAnyModifier) {
+                /**
+                 * In successful note search query there are exactly as many tag
+                 * local ids as there are tag names; therefore, when the search
+                 * is for notes with some particular tags, we need to ensure
+                 * that each note's local id in the sub-query result is present
+                 * there exactly as many times as there are tag local ids in
+                 * the query which the note is labeled with
+                 */
+
+                const int numTagLocalIds = tagLocalIds.size();
+                strm << "(NoteTags.localNote IN (SELECT localNote "
+                     << "FROM (SELECT localNote, localTag, COUNT(*) "
+                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
+                localIdsToSqlList(tagLocalIds, strm);
+
+                strm << ") GROUP BY localNote HAVING COUNT(*)=";
+                strm << numTagLocalIds;
+                strm << "))) ";
+            }
+            else {
+                /**
+                 * With "any:" modifier the search doesn't care about
+                 * the exactness of tag-to-note map, it would instead pick just
+                 * any note corresponding to any of requested tags at least once
+                 */
+
+                strm << "(NoteTags.localNote IN (SELECT localNote "
+                     << "FROM (SELECT localNote, localTag "
+                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
+                localIdsToSqlList(tagLocalIds, strm);
+
+                strm << ")))) ";
+            }
+
+            strm << uniteOperator;
+            strm << " ";
+        }
+
+        const QStringList & negatedTagNames = noteSearchQuery.negatedTagNames();
+        if (!negatedTagNames.isEmpty()) {
+            ErrorString error;
+            for (const auto & tagName: qAsConst(tagNames)) {
+                error.clear();
+                auto tagLocalId =
+                    tagLocalIdByName(tagName, std::nullopt, database, error);
+                if (tagLocalId.isEmpty()) {
+                    extendError(
+                        error,
+                        QT_TRANSLATE_NOOP(
+                            "local_storage::sql::utils",
+                            "No tag with such name"),
+                        tagName);
+                    QNWARNING("local_storage::sql::utils", errorDescription);
+                    return {};
+                }
+            }
+        }
+
+        if (!tagNegatedLocalIds.isEmpty()) {
+            if (!queryHasAnyModifier) {
+                /**
+                 * First find all notes' local ids which actually correspond
+                 * to negated tags' local ids; then simply negate that
+                 * condition
+                 */
+
+                const int numTagNegatedLocalIds = tagNegatedLocalIds.size();
+                strm << "(NoteTags.localNote NOT IN (SELECT localNote "
+                     << "FROM (SELECT localNote, localTag, COUNT(*) "
+                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
+                localIdsToSqlList(tagNegatedLocalIds, strm);
+
+                strm << ") GROUP BY localNote HAVING COUNT(*)=";
+                strm << numTagNegatedLocalIds;
+
+                // Don't forget to account for the case of no tags used for note
+                // so it's not even present in NoteTags table
+
+                strm << ")) OR (NoteTags.localNote IS NULL)) ";
+            }
+            else {
+                /**
+                 * With "any:" modifier the search doesn't care about the
+                 * exactness of tag-to-note map, it would instead pick just any
+                 * note not from the list of notes corresponding to any of
+                 * requested tags at least once
+                 */
+
+                strm << "(NoteTags.localNote NOT IN (SELECT "
+                     << "localNote FROM (SELECT localNote, localTag "
+                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
+                localIdsToSqlList(tagNegatedLocalIds, strm);
+
+                // Don't forget to account for the case of no tags used for note
+                // so it's not even present in NoteTags table
+
+                strm << "))) OR (NoteTags.localNote IS NULL)) ";
+            }
+
+            strm << uniteOperator;
+            strm << " ";
+        }
     }
 
     // TODO: continue from here
@@ -139,8 +263,7 @@ QString notebookLocalId(
 
     QSqlQuery query{database};
     const auto & notebookGuid = note.notebookGuid();
-    if (notebookGuid)
-    {
+    if (notebookGuid) {
         bool res = query.prepare(QStringLiteral(
             "SELECT localUid FROM Notebooks WHERE guid = :guid"));
         ENSURE_DB_REQUEST_RETURN(
@@ -197,8 +320,8 @@ QString notebookLocalId(
 
     if (!query.next()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot find notebook local id for note local id"));
+            "local_storage::sql::utils",
+            "Cannot find notebook local id for note local id"));
         errorDescription.details() = note.localId();
         QNWARNING("local_storage::sql::utils", errorDescription);
         return QString{};
@@ -216,8 +339,7 @@ QString notebookGuid(
         return *notebookGuid;
     }
 
-    const auto localId = notebookLocalId(
-        note, database, errorDescription);
+    const auto localId = notebookLocalId(note, database, errorDescription);
     if (localId.isEmpty()) {
         return {};
     }
@@ -245,8 +367,8 @@ QString notebookGuid(
 
     if (!query.next()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot find notebook guid for local id"));
+            "local_storage::sql::utils",
+            "Cannot find notebook guid for local id"));
         errorDescription.details() = localId;
         QNWARNING("local_storage::sql::utils", errorDescription);
         return QString{};
@@ -259,8 +381,8 @@ QString noteLocalIdByGuid(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    static const QString queryString = QStringLiteral(
-        "SELECT localUid FROM Notes WHERE guid = :guid");
+    static const QString queryString =
+        QStringLiteral("SELECT localUid FROM Notes WHERE guid = :guid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -277,8 +399,7 @@ QString noteLocalIdByGuid(
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
-            "local_storage::sql::utils",
-            "Cannot find note local id by guid"),
+            "local_storage::sql::utils", "Cannot find note local id by guid"),
         {});
 
     if (!query.next()) {
