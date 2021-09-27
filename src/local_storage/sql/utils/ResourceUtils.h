@@ -83,4 +83,8 @@ Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption);
     const QString & localId, qevercloud::ResourceAttributes & attributes,
     QSqlDatabase & database, ErrorString & errorDescription);
 
+[[nodiscard]] QStringList findResourceLocalIdsByMimeTypes(
+    const QStringList & resourceMimeTypes, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

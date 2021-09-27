@@ -21,6 +21,7 @@
 #include <QString>
 
 class QSqlDatabase;
+class QStringList;
 class QVariant;
 
 namespace quentier {
@@ -37,5 +38,7 @@ namespace quentier::local_storage::sql::utils {
     const QString & tableName, const QString & columnName,
     const QVariant & value, QSqlDatabase & database,
     ErrorString & errorDescription);
+
+[[nodiscard]] QString toQuotedSqlList(const QStringList & items);
 
 } // namespace quentier::local_storage::sql::utils

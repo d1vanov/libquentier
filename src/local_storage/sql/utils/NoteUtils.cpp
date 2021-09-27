@@ -18,6 +18,7 @@
 
 #include "NoteUtils.h"
 #include "NotebookUtils.h"
+#include "ResourceUtils.h"
 #include "SqlUtils.h"
 #include "TagUtils.h"
 
@@ -32,9 +33,279 @@
 #include <QSqlRecord>
 #include <QTextStream>
 
+#include <algorithm>
+
 namespace quentier::local_storage::sql::utils {
 
 namespace {
+
+[[nodiscard]] bool notebookNameInNoteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, QTextStream & strm,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    const QString notebookName = noteSearchQuery.notebookModifier();
+    if (notebookName.isEmpty()) {
+        return true;
+    }
+
+    QString notebookLocalId;
+    notebookLocalId = notebookLocalIdByName(
+        notebookName, std::nullopt, database, errorDescription);
+    if (notebookLocalId.isEmpty()) {
+        if (errorDescription.isEmpty()) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot find notebook with such name"));
+            errorDescription.setDetails(notebookName);
+        }
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return false;
+    }
+
+    strm << "(notebookLocalUid = '" << sqlEscape(notebookLocalId) << "') AND ";
+    return true;
+}
+
+[[nodiscard]] bool tagsInNoteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, const QString & uniteOperator,
+    QTextStream & strm, QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (noteSearchQuery.hasAnyTag()) {
+        strm << "(NoteTags.localTag IS NOT NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+        return true;
+    }
+
+    if (noteSearchQuery.hasNegatedAnyTag()) {
+        strm << "(NoteTags.localTag IS NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+        return true;
+    }
+
+    const bool queryHasAnyModifier = noteSearchQuery.hasAnyModifier();
+
+    const auto tagLocalIdsByNames = [&](const QStringList & tagNames) {
+        if (tagNames.isEmpty()) {
+            return QStringList{};
+        }
+
+        QStringList result;
+        result.reserve(std::max(tagNames.size(), 0));
+        for (const auto & tagName: qAsConst(tagNames)) {
+            errorDescription.clear();
+            auto tagLocalId = tagLocalIdByName(
+                tagName, std::nullopt, database, errorDescription);
+            if (tagLocalId.isEmpty()) {
+                if (errorDescription.isEmpty()) {
+                    errorDescription.setBase(QT_TRANSLATE_NOOP(
+                        "local_storage::sql::utils",
+                        "Cannot find tag with such name"));
+                    errorDescription.setDetails(tagName);
+                }
+                QNWARNING("local_storage::sql::utils", errorDescription);
+                return QStringList{};
+            }
+
+            result << tagLocalId;
+        }
+
+        return result;
+    };
+
+    const QStringList tagLocalIds =
+        tagLocalIdsByNames(noteSearchQuery.tagNames());
+    if (!tagLocalIds.isEmpty()) {
+        if (!queryHasAnyModifier) {
+            /**
+             * In successful note search query there are exactly as many tag
+             * local ids as there are tag names; therefore, when the search
+             * is for notes with some particular tags, we need to ensure
+             * that each note's local id in the sub-query result is present
+             * there exactly as many times as there are tag local ids in
+             * the query which the note is labeled with
+             */
+
+            const int numTagLocalIds = tagLocalIds.size();
+            strm << "(NoteTags.localNote IN (SELECT localNote "
+                 << "FROM (SELECT localNote, localTag, COUNT(*) "
+                 << "FROM NoteTags WHERE NoteTags.localTag IN ("
+                 << toQuotedSqlList(tagLocalIds)
+                 << ") GROUP BY localNote HAVING COUNT(*)=" << numTagLocalIds
+                 << "))) ";
+        }
+        else {
+            /**
+             * With "any:" modifier the search doesn't care about
+             * the exactness of tag-to-note map, it would instead pick just
+             * any note corresponding to any of requested tags at least once
+             */
+
+            strm << "(NoteTags.localNote IN (SELECT localNote "
+                 << "FROM (SELECT localNote, localTag "
+                 << "FROM NoteTags WHERE NoteTags.localTag IN ("
+                 << toQuotedSqlList(tagLocalIds) << ")))) ";
+        }
+
+        strm << uniteOperator;
+        strm << " ";
+    }
+
+    const QStringList tagNegatedLocalIds =
+        tagLocalIdsByNames(noteSearchQuery.negatedTagNames());
+
+    if (!tagNegatedLocalIds.isEmpty()) {
+        if (!queryHasAnyModifier) {
+            /**
+             * First find all notes' local ids which actually correspond
+             * to negated tags' local ids; then simply negate that
+             * condition
+             */
+
+            const int numTagNegatedLocalIds = tagNegatedLocalIds.size();
+            strm << "(NoteTags.localNote NOT IN (SELECT localNote "
+                 << "FROM (SELECT localNote, localTag, COUNT(*) "
+                 << "FROM NoteTags WHERE NoteTags.localTag IN ("
+                 << toQuotedSqlList(tagNegatedLocalIds)
+                 << ") GROUP BY localNote HAVING COUNT(*)="
+                 << numTagNegatedLocalIds;
+
+            // Don't forget to account for the case of no tags used for note
+            // so it's not even present in NoteTags table
+            strm << ")) OR (NoteTags.localNote IS NULL)) ";
+        }
+        else {
+            /**
+             * With "any:" modifier the search doesn't care about the
+             * exactness of tag-to-note map, it would instead pick just any
+             * note not from the list of notes corresponding to any of
+             * requested tags at least once
+             */
+
+            strm << "(NoteTags.localNote NOT IN (SELECT "
+                 << "localNote FROM (SELECT localNote, localTag "
+                 << "FROM NoteTags WHERE NoteTags.localTag IN ("
+                 << toQuotedSqlList(tagNegatedLocalIds);
+
+            // Don't forget to account for the case of no tags used for note
+            // so it's not even present in NoteTags table
+            strm << "))) OR (NoteTags.localNote IS NULL)) ";
+        }
+
+        strm << uniteOperator;
+        strm << " ";
+    }
+
+    return true;
+}
+
+[[nodiscard]] bool resourceMimeTypesInNoteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, const QString & uniteOperator,
+    QTextStream & strm, QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (noteSearchQuery.hasAnyResourceMimeType()) {
+        strm << "(NoteResources.localResource IS NOT NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+        return true;
+    }
+
+    if (noteSearchQuery.hasNegatedAnyResourceMimeType()) {
+        strm << "(NoteResources.localResource IS NULL) ";
+        strm << uniteOperator;
+        strm << " ";
+        return true;
+    }
+
+    const bool queryHasAnyModifier = noteSearchQuery.hasAnyModifier();
+    const QStringList & resourceMimeTypes = noteSearchQuery.resourceMimeTypes();
+
+    const QStringList resourceLocalIdsPerMime = findResourceLocalIdsByMimeTypes(
+        resourceMimeTypes, database, errorDescription);
+
+    if (!resourceLocalIdsPerMime.isEmpty()) {
+        if (!queryHasAnyModifier) {
+            /**
+             * Need to find notes which each have all the found resource
+             * local ids. One resource mime type can correspond to multiple
+             * resources. However, one resource corresponds to exactly one
+             * note. When searching for notes which resources have
+             * particular mime type, we need to ensure that each note's
+             * local id in the sub-query result is present there exactly as
+             * many times as there are resource mime types in the query
+             */
+
+            strm << "(NoteResources.localNote IN (SELECT "
+                 << "localNote FROM (SELECT localNote, "
+                 << "localResource, COUNT(*) "
+                 << "FROM NoteResources WHERE "
+                 << "NoteResources.localResource IN ("
+                 << toQuotedSqlList(resourceLocalIdsPerMime)
+                 << ") GROUP BY localNote HAVING COUNT(*)="
+                 << QString::number(resourceMimeTypes.size()) << "))) ";
+        }
+        else {
+            /**
+             * With "any:" modifier the search doesn't care about the
+             * exactness of resource mime type-to-note map, it would instead
+             * pick just any note having at least one resource with
+             * requested mime type
+             */
+
+            strm << "(NoteResources.localNote IN (SELECT "
+                 << "localNote FROM (SELECT localNote, "
+                 << "localResource FROM NoteResources WHERE "
+                 << "NoteResources.localResource IN ("
+                 << toQuotedSqlList(resourceLocalIdsPerMime) << ")))) ";
+        }
+
+        strm << uniteOperator;
+        strm << " ";
+    }
+
+    const QStringList & negatedResourceMimeTypes =
+        noteSearchQuery.negatedResourceMimeTypes();
+
+    const QStringList resourceNegatedLocalIdsPerMime =
+        findResourceLocalIdsByMimeTypes(
+            negatedResourceMimeTypes, database, errorDescription);
+
+    if (!resourceNegatedLocalIdsPerMime.isEmpty()) {
+        if (!queryHasAnyModifier) {
+            strm << "(NoteResources.localNote NOT IN (SELECT "
+                 << "localNote FROM (SELECT localNote, "
+                 << "localResource, COUNT(*) "
+                 << "FROM NoteResources WHERE "
+                 << "NoteResources.localResource IN ("
+                 << toQuotedSqlList(resourceNegatedLocalIdsPerMime)
+                 << ") GROUP BY localNote HAVING COUNT(*)="
+                 << QString::number(negatedResourceMimeTypes.size());
+
+            // Don't forget to account for the case of no resources existing
+            // in the note so it's not even present in NoteResources table
+            strm << ")) OR (NoteResources.localNote IS NULL)) ";
+        }
+        else {
+            strm << "(NoteResources.localNote NOT IN (SELECT "
+                 << "localNote FROM (SELECT localNote, localResource "
+                 << "FROM NoteResources WHERE "
+                 << "NoteResources.localResource IN ("
+                 << toQuotedSqlList(resourceNegatedLocalIdsPerMime);
+
+            /**
+             * Don't forget to account for the case of no resources existing
+             * in the note so it's not even present in NoteResources table
+             */
+            strm << "))) OR (NoteResources.localNote IS NULL)) ";
+        }
+
+        strm << uniteOperator;
+        strm << " ";
+    }
+
+    return true;
+}
 
 QString noteSearchQueryToSql(
     const NoteSearchQuery & noteSearchQuery, QSqlDatabase & database,
@@ -57,10 +328,6 @@ QString noteSearchQueryToSql(
     const QString uniteOperator =
         (queryHasAnyModifier ? QStringLiteral("OR") : QStringLiteral("AND"));
 
-    // 3) Processing notebook modifier (if present)
-
-    const QString notebookName = noteSearchQuery.notebookModifier();
-
     const auto extendError = [&](ErrorString & error,
                                  const QString & defaultBase,
                                  QString defaultDetails) {
@@ -74,176 +341,36 @@ QString noteSearchQueryToSql(
         errorDescription.details() = error.details();
     };
 
-    QString notebookLocalId;
-    if (!notebookName.isEmpty()) {
-        ErrorString error;
-        notebookLocalId =
-            notebookLocalIdByName(notebookName, std::nullopt, database, error);
-        if (notebookLocalId.isEmpty()) {
-            extendError(
-                error,
-                QT_TRANSLATE_NOOP(
-                    "local_storage::sql::utils", "No notebook with such name"),
-                notebookName);
-            QNWARNING("local_storage::sql::utils", errorDescription);
-            return {};
-        }
+    // 3) Processing notebook modifier (if present)
+
+    ErrorString error;
+    if (!notebookNameInNoteSearchQueryToSql(
+            noteSearchQuery, strm, database, error)) {
+        extendError(error, {}, {});
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return {};
     }
 
-    if (!notebookLocalId.isEmpty()) {
-        strm << "(notebookLocalUid = '";
-        strm << utils::sqlEscape(notebookLocalId);
-        strm << "') AND ";
+    // 4) Processing tag names and negated tag names, if any
+
+    error.clear();
+    if (!tagsInNoteSearchQueryToSql(
+            noteSearchQuery, uniteOperator, strm, database, error))
+    {
+        extendError(error, {}, {});
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return {};
     }
 
-    const auto localIdsToSqlList = [](const QStringList & localIds,
-                                      QTextStream & strm) {
-        for (const QString & localId: qAsConst(localIds)) {
-            strm << "'" << sqlEscape(localId) << "'";
-            if (&localId != localIds.constLast()) {
-                strm << ", ";
-            }
-        }
-    };
+    // 5) Processing resource mime types
 
-    if (noteSearchQuery.hasAnyTag()) {
-        strm << "(NoteTags.localTag IS NOT NULL) ";
-        strm << uniteOperator;
-        strm << " ";
-    }
-    else if (noteSearchQuery.hasNegatedAnyTag()) {
-        strm << "(NoteTags.localTag IS NULL) ";
-        strm << uniteOperator;
-        strm << " ";
-    }
-    else {
-        QStringList tagLocalIds;
-        QStringList tagNegatedLocalIds;
-
-        const QStringList & tagNames = noteSearchQuery.tagNames();
-        if (!tagNames.isEmpty()) {
-            ErrorString error;
-            for (const auto & tagName: qAsConst(tagNames)) {
-                error.clear();
-                auto tagLocalId =
-                    tagLocalIdByName(tagName, std::nullopt, database, error);
-                if (tagLocalId.isEmpty()) {
-                    extendError(
-                        error,
-                        QT_TRANSLATE_NOOP(
-                            "local_storage::sql::utils",
-                            "No tag with such name"),
-                        tagName);
-                    QNWARNING("local_storage::sql::utils", errorDescription);
-                    return {};
-                }
-            }
-        }
-
-        if (!tagLocalIds.isEmpty()) {
-            if (!queryHasAnyModifier) {
-                /**
-                 * In successful note search query there are exactly as many tag
-                 * local ids as there are tag names; therefore, when the search
-                 * is for notes with some particular tags, we need to ensure
-                 * that each note's local id in the sub-query result is present
-                 * there exactly as many times as there are tag local ids in
-                 * the query which the note is labeled with
-                 */
-
-                const int numTagLocalIds = tagLocalIds.size();
-                strm << "(NoteTags.localNote IN (SELECT localNote "
-                     << "FROM (SELECT localNote, localTag, COUNT(*) "
-                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
-                localIdsToSqlList(tagLocalIds, strm);
-
-                strm << ") GROUP BY localNote HAVING COUNT(*)=";
-                strm << numTagLocalIds;
-                strm << "))) ";
-            }
-            else {
-                /**
-                 * With "any:" modifier the search doesn't care about
-                 * the exactness of tag-to-note map, it would instead pick just
-                 * any note corresponding to any of requested tags at least once
-                 */
-
-                strm << "(NoteTags.localNote IN (SELECT localNote "
-                     << "FROM (SELECT localNote, localTag "
-                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
-                localIdsToSqlList(tagLocalIds, strm);
-
-                strm << ")))) ";
-            }
-
-            strm << uniteOperator;
-            strm << " ";
-        }
-
-        const QStringList & negatedTagNames = noteSearchQuery.negatedTagNames();
-        if (!negatedTagNames.isEmpty()) {
-            ErrorString error;
-            for (const auto & tagName: qAsConst(tagNames)) {
-                error.clear();
-                auto tagLocalId =
-                    tagLocalIdByName(tagName, std::nullopt, database, error);
-                if (tagLocalId.isEmpty()) {
-                    extendError(
-                        error,
-                        QT_TRANSLATE_NOOP(
-                            "local_storage::sql::utils",
-                            "No tag with such name"),
-                        tagName);
-                    QNWARNING("local_storage::sql::utils", errorDescription);
-                    return {};
-                }
-            }
-        }
-
-        if (!tagNegatedLocalIds.isEmpty()) {
-            if (!queryHasAnyModifier) {
-                /**
-                 * First find all notes' local ids which actually correspond
-                 * to negated tags' local ids; then simply negate that
-                 * condition
-                 */
-
-                const int numTagNegatedLocalIds = tagNegatedLocalIds.size();
-                strm << "(NoteTags.localNote NOT IN (SELECT localNote "
-                     << "FROM (SELECT localNote, localTag, COUNT(*) "
-                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
-                localIdsToSqlList(tagNegatedLocalIds, strm);
-
-                strm << ") GROUP BY localNote HAVING COUNT(*)=";
-                strm << numTagNegatedLocalIds;
-
-                // Don't forget to account for the case of no tags used for note
-                // so it's not even present in NoteTags table
-
-                strm << ")) OR (NoteTags.localNote IS NULL)) ";
-            }
-            else {
-                /**
-                 * With "any:" modifier the search doesn't care about the
-                 * exactness of tag-to-note map, it would instead pick just any
-                 * note not from the list of notes corresponding to any of
-                 * requested tags at least once
-                 */
-
-                strm << "(NoteTags.localNote NOT IN (SELECT "
-                     << "localNote FROM (SELECT localNote, localTag "
-                     << "FROM NoteTags WHERE NoteTags.localTag IN (";
-                localIdsToSqlList(tagNegatedLocalIds, strm);
-
-                // Don't forget to account for the case of no tags used for note
-                // so it's not even present in NoteTags table
-
-                strm << "))) OR (NoteTags.localNote IS NULL)) ";
-            }
-
-            strm << uniteOperator;
-            strm << " ";
-        }
+    error.clear();
+    if (!resourceMimeTypesInNoteSearchQueryToSql(
+            noteSearchQuery, uniteOperator, strm, database, error))
+    {
+        extendError(error, {}, {});
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return {};
     }
 
     // TODO: continue from here

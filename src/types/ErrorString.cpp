@@ -77,9 +77,9 @@ QString & ErrorString::details()
     return d->m_details;
 }
 
-void ErrorString::setBase(const QString & error)
+void ErrorString::setBase(QString error)
 {
-    d->m_base = error;
+    d->m_base = std::move(error);
 }
 
 void ErrorString::setBase(const char * error)

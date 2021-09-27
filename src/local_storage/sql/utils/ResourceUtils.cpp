@@ -20,6 +20,7 @@
 #include "FillFromSqlRecordUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
+#include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
 
@@ -30,6 +31,8 @@
 #include <QCryptographicHash>
 #include <QSqlRecord>
 #include <QSqlQuery>
+
+#include <algorithm>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -522,6 +525,115 @@ bool findResourceAttributesApplicationDataFullMapByLocalId(
         record.value(keyIndex).toString(), record.value(valueIndex).toString());
 
     return true;
+}
+
+QStringList findResourceLocalIdsByMimeTypes(
+    const QStringList & resourceMimeTypes, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    const ErrorString errorPrefix(
+        QT_TR_NOOP("can't get resource mime types for resource local ids"));
+
+    QSqlQuery query{database};
+    QString queryString;
+
+    const bool singleMimeType = (resourceMimeTypes.size() == 1);
+    if (singleMimeType) {
+        bool res = query.prepare(
+            QStringLiteral("SELECT resourceLocalUid FROM ResourceMimeFTS "
+                           "WHERE mime MATCH :mimeTypes"));
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot get resource local ids by mime types: failed to "
+                "prepare query"),
+            {});
+
+        QString mimeTypes = resourceMimeTypes.at(0);
+        mimeTypes.prepend(QStringLiteral("\'"));
+        mimeTypes.append(QStringLiteral("\'"));
+        query.bindValue(QStringLiteral(":mimeTypes"), mimeTypes);
+    }
+    else {
+        QTextStream strm{&queryString};
+
+        bool someMimeTypeHasWhitespace = false;
+        for (const auto & mimeType: resourceMimeTypes) {
+            if (mimeType.contains(QStringLiteral(" "))) {
+                someMimeTypeHasWhitespace = true;
+                break;
+            }
+        }
+
+        if (someMimeTypeHasWhitespace) {
+            /**
+             * Unfortunately, stardard SQLite at least from Qt 4.x has standard
+             * query syntax for FTS which does not support whitespaces in search
+             * terms and therefore MATCH function is simply inapplicable here,
+             * have to use brute-force "equal to X1 or equal to X2 or ... equal
+             * to XN
+             */
+
+            strm << "SELECT resourceLocalUid FROM Resources WHERE ";
+
+            for (const auto & mimeType: resourceMimeTypes) {
+                strm << "(mime = \'";
+                strm << sqlEscape(mimeType);
+                strm << "\')";
+                if (&mimeType != &resourceMimeTypes.constLast()) {
+                    strm << " OR ";
+                }
+            }
+        }
+        else {
+            // For some reason statements like "MATCH 'x OR y'" don't work while
+            // "SELECT ... MATCH 'x' UNION SELECT ... MATCH 'y'" work.
+
+            for (const auto & mimeType: resourceMimeTypes) {
+                strm << "SELECT resourceLocalUid FROM "
+                    << "ResourceMimeFTS WHERE mime MATCH \'";
+                strm << sqlEscape(mimeType);
+                strm << "\'";
+                if (&mimeType != &resourceMimeTypes.constLast()) {
+                    strm << " UNION ";
+                }
+            }
+        }
+    }
+
+    bool res = false;
+    if (queryString.isEmpty()) {
+        res = query.exec();
+    }
+    else {
+        res = query.exec(queryString);
+    }
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot get resource local ids by mime types"),
+        {});
+
+    QStringList resourceLocalIds;
+    resourceLocalIds.reserve(std::max(0, query.size()));
+
+    while (query.next()) {
+        QSqlRecord rec = query.record();
+        const int index = rec.indexOf(QStringLiteral("resourceLocalUid"));
+        if (Q_UNLIKELY(index < 0)) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot get resource local ids by mime types: resource local "
+                "id is not present in the result of SQL query"));
+            return {};
+        }
+
+        resourceLocalIds << rec.value(index).toString();
+    }
+
+    return resourceLocalIds;
 }
 
 } // namespace quentier::local_storage::sql::utils

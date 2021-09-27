@@ -63,7 +63,7 @@ public:
     [[nodiscard]] const QString & details() const noexcept;
     [[nodiscard]] QString & details();
 
-    void setBase(const QString & error);
+    void setBase(QString error);
     void setBase(const char * error);
 
     void appendBase(const QString & error);

@@ -24,6 +24,8 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QStringList>
+#include <QTextStream>
 #include <QVariant>
 
 namespace quentier::local_storage::sql::utils {
@@ -75,6 +77,21 @@ bool rowExists(
     }
 
     return count > 0;
+}
+
+QString toQuotedSqlList(const QStringList & items)
+{
+    QString result;
+    QTextStream strm{&result};
+
+    for (const QString & item: qAsConst(items)) {
+        strm << "'" << sqlEscape(item) << "'";
+        if (&item != items.constLast()) {
+            strm << ", ";
+        }
+    }
+
+    return result;
 }
 
 } // namespace quentier::local_storage::sql::utils
