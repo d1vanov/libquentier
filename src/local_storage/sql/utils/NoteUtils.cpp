@@ -34,6 +34,7 @@
 #include <QTextStream>
 
 #include <algorithm>
+#include <functional>
 
 namespace quentier::local_storage::sql::utils {
 
@@ -372,6 +373,241 @@ QString noteSearchQueryToSql(
         QNWARNING("local_storage::sql::utils", errorDescription);
         return {};
     }
+
+    // 6) Processing other better generalizable filters
+
+    const auto processAnyQueryItem = [&](const auto & hasAnyItem,
+                                         const auto & hasNegatedAnyItem,
+                                         const QString & column) {
+        if (std::bind(hasAnyItem, noteSearchQuery)()) { // NOLINT
+            strm << "(NoteFTS." << column << " IS NOT NULL) ";
+            strm << uniteOperator;
+            strm << " ";
+            return true;
+        }
+
+        if (std::bind(hasNegatedAnyItem, noteSearchQuery)()) { // NOLINT
+            strm << "(NoteFTS." << column << " IS NULL) ";
+            strm << uniteOperator;
+            strm << " ";
+            return true;
+        }
+
+        return false;
+    };
+
+    enum class Negated
+    {
+        Yes,
+        No
+    };
+
+    const auto processListQueryItem = [&](const auto & listItemAccessor,
+                                          const Negated negated,
+                                          const QString & column) {
+        const auto & items =
+            std::bind(listItemAccessor, noteSearchQuery)(); // NOLINT
+        if (items.isEmpty()) {
+            return;
+        }
+
+        strm << "(";
+        for (const auto & item: qAsConst(items)) {
+            if (negated == Negated::Yes) {
+                strm << "(localUid NOT IN ";
+            }
+            else {
+                strm << "(localUid IN ";
+            }
+            strm << "(SELECT localUid FROM NoteFTS WHERE ";
+            strm << "NoteFTS." << column << " MATCH \'";
+            strm << sqlEscape(item);
+            strm << "\')) ";
+
+            if (&item != &items.constLast()) {
+                strm << uniteOperator;
+                strm << " ";
+            }
+        }
+        strm << ")";
+        strm << uniteOperator;
+        strm << " ";
+    };
+
+    const auto processNumericListQueryItem = [&](const auto & listItemAccessor,
+                                                 const Negated negated,
+                                                 const QString & column) {
+        const auto & items =
+            std::bind(listItemAccessor, noteSearchQuery)(); // NOLINT
+        if (items.isEmpty()) {
+            return;
+        }
+
+        auto it = items.constEnd();
+        if (queryHasAnyModifier) {
+            if (negated == Negated::Yes) {
+                it = std::max_element(items.constBegin(), items.constEnd());
+            }
+            else {
+                it = std::min_element(items.constBegin(), items.constEnd());
+            }
+        }
+        else {
+            if (negated == Negated::Yes) {
+                it = std::min_element(items.constBegin(), items.constEnd());
+            }
+            else {
+                it = std::max_element(items.constBegin(), items.constEnd());
+            }
+        }
+
+        if (it == items.constEnd()) {
+            return;
+        }
+
+        strm << "(localUid IN (SELECT localUid FROM ";
+        strm << "Notes WHERE Notes." << column;
+        if (negated == Negated::Yes) {
+            strm << " < ";
+        }
+        else {
+            strm << " >= ";
+        }
+        strm << sqlEscape(QString::number(*it));
+        strm << ")) ";
+        strm << uniteOperator;
+        strm << " ";
+    };
+
+    const auto processQueryItem =
+        [&](const auto & hasAnyItem, const auto & hasNegatedAnyItem,
+            const auto & listItemAccessor, const auto & negatedListItemAccessor,
+            const QString & column) {
+            if (processAnyQueryItem(hasAnyItem, hasNegatedAnyItem, column)) {
+                return;
+            }
+
+            processListQueryItem(listItemAccessor, Negated::No, column);
+            processListQueryItem(negatedListItemAccessor, Negated::Yes, column);
+        };
+
+    const auto processNumericQueryItem =
+        [&](const auto & hasAnyItem, const auto & hasNegatedAnyItem,
+            const auto & listItemAccessor, const auto & negatedListItemAccessor,
+            const QString & column) {
+            if (processAnyQueryItem(hasAnyItem, hasNegatedAnyItem, column)) {
+                return;
+            }
+
+            processNumericListQueryItem(listItemAccessor, Negated::No, column);
+
+            processNumericListQueryItem(
+                negatedListItemAccessor, Negated::Yes, column);
+        };
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyTitleName,
+        &NoteSearchQuery::hasNegatedAnyTitleName, &NoteSearchQuery::titleNames,
+        &NoteSearchQuery::negatedTitleNames, QStringLiteral("title"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyCreationTimestamp,
+        &NoteSearchQuery::hasNegatedAnyCreationTimestamp,
+        &NoteSearchQuery::creationTimestamps,
+        &NoteSearchQuery::negatedCreationTimestamps,
+        QStringLiteral("creationTimestamp"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyModificationTimestamp,
+        &NoteSearchQuery::hasNegatedAnyModificationTimestamp,
+        &NoteSearchQuery::modificationTimestamps,
+        &NoteSearchQuery::negatedModificationTimestamps,
+        QStringLiteral("modificationTimestamp"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnySubjectDateTimestamp,
+        &NoteSearchQuery::hasNegatedAnySubjectDateTimestamp,
+        &NoteSearchQuery::subjectDateTimestamps,
+        &NoteSearchQuery::negatedSubjectDateTimestamps,
+        QStringLiteral("subjectDate"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyLatitude,
+        &NoteSearchQuery::hasNegatedAnyLatitude, &NoteSearchQuery::latitudes,
+        &NoteSearchQuery::negatedLatitudes, QStringLiteral("latitude"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyLongitude,
+        &NoteSearchQuery::hasNegatedAnyLongitude, &NoteSearchQuery::longitudes,
+        &NoteSearchQuery::negatedLongitudes, QStringLiteral("longitude"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyAltitude,
+        &NoteSearchQuery::hasNegatedAnyAltitude, &NoteSearchQuery::altitudes,
+        &NoteSearchQuery::negatedAltitudes, QStringLiteral("altitude"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyAuthor, &NoteSearchQuery::hasNegatedAnyAuthor,
+        &NoteSearchQuery::authors, &NoteSearchQuery::negatedAuthors,
+        QStringLiteral("authors"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnySource, &NoteSearchQuery::hasNegatedAnySource,
+        &NoteSearchQuery::sources, &NoteSearchQuery::negatedSources,
+        QStringLiteral("source"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnySourceApplication,
+        &NoteSearchQuery::hasNegatedAnySourceApplication,
+        &NoteSearchQuery::sourceApplications,
+        &NoteSearchQuery::negatedSourceApplications,
+        QStringLiteral("sourceApplication"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyContentClass,
+        &NoteSearchQuery::hasNegatedAnyContentClass,
+        &NoteSearchQuery::contentClasses,
+        &NoteSearchQuery::negatedContentClasses,
+        QStringLiteral("contentClass"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyPlaceName,
+        &NoteSearchQuery::hasNegatedAnyPlaceName, &NoteSearchQuery::placeNames,
+        &NoteSearchQuery::negatedPlaceNames, QStringLiteral("placeName"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyApplicationData,
+        &NoteSearchQuery::hasNegatedAnyApplicationData,
+        &NoteSearchQuery::applicationData,
+        &NoteSearchQuery::negatedApplicationData,
+        QStringLiteral("applicationDataKeysOnly"));
+
+    processQueryItem(
+        &NoteSearchQuery::hasAnyApplicationData,
+        &NoteSearchQuery::hasNegatedAnyApplicationData,
+        &NoteSearchQuery::applicationData,
+        &NoteSearchQuery::negatedApplicationData,
+        QStringLiteral("applicationDataKeysMap"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyReminderOrder,
+        &NoteSearchQuery::hasNegatedAnyReminderOrder,
+        &NoteSearchQuery::reminderOrders,
+        &NoteSearchQuery::negatedReminderOrders,
+        QStringLiteral("reminderOrder"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyReminderTime,
+        &NoteSearchQuery::hasNegatedAnyReminderTime,
+        &NoteSearchQuery::reminderTimes, &NoteSearchQuery::negatedReminderTimes,
+        QStringLiteral("reminderTime"));
+
+    processNumericQueryItem(
+        &NoteSearchQuery::hasAnyReminderDoneTime,
+        &NoteSearchQuery::hasNegatedAnyReminderDoneTime,
+        &NoteSearchQuery::reminderDoneTimes,
+        &NoteSearchQuery::negatedReminderDoneTimes,
+        QStringLiteral("reminderDoneTime"));
 
     // TODO: continue from here
     return {};
