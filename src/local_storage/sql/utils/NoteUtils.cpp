@@ -25,9 +25,11 @@
 #include "../ErrorHandling.h"
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/utility/StringUtils.h>
 
 #include <qevercloud/types/Note.h>
 
+#include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -308,7 +310,276 @@ namespace {
     return true;
 }
 
-QString noteSearchQueryToSql(
+void toDoItemsInNoteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, const QString & uniteOperator,
+    QTextStream & strm)
+{
+    if (noteSearchQuery.hasAnyToDo()) {
+        strm << "((NoteFTS.contentContainsFinishedToDo IS 1) OR "
+             << "(NoteFTS.contentContainsUnfinishedToDo IS 1)) ";
+        strm << uniteOperator;
+        strm << " ";
+        return;
+    }
+
+    if (noteSearchQuery.hasNegatedAnyToDo()) {
+        strm << "((NoteFTS.contentContainsFinishedToDo IS 0) OR "
+             << "(NoteFTS.contentContainsFinishedToDo IS NULL)) AND "
+             << "((NoteFTS.contentContainsUnfinishedToDo IS 0) OR "
+             << "(NoteFTS.contentContainsUnfinishedToDo IS NULL)) ";
+        strm << uniteOperator;
+        strm << " ";
+        return;
+    }
+
+    if (noteSearchQuery.hasFinishedToDo()) {
+        strm << "(NoteFTS.contentContainsFinishedToDo IS 1) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+    else if (noteSearchQuery.hasNegatedFinishedToDo()) {
+        strm << "((NoteFTS.contentContainsFinishedToDo IS 0) OR "
+             << "(NoteFTS.contentContainsFinishedToDo IS NULL)) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+
+    if (noteSearchQuery.hasUnfinishedToDo()) {
+        strm << "(NoteFTS.contentContainsUnfinishedToDo IS 1) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+    else if (noteSearchQuery.hasNegatedUnfinishedToDo()) {
+        strm << "((NoteFTS.contentContainsUnfinishedToDo IS 0) OR "
+             << "(NoteFTS.contentContainsUnfinishedToDo IS NULL)) ";
+        strm << uniteOperator;
+        strm << " ";
+    }
+}
+
+void encryptionItemInNoteSearchQueryToSql(
+    const NoteSearchQuery & noteSearchQuery, const QString & uniteOperator,
+    QTextStream & strm)
+{
+    if (noteSearchQuery.hasNegatedEncryption()) {
+        strm << "((NoteFTS.contentContainsEncryption IS 0) OR "
+             << "(NoteFTS.contentContainsEncryption IS NULL)) ";
+    }
+    else if (noteSearchQuery.hasEncryption()) {
+        strm << "(NoteFTS.contentContainsEncryption IS 1) ";
+    }
+
+    strm << uniteOperator;
+    strm << " ";
+}
+
+void contentSearchTermToSqlQueryParts(
+    QString & frontSearchTermModifier, QString & searchTerm,
+    QString & backSearchTermModifier, QString & matchStatement)
+{
+    static const QRegularExpression whitespaceRegex{QStringLiteral("\\p{Z}")};
+    static const QString asterisk = QStringLiteral("*");
+
+    if ((whitespaceRegex.match(searchTerm).isValid()) ||
+        (searchTerm.contains(asterisk) && !searchTerm.endsWith(asterisk)))
+    {
+        // FTS "MATCH" clause doesn't work for phrased search or search with
+        // asterisk somewhere but the end of the search term,
+        // need to use the slow "LIKE" clause instead
+        matchStatement = QStringLiteral("LIKE");
+
+        while (searchTerm.startsWith(asterisk)) {
+            searchTerm.remove(0, 1);
+        }
+
+        while (searchTerm.endsWith(asterisk)) {
+            searchTerm.chop(1);
+        }
+
+        frontSearchTermModifier = QStringLiteral("%");
+        backSearchTermModifier = QStringLiteral("%");
+
+        int pos = -1;
+        while ((pos = searchTerm.indexOf(asterisk)) >= 0) {
+            searchTerm.replace(pos, 1, QStringLiteral("%"));
+        }
+    }
+    else {
+        matchStatement = QStringLiteral("MATCH");
+        frontSearchTermModifier = QLatin1String("");
+        backSearchTermModifier = QLatin1String("");
+    }
+}
+
+[[nodiscard]] bool contentSearchTermsToSqlQueryPart(
+    const NoteSearchQuery & noteSearchQuery, QTextStream & strm,
+    ErrorString & errorDescription)
+{
+    if (!noteSearchQuery.hasAnyContentSearchTerms()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "note search query has no advanced search "
+            "modifiers and no content search terms"));
+        errorDescription.details() = noteSearchQuery.queryString();
+        QNWARNING("local_storage", errorDescription);
+        return false;
+    }
+
+    const bool queryHasAnyModifier = noteSearchQuery.hasAnyModifier();
+    QString uniteOperator =
+        (queryHasAnyModifier ? QStringLiteral("OR") : QStringLiteral("AND"));
+
+    QString positiveSqlPart;
+    QTextStream positiveSqlPartStrm{&positiveSqlPart};
+
+    QString negatedSqlPart;
+    QTextStream negatedSqlPartStrm{&negatedSqlPart};
+
+    QString matchStatement;
+    matchStatement.reserve(5);
+
+    QString frontSearchTermModifier;
+    frontSearchTermModifier.reserve(1);
+
+    QString backSearchTermModifier;
+    backSearchTermModifier.reserve(1);
+
+    QString currentSearchTerm;
+
+    const QStringList & contentSearchTerms =
+        noteSearchQuery.contentSearchTerms();
+
+    StringUtils stringUtils;
+    const auto asterisk = QList<QChar>{} << QChar::fromLatin1('*');
+
+    if (!contentSearchTerms.isEmpty()) {
+        const int numContentSearchTerms = contentSearchTerms.size();
+        for (int i = 0; i < numContentSearchTerms; ++i) {
+            currentSearchTerm = contentSearchTerms[i];
+            stringUtils.removePunctuation(currentSearchTerm, asterisk);
+            if (currentSearchTerm.isEmpty()) {
+                continue;
+            }
+
+            stringUtils.removeDiacritics(currentSearchTerm);
+
+            positiveSqlPartStrm << "(";
+
+            contentSearchTermToSqlQueryParts(
+                frontSearchTermModifier, currentSearchTerm,
+                backSearchTermModifier, matchStatement);
+
+            currentSearchTerm = sqlEscape(currentSearchTerm);
+
+            positiveSqlPartStrm
+                << QString::fromUtf8(
+                       "(localUid IN (SELECT localUid FROM NoteFTS "
+                       "WHERE contentListOfWords %1 '%2%3%4')) OR "
+                       "(localUid IN (SELECT localUid FROM NoteFTS "
+                       "WHERE titleNormalized %1 '%2%3%4')) OR "
+                       "(localUid IN (SELECT noteLocalUid FROM "
+                       "ResourceRecognitionDataFTS WHERE "
+                       "recognitionData %1 '%2%3%4')) OR "
+                       "(localUid IN (SELECT localNote FROM "
+                       "NoteTags LEFT OUTER JOIN TagFTS ON "
+                       "NoteTags.localTag=TagFTS.localUid WHERE "
+                       "(nameLower IN (SELECT nameLower FROM TagFTS "
+                       "WHERE nameLower %1 '%2%3%4'))))")
+                       .arg(
+                           matchStatement, frontSearchTermModifier,
+                           currentSearchTerm, backSearchTermModifier);
+
+            positiveSqlPartStrm << ")";
+
+            if (i != (numContentSearchTerms - 1)) {
+                strm << " " << uniteOperator << " ";
+            }
+        }
+
+        if (!positiveSqlPart.isEmpty()) {
+            positiveSqlPartStrm << ")";
+            positiveSqlPart.prepend(QStringLiteral("("));
+        }
+    }
+
+    const auto & negatedContentSearchTerms =
+        noteSearchQuery.negatedContentSearchTerms();
+
+    if (!negatedContentSearchTerms.isEmpty()) {
+        const int numNegatedContentSearchTerms =
+            negatedContentSearchTerms.size();
+
+        for (int i = 0; i < numNegatedContentSearchTerms; ++i) {
+            currentSearchTerm = negatedContentSearchTerms[i];
+
+            stringUtils.removePunctuation(currentSearchTerm, asterisk);
+
+            if (currentSearchTerm.isEmpty()) {
+                continue;
+            }
+
+            stringUtils.removeDiacritics(currentSearchTerm);
+
+            negatedSqlPartStrm << "(";
+
+            contentSearchTermToSqlQueryParts(
+                frontSearchTermModifier, currentSearchTerm,
+                backSearchTermModifier, matchStatement);
+
+            currentSearchTerm = sqlEscape(currentSearchTerm);
+
+            negatedSqlPartStrm
+                << QString::fromUtf8(
+                       "(localUid NOT IN (SELECT localUid FROM "
+                       "NoteFTS WHERE contentListOfWords %1 '%2%3%4')) AND "
+                       "(localUid NOT IN (SELECT localUid FROM "
+                       "NoteFTS WHERE titleNormalized %1 '%2%3%4')) AND "
+                       "(localUid NOT IN (SELECT noteLocalUid FROM "
+                       "ResourceRecognitionDataFTS WHERE "
+                       "recognitionData %1 '%2%3%4')) AND "
+                       "(localUid NOT IN (SELECT localNote FROM "
+                       "NoteTags LEFT OUTER JOIN TagFTS ON "
+                       "NoteTags.localTag=TagFTS.localUid WHERE "
+                       "(nameLower IN (SELECT nameLower FROM TagFTS "
+                       "WHERE nameLower %1 '%2%3%4'))))")
+                       .arg(
+                           matchStatement, frontSearchTermModifier,
+                           currentSearchTerm, backSearchTermModifier);
+
+            negatedSqlPartStrm << ")";
+
+            if (i != (numNegatedContentSearchTerms - 1)) {
+                negatedSqlPartStrm << " " << uniteOperator << " ";
+            }
+        }
+
+        if (!negatedSqlPart.isEmpty()) {
+            negatedSqlPartStrm << ")";
+            negatedSqlPart.prepend(QStringLiteral("("));
+        }
+    }
+
+    // First append all positive terms of the query
+    if (!positiveSqlPart.isEmpty()) {
+        strm << "(" << positiveSqlPart << ") ";
+    }
+
+    // Now append all negative parts of the query (if any)
+
+    if (!negatedSqlPart.isEmpty()) {
+        if (!positiveSqlPart.isEmpty()) {
+            strm << " " << uniteOperator << " ";
+        }
+
+        strm << "(" << negatedSqlPart << ")";
+    }
+
+    strm << uniteOperator;
+    strm << " ";
+    return true;
+}
+
+[[nodiscard]] QString noteSearchQueryToSql(
     const NoteSearchQuery & noteSearchQuery, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
@@ -608,6 +879,23 @@ QString noteSearchQueryToSql(
         &NoteSearchQuery::reminderDoneTimes,
         &NoteSearchQuery::negatedReminderDoneTimes,
         QStringLiteral("reminderDoneTime"));
+
+    // 7) Processing ToDo items
+    toDoItemsInNoteSearchQueryToSql(noteSearchQuery, uniteOperator, strm);
+
+    // 8) Processing encryption item
+    encryptionItemInNoteSearchQueryToSql(noteSearchQuery, uniteOperator, strm);
+
+    // 9) Processing content search terms
+
+    if (noteSearchQuery.hasAnyContentSearchTerms()) {
+        ErrorString error;
+        if (!contentSearchTermsToSqlQueryPart(noteSearchQuery, strm, error)) {
+            extendError(error, {}, {});
+            QNWARNING("local_storage", errorDescription);
+            return {};
+        }
+    }
 
     // TODO: continue from here
     return {};
