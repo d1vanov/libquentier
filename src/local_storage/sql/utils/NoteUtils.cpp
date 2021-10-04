@@ -591,7 +591,7 @@ void contentSearchTermToSqlQueryParts(
         "can't convert note search query string into SQL query"});
 
     // 1) Setting up initial templates
-    const QString sqlPrefix = QStringLiteral("SELECT DISTINCT localUid ");
+    QString sqlPrefix = QStringLiteral("SELECT DISTINCT localUid ");
 
     // 2) Determining whether "any:" modifier takes effect
 
@@ -897,8 +897,40 @@ void contentSearchTermToSqlQueryParts(
         }
     }
 
-    // TODO: continue from here
-    return {};
+    strm.setDevice(nullptr);
+
+    // 10) Removing trailing unite operator from the SQL string (if any)
+
+    QString spareEnd = uniteOperator + QStringLiteral(" ");
+    if (queryString.endsWith(spareEnd)) {
+        queryString.chop(spareEnd.size());
+    }
+
+    // 11) See whether we should bother anything regarding tags or resources
+
+    QString sqlPostfix = QStringLiteral("FROM NoteFTS ");
+    if (queryString.contains(QStringLiteral("NoteTags"))) {
+        sqlPrefix += QStringLiteral(", NoteTags.localTag ");
+        sqlPostfix += QStringLiteral(
+            "LEFT OUTER JOIN NoteTags ON "
+            "NoteFTS.localUid = NoteTags.localNote ");
+    }
+
+    if (queryString.contains(QStringLiteral("NoteResources"))) {
+        sqlPrefix += QStringLiteral(", NoteResources.localResource ");
+        sqlPostfix += QStringLiteral(
+            "LEFT OUTER JOIN NoteResources ON "
+            "NoteFTS.localUid = NoteResources.localNote ");
+    }
+
+    // 12) Finalize the query composed of parts
+
+    sqlPrefix += sqlPostfix;
+    sqlPrefix += QStringLiteral("WHERE ");
+    queryString.prepend(sqlPrefix);
+
+    QNTRACE("local_storage::sql::utils", "Prepared SQL query for note search: " << queryString);
+    return queryString;
 }
 
 } // namespace

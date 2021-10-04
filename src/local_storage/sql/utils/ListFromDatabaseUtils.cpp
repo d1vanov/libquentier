@@ -71,6 +71,17 @@ QString listObjectsGenericSqlQuery<qevercloud::LinkedNotebook>()
 }
 
 template <>
+QString listObjectsGenericSqlQuery<qevercloud::Note>()
+{
+    return QStringLiteral(
+        "SELECT * FROM Notes "
+        "LEFT OUTER JOIN NoteRestrictions ON "
+        "Notes.localUid = NoteRestrictions.noteLocalUid "
+        "LEFT OUTER JOIN NoteLimits ON "
+        "Notes.localUid = NoteLimits.noteLocalUid");
+}
+
+template <>
 QString orderByToSqlTableColumn<ILocalStorage::ListNotebooksOrder>(
     const ILocalStorage::ListNotebooksOrder & order)
 {
@@ -158,6 +169,51 @@ QString orderByToSqlTableColumn<ILocalStorage::ListLinkedNotebooksOrder>(
         break;
     case ListLinkedNotebooksOrder::ByUsername:
         result = QStringLiteral("username");
+        break;
+    default:
+        break;
+    }
+
+    return result;
+}
+
+template <>
+QString orderByToSqlTableColumn<ILocalStorage::ListNotesOrder>(
+    const ILocalStorage::ListNotesOrder & order)
+{
+    QString result;
+
+    using ListNotesOrder = ILocalStorage::ListNotesOrder;
+    switch (order) {
+    case ListNotesOrder::ByUpdateSequenceNumber:
+        result = QStringLiteral("updateSequenceNumber");
+        break;
+    case ListNotesOrder::ByTitle:
+        result = QStringLiteral("title");
+        break;
+    case ListNotesOrder::ByCreationTimestamp:
+        result = QStringLiteral("creationTimestamp");
+        break;
+    case ListNotesOrder::ByModificationTimestamp:
+        result = QStringLiteral("modificationTimestamp");
+        break;
+    case ListNotesOrder::ByDeletionTimestamp:
+        result = QStringLiteral("deletionTimestamp");
+        break;
+    case ListNotesOrder::ByAuthor:
+        result = QStringLiteral("author");
+        break;
+    case ListNotesOrder::BySource:
+        result = QStringLiteral("source");
+        break;
+    case ListNotesOrder::BySourceApplication:
+        result = QStringLiteral("sourceApplication");
+        break;
+    case ListNotesOrder::ByReminderTime:
+        result = QStringLiteral("reminderTime");
+        break;
+    case ListNotesOrder::ByPlaceName:
+        result = QStringLiteral("placeName");
         break;
     default:
         break;

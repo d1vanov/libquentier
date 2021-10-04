@@ -1731,6 +1731,14 @@ bool fillObjectFromSqlRecord<qevercloud::Resource>(
 }
 
 template <>
+bool fillObjectFromSqlRecord<qevercloud::Note>(
+    const QSqlRecord & record, qevercloud::Note & object,
+    ErrorString & errorDescription)
+{
+    return fillNoteFromSqlRecord(record, object, errorDescription);
+}
+
+template <>
 bool fillObjectsFromSqlQuery<qevercloud::Notebook>(
     QSqlQuery & query, QSqlDatabase & database,
     QList<qevercloud::Notebook> & objects, ErrorString & errorDescription)

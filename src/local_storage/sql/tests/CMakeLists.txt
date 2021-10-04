@@ -11,6 +11,7 @@ add_executable(${TESTS_NAME}
   LinkedNotebooksHandlerTest.cpp
   main.cpp
   NotebooksHandlerTest.cpp
+  NotesHandlerTest.cpp
   Patch1To2Test.cpp
   Patch2To3Test.cpp
   PatchUtilsTest.cpp

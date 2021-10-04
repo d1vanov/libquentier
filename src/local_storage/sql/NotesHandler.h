@@ -206,7 +206,8 @@ private:
         FetchNoteOptions fetchOptions,
         const ListOptions<ListNotesOrder> & options,
         QSqlDatabase & database, ErrorString & errorDescription,
-        const QString & sqlQueryCondition = {}) const;
+        const QString & sqlQueryCondition = {},
+        std::optional<Transaction> transaction = std::nullopt) const;
 
     [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesImpl(
         const qevercloud::Guid & noteGuid, QSqlDatabase & database,
@@ -232,7 +233,8 @@ private:
     [[nodiscard]] QList<qevercloud::Note> listNotesByLocalIdsImpl(
         const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
         const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
-        ErrorString & errorDescription) const;
+        ErrorString & errorDescription,
+        std::optional<Transaction> transaction = std::nullopt) const;
 
     [[nodiscard]] QList<qevercloud::Note> queryNotesImpl(
         const NoteSearchQuery & query, FetchNoteOptions fetchOptions,

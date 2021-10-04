@@ -1456,9 +1456,12 @@ QList<qevercloud::Note> NotesHandler::listNotesImpl(
     FetchNoteOptions fetchOptions,
     const ListOptions<ListNotesOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription,
-    const QString & sqlQueryCondition) const
+    const QString & sqlQueryCondition,
+    std::optional<Transaction> transaction) const
 {
-    const Transaction transaction{database, Transaction::Type::Selection};
+    if (!transaction) {
+        transaction.emplace(database, Transaction::Type::Selection);
+    }
 
     auto notes = utils::listObjects<qevercloud::Note, ListNotesOrder>(
         options.m_flags, options.m_limit, options.m_offset, options.m_order,
@@ -1658,7 +1661,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
 QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
     const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
     const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
-    ErrorString & errorDescription) const
+    ErrorString & errorDescription, std::optional<Transaction> transaction) const
 {
     QString noteLocalIdsSqlQueryCondition;
     QTextStream strm{&noteLocalIdsSqlQueryCondition};
@@ -1675,19 +1678,29 @@ QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
 
     return listNotesImpl(
         fetchOptions, options, database, errorDescription,
-        noteLocalIdsSqlQueryCondition);
+        noteLocalIdsSqlQueryCondition, std::move(transaction));
 }
 
 QList<qevercloud::Note> NotesHandler::queryNotesImpl(
     const NoteSearchQuery & query, FetchNoteOptions fetchOptions,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    // TODO: implement
-    Q_UNUSED(query)
-    Q_UNUSED(fetchOptions)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    return {};
+    Transaction transaction{database, Transaction::Type::Selection};
+
+    const auto noteLocalIds = utils::queryNoteLocalIds(
+        query, database, errorDescription,
+        utils::TransactionOption::DontUseSeparateTransaction);
+    if (noteLocalIds.isEmpty()) {
+        return {};
+    }
+
+    ListOptions<ListNotesOrder> options;
+    options.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    return listNotesByLocalIdsImpl(
+        noteLocalIds, fetchOptions, options, database,
+        errorDescription, std::move(transaction));
 }
 
 TaskContext NotesHandler::makeTaskContext() const
