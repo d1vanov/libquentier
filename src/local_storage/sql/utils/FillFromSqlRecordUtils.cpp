@@ -80,6 +80,22 @@ Q_GLOBAL_STATIC_WITH_ARGS(
         "Saved search field missing in the record received from the local "
         "storage database")));
 
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingNoteFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Note field missing in the record received from the local "
+        "storage database")));
+
+Q_GLOBAL_STATIC_WITH_ARGS(
+    QString,
+    gMissingSharedNoteFieldErrorMessage,
+    (QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Shared note field missing in the record received from the local "
+        "storage database")));
+
 template <class Type, class VariantType, class LocalType = VariantType>
 bool fillValue(
     const QSqlRecord & record, const QString & column, Type & typeValue,
@@ -216,6 +232,30 @@ bool fillSavedSearchValue(
     return fillValue<qevercloud::SavedSearch, VariantType, LocalType>(
         record, column, savedSearch, std::move(setter),
         *gMissingSavedSearchFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillNoteValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::Note & note,
+    std::function<void(qevercloud::Note&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::Note, VariantType, LocalType>(
+        record, column, note, std::move(setter),
+        *gMissingNoteFieldErrorMessage, errorDescription);
+}
+
+template <class VariantType, class LocalType = VariantType>
+bool fillSharedNoteValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::SharedNote & sharedNote,
+    std::function<void(qevercloud::SharedNote&, LocalType)> setter,
+    ErrorString * errorDescription = nullptr)
+{
+    return fillValue<qevercloud::SharedNote, VariantType, LocalType>(
+        record, column, sharedNote, std::move(setter),
+        *gMissingSharedNoteFieldErrorMessage, errorDescription);
 }
 
 template <class FieldType, class VariantType, class LocalType = VariantType>
@@ -1680,11 +1720,244 @@ bool fillSharedNoteFromSqlRecord(
     const QSqlRecord & record, qevercloud::SharedNote & sharedNote,
     int & indexInNote, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(sharedNote)
-    Q_UNUSED(indexInNote)
-    Q_UNUSED(errorDescription)
+    using qevercloud::SharedNote;
+
+    fillSharedNoteValue<QString, QString>(
+        record, QStringLiteral("sharedNoteNoteGuid"), sharedNote,
+        &SharedNote::setNoteGuid);
+
+    fillSharedNoteValue<qint32, qint32>(
+        record, QStringLiteral("sharedNoteSharerUserId"), sharedNote,
+        &SharedNote::setSharerUserID);
+
+    fillSharedNoteValue<qint8, qevercloud::SharedNotePrivilegeLevel>(
+        record, QStringLiteral("sharedNotePrivilegeLevel"), sharedNote,
+        &SharedNote::setPrivilege);
+
+    fillSharedNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNoteCreationTimestamp"), sharedNote,
+        &SharedNote::setServiceCreated);
+
+    fillSharedNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNoteModificationTimestamp"), sharedNote,
+        &SharedNote::setServiceUpdated);
+
+    fillSharedNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNoteAssignmentTimestamp"), sharedNote,
+        &SharedNote::setServiceAssigned);
+
+    const auto setSharedNoteRecipientIdentityValue =
+        [](SharedNote & sharedNote, auto setter)
+        {
+            if (!sharedNote.recipientIdentity()) {
+                sharedNote.setRecipientIdentity(qevercloud::Identity{});
+            }
+            setter(*sharedNote.mutableRecipientIdentity());
+        };
+
+    fillSharedNoteValue<qint64, qevercloud::IdentityID>(
+        record, QStringLiteral("sharedNoteRecipientIdentityId"), sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::IdentityID identityId)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [identityId](qevercloud::Identity & identity)
+                {
+                    identity.setId(identityId);
+                });
+        });
+
+    fillSharedNoteValue<qint64, qevercloud::UserID>(
+        record, QStringLiteral("sharedNoteRecipientUserId"), sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::UserID userId)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [userId](qevercloud::Identity & identity)
+                {
+                    identity.setUserId(userId);
+                });
+        });
+
+    fillSharedNoteValue<int, bool>(
+        record, QStringLiteral("sharedNoteRecipientDeactivated"), sharedNote,
+        [&](SharedNote & sharedNote, bool deactivated)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [deactivated](qevercloud::Identity & identity)
+                {
+                    identity.setDeactivated(deactivated);
+                });
+        });
+
+    fillSharedNoteValue<int, bool>(
+        record, QStringLiteral("sharedNoteRecipientSameBusiness"), sharedNote,
+        [&](SharedNote & sharedNote, bool sameBusiness)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [sameBusiness](qevercloud::Identity & identity)
+                {
+                    identity.setSameBusiness(sameBusiness);
+                });
+        });
+
+    fillSharedNoteValue<int, bool>(
+        record, QStringLiteral("sharedNoteRecipientBlocked"), sharedNote,
+        [&](SharedNote & sharedNote, bool blocked)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [blocked](qevercloud::Identity & identity)
+                {
+                    identity.setBlocked(blocked);
+                });
+        });
+
+    fillSharedNoteValue<int, bool>(
+        record, QStringLiteral("sharedNoteRecipientUserConnected"), sharedNote,
+        [&](SharedNote & sharedNote, bool connected)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [connected](qevercloud::Identity & identity)
+                {
+                    identity.setUserConnected(connected);
+                });
+        });
+
+    fillSharedNoteValue<qint64, qevercloud::MessageEventID>(
+        record, QStringLiteral("sharedNoteRecipientEventId"), sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::MessageEventID id)
+        {
+            setSharedNoteRecipientIdentityValue(
+                sharedNote,
+                [id](qevercloud::Identity & identity)
+                {
+                    identity.setEventId(id);
+                });
+        });
+
+    const auto setSharedNoteRecipientIdentityContactValue =
+        [](SharedNote & sharedNote, auto setter)
+        {
+            if (!sharedNote.recipientIdentity()) {
+                sharedNote.setRecipientIdentity(qevercloud::Identity{});
+            }
+            if (!sharedNote.recipientIdentity()->contact()) {
+                sharedNote.mutableRecipientIdentity()->setContact(
+                    qevercloud::Contact{});
+            }
+            setter(*sharedNote.mutableRecipientIdentity()->mutableContact());
+        };
+
+    fillSharedNoteValue<QString, QString>(
+        record, QStringLiteral("sharedNoteRecipientContactName"), sharedNote,
+        [&](SharedNote & sharedNote, QString name)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setName(std::move(name));
+                });
+        });
+
+    fillSharedNoteValue<QString, QString>(
+        record, QStringLiteral("sharedNoteRecipientContactId"), sharedNote,
+        [&](SharedNote & sharedNote, QString id)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setId(std::move(id));
+                });
+        });
+
+    fillSharedNoteValue<qint32, qevercloud::ContactType>(
+        record, QStringLiteral("sharedNoteRecipientContactType"), sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::ContactType contactType)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setType(contactType);
+                });
+        });
+
+    fillSharedNoteValue<QString, QString>(
+        record, QStringLiteral("sharedNoteRecipientContactPhotoUrl"),
+        sharedNote,
+        [&](SharedNote & sharedNote, QString photoUrl)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setPhotoUrl(std::move(photoUrl));
+                });
+        });
+
+    fillSharedNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("sharedNoteRecipientContactPhotoLastUpdated"),
+        sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [timestamp](qevercloud::Contact & contact)
+                {
+                    contact.setPhotoLastUpdated(timestamp);
+                });
+        });
+
+    fillSharedNoteValue<QByteArray, QByteArray>(
+        record, QStringLiteral("sharedNoteRecipientContactMessagingPermit"),
+        sharedNote,
+        [&](SharedNote & sharedNote, QByteArray permit)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setMessagingPermit(std::move(permit));
+                });
+        });
+
+    fillSharedNoteValue<qint64, qevercloud::Timestamp>(
+        record,
+        QStringLiteral("sharedNoteRecipientContactMessagingPermitExpires"),
+        sharedNote,
+        [&](SharedNote & sharedNote, qevercloud::Timestamp timestamp)
+        {
+            setSharedNoteRecipientIdentityContactValue(
+                sharedNote,
+                [&](qevercloud::Contact & contact)
+                {
+                    contact.setMessagingPermitExpires(timestamp);
+                });
+        });
+
+    const int recordIndex = record.indexOf(QStringLiteral("indexInNote"));
+    if (recordIndex >= 0) {
+        const QVariant value = record.value(recordIndex);
+        if (!value.isNull()) {
+            bool conversionResult = false;
+            const int index = value.toInt(&conversionResult);
+            if (!conversionResult) {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "can't convert shared note's index in note to int"));
+                QNERROR("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+            indexInNote = index;
+        }
+    }
+
     return true;
 }
 
