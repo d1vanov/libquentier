@@ -332,6 +332,38 @@ void fillAccountLimitsValue(
         record, column, accountLimits, std::move(setter));
 }
 
+void fillNoteAttributesFromSqlRecord(
+    const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(attributes)
+}
+
+void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
+    const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(attributes)
+}
+
+void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
+    const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(attributes)
+}
+
+void fillNoteAttributesClassificationsFromSqlRecord(
+    const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
+{
+    // TODO: implement
+    Q_UNUSED(record)
+    Q_UNUSED(attributes)
+}
+
 } // namespace
 
 bool fillUserFromSqlRecord(
@@ -1709,10 +1741,247 @@ bool fillNoteFromSqlRecord(
     const QSqlRecord & record, qevercloud::Note & note,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(note)
-    Q_UNUSED(errorDescription)
+    using qevercloud::Note;
+
+    if (!fillNoteValue<int, bool>(
+            record, QStringLiteral("isDirty"), note,
+            &Note::setLocallyModified, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillNoteValue<int, bool>(
+            record, QStringLiteral("isLocal"), note,
+            &Note::setLocalOnly, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillNoteValue<int, bool>(
+            record, QStringLiteral("isFavorited"), note,
+            &Note::setLocallyFavorited, &errorDescription))
+    {
+        return false;
+    }
+
+    if (!fillNoteValue<QString, QString>(
+            record, QStringLiteral("localUid"), note,
+            &Note::setLocalId, &errorDescription))
+    {
+        return false;
+    }
+
+    fillNoteValue<QString, QString>(
+        record, QStringLiteral("notebookLocalUid"), note,
+        &Note::setNotebookLocalId);
+
+    const auto fillOptStringValue =
+        [&](const QString & column,
+            std::function<void(Note &, std::optional<QString>)> setter) {
+            fillNoteValue<QString, std::optional<QString>>(
+                record, column, note, std::move(setter));
+        };
+
+    fillOptStringValue(QStringLiteral("guid"), &Note::setGuid);
+    fillOptStringValue(QStringLiteral("notebookGuid"), &Note::setNotebookGuid);
+    fillOptStringValue(QStringLiteral("title"), &Note::setTitle);
+    fillOptStringValue(QStringLiteral("content"), &Note::setContent);
+
+    fillNoteValue<qint32, qint32>(
+        record, QStringLiteral("updateSequenceNumber"), note,
+        &Note::setUpdateSequenceNum);
+
+    fillNoteValue<qint32, qint32>(
+        record, QStringLiteral("contentLength"), note, &Note::setContentLength);
+
+    fillNoteValue<QByteArray, QByteArray>(
+        record, QStringLiteral("contentHash"), note, &Note::setContentHash);
+
+    fillNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("creationTimestamp"), note, &Note::setCreated);
+
+    fillNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("modificationTimestamp"), note,
+        &Note::setUpdated);
+
+    fillNoteValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("deletionTimestamp"), note, &Note::setDeleted);
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("isActive"), note, &Note::setActive);
+
+    const int indexOfThumbnail = record.indexOf(QStringLiteral("thumbnail"));
+    if (indexOfThumbnail >= 0) {
+        const QVariant thumbnailValue = record.value(indexOfThumbnail);
+        if (!thumbnailValue.isNull()) {
+            note.setThumbnailData(thumbnailValue.toByteArray());
+        }
+    }
+
+    const int hasAttributesIndex = record.indexOf(QStringLiteral("hasAttributes"));
+    if (hasAttributesIndex >= 0) {
+        const QVariant hasAttributesValue = record.value(hasAttributesIndex);
+        if (!hasAttributesValue.isNull()) {
+            const bool hasAttributes =
+                static_cast<bool>(qvariant_cast<int>(hasAttributesValue));
+            if (hasAttributes) {
+                if (!note.attributes()) {
+                    note.setAttributes(qevercloud::NoteAttributes{});
+                }
+
+                auto & attributes = *note.mutableAttributes();
+
+                fillNoteAttributesFromSqlRecord(record, attributes);
+
+                fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
+                    record, attributes);
+
+                fillNoteAttributesApplicationDataFullMapFromSqlRecord(
+                    record, attributes);
+
+                fillNoteAttributesClassificationsFromSqlRecord(record, attributes);
+            }
+        }
+    }
+
+    const auto setNoteRestrictionValue =
+        [](Note & note, auto setter)
+        {
+            if (!note.restrictions()) {
+                note.setRestrictions(qevercloud::NoteRestrictions{});
+            }
+            setter(*note.mutableRestrictions());
+        };
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("noUpdateNoteTitle"), note,
+        [&](Note & note, bool value)
+        {
+            setNoteRestrictionValue(
+                note,
+                [value](qevercloud::NoteRestrictions & restrictions)
+                {
+                    restrictions.setNoUpdateTitle(value);
+                });
+        });
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("noUpdateNoteContent"), note,
+        [&](Note & note, bool value)
+        {
+            setNoteRestrictionValue(
+                note,
+                [value](qevercloud::NoteRestrictions & restrictions)
+                {
+                    restrictions.setNoUpdateContent(value);
+                });
+        });
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("noEmailNote"), note,
+        [&](Note & note, bool value)
+        {
+            setNoteRestrictionValue(
+                note,
+                [value](qevercloud::NoteRestrictions & restrictions)
+                {
+                    restrictions.setNoEmail(value);
+                });
+        });
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("noShareNote"), note,
+        [&](Note & note, bool value)
+        {
+            setNoteRestrictionValue(
+                note,
+                [value](qevercloud::NoteRestrictions & restrictions)
+                {
+                    restrictions.setNoShare(value);
+                });
+        });
+
+    fillNoteValue<int, bool>(
+        record, QStringLiteral("noShareNotePublicly"), note,
+        [&](Note & note, bool value)
+        {
+            setNoteRestrictionValue(
+                note,
+                [value](qevercloud::NoteRestrictions & restrictions)
+                {
+                    restrictions.setNoSharePublicly(value);
+                });
+        });
+
+    const auto setNoteLimitValue =
+        [](Note & note, auto setter)
+        {
+            if (!note.limits()) {
+                note.setLimits(qevercloud::NoteLimits{});
+            }
+            setter(*note.mutableLimits());
+        };
+
+    fillNoteValue<qint32, qint32>(
+        record, QStringLiteral("noteResourceCountMax"), note,
+        [&](Note & note, qint32 value)
+        {
+            setNoteLimitValue(
+                note,
+                [value](qevercloud::NoteLimits & limits)
+                {
+                    limits.setNoteResourceCountMax(value);
+                });
+        });
+
+    fillNoteValue<qint64, qint64>(
+        record, QStringLiteral("uploadLimit"), note,
+        [&](Note & note, qint64 value)
+        {
+            setNoteLimitValue(
+                note,
+                [value](qevercloud::NoteLimits & limits)
+                {
+                    limits.setUploadLimit(value);
+                });
+        });
+
+    fillNoteValue<qint64, qint64>(
+        record, QStringLiteral("resourceSizeMax"), note,
+        [&](Note & note, qint64 value)
+        {
+            setNoteLimitValue(
+                note,
+                [value](qevercloud::NoteLimits & limits)
+                {
+                    limits.setResourceSizeMax(value);
+                });
+        });
+
+    fillNoteValue<qint64, qint64>(
+        record, QStringLiteral("noteSizeMax"), note,
+        [&](Note & note, qint64 value)
+        {
+            setNoteLimitValue(
+                note,
+                [value](qevercloud::NoteLimits & limits)
+                {
+                    limits.setNoteSizeMax(value);
+                });
+        });
+
+    fillNoteValue<qint64, qint64>(
+        record, QStringLiteral("uploaded"), note,
+        [&](Note & note, qint64 value)
+        {
+            setNoteLimitValue(
+                note,
+                [value](qevercloud::NoteLimits & limits)
+                {
+                    limits.setUploaded(value);
+                });
+        });
+
     return true;
 }
 
