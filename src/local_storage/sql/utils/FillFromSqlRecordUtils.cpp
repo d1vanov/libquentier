@@ -258,6 +258,16 @@ bool fillSharedNoteValue(
         *gMissingSharedNoteFieldErrorMessage, errorDescription);
 }
 
+template <class VariantType, class LocalType = VariantType>
+void fillNoteAttributeValue(
+    const QSqlRecord & record, const QString & column,
+    qevercloud::NoteAttributes & attributes,
+    std::function<void(qevercloud::NoteAttributes&, LocalType)> setter)
+{
+    fillValue<qevercloud::NoteAttributes, VariantType, LocalType>(
+        record, column, attributes, std::move(setter), QString{});
+}
+
 template <class FieldType, class VariantType, class LocalType = VariantType>
 void fillOptionalFieldValue(
     const QSqlRecord & record, const QString & column,
@@ -335,9 +345,87 @@ void fillAccountLimitsValue(
 void fillNoteAttributesFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(attributes)
+    using qevercloud::NoteAttributes;
+
+    fillNoteAttributeValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("subjectDate"), attributes,
+        &NoteAttributes::setSubjectDate);
+
+    fillNoteAttributeValue<double, double>(
+        record, QStringLiteral("latitude"), attributes,
+        &NoteAttributes::setLatitude);
+
+    fillNoteAttributeValue<double, double>(
+        record, QStringLiteral("longitude"), attributes,
+        &NoteAttributes::setLongitude);
+
+    fillNoteAttributeValue<double, double>(
+        record, QStringLiteral("altitude"), attributes,
+        &NoteAttributes::setAltitude);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("author"), attributes,
+        &NoteAttributes::setAuthor);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("source"), attributes,
+        &NoteAttributes::setSource);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("sourceURL"), attributes,
+        &NoteAttributes::setSourceURL);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("sourceApplication"), attributes,
+        &NoteAttributes::setSourceApplication);
+
+    fillNoteAttributeValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("shareDate"), attributes,
+        &NoteAttributes::setShareDate);
+
+    fillNoteAttributeValue<qint64, qint64>(
+        record, QStringLiteral("reminderOrder"), attributes,
+        &NoteAttributes::setReminderOrder);
+
+    fillNoteAttributeValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("reminderDoneTime"), attributes,
+        &NoteAttributes::setReminderDoneTime);
+
+    fillNoteAttributeValue<qint64, qevercloud::Timestamp>(
+        record, QStringLiteral("reminderTime"), attributes,
+        &NoteAttributes::setReminderTime);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("placeName"), attributes,
+        &NoteAttributes::setPlaceName);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("contentClass"), attributes,
+        &NoteAttributes::setContentClass);
+
+    fillNoteAttributeValue<QString, QString>(
+        record, QStringLiteral("lastEditedBy"), attributes,
+        &NoteAttributes::setLastEditedBy);
+
+    fillNoteAttributeValue<qint32, qevercloud::UserID>(
+        record, QStringLiteral("creatorId"), attributes,
+        &NoteAttributes::setCreatorId);
+
+    fillNoteAttributeValue<qint32, qevercloud::UserID>(
+        record, QStringLiteral("lastEditorId"), attributes,
+        &NoteAttributes::setLastEditorId);
+
+    fillNoteAttributeValue<int, bool>(
+        record, QStringLiteral("sharedWithBusiness"), attributes,
+        &NoteAttributes::setSharedWithBusiness);
+
+    fillNoteAttributeValue<QString, qevercloud::Guid>(
+        record, QStringLiteral("conflictSourceNoteGuid"), attributes,
+        &NoteAttributes::setConflictSourceNoteGuid);
+
+    fillNoteAttributeValue<qint32, qint32>(
+        record, QStringLiteral("noteTitleQuality"), attributes,
+        &NoteAttributes::setNoteTitleQuality);
 }
 
 void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
