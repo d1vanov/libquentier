@@ -431,25 +431,245 @@ void fillNoteAttributesFromSqlRecord(
 void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(attributes)
+    const int keysOnlyIndex =
+        record.indexOf(QStringLiteral("applicationDataKeysOnly"));
+    if (keysOnlyIndex < 0) {
+        return;
+    }
+
+    const QVariant value = record.value(keysOnlyIndex);
+    if (value.isNull()) {
+        return;
+    }
+
+    bool applicationDataWasEmpty = !attributes.applicationData();
+    if (applicationDataWasEmpty) {
+        attributes.setApplicationData(qevercloud::LazyMap());
+    }
+
+    if (!attributes.applicationData()->keysOnly()) {
+        attributes.mutableApplicationData()->setKeysOnly(QSet<QString>());
+    }
+
+    QSet<QString> & keysOnly =
+        *attributes.mutableApplicationData()->mutableKeysOnly();
+
+    const QString keysOnlyString = value.toString();
+    const int length = keysOnlyString.length();
+    bool insideQuotedText = false;
+    QString currentKey;
+    const QChar wordSep = QChar::fromLatin1('\'');
+    for (int i = 0; i < (length - 1); ++i) {
+        const QChar currentChar = keysOnlyString.at(i);
+        const QChar nextChar = keysOnlyString.at(i + 1);
+
+        if (currentChar == wordSep) {
+            insideQuotedText = !insideQuotedText;
+
+            if (nextChar == wordSep) {
+                keysOnly.insert(currentKey);
+                currentKey.resize(0);
+            }
+        }
+        else if (insideQuotedText) {
+            currentKey.append(currentChar);
+        }
+    }
+
+    if (!currentKey.isEmpty()) {
+        keysOnly.insert(currentKey);
+    }
+
+    if (keysOnly.isEmpty()) {
+        if (applicationDataWasEmpty) {
+            attributes.mutableApplicationData() = std::nullopt;
+        }
+        else {
+            attributes.mutableApplicationData()->mutableKeysOnly() =
+                std::nullopt;
+        }
+    }
 }
 
 void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(attributes)
+    const int keyIndex = record.indexOf(QStringLiteral("applicationDataKeysMap"));
+    const int valueIndex = record.indexOf(QStringLiteral("applicationDataValues"));
+    if ((keyIndex < 0) || (valueIndex < 0)) {
+        return;
+    }
+
+    const QVariant keys = record.value(keyIndex);
+    const QVariant values = record.value(valueIndex);
+    if (keys.isNull() || values.isNull()) {
+        return;
+    }
+
+    const bool applicationDataWasEmpty = !attributes.applicationData();
+    if (applicationDataWasEmpty) {
+        attributes.setApplicationData(qevercloud::LazyMap());
+    }
+
+    if (!attributes.applicationData()->fullMap()) {
+        attributes.mutableApplicationData()->setFullMap(
+            QMap<QString, QString>());
+    }
+
+    QMap<QString, QString> & fullMap =
+        *attributes.mutableApplicationData()->mutableFullMap();
+
+    QStringList keysList, valuesList;
+
+    const QString keysString = keys.toString();
+    const int keysLength = keysString.length();
+    keysList.reserve(keysLength / 2); // NOTE: just a wild guess
+
+    bool insideQuotedText = false;
+    QString currentKey;
+    const QChar wordSep = QChar::fromLatin1('\'');
+    for (int i = 0; i < (keysLength - 1); ++i) {
+        const QChar currentChar = keysString.at(i);
+        const QChar nextChar = keysString.at(i + 1);
+
+        if (currentChar == wordSep) {
+            insideQuotedText = !insideQuotedText;
+
+            if (nextChar == wordSep) {
+                keysList << currentKey;
+                currentKey.resize(0);
+            }
+        }
+        else if (insideQuotedText) {
+            currentKey.append(currentChar);
+        }
+    }
+
+    if (!currentKey.isEmpty()) {
+        keysList << currentKey;
+    }
+
+    const QString valuesString = values.toString();
+    int valuesLength = valuesString.length();
+    valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
+
+    insideQuotedText = false;
+    QString currentValue;
+    for (int i = 0; i < (valuesLength - 1); ++i) {
+        const QChar currentChar = valuesString.at(i);
+        const QChar nextChar = valuesString.at(i + 1);
+
+        if (currentChar == wordSep) {
+            insideQuotedText = !insideQuotedText;
+
+            if (nextChar == wordSep) {
+                valuesList << currentValue;
+                currentValue.resize(0);
+            }
+        }
+        else if (insideQuotedText) {
+            currentValue.append(currentChar);
+        }
+    }
+
+    if (!currentValue.isEmpty()) {
+        valuesList << currentValue;
+    }
+
+    int numKeys = keysList.size();
+    for (int i = 0; i < numKeys; ++i) {
+        fullMap.insert(keysList.at(i), valuesList.at(i));
+    }
+
+    if (fullMap.isEmpty()) {
+        if (applicationDataWasEmpty) {
+            attributes.mutableApplicationData() = std::nullopt;
+        }
+        else {
+            attributes.mutableApplicationData()->mutableFullMap() =
+                std::nullopt;
+        }
+    }
 }
 
 void fillNoteAttributesClassificationsFromSqlRecord(
     const QSqlRecord & record, qevercloud::NoteAttributes & attributes)
 {
-    // TODO: implement
-    Q_UNUSED(record)
-    Q_UNUSED(attributes)
+    const int keyIndex = record.indexOf(QStringLiteral("classificationKeys"));
+    const int valueIndex = record.indexOf(QStringLiteral("classificationValues"));
+    if ((keyIndex < 0) || (valueIndex < 0)) {
+        return;
+    }
+
+    const QVariant keys = record.value(keyIndex);
+    const QVariant values = record.value(valueIndex);
+    if (keys.isNull() || values.isNull()) {
+        return;
+    }
+
+    const bool classificationsWereEmpty = !attributes.classifications();
+    if (classificationsWereEmpty) {
+        attributes.setClassifications(QMap<QString, QString>());
+    }
+
+    QMap<QString, QString> & classifications =
+        *attributes.mutableClassifications();
+    QStringList keysList, valuesList;
+
+    const QString keysString = keys.toString();
+    const int keysLength = keysString.length();
+    keysList.reserve(keysLength / 2); // NOTE: just a wild guess
+    bool insideQuotedText = false;
+    QString currentKey;
+    QChar wordSep = QChar::fromLatin1('\'');
+    for (int i = 0; i < (keysLength - 1); ++i) {
+        const QChar currentChar = keysString.at(i);
+        const QChar nextChar = keysString.at(i + 1);
+
+        if (currentChar == wordSep) {
+            insideQuotedText = !insideQuotedText;
+
+            if (nextChar == wordSep) {
+                keysList << currentKey;
+                currentKey.resize(0);
+            }
+        }
+        else if (insideQuotedText) {
+            currentKey.append(currentChar);
+        }
+    }
+
+    const QString valuesString = values.toString();
+    const int valuesLength = valuesString.length();
+    valuesList.reserve(valuesLength / 2); // NOTE: just a wild guess
+
+    insideQuotedText = false;
+    QString currentValue;
+    for (int i = 0; i < (valuesLength - 1); ++i) {
+        const QChar currentChar = valuesString.at(i);
+        const QChar nextChar = valuesString.at(i + 1);
+
+        if (currentChar == wordSep) {
+            insideQuotedText = !insideQuotedText;
+
+            if (nextChar == wordSep) {
+                valuesList << currentValue;
+                currentValue.resize(0);
+            }
+        }
+        else if (insideQuotedText) {
+            currentValue.append(currentChar);
+        }
+    }
+
+    int numKeys = keysList.size();
+    for (int i = 0; i < numKeys; ++i) {
+        classifications[keysList.at(i)] = valuesList.at(i);
+    }
+
+    if (classifications.isEmpty() && classificationsWereEmpty) {
+        attributes.mutableClassifications() = std::nullopt;
+    }
 }
 
 } // namespace

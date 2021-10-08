@@ -32,6 +32,10 @@ class ErrorString;
 
 namespace quentier::local_storage::sql::utils {
 
+[[nodiscard]] QString noteGuidByLocalId(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 [[nodiscard]] QString notebookLocalId(
     const qevercloud::Note & note, QSqlDatabase & database,
     ErrorString & errorDescription);

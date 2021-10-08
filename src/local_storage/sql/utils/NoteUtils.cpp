@@ -935,6 +935,39 @@ void contentSearchTermToSqlQueryParts(
 
 } // namespace
 
+QString noteGuidByLocalId(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT guid FROM Notes WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot get note guid by note local id: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":localUid"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot get note guid by note local id"),
+        {});
+
+    if (query.next()) {
+        return query.record().value(0).toString();
+    }
+
+    return {};
+}
+
 QString notebookLocalId(
     const qevercloud::Note & note, QSqlDatabase & database,
     ErrorString & errorDescription)

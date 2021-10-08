@@ -146,6 +146,25 @@ enum class PutResourceMetadataOption
     const QMap<QString, QString> & fullMap,
     QSqlDatabase & database, ErrorString & errorDescription);
 
+[[nodiscard]] bool putCommonNoteData(
+    const qevercloud::Note & note, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool putNoteRestrictions(
+    const QString & noteLocalId,
+    const qevercloud::NoteRestrictions & restrictions, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool putNoteLimits(
+    const QString & noteLocalId,
+    const qevercloud::NoteLimits & limits, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool putSharedNotes(
+    const qevercloud::Guid & noteGuid,
+    const QList<qevercloud::SharedNote> & sharedNotes, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 enum class PutNoteOption
 {
     PutResourceMetadata = 1 << 1,

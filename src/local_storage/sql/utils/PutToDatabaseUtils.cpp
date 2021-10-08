@@ -18,6 +18,7 @@
 
 #include "PutToDatabaseUtils.h"
 #include "NotebookUtils.h"
+#include "NoteUtils.h"
 #include "RemoveFromDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
@@ -32,6 +33,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/Resource.h>
 #include <qevercloud/types/SavedSearch.h>
@@ -49,6 +51,89 @@ namespace quentier::local_storage::sql::utils {
 namespace {
 
 Q_GLOBAL_STATIC(QVariant, gNullValue);
+
+void setNoteIdsToNoteResources(qevercloud::Note & note)
+{
+    if (!note.resources()) {
+        return;
+    }
+
+    auto resources = *note.resources();
+    for (auto & resource: resources) {
+        resource.setNoteLocalId(note.localId());
+        if (note.guid()) {
+            resource.setNoteGuid(*note.guid());
+        }
+    }
+    note.setResources(resources);
+}
+
+[[nodiscard]] bool clearNoteGuid(
+    const PutNoteOptions putNoteOptions, qevercloud::Note & note,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (note.resources() &&
+        putNoteOptions.testFlag(PutNoteOption::PutResourceMetadata))
+    {
+        const auto & resources = *note.resources();
+        for (const auto & resource: qAsConst(resources))
+        {
+            if (Q_UNLIKELY(resource.noteGuid())) {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "note's guid is being cleared but one of "
+                    "note's resources has non-empty note guid"));
+                if (resource.attributes() &&
+                    resource.attributes()->fileName()) {
+                    errorDescription.details() =
+                        *resource.attributes()->fileName();
+                }
+
+                QNWARNING("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+
+            if (Q_UNLIKELY(resource.guid())) {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "note's guid is being cleared but one of "
+                    "note's resources has non-empty guid"));
+                if (resource.attributes() &&
+                    resource.attributes()->fileName()) {
+                    errorDescription.details() =
+                        *resource.attributes()->fileName();
+                }
+
+                QNWARNING("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+        }
+    }
+
+    static const QString queryString = QStringLiteral(
+        "UPDATE Notes SET guid = NULL WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot clear guid from note: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localUid"), note.localId());
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot clear guid from note"),
+        false);
+
+    return true;
+}
 
 } // namespace
 
@@ -2419,17 +2504,212 @@ bool putResourceAttributesAppDataFullMap(
     return true;
 }
 
+bool putCommonNoteData(
+    const qevercloud::Note & note, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(note)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool putNoteRestrictions(
+    const QString & noteLocalId,
+    const qevercloud::NoteRestrictions & restrictions, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(restrictions)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool putNoteLimits(
+    const QString & noteLocalId,
+    const qevercloud::NoteLimits & limits, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    // TODO: implement
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(limits)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool putSharedNotes(
+    const qevercloud::Guid & noteGuid,
+    const QList<qevercloud::SharedNote> & sharedNotes, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    if (sharedNotes.isEmpty()) {
+        return true;
+    }
+
+    // TODO: implement
+    Q_UNUSED(noteGuid)
+    Q_UNUSED(sharedNotes)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
     QSqlDatabase & database, ErrorString & errorDescription,
     PutNoteOptions putNoteOptions, TransactionOption transactionOption)
 {
-    // TODO: implement
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "putNote: "
+            << note << ", put resource metadata: "
+            << (putNoteOptions.testFlag(PutNoteOption::PutResourceMetadata)
+                    ? "yes"
+                    : "no")
+            << ", put resource binary data: "
+            << (putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData)
+                    ? "yes"
+                    : "no")
+            << ", put tag ids: "
+            << (putNoteOptions.testFlag(PutNoteOption::PutTagIds) ? "yes"
+                                                                  : "no")
+            << ", transaction option = " << transactionOption);
+
+    std::optional<Transaction> transaction;
+    if (transactionOption == TransactionOption::UseSeparateTransaction) {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
+
+    const ErrorString errorPrefix(QT_TRANSLATE_NOOP(
+        "local_storage::sql::utils",
+        "Can't put note into the local storage database"));
+
+    ErrorString error;
+    QString notebookLocalId = utils::notebookLocalId(note, database, error);
+    if (notebookLocalId.isEmpty()) {
+        errorDescription.base() = errorPrefix.base();
+        if (error.isEmpty()) {
+            error.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "cannot find notebook local id corresponding to note"));
+        }
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << ", note: " << note);
+        return false;
+    }
+
+    const auto composeFullError = [&]
+    {
+        errorDescription.base() = errorPrefix.base();
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << ", note: " << note);
+    };
+
+    error.clear();
+    QString notebookGuid = utils::notebookGuid(note, database, error);
+    if (notebookGuid.isEmpty() && !error.isEmpty()) {
+        composeFullError();
+        return false;
+    }
+
+    if (notebookGuid.isEmpty()) {
+        note.setNotebookGuid(std::nullopt);
+    }
+    else {
+        note.setNotebookGuid(std::move(notebookGuid));
+    }
+
+    error.clear();
+    if (!checkNote(note, error)) {
+        composeFullError();
+        return false;
+    }
+
+    setNoteIdsToNoteResources(note);
+
+    QString previousNoteGuid;
+    if (!note.guid()) {
+        error.clear();
+        previousNoteGuid =
+            noteGuidByLocalId(note.localId(), database, error);
+        if (previousNoteGuid.isEmpty() && !error.isEmpty()) {
+            composeFullError();
+            return false;
+        }
+
+        if (!previousNoteGuid.isEmpty() &&
+            !clearNoteGuid(putNoteOptions, note, database, error))
+        {
+            composeFullError();
+            return false;
+        }
+    }
+
+    error.clear();
+    if (!putCommonNoteData(note, database, error)) {
+        composeFullError();
+        return false;
+    }
+
+    error.clear();
+    if (note.restrictions()) {
+        if (!putNoteRestrictions(
+                note.localId(), *note.restrictions(), database, error)) {
+            composeFullError();
+            return false;
+        }
+    }
+    else if (!removeNoteRestrictions(note.localId(), database, error)) {
+        composeFullError();
+        return false;
+    }
+
+    error.clear();
+    if (note.limits()) {
+        if (!putNoteLimits(note.localId(), *note.limits(), database, error)) {
+            composeFullError();
+            return false;
+        }
+    }
+    else if (!removeNoteLimits(note.localId(), database, error)) {
+        composeFullError();
+        return false;
+    }
+
+    if (!note.guid() && !previousNoteGuid.isEmpty()) {
+        if (!removeSharedNotes(previousNoteGuid, database, error)) {
+            composeFullError();
+            return false;
+        }
+    }
+    else if (note.guid()) {
+        if (!removeSharedNotes(*note.guid(), database, error)) {
+            composeFullError();
+            return false;
+        }
+
+        if (note.sharedNotes()) {
+            if (!putSharedNotes(
+                    *note.guid(), *note.sharedNotes(), database, error)) {
+                composeFullError();
+                return false;
+            }
+        }
+    }
+
+    // TODO: implement further
     Q_UNUSED(localStorageDir)
-    Q_UNUSED(note)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
-    Q_UNUSED(putNoteOptions)
-    Q_UNUSED(transactionOption)
     return true;
 }
 

@@ -52,7 +52,7 @@ ConnectionPool::ConnectionPool(
     if (Q_UNLIKELY(!isSqlDriverAvailable)) {
         ErrorString error(QT_TRANSLATE_NOOP(
             "quentier::local_storage::sql::ConnectionPool",
-            "SQLdatabase driver is not available"));
+            "SQL database driver is not available"));
 
         error.details() += m_sqlDriverName;
         error.details() += QStringLiteral("; available SQL drivers: ");

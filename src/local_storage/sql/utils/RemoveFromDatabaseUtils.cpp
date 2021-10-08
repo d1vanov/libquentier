@@ -384,4 +384,34 @@ bool removeResourceAttributesAppDataFullMap(
     return true;
 }
 
+bool removeNoteRestrictions(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool removeNoteLimits(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    Q_UNUSED(noteLocalId)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
+bool removeSharedNotes(
+    const qevercloud::Guid & noteGuid, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    Q_UNUSED(noteGuid)
+    Q_UNUSED(database)
+    Q_UNUSED(errorDescription)
+    return true;
+}
+
 } // namespace quentier::local_storage::sql::utils

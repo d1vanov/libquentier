@@ -18,8 +18,9 @@
 
 #pragma once
 
+#include <qevercloud/types/TypeAliases.h>
+
 class QSqlDatabase;
-class QString;
 
 namespace quentier {
 
@@ -71,6 +72,18 @@ namespace quentier::local_storage::sql::utils {
 
 [[nodiscard]] bool removeResourceAttributesAppDataFullMap(
     const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeNoteRestrictions(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeNoteLimits(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] bool removeSharedNotes(
+    const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 } // namespace quentier::local_storage::sql::utils
