@@ -22,18 +22,25 @@
 
 #include <QCoreApplication>
 #include <QDeadlineTimer>
-#include <QEventLoop>
-#include <QMutex>
+#include <QFuture>
+#include <QFutureSynchronizer>
 #include <QSemaphore>
 #include <QSqlDatabase>
 #include <QThread>
-#include <QWaitCondition>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <utility/Qt5Promise.h>
+#endif
 
 #include <gtest/gtest.h>
 
 #include <array>
 #include <chrono>
 #include <cstddef>
+
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -76,12 +83,6 @@ TEST(ConnectionPoolTest, CreateConnectionForCurrentThread)
 
 TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
 {
-    QMutex threadMutex;
-    QWaitCondition threadWaitCond;
-
-    QMutex mainMutex;
-    QWaitCondition mainWaitCond;
-
     const auto pool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), QStringLiteral("user"),
         QStringLiteral("password"), QStringLiteral("database"),
@@ -90,52 +91,78 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
     const std::size_t threadCount = 3;
     QSemaphore threadSemaphore{static_cast<int>(threadCount)};
 
-    const auto threadFunc = [&]
+    std::array<QPromise<void>, threadCount> threadReadyPromises;
+    for (auto & promise: threadReadyPromises) {
+        promise.start();
+    }
+
+    std::array<QPromise<void>, threadCount> threadWaitPromises;
+    for (auto & promise: threadWaitPromises) {
+        promise.start();
+    }
+
+    const auto makeThreadFunc = [&](const std::size_t index)
     {
-        Q_UNUSED(pool->database());
-        threadSemaphore.acquire();
+        return [&, index]
+        {
+            Q_UNUSED(pool->database());
+            ASSERT_TRUE(threadSemaphore.tryAcquire());
 
-        mainWaitCond.notify_one();
-
-        threadMutex.lock();
-        EXPECT_TRUE(threadWaitCond.wait(&threadMutex));
-
-        threadMutex.unlock();
+            threadReadyPromises[index].finish();
+            threadWaitPromises[index].future().waitForFinished();
+        };
     };
 
     std::array<QThread*, threadCount> threads;
     for (std::size_t i = 0; i < threadCount; ++i)
     {
-        threads[i] = QThread::create(threadFunc);
+        threads[i] = QThread::create(makeThreadFunc(i));
         threads[i]->start();
     }
 
-    // Waiting for all threads to establish the connection
-    for (;;) {
-        if (threadSemaphore.available() == 0) {
-            const auto connectionNames = QSqlDatabase::connectionNames();
-            EXPECT_EQ(connectionNames.size(), static_cast<int>(threadCount));
-
-            threadWaitCond.notify_all();
-            break;
-        }
-
-        mainMutex.lock();
-        mainWaitCond.wait(&mainMutex);
-        mainMutex.unlock();
+    // Wait for all threads to create their DB connections
+    QFutureSynchronizer<void> threadReadyFutureSynchronizer;
+    for (std::size_t i = 0; i < threadCount; ++i) {
+        threadReadyFutureSynchronizer.addFuture(threadReadyPromises[i].future());
     }
 
-    // Wait for all threads to finish
-    for (std::size_t i = 0; i < threadCount; ++i)
+    EXPECT_EQ(threadReadyFutureSynchronizer.futures().size(), static_cast<int>(threadCount));
+    threadReadyFutureSynchronizer.waitForFinished();
+
+    // Now each thread should have its own DB connection
+    EXPECT_EQ(threadSemaphore.available(), 0);
+
+    // Wait for database connections to appear in the list of connection names
+    // It should really be synchronous but it appears that somewhere in the gory
+    // guts of Qt it is actually asynchronous
+    const int maxIterations = 500;
+    bool gotExpectedConnectionNames = false;
+    for (int i = 0; i < maxIterations; ++i)
     {
+        auto connectionNames = QSqlDatabase::connectionNames();
+        if (connectionNames.size() != static_cast<int>(threadCount)) {
+            QThread::msleep(50);
+            continue;
+        }
+
+        gotExpectedConnectionNames = true;
+        break;
+    }
+
+    EXPECT_TRUE(gotExpectedConnectionNames);
+
+    // Let the threads finish
+    for (std::size_t i = 0; i < threadCount; ++i) {
+        threadWaitPromises[i].finish();
         threads[i]->wait();
+        threads[i]->deleteLater();
+        threads[i] = nullptr;
     }
 
     // Give lambdas connected to threads finished signal a chance to fire
     QCoreApplication::processEvents();
 
     // Wait for database connections to close
-    const int maxIterations = 100;
     for (int i = 0; i < maxIterations; ++i)
     {
         const auto connectionNames = QSqlDatabase::connectionNames();
@@ -143,25 +170,16 @@ TEST(ConnectionPoolTest, CreateConnectionsForEachThread)
             break;
         }
 
-        mainMutex.lock();
-        mainWaitCond.wait(&mainMutex, QDeadlineTimer{std::chrono::milliseconds(100)});
-        mainMutex.unlock();
-
+        QThread::msleep(100);
         QCoreApplication::processEvents();
     }
 
-    const auto connectionNames = QSqlDatabase::connectionNames();
+    auto connectionNames = QSqlDatabase::connectionNames();
     EXPECT_TRUE(connectionNames.isEmpty());
 }
 
 TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
 {
-    QMutex threadMutex;
-    QWaitCondition threadWaitCond;
-
-    QMutex mainMutex;
-    QWaitCondition mainWaitCond;
-
     auto pool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), QStringLiteral("user"),
         QStringLiteral("password"), QStringLiteral("database"),
@@ -170,53 +188,82 @@ TEST(ConnectionPoolTest, RemoveConnectionsInDestructor)
     const std::size_t threadCount = 3;
     QSemaphore threadSemaphore{static_cast<int>(threadCount)};
 
-    const auto threadFunc = [&]
+    std::array<QPromise<void>, threadCount> threadReadyPromises;
+    for (auto & promise: threadReadyPromises) {
+        promise.start();
+    }
+
+    std::array<QPromise<void>, threadCount> threadWaitPromises;
+    for (auto & promise: threadWaitPromises) {
+        promise.start();
+    }
+
+    const auto makeThreadFunc = [&](const std::size_t index)
     {
-        Q_UNUSED(pool->database());
-        threadSemaphore.acquire();
+        return [&, index]
+        {
+            Q_UNUSED(pool->database());
+            ASSERT_TRUE(threadSemaphore.tryAcquire());
 
-        mainWaitCond.notify_one();
-
-        threadMutex.lock();
-        EXPECT_TRUE(threadWaitCond.wait(&threadMutex));
-
-        threadMutex.unlock();
+            threadReadyPromises[index].finish();
+            threadWaitPromises[index].future().waitForFinished();
+        };
     };
 
     std::array<QThread*, threadCount> threads;
     for (std::size_t i = 0; i < threadCount; ++i)
     {
-        threads[i] = QThread::create(threadFunc);
+        threads[i] = QThread::create(makeThreadFunc(i));
         threads[i]->start();
     }
 
-    // Waiting for all threads to establish the connection
-    for (;;) {
-        if (threadSemaphore.available() == 0) {
-            const auto connectionNames = QSqlDatabase::connectionNames();
-            EXPECT_EQ(connectionNames.size(), static_cast<int>(threadCount));
-            break;
-        }
-
-        mainMutex.lock();
-        mainWaitCond.wait(&mainMutex);
-        mainMutex.unlock();
+    // Wait for all threads to create their DB connections
+    QFutureSynchronizer<void> threadReadyFutureSynchronizer;
+    for (std::size_t i = 0; i < threadCount; ++i) {
+        threadReadyFutureSynchronizer.addFuture(threadReadyPromises[i].future());
     }
 
-    // Now threads are waiting. Destroying the pool and verifying that
-    // connections are gone
+    EXPECT_EQ(threadReadyFutureSynchronizer.futures().size(), static_cast<int>(threadCount));
+    threadReadyFutureSynchronizer.waitForFinished();
+
+    // Now each thread should have its own DB connection
+    EXPECT_EQ(threadSemaphore.available(), 0);
+
+    // Wait for database connections to appear in the list of connection names
+    // It should really be synchronous but it appears that somewhere in the gory
+    // guts of Qt it is actually asynchronous
+    const int maxIterations = 500;
+    bool gotExpectedConnectionNames = false;
+    for (int i = 0; i < maxIterations; ++i)
+    {
+        auto connectionNames = QSqlDatabase::connectionNames();
+        if (connectionNames.size() != static_cast<int>(threadCount)) {
+            QThread::msleep(50);
+            continue;
+        }
+
+        gotExpectedConnectionNames = true;
+        break;
+    }
+
+    EXPECT_TRUE(gotExpectedConnectionNames);
+
+    // Destroying the pool and verifying that connections are gone
     pool.reset();
 
-    const auto connectionNames = QSqlDatabase::connectionNames();
+    auto connectionNames = QSqlDatabase::connectionNames();
     EXPECT_TRUE(connectionNames.isEmpty());
 
-    // Can finish threads now
-    threadWaitCond.notify_all();
+    // Can let the threads finish now
+    for (std::size_t i = 0; i < threadCount; ++i) {
+        threadWaitPromises[i].finish();
+    }
 
     // Wait for all threads to finish
     for (std::size_t i = 0; i < threadCount; ++i)
     {
         threads[i]->wait();
+        threads[i]->deleteLater();
     }
 }
 
