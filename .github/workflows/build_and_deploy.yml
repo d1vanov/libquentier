@@ -433,7 +433,10 @@ jobs:
         id: test
         run: |
           cd $GITHUB_WORKSPACE/build
+          source /opt/qt512/bin/qt512-env.sh
           xvfb-run ./test_libquentier -platform minimal
+        env:
+          LD_LIBRARY_PATH: /opt/qt512/lib
 
       - name: Update translations
         id: update_translations
