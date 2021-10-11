@@ -147,8 +147,8 @@ enum class PutResourceMetadataOption
     QSqlDatabase & database, ErrorString & errorDescription);
 
 [[nodiscard]] bool putCommonNoteData(
-    const qevercloud::Note & note, QSqlDatabase & database,
-    ErrorString & errorDescription);
+    const qevercloud::Note & note, const QString & notebookLocalId,
+    QSqlDatabase & database, ErrorString & errorDescription);
 
 [[nodiscard]] bool putNoteRestrictions(
     const QString & noteLocalId,

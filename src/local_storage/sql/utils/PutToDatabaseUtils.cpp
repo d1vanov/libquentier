@@ -29,6 +29,7 @@
 #include "../TypeChecks.h"
 
 #include <quentier/types/ErrorString.h>
+#include <quentier/types/NoteUtils.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -133,6 +134,228 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
         false);
 
     return true;
+}
+
+void bindNoteApplicationData(
+    const qevercloud::LazyMap & applicationData, QSqlQuery & query)
+{
+    if (applicationData.keysOnly()) {
+        const QSet<QString> & keysOnly = *applicationData.keysOnly();
+        QString keysOnlyString;
+        QTextStream strm{&keysOnlyString};
+
+        for (const auto & key: keysOnly) {
+            strm << "'" << key << "'";
+        }
+
+        query.bindValue(
+            QStringLiteral(":applicationDataKeysOnly"),
+            keysOnlyString);
+    }
+    else {
+        query.bindValue(
+            QStringLiteral(":applicationDataKeysOnly"), *gNullValue);
+    }
+
+    if (applicationData.fullMap()) {
+        const QMap<QString, QString> & fullMap = *applicationData.fullMap();
+        QString fullMapKeysString;
+        QTextStream fullMapKeysStrm{&fullMapKeysString};
+
+        QString fullMapValuesString;
+        QTextStream fullMapValuesStrm{&fullMapValuesString};
+
+        for (const auto it: qevercloud::toRange(fullMap)) {
+            fullMapKeysStrm << "'" << it.key() << "'";
+            fullMapValuesStrm << "'" << it.value() << "'";
+        }
+
+        query.bindValue(
+            QStringLiteral(":applicationDataKeysMap"),
+            fullMapKeysString);
+
+        query.bindValue(
+            QStringLiteral(":applicationDataValues"),
+            fullMapValuesString);
+    }
+    else {
+        query.bindValue(
+            QStringLiteral(":applicationDataKeysMap"), *gNullValue);
+
+        query.bindValue(
+            QStringLiteral(":applicationDataValues"), *gNullValue);
+    }
+}
+
+void bindNullNoteApplicationData(QSqlQuery & query)
+{
+    query.bindValue(QStringLiteral(":applicationDataKeysOnly"), *gNullValue);
+    query.bindValue(QStringLiteral(":applicationDataKeysMap"), *gNullValue);
+    query.bindValue(QStringLiteral(":applicationDataValues"), *gNullValue);
+}
+
+void bindNoteClassifications(
+    const QMap<QString, QString> & classifications, QSqlQuery & query)
+{
+    QString classificationKeys;
+    QTextStream keysStrm{&classificationKeys};
+
+    QString classificationValues;
+    QTextStream valuesStrm{&classificationValues};
+
+    for (const auto it: qevercloud::toRange(classifications)) {
+        keysStrm << "'" << it.key() << "'";
+        valuesStrm << "'" << it.value() << "'";
+    }
+
+    query.bindValue(
+        QStringLiteral(":classificationKeys"), classificationKeys);
+
+    query.bindValue(
+        QStringLiteral(":classificationValues"),
+        classificationValues);
+}
+
+void bindNullNoteClassifications(QSqlQuery & query)
+{
+    query.bindValue(QStringLiteral(":classificationKeys"), *gNullValue);
+    query.bindValue(QStringLiteral(":classificationValues"), *gNullValue);
+}
+
+void bindNoteAttributes(
+    const qevercloud::NoteAttributes & attributes, QSqlQuery & query)
+{
+    const auto bindAttribute = [&](const QString & name, auto getter)
+    {
+        const auto value = getter();
+        query.bindValue(name, value ? *value : *gNullValue);
+    };
+
+    bindAttribute(QStringLiteral(":subjectDate"), [&] {
+        return attributes.subjectDate();
+    });
+
+    bindAttribute(QStringLiteral(":latitude"), [&] {
+        return attributes.latitude();
+    });
+
+    bindAttribute(QStringLiteral(":longitude"), [&] {
+        return attributes.longitude();
+    });
+
+    bindAttribute(QStringLiteral(":altitude"), [&] {
+        return attributes.altitude();
+    });
+
+    bindAttribute(QStringLiteral(":author"), [&] {
+        return attributes.author();
+    });
+
+    bindAttribute(QStringLiteral(":source"), [&] {
+        return attributes.source();
+    });
+
+    bindAttribute(QStringLiteral(":sourceURL"), [&] {
+        return attributes.sourceURL();
+    });
+
+    bindAttribute(QStringLiteral(":sourceApplication"), [&] {
+        return attributes.sourceApplication();
+    });
+
+    bindAttribute(QStringLiteral(":shareDate"), [&] {
+        return attributes.shareDate();
+    });
+
+    bindAttribute(QStringLiteral(":reminderOrder"), [&] {
+        return attributes.reminderOrder();
+    });
+
+    bindAttribute(QStringLiteral(":reminderDoneTime"), [&] {
+        return attributes.reminderDoneTime();
+    });
+
+    bindAttribute(QStringLiteral(":reminderTime"), [&] {
+        return attributes.reminderTime();
+    });
+
+    bindAttribute(QStringLiteral(":placeName"), [&] {
+        return attributes.placeName();
+    });
+
+    bindAttribute(QStringLiteral(":contentClass"), [&] {
+        return attributes.contentClass();
+    });
+
+    bindAttribute(QStringLiteral(":lastEditedBy"), [&] {
+        return attributes.lastEditedBy();
+    });
+
+    bindAttribute(QStringLiteral(":creatorId"), [&] {
+        return attributes.creatorId();
+    });
+
+    bindAttribute(QStringLiteral(":lastEditorId"), [&] {
+        return attributes.lastEditorId();
+    });
+
+    bindAttribute(QStringLiteral(":sharedWithBusiness"), [&] {
+        return attributes.sharedWithBusiness();
+    });
+
+    bindAttribute(QStringLiteral(":conflictSourceNoteGuid"), [&] {
+        return attributes.conflictSourceNoteGuid();
+    });
+
+    bindAttribute(QStringLiteral(":noteTitleQuality"), [&] {
+        return attributes.noteTitleQuality();
+    });
+
+    if (attributes.applicationData()) {
+        bindNoteApplicationData(*attributes.applicationData(), query);
+    }
+    else {
+        bindNullNoteApplicationData(query);
+    }
+
+    if (attributes.classifications()) {
+        bindNoteClassifications(*attributes.classifications(), query);
+    }
+    else {
+        bindNullNoteClassifications(query);
+    }
+}
+
+void bindNullNoteAttributes(QSqlQuery & query)
+{
+    const auto bindNullAttribute = [&](const QString & name)
+    {
+        query.bindValue(name, *gNullValue);
+    };
+
+    bindNullAttribute(QStringLiteral(":subjectDate"));
+    bindNullAttribute(QStringLiteral(":latitude"));
+    bindNullAttribute(QStringLiteral(":longitude"));
+    bindNullAttribute(QStringLiteral(":altitude"));
+    bindNullAttribute(QStringLiteral(":author"));
+    bindNullAttribute(QStringLiteral(":source"));
+    bindNullAttribute(QStringLiteral(":sourceURL"));
+    bindNullAttribute(QStringLiteral(":sourceApplication"));
+    bindNullAttribute(QStringLiteral(":shareDate"));
+    bindNullAttribute(QStringLiteral(":reminderOrder"));
+    bindNullAttribute(QStringLiteral(":reminderDoneTime"));
+    bindNullAttribute(QStringLiteral(":reminderTime"));
+    bindNullAttribute(QStringLiteral(":placeName"));
+    bindNullAttribute(QStringLiteral(":contentClass"));
+    bindNullAttribute(QStringLiteral(":lastEditedBy"));
+    bindNullAttribute(QStringLiteral(":creatorId"));
+    bindNullAttribute(QStringLiteral(":lastEditorId"));
+    bindNullAttribute(QStringLiteral(":sharedWithBusiness"));
+    bindNullAttribute(QStringLiteral(":conflictSourceNoteGuid"));
+    bindNullAttribute(QStringLiteral(":noteTitleQuality"));
+
+    bindNullNoteApplicationData(query);
+    bindNullNoteClassifications(query);
 }
 
 } // namespace
@@ -2505,13 +2728,216 @@ bool putResourceAttributesAppDataFullMap(
 }
 
 bool putCommonNoteData(
-    const qevercloud::Note & note, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    const qevercloud::Note & note, const QString & notebookLocalId,
+    QSqlDatabase & database, ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(note)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO Notes("
+        "localUid, guid, updateSequenceNumber, isDirty, "
+        "isLocal, isFavorited, title, titleNormalized, content, "
+        "contentLength, contentHash, contentPlainText, "
+        "contentListOfWords, contentContainsFinishedToDo, "
+        "contentContainsUnfinishedToDo, "
+        "contentContainsEncryption, creationTimestamp, "
+        "modificationTimestamp, deletionTimestamp, isActive, "
+        "hasAttributes, thumbnail, notebookLocalUid, notebookGuid, "
+        "subjectDate, latitude, longitude, altitude, author, "
+        "source, sourceURL, sourceApplication, shareDate, "
+        "reminderOrder, reminderDoneTime, reminderTime, placeName, "
+        "contentClass, lastEditedBy, creatorId, lastEditorId, "
+        "sharedWithBusiness, conflictSourceNoteGuid, "
+        "noteTitleQuality, applicationDataKeysOnly, "
+        "applicationDataKeysMap, applicationDataValues, "
+        "classificationKeys, classificationValues) VALUES("
+        ":localUid, :guid, :updateSequenceNumber, :isDirty, "
+        ":isLocal, :isFavorited, :title, :titleNormalized, "
+        ":content, :contentLength, :contentHash, "
+        ":contentPlainText, :contentListOfWords, "
+        ":contentContainsFinishedToDo, "
+        ":contentContainsUnfinishedToDo, "
+        ":contentContainsEncryption, :creationTimestamp, "
+        ":modificationTimestamp, :deletionTimestamp, :isActive, "
+        ":hasAttributes, :thumbnail, :notebookLocalUid, "
+        ":notebookGuid, :subjectDate, :latitude, :longitude, "
+        ":altitude, :author, :source, :sourceURL, "
+        ":sourceApplication, :shareDate, :reminderOrder, "
+        ":reminderDoneTime, :reminderTime, :placeName, "
+        ":contentClass, :lastEditedBy, :creatorId, :lastEditorId, "
+        ":sharedWithBusiness, :conflictSourceNoteGuid, "
+        ":noteTitleQuality, :applicationDataKeysOnly, "
+        ":applicationDataKeysMap, :applicationDataValues, "
+        ":classificationKeys, :classificationValues)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put common note data into the locla storage database: "
+            "failed to prepare query"),
+        false);
+
+    StringUtils stringUtils;
+
+    const QString titleNormalized = [&]
+    {
+        if (!note.title()) {
+            return QString{};
+        }
+
+        auto title = note.title()->toLower();
+        stringUtils.removeDiacritics(title);
+        return title;
+    }();
+
+    query.bindValue(QStringLiteral(":localUid"), note.localId());
+
+    query.bindValue(
+        QStringLiteral(":guid"), (note.guid() ? *note.guid() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":updateSequenceNumber"),
+        (note.updateSequenceNum() ? *note.updateSequenceNum() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isDirty"), (note.isLocallyModified() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":isLocal"), (note.isLocalOnly() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":isFavorited"),
+        (note.isLocallyFavorited() ? 1 : 0));
+
+    query.bindValue(
+        QStringLiteral(":title"),
+        (note.title() ? *note.title() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":titleNormalized"),
+        (titleNormalized.isEmpty() ? *gNullValue : titleNormalized));
+
+    query.bindValue(
+        QStringLiteral(":content"),
+        (note.content() ? *note.content() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":contentLength"),
+        (note.contentLength() ? *note.contentLength() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":contentHash"),
+        (note.contentHash() ? *note.contentHash() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":contentContainsFinishedToDo"),
+        (note.content() ? static_cast<int>(noteContentContainsCheckedToDo(
+                    *note.content()))
+            : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":contentContainsUnfinishedToDo"),
+        (note.content() ? static_cast<int>(noteContentContainsUncheckedToDo(
+                    *note.content()))
+            : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":contentContainsEncryption"),
+        (note.content()
+         ? static_cast<int>(
+             noteContentContainsEncryptedFragments(*note.content()))
+         : *gNullValue));
+
+    if (note.content()) {
+        ErrorString error;
+
+        const auto plainTextAndListOfWords =
+            noteContentToPlainTextAndListOfWords(*note.content(), &error);
+
+        if (!error.isEmpty()) {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "can't get note's plain text and list of words"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING(
+                "local_storage::sql::utils",
+                errorDescription << ", note: " << note);
+            return false;
+        }
+
+        QString listOfWords =
+            plainTextAndListOfWords.second.join(QStringLiteral(" "));
+
+        stringUtils.removePunctuation(listOfWords);
+        listOfWords = listOfWords.toLower();
+        stringUtils.removeDiacritics(listOfWords);
+
+        query.bindValue(
+            QStringLiteral(":contentPlainText"),
+            (plainTextAndListOfWords.first.isEmpty()
+             ? *gNullValue
+             : plainTextAndListOfWords.first));
+
+        query.bindValue(
+            QStringLiteral(":contentListOfWords"),
+            (listOfWords.isEmpty() ? *gNullValue : listOfWords));
+    }
+    else {
+        query.bindValue(QStringLiteral(":contentPlainText"), *gNullValue);
+        query.bindValue(QStringLiteral(":contentListOfWords"), *gNullValue);
+    }
+
+    query.bindValue(
+        QStringLiteral(":creationTimestamp"),
+        (note.created() ? *note.created() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":modificationTimestamp"),
+        (note.updated() ? *note.updated() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":deletionTimestamp"),
+        (note.deleted() ? *note.deleted() : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":isActive"),
+        (note.active() ? (*note.active() ? 1 : 0) : *gNullValue));
+
+    query.bindValue(
+        QStringLiteral(":hasAttributes"), (note.attributes() ? 1 : 0));
+
+    const QByteArray thumbnailData = note.thumbnailData();
+
+    query.bindValue(
+        QStringLiteral(":thumbnail"),
+        (thumbnailData.isEmpty() ? *gNullValue : thumbnailData));
+
+    query.bindValue(
+        QStringLiteral(":notebookLocalUid"),
+        (notebookLocalId.isEmpty() ? *gNullValue : notebookLocalId));
+
+    query.bindValue(
+        QStringLiteral(":notebookGuid"),
+        (note.notebookGuid() ? *note.notebookGuid() : *gNullValue));
+
+    if (note.attributes()) {
+        bindNoteAttributes(*note.attributes(), query);
+    }
+    else {
+        bindNullNoteAttributes(query);
+    }
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put common note data into the locla storage database"),
+        false);
+
     return true;
 }
 
@@ -2657,7 +3083,7 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
     }
 
     error.clear();
-    if (!putCommonNoteData(note, database, error)) {
+    if (!putCommonNoteData(note, notebookLocalId, database, error)) {
         composeFullError();
         return false;
     }
