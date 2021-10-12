@@ -2946,11 +2946,60 @@ bool putNoteRestrictions(
     const qevercloud::NoteRestrictions & restrictions, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(restrictions)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NoteRestrictions "
+        "(noteLocalUid, noUpdateNoteTitle, noUpdateNoteContent, "
+        "noEmailNote, noShareNote, noShareNotePublicly) "
+        "VALUES(:noteLocalUid, :noUpdateNoteTitle, "
+        ":noUpdateNoteContent, :noEmailNote, "
+        ":noShareNote, :noShareNotePublicly)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put note restrictions into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    const auto bindRestriction = [&](const QString & column, auto getter)
+    {
+        auto value = getter();
+        query.bindValue(column, (value ? (*value ? 1 : 0) : *gNullValue));
+    };
+
+    bindRestriction(QStringLiteral(":noUpdateNoteTitle"), [&] {
+        return restrictions.noUpdateTitle();
+    });
+
+    bindRestriction(QStringLiteral(":noUpdateNoteContent"), [&] {
+        return restrictions.noUpdateContent();
+    });
+
+    bindRestriction(QStringLiteral(":noEmailNote"), [&] {
+        return restrictions.noEmail();
+    });
+
+    bindRestriction(QStringLiteral(":noShareNote"), [&] {
+        return restrictions.noShare();
+    });
+
+    bindRestriction(QStringLiteral(":noShareNotePublicly"), [&] {
+        return restrictions.noSharePublicly();
+    });
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put note restrictions into the local storage database"),
+        false);
+
     return true;
 }
 
@@ -2959,11 +3008,59 @@ bool putNoteLimits(
     const qevercloud::NoteLimits & limits, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(limits)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NoteLimits "
+        "(noteLocalUid, noteResourceCountMax, uploadLimit, "
+        "resourceSizeMax, noteSizeMax, uploaded) "
+        "VALUES(:noteLocalUid, :noteResourceCountMax, "
+        ":uploadLimit, :resourceSizeMax, :noteSizeMax, :uploaded)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put note limits into the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    const auto bindLimit = [&](const QString & column, auto getter)
+    {
+        auto value = getter();
+        query.bindValue(column, value ? *value : *gNullValue);
+    };
+
+    bindLimit(QStringLiteral(":noteResourceCountMax"), [&] {
+        return limits.noteResourceCountMax();
+    });
+
+    bindLimit(QStringLiteral(":uploadLimit"), [&] {
+        return limits.uploadLimit();
+    });
+
+    bindLimit(QStringLiteral(":resourceSizeMax"), [&] {
+        return limits.resourceSizeMax();
+    });
+
+    bindLimit(QStringLiteral(":noteSizeMax"), [&] {
+        return limits.noteSizeMax();
+    });
+
+    bindLimit(QStringLiteral(":uploaded"), [&] {
+        return limits.uploaded();
+    });
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put note limits into the local storage database"),
+        false);
+
     return true;
 }
 
@@ -2976,11 +3073,207 @@ bool putSharedNotes(
         return true;
     }
 
-    // TODO: implement
-    Q_UNUSED(noteGuid)
-    Q_UNUSED(sharedNotes)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO SharedNotes ("
+        "sharedNoteNoteGuid, "
+        "sharedNoteSharerUserId, "
+        "sharedNoteRecipientIdentityId, "
+        "sharedNoteRecipientContactName, "
+        "sharedNoteRecipientContactId, "
+        "sharedNoteRecipientContactType, "
+        "sharedNoteRecipientContactPhotoUrl, "
+        "sharedNoteRecipientContactPhotoLastUpdated, "
+        "sharedNoteRecipientContactMessagingPermit, "
+        "sharedNoteRecipientContactMessagingPermitExpires, "
+        "sharedNoteRecipientUserId, "
+        "sharedNoteRecipientDeactivated, "
+        "sharedNoteRecipientSameBusiness, "
+        "sharedNoteRecipientBlocked, "
+        "sharedNoteRecipientUserConnected, "
+        "sharedNoteRecipientEventId, "
+        "sharedNotePrivilegeLevel, "
+        "sharedNoteCreationTimestamp, "
+        "sharedNoteModificationTimestamp, "
+        "sharedNoteAssignmentTimestamp, "
+        "indexInNote) "
+        "VALUES("
+        ":sharedNoteNoteGuid, "
+        ":sharedNoteSharerUserId, "
+        ":sharedNoteRecipientIdentityId, "
+        ":sharedNoteRecipientContactName, "
+        ":sharedNoteRecipientContactId, "
+        ":sharedNoteRecipientContactType, "
+        ":sharedNoteRecipientContactPhotoUrl, "
+        ":sharedNoteRecipientContactPhotoLastUpdated, "
+        ":sharedNoteRecipientContactMessagingPermit, "
+        ":sharedNoteRecipientContactMessagingPermitExpires, "
+        ":sharedNoteRecipientUserId, "
+        ":sharedNoteRecipientDeactivated, "
+        ":sharedNoteRecipientSameBusiness, "
+        ":sharedNoteRecipientBlocked, "
+        ":sharedNoteRecipientUserConnected, "
+        ":sharedNoteRecipientEventId, "
+        ":sharedNotePrivilegeLevel, "
+        ":sharedNoteCreationTimestamp, "
+        ":sharedNoteModificationTimestamp, "
+        ":sharedNoteAssignmentTimestamp, "
+        ":indexInNote)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't put shared note into the local storage database: failed to "
+            "prepare query"),
+        false);
+
+    int indexInNote = 0;
+    for (const auto & sharedNote: qAsConst(sharedNotes))
+    {
+        query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteSharerUserId"),
+            (sharedNote.sharerUserID() ? *sharedNote.sharerUserID()
+                                       : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientIdentityId"),
+            (sharedNote.recipientIdentity()
+                 ? sharedNote.recipientIdentity()->id()
+                 : *gNullValue));
+
+        const std::optional<qevercloud::Contact> & contact =
+            (sharedNote.recipientIdentity()
+                 ? sharedNote.recipientIdentity()->contact()
+                 : std::nullopt);
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactName"),
+            (contact ? contact->name().value_or(QString{}) : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactId"),
+            (contact ? contact->id().value_or(QString{}) : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactType"),
+            (contact ? (contact->type() ? static_cast<int>(*contact->type())
+                                        : *gNullValue)
+                     : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactPhotoUrl"),
+            (contact ? contact->photoUrl().value_or(QString{}) : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactPhotoLastUpdated"),
+            (contact
+                 ? (contact->photoLastUpdated() ? *contact->photoLastUpdated()
+                                                : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactMessagingPermit"),
+            (contact ? (contact->messagingPermit() ? *contact->messagingPermit()
+                                                   : *gNullValue)
+                     : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientContactMessagingPermitExpires"),
+            (contact ? (contact->messagingPermitExpires()
+                            ? *contact->messagingPermitExpires()
+                            : *gNullValue)
+                     : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientUserId"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->userId()
+                        ? *sharedNote.recipientIdentity()->userId()
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientDeactivated"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->deactivated()
+                        ? static_cast<int>(
+                              *sharedNote.recipientIdentity()->deactivated())
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientSameBusiness"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->sameBusiness()
+                        ? static_cast<int>(
+                              *sharedNote.recipientIdentity()->sameBusiness())
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientBlocked"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->blocked()
+                        ? static_cast<int>(
+                              *sharedNote.recipientIdentity()->blocked())
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientUserConnected"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->userConnected()
+                        ? static_cast<int>(
+                              *sharedNote.recipientIdentity()->userConnected())
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteRecipientEventId"),
+            (sharedNote.recipientIdentity()
+                 ? (sharedNote.recipientIdentity()->eventId()
+                        ? static_cast<int>(
+                              *sharedNote.recipientIdentity()->eventId())
+                        : *gNullValue)
+                 : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNotePrivilegeLevel"),
+            (sharedNote.privilege() ? static_cast<int>(*sharedNote.privilege())
+                                    : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteCreationTimestamp"),
+            (sharedNote.serviceCreated() ? *sharedNote.serviceCreated()
+                                         : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteModificationTimestamp"),
+            (sharedNote.serviceUpdated() ? *sharedNote.serviceUpdated()
+                                         : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":sharedNoteAssignmentTimestamp"),
+            (sharedNote.serviceAssigned() ? *sharedNote.serviceAssigned()
+                                          : *gNullValue));
+
+        query.bindValue(QStringLiteral(":indexInNote"), indexInNote);
+
+        ++indexInNote;
+
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Can't put shared note into the local storage database"),
+            false);
+    }
+
     return true;
 }
 

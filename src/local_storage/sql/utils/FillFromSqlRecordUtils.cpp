@@ -444,11 +444,11 @@ void fillNoteAttributesApplicationDataKeysOnlyFromSqlRecord(
 
     bool applicationDataWasEmpty = !attributes.applicationData();
     if (applicationDataWasEmpty) {
-        attributes.setApplicationData(qevercloud::LazyMap());
+        attributes.setApplicationData(qevercloud::LazyMap{});
     }
 
     if (!attributes.applicationData()->keysOnly()) {
-        attributes.mutableApplicationData()->setKeysOnly(QSet<QString>());
+        attributes.mutableApplicationData()->setKeysOnly(QSet<QString>{});
     }
 
     QSet<QString> & keysOnly =
@@ -508,12 +508,12 @@ void fillNoteAttributesApplicationDataFullMapFromSqlRecord(
 
     const bool applicationDataWasEmpty = !attributes.applicationData();
     if (applicationDataWasEmpty) {
-        attributes.setApplicationData(qevercloud::LazyMap());
+        attributes.setApplicationData(qevercloud::LazyMap{});
     }
 
     if (!attributes.applicationData()->fullMap()) {
         attributes.mutableApplicationData()->setFullMap(
-            QMap<QString, QString>());
+            QMap<QString, QString>{});
     }
 
     QMap<QString, QString> & fullMap =

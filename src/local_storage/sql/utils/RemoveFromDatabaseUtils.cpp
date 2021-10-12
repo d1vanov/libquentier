@@ -388,6 +388,7 @@ bool removeNoteRestrictions(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    // TODO: implement
     Q_UNUSED(noteLocalId)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
@@ -398,6 +399,7 @@ bool removeNoteLimits(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    // TODO: implement
     Q_UNUSED(noteLocalId)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
@@ -408,6 +410,7 @@ bool removeSharedNotes(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    // TODO: implement
     Q_UNUSED(noteGuid)
     Q_UNUSED(database)
     Q_UNUSED(errorDescription)
