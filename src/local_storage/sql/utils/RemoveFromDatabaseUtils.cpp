@@ -388,10 +388,29 @@ bool removeNoteRestrictions(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM NoteRestrictions WHERE noteLocalUid = :noteLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove note restrictions from the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove note restrictions from the local storage database"),
+        false);
+
     return true;
 }
 
@@ -399,10 +418,29 @@ bool removeNoteLimits(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteLocalId)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM NoteLimits WHERE noteLocalUid = :noteLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove note limits from the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove note limits from the local storage database"),
+        false);
+
     return true;
 }
 
@@ -410,10 +448,30 @@ bool removeSharedNotes(
     const qevercloud::Guid & noteGuid, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
-    // TODO: implement
-    Q_UNUSED(noteGuid)
-    Q_UNUSED(database)
-    Q_UNUSED(errorDescription)
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM SharedNotes "
+        "WHERE sharedNoteNoteGuid = :sharedNoteNoteGuid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove shared notes from the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":sharedNoteNoteGuid"), noteGuid);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't remove shared notes from the local storage database"),
+        false);
+
     return true;
 }
 
