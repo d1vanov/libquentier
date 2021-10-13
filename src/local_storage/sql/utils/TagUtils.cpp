@@ -142,6 +142,49 @@ namespace quentier::local_storage::sql::utils {
     return {};
 }
 
+[[nodiscard]] std::optional<qevercloud::Guid> tagGuid(
+    const qevercloud::Tag & tag, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    if (tag.guid()) {
+        return tag.guid();
+    }
+
+    static const QString queryString = QStringLiteral(
+        "SELECT guid FROM Tags WHERE localUid = :localUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't find tag guid by local id in the local storage database: "
+            "failed to prepare query"),
+        std::nullopt);
+
+    query.bindValue(QStringLiteral(":localUid"), tag.localId());
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't find tag guid by local id in the local storage database"),
+        std::nullopt);
+
+    if (!query.next()) {
+        return std::nullopt;
+    }
+
+    auto guid = query.value(0).toString();
+    if (guid.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return guid;
+}
+
 bool complementTagParentInfo(
     qevercloud::Tag & tag, QSqlDatabase & database,
     ErrorString & errorDescription)

@@ -136,6 +136,149 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     return true;
 }
 
+bool clearNoteTagBindings(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE From NoteTags WHERE localNote = :localNote");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't clear note tags bindings in the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't clear note tags bindings in the local storage database"),
+        false);
+
+    return true;
+}
+
+struct NoteTagIds
+{
+    QStringList tagLocalIds;
+    QStringList tagGuids;
+};
+
+[[nodiscard]] std::optional<NoteTagIds> noteTagIds(
+    const qevercloud::Note & note, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    QStringList tagLocalIds = note.tagLocalIds();
+
+    const bool hasTagLocalIds = !tagLocalIds.isEmpty();
+    const bool hasTagGuids = (note.tagGuids() != std::nullopt);
+
+    NoteTagIds result;
+    if (!hasTagLocalIds && !hasTagGuids) {
+        return result;
+    }
+
+    if (hasTagLocalIds && hasTagGuids) {
+        result.tagLocalIds = std::move(tagLocalIds);
+        result.tagGuids = *note.tagGuids();
+        return result;
+    }
+
+    if (hasTagLocalIds) {
+        ErrorString error;
+        for (const QString & localId: qAsConst(tagLocalIds)) {
+            qevercloud::Tag tag;
+            tag.setLocalId(localId);
+            auto guid = tagGuid(tag, database, error);
+            if (!guid && !error.isEmpty()) {
+                errorDescription = std::move(error);
+                return std::nullopt;
+            }
+
+            result.tagGuids << guid.value_or(QString{});
+        }
+    }
+    else {
+        ErrorString error;
+        for (const auto & guid: qAsConst(note.tagGuids().value())) {
+            QString localId = tagLocalIdByGuid(guid, database, error);
+            if (localId.isEmpty() && !error.isEmpty()) {
+                errorDescription = std::move(error);
+                return std::nullopt;
+            }
+
+            result.tagLocalIds << localId;
+        }
+    }
+
+    return result;
+}
+
+bool bindNoteWithTagIds(
+    const qevercloud::Note & note, const NoteTagIds & noteTagIds,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    Q_ASSERT(noteTagIds.tagLocalIds.size() == noteTagIds.tagGuids.size());
+
+    if (noteTagIds.tagLocalIds.isEmpty()) {
+        return true;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NoteTags"
+        "(localNote, note, localTag, tag, tagIndexInNote) "
+        "VALUES(:localNote, :note, :localTag, :tag, :tagIndexInNote)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't bind tag ids to note: failed to prepare query"),
+        false);
+
+    int index = 0;
+    const auto & noteLocalId = note.localId();
+    for (const auto & tagLocalId: qAsConst(noteTagIds.tagLocalIds)) {
+        query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+        query.bindValue(
+            QStringLiteral(":note"),
+            (note.guid() ? *note.guid() : *gNullValue));
+
+        query.bindValue(QStringLiteral(":localTag"), tagLocalId);
+
+        const auto & tagGuid = noteTagIds.tagGuids.at(index);
+        query.bindValue(
+            QStringLiteral(":tag"),
+            (!tagGuid.isEmpty() ? tagGuid : *gNullValue));
+
+        query.bindValue(
+            QStringLiteral(":tagIndexInNote"), index);
+
+        ++index;
+
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Can't bind tag ids to note"),
+            false);
+    }
+
+    return true;
+}
+
 void bindNoteApplicationData(
     const qevercloud::LazyMap & applicationData, QSqlQuery & query)
 {
@@ -3407,23 +3550,47 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
     }
 
     if (!note.guid() && !previousNoteGuid.isEmpty()) {
+        error.clear();
         if (!removeSharedNotes(previousNoteGuid, database, error)) {
             composeFullError();
             return false;
         }
     }
     else if (note.guid()) {
+        error.clear();
         if (!removeSharedNotes(*note.guid(), database, error)) {
             composeFullError();
             return false;
         }
 
         if (note.sharedNotes()) {
+            error.clear();
             if (!putSharedNotes(
                     *note.guid(), *note.sharedNotes(), database, error)) {
                 composeFullError();
                 return false;
             }
+        }
+    }
+
+    if (putNoteOptions.testFlag(PutNoteOption::PutTagIds)) {
+        error.clear();
+        if (!clearNoteTagBindings(note.localId(), database, error)) {
+            composeFullError();
+            return false;
+        }
+
+        error.clear();
+        auto tagIds = noteTagIds(note, database, error);
+        if (!tagIds) {
+            composeFullError();
+            return false;
+        }
+
+        error.clear();
+        if (!bindNoteWithTagIds(note, *tagIds, database, error)) {
+            composeFullError();
+            return false;
         }
     }
 
