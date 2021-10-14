@@ -54,4 +54,8 @@ namespace quentier::local_storage::sql::utils {
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);
 
+[[nodiscard]] QStringList noteResourceLocalIds(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
 } // namespace quentier::local_storage::sql::utils

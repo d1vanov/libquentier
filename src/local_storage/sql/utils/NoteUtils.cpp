@@ -1188,4 +1188,40 @@ QStringList queryNoteLocalIds(
     return result;
 }
 
+QStringList noteResourceLocalIds(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT localResource FROM NoteResources WHERE localNote = :localNote");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot list resource local ids by note local id: failed to "
+            "prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot list resource local ids by note local id"),
+        {});
+
+    QStringList result;
+    result.reserve(std::max(0, query.size()));
+    while (query.next()) {
+        result << query.value(0).toString();
+    }
+
+    return result;
+}
+
 } // namespace quentier::local_storage::sql::utils

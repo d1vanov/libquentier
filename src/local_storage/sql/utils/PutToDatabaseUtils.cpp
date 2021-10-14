@@ -136,7 +136,7 @@ void setNoteIdsToNoteResources(qevercloud::Note & note)
     return true;
 }
 
-bool clearNoteTagBindings(
+[[nodiscard]] bool clearNoteTagBindings(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
@@ -222,7 +222,78 @@ struct NoteTagIds
     return result;
 }
 
-bool bindNoteWithTagIds(
+bool removeResourceMetadataByNoteLocalId(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM Resources WHERE noteLocalUid = :noteLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot remove resource metadata by note local id: failed to "
+            "prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot remove resource metadata by note local id"),
+        false);
+
+    return true;
+}
+
+[[nodiscard]] QStringList collectResourceLocalIds(
+    const QList<qevercloud::Resource> & resources)
+{
+    QStringList resourceLocalIds;
+    resourceLocalIds.reserve(resources.size());
+    for (const auto & resource: qAsConst(resources)) {
+        resourceLocalIds << resource.localId();
+    }
+
+    return resourceLocalIds;
+}
+
+void removeStaleNoteResourceDataFiles(
+    const QString & noteLocalId, const QStringList & resourceLocalIds,
+    const QDir & localStorageDir, QSqlDatabase & database)
+{
+    ErrorString error;
+    QString actualVersionId;
+    for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
+        actualVersionId.resize(0);
+        error.clear();
+        if (findResourceDataBodyVersionId(
+                resourceLocalId, database, actualVersionId, error))
+        {
+            removeStaleResourceDataBodyFiles(
+                localStorageDir, noteLocalId, resourceLocalId,
+                actualVersionId);
+        }
+
+        actualVersionId.clear();
+        error.clear();
+        if (findResourceAlternateDataBodyVersionId(
+                resourceLocalId, database, actualVersionId, error))
+        {
+            removeStaleResourceAlternateDataBodyFiles(
+                localStorageDir, noteLocalId, resourceLocalId,
+                actualVersionId);
+        }
+    }
+}
+
+[[nodiscard]] bool bindNoteWithTagIds(
     const qevercloud::Note & note, const NoteTagIds & noteTagIds,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
@@ -3594,8 +3665,118 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
         }
     }
 
-    // TODO: implement further
-    Q_UNUSED(localStorageDir)
+    bool needToRemoveResourceDataFiles = false;
+    bool needToRemoveStaleResourceDataFiles = false;
+    QStringList originalNoteResourceLocalIds;
+
+    if (putNoteOptions.testFlag(PutNoteOption::PutResourceMetadata) ||
+        putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData))
+    {
+        error.clear();
+        originalNoteResourceLocalIds = noteResourceLocalIds(
+            note.localId(), database, error);
+        if (originalNoteResourceLocalIds.isEmpty() && !error.isEmpty()) {
+            composeFullError();
+            return false;
+        }
+
+        if (!note.resources() || note.resources()->isEmpty()) {
+            error.clear();
+            if (!removeResourceMetadataByNoteLocalId(
+                    note.localId(), database, error)) {
+                composeFullError();
+                return false;
+            }
+            needToRemoveResourceDataFiles = true;
+        }
+        else {
+            // TODO: remove resources which existed in the previous version
+            // of the note but don't exist in the new version
+
+            // TODO: detect which resources haven't changed and don't update them
+
+            const PutResourceBinaryDataOption putResourceOption =
+                (putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData)
+                 ? PutResourceBinaryDataOption::WithBinaryData
+                 : PutResourceBinaryDataOption::WithoutBinaryData);
+
+            int indexInNote = 0;
+            for (auto & resource: *note.mutableResources()) {
+                error.clear();
+                if (!putResource(
+                        localStorageDir, resource, indexInNote, database, error,
+                        putResourceOption,
+                        TransactionOption::DontUseSeparateTransaction))
+                {
+                    composeFullError();
+                    return false;
+                }
+                ++indexInNote;
+            }
+
+            needToRemoveStaleResourceDataFiles = true;
+        }
+    }
+
+    if (transaction) {
+        const bool res = transaction->commit();
+
+        if (!res) {
+            transaction.reset();
+
+            // Removing resource data files which might have been written
+            // but for which resource metadata was not committed
+            if (note.resources() && !note.resources()->isEmpty()) {
+                const auto resourceLocalIds =
+                    collectResourceLocalIds(*note.resources());
+
+                removeStaleNoteResourceDataFiles(
+                    note.localId(), resourceLocalIds, localStorageDir,
+                    database);
+            }
+        }
+
+        ENSURE_DB_REQUEST_RETURN(
+            res, database, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Cannot put note into the local storage database, "
+                "failed to commit"),
+            false);
+
+        const QString & noteLocalId = note.localId();
+        if (needToRemoveResourceDataFiles) {
+            for (const auto & resourceLocalId:
+                 qAsConst(originalNoteResourceLocalIds)) {
+                error.clear();
+                if (!removeResourceDataFiles(
+                        localStorageDir, noteLocalId, resourceLocalId, error))
+                {
+                    QNWARNING("local_storage::sql::utils", error);
+                }
+            }
+        }
+        else if (needToRemoveStaleResourceDataFiles) {
+            // Computing the union of original and new resource local ids
+            QStringList originalAndNewNoteResourceLocalIds =
+                originalNoteResourceLocalIds;
+            if (note.resources()) {
+                originalAndNewNoteResourceLocalIds
+                    << collectResourceLocalIds(*note.resources());
+
+                originalAndNewNoteResourceLocalIds.erase(
+                    std::unique(
+                        originalAndNewNoteResourceLocalIds.begin(),
+                        originalAndNewNoteResourceLocalIds.end()),
+                    originalAndNewNoteResourceLocalIds.end());
+            }
+
+            removeStaleNoteResourceDataFiles(
+                noteLocalId, originalAndNewNoteResourceLocalIds,
+                localStorageDir, database);
+        }
+    }
+
     return true;
 }
 
