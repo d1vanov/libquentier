@@ -28,10 +28,23 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
+class QDir;
+
 namespace quentier::local_storage::sql::utils {
 
 [[nodiscard]] QList<qevercloud::SharedNotebook> listSharedNotebooks(
     const qevercloud::Guid & notebookGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+enum class ListNoteResourcesOption
+{
+    WithBinaryData,
+    WithoutBinaryData
+};
+
+[[nodiscard]] QList<qevercloud::Resource> listNoteResources(
+    const QString & noteLocalId, const QDir & localStorageDir,
+    ListNoteResourcesOption option, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 template <class T>

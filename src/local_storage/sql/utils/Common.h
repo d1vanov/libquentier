@@ -20,6 +20,10 @@
 
 #include "../Transaction.h"
 
+#include <QSet>
+
+#include <algorithm>
+
 class QDebug;
 
 namespace quentier::local_storage::sql::utils {
@@ -45,5 +49,22 @@ struct SelectTransactionGuard
 
     Transaction m_transaction;
 };
+
+template <class T>
+[[nodiscard]] bool checkDuplicatesByLocalId(const QList<T> & lhs)
+{
+    return !std::any_of(
+        lhs.begin(), lhs.end(),
+        [s = QSet<QString>{}] (const auto & item) mutable
+        {
+            const auto & localId = item.localId();
+            if (s.contains(localId)) {
+                return true;
+            }
+
+            Q_UNUSED(s.insert(localId))
+            return false;
+        });
+}
 
 } // namespace quentier::local_storage::sql::utils

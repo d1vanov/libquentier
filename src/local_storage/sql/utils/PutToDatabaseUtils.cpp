@@ -17,6 +17,7 @@
  */
 
 #include "PutToDatabaseUtils.h"
+#include "Common.h"
 #include "NotebookUtils.h"
 #include "NoteUtils.h"
 #include "RemoveFromDatabaseUtils.h"
@@ -291,6 +292,32 @@ void removeStaleNoteResourceDataFiles(
                 actualVersionId);
         }
     }
+}
+
+bool partialUpdateNoteResources(
+    const QString & noteLocalId,
+    const QList<qevercloud::Resource> & updatedNoteResources,
+    const bool updateResourceBinaryData,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    QNDEBUG(
+        "local_storage::sql::utils",
+        "partialUpdateNoteResources: "
+        "note local id = "
+            << noteLocalId << ", update resource binary data = "
+            << (updateResourceBinaryData ? "true" : "false"));
+
+    if (!checkDuplicatesByLocalId(updatedNoteResources)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "The list of note's resources contains resources with "
+            "the same local id"));
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return false;
+    }
+
+    // TODO: continue from here
+    return true;
 }
 
 [[nodiscard]] bool bindNoteWithTagIds(

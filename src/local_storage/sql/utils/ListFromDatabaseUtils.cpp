@@ -18,11 +18,14 @@
 
 #include "FillFromSqlRecordUtils.h"
 #include "ListFromDatabaseUtils.h"
+#include "ResourceUtils.h"
 
 #include "../ErrorHandling.h"
 
 #include <qevercloud/utility/ToRange.h>
 
+#include <QDir>
+#include <QMap>
 #include <QSqlRecord>
 
 namespace quentier::local_storage::sql::utils {
@@ -272,6 +275,98 @@ QList<qevercloud::SharedNotebook> listSharedNotebooks(
     }
 
     return sharedNotebooks;
+}
+
+QList<qevercloud::Resource> listNoteResources(
+    const QString & noteLocalId, const QDir & localStorageDir,
+    const ListNoteResourcesOption option, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT Resources.resourceLocalUid, resourceGuid, "
+        "noteGuid, resourceUpdateSequenceNumber, resourceIsDirty, "
+        "dataSize, dataHash, mime, width, height, recognitionDataSize, "
+        "recognitionDataHash, alternateDataSize, alternateDataHash, "
+        "resourceIndexInNote, resourceSourceURL, timestamp, "
+        "resourceLatitude, resourceLongitude, resourceAltitude, "
+        "cameraMake, cameraModel, clientWillIndex, fileName, "
+        "attachment, resourceKey, resourceMapKey, resourceValue, "
+        "localNote, recognitionDataBody FROM Resources "
+        "LEFT OUTER JOIN ResourceAttributes ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributes.resourceLocalUid "
+        "LEFT OUTER JOIN ResourceAttributesApplicationDataKeysOnly ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributesApplicationDataKeysOnly.resourceLocalUid "
+        "LEFT OUTER JOIN ResourceAttributesApplicationDataFullMap ON "
+        "Resources.resourceLocalUid = "
+        "ResourceAttributesApplicationDataFullMap.resourceLocalUid "
+        "LEFT OUTER JOIN NoteResources ON "
+        "Resources.resourceLocalUid = NoteResources.localResource "
+        "WHERE Resources.noteLocalUid = :noteLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't list resources by note local id: failed to prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't list resources by note local id"),
+        {});
+
+    QMap<int, qevercloud::Resource> resourcesByIndex;
+    while (query.next()) {
+        qevercloud::Resource resource;
+        int indexInNote = -1;
+        ErrorString error;
+        if (!fillResourceFromSqlRecord(
+                query.record(), resource, indexInNote, error))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Can't list resources by note local id"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return {};
+        }
+
+        resourcesByIndex[indexInNote] = resource;
+    }
+
+    QList<qevercloud::Resource> resources;
+    resources.reserve(qMax(resourcesByIndex.size(), 0));
+    for (const auto it: qevercloud::toRange(resourcesByIndex)) {
+        resources << it.value();
+    }
+
+    if (option == ListNoteResourcesOption::WithBinaryData) {
+        ErrorString error;
+        for (auto & resource: resources) {
+            error.clear();
+            if (!fillResourceData(resource, localStorageDir, database, error)) {
+                errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "Can't list resources by note local id"));
+                errorDescription.appendBase(error.base());
+                errorDescription.appendBase(error.additionalBases());
+                errorDescription.details() = error.details();
+                return {};
+            }
+        }
+    }
+
+    return resources;
 }
 
 } // namespace quentier::local_storage::sql::utils
