@@ -54,6 +54,8 @@ target_sources(${LIBRARY_NAME}
   utils/NotebookUtils.h
   utils/NoteUtils.cpp
   utils/NoteUtils.h
+  utils/PartialUpdateNoteResources.cpp
+  utils/PartialUpdateNoteResources.h
   utils/PutToDatabaseUtils.cpp
   utils/PutToDatabaseUtils.h
   utils/RemoveFromDatabaseUtils.cpp
