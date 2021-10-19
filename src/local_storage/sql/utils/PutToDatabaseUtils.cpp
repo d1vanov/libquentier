@@ -20,6 +20,7 @@
 #include "Common.h"
 #include "NotebookUtils.h"
 #include "NoteUtils.h"
+#include "PartialUpdateNoteResources.h"
 #include "RemoveFromDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "ResourceUtils.h"
@@ -3693,28 +3694,16 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
             needToRemoveResourceDataFiles = true;
         }
         else {
-            // TODO: remove resources which existed in the previous version
-            // of the note but don't exist in the new version
+            const bool updateResourceBinaryData =
+                putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData);
 
-            // TODO: detect which resources haven't changed and don't update them
-
-            const PutResourceBinaryDataOption putResourceOption =
-                (putNoteOptions.testFlag(PutNoteOption::PutResourceBinaryData)
-                 ? PutResourceBinaryDataOption::WithBinaryData
-                 : PutResourceBinaryDataOption::WithoutBinaryData);
-
-            int indexInNote = 0;
-            for (auto & resource: *note.mutableResources()) {
-                error.clear();
-                if (!putResource(
-                        localStorageDir, resource, indexInNote, database, error,
-                        putResourceOption,
-                        TransactionOption::DontUseSeparateTransaction))
-                {
-                    composeFullError();
-                    return false;
-                }
-                ++indexInNote;
+            error.clear();
+            if (!partialUpdateNoteResources(
+                    note.localId(), localStorageDir, *note.resources(),
+                    updateResourceBinaryData, database, error))
+            {
+                composeFullError();
+                return false;
             }
 
             needToRemoveStaleResourceDataFiles = true;

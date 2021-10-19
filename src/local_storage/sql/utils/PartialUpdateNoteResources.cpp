@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "PartialUpdateNoteResources.h"
 #include "Common.h"
 #include "ListFromDatabaseUtils.h"
-#include "PartialUpdateNoteResources.h"
 #include "PutToDatabaseUtils.h"
 #include "ResourceDataFilesUtils.h"
 #include "SqlUtils.h"
