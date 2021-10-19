@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../NotesHandler.h"
 #include "../ConnectionPool.h"
 #include "../LinkedNotebooksHandler.h"
 #include "../NotebooksHandler.h"
-#include "../NotesHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
 
@@ -103,9 +103,7 @@ protected:
         m_notifier->moveToThread(m_writerThread.get());
 
         QObject::connect(
-            m_writerThread.get(),
-            &QThread::finished,
-            m_notifier,
+            m_writerThread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
         m_writerThread->start();
@@ -181,6 +179,195 @@ TEST_F(NotesHandlerTest, CtorNullResourceDataFilesLock)
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path(), nullptr),
         IQuentierException);
+}
+
+TEST_F(NotesHandlerTest, ShouldHaveZeroNonDeletedNoteCountWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCount(
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(NotesHandlerTest, ShouldHaveZeroDeletedNoteCountWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCount(
+        NoteCountOptions{NoteCountOption::IncludeDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCount(
+        NoteCountOptions{NoteCountOption::IncludeDeletedNotes} |
+        NoteCountOption::IncludeNonDeletedNotes);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNonDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroDeletedNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNoteCountPerNotebookLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
+            NoteCountOption::IncludeDeletedNotes);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNonDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroDeletedNoteCountPerTagLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNoteCountPerTagLocalIdWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerTagLocalId(
+        UidGenerator::Generate(),
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
+            NoteCountOption::IncludeDeletedNotes);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotesNorTags)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto listTagsOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto noteCountsFuture = notesHandler->noteCountsPerTags(
+        listTagsOptions,
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
+            NoteCountOption::IncludeDeletedNotes);
+
+    noteCountsFuture.waitForFinished();
+    EXPECT_EQ(noteCountsFuture.result().size(), 0);
 }
 
 } // namespace quentier::local_storage::sql::tests
