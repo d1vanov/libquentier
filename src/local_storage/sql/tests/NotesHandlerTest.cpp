@@ -370,6 +370,215 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotes
     EXPECT_EQ(noteCountsFuture.result().size(), 0);
 }
 
+TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountPerNotebookAndTagLocalidsWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
+        QStringList{}, QStringList{},
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes} |
+            NoteCountOption::IncludeDeletedNotes);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 0U);
+}
+
+TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto noteFuture = notesHandler->findNoteByLocalId(
+        UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
+
+    noteFuture.waitForFinished();
+    EXPECT_EQ(noteFuture.resultCount(), 0);
+}
+
+TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto noteFuture = notesHandler->findNoteByGuid(
+        UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
+
+    noteFuture.waitForFinished();
+    EXPECT_EQ(noteFuture.resultCount(), 0);
+}
+
+TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto expungeNoteFuture = notesHandler->expungeNoteByLocalId(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
+}
+
+TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto expungeNoteFuture = notesHandler->expungeNoteByGuid(
+        UidGenerator::Generate());
+
+    EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListSharedNotesForNonexistentNote)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto listSharedNotesFuture =
+        notesHandler->listSharedNotes(UidGenerator::Generate());
+
+    listSharedNotesFuture.waitForFinished();
+    EXPECT_TRUE(listSharedNotesFuture.result().isEmpty());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto notesFuture = notesHandler->listNotes(
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
+        listNotesOptions);
+
+    notesFuture.waitForFinished();
+    EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto notesFuture = notesHandler->listNotesPerNotebookLocalId(
+        UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
+        listNotesOptions);
+
+    notesFuture.waitForFinished();
+    EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto notesFuture = notesHandler->listNotesPerTagLocalId(
+        UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
+        listNotesOptions);
+
+    notesFuture.waitForFinished();
+    EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto notesFuture = notesHandler->listNotesPerNotebookAndTagLocalIds(
+        QStringList{} << UidGenerator::Generate(),
+        QStringList{} << UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
+        listNotesOptions);
+
+    notesFuture.waitForFinished();
+    EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
+TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto notesFuture = notesHandler->listNotesByLocalIds(
+        QStringList{} << UidGenerator::Generate() << UidGenerator::Generate(),
+        FetchNoteOptions{FetchNoteOption::WithResourceMetadata},
+        listNotesOptions);
+
+    notesFuture.waitForFinished();
+    EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "NotesHandlerTest.moc"
