@@ -27,6 +27,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QFlags>
 #include <QFutureSynchronizer>
@@ -40,10 +41,13 @@
 
 #include <array>
 #include <iterator>
+#include <string>
 
 // clazy:excludeall=non-pod-global-static
 
 namespace quentier::local_storage::sql::tests {
+
+using namespace std::string_literals;
 
 class NotesHandlerTestNotifierListener : public QObject
 {
@@ -80,6 +84,264 @@ private:
 };
 
 namespace {
+
+[[nodiscard]] QList<qevercloud::SharedNote> createSharedNotes(
+    const std::optional<qevercloud::Guid> & noteGuid)
+{
+    const int sharedNoteCount = 5;
+    QList<qevercloud::SharedNote> sharedNotes;
+    sharedNotes.reserve(sharedNoteCount);
+    for (int i = 0; i < sharedNoteCount; ++i) {
+        qevercloud::SharedNote sharedNote;
+        sharedNote.setLocallyModified(i % 2 == 0);
+        sharedNote.setLocalOnly(i % 3 == 0);
+        sharedNote.setLocallyFavorited(i % 4 == 0);
+
+        QHash<QString, QVariant> localData;
+        localData[QStringLiteral("heySharedNote")] =
+            QStringLiteral("hiSharedNote");
+
+        sharedNote.setLocalData(std::move(localData));
+
+        sharedNote.setSharerUserID(qevercloud::UserID{10});
+
+        if (i % 2 == 0)
+        {
+            qevercloud::Identity recipientIdentity;
+            recipientIdentity.setId(qevercloud::IdentityID{i * 20});
+
+            if (i % 4 == 0) {
+                qevercloud::Contact contact;
+                contact.setName(QStringLiteral("contactName"));
+                contact.setId(QStringLiteral("contactId"));
+                contact.setType(qevercloud::ContactType::EVERNOTE);
+                contact.setPhotoUrl(QStringLiteral("https://www.example.com"));
+
+                contact.setPhotoLastUpdated(
+                    QDateTime::currentMSecsSinceEpoch());
+
+                contact.setMessagingPermit(
+                    QByteArray::fromStdString("aaaa"s));
+
+                contact.setMessagingPermitExpires(
+                    QDateTime::currentMSecsSinceEpoch());
+
+                recipientIdentity.setContact(std::move(contact));
+            }
+
+            recipientIdentity.setUserId(qevercloud::UserID{i * 50});
+            recipientIdentity.setDeactivated(false);
+            recipientIdentity.setSameBusiness(false);
+            recipientIdentity.setBlocked(false);
+            recipientIdentity.setUserConnected(true);
+            recipientIdentity.setEventId(qevercloud::MessageEventID{35});
+
+            sharedNote.setRecipientIdentity(std::move(recipientIdentity));
+        }
+
+        sharedNote.setPrivilege(
+            qevercloud::SharedNotePrivilegeLevel::FULL_ACCESS);
+
+        auto now = QDateTime::currentMSecsSinceEpoch();
+        sharedNote.setServiceCreated(now - 2);
+        sharedNote.setServiceUpdated(now - 1);
+        sharedNote.setServiceAssigned(now);
+
+        sharedNote.setNoteGuid(noteGuid);
+
+        sharedNotes << sharedNote;
+    }
+
+    return sharedNotes;
+}
+
+[[nodiscard]] qevercloud::NoteRestrictions createNoteRestrictions()
+{
+    qevercloud::NoteRestrictions noteRestrictions;
+    noteRestrictions.setNoUpdateTitle(false);
+    noteRestrictions.setNoUpdateContent(true);
+    noteRestrictions.setNoEmail(false);
+    noteRestrictions.setNoShare(true);
+    noteRestrictions.setNoSharePublicly(false);
+    return noteRestrictions;
+}
+
+[[nodiscard]] qevercloud::NoteLimits createNoteLimits()
+{
+    qevercloud::NoteLimits noteLimits;
+    noteLimits.setNoteResourceCountMax(10);
+    noteLimits.setUploadLimit(10000);
+    noteLimits.setResourceSizeMax(5000);
+    noteLimits.setNoteSizeMax(8000);
+    noteLimits.setUploaded(2000);
+    return noteLimits;
+}
+
+[[nodiscard]] QList<qevercloud::Resource> createNoteResources(
+    const QString & noteLocalId,
+    const std::optional<qevercloud::Guid> & noteGuid)
+{
+    const int resourceCount = 5;
+    QList<qevercloud::Resource> resources;
+    resources.reserve(resourceCount);
+
+    for (int i = 0; i < resourceCount; ++i)
+    {
+        qevercloud::Resource resource;
+        resource.setLocallyModified(true);
+        resource.setLocalOnly(false);
+        resource.setLocallyFavorited(true);
+
+        QHash<QString, QVariant> localData;
+        localData[QStringLiteral("heyResource")] = QStringLiteral("hiResource");
+        resource.setLocalData(std::move(localData));
+
+        resource.setData(qevercloud::Data{});
+        auto & data = *resource.mutableData();
+        data.setBody(QByteArray::fromStdString("test resource data"s));
+        data.setSize(data.body()->size());
+        data.setBodyHash(
+            QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
+
+        resource.setAlternateData(qevercloud::Data{});
+        auto & alternateData = *resource.mutableAlternateData();
+        alternateData.setBody(
+            QByteArray::fromStdString("test resource alternate data"s));
+
+        alternateData.setSize(alternateData.body()->size());
+
+        alternateData.setBodyHash(QCryptographicHash::hash(
+            *alternateData.body(), QCryptographicHash::Md5));
+
+        resource.setRecognition(qevercloud::Data{});
+        auto & recognition = *resource.mutableRecognition();
+        recognition.setBody(
+            QByteArray::fromStdString("test resource recognition data"s));
+
+        recognition.setSize(recognition.body()->size());
+
+        recognition.setBodyHash(QCryptographicHash::hash(
+            *recognition.body(), QCryptographicHash::Md5));
+
+        resource.setMime("application/text-plain");
+
+        resource.setWidth(10);
+        resource.setHeight(20);
+
+        resource.setActive(true);
+
+        resource.setNoteLocalId(noteLocalId);
+        resource.setNoteGuid(noteGuid);
+        if (noteGuid) {
+            resource.setGuid(UidGenerator::Generate());
+            resource.setUpdateSequenceNum(10 + i);
+        }
+
+        qevercloud::ResourceAttributes resourceAttributes;
+        resourceAttributes.setSourceURL(
+            QStringLiteral("https://www.example.com"));
+
+        resourceAttributes.setTimestamp(QDateTime::currentMSecsSinceEpoch());
+        resourceAttributes.setLatitude(55.0);
+        resourceAttributes.setLongitude(38.2);
+        resourceAttributes.setAltitude(0.2);
+        resourceAttributes.setCameraMake(QStringLiteral("cameraMake"));
+        resourceAttributes.setCameraModel(QStringLiteral("cameraModel"));
+        resourceAttributes.setClientWillIndex(false);
+        resourceAttributes.setFileName(QStringLiteral("resourceFileName"));
+        resourceAttributes.setAttachment(false);
+
+        resourceAttributes.setApplicationData(qevercloud::LazyMap{});
+        auto & appData = *resourceAttributes.mutableApplicationData();
+        appData.setKeysOnly(QSet<QString>{} << QStringLiteral("key1"));
+        appData.setFullMap(QMap<QString, QString>{});
+        auto & fullMap = *appData.mutableFullMap();
+        fullMap[QStringLiteral("key1")] = QStringLiteral("value1");
+
+        resource.setAttributes(std::move(resourceAttributes));
+    }
+
+    return resources;
+}
+
+enum class CreateNoteOption
+{
+    WithTagLocalIds = 1 << 0,
+    WithTagGuids = 1 << 1,
+    WithSharedNotes = 1 << 2,
+    WithRestrictions = 1 << 3,
+    WithLimits = 1 << 4,
+    WithResources = 1 << 5,
+    Deleted = 1 << 6,
+};
+
+Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
+
+[[nodiscard]] qevercloud::Note createNote(
+    const qevercloud::Notebook & notebook,
+    const CreateNoteOptions createNoteOptions = {})
+{
+    qevercloud::Note note;
+    note.setLocallyModified(true);
+    note.setLocalOnly(false);
+    note.setLocallyFavorited(true);
+
+    note.setNotebookLocalId(notebook.localId());
+    note.setNotebookGuid(notebook.guid());
+
+    QHash<QString, QVariant> localData;
+    localData[QStringLiteral("hey")] = QStringLiteral("hi");
+    note.setLocalData(std::move(localData));
+
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(1);
+
+    note.setTitle(QStringLiteral("Title"));
+
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setContentHash(QCryptographicHash::hash(
+        note.content()->toUtf8(), QCryptographicHash::Md5));
+
+    note.setContentLength(note.content()->size());
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    note.setCreated(now);
+    note.setUpdated(now);
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithTagLocalIds)) {
+        note.setTagLocalIds(
+            QStringList{} << UidGenerator::Generate()
+                          << UidGenerator::Generate());
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithTagGuids)) {
+        note.setTagGuids(
+            QList<qevercloud::Guid>{} << UidGenerator::Generate()
+                                      << UidGenerator::Generate());
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithSharedNotes)) {
+        note.setSharedNotes(createSharedNotes(note.guid()));
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithRestrictions)) {
+        note.setRestrictions(createNoteRestrictions());
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithLimits)) {
+        note.setLimits(createNoteLimits());
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::WithResources)) {
+        note.setResources(createNoteResources(note.localId(), note.guid()));
+    }
+
+    if (createNoteOptions.testFlag(CreateNoteOption::Deleted)) {
+        note.setDeleted(QDateTime::currentMSecsSinceEpoch());
+    }
+
+    return note;
+}
 
 class NotesHandlerTest : public testing::Test
 {
