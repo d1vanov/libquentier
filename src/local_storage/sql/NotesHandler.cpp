@@ -1181,7 +1181,7 @@ bool NotesHandler::fillTagIds(
     ErrorString & errorDescription) const
 {
     static const QString queryString = QStringLiteral(
-        "SELECT localTag, tag, tagIndexInNote, from NoteTags "
+        "SELECT localTag, tag, tagIndexInNote FROM NoteTags "
         "WHERE localNote = :localNote");
 
     QSqlQuery query{database};

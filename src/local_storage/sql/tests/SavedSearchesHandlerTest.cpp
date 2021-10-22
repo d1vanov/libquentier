@@ -50,12 +50,13 @@ public:
     {}
 
     [[nodiscard]] const QList<qevercloud::SavedSearch> & putSavedSearches()
-        const
+        const noexcept
     {
         return m_putSavedSearches;
     }
 
-    [[nodiscard]] const QStringList & expungedSavedSearchLocalIds() const
+    [[nodiscard]] const QStringList & expungedSavedSearchLocalIds()
+        const noexcept
     {
         return m_expungedSavedSearchLocalIds;
     }

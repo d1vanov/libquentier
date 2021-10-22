@@ -17,6 +17,7 @@
  */
 
 #include "../NotesHandler.h"
+#include "../NotebooksHandler.h"
 #include "../ConnectionPool.h"
 #include "../LinkedNotebooksHandler.h"
 #include "../NotebooksHandler.h"
@@ -44,6 +45,7 @@
 #include <string>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -57,12 +59,21 @@ public:
         QObject(parent)
     {}
 
-    [[nodiscard]] const QList<qevercloud::Note> & putNotes() const
+    using UpdatedNoteWithOptions =
+        std::pair<qevercloud::Note, NotesHandler::UpdateNoteOptions>;
+
+    [[nodiscard]] const QList<qevercloud::Note> & putNotes() const noexcept
     {
         return m_putNotes;
     }
 
-    [[nodiscard]] const QStringList & expungedNoteLocalIds() const
+    [[nodiscard]] const QList<UpdatedNoteWithOptions> &
+        updatedNotesWithOptions() const noexcept
+    {
+        return m_updatedNotesWithOptions;
+    }
+
+    [[nodiscard]] const QStringList & expungedNoteLocalIds() const noexcept
     {
         return m_expungedNoteLocalIds;
     }
@@ -73,13 +84,21 @@ public Q_SLOTS:
         m_putNotes << note;
     }
 
-    void onNotebookExpunged(QString noteLocalId) // NOLINT
+    void onNoteUpdated(
+        qevercloud::Note note, ILocalStorage::UpdateNoteOptions options)
+    {
+        m_updatedNotesWithOptions << std::make_pair(std::move(note), options);
+    }
+
+    void onNoteExpunged(QString noteLocalId) // NOLINT
     {
         m_expungedNoteLocalIds << noteLocalId;
     }
 
 private:
+
     QList<qevercloud::Note> m_putNotes;
+    QList<UpdatedNoteWithOptions> m_updatedNotesWithOptions;
     QStringList m_expungedNoteLocalIds;
 };
 
@@ -341,6 +360,20 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
     }
 
     return note;
+}
+
+[[nodiscard]] qevercloud::Notebook createNotebook()
+{
+    qevercloud::Notebook notebook;
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("name"));
+    notebook.setUpdateSequenceNum(1);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    notebook.setServiceCreated(now);
+    notebook.setServiceUpdated(now);
+
+    return notebook;
 }
 
 class NotesHandlerTest : public testing::Test
@@ -839,6 +872,155 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
 
     notesFuture.waitForFinished();
     EXPECT_TRUE(notesFuture.result().isEmpty());
+}
+
+class NotesHandlerSingleNoteTest :
+    public NotesHandlerTest,
+    public testing::WithParamInterface<qevercloud::Note>
+{};
+
+static const qevercloud::Notebook gNotebook = createNotebook();
+
+const std::array gNoteTestValues{
+    createNote(gNotebook),
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    NotesHandlerSingleNoteTestInstance,
+    NotesHandlerSingleNoteTest,
+    testing::ValuesIn(gNoteTestValues));
+
+TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
+{
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    NotesHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::notePut,
+        &notifierListener,
+        &NotesHandlerTestNotifierListener::onNotePut);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::noteUpdated,
+        &notifierListener,
+        &NotesHandlerTestNotifierListener::onNoteUpdated);
+
+    QObject::connect(
+        m_notifier,
+        &Notifier::noteExpunged,
+        &notifierListener,
+        &NotesHandlerTestNotifierListener::onNoteExpunged);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(gNotebook);
+    putNotebookFuture.waitForFinished();
+
+    const auto note = GetParam();
+
+    auto putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putNotes().size(), 1);
+    EXPECT_EQ(notifierListener.putNotes()[0], note);
+
+    using NoteCountOption = ILocalStorage::NoteCountOption;
+    using NoteCountOptions = ILocalStorage::NoteCountOptions;
+
+    const auto noteCountOptions =
+        (note.deleted()
+             ? NoteCountOptions{NoteCountOption::IncludeDeletedNotes}
+             : NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    auto noteCountFuture = notesHandler->noteCount(noteCountOptions);
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 1U);
+
+    noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
+        gNotebook.localId(), noteCountOptions);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 1U);
+
+    for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+        noteCountFuture = notesHandler->noteCountPerTagLocalId(
+            tagLocalId, noteCountOptions);
+
+        noteCountFuture.waitForFinished();
+        EXPECT_EQ(noteCountFuture.result(), 1U);
+    }
+
+    noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
+        QStringList{} << gNotebook.localId(), note.tagLocalIds(),
+        noteCountOptions);
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 1U);
+
+    using FetchNoteOption = ILocalStorage::FetchNoteOption;
+    using FetchNoteOptions = ILocalStorage::FetchNoteOptions;
+
+    const auto fetchNoteOptions = FetchNoteOptions{} |
+        FetchNoteOption::WithResourceMetadata |
+        FetchNoteOption::WithResourceBinaryData;
+
+    auto foundByLocalIdNoteFuture = notesHandler->findNoteByLocalId(
+        note.localId(), fetchNoteOptions);
+
+    foundByLocalIdNoteFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
+
+    auto foundByGuidNoteFuture = notesHandler->findNoteByGuid(
+        note.guid().value(), fetchNoteOptions);
+
+    foundByGuidNoteFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundByGuidNoteFuture.result(), note);
+
+    auto listNotesOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    auto listNotesFuture = notesHandler->listNotes(
+        fetchNoteOptions, listNotesOptions);
+
+    listNotesFuture.waitForFinished();
+    ASSERT_EQ(listNotesFuture.result().size(), 1);
+    EXPECT_EQ(listNotesFuture.result().at(0), note);
+
+    auto sharedNotesFuture = notesHandler->listSharedNotes(note.guid().value());
+    sharedNotesFuture.waitForFinished();
+
+    EXPECT_EQ(
+        sharedNotesFuture.result(),
+        note.sharedNotes().value_or(QList<qevercloud::SharedNote>{}));
+
+    listNotesFuture = notesHandler->listNotesPerNotebookLocalId(
+        gNotebook.localId(), fetchNoteOptions, listNotesOptions);
+
+    listNotesFuture.waitForFinished();
+    ASSERT_EQ(listNotesFuture.result().size(), 1);
+    EXPECT_EQ(listNotesFuture.result().at(0), note);
+
+    for (const auto & tagLocalId: note.tagLocalIds()) {
+        listNotesFuture = notesHandler->listNotesPerTagLocalId(
+            tagLocalId, fetchNoteOptions, listNotesOptions);
+
+        listNotesFuture.waitForFinished();
+        ASSERT_EQ(listNotesFuture.result().size(), 1);
+        EXPECT_EQ(listNotesFuture.result().at(0), note);
+    }
 }
 
 } // namespace quentier::local_storage::sql::tests

@@ -48,12 +48,13 @@ public:
         QObject(parent)
     {}
 
-    [[nodiscard]] const QList<qevercloud::User> & putUsers() const
+    [[nodiscard]] const QList<qevercloud::User> & putUsers() const noexcept
     {
         return m_putUsers;
     }
 
-    [[nodiscard]] const QList<qevercloud::UserID> & expungeUserIds() const
+    [[nodiscard]] const QList<qevercloud::UserID> & expungeUserIds()
+        const noexcept
     {
         return m_expungedUserIds;
     }

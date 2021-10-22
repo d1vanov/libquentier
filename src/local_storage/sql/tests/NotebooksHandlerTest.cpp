@@ -52,12 +52,13 @@ public:
         QObject(parent)
     {}
 
-    [[nodiscard]] const QList<qevercloud::Notebook> & putNotebooks() const
+    [[nodiscard]] const QList<qevercloud::Notebook> & putNotebooks()
+        const noexcept
     {
         return m_putNotebooks;
     }
 
-    [[nodiscard]] const QStringList & expungedNotebookLocalIds() const
+    [[nodiscard]] const QStringList & expungedNotebookLocalIds() const noexcept
     {
         return m_expungedNotebookLocalIds;
     }

@@ -49,12 +49,13 @@ public:
     {}
 
     [[nodiscard]] const QList<qevercloud::LinkedNotebook> & putLinkedNotebooks()
-        const
+        const noexcept
     {
         return m_putLinkedNotebooks;
     }
 
-    [[nodiscard]] const QStringList & expungedLinkedNotebookGuids() const
+    [[nodiscard]] const QStringList & expungedLinkedNotebookGuids()
+        const noexcept
     {
         return m_expungedLinkedNotebookGuids;
     }

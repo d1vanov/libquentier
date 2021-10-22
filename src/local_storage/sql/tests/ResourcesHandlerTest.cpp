@@ -48,18 +48,19 @@ public:
         QObject(parent)
     {}
 
-    [[nodiscard]] const QList<qevercloud::Resource> & putResources() const
+    [[nodiscard]] const QList<qevercloud::Resource> & putResources()
+        const noexcept
     {
         return m_putResources;
     }
 
     [[nodiscard]] const QList<qevercloud::Resource> & putResourceMetadata()
-        const
+        const noexcept
     {
         return m_putResourceMetadata;
     }
 
-    [[nodiscard]] const QStringList & expungedResourceLocalIds() const
+    [[nodiscard]] const QStringList & expungedResourceLocalIds() const noexcept
     {
         return m_expungedResourceLocalIds;
     }

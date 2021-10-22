@@ -52,12 +52,12 @@ public:
         QObject(parent)
     {}
 
-    [[nodiscard]] const QList<qevercloud::Tag> & putTags() const
+    [[nodiscard]] const QList<qevercloud::Tag> & putTags() const noexcept
     {
         return m_putTags;
     }
 
-    [[nodiscard]] const QStringList & expungedTagLocalIds() const
+    [[nodiscard]] const QStringList & expungedTagLocalIds() const noexcept
     {
         return m_expungedTagLocalIds;
     }
