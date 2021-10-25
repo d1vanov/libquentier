@@ -41,8 +41,9 @@ bool rowExists(
     ErrorString & errorDescription)
 {
     QSqlQuery query{database};
-    bool res = query.prepare(QStringLiteral(
-        "SELECT COUNT(*) FROM :tableName WHERE :columnName = :value"));
+    bool res = query.prepare(
+        QString::fromUtf8("SELECT COUNT(*) FROM %1 WHERE %2 = :value")
+            .arg(sqlEscape(tableName), sqlEscape(columnName)));
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
@@ -50,8 +51,6 @@ bool rowExists(
             "Cannot check row existence: failed to prepare query"),
         false);
 
-    query.bindValue(QStringLiteral(":tableName"), tableName);
-    query.bindValue(QStringLiteral(":columnName"), columnName);
     query.bindValue(QStringLiteral(":value"), value);
 
     res = query.exec();
