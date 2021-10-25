@@ -36,6 +36,8 @@ public:
     explicit Transaction(
         const QSqlDatabase & database, Type type = Type::Default);
 
+    Transaction(Transaction && transaction) noexcept;
+
     ~Transaction();
 
     [[nodiscard]] bool commit();

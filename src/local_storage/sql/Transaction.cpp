@@ -35,9 +35,20 @@ Transaction::Transaction(const QSqlDatabase & database, Type type) :
     init();
 }
 
+Transaction::Transaction(Transaction && transaction) noexcept :
+    m_database{transaction.m_database},
+    m_type{transaction.m_type},
+    m_committed{transaction.m_committed},
+    m_rolledBack{transaction.m_rolledBack},
+    m_ended{transaction.m_ended}
+{
+    transaction.m_ended = true;
+}
+
 Transaction::~Transaction()
 {
-    if ((m_type != Type::Selection) && !m_committed && !m_rolledBack) {
+    if ((m_type != Type::Selection) && !m_committed && !m_rolledBack &&
+        !m_ended) {
         QSqlQuery query{m_database};
         bool res = query.exec(QStringLiteral("ROLLBACK"));
         if (!res) {
@@ -76,6 +87,13 @@ bool Transaction::commit()
         QNWARNING(
             "local_storage:sql:Transaction",
             "Commit called on already rolled back transaction");
+        return false;
+    }
+
+    if (m_ended) {
+        QNWARNING(
+            "local_storage:sql:Transaction",
+            "Commit called on already ended transaction");
         return false;
     }
 
@@ -144,14 +162,6 @@ bool Transaction::rollback()
 
 bool Transaction::end()
 {
-    if (m_type != Type::Selection) {
-        QNWARNING(
-            "local_storage:sql:Transaction",
-            "Only transactions used for selection queries should be "
-            "explicitly ended without committing the changes");
-        return false;
-    }
-
     if (m_ended) {
         QNWARNING(
             "local_storage:sql:Transaction",
