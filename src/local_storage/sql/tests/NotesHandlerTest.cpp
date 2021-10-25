@@ -935,7 +935,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     using NoteCountOption = ILocalStorage::NoteCountOption;
     using NoteCountOptions = ILocalStorage::NoteCountOptions;
 
-    const auto noteCountOptions =
+    auto noteCountOptions =
         (note.deleted()
              ? NoteCountOptions{NoteCountOption::IncludeDeletedNotes}
              : NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
@@ -1021,6 +1021,127 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         ASSERT_EQ(listNotesFuture.result().size(), 1);
         EXPECT_EQ(listNotesFuture.result().at(0), note);
     }
+
+    auto expungeNoteByLocalIdFuture =
+        notesHandler->expungeNoteByLocalId(note.localId());
+
+    expungeNoteByLocalIdFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedNoteLocalIds().size(), 1);
+    EXPECT_EQ(notifierListener.expungedNoteLocalIds().at(0), note.localId());
+
+    const auto checkNoteExpunged = [&] {
+        noteCountOptions = NoteCountOptions{} | NoteCountOption::IncludeNonDeletedNotes |
+            NoteCountOption::IncludeDeletedNotes;
+
+        noteCountFuture = notesHandler->noteCount(noteCountOptions);
+        noteCountFuture.waitForFinished();
+        EXPECT_EQ(noteCountFuture.result(), 0U);
+
+        noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
+            gNotebook.localId(), noteCountOptions);
+
+        noteCountFuture.waitForFinished();
+        EXPECT_EQ(noteCountFuture.result(), 0U);
+
+        for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+            noteCountFuture = notesHandler->noteCountPerTagLocalId(
+                tagLocalId, noteCountOptions);
+
+            noteCountFuture.waitForFinished();
+            EXPECT_EQ(noteCountFuture.result(), 0U);
+        }
+
+        noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
+            QStringList{} << gNotebook.localId(), note.tagLocalIds(),
+            noteCountOptions);
+
+        noteCountFuture.waitForFinished();
+        EXPECT_EQ(noteCountFuture.result(), 0U);
+
+        auto foundByLocalIdNoteFuture = notesHandler->findNoteByLocalId(
+            note.localId(), fetchNoteOptions);
+
+        foundByLocalIdNoteFuture.waitForFinished();
+        EXPECT_EQ(foundByLocalIdNoteFuture.resultCount(), 0);
+
+        auto foundByGuidNoteFuture = notesHandler->findNoteByGuid(
+            note.guid().value(), fetchNoteOptions);
+
+        foundByGuidNoteFuture.waitForFinished();
+        EXPECT_EQ(foundByGuidNoteFuture.resultCount(), 0);
+
+        auto listNotesFuture = notesHandler->listNotes(
+            fetchNoteOptions, listNotesOptions);
+
+        listNotesFuture.waitForFinished();
+        EXPECT_EQ(listNotesFuture.result().size(), 0);
+    };
+
+    checkNoteExpunged();
+
+    putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putNotes().size(), 2);
+    EXPECT_EQ(notifierListener.putNotes()[1], note);
+
+    auto expungeNoteByGuidFuture =
+        notesHandler->expungeNoteByGuid(note.guid().value());
+
+    expungeNoteByGuidFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedNoteLocalIds().size(), 2);
+    EXPECT_EQ(notifierListener.expungedNoteLocalIds().at(1), note.localId());
+
+    checkNoteExpunged();
+
+    putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putNotes().size(), 3);
+    EXPECT_EQ(notifierListener.putNotes()[2], note);
+
+    auto updatedNote = note;
+
+    updatedNote.setTitle(
+        updatedNote.title().value() + QStringLiteral("_updated"));
+
+    using UpdateNoteOptions = NotesHandler::UpdateNoteOptions;
+    using UpdateNoteOption = NotesHandler::UpdateNoteOption;
+
+    const auto updateNoteOptions =
+        UpdateNoteOptions{} | UpdateNoteOption::UpdateTags;
+
+    auto updateNoteFuture = notesHandler->updateNote(
+        updatedNote, updateNoteOptions);
+
+    updateNoteFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.updatedNotesWithOptions().size(), 1);
+    EXPECT_EQ(notifierListener.updatedNotesWithOptions()[0].first, updatedNote);
+    EXPECT_EQ(
+        notifierListener.updatedNotesWithOptions()[0].second,
+        updateNoteOptions);
+
+    foundByLocalIdNoteFuture = notesHandler->findNoteByLocalId(
+        updatedNote.localId(), fetchNoteOptions);
+
+    foundByLocalIdNoteFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundByLocalIdNoteFuture.result(), updatedNote);
+
+    foundByGuidNoteFuture = notesHandler->findNoteByGuid(
+        updatedNote.guid().value(), fetchNoteOptions);
+
+    foundByGuidNoteFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundByGuidNoteFuture.result(), updatedNote);
 }
 
 } // namespace quentier::local_storage::sql::tests
