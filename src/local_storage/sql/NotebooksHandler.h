@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Fwd.h"
+#include "Transaction.h"
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -100,7 +101,8 @@ private:
 
     [[nodiscard]] bool expungeNotebookByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription);
+        ErrorString & errorDescription,
+        std::optional<Transaction> transaction = std::nullopt);
 
     [[nodiscard]] bool expungeNotebookByGuidImpl(
         const qevercloud::Guid & guid, QSqlDatabase & database,

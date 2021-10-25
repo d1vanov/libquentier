@@ -635,16 +635,21 @@ std::optional<qevercloud::Notebook> NotebooksHandler::fillSharedNotebooks(
 
 bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    ErrorString & errorDescription, std::optional<Transaction> transaction)
 {
     QNDEBUG(
         "local_storage::sql::NotebooksHandler",
         "NotebooksHandler::expungeNotebookByLocalIdImpl: local id = "
             << localId);
 
+    if (!transaction) {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
+
     const auto noteLocalIds = listNoteLocalIdsByNotebookLocalId(
         localId, database, errorDescription);
     if (!errorDescription.isEmpty()) {
+        Q_UNUSED(transaction->end())
         return false;
     }
 
@@ -653,6 +658,10 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
+    if (!res) {
+        Q_UNUSED(transaction->end())
+    }
+
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
@@ -664,12 +673,25 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     query.bindValue(QStringLiteral(":localUid"), localId);
 
     res = query.exec();
+    if (!res) {
+        Q_UNUSED(transaction->end())
+    }
+
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::NotebooksHandler",
             "Cannot expunge notebook by local id from the local storage "
             "database"),
+        false);
+
+    res = transaction->commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::NotesHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::NotesHandler",
+            "Cannot expunge notebook by local id from the local storage "
+            "database: failed to commit transaction"),
         false);
 
     for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
@@ -690,7 +712,11 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
         "local_storage::sql::NotebooksHandler",
         "NotebooksHandler::expungeNotebookByGuidImpl: guid = " << guid);
 
-    const auto localId = utils::notebookLocalIdByGuid(guid, database, errorDescription);
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
+    const auto localId =
+        utils::notebookLocalIdByGuid(guid, database, errorDescription);
+
     if (!errorDescription.isEmpty()) {
         return false;
     }
@@ -706,8 +732,8 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
         "local_storage::sql::NotebooksHandler",
         "Found notebook local id for guid " << guid << ": " << localId);
 
-    const bool res =
-        expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+    const bool res = expungeNotebookByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction));
 
     if (res) {
         m_notifier->notifyNotebookExpunged(localId);
@@ -725,6 +751,8 @@ bool NotebooksHandler::expungeNotebookByNameImpl(
         "NotebooksHandler::expungeNotebookByNameImpl: name = "
             << name << ", linked notebook guid = "
             << linkedNotebookGuid.value_or(QStringLiteral("<not set>")));
+
+    Transaction transaction{database, Transaction::Type::Exclusive};
 
     const auto localId = utils::notebookLocalIdByName(
         name, linkedNotebookGuid, database, errorDescription);
@@ -744,8 +772,8 @@ bool NotebooksHandler::expungeNotebookByNameImpl(
         "local_storage::sql::NotebooksHandler",
         "Found notebook local id for name " << name << ": " << localId);
 
-    const bool res =
-        expungeNotebookByLocalIdImpl(localId, database, errorDescription);
+    const bool res = expungeNotebookByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction));
 
     if (res) {
         m_notifier->notifyNotebookExpunged(localId);
