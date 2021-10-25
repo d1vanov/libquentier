@@ -1399,6 +1399,10 @@ bool NotesHandler::expungeNoteByLocalIdImpl(
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
+    if (!res) {
+        Q_UNUSED(transaction->end())
+    }
+
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QT_TRANSLATE_NOOP(
@@ -1410,6 +1414,10 @@ bool NotesHandler::expungeNoteByLocalIdImpl(
     query.bindValue(QStringLiteral(":localUid"), localId);
 
     res = query.exec();
+    if (!res) {
+        Q_UNUSED(transaction->end())
+    }
+
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QT_TRANSLATE_NOOP(
@@ -1445,11 +1453,18 @@ bool NotesHandler::expungeNoteByGuidImpl(
         utils::noteLocalIdByGuid(guid, database, errorDescription);
 
     if (localId.isEmpty()) {
+        Q_UNUSED(transaction.end());
         return errorDescription.isEmpty();
     }
 
-    return expungeNoteByLocalIdImpl(
+    const bool res = expungeNoteByLocalIdImpl(
         localId, database, errorDescription, std::move(transaction));
+
+    if (res) {
+        m_notifier->notifyNoteExpunged(localId);
+    }
+
+    return res;
 }
 
 QList<qevercloud::Note> NotesHandler::listNotesImpl(
