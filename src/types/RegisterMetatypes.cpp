@@ -18,6 +18,7 @@
 
 #include "../src/synchronization/SynchronizationShared.h"
 
+#include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/local_storage/LocalStorageManager.h>
 #include <quentier/local_storage/NoteSearchQuery.h>
 #include <quentier/synchronization/Fwd.h>
@@ -151,6 +152,9 @@ void registerMetatypes()
     qRegisterMetaType<std::size_t>("std::size_t");
 
     qRegisterMetaType<ISyncChunksDataCountersPtr>("ISyncChunksDataCountersPtr");
+
+    qRegisterMetaType<local_storage::ILocalStorage::UpdateNoteOptions>(
+        "ILocalStorage::UpdateNoteOptions");
 }
 
 } // namespace quentier
