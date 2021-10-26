@@ -301,7 +301,9 @@ bool writeResourceBodyToFile(
         return false;
     }
 
-    QFile file{dirPath + QStringLiteral("/") + versionId};
+    QFile file{
+        dirPath + QStringLiteral("/") + versionId + QStringLiteral(".dat")};
+
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",

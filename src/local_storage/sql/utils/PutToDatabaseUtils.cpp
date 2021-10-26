@@ -190,15 +190,10 @@ struct NoteTagIds
         return result;
     }
 
-    if (hasTagLocalIds && hasTagGuids) {
-        result.tagLocalIds = std::move(tagLocalIds);
-        result.tagGuids = *note.tagGuids();
-        return result;
-    }
-
     if (hasTagLocalIds) {
+        result.tagLocalIds = std::move(tagLocalIds);
         ErrorString error;
-        for (const QString & localId: qAsConst(tagLocalIds)) {
+        for (const QString & localId: qAsConst(result.tagLocalIds)) {
             qevercloud::Tag tag;
             tag.setLocalId(localId);
             auto guid = tagGuid(tag, database, error);
@@ -211,8 +206,9 @@ struct NoteTagIds
         }
     }
     else {
+        result.tagGuids = note.tagGuids().value();
         ErrorString error;
-        for (const auto & guid: qAsConst(note.tagGuids().value())) {
+        for (const auto & guid: qAsConst(result.tagGuids)) {
             QString localId = tagLocalIdByGuid(guid, database, error);
             if (localId.isEmpty() && !error.isEmpty()) {
                 errorDescription = std::move(error);
@@ -348,6 +344,84 @@ void removeStaleNoteResourceDataFiles(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::utils",
                 "Can't bind tag ids to note"),
+            false);
+    }
+
+    return true;
+}
+
+[[nodiscard]] bool clearNoteResourceBindings(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "DELETE FROM NoteResources WHERE localNote = :localNote");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't clear note resource bindings in the local storage database: "
+            "failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't clear note resources bindings in the local storage "
+            "database"),
+        false);
+
+    return true;
+}
+
+[[nodiscard]] bool bindNoteWithItsResources(
+    const qevercloud::Note & note,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (!note.resources() || note.resources()->isEmpty()) {
+        return false;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NoteResources "
+        "(localNote, note, localResource, resource) "
+        "VALUES(:localNote, :note, :localResource, :resource)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't bind resource ids to note: failed to prepare query"),
+        false);
+
+    for (const auto & resource: qAsConst(*note.resources())) {
+        query.bindValue(QStringLiteral(":localNote"), resource.noteLocalId());
+
+        query.bindValue(
+            QStringLiteral(":note"),
+            (resource.noteGuid() ? *resource.noteGuid() : *gNullValue));
+
+        query.bindValue(QStringLiteral(":localResource"), resource.localId());
+
+        query.bindValue(
+            QStringLiteral(":resource"),
+            (resource.guid() ? *resource.guid() : *gNullValue));
+
+        res = query.exec();
+        ENSURE_DB_REQUEST_RETURN(
+            res, query, "local_storage::sql::utils",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::utils",
+                "Can't bind resource ids to note: failed to prepare query"),
             false);
     }
 
@@ -2590,7 +2664,7 @@ bool putResource(
 
             if (!writeResourceAlternateDataBodyToFile(
                     localStorageDir, resource.noteLocalId(), localId,
-                    resourceDataBodyVersionId,
+                    resourceAlternateDataBodyVersionId,
                     *resource.alternateData()->body(), errorDescription))
             {
                 return false;
@@ -2677,7 +2751,7 @@ bool putCommonResourceData(
         if (putResourceMetadataOption ==
             PutResourceMetadataOption::WithBinaryDataProperties)
         {
-            strm << ":dataSize, :dataHash, :alternateDataSize, "
+            strm << ", :dataSize, :dataHash, :alternateDataSize, "
                  << ":alternateDataHash";
         }
 
@@ -3686,6 +3760,12 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
 
         if (!note.resources() || note.resources()->isEmpty()) {
             error.clear();
+            if (!clearNoteResourceBindings(note.localId(), database, error)) {
+                composeFullError();
+                return false;
+            }
+
+            error.clear();
             if (!removeResourceMetadataByNoteLocalId(
                     note.localId(), database, error)) {
                 composeFullError();
@@ -3702,6 +3782,12 @@ bool putNote(const QDir & localStorageDir, qevercloud::Note & note,
                     note.localId(), localStorageDir, *note.resources(),
                     updateResourceBinaryData, database, error))
             {
+                composeFullError();
+                return false;
+            }
+
+            error.clear();
+            if (!bindNoteWithItsResources(note, database, error)) {
                 composeFullError();
                 return false;
             }

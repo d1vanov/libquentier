@@ -185,9 +185,10 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
                     utils::FetchResourceOption::WithBinaryData);
                 locker.emplace(handler.m_resourceDataFilesLock.get());
             }
+            int indexInNote = -1;
             return utils::findResourceByLocalId(
                 resourceLocalId, resourceOptions, handler.m_localStorageDir,
-                database, errorDescription);
+                indexInNote, database, errorDescription);
         });
 }
 
@@ -206,9 +207,10 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByGuid(
                     utils::FetchResourceOption::WithBinaryData);
                 locker.emplace(handler.m_resourceDataFilesLock.get());
             }
+            int indexInNote = -1;
             return utils::findResourceByLocalId(
                 resourceGuid, resourceOptions, handler.m_localStorageDir,
-                database, errorDescription);
+                indexInNote, database, errorDescription);
         });
 }
 
@@ -359,6 +361,21 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
         transaction.emplace(database, Transaction::Type::Exclusive);
     }
 
+    ErrorString error;
+    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
+        localId, database, error);
+
+    if (noteLocalId.isEmpty() && !error.isEmpty()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::ResourcesHandler",
+            "Cannot expunge resource from the local storage database"));
+        errorDescription.appendBase(error.base());
+        errorDescription.appendBase(error.additionalBases());
+        errorDescription.details() = error.details();
+        QNWARNING("local_storage::sql::ResourcesHandler", errorDescription);
+        return false;
+    }
+
     static const QString queryString = QStringLiteral(
         "DELETE FROM Resources WHERE resourceLocalUid = :resourceLocalUid");
 
@@ -390,13 +407,6 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
             "Cannot expunge resource from the local storage database, failed "
             "to commit transaction"),
         false);
-
-    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
-        localId, database, errorDescription);
-
-    if (noteLocalId.isEmpty()) {
-        return errorDescription.isEmpty();
-    }
 
     if (!utils::removeResourceDataFiles(
             m_localStorageDir, noteLocalId, localId, errorDescription))

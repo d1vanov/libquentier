@@ -1327,11 +1327,13 @@ bool NotesHandler::fillResources(
         note.setResources(QList<qevercloud::Resource>{});
     }
 
+    QMap<int, qevercloud::Resource> resourcesByIndex;
     for (const auto & resourceLocalId: qAsConst(resourceLocalIds)) {
         error.clear();
+        int indexInNote = -1;
         auto resource = utils::findResourceByLocalId(
             resourceLocalId, resourceOptions, m_localStorageDir,
-            database, error,
+            indexInNote, database, error,
             utils::TransactionOption::DontUseSeparateTransaction);
         if (!resource) {
             errorDescription.appendBase(QT_TRANSLATE_NOOP(
@@ -1344,7 +1346,15 @@ bool NotesHandler::fillResources(
             QNWARNING("local_storage::sql::NotesHandler", errorDescription);
             return false;
         }
-        note.mutableResources()->append(*resource);
+
+        Q_ASSERT(!resourcesByIndex.contains(indexInNote));
+        resourcesByIndex[indexInNote] = std::move(*resource);
+    }
+
+    for (auto it = resourcesByIndex.cbegin(), end = resourcesByIndex.cend();
+         it != end; ++it)
+    {
+        note.mutableResources()->append(it.value());
     }
 
     return true;
@@ -1399,10 +1409,6 @@ bool NotesHandler::expungeNoteByLocalIdImpl(
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
-    if (!res) {
-        Q_UNUSED(transaction->end())
-    }
-
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QT_TRANSLATE_NOOP(
@@ -1414,10 +1420,6 @@ bool NotesHandler::expungeNoteByLocalIdImpl(
     query.bindValue(QStringLiteral(":localUid"), localId);
 
     res = query.exec();
-    if (!res) {
-        Q_UNUSED(transaction->end())
-    }
-
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotesHandler",
         QT_TRANSLATE_NOOP(
@@ -1453,7 +1455,6 @@ bool NotesHandler::expungeNoteByGuidImpl(
         utils::noteLocalIdByGuid(guid, database, errorDescription);
 
     if (localId.isEmpty()) {
-        Q_UNUSED(transaction.end());
         return errorDescription.isEmpty();
     }
 

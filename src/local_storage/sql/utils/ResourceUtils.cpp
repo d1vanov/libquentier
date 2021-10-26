@@ -135,7 +135,7 @@ QString resourceLocalIdByGuid(
 
 std::optional<qevercloud::Resource> findResourceByLocalId(
     const QString & resourceLocalId, const FetchResourceOptions options,
-    const QDir & localStorageDir, QSqlDatabase & database,
+    const QDir & localStorageDir, int & indexInNote, QSqlDatabase & database,
     ErrorString & errorDescription,
     const TransactionOption transactionOption)
 {
@@ -185,7 +185,7 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
     const auto record = query.record();
     qevercloud::Resource resource;
     ErrorString error;
-    int indexInNote = -1;
+    indexInNote = -1;
     if (!fillResourceFromSqlRecord(record, resource, indexInNote, error))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
@@ -229,7 +229,7 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
 
 std::optional<qevercloud::Resource> findResourceByGuid(
     const qevercloud::Guid & resourceGuid, const FetchResourceOptions options,
-    const QDir & localStorageDir,
+    const QDir & localStorageDir, int & indexInNote,
     QSqlDatabase & database, ErrorString & errorDescription,
     const TransactionOption transactionOption)
 {
@@ -279,7 +279,7 @@ std::optional<qevercloud::Resource> findResourceByGuid(
     const auto record = query.record();
     qevercloud::Resource resource;
     ErrorString error;
-    int indexInNote = -1;
+    indexInNote = -1;
     if (!fillResourceFromSqlRecord(record, resource, indexInNote, error))
     {
         errorDescription.setBase(QT_TRANSLATE_NOOP(

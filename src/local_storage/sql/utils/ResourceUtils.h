@@ -59,14 +59,14 @@ Q_DECLARE_FLAGS(FetchResourceOptions, FetchResourceOption);
 
 [[nodiscard]] std::optional<qevercloud::Resource> findResourceByLocalId(
     const QString & resourceLocalId, FetchResourceOptions options,
-    const QDir & localStorageDir, QSqlDatabase & database,
+    const QDir & localStorageDir, int & indexInNote, QSqlDatabase & database,
     ErrorString & errorDescription,
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);
 
 [[nodiscard]] std::optional<qevercloud::Resource> findResourceByGuid(
     const qevercloud::Guid & resourceGuid, FetchResourceOptions options,
-    const QDir & localStorageDir, QSqlDatabase & database,
+    const QDir & localStorageDir, int & indexInNote, QSqlDatabase & database,
     ErrorString & errorDescription,
     TransactionOption transactionOption =
         TransactionOption::UseSeparateTransaction);

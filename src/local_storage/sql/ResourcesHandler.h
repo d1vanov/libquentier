@@ -73,7 +73,8 @@ public:
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId);
 
-    [[nodiscard]] QFuture<void> expungeResourceByGuid(QString resourceGuid);
+    [[nodiscard]] QFuture<void> expungeResourceByGuid(
+        qevercloud::Guid resourceGuid);
 
 private:
     [[nodiscard]] std::optional<quint32> resourceCountImpl(
