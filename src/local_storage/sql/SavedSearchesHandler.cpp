@@ -347,7 +347,7 @@ std::optional<qevercloud::SavedSearch>
 
 bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
-    ErrorString & errorDescription)
+    ErrorString & errorDescription, std::optional<Transaction> transaction)
 {
     static const QString queryString = QStringLiteral(
         "DELETE FROM SavedSearches WHERE localUid=:localUid");
@@ -373,6 +373,17 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
             "local id"),
         false);
 
+    if (transaction) {
+        res = transaction->commit();
+        ENSURE_DB_REQUEST_RETURN(
+            res, database, "local_storage::sql::SavedSearchesHandler",
+            QT_TRANSLATE_NOOP(
+                "local_storage::sql::SavedSearchesHandler",
+                "Cannot expunge saved search from the local storage database "
+                "by local id: failed to commit transaction"),
+            false);
+    }
+
     return true;
 }
 
@@ -383,6 +394,8 @@ bool SavedSearchesHandler::expungeSavedSearchByGuidImpl(
     QNDEBUG(
         "local_storage::sql::SavedSearchesHandler",
         "SavedSearchesHandler::expungeSavedSearchByGuidImpl: guid = " << guid);
+
+    Transaction transaction{database, Transaction::Type::Exclusive};
 
     const auto localId =
         utils::savedSearchLocalIdByGuid(guid, database, errorDescription);
@@ -402,8 +415,8 @@ bool SavedSearchesHandler::expungeSavedSearchByGuidImpl(
         "local_storage::sql::SavedSearchesHandler",
         "Found saved search local id for guid " << guid << ": " << localId);
 
-    const bool res =
-        expungeSavedSearchByLocalIdImpl(localId, database, errorDescription);
+    const bool res = expungeSavedSearchByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction));
 
     if (res) {
         m_notifier->notifySavedSearchExpunged(localId);
