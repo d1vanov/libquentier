@@ -19,10 +19,10 @@
 #include "../NotesHandler.h"
 #include "../NotebooksHandler.h"
 #include "../ConnectionPool.h"
-#include "../LinkedNotebooksHandler.h"
 #include "../NotebooksHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
+#include "../TagsHandler.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
@@ -112,16 +112,6 @@ namespace {
     sharedNotes.reserve(sharedNoteCount);
     for (int i = 0; i < sharedNoteCount; ++i) {
         qevercloud::SharedNote sharedNote;
-        sharedNote.setLocallyModified(i % 2 == 0);
-        sharedNote.setLocalOnly(i % 3 == 0);
-        sharedNote.setLocallyFavorited(i % 4 == 0);
-
-        QHash<QString, QVariant> localData;
-        localData[QStringLiteral("heySharedNote")] =
-            QStringLiteral("hiSharedNote");
-
-        sharedNote.setLocalData(std::move(localData));
-
         sharedNote.setSharerUserID(qevercloud::UserID{10});
 
         if (i % 2 == 0)
@@ -208,12 +198,6 @@ namespace {
     {
         qevercloud::Resource resource;
         resource.setLocallyModified(true);
-        resource.setLocalOnly(false);
-        resource.setLocallyFavorited(true);
-
-        QHash<QString, QVariant> localData;
-        localData[QStringLiteral("heyResource")] = QStringLiteral("hiResource");
-        resource.setLocalData(std::move(localData));
 
         resource.setData(qevercloud::Data{});
         auto & data = *resource.mutableData();
@@ -247,8 +231,6 @@ namespace {
         resource.setWidth(10);
         resource.setHeight(20);
 
-        resource.setActive(true);
-
         resource.setNoteLocalId(noteLocalId);
         resource.setNoteGuid(noteGuid);
         if (noteGuid) {
@@ -278,6 +260,8 @@ namespace {
         fullMap[QStringLiteral("key1")] = QStringLiteral("value1");
 
         resource.setAttributes(std::move(resourceAttributes));
+
+        resources.push_back(resource);
     }
 
     return resources;
@@ -883,6 +867,37 @@ static const qevercloud::Notebook gNotebook = createNotebook();
 
 const std::array gNoteTestValues{
     createNote(gNotebook),
+    createNote(
+        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds),
+    createNote(gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
+            CreateNoteOption::WithTagGuids),
+    createNote(
+        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithSharedNotes),
+    createNote(
+        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithRestrictions),
+    createNote(gNotebook, CreateNoteOptions{} | CreateNoteOption::WithLimits),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithRestrictions),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithLimits),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithRestrictions |
+            CreateNoteOption::WithLimits),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
+            CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
+    createNote(
+        gNotebook,
+        CreateNoteOptions{} | CreateNoteOption::WithResources),
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -923,7 +938,40 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     auto putNotebookFuture = notebooksHandler->putNotebook(gNotebook);
     putNotebookFuture.waitForFinished();
 
-    const auto note = GetParam();
+    auto note = GetParam();
+
+    if (!note.tagLocalIds().isEmpty() ||
+        (note.tagGuids() && !note.tagGuids()->isEmpty()))
+    {
+        const auto tagsHandler = std::make_shared<TagsHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread);
+
+        if (!note.tagLocalIds().isEmpty()) {
+            int index = 0;
+            for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
+                qevercloud::Tag tag;
+                tag.setLocalId(tagLocalId);
+                if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
+                    tag.setGuid(note.tagGuids()->at(index));
+                }
+
+                auto putTagFuture = tagsHandler->putTag(tag);
+                putTagFuture.waitForFinished();
+
+                ++index;
+            }
+        }
+        else if (note.tagGuids() && !note.tagGuids()->isEmpty()) {
+            for (const auto & tagGuid: qAsConst(*note.tagGuids())) {
+                qevercloud::Tag tag;
+                tag.setGuid(tagGuid);
+
+                auto putTagFuture = tagsHandler->putTag(tag);
+                putTagFuture.waitForFinished();
+            }
+        }
+    }
 
     auto putNoteFuture = notesHandler->putNote(note);
     putNoteFuture.waitForFinished();
@@ -977,6 +1025,14 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     foundByLocalIdNoteFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+
+    if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
+        !note.tagGuids()->isEmpty())
+    {
+        EXPECT_FALSE(foundByLocalIdNoteFuture.result().tagLocalIds().isEmpty());
+        note.setTagLocalIds(foundByLocalIdNoteFuture.result().tagLocalIds());
+    }
+
     EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
 
     auto foundByGuidNoteFuture = notesHandler->findNoteByGuid(
@@ -1114,8 +1170,17 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     using UpdateNoteOptions = NotesHandler::UpdateNoteOptions;
     using UpdateNoteOption = NotesHandler::UpdateNoteOption;
 
-    const auto updateNoteOptions =
-        UpdateNoteOptions{} | UpdateNoteOption::UpdateTags;
+    const UpdateNoteOptions updateNoteOptions = [&] {
+        UpdateNoteOptions options;
+        if (!note.tagLocalIds().isEmpty()) {
+            options.setFlag(UpdateNoteOption::UpdateTags);
+        }
+        if (note.resources() && !note.resources()->isEmpty()) {
+            options.setFlag(UpdateNoteOption::UpdateResourceMetadata);
+            options.setFlag(UpdateNoteOption::UpdateResourceBinaryData);
+        }
+        return options;
+    }();
 
     auto updateNoteFuture = notesHandler->updateNote(
         updatedNote, updateNoteOptions);
