@@ -329,6 +329,8 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
         "local_storage::sql::LinkedNotebooksHandler",
         "LinkedNotebooksHandler::expungeLinkedNotebookByGuid: guid = " << guid);
 
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
     const auto noteLocalIds = listNoteLocalIdsByLinkedNotebookGuid(
         guid, database, errorDescription);
     if (!errorDescription.isEmpty()) {
@@ -357,6 +359,15 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
             "local_storage::sql::LinkedNotebooksHandler",
             "Cannot expunge linked notebook by guid from the local storage "
             "database"),
+        false);
+
+    res = transaction.commit();
+    ENSURE_DB_REQUEST_RETURN(
+        res, database, "local_storage::sql::LinkedNotebooksHandler",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::LinkedNotebooksHandler",
+            "Cannot expunge linked notebook by guid from the local storage "
+            "database: failed to commit transaction"),
         false);
 
     for (const auto & noteLocalId: qAsConst(noteLocalIds)) {
