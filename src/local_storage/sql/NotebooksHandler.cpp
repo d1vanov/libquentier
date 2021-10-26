@@ -649,7 +649,6 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     const auto noteLocalIds = listNoteLocalIdsByNotebookLocalId(
         localId, database, errorDescription);
     if (!errorDescription.isEmpty()) {
-        Q_UNUSED(transaction->end())
         return false;
     }
 
@@ -658,10 +657,6 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
-    if (!res) {
-        Q_UNUSED(transaction->end())
-    }
-
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
@@ -673,10 +668,6 @@ bool NotebooksHandler::expungeNotebookByLocalIdImpl(
     query.bindValue(QStringLiteral(":localUid"), localId);
 
     res = query.exec();
-    if (!res) {
-        Q_UNUSED(transaction->end())
-    }
-
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::NotebooksHandler",
         QT_TRANSLATE_NOOP(
