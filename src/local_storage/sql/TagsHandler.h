@@ -99,6 +99,7 @@ private:
     [[nodiscard]] ExpungeTagResult expungeTagByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
         ErrorString & errorDescription,
+        std::optional<Transaction> transaction = std::nullopt,
         utils::TransactionOption transactionOption =
             utils::TransactionOption::UseSeparateTransaction);
 

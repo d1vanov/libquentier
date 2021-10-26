@@ -523,11 +523,18 @@ QStringList TagsHandler::listChildTagLocalIds(
 TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription,
+    std::optional<Transaction> transaction,
     const utils::TransactionOption transactionOption)
 {
     QNDEBUG(
         "local_storage::sql::TagsHandler",
         "TagsHandler::expungeTagByLocalIdImpl: local id = " << localId);
+
+    if (transactionOption == utils::TransactionOption::UseSeparateTransaction &&
+        !transaction)
+    {
+        transaction.emplace(database, Transaction::Type::Exclusive);
+    }
 
     ErrorString error;
     const auto childTagLocalIds =
@@ -540,15 +547,10 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
 
     ExpungeTagResult result;
 
-    std::optional<Transaction> transaction;
-    if (transactionOption == utils::TransactionOption::UseSeparateTransaction) {
-        transaction.emplace(database);
-    }
-
     for (const auto & childTagLocalId: qAsConst(childTagLocalIds)) {
         ErrorString error;
         const auto res = expungeTagByLocalIdImpl(
-            childTagLocalId, database, error,
+            childTagLocalId, database, error, std::nullopt,
             utils::TransactionOption::DontUseSeparateTransaction);
 
         if (!res.status) {
@@ -594,7 +596,7 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByLocalIdImpl(
     result.status = true;
     result.expungedTagLocalId = localId;
 
-    if (transactionOption == utils::TransactionOption::UseSeparateTransaction) {
+    if (transaction) {
         res = transaction->commit();
         ENSURE_DB_REQUEST_RETURN(
             res, database, "local_storage::sql::TagsHandler",
@@ -616,6 +618,8 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByGuidImpl(
         "local_storage::sql::TagsHandler",
         "TagsHandler::expungeTagByGuidImpl: guid = " << guid);
 
+    Transaction transaction{database, Transaction::Type::Exclusive};
+
     const auto localId =
         utils::tagLocalIdByGuid(guid, database, errorDescription);
 
@@ -634,7 +638,9 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByGuidImpl(
         "local_storage::sql::TagsHandler",
         "Found tag local id for guid " << guid << ": " << localId);
 
-    return expungeTagByLocalIdImpl(localId, database, errorDescription);
+    return expungeTagByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction),
+        utils::TransactionOption::UseSeparateTransaction);
 }
 
 TagsHandler::ExpungeTagResult TagsHandler::expungeTagByNameImpl(
@@ -646,6 +652,8 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByNameImpl(
         "TagsHandler::expungeTagByNameImpl: name = "
             << name << ", linked notebook guid = "
             << linkedNotebookGuid.value_or(QStringLiteral("<not set>")));
+
+    Transaction transaction{database, Transaction::Type::Exclusive};
 
     const auto localId = utils::tagLocalIdByName(
         name, linkedNotebookGuid, database, errorDescription);
@@ -665,7 +673,9 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByNameImpl(
         "local_storage::sql::TagsHandler",
         "Found tag local id for name " << name << ": " << localId);
 
-    return expungeTagByLocalIdImpl(localId, database, errorDescription);
+    return expungeTagByLocalIdImpl(
+        localId, database, errorDescription, std::move(transaction),
+        utils::TransactionOption::UseSeparateTransaction);
 }
 
 QList<qevercloud::Tag> TagsHandler::listTagsImpl(
