@@ -781,7 +781,8 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
             notebooks.begin()->name().value() + QStringLiteral(" #") +
             QString::number(notebookCounter));
 
-        if (notebook.sharedNotebooks() && !notebook.sharedNotebooks()->isEmpty()) {
+        if (notebook.sharedNotebooks() &&
+            !notebook.sharedNotebooks()->isEmpty()) {
             for (auto & sharedNotebook: *notebook.mutableSharedNotebooks()) {
                 sharedNotebook.setNotebookGuid(notebook.guid());
                 sharedNotebook.setId(sharedNotebookIdCounter);
