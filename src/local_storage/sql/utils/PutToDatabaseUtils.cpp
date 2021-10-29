@@ -276,9 +276,11 @@ void removeStaleNoteResourceDataFiles(
         if (findResourceDataBodyVersionId(
                 resourceLocalId, database, actualVersionId, error))
         {
-            removeStaleResourceDataBodyFiles(
-                localStorageDir, noteLocalId, resourceLocalId,
-                actualVersionId);
+            if (!actualVersionId.isEmpty()) {
+                removeStaleResourceDataBodyFiles(
+                    localStorageDir, noteLocalId, resourceLocalId,
+                    actualVersionId);
+            }
         }
 
         actualVersionId.clear();
@@ -286,9 +288,11 @@ void removeStaleNoteResourceDataFiles(
         if (findResourceAlternateDataBodyVersionId(
                 resourceLocalId, database, actualVersionId, error))
         {
-            removeStaleResourceAlternateDataBodyFiles(
-                localStorageDir, noteLocalId, resourceLocalId,
-                actualVersionId);
+            if (!actualVersionId.isEmpty()) {
+                removeStaleResourceAlternateDataBodyFiles(
+                    localStorageDir, noteLocalId, resourceLocalId,
+                    actualVersionId);
+            }
         }
     }
 }
@@ -424,6 +428,47 @@ void removeStaleNoteResourceDataFiles(
                 "Can't bind resource ids to note: failed to prepare query"),
             false);
     }
+
+    return true;
+}
+
+[[nodiscard]] bool bindResourceToNote(
+    const qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO NoteResources "
+        "(localNote, note, localResource, resource) "
+        "VALUES(:localNote, :note, :localResource, :resource)");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't bind resource ids to note: failed to prepare query"),
+        false);
+
+    query.bindValue(QStringLiteral(":localNote"), resource.noteLocalId());
+
+    query.bindValue(
+        QStringLiteral(":note"),
+        (resource.noteGuid() ? *resource.noteGuid() : *gNullValue));
+
+    query.bindValue(QStringLiteral(":localResource"), resource.localId());
+
+    query.bindValue(
+        QStringLiteral(":resource"),
+        (resource.guid() ? *resource.guid() : *gNullValue));
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Can't bind resource ids to note: failed to prepare query"),
+        false);
 
     return true;
 }
@@ -2552,6 +2597,10 @@ bool putResource(
         return false;
     }
 
+    if (!bindResourceToNote(resource, database, errorDescription)) {
+        return false;
+    }
+
     if (resource.attributes()) {
         if (!putResourceAttributes(
                 localId, *resource.attributes(), database, errorDescription))
@@ -2707,13 +2756,17 @@ bool putResource(
             putResourceBinaryDataOption ==
             PutResourceBinaryDataOption::WithBinaryData)
         {
-            removeStaleResourceDataBodyFiles(
-                localStorageDir, resource.noteLocalId(), localId,
-                resourceDataBodyVersionId);
+            if (!resourceDataBodyVersionId.isEmpty()) {
+                removeStaleResourceDataBodyFiles(
+                    localStorageDir, resource.noteLocalId(), localId,
+                    resourceDataBodyVersionId);
+            }
 
-            removeStaleResourceAlternateDataBodyFiles(
-                localStorageDir, resource.noteLocalId(), localId,
-                resourceAlternateDataBodyVersionId);
+            if (!resourceAlternateDataBodyVersionId.isEmpty()) {
+                removeStaleResourceAlternateDataBodyFiles(
+                    localStorageDir, resource.noteLocalId(), localId,
+                    resourceAlternateDataBodyVersionId);
+            }
         }
     }
 
