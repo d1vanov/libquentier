@@ -210,15 +210,14 @@ template <class VariantType, class LocalType = VariantType>
 bool fillResourceAttributeValue(
     const QSqlRecord & record, const QString & column,
     qevercloud::Resource & resource,
-    std::function<void(qevercloud::ResourceAttributes&, LocalType)> setter,
+    std::function<
+        void(std::optional<qevercloud::ResourceAttributes> &, LocalType)>
+        setter,
     ErrorString * errorDescription = nullptr)
 {
-    if (!resource.attributes()) {
-        resource.setAttributes(qevercloud::ResourceAttributes{});
-    }
-
-    return fillValue<qevercloud::ResourceAttributes, VariantType, LocalType>(
-        record, column, *resource.mutableAttributes(), std::move(setter),
+    return fillValue<
+        std::optional<qevercloud::ResourceAttributes>, VariantType, LocalType>(
+        record, column, resource.mutableAttributes(), std::move(setter),
         *gMissingResourceFieldErrorMessage, errorDescription);
 }
 
@@ -1902,45 +1901,96 @@ bool fillResourceFromSqlRecord(
 
     using qevercloud::ResourceAttributes;
 
+    const auto setResourceAttributeFunction = [&](auto setter) {
+        return [&, setter = std::move(setter)](
+                   std::optional<qevercloud::ResourceAttributes> & attributes,
+                   auto value) {
+            if (!attributes) {
+                attributes = qevercloud::ResourceAttributes{};
+            }
+
+            setter(*attributes, std::move(value));
+        };
+    };
+
     fillResourceAttributeValue<QString, QString>(
         record, QStringLiteral("resourceSourceURL"), resource,
-        &ResourceAttributes::setSourceURL);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes, QString sourceUrl) {
+                attributes.setSourceURL(std::move(sourceUrl));
+            }));
 
     fillResourceAttributeValue<qint64, qevercloud::Timestamp>(
         record, QStringLiteral("timestamp"), resource,
-        &ResourceAttributes::setTimestamp);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               qevercloud::Timestamp timestamp) {
+                attributes.setTimestamp(timestamp);
+            }));
 
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceLatitude"), resource,
-        &ResourceAttributes::setLatitude);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               double latitude) {
+                attributes.setLatitude(latitude);
+            }));
 
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceLongitude"), resource,
-        &ResourceAttributes::setLongitude);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               double longitude) {
+                attributes.setLongitude(longitude);
+            }));
 
     fillResourceAttributeValue<double, double>(
         record, QStringLiteral("resourceAltitude"), resource,
-        &ResourceAttributes::setAltitude);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               double altitude) {
+                attributes.setAltitude(altitude);
+            }));
 
     fillResourceAttributeValue<QString, QString>(
         record, QStringLiteral("cameraMake"), resource,
-        &ResourceAttributes::setCameraMake);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               QString cameraMake) {
+                attributes.setCameraMake(std::move(cameraMake));
+            }));
 
     fillResourceAttributeValue<QString, QString>(
         record, QStringLiteral("cameraModel"), resource,
-        &ResourceAttributes::setCameraModel);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               QString cameraModel) {
+                attributes.setCameraModel(std::move(cameraModel));
+            }));
 
     fillResourceAttributeValue<int, bool>(
         record, QStringLiteral("clientWillIndex"), resource,
-        &ResourceAttributes::setClientWillIndex);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               bool clientWillIndex) {
+                attributes.setClientWillIndex(clientWillIndex);
+            }));
 
     fillResourceAttributeValue<QString, QString>(
         record, QStringLiteral("fileName"), resource,
-        &ResourceAttributes::setFileName);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               QString fileName) {
+                attributes.setFileName(std::move(fileName));
+            }));
 
     fillResourceAttributeValue<int, bool>(
         record, QStringLiteral("attachment"), resource,
-        &ResourceAttributes::setAttachment);
+        setResourceAttributeFunction(
+            [](qevercloud::ResourceAttributes & attributes,
+               bool attachment) {
+                attributes.setAttachment(attachment);
+            }));
 
     return true;
 }
