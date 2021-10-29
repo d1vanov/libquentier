@@ -17,6 +17,8 @@
  */
 
 #include "../ConnectionPool.h"
+#include "../NotebooksHandler.h"
+#include "../NotesHandler.h"
 #include "../Notifier.h"
 #include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
@@ -25,9 +27,11 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QFlags>
 #include <QFutureSynchronizer>
+#include <QGlobalStatic>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -36,9 +40,14 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
+
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
+
+using namespace std::string_literals;
 
 class ResourcesHandlerTestNotifierListener : public QObject
 {
@@ -89,6 +98,139 @@ private:
 
 namespace {
 
+[[nodiscard]] qevercloud::Notebook createNotebook()
+{
+    qevercloud::Notebook notebook;
+    notebook.setGuid(UidGenerator::Generate());
+    notebook.setName(QStringLiteral("name"));
+    notebook.setUpdateSequenceNum(1);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    notebook.setServiceCreated(now);
+    notebook.setServiceUpdated(now);
+
+    return notebook;
+}
+
+[[nodiscard]] qevercloud::Note createNote(const qevercloud::Notebook & notebook)
+{
+    qevercloud::Note note;
+    note.setLocallyModified(true);
+    note.setLocalOnly(false);
+    note.setLocallyFavorited(true);
+
+    note.setNotebookLocalId(notebook.localId());
+    note.setNotebookGuid(notebook.guid());
+
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(1);
+
+    note.setTitle(QStringLiteral("Title"));
+
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setContentHash(QCryptographicHash::hash(
+        note.content()->toUtf8(), QCryptographicHash::Md5));
+
+    note.setContentLength(note.content()->size());
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+    note.setCreated(now);
+    note.setUpdated(now);
+
+    return note;
+}
+
+enum class CreateResourceOption
+{
+    WithRecognitionData = 1 << 0,
+    WithData = 1 << 1,
+    WithAlternateData = 1 << 2,
+    WithAttributes = 1 << 3
+};
+
+Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
+
+[[nodiscard]] qevercloud::Resource createResource(
+    QString noteLocalId, std::optional<qevercloud::Guid> noteGuid,
+    const CreateResourceOptions createResourceOptions = {})
+{
+    qevercloud::Resource resource;
+    resource.setLocallyModified(true);
+
+    if (noteGuid) {
+        resource.setGuid(UidGenerator::Generate());
+        resource.setUpdateSequenceNum(42);
+    }
+
+    resource.setNoteLocalId(std::move(noteLocalId));
+    resource.setNoteGuid(std::move(noteGuid));
+
+    resource.setMime("application/text-plain");
+
+    resource.setWidth(10);
+    resource.setHeight(20);
+
+    if (createResourceOptions.testFlag(
+            CreateResourceOption::WithRecognitionData)) {
+        resource.setRecognition(qevercloud::Data{});
+        auto & recognition = *resource.mutableRecognition();
+        recognition.setBody(
+            QByteArray::fromStdString("test resource recognitiondata"s));
+        recognition.setSize(recognition.body()->size());
+        recognition.setBodyHash(QCryptographicHash::hash(
+            *recognition.body(), QCryptographicHash::Md5));
+    }
+
+    if (createResourceOptions.testFlag(CreateResourceOption::WithData)) {
+        resource.setData(qevercloud::Data{});
+        auto & data = *resource.mutableData();
+        data.setBody(QByteArray::fromStdString("test resource data"s));
+        data.setSize(data.body()->size());
+        data.setBodyHash(
+            QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
+    }
+
+    if (createResourceOptions.testFlag(CreateResourceOption::WithAlternateData))
+    {
+        resource.setAlternateData(qevercloud::Data{});
+        auto & alternateData = *resource.mutableAlternateData();
+        alternateData.setBody(
+            QByteArray::fromStdString("test resource alternate data"s));
+
+        alternateData.setSize(alternateData.body()->size());
+
+        alternateData.setBodyHash(QCryptographicHash::hash(
+            *alternateData.body(), QCryptographicHash::Md5));
+    }
+
+    if (createResourceOptions.testFlag(CreateResourceOption::WithAttributes)) {
+        qevercloud::ResourceAttributes resourceAttributes;
+        resourceAttributes.setSourceURL(
+            QStringLiteral("https://www.example.com"));
+
+        resourceAttributes.setTimestamp(QDateTime::currentMSecsSinceEpoch());
+        resourceAttributes.setLatitude(55.0);
+        resourceAttributes.setLongitude(38.2);
+        resourceAttributes.setAltitude(0.2);
+        resourceAttributes.setCameraMake(QStringLiteral("cameraMake"));
+        resourceAttributes.setCameraModel(QStringLiteral("cameraModel"));
+        resourceAttributes.setClientWillIndex(false);
+        resourceAttributes.setFileName(QStringLiteral("resourceFileName"));
+        resourceAttributes.setAttachment(false);
+
+        resourceAttributes.setApplicationData(qevercloud::LazyMap{});
+        auto & appData = *resourceAttributes.mutableApplicationData();
+        appData.setKeysOnly(QSet<QString>{} << QStringLiteral("key1"));
+        appData.setFullMap(QMap<QString, QString>{});
+        auto & fullMap = *appData.mutableFullMap();
+        fullMap[QStringLiteral("key1")] = QStringLiteral("value1");
+
+        resource.setAttributes(std::move(resourceAttributes));
+    }
+
+    return resource;
+}
+
 class ResourcesHandlerTest : public testing::Test
 {
 protected:
@@ -111,9 +253,7 @@ protected:
         m_notifier->moveToThread(m_writerThread.get());
 
         QObject::connect(
-            m_writerThread.get(),
-            &QThread::finished,
-            m_notifier,
+            m_writerThread.get(), &QThread::finished, m_notifier,
             &QObject::deleteLater);
 
         m_writerThread->start();
@@ -150,8 +290,8 @@ TEST_F(ResourcesHandlerTest, CtorNullConnectionPool)
 {
     EXPECT_THROW(
         const auto resourcesHandler = std::make_shared<ResourcesHandler>(
-            nullptr, QThreadPool::globalInstance(), m_notifier,
-            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock),
+            nullptr, QThreadPool::globalInstance(), m_notifier, m_writerThread,
+            m_temporaryDir.path(), m_resourceDataFilesLock),
         IQuentierException);
 }
 
@@ -212,8 +352,8 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto resourceFuture = resourcesHandler->findResourceByLocalId(
-        UidGenerator::Generate());
+    auto resourceFuture =
+        resourcesHandler->findResourceByLocalId(UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
     EXPECT_EQ(resourceFuture.resultCount(), 0);
@@ -232,8 +372,8 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto resourceFuture = resourcesHandler->findResourceByGuid(
-        UidGenerator::Generate());
+    auto resourceFuture =
+        resourcesHandler->findResourceByGuid(UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
     EXPECT_EQ(resourceFuture.resultCount(), 0);
@@ -252,8 +392,8 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeResourceFuture = resourcesHandler->expungeResourceByLocalId(
-        UidGenerator::Generate());
+    auto expungeResourceFuture =
+        resourcesHandler->expungeResourceByLocalId(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
 }
@@ -264,10 +404,116 @@ TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeResourceFuture = resourcesHandler->expungeResourceByGuid(
-        UidGenerator::Generate());
+    auto expungeResourceFuture =
+        resourcesHandler->expungeResourceByGuid(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeResourceFuture.waitForFinished());
+}
+
+class ResourcesHandlerSingleResourceTest :
+    public ResourcesHandlerTest,
+    public testing::WithParamInterface<qevercloud::Resource>
+{};
+
+Q_GLOBAL_STATIC_WITH_ARGS(qevercloud::Notebook, gNotebook, (createNotebook()));
+Q_GLOBAL_STATIC_WITH_ARGS(qevercloud::Note, gNote, (createNote(*gNotebook)));
+
+const std::array gResourceTestValues{
+    createResource(gNote->localId(), gNote->guid()),
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    ResourcesHandlerSingleResourceTestInstance,
+    ResourcesHandlerSingleResourceTest, testing::ValuesIn(gResourceTestValues));
+
+TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    ResourcesHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier, &Notifier::resourcePut, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourcePut);
+
+    QObject::connect(
+        m_notifier, &Notifier::resourceMetadataPut, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourceMetadataPut);
+
+    QObject::connect(
+        m_notifier, &Notifier::resourceExpunged, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourceExpunged);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
+    putNotebookFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNoteFuture = notesHandler->putNote(*gNote);
+    putNoteFuture.waitForFinished();
+
+    auto resource = GetParam();
+
+    auto putResourceFuture = resourcesHandler->putResource(resource, 0);
+    putResourceFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putResources().size(), 1);
+    EXPECT_EQ(notifierListener.putResources()[0], resource);
+
+    using NoteCountOption = ILocalStorage::NoteCountOption;
+    using NoteCountOptions = ILocalStorage::NoteCountOptions;
+
+    const auto noteCountOptions =
+        NoteCountOptions{} | NoteCountOption::IncludeNonDeletedNotes;
+
+    auto resourceCountFuture =
+        resourcesHandler->resourceCount(noteCountOptions);
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 1);
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(gNote->localId());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 1);
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(UidGenerator::Generate());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 0);
+
+    using FetchResourceOption = ILocalStorage::FetchResourceOption;
+    using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
+
+    const auto fetchResourceOptions =
+        FetchResourceOptions{} | FetchResourceOption::WithBinaryData;
+
+    auto foundByLocalIdResourceFuture = resourcesHandler->findResourceByLocalId(
+        resource.localId(), fetchResourceOptions);
+
+    foundByLocalIdResourceFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+    EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
+
+    auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
+        resource.guid().value(), fetchResourceOptions);
+
+    foundByGuidResourceFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+    EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
+
+    // TODO: implement futrher
 }
 
 } // namespace quentier::local_storage::sql::tests
