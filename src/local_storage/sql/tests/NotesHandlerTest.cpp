@@ -32,6 +32,7 @@
 #include <QDateTime>
 #include <QFlags>
 #include <QFutureSynchronizer>
+#include <QGlobalStatic>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -97,7 +98,6 @@ public Q_SLOTS:
     }
 
 private:
-
     QList<qevercloud::Note> m_putNotes;
     QList<UpdatedNoteWithOptions> m_updatedNotesWithOptions;
     QStringList m_expungedNoteLocalIds;
@@ -864,54 +864,54 @@ class NotesHandlerSingleNoteTest :
     public testing::WithParamInterface<qevercloud::Note>
 {};
 
-static const qevercloud::Notebook gNotebook = createNotebook();
+Q_GLOBAL_STATIC_WITH_ARGS(qevercloud::Notebook, gNotebook, (createNotebook()));
 
 const std::array gNoteTestValues{
-    createNote(gNotebook),
+    createNote(*gNotebook),
     createNote(
-        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds),
-    createNote(gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds),
+    createNote(*gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
             CreateNoteOption::WithTagGuids),
     createNote(
-        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithSharedNotes),
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithSharedNotes),
     createNote(
-        gNotebook, CreateNoteOptions{} | CreateNoteOption::WithRestrictions),
-    createNote(gNotebook, CreateNoteOptions{} | CreateNoteOption::WithLimits),
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithRestrictions),
+    createNote(*gNotebook, CreateNoteOptions{} | CreateNoteOption::WithLimits),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithRestrictions),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithLimits),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithRestrictions |
             CreateNoteOption::WithLimits),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithResources),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
             CreateNoteOption::WithResources),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
             CreateNoteOption::WithTagGuids | CreateNoteOption::WithResources |
             CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
-    createNote(gNotebook, CreateNoteOption::Deleted),
+    createNote(*gNotebook, CreateNoteOption::Deleted),
     createNote(
-        gNotebook,
+        *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
             CreateNoteOption::WithTagGuids | CreateNoteOption::WithResources |
             CreateNoteOption::WithSharedNotes |
@@ -954,7 +954,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto putNotebookFuture = notebooksHandler->putNotebook(gNotebook);
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     auto note = GetParam();
@@ -1012,7 +1012,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     EXPECT_EQ(noteCountFuture.result(), 1U);
 
     noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        gNotebook.localId(), noteCountOptions);
+        gNotebook->localId(), noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 1U);
@@ -1026,7 +1026,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     }
 
     noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-        QStringList{} << gNotebook.localId(), note.tagLocalIds(),
+        QStringList{} << gNotebook->localId(), note.tagLocalIds(),
         noteCountOptions);
 
     noteCountFuture.waitForFinished();
@@ -1082,7 +1082,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         note.sharedNotes().value_or(QList<qevercloud::SharedNote>{}));
 
     listNotesFuture = notesHandler->listNotesPerNotebookLocalId(
-        gNotebook.localId(), fetchNoteOptions, listNotesOptions);
+        gNotebook->localId(), fetchNoteOptions, listNotesOptions);
 
     listNotesFuture.waitForFinished();
     ASSERT_EQ(listNotesFuture.result().size(), 1);
@@ -1115,7 +1115,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         EXPECT_EQ(noteCountFuture.result(), 0U);
 
         noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-            gNotebook.localId(), noteCountOptions);
+            gNotebook->localId(), noteCountOptions);
 
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 0U);
@@ -1129,7 +1129,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         }
 
         noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-            QStringList{} << gNotebook.localId(), note.tagLocalIds(),
+            QStringList{} << gNotebook->localId(), note.tagLocalIds(),
             noteCountOptions);
 
         noteCountFuture.waitForFinished();
@@ -1258,7 +1258,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto putNotebookFuture = notebooksHandler->putNotebook(gNotebook);
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
     putNotebookFuture.waitForFinished();
 
     const auto tagsHandler = std::make_shared<TagsHandler>(
@@ -1381,13 +1381,13 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     }
 
     noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        gNotebook.localId(), noteCountOptions);
+        gNotebook->localId(), noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), notes.size());
 
     noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-        QStringList{} << gNotebook.localId(), allTagLocalIds, noteCountOptions);
+        QStringList{} << gNotebook->localId(), allTagLocalIds, noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), notesWithTagLocalIds);
@@ -1443,13 +1443,13 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     }
 
     noteCountFuture = notesHandler->noteCountPerNotebookLocalId(
-        gNotebook.localId(), noteCountOptions);
+        gNotebook->localId(), noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 0U);
 
     noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-        QStringList{} << gNotebook.localId(), allTagLocalIds, noteCountOptions);
+        QStringList{} << gNotebook->localId(), allTagLocalIds, noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 0U);
