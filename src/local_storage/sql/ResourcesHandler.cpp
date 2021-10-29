@@ -208,7 +208,7 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByGuid(
                 locker.emplace(handler.m_resourceDataFilesLock.get());
             }
             int indexInNote = -1;
-            return utils::findResourceByLocalId(
+            return utils::findResourceByGuid(
                 resourceGuid, resourceOptions, handler.m_localStorageDir,
                 indexInNote, database, errorDescription);
         });
