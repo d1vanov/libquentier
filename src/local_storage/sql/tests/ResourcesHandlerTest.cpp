@@ -513,7 +513,89 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
 
-    // TODO: implement futrher
+    resource.setUpdateSequenceNum(resource.updateSequenceNum().value() + 1);
+
+    putResourceFuture = resourcesHandler->putResourceMetadata(resource, 0);
+    putResourceFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putResourceMetadata().size(), 1);
+    EXPECT_EQ(notifierListener.putResourceMetadata()[0], resource);
+
+    resourceCountFuture =
+        resourcesHandler->resourceCount(noteCountOptions);
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 1);
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(gNote->localId());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 1);
+
+    foundByLocalIdResourceFuture = resourcesHandler->findResourceByLocalId(
+        resource.localId(), fetchResourceOptions);
+
+    foundByLocalIdResourceFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+    EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
+
+    foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
+        resource.guid().value(), fetchResourceOptions);
+
+    foundByGuidResourceFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+    EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
+
+    auto expungeResourceByLocalIdFuture = resourcesHandler->expungeResourceByLocalId(resource.localId());
+    expungeResourceByLocalIdFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedResourceLocalIds().size(), 1);
+    EXPECT_EQ(notifierListener.expungedResourceLocalIds().at(0), resource.localId());
+
+    const auto checkResourceExpunged = [&] {
+        resourceCountFuture =
+            resourcesHandler->resourceCount(noteCountOptions);
+
+        resourceCountFuture.waitForFinished();
+        EXPECT_EQ(resourceCountFuture.result(), 0);
+
+        resourceCountFuture =
+            resourcesHandler->resourceCountPerNoteLocalId(gNote->localId());
+
+        resourceCountFuture.waitForFinished();
+        EXPECT_EQ(resourceCountFuture.result(), 0);
+
+        foundByLocalIdResourceFuture = resourcesHandler->findResourceByLocalId(
+            resource.localId(), fetchResourceOptions);
+
+        foundByLocalIdResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 0);
+
+        foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
+            resource.guid().value(), fetchResourceOptions);
+
+        foundByGuidResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 0);
+    };
+
+    checkResourceExpunged();
+
+    putResourceFuture = resourcesHandler->putResource(resource, 0);
+    putResourceFuture.waitForFinished();
+
+    auto expungeResourceByGuidFuture = resourcesHandler->expungeResourceByGuid(
+        resource.guid().value());
+
+    expungeResourceByGuidFuture.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(notifierListener.expungedResourceLocalIds().size(), 2);
+    EXPECT_EQ(notifierListener.expungedResourceLocalIds().at(1), resource.localId());
+
+    checkResourceExpunged();
 }
 
 } // namespace quentier::local_storage::sql::tests
