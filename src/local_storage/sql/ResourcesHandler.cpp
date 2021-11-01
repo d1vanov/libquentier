@@ -223,8 +223,12 @@ QFuture<void> ResourcesHandler::expungeResourceByLocalId(
             ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             QWriteLocker locker{handler.m_resourceDataFilesLock.get()};
-            return handler.expungeResourceByLocalIdImpl(
+            const bool res = handler.expungeResourceByLocalIdImpl(
                 resourceLocalId, database, errorDescription);
+            if (res) {
+                handler.m_notifier->notifyResourceExpunged(resourceLocalId);
+            }
+            return res;
         });
 }
 
@@ -430,8 +434,14 @@ bool ResourcesHandler::expungeResourceByGuidImpl(
         return errorDescription.isEmpty();
     }
 
-    return expungeResourceByLocalIdImpl(
+    const bool res = expungeResourceByLocalIdImpl(
         localId, database, errorDescription, std::move(transaction));
+
+    if (res) {
+        m_notifier->notifyResourceExpunged(localId);
+    }
+
+    return res;
 }
 
 TaskContext ResourcesHandler::makeTaskContext() const
