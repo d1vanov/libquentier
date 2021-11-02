@@ -142,9 +142,9 @@ namespace {
 
 enum class CreateResourceOption
 {
-    WithRecognitionData = 1 << 0,
-    WithData = 1 << 1,
-    WithAlternateData = 1 << 2,
+    WithData = 1 << 0,
+    WithAlternateData = 1 << 1,
+    WithRecognitionData = 1 << 2,
     WithAttributes = 1 << 3
 };
 
@@ -420,6 +420,37 @@ Q_GLOBAL_STATIC_WITH_ARGS(qevercloud::Note, gNote, (createNote(*gNotebook)));
 
 const std::array gResourceTestValues{
     createResource(gNote->localId(), gNote->guid()),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithData),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithAlternateData),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithRecognitionData),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithAttributes),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithData |
+            CreateResourceOption::WithAlternateData),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithData |
+            CreateResourceOption::WithRecognitionData),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithData |
+            CreateResourceOption::WithAlternateData |
+            CreateResourceOption::WithAttributes),
+    createResource(
+        gNote->localId(), gNote->guid(),
+        CreateResourceOptions{} | CreateResourceOption::WithData |
+            CreateResourceOption::WithAlternateData |
+            CreateResourceOption::WithRecognitionData |
+            CreateResourceOption::WithAttributes),
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -522,8 +553,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     ASSERT_EQ(notifierListener.putResourceMetadata().size(), 1);
     EXPECT_EQ(notifierListener.putResourceMetadata()[0], resource);
 
-    resourceCountFuture =
-        resourcesHandler->resourceCount(noteCountOptions);
+    resourceCountFuture = resourcesHandler->resourceCount(noteCountOptions);
 
     resourceCountFuture.waitForFinished();
     EXPECT_EQ(resourceCountFuture.result(), 1);
@@ -548,16 +578,17 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
 
-    auto expungeResourceByLocalIdFuture = resourcesHandler->expungeResourceByLocalId(resource.localId());
+    auto expungeResourceByLocalIdFuture =
+        resourcesHandler->expungeResourceByLocalId(resource.localId());
     expungeResourceByLocalIdFuture.waitForFinished();
 
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.expungedResourceLocalIds().size(), 1);
-    EXPECT_EQ(notifierListener.expungedResourceLocalIds().at(0), resource.localId());
+    EXPECT_EQ(
+        notifierListener.expungedResourceLocalIds().at(0), resource.localId());
 
     const auto checkResourceExpunged = [&] {
-        resourceCountFuture =
-            resourcesHandler->resourceCount(noteCountOptions);
+        resourceCountFuture = resourcesHandler->resourceCount(noteCountOptions);
 
         resourceCountFuture.waitForFinished();
         EXPECT_EQ(resourceCountFuture.result(), 0);
@@ -586,14 +617,15 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     putResourceFuture = resourcesHandler->putResource(resource, 0);
     putResourceFuture.waitForFinished();
 
-    auto expungeResourceByGuidFuture = resourcesHandler->expungeResourceByGuid(
-        resource.guid().value());
+    auto expungeResourceByGuidFuture =
+        resourcesHandler->expungeResourceByGuid(resource.guid().value());
 
     expungeResourceByGuidFuture.waitForFinished();
 
     QCoreApplication::processEvents();
     EXPECT_EQ(notifierListener.expungedResourceLocalIds().size(), 2);
-    EXPECT_EQ(notifierListener.expungedResourceLocalIds().at(1), resource.localId());
+    EXPECT_EQ(
+        notifierListener.expungedResourceLocalIds().at(1), resource.localId());
 
     checkResourceExpunged();
 }
