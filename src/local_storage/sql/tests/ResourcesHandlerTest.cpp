@@ -630,6 +630,165 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
     checkResourceExpunged();
 }
 
+TEST_F(ResourcesHandlerTest, HandleMultipleResources)
+{
+    const auto resourcesHandler = std::make_shared<ResourcesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    ResourcesHandlerTestNotifierListener notifierListener;
+
+    QObject::connect(
+        m_notifier, &Notifier::resourcePut, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourcePut);
+
+    QObject::connect(
+        m_notifier, &Notifier::resourceMetadataPut, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourceMetadataPut);
+
+    QObject::connect(
+        m_notifier, &Notifier::resourceExpunged, &notifierListener,
+        &ResourcesHandlerTestNotifierListener::onResourceExpunged);
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
+    putNotebookFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNoteFuture = notesHandler->putNote(*gNote);
+    putNoteFuture.waitForFinished();
+
+    auto resources = gResourceTestValues;
+    auto resourceCounter = 2;
+    for (auto it = std::next(resources.begin()); // NOLINT
+         it != resources.end(); ++it)
+    {
+        auto & resource = *it;
+        resource.setLocalId(UidGenerator::Generate());
+        resource.setGuid(UidGenerator::Generate());
+
+        resource.setUpdateSequenceNum(resourceCounter);
+        ++resourceCounter;
+    }
+
+    QFutureSynchronizer<void> putResourcesSynchronizer;
+    int indexInNote = 0;
+    for (auto resource: resources) {
+        auto putResourceFuture =
+            resourcesHandler->putResource(std::move(resource), indexInNote);
+        putResourcesSynchronizer.addFuture(putResourceFuture);
+        ++indexInNote;
+    }
+
+    EXPECT_NO_THROW(putResourcesSynchronizer.waitForFinished());
+
+    QCoreApplication::processEvents();
+    ASSERT_EQ(notifierListener.putResources().size(), resources.size());
+
+    using NoteCountOption = ILocalStorage::NoteCountOption;
+    using NoteCountOptions = ILocalStorage::NoteCountOptions;
+
+    const auto noteCountOptions =
+        NoteCountOptions{} | NoteCountOption::IncludeNonDeletedNotes;
+
+    auto resourceCountFuture =
+        resourcesHandler->resourceCount(noteCountOptions);
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), resources.size());
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(gNote->localId());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), resources.size());
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(UidGenerator::Generate());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 0);
+
+    using FetchResourceOption = ILocalStorage::FetchResourceOption;
+    using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
+
+    auto fetchResourceOptions =
+        FetchResourceOptions{} | FetchResourceOption::WithBinaryData;
+
+    for (const auto & resource: qAsConst(resources)) {
+        auto foundByLocalIdResourceFuture =
+            resourcesHandler->findResourceByLocalId(
+                resource.localId(), fetchResourceOptions);
+
+        foundByLocalIdResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+        EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
+
+        auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
+            resource.guid().value(), fetchResourceOptions);
+
+        foundByGuidResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+        EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
+    }
+
+    fetchResourceOptions = FetchResourceOptions{};
+
+    for (auto resource: qAsConst(resources)) {
+        if (resource.data()) {
+            resource.mutableData()->setBody(std::nullopt);
+        }
+
+        if (resource.alternateData()) {
+            resource.mutableAlternateData()->setBody(std::nullopt);
+        }
+
+        auto foundByLocalIdResourceFuture =
+            resourcesHandler->findResourceByLocalId(
+                resource.localId(), fetchResourceOptions);
+
+        foundByLocalIdResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+        EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
+
+        auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
+            resource.guid().value(), fetchResourceOptions);
+
+        foundByGuidResourceFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+        EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
+    }
+
+    QFutureSynchronizer<void> expungeResourcesSynchronizer;
+    for (const auto & resource: qAsConst(resources)) {
+        auto expungeResourceByLocalIdFuture =
+            resourcesHandler->expungeResourceByLocalId(resource.localId());
+        expungeResourcesSynchronizer.addFuture(expungeResourceByLocalIdFuture);
+    }
+
+    expungeResourcesSynchronizer.waitForFinished();
+
+    QCoreApplication::processEvents();
+    EXPECT_EQ(
+        notifierListener.expungedResourceLocalIds().size(), resources.size());
+
+    resourceCountFuture = resourcesHandler->resourceCount(noteCountOptions);
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 0);
+
+    resourceCountFuture =
+        resourcesHandler->resourceCountPerNoteLocalId(gNote->localId());
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 0);
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "ResourcesHandlerTest.moc"
