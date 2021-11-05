@@ -109,7 +109,7 @@ void removeStaleResourceBodyFiles(
     }
 }
 
-bool readResourceBodyFromFile(
+[[nodiscard]] bool readResourceBodyFromFile(
     const QDir & localStorageDir, const ResourceDataKind resourceDataKind,
     const QString & noteLocalId, const QString & resourceLocalId,
     const QString & versionId, QByteArray & body,
@@ -191,7 +191,7 @@ bool readResourceBodyFromFile(
     return true;
 }
 
-bool removeResourceBodyFile(
+[[nodiscard]] bool removeResourceBodyFile(
     const QDir & localStorageDir, const ResourceDataKind resourceDataKind,
     const QString & noteLocalId, const QString & resourceLocalId,
     const QString & versionId, ErrorString & errorDescription)
@@ -268,7 +268,7 @@ bool removeResourceBodyFile(
     return true;
 }
 
-bool writeResourceBodyToFile(
+[[nodiscard]] bool writeResourceBodyToFile(
     const QDir & localStorageDir, const ResourceDataKind resourceDataKind,
     const QString & noteLocalId, const QString & resourceLocalId,
     const QString & versionId, const QByteArray & body,

@@ -27,6 +27,7 @@
 #include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
 #include "../patches/Patch2To3.h"
+#include "../utils/ResourceDataFilesUtils.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -47,6 +48,8 @@
 #include <QtGlobal>
 
 #include <string>
+
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -83,10 +86,20 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
             "Failed to drop ResourceAlternateDataBodyVersionIds table"));
 }
 
+// Test data which is put into the local storage on which the tested patch
+// is applied
+struct TestData
+{
+    qevercloud::Notebook m_notebook;
+    qevercloud::Note m_note;
+    qevercloud::Resource m_firstResource;
+    qevercloud::Resource m_secondResource;
+    qevercloud::Resource m_thirdResource;
+};
+
 // Prepares local storage database corresponding to version 2 in a temporary dir
 // so that it can be upgraded from version 2 to version 3
-// TODO: remove maybe_unused attribute later when more tests are added
-[[maybe_unused]] void prepareLocalStorageForUpgrade(
+[[nodiscard]] TestData prepareLocalStorageForUpgrade(
     const QString & localStorageDirPath, ConnectionPoolPtr connectionPool)
 {
     Q_ASSERT(connectionPool);
@@ -114,85 +127,81 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
 
     const auto now = QDateTime::currentMSecsSinceEpoch();
 
+    TestData testData;
+
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
         connectionPool, QThreadPool::globalInstance(), notifier, writerThread,
         localStorageDirPath, resourceDataFilesLock);
 
-    qevercloud::Notebook notebook;
-    notebook.setGuid(UidGenerator::Generate());
-    notebook.setName(QStringLiteral("name"));
-    notebook.setUpdateSequenceNum(1);
+    testData.m_notebook.setGuid(UidGenerator::Generate());
+    testData.m_notebook.setName(QStringLiteral("name"));
+    testData.m_notebook.setUpdateSequenceNum(1);
+    testData.m_notebook.setServiceCreated(now);
+    testData.m_notebook.setServiceUpdated(now);
 
-    notebook.setServiceCreated(now);
-    notebook.setServiceUpdated(now);
-
-    auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+    auto putNotebookFuture = notebooksHandler->putNotebook(testData.m_notebook);
     putNotebookFuture.waitForFinished();
 
-    qevercloud::Note note;
-    note.setLocallyModified(true);
-    note.setLocalOnly(false);
-    note.setLocallyFavorited(true);
+    testData.m_note.setLocallyModified(true);
+    testData.m_note.setLocalOnly(false);
+    testData.m_note.setLocallyFavorited(true);
+    testData.m_note.setNotebookLocalId(testData.m_notebook.localId());
+    testData.m_note.setNotebookGuid(testData.m_notebook.guid());
+    testData.m_note.setGuid(UidGenerator::Generate());
+    testData.m_note.setUpdateSequenceNum(1);
+    testData.m_note.setTitle(QStringLiteral("Title"));
+    testData.m_note.setContent(
+        QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
 
-    note.setNotebookLocalId(notebook.localId());
-    note.setNotebookGuid(notebook.guid());
+    testData.m_note.setContentHash(QCryptographicHash::hash(
+        testData.m_note.content()->toUtf8(), QCryptographicHash::Md5));
 
-    note.setGuid(UidGenerator::Generate());
-    note.setUpdateSequenceNum(1);
-
-    note.setTitle(QStringLiteral("Title"));
-
-    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
-    note.setContentHash(QCryptographicHash::hash(
-        note.content()->toUtf8(), QCryptographicHash::Md5));
-
-    note.setContentLength(note.content()->size());
-    note.setCreated(now);
-    note.setUpdated(now);
+    testData.m_note.setContentLength(testData.m_note.content()->size());
+    testData.m_note.setCreated(now);
+    testData.m_note.setUpdated(now);
 
     const auto notesHandler = std::make_shared<NotesHandler>(
         connectionPool, QThreadPool::globalInstance(), notifier, writerThread,
         localStorageDirPath, resourceDataFilesLock);
 
-    auto putNoteFuture = notesHandler->putNote(note);
+    auto putNoteFuture = notesHandler->putNote(testData.m_note);
     putNoteFuture.waitForFinished();
 
-    qevercloud::Resource firstResource;
-    firstResource.setLocallyModified(true);
-    firstResource.setGuid(UidGenerator::Generate());
-    firstResource.setUpdateSequenceNum(42);
-    firstResource.setNoteLocalId(note.localId());
-    firstResource.setNoteGuid(note.guid());
-    firstResource.setMime("application/text-plain");
-    firstResource.setWidth(10);
-    firstResource.setHeight(20);
+    testData.m_firstResource.setLocallyModified(true);
+    testData.m_firstResource.setGuid(UidGenerator::Generate());
+    testData.m_firstResource.setUpdateSequenceNum(42);
+    testData.m_firstResource.setNoteLocalId(testData.m_note.localId());
+    testData.m_firstResource.setNoteGuid(testData.m_note.guid());
+    testData.m_firstResource.setMime("application/text-plain");
+    testData.m_firstResource.setWidth(10);
+    testData.m_firstResource.setHeight(20);
 
-    firstResource.setData(qevercloud::Data{});
+    testData.m_firstResource.setData(qevercloud::Data{});
     {
-        auto & data = *firstResource.mutableData();
+        auto & data = *testData.m_firstResource.mutableData();
         data.setBody(QByteArray::fromStdString("test first resource data"s));
         data.setSize(data.body()->size());
         data.setBodyHash(
             QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
     }
 
-    qevercloud::Resource secondResource = firstResource;
-    secondResource.setLocalId(UidGenerator::Generate());
-    secondResource.setGuid(UidGenerator::Generate());
-    secondResource.setUpdateSequenceNum(
-        secondResource.updateSequenceNum().value() + 1);
+    testData.m_secondResource = testData.m_firstResource;
+    testData.m_secondResource.setLocalId(UidGenerator::Generate());
+    testData.m_secondResource.setGuid(UidGenerator::Generate());
+    testData.m_secondResource.setUpdateSequenceNum(
+        testData.m_secondResource.updateSequenceNum().value() + 1);
 
     {
-        auto & data = secondResource.mutableData().value();
+        auto & data = testData.m_secondResource.mutableData().value();
         data.setBody(QByteArray::fromStdString("test second resource data"s));
         data.setSize(data.body()->size());
         data.setBodyHash(
             QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
     }
 
-    secondResource.setAlternateData(qevercloud::Data{});
+    testData.m_secondResource.setAlternateData(qevercloud::Data{});
     {
-        auto & data = *secondResource.mutableAlternateData();
+        auto & data = *testData.m_secondResource.mutableAlternateData();
         data.setBody(
             QByteArray::fromStdString("test second resource alternate data"s));
 
@@ -201,14 +210,14 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
             QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
     }
 
-    qevercloud::Resource thirdResource = secondResource;
-    thirdResource.setLocalId(UidGenerator::Generate());
-    thirdResource.setGuid(UidGenerator::Generate());
-    thirdResource.setUpdateSequenceNum(
-        thirdResource.updateSequenceNum().value() + 1);
+    testData.m_thirdResource = testData.m_secondResource;
+    testData.m_thirdResource.setLocalId(UidGenerator::Generate());
+    testData.m_thirdResource.setGuid(UidGenerator::Generate());
+    testData.m_thirdResource.setUpdateSequenceNum(
+        testData.m_thirdResource.updateSequenceNum().value() + 1);
 
     {
-        auto & data = thirdResource.mutableData().value();
+        auto & data = testData.m_thirdResource.mutableData().value();
         data.setBody(QByteArray::fromStdString("test third resource data"s));
         data.setSize(data.body()->size());
         data.setBodyHash(
@@ -216,7 +225,7 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
     }
 
     {
-        auto & data = thirdResource.mutableAlternateData().value();
+        auto & data = testData.m_thirdResource.mutableAlternateData().value();
         data.setBody(
             QByteArray::fromStdString("test third resource alternate data"s));
 
@@ -225,9 +234,9 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
             QCryptographicHash::hash(*data.body(), QCryptographicHash::Md5));
     }
 
-    thirdResource.setRecognition(qevercloud::Data{});
+    testData.m_thirdResource.setRecognition(qevercloud::Data{});
     {
-        auto & data = *thirdResource.mutableRecognition();
+        auto & data = *testData.m_thirdResource.mutableRecognition();
         data.setBody(QByteArray::fromStdString(
             R"___(
 <?xml version="1.0" encoding="UTF-8"?>
@@ -277,31 +286,120 @@ void removeBodyVersionIdTables(QSqlDatabase & database)
     int indexInNote = 0;
 
     auto putFirstResourceFuture =
-        resourcesHandler->putResource(firstResource, indexInNote);
+        resourcesHandler->putResource(testData.m_firstResource, indexInNote);
 
     putFirstResourceFuture.waitForFinished();
 
     ++indexInNote;
 
     auto putSecondResourceFuture =
-        resourcesHandler->putResource(secondResource, indexInNote);
+        resourcesHandler->putResource(testData.m_secondResource, indexInNote);
 
     putSecondResourceFuture.waitForFinished();
 
     ++indexInNote;
 
     auto putThirdResourceFuture =
-        resourcesHandler->putResource(thirdResource, indexInNote);
+        resourcesHandler->putResource(testData.m_thirdResource, indexInNote);
 
     putThirdResourceFuture.waitForFinished();
 
     // Now need to mutate the data to make the local storage files layout
     // look like version 2.
 
-    // TODO: move resource data files out of version id dirs to parent dir
-
     auto database = connectionPool->database();
+
+    enum class ResourceDataKind
+    {
+        Data,
+        AlternateData
+    };
+
+    const auto moveResourceDataFiles =
+        [&](const qevercloud::Resource & resource,
+            const ResourceDataKind dataKind)
+    {
+        if (dataKind == ResourceDataKind::Data &&
+            (!resource.data() || !resource.data()->body()))
+        {
+            return;
+        }
+
+        if (dataKind == ResourceDataKind::AlternateData &&
+            (!resource.alternateData() || !resource.alternateData()->body()))
+        {
+            return;
+        }
+
+        QString versionId;
+        ErrorString errorDescription;
+        if (!::quentier::local_storage::sql::utils::
+                findResourceDataBodyVersionId(
+                    resource.localId(), database, versionId,
+                    errorDescription))
+        {
+            FAIL() << errorDescription.nonLocalizedString().toStdString();
+            return;
+        }
+
+        const QString dataPathPart = (dataKind == ResourceDataKind::Data
+                                      ? QStringLiteral("data")
+                                      : QStringLiteral("alternateData"));
+
+        const QString pathFrom = [&]
+        {
+            QString result;
+            QTextStream strm{&result};
+            strm << localStorageDirPath << "/Resources/" << dataPathPart << "/"
+                << testData.m_note.localId() << "/" << resource.localId()
+                << "/" << versionId << ".dat";
+            return result;
+        }();
+
+        const QString pathTo = [&]
+        {
+            QString result;
+            QTextStream strm{&result};
+            strm << localStorageDirPath << "/Resources/" << dataPathPart << "/"
+                << testData.m_note.localId() << "/" << resource.localId()
+                << ".dat";
+            return result;
+        }();
+
+        errorDescription.clear();
+        if (!::quentier::renameFile(pathFrom, pathTo, errorDescription)) {
+            FAIL() << errorDescription.nonLocalizedString().toStdString();
+            return;
+        }
+
+        const QString dirPathToRemove = [&]
+        {
+            QString result;
+            QTextStream strm{&result};
+            strm << localStorageDirPath << "/Resources/" << dataPathPart << "/"
+                << testData.m_note.localId() << "/" << resource.localId();
+            return result;
+        }();
+
+        if (!::quentier::removeDir(dirPathToRemove)) {
+            FAIL() << "Failed to remove dir: " << dirPathToRemove.toStdString();
+            return;
+        }
+    };
+
+    const auto moveResourceFiles = [&](const qevercloud::Resource & resource)
+    {
+        moveResourceDataFiles(resource, ResourceDataKind::Data);
+        moveResourceDataFiles(resource, ResourceDataKind::AlternateData);
+    };
+
+    moveResourceFiles(testData.m_firstResource);
+    moveResourceFiles(testData.m_secondResource);
+    moveResourceFiles(testData.m_thirdResource);
+
     removeBodyVersionIdTables(database);
+
+    return testData;
 }
 
 } // namespace
