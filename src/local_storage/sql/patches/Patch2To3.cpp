@@ -334,8 +334,7 @@ bool Patch2To3::applySync(
                 }
 
                 QDir resourceLocalIdDir{
-                    resourceBodyFileInfo.dir().absolutePath() +
-                    QStringLiteral("/") + resourceLocalId};
+                    resourceBodyFileInfo.dir().absoluteFilePath(resourceLocalId)};
 
                 if (!resourceLocalIdDir.exists() &&
                     !resourceLocalIdDir.mkpath(
@@ -353,8 +352,10 @@ bool Patch2To3::applySync(
 
                 QFile resourceBodyFile{
                     resourceBodyFileInfo.absoluteFilePath()};
+
                 bool res = resourceBodyFile.rename(
-                    resourceLocalIdDir.absoluteFilePath(versionId));
+                    resourceLocalIdDir.absoluteFilePath(versionId) +
+                    QStringLiteral(".dat"));
                 if (!res) {
                     errorDescription.setBase(QT_TR_NOOP(
                         "Failed to move resource body file"));
@@ -381,10 +382,12 @@ bool Patch2To3::applySync(
                 resourceDataBodiesDir.entryInfoList(
                     QDir::Dirs | QDir::NoDotAndDotDot);
 
-            for (const auto & noteLocalIdSubdir:
+            for (const auto & noteLocalIdSubdirInfo:
                  qAsConst(resourceDataBodiesDirSubdirs)) {
+                QDir noteLocalIdSubdir{
+                    noteLocalIdSubdirInfo.absoluteFilePath()};
                 const auto resourceFiles =
-                    noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+                    noteLocalIdSubdir.entryInfoList(QDir::Files);
 
                 for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
                 {
@@ -405,11 +408,13 @@ bool Patch2To3::applySync(
                 resourceAlternateDataBodiesDir.entryInfoList(
                     QDir::Dirs | QDir::NoDotAndDotDot);
 
-            for (const auto & noteLocalIdSubdir:
+            for (const auto & noteLocalIdSubdirInfo:
                  qAsConst(resourceAlternateDataBodiesDirSubdirs))
             {
+                QDir noteLocalIdSubdir{
+                    noteLocalIdSubdirInfo.absoluteFilePath()};
                 const auto resourceFiles =
-                    noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+                    noteLocalIdSubdir.entryInfoList(QDir::Files);
 
                 for (const auto & resourceDataBodyFile: qAsConst(resourceFiles))
                 {
@@ -462,14 +467,15 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
     const QString localStorageDirPath = m_localStorageDir.absolutePath();
 
     QDir resourceDataBodiesDir{
-        localStorageDirPath + QStringLiteral("/Resources/data")};
+        localStorageDirPath + QStringLiteral("/Resources/data/")};
 
     const auto resourceDataBodiesDirSubdirs =
         resourceDataBodiesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const auto & noteLocalIdSubdir: qAsConst(resourceDataBodiesDirSubdirs))
-    {
-        const auto resourceFiles =
-            noteLocalIdSubdir.dir().entryInfoList(QDir::Files);
+
+    for (const auto & noteLocalIdSubdirInfo:
+         qAsConst(resourceDataBodiesDirSubdirs)) {
+        QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
+        const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
         for (const auto & resourceDataBodyFile: qAsConst(resourceFiles)) {
             if (resourceDataBodyFile.completeSuffix() != QStringLiteral("dat"))
             {
@@ -486,21 +492,16 @@ QHash<QString, Patch2To3::ResourceVersionIds> Patch2To3::generateVersionIds()
         localStorageDirPath + QStringLiteral("/Resources/alternateData")};
 
     const auto resourceAlternateDataBodiesDirSubdirs =
-        resourceAlternateDataBodiesDir.entryInfoList();
-    for (const auto & noteLocalIdSubdir:
+        resourceAlternateDataBodiesDir.entryInfoList(
+            QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const auto & noteLocalIdSubdirInfo:
          qAsConst(resourceAlternateDataBodiesDirSubdirs))
     {
-        if (!noteLocalIdSubdir.isDir()) {
-            continue;
-        }
-
-        const auto resourceFiles = noteLocalIdSubdir.dir().entryInfoList();
+        QDir noteLocalIdSubdir{noteLocalIdSubdirInfo.absoluteFilePath()};
+        const auto resourceFiles = noteLocalIdSubdir.entryInfoList(QDir::Files);
         for (const auto & resourceAlternateDataBodyFile:
              qAsConst(resourceFiles)) {
-            if (!resourceAlternateDataBodyFile.isFile()) {
-                continue;
-            }
-
             if (resourceAlternateDataBodyFile.completeSuffix() !=
                 QStringLiteral("dat")) {
                 continue;
@@ -624,7 +625,7 @@ bool Patch2To3::putVersionIdsToDatabase(
                 false);
 
             query.bindValue(
-                QStringLiteral(":resouceLocalUid"), resourceLocalId);
+                QStringLiteral(":resourceLocalUid"), resourceLocalId);
 
             query.bindValue(
                 QStringLiteral(":versionId"),
@@ -654,7 +655,7 @@ bool Patch2To3::putVersionIdsToDatabase(
                 false);
 
             query.bindValue(
-                QStringLiteral(":resouceLocalUid"), resourceLocalId);
+                QStringLiteral(":resourceLocalUid"), resourceLocalId);
 
             query.bindValue(
                 QStringLiteral(":versionId"),
