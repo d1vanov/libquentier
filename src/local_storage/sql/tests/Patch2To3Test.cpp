@@ -26,11 +26,13 @@
 #include "../Notifier.h"
 #include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
+#include "../VersionHandler.h"
 #include "../patches/Patch2To3.h"
 #include "../utils/ResourceDataFilesUtils.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/UidGenerator.h>
@@ -39,6 +41,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFlags>
 #include <QReadWriteLock>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -47,8 +50,11 @@
 #include <QThreadPool>
 #include <QtGlobal>
 
+#include <array>
+#include <functional>
 #include <string>
 
+// clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
@@ -61,6 +67,20 @@ const char * gAppPersistentStoragePath = "LIBQUENTIER_PERSISTENCE_STORAGE_PATH";
 
 const QString gTestDbConnectionName =
     QStringLiteral("libquentier_local_storage_sql_patch2to3_test_db");
+
+// Changes version in Auxiliary table back from 3 to 2, to ensure that the patch
+// would properly update it from 2 to 3
+void changeDatabaseVersionTo2(QSqlDatabase & database)
+{
+    QSqlQuery query{database};
+    const bool res = query.exec(
+        QStringLiteral("INSERT OR REPLACE INTO Auxiliary (version) VALUES(2)"));
+
+    ENSURE_DB_REQUEST_THROW(
+        res, query, "local_storage::sql::patches::2_to_3",
+        QT_TR_NOOP(
+            "failed to execute SQL query increasing local storage version"));
+}
 
 // Removes ResourceDataBodyVersionIds and ResourceAlternateDataBodyVersionIds
 // tables from the local storage database in order to set up the situation
@@ -131,6 +151,7 @@ protected:
         QCoreApplication::processEvents();
     }
 
+public:
     // Test data which is put into the local storage on which the tested patch
     // is applied
     struct TestData
@@ -143,9 +164,19 @@ protected:
         QString m_localStorageDirPath;
     };
 
+    enum PrepareLocalStorageForUpgradeFlag
+    {
+        RemoveResourceVersionIdsTables = 1 << 0,
+        MoveResourceBodyFiles = 1 << 1
+    };
+
+    Q_DECLARE_FLAGS(
+        PrepareLocalStorageForUpgradeFlags, PrepareLocalStorageForUpgradeFlag);
+
     // Prepares local storage database corresponding to version 2 in a temporary
     // dir so that it can be upgraded from version 2 to version 3
-    [[nodiscard]] TestData prepareLocalStorageForUpgrade()
+    [[nodiscard]] TestData prepareLocalStorageForUpgrade(
+        const PrepareLocalStorageForUpgradeFlags flags)
     {
         // Prepare tables within the database
         utils::prepareLocalStorage(m_temporaryDir.path(), *m_connectionPool);
@@ -453,11 +484,20 @@ protected:
                     resource, ResourceDataKind::AlternateData);
             };
 
-        moveResourceFiles(testData.m_firstResource);
-        moveResourceFiles(testData.m_secondResource);
-        moveResourceFiles(testData.m_thirdResource);
+        if (flags.testFlag(
+                PrepareLocalStorageForUpgradeFlag::MoveResourceBodyFiles)) {
+            moveResourceFiles(testData.m_firstResource);
+            moveResourceFiles(testData.m_secondResource);
+            moveResourceFiles(testData.m_thirdResource);
+        }
 
-        removeBodyVersionIdTables(database);
+        if (flags.testFlag(PrepareLocalStorageForUpgradeFlag::
+                               RemoveResourceVersionIdsTables))
+        {
+            removeBodyVersionIdTables(database);
+        }
+
+        changeDatabaseVersionTo2(database);
 
         return testData;
     }
@@ -507,11 +547,92 @@ TEST_F(Patch2To3Test, CtorNullWriterThread)
         IQuentierException);
 }
 
-TEST_F(Patch2To3Test, ApplyPatch)
+struct Patch2To3TestData
+{
+    Patch2To3Test::PrepareLocalStorageForUpgradeFlags flags = {};
+    std::function<void()> prepareFunc = {};
+};
+
+class Patch2To3DataTest :
+    public Patch2To3Test,
+    public testing::WithParamInterface<Patch2To3TestData>
+{};
+
+const std::array gPatch2To3TestData{
+    Patch2To3TestData{
+        Patch2To3Test::PrepareLocalStorageForUpgradeFlags{} |
+            Patch2To3Test::PrepareLocalStorageForUpgradeFlag::
+                RemoveResourceVersionIdsTables |
+            Patch2To3Test::PrepareLocalStorageForUpgradeFlag::
+                MoveResourceBodyFiles,
+    },
+    Patch2To3TestData{
+        Patch2To3Test::PrepareLocalStorageForUpgradeFlags{} |
+            Patch2To3Test::PrepareLocalStorageForUpgradeFlag::
+                MoveResourceBodyFiles,
+        [] {
+            Account account{*utils::gTestAccountName, Account::Type::Local};
+
+            ApplicationSettings databaseUpgradeInfo{
+                account,
+                QStringLiteral(
+                    "LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};
+
+            databaseUpgradeInfo.setValue(
+                QStringLiteral("ResourceBodyVersionIdTablesCreated"), true);
+
+            databaseUpgradeInfo.setValue(
+                QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase"),
+                true);
+
+            databaseUpgradeInfo.sync();
+        }},
+    Patch2To3TestData{
+        Patch2To3Test::PrepareLocalStorageForUpgradeFlags{},
+        [] {
+            Account account{*utils::gTestAccountName, Account::Type::Local};
+
+            ApplicationSettings databaseUpgradeInfo{
+                account,
+                QStringLiteral(
+                    "LocalStorageDatabaseUpgradeFromVersion2ToVersion3")};
+
+            databaseUpgradeInfo.setValue(
+                QStringLiteral("ResourceBodyVersionIdTablesCreated"), true);
+
+            databaseUpgradeInfo.setValue(
+                QStringLiteral("ResourceBodyVersionIdsCommittedToDatabase"),
+                true);
+
+            databaseUpgradeInfo.setValue(
+                QStringLiteral("ResourceBodyFilesMovedToVersionIdFolders"),
+                true);
+
+            databaseUpgradeInfo.sync();
+        }},
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    Patch2To3DataTestInstance, Patch2To3DataTest,
+    testing::ValuesIn(gPatch2To3TestData));
+
+TEST_P(Patch2To3DataTest, ApplyPatch)
 {
     Account account{*utils::gTestAccountName, Account::Type::Local};
 
-    const auto testData = prepareLocalStorageForUpgrade();
+    const auto data = GetParam();
+    const auto testData = prepareLocalStorageForUpgrade(data.flags);
+    if (data.prepareFunc) {
+        data.prepareFunc();
+    }
+
+    const auto versionHandler = std::make_shared<VersionHandler>(
+        account, m_connectionPool, QThreadPool::globalInstance(),
+        m_writerThread);
+
+    auto versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 2);
 
     const auto patch = std::make_shared<Patch2To3>(
         std::move(account), m_connectionPool, m_writerThread);
@@ -524,6 +645,10 @@ TEST_F(Patch2To3Test, ApplyPatch)
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
 
+    auto notebookCountFuture = notebooksHandler->notebookCount();
+    notebookCountFuture.waitForFinished();
+    EXPECT_EQ(notebookCountFuture.result(), 1U);
+
     auto findNotebookFuture =
         notebooksHandler->findNotebookByLocalId(testData.m_notebook.localId());
 
@@ -535,6 +660,15 @@ TEST_F(Patch2To3Test, ApplyPatch)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
+
+    using NoteCountOption = NotesHandler::NoteCountOption;
+    using NoteCountOptions = NotesHandler::NoteCountOptions;
+
+    auto noteCountFuture = notesHandler->noteCount(
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    noteCountFuture.waitForFinished();
+    EXPECT_EQ(noteCountFuture.result(), 1U);
 
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
@@ -562,6 +696,12 @@ TEST_F(Patch2To3Test, ApplyPatch)
         m_writerThread, testData.m_localStorageDirPath,
         m_resourceDataFilesLock);
 
+    auto resourceCountFuture = resourcesHandler->resourceCount(
+        NoteCountOptions{NoteCountOption::IncludeNonDeletedNotes});
+
+    resourceCountFuture.waitForFinished();
+    EXPECT_EQ(resourceCountFuture.result(), 3U);
+
     using FetchResourceOption = ILocalStorage::FetchResourceOption;
     using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
 
@@ -588,6 +728,10 @@ TEST_F(Patch2To3Test, ApplyPatch)
     findThirdResourceFuture.waitForFinished();
     ASSERT_EQ(findThirdResourceFuture.resultCount(), 1);
     EXPECT_EQ(findThirdResourceFuture.result(), testData.m_thirdResource);
+
+    versionFuture = versionHandler->version();
+    versionFuture.waitForFinished();
+    EXPECT_EQ(versionFuture.result(), 3);
 }
 
 } // namespace quentier::local_storage::sql::tests
