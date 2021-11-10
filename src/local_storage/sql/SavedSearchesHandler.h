@@ -49,6 +49,9 @@ public:
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
         qevercloud::Guid guid) const;
 
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
+        QString name) const;
+
     template <class T>
     using ListOptions = ILocalStorage::ListOptions<T>;
 
@@ -66,14 +69,9 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::SavedSearch>
-        findSavedSearchByLocalIdImpl(
-            const QString & localId, QSqlDatabase & database,
-            ErrorString & errorDescription) const;
-
-    [[nodiscard]] std::optional<qevercloud::SavedSearch>
-        findSavedSearchByGuidImpl(
-            const qevercloud::Guid & guid, QSqlDatabase & database,
-            ErrorString & errorDescription) const;
+        findSavedSearchImpl(
+            const QString & columnName, const QString & columnValue,
+            QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeSavedSearchByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,

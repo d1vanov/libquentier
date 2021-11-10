@@ -126,8 +126,9 @@ QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByLocalId(
         (const SavedSearchesHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
-            return handler.findSavedSearchByLocalIdImpl(
-                localId, database, errorDescription);
+            return handler.findSavedSearchImpl(
+                QStringLiteral("localUid"), localId, database,
+                errorDescription);
         });
 }
 
@@ -141,8 +142,24 @@ QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByGuid(
         (const SavedSearchesHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
-            return handler.findSavedSearchByGuidImpl(
-                guid, database, errorDescription);
+            return handler.findSavedSearchImpl(
+                QStringLiteral("guid"), guid, database, errorDescription);
+        });
+}
+
+QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByName(
+    QString name) const
+{
+    return makeReadTask<qevercloud::SavedSearch>(
+        makeTaskContext(),
+        weak_from_this(),
+        [name = std::move(name)]
+        (const SavedSearchesHandler & handler, QSqlDatabase & database,
+         ErrorString & errorDescription)
+        {
+            return handler.findSavedSearchImpl(
+                QStringLiteral("nameLower"), name.toLower(), database,
+                errorDescription);
         });
 }
 
@@ -235,16 +252,16 @@ std::optional<quint32> SavedSearchesHandler::savedSearchCountImpl(
 }
 
 std::optional<qevercloud::SavedSearch>
-    SavedSearchesHandler::findSavedSearchByLocalIdImpl(
-        const QString & localId, QSqlDatabase & database,
-        ErrorString & errorDescription) const
+    SavedSearchesHandler::findSavedSearchImpl(
+        const QString & columnName, const QString & columnValue,
+        QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    static const QString queryString = QStringLiteral(
+    const QString queryString = QString::fromUtf8(
         "SELECT localUid, guid, name, query, format, "
         "updateSequenceNumber, isDirty, isLocal, "
         "includeAccount, includePersonalLinkedNotebooks, "
         "includeBusinessLinkedNotebooks, isFavorited FROM "
-        "SavedSearches WHERE localUid = :localUid");
+        "SavedSearches WHERE %1 = :%2").arg(columnName, columnName);
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -252,74 +269,18 @@ std::optional<qevercloud::SavedSearch>
         res, query, "local_storage::sql::SavedSearchesHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::SavedSearchesHandler",
-            "Cannot find saved search in the local storage database by local "
-            "id: failed to prepare query"),
-        std::nullopt);
-
-    query.bindValue(QStringLiteral(":localUid"), localId);
-
-    res = query.exec();
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "Cannot find saved search in the local storage database by local "
-            "id"),
-        std::nullopt);
-
-    if (!query.next()) {
-        return std::nullopt;
-    }
-
-    const auto record = query.record();
-    qevercloud::SavedSearch savedSearch;
-    ErrorString error;
-    if (!utils::fillSavedSearchFromSqlRecord(record, savedSearch, error)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "Failed to find saved search by local id in the local storage "
-                "database"));
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
-        return std::nullopt;
-    }
-
-    return savedSearch;
-}
-
-std::optional<qevercloud::SavedSearch>
-    SavedSearchesHandler::findSavedSearchByGuidImpl(
-        const qevercloud::Guid & guid, QSqlDatabase & database,
-        ErrorString & errorDescription) const
-{
-    static const QString queryString = QStringLiteral(
-        "SELECT localUid, guid, name, query, format, "
-        "updateSequenceNumber, isDirty, isLocal, "
-        "includeAccount, includePersonalLinkedNotebooks, "
-        "includeBusinessLinkedNotebooks, isFavorited FROM "
-        "SavedSearches WHERE guid = :guid");
-
-    QSqlQuery query{database};
-    bool res = query.prepare(queryString);
-    ENSURE_DB_REQUEST_RETURN(
-        res, query, "local_storage::sql::SavedSearchesHandler",
-        QT_TRANSLATE_NOOP(
-            "local_storage::sql::SavedSearchesHandler",
-            "Cannot find saved search in the local storage database by guid: "
+            "Cannot find saved search in the local storage database: "
             "failed to prepare query"),
         std::nullopt);
 
-    query.bindValue(QStringLiteral(":guid"), guid);
+    query.bindValue(QString::fromUtf8(":%1").arg(columnName), columnValue);
 
     res = query.exec();
     ENSURE_DB_REQUEST_RETURN(
         res, query, "local_storage::sql::SavedSearchesHandler",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::SavedSearchesHandler",
-            "Cannot find saved search in the local storage database by guid"),
+            "Cannot find saved search in the local storage database"),
         std::nullopt);
 
     if (!query.next()) {
@@ -333,8 +294,7 @@ std::optional<qevercloud::SavedSearch>
         errorDescription.setBase(
             QT_TRANSLATE_NOOP(
                 "local_storage::sql::SavedSearchesHandler",
-                "Failed to find saved search by guid in the local storage "
-                "database"));
+                "Failed to find saved search in the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();

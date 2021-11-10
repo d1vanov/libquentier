@@ -37,6 +37,7 @@
 #include <gtest/gtest.h>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -196,6 +197,32 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByLocalId)
     EXPECT_EQ(savedSearchFuture.resultCount(), 0);
 }
 
+TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
+{
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    auto savedSearchFuture = savedSearchesHandler->findSavedSearchByGuid(
+        UidGenerator::Generate());
+
+    savedSearchFuture.waitForFinished();
+    EXPECT_EQ(savedSearchFuture.resultCount(), 0);
+}
+
+TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByName)
+{
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    auto savedSearchFuture = savedSearchesHandler->findSavedSearchByName(
+        QStringLiteral("search1"));
+
+    savedSearchFuture.waitForFinished();
+    EXPECT_EQ(savedSearchFuture.resultCount(), 0);
+}
+
 TEST_F(
     SavedSearchesHandlerTest,
     IgnoreAttemptToExpungeNonexistentSavedSearchByLocalId)
@@ -315,13 +342,22 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
         savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
 
     foundSavedSearchByLocalIdFuture.waitForFinished();
+    ASSERT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 1);
     EXPECT_EQ(foundSavedSearchByLocalIdFuture.result(), savedSearch);
 
     auto foundSavedSearchByGuidFuture =
         savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
 
     foundSavedSearchByGuidFuture.waitForFinished();
+    ASSERT_EQ(foundSavedSearchByGuidFuture.resultCount(), 1);
     EXPECT_EQ(foundSavedSearchByGuidFuture.result(), savedSearch);
+
+    auto foundSavedSearchByNameFuture =
+        savedSearchesHandler->findSavedSearchByName(savedSearch.name().value());
+
+    foundSavedSearchByNameFuture.waitForFinished();
+    ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundSavedSearchByNameFuture.result(), savedSearch);
 
     auto listSavedSearchesOptions =
         ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder>{};
@@ -360,13 +396,19 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
             savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
 
         foundSavedSearchByLocalIdFuture.waitForFinished();
-        EXPECT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 0U);
+        EXPECT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 0);
 
         foundSavedSearchByGuidFuture =
             savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
 
         foundSavedSearchByGuidFuture.waitForFinished();
-        EXPECT_EQ(foundSavedSearchByGuidFuture.resultCount(), 0U);
+        EXPECT_EQ(foundSavedSearchByGuidFuture.resultCount(), 0);
+
+        foundSavedSearchByNameFuture =
+            savedSearchesHandler->findSavedSearchByName(savedSearch.name().value());
+
+        foundSavedSearchByNameFuture.waitForFinished();
+        EXPECT_EQ(foundSavedSearchByNameFuture.resultCount(), 0);
 
         listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
             listSavedSearchesOptions);
@@ -459,13 +501,22 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
             savedSearchesHandler->findSavedSearchByLocalId(
                 savedSearch.localId());
         foundByLocalIdSavedSearchFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdSavedSearchFuture.resultCount(), 1);
         EXPECT_EQ(foundByLocalIdSavedSearchFuture.result(), savedSearch);
 
         auto foundByGuidSavedSearchFuture =
             savedSearchesHandler->findSavedSearchByGuid(
                 savedSearch.guid().value());
         foundByGuidSavedSearchFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidSavedSearchFuture.resultCount(), 1);
         EXPECT_EQ(foundByGuidSavedSearchFuture.result(), savedSearch);
+
+        auto foundByNameSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByName(
+                savedSearch.name().value());
+        foundByNameSavedSearchFuture.waitForFinished();
+        ASSERT_EQ(foundByNameSavedSearchFuture.resultCount(), 1);
+        EXPECT_EQ(foundByNameSavedSearchFuture.result(), savedSearch);
     }
 
     for (const auto & savedSearch: qAsConst(savedSearches)) {
@@ -497,7 +548,53 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
                 savedSearch.guid().value());
         foundByGuidSavedSearchFuture.waitForFinished();
         EXPECT_EQ(foundByGuidSavedSearchFuture.resultCount(), 0);
+
+        auto foundByNameSavedSearchFuture =
+            savedSearchesHandler->findSavedSearchByName(
+                savedSearch.name().value());
+        foundByNameSavedSearchFuture.waitForFinished();
+        EXPECT_EQ(foundByNameSavedSearchFuture.resultCount(), 0);
     }
+}
+
+// The test checks that SavedSearchesHandler doesn't confuse saved searches
+// which names are very similar and differ only by the presence of diacritics
+// in one of names
+TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
+{
+    const auto savedSearchesHandler = std::make_shared<SavedSearchesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::SavedSearch search1;
+    search1.setGuid(UidGenerator::Generate());
+    search1.setUpdateSequenceNum(1);
+    search1.setName(QStringLiteral("search"));
+
+    qevercloud::SavedSearch search2;
+    search2.setGuid(UidGenerator::Generate());
+    search2.setUpdateSequenceNum(2);
+    search2.setName(QStringLiteral("séarch"));
+
+    auto putSavedSearchFuture = savedSearchesHandler->putSavedSearch(search1);
+    putSavedSearchFuture.waitForFinished();
+
+    putSavedSearchFuture = savedSearchesHandler->putSavedSearch(search2);
+    putSavedSearchFuture.waitForFinished();
+
+    auto foundSavedSearchByNameFuture =
+        savedSearchesHandler->findSavedSearchByName(search1.name().value());
+
+    foundSavedSearchByNameFuture.waitForFinished();
+    ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundSavedSearchByNameFuture.result(), search1);
+
+    foundSavedSearchByNameFuture =
+        savedSearchesHandler->findSavedSearchByName(search2.name().value());
+
+    foundSavedSearchByNameFuture.waitForFinished();
+    ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundSavedSearchByNameFuture.result(), search2);
 }
 
 } // namespace quentier::local_storage::sql::tests
