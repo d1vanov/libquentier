@@ -41,6 +41,7 @@
 #include <iterator>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -381,16 +382,19 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
     auto foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
     foundByLocalIdTagFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
     EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
 
     auto foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
     foundByGuidTagFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidTagFuture.result(), tag);
 
     auto foundByNameTagFuture = tagsHandler->findTagByName(
         tag.name().value(), tag.linkedNotebookGuid());
 
     foundByNameTagFuture.waitForFinished();
+    ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
     EXPECT_EQ(foundByNameTagFuture.result(), tag);
 
     auto listTagsOptions =
@@ -543,16 +547,19 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
         auto foundByLocalIdTagFuture =
             tagsHandler->findTagByLocalId(tag.localId());
         foundByLocalIdTagFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
         EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
 
         auto foundByGuidTagFuture =
             tagsHandler->findTagByGuid(tag.guid().value());
         foundByGuidTagFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
         EXPECT_EQ(foundByGuidTagFuture.result(), tag);
 
         auto foundByNameTagFuture = tagsHandler->findTagByName(
             tag.name().value(), tag.linkedNotebookGuid());
         foundByNameTagFuture.waitForFinished();
+        ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
         EXPECT_EQ(foundByNameTagFuture.result(), tag);
     }
 
@@ -634,11 +641,13 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     auto findTagFuture = tagsHandler->findTagByName(
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     auto expungeTagFuture = tagsHandler->expungeTagByName(
@@ -648,6 +657,7 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findTagFuture = tagsHandler->findTagByName(
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(
@@ -687,6 +697,7 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     expungeTagFuture = tagsHandler->expungeTagByName(
@@ -738,10 +749,12 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
 
     auto findTagFuture = tagsHandler->findTagByName(tag1.name().value());
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(tag2.name().value());
     findTagFuture.waitForFinished();
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     auto expungeTagFuture = tagsHandler->expungeTagByLocalId(tag1.localId());
@@ -777,6 +790,41 @@ TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
 
     auto putTagFuture = tagsHandler->putTag(tag);
     EXPECT_THROW(putTagFuture.waitForFinished(), IQuentierException);
+}
+
+// The test checks that TagsHandler doesn't confuse tags which names are very
+// similar and differ only by the presence of diacritics in one of names
+TEST_F(TagsHandlerTest, FindTagByNameWithDiacritics)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag tag1;
+    tag1.setGuid(UidGenerator::Generate());
+    tag1.setUpdateSequenceNum(1);
+    tag1.setName(QStringLiteral("tag"));
+
+    qevercloud::Tag tag2;
+    tag2.setGuid(UidGenerator::Generate());
+    tag2.setUpdateSequenceNum(2);
+    tag2.setName(QStringLiteral("tāg"));
+
+    auto putTagFuture = tagsHandler->putTag(tag1);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(tag2);
+    putTagFuture.waitForFinished();
+
+    auto foundTagByNameFuture = tagsHandler->findTagByName(tag1.name().value());
+    foundTagByNameFuture.waitForFinished();
+    ASSERT_EQ(foundTagByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundTagByNameFuture.result(), tag1);
+
+    foundTagByNameFuture = tagsHandler->findTagByName(tag2.name().value());
+    foundTagByNameFuture.waitForFinished();
+    ASSERT_EQ(foundTagByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundTagByNameFuture.result(), tag2);
 }
 
 } // namespace quentier::local_storage::sql::tests
