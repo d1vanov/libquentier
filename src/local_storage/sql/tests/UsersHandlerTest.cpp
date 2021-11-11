@@ -24,6 +24,7 @@
 #include <quentier/exception/IQuentierException.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QFlags>
 #include <QFutureSynchronizer>
 #include <QObject>
@@ -37,6 +38,7 @@
 #include <iterator>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -448,8 +450,8 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 
     auto foundUserFuture = usersHandler->findUserById(*user.id());
     foundUserFuture.waitForFinished();
-    const auto foundUser = foundUserFuture.result();
-    EXPECT_EQ(foundUser, user);
+    ASSERT_EQ(foundUserFuture.resultCount(), 1);
+    EXPECT_EQ(foundUserFuture.result(), user);
 
     auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
     expungeUserFuture.waitForFinished();
@@ -511,8 +513,8 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
     for (const auto & user: users) {
         auto foundUserFuture = usersHandler->findUserById(*user.id());
         foundUserFuture.waitForFinished();
-        const auto foundUser = foundUserFuture.result();
-        EXPECT_EQ(foundUser, user);
+        ASSERT_EQ(foundUserFuture.resultCount(), 1);
+        EXPECT_EQ(foundUserFuture.result(), user);
     }
 
     for (const auto & user: users) {
@@ -532,6 +534,85 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         foundUserFuture.waitForFinished();
         EXPECT_EQ(foundUserFuture.resultCount(), 0);
     }
+}
+
+// The test checks that updates of existing user in the local storage work as
+// expected when updated user doesn't have several fields which existed for
+// the original user
+TEST_F(UsersHandlerTest, RemoveUserFieldsOnUpdate)
+{
+    const auto usersHandler = std::make_shared<UsersHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    const auto now = QDateTime::currentMSecsSinceEpoch();
+
+    qevercloud::User user;
+    user.setId(1);
+    user.setUsername(QStringLiteral("checker"));
+    user.setEmail(QStringLiteral("mail@checker.com"));
+    user.setTimezone(QStringLiteral("Europe/Moscow"));
+    user.setCreated(now);
+    user.setUpdated(now);
+    user.setActive(true);
+
+    qevercloud::UserAttributes userAttributes;
+    userAttributes.setDefaultLocationName(QStringLiteral("Default location"));
+    userAttributes.setComments(QStringLiteral("My comment"));
+    userAttributes.setPreferredLanguage(QStringLiteral("English"));
+    userAttributes.setViewedPromotions(
+        QStringList() << QStringLiteral("Promotion #1")
+        << QStringLiteral("Promotion #2") << QStringLiteral("Promotion #3"));
+
+    userAttributes.setRecentMailedAddresses(
+        QStringList() << QStringLiteral("Recent mailed address #1")
+        << QStringLiteral("Recent mailed address #2")
+        << QStringLiteral("Recent mailed address #3"));
+
+    user.setAttributes(std::move(userAttributes));
+
+    qevercloud::Accounting accounting;
+    accounting.setPremiumOrderNumber(QStringLiteral("Premium order number"));
+
+    accounting.setPremiumSubscriptionNumber(
+        QStringLiteral("Premium subscription number"));
+
+    accounting.setUpdated(now);
+
+    user.setAccounting(std::move(accounting));
+
+    qevercloud::BusinessUserInfo businessUserInfo;
+    businessUserInfo.setBusinessName(QStringLiteral("Business name"));
+    businessUserInfo.setEmail(QStringLiteral("Business email"));
+
+    user.setBusinessUserInfo(std::move(businessUserInfo));
+
+    qevercloud::AccountLimits accountLimits;
+    accountLimits.setNoteResourceCountMax(20);
+    accountLimits.setUserNoteCountMax(200);
+    accountLimits.setUserSavedSearchesMax(100);
+
+    user.setAccountLimits(std::move(accountLimits));
+
+    auto putUserFuture = usersHandler->putUser(user);
+    putUserFuture.waitForFinished();
+
+    qevercloud::User updatedUser;
+    updatedUser.setId(1);
+    updatedUser.setUsername(QStringLiteral("checker"));
+    updatedUser.setEmail(QStringLiteral("mail@checker.com"));
+    updatedUser.setPrivilege(qevercloud::PrivilegeLevel::NORMAL);
+    updatedUser.setCreated(QDateTime::currentMSecsSinceEpoch());
+    updatedUser.setUpdated(QDateTime::currentMSecsSinceEpoch());
+    updatedUser.setActive(true);
+
+    putUserFuture = usersHandler->putUser(updatedUser);
+    putUserFuture.waitForFinished();
+
+    auto foundUserFuture = usersHandler->findUserById(user.id().value());
+    foundUserFuture.waitForFinished();
+    ASSERT_EQ(foundUserFuture.resultCount(), 1);
+    EXPECT_EQ(foundUserFuture.result(), updatedUser);
 }
 
 } // namespace quentier::local_storage::sql::tests
