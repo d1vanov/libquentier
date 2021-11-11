@@ -41,6 +41,7 @@
 #include <iterator>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -627,18 +628,21 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
         notebook.localId());
 
     foundByLocalIdNotebookFuture.waitForFinished();
+    ASSERT_EQ(foundByLocalIdNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
 
     auto foundByGuidNotebookFuture = notebooksHandler->findNotebookByGuid(
         notebook.guid().value());
 
     foundByGuidNotebookFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
 
     auto foundByNameNotebookFuture = notebooksHandler->findNotebookByName(
         notebook.name().value(),  notebook.linkedNotebookGuid());
 
     foundByNameNotebookFuture.waitForFinished();
+    ASSERT_EQ(foundByNameNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
 
     auto foundDefaultNotebookFuture = notebooksHandler->findDefaultNotebook();
@@ -840,16 +844,19 @@ TEST_F(NotebooksHandlerTest, HandleMultipleNotebooks)
         auto foundByLocalIdNotebookFuture =
             notebooksHandler->findNotebookByLocalId(notebook.localId());
         foundByLocalIdNotebookFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdNotebookFuture.resultCount(), 1);
         EXPECT_EQ(foundByLocalIdNotebookFuture.result(), notebook);
 
         auto foundByGuidNotebookFuture =
             notebooksHandler->findNotebookByGuid(notebook.guid().value());
         foundByGuidNotebookFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidNotebookFuture.resultCount(), 1);
         EXPECT_EQ(foundByGuidNotebookFuture.result(), notebook);
 
         auto foundByNameNotebookFuture =
             notebooksHandler->findNotebookByName(notebook.name().value());
         foundByNameNotebookFuture.waitForFinished();
+        ASSERT_EQ(foundByNameNotebookFuture.resultCount(), 1);
         EXPECT_EQ(foundByNameNotebookFuture.result(), notebook);
     }
 
@@ -935,11 +942,13 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     auto findNotebookFuture = notebooksHandler->findNotebookByName(
         notebook1.name().value(), QString{});
     findNotebookFuture.waitForFinished();
+    ASSERT_EQ(findNotebookFuture.resultCount(), 1);
     EXPECT_EQ(findNotebookFuture.result(), notebook1);
 
     findNotebookFuture = notebooksHandler->findNotebookByName(
         notebook2.name().value(), notebook2.linkedNotebookGuid());
     findNotebookFuture.waitForFinished();
+    ASSERT_EQ(findNotebookFuture.resultCount(), 1);
     EXPECT_EQ(findNotebookFuture.result(), notebook2);
 
     auto expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
@@ -949,6 +958,7 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findNotebookFuture = notebooksHandler->findNotebookByName(
         notebook1.name().value(), QString{});
     findNotebookFuture.waitForFinished();
+    ASSERT_EQ(findNotebookFuture.resultCount(), 1);
     EXPECT_EQ(findNotebookFuture.result(), notebook1);
 
     findNotebookFuture = notebooksHandler->findNotebookByName(
@@ -988,6 +998,7 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findNotebookFuture = notebooksHandler->findNotebookByName(
         notebook2.name().value(), notebook2.linkedNotebookGuid());
     findNotebookFuture.waitForFinished();
+    ASSERT_EQ(findNotebookFuture.resultCount(), 1);
     EXPECT_EQ(findNotebookFuture.result(), notebook2);
 
     expungeNotebookFuture = notebooksHandler->expungeNotebookByName(
@@ -1003,6 +1014,177 @@ TEST_F(NotebooksHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
         notebook2.name().value(), notebook2.linkedNotebookGuid());
     findNotebookFuture.waitForFinished();
     EXPECT_EQ(findNotebookFuture.resultCount(), 0);
+}
+
+// The test checks that NotebooksHandler doesn't confuse notebooks
+// which names are very similar and differ only by the presence of diacritics
+// in one of names
+TEST_F(NotebooksHandlerTest, FindNotebookByNameWithDiacritics)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Notebook notebook1;
+    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setUpdateSequenceNum(1);
+    notebook1.setName(QStringLiteral("notebook"));
+
+    qevercloud::Notebook notebook2;
+    notebook2.setGuid(UidGenerator::Generate());
+    notebook2.setUpdateSequenceNum(2);
+    notebook2.setName(QStringLiteral("Notébook"));
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook1);
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture = notebooksHandler->putNotebook(notebook2);
+    putNotebookFuture.waitForFinished();
+
+    auto foundNotebookByNameFuture =
+        notebooksHandler->findNotebookByName(notebook1.name().value());
+
+    foundNotebookByNameFuture.waitForFinished();
+    ASSERT_EQ(foundNotebookByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundNotebookByNameFuture.result(), notebook1);
+
+    foundNotebookByNameFuture =
+        notebooksHandler->findNotebookByName(notebook2.name().value());
+
+    foundNotebookByNameFuture.waitForFinished();
+    ASSERT_EQ(foundNotebookByNameFuture.resultCount(), 1);
+    EXPECT_EQ(foundNotebookByNameFuture.result(), notebook2);
+}
+
+// The test checks that updates of existing notebook in the local storage work
+// as expected when updated notebook doesn't have several fields which existed
+// for the original notebook
+TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Notebook notebook;
+    notebook.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000049"));
+    notebook.setUpdateSequenceNum(1);
+    notebook.setName(QStringLiteral("Fake notebook name"));
+    notebook.setServiceCreated(1);
+    notebook.setServiceUpdated(1);
+    notebook.setDefaultNotebook(true);
+    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
+
+    notebook.setPublishing(qevercloud::Publishing{});
+    notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
+    notebook.mutablePublishing()->setOrder(qevercloud::NoteSortOrder::CREATED);
+    notebook.mutablePublishing()->setAscending(true);
+    notebook.mutablePublishing()->setPublicDescription(
+        QStringLiteral("Fake public description"));
+
+    notebook.setPublished(true);
+    notebook.setStack(QStringLiteral("Fake notebook stack"));
+
+    notebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+    notebook.mutableBusinessNotebook()->setNotebookDescription(
+        QStringLiteral("Fake business notebook description"));
+    notebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+    notebook.mutableBusinessNotebook()->setRecommended(true);
+
+    notebook.setRestrictions(qevercloud::NotebookRestrictions{});
+    auto & notebookRestrictions = *notebook.mutableRestrictions();
+    notebookRestrictions.setNoReadNotes(false);
+    notebookRestrictions.setNoCreateNotes(false);
+    notebookRestrictions.setNoUpdateNotes(false);
+    notebookRestrictions.setNoExpungeNotes(true);
+    notebookRestrictions.setNoShareNotes(false);
+    notebookRestrictions.setNoEmailNotes(true);
+    notebookRestrictions.setNoSendMessageToRecipients(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
+    notebookRestrictions.setNoExpungeNotebook(true);
+    notebookRestrictions.setNoSetDefaultNotebook(false);
+    notebookRestrictions.setNoSetNotebookStack(true);
+    notebookRestrictions.setNoPublishToPublic(false);
+    notebookRestrictions.setNoPublishToBusinessLibrary(true);
+    notebookRestrictions.setNoCreateTags(false);
+    notebookRestrictions.setNoUpdateTags(false);
+    notebookRestrictions.setNoExpungeTags(true);
+    notebookRestrictions.setNoSetParentTag(false);
+    notebookRestrictions.setNoCreateSharedNotebooks(false);
+    notebookRestrictions.setNoUpdateNotebook(false);
+    notebookRestrictions.setUpdateWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::ASSIGNED);
+    notebookRestrictions.setExpungeWhichSharedNotebookRestrictions(
+        qevercloud::SharedNotebookInstanceRestrictions::NO_SHARED_NOTEBOOKS);
+
+    qevercloud::SharedNotebook sharedNotebook;
+    sharedNotebook.setId(1);
+    sharedNotebook.setUserId(1);
+    sharedNotebook.setNotebookGuid(notebook.guid());
+    sharedNotebook.setEmail(QStringLiteral("Fake shared notebook email"));
+    sharedNotebook.setServiceCreated(1);
+    sharedNotebook.setServiceUpdated(1);
+
+    sharedNotebook.setGlobalId(
+        QStringLiteral("Fake shared notebook global id"));
+
+    sharedNotebook.setUsername(QStringLiteral("Fake shared notebook username"));
+    sharedNotebook.setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    sharedNotebook.setRecipientSettings(
+        qevercloud::SharedNotebookRecipientSettings{});
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyEmail(true);
+    sharedNotebook.mutableRecipientSettings()->setReminderNotifyInApp(false);
+
+    notebook.setSharedNotebooks(
+        QList<qevercloud::SharedNotebook>() << sharedNotebook);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+    putNotebookFuture.waitForFinished();
+
+    // Remove restrictions and shared notebooks
+    qevercloud::Notebook updatedNotebook;
+    updatedNotebook.setLocalId(notebook.localId());
+    updatedNotebook.setGuid(notebook.guid());
+    updatedNotebook.setUpdateSequenceNum(1);
+    updatedNotebook.setName(QStringLiteral("Fake notebook name"));
+    updatedNotebook.setServiceCreated(1);
+    updatedNotebook.setServiceUpdated(1);
+    updatedNotebook.setDefaultNotebook(true);
+    updatedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
+
+    updatedNotebook.setPublishing(qevercloud::Publishing{});
+    updatedNotebook.mutablePublishing()->setUri(
+        QStringLiteral("Fake publishing uri"));
+    updatedNotebook.mutablePublishing()->setOrder(
+        qevercloud::NoteSortOrder::CREATED);
+    updatedNotebook.mutablePublishing()->setAscending(true);
+
+    updatedNotebook.mutablePublishing()->setPublicDescription(
+        QStringLiteral("Fake public description"));
+
+    updatedNotebook.setPublished(true);
+    updatedNotebook.setStack(QStringLiteral("Fake notebook stack"));
+
+    updatedNotebook.setBusinessNotebook(qevercloud::BusinessNotebook{});
+    updatedNotebook.mutableBusinessNotebook()->setNotebookDescription(
+        QStringLiteral("Fake business notebook description"));
+
+    updatedNotebook.mutableBusinessNotebook()->setPrivilege(
+        qevercloud::SharedNotebookPrivilegeLevel::FULL_ACCESS);
+
+    updatedNotebook.mutableBusinessNotebook()->setRecommended(true);
+
+    putNotebookFuture = notebooksHandler->putNotebook(updatedNotebook);
+    putNotebookFuture.waitForFinished();
+
+    auto foundNotebookFuture =
+        notebooksHandler->findNotebookByLocalId(notebook.localId());
+
+    foundNotebookFuture.waitForFinished();
+    ASSERT_EQ(foundNotebookFuture.resultCount(), 1);
+    EXPECT_EQ(foundNotebookFuture.result(), updatedNotebook);
 }
 
 } // namespace quentier::local_storage::sql::tests
