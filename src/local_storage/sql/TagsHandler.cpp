@@ -430,7 +430,15 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByNameImpl(
             "failed to prepare query"),
         std::nullopt);
 
-    query.bindValue(QStringLiteral(":nameLower"), name.toLower());
+    // Legacy behaviour affecting only tags: due to a mistake tags nameLower
+    // field contains lowercase names of tags which were also cleared from
+    // diacritics. So need to search by lowercase name with removed diacritics
+    // as well + need to check that actual name of the tag matches and only
+    // in that case return non-nullopt result.
+    auto nameLower = name.toLower();
+    m_stringUtils.removeDiacritics(nameLower);
+
+    query.bindValue(QStringLiteral(":nameLower"), nameLower);
 
     if (linkedNotebookGuid && !linkedNotebookGuid->isEmpty()) {
         query.bindValue(
@@ -445,26 +453,31 @@ std::optional<qevercloud::Tag> TagsHandler::findTagByNameImpl(
             "Cannot find tag in the local storage database by name"),
         std::nullopt);
 
-    if (!query.next()) {
-        return std::nullopt;
+    while (query.next())
+    {
+        const auto record = query.record();
+        qevercloud::Tag tag;
+        ErrorString error;
+        if (!utils::fillTagFromSqlRecord(record, tag, error)) {
+            errorDescription.setBase(
+                QT_TRANSLATE_NOOP(
+                    "local_storage::sql::TagsHandler",
+                    "Failed to find tag by name in the local storage database"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            QNWARNING("local_storage::sql::TagsHandler", errorDescription);
+            return std::nullopt;
+        }
+
+        if (tag.name() && *tag.name() != name) {
+            continue;
+        }
+
+        return tag;
     }
 
-    const auto record = query.record();
-    qevercloud::Tag tag;
-    ErrorString error;
-    if (!utils::fillTagFromSqlRecord(record, tag, error)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::TagsHandler",
-                "Failed to find tag by name in the local storage database"));
-        errorDescription.appendBase(error.base());
-        errorDescription.appendBase(error.additionalBases());
-        errorDescription.details() = error.details();
-        QNWARNING("local_storage::sql::TagsHandler", errorDescription);
-        return std::nullopt;
-    }
-
-    return tag;
+    return std::nullopt;
 }
 
 QStringList TagsHandler::listChildTagLocalIds(

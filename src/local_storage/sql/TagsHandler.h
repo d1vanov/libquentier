@@ -26,6 +26,7 @@
 #include <quentier/local_storage/ILocalStorage.h>
 
 #include <qevercloud/types/Tag.h>
+#include <quentier/utility/StringUtils.h>
 
 #include <memory>
 #include <optional>
@@ -126,6 +127,8 @@ private:
     QThreadPool * m_threadPool;
     Notifier * m_notifier;
     QThreadPtr m_writerThread;
+
+    StringUtils m_stringUtils;
 };
 
 } // namespace quentier::local_storage::sql
