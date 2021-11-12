@@ -16,11 +16,11 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../ResourcesHandler.h"
 #include "../ConnectionPool.h"
 #include "../NotebooksHandler.h"
 #include "../NotesHandler.h"
 #include "../Notifier.h"
-#include "../ResourcesHandler.h"
 #include "../TablesInitializer.h"
 
 #include <quentier/exception/IQuentierException.h>
@@ -220,10 +220,13 @@ Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
 
         resourceAttributes.setApplicationData(qevercloud::LazyMap{});
         auto & appData = *resourceAttributes.mutableApplicationData();
-        appData.setKeysOnly(QSet<QString>{} << QStringLiteral("key1"));
+        appData.setKeysOnly(
+            QSet<QString>{} << QStringLiteral("key1")
+                            << QStringLiteral("key2"));
         appData.setFullMap(QMap<QString, QString>{});
         auto & fullMap = *appData.mutableFullMap();
         fullMap[QStringLiteral("key1")] = QStringLiteral("value1");
+        fullMap[QStringLiteral("key2")] = QStringLiteral("value2");
 
         resource.setAttributes(std::move(resourceAttributes));
     }
