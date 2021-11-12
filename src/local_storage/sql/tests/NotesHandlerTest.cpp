@@ -1469,6 +1469,169 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     }
 }
 
+// The test checks that updates of existing note in the local storage work
+// as expected when updated note doesn't have several fields which existed
+// for the original note
+TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
+    putNotebookFuture.waitForFinished();
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag tag;
+    tag.setGuid(UidGenerator::Generate());
+    tag.setUpdateSequenceNum(1);
+    tag.setName(QStringLiteral("Tag"));
+
+    auto putTagFuture = tagsHandler->putTag(tag);
+    putTagFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    // Put note with a tag and a resource to the local storage
+    qevercloud::Note note;
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(1);
+    note.setTitle(QStringLiteral("Note"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreated(1);
+    note.setUpdated(1);
+    note.setActive(true);
+    note.setNotebookGuid(gNotebook->guid());
+    note.setNotebookLocalId(gNotebook->localId());
+
+    qevercloud::Resource resource;
+    resource.setGuid(QStringLiteral("00000000-0000-0000-c000-000000000044"));
+    resource.setUpdateSequenceNum(1);
+    resource.setNoteGuid(note.guid());
+    resource.setNoteLocalId(note.localId());
+
+    resource.setData(qevercloud::Data{});
+    resource.mutableData()->setBody(QByteArray("Fake resource data body"));
+    resource.mutableData()->setSize(resource.data()->body()->size());
+    resource.mutableData()->setBodyHash(
+        QCryptographicHash::hash(
+            *resource.data()->body(),
+            QCryptographicHash::Md5));
+
+    note.setResources(QList<qevercloud::Resource>() << resource);
+    note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
+    note.setNotebookLocalId(gNotebook->localId());
+
+    auto putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    // Update this note and ensure it no longer has the resource and the tag
+    // binding
+    qevercloud::Note updatedNote;
+    updatedNote.setLocalId(note.localId());
+    updatedNote.setGuid(note.guid());
+    updatedNote.setUpdateSequenceNum(1);
+    updatedNote.setTitle(QStringLiteral("Note"));
+
+    updatedNote.setContent(
+        QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+
+    updatedNote.setCreated(1);
+    updatedNote.setUpdated(1);
+    updatedNote.setActive(true);
+    updatedNote.setNotebookGuid(gNotebook->guid());
+    updatedNote.setNotebookLocalId(gNotebook->localId());
+
+    putNoteFuture = notesHandler->putNote(updatedNote);
+    putNoteFuture.waitForFinished();
+
+    using UpdateNoteOption = NotesHandler::UpdateNoteOption;
+    using UpdateNoteOptions = NotesHandler::UpdateNoteOptions;
+
+    const auto updateNoteOptions = UpdateNoteOptions{} |
+        UpdateNoteOption::UpdateTags |
+        UpdateNoteOption::UpdateResourceMetadata |
+        UpdateNoteOption::UpdateResourceBinaryData;
+
+    auto updateNoteFuture =
+        notesHandler->updateNote(updatedNote, updateNoteOptions);
+
+    updateNoteFuture.waitForFinished();
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    const auto fetchNoteOptions = FetchNoteOptions{} |
+        FetchNoteOption::WithResourceMetadata |
+        FetchNoteOption::WithResourceBinaryData;
+
+    auto foundNoteFuture =
+        notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
+
+    foundNoteFuture.waitForFinished();
+    ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundNoteFuture.result(), updatedNote);
+
+    // Add resource attributes to the resource and add the resource to note
+    // again
+    resource.setAttributes(qevercloud::ResourceAttributes{});
+
+    auto & resourceAttributes = *resource.mutableAttributes();
+    resourceAttributes.setApplicationData(qevercloud::LazyMap{});
+
+    auto & resourceAppData = *resourceAttributes.mutableApplicationData();
+    resourceAppData.setKeysOnly(
+        QSet<QString>() << QStringLiteral("key_1")
+        << QStringLiteral("key_2") << QStringLiteral("key_3"));
+
+    resourceAppData.setFullMap(QMap<QString, QString>{});
+
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_1")] =
+        QStringLiteral("value_1");
+
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_2")] =
+        QStringLiteral("value_2");
+
+    (*resourceAppData.mutableFullMap())[QStringLiteral("key_3")] =
+        QStringLiteral("value_3");
+
+    updatedNote.setResources(QList<qevercloud::Resource>() << resource);
+
+    updateNoteFuture = notesHandler->updateNote(updatedNote, updateNoteOptions);
+    updateNoteFuture.waitForFinished();
+
+    foundNoteFuture =
+        notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
+
+    foundNoteFuture.waitForFinished();
+    ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundNoteFuture.result(), updatedNote);
+    ASSERT_TRUE(foundNoteFuture.result().resources());
+    ASSERT_FALSE(foundNoteFuture.result().resources()->isEmpty());
+    EXPECT_TRUE(foundNoteFuture.result().resources()->begin()->attributes());
+
+    // Remove resource attributes from note's resource and update it again
+    updatedNote.mutableResources()->begin()->setAttributes(std::nullopt);
+
+    updateNoteFuture = notesHandler->updateNote(updatedNote, updateNoteOptions);
+    updateNoteFuture.waitForFinished();
+
+    foundNoteFuture =
+        notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
+
+    foundNoteFuture.waitForFinished();
+    ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    EXPECT_EQ(foundNoteFuture.result(), updatedNote);
+    ASSERT_TRUE(foundNoteFuture.result().resources());
+    ASSERT_FALSE(foundNoteFuture.result().resources()->isEmpty());
+    EXPECT_FALSE(foundNoteFuture.result().resources()->begin()->attributes());
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "NotesHandlerTest.moc"
