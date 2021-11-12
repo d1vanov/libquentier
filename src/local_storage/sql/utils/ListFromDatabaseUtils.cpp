@@ -341,6 +341,19 @@ QList<qevercloud::Resource> listNoteResources(
             return {};
         }
 
+        error.clear();
+        if (!findResourceAttributesApplicationDataByLocalId(
+                resource, database, error))
+        {
+            errorDescription.setBase(QT_TRANSLATE_NOOP(
+                    "local_storage::sql::utils",
+                    "Can't list resources by note local id"));
+            errorDescription.appendBase(error.base());
+            errorDescription.appendBase(error.additionalBases());
+            errorDescription.details() = error.details();
+            return {};
+        }
+
         resourcesByIndex[indexInNote] = resource;
     }
 

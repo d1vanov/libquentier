@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ResourceUtils.h"
 #include "Common.h"
 #include "FillFromSqlRecordUtils.h"
 #include "ResourceDataFilesUtils.h"
-#include "ResourceUtils.h"
 #include "SqlUtils.h"
 
 #include "../ErrorHandling.h"
@@ -29,8 +29,8 @@
 #include <qevercloud/types/Resource.h>
 
 #include <QCryptographicHash>
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 
 #include <algorithm>
 
@@ -136,8 +136,7 @@ QString resourceLocalIdByGuid(
 std::optional<qevercloud::Resource> findResourceByLocalId(
     const QString & resourceLocalId, const FetchResourceOptions options,
     const QDir & localStorageDir, int & indexInNote, QSqlDatabase & database,
-    ErrorString & errorDescription,
-    const TransactionOption transactionOption)
+    ErrorString & errorDescription, const TransactionOption transactionOption)
 {
     std::optional<SelectTransactionGuard> transactionGuard;
     if (transactionOption == TransactionOption::UseSeparateTransaction) {
@@ -186,8 +185,7 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
     qevercloud::Resource resource;
     ErrorString error;
     indexInNote = -1;
-    if (!fillResourceFromSqlRecord(record, resource, indexInNote, error))
-    {
+    if (!fillResourceFromSqlRecord(record, resource, indexInNote, error)) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",
             "Failed to find resource by local id in the local storage "
@@ -199,20 +197,10 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
         return std::nullopt;
     }
 
-    if (resource.attributes()) {
-        if (!findResourceAttributesApplicationDataKeysOnlyByLocalId(
-                resourceLocalId, *resource.mutableAttributes(), database,
-                errorDescription))
-        {
-            return std::nullopt;
-        }
-
-        if (!findResourceAttributesApplicationDataFullMapByLocalId(
-                resourceLocalId, *resource.mutableAttributes(), database,
-                errorDescription))
-        {
-            return std::nullopt;
-        }
+    if (!findResourceAttributesApplicationDataByLocalId(
+            resource, database, errorDescription))
+    {
+        return std::nullopt;
     }
 
     if (!options.testFlag(FetchResourceOption::WithBinaryData)) {
@@ -229,9 +217,8 @@ std::optional<qevercloud::Resource> findResourceByLocalId(
 
 std::optional<qevercloud::Resource> findResourceByGuid(
     const qevercloud::Guid & resourceGuid, const FetchResourceOptions options,
-    const QDir & localStorageDir, int & indexInNote,
-    QSqlDatabase & database, ErrorString & errorDescription,
-    const TransactionOption transactionOption)
+    const QDir & localStorageDir, int & indexInNote, QSqlDatabase & database,
+    ErrorString & errorDescription, const TransactionOption transactionOption)
 {
     std::optional<SelectTransactionGuard> transactionGuard;
     if (transactionOption == TransactionOption::UseSeparateTransaction) {
@@ -280,8 +267,7 @@ std::optional<qevercloud::Resource> findResourceByGuid(
     qevercloud::Resource resource;
     ErrorString error;
     indexInNote = -1;
-    if (!fillResourceFromSqlRecord(record, resource, indexInNote, error))
-    {
+    if (!fillResourceFromSqlRecord(record, resource, indexInNote, error)) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",
             "Failed to find resource by guid in the local storage "
@@ -453,20 +439,18 @@ bool findResourceAttributesApplicationDataKeysOnlyByLocalId(
             "storage database"),
         false);
 
-    if (!query.next()) {
-        return true;
-    }
+    while (query.next()) {
+        if (!attributes.applicationData()) {
+            attributes.setApplicationData(qevercloud::LazyMap{});
+        }
 
-    if (!attributes.applicationData()) {
-        attributes.setApplicationData(qevercloud::LazyMap{});
-    }
+        auto & appData = *attributes.mutableApplicationData();
+        if (!appData.keysOnly()) {
+            appData.setKeysOnly(QSet<QString>{});
+        }
 
-    auto & appData = *attributes.mutableApplicationData();
-    if (!appData.keysOnly()) {
-        appData.setKeysOnly(QSet<QString>{});
+        appData.mutableKeysOnly()->insert(query.value(0).toString());
     }
-
-    appData.mutableKeysOnly()->insert(query.value(0).toString());
     return true;
 }
 
@@ -500,29 +484,70 @@ bool findResourceAttributesApplicationDataFullMapByLocalId(
             "storage database"),
         false);
 
-    if (!query.next()) {
-        return true;
+    while (query.next()) {
+        const auto record = query.record();
+        const int keyIndex = record.indexOf(QStringLiteral("resourceMapKey"));
+        const int valueIndex = record.indexOf(QStringLiteral("resourceValue"));
+
+        if (keyIndex < 0 || valueIndex < 0) {
+            return true;
+        }
+
+        if (!attributes.applicationData()) {
+            attributes.setApplicationData(qevercloud::LazyMap{});
+        }
+
+        auto & appData = *attributes.mutableApplicationData();
+        if (!appData.fullMap()) {
+            appData.setFullMap(QMap<QString, QString>{});
+        }
+
+        appData.mutableFullMap()->insert(
+            record.value(keyIndex).toString(),
+            record.value(valueIndex).toString());
     }
 
-    const auto record = query.record();
-    const int keyIndex = record.indexOf(QStringLiteral("resourceMapKey"));
-    const int valueIndex = record.indexOf(QStringLiteral("resourceValue"));
+    return true;
+}
 
-    if (keyIndex < 0 || valueIndex < 0) {
-        return true;
+bool findResourceAttributesApplicationDataByLocalId(
+    const QString & localId, qevercloud::ResourceAttributes & attributes,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    if (!findResourceAttributesApplicationDataKeysOnlyByLocalId(
+            localId, attributes, database, errorDescription))
+    {
+        return false;
     }
 
-    if (!attributes.applicationData()) {
-        attributes.setApplicationData(qevercloud::LazyMap{});
+    if (!findResourceAttributesApplicationDataFullMapByLocalId(
+            localId, attributes, database, errorDescription))
+    {
+        return false;
     }
 
-    auto & appData = *attributes.mutableApplicationData();
-    if (!appData.fullMap()) {
-        appData.setFullMap(QMap<QString, QString>{});
+    return true;
+}
+
+bool findResourceAttributesApplicationDataByLocalId(
+    qevercloud::Resource & resource, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    if (resource.attributes()) {
+        return findResourceAttributesApplicationDataByLocalId(
+            resource.localId(), *resource.mutableAttributes(), database,
+            errorDescription);
     }
 
-    appData.mutableFullMap()->insert(
-        record.value(keyIndex).toString(), record.value(valueIndex).toString());
+    qevercloud::ResourceAttributes attributes;
+    if (!findResourceAttributesApplicationDataByLocalId(
+            resource.localId(), attributes, database, errorDescription)) {
+        return false;
+    }
+
+    if (attributes.applicationData()) {
+        resource.setAttributes(std::move(attributes));
+    }
 
     return true;
 }
@@ -592,7 +617,7 @@ QStringList findResourceLocalIdsByMimeTypes(
 
             for (const auto & mimeType: resourceMimeTypes) {
                 strm << "SELECT resourceLocalUid FROM "
-                    << "ResourceMimeFTS WHERE mime MATCH \'";
+                     << "ResourceMimeFTS WHERE mime MATCH \'";
                 strm << sqlEscape(mimeType);
                 strm << "\'";
                 if (&mimeType != &resourceMimeTypes.constLast()) {
