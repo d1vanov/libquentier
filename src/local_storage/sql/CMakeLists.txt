@@ -23,6 +23,8 @@ target_sources(${LIBRARY_NAME}
   ResourcesHandler.h
   SavedSearchesHandler.cpp
   SavedSearchesHandler.h
+  SynchronizationInfoHandler.cpp
+  SynchronizationInfoHandler.h
   TablesInitializer.cpp
   TablesInitializer.h
   TagsHandler.cpp
