@@ -196,7 +196,7 @@ std::optional<qint32>
     }
 
     tablesAndUsnColumns << HighUsnRequestData{
-        QStringLiteral("Resource"),
+        QStringLiteral("Resources"),
         QStringLiteral("resourceUpdateSequenceNumber"), queryCondition};
 
     /**
@@ -213,7 +213,7 @@ std::optional<qint32>
     }
 
     qint32 updateSequenceNumber = 0;
-    for (const auto & requestData: tablesAndUsnColumns) {
+    for (const auto & requestData: qAsConst(tablesAndUsnColumns)) {
         auto usn = updateSequenceNumberFromTable(
             requestData.m_tableName, requestData.m_usnColumnName,
             requestData.m_queryCondition, database, errorDescription);
@@ -293,6 +293,20 @@ std::optional<qint32> SynchronizationInfoHandler::updateSequenceNumberFromTable(
     }
 
     return usn;
+}
+
+TaskContext SynchronizationInfoHandler::makeTaskContext() const
+{
+    return TaskContext{
+        m_threadPool,
+        m_writerThread,
+        m_connectionPool,
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::SynchronizationInfoHandler",
+                "SynchronizationInfoHandler is already destroyed")},
+        ErrorString{QT_TRANSLATE_NOOP(
+                "local_storage::sql::SynchronizationInfoHandler",
+                "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql
