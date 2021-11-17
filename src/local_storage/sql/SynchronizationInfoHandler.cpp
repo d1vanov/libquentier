@@ -137,18 +137,29 @@ std::optional<qint32>
         tablesAndUsnColumns.reserve(4);
     }
 
-    QString queryCondition = QStringLiteral("WHERE linkedNotebookGuid");
+    const auto addLinkedNotebookToQueryCondition =
+        [&](QString & queryCondition) {
+            if (isHighestUsnOption) {
+                const auto highestUsnOption =
+                    std::get<HighestUsnOption>(usnVariant);
+                if (highestUsnOption == HighestUsnOption::WithinUserOwnContent)
+                {
+                    queryCondition +=
+                        QStringLiteral(" WHERE linkedNotebookGuid IS NULL");
+                }
+            }
+            else {
+                const auto & linkedNotebookGuid =
+                    std::get<qevercloud::Guid>(usnVariant);
 
-    if (isHighestUsnOption) {
-        queryCondition += QStringLiteral(" IS NULL");
-    }
-    else {
-        const auto & linkedNotebookGuid =
-            std::get<qevercloud::Guid>(usnVariant);
+                queryCondition +=
+                    QString::fromUtf8(" WHERE linkedNotebookGuid ='%1'")
+                        .arg(utils::sqlEscape(linkedNotebookGuid));
+            }
+        };
 
-        queryCondition += QString::fromUtf8("='%1'").arg(
-            utils::sqlEscape(linkedNotebookGuid));
-    }
+    QString queryCondition;
+    addLinkedNotebookToQueryCondition(queryCondition);
 
     const QString usn = QStringLiteral("updateSequenceNumber");
 
@@ -161,18 +172,10 @@ std::optional<qint32>
     // Separate query condition is required for notes table
     queryCondition = QStringLiteral(
         "WHERE notebookLocalUid IN (SELECT DISTINCT localUid "
-        "FROM Notebooks WHERE linkedNotebookGuid");
+        "FROM Notebooks");
 
-    if (isHighestUsnOption) {
-        queryCondition += QStringLiteral(" IS NULL)");
-    }
-    else {
-        const auto & linkedNotebookGuid =
-            std::get<qevercloud::Guid>(usnVariant);
-
-        queryCondition += QString::fromUtf8("='%1')").arg(
-            utils::sqlEscape(linkedNotebookGuid));
-    }
+    addLinkedNotebookToQueryCondition(queryCondition);
+    queryCondition += QStringLiteral(")");
 
     tablesAndUsnColumns << HighUsnRequestData{
         QStringLiteral("Notes"), usn, queryCondition};
@@ -181,19 +184,10 @@ std::optional<qint32>
     queryCondition = QStringLiteral(
         "WHERE noteLocalUid IN (SELECT DISTINCT localUid FROM "
         "Notes WHERE notebookLocalUid IN "
-        "(SELECT DISTINCT localUid FROM Notebooks "
-        "WHERE linkedNotebookGuid");
+        "(SELECT DISTINCT localUid FROM Notebooks");
 
-    if (isHighestUsnOption) {
-        queryCondition += QStringLiteral(" IS NULL))");
-    }
-    else {
-        const auto & linkedNotebookGuid =
-            std::get<qevercloud::Guid>(usnVariant);
-
-        queryCondition += QString::fromUtf8("='%1'))").arg(
-            utils::sqlEscape(linkedNotebookGuid));
-    }
+    addLinkedNotebookToQueryCondition(queryCondition);
+    queryCondition += QStringLiteral("))");
 
     tablesAndUsnColumns << HighUsnRequestData{
         QStringLiteral("Resources"),
@@ -205,11 +199,14 @@ std::optional<qint32>
      * account, not from some linked notebook
      */
     if (isHighestUsnOption) {
-        tablesAndUsnColumns << HighUsnRequestData{
-            QStringLiteral("LinkedNotebooks"), usn, QString{}};
+        const auto highestUsnOption = std::get<HighestUsnOption>(usnVariant);
+        if (highestUsnOption == HighestUsnOption::WithinUserOwnContent) {
+            tablesAndUsnColumns << HighUsnRequestData{
+                QStringLiteral("LinkedNotebooks"), usn, QString{}};
 
-        tablesAndUsnColumns << HighUsnRequestData{
-            QStringLiteral("SavedSearches"), usn, QString{}};
+            tablesAndUsnColumns << HighUsnRequestData{
+                QStringLiteral("SavedSearches"), usn, QString{}};
+        }
     }
 
     qint32 updateSequenceNumber = 0;
