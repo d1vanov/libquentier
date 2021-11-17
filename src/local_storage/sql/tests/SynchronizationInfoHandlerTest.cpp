@@ -18,15 +18,20 @@
 
 #include "../SynchronizationInfoHandler.h"
 #include "../ConnectionPool.h"
+#include "../LinkedNotebooksHandler.h"
+#include "../NotebooksHandler.h"
+#include "../Notifier.h"
 #include "../TablesInitializer.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/Notebook.h>
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFlags>
-#include <QFutureSynchronizer>
+#include <QList>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -35,9 +40,32 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 namespace quentier::local_storage::sql::tests {
 
 namespace {
+
+[[nodiscard]] QList<qevercloud::Notebook> createNotebooks(
+    const int count = 3, const qint32 smallestUsn = 0,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid = std::nullopt,
+    const qint32 smallestIndex = 1)
+{
+    QList<qevercloud::Notebook> result;
+    result.reserve(std::max(count, 0));
+    for (int i = 0; i < count; ++i)
+    {
+        qevercloud::Notebook notebook;
+        notebook.setGuid(UidGenerator::Generate());
+        notebook.setUpdateSequenceNum(smallestUsn + i);
+        notebook.setName(
+            QStringLiteral("Notebook #") + QString::number(smallestIndex + i));
+
+        notebook.setLinkedNotebookGuid(linkedNotebookGuid);
+        result << notebook;
+    }
+    return result;
+};
 
 class SynchronizationInfoHandlerTest : public testing::Test
 {
@@ -54,6 +82,18 @@ protected:
         TablesInitializer::initializeTables(database);
 
         m_writerThread = std::make_shared<QThread>();
+
+        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
+
+        m_notifier = new Notifier;
+        m_notifier->moveToThread(m_writerThread.get());
+
+        QObject::connect(
+            m_writerThread.get(),
+            &QThread::finished,
+            m_notifier,
+            &QObject::deleteLater);
+
         m_writerThread->start();
     }
 
@@ -69,6 +109,9 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
+    QReadWriteLockPtr m_resourceDataFilesLock;
+    QTemporaryDir m_temporaryDir;
+    Notifier * m_notifier;
 };
 
 } // namespace
@@ -149,6 +192,99 @@ TEST_F(
 
     highUsn.waitForFinished();
     EXPECT_EQ(highUsn.result(), 0);
+}
+
+TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinUserOwnNotebooks)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const int notebookCount = 3;
+    const qint32 smallestUsn = 42;
+    {
+        auto notebooks = createNotebooks(notebookCount, smallestUsn);
+        for (auto & notebook: notebooks) {
+            auto putNotebookFuture =
+                notebooksHandler->putNotebook(std::move(notebook));
+
+            putNotebookFuture.waitForFinished();
+        }
+    }
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + notebookCount - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+        WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + notebookCount - 1);
+}
+
+TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinNotebooksFromLinkedNotebook)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const int notebookCount = 3;
+    const qint32 smallestUsn = 42;
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+    {
+        const auto linkedNotebooksHandler =
+            std::make_shared<LinkedNotebooksHandler>(
+                m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+                m_writerThread, m_temporaryDir.path());
+
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(linkedNotebookGuid);
+
+        auto putLinkedNotebookFuture =
+            linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+        putLinkedNotebookFuture.waitForFinished();
+
+        auto notebooks =
+            createNotebooks(notebookCount, smallestUsn, linkedNotebookGuid);
+        for (auto & notebook: notebooks) {
+            auto putNotebookFuture =
+                notebooksHandler->putNotebook(std::move(notebook));
+
+            putNotebookFuture.waitForFinished();
+        }
+    }
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), 0);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+        WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + notebookCount - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        linkedNotebookGuid);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + notebookCount - 1);
 }
 
 } // namespace quentier::local_storage::sql::tests
