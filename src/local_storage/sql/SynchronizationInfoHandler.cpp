@@ -199,14 +199,11 @@ std::optional<qint32>
      * account, not from some linked notebook
      */
     if (isHighestUsnOption) {
-        const auto highestUsnOption = std::get<HighestUsnOption>(usnVariant);
-        if (highestUsnOption == HighestUsnOption::WithinUserOwnContent) {
-            tablesAndUsnColumns << HighUsnRequestData{
-                QStringLiteral("LinkedNotebooks"), usn, QString{}};
+        tablesAndUsnColumns << HighUsnRequestData{
+            QStringLiteral("LinkedNotebooks"), usn, QString{}};
 
-            tablesAndUsnColumns << HighUsnRequestData{
-                QStringLiteral("SavedSearches"), usn, QString{}};
-        }
+        tablesAndUsnColumns << HighUsnRequestData{
+            QStringLiteral("SavedSearches"), usn, QString{}};
     }
 
     qint32 updateSequenceNumber = 0;
