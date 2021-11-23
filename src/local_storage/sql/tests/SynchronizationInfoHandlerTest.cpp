@@ -22,14 +22,17 @@
 #include "../NotebooksHandler.h"
 #include "../NotesHandler.h"
 #include "../Notifier.h"
+#include "../SavedSearchesHandler.h"
 #include "../TablesInitializer.h"
 #include "../TagsHandler.h"
 
 #include <quentier/exception/IQuentierException.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/Notebook.h>
+#include <qevercloud/types/SavedSearch.h>
 #include <qevercloud/types/Tag.h>
 
 #include <QCoreApplication>
@@ -52,6 +55,29 @@
 namespace quentier::local_storage::sql::tests {
 
 namespace {
+
+[[nodiscard]] QList<qevercloud::LinkedNotebook> createLinkedNotebooks(
+    const int count = 3, const qint32 smallestUsn = 0,
+    const qint32 smallestIndex = 1)
+{
+    QList<qevercloud::LinkedNotebook> result;
+    result.reserve(std::max(count, 0));
+    for (int i = 0; i < count; ++i) {
+        qevercloud::LinkedNotebook linkedNotebook;
+        linkedNotebook.setGuid(UidGenerator::Generate());
+
+        linkedNotebook.setUri(QStringLiteral("uri"));
+        linkedNotebook.setUpdateSequenceNum(smallestUsn + i);
+        linkedNotebook.setNoteStoreUrl(QStringLiteral("noteStoreUrl"));
+        linkedNotebook.setWebApiUrlPrefix(QStringLiteral("webApiUrlPrefix"));
+        linkedNotebook.setUsername(
+            QStringLiteral("Linked notebook#") +
+            QString::number(smallestIndex + i));
+
+        result << linkedNotebook;
+    }
+    return result;
+}
 
 [[nodiscard]] QList<qevercloud::Notebook> createNotebooks(
     const int count = 3, const qint32 smallestUsn = 0,
@@ -156,6 +182,25 @@ namespace {
         resource.setHeight(20);
 
         result << resource;
+    }
+    return result;
+}
+
+[[nodiscard]] QList<qevercloud::SavedSearch> createSavedSearches(
+    const int count = 3, const qint32 smallestUsn = 0,
+    const qint32 smallestIndex = 1)
+{
+    QList<qevercloud::SavedSearch> result;
+    result.reserve(std::max(count, 0));
+    for (int i = 0; i < count; ++i) {
+        qevercloud::SavedSearch search;
+        search.setGuid(UidGenerator::Generate());
+        search.setUpdateSequenceNum(smallestUsn + i);
+        search.setName(
+            QStringLiteral("Saved search #") +
+            QString::number(smallestIndex + i));
+
+        result << search;
     }
     return result;
 }
@@ -732,6 +777,82 @@ TEST_F(
     highUsn.waitForFinished();
     EXPECT_EQ(
         highUsn.result(), smallestUsn + noteCount * (1 + resourcePerNoteCount));
+}
+
+TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinSavedSearches)
+{
+    const auto savedSearchesHandler =
+        std::make_shared<SavedSearchesHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread);
+
+    const int savedSearchCount = 3;
+    const qint32 smallestUsn = 42;
+    {
+        auto savedSearches = createSavedSearches(savedSearchCount, smallestUsn);
+        for (auto & savedSearch: savedSearches) {
+            auto putSavedSearchFuture =
+                savedSearchesHandler->putSavedSearch(savedSearch);
+
+            putSavedSearchFuture.waitForFinished();
+        }
+    }
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + savedSearchCount - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+            WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + savedSearchCount - 1);
+}
+
+TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinLinkedNotebooks)
+{
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    const int linkedNotebookCount = 3;
+    const qint32 smallestUsn = 42;
+    {
+        auto linkedNotebooks =
+            createLinkedNotebooks(linkedNotebookCount, smallestUsn);
+
+        for (auto & linkedNotebook: linkedNotebooks) {
+            auto putLinkedNotebookFuture =
+                linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+
+            putLinkedNotebookFuture.waitForFinished();
+        }
+    }
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + linkedNotebookCount - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+            WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn + linkedNotebookCount - 1);
 }
 
 } // namespace quentier::local_storage::sql::tests
