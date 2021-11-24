@@ -831,7 +831,8 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinLinkedNotebooks)
 
         for (auto & linkedNotebook: linkedNotebooks) {
             auto putLinkedNotebookFuture =
-                linkedNotebooksHandler->putLinkedNotebook(linkedNotebook);
+                linkedNotebooksHandler->putLinkedNotebook(
+                    std::move(linkedNotebook));
 
             putLinkedNotebookFuture.waitForFinished();
         }
@@ -853,6 +854,253 @@ TEST_F(SynchronizationInfoHandlerTest, HighestUsnWithinLinkedNotebooks)
 
     highUsn.waitForFinished();
     EXPECT_EQ(highUsn.result(), smallestUsn + linkedNotebookCount - 1);
+}
+
+TEST_F(
+    SynchronizationInfoHandlerTest,
+    HighestUsnWithinUserOwnAccount)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const int notebookCount = 3;
+    const int noteCount = 3;
+    const int resourcePerNoteCount = 3;
+
+    qint32 smallestUsn = 42;
+    {
+        auto notebooks = createNotebooks(notebookCount, smallestUsn);
+        for (auto & notebook: notebooks) {
+            const auto notebookLocalId = notebook.localId();
+            const auto notebookGuid = notebook.guid();
+
+            auto putNotebookFuture =
+                notebooksHandler->putNotebook(std::move(notebook));
+
+            putNotebookFuture.waitForFinished();
+
+            auto notes = createNotes(
+                notebookLocalId, notebookGuid, noteCount,
+                smallestUsn + notebookCount + 1);
+
+            int i = 0;
+            for (auto & note: notes) {
+                auto resources = createResources(
+                    note.localId(), note.guid(), resourcePerNoteCount,
+                    smallestUsn + notebookCount + 1 + noteCount +
+                    i * resourcePerNoteCount);
+
+                ++i;
+
+                note.setResources(resources);
+
+                auto putNoteFuture = notesHandler->putNote(std::move(note));
+                putNoteFuture.waitForFinished();
+            }
+        }
+    }
+
+    smallestUsn += notebookCount + 1 + noteCount * (1 + resourcePerNoteCount);
+
+    const auto savedSearchesHandler =
+        std::make_shared<SavedSearchesHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread);
+
+    const int savedSearchCount = 3;
+    {
+        auto savedSearches = createSavedSearches(savedSearchCount, smallestUsn);
+        for (auto & savedSearch: savedSearches) {
+            auto putSavedSearchFuture =
+                savedSearchesHandler->putSavedSearch(savedSearch);
+
+            putSavedSearchFuture.waitForFinished();
+        }
+    }
+
+    smallestUsn += savedSearchCount;
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    const int tagCount = 3;
+    {
+        auto tags = createTags(tagCount, smallestUsn);
+        for (auto & tag: tags) {
+            auto putTagFuture = tagsHandler->putTag(std::move(tag));
+            putTagFuture.waitForFinished();
+        }
+    }
+
+    smallestUsn += tagCount;
+
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    const int linkedNotebookCount = 3;
+    QStringList linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    {
+        auto linkedNotebooks =
+            createLinkedNotebooks(linkedNotebookCount, smallestUsn);
+
+        for (auto & linkedNotebook: linkedNotebooks) {
+            linkedNotebookGuids << linkedNotebook.guid().value();
+
+            auto putLinkedNotebookFuture =
+                linkedNotebooksHandler->putLinkedNotebook(
+                    std::move(linkedNotebook));
+
+            putLinkedNotebookFuture.waitForFinished();
+        }
+    }
+
+    smallestUsn += linkedNotebookCount;
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+            WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn - 1);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+            linkedNotebookGuid);
+
+        highUsn.waitForFinished();
+        EXPECT_EQ(highUsn.result(), 0);
+    }
+}
+
+TEST_F(
+    SynchronizationInfoHandlerTest,
+    HighestUsnWithinLinkedNotebookContent)
+{
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    const int linkedNotebookCount = 3;
+    qint32 smallestUsn = 42;
+    QStringList linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    {
+        auto linkedNotebooks =
+            createLinkedNotebooks(linkedNotebookCount, smallestUsn);
+
+        for (auto & linkedNotebook: linkedNotebooks) {
+            linkedNotebookGuids << linkedNotebook.guid().value();
+
+            auto putLinkedNotebookFuture =
+                linkedNotebooksHandler->putLinkedNotebook(
+                    std::move(linkedNotebook));
+
+            putLinkedNotebookFuture.waitForFinished();
+        }
+    }
+
+    smallestUsn += linkedNotebookCount;
+    const int userOwnDataSmallestUsn = smallestUsn;
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    const int notebookCount = 3;
+    const int noteCount = 3;
+    const int resourcePerNoteCount = 3;
+    const int tagCount = 3;
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids))
+    {
+        auto notebooks =
+            createNotebooks(notebookCount, smallestUsn, linkedNotebookGuid);
+
+        for (auto & notebook: notebooks) {
+            const auto notebookLocalId = notebook.localId();
+            const auto notebookGuid = notebook.guid();
+
+            auto putNotebookFuture =
+                notebooksHandler->putNotebook(std::move(notebook));
+
+            putNotebookFuture.waitForFinished();
+
+            auto notes = createNotes(
+                notebookLocalId, notebookGuid, noteCount,
+                smallestUsn + notebookCount + 1);
+
+            int i = 0;
+            for (auto & note: notes) {
+                auto resources = createResources(
+                    note.localId(), note.guid(), resourcePerNoteCount,
+                    smallestUsn + notebookCount + 1 + noteCount +
+                    i * resourcePerNoteCount);
+
+                ++i;
+
+                note.setResources(resources);
+
+                auto putNoteFuture = notesHandler->putNote(std::move(note));
+                putNoteFuture.waitForFinished();
+            }
+        }
+
+        smallestUsn +=
+            notebookCount + 1 + noteCount * (1 + resourcePerNoteCount);
+
+        auto tags = createTags(tagCount, smallestUsn, linkedNotebookGuid);
+        for (auto & tag: tags) {
+            auto putTagFuture = tagsHandler->putTag(std::move(tag));
+            putTagFuture.waitForFinished();
+        }
+
+        smallestUsn += tagCount;
+    }
+
+    const auto synchronizationInfoHandler =
+        std::make_shared<SynchronizationInfoHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_writerThread);
+
+    auto highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::WithinUserOwnContent);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), userOwnDataSmallestUsn - 1);
+
+    highUsn = synchronizationInfoHandler->highestUpdateSequenceNumber(
+        SynchronizationInfoHandler::HighestUsnOption::
+            WithinUserOwnContentAndLinkedNotebooks);
+
+    highUsn.waitForFinished();
+    EXPECT_EQ(highUsn.result(), smallestUsn - 1);
 }
 
 } // namespace quentier::local_storage::sql::tests
