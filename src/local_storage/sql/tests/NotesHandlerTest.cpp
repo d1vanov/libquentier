@@ -1632,6 +1632,125 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
     EXPECT_FALSE(foundNoteFuture.result().resources()->begin()->attributes());
 }
 
+enum class ExcludedTagIds
+{
+    LocalIds,
+    Guids
+};
+
+const std::array gExcludedTagIds{
+    ExcludedTagIds::LocalIds,
+    ExcludedTagIds::Guids
+};
+
+class NotesHandlerUpdateNoteTagIdsTest :
+    public NotesHandlerTest,
+    public testing::WithParamInterface<ExcludedTagIds>
+{};
+
+INSTANTIATE_TEST_SUITE_P(
+    NotesHandlerUpdateNoteTagIdsTestInstance,
+    NotesHandlerUpdateNoteTagIdsTest,
+    testing::ValuesIn(gExcludedTagIds));
+
+TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
+{
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(*gNotebook);
+    putNotebookFuture.waitForFinished();
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag tag1;
+    tag1.setGuid(UidGenerator::Generate());
+    tag1.setUpdateSequenceNum(1);
+    tag1.setName(QStringLiteral("Tag #1"));
+
+    auto putTagFuture = tagsHandler->putTag(tag1);
+    putTagFuture.waitForFinished();
+
+    qevercloud::Tag tag2;
+    tag2.setGuid(UidGenerator::Generate());
+    tag2.setUpdateSequenceNum(2);
+    tag2.setName(QStringLiteral("Tag #2"));
+
+    putTagFuture = tagsHandler->putTag(tag2);
+    putTagFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Note note;
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(1);
+    note.setTitle(QStringLiteral("Note"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreated(1);
+    note.setUpdated(1);
+    note.setActive(true);
+    note.setNotebookGuid(gNotebook->guid());
+    note.setNotebookLocalId(gNotebook->localId());
+    note.setTagGuids(QList<qevercloud::Guid>{} << tag1.guid().value() << tag2.guid().value());
+    note.setTagLocalIds(QStringList{} << tag1.localId() << tag2.localId());
+
+    auto putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    qevercloud::Note updatedNote = note;
+
+    const auto excludedTagIds = GetParam();
+    if (excludedTagIds == ExcludedTagIds::LocalIds) {
+        updatedNote.setTagLocalIds(QStringList{});
+        updatedNote.setTagGuids(
+            QList<qevercloud::Guid>{} << tag1.guid().value());
+    }
+    else {
+        updatedNote.setTagGuids(std::nullopt);
+        updatedNote.setTagLocalIds(QStringList{} << tag1.localId());
+    }
+
+    using UpdateNoteOption = NotesHandler::UpdateNoteOption;
+    using UpdateNoteOptions = NotesHandler::UpdateNoteOptions;
+
+    const auto updateNoteOptions = UpdateNoteOptions{} |
+        UpdateNoteOption::UpdateTags |
+        UpdateNoteOption::UpdateResourceMetadata |
+        UpdateNoteOption::UpdateResourceBinaryData;
+
+    auto updateNoteFuture =
+        notesHandler->updateNote(updatedNote, updateNoteOptions);
+
+    updateNoteFuture.waitForFinished();
+
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    const auto fetchNoteOptions = FetchNoteOptions{} |
+        FetchNoteOption::WithResourceMetadata |
+        FetchNoteOption::WithResourceBinaryData;
+
+    auto foundNoteFuture =
+        notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
+
+    foundNoteFuture.waitForFinished();
+    ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+
+    if (excludedTagIds == ExcludedTagIds::LocalIds) {
+        updatedNote.setTagLocalIds(QStringList{} << tag1.localId());
+    }
+    else {
+        updatedNote.setTagGuids(
+            QList<qevercloud::Guid>{} << tag1.guid().value());
+    }
+    EXPECT_EQ(foundNoteFuture.result(), updatedNote);
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "NotesHandlerTest.moc"
