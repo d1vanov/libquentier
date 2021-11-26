@@ -695,17 +695,12 @@ QList<qevercloud::Tag> TagsHandler::listTagsImpl(
     const ListOptions<ListTagsOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    QString linkedNotebookGuidSqlQueryCondition;
-    if (options.m_linkedNotebookGuid) {
-        if (options.m_linkedNotebookGuid->isEmpty()) {
-            linkedNotebookGuidSqlQueryCondition =
-                QStringLiteral("linkedNotebookGuid IS NULL");
-        }
-        else {
-            linkedNotebookGuidSqlQueryCondition =
-                QString::fromUtf8("linkedNotebookGuid = '%1'")
-                    .arg(utils::sqlEscape(*options.m_linkedNotebookGuid));
-        }
+    ErrorString error;
+    QString linkedNotebookGuidSqlQueryCondition =
+        utils::linkedNotebookGuidSqlQueryCondition(options, error);
+    if (linkedNotebookGuidSqlQueryCondition.isEmpty() && !error.isEmpty()) {
+        errorDescription = error;
+        return {};
     }
 
     return utils::listObjects<

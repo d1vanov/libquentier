@@ -497,6 +497,8 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
     listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
 
+    listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+
     auto listNotebooksFuture =
         notebooksHandler->listNotebooks(listNotebooksOptions);
 
@@ -654,6 +656,8 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
 
     listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
+
+    listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::Any;
 
     auto listNotebooksFuture =
         notebooksHandler->listNotebooks(listNotebooksOptions);

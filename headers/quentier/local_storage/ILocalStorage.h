@@ -202,6 +202,24 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////
 
+    /// Denotes whether some data item belongs to user's own account,
+    /// any of linked notebooks or particular linked notebooks
+    enum class Affiliation
+    {
+        Any,
+        User,
+        AnyLinkedNotebook,
+        ParticularLinkedNotebooks
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, Affiliation affiliation);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, Affiliation affiliation);
+
+    ////////////////////////////////////////////////////////////////////////////
+
     struct QUENTIER_EXPORT ListOptionsBase
     {
         ListObjectsOptions m_flags;
@@ -214,14 +232,25 @@ public:
     struct QUENTIER_EXPORT ListOptions : ListOptionsBase
     {
         Order m_order;
-        std::optional<QString> m_linkedNotebookGuid;
+        Affiliation m_affiliation;
+        QList<qevercloud::Guid> m_linkedNotebookGuids;
     };
 
+    // Specialization for linked notebooks as they can belong only to user's
+    // own account
     template <>
     struct QUENTIER_EXPORT ListOptions<ListLinkedNotebooksOrder> :
         ListOptionsBase
     {
         ListLinkedNotebooksOrder m_order;
+    };
+
+    // Specialization for saved searches as they can belong only to user's
+    // own account
+    template <>
+    struct QUENTIER_EXPORT ListOptions<ListSavedSearchesOrder> : ListOptionsBase
+    {
+        ListSavedSearchesOrder m_order;
     };
 
     template <class Order>

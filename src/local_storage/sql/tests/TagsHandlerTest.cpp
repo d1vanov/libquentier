@@ -293,6 +293,8 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
 
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+
     auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
     listTagsFuture.waitForFinished();
     EXPECT_TRUE(listTagsFuture.result().isEmpty());
@@ -309,6 +311,8 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
 
     auto listTagsFuture = tagsHandler->listTagsPerNoteLocalId(
         UidGenerator::Generate(), listTagsOptions);
@@ -402,6 +406,8 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
 
     auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
     listTagsFuture.waitForFinished();
