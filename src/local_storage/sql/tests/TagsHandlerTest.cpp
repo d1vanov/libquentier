@@ -836,6 +836,135 @@ TEST_F(TagsHandlerTest, FindTagByNameWithDiacritics)
     EXPECT_EQ(foundTagByNameFuture.result(), tag2);
 }
 
+// The test checks that TagsHandler properly considers affiliation when listing
+// tags
+TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
+{
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    qevercloud::LinkedNotebook linkedNotebook1;
+    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setUsername(QStringLiteral("username1"));
+
+    qevercloud::LinkedNotebook linkedNotebook2;
+    linkedNotebook2.setGuid(UidGenerator::Generate());
+    linkedNotebook2.setUsername(QStringLiteral("username1"));
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook2);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag userOwnTag1;
+    userOwnTag1.setGuid(UidGenerator::Generate());
+    userOwnTag1.setUpdateSequenceNum(1);
+    userOwnTag1.setName(QStringLiteral("userOwnTag #1"));
+
+    qevercloud::Tag userOwnTag2;
+    userOwnTag2.setGuid(UidGenerator::Generate());
+    userOwnTag2.setUpdateSequenceNum(2);
+    userOwnTag2.setName(QStringLiteral("userOwnTag #2"));
+
+    qevercloud::Tag tagFromLinkedNotebook1;
+    tagFromLinkedNotebook1.setGuid(UidGenerator::Generate());
+    tagFromLinkedNotebook1.setUpdateSequenceNum(3);
+    tagFromLinkedNotebook1.setName(QStringLiteral("Tag from linkedNotebook1"));
+    tagFromLinkedNotebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    qevercloud::Tag tagFromLinkedNotebook2;
+    tagFromLinkedNotebook2.setGuid(UidGenerator::Generate());
+    tagFromLinkedNotebook2.setUpdateSequenceNum(4);
+    tagFromLinkedNotebook2.setName(QStringLiteral("Tag from linkedNotebook2"));
+    tagFromLinkedNotebook2.setLinkedNotebookGuid(linkedNotebook2.guid());
+
+    auto putTagFuture = tagsHandler->putTag(userOwnTag1);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(userOwnTag2);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(tagFromLinkedNotebook1);
+    putTagFuture.waitForFinished();
+
+    putTagFuture = tagsHandler->putTag(tagFromLinkedNotebook2);
+    putTagFuture.waitForFinished();
+
+    auto listTagsOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
+
+    auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    auto tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 4);
+    EXPECT_TRUE(tags.contains(userOwnTag1));
+    EXPECT_TRUE(tags.contains(userOwnTag2));
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook1));
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook2));
+
+    listTagsOptions.m_affiliation =
+        ILocalStorage::Affiliation::AnyLinkedNotebook;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook1));
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook2));
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::User;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(userOwnTag1));
+    EXPECT_TRUE(tags.contains(userOwnTag2));
+
+    listTagsOptions.m_affiliation =
+        ILocalStorage::Affiliation::ParticularLinkedNotebooks;
+
+    listTagsOptions.m_linkedNotebookGuids = QList<qevercloud::Guid>{}
+        << linkedNotebook1.guid().value();
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 1);
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook1));
+
+    listTagsOptions.m_linkedNotebookGuids = QList<qevercloud::Guid>{}
+        << linkedNotebook2.guid().value();
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 1);
+    EXPECT_TRUE(tags.contains(tagFromLinkedNotebook2));
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "TagsHandlerTest.moc"
