@@ -253,6 +253,14 @@ public:
         ListSavedSearchesOrder m_order;
     };
 
+    /// Specialization for notes as for them a multitude of listing methods
+    /// is available and support for affiliation is not a strict requirement
+    template <>
+    struct QUENTIER_EXPORT ListOptions<ListNotesOrder> : ListOptionsBase
+    {
+        ListNotesOrder m_order;
+    };
+
     /// Denotes the relation between tag and notes - whether any note us using
     /// the given tag
     enum class TagNotesRelation

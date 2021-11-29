@@ -310,6 +310,16 @@ T & printListTagsOptions(
 }
 
 template <class T>
+T & printListNotesOptions(
+    T & t,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+{
+    printListOptionsBase(t, options);
+    t << options.m_order;
+    return t;
+}
+
+template <class T>
 T & printAffiliation(
     T & t, const ILocalStorage::Affiliation affiliation)
 {
@@ -864,14 +874,14 @@ QTextStream & operator<<(
     QTextStream & strm,
     const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
 {
-    return printListOptions(strm, options);
+    return printListNotesOptions(strm, options);
 }
 
 QDebug & operator<<(
     QDebug & dbg,
     const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
 {
-    return printListOptions(dbg, options);
+    return printListNotesOptions(dbg, options);
 }
 
 QTextStream & operator<<(
