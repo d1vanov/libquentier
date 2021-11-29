@@ -703,10 +703,33 @@ QList<qevercloud::Tag> TagsHandler::listTagsImpl(
         return {};
     }
 
+    QString tagNotesRelationSqlQueryCondition;
+    if (options.m_tagNotesRelation == TagNotesRelation::WithoutNotes) {
+        tagNotesRelationSqlQueryCondition =
+            QStringLiteral("localUid NOT IN (SELECT localTag FROM NoteTags)");
+    }
+    else if (options.m_tagNotesRelation == TagNotesRelation::WithNotes) {
+        tagNotesRelationSqlQueryCondition =
+            QStringLiteral("localUid IN (SELECT localTag FROM NoteTags)");
+    }
+
+    QString sqlQueryCondition;
+    if (tagNotesRelationSqlQueryCondition.isEmpty()) {
+        sqlQueryCondition = linkedNotebookGuidSqlQueryCondition;
+    }
+    else if (linkedNotebookGuidSqlQueryCondition.isEmpty()) {
+        sqlQueryCondition = tagNotesRelationSqlQueryCondition;
+    }
+    else {
+        QTextStream strm{&sqlQueryCondition};
+        strm << "(" << linkedNotebookGuidSqlQueryCondition << ") AND ("
+            << tagNotesRelationSqlQueryCondition << ")";
+    }
+
     return utils::listObjects<
         qevercloud::Tag, ILocalStorage::ListTagsOrder>(
         options.m_flags, options.m_limit, options.m_offset, options.m_order,
-        options.m_direction, linkedNotebookGuidSqlQueryCondition, database,
+        options.m_direction, sqlQueryCondition, database,
         errorDescription);
 }
 
@@ -714,6 +737,14 @@ QList<qevercloud::Tag> TagsHandler::listTagsPerNoteLocalIdImpl(
     const QString & noteLocalId, const ListOptions<ListTagsOrder> & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
+    if (options.m_tagNotesRelation == TagNotesRelation::WithoutNotes) {
+        QNWARNING(
+            "local_storage::sql::TagsHandler",
+            "Detected strange use of TagNotesRelation::WithoutNotes when "
+            "listing tags per note local id");
+        return {};
+    }
+
     const auto noteLocalIdSqlQueryCondition = QString::fromUtf8(
         "localNote = '%1'").arg(utils::sqlEscape(noteLocalId));
 

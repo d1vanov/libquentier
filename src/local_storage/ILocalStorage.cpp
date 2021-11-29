@@ -229,6 +229,115 @@ T & printListLinkedNotebooksOrder(
 }
 
 template <class T>
+T & printListOptionsBase(T & t, const ILocalStorage::ListOptionsBase & options)
+{
+    t << "Flags: " << options.m_flags << "; limit = " << options.m_limit
+        << ", offset = " << options.m_offset << ", direction = "
+        << options.m_direction;
+    return t;
+}
+
+template <class T, class O>
+T & printListOptions(T & t, const ILocalStorage::ListOptions<O> & options)
+{
+    printListOptionsBase(t, options);
+    t << ", order = " << options.m_order << ", affiliation = "
+        << options.m_affiliation << ", linked notebook guids: ";
+    for (const auto & linkedNotebookGuid: qAsConst(options.m_linkedNotebookGuids)) {
+        t << linkedNotebookGuid;
+        if (&linkedNotebookGuid != &options.m_linkedNotebookGuids.constLast()) {
+            t << ", ";
+        }
+    }
+    return t;
+}
+
+template <class T>
+T & printListLinkedNotebooksOptions(
+    T & t,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
+        options)
+{
+    printListOptionsBase(t, options);
+    t << options.m_order;
+    return t;
+}
+
+template <class T>
+T & printListSavedSearchesOptions(
+    T & t,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
+        options)
+{
+    printListOptionsBase(t, options);
+    t << options.m_order;
+    return t;
+}
+
+template <class T>
+T & printTagNotesRelation(
+    T & t, const ILocalStorage::TagNotesRelation tagNotesRelation)
+{
+    using TagNotesRelation = ILocalStorage::TagNotesRelation;
+
+    switch (tagNotesRelation)
+    {
+    case TagNotesRelation::Any:
+        t << "Any";
+        break;
+    case TagNotesRelation::WithNotes:
+        t << "With notes";
+        break;
+    case TagNotesRelation::WithoutNotes:
+        t << "Without notes";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(tagNotesRelation) << ")";
+        break;
+    }
+
+    return t;
+}
+
+template <class T>
+T & printListTagsOptions(
+    T & t,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+{
+    printListOptionsBase(t, options);
+    t << options.m_order;
+    return t;
+}
+
+template <class T>
+T & printAffiliation(
+    T & t, const ILocalStorage::Affiliation affiliation)
+{
+    using Affiliation = ILocalStorage::Affiliation;
+
+    switch (affiliation)
+    {
+    case Affiliation::Any:
+        t << "Any";
+        break;
+    case Affiliation::AnyLinkedNotebook:
+        t << "Any linked notebook";
+        break;
+    case Affiliation::ParticularLinkedNotebooks:
+        t << "Particular linked notebooks";
+        break;
+    case Affiliation::User:
+        t << "User";
+        break;
+    default:
+        t << "Unknown (" << static_cast<qint64>(affiliation) << ")";
+        break;
+    }
+
+    return t;
+}
+
+template <class T>
 T & printUpdateNoteOption(
     T & t, const ILocalStorage::UpdateNoteOption option)
 {
@@ -691,6 +800,94 @@ QDebug & operator<<(
     QDebug & dbg, const ILocalStorage::ListSavedSearchesOrder order)
 {
     return printListSavedSearchesOrder(dbg, order);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const ILocalStorage::Affiliation affiliation)
+{
+    return printAffiliation(strm, affiliation);
+}
+
+QDebug & operator<<(
+    QDebug & dbg, const ILocalStorage::Affiliation affiliation)
+{
+    return printAffiliation(dbg, affiliation);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder> &
+        options)
+{
+    return printListOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder> &
+        options)
+{
+    return printListOptions(dbg, options);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
+        options)
+{
+    return printListLinkedNotebooksOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
+        options)
+{
+    return printListLinkedNotebooksOptions(dbg, options);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+{
+    return printListTagsOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+{
+    return printListTagsOptions(dbg, options);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+{
+    return printListOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+{
+    return printListOptions(dbg, options);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
+        options)
+{
+    return printListSavedSearchesOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
+        options)
+{
+    return printListSavedSearchesOptions(dbg, options);
 }
 
 QTextStream & operator<<(

@@ -294,6 +294,7 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
         ILocalStorage::ListObjectsOption::ListAll};
 
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
     auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
     listTagsFuture.waitForFinished();
@@ -313,6 +314,7 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
         ILocalStorage::ListObjectsOption::ListAll};
 
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
     auto listTagsFuture = tagsHandler->listTagsPerNoteLocalId(
         UidGenerator::Generate(), listTagsOptions);
@@ -408,6 +410,7 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
         ILocalStorage::ListObjectsOption::ListAll};
 
     listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
 
     auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
     listTagsFuture.waitForFinished();

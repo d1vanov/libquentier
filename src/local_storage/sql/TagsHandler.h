@@ -57,6 +57,7 @@ public:
     using ListOptions = ILocalStorage::ListOptions<T>;
 
     using ListTagsOrder = ILocalStorage::ListTagsOrder;
+    using TagNotesRelation = ILocalStorage::TagNotesRelation;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
         ListOptions<ListTagsOrder> options = {}) const;

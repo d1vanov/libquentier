@@ -236,8 +236,8 @@ public:
         QList<qevercloud::Guid> m_linkedNotebookGuids;
     };
 
-    // Specialization for linked notebooks as they can belong only to user's
-    // own account
+    /// Specialization for linked notebooks as they can belong only to user's
+    /// own account
     template <>
     struct QUENTIER_EXPORT ListOptions<ListLinkedNotebooksOrder> :
         ListOptionsBase
@@ -245,21 +245,64 @@ public:
         ListLinkedNotebooksOrder m_order;
     };
 
-    // Specialization for saved searches as they can belong only to user's
-    // own account
+    /// Specialization for saved searches as they can belong only to user's
+    /// own account
     template <>
     struct QUENTIER_EXPORT ListOptions<ListSavedSearchesOrder> : ListOptionsBase
     {
         ListSavedSearchesOrder m_order;
     };
 
-    template <class Order>
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<Order> options);
+    /// Denotes the relation between tag and notes - whether any note us using
+    /// the given tag
+    enum class TagNotesRelation
+    {
+        /// The tag might be used by some notes or it might not be
+        Any,
+        /// The tag is used by some notes
+        WithNotes,
+        /// The tag is not used by any note
+        WithoutNotes
+    };
 
-    template <class Order>
+    template <>
+    struct QUENTIER_EXPORT ListOptions<ListTagsOrder> : ListOptionsBase
+    {
+        ListTagsOrder m_order;
+        Affiliation m_affiliation;
+        QList<qevercloud::Guid> m_linkedNotebookGuids;
+        TagNotesRelation m_tagNotesRelation;
+    };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ListOptions<ListNotebooksOrder> options);
+
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<Order> options);
+        QDebug & dbg, ListOptions<ListNotebooksOrder> options);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ListOptions<ListLinkedNotebooksOrder> options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ListOptions<ListLinkedNotebooksOrder> options);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ListOptions<ListTagsOrder> options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ListOptions<ListTagsOrder> options);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ListOptions<ListNotesOrder> options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ListOptions<ListNotesOrder> options);
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, ListOptions<ListSavedSearchesOrder> options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ListOptions<ListSavedSearchesOrder> options);
 
     ////////////////////////////////////////////////////////////////////////////
 
