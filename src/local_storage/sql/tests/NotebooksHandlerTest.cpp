@@ -1191,6 +1191,142 @@ TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
     EXPECT_EQ(foundNotebookFuture.result(), updatedNotebook);
 }
 
+// The test checks that NotebooksHandler properly considers affiliation when
+// listing notebooks
+TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
+{
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    qevercloud::LinkedNotebook linkedNotebook1;
+    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setUsername(QStringLiteral("username1"));
+
+    qevercloud::LinkedNotebook linkedNotebook2;
+    linkedNotebook2.setGuid(UidGenerator::Generate());
+    linkedNotebook2.setUsername(QStringLiteral("username1"));
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook2);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Notebook userOwnNotebook1;
+    userOwnNotebook1.setGuid(UidGenerator::Generate());
+    userOwnNotebook1.setUpdateSequenceNum(1);
+    userOwnNotebook1.setName(QStringLiteral("userOwnNotebook #1"));
+
+    qevercloud::Notebook userOwnNotebook2;
+    userOwnNotebook2.setGuid(UidGenerator::Generate());
+    userOwnNotebook2.setUpdateSequenceNum(2);
+    userOwnNotebook2.setName(QStringLiteral("userOwnNotebook #2"));
+
+    qevercloud::Notebook notebookFromLinkedNotebook1;
+    notebookFromLinkedNotebook1.setGuid(UidGenerator::Generate());
+    notebookFromLinkedNotebook1.setUpdateSequenceNum(3);
+    notebookFromLinkedNotebook1.setName(
+        QStringLiteral("Notebook from linkedNotebook1"));
+    notebookFromLinkedNotebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    qevercloud::Notebook notebookFromLinkedNotebook2;
+    notebookFromLinkedNotebook2.setGuid(UidGenerator::Generate());
+    notebookFromLinkedNotebook2.setUpdateSequenceNum(4);
+    notebookFromLinkedNotebook2.setName(
+        QStringLiteral("Notebook from linkedNotebook2"));
+    notebookFromLinkedNotebook2.setLinkedNotebookGuid(linkedNotebook2.guid());
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(userOwnNotebook1);
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture = notebooksHandler->putNotebook(userOwnNotebook2);
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture =
+        notebooksHandler->putNotebook(notebookFromLinkedNotebook1);
+
+    putNotebookFuture.waitForFinished();
+
+    putNotebookFuture =
+        notebooksHandler->putNotebook(notebookFromLinkedNotebook2);
+
+    putNotebookFuture.waitForFinished();
+
+    auto listNotebooksOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+
+    listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+
+    auto listNotebooksFuture =
+        notebooksHandler->listNotebooks(listNotebooksOptions);
+
+    listNotebooksFuture.waitForFinished();
+
+    auto notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 4);
+    EXPECT_TRUE(notebooks.contains(userOwnNotebook1));
+    EXPECT_TRUE(notebooks.contains(userOwnNotebook2));
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook1));
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook2));
+
+    listNotebooksOptions.m_affiliation =
+        ILocalStorage::Affiliation::AnyLinkedNotebook;
+
+    listNotebooksFuture = notebooksHandler->listNotebooks(listNotebooksOptions);
+    listNotebooksFuture.waitForFinished();
+
+    notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 2);
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook1));
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook2));
+
+    listNotebooksOptions.m_affiliation = ILocalStorage::Affiliation::User;
+
+    listNotebooksFuture = notebooksHandler->listNotebooks(listNotebooksOptions);
+    listNotebooksFuture.waitForFinished();
+
+    notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 2);
+    EXPECT_TRUE(notebooks.contains(userOwnNotebook1));
+    EXPECT_TRUE(notebooks.contains(userOwnNotebook2));
+
+    listNotebooksOptions.m_affiliation =
+        ILocalStorage::Affiliation::ParticularLinkedNotebooks;
+
+    listNotebooksOptions.m_linkedNotebookGuids = QList<qevercloud::Guid>{}
+        << linkedNotebook1.guid().value();
+
+    listNotebooksFuture = notebooksHandler->listNotebooks(listNotebooksOptions);
+    listNotebooksFuture.waitForFinished();
+
+    notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 1);
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook1));
+
+    listNotebooksOptions.m_linkedNotebookGuids = QList<qevercloud::Guid>{}
+        << linkedNotebook2.guid().value();
+
+    listNotebooksFuture = notebooksHandler->listNotebooks(listNotebooksOptions);
+    listNotebooksFuture.waitForFinished();
+
+    notebooks = listNotebooksFuture.result();
+    EXPECT_EQ(notebooks.size(), 1);
+    EXPECT_TRUE(notebooks.contains(notebookFromLinkedNotebook2));
+}
+
 } // namespace quentier::local_storage::sql::tests
 
 #include "NotebooksHandlerTest.moc"
