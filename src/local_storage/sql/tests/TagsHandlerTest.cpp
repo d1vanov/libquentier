@@ -18,6 +18,8 @@
 
 #include "../ConnectionPool.h"
 #include "../LinkedNotebooksHandler.h"
+#include "../NotebooksHandler.h"
+#include "../NotesHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
 #include "../TagsHandler.h"
@@ -128,6 +130,8 @@ protected:
 
         m_writerThread = std::make_shared<QThread>();
 
+        m_resourceDataFilesLock = std::make_shared<QReadWriteLock>();
+
         m_notifier = new Notifier;
         m_notifier->moveToThread(m_writerThread.get());
 
@@ -152,6 +156,7 @@ protected:
 protected:
     ConnectionPoolPtr m_connectionPool;
     QThreadPtr m_writerThread;
+    QReadWriteLockPtr m_resourceDataFilesLock;
     Notifier * m_notifier;
     QTemporaryDir m_temporaryDir;
 };
@@ -963,6 +968,289 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
     tags = listTagsFuture.result();
     EXPECT_EQ(tags.size(), 1);
     EXPECT_TRUE(tags.contains(tagFromLinkedNotebook2));
+}
+
+// The test checks that TagsHandler properly considers TagNotesRelation when
+// listing tags from user's own account
+TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
+{
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag tag1;
+    tag1.setGuid(UidGenerator::Generate());
+    tag1.setUpdateSequenceNum(1);
+    tag1.setName(QStringLiteral("Tag 1"));
+
+    qevercloud::Tag tag2;
+    tag2.setGuid(UidGenerator::Generate());
+    tag2.setUpdateSequenceNum(2);
+    tag2.setName(QStringLiteral("Tag 2"));
+
+    qevercloud::Tag tag3;
+    tag3.setGuid(UidGenerator::Generate());
+    tag3.setUpdateSequenceNum(3);
+    tag3.setName(QStringLiteral("Tag 3"));
+
+    qevercloud::Tag tag4;
+    tag4.setGuid(UidGenerator::Generate());
+    tag4.setUpdateSequenceNum(4);
+    tag4.setName(QStringLiteral("Tag 4"));
+
+    auto tags = QList<qevercloud::Tag>{} << tag1 << tag2 << tag3 << tag4;
+    for (const auto & tag: qAsConst(tags)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Notebook notebook1;
+    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setUpdateSequenceNum(5);
+    notebook1.setName(QStringLiteral("Notebook 1"));
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook1);
+    putNotebookFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Note note;
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(6);
+    note.setTitle(QStringLiteral("Note"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreated(1);
+    note.setUpdated(1);
+    note.setActive(true);
+    note.setNotebookGuid(notebook1.guid());
+    note.setNotebookLocalId(notebook1.localId());
+    note.setTagLocalIds(QStringList{} << tag1.localId() << tag2.localId());
+
+    auto putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    auto listTagsOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
+
+    auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 4);
+    EXPECT_TRUE(tags.contains(tag1));
+    EXPECT_TRUE(tags.contains(tag2));
+    EXPECT_TRUE(tags.contains(tag3));
+    EXPECT_TRUE(tags.contains(tag4));
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(tag1));
+    EXPECT_TRUE(tags.contains(tag2));
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithoutNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(tag3));
+    EXPECT_TRUE(tags.contains(tag4));
+
+    listTagsOptions.m_affiliation =
+        ILocalStorage::Affiliation::AnyLinkedNotebook;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
+
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
+}
+
+TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
+{
+    const auto linkedNotebooksHandler =
+        std::make_shared<LinkedNotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path());
+
+    qevercloud::LinkedNotebook linkedNotebook1;
+    linkedNotebook1.setGuid(UidGenerator::Generate());
+    linkedNotebook1.setUpdateSequenceNum(1);
+    linkedNotebook1.setUsername(QStringLiteral("username1"));
+
+    auto putLinkedNotebookFuture =
+        linkedNotebooksHandler->putLinkedNotebook(linkedNotebook1);
+
+    putLinkedNotebookFuture.waitForFinished();
+
+    const auto tagsHandler = std::make_shared<TagsHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread);
+
+    qevercloud::Tag tag1;
+    tag1.setGuid(UidGenerator::Generate());
+    tag1.setUpdateSequenceNum(2);
+    tag1.setName(QStringLiteral("Tag 1"));
+    tag1.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    qevercloud::Tag tag2;
+    tag2.setGuid(UidGenerator::Generate());
+    tag2.setUpdateSequenceNum(3);
+    tag2.setName(QStringLiteral("Tag 2"));
+    tag2.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    qevercloud::Tag tag3;
+    tag3.setGuid(UidGenerator::Generate());
+    tag3.setUpdateSequenceNum(4);
+    tag3.setName(QStringLiteral("Tag 3"));
+    tag3.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    qevercloud::Tag tag4;
+    tag4.setGuid(UidGenerator::Generate());
+    tag4.setUpdateSequenceNum(5);
+    tag4.setName(QStringLiteral("Tag 4"));
+    tag4.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    auto tags = QList<qevercloud::Tag>{} << tag1 << tag2 << tag3 << tag4;
+    for (const auto & tag: qAsConst(tags)) {
+        auto putTagFuture = tagsHandler->putTag(tag);
+        putTagFuture.waitForFinished();
+    }
+
+    const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Notebook notebook1;
+    notebook1.setGuid(UidGenerator::Generate());
+    notebook1.setUpdateSequenceNum(6);
+    notebook1.setName(QStringLiteral("Notebook 1"));
+    notebook1.setLinkedNotebookGuid(linkedNotebook1.guid());
+
+    auto putNotebookFuture = notebooksHandler->putNotebook(notebook1);
+    putNotebookFuture.waitForFinished();
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    qevercloud::Note note;
+    note.setGuid(UidGenerator::Generate());
+    note.setUpdateSequenceNum(7);
+    note.setTitle(QStringLiteral("Note"));
+    note.setContent(QStringLiteral("<en-note><h1>Hello, world</h1></en-note>"));
+    note.setCreated(1);
+    note.setUpdated(1);
+    note.setActive(true);
+    note.setNotebookGuid(notebook1.guid());
+    note.setNotebookLocalId(notebook1.localId());
+    note.setTagLocalIds(QStringList{} << tag1.localId() << tag2.localId());
+
+    auto putNoteFuture = notesHandler->putNote(note);
+    putNoteFuture.waitForFinished();
+
+    auto listTagsOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::Any;
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
+
+    auto listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 4);
+    EXPECT_TRUE(tags.contains(tag1));
+    EXPECT_TRUE(tags.contains(tag2));
+    EXPECT_TRUE(tags.contains(tag3));
+    EXPECT_TRUE(tags.contains(tag4));
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(tag1));
+    EXPECT_TRUE(tags.contains(tag2));
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithoutNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_EQ(tags.size(), 2);
+    EXPECT_TRUE(tags.contains(tag3));
+    EXPECT_TRUE(tags.contains(tag4));
+
+    listTagsOptions.m_affiliation = ILocalStorage::Affiliation::User;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
+
+    listTagsOptions.m_tagNotesRelation =
+        ILocalStorage::TagNotesRelation::WithNotes;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
+
+    listTagsOptions.m_tagNotesRelation = ILocalStorage::TagNotesRelation::Any;
+
+    listTagsFuture = tagsHandler->listTags(listTagsOptions);
+    listTagsFuture.waitForFinished();
+
+    tags = listTagsFuture.result();
+    EXPECT_TRUE(tags.empty());
 }
 
 } // namespace quentier::local_storage::sql::tests
