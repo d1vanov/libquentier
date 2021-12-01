@@ -18,15 +18,9 @@
 
 #pragma once
 
-#include "Fwd.h"
-
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/LinkedNotebook.h>
+#include "ILinkedNotebooksHandler.h"
 
 #include <QDir>
-#include <QFuture>
 #include <QtGlobal>
 
 #include <memory>
@@ -35,6 +29,7 @@
 namespace quentier::local_storage::sql {
 
 class LinkedNotebooksHandler final :
+    public ILinkedNotebooksHandler,
     public std::enable_shared_from_this<LinkedNotebooksHandler>
 {
 public:
@@ -43,25 +38,20 @@ public:
         Notifier * notifier, QThreadPtr writerThread,
         const QString & localStorageDirPath);
 
-    [[nodiscard]] QFuture<quint32> linkedNotebookCount() const;
+    [[nodiscard]] QFuture<quint32> linkedNotebookCount() const override;
 
     [[nodiscard]] QFuture<void> putLinkedNotebook(
-        qevercloud::LinkedNotebook linkedNotebook);
+        qevercloud::LinkedNotebook linkedNotebook) override;
 
     [[nodiscard]] QFuture<qevercloud::LinkedNotebook>
-        findLinkedNotebookByGuid(qevercloud::Guid guid) const;
+        findLinkedNotebookByGuid(qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<void> expungeLinkedNotebookByGuid(
-        qevercloud::Guid guid);
-
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
-    using ListLinkedNotebooksOrder = ILocalStorage::ListLinkedNotebooksOrder;
+        qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::LinkedNotebook>>
         listLinkedNotebooks(
-            ListOptions<ListLinkedNotebooksOrder> options = {}) const;
+            ListOptions<ListLinkedNotebooksOrder> options = {}) const override;
 
 private:
     [[nodiscard]] std::optional<quint32> linkedNotebookCountImpl(

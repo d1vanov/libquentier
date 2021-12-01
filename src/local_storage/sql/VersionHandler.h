@@ -18,12 +18,10 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "IVersionHandler.h"
 
-#include <quentier/local_storage/Fwd.h>
 #include <quentier/types/Account.h>
 
-#include <QFuture>
 #include <QtGlobal>
 
 #include <memory>
@@ -39,20 +37,22 @@ class ErrorString;
 
 namespace quentier::local_storage::sql {
 
-class VersionHandler final: public std::enable_shared_from_this<VersionHandler>
+class VersionHandler final:
+    public IVersionHandler,
+    public std::enable_shared_from_this<VersionHandler>
 {
 public:
     explicit VersionHandler(
         Account account, ConnectionPoolPtr connectionPool,
         QThreadPool * threadPool, QThreadPtr writerThread);
 
-    [[nodiscard]] QFuture<bool> isVersionTooHigh() const;
-    [[nodiscard]] QFuture<bool> requiresUpgrade() const;
+    [[nodiscard]] QFuture<bool> isVersionTooHigh() const override;
+    [[nodiscard]] QFuture<bool> requiresUpgrade() const override;
 
-    [[nodiscard]] QFuture<QList<IPatchPtr>> requiredPatches() const;
+    [[nodiscard]] QFuture<QList<IPatchPtr>> requiredPatches() const override;
 
-    [[nodiscard]] QFuture<qint32> version() const;
-    [[nodiscard]] QFuture<qint32> highestSupportedVersion() const;
+    [[nodiscard]] QFuture<qint32> version() const override;
+    [[nodiscard]] QFuture<qint32> highestSupportedVersion() const override;
 
 private:
     [[nodiscard]] qint32 versionImpl(
