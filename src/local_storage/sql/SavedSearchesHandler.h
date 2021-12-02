@@ -18,13 +18,8 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "ISavedSearchesHandler.h"
 #include "Transaction.h"
-
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/SavedSearch.h>
 
 #include <memory>
 #include <optional>
@@ -32,6 +27,7 @@
 namespace quentier::local_storage::sql {
 
 class SavedSearchesHandler final :
+    public ISavedSearchesHandler,
     public std::enable_shared_from_this<SavedSearchesHandler>
 {
 public:
@@ -39,30 +35,25 @@ public:
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread);
 
-    [[nodiscard]] QFuture<quint32> savedSearchCount() const;
+    [[nodiscard]] QFuture<quint32> savedSearchCount() const override;
 
-    [[nodiscard]] QFuture<void> putSavedSearch(qevercloud::SavedSearch search);
+    [[nodiscard]] QFuture<void> putSavedSearch(qevercloud::SavedSearch search) override;
 
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByLocalId(
-        QString localId) const;
+        QString localId) const override;
 
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
-        qevercloud::Guid guid) const;
+        qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
-        QString name) const;
-
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
-    using ListSavedSearchesOrder = ILocalStorage::ListSavedSearchesOrder;
+        QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
-        ListOptions<ListSavedSearchesOrder> options = {}) const;
+        ListOptions<ListSavedSearchesOrder> options = {}) const override;
 
-    [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(QString localId);
+    [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(QString localId) override;
 
-    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(qevercloud::Guid guid);
+    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(qevercloud::Guid guid) override;
 
 private:
     [[nodiscard]] std::optional<quint32> savedSearchCountImpl(

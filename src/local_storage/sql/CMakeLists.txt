@@ -10,6 +10,12 @@ target_sources(${LIBRARY_NAME}
   ConnectionPool.h
   ErrorHandling.h
   ILinkedNotebooksHandler.h
+  INotebooksHandler.h
+  INotesHandler.h
+  IResourcesHandler.h
+  ISavedSearchesHandler.h
+  ISynchronizationInfoHandler.h
+  ITagsHandler.h
   IVersionHandler.h
   LinkedNotebooksHandler.cpp
   LinkedNotebooksHandler.h

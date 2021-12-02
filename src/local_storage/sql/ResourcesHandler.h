@@ -18,13 +18,8 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "IResourcesHandler.h"
 #include "Transaction.h"
-
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/Resource.h>
 
 #include <QDir>
 #include <QReadWriteLock>
@@ -35,15 +30,9 @@
 namespace quentier::local_storage::sql {
 
 class ResourcesHandler final :
+    public IResourcesHandler,
     public std::enable_shared_from_this<ResourcesHandler>
 {
-public:
-    using FetchResourceOption = ILocalStorage::FetchResourceOption;
-    using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
-
-    using NoteCountOption = ILocalStorage::NoteCountOption;
-    using NoteCountOptions = ILocalStorage::NoteCountOptions;
-
 public:
     explicit ResourcesHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
@@ -53,28 +42,30 @@ public:
 
     [[nodiscard]] QFuture<quint32> resourceCount(
         NoteCountOptions options = NoteCountOptions{
-            NoteCountOption::IncludeNonDeletedNotes}) const;
+            NoteCountOption::IncludeNonDeletedNotes}) const override;
 
     [[nodiscard]] QFuture<quint32> resourceCountPerNoteLocalId(
-        QString noteLocalId) const;
+        QString noteLocalId) const override;
 
     [[nodiscard]] QFuture<void> putResource(
-        qevercloud::Resource resource, int indexInNote);
+        qevercloud::Resource resource, int indexInNote) override;
 
     [[nodiscard]] QFuture<void> putResourceMetadata(
-        qevercloud::Resource resource, int indexInNote);
+        qevercloud::Resource resource, int indexInNote) override;
 
     [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
-        QString resourceLocalId, FetchResourceOptions options = {}) const;
+        QString resourceLocalId,
+        FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
-        qevercloud::Guid resourceGuid, FetchResourceOptions options = {}) const;
+        qevercloud::Guid resourceGuid,
+        FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
-        QString resourceLocalId);
+        QString resourceLocalId) override;
 
     [[nodiscard]] QFuture<void> expungeResourceByGuid(
-        qevercloud::Guid resourceGuid);
+        qevercloud::Guid resourceGuid) override;
 
 private:
     [[nodiscard]] std::optional<quint32> resourceCountImpl(

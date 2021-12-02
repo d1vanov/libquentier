@@ -18,16 +18,10 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "INotebooksHandler.h"
 #include "Transaction.h"
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/Notebook.h>
-
 #include <QDir>
-#include <QFuture>
 #include <QtGlobal>
 
 #include <memory>
@@ -36,6 +30,7 @@
 namespace quentier::local_storage::sql {
 
 class NotebooksHandler final :
+    public INotebooksHandler,
     public std::enable_shared_from_this<NotebooksHandler>
 {
 public:
@@ -45,36 +40,31 @@ public:
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
 
-    [[nodiscard]] QFuture<quint32> notebookCount() const;
-    [[nodiscard]] QFuture<void> putNotebook(qevercloud::Notebook notebook);
+    [[nodiscard]] QFuture<quint32> notebookCount() const override;
+    [[nodiscard]] QFuture<void> putNotebook(qevercloud::Notebook notebook) override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByLocalId(
-        QString localId) const;
+        QString localId) const override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByGuid(
-        qevercloud::Guid guid) const;
+        qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) const;
+        QString name, std::optional<QString> linkedNotebookGuid = {}) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const;
+    [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const override;
 
-    [[nodiscard]] QFuture<void> expungeNotebookByLocalId(QString localId);
-    [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid);
+    [[nodiscard]] QFuture<void> expungeNotebookByLocalId(QString localId) override;
+    [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<void> expungeNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {});
-
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
-    using ListNotebooksOrder = ILocalStorage::ListNotebooksOrder;
+        QString name, std::optional<QString> linkedNotebookGuid = {}) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options) const;
+        ListOptions<ListNotebooksOrder> options) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
-        listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const;
+        listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const override;
 
 private:
     [[nodiscard]] std::optional<quint32> notebookCountImpl(

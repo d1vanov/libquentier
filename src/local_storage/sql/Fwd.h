@@ -29,6 +29,30 @@ namespace quentier::local_storage::sql {
 class ConnectionPool;
 using ConnectionPoolPtr = std::shared_ptr<ConnectionPool>;
 
+class ILinkedNotebooksHandler;
+using ILinkedNotebooksHandlerPtr = std::shared_ptr<ILinkedNotebooksHandler>;
+
+class INotebooksHandler;
+using INotebooksHandlerPtr = std::shared_ptr<INotebooksHandler>;
+
+class INotesHandler;
+using INotesHandlerPtr = std::shared_ptr<INotesHandler>;
+
+class IResourcesHandler;
+using IResourcesHandlerPtr = std::shared_ptr<IResourcesHandler>;
+
+class ISavedSearchesHandler;
+using ISavedSearchesHandlerPtr = std::shared_ptr<ISavedSearchesHandler>;
+
+class ISynchronizationInfoHandler;
+using ISynchronizationInfoHandlerPtr = std::shared_ptr<ISynchronizationInfoHandler>;
+
+class ITagsHandler;
+using ITagsHandlerPtr = std::shared_ptr<ITagsHandler>;
+
+class IVersionHandler;
+using IVersionHandlerPtr = std::shared_ptr<IVersionHandler>;
+
 class Notifier;
 
 class Transaction;

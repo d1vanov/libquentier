@@ -18,14 +18,9 @@
 
 #pragma once
 
-#include "Fwd.h"
-
+#include "ITagsHandler.h"
 #include "utils/Common.h"
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/Tag.h>
 #include <quentier/utility/StringUtils.h>
 
 #include <memory>
@@ -34,6 +29,7 @@
 namespace quentier::local_storage::sql {
 
 class TagsHandler final :
+    public ITagsHandler,
     public std::enable_shared_from_this<TagsHandler>
 {
 public:
@@ -41,35 +37,34 @@ public:
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread);
 
-    [[nodiscard]] QFuture<quint32> tagCount() const;
-    [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag);
+    [[nodiscard]] QFuture<quint32> tagCount() const override;
+    [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag) override;
 
     [[nodiscard]] QFuture<qevercloud::Tag> findTagByLocalId(
-        QString tagLocalId) const;
+        QString tagLocalId) const override;
 
     [[nodiscard]] QFuture<qevercloud::Tag> findTagByGuid(
-        qevercloud::Guid tagGuid) const;
+        qevercloud::Guid tagGuid) const override;
 
     [[nodiscard]] QFuture<qevercloud::Tag> findTagByName(
-        QString tagName, std::optional<QString> linkedNotebookGuid = {}) const;
-
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
-    using ListTagsOrder = ILocalStorage::ListTagsOrder;
-    using TagNotesRelation = ILocalStorage::TagNotesRelation;
+        QString tagName,
+        std::optional<QString> linkedNotebookGuid = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
-        ListOptions<ListTagsOrder> options = {}) const;
+        ListOptions<ListTagsOrder> options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
-        QString noteLocalId, ListOptions<ListTagsOrder> options = {}) const;
+        QString noteLocalId,
+        ListOptions<ListTagsOrder> options = {}) const override;
 
-    [[nodiscard]] QFuture<void> expungeTagByLocalId(QString tagLocalId);
-    [[nodiscard]] QFuture<void> expungeTagByGuid(qevercloud::Guid tagGuid);
+    [[nodiscard]] QFuture<void> expungeTagByLocalId(
+        QString tagLocalId) override;
+
+    [[nodiscard]] QFuture<void> expungeTagByGuid(
+        qevercloud::Guid tagGuid) override;
 
     [[nodiscard]] QFuture<void> expungeTagByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {});
+        QString name, std::optional<QString> linkedNotebookGuid = {}) override;
 
 private:
     [[nodiscard]] std::optional<quint32> tagCountImpl(
@@ -114,8 +109,8 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::Tag> listTagsImpl(
-        const ListOptions<ListTagsOrder> & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        const ListOptions<ListTagsOrder> & options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Tag> listTagsPerNoteLocalIdImpl(
         const QString & noteLocalId, const ListOptions<ListTagsOrder> & options,

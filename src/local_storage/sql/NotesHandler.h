@@ -18,16 +18,10 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "INotesHandler.h"
 #include "Transaction.h"
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <qevercloud/types/Note.h>
-
 #include <QDir>
-#include <QFuture>
 #include <QReadWriteLock>
 #include <QtGlobal>
 
@@ -39,6 +33,7 @@ class QSqlQuery;
 namespace quentier::local_storage::sql {
 
 class NotesHandler final :
+    public INotesHandler,
     public std::enable_shared_from_this<NotesHandler>
 {
 public:
@@ -48,94 +43,75 @@ public:
         const QString & localStorageDirPath,
         QReadWriteLockPtr resourceDataFilesLock);
 
-    using NoteCountOption = ILocalStorage::NoteCountOption;
-    using NoteCountOptions = ILocalStorage::NoteCountOptions;
-
     [[nodiscard]] QFuture<quint32> noteCount(
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) const;
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const override;
 
     [[nodiscard]] QFuture<quint32> noteCountPerNotebookLocalId(
         QString notebookLocalId,
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) const;
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const override;
 
     [[nodiscard]] QFuture<quint32> noteCountPerTagLocalId(
         QString tagLocalId,
-        NoteCountOptions options =
-            NoteCountOptions(NoteCountOption::IncludeNonDeletedNotes)) const;
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const override;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
-    using ListTagsOrder = ILocalStorage::ListTagsOrder;
-
-    [[nodiscard]] QFuture<QHash<QString, quint32>>
-        noteCountsPerTags(
-            ListOptions<ListTagsOrder> listTagsOptions = {},
-            NoteCountOptions options = NoteCountOptions(
-                NoteCountOption::IncludeNonDeletedNotes)) const;
+    [[nodiscard]] QFuture<QHash<QString, quint32>> noteCountsPerTags(
+        ListOptions<ListTagsOrder> listTagsOptions = {},
+        NoteCountOptions options = NoteCountOptions(
+            NoteCountOption::IncludeNonDeletedNotes)) const override;
 
     [[nodiscard]] QFuture<quint32> noteCountPerNotebookAndTagLocalIds(
         QStringList notebookLocalIds, QStringList tagLocalIds,
         NoteCountOptions options = NoteCountOptions(
-            NoteCountOption::IncludeNonDeletedNotes)) const;
+            NoteCountOption::IncludeNonDeletedNotes)) const override;
 
-    [[nodiscard]] QFuture<void> putNote(qevercloud::Note note);
-
-    using UpdateNoteOption = ILocalStorage::UpdateNoteOption;
-    using UpdateNoteOptions = ILocalStorage::UpdateNoteOptions;
+    [[nodiscard]] QFuture<void> putNote(qevercloud::Note note) override;
 
     [[nodiscard]] QFuture<void> updateNote(
-        qevercloud::Note note, UpdateNoteOptions options);
-
-    using FetchNoteOption = ILocalStorage::FetchNoteOption;
-    using FetchNoteOptions = ILocalStorage::FetchNoteOptions;
+        qevercloud::Note note, UpdateNoteOptions options) override;
 
     [[nodiscard]] QFuture<qevercloud::Note> findNoteByLocalId(
-        QString localId, FetchNoteOptions options) const;
+        QString localId, FetchNoteOptions options) const override;
 
     [[nodiscard]] QFuture<qevercloud::Note> findNoteByGuid(
-        qevercloud::Guid guid, FetchNoteOptions options) const;
+        qevercloud::Guid guid, FetchNoteOptions options) const override;
 
-    [[nodiscard]] QFuture<void> expungeNoteByLocalId(QString localId);
-    [[nodiscard]] QFuture<void> expungeNoteByGuid(qevercloud::Guid guid);
-
-    using ListNotesOrder = ILocalStorage::ListNotesOrder;
+    [[nodiscard]] QFuture<void> expungeNoteByLocalId(QString localId) override;
+    [[nodiscard]] QFuture<void> expungeNoteByGuid(
+        qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options) const;
+        ListOptions<ListNotesOrder> options) const override;
 
-    [[nodiscard]] QFuture<QList<qevercloud::SharedNote>>
-        listSharedNotes(qevercloud::Guid noteGuid = {}) const;
+    [[nodiscard]] QFuture<QList<qevercloud::SharedNote>> listSharedNotes(
+        qevercloud::Guid noteGuid = {}) const override;
 
-    [[nodiscard]] QFuture<QList<qevercloud::Note>>
-        listNotesPerNotebookLocalId(
-            QString notebookLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const;
+    [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesPerNotebookLocalId(
+        QString notebookLocalId, FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> options = {}) const override;
 
-    [[nodiscard]] QFuture<QList<qevercloud::Note>>
-        listNotesPerTagLocalId(
-            QString tagLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const;
+    [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesPerTagLocalId(
+        QString tagLocalId, FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookAndTagLocalIds(
             QStringList notebookLocalIds, QStringList tagLocalIds,
             FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const;
+            ListOptions<ListNotesOrder> options = {}) const override;
 
-    [[nodiscard]] QFuture<QList<qevercloud::Note>>
-        listNotesByLocalIds(
-            QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const;
+    [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesByLocalIds(
+        QStringList noteLocalIds, FetchNoteOptions fetchOptions,
+        ListOptions<ListNotesOrder> options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> queryNotes(
-        NoteSearchQuery query, FetchNoteOptions fetchOptions) const;
+        NoteSearchQuery query, FetchNoteOptions fetchOptions) const override;
 
     [[nodiscard]] QFuture<QStringList> queryNoteLocalIds(
-        NoteSearchQuery query) const;
+        NoteSearchQuery query) const override;
 
 private:
     [[nodiscard]] std::optional<quint32> noteCountImpl(
@@ -204,9 +180,8 @@ private:
 
     [[nodiscard]] QList<qevercloud::Note> listNotesImpl(
         FetchNoteOptions fetchOptions,
-        const ListOptions<ListNotesOrder> & options,
-        QSqlDatabase & database, ErrorString & errorDescription,
-        const QString & sqlQueryCondition = {},
+        const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
+        ErrorString & errorDescription, const QString & sqlQueryCondition = {},
         std::optional<Transaction> transaction = std::nullopt) const;
 
     [[nodiscard]] QList<qevercloud::SharedNote> listSharedNotesImpl(

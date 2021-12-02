@@ -18,12 +18,8 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "ISynchronizationInfoHandler.h"
 
-#include <quentier/local_storage/Fwd.h>
-#include <quentier/local_storage/ILocalStorage.h>
-
-#include <QFuture>
 #include <QtGlobal>
 
 #include <memory>
@@ -42,20 +38,19 @@ class ErrorString;
 namespace quentier::local_storage::sql {
 
 class SynchronizationInfoHandler final :
+    public ISynchronizationInfoHandler,
     public std::enable_shared_from_this<SynchronizationInfoHandler>
 {
 public:
-    using HighestUsnOption = ILocalStorage::HighestUsnOption;
-
     explicit SynchronizationInfoHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         QThreadPtr writerThread);
 
     [[nodiscard]] QFuture<qint32> highestUpdateSequenceNumber(
-        HighestUsnOption option) const;
+        HighestUsnOption option) const override;
 
     [[nodiscard]] QFuture<qint32> highestUpdateSequenceNumber(
-        qevercloud::Guid linkedNotebookGuid) const;
+        qevercloud::Guid linkedNotebookGuid) const override;
 
 private:
     using UsnVariant = std::variant<HighestUsnOption, qevercloud::Guid>;
