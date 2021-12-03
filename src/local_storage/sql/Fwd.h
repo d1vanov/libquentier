@@ -53,6 +53,9 @@ using ITagsHandlerPtr = std::shared_ptr<ITagsHandler>;
 class IVersionHandler;
 using IVersionHandlerPtr = std::shared_ptr<IVersionHandler>;
 
+class IUsersHandler;
+using IUsersHandlerPtr = std::shared_ptr<IUsersHandler>;
+
 class Notifier;
 
 class Transaction;

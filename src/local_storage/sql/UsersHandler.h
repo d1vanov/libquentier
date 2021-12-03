@@ -18,13 +18,8 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "IUsersHandler.h"
 
-#include <quentier/local_storage/Fwd.h>
-
-#include <qevercloud/types/User.h>
-
-#include <QFuture>
 #include <QtGlobal>
 
 #include <memory>
@@ -40,20 +35,23 @@ class ErrorString;
 
 namespace quentier::local_storage::sql {
 
-class UsersHandler final: public std::enable_shared_from_this<UsersHandler>
+class UsersHandler final:
+    public IUsersHandler,
+    public std::enable_shared_from_this<UsersHandler>
 {
 public:
     explicit UsersHandler(
         ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
         Notifier * notifier, QThreadPtr writerThread);
 
-    [[nodiscard]] QFuture<quint32> userCount() const;
-    [[nodiscard]] QFuture<void> putUser(qevercloud::User user);
+    [[nodiscard]] QFuture<quint32> userCount() const override;
+    [[nodiscard]] QFuture<void> putUser(qevercloud::User user) override;
 
     [[nodiscard]] QFuture<qevercloud::User> findUserById(
-        qevercloud::UserID userId) const;
+        qevercloud::UserID userId) const override;
 
-    [[nodiscard]] QFuture<void> expungeUserById(qevercloud::UserID userId);
+    [[nodiscard]] QFuture<void> expungeUserById(
+        qevercloud::UserID userId) override;
 
 private:
     [[nodiscard]] std::optional<quint32> userCountImpl(

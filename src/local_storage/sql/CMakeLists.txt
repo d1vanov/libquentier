@@ -17,6 +17,7 @@ target_sources(${LIBRARY_NAME}
   ISynchronizationInfoHandler.h
   ITagsHandler.h
   IVersionHandler.h
+  IUsersHandler.h
   LinkedNotebooksHandler.cpp
   LinkedNotebooksHandler.h
   NotebooksHandler.cpp
