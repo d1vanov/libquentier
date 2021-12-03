@@ -414,10 +414,7 @@ public:
     // Versions/upgrade API
     [[nodiscard]] virtual QFuture<bool> isVersionTooHigh() const = 0;
     [[nodiscard]] virtual QFuture<bool> requiresUpgrade() const = 0;
-
-    [[nodiscard]] virtual QFuture<QList<ILocalStoragePatchPtr>>
-        requiredPatches() const = 0;
-
+    [[nodiscard]] virtual QFuture<QList<IPatchPtr>> requiredPatches() const = 0;
     [[nodiscard]] virtual QFuture<qint32> version() const = 0;
     [[nodiscard]] virtual QFuture<qint32> highestSupportedVersion() const = 0;
 
@@ -425,7 +422,7 @@ public:
     [[nodiscard]] virtual QFuture<quint32> userCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putUser(qevercloud::User user) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::User>> findUserById(
+    [[nodiscard]] virtual QFuture<qevercloud::User> findUserById(
         qevercloud::UserID userId) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeUserById(
@@ -437,17 +434,18 @@ public:
     [[nodiscard]] virtual QFuture<void> putNotebook(
         qevercloud::Notebook notebook) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findNotebookByLocalId(QString notebookLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findNotebookByName(
-            QString notebookName, QString linkedNotebookGuid = {}) const = 0;
+            QString notebookName,
+            std::optional<QString> linkedNotebookGuid = std::nullopt) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findDefaultNotebook() const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByLocalId(
@@ -459,7 +457,7 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListOptions<ListNotebooksOrder> options = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<QVector<qevercloud::SharedNotebook>>
+    [[nodiscard]] virtual QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const = 0;
 
     // Linked notebooks API
@@ -494,7 +492,7 @@ public:
             NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
     [[nodiscard]] virtual QFuture<QHash<QString, quint32>>
-        noteCountsPerTagLocalIds(
+        noteCountsPerTags(
             ListOptions<ListTagsOrder> listTagsOptions = {},
             NoteCountOptions options = NoteCountOptions(
                 NoteCountOption::IncludeNonDeletedNotes)) const = 0;
@@ -509,11 +507,11 @@ public:
     [[nodiscard]] virtual QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+    [[nodiscard]] virtual QFuture<qevercloud::Note>
         findNoteByLocalId(
             QString noteLocalId, FetchNoteOptions options) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+    [[nodiscard]] virtual QFuture<qevercloud::Note>
         findNoteByGuid(
             qevercloud::Guid noteGuid, FetchNoteOptions options) const = 0;
 
@@ -558,13 +556,13 @@ public:
     [[nodiscard]] virtual QFuture<quint32> tagCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putTag(qevercloud::Tag tag) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+    [[nodiscard]] virtual QFuture<qevercloud::Tag>
         findTagByLocalId(QString tagLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+    [[nodiscard]] virtual QFuture<qevercloud::Tag>
         findTagByGuid(qevercloud::Guid tagGuid) const = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+    [[nodiscard]] virtual QFuture<qevercloud::Tag>
         findTagByName(QString tagName) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>> listTags(
