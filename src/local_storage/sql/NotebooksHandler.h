@@ -50,7 +50,9 @@ public:
         qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) const override;
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const override;
 
@@ -58,7 +60,9 @@ public:
     [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<void> expungeNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) override;
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListOptions<ListNotebooksOrder> options) const override;
@@ -79,7 +83,8 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findNotebookByNameImpl(
-        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        const QString & name,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Notebook> findDefaultNotebookImpl(
@@ -99,7 +104,8 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] bool expungeNotebookByNameImpl(
-        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        const QString & name,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription);
 
     [[nodiscard]] QStringList listNoteLocalIdsByNotebookLocalId(

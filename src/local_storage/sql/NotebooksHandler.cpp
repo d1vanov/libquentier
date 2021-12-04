@@ -181,7 +181,7 @@ QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByGuid(
 }
 
 QFuture<qevercloud::Notebook> NotebooksHandler::findNotebookByName(
-    QString name, std::optional<QString> linkedNotebookGuid) const
+    QString name, std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
     return makeReadTask<qevercloud::Notebook>(
         makeTaskContext(),
@@ -243,7 +243,7 @@ QFuture<void> NotebooksHandler::expungeNotebookByGuid(qevercloud::Guid guid)
 }
 
 QFuture<void> NotebooksHandler::expungeNotebookByName(
-    QString name, std::optional<QString> linkedNotebookGuid)
+    QString name, std::optional<qevercloud::Guid> linkedNotebookGuid)
 {
     return makeWriteTask<void>(
         makeTaskContext(),
@@ -462,7 +462,8 @@ std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByGuidImpl(
 }
 
 std::optional<qevercloud::Notebook> NotebooksHandler::findNotebookByNameImpl(
-    const QString & name, const std::optional<QString> & linkedNotebookGuid,
+    const QString & name,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     QString queryString = QStringLiteral(
@@ -734,7 +735,8 @@ bool NotebooksHandler::expungeNotebookByGuidImpl(
 }
 
 bool NotebooksHandler::expungeNotebookByNameImpl(
-    const QString & name, const std::optional<QString> & linkedNotebookGuid,
+    const QString & name,
+    const std::optional<qevercloud::Guid> & linkedNotebookGuid,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
     QNDEBUG(

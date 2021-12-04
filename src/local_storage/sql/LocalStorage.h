@@ -67,7 +67,7 @@ public:
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
         QString notebookName,
-        std::optional<QString> linkedNotebookGuid =
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook>
@@ -78,6 +78,11 @@ public:
 
     [[nodiscard]] QFuture<void> expungeNotebookByGuid(
         qevercloud::Guid notebookGuid) override;
+
+    [[nodiscard]] QFuture<void> expungeNotebookByName(
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListOptions<ListNotebooksOrder> options = {}) const override;

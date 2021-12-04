@@ -440,10 +440,10 @@ public:
     [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
-        findNotebookByName(
-            QString notebookName,
-            std::optional<QString> linkedNotebookGuid = std::nullopt) const = 0;
+    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findNotebookByName(
+        QString notebookName,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const = 0;
 
     [[nodiscard]] virtual QFuture<qevercloud::Notebook>
         findDefaultNotebook() const = 0;
@@ -453,6 +453,10 @@ public:
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByGuid(
         qevercloud::Guid notebookGuid) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeNotebookByName(
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt) = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
         ListOptions<ListNotebooksOrder> options = {}) const = 0;

@@ -181,7 +181,8 @@ QFuture<qevercloud::Notebook> LocalStorage::findNotebookByGuid(
 }
 
 QFuture<qevercloud::Notebook> LocalStorage::findNotebookByName(
-    QString notebookName, std::optional<QString> linkedNotebookGuid) const
+    QString notebookName,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
     return m_notebooksHandler->findNotebookByName(
         std::move(notebookName), std::move(linkedNotebookGuid));
@@ -201,6 +202,13 @@ QFuture<void> LocalStorage::expungeNotebookByLocalId(QString notebookLocalId)
 QFuture<void> LocalStorage::expungeNotebookByGuid(qevercloud::Guid notebookGuid)
 {
     return m_notebooksHandler->expungeNotebookByGuid(std::move(notebookGuid));
+}
+
+QFuture<void> LocalStorage::expungeNotebookByName(
+    QString name, std::optional<qevercloud::Guid> linkedNotebookGuid)
+{
+    return m_notebooksHandler->expungeNotebookByName(
+        std::move(name), std::move(linkedNotebookGuid));
 }
 
 QFuture<QList<qevercloud::Notebook>> LocalStorage::listNotebooks(
