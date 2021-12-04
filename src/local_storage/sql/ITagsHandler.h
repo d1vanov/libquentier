@@ -43,7 +43,8 @@ public:
 
     [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByName(
         QString tagName,
-        std::optional<QString> linkedNotebookGuid = {}) const = 0;
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const = 0;
 
     template <class T>
     using ListOptions = ILocalStorage::ListOptions<T>;
@@ -66,7 +67,8 @@ public:
         qevercloud::Guid tagGuid) = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) = 0;
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt) = 0;
 };
 
 } // namespace quentier::local_storage::sql

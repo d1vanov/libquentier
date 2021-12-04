@@ -56,7 +56,8 @@ public:
 
     MOCK_METHOD(
         QFuture<void>, expungeTagByName,
-        (QString name, std::optional<QString> linkedNotebookGuid), (override));
+        (QString name, std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (override));
 };
 
 } // namespace quentier::local_storage::sql::tests::mocks

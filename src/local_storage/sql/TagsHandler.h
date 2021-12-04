@@ -48,7 +48,8 @@ public:
 
     [[nodiscard]] QFuture<qevercloud::Tag> findTagByName(
         QString tagName,
-        std::optional<QString> linkedNotebookGuid = {}) const override;
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
         ListOptions<ListTagsOrder> options = {}) const override;
@@ -64,7 +65,9 @@ public:
         qevercloud::Guid tagGuid) override;
 
     [[nodiscard]] QFuture<void> expungeTagByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) override;
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) override;
 
 private:
     [[nodiscard]] std::optional<quint32> tagCountImpl(
@@ -79,7 +82,8 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] std::optional<qevercloud::Tag> findTagByNameImpl(
-        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        const QString & name,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] QStringList listChildTagLocalIds(
@@ -105,7 +109,8 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] ExpungeTagResult expungeTagByNameImpl(
-        const QString & name, const std::optional<QString> & linkedNotebookGuid,
+        const QString & name,
+        const std::optional<qevercloud::Guid> & linkedNotebookGuid,
         QSqlDatabase & database, ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::Tag> listTagsImpl(

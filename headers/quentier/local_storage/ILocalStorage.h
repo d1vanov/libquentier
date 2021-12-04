@@ -566,8 +566,10 @@ public:
     [[nodiscard]] virtual QFuture<qevercloud::Tag>
         findTagByGuid(qevercloud::Guid tagGuid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag>
-        findTagByName(QString tagName) const = 0;
+    [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByName(
+        QString tagName,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>> listTags(
         ListOptions<ListTagsOrder> options = {}) const = 0;
@@ -582,6 +584,10 @@ public:
 
     [[nodiscard]] virtual QFuture<void> expungeTagByGuid(
         qevercloud::Guid tagGuid) = 0;
+
+    [[nodiscard]] virtual QFuture<void> expungeTagByName(
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt) = 0;
 
     // Resources API
     [[nodiscard]] virtual QFuture<quint32> resourceCount(

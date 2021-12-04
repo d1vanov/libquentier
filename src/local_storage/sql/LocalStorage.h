@@ -187,7 +187,9 @@ public:
         qevercloud::Guid tagGuid) const override;
 
     [[nodiscard]] QFuture<qevercloud::Tag> findTagByName(
-        QString tagName) const override;
+        QString tagName,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
         ListOptions<ListTagsOrder> options = {}) const override;
@@ -201,6 +203,11 @@ public:
 
     [[nodiscard]] QFuture<void> expungeTagByGuid(
         qevercloud::Guid tagGuid) override;
+
+    [[nodiscard]] QFuture<void> expungeTagByName(
+        QString name,
+        std::optional<qevercloud::Guid> linkedNotebookGuid =
+            std::nullopt) override;
 
     // Resources API
     [[nodiscard]] QFuture<quint32> resourceCount(

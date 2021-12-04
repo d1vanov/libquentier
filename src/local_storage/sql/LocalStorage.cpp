@@ -395,9 +395,12 @@ QFuture<qevercloud::Tag> LocalStorage::findTagByGuid(
     return m_tagsHandler->findTagByGuid(std::move(tagGuid));
 }
 
-QFuture<qevercloud::Tag> LocalStorage::findTagByName(QString tagName) const
+QFuture<qevercloud::Tag> LocalStorage::findTagByName(
+    QString tagName,
+    std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
-    return m_tagsHandler->findTagByName(std::move(tagName));
+    return m_tagsHandler->findTagByName(
+        std::move(tagName), std::move(linkedNotebookGuid));
 }
 
 QFuture<QList<qevercloud::Tag>> LocalStorage::listTags(
@@ -421,6 +424,13 @@ QFuture<void> LocalStorage::expungeTagByLocalId(QString tagLocalId)
 QFuture<void> LocalStorage::expungeTagByGuid(qevercloud::Guid tagGuid)
 {
     return m_tagsHandler->expungeTagByGuid(std::move(tagGuid));
+}
+
+QFuture<void> LocalStorage::expungeTagByName(
+    QString name, std::optional<qevercloud::Guid> linkedNotebookGuid)
+{
+    return m_tagsHandler->expungeTagByName(
+        std::move(name), std::move(linkedNotebookGuid));
 }
 
 QFuture<quint32> LocalStorage::resourceCount(NoteCountOptions options) const
