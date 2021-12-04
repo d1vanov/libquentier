@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 
+add_subdirectory(mocks)
+
 set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 set(TESTS_RESOURCES_NAME ${TESTS_NAME}_resources)
 
