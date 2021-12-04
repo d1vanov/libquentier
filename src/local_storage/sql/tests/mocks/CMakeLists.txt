@@ -8,6 +8,7 @@ target_sources(${MOCKS_NAME}
     MockILinkedNotebooksHandler.h
     MockINotebooksHandler.h
     MockINotesHandler.h
+    MockIResourcesHandler.h
   PRIVATE
     CheckBuild.cpp
 )
