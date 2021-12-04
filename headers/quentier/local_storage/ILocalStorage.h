@@ -577,7 +577,7 @@ public:
         QString tagLocalId) = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByGuid(
-        QString tagGuid) = 0;
+        qevercloud::Guid tagGuid) = 0;
 
     // Resources API
     [[nodiscard]] virtual QFuture<quint32> resourceCount(
@@ -597,14 +597,14 @@ public:
 
     [[nodiscard]] virtual QFuture<qevercloud::Resource>
         findResourceByGuid(
-            QString resourceGuid,
+            qevercloud::Guid resourceGuid,
             FetchResourceOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeResourceByGuid(
-        QString resourceGuid) = 0;
+        qevercloud::Guid resourceGuid) = 0;
 
     // Saved searches API
     [[nodiscard]] virtual QFuture<quint32> savedSearchCount() const = 0;
@@ -612,8 +612,14 @@ public:
     [[nodiscard]] virtual QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) = 0;
 
-    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
+    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
         findSavedSearchByLocalId(QString savedSearchLocalId) const = 0;
+
+    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+        findSavedSearchByGuid(qevercloud::Guid guid) const = 0;
+
+    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+        findSavedSearchByName(QString name) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
         listSavedSearches(

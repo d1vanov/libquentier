@@ -20,6 +20,8 @@ target_sources(${LIBRARY_NAME}
   IUsersHandler.h
   LinkedNotebooksHandler.cpp
   LinkedNotebooksHandler.h
+  LocalStorage.cpp
+  LocalStorage.h
   NotebooksHandler.cpp
   NotebooksHandler.h
   NotesHandler.cpp

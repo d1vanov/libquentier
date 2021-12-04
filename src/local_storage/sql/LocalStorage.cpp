@@ -410,9 +410,113 @@ QFuture<void> LocalStorage::expungeTagByLocalId(QString tagLocalId)
     return m_tagsHandler->expungeTagByLocalId(std::move(tagLocalId));
 }
 
-QFuture<void> LocalStorage::expungeTagByGuid(QString tagGuid)
+QFuture<void> LocalStorage::expungeTagByGuid(qevercloud::Guid tagGuid)
 {
     return m_tagsHandler->expungeTagByGuid(std::move(tagGuid));
+}
+
+QFuture<quint32> LocalStorage::resourceCount(NoteCountOptions options) const
+{
+    return m_resourcesHandler->resourceCount(options);
+}
+
+QFuture<quint32> LocalStorage::resourceCountPerNoteLocalId(
+    QString noteLocalId) const
+{
+    return m_resourcesHandler->resourceCountPerNoteLocalId(
+        std::move(noteLocalId));
+}
+
+QFuture<void> LocalStorage::putResource(
+    qevercloud::Resource resource, int indexInNote)
+{
+    return m_resourcesHandler->putResource(std::move(resource), indexInNote);
+}
+
+QFuture<qevercloud::Resource> LocalStorage::findResourceByLocalId(
+    QString resourceLocalId, FetchResourceOptions options) const
+{
+    return m_resourcesHandler->findResourceByLocalId(
+        std::move(resourceLocalId), options);
+}
+
+QFuture<qevercloud::Resource> LocalStorage::findResourceByGuid(
+    qevercloud::Guid resourceGuid, FetchResourceOptions options) const
+{
+    return m_resourcesHandler->findResourceByGuid(
+        std::move(resourceGuid), options);
+}
+
+QFuture<void> LocalStorage::expungeResourceByLocalId(QString resourceLocalId)
+{
+    return m_resourcesHandler->expungeResourceByLocalId(
+        std::move(resourceLocalId));
+}
+
+QFuture<void> LocalStorage::expungeResourceByGuid(qevercloud::Guid resourceGuid)
+{
+    return m_resourcesHandler->expungeResourceByGuid(
+        std::move(resourceGuid));
+}
+
+QFuture<quint32> LocalStorage::savedSearchCount() const
+{
+    return m_savedSearchesHandler->savedSearchCount();
+}
+
+QFuture<void> LocalStorage::putSavedSearch(qevercloud::SavedSearch search)
+{
+    return m_savedSearchesHandler->putSavedSearch(std::move(search));
+}
+
+QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByLocalId(
+    QString savedSearchLocalId) const
+{
+    return m_savedSearchesHandler->findSavedSearchByLocalId(
+        std::move(savedSearchLocalId));
+}
+
+QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByGuid(
+    qevercloud::Guid guid) const
+{
+    return m_savedSearchesHandler->findSavedSearchByGuid(std::move(guid));
+}
+
+QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByName(
+    QString name) const
+{
+    return m_savedSearchesHandler->findSavedSearchByName(std::move(name));
+}
+
+QFuture<QList<qevercloud::SavedSearch>> LocalStorage::listSavedSearches(
+    ListOptions<ListSavedSearchesOrder> options) const
+{
+    return m_savedSearchesHandler->listSavedSearches(options);
+}
+
+QFuture<void> LocalStorage::expungeSavedSearchByLocalId(
+    QString savedSearchLocalId)
+{
+    return m_savedSearchesHandler->expungeSavedSearchByLocalId(
+        std::move(savedSearchLocalId));
+}
+
+QFuture<qint32> LocalStorage::highestUpdateSequenceNumber(
+    HighestUsnOption option) const
+{
+    return m_synchronizationInfoHandler->highestUpdateSequenceNumber(option);
+}
+
+QFuture<qint32> LocalStorage::highestUpdateSequenceNumber(
+    qevercloud::Guid linkedNotebookGuid) const
+{
+    return m_synchronizationInfoHandler->highestUpdateSequenceNumber(
+        std::move(linkedNotebookGuid));
+}
+
+ILocalStorageNotifier * LocalStorage::notifier() const noexcept
+{
+    return m_notifier;
 }
 
 } // namespace quentier::local_storage::sql

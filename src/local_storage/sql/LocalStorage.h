@@ -194,7 +194,8 @@ public:
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
 
-    [[nodiscard]] QFuture<void> expungeTagByGuid(QString tagGuid) override;
+    [[nodiscard]] QFuture<void> expungeTagByGuid(
+        qevercloud::Guid tagGuid) override;
 
     // Resources API
     [[nodiscard]] QFuture<quint32> resourceCount(
@@ -212,13 +213,14 @@ public:
         FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
-        QString resourceGuid, FetchResourceOptions options = {}) const override;
+        qevercloud::Guid resourceGuid,
+        FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) override;
 
     [[nodiscard]] QFuture<void> expungeResourceByGuid(
-        QString resourceGuid) override;
+        qevercloud::Guid resourceGuid) override;
 
     // Saved searches API
     [[nodiscard]] QFuture<quint32> savedSearchCount() const override;
@@ -226,8 +228,14 @@ public:
     [[nodiscard]] QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) override;
 
-    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+    [[nodiscard]] QFuture<qevercloud::SavedSearch>
         findSavedSearchByLocalId(QString savedSearchLocalId) const override;
+
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
+        qevercloud::Guid guid) const override;
+
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
+        QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListOptions<ListSavedSearchesOrder> options = {}) const override;
@@ -246,7 +254,7 @@ public:
     // signals emitted by ILocalStorageNotifier.
     // ILocalStorageNotifier must be alive for at least as much as ILocalStorage
     // itself.
-    [[nodiscard]] ILocalStorageNotifier * notifier() const override;
+    [[nodiscard]] ILocalStorageNotifier * notifier() const noexcept override;
 
 private:
     ILinkedNotebooksHandlerPtr m_linkedNotebooksHandler;
