@@ -86,6 +86,7 @@ public:
 
     [[nodiscard]] virtual QFuture<void> expungeNoteByLocalId(
         QString localId) = 0;
+
     [[nodiscard]] virtual QFuture<void> expungeNoteByGuid(
         qevercloud::Guid guid) = 0;
 
