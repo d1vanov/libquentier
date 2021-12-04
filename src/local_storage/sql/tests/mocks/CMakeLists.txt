@@ -10,6 +10,7 @@ target_sources(${MOCKS_NAME}
     MockINotesHandler.h
     MockIResourcesHandler.h
     MockISavedSearchesHandler.h
+    MockISynchronizationInfoHandler.h
   PRIVATE
     CheckBuild.cpp
 )
