@@ -11,6 +11,7 @@ target_sources(${MOCKS_NAME}
     MockIResourcesHandler.h
     MockISavedSearchesHandler.h
     MockISynchronizationInfoHandler.h
+    MockITagsHandler.h
   PRIVATE
     CheckBuild.cpp
 )
