@@ -43,7 +43,7 @@ public:
 
     MOCK_METHOD(
         QFuture<qevercloud::Notebook>, findNotebookByName,
-        (QString name, std::optional<QString> linkedNotebookGuid),
+        (QString name, std::optional<qevercloud::Guid> linkedNotebookGuid),
         (const, override));
 
     MOCK_METHOD(
@@ -59,7 +59,8 @@ public:
 
     MOCK_METHOD(
         QFuture<void>, expungeNotebookByName,
-        (QString name, std::optional<QString> linkedNotebookGuid), (override));
+        (QString name, std::optional<qevercloud::Guid> linkedNotebookGuid),
+        (override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Notebook>>, listNotebooks,
