@@ -5,3 +5,4 @@
 #include "MockISavedSearchesHandler.h"
 #include "MockISynchronizationInfoHandler.h"
 #include "MockITagsHandler.h"
+#include "MockIUsersHandler.h"
