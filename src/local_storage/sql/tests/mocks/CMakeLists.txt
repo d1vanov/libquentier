@@ -13,6 +13,7 @@ target_sources(${MOCKS_NAME}
     MockISynchronizationInfoHandler.h
     MockITagsHandler.h
     MockIUsersHandler.h
+    MockIVersionHandler.h
   PRIVATE
     CheckBuild.cpp
 )

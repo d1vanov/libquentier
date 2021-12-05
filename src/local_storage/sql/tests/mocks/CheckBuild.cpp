@@ -6,3 +6,4 @@
 #include "MockISynchronizationInfoHandler.h"
 #include "MockITagsHandler.h"
 #include "MockIUsersHandler.h"
+#include "MockIVersionHandler.h"
