@@ -11,6 +11,7 @@ qt5_add_resources(${TESTS_RESOURCES_NAME}
 add_executable(${TESTS_NAME}
   ConnectionPoolTest.cpp
   LinkedNotebooksHandlerTest.cpp
+  LocalStorageTest.cpp
   main.cpp
   NotebooksHandlerTest.cpp
   NotesHandlerTest.cpp
