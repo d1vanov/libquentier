@@ -48,6 +48,11 @@ public:
         (ListOptions<ListTagsOrder> options), (const, override));
 
     MOCK_METHOD(
+        QFuture<QList<qevercloud::Tag>>, listTagsPerNoteLocalId,
+        (QString noteLocalId, ListOptions<ListTagsOrder> options),
+        (const, override));
+
+    MOCK_METHOD(
         QFuture<void>, expungeTagByLocalId, (QString tagLocalId), (override));
 
     MOCK_METHOD(
