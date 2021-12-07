@@ -36,6 +36,7 @@
 
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 class QRunnable;
 
@@ -71,8 +72,7 @@ void postToThread(QThread * pThread, Function && function)
         auto * pObj = pDummyObj.release();
         postToObject(
             pObj,
-            [pObj, function = std::forward<Function>(function)] () mutable
-            {
+            [pObj, function = std::forward<Function>(function)]() mutable {
                 function();
                 pObj->deleteLater();
             });
@@ -94,11 +94,31 @@ void postToThread(QThread * pThread, Function && function)
 /**
  * Create QFuture already containing the result
  */
-template <class T>
-[[nodiscard]] QFuture<T> makeReadyFuture(T && t)
+template <
+    class T,
+    typename = std::enable_if_t<
+        std::is_fundamental_v<std::decay_t<T>> && std::negation_v<std::is_same<std::decay_t<T>, void>>>>
+[[nodiscard]] QFuture<T> makeReadyFuture(T t)
 {
-    QPromise<T> promise;
-    QFuture<T> future = promise.future();
+    QPromise<std::decay_t<T>> promise;
+    QFuture<std::decay_t<T>> future = promise.future();
+
+    promise.start();
+    promise.addResult(t);
+    promise.finish();
+
+    return future;
+}
+
+template <
+    class T,
+    typename = std::enable_if_t<
+        std::negation_v<std::is_fundamental<std::decay_t<T>>> &&
+        std::negation_v<std::is_same<std::decay_t<T>, void>>>>
+[[nodiscard]] QFuture<std::decay_t<T>> makeReadyFuture(T && t)
+{
+    QPromise<std::decay_t<T>> promise;
+    QFuture<std::decay_t<T>> future = promise.future();
 
     promise.start();
     promise.addResult(std::forward<T>(t));
