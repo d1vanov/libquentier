@@ -229,7 +229,7 @@ TEST_F(LocalStorageTest, ForwardIsVersionTooHighToVersionHandler)
         .WillOnce(Return(utility::makeReadyFuture<bool>(false)));
 
     const auto res = localStorage->isVersionTooHigh();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_FALSE(res.result());
 }
@@ -242,7 +242,7 @@ TEST_F(LocalStorageTest, ForwardRequiresUpgradeToVersionHandler)
         .WillOnce(Return(utility::makeReadyFuture<bool>(true)));
 
     const auto res = localStorage->requiresUpgrade();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_TRUE(res.result());
 }
@@ -255,7 +255,7 @@ TEST_F(LocalStorageTest, ForwardRequiredPatchesToVersionHandler)
         .WillOnce(Return(utility::makeReadyFuture<QList<IPatchPtr>>({})));
 
     const auto res = localStorage->requiredPatches();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_TRUE(res.result().isEmpty());
 }
@@ -268,7 +268,7 @@ TEST_F(LocalStorageTest, ForwardVersionToVersionHandler)
         .WillOnce(Return(utility::makeReadyFuture<qint32>(3)));
 
     const auto res = localStorage->version();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), 3);
 }
@@ -281,7 +281,7 @@ TEST_F(LocalStorageTest, ForwardHighestSupportedVersionToVersionHandler)
         .WillOnce(Return(utility::makeReadyFuture<qint32>(3)));
 
     const auto res = localStorage->highestSupportedVersion();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), 3);
 }
@@ -295,7 +295,7 @@ TEST_F(LocalStorageTest, ForwardUserCountToUsersHandler)
         .WillOnce(Return(utility::makeReadyFuture(userCount)));
 
     const auto res = localStorage->userCount();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), userCount);
 }
@@ -308,7 +308,7 @@ TEST_F(LocalStorageTest, ForwardPutUserToUsersHandler)
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->putUser(qevercloud::User{});
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardFindUserByIdToUsersHandler)
@@ -326,7 +326,7 @@ TEST_F(LocalStorageTest, ForwardFindUserByIdToUsersHandler)
             });
 
     const auto res = localStorage->findUserById(user.id().value());
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), user);
 }
@@ -347,7 +347,7 @@ TEST_F(LocalStorageTest, ForwardExpungeUserByIdToUsersHandler)
             });
 
     const auto res = localStorage->expungeUserById(user.id().value());
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardNotebookCountToNotebooksHandler)
@@ -359,7 +359,7 @@ TEST_F(LocalStorageTest, ForwardNotebookCountToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture(notebookCount)));
 
     const auto res = localStorage->notebookCount();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebookCount);
 }
@@ -372,7 +372,7 @@ TEST_F(LocalStorageTest, ForwardPutNotebookToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->putNotebook(qevercloud::Notebook{});
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardFindNotebookByLocalIdToNotebooksHandler)
@@ -390,7 +390,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByLocalIdToNotebooksHandler)
             });
 
     const auto res = localStorage->findNotebookByLocalId(notebook.localId());
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
 }
@@ -412,7 +412,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByGuidToNotebooksHandler)
             });
 
     const auto res = localStorage->findNotebookByGuid(notebook.guid().value());
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
 }
@@ -439,7 +439,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByNameToNotebooksHandler)
     const auto res = localStorage->findNotebookByName(
         notebook.name().value(), notebook.linkedNotebookGuid());
 
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
 }
@@ -455,7 +455,7 @@ TEST_F(LocalStorageTest, ForwardFindDefaultNotebookToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture(notebook)));
 
     const auto res = localStorage->findDefaultNotebook();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
 }
@@ -469,7 +469,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByLocalIdToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->expungeNotebookByLocalId(localId);
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardExpungeNotebookByGuidToNotebooksHandler)
@@ -481,7 +481,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByGuidToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->expungeNotebookByGuid(guid);
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardExpungeNotebookByNameToNotebooksHandler)
@@ -499,7 +499,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByNameToNotebooksHandler)
     const auto res =
         localStorage->expungeNotebookByName(name, linkedNotebookGuid);
 
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
@@ -513,7 +513,7 @@ TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture(notebooks)));
 
     const auto res = localStorage->listNotebooks();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebooks);
 }
@@ -530,7 +530,7 @@ TEST_F(LocalStorageTest, ForwardListSharedNotebooksToNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture(sharedNotebooks)));
 
     const auto res = localStorage->listSharedNotebooks(guid);
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), sharedNotebooks);
 }
@@ -544,7 +544,7 @@ TEST_F(LocalStorageTest, ForwardLinkedNotebookCountToLinkedNotebooksHandler)
         .WillOnce(Return(utility::makeReadyFuture(linkedNotebookCount)));
 
     const auto res = localStorage->linkedNotebookCount();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), linkedNotebookCount);
 }
@@ -559,7 +559,7 @@ TEST_F(LocalStorageTest, ForwardPutLinkedNotebookToLinkedNotebooksHandler)
     const auto res =
         localStorage->putLinkedNotebook(qevercloud::LinkedNotebook{});
 
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(
@@ -582,7 +582,7 @@ TEST_F(
     const auto res =
         localStorage->findLinkedNotebookByGuid(linkedNotebook.guid().value());
 
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), linkedNotebook);
 }
@@ -599,7 +599,7 @@ TEST_F(
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->expungeLinkedNotebookByGuid(guid);
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
 }
 
 TEST_F(
@@ -615,9 +615,424 @@ TEST_F(
         .WillOnce(Return(utility::makeReadyFuture(linkedNotebooks)));
 
     const auto res = localStorage->listLinkedNotebooks();
-    EXPECT_TRUE(res.isFinished());
+    ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), linkedNotebooks);
+}
+
+TEST_F(LocalStorageTest, ForwardNoteCountToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 noteCount = 7;
+
+    const ILocalStorage::NoteCountOptions options =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    EXPECT_CALL(*m_mockNotesHandler, noteCount(options))
+        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+
+    const auto res = localStorage->noteCount(options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteCount);
+}
+
+TEST_F(LocalStorageTest, ForwardNoteCountPerNotebookLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 noteCount = 8;
+    const auto notebookLocalId = UidGenerator::Generate();
+
+    const ILocalStorage::NoteCountOptions options =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        noteCountPerNotebookLocalId(notebookLocalId, options))
+        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+
+    const auto res = localStorage->noteCountPerNotebookLocalId(
+        notebookLocalId, options);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteCount);
+}
+
+TEST_F(LocalStorageTest, ForwardNoteCountPerTagLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 noteCount = 9;
+    const auto tagLocalId = UidGenerator::Generate();
+
+    const ILocalStorage::NoteCountOptions options =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        noteCountPerTagLocalId(tagLocalId, options))
+        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+
+    const auto res = localStorage->noteCountPerTagLocalId(tagLocalId, options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteCount);
+}
+
+TEST_F(LocalStorageTest, ForwardNoteCountPerTagsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    QHash<QString, quint32> noteCounts;
+    noteCounts[UidGenerator::Generate()] = 10;
+
+    const ILocalStorage::NoteCountOptions noteCountOptions =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> listTagsOptions;
+    listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        noteCountsPerTags(listTagsOptions, noteCountOptions))
+        .WillOnce(Return(utility::makeReadyFuture(noteCounts)));
+
+    const auto res =
+        localStorage->noteCountsPerTags(listTagsOptions, noteCountOptions);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteCounts);
+}
+
+TEST_F(
+    LocalStorageTest, ForwardNoteCountPerNotebookAndTagLocalIdsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 noteCount = 11;
+    const auto notebookLocalIds = QStringList{} << UidGenerator::Generate();
+    const auto tagLocalIds = QStringList{} << UidGenerator::Generate();
+
+    const ILocalStorage::NoteCountOptions options =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        noteCountPerNotebookAndTagLocalIds(
+            notebookLocalIds, tagLocalIds, options))
+        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+
+    const auto res = localStorage->noteCountPerNotebookAndTagLocalIds(
+        notebookLocalIds, tagLocalIds, options);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteCount);
+}
+
+TEST_F(LocalStorageTest, ForwardPutNoteToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto note = qevercloud::Note{};
+    EXPECT_CALL(*m_mockNotesHandler, putNote(note))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->putNote(note);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardUpdateNoteToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto note = qevercloud::Note{};
+
+    const auto options = ILocalStorage::UpdateNoteOptions{
+        ILocalStorage::UpdateNoteOption::UpdateResourceMetadata} |
+        ILocalStorage::UpdateNoteOption::UpdateResourceBinaryData |
+        ILocalStorage::UpdateNoteOption::UpdateTags;
+
+    EXPECT_CALL(*m_mockNotesHandler, updateNote(note, options))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->updateNote(note, options);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardFindNoteByLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto note = qevercloud::Note{};
+    const auto & localId = note.localId();
+
+    const auto options = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    EXPECT_CALL(*m_mockNotesHandler, findNoteByLocalId(localId, options))
+        .WillOnce(Return(utility::makeReadyFuture(note)));
+
+    const auto res = localStorage->findNoteByLocalId(localId, options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), note);
+}
+
+TEST_F(LocalStorageTest, ForwardFindNoteByGuidToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    auto note = qevercloud::Note{};
+    note.setGuid(UidGenerator::Generate());
+
+    const auto guid = note.guid().value();
+
+    const auto options = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    EXPECT_CALL(*m_mockNotesHandler, findNoteByGuid(guid, options))
+        .WillOnce(Return(utility::makeReadyFuture(note)));
+
+    const auto res = localStorage->findNoteByGuid(guid, options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), note);
+}
+
+TEST_F(LocalStorageTest, ForwardListNotesToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(*m_mockNotesHandler, listNotes(fetchOptions, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->listNotes(fetchOptions, listOptions);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(LocalStorageTest, ForwardListNotesPerNotebookLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+    const auto notebookLocalId = UidGenerator::Generate();
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        listNotesPerNotebookLocalId(notebookLocalId, fetchOptions, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->listNotesPerNotebookLocalId(
+        notebookLocalId, fetchOptions, listOptions);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(LocalStorageTest, ForwardListNotesPerTagLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+    const auto tagLocalId = UidGenerator::Generate();
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        listNotesPerTagLocalId(tagLocalId, fetchOptions, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->listNotesPerTagLocalId(
+        tagLocalId, fetchOptions, listOptions);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(
+    LocalStorageTest, ForwardListNotesPerNotebookAndTagLocalIdsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+    const auto notebookLocalIds = QStringList{} << UidGenerator::Generate();
+    const auto tagLocalIds = QStringList{} << UidGenerator::Generate();
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        listNotesPerNotebookAndTagLocalIds(
+            notebookLocalIds, tagLocalIds, fetchOptions, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->listNotesPerNotebookAndTagLocalIds(
+        notebookLocalIds, tagLocalIds, fetchOptions, listOptions);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+    const auto noteLocalIds = QStringList{} << notes.begin()->localId();
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(
+        *m_mockNotesHandler,
+        listNotesByLocalIds(noteLocalIds, fetchOptions, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->listNotesByLocalIds(
+        noteLocalIds, fetchOptions, listOptions);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(LocalStorageTest, ForwardQueryNotesToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
+
+    NoteSearchQuery query;
+
+    ErrorString errorDescription;
+    ASSERT_TRUE(
+        query.setQueryString(QStringLiteral("Something"), errorDescription));
+
+    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
+        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+        ILocalStorage::FetchNoteOption::WithResourceBinaryData;
+
+    EXPECT_CALL(*m_mockNotesHandler, queryNotes(query, fetchOptions))
+        .WillOnce(Return(utility::makeReadyFuture(notes)));
+
+    const auto res = localStorage->queryNotes(query, fetchOptions);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), notes);
+}
+
+TEST_F(LocalStorageTest, ForwardQueryNoteLocalIdsToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto noteLocalIds = QStringList{} << UidGenerator::Generate();
+
+    NoteSearchQuery query;
+
+    ErrorString errorDescription;
+    ASSERT_TRUE(
+        query.setQueryString(QStringLiteral("Something"), errorDescription));
+
+    EXPECT_CALL(*m_mockNotesHandler, queryNoteLocalIds(query))
+        .WillOnce(Return(utility::makeReadyFuture(noteLocalIds)));
+
+    const auto res = localStorage->queryNoteLocalIds(query);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), noteLocalIds);
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeNoteByLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto localId = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockNotesHandler, expungeNoteByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeNoteByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeNoteByGuidToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto guid = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockNotesHandler, expungeNoteByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeNoteByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
 }
 
 } // namespace quentier::local_storage::sql::tests
