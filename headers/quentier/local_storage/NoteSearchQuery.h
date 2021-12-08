@@ -175,6 +175,12 @@ private:
     QSharedDataPointer<Data> d;
 };
 
+[[nodiscard]] bool operator==(
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
+
+[[nodiscard]] bool operator!=(
+    const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_LOCAL_STORAGE_NOTE_SEARCH_QUERY_H

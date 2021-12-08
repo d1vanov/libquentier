@@ -494,4 +494,14 @@ QTextStream & NoteSearchQuery::print(QTextStream & strm) const
     return d->print(strm);
 }
 
+bool operator==(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs)
+{
+    return lhs.queryString() == rhs.queryString();
+}
+
+bool operator!=(const NoteSearchQuery & lhs, const NoteSearchQuery & rhs)
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier
