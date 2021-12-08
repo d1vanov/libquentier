@@ -652,4 +652,63 @@ public:
     [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
 
+template <class Order>
+[[nodiscard]] bool operator==(
+    const ILocalStorage::ListOptions<Order> & lhs,
+    const ILocalStorage::ListOptions<Order> & rhs)
+{
+    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
+        lhs.m_order == rhs.m_order && lhs.m_affiliation = rhs.m_affiliation &&
+        lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids;
+}
+
+template <class Order>
+[[nodiscard]] bool operator!=(
+    const ILocalStorage::ListOptions<Order> & lhs,
+    const ILocalStorage::ListOptions<Order> & rhs)
+{
+    return !(lhs == rhs);
+}
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs);
+
+template <>
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs);
+
 } // namespace quentier::local_storage

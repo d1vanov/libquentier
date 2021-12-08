@@ -924,4 +924,78 @@ QDebug & operator<<(
     return printNoteCountOptions(dbg, options);
 }
 
+template <>
+[[nodiscard]] bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs)
+{
+    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
+        lhs.m_order == rhs.m_order;
+}
+
+template <>
+[[nodiscard]] bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs)
+{
+    return !(lhs == rhs);
+}
+
+template <>
+[[nodiscard]] bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs)
+{
+    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
+        lhs.m_order == rhs.m_order;
+}
+
+template <>
+[[nodiscard]] bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs)
+{
+    return !(lhs == rhs);
+}
+
+template <>
+[[nodiscard]] bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs)
+{
+    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
+        lhs.m_order == rhs.m_order;
+}
+
+template <>
+[[nodiscard]] bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs)
+{
+    return !(lhs == rhs);
+}
+
+template <>
+[[nodiscard]] bool operator==(
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs)
+{
+    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
+        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
+        lhs.m_order == rhs.m_order && lhs.m_affiliation == rhs.m_affiliation &&
+        lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids &&
+        lhs.m_tagNotesRelation == rhs.m_tagNotesRelation;
+}
+
+template <>
+[[nodiscard]] bool operator!=(
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
+    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs)
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier::local_storage
