@@ -368,10 +368,11 @@ TEST_F(LocalStorageTest, ForwardPutNotebookToNotebooksHandler)
 {
     const auto localStorage = createLocalStorage();
 
-    EXPECT_CALL(*m_mockNotebooksHandler, putNotebook)
+    const auto notebook = qevercloud::Notebook{};
+    EXPECT_CALL(*m_mockNotebooksHandler, putNotebook(notebook))
         .WillOnce(Return(utility::makeReadyFuture()));
 
-    const auto res = localStorage->putNotebook(qevercloud::Notebook{});
+    const auto res = localStorage->putNotebook(notebook);
     ASSERT_TRUE(res.isFinished());
 }
 
@@ -382,14 +383,12 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByLocalIdToNotebooksHandler)
     qevercloud::Notebook notebook;
     notebook.setName(QStringLiteral("Notebook"));
 
-    EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByLocalId)
-        .WillOnce(
-            [=](QString localId) mutable { // NOLINT
-                EXPECT_EQ(localId, notebook.localId());
-                return utility::makeReadyFuture(std::move(notebook));
-            });
+    const auto & localId = notebook.localId();
 
-    const auto res = localStorage->findNotebookByLocalId(notebook.localId());
+    EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+
+    const auto res = localStorage->findNotebookByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
@@ -404,14 +403,12 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByGuidToNotebooksHandler)
     notebook.setGuid(UidGenerator::Generate());
     notebook.setUpdateSequenceNum(42);
 
-    EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByGuid)
-        .WillOnce(
-            [=](qevercloud::Guid guid) mutable { // NOLINT
-                EXPECT_EQ(guid, notebook.guid());
-                return utility::makeReadyFuture(std::move(notebook));
-            });
+    const auto guid = notebook.guid().value();
 
-    const auto res = localStorage->findNotebookByGuid(notebook.guid().value());
+    EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+
+    const auto res = localStorage->findNotebookByGuid(guid);
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
@@ -427,18 +424,14 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByNameToNotebooksHandler)
     notebook.setUpdateSequenceNum(42);
     notebook.setLinkedNotebookGuid(UidGenerator::Generate());
 
-    EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByName)
-        .WillOnce(
-            [=](QString name, // NOLINT
-                std::optional<qevercloud::Guid> linkedNotebookGuid) mutable { // NOLINT
-                EXPECT_EQ(name, notebook.name());
-                EXPECT_EQ(linkedNotebookGuid, notebook.linkedNotebookGuid());
-                return utility::makeReadyFuture(std::move(notebook));
-            });
+    const auto name = notebook.name().value();
+    const auto & linkedNotebookGuid = notebook.linkedNotebookGuid();
 
-    const auto res = localStorage->findNotebookByName(
-        notebook.name().value(), notebook.linkedNotebookGuid());
+    EXPECT_CALL(
+        *m_mockNotebooksHandler, findNotebookByName(name, linkedNotebookGuid))
+        .WillOnce(Return(utility::makeReadyFuture(notebook)));
 
+    const auto res = localStorage->findNotebookByName(name, linkedNotebookGuid);
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebook);
@@ -509,10 +502,16 @@ TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::Notebook{};
 
-    EXPECT_CALL(*m_mockNotebooksHandler, listNotebooks)
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(*m_mockNotebooksHandler, listNotebooks(listOptions))
         .WillOnce(Return(utility::makeReadyFuture(notebooks)));
 
-    const auto res = localStorage->listNotebooks();
+    const auto res = localStorage->listNotebooks(listOptions);
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
     EXPECT_EQ(res.result(), notebooks);
@@ -1032,6 +1031,180 @@ TEST_F(LocalStorageTest, ForwardExpungeNoteByGuidToNotesHandler)
         .WillOnce(Return(utility::makeReadyFuture()));
 
     const auto res = localStorage->expungeNoteByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardTagCountToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 tagCount = 12;
+    EXPECT_CALL(*m_mockTagsHandler, tagCount)
+        .WillOnce(Return(utility::makeReadyFuture(tagCount)));
+
+    const auto res = localStorage->tagCount();
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tagCount);
+}
+
+TEST_F(LocalStorageTest, ForwardPutTagToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto tag = qevercloud::Tag{};
+    EXPECT_CALL(*m_mockTagsHandler, putTag(tag))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->putTag(tag);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardFindTagByLocalIdToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    qevercloud::Tag tag;
+    tag.setName(QStringLiteral("Tag"));
+
+    const auto & localId = tag.localId();
+
+    EXPECT_CALL(*m_mockTagsHandler, findTagByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture(tag)));
+
+    const auto res = localStorage->findTagByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tag);
+}
+
+TEST_F(LocalStorageTest, ForwardFindTagByGuidToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    qevercloud::Tag tag;
+    tag.setName(QStringLiteral("Tag"));
+    tag.setGuid(UidGenerator::Generate());
+    tag.setUpdateSequenceNum(42);
+
+    const auto guid = tag.guid().value();
+
+    EXPECT_CALL(*m_mockTagsHandler, findTagByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture(tag)));
+
+    const auto res = localStorage->findTagByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tag);
+}
+
+TEST_F(LocalStorageTest, ForwardFindTagByNameToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    qevercloud::Tag tag;
+    tag.setName(QStringLiteral("Tag"));
+    tag.setGuid(UidGenerator::Generate());
+    tag.setUpdateSequenceNum(42);
+    tag.setLinkedNotebookGuid(UidGenerator::Generate());
+
+    const auto name = tag.name().value();
+    const auto & linkedNotebookGuid = tag.linkedNotebookGuid();
+
+    EXPECT_CALL(
+        *m_mockTagsHandler, findTagByName(name, linkedNotebookGuid))
+        .WillOnce(Return(utility::makeReadyFuture(tag)));
+
+    const auto res = localStorage->findTagByName(name, linkedNotebookGuid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tag);
+}
+
+TEST_F(LocalStorageTest, ForwardListTagsToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(*m_mockTagsHandler, listTags(listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(tags)));
+
+    const auto res = localStorage->listTags(listOptions);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tags);
+}
+
+TEST_F(LocalStorageTest, ForwardListTagsPerNoteLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    const auto & localId = tags[0].localId();
+
+    EXPECT_CALL(
+        *m_mockTagsHandler, listTagsPerNoteLocalId(localId, listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(tags)));
+
+    const auto res = localStorage->listTagsPerNoteLocalId(localId, listOptions);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), tags);
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeTagByLocalIdToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto localId = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockTagsHandler, expungeTagByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeTagByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeTagByGuidToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto guid = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockTagsHandler, expungeTagByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeTagByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeTagByNameToTagsHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto name = QStringLiteral("Tag");
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockTagsHandler,
+        expungeTagByName(name, std::make_optional(linkedNotebookGuid)))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res =
+        localStorage->expungeTagByName(name, linkedNotebookGuid);
+
     ASSERT_TRUE(res.isFinished());
 }
 
