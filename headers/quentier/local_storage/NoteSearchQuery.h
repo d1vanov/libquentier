@@ -175,10 +175,10 @@ private:
     QSharedDataPointer<Data> d;
 };
 
-[[nodiscard]] bool operator==(
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
     const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
 
-[[nodiscard]] bool operator!=(
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const NoteSearchQuery & lhs, const NoteSearchQuery & rhs);
 
 } // namespace quentier
