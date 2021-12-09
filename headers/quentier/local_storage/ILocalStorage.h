@@ -659,7 +659,7 @@ template <class Order>
 {
     return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
         lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order && lhs.m_affiliation = rhs.m_affiliation &&
+        lhs.m_order == rhs.m_order && lhs.m_affiliation == rhs.m_affiliation &&
         lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids;
 }
 
