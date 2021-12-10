@@ -1208,4 +1208,292 @@ TEST_F(LocalStorageTest, ForwardExpungeTagByNameToTagsHandler)
     ASSERT_TRUE(res.isFinished());
 }
 
+TEST_F(LocalStorageTest, ForwardResourceCountToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 resourceCount = 13;
+
+    const ILocalStorage::NoteCountOptions options =
+        ILocalStorage::NoteCountOptions{
+            ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
+        ILocalStorage::NoteCountOption::IncludeDeletedNotes;
+
+    EXPECT_CALL(*m_mockResourcesHandler, resourceCount(options))
+        .WillOnce(Return(utility::makeReadyFuture(resourceCount)));
+
+    const auto res = localStorage->resourceCount(options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), resourceCount);
+}
+
+TEST_F(LocalStorageTest, ForwardResourceCountPerNoteLocalIdToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 resourceCount = 13;
+    const auto noteLocalId = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockResourcesHandler, resourceCountPerNoteLocalId(noteLocalId))
+        .WillOnce(Return(utility::makeReadyFuture(resourceCount)));
+
+    const auto res = localStorage->resourceCountPerNoteLocalId(noteLocalId);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), resourceCount);
+}
+
+TEST_F(LocalStorageTest, ForwardPutResourceToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto resource = qevercloud::Resource{};
+    const int indexInNote = 0;
+    EXPECT_CALL(*m_mockResourcesHandler, putResource(resource, indexInNote))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->putResource(resource, indexInNote);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardFindResourceByLocalIdToNotesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto resource = qevercloud::Resource{};
+    const auto & localId = resource.localId();
+
+    const auto options = ILocalStorage::FetchResourceOptions{
+        ILocalStorage::FetchResourceOption::WithBinaryData};
+
+    EXPECT_CALL(
+        *m_mockResourcesHandler, findResourceByLocalId(localId, options))
+        .WillOnce(Return(utility::makeReadyFuture(resource)));
+
+    const auto res = localStorage->findResourceByLocalId(localId, options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), resource);
+}
+
+TEST_F(LocalStorageTest, ForwardFindResourceByGuidToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    auto resource = qevercloud::Resource{};
+    resource.setGuid(UidGenerator::Generate());
+
+    const auto guid = resource.guid().value();
+
+    const auto options = ILocalStorage::FetchResourceOptions{
+        ILocalStorage::FetchResourceOption::WithBinaryData};
+
+    EXPECT_CALL(*m_mockResourcesHandler, findResourceByGuid(guid, options))
+        .WillOnce(Return(utility::makeReadyFuture(resource)));
+
+    const auto res = localStorage->findResourceByGuid(guid, options);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), resource);
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeResourceByLocalIdToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto localId = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockResourcesHandler, expungeResourceByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeResourceByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeResourceByGuidToResourcesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto guid = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockResourcesHandler, expungeResourceByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeResourceByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardSavedSearchCountToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const quint32 savedSearchCount = 15;
+    EXPECT_CALL(*m_mockSavedSearchesHandler, savedSearchCount)
+        .WillOnce(Return(utility::makeReadyFuture(savedSearchCount)));
+
+    const auto res = localStorage->savedSearchCount();
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearchCount);
+}
+
+TEST_F(LocalStorageTest, ForwardPutSavedSearchToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto savedSearch = qevercloud::SavedSearch{};
+    EXPECT_CALL(*m_mockSavedSearchesHandler, putSavedSearch(savedSearch))
+        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+
+    const auto res = localStorage->putSavedSearch(savedSearch);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardFindSavedSearchByLocalIdToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto savedSearch = qevercloud::SavedSearch{};
+    const auto & localId = savedSearch.localId();
+
+    EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+
+    const auto res = localStorage->findSavedSearchByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearch);
+}
+
+TEST_F(LocalStorageTest, ForwardFindSavedSearchByGuidToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    auto savedSearch = qevercloud::SavedSearch{};
+    savedSearch.setGuid(UidGenerator::Generate());
+
+    const auto guid = savedSearch.guid().value();
+
+    EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+
+    const auto res = localStorage->findSavedSearchByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearch);
+}
+
+TEST_F(LocalStorageTest, ForwardFindSavedSearchByNameToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    auto savedSearch = qevercloud::SavedSearch{};
+    savedSearch.setName(QStringLiteral("Saved search"));
+
+    const auto name = savedSearch.name().value();
+
+    EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByName(name))
+        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+
+    const auto res = localStorage->findSavedSearchByName(name);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearch);
+}
+
+TEST_F(LocalStorageTest, ForwardListSavedSearchesToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto savedSearches = QList<qevercloud::SavedSearch>{}
+        << qevercloud::SavedSearch{};
+
+    auto listOptions =
+        ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder>{};
+
+    listOptions.m_flags = ILocalStorage::ListObjectsOptions{
+        ILocalStorage::ListObjectsOption::ListAll};
+
+    EXPECT_CALL(*m_mockSavedSearchesHandler, listSavedSearches(listOptions))
+        .WillOnce(Return(utility::makeReadyFuture(savedSearches)));
+
+    const auto res = localStorage->listSavedSearches(listOptions);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), savedSearches);
+}
+
+TEST_F(
+    LocalStorageTest, ForwardExpungeSavedSearchByLocalIdToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto localId = UidGenerator::Generate();
+    EXPECT_CALL(
+        *m_mockSavedSearchesHandler, expungeSavedSearchByLocalId(localId))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeSavedSearchByLocalId(localId);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(LocalStorageTest, ForwardExpungeSavedSearchByGuidToSavedSearchesHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const auto guid = UidGenerator::Generate();
+    EXPECT_CALL(*m_mockSavedSearchesHandler, expungeSavedSearchByGuid(guid))
+        .WillOnce(Return(utility::makeReadyFuture()));
+
+    const auto res = localStorage->expungeSavedSearchByGuid(guid);
+    ASSERT_TRUE(res.isFinished());
+}
+
+TEST_F(
+    LocalStorageTest,
+    ForwardHighestUpdateSequenceNumberForUserOwnAccountToSynchronizationInfoHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const qint32 usn = 42;
+    const auto option = ILocalStorage::HighestUsnOption::WithinUserOwnContent;
+
+    EXPECT_CALL(
+        *m_mockSynchronizationInfoHandler, highestUpdateSequenceNumber(option))
+        .WillOnce(Return(utility::makeReadyFuture(usn)));
+
+    const auto res = localStorage->highestUpdateSequenceNumber(option);
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), usn);
+}
+
+TEST_F(
+    LocalStorageTest,
+    ForwardHighestUpdateSequenceNumberForLinkedNotebooksToSynchronizationInfoHandler)
+{
+    const auto localStorage = createLocalStorage();
+
+    const qint32 usn = 43;
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+
+    EXPECT_CALL(
+        *m_mockSynchronizationInfoHandler,
+        highestUpdateSequenceNumber(linkedNotebookGuid))
+        .WillOnce(Return(utility::makeReadyFuture(usn)));
+
+    const auto res =
+        localStorage->highestUpdateSequenceNumber(linkedNotebookGuid);
+
+    ASSERT_TRUE(res.isFinished());
+    ASSERT_EQ(res.resultCount(), 1);
+    EXPECT_EQ(res.result(), usn);
+}
+
+TEST_F(LocalStorageTest, ReturnNotifierPassedInConstructor)
+{
+    const auto localStorage = createLocalStorage();
+    EXPECT_EQ(localStorage->notifier(), m_notifier.get());
+}
+
 } // namespace quentier::local_storage::sql::tests
