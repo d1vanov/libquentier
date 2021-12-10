@@ -34,6 +34,7 @@
 #include <QFutureSynchronizer>
 #include <QGlobalStatic>
 #include <QObject>
+#include <QSet>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -1750,6 +1751,117 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
     }
     EXPECT_EQ(foundNoteFuture.result(), updatedNote);
 }
+
+struct NoteSearchQueryTestData
+{
+    QString queryString;
+    QSet<int> expectedContainedNotesIndices;
+};
+
+class NotesHandlerNoteSearchQueryTest :
+    public NotesHandlerTest,
+    public testing::WithParamInterface<NoteSearchQueryTestData>
+{
+protected:
+    void SetUpTestCase()
+    {
+        createNotebooks();
+        createTags();
+    }
+
+    void SetUp() override
+    {
+        NotesHandlerTest::SetUp();
+
+        putNotebooks();
+        putTags();
+    }
+
+    static void createNotebooks()
+    {
+        constexpr int notebookCount = 3;
+        m_notebooks.reserve(notebookCount);
+        for (int i = 0; i < notebookCount; ++i) {
+            qevercloud::Notebook notebook;
+            notebook.setName(
+                QString(QStringLiteral("Test notebook #")) + QString::number(i));
+
+            notebook.setUpdateSequenceNum(i);
+            notebook.setDefaultNotebook(i == 0);
+            notebook.setServiceCreated(i);
+            notebook.setServiceUpdated(i + 1);
+
+            m_notebooks << notebook;
+        }
+    }
+
+    static void createTags()
+    {
+        constexpr int tagCount = 9;
+        m_tags.reserve(tagCount);
+        for (int i = 0; i < tagCount; ++i) {
+            m_tags << qevercloud::Tag();
+            auto & tag = m_tags.back();
+            tag.setUpdateSequenceNum(i);
+        }
+
+        m_tags[0].setName(QStringLiteral("College"));
+        m_tags[1].setName(QStringLiteral("Server"));
+        m_tags[2].setName(QStringLiteral("Binary"));
+        m_tags[3].setName(QStringLiteral("Download"));
+        m_tags[4].setName(QStringLiteral("Browser"));
+        m_tags[5].setName(QStringLiteral("Tracker"));
+        m_tags[6].setName(QStringLiteral("Application"));
+        m_tags[7].setName(QString::fromUtf8("Footlocker αυΤΟκίΝΗτο"));
+        m_tags[8].setName(QStringLiteral("Money"));
+
+        m_tags[0].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813a"));
+        m_tags[1].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813b"));
+        m_tags[2].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813c"));
+        m_tags[3].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813d"));
+        m_tags[4].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813e"));
+        m_tags[5].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813f"));
+        m_tags[6].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813g"));
+        m_tags[7].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813h"));
+        m_tags[8].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813i"));
+    }
+
+    void putNotebooks()
+    {
+        const auto notebooksHandler = std::make_shared<NotebooksHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+        for (const auto & notebook: qAsConst(m_notebooks)) {
+            auto putNotebookFuture = notebooksHandler->putNotebook(notebook);
+            putNotebookFuture.waitForFinished();
+        }
+    }
+
+    void putTags()
+    {
+        const auto tagsHandler = std::make_shared<TagsHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread);
+
+        for (const auto & tag: qAsConst(m_tags)) {
+            auto putTagFuture = tagsHandler->putTag(tag);
+            putTagFuture.waitForFinished();
+        }
+    }
+
+protected:
+    static QList<qevercloud::Notebook> m_notebooks;
+    static QList<qevercloud::Tag> m_tags;
+    static QList<qevercloud::Resource> m_resources;
+};
+
+const std::array gNoteSearchQueryTestData{
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:true"),
+        QSet<int>{} << 1 << 4 << 8
+    },
+};
 
 } // namespace quentier::local_storage::sql::tests
 
