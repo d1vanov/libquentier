@@ -519,6 +519,12 @@ QFuture<void> LocalStorage::expungeSavedSearchByLocalId(
         std::move(savedSearchLocalId));
 }
 
+QFuture<void> LocalStorage::expungeSavedSearchByGuid(
+    qevercloud::Guid guid)
+{
+    return m_savedSearchesHandler->expungeSavedSearchByGuid(std::move(guid));
+}
+
 QFuture<qint32> LocalStorage::highestUpdateSequenceNumber(
     HighestUsnOption option) const
 {

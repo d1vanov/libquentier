@@ -255,6 +255,9 @@ public:
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) override;
 
+    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(
+        qevercloud::Guid guid) override;
+
     // Synchronization API
     [[nodiscard]] QFuture<qint32> highestUpdateSequenceNumber(
         HighestUsnOption option) const override;

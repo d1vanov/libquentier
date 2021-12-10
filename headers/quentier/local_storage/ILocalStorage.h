@@ -638,6 +638,9 @@ public:
     [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) = 0;
 
+    [[nodiscard]] virtual QFuture<void> expungeSavedSearchByGuid(
+        qevercloud::Guid guid) = 0;
+
     // Synchronization API
     [[nodiscard]] virtual QFuture<qint32> highestUpdateSequenceNumber(
         HighestUsnOption option) const = 0;
