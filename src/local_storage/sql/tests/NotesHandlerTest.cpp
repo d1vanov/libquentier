@@ -17,7 +17,6 @@
  */
 
 #include "../NotesHandler.h"
-#include "../NotebooksHandler.h"
 #include "../ConnectionPool.h"
 #include "../NotebooksHandler.h"
 #include "../Notifier.h"
@@ -33,6 +32,7 @@
 #include <QFlags>
 #include <QFutureSynchronizer>
 #include <QGlobalStatic>
+#include <QHash>
 #include <QObject>
 #include <QSet>
 #include <QSqlDatabase>
@@ -116,8 +116,7 @@ namespace {
         qevercloud::SharedNote sharedNote;
         sharedNote.setSharerUserID(qevercloud::UserID{10});
 
-        if (i % 2 == 0)
-        {
+        if (i % 2 == 0) {
             qevercloud::Identity recipientIdentity;
             recipientIdentity.setId(qevercloud::IdentityID{i * 20});
 
@@ -131,8 +130,7 @@ namespace {
                 contact.setPhotoLastUpdated(
                     QDateTime::currentMSecsSinceEpoch());
 
-                contact.setMessagingPermit(
-                    QByteArray::fromStdString("aaaa"s));
+                contact.setMessagingPermit(QByteArray::fromStdString("aaaa"s));
 
                 contact.setMessagingPermitExpires(
                     QDateTime::currentMSecsSinceEpoch());
@@ -196,8 +194,7 @@ namespace {
     QList<qevercloud::Resource> resources;
     resources.reserve(resourceCount);
 
-    for (int i = 0; i < resourceCount; ++i)
-    {
+    for (int i = 0; i < resourceCount; ++i) {
         qevercloud::Resource resource;
         resource.setLocallyModified(true);
 
@@ -608,8 +605,7 @@ TEST_F(
 }
 
 TEST_F(
-    NotesHandlerTest,
-    ShouldHaveZeroNoteCountPerTagLocalIdWhenThereAreNoNotes)
+    NotesHandlerTest, ShouldHaveZeroNoteCountPerTagLocalIdWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
@@ -627,7 +623,9 @@ TEST_F(
     EXPECT_EQ(noteCountFuture.result(), 0U);
 }
 
-TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotesNorTags)
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotesNorTags)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
@@ -651,7 +649,9 @@ TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountsPerTagsWhenThereAreNeitherNotes
     EXPECT_EQ(noteCountsFuture.result().size(), 0);
 }
 
-TEST_F(NotesHandlerTest, ShouldHaveZeroNoteCountPerNotebookAndTagLocalidsWhenThereAreNoNotes)
+TEST_F(
+    NotesHandlerTest,
+    ShouldHaveZeroNoteCountPerNotebookAndTagLocalidsWhenThereAreNoNotes)
 {
     const auto notesHandler = std::make_shared<NotesHandler>(
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
@@ -709,8 +709,8 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeNoteFuture = notesHandler->expungeNoteByLocalId(
-        UidGenerator::Generate());
+    auto expungeNoteFuture =
+        notesHandler->expungeNoteByLocalId(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
 }
@@ -721,8 +721,8 @@ TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByGuid)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
-    auto expungeNoteFuture = notesHandler->expungeNoteByGuid(
-        UidGenerator::Generate());
+    auto expungeNoteFuture =
+        notesHandler->expungeNoteByGuid(UidGenerator::Generate());
 
     EXPECT_NO_THROW(expungeNoteFuture.waitForFinished());
 }
@@ -871,7 +871,8 @@ const std::array gNoteTestValues{
     createNote(*gNotebook),
     createNote(
         *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds),
-    createNote(*gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
+    createNote(
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithTagGuids),
     createNote(
         *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
@@ -898,8 +899,7 @@ const std::array gNoteTestValues{
         CreateNoteOptions{} | CreateNoteOption::WithSharedNotes |
             CreateNoteOption::WithRestrictions | CreateNoteOption::WithLimits),
     createNote(
-        *gNotebook,
-        CreateNoteOptions{} | CreateNoteOption::WithResources),
+        *gNotebook, CreateNoteOptions{} | CreateNoteOption::WithResources),
     createNote(
         *gNotebook,
         CreateNoteOptions{} | CreateNoteOption::WithTagLocalIds |
@@ -921,8 +921,7 @@ const std::array gNoteTestValues{
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    NotesHandlerSingleNoteTestInstance,
-    NotesHandlerSingleNoteTest,
+    NotesHandlerSingleNoteTestInstance, NotesHandlerSingleNoteTest,
     testing::ValuesIn(gNoteTestValues));
 
 TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
@@ -934,21 +933,15 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     NotesHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notePut,
-        &notifierListener,
+        m_notifier, &Notifier::notePut, &notifierListener,
         &NotesHandlerTestNotifierListener::onNotePut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::noteUpdated,
-        &notifierListener,
+        m_notifier, &Notifier::noteUpdated, &notifierListener,
         &NotesHandlerTestNotifierListener::onNoteUpdated);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::noteExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::noteExpunged, &notifierListener,
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
@@ -1019,8 +1012,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     EXPECT_EQ(noteCountFuture.result(), 1U);
 
     for (const auto & tagLocalId: qAsConst(note.tagLocalIds())) {
-        noteCountFuture = notesHandler->noteCountPerTagLocalId(
-            tagLocalId, noteCountOptions);
+        noteCountFuture =
+            notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 1U);
@@ -1040,8 +1033,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         FetchNoteOption::WithResourceMetadata |
         FetchNoteOption::WithResourceBinaryData;
 
-    auto foundByLocalIdNoteFuture = notesHandler->findNoteByLocalId(
-        note.localId(), fetchNoteOptions);
+    auto foundByLocalIdNoteFuture =
+        notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
     foundByLocalIdNoteFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
@@ -1055,8 +1048,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
 
-    auto foundByGuidNoteFuture = notesHandler->findNoteByGuid(
-        note.guid().value(), fetchNoteOptions);
+    auto foundByGuidNoteFuture =
+        notesHandler->findNoteByGuid(note.guid().value(), fetchNoteOptions);
 
     foundByGuidNoteFuture.waitForFinished();
     ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
@@ -1068,8 +1061,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
 
-    auto listNotesFuture = notesHandler->listNotes(
-        fetchNoteOptions, listNotesOptions);
+    auto listNotesFuture =
+        notesHandler->listNotes(fetchNoteOptions, listNotesOptions);
 
     listNotesFuture.waitForFinished();
     ASSERT_EQ(listNotesFuture.result().size(), 1);
@@ -1108,7 +1101,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     EXPECT_EQ(notifierListener.expungedNoteLocalIds().at(0), note.localId());
 
     const auto checkNoteExpunged = [&] {
-        noteCountOptions = NoteCountOptions{} | NoteCountOption::IncludeNonDeletedNotes |
+        noteCountOptions = NoteCountOptions{} |
+            NoteCountOption::IncludeNonDeletedNotes |
             NoteCountOption::IncludeDeletedNotes;
 
         noteCountFuture = notesHandler->noteCount(noteCountOptions);
@@ -1136,20 +1130,20 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 0U);
 
-        auto foundByLocalIdNoteFuture = notesHandler->findNoteByLocalId(
-            note.localId(), fetchNoteOptions);
+        auto foundByLocalIdNoteFuture =
+            notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
         foundByLocalIdNoteFuture.waitForFinished();
         EXPECT_EQ(foundByLocalIdNoteFuture.resultCount(), 0);
 
-        auto foundByGuidNoteFuture = notesHandler->findNoteByGuid(
-            note.guid().value(), fetchNoteOptions);
+        auto foundByGuidNoteFuture =
+            notesHandler->findNoteByGuid(note.guid().value(), fetchNoteOptions);
 
         foundByGuidNoteFuture.waitForFinished();
         EXPECT_EQ(foundByGuidNoteFuture.resultCount(), 0);
 
-        auto listNotesFuture = notesHandler->listNotes(
-            fetchNoteOptions, listNotesOptions);
+        auto listNotesFuture =
+            notesHandler->listNotes(fetchNoteOptions, listNotesOptions);
 
         listNotesFuture.waitForFinished();
         EXPECT_EQ(listNotesFuture.result().size(), 0);
@@ -1202,8 +1196,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
         return options;
     }();
 
-    auto updateNoteFuture = notesHandler->updateNote(
-        updatedNote, updateNoteOptions);
+    auto updateNoteFuture =
+        notesHandler->updateNote(updatedNote, updateNoteOptions);
 
     updateNoteFuture.waitForFinished();
 
@@ -1238,21 +1232,15 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     NotesHandlerTestNotifierListener notifierListener;
 
     QObject::connect(
-        m_notifier,
-        &Notifier::notePut,
-        &notifierListener,
+        m_notifier, &Notifier::notePut, &notifierListener,
         &NotesHandlerTestNotifierListener::onNotePut);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::noteUpdated,
-        &notifierListener,
+        m_notifier, &Notifier::noteUpdated, &notifierListener,
         &NotesHandlerTestNotifierListener::onNoteUpdated);
 
     QObject::connect(
-        m_notifier,
-        &Notifier::noteExpunged,
-        &notifierListener,
+        m_notifier, &Notifier::noteExpunged, &notifierListener,
         &NotesHandlerTestNotifierListener::onNoteExpunged);
 
     const auto notebooksHandler = std::make_shared<NotebooksHandler>(
@@ -1270,7 +1258,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     int noteCounter = 2;
     int tagCounter = 1;
     int sharedNoteCounter = 1;
-    for (auto it = std::next(notes.begin()); it != notes.end(); ++it) { // NOLINT
+    for (auto it = std::next(notes.begin()); it != notes.end(); ++it) // NOLINT
+    {
         auto & note = *it;
         note.setLocalId(UidGenerator::Generate());
         note.setGuid(UidGenerator::Generate());
@@ -1283,7 +1272,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         ++noteCounter;
 
         if (note.sharedNotes() && !note.sharedNotes()->isEmpty()) {
-            for (auto & sharedNote : *note.mutableSharedNotes()) {
+            for (auto & sharedNote: *note.mutableSharedNotes()) {
                 sharedNote.setNoteGuid(note.guid());
 
                 if (sharedNote.recipientIdentity()) {
@@ -1296,7 +1285,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         }
 
         if (note.resources() && !note.resources()->isEmpty()) {
-            for (auto & resource : *note.mutableResources()) {
+            for (auto & resource: *note.mutableResources()) {
                 resource.setNoteLocalId(note.localId());
                 resource.setNoteGuid(note.guid());
             }
@@ -1374,8 +1363,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     }
 
     for (const auto & tagLocalId: qAsConst(allTagLocalIds)) {
-        noteCountFuture = notesHandler->noteCountPerTagLocalId(
-            tagLocalId, noteCountOptions);
+        noteCountFuture =
+            notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 1U);
@@ -1388,7 +1377,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     EXPECT_EQ(noteCountFuture.result(), notes.size());
 
     noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-        QStringList{} << gNotebook->localId(), allTagLocalIds, noteCountOptions);
+        QStringList{} << gNotebook->localId(), allTagLocalIds,
+        noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), notesWithTagLocalIds);
@@ -1409,8 +1399,10 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
         if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
             !note.tagGuids()->isEmpty())
         {
-            EXPECT_FALSE(foundByLocalIdNoteFuture.result().tagLocalIds().isEmpty());
-            note.setTagLocalIds(foundByLocalIdNoteFuture.result().tagLocalIds());
+            EXPECT_FALSE(
+                foundByLocalIdNoteFuture.result().tagLocalIds().isEmpty());
+            note.setTagLocalIds(
+                foundByLocalIdNoteFuture.result().tagLocalIds());
         }
 
         EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
@@ -1436,8 +1428,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     EXPECT_EQ(noteCountFuture.result(), 0U);
 
     for (const auto & tagLocalId: qAsConst(allTagLocalIds)) {
-        noteCountFuture = notesHandler->noteCountPerTagLocalId(
-            tagLocalId, noteCountOptions);
+        noteCountFuture =
+            notesHandler->noteCountPerTagLocalId(tagLocalId, noteCountOptions);
 
         noteCountFuture.waitForFinished();
         EXPECT_EQ(noteCountFuture.result(), 0U);
@@ -1450,7 +1442,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
     EXPECT_EQ(noteCountFuture.result(), 0U);
 
     noteCountFuture = notesHandler->noteCountPerNotebookAndTagLocalIds(
-        QStringList{} << gNotebook->localId(), allTagLocalIds, noteCountOptions);
+        QStringList{} << gNotebook->localId(), allTagLocalIds,
+        noteCountOptions);
 
     noteCountFuture.waitForFinished();
     EXPECT_EQ(noteCountFuture.result(), 0U);
@@ -1519,10 +1512,8 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
     resource.setData(qevercloud::Data{});
     resource.mutableData()->setBody(QByteArray("Fake resource data body"));
     resource.mutableData()->setSize(resource.data()->body()->size());
-    resource.mutableData()->setBodyHash(
-        QCryptographicHash::hash(
-            *resource.data()->body(),
-            QCryptographicHash::Md5));
+    resource.mutableData()->setBodyHash(QCryptographicHash::hash(
+        *resource.data()->body(), QCryptographicHash::Md5));
 
     note.setResources(QList<qevercloud::Resource>() << resource);
     note.setTagGuids(QList<qevercloud::Guid>() << *tag.guid());
@@ -1587,8 +1578,8 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
     auto & resourceAppData = *resourceAttributes.mutableApplicationData();
     resourceAppData.setKeysOnly(
-        QSet<QString>() << QStringLiteral("key_1")
-        << QStringLiteral("key_2") << QStringLiteral("key_3"));
+        QSet<QString>() << QStringLiteral("key_1") << QStringLiteral("key_2")
+                        << QStringLiteral("key_3"));
 
     resourceAppData.setFullMap(QMap<QString, QString>{});
 
@@ -1640,9 +1631,7 @@ enum class ExcludedTagIds
 };
 
 const std::array gExcludedTagIds{
-    ExcludedTagIds::LocalIds,
-    ExcludedTagIds::Guids
-};
+    ExcludedTagIds::LocalIds, ExcludedTagIds::Guids};
 
 class NotesHandlerUpdateNoteTagIdsTest :
     public NotesHandlerTest,
@@ -1650,8 +1639,7 @@ class NotesHandlerUpdateNoteTagIdsTest :
 {};
 
 INSTANTIATE_TEST_SUITE_P(
-    NotesHandlerUpdateNoteTagIdsTestInstance,
-    NotesHandlerUpdateNoteTagIdsTest,
+    NotesHandlerUpdateNoteTagIdsTestInstance, NotesHandlerUpdateNoteTagIdsTest,
     testing::ValuesIn(gExcludedTagIds));
 
 TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
@@ -1697,7 +1685,9 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
     note.setActive(true);
     note.setNotebookGuid(gNotebook->guid());
     note.setNotebookLocalId(gNotebook->localId());
-    note.setTagGuids(QList<qevercloud::Guid>{} << tag1.guid().value() << tag2.guid().value());
+    note.setTagGuids(
+        QList<qevercloud::Guid>{} << tag1.guid().value()
+                                  << tag2.guid().value());
     note.setTagLocalIds(QStringList{} << tag1.localId() << tag2.localId());
 
     auto putNoteFuture = notesHandler->putNote(note);
@@ -1762,29 +1752,29 @@ class NotesHandlerNoteSearchQueryTest :
     public NotesHandlerTest,
     public testing::WithParamInterface<NoteSearchQueryTestData>
 {
-protected:
-    void SetUpTestCase()
-    {
-        createNotebooks();
-        createTags();
-    }
-
     void SetUp() override
     {
         NotesHandlerTest::SetUp();
 
+        createNotebooks();
+        createTags();
+        createResources();
+        createNotes();
+
         putNotebooks();
         putTags();
+        putNotes();
     }
 
-    static void createNotebooks()
+    void createNotebooks()
     {
         constexpr int notebookCount = 3;
         m_notebooks.reserve(notebookCount);
         for (int i = 0; i < notebookCount; ++i) {
             qevercloud::Notebook notebook;
             notebook.setName(
-                QString(QStringLiteral("Test notebook #")) + QString::number(i));
+                QString(QStringLiteral("Test notebook #")) +
+                QString::number(i));
 
             notebook.setUpdateSequenceNum(i);
             notebook.setDefaultNotebook(i == 0);
@@ -1795,7 +1785,7 @@ protected:
         }
     }
 
-    static void createTags()
+    void createTags()
     {
         constexpr int tagCount = 9;
         m_tags.reserve(tagCount);
@@ -1815,19 +1805,612 @@ protected:
         m_tags[7].setName(QString::fromUtf8("Footlocker αυΤΟκίΝΗτο"));
         m_tags[8].setName(QStringLiteral("Money"));
 
-        m_tags[0].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813a"));
-        m_tags[1].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813b"));
-        m_tags[2].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813c"));
-        m_tags[3].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813d"));
-        m_tags[4].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813e"));
-        m_tags[5].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813f"));
-        m_tags[6].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813g"));
-        m_tags[7].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813h"));
-        m_tags[8].setGuid(QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813i"));
+        m_tags[0].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813a"));
+        m_tags[1].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813b"));
+        m_tags[2].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813c"));
+        m_tags[3].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813d"));
+        m_tags[4].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813e"));
+        m_tags[5].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813f"));
+        m_tags[6].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813g"));
+        m_tags[7].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813h"));
+        m_tags[8].setGuid(
+            QStringLiteral("8743428c-ef91-4d05-9e7c-4a2e856e813i"));
+    }
+
+    void createResources()
+    {
+        constexpr int resourceCount = 3;
+        m_resources.reserve(resourceCount);
+
+        for (int i = 0; i < resourceCount; ++i) {
+            m_resources << qevercloud::Resource();
+            auto & resource = m_resources.back();
+
+            resource.setUpdateSequenceNum(i);
+        }
+
+        auto & res0 = m_resources[0];
+        res0.setMime(QStringLiteral("image/gif"));
+        res0.setData(qevercloud::Data{});
+        res0.mutableData()->setBody(QByteArray("fake image/gif byte array"));
+        res0.mutableData()->setSize(res0.data()->body()->size());
+
+        res0.mutableData()->setBodyHash(QCryptographicHash::hash(
+            *res0.data()->body(), QCryptographicHash::Md5));
+
+        QString recognitionBodyStr = QStringLiteral(
+            "<recoIndex docType=\"handwritten\" objType=\"image\" "
+            "objID=\"fc83e58282d8059be17debabb69be900\" "
+            "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+            "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+            "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+            "<t w=\"87\">INFO ?</t>"
+            "<t w=\"83\">INFORMATION</t>"
+            "<t w=\"82\">LNFOPWATION</t>"
+            "<t w=\"71\">LNFOPMATION</t>"
+            "<t w=\"67\">LNFOPWATJOM</t>"
+            "<t w=\"67\">LMFOPWAFJOM</t>"
+            "<t w=\"62\">ΕΊΝΑΙ ένα</t>"
+            "</item>"
+            "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+            "<t w=\"11\">et</t>"
+            "<t w=\"10\">TQ</t>"
+            "</item>"
+            "</recoIndex>");
+
+        res0.setRecognition(qevercloud::Data{});
+        res0.mutableRecognition()->setBody(recognitionBodyStr.toUtf8());
+        res0.mutableRecognition()->setSize(res0.recognition()->body()->size());
+
+        res0.mutableRecognition()->setBodyHash(QCryptographicHash::hash(
+            *res0.recognition()->body(), QCryptographicHash::Md5));
+
+        auto & res1 = m_resources[1];
+        res1.setMime(QStringLiteral("audio/*"));
+        res1.setData(qevercloud::Data{});
+        res1.mutableData()->setBody(QByteArray("fake audio/* byte array"));
+        res1.mutableData()->setSize(res1.data()->body()->size());
+
+        res1.mutableData()->setBodyHash(QCryptographicHash::hash(
+            *res1.data()->body(), QCryptographicHash::Md5));
+
+        res1.setRecognition(qevercloud::Data{});
+        res1.mutableRecognition()->setBody(
+            QByteArray("<recoIndex docType=\"picture\" objType=\"image\" "
+                       "objID=\"fc83e58282d8059be17debabb69be900\" "
+                       "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+                       "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+                       "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+                       "<t w=\"87\">WIKI ?</t>"
+                       "<t w=\"83\">WIKIPEDIA</t>"
+                       "<t w=\"82\">WIKJPEDJA</t>"
+                       "<t w=\"71\">WJKJPEDJA</t>"
+                       "<t w=\"67\">MJKJPEDJA</t>"
+                       "<t w=\"67\">MJKJREDJA</t>"
+                       "<t w=\"66\">MJKJREDJA</t>"
+                       "</item>"
+                       "<item x=\"1840\" y=\"1475\" w=\"14\" h=\"12\">"
+                       "<t w=\"11\">et</t>"
+                       "<t w=\"10\">TQ</t>"
+                       "</item>"
+                       "</recoIndex>"));
+
+        res1.mutableRecognition()->setSize(res1.recognition()->body()->size());
+
+        res1.mutableRecognition()->setBodyHash(QCryptographicHash::hash(
+            *res1.recognition()->body(), QCryptographicHash::Md5));
+
+        auto & res2 = m_resources[2];
+        res2.setMime(QStringLiteral("application/vnd.evernote.ink"));
+
+        res2.setData(qevercloud::Data{});
+        res2.mutableData()->setBody(
+            QByteArray("fake application/vnd.evernote.ink byte array"));
+
+        res2.mutableData()->setSize(res2.data()->body()->size());
+
+        res2.mutableData()->setBodyHash(QCryptographicHash::hash(
+            *res2.data()->body(), QCryptographicHash::Md5));
+    }
+
+    void createNotes()
+    {
+        constexpr int titleCount = 3;
+        QStringList titles;
+        titles.reserve(titleCount);
+        titles << QString::fromUtf8("Potato (είΝΑΙ)") << QStringLiteral("Ham")
+               << QStringLiteral("Eggs");
+
+        constexpr int contentCount = 9;
+        QStringList contents;
+        contents.reserve(contentCount);
+        contents
+            << QStringLiteral(
+                   "<en-note><h1>The unique identifier of this note. "
+                   "Will be set by the server</h1></en-note>")
+            << QStringLiteral(
+                   "<en-note><h1>The XHTML block that makes up the note. "
+                   "This is the canonical form of the note's contents"
+                   "</h1><en-todo checked = \"true\"/></en-note>")
+            << QStringLiteral(
+                   "<en-note><h1>The binary MD5 checksum of the UTF-8 "
+                   "encoded content body.</h1></en-note>")
+            << QString::fromUtf8(
+                   "<en-note><h1>The number of Unicode characters "
+                   "\"αυτό είναι ένα αυτοκίνητο\" in the content "
+                   "of the note.</h1><en-todo/></en-note>")
+            << QStringLiteral(
+                   "<en-note><en-todo checked = \"true\"/><h1>The date "
+                   "and time when the note was created in one of "
+                   "the clients.</h1><en-todo checked = \"false\"/></en-note>")
+            << QStringLiteral(
+                   "<en-note><h1>If present [code characters], the note "
+                   "is considered \"deleted\", and this stores the date "
+                   "and time when the note was deleted</h1></en-note>")
+            << QString::fromUtf8(
+                   "<en-note><h1>If the note is available {ΑΥΤΌ "
+                   "ΕΊΝΑΙ ΈΝΑ ΑΥΤΟΚΊΝΗΤΟ} for normal actions and viewing, "
+                   "this flag will be set to true.</h1><en-crypt "
+                   "hint=\"My Cat\'s Name\">NKLHX5yK1MlpzemJQijA"
+                   "N6C4545s2EODxQ8Bg1r==</en-crypt></en-note>")
+            << QString::fromUtf8(
+                   "<en-note><h1>A number identifying the last "
+                   "transaction (Αυτό ΕΊΝΑΙ ένα αυΤΟκίΝΗτο) to "
+                   "modify the state of this note</h1></en-note>")
+            << QStringLiteral(
+                   "<en-note><h1>The list of resources that are embedded "
+                   "within this note.</h1><en-todo checked = \"true\"/>"
+                   "<en-crypt hint=\"My Cat\'s Name\">NKLHX5yK1Mlpzem"
+                   "JQijAN6C4545s2EODxQ8Bg1r==</en-crypt></en-note>");
+
+        QHash<QString, qevercloud::Timestamp> timestampForDateTimeString;
+
+        QDateTime datetime = QDateTime::currentDateTime();
+        datetime.setTime(QTime(0, 0, 0, 0)); // today midnight
+
+        timestampForDateTimeString[QStringLiteral("day")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-1);
+
+        timestampForDateTimeString[QStringLiteral("day-1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-1);
+
+        timestampForDateTimeString[QStringLiteral("day-2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-1);
+
+        timestampForDateTimeString[QStringLiteral("day-3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(4);
+
+        timestampForDateTimeString[QStringLiteral("day+1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(1);
+
+        timestampForDateTimeString[QStringLiteral("day+2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(1);
+
+        timestampForDateTimeString[QStringLiteral("day+3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-3); // return back to today midnight
+
+        const int dayOfWeek = datetime.date().dayOfWeek();
+
+        // go to the closest previous Sunday
+        datetime = datetime.addDays(-1 * dayOfWeek);
+
+        timestampForDateTimeString[QStringLiteral("week")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-7);
+
+        timestampForDateTimeString[QStringLiteral("week-1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-7);
+
+        timestampForDateTimeString[QStringLiteral("week-2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(-7);
+
+        timestampForDateTimeString[QStringLiteral("week-3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(28);
+
+        timestampForDateTimeString[QStringLiteral("week+1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(7);
+
+        timestampForDateTimeString[QStringLiteral("week+2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addDays(7);
+
+        timestampForDateTimeString[QStringLiteral("week+3")] =
+            datetime.toMSecsSinceEpoch();
+
+        // return to today midnight
+        datetime = datetime.addDays(-21 + dayOfWeek);
+
+        const int dayOfMonth = datetime.date().day();
+        datetime = datetime.addDays(-(dayOfMonth - 1));
+
+        timestampForDateTimeString[QStringLiteral("month")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(-1);
+
+        timestampForDateTimeString[QStringLiteral("month-1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(-1);
+
+        timestampForDateTimeString[QStringLiteral("month-2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(-1);
+
+        timestampForDateTimeString[QStringLiteral("month-3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(4);
+
+        timestampForDateTimeString[QStringLiteral("month+1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(1);
+
+        timestampForDateTimeString[QStringLiteral("month+2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(1);
+
+        timestampForDateTimeString[QStringLiteral("month+3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addMonths(-3);
+        datetime =
+            datetime.addDays(dayOfMonth - 1); // return back to today midnight
+
+        const int monthOfYear = datetime.date().month();
+        datetime = datetime.addMonths(-(monthOfYear - 1));
+        datetime = datetime.addDays(-(dayOfMonth - 1));
+
+        timestampForDateTimeString[QStringLiteral("year")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(-1);
+
+        timestampForDateTimeString[QStringLiteral("year-1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(-1);
+
+        timestampForDateTimeString[QStringLiteral("year-2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(-1);
+
+        timestampForDateTimeString[QStringLiteral("year-3")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(4);
+
+        timestampForDateTimeString[QStringLiteral("year+1")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(1);
+
+        timestampForDateTimeString[QStringLiteral("year+2")] =
+            datetime.toMSecsSinceEpoch();
+
+        datetime = datetime.addYears(1);
+
+        timestampForDateTimeString[QStringLiteral("year+3")] =
+            datetime.toMSecsSinceEpoch();
+
+        const int creationTimestampCount = 9;
+        QList<qevercloud::Timestamp> creationTimestamps;
+        creationTimestamps.reserve(creationTimestampCount);
+
+        creationTimestamps
+            << timestampForDateTimeString[QStringLiteral("day-3")]
+            << timestampForDateTimeString[QStringLiteral("day-2")]
+            << timestampForDateTimeString[QStringLiteral("day-1")]
+            << timestampForDateTimeString[QStringLiteral("day")]
+            << timestampForDateTimeString[QStringLiteral("day+1")]
+            << timestampForDateTimeString[QStringLiteral("day+2")]
+            << timestampForDateTimeString[QStringLiteral("day+3")]
+            << timestampForDateTimeString[QStringLiteral("week-3")]
+            << timestampForDateTimeString[QStringLiteral("week-2")];
+
+        const int modificationTimestampCount = 9;
+        QList<qevercloud::Timestamp> modificationTimestamps;
+        modificationTimestamps.reserve(modificationTimestampCount);
+
+        modificationTimestamps
+            << timestampForDateTimeString[QStringLiteral("month-3")]
+            << timestampForDateTimeString[QStringLiteral("month-2")]
+            << timestampForDateTimeString[QStringLiteral("month-1")]
+            << timestampForDateTimeString[QStringLiteral("month")]
+            << timestampForDateTimeString[QStringLiteral("month+1")]
+            << timestampForDateTimeString[QStringLiteral("month+2")]
+            << timestampForDateTimeString[QStringLiteral("month+3")]
+            << timestampForDateTimeString[QStringLiteral("week-1")]
+            << timestampForDateTimeString[QStringLiteral("week")];
+
+        const int subjectDateTimestampCount = 3;
+        QList<qevercloud::Timestamp> subjectDateTimestamps;
+        subjectDateTimestamps.reserve(subjectDateTimestampCount);
+
+        subjectDateTimestamps
+            << timestampForDateTimeString[QStringLiteral("week+1")]
+            << timestampForDateTimeString[QStringLiteral("week+2")]
+            << timestampForDateTimeString[QStringLiteral("week+3")];
+
+        const int latitudeCount = 9;
+        QList<double> latitudes;
+        latitudes.reserve(latitudeCount);
+
+        latitudes << -72.5 << -51.3 << -32.1 << -11.03 << 10.24 << 32.33
+                  << 54.78 << 72.34 << 91.18;
+
+        const int longitudeCount = 9;
+        QList<double> longitudes;
+        longitudes.reserve(longitudeCount);
+
+        longitudes << -71.15 << -52.42 << -31.91 << -12.25 << 9.78 << 34.62
+                   << 56.17 << 73.27 << 92.46;
+
+        const int altitudeCount = 9;
+        QList<double> altitudes;
+        altitudes.reserve(altitudeCount);
+
+        altitudes << -70.23 << -51.81 << -32.62 << -11.14 << 10.45 << 31.73
+                  << 52.73 << 71.82 << 91.92;
+
+        const int authorCount = 3;
+        QStringList authors;
+        authors.reserve(authorCount);
+
+        authors << QStringLiteral("Shakespeare") << QStringLiteral("Homer")
+                << QStringLiteral("Socrates");
+
+        const int sourceCount = 3;
+        QStringList sources;
+        sources.reserve(sourceCount);
+
+        sources << QStringLiteral("web.clip") << QStringLiteral("mail.clip")
+                << QStringLiteral("mobile.android");
+
+        const int sourceApplicationCount = 3;
+        QStringList sourceApplications;
+        sourceApplications.reserve(sourceApplicationCount);
+
+        sourceApplications << QStringLiteral("food.*")
+                           << QStringLiteral("hello.*")
+                           << QStringLiteral("skitch.*");
+
+        const int contentClassCount = 3;
+        QStringList contentClasses;
+        contentClasses.reserve(contentClassCount);
+
+        contentClasses << QStringLiteral("evernote.food.meal")
+                       << QStringLiteral("evernote.hello.*")
+                       << QStringLiteral("whatever");
+
+        const int placeNameCount = 3;
+        QStringList placeNames;
+        placeNames.reserve(placeNameCount);
+
+        placeNames << QStringLiteral("home") << QStringLiteral("school")
+                   << QStringLiteral("bus");
+
+        const int applicationDataCount = 3;
+        QStringList applicationData;
+        applicationData.reserve(applicationDataCount);
+
+        applicationData << QStringLiteral("myapp") << QStringLiteral("Evernote")
+                        << QStringLiteral("Quentier");
+
+        const int reminderOrderCount = 3;
+        QList<qint64> reminderOrders;
+        reminderOrders.reserve(reminderOrderCount);
+        reminderOrders << 1 << 2 << 3;
+
+        const int reminderTimeCount = 3;
+        QList<qevercloud::Timestamp> reminderTimes;
+        reminderTimes.reserve(reminderTimeCount);
+
+        reminderTimes << timestampForDateTimeString[QStringLiteral("year-3")]
+                      << timestampForDateTimeString[QStringLiteral("year-2")]
+                      << timestampForDateTimeString[QStringLiteral("year-1")];
+
+        const int reminderDoneTimeCount = 3;
+        QList<qevercloud::Timestamp> reminderDoneTimes;
+        reminderDoneTimes.reserve(reminderDoneTimeCount);
+
+        reminderDoneTimes
+            << timestampForDateTimeString[QStringLiteral("year")]
+            << timestampForDateTimeString[QStringLiteral("year+1")]
+            << timestampForDateTimeString[QStringLiteral("year+2")];
+
+        const int noteCount = 9;
+        m_notes.reserve(noteCount);
+
+        Q_ASSERT(!m_notebooks.isEmpty());
+        const int notebookCount = m_notebooks.size();
+
+        for (int i = 0; i < noteCount; ++i) {
+            m_notes << qevercloud::Note();
+            auto & note = m_notes.back();
+
+            note.setTitle(
+                titles[i / titleCount] + QStringLiteral(" #") +
+                QString::number(i));
+
+            note.setContent(contents[i]);
+
+            if (i != 7) {
+                note.setCreated(creationTimestamps[i]);
+            }
+
+            if (!note.attributes()) {
+                note.setAttributes(qevercloud::NoteAttributes{});
+            }
+
+            auto & attributes = *note.mutableAttributes();
+
+            attributes.setSubjectDate(
+                subjectDateTimestamps[i / subjectDateTimestampCount]);
+
+            if ((i != 6) && (i != 7) && (i != 8)) {
+                attributes.setLatitude(latitudes[i]);
+            }
+
+            attributes.setLongitude(longitudes[i]);
+            attributes.setAltitude(altitudes[i]);
+            attributes.setAuthor(authors[i / authorCount]);
+            attributes.setSource(sources[i / sourceCount]);
+
+            attributes.setSourceApplication(
+                sourceApplications[i / sourceApplicationCount]);
+
+            attributes.setContentClass(contentClasses[i / contentClassCount]);
+
+            if (i / placeNameCount != 2) {
+                attributes.setPlaceName(placeNames[i / placeNameCount]);
+            }
+
+            if ((i != 3) && (i != 4) && (i != 5)) {
+                attributes.setApplicationData(qevercloud::LazyMap{});
+                attributes.mutableApplicationData()->setKeysOnly(
+                    QSet<QString>{});
+
+                auto & keysOnly =
+                    *attributes.mutableApplicationData()->mutableKeysOnly();
+
+                keysOnly.insert(applicationData[i / applicationDataCount]);
+
+                attributes.mutableApplicationData()->setFullMap(
+                    QMap<QString, QString>{});
+
+                auto & fullMap =
+                    *attributes.mutableApplicationData()->mutableFullMap();
+
+                fullMap.insert(
+                    applicationData[i / applicationDataCount],
+                    QStringLiteral("Application data value at key ") +
+                        applicationData[i / applicationDataCount]);
+            }
+
+            if (i == 6) {
+                if (!attributes.applicationData()->keysOnly()) {
+                    attributes.mutableApplicationData()->setKeysOnly(
+                        QSet<QString>{});
+                }
+
+                auto & keysOnly =
+                    *attributes.mutableApplicationData()->mutableKeysOnly();
+
+                keysOnly.insert(applicationData[1]);
+
+                if (!attributes.applicationData()->fullMap()) {
+                    attributes.mutableApplicationData()->setFullMap(
+                        QMap<QString, QString>{});
+                }
+
+                auto & fullMap =
+                    *attributes.mutableApplicationData()->mutableFullMap();
+
+                fullMap.insert(
+                    applicationData[1],
+                    QStringLiteral("Application data value at key ") +
+                        applicationData[1]);
+            }
+
+            if ((i != 0) && (i != 1) && (i != 2)) {
+                attributes.setReminderOrder(
+                    reminderOrders[i / reminderOrderCount]);
+            }
+
+            attributes.setReminderTime(reminderTimes[i / reminderTimeCount]);
+            attributes.setReminderDoneTime(
+                reminderDoneTimes[i / reminderDoneTimeCount]);
+
+            if (i != (noteCount - 1)) {
+                int k = 0;
+                const int tagCount = m_tags.size();
+                while (((i + k) < tagCount) && (k < 3)) {
+                    if (!note.tagGuids()) {
+                        note.setTagGuids(
+                            QList<qevercloud::Guid>()
+                            << m_tags[i + k].guid().value());
+                    }
+                    else {
+                        note.mutableTagGuids()->append(
+                            m_tags[i + k].guid().value());
+                    }
+
+                    note.mutableTagLocalIds().append(m_tags[i + k].localId());
+                    ++k;
+                }
+            }
+
+            if (i != 8) {
+                Q_ASSERT(!m_resources.isEmpty());
+                auto resource = m_resources[i / m_resources.size()];
+                resource.setLocalId(QUuid::createUuid().toString());
+                if (!note.resources()) {
+                    note.setResources(
+                        QList<qevercloud::Resource>() << resource);
+                }
+                else {
+                    note.mutableResources()->append(resource);
+                }
+            }
+
+            if (i == 3) {
+                auto additionalResource = m_resources[0];
+                additionalResource.setLocalId(QUuid::createUuid().toString());
+                if (!note.resources()) {
+                    note.setResources(
+                        QList<qevercloud::Resource>() << additionalResource);
+                }
+                else {
+                    note.mutableResources()->append(additionalResource);
+                }
+            }
+
+            m_notes[i].setNotebookLocalId(
+                m_notebooks[i / notebookCount].localId());
+        }
     }
 
     void putNotebooks()
     {
+        Q_ASSERT(!m_notebooks.isEmpty());
+
         const auto notebooksHandler = std::make_shared<NotebooksHandler>(
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
@@ -1840,6 +2423,8 @@ protected:
 
     void putTags()
     {
+        Q_ASSERT(!m_tags.isEmpty());
+
         const auto tagsHandler = std::make_shared<TagsHandler>(
             m_connectionPool, QThreadPool::globalInstance(), m_notifier,
             m_writerThread);
@@ -1850,18 +2435,48 @@ protected:
         }
     }
 
+    void putNotes()
+    {
+        Q_ASSERT(!m_notes.isEmpty());
+
+        const auto notesHandler = std::make_shared<NotesHandler>(
+            m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+            m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+        for (const auto & note: qAsConst(m_notes)) {
+            auto putNoteFuture = notesHandler->putNote(note);
+            putNoteFuture.waitForFinished();
+        }
+    }
+
 protected:
-    static QList<qevercloud::Notebook> m_notebooks;
-    static QList<qevercloud::Tag> m_tags;
-    static QList<qevercloud::Resource> m_resources;
+    QList<qevercloud::Notebook> m_notebooks;
+    QList<qevercloud::Tag> m_tags;
+    QList<qevercloud::Resource> m_resources;
+    QList<qevercloud::Note> m_notes;
 };
 
 const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
-        QStringLiteral("todo:true"),
-        QSet<int>{} << 1 << 4 << 8
-    },
+        QStringLiteral("todo:true"), QSet<int>{} << 1 << 4 << 8},
 };
+
+INSTANTIATE_TEST_SUITE_P(
+    NotesHandlerNoteSearchQueryTestInstance, NotesHandlerNoteSearchQueryTest,
+    testing::ValuesIn(gNoteSearchQueryTestData));
+
+TEST_P(NotesHandlerNoteSearchQueryTest, TestNoteSearchQuery)
+{
+    const auto & testData = GetParam();
+
+    NoteSearchQuery noteSearchQuery;
+    ErrorString errorDescription;
+    ASSERT_TRUE(
+        noteSearchQuery.setQueryString(testData.queryString, errorDescription))
+        << errorDescription.nonLocalizedString().toStdString();
+
+    // TODO: continue from here
+}
 
 } // namespace quentier::local_storage::sql::tests
 
