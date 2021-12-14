@@ -556,6 +556,10 @@ QStringList findResourceLocalIdsByMimeTypes(
     const QStringList & resourceMimeTypes, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
+    if (resourceMimeTypes.isEmpty()) {
+        return {};
+    }
+
     const ErrorString errorPrefix(
         QT_TR_NOOP("can't get resource mime types for resource local ids"));
 
