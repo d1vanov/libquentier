@@ -237,8 +237,9 @@ T & printListOptionsBase(T & t, const ILocalStorage::ListOptionsBase & options)
     return t;
 }
 
-template <class T, class O>
-T & printListOptions(T & t, const ILocalStorage::ListOptions<O> & options)
+template <class T>
+T & printListNotebooksOptions(
+    T & t, const ILocalStorage::ListNotebooksOptions & options)
 {
     printListOptionsBase(t, options);
     t << ", order = " << options.m_order << ", affiliation = "
@@ -254,9 +255,7 @@ T & printListOptions(T & t, const ILocalStorage::ListOptions<O> & options)
 
 template <class T>
 T & printListLinkedNotebooksOptions(
-    T & t,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
-        options)
+    T & t, const ILocalStorage::ListLinkedNotebooksOptions & options)
 {
     printListOptionsBase(t, options);
     t << options.m_order;
@@ -266,8 +265,7 @@ T & printListLinkedNotebooksOptions(
 template <class T>
 T & printListSavedSearchesOptions(
     T & t,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
-        options)
+    const ILocalStorage::ListSavedSearchesOptions & options)
 {
     printListOptionsBase(t, options);
     t << options.m_order;
@@ -301,8 +299,7 @@ T & printTagNotesRelation(
 
 template <class T>
 T & printListTagsOptions(
-    T & t,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+    T & t, const ILocalStorage::ListTagsOptions & options)
 {
     printListOptionsBase(t, options);
     t << options.m_order;
@@ -311,8 +308,7 @@ T & printListTagsOptions(
 
 template <class T>
 T & printListNotesOptions(
-    T & t,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+    T & t, const ILocalStorage::ListNotesOptions & options)
 {
     printListOptionsBase(t, options);
     t << options.m_order;
@@ -616,7 +612,52 @@ T & printHighestUsnOption(
     return t;
 }
 
+bool compare(
+    const ILocalStorage::ListOptionsBase & lhs,
+    const ILocalStorage::ListOptionsBase & rhs) noexcept
+{
+    return static_cast<qint64>(lhs.m_flags) ==
+        static_cast<qint64>(rhs.m_flags) &&
+        lhs.m_limit == rhs.m_limit && lhs.m_offset == rhs.m_offset &&
+        lhs.m_direction == rhs.m_direction;
+}
+
 } // namespace
+
+ILocalStorage::ListOptionsBase::ListOptionsBase() noexcept :
+    m_flags{ILocalStorage::ListObjectsOptions{ILocalStorage::ListObjectsOption::ListAll}},
+    m_limit{0},
+    m_offset{0},
+    m_direction{ILocalStorage::OrderDirection::Ascending}
+{}
+
+ILocalStorage::ListNotebooksOptions::ListNotebooksOptions() noexcept :
+    ListOptionsBase(),
+    m_order{ILocalStorage::ListNotebooksOrder::NoOrder},
+    m_affiliation{ILocalStorage::Affiliation::Any}
+{}
+
+ILocalStorage::ListLinkedNotebooksOptions::ListLinkedNotebooksOptions() noexcept :
+    ListOptionsBase(),
+    m_order{ILocalStorage::ListLinkedNotebooksOrder::NoOrder}
+{}
+
+ILocalStorage::ListSavedSearchesOptions::ListSavedSearchesOptions() noexcept :
+    ListOptionsBase(),
+    m_order{ILocalStorage::ListSavedSearchesOrder::NoOrder}
+{}
+
+ILocalStorage::ListNotesOptions::ListNotesOptions() noexcept :
+    ListOptionsBase(),
+    m_order{ILocalStorage::ListNotesOrder::NoOrder}
+{}
+
+ILocalStorage::ListTagsOptions::ListTagsOptions() noexcept :
+    ListOptionsBase(),
+    m_order{ILocalStorage::ListTagsOrder::NoOrder},
+    m_affiliation{ILocalStorage::Affiliation::Any},
+    m_tagNotesRelation{ILocalStorage::TagNotesRelation::Any}
+{}
 
 QTextStream & operator<<(
     QTextStream & strm, const ILocalStorage::StartupOption option)
@@ -826,76 +867,61 @@ QDebug & operator<<(
 
 QTextStream & operator<<(
     QTextStream & strm,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder> &
-        options)
-{
-    return printListOptions(strm, options);
-}
-
-QDebug & operator<<(
-    QDebug & dbg,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder> &
-        options)
-{
-    return printListOptions(dbg, options);
-}
-
-QTextStream & operator<<(
-    QTextStream & strm,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
-        options)
+    const ILocalStorage::ListLinkedNotebooksOptions & options)
 {
     return printListLinkedNotebooksOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> &
-        options)
+    QDebug & dbg, const ILocalStorage::ListNotebooksOptions & options)
+{
+    return printListNotebooksOptions(dbg, options);
+}
+
+QTextStream & operator<<(
+    QTextStream & strm, const ILocalStorage::ListNotebooksOptions & options)
+{
+    return printListNotebooksOptions(strm, options);
+}
+
+QDebug & operator<<(
+    QDebug & dbg, const ILocalStorage::ListLinkedNotebooksOptions & options)
 {
     return printListLinkedNotebooksOptions(dbg, options);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+    QTextStream & strm, const ILocalStorage::ListTagsOptions & options)
 {
     return printListTagsOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & options)
+    QDebug & dbg, const ILocalStorage::ListTagsOptions & options)
 {
     return printListTagsOptions(dbg, options);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+    QTextStream & strm, const ILocalStorage::ListNotesOptions & options)
 {
     return printListNotesOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & options)
+    QDebug & dbg, const ILocalStorage::ListNotesOptions & options)
 {
     return printListNotesOptions(dbg, options);
 }
 
 QTextStream & operator<<(
-    QTextStream & strm,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
-        options)
+    QTextStream & strm, const ILocalStorage::ListSavedSearchesOptions & options)
 {
     return printListSavedSearchesOptions(strm, options);
 }
 
 QDebug & operator<<(
-    QDebug & dbg,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> &
-        options)
+    QDebug & dbg, const ILocalStorage::ListSavedSearchesOptions & options)
 {
     return printListSavedSearchesOptions(dbg, options);
 }
@@ -924,78 +950,39 @@ QDebug & operator<<(
     return printNoteCountOptions(dbg, options);
 }
 
-template <>
-[[nodiscard]] bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs)
+bool operator==(
+    const ILocalStorage::ListOptionsBase & lhs,
+    const ILocalStorage::ListOptionsBase & rhs) noexcept
 {
-    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
-        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order;
+    return compare(lhs, rhs);
 }
 
-template <>
-[[nodiscard]] bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs)
+bool operator!=(
+    const ILocalStorage::ListOptionsBase & lhs,
+    const ILocalStorage::ListOptionsBase & rhs) noexcept
 {
     return !(lhs == rhs);
 }
 
-template <>
-[[nodiscard]] bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs)
+bool operator==(
+    const ILocalStorage::ListNotebooksOptions & lhs,
+    const ILocalStorage::ListNotebooksOptions & rhs) noexcept
 {
-    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
-        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order;
+    if (!compare(lhs, rhs)) {
+        return false;
+    }
+
+    return lhs.m_order == rhs.m_order && lhs.m_affiliation == rhs.m_affiliation
+        && lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids;
 }
 
-template <>
-[[nodiscard]] bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs)
+bool operator!=(
+    const ILocalStorage::ListNotebooksOptions & lhs,
+    const ILocalStorage::ListNotebooksOptions & rhs) noexcept
 {
     return !(lhs == rhs);
 }
 
-template <>
-[[nodiscard]] bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs)
-{
-    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
-        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order;
-}
-
-template <>
-[[nodiscard]] bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs)
-{
-    return !(lhs == rhs);
-}
-
-template <>
-[[nodiscard]] bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs)
-{
-    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
-        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order && lhs.m_affiliation == rhs.m_affiliation &&
-        lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids &&
-        lhs.m_tagNotesRelation == rhs.m_tagNotesRelation;
-}
-
-template <>
-[[nodiscard]] bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs)
-{
-    return !(lhs == rhs);
-}
+// TODO: continue from here
 
 } // namespace quentier::local_storage

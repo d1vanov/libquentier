@@ -222,44 +222,67 @@ public:
 
     struct QUENTIER_EXPORT ListOptionsBase
     {
+        ListOptionsBase() noexcept;
+
         ListObjectsOptions m_flags;
         quint64 m_limit;
         quint64 m_offset;
         OrderDirection m_direction;
     };
 
-    template <class Order>
-    struct QUENTIER_EXPORT ListOptions : ListOptionsBase
+    struct QUENTIER_EXPORT ListNotebooksOptions : public ListOptionsBase
     {
-        Order m_order;
+        ListNotebooksOptions() noexcept;
+
+        ListNotebooksOrder m_order;
         Affiliation m_affiliation;
         QList<qevercloud::Guid> m_linkedNotebookGuids;
     };
 
-    /// Specialization for linked notebooks as they can belong only to user's
-    /// own account
-    template <>
-    struct QUENTIER_EXPORT ListOptions<ListLinkedNotebooksOrder> :
-        ListOptionsBase
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotebooksOptions & options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListNotebooksOptions & options);
+
+    struct QUENTIER_EXPORT ListLinkedNotebooksOptions : public ListOptionsBase
     {
+        ListLinkedNotebooksOptions() noexcept;
+
         ListLinkedNotebooksOrder m_order;
     };
 
-    /// Specialization for saved searches as they can belong only to user's
-    /// own account
-    template <>
-    struct QUENTIER_EXPORT ListOptions<ListSavedSearchesOrder> : ListOptionsBase
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListLinkedNotebooksOptions & options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListLinkedNotebooksOptions & options);
+
+    struct QUENTIER_EXPORT ListSavedSearchesOptions : public ListOptionsBase
     {
+        ListSavedSearchesOptions() noexcept;
+
         ListSavedSearchesOrder m_order;
     };
 
-    /// Specialization for notes as for them a multitude of listing methods
-    /// is available and support for affiliation is not a strict requirement
-    template <>
-    struct QUENTIER_EXPORT ListOptions<ListNotesOrder> : ListOptionsBase
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListSavedSearchesOptions & options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListSavedSearchesOptions & options);
+
+    struct QUENTIER_EXPORT ListNotesOptions : public ListOptionsBase
     {
+        ListNotesOptions() noexcept;
+
         ListNotesOrder m_order;
     };
+
+    friend QUENTIER_EXPORT QTextStream & operator<<(
+        QTextStream & strm, const ListNotesOptions & options);
+
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, const ListNotesOptions & options);
 
     /// Denotes the relation between tag and notes - whether any note us using
     /// the given tag
@@ -273,9 +296,10 @@ public:
         WithoutNotes
     };
 
-    template <>
-    struct QUENTIER_EXPORT ListOptions<ListTagsOrder> : ListOptionsBase
+    struct QUENTIER_EXPORT ListTagsOptions : public ListOptionsBase
     {
+        ListTagsOptions() noexcept;
+
         ListTagsOrder m_order;
         Affiliation m_affiliation;
         QList<qevercloud::Guid> m_linkedNotebookGuids;
@@ -283,34 +307,10 @@ public:
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<ListNotebooksOrder> options);
+        QTextStream & strm, const ListTagsOptions & options);
 
     friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<ListNotebooksOrder> options);
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<ListLinkedNotebooksOrder> options);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<ListLinkedNotebooksOrder> options);
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<ListTagsOrder> options);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<ListTagsOrder> options);
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<ListNotesOrder> options);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<ListNotesOrder> options);
-
-    friend QUENTIER_EXPORT QTextStream & operator<<(
-        QTextStream & strm, ListOptions<ListSavedSearchesOrder> options);
-
-    friend QUENTIER_EXPORT QDebug & operator<<(
-        QDebug & dbg, ListOptions<ListSavedSearchesOrder> options);
+        QDebug & dbg, const ListTagsOptions & options);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -459,7 +459,7 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt) = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options = {}) const = 0;
+        ListNotebooksOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const = 0;
@@ -478,7 +478,7 @@ public:
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::LinkedNotebook>>
         listLinkedNotebooks(
-            ListOptions<ListLinkedNotebooksOrder> options = {}) const = 0;
+            ListLinkedNotebooksOptions options = {}) const = 0;
 
     // Notes API
     [[nodiscard]] virtual QFuture<quint32> noteCount(
@@ -497,7 +497,7 @@ public:
 
     [[nodiscard]] virtual QFuture<QHash<QString, quint32>>
         noteCountsPerTags(
-            ListOptions<ListTagsOrder> listTagsOptions = {},
+            ListTagsOptions listTagsOptions = {},
             NoteCountOptions options = NoteCountOptions(
                 NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
@@ -521,28 +521,28 @@ public:
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) const = 0;
+        ListNotesOptions listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookLocalId(
             QString notebookLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
+            ListNotesOptions listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerTagLocalId(
             QString tagLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
+            ListNotesOptions listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookAndTagLocalIds(
             QStringList notebookLocalIds, QStringList tagLocalIds,
             FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
+            ListNotesOptions listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesByLocalIds(
             QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> listOptions = {}) const = 0;
+            ListNotesOptions listOptions = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const = 0;
@@ -572,12 +572,12 @@ public:
             std::nullopt) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>> listTags(
-        ListOptions<ListTagsOrder> options = {}) const = 0;
+        ListTagsOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>>
         listTagsPerNoteLocalId(
             QString noteLocalId,
-            ListOptions<ListTagsOrder> options = {}) const = 0;
+            ListTagsOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByLocalId(
         QString tagLocalId) = 0;
@@ -633,7 +633,7 @@ public:
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
         listSavedSearches(
-            ListOptions<ListSavedSearchesOrder> options = {}) const = 0;
+            ListSavedSearchesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) = 0;
@@ -655,63 +655,52 @@ public:
     [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
 
-template <class Order>
-[[nodiscard]] bool operator==(
-    const ILocalStorage::ListOptions<Order> & lhs,
-    const ILocalStorage::ListOptions<Order> & rhs)
-{
-    return lhs.m_flags == rhs.m_flags && lhs.m_limit == rhs.m_limit &&
-        lhs.m_offset == rhs.m_offset && lhs.m_direction == rhs.m_direction &&
-        lhs.m_order == rhs.m_order && lhs.m_affiliation == rhs.m_affiliation &&
-        lhs.m_linkedNotebookGuids == rhs.m_linkedNotebookGuids;
-}
-
-template <class Order>
-[[nodiscard]] bool operator!=(
-    const ILocalStorage::ListOptions<Order> & lhs,
-    const ILocalStorage::ListOptions<Order> & rhs)
-{
-    return !(lhs == rhs);
-}
-
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs);
+    const ILocalStorage::ListOptionsBase & lhs,
+    const ILocalStorage::ListOptionsBase & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder> & rhs);
+    const ILocalStorage::ListOptionsBase & lhs,
+    const ILocalStorage::ListOptionsBase & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs);
+    const ILocalStorage::ListNotebooksOptions & lhs,
+    const ILocalStorage::ListNotebooksOptions & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder> & rhs);
+    const ILocalStorage::ListNotebooksOptions & lhs,
+    const ILocalStorage::ListNotebooksOptions & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs);
+    const ILocalStorage::ListLinkedNotebooksOptions & lhs,
+    const ILocalStorage::ListLinkedNotebooksOptions & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder> & rhs);
+    const ILocalStorage::ListLinkedNotebooksOptions & lhs,
+    const ILocalStorage::ListLinkedNotebooksOptions & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs);
+    const ILocalStorage::ListSavedSearchesOptions & lhs,
+    const ILocalStorage::ListSavedSearchesOptions & rhs) noexcept;
 
-template <>
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & lhs,
-    const ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> & rhs);
+    const ILocalStorage::ListSavedSearchesOptions & lhs,
+    const ILocalStorage::ListSavedSearchesOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListNotesOptions & lhs,
+    const ILocalStorage::ListNotesOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListNotesOptions & lhs,
+    const ILocalStorage::ListNotesOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ILocalStorage::ListTagsOptions & lhs,
+    const ILocalStorage::ListTagsOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ILocalStorage::ListTagsOptions & lhs,
+    const ILocalStorage::ListTagsOptions & rhs) noexcept;
 
 } // namespace quentier::local_storage
