@@ -364,13 +364,14 @@ void encryptionItemInNoteSearchQueryToSql(
     if (noteSearchQuery.hasNegatedEncryption()) {
         strm << "((NoteFTS.contentContainsEncryption IS 0) OR "
              << "(NoteFTS.contentContainsEncryption IS NULL)) ";
+        strm << uniteOperator;
+        strm << " ";
     }
     else if (noteSearchQuery.hasEncryption()) {
         strm << "(NoteFTS.contentContainsEncryption IS 1) ";
+        strm << uniteOperator;
+        strm << " ";
     }
-
-    strm << uniteOperator;
-    strm << " ";
 }
 
 void contentSearchTermToSqlQueryParts(
@@ -892,7 +893,7 @@ void contentSearchTermToSqlQueryParts(
         ErrorString error;
         if (!contentSearchTermsToSqlQueryPart(noteSearchQuery, strm, error)) {
             extendError(error, {}, {});
-            QNWARNING("local_storage", errorDescription);
+            QNWARNING("local_storage::sql::utils", errorDescription);
             return {};
         }
     }
@@ -901,7 +902,9 @@ void contentSearchTermToSqlQueryParts(
 
     // 10) Removing trailing unite operator from the SQL string (if any)
 
-    QString spareEnd = uniteOperator + QStringLiteral(" ");
+    const QString spareEnd =
+        QStringLiteral(" ") + uniteOperator + QStringLiteral(" ");
+
     if (queryString.endsWith(spareEnd)) {
         queryString.chop(spareEnd.size());
     }
