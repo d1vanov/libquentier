@@ -38,6 +38,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QTemporaryDir>
+#include <QTextStream>
 #include <QThreadPool>
 
 #include <gtest/gtest.h>
@@ -2465,7 +2466,8 @@ INSTANTIATE_TEST_SUITE_P(
     NotesHandlerNoteSearchQueryTestInstance, NotesHandlerNoteSearchQueryTest,
     testing::ValuesIn(gNoteSearchQueryTestData));
 
-TEST_P(NotesHandlerNoteSearchQueryTest, TestNoteSearchQuery)
+/*
+TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
 {
     const auto & testData = GetParam();
 
@@ -2475,8 +2477,85 @@ TEST_P(NotesHandlerNoteSearchQueryTest, TestNoteSearchQuery)
         noteSearchQuery.setQueryString(testData.queryString, errorDescription))
         << errorDescription.nonLocalizedString().toStdString();
 
-    // TODO: continue from here
+    using FetchNoteOption = NotesHandler::FetchNoteOption;
+    using FetchNoteOptions = NotesHandler::FetchNoteOptions;
+
+    const auto fetchNoteOptions = FetchNoteOptions{} |
+        FetchNoteOption::WithResourceMetadata |
+        FetchNoteOption::WithResourceBinaryData;
+
+    const auto notesHandler = std::make_shared<NotesHandler>(
+        m_connectionPool, QThreadPool::globalInstance(), m_notifier,
+        m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
+
+    auto queryNotesFuture =
+        notesHandler->queryNotes(noteSearchQuery, fetchNoteOptions);
+
+    queryNotesFuture.waitForFinished();
+    ASSERT_EQ(queryNotesFuture.resultCount(), 1);
+    const auto notes = queryNotesFuture.result();
+
+    if (notes.isEmpty())
+    {
+        EXPECT_TRUE(testData.expectedContainedNotesIndices.isEmpty())
+            << ([&] {
+                QString res;
+                QTextStream strm{&res};
+                strm << "Internal error: no notes corresponding to note search "
+                    << "query were found; query string: "
+                    << testData.queryString << "\nNote search query: "
+                    << noteSearchQuery;
+                return res.toStdString();
+            }());
+    }
+    else
+    {
+        QSet<int> containedNoteIndices;
+        const int originalNoteCount = m_notes.size();
+        for (int i = 0; i < originalNoteCount; ++i)
+        {
+            if (notes.contains(m_notes.at(i))) {
+                containedNoteIndices.insert(i);
+            }
+        }
+
+        EXPECT_EQ(containedNoteIndices, testData.expectedContainedNotesIndices)
+            << ([&] {
+                QString res;
+                QTextStream strm{&res};
+                strm << "unexpected result of note search query processing: ";
+                strm << "Expected note indices: ";
+                for (const int i:
+                     qAsConst(testData.expectedContainedNotesIndices)) {
+                    strm << i << "; ";
+                }
+                strm << "received note indices: ";
+                for (const int i: qAsConst(containedNoteIndices)) {
+                    strm << i << "; ";
+                }
+
+                strm << "\nExpected notes: ";
+                for (int i = 0; i < originalNoteCount; ++i) {
+                    if (!testData.expectedContainedNotesIndices.contains(i)) {
+                        continue;
+                    }
+
+                    strm << m_notes.at(i) << "\n";
+                }
+
+                strm << "\nActual found notes: ";
+                for (const auto & note: qAsConst(notes)) {
+                    strm << note << "\n";
+                }
+
+                strm << "\nQuery string: " << testData.queryString
+                    << "\nNote search query: " << noteSearchQuery;
+
+                return res.toStdString();
+            }());
+    }
 }
+*/
 
 } // namespace quentier::local_storage::sql::tests
 
