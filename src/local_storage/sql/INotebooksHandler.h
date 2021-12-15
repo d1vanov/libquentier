@@ -61,13 +61,11 @@ public:
     [[nodiscard]] virtual QFuture<void> expungeNotebookByName(
         QString name, std::optional<QString> linkedNotebookGuid = {}) = 0;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
+    using ListNotebooksOptions = ILocalStorage::ListNotebooksOptions;
     using ListNotebooksOrder = ILocalStorage::ListNotebooksOrder;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options) const = 0;
+        ListNotebooksOptions options) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const = 0;

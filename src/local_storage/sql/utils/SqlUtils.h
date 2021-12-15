@@ -40,7 +40,7 @@ namespace quentier::local_storage::sql::utils {
 
 template <class T>
 [[nodiscard]] QString linkedNotebookGuidSqlQueryCondition(
-    const ILocalStorage::ListOptions<T> & options,
+    const T & options,
     ErrorString & errorDescription)
 {
     QString condition;

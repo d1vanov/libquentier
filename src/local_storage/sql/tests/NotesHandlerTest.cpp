@@ -635,8 +635,7 @@ TEST_F(
     using NoteCountOption = NotesHandler::NoteCountOption;
     using NoteCountOptions = NotesHandler::NoteCountOptions;
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -750,8 +749,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesWhenThereAreNoNotes)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -773,8 +771,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookLocalId)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -797,8 +794,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentTagLocalId)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -821,8 +817,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesPerNonexistentNotebookAndTagLocalIds)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -846,8 +841,7 @@ TEST_F(NotesHandlerTest, ShouldNotListNotesForNonexistentNoteLocalIds)
     using FetchNoteOption = NotesHandler::FetchNoteOption;
     using FetchNoteOptions = NotesHandler::FetchNoteOptions;
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1056,8 +1050,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidNoteFuture.result(), note);
 
-    auto listNotesOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listNotesOptions = ILocalStorage::ListNotesOptions{};
 
     listNotesOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};

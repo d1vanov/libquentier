@@ -46,19 +46,16 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const = 0;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
+    using ListTagsOptions = ILocalStorage::ListTagsOptions;
     using ListTagsOrder = ILocalStorage::ListTagsOrder;
     using TagNotesRelation = ILocalStorage::TagNotesRelation;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>> listTags(
-        ListOptions<ListTagsOrder> options = {}) const = 0;
+        ListTagsOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Tag>>
         listTagsPerNoteLocalId(
-            QString noteLocalId,
-            ListOptions<ListTagsOrder> options = {}) const = 0;
+            QString noteLocalId, ListTagsOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeTagByLocalId(
         QString tagLocalId) = 0;

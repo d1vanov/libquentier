@@ -212,7 +212,7 @@ QFuture<void> LocalStorage::expungeNotebookByName(
 }
 
 QFuture<QList<qevercloud::Notebook>> LocalStorage::listNotebooks(
-    ListOptions<ListNotebooksOrder> options) const
+    ListNotebooksOptions options) const
 {
     return m_notebooksHandler->listNotebooks(std::move(options));
 }
@@ -248,7 +248,7 @@ QFuture<void> LocalStorage::expungeLinkedNotebookByGuid(qevercloud::Guid guid)
 }
 
 QFuture<QList<qevercloud::LinkedNotebook>> LocalStorage::listLinkedNotebooks(
-    ListOptions<ListLinkedNotebooksOrder> options) const
+    ListLinkedNotebooksOptions options) const
 {
     return m_linkedNotebooksHandler->listLinkedNotebooks(options);
 }
@@ -273,7 +273,7 @@ QFuture<quint32> LocalStorage::noteCountPerTagLocalId(
 }
 
 QFuture<QHash<QString, quint32>> LocalStorage::noteCountsPerTags(
-    ListOptions<ListTagsOrder> listTagsOptions, NoteCountOptions options) const
+    ListTagsOptions listTagsOptions, NoteCountOptions options) const
 {
     return m_notesHandler->noteCountsPerTags(
         std::move(listTagsOptions), options);
@@ -312,14 +312,14 @@ QFuture<qevercloud::Note> LocalStorage::findNoteByGuid(
 
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotes(
     FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> listOptions) const
+    ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotes(fetchOptions, listOptions);
 }
 
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerNotebookLocalId(
     QString notebookLocalId, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> listOptions) const
+    ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotesPerNotebookLocalId(
         std::move(notebookLocalId), fetchOptions, listOptions);
@@ -327,7 +327,7 @@ QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerNotebookLocalId(
 
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerTagLocalId(
     QString tagLocalId, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> listOptions) const
+    ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotesPerTagLocalId(
         std::move(tagLocalId), fetchOptions, listOptions);
@@ -336,7 +336,7 @@ QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerTagLocalId(
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerNotebookAndTagLocalIds(
     QStringList notebookLocalIds, QStringList tagLocalIds,
     FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> listOptions) const
+    ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotesPerNotebookAndTagLocalIds(
         std::move(notebookLocalIds), std::move(tagLocalIds), fetchOptions,
@@ -345,7 +345,7 @@ QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerNotebookAndTagLocalId
 
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotesByLocalIds(
     QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> listOptions) const
+    ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotesByLocalIds(
         std::move(noteLocalIds), fetchOptions, listOptions);
@@ -404,13 +404,13 @@ QFuture<qevercloud::Tag> LocalStorage::findTagByName(
 }
 
 QFuture<QList<qevercloud::Tag>> LocalStorage::listTags(
-    ListOptions<ListTagsOrder> options) const
+    ListTagsOptions options) const
 {
     return m_tagsHandler->listTags(options);
 }
 
 QFuture<QList<qevercloud::Tag>> LocalStorage::listTagsPerNoteLocalId(
-    QString noteLocalId, ListOptions<ListTagsOrder> options) const
+    QString noteLocalId, ListTagsOptions options) const
 {
     return m_tagsHandler->listTagsPerNoteLocalId(
         std::move(noteLocalId), options);
@@ -507,7 +507,7 @@ QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByName(
 }
 
 QFuture<QList<qevercloud::SavedSearch>> LocalStorage::listSavedSearches(
-    ListOptions<ListSavedSearchesOrder> options) const
+    ListSavedSearchesOptions options) const
 {
     return m_savedSearchesHandler->listSavedSearches(options);
 }

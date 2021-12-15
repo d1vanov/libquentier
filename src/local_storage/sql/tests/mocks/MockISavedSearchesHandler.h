@@ -47,7 +47,7 @@ public:
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::SavedSearch>>, listSavedSearches,
-        (ListOptions<ListSavedSearchesOrder> options), (const, override));
+        (ListSavedSearchesOptions options), (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeSavedSearchByLocalId, (QString localId),

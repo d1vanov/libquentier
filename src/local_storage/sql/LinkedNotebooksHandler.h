@@ -43,15 +43,15 @@ public:
     [[nodiscard]] QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) override;
 
-    [[nodiscard]] QFuture<qevercloud::LinkedNotebook>
-        findLinkedNotebookByGuid(qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<qevercloud::LinkedNotebook> findLinkedNotebookByGuid(
+        qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<void> expungeLinkedNotebookByGuid(
         qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::LinkedNotebook>>
         listLinkedNotebooks(
-            ListOptions<ListLinkedNotebooksOrder> options = {}) const override;
+            ListLinkedNotebooksOptions options = {}) const override;
 
 private:
     [[nodiscard]] std::optional<quint32> linkedNotebookCountImpl(
@@ -71,8 +71,8 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::LinkedNotebook> listLinkedNotebooksImpl(
-        const ListOptions<ListLinkedNotebooksOrder> & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        const ListLinkedNotebooksOptions & options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;
 

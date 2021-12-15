@@ -49,14 +49,11 @@ public:
     [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
         findSavedSearchByName(QString name) const = 0;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
+    using ListSavedSearchesOptions = ILocalStorage::ListSavedSearchesOptions;
     using ListSavedSearchesOrder = ILocalStorage::ListSavedSearchesOrder;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>
-        listSavedSearches(
-            ListOptions<ListSavedSearchesOrder> options = {}) const = 0;
+        listSavedSearches(ListSavedSearchesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeSavedSearchByLocalId(
         QString localId) = 0;

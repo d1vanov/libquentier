@@ -260,7 +260,7 @@ QFuture<void> NotebooksHandler::expungeNotebookByName(
 }
 
 QFuture<QList<qevercloud::Notebook>> NotebooksHandler::listNotebooks(
-    ListOptions<ListNotebooksOrder> options) const
+    ListNotebooksOptions options) const
 {
     return makeReadTask<QList<qevercloud::Notebook>>(
         makeTaskContext(),
@@ -815,7 +815,7 @@ QStringList NotebooksHandler::listNoteLocalIdsByNotebookLocalId(
 }
 
 QList<qevercloud::Notebook> NotebooksHandler::listNotebooksImpl(
-    const ListOptions<ListNotebooksOrder> & options,
+    const ListNotebooksOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     ErrorString error;

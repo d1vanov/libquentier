@@ -64,7 +64,7 @@ public:
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Notebook>>, listNotebooks,
-        (ListOptions<ListNotebooksOrder> options), (const, override));
+        (ListNotebooksOptions options), (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::SharedNotebook>>, listSharedNotebooks,

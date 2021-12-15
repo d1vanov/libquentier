@@ -41,7 +41,7 @@ public:
 
     MOCK_METHOD(
         (QFuture<QHash<QString, quint32>>), noteCountsPerTags,
-        (ListOptions<ListTagsOrder> listTagsOptions, NoteCountOptions options),
+        (ListTagsOptions listTagsOptions, NoteCountOptions options),
         (const, override));
 
     MOCK_METHOD(
@@ -73,7 +73,7 @@ public:
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, listNotes,
-        (FetchNoteOptions fetchOptions, ListOptions<ListNotesOrder> options),
+        (FetchNoteOptions fetchOptions, ListNotesOptions options),
         (const, override));
 
     MOCK_METHOD(
@@ -83,25 +83,25 @@ public:
     MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, listNotesPerNotebookLocalId,
         (QString notebookLocalId, FetchNoteOptions fetchOptions,
-         ListOptions<ListNotesOrder> options),
+         ListNotesOptions options),
         (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, listNotesPerTagLocalId,
         (QString tagLocalId, FetchNoteOptions fetchOptions,
-         ListOptions<ListNotesOrder> options),
+         ListNotesOptions options),
         (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, listNotesPerNotebookAndTagLocalIds,
         (QStringList notebookLocalIds, QStringList tagLocalIds,
-         FetchNoteOptions fetchOptions, ListOptions<ListNotesOrder> options),
+         FetchNoteOptions fetchOptions, ListNotesOptions options),
         (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Note>>, listNotesByLocalIds,
         (QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-         ListOptions<ListNotesOrder> options),
+         ListNotesOptions options),
         (const, override));
 
     MOCK_METHOD(

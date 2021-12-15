@@ -206,7 +206,7 @@ QFuture<void> TagsHandler::expungeTagByName(
 }
 
 QFuture<QList<qevercloud::Tag>> TagsHandler::listTags(
-    ListOptions<ListTagsOrder> options) const
+    ListTagsOptions options) const
 {
     return makeReadTask<QList<qevercloud::Tag>>(
         makeTaskContext(), weak_from_this(),
@@ -218,7 +218,7 @@ QFuture<QList<qevercloud::Tag>> TagsHandler::listTags(
 }
 
 QFuture<QList<qevercloud::Tag>> TagsHandler::listTagsPerNoteLocalId(
-    QString noteLocalId, ListOptions<ListTagsOrder> options) const
+    QString noteLocalId, ListTagsOptions options) const
 {
     return makeReadTask<QList<qevercloud::Tag>>(
         makeTaskContext(), weak_from_this(),
@@ -660,7 +660,7 @@ TagsHandler::ExpungeTagResult TagsHandler::expungeTagByNameImpl(
 }
 
 QList<qevercloud::Tag> TagsHandler::listTagsImpl(
-    const ListOptions<ListTagsOrder> & options, QSqlDatabase & database,
+    const ListTagsOptions & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
     ErrorString error;
@@ -700,7 +700,7 @@ QList<qevercloud::Tag> TagsHandler::listTagsImpl(
 }
 
 QList<qevercloud::Tag> TagsHandler::listTagsPerNoteLocalIdImpl(
-    const QString & noteLocalId, const ListOptions<ListTagsOrder> & options,
+    const QString & noteLocalId, const ListTagsOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     if (options.m_tagNotesRelation == TagNotesRelation::WithoutNotes) {

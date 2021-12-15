@@ -41,7 +41,8 @@ public:
         QReadWriteLockPtr resourceDataFilesLock);
 
     [[nodiscard]] QFuture<quint32> notebookCount() const override;
-    [[nodiscard]] QFuture<void> putNotebook(qevercloud::Notebook notebook) override;
+    [[nodiscard]] QFuture<void> putNotebook(
+        qevercloud::Notebook notebook) override;
 
     [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByLocalId(
         QString localId) const override;
@@ -54,10 +55,14 @@ public:
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook() const override;
+    [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook()
+        const override;
 
-    [[nodiscard]] QFuture<void> expungeNotebookByLocalId(QString localId) override;
-    [[nodiscard]] QFuture<void> expungeNotebookByGuid(qevercloud::Guid guid) override;
+    [[nodiscard]] QFuture<void> expungeNotebookByLocalId(
+        QString localId) override;
+
+    [[nodiscard]] QFuture<void> expungeNotebookByGuid(
+        qevercloud::Guid guid) override;
 
     [[nodiscard]] QFuture<void> expungeNotebookByName(
         QString name,
@@ -65,7 +70,7 @@ public:
             std::nullopt) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options) const override;
+        ListNotebooksOptions options) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const override;
@@ -113,7 +118,7 @@ private:
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Notebook> listNotebooksImpl(
-        const ListOptions<ListNotebooksOrder> & options,
+        const ListNotebooksOptions & options,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;

@@ -247,7 +247,7 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldListNoLinkedNotebooksWhenThereAreNoLink
             m_writerThread, m_temporaryDir.path());
 
     auto listLinkedNotebooksOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder>{};
+        ILocalStorage::ListLinkedNotebooksOptions{};
 
     listLinkedNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -305,7 +305,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
     EXPECT_EQ(foundByGuidLinkedNotebookFuture.result(), linkedNotebook);
 
     auto listLinkedNotebooksOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListLinkedNotebooksOrder>{};
+        ILocalStorage::ListLinkedNotebooksOptions{};
 
     listLinkedNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};

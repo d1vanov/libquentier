@@ -136,8 +136,9 @@ QFuture<void> LinkedNotebooksHandler::putLinkedNotebook(
         });
 }
 
-QFuture<qevercloud::LinkedNotebook> LinkedNotebooksHandler::findLinkedNotebookByGuid(
-    qevercloud::Guid guid) const
+QFuture<qevercloud::LinkedNotebook>
+    LinkedNotebooksHandler::findLinkedNotebookByGuid(
+        qevercloud::Guid guid) const
 {
     return makeReadTask<qevercloud::LinkedNotebook>(
         makeTaskContext(),
@@ -172,8 +173,9 @@ QFuture<void> LinkedNotebooksHandler::expungeLinkedNotebookByGuid(
         });
 }
 
-QFuture<QList<qevercloud::LinkedNotebook>> LinkedNotebooksHandler::listLinkedNotebooks(
-    ListOptions<ListLinkedNotebooksOrder> options) const
+QFuture<QList<qevercloud::LinkedNotebook>>
+    LinkedNotebooksHandler::listLinkedNotebooks(
+        ListLinkedNotebooksOptions options) const
 {
     return makeReadTask<QList<qevercloud::LinkedNotebook>>(
         makeTaskContext(),
@@ -223,9 +225,10 @@ std::optional<quint32> LinkedNotebooksHandler::linkedNotebookCountImpl(
     return count;
 }
 
-std::optional<qevercloud::LinkedNotebook> LinkedNotebooksHandler::findLinkedNotebookByGuid(
-    const qevercloud::Guid & guid, QSqlDatabase & database,
-    ErrorString & errorDescription) const
+std::optional<qevercloud::LinkedNotebook>
+    LinkedNotebooksHandler::findLinkedNotebookByGuid(
+        const qevercloud::Guid & guid, QSqlDatabase & database,
+        ErrorString & errorDescription) const
 {
     static const QString queryString = QStringLiteral(
         "SELECT guid, updateSequenceNumber, isDirty, "
@@ -382,7 +385,7 @@ bool LinkedNotebooksHandler::expungeLinkedNotebookByGuidImpl(
 
 QList<qevercloud::LinkedNotebook>
     LinkedNotebooksHandler::listLinkedNotebooksImpl(
-        const ListOptions<ListLinkedNotebooksOrder> & options,
+        const ListLinkedNotebooksOptions & options,
         QSqlDatabase & database, ErrorString & errorDescription) const
 {
     return utils::listObjects<

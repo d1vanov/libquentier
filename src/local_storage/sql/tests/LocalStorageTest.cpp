@@ -502,8 +502,7 @@ TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::Notebook{};
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+    auto listOptions = ILocalStorage::ListNotebooksOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -699,7 +698,7 @@ TEST_F(LocalStorageTest, ForwardNoteCountPerTagsToNotesHandler)
             ILocalStorage::NoteCountOption::IncludeNonDeletedNotes} |
         ILocalStorage::NoteCountOption::IncludeDeletedNotes;
 
-    ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder> listTagsOptions;
+    ILocalStorage::ListTagsOptions listTagsOptions;
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
 
@@ -826,8 +825,7 @@ TEST_F(LocalStorageTest, ForwardListNotesToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listOptions = ILocalStorage::ListNotesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -852,8 +850,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerNotebookLocalIdToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listOptions = ILocalStorage::ListNotesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -882,8 +879,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerTagLocalIdToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listOptions = ILocalStorage::ListNotesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -914,8 +910,7 @@ TEST_F(
         ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listOptions = ILocalStorage::ListNotesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -945,8 +940,7 @@ TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotesOrder>{};
+    auto listOptions = ILocalStorage::ListNotesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1127,8 +1121,7 @@ TEST_F(LocalStorageTest, ForwardListTagsToTagsHandler)
 
     const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listOptions = ILocalStorage::ListTagsOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1148,8 +1141,7 @@ TEST_F(LocalStorageTest, ForwardListTagsPerNoteLocalIdToNotesHandler)
 
     const auto tags = QList<qevercloud::Tag>{} << qevercloud::Tag{};
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listOptions = ILocalStorage::ListTagsOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1408,8 +1400,7 @@ TEST_F(LocalStorageTest, ForwardListSavedSearchesToSavedSearchesHandler)
     const auto savedSearches = QList<qevercloud::SavedSearch>{}
         << qevercloud::SavedSearch{};
 
-    auto listOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListSavedSearchesOrder>{};
+    auto listOptions = ILocalStorage::ListSavedSearchesOptions{};
 
     listOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};

@@ -43,7 +43,7 @@ public:
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::LinkedNotebook>>, listLinkedNotebooks,
-        (ListOptions<ListLinkedNotebooksOrder> options), (const, override));
+        (ListLinkedNotebooksOptions options), (const, override));
 };
 
 } // namespace quentier::local_storage::sql::tests::mocks

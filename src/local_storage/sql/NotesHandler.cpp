@@ -178,7 +178,7 @@ QFuture<quint32> NotesHandler::noteCountPerTagLocalId(
 }
 
 QFuture<QHash<QString, quint32>> NotesHandler::noteCountsPerTags(
-    ListOptions<ListTagsOrder> listTagsOptions, NoteCountOptions options) const
+    ListTagsOptions listTagsOptions, NoteCountOptions options) const
 {
     return makeReadTask<QHash<QString, quint32>>(
         makeTaskContext(), weak_from_this(),
@@ -309,11 +309,11 @@ QFuture<void> NotesHandler::expungeNoteByGuid(qevercloud::Guid guid)
 }
 
 QFuture<QList<qevercloud::Note>> NotesHandler::listNotes(
-    FetchNoteOptions fetchOptions, ListOptions<ListNotesOrder> options) const
+    FetchNoteOptions fetchOptions, ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [fetchOptions, options = std::move(options)](
+        [fetchOptions, options](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -341,12 +341,12 @@ QFuture<QList<qevercloud::SharedNote>> NotesHandler::listSharedNotes(
 
 QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookLocalId(
     QString notebookLocalId, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> options) const
+    ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [notebookLocalId = std::move(notebookLocalId),
-         options = std::move(options), fetchOptions](
+         options, fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
             std::optional<QReadLocker> locker;
@@ -362,11 +362,11 @@ QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerNotebookLocalId(
 
 QFuture<QList<qevercloud::Note>> NotesHandler::listNotesPerTagLocalId(
     QString tagLocalId, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> options) const
+    ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [tagLocalId = std::move(tagLocalId), options = std::move(options),
+        [tagLocalId = std::move(tagLocalId), options,
          fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
@@ -384,12 +384,12 @@ QFuture<QList<qevercloud::Note>>
     NotesHandler::listNotesPerNotebookAndTagLocalIds(
         QStringList notebookLocalIds, QStringList tagLocalIds,
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options) const
+        ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [notebookLocalIds = std::move(notebookLocalIds),
-         tagLocalIds = std::move(tagLocalIds), options = std::move(options),
+         tagLocalIds = std::move(tagLocalIds), options,
          fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
@@ -406,11 +406,11 @@ QFuture<QList<qevercloud::Note>>
 
 QFuture<QList<qevercloud::Note>> NotesHandler::listNotesByLocalIds(
     QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-    ListOptions<ListNotesOrder> options) const
+    ListNotesOptions options) const
 {
     return makeReadTask<QList<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
-        [noteLocalIds = std::move(noteLocalIds), options = std::move(options),
+        [noteLocalIds = std::move(noteLocalIds), options,
          fetchOptions](
             const NotesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) {
@@ -622,7 +622,7 @@ std::optional<quint32> NotesHandler::noteCountPerTagLocalIdImpl(
 }
 
 std::optional<QHash<QString, quint32>> NotesHandler::noteCountsPerTagsImpl(
-    const ListOptions<ListTagsOrder> & listTagsOptions,
+    const ListTagsOptions & listTagsOptions,
     NoteCountOptions options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
@@ -1470,7 +1470,7 @@ bool NotesHandler::expungeNoteByGuidImpl(
 
 QList<qevercloud::Note> NotesHandler::listNotesImpl(
     FetchNoteOptions fetchOptions,
-    const ListOptions<ListNotesOrder> & options,
+    const ListNotesOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription,
     const QString & sqlQueryCondition,
     std::optional<Transaction> transaction) const
@@ -1588,7 +1588,7 @@ QList<qevercloud::SharedNote> NotesHandler::listSharedNotesImpl(
 
 QList<qevercloud::Note> NotesHandler::listNotesPerNotebookLocalIdImpl(
     const QString & notebookLocalId, FetchNoteOptions fetchOptions,
-    const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
+    const ListNotesOptions & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
     return listNotesImpl(
@@ -1599,7 +1599,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookLocalIdImpl(
 
 QList<qevercloud::Note> NotesHandler::listNotesPerTagLocalIdImpl(
     const QString & tagLocalId, FetchNoteOptions fetchOptions,
-    const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
+    const ListNotesOptions & options, QSqlDatabase & database,
     ErrorString & errorDescription) const
 {
     return listNotesImpl(
@@ -1612,7 +1612,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerTagLocalIdImpl(
 
 QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
     const QStringList & notebookLocalIds, const QStringList & tagLocalIds,
-    FetchNoteOptions fetchOptions, const ListOptions<ListNotesOrder> & options,
+    FetchNoteOptions fetchOptions, const ListNotesOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     QString notebooksAndTagsSqlQueryCondition;
@@ -1676,7 +1676,7 @@ QList<qevercloud::Note> NotesHandler::listNotesPerNotebookAndTagLocalIdsImpl(
 
 QList<qevercloud::Note> NotesHandler::listNotesByLocalIdsImpl(
     const QStringList & noteLocalIds, FetchNoteOptions fetchOptions,
-    const ListOptions<ListNotesOrder> & options, QSqlDatabase & database,
+    const ListNotesOptions & options, QSqlDatabase & database,
     ErrorString & errorDescription, std::optional<Transaction> transaction) const
 {
     QString noteLocalIdsSqlQueryCondition;
@@ -1710,7 +1710,7 @@ QList<qevercloud::Note> NotesHandler::queryNotesImpl(
         return {};
     }
 
-    ListOptions<ListNotesOrder> options;
+    ListNotesOptions options;
     options.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
 

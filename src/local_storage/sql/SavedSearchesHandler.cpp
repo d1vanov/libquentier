@@ -164,12 +164,12 @@ QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByName(
 }
 
 QFuture<QList<qevercloud::SavedSearch>> SavedSearchesHandler::listSavedSearches(
-    ListOptions<ListSavedSearchesOrder> options) const
+    ListSavedSearchesOptions options) const
 {
     return makeReadTask<QList<qevercloud::SavedSearch>>(
         makeTaskContext(),
         weak_from_this(),
-        [options = std::move(options)]
+        [options]
         (const SavedSearchesHandler & handler, QSqlDatabase & database,
          ErrorString & errorDescription)
         {
@@ -386,7 +386,7 @@ bool SavedSearchesHandler::expungeSavedSearchByGuidImpl(
 }
 
 QList<qevercloud::SavedSearch> SavedSearchesHandler::listSavedSearchesImpl(
-    const ListOptions<ListSavedSearchesOrder> & options,
+    const ListSavedSearchesOptions & options,
     QSqlDatabase & database, ErrorString & errorDescription) const
 {
     return utils::listObjects<

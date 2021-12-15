@@ -52,11 +52,11 @@ public:
             std::nullopt) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
-        ListOptions<ListTagsOrder> options = {}) const override;
+        ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
         QString noteLocalId,
-        ListOptions<ListTagsOrder> options = {}) const override;
+        ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
@@ -114,11 +114,11 @@ private:
         QSqlDatabase & database, ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::Tag> listTagsImpl(
-        const ListOptions<ListTagsOrder> & options, QSqlDatabase & database,
+        const ListTagsOptions & options, QSqlDatabase & database,
         ErrorString & errorDescription) const;
 
     [[nodiscard]] QList<qevercloud::Tag> listTagsPerNoteLocalIdImpl(
-        const QString & noteLocalId, const ListOptions<ListTagsOrder> & options,
+        const QString & noteLocalId, const ListTagsOptions & options,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;

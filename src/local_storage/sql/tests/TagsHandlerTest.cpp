@@ -292,8 +292,7 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsWhenThereAreNoTags)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -312,8 +311,7 @@ TEST_F(TagsHandlerTest, ShouldListNoTagsPerNoteWhenThereAreNoTags)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -408,8 +406,7 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
     EXPECT_EQ(foundByNameTagFuture.result(), tag);
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -906,8 +903,7 @@ TEST_F(TagsHandlerTest, ListTagsWithAffiliation)
     putTagFuture = tagsHandler->putTag(tagFromLinkedNotebook2);
     putTagFuture.waitForFinished();
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1035,8 +1031,7 @@ TEST_F(TagsHandlerTest, ListUserOwnTagsConsideringTagNotesRelation)
     auto putNoteFuture = notesHandler->putNote(note);
     putNoteFuture.waitForFinished();
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1186,8 +1181,7 @@ TEST_F(TagsHandlerTest, ListTagsFromLinkedNotebooksConsideringTagNotesRelation)
     auto putNoteFuture = notesHandler->putNote(note);
     putNoteFuture.waitForFinished();
 
-    auto listTagsOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListTagsOrder>{};
+    auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
     listTagsOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};

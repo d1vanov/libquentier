@@ -85,7 +85,7 @@ public:
             std::nullopt) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Notebook>> listNotebooks(
-        ListOptions<ListNotebooksOrder> options = {}) const override;
+        ListNotebooksOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SharedNotebook>>
         listSharedNotebooks(qevercloud::Guid notebookGuid = {}) const override;
@@ -104,7 +104,7 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::LinkedNotebook>>
         listLinkedNotebooks(
-            ListOptions<ListLinkedNotebooksOrder> options = {}) const override;
+            ListLinkedNotebooksOptions options = {}) const override;
 
     // Notes API
     [[nodiscard]] QFuture<quint32> noteCount(
@@ -122,7 +122,7 @@ public:
             NoteCountOption::IncludeNonDeletedNotes)) const override;
 
     [[nodiscard]] QFuture<QHash<QString, quint32>> noteCountsPerTags(
-        ListOptions<ListTagsOrder> listTagsOptions = {},
+        ListTagsOptions listTagsOptions = {},
         NoteCountOptions options = NoteCountOptions(
             NoteCountOption::IncludeNonDeletedNotes)) const override;
 
@@ -144,25 +144,25 @@ public:
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) const override;
+        ListNotesOptions listOptions = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesPerNotebookLocalId(
         QString notebookLocalId, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) const override;
+        ListNotesOptions listOptions = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesPerTagLocalId(
         QString tagLocalId, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) const override;
+        ListNotesOptions listOptions = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookAndTagLocalIds(
             QStringList notebookLocalIds, QStringList tagLocalIds,
             FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> listOptions = {}) const override;
+            ListNotesOptions listOptions = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotesByLocalIds(
         QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> listOptions = {}) const override;
+        ListNotesOptions listOptions = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const override;
@@ -192,11 +192,11 @@ public:
             std::nullopt) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTags(
-        ListOptions<ListTagsOrder> options = {}) const override;
+        ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
         QString noteLocalId,
-        ListOptions<ListTagsOrder> options = {}) const override;
+        ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
@@ -250,7 +250,7 @@ public:
         QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
-        ListOptions<ListSavedSearchesOrder> options = {}) const override;
+        ListSavedSearchesOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(
         QString savedSearchLocalId) override;

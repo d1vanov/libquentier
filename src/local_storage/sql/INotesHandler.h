@@ -52,13 +52,12 @@ public:
         NoteCountOptions options = NoteCountOptions(
             NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
-
+    using ListNotesOptions = ILocalStorage::ListNotesOptions;
+    using ListTagsOptions = ILocalStorage::ListTagsOptions;
     using ListTagsOrder = ILocalStorage::ListTagsOrder;
 
     [[nodiscard]] virtual QFuture<QHash<QString, quint32>> noteCountsPerTags(
-        ListOptions<ListTagsOrder> listTagsOptions = {},
+        ListTagsOptions listTagsOptions = {},
         NoteCountOptions options = NoteCountOptions(
             NoteCountOption::IncludeNonDeletedNotes)) const = 0;
 
@@ -94,7 +93,7 @@ public:
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> listNotes(
         FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options) const = 0;
+        ListNotesOptions options) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SharedNote>>
         listSharedNotes(qevercloud::Guid noteGuid = {}) const = 0;
@@ -102,22 +101,22 @@ public:
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookLocalId(
             QString notebookLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const = 0;
+            ListNotesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerTagLocalId(
             QString tagLocalId, FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const = 0;
+            ListNotesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>>
         listNotesPerNotebookAndTagLocalIds(
             QStringList notebookLocalIds, QStringList tagLocalIds,
             FetchNoteOptions fetchOptions,
-            ListOptions<ListNotesOrder> options = {}) const = 0;
+            ListNotesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> listNotesByLocalIds(
         QStringList noteLocalIds, FetchNoteOptions fetchOptions,
-        ListOptions<ListNotesOrder> options = {}) const = 0;
+        ListNotesOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::Note>> queryNotes(
         NoteSearchQuery query, FetchNoteOptions fetchOptions) const = 0;

@@ -45,11 +45,11 @@ public:
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Tag>>, listTags,
-        (ListOptions<ListTagsOrder> options), (const, override));
+        (ListTagsOptions options), (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Tag>>, listTagsPerNoteLocalId,
-        (QString noteLocalId, ListOptions<ListTagsOrder> options),
+        (QString noteLocalId, ListTagsOptions options),
         (const, override));
 
     MOCK_METHOD(

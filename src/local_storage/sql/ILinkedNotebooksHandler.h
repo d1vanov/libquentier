@@ -46,14 +46,13 @@ public:
     [[nodiscard]] virtual QFuture<void> expungeLinkedNotebookByGuid(
         qevercloud::Guid guid) = 0;
 
-    template <class T>
-    using ListOptions = ILocalStorage::ListOptions<T>;
+    using ListLinkedNotebooksOptions =
+        ILocalStorage::ListLinkedNotebooksOptions;
 
     using ListLinkedNotebooksOrder = ILocalStorage::ListLinkedNotebooksOrder;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::LinkedNotebook>>
-        listLinkedNotebooks(
-            ListOptions<ListLinkedNotebooksOrder> options = {}) const = 0;
+        listLinkedNotebooks(ListLinkedNotebooksOptions options = {}) const = 0;
 };
 
 } // namespace quentier::local_storage::sql

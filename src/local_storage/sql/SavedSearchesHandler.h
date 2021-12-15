@@ -49,7 +49,7 @@ public:
         QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
-        ListOptions<ListSavedSearchesOrder> options = {}) const override;
+        ListSavedSearchesOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(QString localId) override;
 
@@ -74,7 +74,7 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearchesImpl(
-        const ListOptions<ListSavedSearchesOrder> & options,
+        const ListSavedSearchesOptions & options,
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;

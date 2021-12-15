@@ -492,7 +492,7 @@ TEST_F(NotebooksHandlerTest, ShouldListNoNotebooksWhenThereAreNoNotebooks)
         m_writerThread, m_temporaryDir.path(), m_resourceDataFilesLock);
 
     auto listNotebooksOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+        ILocalStorage::ListNotebooksOptions{};
 
     listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -652,7 +652,7 @@ TEST_P(NotebooksHandlerSingleNotebookTest, HandleSingleNotebook)
     EXPECT_EQ(foundDefaultNotebookFuture.result(), notebook);
 
     auto listNotebooksOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+        ILocalStorage::ListNotebooksOptions{};
 
     listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
@@ -1262,8 +1262,7 @@ TEST_F(NotebooksHandlerTest, ListNotebooksWithAffiliation)
 
     putNotebookFuture.waitForFinished();
 
-    auto listNotebooksOptions =
-        ILocalStorage::ListOptions<ILocalStorage::ListNotebooksOrder>{};
+    auto listNotebooksOptions = ILocalStorage::ListNotebooksOptions{};
 
     listNotebooksOptions.m_flags = ILocalStorage::ListObjectsOptions{
         ILocalStorage::ListObjectsOption::ListAll};
