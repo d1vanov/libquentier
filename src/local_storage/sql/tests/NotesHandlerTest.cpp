@@ -2375,6 +2375,8 @@ class NotesHandlerNoteSearchQueryTest :
                 Q_ASSERT(!m_resources.isEmpty());
                 auto resource = m_resources[i / m_resources.size()];
                 resource.setLocalId(QUuid::createUuid().toString());
+                resource.setNoteLocalId(note.localId());
+                resource.setNoteGuid(note.guid());
                 if (!note.resources()) {
                     note.setResources(
                         QList<qevercloud::Resource>() << resource);
@@ -2387,6 +2389,8 @@ class NotesHandlerNoteSearchQueryTest :
             if (i == 3) {
                 auto additionalResource = m_resources[0];
                 additionalResource.setLocalId(QUuid::createUuid().toString());
+                additionalResource.setNoteLocalId(note.localId());
+                additionalResource.setNoteGuid(note.guid());
                 if (!note.resources()) {
                     note.setResources(
                         QList<qevercloud::Resource>() << additionalResource);
@@ -2459,7 +2463,6 @@ INSTANTIATE_TEST_SUITE_P(
     NotesHandlerNoteSearchQueryTestInstance, NotesHandlerNoteSearchQueryTest,
     testing::ValuesIn(gNoteSearchQueryTestData));
 
-/*
 TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
 {
     const auto & testData = GetParam();
@@ -2548,7 +2551,6 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
             }());
     }
 }
-*/
 
 } // namespace quentier::local_storage::sql::tests
 
