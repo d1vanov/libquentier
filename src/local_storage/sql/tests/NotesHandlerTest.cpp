@@ -2457,6 +2457,62 @@ protected:
 const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
         QStringLiteral("todo:true"), QSet<int>{} << 1 << 4 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:false"), QSet<int>{} << 3 << 4},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:*"), QSet<int>{} << 1 << 3 << 4 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:true -todo:false"), QSet<int>{} << 1 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("-todo:false todo:true"), QSet<int>{} << 1 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:false -todo:true"), QSet<int>{} << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("-todo:true todo:false"), QSet<int>{} << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:true -todo:false todo:*"),
+        QSet<int>{} << 1 << 3 << 4 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: todo:true todo:false"),
+        QSet<int>{} << 1 << 3 << 4 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("todo:true todo:false"), QSet<int>{} << 4},
+    NoteSearchQueryTestData{
+        QStringLiteral("-todo:*"), QSet<int>{} << 0 << 2 << 5 << 6 << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("encryption:"), QSet<int>{} << 6 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("-encryption:"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("reminderOrder:*"),
+        QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("-reminderOrder:*"), QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("notebook:\"Test notebook #1\""),
+        QSet<int>{} << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("tag:\"Server\""), QSet<int>{} << 0 << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("-tag:\"Binary\""),
+        QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("tag:\"Server\" tag:\"Download\""), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: tag:\"Server\" tag:\"Download\""),
+        QSet<int>{} << 0 << 1 << 2 << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("tag:\"Browser\" -tag:\"Binary\""),
+        QSet<int>{} << 3 << 4},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: tag:\"Browser\" -tag:\"Binary\""),
+        QSet<int>{} << 2 << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("tag:*"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("-tag:*"), QSet<int>{} << 8},
 };
 
 INSTANTIATE_TEST_SUITE_P(
