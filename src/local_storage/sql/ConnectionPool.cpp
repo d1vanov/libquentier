@@ -26,14 +26,44 @@
 
 #include <QObject>
 #include <QReadLocker>
+#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QThread>
 #include <QWriteLocker>
 
 #include <sstream>
 #include <thread>
 
 namespace quentier::local_storage::sql {
+
+namespace {
+
+void removeDatabaseSync(const QString & connectionName)
+{
+    // It appears that QSqlDatabase::removeDatabase method does not really
+    // remove connections synchronously, so using this function to wait for that
+    // to happen
+    QSqlDatabase::removeDatabase(connectionName);
+
+    constexpr int maxWaitPeriods = 300;
+    for (int i = 0; i < maxWaitPeriods; ++i) {
+        if (!QSqlDatabase::contains(connectionName)) {
+            return;
+        }
+
+        QThread::msleep(100);
+    }
+
+    // If we got here, we are unable to actually remove the connection
+    // in a reasonable time.
+    QNWARNING(
+        "local_storage::sql::ConnectionPool",
+        "Failed to remove QSqlDatabase connection " << connectionName
+        << " in a reasonable time");
+}
+
+} // namespace
 
 ConnectionPool::ConnectionPool(
     QString hostName, QString userName, QString password,
@@ -72,9 +102,10 @@ ConnectionPool::ConnectionPool(
 
 ConnectionPool::~ConnectionPool()
 {
-    for (auto it = m_connections.begin(), end = m_connections.end(); it != end; ++it)
+    for (auto it = m_connections.begin(), end = m_connections.end(); it != end;
+         ++it)
     {
-        QSqlDatabase::removeDatabase(it.value().m_connectionName);
+        removeDatabaseSync(it.value().m_connectionName);
     }
 }
 
@@ -125,7 +156,7 @@ QSqlDatabase ConnectionPool::database()
             QWriteLocker lock{&self->m_connectionsLock};
             auto it = self->m_connections.find(pCurrentThread);
             if (Q_LIKELY(it != self->m_connections.end())) {
-                QSqlDatabase::removeDatabase(it.value().m_connectionName);
+                removeDatabaseSync(it.value().m_connectionName);
                 self->m_connections.erase(it);
             }
         },
