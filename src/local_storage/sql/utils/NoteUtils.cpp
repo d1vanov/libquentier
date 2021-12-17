@@ -493,7 +493,7 @@ void contentSearchTermToSqlQueryParts(
             positiveSqlPartStrm << ")";
 
             if (i != (numContentSearchTerms - 1)) {
-                strm << " " << uniteOperator << " ";
+                positiveSqlPartStrm << " " << uniteOperator << " ";
             }
         }
 
@@ -575,8 +575,10 @@ void contentSearchTermToSqlQueryParts(
         strm << "(" << negatedSqlPart << ")";
     }
 
-    strm << uniteOperator;
-    strm << " ";
+    if (!positiveSqlPart.isEmpty() || !negatedSqlPart.isEmpty()) {
+        strm << " " << uniteOperator << " ";
+    }
+
     return true;
 }
 
