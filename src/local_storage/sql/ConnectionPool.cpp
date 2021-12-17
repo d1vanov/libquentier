@@ -23,6 +23,7 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/SysInfo.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <QObject>
 #include <QReadLocker>
@@ -36,34 +37,6 @@
 #include <thread>
 
 namespace quentier::local_storage::sql {
-
-namespace {
-
-void removeDatabaseSync(const QString & connectionName)
-{
-    // It appears that QSqlDatabase::removeDatabase method does not really
-    // remove connections synchronously, so using this function to wait for that
-    // to happen
-    QSqlDatabase::removeDatabase(connectionName);
-
-    constexpr int maxWaitPeriods = 300;
-    for (int i = 0; i < maxWaitPeriods; ++i) {
-        if (!QSqlDatabase::contains(connectionName)) {
-            return;
-        }
-
-        QThread::msleep(100);
-    }
-
-    // If we got here, we are unable to actually remove the connection
-    // in a reasonable time.
-    QNWARNING(
-        "local_storage::sql::ConnectionPool",
-        "Failed to remove QSqlDatabase connection " << connectionName
-        << " in a reasonable time");
-}
-
-} // namespace
 
 ConnectionPool::ConnectionPool(
     QString hostName, QString userName, QString password,
@@ -105,7 +78,7 @@ ConnectionPool::~ConnectionPool()
     for (auto it = m_connections.begin(), end = m_connections.end(); it != end;
          ++it)
     {
-        removeDatabaseSync(it.value().m_connectionName);
+        QSqlDatabase::removeDatabase(it.value().m_connectionName);
     }
 }
 
@@ -135,9 +108,17 @@ QSqlDatabase ConnectionPool::database()
     auto threadId = std::this_thread::get_id();
     sstrm << threadId;
 
+    // Will also add a unique identifier to the name of the connection
+    // to prevent the following potential problem: if the same thread
+    // calls QSqlDatabase::removeDatabase and shortly thereafter
+    // QSqlDatabase::addDatabase with the same connection name, it might fail
+    // with an error saying "duplicate connection name <...>, old connection
+    // removed" and then the created connection would actually fail to do any
+    // useful work. So will ensure that each newly created connection name
+    // is unique, even if the same thread makes the connection again.
     QString connectionName =
         QStringLiteral("quentier_local_storage_db_connection_") +
-        QString::fromStdString(sstrm.str());
+        QString::fromStdString(sstrm.str()) + UidGenerator::Generate();
 
     m_connections[pCurrentThread] =
         ConnectionData{QPointer{pCurrentThread}, connectionName};
@@ -156,7 +137,7 @@ QSqlDatabase ConnectionPool::database()
             QWriteLocker lock{&self->m_connectionsLock};
             auto it = self->m_connections.find(pCurrentThread);
             if (Q_LIKELY(it != self->m_connections.end())) {
-                removeDatabaseSync(it.value().m_connectionName);
+                QSqlDatabase::removeDatabase(it.value().m_connectionName);
                 self->m_connections.erase(it);
             }
         },
