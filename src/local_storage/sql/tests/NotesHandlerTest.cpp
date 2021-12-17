@@ -2511,8 +2511,132 @@ const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
         QStringLiteral("tag:*"),
         QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7},
+    NoteSearchQueryTestData{QStringLiteral("-tag:*"), QSet<int>{} << 8},
     NoteSearchQueryTestData{
-        QStringLiteral("-tag:*"), QSet<int>{} << 8},
+        QStringLiteral("resource:\"audio/*\""), QSet<int>{} << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-resource:\"application/vnd.evernote.ink\""),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("resource:\"image/gif\" resource:\"audio/*\""),
+        QSet<int>{} << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: resource:\"image/gif\" resource:\"audio/*\""),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("resource:\"image/gif\" -resource:\"audio/*\""),
+        QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: resource:\"image/gif\" -resource:\"audio/*\""),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("resource:*"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7},
+    NoteSearchQueryTestData{QStringLiteral("-resource:*"), QSet<int>{} << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("created:day"), QSet<int>{} << 3 << 4 << 5 << 6},
+    NoteSearchQueryTestData{
+        QStringLiteral("-created:day+1"), QSet<int>{} << 0 << 1 << 2 << 3 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("created:day created:day+2"), QSet<int>{} << 5 << 6},
+    NoteSearchQueryTestData{
+        QStringLiteral("-created:day+2 -created:day-1"),
+        QSet<int>{} << 0 << 1 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: created:day-1 created:day+2"),
+        QSet<int>{} << 2 << 3 << 4 << 5 << 6},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -created:day+2 -created:day-1"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("created:day-1 -created:day+2"),
+        QSet<int>{} << 2 << 3 << 4},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: created:day+2 -created:day-1"),
+        QSet<int>{} << 0 << 1 << 5 << 6 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("created:*"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 8},
+    NoteSearchQueryTestData{QStringLiteral("-created:*"), QSet<int>{} << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("latitude:10"), QSet<int>{} << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-latitude:-30"), QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("latitude:-10 latitude:10"), QSet<int>{} << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: latitude:-10 latitude:10"), QSet<int>{} << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-latitude:-30 -latitude:-10"),
+        QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -latitude:-30 -latitude:-10"),
+        QSet<int>{} << 0 << 1 << 2 << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("latitude:-20 -latitude:20"), QSet<int>{} << 3 << 4},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -latitude:-30 latitude:30"),
+        QSet<int>{} << 0 << 1 << 2 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("latitude:*"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-latitude:*"), QSet<int>{} << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("placeName:school"), QSet<int>{} << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-placeName:home"),
+        QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("placeName:home placeName:school"), QSet<int>{}},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: placeName:home placeName:school"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("placeName:home -placeName:school"),
+        QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: placeName:home -placeName:school"),
+        QSet<int>{} << 0 << 1 << 2 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("-placeName:home -placeName:school"),
+        QSet<int>{} << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -placeName:home -placeName:school"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("placeName:*"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-placeName:*"), QSet<int>{} << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("applicationData:myapp"), QSet<int>{} << 0 << 1 << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("-applicationData:Evernote"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("applicationData:Evernote applicationData:Quentier"),
+        QSet<int>{} << 6},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: applicationData:myapp applicationData:Evernote"),
+        QSet<int>{} << 0 << 1 << 2 << 6},
+    NoteSearchQueryTestData{
+        QStringLiteral("-applicationData:myapp -applicationData:Evernote"),
+        QSet<int>{} << 3 << 4 << 5 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -applicationData:myapp -applicationData:Evernote"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("applicationData:Quentier -applicationData:Evernote"),
+        QSet<int>{} << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: applicationData:Quentier -applicationData:myapp"),
+        QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("applicationData:*"),
+        QSet<int>{} << 0 << 1 << 2 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("-applicationData:*"), QSet<int>{} << 3 << 4 << 5},
 };
 
 INSTANTIATE_TEST_SUITE_P(
