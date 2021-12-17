@@ -701,7 +701,7 @@ void contentSearchTermToSqlQueryParts(
                 strm << " ";
             }
         }
-        strm << ")";
+        strm << ") ";
         strm << uniteOperator;
         strm << " ";
     };
