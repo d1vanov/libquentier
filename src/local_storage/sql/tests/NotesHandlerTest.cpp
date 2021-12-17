@@ -2637,6 +2637,111 @@ const std::array gNoteSearchQueryTestData{
         QSet<int>{} << 0 << 1 << 2 << 6 << 7 << 8},
     NoteSearchQueryTestData{
         QStringLiteral("-applicationData:*"), QSet<int>{} << 3 << 4 << 5},
+    // Single simple search term
+    NoteSearchQueryTestData{
+        QStringLiteral("cAnOniCal"), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("-canOnIcal"),
+        QSet<int>{} << 0 << 2 << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: cAnOnical cHeckSuM ConsiDerEd"),
+        QSet<int>{} << 1 << 2 << 5},
+    // Multiple simple search terms
+    NoteSearchQueryTestData{
+        QStringLiteral("cAnOnical cHeckSuM ConsiDerEd"), QSet<int>{}},
+    NoteSearchQueryTestData{
+        QStringLiteral("-cAnOnical -cHeckSuM -ConsiDerEd"),
+        QSet<int>{} << 0 << 3 << 4 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: -cAnOnical -cHeckSuM -ConsiDerEd"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8},
+    // With search terms "overlapping" with some notes
+    NoteSearchQueryTestData{
+        QStringLiteral("-iDEnTIfIEr xhTmL -cHeckSuM -ConsiDerEd"),
+        QSet<int>{} << 1},
+    // Search by tag names as well as note contents
+    NoteSearchQueryTestData{
+        QStringLiteral("any: CaNonIcAl colLeGE UniCODe foOtLOCkeR"),
+        QSet<int>{} << 0 << 1 << 3 << 5 << 6  << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("CaNonIcAl sERveR"), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("wiLl -colLeGe"), QSet<int>{} << 6},
+    // Search by note titles as well as note contents
+    NoteSearchQueryTestData{
+        QStringLiteral("any: CaNonIcAl eGGs"), QSet<int>{} << 1 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("CaNonIcAl PotAto"), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("unIQue -EGgs"), QSet<int>{} << 0},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: cONSiDERed -hAm"),
+        QSet<int>{} << 0 << 1 << 2 << 5 << 6 << 7 << 8},
+    // Search by note titles and tag names as well as note contents
+    NoteSearchQueryTestData{
+        QStringLiteral("any: cHECksUM SeRVEr hAM"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    /*
+    // Search by resource recognition data
+    NoteSearchQueryTestData{
+        QStringLiteral("inFoRmATiON"), QSet<int>{} << 0 << 1 << 2 << 3},
+    NoteSearchQueryTestData{
+        QStringLiteral("-infoRMatiON"), QSet<int>{} << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("infoRMAtion wikiPEDiA any:"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
+    NoteSearchQueryTestData{
+        QStringLiteral("-inFORMation -wikiPEDiA"),
+        QSet<int>{} << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("inFOrMATioN tHe poTaTO serVEr"), QSet<int>{} << 0 << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("wiKiPeDiA servER haM iDEntiFYiNg any:"),
+        QSet<int>{} << 0 << 1 << 3 << 4 << 5 << 7},
+    NoteSearchQueryTestData{
+        QStringLiteral("infORMatioN -colLEgE pOtaTo -xHtMl"), QSet<int>{} << 2},
+    NoteSearchQueryTestData{
+        QStringLiteral("wikiPEDiA traNSActioN any: -PotaTo -biNARy"),
+        QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
+    // Search by phrases
+    NoteSearchQueryTestData{
+        QStringLiteral("\"The list\""), QSet<int>{} << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("\"tHe lIsT\" \"tHE lASt\" any: \"tHE xhTMl\""),
+        QSet<int>{} << 1 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("any: \"The xhTMl\" eggS wikiPEDiA"),
+        QSet<int>{} << 1 << 3 << 4 << 5 << 6 << 7 << 8},
+    NoteSearchQueryTestData{
+        QStringLiteral("\"tHE noTE\" -\"of tHE\""), QSet<int>{} << 5 << 6},
+    // Search by phrases with wildcards
+    NoteSearchQueryTestData{
+        QStringLiteral("\"the canonic*\""), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("\"the can*cal\""), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("\"*onical\""), QSet<int>{} << 1},
+    NoteSearchQueryTestData{
+        QStringLiteral("\"*code characters\""), QSet<int>{} << 3 << 5},
+    // Search by terms in Greek with diacritics
+    NoteSearchQueryTestData{
+        QString::fromUtf8("είναι"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ΕΊΝΑΙ"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ΕΊναι"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    // Search by terms in Greek without diacritics
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ειναι"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ΕΙΝΑΙ"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ΕΙναι"), QSet<int>{} << 0 << 1 << 2 << 3 << 6 << 7},
+    // Search by terms in Greek with and without diacritics
+    NoteSearchQueryTestData{
+        QString::fromUtf8("ΕΊναι any: αυΤΟκιΝΗτο"),
+        QSet<int>{} << 0 << 1 << 2 << 3 << 5 << 6 << 7},
+    */
 };
 
 INSTANTIATE_TEST_SUITE_P(
