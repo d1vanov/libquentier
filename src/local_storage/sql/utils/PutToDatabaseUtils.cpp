@@ -3367,7 +3367,7 @@ bool putCommonNoteData(
         res, query, "local_storage::sql::utils",
         QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",
-            "Can't put common note data into the locla storage database"),
+            "Can't put common note data into the local storage database"),
         false);
 
     return true;
