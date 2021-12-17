@@ -174,8 +174,25 @@ Q_DECLARE_FLAGS(CreateResourceOptions, CreateResourceOption);
             CreateResourceOption::WithRecognitionData)) {
         resource.setRecognition(qevercloud::Data{});
         auto & recognition = *resource.mutableRecognition();
-        recognition.setBody(
-            QByteArray::fromStdString("test resource recognitiondata"s));
+        recognition.setBody(QByteArray::fromStdString(
+            "<recoIndex docType=\"handwritten\" objType=\"image\" "
+            "objID=\"fc83e58282d8059be17debabb69be900\" "
+            "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+            "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+            "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+            "<t w=\"87\">INFO ?</t>"
+            "<t w=\"83\">INFORMATION</t>"
+            "<t w=\"82\">LNFOPWATION</t>"
+            "<t w=\"71\">LNFOPMATION</t>"
+            "<t w=\"67\">LNFOPWATJOM</t>"
+            "<t w=\"67\">LMFOPWAFJOM</t>"
+            "<t w=\"62\">ΕΊΝΑΙ ένα</t>"
+            "</item>"
+            "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+            "<t w=\"11\">et</t>"
+            "<t w=\"10\">TQ</t>"
+            "</item>"
+            "</recoIndex>"s));
         recognition.setSize(recognition.body()->size());
         recognition.setBodyHash(QCryptographicHash::hash(
             *recognition.body(), QCryptographicHash::Md5));

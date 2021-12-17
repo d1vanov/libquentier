@@ -133,6 +133,11 @@ enum class PutResourceMetadataOption
     PutResourceMetadataOption putResourceMetadataOption,
     QSqlDatabase & database, ErrorString & errorDescription);
 
+[[nodiscard]] bool putResourceRecognitionData(
+    const QString & resourceLocalId, const QString & noteLocalId,
+    const QByteArray & resourceRecognitionData,
+    QSqlDatabase & database, ErrorString & errorDescription);
+
 [[nodiscard]] bool putResourceAttributes(
     const QString & localId, const qevercloud::ResourceAttributes & attributes,
     QSqlDatabase & database, ErrorString & errorDescription);

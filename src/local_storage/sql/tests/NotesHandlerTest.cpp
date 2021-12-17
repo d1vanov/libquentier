@@ -218,8 +218,25 @@ namespace {
 
         resource.setRecognition(qevercloud::Data{});
         auto & recognition = *resource.mutableRecognition();
-        recognition.setBody(
-            QByteArray::fromStdString("test resource recognition data"s));
+        recognition.setBody(QByteArray::fromStdString(
+            "<recoIndex docType=\"handwritten\" objType=\"image\" "
+            "objID=\"fc83e58282d8059be17debabb69be900\" "
+            "engineVersion=\"5.5.22.7\" recoType=\"service\" "
+            "lang=\"en\" objWidth=\"2398\" objHeight=\"1798\"> "
+            "<item x=\"437\" y=\"589\" w=\"1415\" h=\"190\">"
+            "<t w=\"87\">INFO ?</t>"
+            "<t w=\"83\">INFORMATION</t>"
+            "<t w=\"82\">LNFOPWATION</t>"
+            "<t w=\"71\">LNFOPMATION</t>"
+            "<t w=\"67\">LNFOPWATJOM</t>"
+            "<t w=\"67\">LMFOPWAFJOM</t>"
+            "<t w=\"62\">ΕΊΝΑΙ ένα</t>"
+            "</item>"
+            "<item x=\"1850\" y=\"1465\" w=\"14\" h=\"12\">"
+            "<t w=\"11\">et</t>"
+            "<t w=\"10\">TQ</t>"
+            "</item>"
+            "</recoIndex>"s));
 
         recognition.setSize(recognition.body()->size());
 
@@ -2681,7 +2698,6 @@ const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
         QStringLiteral("any: cHECksUM SeRVEr hAM"),
         QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
-    /*
     // Search by resource recognition data
     NoteSearchQueryTestData{
         QStringLiteral("inFoRmATiON"), QSet<int>{} << 0 << 1 << 2 << 3},
@@ -2695,6 +2711,7 @@ const std::array gNoteSearchQueryTestData{
         QSet<int>{} << 6 << 7 << 8},
     NoteSearchQueryTestData{
         QStringLiteral("inFOrMATioN tHe poTaTO serVEr"), QSet<int>{} << 0 << 1},
+    /*
     NoteSearchQueryTestData{
         QStringLiteral("wiKiPeDiA servER haM iDEntiFYiNg any:"),
         QSet<int>{} << 0 << 1 << 3 << 4 << 5 << 7},

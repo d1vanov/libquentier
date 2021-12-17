@@ -315,8 +315,7 @@ public:
         {
             auto & data = *testData.m_thirdResource.mutableRecognition();
             data.setBody(QByteArray::fromStdString(
-                R"___(
-    <?xml version="1.0" encoding="UTF-8"?>
+                R"___(<?xml version="1.0" encoding="UTF-8"?>
     <recoIndex docType="picture" objType="ink" objID="a284273e482578224145f2560b67bf45"
             engineVersion="3.0.17.14" recoType="client" lang="en" objWidth="1936" objHeight="2592">
         <item x="853" y="1278" w="14" h="17">

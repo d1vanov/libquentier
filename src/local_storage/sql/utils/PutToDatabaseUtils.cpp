@@ -32,6 +32,7 @@
 
 #include <quentier/types/ErrorString.h>
 #include <quentier/types/NoteUtils.h>
+#include <quentier/types/ResourceRecognitionIndices.h>
 #include <quentier/utility/StringUtils.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -2597,6 +2598,18 @@ bool putResource(
         return false;
     }
 
+    if (!removeResourceRecognitionData(localId, database, errorDescription)) {
+        return false;
+    }
+
+    if (resource.recognition() && resource.recognition()->body()) {
+        if (!putResourceRecognitionData(
+                localId, resource.noteLocalId(),
+                *resource.recognition()->body(), database, errorDescription)) {
+            return false;
+        }
+    }
+
     if (!bindResourceToNote(resource, database, errorDescription)) {
         return false;
     }
@@ -2907,6 +2920,80 @@ bool putCommonResourceData(
         QT_TRANSLATE_NOOP(
             "local_storage::sql::utils",
             "Cannot put resource metadata into the local storage database"),
+        false);
+
+    return true;
+}
+
+bool putResourceRecognitionData(
+    const QString & resourceLocalId, const QString & noteLocalId,
+    const QByteArray & resourceRecognitionData,
+    QSqlDatabase & database, ErrorString & errorDescription)
+{
+    ResourceRecognitionIndices recoIndices;
+    bool res = recoIndices.setData(resourceRecognitionData);
+    if (!res || !recoIndices.isValid()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Failed to parse resource recognition data"));
+        QNWARNING(
+            "local_storage::sql::utils",
+            errorDescription << ": " << resourceRecognitionData);
+        return false;
+    }
+
+    QString recognitionData;
+
+    const auto items = recoIndices.items();
+    const int numItems = items.size();
+    for (int i = 0; i < numItems; ++i) {
+        const ResourceRecognitionIndexItem & item = qAsConst(items)[i];
+
+        auto textItems = item.textItems();
+        for (const auto & textItem: qAsConst(textItems)) {
+            recognitionData += textItem.m_text + QStringLiteral(" ");
+        }
+    }
+
+    recognitionData.chop(1); // Remove trailing whitespace
+
+    StringUtils stringUtils;
+    stringUtils.removePunctuation(recognitionData);
+    stringUtils.removeDiacritics(recognitionData);
+
+    if (recognitionData.isEmpty()) {
+        return true;
+    }
+
+    static const QString queryString = QStringLiteral(
+        "INSERT OR REPLACE INTO ResourceRecognitionData"
+        "(resourceLocalUid, noteLocalUid, recognitionData) "
+        "VALUES(:resourceLocalUid, :noteLocalUid, :recognitionData)");
+
+    QSqlQuery query{database};
+    res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource recognition data: failed to prepare "
+            "query"),
+        false);
+
+    query.bindValue(
+        QStringLiteral(":resourceLocalUid"), resourceLocalId);
+
+    query.bindValue(QStringLiteral(":noteLocalUid"), noteLocalId);
+
+    query.bindValue(
+        QStringLiteral(":recognitionData"), recognitionData);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot put resource recognition data"),
         false);
 
     return true;
