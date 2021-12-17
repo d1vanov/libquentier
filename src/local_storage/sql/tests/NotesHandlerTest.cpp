@@ -2711,7 +2711,6 @@ const std::array gNoteSearchQueryTestData{
         QSet<int>{} << 6 << 7 << 8},
     NoteSearchQueryTestData{
         QStringLiteral("inFOrMATioN tHe poTaTO serVEr"), QSet<int>{} << 0 << 1},
-    /*
     NoteSearchQueryTestData{
         QStringLiteral("wiKiPeDiA servER haM iDEntiFYiNg any:"),
         QSet<int>{} << 0 << 1 << 3 << 4 << 5 << 7},
@@ -2758,7 +2757,6 @@ const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
         QString::fromUtf8("ΕΊναι any: αυΤΟκιΝΗτο"),
         QSet<int>{} << 0 << 1 << 2 << 3 << 5 << 6 << 7},
-    */
 };
 
 INSTANTIATE_TEST_SUITE_P(
