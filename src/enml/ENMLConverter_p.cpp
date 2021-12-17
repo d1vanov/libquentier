@@ -1421,7 +1421,7 @@ QStringList ENMLConverterPrivate::plainTextToListOfWords(
 {
     // Simply remove all non-word characters from plain text
     return plainText.split(
-        QRegularExpression{QStringLiteral("\\W+")},
+        QRegularExpression{QStringLiteral("([[:punct:]]|[[:space:]])+")},
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         Qt::SkipEmptyParts);
 #else
