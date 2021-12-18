@@ -648,10 +648,12 @@ public:
     [[nodiscard]] virtual QFuture<qint32> highestUpdateSequenceNumber(
         qevercloud::Guid linkedNotebookGuid) const = 0;
 
-    // Notifications about events occurring in local storage are done via
-    // signals emitted by ILocalStorageNotifier.
-    // ILocalStorageNotifier must be alive for at least as much as ILocalStorage
-    // itself.
+    /**
+     * Notifications about the events occurring with the local storage are done
+     * via signals emitted by ILocalStorageNotifier.
+     * @return the pointer to ILocalStorageNotifier object which would be valid
+     * for at least as long as ILocalStorage object that returned it is alive.
+     */
     [[nodiscard]] virtual ILocalStorageNotifier * notifier() const = 0;
 };
 
