@@ -41,8 +41,16 @@
 #include <optional>
 #include <utility>
 
-class QTextStream;
 class QDebug;
+class QDir;
+class QTextStream;
+class QThreadPool;
+
+namespace quentier {
+
+class Account;
+
+} // namespace quentier
 
 namespace quentier::local_storage {
 
@@ -704,5 +712,9 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ILocalStorage::ListTagsOptions & lhs,
     const ILocalStorage::ListTagsOptions & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT ILocalStoragePtr createSqliteLocalStorage(
+    const Account & account, const QDir & localStorageDir,
+    QThreadPool * threadPool);
 
 } // namespace quentier::local_storage

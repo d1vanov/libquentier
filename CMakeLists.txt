@@ -748,7 +748,8 @@ target_link_libraries(${LIBNAME}
   PUBLIC
   ${QT_LIBRARIES}
   PRIVATE
-  ${THIRDPARTY_LIBS})
+  ${THIRDPARTY_LIBS}
+  ${LIBNAME}_local_storage_sql)
 
 add_sanitizers(${LIBNAME})
 

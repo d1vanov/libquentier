@@ -18,8 +18,22 @@
 
 #include <quentier/local_storage/ILocalStorage.h>
 
+#include <local_storage/sql/ConnectionPool.h>
+#include <local_storage/sql/LocalStorage.h>
+#include <local_storage/sql/LinkedNotebooksHandler.h>
+#include <local_storage/sql/NotebooksHandler.h>
+#include <local_storage/sql/NotesHandler.h>
+#include <local_storage/sql/Notifier.h>
+#include <local_storage/sql/ResourcesHandler.h>
+#include <local_storage/sql/SavedSearchesHandler.h>
+#include <local_storage/sql/SynchronizationInfoHandler.h>
+#include <local_storage/sql/TagsHandler.h>
+#include <local_storage/sql/VersionHandler.h>
+#include <local_storage/sql/UsersHandler.h>
+
 #include <QDebug>
 #include <QTextStream>
+#include <QReadWriteLock>
 
 namespace quentier::local_storage {
 
@@ -1029,6 +1043,91 @@ bool operator!=(
     const ILocalStorage::ListTagsOptions & rhs) noexcept
 {
     return !(lhs == rhs);
+}
+
+ILocalStoragePtr createSqliteLocalStorage(
+    const Account & account, const QDir & localStorageDir,
+    QThreadPool * threadPool)
+{
+    auto localStorageMainFilePath = localStorageDir.absoluteFilePath(
+        QStringLiteral("qn.storage.sqlite"));
+
+    auto connectionPool = std::make_shared<sql::ConnectionPool>(
+        QStringLiteral("localhost"), QString{}, QString{},
+        std::move(localStorageMainFilePath), QStringLiteral("QSQLITE"));
+
+    auto resourceDataFilesLock = std::make_shared<QReadWriteLock>();
+
+    sql::QThreadPtr writerThread;
+    {
+        auto deleter = [](QThread * thread)
+        {
+            thread->quit();
+            thread->deleteLater();
+        };
+        auto writerThreadUnique = std::make_unique<QThread>();
+
+        writerThread =
+            sql::QThreadPtr{writerThreadUnique.get(), std::move(deleter)};
+
+        Q_UNUSED(writerThreadUnique.release());
+    }
+
+    sql::Notifier * notifier = nullptr;
+    {
+        auto notifierUnique = std::make_unique<sql::Notifier>();
+        notifierUnique->moveToThread(writerThread.get());
+
+        QObject::connect(
+            writerThread.get(), &QThread::finished, notifierUnique.get(),
+            &QObject::deleteLater);
+
+        notifier = notifierUnique.release();
+    }
+
+    writerThread->start();
+
+    const QString localStorageDirPath = localStorageDir.absolutePath();
+
+    auto linkedNotebooksHandler =
+        std::make_shared<sql::LinkedNotebooksHandler>(
+            connectionPool, threadPool, notifier,
+            writerThread, localStorageDirPath);
+
+    auto notebooksHandler = std::make_shared<sql::NotebooksHandler>(
+        connectionPool, threadPool, notifier,
+        writerThread, localStorageDirPath, resourceDataFilesLock);
+
+    auto notesHandler = std::make_shared<sql::NotesHandler>(
+        connectionPool, threadPool, notifier,
+        writerThread, localStorageDirPath, resourceDataFilesLock);
+
+    auto resourcesHandler = std::make_shared<sql::ResourcesHandler>(
+        connectionPool, threadPool, notifier,
+        writerThread, localStorageDirPath, resourceDataFilesLock);
+
+    auto savedSearchesHandler = std::make_shared<sql::SavedSearchesHandler>(
+        connectionPool, threadPool, notifier, writerThread);
+
+    auto synchronizationInfoHandler =
+        std::make_shared<sql::SynchronizationInfoHandler>(
+            connectionPool, threadPool, writerThread);
+
+    auto tagsHandler = std::make_shared<sql::TagsHandler>(
+        connectionPool, threadPool, notifier, writerThread);
+
+    auto versionHandler = std::make_shared<sql::VersionHandler>(
+        account, connectionPool, threadPool, writerThread);
+
+    auto usersHandler = std::make_shared<sql::UsersHandler>(
+        connectionPool, threadPool, notifier, writerThread);
+
+    return std::make_shared<sql::LocalStorage>(
+        std::move(linkedNotebooksHandler), std::move(notebooksHandler),
+        std::move(notesHandler), std::move(resourcesHandler),
+        std::move(savedSearchesHandler), std::move(synchronizationInfoHandler),
+        std::move(tagsHandler), std::move(versionHandler),
+        std::move(usersHandler), notifier);
 }
 
 } // namespace quentier::local_storage
