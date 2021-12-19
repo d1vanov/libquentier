@@ -37,6 +37,17 @@ using IUserStorePtr = std::shared_ptr<IUserStore>;
 struct ISyncChunksDataCounters;
 using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
 
+namespace synchronization {
+
+struct SyncStats;
+
+class ISynchronizer;
+using ISynchronizerPtr = std::shared_ptr<ISynchronizer>;
+
+class ISyncEventsNotifier;
+
+} // namespace synchronization
+
 } // namespace quentier
 
 #endif // LIB_QUENTIER_SYNCHRONIZATION_FORWARD_DECLARATIONS_H
