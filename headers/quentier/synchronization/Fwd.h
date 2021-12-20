@@ -39,7 +39,8 @@ using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
 
 namespace synchronization {
 
-struct SyncStats;
+class ISyncConflictResolver;
+using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
 
 class ISynchronizer;
 using ISynchronizerPtr = std::shared_ptr<ISynchronizer>;

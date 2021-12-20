@@ -103,10 +103,11 @@ public:
     [[nodiscard]] virtual QFuture<AuthResult> authenticateNewAccount() = 0;
 
     [[nodiscard]] virtual QFuture<AuthResult> authenticateAccount(
-        const Account & account) = 0;
+        Account account) = 0;
 
     [[nodiscard]] virtual QFuture<SyncStats> synchronizeAccount(
-        const Account & account,
+        Account account,
+        ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
         Options options) = 0;
 
