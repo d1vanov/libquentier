@@ -18,22 +18,14 @@
 
 #include "../Fwd.h"
 
-#include <QGlobalStatic>
 #include <QString>
 
 class QDir;
 
 namespace quentier::local_storage::sql::tests::utils {
 
-Q_GLOBAL_STATIC_WITH_ARGS(
-    QString, gTestAccountName, (QString::fromUtf8("testAccountName")));
-
-Q_GLOBAL_STATIC_WITH_ARGS(
-    QString, gTestDatabaseFileName, (QString::fromUtf8("qn.storage.sqlite")));
-
 void prepareLocalStorage(
-    const QString & localStorageDirPath,
-    ConnectionPool & connectionPool);
+    const QString & localStorageDirPath, ConnectionPool & connectionPool);
 
 void ensureFile(const QDir & dir, const QString & fileName);
 

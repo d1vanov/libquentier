@@ -65,6 +65,8 @@ namespace {
 
 const char * gAppPersistentStoragePath = "LIBQUENTIER_PERSISTENCE_STORAGE_PATH";
 
+const QString gTestAccountName = QStringLiteral("testAccountName");
+
 const QString gTestDbConnectionName =
     QStringLiteral("libquentier_local_storage_sql_patch2to3_test_db");
 
@@ -190,7 +192,7 @@ public:
             QTextStream strm{&path};
 
             strm << m_temporaryDir.path() << "/LocalAccounts/"
-                 << *utils::gTestAccountName;
+                 << gTestAccountName;
             return path;
         }();
 
@@ -511,7 +513,7 @@ protected:
 
 TEST_F(Patch2To3Test, Ctor)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     EXPECT_NO_THROW(
         const auto patch = std::make_shared<Patch2To3>(
@@ -528,7 +530,7 @@ TEST_F(Patch2To3Test, CtorEmptyAccount)
 
 TEST_F(Patch2To3Test, CtorNullConnectionPool)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     EXPECT_THROW(
         const auto patch = std::make_shared<Patch2To3>(
@@ -538,7 +540,7 @@ TEST_F(Patch2To3Test, CtorNullConnectionPool)
 
 TEST_F(Patch2To3Test, CtorNullWriterThread)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     EXPECT_THROW(
         const auto patch = std::make_shared<Patch2To3>(
@@ -570,7 +572,7 @@ const std::array gPatch2To3TestData{
             Patch2To3Test::PrepareLocalStorageForUpgradeFlag::
                 MoveResourceBodyFiles,
         [] {
-            Account account{*utils::gTestAccountName, Account::Type::Local};
+            Account account{gTestAccountName, Account::Type::Local};
 
             ApplicationSettings databaseUpgradeInfo{
                 account,
@@ -589,7 +591,7 @@ const std::array gPatch2To3TestData{
     Patch2To3TestData{
         Patch2To3Test::PrepareLocalStorageForUpgradeFlags{},
         [] {
-            Account account{*utils::gTestAccountName, Account::Type::Local};
+            Account account{gTestAccountName, Account::Type::Local};
 
             ApplicationSettings databaseUpgradeInfo{
                 account,
@@ -617,7 +619,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(Patch2To3DataTest, ApplyPatch)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     const auto data = GetParam();
     const auto testData = prepareLocalStorageForUpgrade(data.flags);

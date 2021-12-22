@@ -37,11 +37,11 @@ void prepareLocalStorage(
         Q_ASSERT(res);
     }
 
-    ensureFile(dir, *gTestDatabaseFileName);
+    static const QString databaseName = QStringLiteral("qn.storage.sqlite");
 
-    QFileInfo testDatabaseFileInfo{
-        dir.absoluteFilePath(*gTestDatabaseFileName)};
+    ensureFile(dir, databaseName);
 
+    QFileInfo testDatabaseFileInfo{dir.absoluteFilePath(databaseName)};
     EXPECT_TRUE(testDatabaseFileInfo.exists());
     EXPECT_TRUE(testDatabaseFileInfo.isFile());
     EXPECT_TRUE(testDatabaseFileInfo.isReadable());
@@ -49,8 +49,6 @@ void prepareLocalStorage(
 
     auto database = connectionPool.database();
     database.setHostName(QStringLiteral("localhost"));
-    database.setUserName(*gTestAccountName);
-    database.setPassword(*gTestAccountName);
     database.setDatabaseName(testDatabaseFileInfo.absoluteFilePath());
 
     TablesInitializer::initializeTables(database);

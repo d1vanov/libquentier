@@ -209,7 +209,7 @@ void classifyNoteResources(
         strm << sqlEscape(localId);
         strm << apostrophe;
 
-        if (&localId != &(*localIds.crbegin())) {
+        if (&localId != &(*std::prev(localIds.constEnd()))) {
             strm << comma;
         }
     }
