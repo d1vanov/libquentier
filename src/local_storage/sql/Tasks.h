@@ -116,8 +116,9 @@ QFuture<ResultType> makeWriteTask(
 
     promise->start();
 
+    auto * writerThread = taskContext.m_writerThread.get();
     utility::postToThread(
-        taskContext.m_writerThread.get(),
+        writerThread,
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)] () mutable
          {
