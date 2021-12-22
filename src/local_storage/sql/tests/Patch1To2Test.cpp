@@ -42,6 +42,8 @@ namespace quentier::local_storage::sql::tests {
 
 namespace {
 
+const QString gTestAccountName = QStringLiteral("testAccountName");
+
 const QString gTestDbConnectionName =
     QStringLiteral("libquentier_local_storage_sql_patch1to2_test_db");
 
@@ -49,7 +51,7 @@ const QString gTestDbConnectionName =
 
 TEST(Patch1To2Test, Ctor)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     auto connectionPool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), QStringLiteral("user"),
@@ -80,7 +82,7 @@ TEST(Patch1To2Test, CtorEmptyAccount)
 
 TEST(Patch1To2Test, CtorNullConnectionPool)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     auto pWriterThread = std::make_shared<QThread>();
 
@@ -92,7 +94,7 @@ TEST(Patch1To2Test, CtorNullConnectionPool)
 
 TEST(Patch1To2Test, CtorNullWriterThread)
 {
-    Account account{*utils::gTestAccountName, Account::Type::Local};
+    Account account{gTestAccountName, Account::Type::Local};
 
     auto connectionPool = std::make_shared<ConnectionPool>(
         QStringLiteral("localhost"), QStringLiteral("user"),
