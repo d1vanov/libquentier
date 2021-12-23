@@ -98,7 +98,7 @@ template <
     class T,
     typename = std::enable_if_t<
         std::is_fundamental_v<std::decay_t<T>> && std::negation_v<std::is_same<std::decay_t<T>, void>>>>
-[[nodiscard]] QFuture<T> makeReadyFuture(T t)
+[[nodiscard]] QFuture<std::decay_t<T>> makeReadyFuture(T t)
 {
     QPromise<std::decay_t<T>> promise;
     QFuture<std::decay_t<T>> future = promise.future();
@@ -128,6 +128,22 @@ template <
 }
 
 [[nodiscard]] QFuture<void> makeReadyFuture();
+
+/**
+ * Create QFuture already containing exception instead of the result
+ */
+template <class T, class E>
+[[nodiscard]] QFuture<T> makeExceptionalFuture(E e)
+{
+    QPromise<std::decay_t<T>> promise;
+    QFuture<std::decay_t<T>> future = promise.future();
+
+    promise.start();
+    promise.setException(std::move(e));
+    promise.finish();
+
+    return future;
+}
 
 /**
  * Create QRunnable from a function - sort of a workaround for Qt < 5.15
