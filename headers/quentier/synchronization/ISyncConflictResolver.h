@@ -42,6 +42,9 @@ public:
         struct UseMine
         {};
 
+        struct IgnoreMine
+        {};
+
         template <class T>
         struct MoveMine
         {
@@ -51,17 +54,21 @@ public:
 
     using NotebookConflictResolution = std::variant<
         ConflictResolution::UseTheirs, ConflictResolution::UseMine,
+        ConflictResolution::IgnoreMine,
         ConflictResolution::MoveMine<qevercloud::Notebook>>;
 
     using NoteConflictResolution = std::variant<
         ConflictResolution::UseTheirs, ConflictResolution::UseMine,
+        ConflictResolution::IgnoreMine,
         ConflictResolution::MoveMine<qevercloud::Note>>;
 
     using SavedSearchConflictResolution = std::variant<
         ConflictResolution::UseTheirs, ConflictResolution::UseMine,
+        ConflictResolution::IgnoreMine,
         ConflictResolution::MoveMine<qevercloud::SavedSearch>>;
 
     using TagConflictResolution = std::variant<
+        ConflictResolution::IgnoreMine,
         ConflictResolution::UseTheirs, ConflictResolution::UseMine,
         ConflictResolution::MoveMine<qevercloud::Tag>>;
 
