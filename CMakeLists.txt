@@ -742,6 +742,7 @@ find_package(GMock)
 find_package(GTest)
 
 add_subdirectory(src/local_storage/sql)
+add_subdirectory(src/synchronization)
 add_subdirectory(src/utility)
 
 target_link_libraries(${LIBNAME}

@@ -20,10 +20,13 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
+#include <memory>
 
 namespace quentier::synchronization {
 
-class SimpleSyncConflictResolver final : public ISyncConflictResolver
+class SimpleSyncConflictResolver final :
+    public std::enable_shared_from_this<SimpleSyncConflictResolver>,
+    public ISyncConflictResolver
 {
 public:
     explicit SimpleSyncConflictResolver(
@@ -47,12 +50,15 @@ private:
     [[nodiscard]] QFuture<NotebookConflictResolution>
         processNotebooksConflictByName(
             const qevercloud::Notebook & theirs,
-            const qevercloud::Notebook & mine);
+            qevercloud::Notebook mine);
 
     [[nodiscard]] QFuture<NotebookConflictResolution>
         processNotebooksConflictByGuid(
             const qevercloud::Notebook & theirs,
             const qevercloud::Notebook & mine);
+
+    [[nodiscard]] QFuture<qevercloud::Notebook> renameConflictingNotebook(
+        qevercloud::Notebook notebook, int counter = 1);
 
 private:
     local_storage::ILocalStoragePtr m_localStorage;
