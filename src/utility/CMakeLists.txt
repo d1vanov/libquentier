@@ -11,4 +11,5 @@ target_sources(${LIBRARY_NAME}
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
+  ${LIBNAME}_interface
   Qt5::Core)
