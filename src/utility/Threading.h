@@ -170,6 +170,28 @@ template <class T>
 }
 
 /**
+ * Checks whether the passed future contains exception, if yes, sets this
+ * exception to the promise.
+ * @note future must be already finished, otherwise the execution would block
+ *       until it is finished
+ * @return true if future contains exception, false otherwise
+ */
+template <class T, class U>
+bool checkFutureException(QPromise<U> & promise, QFuture<T> & future)
+{
+    try {
+        future.waitForFinished();
+    }
+    catch (const QException & e) {
+        promise.setException(e);
+        promise.finish();
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Set results or exception from future to promise when either thing
  * appears in the future. Can work with futures and promises with different
  * template types if appropriate processor function between the two is provided.
@@ -187,17 +209,12 @@ void bindPromiseToFuture(
     promise.start();
 
     if (future.isFinished()) {
-        try {
-            future.waitForFinished();
-        }
-        catch (const QException & e) {
-            promise.setException(e);
+        if (!checkFutureException(promise, future))
+        {
+            processor(promise, future.results());
             promise.finish();
-            return;
         }
 
-        processor(promise, future.results());
-        promise.finish();
         return;
     }
 
@@ -214,12 +231,7 @@ void bindPromiseToFuture(
         [promise = std::move(promise), watcher = std::move(watcher),
          processor = std::move(processor)]() mutable {
             auto future = watcher->future();
-            try {
-                future.waitForFinished();
-            }
-            catch (const QException & e) {
-                promise.setException(e);
-                promise.finish();
+            if (checkFutureException(promise, future)) {
                 return;
             }
 
