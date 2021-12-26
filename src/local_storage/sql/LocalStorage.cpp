@@ -145,7 +145,7 @@ QFuture<void> LocalStorage::putUser(qevercloud::User user)
     return m_usersHandler->putUser(std::move(user));
 }
 
-QFuture<qevercloud::User> LocalStorage::findUserById(
+QFuture<std::optional<qevercloud::User>> LocalStorage::findUserById(
     qevercloud::UserID userId) const
 {
     return m_usersHandler->findUserById(userId);

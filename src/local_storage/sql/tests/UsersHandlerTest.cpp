@@ -346,7 +346,8 @@ TEST_F(UsersHandlerTest, ShouldNotFindNonexistentUser)
 
     auto userFuture = usersHandler->findUserById(qevercloud::UserID{1});
     userFuture.waitForFinished();
-    EXPECT_EQ(userFuture.resultCount(), 0);
+    ASSERT_EQ(userFuture.resultCount(), 1);
+    EXPECT_FALSE(userFuture.result());
 }
 
 TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
@@ -355,7 +356,9 @@ TEST_F(UsersHandlerTest, IgnoreAttemptToExpungeNonexistentUser)
         m_connectionPool, QThreadPool::globalInstance(), m_notifier,
         m_writerThread);
 
-    auto expungeUserFuture = usersHandler->findUserById(qevercloud::UserID{1});
+    auto expungeUserFuture =
+        usersHandler->expungeUserById(qevercloud::UserID{1});
+
     EXPECT_NO_THROW(expungeUserFuture.waitForFinished());
 }
 
@@ -451,6 +454,7 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
     auto foundUserFuture = usersHandler->findUserById(*user.id());
     foundUserFuture.waitForFinished();
     ASSERT_EQ(foundUserFuture.resultCount(), 1);
+    ASSERT_TRUE(foundUserFuture.result());
     EXPECT_EQ(foundUserFuture.result(), user);
 
     auto expungeUserFuture = usersHandler->expungeUserById(user.id().value());
@@ -466,7 +470,8 @@ TEST_P(UsersHandlerSingleUserTest, HandleSingleUser)
 
     foundUserFuture = usersHandler->findUserById(*user.id());
     foundUserFuture.waitForFinished();
-    EXPECT_EQ(foundUserFuture.resultCount(), 0);
+    ASSERT_EQ(foundUserFuture.resultCount(), 1);
+    EXPECT_FALSE(foundUserFuture.result());
 }
 
 TEST_F(UsersHandlerTest, HandleMultipleUsers)
@@ -514,6 +519,7 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
         auto foundUserFuture = usersHandler->findUserById(*user.id());
         foundUserFuture.waitForFinished();
         ASSERT_EQ(foundUserFuture.resultCount(), 1);
+        ASSERT_TRUE(foundUserFuture.result());
         EXPECT_EQ(foundUserFuture.result(), user);
     }
 
@@ -532,7 +538,8 @@ TEST_F(UsersHandlerTest, HandleMultipleUsers)
     for (const auto & user: users) {
         auto foundUserFuture = usersHandler->findUserById(*user.id());
         foundUserFuture.waitForFinished();
-        EXPECT_EQ(foundUserFuture.resultCount(), 0);
+        ASSERT_EQ(foundUserFuture.resultCount(), 1);
+        EXPECT_FALSE(foundUserFuture.result());
     }
 }
 
@@ -612,6 +619,7 @@ TEST_F(UsersHandlerTest, RemoveUserFieldsOnUpdate)
     auto foundUserFuture = usersHandler->findUserById(user.id().value());
     foundUserFuture.waitForFinished();
     ASSERT_EQ(foundUserFuture.resultCount(), 1);
+    ASSERT_TRUE(foundUserFuture.result());
     EXPECT_EQ(foundUserFuture.result(), updatedUser);
 }
 

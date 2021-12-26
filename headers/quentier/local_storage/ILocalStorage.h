@@ -430,7 +430,7 @@ public:
     [[nodiscard]] virtual QFuture<quint32> userCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putUser(qevercloud::User user) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::User> findUserById(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::User>> findUserById(
         qevercloud::UserID userId) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeUserById(

@@ -319,11 +319,11 @@ TEST_F(LocalStorageTest, ForwardFindUserByIdToUsersHandler)
     user.setId(qevercloud::UserID{42});
 
     EXPECT_CALL(*m_mockUsersHandler, findUserById)
-        .WillOnce(
-            [=](qevercloud::UserID id) mutable {
-                EXPECT_EQ(id, user.id());
-                return utility::makeReadyFuture(std::move(user));
-            });
+        .WillOnce([=](qevercloud::UserID id) mutable {
+            EXPECT_EQ(id, user.id());
+            return utility::makeReadyFuture(
+                std::make_optional(std::move(user)));
+        });
 
     const auto res = localStorage->findUserById(user.id().value());
     ASSERT_TRUE(res.isFinished());

@@ -31,8 +31,8 @@ public:
     MOCK_METHOD(QFuture<void>, putUser, (qevercloud::User user), (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::User>, findUserById, (qevercloud::UserID userId),
-        (const, override));
+        QFuture<std::optional<qevercloud::User>>, findUserById,
+        (qevercloud::UserID userId), (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeUserById, (qevercloud::UserID userId),
