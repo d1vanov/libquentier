@@ -244,10 +244,10 @@ QFuture<void> NotesHandler::updateNote(
         });
 }
 
-QFuture<qevercloud::Note> NotesHandler::findNoteByLocalId(
+QFuture<std::optional<qevercloud::Note>> NotesHandler::findNoteByLocalId(
     QString localId, FetchNoteOptions options) const
 {
-    return makeReadTask<qevercloud::Note>(
+    return makeReadTask<std::optional<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [localId = std::move(localId), options](
             const NotesHandler & handler, QSqlDatabase & database,
@@ -261,10 +261,10 @@ QFuture<qevercloud::Note> NotesHandler::findNoteByLocalId(
         });
 }
 
-QFuture<qevercloud::Note> NotesHandler::findNoteByGuid(
+QFuture<std::optional<qevercloud::Note>> NotesHandler::findNoteByGuid(
     qevercloud::Guid guid, FetchNoteOptions options) const
 {
-    return makeReadTask<qevercloud::Note>(
+    return makeReadTask<std::optional<qevercloud::Note>>(
         makeTaskContext(), weak_from_this(),
         [guid = std::move(guid), options](
             const NotesHandler & handler, QSqlDatabase & database,

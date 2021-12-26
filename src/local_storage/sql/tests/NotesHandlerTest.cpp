@@ -700,7 +700,8 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByLocalId)
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
 
     noteFuture.waitForFinished();
-    EXPECT_EQ(noteFuture.resultCount(), 0);
+    ASSERT_EQ(noteFuture.resultCount(), 1);
+    EXPECT_FALSE(noteFuture.result());
 }
 
 TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
@@ -717,7 +718,8 @@ TEST_F(NotesHandlerTest, ShouldNotFindNonexistentNoteByGuid)
         FetchNoteOptions{FetchNoteOption::WithResourceMetadata});
 
     noteFuture.waitForFinished();
-    EXPECT_EQ(noteFuture.resultCount(), 0);
+    ASSERT_EQ(noteFuture.resultCount(), 1);
+    EXPECT_FALSE(noteFuture.result());
 }
 
 TEST_F(NotesHandlerTest, IgnoreAttemptToExpungeNonexistentNoteByLocalId)
@@ -1050,12 +1052,13 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     foundByLocalIdNoteFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByLocalIdNoteFuture.result());
 
     if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
         !note.tagGuids()->isEmpty())
     {
-        EXPECT_FALSE(foundByLocalIdNoteFuture.result().tagLocalIds().isEmpty());
-        note.setTagLocalIds(foundByLocalIdNoteFuture.result().tagLocalIds());
+        EXPECT_FALSE(foundByLocalIdNoteFuture.result()->tagLocalIds().isEmpty());
+        note.setTagLocalIds(foundByLocalIdNoteFuture.result()->tagLocalIds());
     }
 
     EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
@@ -1145,18 +1148,21 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
             notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
         foundByLocalIdNoteFuture.waitForFinished();
-        EXPECT_EQ(foundByLocalIdNoteFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByLocalIdNoteFuture.result());
 
         auto foundByGuidNoteFuture =
             notesHandler->findNoteByGuid(note.guid().value(), fetchNoteOptions);
 
         foundByGuidNoteFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidNoteFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidNoteFuture.result());
 
         auto listNotesFuture =
             notesHandler->listNotes(fetchNoteOptions, listNotesOptions);
 
         listNotesFuture.waitForFinished();
+        ASSERT_EQ(listNotesFuture.resultCount(), 1);
         EXPECT_EQ(listNotesFuture.result().size(), 0);
     };
 
@@ -1224,6 +1230,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     foundByLocalIdNoteFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByLocalIdNoteFuture.result());
     EXPECT_EQ(foundByLocalIdNoteFuture.result(), updatedNote);
 
     foundByGuidNoteFuture = notesHandler->findNoteByGuid(
@@ -1231,6 +1238,7 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
 
     foundByGuidNoteFuture.waitForFinished();
     ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByGuidNoteFuture.result());
     EXPECT_EQ(foundByGuidNoteFuture.result(), updatedNote);
 }
 
@@ -1406,14 +1414,17 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
             notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
         foundByLocalIdNoteFuture.waitForFinished();
+        ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByLocalIdNoteFuture.result());
 
         if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
             !note.tagGuids()->isEmpty())
         {
             EXPECT_FALSE(
-                foundByLocalIdNoteFuture.result().tagLocalIds().isEmpty());
+                foundByLocalIdNoteFuture.result()->tagLocalIds().isEmpty());
+
             note.setTagLocalIds(
-                foundByLocalIdNoteFuture.result().tagLocalIds());
+                foundByLocalIdNoteFuture.result()->tagLocalIds());
         }
 
         EXPECT_EQ(foundByLocalIdNoteFuture.result(), note);
@@ -1422,6 +1433,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
             notesHandler->findNoteByGuid(note.guid().value(), fetchNoteOptions);
 
         foundByGuidNoteFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByGuidNoteFuture.result());
         EXPECT_EQ(foundByGuidNoteFuture.result(), note);
     }
 
@@ -1464,13 +1477,15 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
             notesHandler->findNoteByLocalId(note.localId(), fetchNoteOptions);
 
         foundByLocalIdNoteFuture.waitForFinished();
-        EXPECT_EQ(foundByLocalIdNoteFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdNoteFuture.resultCount(), 1);
+        ASSERT_FALSE(foundByLocalIdNoteFuture.result());
 
         auto foundByGuidNoteFuture =
             notesHandler->findNoteByGuid(note.guid().value(), fetchNoteOptions);
 
         foundByGuidNoteFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidNoteFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidNoteFuture.resultCount(), 1);
+        ASSERT_FALSE(foundByGuidNoteFuture.result());
     }
 }
 
@@ -1578,6 +1593,7 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
     foundNoteFuture.waitForFinished();
     ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundNoteFuture.result());
     EXPECT_EQ(foundNoteFuture.result(), updatedNote);
 
     // Add resource attributes to the resource and add the resource to note
@@ -1613,10 +1629,11 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
     foundNoteFuture.waitForFinished();
     ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundNoteFuture.result());
     EXPECT_EQ(foundNoteFuture.result(), updatedNote);
-    ASSERT_TRUE(foundNoteFuture.result().resources());
-    ASSERT_FALSE(foundNoteFuture.result().resources()->isEmpty());
-    EXPECT_TRUE(foundNoteFuture.result().resources()->begin()->attributes());
+    ASSERT_TRUE(foundNoteFuture.result()->resources());
+    ASSERT_FALSE(foundNoteFuture.result()->resources()->isEmpty());
+    EXPECT_TRUE(foundNoteFuture.result()->resources()->begin()->attributes());
 
     // Remove resource attributes from note's resource and update it again
     updatedNote.mutableResources()->begin()->setAttributes(std::nullopt);
@@ -1629,10 +1646,11 @@ TEST_F(NotesHandlerTest, RemoveNoteFieldsOnUpdate)
 
     foundNoteFuture.waitForFinished();
     ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundNoteFuture.result());
     EXPECT_EQ(foundNoteFuture.result(), updatedNote);
-    ASSERT_TRUE(foundNoteFuture.result().resources());
-    ASSERT_FALSE(foundNoteFuture.result().resources()->isEmpty());
-    EXPECT_FALSE(foundNoteFuture.result().resources()->begin()->attributes());
+    ASSERT_TRUE(foundNoteFuture.result()->resources());
+    ASSERT_FALSE(foundNoteFuture.result()->resources()->isEmpty());
+    EXPECT_FALSE(foundNoteFuture.result()->resources()->begin()->attributes());
 }
 
 enum class ExcludedTagIds
@@ -1742,6 +1760,7 @@ TEST_P(NotesHandlerUpdateNoteTagIdsTest, UpdateNoteWithTagPartialTagIds)
 
     foundNoteFuture.waitForFinished();
     ASSERT_EQ(foundNoteFuture.resultCount(), 1);
+    ASSERT_TRUE(foundNoteFuture.result());
 
     if (excludedTagIds == ExcludedTagIds::LocalIds) {
         updatedNote.setTagLocalIds(QStringList{} << tag1.localId());

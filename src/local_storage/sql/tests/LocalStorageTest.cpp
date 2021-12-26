@@ -789,7 +789,7 @@ TEST_F(LocalStorageTest, ForwardFindNoteByLocalIdToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     EXPECT_CALL(*m_mockNotesHandler, findNoteByLocalId(localId, options))
-        .WillOnce(Return(utility::makeReadyFuture(note)));
+        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(note))));
 
     const auto res = localStorage->findNoteByLocalId(localId, options);
     ASSERT_TRUE(res.isFinished());
@@ -811,7 +811,7 @@ TEST_F(LocalStorageTest, ForwardFindNoteByGuidToNotesHandler)
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     EXPECT_CALL(*m_mockNotesHandler, findNoteByGuid(guid, options))
-        .WillOnce(Return(utility::makeReadyFuture(note)));
+        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(note))));
 
     const auto res = localStorage->findNoteByGuid(guid, options);
     ASSERT_TRUE(res.isFinished());

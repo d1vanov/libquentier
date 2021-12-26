@@ -137,10 +137,10 @@ public:
     [[nodiscard]] QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByLocalId(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByLocalId(
         QString noteLocalId, FetchNoteOptions options) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByGuid(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByGuid(
         qevercloud::Guid noteGuid, FetchNoteOptions options) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(

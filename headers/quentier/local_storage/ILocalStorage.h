@@ -520,11 +520,11 @@ public:
     [[nodiscard]] virtual QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
         findNoteByLocalId(
             QString noteLocalId, FetchNoteOptions options) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
         findNoteByGuid(
             qevercloud::Guid noteGuid, FetchNoteOptions options) const = 0;
 

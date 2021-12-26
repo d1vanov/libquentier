@@ -299,13 +299,13 @@ QFuture<void> LocalStorage::updateNote(
     return m_notesHandler->updateNote(std::move(note), options);
 }
 
-QFuture<qevercloud::Note> LocalStorage::findNoteByLocalId(
+QFuture<std::optional<qevercloud::Note>> LocalStorage::findNoteByLocalId(
     QString noteLocalId, FetchNoteOptions options) const
 {
     return m_notesHandler->findNoteByLocalId(std::move(noteLocalId), options);
 }
 
-QFuture<qevercloud::Note> LocalStorage::findNoteByGuid(
+QFuture<std::optional<qevercloud::Note>> LocalStorage::findNoteByGuid(
     qevercloud::Guid noteGuid, FetchNoteOptions options) const
 {
     return m_notesHandler->findNoteByGuid(std::move(noteGuid), options);
