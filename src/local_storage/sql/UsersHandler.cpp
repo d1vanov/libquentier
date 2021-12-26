@@ -117,10 +117,10 @@ QFuture<void> UsersHandler::putUser(qevercloud::User user)
         });
 }
 
-QFuture<qevercloud::User> UsersHandler::findUserById(
+QFuture<std::optional<qevercloud::User>> UsersHandler::findUserById(
     qevercloud::UserID userId) const
 {
-    return makeReadTask<qevercloud::User>(
+    return makeReadTask<std::optional<qevercloud::User>>(
         makeTaskContext(),
         weak_from_this(),
         [userId](const UsersHandler & handler, QSqlDatabase & database,

@@ -109,9 +109,10 @@ QFuture<void> TagsHandler::putTag(qevercloud::Tag tag)
         });
 }
 
-QFuture<qevercloud::Tag> TagsHandler::findTagByLocalId(QString localId) const
+QFuture<std::optional<qevercloud::Tag>> TagsHandler::findTagByLocalId(
+    QString localId) const
 {
-    return makeReadTask<qevercloud::Tag>(
+    return makeReadTask<std::optional<qevercloud::Tag>>(
         makeTaskContext(), weak_from_this(),
         [localId = std::move(localId)](
             const TagsHandler & handler, QSqlDatabase & database,
@@ -121,9 +122,10 @@ QFuture<qevercloud::Tag> TagsHandler::findTagByLocalId(QString localId) const
         });
 }
 
-QFuture<qevercloud::Tag> TagsHandler::findTagByGuid(qevercloud::Guid guid) const
+QFuture<std::optional<qevercloud::Tag>> TagsHandler::findTagByGuid(
+    qevercloud::Guid guid) const
 {
-    return makeReadTask<qevercloud::Tag>(
+    return makeReadTask<std::optional<qevercloud::Tag>>(
         makeTaskContext(), weak_from_this(),
         [guid = std::move(guid)](
             const TagsHandler & handler, QSqlDatabase & database,
@@ -132,10 +134,10 @@ QFuture<qevercloud::Tag> TagsHandler::findTagByGuid(qevercloud::Guid guid) const
         });
 }
 
-QFuture<qevercloud::Tag> TagsHandler::findTagByName(
+QFuture<std::optional<qevercloud::Tag>> TagsHandler::findTagByName(
     QString name, std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
-    return makeReadTask<qevercloud::Tag>(
+    return makeReadTask<std::optional<qevercloud::Tag>>(
         makeTaskContext(), weak_from_this(),
         [name = std::move(name),
          linkedNotebookGuid = std::move(linkedNotebookGuid)](

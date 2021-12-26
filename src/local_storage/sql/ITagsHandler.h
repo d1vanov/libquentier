@@ -25,6 +25,8 @@
 
 #include <qevercloud/types/Tag.h>
 
+#include <optional>
+
 namespace quentier::local_storage::sql {
 
 class ITagsHandler
@@ -35,13 +37,13 @@ public:
     [[nodiscard]] virtual QFuture<quint32> tagCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putTag(qevercloud::Tag tag) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByLocalId(
-        QString tagLocalId) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
+        findTagByLocalId(QString tagLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByGuid(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>> findTagByGuid(
         qevercloud::Guid tagGuid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByName(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>> findTagByName(
         QString tagName,
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const = 0;

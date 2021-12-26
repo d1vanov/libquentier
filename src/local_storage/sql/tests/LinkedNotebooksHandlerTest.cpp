@@ -36,6 +36,7 @@
 #include <gtest/gtest.h>
 
 // clazy:excludeall=non-pod-global-static
+// clazy:excludeall=returning-void-expression
 
 namespace quentier::local_storage::sql::tests {
 
@@ -223,7 +224,8 @@ TEST_F(LinkedNotebooksHandlerTest, ShouldNotFindNonexistentLinkedNotebookByGuid)
         UidGenerator::Generate());
 
     linkedNotebookFuture.waitForFinished();
-    EXPECT_EQ(linkedNotebookFuture.resultCount(), 0);
+    ASSERT_EQ(linkedNotebookFuture.resultCount(), 1);
+    EXPECT_FALSE(linkedNotebookFuture.result());
 }
 
 TEST_F(LinkedNotebooksHandlerTest, IgnoreAttemptToExpungeNonexistentLinkedNotebookByGuid)
@@ -302,6 +304,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
             linkedNotebook.guid().value());
 
     foundByGuidLinkedNotebookFuture.waitForFinished();
+    ASSERT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 1);
     EXPECT_EQ(foundByGuidLinkedNotebookFuture.result(), linkedNotebook);
 
     auto listLinkedNotebooksOptions =
@@ -342,7 +345,8 @@ TEST_F(LinkedNotebooksHandlerTest, HandleSingleLinkedNotebook)
             linkedNotebook.guid().value());
 
     foundByGuidLinkedNotebookFuture.waitForFinished();
-    EXPECT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 0);
+    ASSERT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 1);
+    EXPECT_FALSE(foundByGuidLinkedNotebookFuture.result());
 }
 
 TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
@@ -404,6 +408,7 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
                 linkedNotebook.guid().value());
 
         foundByGuidLinkedNotebookFuture.waitForFinished();
+        ASSERT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 1);
         EXPECT_EQ(foundByGuidLinkedNotebookFuture.result(), linkedNotebook);
     }
 
@@ -433,7 +438,8 @@ TEST_F(LinkedNotebooksHandlerTest, HandleMultipleLinkedNotebooks)
                 linkedNotebook.guid().value());
 
         foundByGuidLinkedNotebookFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidLinkedNotebookFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidLinkedNotebookFuture.result());
     }
 }
 

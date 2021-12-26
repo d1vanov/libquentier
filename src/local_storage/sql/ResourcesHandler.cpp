@@ -16,10 +16,10 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ResourcesHandler.h"
 #include "ConnectionPool.h"
 #include "ErrorHandling.h"
 #include "Notifier.h"
+#include "ResourcesHandler.h"
 #include "Tasks.h"
 #include "TypeChecks.h"
 
@@ -56,10 +56,10 @@ ResourcesHandler::ResourcesHandler(
     const QString & localStorageDirPath,
     QReadWriteLockPtr resourceDataFilesLock) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool}, m_notifier{notifier},
-    m_writerThread{std::move(writerThread)},
-    m_localStorageDir{localStorageDirPath},
-    m_resourceDataFilesLock{std::move(resourceDataFilesLock)}
+    m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{std::move(
+                                                        writerThread)},
+    m_localStorageDir{localStorageDirPath}, m_resourceDataFilesLock{std::move(
+                                                resourceDataFilesLock)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -161,7 +161,8 @@ QFuture<void> ResourcesHandler::putResourceMetadata(
             const ResourcesHandler & handler, QSqlDatabase & database,
             ErrorString & errorDescription) mutable {
             bool res = utils::putResource(
-                m_localStorageDir, resource, indexInNote, database, errorDescription,
+                m_localStorageDir, resource, indexInNote, database,
+                errorDescription,
                 utils::PutResourceBinaryDataOption::WithoutBinaryData);
             if (res) {
                 handler.m_notifier->notifyResourceMetadataPut(resource);
@@ -170,10 +171,11 @@ QFuture<void> ResourcesHandler::putResourceMetadata(
         });
 }
 
-QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
-    QString resourceLocalId, FetchResourceOptions options) const
+QFuture<std::optional<qevercloud::Resource>>
+    ResourcesHandler::findResourceByLocalId(
+        QString resourceLocalId, FetchResourceOptions options) const
 {
-    return makeReadTask<qevercloud::Resource>(
+    return makeReadTask<std::optional<qevercloud::Resource>>(
         makeTaskContext(), weak_from_this(),
         [resourceLocalId = std::move(resourceLocalId), options](
             const ResourcesHandler & handler, QSqlDatabase & database,
@@ -192,10 +194,11 @@ QFuture<qevercloud::Resource> ResourcesHandler::findResourceByLocalId(
         });
 }
 
-QFuture<qevercloud::Resource> ResourcesHandler::findResourceByGuid(
-    qevercloud::Guid resourceGuid, FetchResourceOptions options) const
+QFuture<std::optional<qevercloud::Resource>>
+    ResourcesHandler::findResourceByGuid(
+        qevercloud::Guid resourceGuid, FetchResourceOptions options) const
 {
-    return makeReadTask<qevercloud::Resource>(
+    return makeReadTask<std::optional<qevercloud::Resource>>(
         makeTaskContext(), weak_from_this(),
         [resourceGuid = std::move(resourceGuid), options](
             const ResourcesHandler & handler, QSqlDatabase & database,
@@ -366,8 +369,8 @@ bool ResourcesHandler::expungeResourceByLocalIdImpl(
     }
 
     ErrorString error;
-    const auto noteLocalId = utils::noteLocalIdByResourceLocalId(
-        localId, database, error);
+    const auto noteLocalId =
+        utils::noteLocalIdByResourceLocalId(localId, database, error);
 
     if (noteLocalId.isEmpty() && !error.isEmpty()) {
         errorDescription.setBase(QT_TRANSLATE_NOOP(

@@ -28,6 +28,8 @@
 #include <QFuture>
 #include <QList>
 
+#include <optional>
+
 namespace quentier::local_storage::sql {
 
 class INotebooksHandler
@@ -40,17 +42,19 @@ public:
     [[nodiscard]] virtual QFuture<void> putNotebook(
         qevercloud::Notebook notebook) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findNotebookByLocalId(
-        QString localId) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByLocalId(QString localId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findNotebookByGuid(
-        qevercloud::Guid guid) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name, std::optional<QString> linkedNotebookGuid = {}) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByName(
+            QString name,
+            std::optional<QString> linkedNotebookGuid = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findDefaultNotebook()
-        const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findDefaultNotebook() const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByLocalId(
         QString localId) = 0;

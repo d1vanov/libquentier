@@ -47,7 +47,7 @@ public:
     [[nodiscard]] QFuture<quint32> userCount() const override;
     [[nodiscard]] QFuture<void> putUser(qevercloud::User user) override;
 
-    [[nodiscard]] QFuture<qevercloud::User> findUserById(
+    [[nodiscard]] QFuture<std::optional<qevercloud::User>> findUserById(
         qevercloud::UserID userId) const override;
 
     [[nodiscard]] QFuture<void> expungeUserById(

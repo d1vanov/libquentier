@@ -430,7 +430,7 @@ public:
     [[nodiscard]] virtual QFuture<quint32> userCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putUser(qevercloud::User user) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::User> findUserById(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::User>> findUserById(
         qevercloud::UserID userId) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeUserById(
@@ -442,18 +442,19 @@ public:
     [[nodiscard]] virtual QFuture<void> putNotebook(
         qevercloud::Notebook notebook) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByLocalId(QString notebookLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook> findNotebookByName(
-        QString notebookName,
-        std::optional<qevercloud::Guid> linkedNotebookGuid =
-            std::nullopt) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByName(
+            QString notebookName,
+            std::optional<qevercloud::Guid> linkedNotebookGuid =
+                std::nullopt) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Notebook>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Notebook>>
         findDefaultNotebook() const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNotebookByLocalId(
@@ -478,7 +479,7 @@ public:
     [[nodiscard]] virtual QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::LinkedNotebook>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByGuid(qevercloud::Guid guid) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeLinkedNotebookByGuid(
@@ -519,11 +520,11 @@ public:
     [[nodiscard]] virtual QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
         findNoteByLocalId(
             QString noteLocalId, FetchNoteOptions options) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
         findNoteByGuid(
             qevercloud::Guid noteGuid, FetchNoteOptions options) const = 0;
 
@@ -568,13 +569,13 @@ public:
     [[nodiscard]] virtual QFuture<quint32> tagCount() const = 0;
     [[nodiscard]] virtual QFuture<void> putTag(qevercloud::Tag tag) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
         findTagByLocalId(QString tagLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>>
         findTagByGuid(qevercloud::Guid tagGuid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Tag> findTagByName(
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Tag>> findTagByName(
         QString tagName,
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const = 0;
@@ -608,12 +609,12 @@ public:
     [[nodiscard]] virtual QFuture<void> putResource(
         qevercloud::Resource resource, int indexInNote) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
         findResourceByLocalId(
             QString resourceLocalId,
             FetchResourceOptions options = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
         findResourceByGuid(
             qevercloud::Guid resourceGuid,
             FetchResourceOptions options = {}) const = 0;
@@ -630,13 +631,13 @@ public:
     [[nodiscard]] virtual QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByLocalId(QString savedSearchLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByName(QString name) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>

@@ -47,7 +47,7 @@ public:
     [[nodiscard]] QFuture<quint32> userCount() const override;
     [[nodiscard]] QFuture<void> putUser(qevercloud::User user) override;
 
-    [[nodiscard]] QFuture<qevercloud::User> findUserById(
+    [[nodiscard]] QFuture<std::optional<qevercloud::User>> findUserById(
         qevercloud::UserID userId) const override;
 
     [[nodiscard]] QFuture<void> expungeUserById(
@@ -59,18 +59,19 @@ public:
     [[nodiscard]] QFuture<void> putNotebook(
         qevercloud::Notebook notebook) override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook>
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByLocalId(QString notebookLocalId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook>
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
         findNotebookByGuid(qevercloud::Guid guid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString notebookName,
-        std::optional<qevercloud::Guid> linkedNotebookGuid =
-            std::nullopt) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByName(
+            QString notebookName,
+            std::optional<qevercloud::Guid> linkedNotebookGuid =
+                std::nullopt) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook>
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
         findDefaultNotebook() const override;
 
     [[nodiscard]] QFuture<void> expungeNotebookByLocalId(
@@ -96,8 +97,8 @@ public:
     [[nodiscard]] QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) override;
 
-    [[nodiscard]] QFuture<qevercloud::LinkedNotebook> findLinkedNotebookByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByGuid(qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<void> expungeLinkedNotebookByGuid(
         qevercloud::Guid guid) override;
@@ -136,10 +137,10 @@ public:
     [[nodiscard]] QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByLocalId(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByLocalId(
         QString noteLocalId, FetchNoteOptions options) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByGuid(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByGuid(
         qevercloud::Guid noteGuid, FetchNoteOptions options) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Note>> listNotes(
@@ -180,13 +181,13 @@ public:
     [[nodiscard]] QFuture<quint32> tagCount() const override;
     [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag) override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByLocalId(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByLocalId(
         QString tagLocalId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByGuid(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByGuid(
         qevercloud::Guid tagGuid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByName(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByName(
         QString tagName,
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const override;
@@ -195,8 +196,7 @@ public:
         ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
-        QString noteLocalId,
-        ListTagsOptions options = {}) const override;
+        QString noteLocalId, ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
@@ -220,13 +220,15 @@ public:
     [[nodiscard]] QFuture<void> putResource(
         qevercloud::Resource resource, int indexInNote) override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
-        QString resourceLocalId,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByLocalId(
+            QString resourceLocalId,
+            FetchResourceOptions options = {}) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
-        qevercloud::Guid resourceGuid,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByGuid(
+            qevercloud::Guid resourceGuid,
+            FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) override;
@@ -240,14 +242,14 @@ public:
     [[nodiscard]] QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByLocalId(QString savedSearchLocalId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByGuid(qevercloud::Guid guid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
-        QString name) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByName(QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListSavedSearchesOptions options = {}) const override;

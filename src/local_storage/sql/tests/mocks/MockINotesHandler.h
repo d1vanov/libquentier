@@ -57,11 +57,11 @@ public:
         (qevercloud::Note note, UpdateNoteOptions options), (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Note>, findNoteByLocalId,
+        QFuture<std::optional<qevercloud::Note>>, findNoteByLocalId,
         (QString localId, FetchNoteOptions options), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Note>, findNoteByGuid,
+        QFuture<std::optional<qevercloud::Note>>, findNoteByGuid,
         (qevercloud::Guid guid, FetchNoteOptions options), (const, override));
 
     MOCK_METHOD(

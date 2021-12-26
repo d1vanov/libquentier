@@ -34,12 +34,33 @@
 #endif
 
 #include <QFuture>
+#include <QStringList>
 #include <QThreadPool>
 
 #include <memory>
 #include <optional>
+#include <type_traits>
 
 namespace quentier::local_storage::sql {
+
+namespace {
+
+template <class T, class Enable = void>
+struct isOptional : std::false_type {};
+
+template <class T>
+struct isOptional<std::optional<T> > : std::true_type {};
+
+template <class T, class Enable = void>
+struct isList : std::false_type {};
+
+template <class T>
+struct isList<QList<T>> : std::true_type {};
+
+template <>
+struct isList<QStringList> : std::true_type {};
+
+} // namespace
 
 struct TaskContext
 {
@@ -85,15 +106,31 @@ QFuture<ResultType> makeReadTask(
             auto databaseConnection = taskContext.m_connectionPool->database();
 
             ErrorString errorDescription;
-            std::optional<ResultType> result = f(
-                *holder, databaseConnection, errorDescription);
 
-            if (result) {
-                promise->addResult(std::move(*result));
+            if constexpr (isOptional<ResultType>() || isList<ResultType>()) {
+                auto result = f(*holder, databaseConnection, errorDescription);
+                if (errorDescription.isEmpty()) {
+                    promise->addResult(std::move(result));
+                }
+                else {
+                    promise->setException(
+                        DatabaseRequestException{errorDescription});
+                }
             }
-            else if (!errorDescription.isEmpty()) {
-                promise->setException(
-                    DatabaseRequestException{errorDescription});
+            else {
+                auto result = f(*holder, databaseConnection, errorDescription);
+
+                static_assert(std::is_same_v<
+                              std::decay_t<decltype(result)>,
+                              std::optional<ResultType>>);
+
+                if (result) {
+                    promise->addResult(std::move(*result));
+                }
+                else if (!errorDescription.isEmpty()) {
+                    promise->setException(
+                        DatabaseRequestException{errorDescription});
+                }
             }
 
             promise->finish();

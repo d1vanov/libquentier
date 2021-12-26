@@ -40,8 +40,8 @@
 #include <utility/Qt5Promise.h>
 #endif
 
-#include <QSqlRecord>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QThreadPool>
 
 namespace quentier::local_storage::sql {
@@ -50,47 +50,40 @@ SavedSearchesHandler::SavedSearchesHandler(
     ConnectionPoolPtr connectionPool, QThreadPool * threadPool,
     Notifier * notifier, QThreadPtr writerThread) :
     m_connectionPool{std::move(connectionPool)},
-    m_threadPool{threadPool},
-    m_notifier{notifier},
-    m_writerThread{std::move(writerThread)}
+    m_threadPool{threadPool}, m_notifier{notifier}, m_writerThread{
+                                                        std::move(writerThread)}
 {
     if (Q_UNLIKELY(!m_connectionPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "SavedSearchesHandler ctor: connection pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "SavedSearchesHandler ctor: connection pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_threadPool)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "SavedSearchesHandler ctor: thread pool is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "SavedSearchesHandler ctor: thread pool is null")}};
     }
 
     if (Q_UNLIKELY(!m_notifier)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "SavedSearchesHandler ctor: notifier is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "SavedSearchesHandler ctor: notifier is null")}};
     }
 
     if (Q_UNLIKELY(!m_writerThread)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "SavedSearchesHandler ctor: writer thread is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "SavedSearchesHandler ctor: writer thread is null")}};
     }
 }
 
 QFuture<quint32> SavedSearchesHandler::savedSearchCount() const
 {
     return makeReadTask<quint32>(
-        makeTaskContext(),
-        weak_from_this(),
+        makeTaskContext(), weak_from_this(),
         [](const SavedSearchesHandler & handler, QSqlDatabase & database,
-           ErrorString & errorDescription)
-        {
+           ErrorString & errorDescription) {
             return handler.savedSearchCountImpl(database, errorDescription);
         });
 }
@@ -99,14 +92,12 @@ QFuture<void> SavedSearchesHandler::putSavedSearch(
     qevercloud::SavedSearch savedSearch)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [savedSearch = std::move(savedSearch)]
-        (SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription) mutable
-        {
-            const bool res = utils::putSavedSearch(
-                savedSearch, database, errorDescription);
+        makeTaskContext(), weak_from_this(),
+        [savedSearch = std::move(savedSearch)](
+            SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) mutable {
+            const bool res =
+                utils::putSavedSearch(savedSearch, database, errorDescription);
 
             if (res) {
                 handler.m_notifier->notifySavedSearchPut(savedSearch);
@@ -116,47 +107,41 @@ QFuture<void> SavedSearchesHandler::putSavedSearch(
         });
 }
 
-QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByLocalId(
-    QString localId) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    SavedSearchesHandler::findSavedSearchByLocalId(QString localId) const
 {
-    return makeReadTask<qevercloud::SavedSearch>(
-        makeTaskContext(),
-        weak_from_this(),
-        [localId = std::move(localId)]
-        (const SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+    return makeReadTask<std::optional<qevercloud::SavedSearch>>(
+        makeTaskContext(), weak_from_this(),
+        [localId = std::move(localId)](
+            const SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.findSavedSearchImpl(
                 QStringLiteral("localUid"), localId, database,
                 errorDescription);
         });
 }
 
-QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByGuid(
-    qevercloud::Guid guid) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    SavedSearchesHandler::findSavedSearchByGuid(qevercloud::Guid guid) const
 {
-    return makeReadTask<qevercloud::SavedSearch>(
-        makeTaskContext(),
-        weak_from_this(),
-        [guid = std::move(guid)]
-        (const SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+    return makeReadTask<std::optional<qevercloud::SavedSearch>>(
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid)](
+            const SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.findSavedSearchImpl(
                 QStringLiteral("guid"), guid, database, errorDescription);
         });
 }
 
-QFuture<qevercloud::SavedSearch> SavedSearchesHandler::findSavedSearchByName(
-    QString name) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    SavedSearchesHandler::findSavedSearchByName(QString name) const
 {
-    return makeReadTask<qevercloud::SavedSearch>(
-        makeTaskContext(),
-        weak_from_this(),
-        [name = std::move(name)]
-        (const SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+    return makeReadTask<std::optional<qevercloud::SavedSearch>>(
+        makeTaskContext(), weak_from_this(),
+        [name = std::move(name)](
+            const SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.findSavedSearchImpl(
                 QStringLiteral("nameLower"), name.toLower(), database,
                 errorDescription);
@@ -167,27 +152,22 @@ QFuture<QList<qevercloud::SavedSearch>> SavedSearchesHandler::listSavedSearches(
     ListSavedSearchesOptions options) const
 {
     return makeReadTask<QList<qevercloud::SavedSearch>>(
-        makeTaskContext(),
-        weak_from_this(),
-        [options]
-        (const SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [options](
+            const SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.listSavedSearchesImpl(
                 options, database, errorDescription);
         });
 }
 
-QFuture<void> SavedSearchesHandler::expungeSavedSearchByLocalId(
-    QString localId)
+QFuture<void> SavedSearchesHandler::expungeSavedSearchByLocalId(QString localId)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [localId = std::move(localId)]
-        (SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [localId = std::move(localId)](
+            SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             const bool res = handler.expungeSavedSearchByLocalIdImpl(
                 localId, database, errorDescription);
 
@@ -203,12 +183,10 @@ QFuture<void> SavedSearchesHandler::expungeSavedSearchByGuid(
     qevercloud::Guid guid)
 {
     return makeWriteTask<void>(
-        makeTaskContext(),
-        weak_from_this(),
-        [guid = std::move(guid)]
-        (SavedSearchesHandler & handler, QSqlDatabase & database,
-         ErrorString & errorDescription)
-        {
+        makeTaskContext(), weak_from_this(),
+        [guid = std::move(guid)](
+            SavedSearchesHandler & handler, QSqlDatabase & database,
+            ErrorString & errorDescription) {
             return handler.expungeSavedSearchByGuidImpl(
                 guid, database, errorDescription);
         });
@@ -239,11 +217,10 @@ std::optional<quint32> SavedSearchesHandler::savedSearchCountImpl(
     bool conversionResult = false;
     const int count = query.value(0).toInt(&conversionResult);
     if (Q_UNLIKELY(!conversionResult)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "Cannot count saved searches in the local storage database: "
-                "failed to convert saved search count to int"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Cannot count saved searches in the local storage database: "
+            "failed to convert saved search count to int"));
         QNWARNING("local_storage::sql::SavedSearchesHandler", errorDescription);
         return std::nullopt;
     }
@@ -256,12 +233,14 @@ std::optional<qevercloud::SavedSearch>
         const QString & columnName, const QString & columnValue,
         QSqlDatabase & database, ErrorString & errorDescription) const
 {
-    const QString queryString = QString::fromUtf8(
-        "SELECT localUid, guid, name, query, format, "
-        "updateSequenceNumber, isDirty, isLocal, "
-        "includeAccount, includePersonalLinkedNotebooks, "
-        "includeBusinessLinkedNotebooks, isFavorited FROM "
-        "SavedSearches WHERE %1 = :%2").arg(columnName, columnName);
+    const QString queryString =
+        QString::fromUtf8(
+            "SELECT localUid, guid, name, query, format, "
+            "updateSequenceNumber, isDirty, isLocal, "
+            "includeAccount, includePersonalLinkedNotebooks, "
+            "includeBusinessLinkedNotebooks, isFavorited FROM "
+            "SavedSearches WHERE %1 = :%2")
+            .arg(columnName, columnName);
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -291,10 +270,9 @@ std::optional<qevercloud::SavedSearch>
     qevercloud::SavedSearch savedSearch;
     ErrorString error;
     if (!utils::fillSavedSearchFromSqlRecord(record, savedSearch, error)) {
-        errorDescription.setBase(
-            QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "Failed to find saved search in the local storage database"));
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::SavedSearchesHandler",
+            "Failed to find saved search in the local storage database"));
         errorDescription.appendBase(error.base());
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
@@ -309,8 +287,8 @@ bool SavedSearchesHandler::expungeSavedSearchByLocalIdImpl(
     const QString & localId, QSqlDatabase & database,
     ErrorString & errorDescription, std::optional<Transaction> transaction)
 {
-    static const QString queryString = QStringLiteral(
-        "DELETE FROM SavedSearches WHERE localUid=:localUid");
+    static const QString queryString =
+        QStringLiteral("DELETE FROM SavedSearches WHERE localUid=:localUid");
 
     QSqlQuery query{database};
     bool res = query.prepare(queryString);
@@ -386,27 +364,25 @@ bool SavedSearchesHandler::expungeSavedSearchByGuidImpl(
 }
 
 QList<qevercloud::SavedSearch> SavedSearchesHandler::listSavedSearchesImpl(
-    const ListSavedSearchesOptions & options,
-    QSqlDatabase & database, ErrorString & errorDescription) const
+    const ListSavedSearchesOptions & options, QSqlDatabase & database,
+    ErrorString & errorDescription) const
 {
     return utils::listObjects<
         qevercloud::SavedSearch, ILocalStorage::ListSavedSearchesOrder>(
-            options.m_flags, options.m_limit, options.m_offset, options.m_order,
-            options.m_direction, QString{}, database, errorDescription);
+        options.m_flags, options.m_limit, options.m_offset, options.m_order,
+        options.m_direction, QString{}, database, errorDescription);
 }
 
 TaskContext SavedSearchesHandler::makeTaskContext() const
 {
     return TaskContext{
-        m_threadPool,
-        m_writerThread,
-        m_connectionPool,
+        m_threadPool, m_writerThread, m_connectionPool,
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "SavedSearchesHandler is already destroyed")},
+            "local_storage::sql::SavedSearchesHandler",
+            "SavedSearchesHandler is already destroyed")},
         ErrorString{QT_TRANSLATE_NOOP(
-                "local_storage::sql::SavedSearchesHandler",
-                "Request has been canceled")}};
+            "local_storage::sql::SavedSearchesHandler",
+            "Request has been canceled")}};
 }
 
 } // namespace quentier::local_storage::sql

@@ -34,20 +34,20 @@ public:
         (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Notebook>, findNotebookByLocalId, (QString localId),
-        (const, override));
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByLocalId,
+        (QString localId), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Notebook>, findNotebookByGuid,
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByGuid,
         (qevercloud::Guid guid), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Notebook>, findNotebookByName,
+        QFuture<std::optional<qevercloud::Notebook>>, findNotebookByName,
         (QString name, std::optional<qevercloud::Guid> linkedNotebookGuid),
         (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Notebook>, findDefaultNotebook, (),
+        QFuture<std::optional<qevercloud::Notebook>>, findDefaultNotebook, (),
         (const, override));
 
     MOCK_METHOD(

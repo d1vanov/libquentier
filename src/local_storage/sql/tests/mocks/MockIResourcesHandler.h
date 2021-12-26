@@ -44,12 +44,12 @@ public:
         (qevercloud::Resource resource, int indexInNote), (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Resource>, findResourceByLocalId,
+        QFuture<std::optional<qevercloud::Resource>>, findResourceByLocalId,
         (QString resourceLocalId, FetchResourceOptions options),
         (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Resource>, findResourceByGuid,
+        QFuture<std::optional<qevercloud::Resource>>, findResourceByGuid,
         (qevercloud::Guid resourceGuid, FetchResourceOptions options),
         (const, override));
 

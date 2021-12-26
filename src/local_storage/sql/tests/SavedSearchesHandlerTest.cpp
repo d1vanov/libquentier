@@ -194,7 +194,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByLocalId)
         UidGenerator::Generate());
 
     savedSearchFuture.waitForFinished();
-    EXPECT_EQ(savedSearchFuture.resultCount(), 0);
+    ASSERT_EQ(savedSearchFuture.resultCount(), 1);
+    EXPECT_FALSE(savedSearchFuture.result());
 }
 
 TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
@@ -207,7 +208,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByGuid)
         UidGenerator::Generate());
 
     savedSearchFuture.waitForFinished();
-    EXPECT_EQ(savedSearchFuture.resultCount(), 0);
+    ASSERT_EQ(savedSearchFuture.resultCount(), 1);
+    EXPECT_FALSE(savedSearchFuture.result());
 }
 
 TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByName)
@@ -220,7 +222,8 @@ TEST_F(SavedSearchesHandlerTest, ShouldNotFindNonexistentSavedSearchByName)
         QStringLiteral("search1"));
 
     savedSearchFuture.waitForFinished();
-    EXPECT_EQ(savedSearchFuture.resultCount(), 0);
+    ASSERT_EQ(savedSearchFuture.resultCount(), 1);
+    EXPECT_FALSE(savedSearchFuture.result());
 }
 
 TEST_F(
@@ -342,6 +345,7 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 
     foundSavedSearchByLocalIdFuture.waitForFinished();
     ASSERT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 1);
+    ASSERT_TRUE(foundSavedSearchByLocalIdFuture.result());
     EXPECT_EQ(foundSavedSearchByLocalIdFuture.result(), savedSearch);
 
     auto foundSavedSearchByGuidFuture =
@@ -349,6 +353,7 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 
     foundSavedSearchByGuidFuture.waitForFinished();
     ASSERT_EQ(foundSavedSearchByGuidFuture.resultCount(), 1);
+    ASSERT_TRUE(foundSavedSearchByGuidFuture.result());
     EXPECT_EQ(foundSavedSearchByGuidFuture.result(), savedSearch);
 
     auto foundSavedSearchByNameFuture =
@@ -356,6 +361,7 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
 
     foundSavedSearchByNameFuture.waitForFinished();
     ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), savedSearch);
 
     auto listSavedSearchesOptions = ILocalStorage::ListSavedSearchesOptions{};
@@ -394,19 +400,22 @@ TEST_P(SavedSearchesHandlerSingleSavedSearchTest, HandleSingleSavedSearch)
             savedSearchesHandler->findSavedSearchByLocalId(savedSearch.localId());
 
         foundSavedSearchByLocalIdFuture.waitForFinished();
-        EXPECT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 0);
+        ASSERT_EQ(foundSavedSearchByLocalIdFuture.resultCount(), 1);
+        EXPECT_FALSE(foundSavedSearchByLocalIdFuture.result());
 
         foundSavedSearchByGuidFuture =
             savedSearchesHandler->findSavedSearchByGuid(savedSearch.guid().value());
 
         foundSavedSearchByGuidFuture.waitForFinished();
-        EXPECT_EQ(foundSavedSearchByGuidFuture.resultCount(), 0);
+        ASSERT_EQ(foundSavedSearchByGuidFuture.resultCount(), 1);
+        EXPECT_FALSE(foundSavedSearchByGuidFuture.result());
 
         foundSavedSearchByNameFuture =
             savedSearchesHandler->findSavedSearchByName(savedSearch.name().value());
 
         foundSavedSearchByNameFuture.waitForFinished();
-        EXPECT_EQ(foundSavedSearchByNameFuture.resultCount(), 0);
+        ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+        EXPECT_FALSE(foundSavedSearchByNameFuture.result());
 
         listSavedSearchesFuture = savedSearchesHandler->listSavedSearches(
             listSavedSearchesOptions);
@@ -500,6 +509,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
                 savedSearch.localId());
         foundByLocalIdSavedSearchFuture.waitForFinished();
         ASSERT_EQ(foundByLocalIdSavedSearchFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByLocalIdSavedSearchFuture.result());
         EXPECT_EQ(foundByLocalIdSavedSearchFuture.result(), savedSearch);
 
         auto foundByGuidSavedSearchFuture =
@@ -507,6 +517,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
                 savedSearch.guid().value());
         foundByGuidSavedSearchFuture.waitForFinished();
         ASSERT_EQ(foundByGuidSavedSearchFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByGuidSavedSearchFuture.result());
         EXPECT_EQ(foundByGuidSavedSearchFuture.result(), savedSearch);
 
         auto foundByNameSavedSearchFuture =
@@ -514,6 +525,7 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
                 savedSearch.name().value());
         foundByNameSavedSearchFuture.waitForFinished();
         ASSERT_EQ(foundByNameSavedSearchFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByNameSavedSearchFuture.result());
         EXPECT_EQ(foundByNameSavedSearchFuture.result(), savedSearch);
     }
 
@@ -539,19 +551,22 @@ TEST_F(SavedSearchesHandlerTest, HandleMultipleSavedSearches)
             savedSearchesHandler->findSavedSearchByLocalId(
                 savedSearch.localId());
         foundByLocalIdSavedSearchFuture.waitForFinished();
-        EXPECT_EQ(foundByLocalIdSavedSearchFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdSavedSearchFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByLocalIdSavedSearchFuture.result());
 
         auto foundByGuidSavedSearchFuture =
             savedSearchesHandler->findSavedSearchByGuid(
                 savedSearch.guid().value());
         foundByGuidSavedSearchFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidSavedSearchFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidSavedSearchFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidSavedSearchFuture.result());
 
         auto foundByNameSavedSearchFuture =
             savedSearchesHandler->findSavedSearchByName(
                 savedSearch.name().value());
         foundByNameSavedSearchFuture.waitForFinished();
-        EXPECT_EQ(foundByNameSavedSearchFuture.resultCount(), 0);
+        ASSERT_EQ(foundByNameSavedSearchFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByNameSavedSearchFuture.result());
     }
 }
 
@@ -585,6 +600,7 @@ TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
 
     foundSavedSearchByNameFuture.waitForFinished();
     ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), search1);
 
     foundSavedSearchByNameFuture =
@@ -592,6 +608,7 @@ TEST_F(SavedSearchesHandlerTest, FindSavedSearchByNameWithDiacritics)
 
     foundSavedSearchByNameFuture.waitForFinished();
     ASSERT_EQ(foundSavedSearchByNameFuture.resultCount(), 1);
+    ASSERT_TRUE(foundSavedSearchByNameFuture.result());
     EXPECT_EQ(foundSavedSearchByNameFuture.result(), search2);
 }
 

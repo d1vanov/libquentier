@@ -26,7 +26,6 @@
 #include <QtGlobal>
 
 #include <memory>
-#include <optional>
 
 class QSqlQuery;
 
@@ -72,10 +71,10 @@ public:
     [[nodiscard]] QFuture<void> updateNote(
         qevercloud::Note note, UpdateNoteOptions options) override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByLocalId(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByLocalId(
         QString localId, FetchNoteOptions options) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Note> findNoteByGuid(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Note>> findNoteByGuid(
         qevercloud::Guid guid, FetchNoteOptions options) const override;
 
     [[nodiscard]] QFuture<void> expungeNoteByLocalId(QString localId) override;

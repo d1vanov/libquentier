@@ -225,7 +225,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByLocalId)
 
     auto tagFuture = tagsHandler->findTagByLocalId(UidGenerator::Generate());
     tagFuture.waitForFinished();
-    EXPECT_EQ(tagFuture.resultCount(), 0);
+    ASSERT_EQ(tagFuture.resultCount(), 1);
+    EXPECT_FALSE(tagFuture.result());
 }
 
 TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
@@ -236,7 +237,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByGuid)
 
     auto tagFuture = tagsHandler->findTagByGuid(UidGenerator::Generate());
     tagFuture.waitForFinished();
-    EXPECT_EQ(tagFuture.resultCount(), 0);
+    ASSERT_EQ(tagFuture.resultCount(), 1);
+    EXPECT_FALSE(tagFuture.result());
 }
 
 TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByName)
@@ -247,7 +249,8 @@ TEST_F(TagsHandlerTest, ShouldNotFindNonexistentTagByName)
 
     auto tagFuture = tagsHandler->findTagByName(QStringLiteral("My tag"));
     tagFuture.waitForFinished();
-    EXPECT_EQ(tagFuture.resultCount(), 0);
+    ASSERT_EQ(tagFuture.resultCount(), 1);
+    EXPECT_FALSE(tagFuture.result());
 }
 
 TEST_F(TagsHandlerTest, IgnoreAttemptToExpungeNonexistentTagByLocalId)
@@ -392,11 +395,13 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     auto foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
     foundByLocalIdTagFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByLocalIdTagFuture.result());
     EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
 
     auto foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
     foundByGuidTagFuture.waitForFinished();
     ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByGuidTagFuture.result());
     EXPECT_EQ(foundByGuidTagFuture.result(), tag);
 
     auto foundByNameTagFuture = tagsHandler->findTagByName(
@@ -404,6 +409,7 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
     foundByNameTagFuture.waitForFinished();
     ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByNameTagFuture.result());
     EXPECT_EQ(foundByNameTagFuture.result(), tag);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
@@ -438,17 +444,20 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
 
         foundByLocalIdTagFuture = tagsHandler->findTagByLocalId(tag.localId());
         foundByLocalIdTagFuture.waitForFinished();
-        EXPECT_EQ(foundByLocalIdTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByLocalIdTagFuture.result());
 
         foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
         foundByGuidTagFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidTagFuture.result());
 
         foundByNameTagFuture = tagsHandler->findTagByName(
             tag.name().value(), tag.linkedNotebookGuid());
 
         foundByNameTagFuture.waitForFinished();
-        EXPECT_EQ(foundByNameTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByNameTagFuture.result());
 
         listTagsFuture = tagsHandler->listTags(listTagsOptions);
         listTagsFuture.waitForFinished();
@@ -559,18 +568,21 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
             tagsHandler->findTagByLocalId(tag.localId());
         foundByLocalIdTagFuture.waitForFinished();
         ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByLocalIdTagFuture.result());
         EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
 
         auto foundByGuidTagFuture =
             tagsHandler->findTagByGuid(tag.guid().value());
         foundByGuidTagFuture.waitForFinished();
         ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByGuidTagFuture.result());
         EXPECT_EQ(foundByGuidTagFuture.result(), tag);
 
         auto foundByNameTagFuture = tagsHandler->findTagByName(
             tag.name().value(), tag.linkedNotebookGuid());
         foundByNameTagFuture.waitForFinished();
         ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByNameTagFuture.result());
         EXPECT_EQ(foundByNameTagFuture.result(), tag);
     }
 
@@ -591,17 +603,20 @@ TEST_F(TagsHandlerTest, HandleMultipleTags)
         auto foundByLocalIdTagFuture =
             tagsHandler->findTagByLocalId(tag.localId());
         foundByLocalIdTagFuture.waitForFinished();
-        EXPECT_EQ(foundByLocalIdTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByLocalIdTagFuture.result());
 
         auto foundByGuidTagFuture =
             tagsHandler->findTagByGuid(tag.guid().value());
         foundByGuidTagFuture.waitForFinished();
-        EXPECT_EQ(foundByGuidTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidTagFuture.result());
 
         auto foundByNameTagFuture = tagsHandler->findTagByName(
             tag.name().value(), tag.linkedNotebookGuid());
         foundByNameTagFuture.waitForFinished();
-        EXPECT_EQ(foundByNameTagFuture.resultCount(), 0);
+        ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByNameTagFuture.result());
     }
 }
 
@@ -653,12 +668,14 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     auto expungeTagFuture = tagsHandler->expungeTagByName(
@@ -669,12 +686,14 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     expungeTagFuture = tagsHandler->expungeTagByName(
         tag1.name().value(), QString{});
@@ -683,12 +702,14 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findTagFuture = tagsHandler->findTagByName(
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     putTagFuture = tagsHandler->putTag(tag1);
     putTagFuture.waitForFinished();
@@ -703,12 +724,14 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findTagFuture = tagsHandler->findTagByName(
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     expungeTagFuture = tagsHandler->expungeTagByName(
@@ -718,12 +741,14 @@ TEST_F(TagsHandlerTest, UseLinkedNotebookGuidWhenNameIsAmbiguous)
     findTagFuture = tagsHandler->findTagByName(
         tag1.name().value(), QString{});
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     findTagFuture = tagsHandler->findTagByName(
         tag2.name().value(), tag2.linkedNotebookGuid());
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 }
 
 TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
@@ -761,11 +786,13 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
     auto findTagFuture = tagsHandler->findTagByName(tag1.name().value());
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag1);
 
     findTagFuture = tagsHandler->findTagByName(tag2.name().value());
     findTagFuture.waitForFinished();
     ASSERT_EQ(findTagFuture.resultCount(), 1);
+    ASSERT_TRUE(findTagFuture.result());
     EXPECT_EQ(findTagFuture.result(), tag2);
 
     auto expungeTagFuture = tagsHandler->expungeTagByLocalId(tag1.localId());
@@ -782,11 +809,13 @@ TEST_F(TagsHandlerTest, ExpungeChildTagsAlongWithParentTag)
 
     findTagFuture = tagsHandler->findTagByName(tag1.name().value());
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 
     findTagFuture = tagsHandler->findTagByName(tag2.name().value());
     findTagFuture.waitForFinished();
-    EXPECT_EQ(findTagFuture.resultCount(), 0);
+    ASSERT_EQ(findTagFuture.resultCount(), 1);
+    EXPECT_FALSE(findTagFuture.result());
 }
 
 TEST_F(TagsHandlerTest, RefuseToPutTagWithUnknownParent)
@@ -830,11 +859,13 @@ TEST_F(TagsHandlerTest, FindTagByNameWithDiacritics)
     auto foundTagByNameFuture = tagsHandler->findTagByName(tag1.name().value());
     foundTagByNameFuture.waitForFinished();
     ASSERT_EQ(foundTagByNameFuture.resultCount(), 1);
+    ASSERT_TRUE(foundTagByNameFuture.result());
     EXPECT_EQ(foundTagByNameFuture.result(), tag1);
 
     foundTagByNameFuture = tagsHandler->findTagByName(tag2.name().value());
     foundTagByNameFuture.waitForFinished();
     ASSERT_EQ(foundTagByNameFuture.resultCount(), 1);
+    ASSERT_TRUE(foundTagByNameFuture.result());
     EXPECT_EQ(foundTagByNameFuture.result(), tag2);
 }
 

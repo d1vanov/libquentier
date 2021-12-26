@@ -136,11 +136,11 @@ QFuture<void> LinkedNotebooksHandler::putLinkedNotebook(
         });
 }
 
-QFuture<qevercloud::LinkedNotebook>
+QFuture<std::optional<qevercloud::LinkedNotebook>>
     LinkedNotebooksHandler::findLinkedNotebookByGuid(
         qevercloud::Guid guid) const
 {
-    return makeReadTask<qevercloud::LinkedNotebook>(
+    return makeReadTask<std::optional<qevercloud::LinkedNotebook>>(
         makeTaskContext(),
         weak_from_this(),
         [guid = std::move(guid)]

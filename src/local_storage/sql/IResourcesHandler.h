@@ -27,6 +27,8 @@
 
 #include <QFuture>
 
+#include <optional>
+
 namespace quentier::local_storage::sql {
 
 class IResourcesHandler
@@ -53,12 +55,15 @@ public:
     using FetchResourceOption = ILocalStorage::FetchResourceOption;
     using FetchResourceOptions = ILocalStorage::FetchResourceOptions;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource> findResourceByLocalId(
-        QString resourceLocalId, FetchResourceOptions options = {}) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+        findResourceByLocalId(
+            QString resourceLocalId,
+            FetchResourceOptions options = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource> findResourceByGuid(
-        qevercloud::Guid resourceGuid,
-        FetchResourceOptions options = {}) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
+        findResourceByGuid(
+            qevercloud::Guid resourceGuid,
+            FetchResourceOptions options = {}) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) = 0;

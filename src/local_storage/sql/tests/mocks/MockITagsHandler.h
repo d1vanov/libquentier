@@ -31,26 +31,25 @@ public:
     MOCK_METHOD(QFuture<void>, putTag, (qevercloud::Tag tag), (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Tag>, findTagByLocalId, (QString tagLocalId),
-        (const, override));
+        QFuture<std::optional<qevercloud::Tag>>, findTagByLocalId,
+        (QString tagLocalId), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Tag>, findTagByGuid, (qevercloud::Guid tagGuid),
-        (const, override));
+        QFuture<std::optional<qevercloud::Tag>>, findTagByGuid,
+        (qevercloud::Guid tagGuid), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::Tag>, findTagByName,
+        QFuture<std::optional<qevercloud::Tag>>, findTagByName,
         (QString tagName, std::optional<QString> linkedNotebookGuid),
         (const, override));
 
     MOCK_METHOD(
-        QFuture<QList<qevercloud::Tag>>, listTags,
-        (ListTagsOptions options), (const, override));
+        QFuture<QList<qevercloud::Tag>>, listTags, (ListTagsOptions options),
+        (const, override));
 
     MOCK_METHOD(
         QFuture<QList<qevercloud::Tag>>, listTagsPerNoteLocalId,
-        (QString noteLocalId, ListTagsOptions options),
-        (const, override));
+        (QString noteLocalId, ListTagsOptions options), (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeTagByLocalId, (QString tagLocalId), (override));

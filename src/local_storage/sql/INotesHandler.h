@@ -28,6 +28,8 @@
 #include <QFuture>
 #include <QList>
 
+#include <optional>
+
 namespace quentier::local_storage::sql {
 
 class INotesHandler
@@ -77,11 +79,12 @@ public:
     using FetchNoteOption = ILocalStorage::FetchNoteOption;
     using FetchNoteOptions = ILocalStorage::FetchNoteOptions;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note> findNoteByLocalId(
-        QString localId, FetchNoteOptions options) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+        findNoteByLocalId(QString localId, FetchNoteOptions options) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Note> findNoteByGuid(
-        qevercloud::Guid guid, FetchNoteOptions options) const = 0;
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Note>>
+        findNoteByGuid(
+            qevercloud::Guid guid, FetchNoteOptions options) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeNoteByLocalId(
         QString localId) = 0;
