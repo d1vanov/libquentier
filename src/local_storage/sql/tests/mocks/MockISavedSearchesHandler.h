@@ -34,15 +34,15 @@ public:
         (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::SavedSearch>, findSavedSearchByLocalId,
-        (QString localId), (const, override));
+        QFuture<std::optional<qevercloud::SavedSearch>>,
+        findSavedSearchByLocalId, (QString localId), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::SavedSearch>, findSavedSearchByGuid,
+        QFuture<std::optional<qevercloud::SavedSearch>>, findSavedSearchByGuid,
         (qevercloud::Guid guid), (const, override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::SavedSearch>, findSavedSearchByName,
+        QFuture<std::optional<qevercloud::SavedSearch>>, findSavedSearchByName,
         (QString name), (const, override));
 
     MOCK_METHOD(

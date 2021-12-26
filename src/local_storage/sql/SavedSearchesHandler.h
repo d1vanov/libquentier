@@ -22,7 +22,6 @@
 #include "Transaction.h"
 
 #include <memory>
-#include <optional>
 
 namespace quentier::local_storage::sql {
 
@@ -37,32 +36,34 @@ public:
 
     [[nodiscard]] QFuture<quint32> savedSearchCount() const override;
 
-    [[nodiscard]] QFuture<void> putSavedSearch(qevercloud::SavedSearch search) override;
+    [[nodiscard]] QFuture<void> putSavedSearch(
+        qevercloud::SavedSearch search) override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByLocalId(
-        QString localId) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByLocalId(QString localId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByGuid(qevercloud::Guid guid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
-        QString name) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByName(QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListSavedSearchesOptions options = {}) const override;
 
-    [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(QString localId) override;
+    [[nodiscard]] QFuture<void> expungeSavedSearchByLocalId(
+        QString localId) override;
 
-    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(qevercloud::Guid guid) override;
+    [[nodiscard]] QFuture<void> expungeSavedSearchByGuid(
+        qevercloud::Guid guid) override;
 
 private:
     [[nodiscard]] std::optional<quint32> savedSearchCountImpl(
         QSqlDatabase & database, ErrorString & errorDescription) const;
 
-    [[nodiscard]] std::optional<qevercloud::SavedSearch>
-        findSavedSearchImpl(
-            const QString & columnName, const QString & columnValue,
-            QSqlDatabase & database, ErrorString & errorDescription) const;
+    [[nodiscard]] std::optional<qevercloud::SavedSearch> findSavedSearchImpl(
+        const QString & columnName, const QString & columnValue,
+        QSqlDatabase & database, ErrorString & errorDescription) const;
 
     [[nodiscard]] bool expungeSavedSearchByLocalIdImpl(
         const QString & localId, QSqlDatabase & database,
@@ -74,8 +75,8 @@ private:
         ErrorString & errorDescription);
 
     [[nodiscard]] QList<qevercloud::SavedSearch> listSavedSearchesImpl(
-        const ListSavedSearchesOptions & options,
-        QSqlDatabase & database, ErrorString & errorDescription) const;
+        const ListSavedSearchesOptions & options, QSqlDatabase & database,
+        ErrorString & errorDescription) const;
 
     [[nodiscard]] TaskContext makeTaskContext() const;
 

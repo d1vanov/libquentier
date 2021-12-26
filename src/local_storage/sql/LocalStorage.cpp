@@ -485,21 +485,21 @@ QFuture<void> LocalStorage::putSavedSearch(qevercloud::SavedSearch search)
     return m_savedSearchesHandler->putSavedSearch(std::move(search));
 }
 
-QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByLocalId(
-    QString savedSearchLocalId) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    LocalStorage::findSavedSearchByLocalId(QString savedSearchLocalId) const
 {
     return m_savedSearchesHandler->findSavedSearchByLocalId(
         std::move(savedSearchLocalId));
 }
 
-QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByGuid(
-    qevercloud::Guid guid) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    LocalStorage::findSavedSearchByGuid(qevercloud::Guid guid) const
 {
     return m_savedSearchesHandler->findSavedSearchByGuid(std::move(guid));
 }
 
-QFuture<qevercloud::SavedSearch> LocalStorage::findSavedSearchByName(
-    QString name) const
+QFuture<std::optional<qevercloud::SavedSearch>>
+    LocalStorage::findSavedSearchByName(QString name) const
 {
     return m_savedSearchesHandler->findSavedSearchByName(std::move(name));
 }

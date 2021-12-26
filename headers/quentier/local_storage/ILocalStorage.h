@@ -631,13 +631,13 @@ public:
     [[nodiscard]] virtual QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByLocalId(QString savedSearchLocalId) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByGuid(qevercloud::Guid guid) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::SavedSearch>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::SavedSearch>>
         findSavedSearchByName(QString name) const = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SavedSearch>>

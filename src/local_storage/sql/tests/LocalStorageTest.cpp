@@ -1355,7 +1355,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByLocalIdToSavedSearchesHandler)
     const auto & localId = savedSearch.localId();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1373,7 +1374,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByGuidToSavedSearchesHandler)
     const auto guid = savedSearch.guid().value();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1391,7 +1393,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByNameToSavedSearchesHandler)
     const auto name = savedSearch.name().value();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByName(name))
-        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByName(name);
     ASSERT_TRUE(res.isFinished());

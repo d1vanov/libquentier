@@ -242,14 +242,14 @@ public:
     [[nodiscard]] QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByLocalId(
-        QString savedSearchLocalId) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByLocalId(QString savedSearchLocalId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByGuid(qevercloud::Guid guid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByName(
-        QString name) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::SavedSearch>>
+        findSavedSearchByName(QString name) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SavedSearch>> listSavedSearches(
         ListSavedSearchesOptions options = {}) const override;
