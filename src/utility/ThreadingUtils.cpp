@@ -16,27 +16,34 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Threading.h"
+#include "ThreadingUtils.h"
 
-#include <QFuture>
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "Qt5Promise.h"
-#else
-#include <QPromise>
-#endif
+#include <QRunnable>
+#include <QtGlobal>
 
 namespace quentier::utility {
 
-[[nodiscard]] QFuture<void> makeReadyFuture()
+class Q_DECL_HIDDEN FunctionRunnable final: public QRunnable
 {
-    QPromise<void> promise;
-    QFuture<void> future = promise.future();
+public:
+    explicit FunctionRunnable(std::function<void()> function)
+        : m_function{std::move(function)}
+    {
+        Q_ASSERT(m_function);
+    }
 
-    promise.start();
-    promise.finish();
+    void run() override
+    {
+        m_function();
+    }
 
-    return future;
+private:
+    std::function<void()> m_function;
+};
+
+[[nodiscard]] QRunnable * createFunctionRunnable(std::function<void()> function)
+{
+    return new FunctionRunnable(std::move(function));
 }
 
 } // namespace quentier::utility

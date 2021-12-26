@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef QEVERCLOUD_QT5_PROMISE_H
-#define QEVERCLOUD_QT5_PROMISE_H
+#pragma once
 
 #include <QFutureInterface>
 
@@ -105,5 +104,3 @@ inline void swap(QPromise<T> &a, QPromise<T> &b) noexcept
 {
     a.swap(b);
 }
-
-#endif // QEVERCLOUD_QT5_PROMISE_H

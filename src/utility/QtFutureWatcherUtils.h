@@ -16,27 +16,29 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Threading.h"
+#pragma once
 
-#include <QFuture>
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "Qt5Promise.h"
-#else
-#include <QPromise>
-#endif
+#include <QFutureWatcher>
 
 namespace quentier::utility {
 
-[[nodiscard]] QFuture<void> makeReadyFuture()
+/**
+ * Delete later deleter function for QFutureWatchers
+ */
+template <class T>
+void deleteFutureWatcherLater(QFutureWatcher<T> * watcher) noexcept
 {
-    QPromise<void> promise;
-    QFuture<void> future = promise.future();
+    watcher->deleteLater();
+}
 
-    promise.start();
-    promise.finish();
-
-    return future;
+/**
+ * Create QFutureWatcher which would be deleter through a call to deleteLater
+ */
+template <class T>
+[[nodiscard]] std::shared_ptr<QFutureWatcher<T>> makeFutureWatcher()
+{
+    return std::shared_ptr<QFutureWatcher<T>>(
+        new QFutureWatcher<T>, deleteFutureWatcherLater<T>);
 }
 
 } // namespace quentier::utility

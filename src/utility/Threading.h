@@ -18,16 +18,16 @@
 
 #pragma once
 
+#include "QtFutureWatcherUtils.h"
+#include "ThreadingUtils.h"
+
 #include <QAbstractEventDispatcher>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QObject>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-#include <QMetaObject>
-#else
-#include <QThread>
-#endif
+#include <QFuture>
+#include <QFutureWatcher>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -42,58 +42,7 @@
 #include <memory>
 #include <type_traits>
 
-class QRunnable;
-
 namespace quentier::utility {
-
-template <typename Function>
-void postToObject(QObject * pObject, Function && function)
-{
-    Q_ASSERT(pObject);
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QMetaObject::invokeMethod(pObject, std::forward<Function>(function));
-#else
-    QObject src;
-    QObject::connect(
-        &src, &QObject::destroyed, pObject, std::forward<Function>(function),
-        Qt::QueuedConnection);
-#endif
-}
-
-template <typename Function>
-void postToThread(QThread * pThread, Function && function)
-{
-    Q_ASSERT(pThread);
-
-    QObject * pObject = QAbstractEventDispatcher::instance(pThread);
-    if (!pObject) {
-        // Thread's event loop has not been started yet. Create a dummy QObject,
-        // move it to the target thread, set things up so that it would be
-        // destroyed after the job is done and use postToObject.
-        auto pDummyObj = std::make_unique<QObject>();
-        pDummyObj->moveToThread(pThread);
-        auto * pObj = pDummyObj.release();
-        postToObject(
-            pObj,
-            [pObj, function = std::forward<Function>(function)]() mutable {
-                function();
-                pObj->deleteLater();
-            });
-        return;
-    }
-
-    Q_ASSERT(pObject);
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QMetaObject::invokeMethod(pObject, std::forward<Function>(function));
-#else
-    QObject src;
-    QObject::connect(
-        &src, &QObject::destroyed, pObject, std::forward<Function>(function),
-        Qt::QueuedConnection);
-#endif
-}
 
 /**
  * Create QFuture already containing the result
@@ -148,25 +97,6 @@ template <class T, class E>
     promise.finish();
 
     return future;
-}
-
-/**
- * Delete later deleter function for QFutureWatchers
- */
-template <class T>
-void deleteFutureWatcherLater(QFutureWatcher<T> * watcher) noexcept
-{
-    watcher->deleteLater();
-}
-
-/**
- * Create QFutureWatcher which would be deleter through a call to deleteLater
- */
-template <class T>
-[[nodiscard]] std::shared_ptr<QFutureWatcher<T>> makeFutureWatcher()
-{
-    return std::shared_ptr<QFutureWatcher<T>>(
-        new QFutureWatcher<T>, deleteFutureWatcherLater<T>);
 }
 
 /**
@@ -240,12 +170,5 @@ void bindPromiseToFuture(
             return;
         });
 }
-
-/**
- * Create QRunnable from a function - sort of a workaround for Qt < 5.15
- * where QRunnable::create does the same job
- */
-[[nodiscard]] QRunnable * createFunctionRunnable(
-    std::function<void()> function);
 
 } // namespace quentier::utility
