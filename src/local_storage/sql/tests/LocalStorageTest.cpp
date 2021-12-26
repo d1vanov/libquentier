@@ -386,7 +386,8 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByLocalIdToNotebooksHandler)
     const auto & localId = notebook.localId();
 
     EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -406,7 +407,8 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByGuidToNotebooksHandler)
     const auto guid = notebook.guid().value();
 
     EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -429,7 +431,8 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByNameToNotebooksHandler)
 
     EXPECT_CALL(
         *m_mockNotebooksHandler, findNotebookByName(name, linkedNotebookGuid))
-        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByName(name, linkedNotebookGuid);
     ASSERT_TRUE(res.isFinished());
@@ -445,7 +448,8 @@ TEST_F(LocalStorageTest, ForwardFindDefaultNotebookToNotebooksHandler)
     notebook.setName(QStringLiteral("Notebook"));
 
     EXPECT_CALL(*m_mockNotebooksHandler, findDefaultNotebook)
-        .WillOnce(Return(utility::makeReadyFuture(notebook)));
+        .WillOnce(
+            Return(utility::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findDefaultNotebook();
     ASSERT_TRUE(res.isFinished());

@@ -44,19 +44,20 @@ public:
     [[nodiscard]] QFuture<void> putNotebook(
         qevercloud::Notebook notebook) override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByLocalId(
-        QString localId) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByLocalId(QString localId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByGuid(qevercloud::Guid guid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findNotebookByName(
-        QString name,
-        std::optional<qevercloud::Guid> linkedNotebookGuid =
-            std::nullopt) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findNotebookByName(
+            QString name,
+            std::optional<qevercloud::Guid> linkedNotebookGuid =
+                std::nullopt) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> findDefaultNotebook()
-        const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Notebook>>
+        findDefaultNotebook() const override;
 
     [[nodiscard]] QFuture<void> expungeNotebookByLocalId(
         QString localId) override;
