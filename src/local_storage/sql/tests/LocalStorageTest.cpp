@@ -1068,7 +1068,7 @@ TEST_F(LocalStorageTest, ForwardFindTagByLocalIdToTagsHandler)
     const auto & localId = tag.localId();
 
     EXPECT_CALL(*m_mockTagsHandler, findTagByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture(tag)));
+        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1088,7 +1088,7 @@ TEST_F(LocalStorageTest, ForwardFindTagByGuidToTagsHandler)
     const auto guid = tag.guid().value();
 
     EXPECT_CALL(*m_mockTagsHandler, findTagByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture(tag)));
+        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1111,7 +1111,7 @@ TEST_F(LocalStorageTest, ForwardFindTagByNameToTagsHandler)
 
     EXPECT_CALL(
         *m_mockTagsHandler, findTagByName(name, linkedNotebookGuid))
-        .WillOnce(Return(utility::makeReadyFuture(tag)));
+        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByName(name, linkedNotebookGuid);
     ASSERT_TRUE(res.isFinished());

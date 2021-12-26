@@ -382,19 +382,19 @@ QFuture<void> LocalStorage::putTag(qevercloud::Tag tag)
     return m_tagsHandler->putTag(std::move(tag));
 }
 
-QFuture<qevercloud::Tag> LocalStorage::findTagByLocalId(
+QFuture<std::optional<qevercloud::Tag>> LocalStorage::findTagByLocalId(
     QString tagLocalId) const
 {
     return m_tagsHandler->findTagByLocalId(std::move(tagLocalId));
 }
 
-QFuture<qevercloud::Tag> LocalStorage::findTagByGuid(
+QFuture<std::optional<qevercloud::Tag>> LocalStorage::findTagByGuid(
     qevercloud::Guid tagGuid) const
 {
     return m_tagsHandler->findTagByGuid(std::move(tagGuid));
 }
 
-QFuture<qevercloud::Tag> LocalStorage::findTagByName(
+QFuture<std::optional<qevercloud::Tag>> LocalStorage::findTagByName(
     QString tagName, std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
     return m_tagsHandler->findTagByName(

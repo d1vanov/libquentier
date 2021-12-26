@@ -181,13 +181,13 @@ public:
     [[nodiscard]] QFuture<quint32> tagCount() const override;
     [[nodiscard]] QFuture<void> putTag(qevercloud::Tag tag) override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByLocalId(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByLocalId(
         QString tagLocalId) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByGuid(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByGuid(
         qevercloud::Guid tagGuid) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Tag> findTagByName(
+    [[nodiscard]] QFuture<std::optional<qevercloud::Tag>> findTagByName(
         QString tagName,
         std::optional<qevercloud::Guid> linkedNotebookGuid =
             std::nullopt) const override;
