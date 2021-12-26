@@ -235,8 +235,8 @@ QFuture<void> LocalStorage::putLinkedNotebook(
         std::move(linkedNotebook));
 }
 
-QFuture<qevercloud::LinkedNotebook> LocalStorage::findLinkedNotebookByGuid(
-    qevercloud::Guid guid) const
+QFuture<std::optional<qevercloud::LinkedNotebook>>
+    LocalStorage::findLinkedNotebookByGuid(qevercloud::Guid guid) const
 {
     return m_linkedNotebooksHandler->findLinkedNotebookByGuid(std::move(guid));
 }

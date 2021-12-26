@@ -34,8 +34,8 @@ public:
         (qevercloud::LinkedNotebook linkedNotebook), (override));
 
     MOCK_METHOD(
-        QFuture<qevercloud::LinkedNotebook>, findLinkedNotebookByGuid,
-        (qevercloud::Guid guid), (const, override));
+        QFuture<std::optional<qevercloud::LinkedNotebook>>,
+        findLinkedNotebookByGuid, (qevercloud::Guid guid), (const, override));
 
     MOCK_METHOD(
         QFuture<void>, expungeLinkedNotebookByGuid,

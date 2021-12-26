@@ -478,7 +478,7 @@ public:
     [[nodiscard]] virtual QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::LinkedNotebook>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::LinkedNotebook>>
         findLinkedNotebookByGuid(qevercloud::Guid guid) const = 0;
 
     [[nodiscard]] virtual QFuture<void> expungeLinkedNotebookByGuid(

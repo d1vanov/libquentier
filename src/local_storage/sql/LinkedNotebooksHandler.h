@@ -43,8 +43,8 @@ public:
     [[nodiscard]] QFuture<void> putLinkedNotebook(
         qevercloud::LinkedNotebook linkedNotebook) override;
 
-    [[nodiscard]] QFuture<qevercloud::LinkedNotebook> findLinkedNotebookByGuid(
-        qevercloud::Guid guid) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::LinkedNotebook>>
+        findLinkedNotebookByGuid(qevercloud::Guid guid) const override;
 
     [[nodiscard]] QFuture<void> expungeLinkedNotebookByGuid(
         qevercloud::Guid guid) override;

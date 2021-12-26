@@ -571,11 +571,11 @@ TEST_F(
     linkedNotebook.setUpdateSequenceNum(42);
 
     EXPECT_CALL(*m_mockLinkedNotebooksHandler, findLinkedNotebookByGuid)
-        .WillOnce(
-            [=](qevercloud::Guid guid) mutable { // NOLINT
-                EXPECT_EQ(guid, linkedNotebook.guid());
-                return utility::makeReadyFuture(std::move(linkedNotebook));
-            });
+        .WillOnce([=](qevercloud::Guid guid) mutable { // NOLINT
+            EXPECT_EQ(guid, linkedNotebook.guid());
+            return utility::makeReadyFuture(
+                std::make_optional(std::move(linkedNotebook)));
+        });
 
     const auto res =
         localStorage->findLinkedNotebookByGuid(linkedNotebook.guid().value());
