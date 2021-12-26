@@ -376,14 +376,16 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByLocalId)
         resourcesHandler->findResourceByLocalId(UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
-    EXPECT_EQ(resourceFuture.resultCount(), 0);
+    ASSERT_EQ(resourceFuture.resultCount(), 1);
+    EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByLocalId(
         UidGenerator::Generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
-    EXPECT_EQ(resourceFuture.resultCount(), 0);
+    ASSERT_EQ(resourceFuture.resultCount(), 1);
+    EXPECT_FALSE(resourceFuture.result());
 }
 
 TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
@@ -396,14 +398,16 @@ TEST_F(ResourcesHandlerTest, ShouldNotFindNonexistentResourceByGuid)
         resourcesHandler->findResourceByGuid(UidGenerator::Generate());
 
     resourceFuture.waitForFinished();
-    EXPECT_EQ(resourceFuture.resultCount(), 0);
+    ASSERT_EQ(resourceFuture.resultCount(), 1);
+    EXPECT_FALSE(resourceFuture.result());
 
     resourceFuture = resourcesHandler->findResourceByGuid(
         UidGenerator::Generate(),
         ILocalStorage::FetchResourceOption::WithBinaryData);
 
     resourceFuture.waitForFinished();
-    EXPECT_EQ(resourceFuture.resultCount(), 0);
+    ASSERT_EQ(resourceFuture.resultCount(), 1);
+    EXPECT_FALSE(resourceFuture.result());
 }
 
 TEST_F(ResourcesHandlerTest, IgnoreAttemptToExpungeNonexistentResourceByLocalId)
@@ -555,6 +559,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     foundByLocalIdResourceFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByLocalIdResourceFuture.result());
     EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
 
     auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
@@ -562,6 +567,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     foundByGuidResourceFuture.waitForFinished();
     ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByGuidResourceFuture.result());
     EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
 
     resource.setUpdateSequenceNum(resource.updateSequenceNum().value() + 1);
@@ -589,6 +595,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     foundByLocalIdResourceFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByLocalIdResourceFuture.result());
     EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
 
     foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
@@ -596,6 +603,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     foundByGuidResourceFuture.waitForFinished();
     ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+    ASSERT_TRUE(foundByGuidResourceFuture.result());
     EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
 
     auto expungeResourceByLocalIdFuture =
@@ -623,13 +631,15 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
             resource.localId(), fetchResourceOptions);
 
         foundByLocalIdResourceFuture.waitForFinished();
-        ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 0);
+        ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByLocalIdResourceFuture.result());
 
         foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
             resource.guid().value(), fetchResourceOptions);
 
         foundByGuidResourceFuture.waitForFinished();
-        ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 0);
+        ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+        EXPECT_FALSE(foundByGuidResourceFuture.result());
     };
 
     checkResourceExpunged();
@@ -748,6 +758,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 
         foundByLocalIdResourceFuture.waitForFinished();
         ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByLocalIdResourceFuture.result());
         EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
 
         auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
@@ -755,6 +766,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 
         foundByGuidResourceFuture.waitForFinished();
         ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByGuidResourceFuture.result());
         EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
     }
 
@@ -775,6 +787,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 
         foundByLocalIdResourceFuture.waitForFinished();
         ASSERT_EQ(foundByLocalIdResourceFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByLocalIdResourceFuture.result());
         EXPECT_EQ(foundByLocalIdResourceFuture.result(), resource);
 
         auto foundByGuidResourceFuture = resourcesHandler->findResourceByGuid(
@@ -782,6 +795,7 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
 
         foundByGuidResourceFuture.waitForFinished();
         ASSERT_EQ(foundByGuidResourceFuture.resultCount(), 1);
+        ASSERT_TRUE(foundByGuidResourceFuture.result());
         EXPECT_EQ(foundByGuidResourceFuture.result(), resource);
     }
 

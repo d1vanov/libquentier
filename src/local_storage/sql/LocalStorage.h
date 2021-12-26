@@ -196,8 +196,7 @@ public:
         ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<QList<qevercloud::Tag>> listTagsPerNoteLocalId(
-        QString noteLocalId,
-        ListTagsOptions options = {}) const override;
+        QString noteLocalId, ListTagsOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeTagByLocalId(
         QString tagLocalId) override;
@@ -221,13 +220,15 @@ public:
     [[nodiscard]] QFuture<void> putResource(
         qevercloud::Resource resource, int indexInNote) override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
-        QString resourceLocalId,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByLocalId(
+            QString resourceLocalId,
+            FetchResourceOptions options = {}) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
-        qevercloud::Guid resourceGuid,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByGuid(
+            qevercloud::Guid resourceGuid,
+            FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) override;
@@ -241,8 +242,8 @@ public:
     [[nodiscard]] QFuture<void> putSavedSearch(
         qevercloud::SavedSearch search) override;
 
-    [[nodiscard]] QFuture<qevercloud::SavedSearch>
-        findSavedSearchByLocalId(QString savedSearchLocalId) const override;
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByLocalId(
+        QString savedSearchLocalId) const override;
 
     [[nodiscard]] QFuture<qevercloud::SavedSearch> findSavedSearchByGuid(
         qevercloud::Guid guid) const override;

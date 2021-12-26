@@ -25,7 +25,6 @@
 #include <QReadWriteLock>
 
 #include <memory>
-#include <optional>
 
 namespace quentier::local_storage::sql {
 
@@ -53,13 +52,15 @@ public:
     [[nodiscard]] QFuture<void> putResourceMetadata(
         qevercloud::Resource resource, int indexInNote) override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByLocalId(
-        QString resourceLocalId,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByLocalId(
+            QString resourceLocalId,
+            FetchResourceOptions options = {}) const override;
 
-    [[nodiscard]] QFuture<qevercloud::Resource> findResourceByGuid(
-        qevercloud::Guid resourceGuid,
-        FetchResourceOptions options = {}) const override;
+    [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
+        findResourceByGuid(
+            qevercloud::Guid resourceGuid,
+            FetchResourceOptions options = {}) const override;
 
     [[nodiscard]] QFuture<void> expungeResourceByLocalId(
         QString resourceLocalId) override;

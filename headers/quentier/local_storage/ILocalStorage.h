@@ -609,12 +609,12 @@ public:
     [[nodiscard]] virtual QFuture<void> putResource(
         qevercloud::Resource resource, int indexInNote) = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
         findResourceByLocalId(
             QString resourceLocalId,
             FetchResourceOptions options = {}) const = 0;
 
-    [[nodiscard]] virtual QFuture<qevercloud::Resource>
+    [[nodiscard]] virtual QFuture<std::optional<qevercloud::Resource>>
         findResourceByGuid(
             qevercloud::Guid resourceGuid,
             FetchResourceOptions options = {}) const = 0;

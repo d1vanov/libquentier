@@ -23,8 +23,8 @@
 #include "ISavedSearchesHandler.h"
 #include "ISynchronizationInfoHandler.h"
 #include "ITagsHandler.h"
-#include "IVersionHandler.h"
 #include "IUsersHandler.h"
+#include "IVersionHandler.h"
 #include "LocalStorage.h"
 
 #include <quentier/exception/InvalidArgument.h>
@@ -41,14 +41,13 @@ LocalStorage::LocalStorage(
     IUsersHandlerPtr usersHandler, ILocalStorageNotifier * notifier) :
     m_linkedNotebooksHandler{std::move(linkedNotebooksHandler)},
     m_notebooksHandler{std::move(notebooksHandler)},
-    m_notesHandler{std::move(notesHandler)},
-    m_resourcesHandler{std::move(resourcesHandler)},
+    m_notesHandler{std::move(notesHandler)}, m_resourcesHandler{std::move(
+                                                 resourcesHandler)},
     m_savedSearchesHandler{std::move(savedSearchesHandler)},
     m_synchronizationInfoHandler{std::move(synchronizationInfoHandler)},
-    m_tagsHandler{std::move(tagsHandler)},
-    m_versionHandler{std::move(versionHandler)},
-    m_usersHandler{std::move(usersHandler)},
-    m_notifier{notifier}
+    m_tagsHandler{std::move(tagsHandler)}, m_versionHandler{std::move(
+                                               versionHandler)},
+    m_usersHandler{std::move(usersHandler)}, m_notifier{notifier}
 {
     if (Q_UNLIKELY(!m_linkedNotebooksHandler)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -312,8 +311,7 @@ QFuture<std::optional<qevercloud::Note>> LocalStorage::findNoteByGuid(
 }
 
 QFuture<QList<qevercloud::Note>> LocalStorage::listNotes(
-    FetchNoteOptions fetchOptions,
-    ListNotesOptions listOptions) const
+    FetchNoteOptions fetchOptions, ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotes(fetchOptions, listOptions);
 }
@@ -334,10 +332,10 @@ QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerTagLocalId(
         std::move(tagLocalId), fetchOptions, listOptions);
 }
 
-QFuture<QList<qevercloud::Note>> LocalStorage::listNotesPerNotebookAndTagLocalIds(
-    QStringList notebookLocalIds, QStringList tagLocalIds,
-    FetchNoteOptions fetchOptions,
-    ListNotesOptions listOptions) const
+QFuture<QList<qevercloud::Note>>
+    LocalStorage::listNotesPerNotebookAndTagLocalIds(
+        QStringList notebookLocalIds, QStringList tagLocalIds,
+        FetchNoteOptions fetchOptions, ListNotesOptions listOptions) const
 {
     return m_notesHandler->listNotesPerNotebookAndTagLocalIds(
         std::move(notebookLocalIds), std::move(tagLocalIds), fetchOptions,
@@ -397,8 +395,7 @@ QFuture<qevercloud::Tag> LocalStorage::findTagByGuid(
 }
 
 QFuture<qevercloud::Tag> LocalStorage::findTagByName(
-    QString tagName,
-    std::optional<qevercloud::Guid> linkedNotebookGuid) const
+    QString tagName, std::optional<qevercloud::Guid> linkedNotebookGuid) const
 {
     return m_tagsHandler->findTagByName(
         std::move(tagName), std::move(linkedNotebookGuid));
@@ -452,14 +449,15 @@ QFuture<void> LocalStorage::putResource(
     return m_resourcesHandler->putResource(std::move(resource), indexInNote);
 }
 
-QFuture<qevercloud::Resource> LocalStorage::findResourceByLocalId(
-    QString resourceLocalId, FetchResourceOptions options) const
+QFuture<std::optional<qevercloud::Resource>>
+    LocalStorage::findResourceByLocalId(
+        QString resourceLocalId, FetchResourceOptions options) const
 {
     return m_resourcesHandler->findResourceByLocalId(
         std::move(resourceLocalId), options);
 }
 
-QFuture<qevercloud::Resource> LocalStorage::findResourceByGuid(
+QFuture<std::optional<qevercloud::Resource>> LocalStorage::findResourceByGuid(
     qevercloud::Guid resourceGuid, FetchResourceOptions options) const
 {
     return m_resourcesHandler->findResourceByGuid(
@@ -474,8 +472,7 @@ QFuture<void> LocalStorage::expungeResourceByLocalId(QString resourceLocalId)
 
 QFuture<void> LocalStorage::expungeResourceByGuid(qevercloud::Guid resourceGuid)
 {
-    return m_resourcesHandler->expungeResourceByGuid(
-        std::move(resourceGuid));
+    return m_resourcesHandler->expungeResourceByGuid(std::move(resourceGuid));
 }
 
 QFuture<quint32> LocalStorage::savedSearchCount() const
@@ -520,8 +517,7 @@ QFuture<void> LocalStorage::expungeSavedSearchByLocalId(
         std::move(savedSearchLocalId));
 }
 
-QFuture<void> LocalStorage::expungeSavedSearchByGuid(
-    qevercloud::Guid guid)
+QFuture<void> LocalStorage::expungeSavedSearchByGuid(qevercloud::Guid guid)
 {
     return m_savedSearchesHandler->expungeSavedSearchByGuid(std::move(guid));
 }
