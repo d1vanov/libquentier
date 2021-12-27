@@ -87,7 +87,7 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_private
-  ${LIBNAME}_utility
+  ${LIBNAME}_threading
   Qt5::Core
   Qt5::Sql)
 

@@ -25,15 +25,15 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
-
-#include <utility/Threading.h>
+#include <quentier/threading/Future.h>
+#include <quentier/threading/Runnable.h>
 
 #include <QException>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
-#include <utility/Qt5Promise.h>
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 #include <QSqlQuery>
@@ -86,7 +86,7 @@ QFuture<bool> VersionHandler::isVersionTooHigh() const
 
     promise->start();
 
-    auto * runnable = utility::createFunctionRunnable(
+    auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -131,7 +131,7 @@ QFuture<bool> VersionHandler::requiresUpgrade() const
 
     promise->start();
 
-    auto * runnable = utility::createFunctionRunnable(
+    auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -176,7 +176,7 @@ QFuture<QList<IPatchPtr>> VersionHandler::requiredPatches() const
 
     promise->start();
 
-    auto * runnable = utility::createFunctionRunnable(
+    auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -225,7 +225,7 @@ QFuture<qint32> VersionHandler::version() const
 
     promise->start();
 
-    auto * runnable = utility::createFunctionRunnable(
+    auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise),
          self_weak = weak_from_this()] () mutable
         {
@@ -262,7 +262,7 @@ QFuture<qint32> VersionHandler::version() const
 
 QFuture<qint32> VersionHandler::highestSupportedVersion() const
 {
-    return utility::makeReadyFuture(highestSupportedVersionImpl());
+    return threading::makeReadyFuture(highestSupportedVersionImpl());
 }
 
 qint32 VersionHandler::versionImpl(

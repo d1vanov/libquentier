@@ -16,27 +16,19 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Threading.h"
+#pragma once
 
-#include <QFuture>
+#include <functional>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "Qt5Promise.h"
-#else
-#include <QPromise>
-#endif
+class QRunnable;
 
-namespace quentier::utility {
+namespace quentier::threading {
 
-[[nodiscard]] QFuture<void> makeReadyFuture()
-{
-    QPromise<void> promise;
-    QFuture<void> future = promise.future();
+/**
+ * Create QRunnable from a function - sort of a workaround for Qt < 5.15
+ * where QRunnable::create does the same job
+ */
+[[nodiscard]] QRunnable * createFunctionRunnable(
+    std::function<void()> function);
 
-    promise.start();
-    promise.finish();
-
-    return future;
-}
-
-} // namespace quentier::utility
+} // namespace quentier::threading

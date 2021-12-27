@@ -23,14 +23,14 @@
 
 #include <quentier/exception/DatabaseRequestException.h>
 #include <quentier/exception/RuntimeError.h>
+#include <quentier/threading/Post.h>
+#include <quentier/threading/Runnable.h>
 #include <quentier/types/ErrorString.h>
-
-#include <utility/Threading.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
-#include <utility/Qt5Promise.h>
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 #include <QFuture>
@@ -84,7 +84,7 @@ QFuture<ResultType> makeReadTask(
 
     promise->start();
 
-    auto * runnable = utility::createFunctionRunnable(
+    auto * runnable = threading::createFunctionRunnable(
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)] () mutable
         {
@@ -154,7 +154,7 @@ QFuture<ResultType> makeWriteTask(
     promise->start();
 
     auto * writerThread = taskContext.m_writerThread.get();
-    utility::postToThread(
+    threading::postToThread(
         writerThread,
         [promise = std::move(promise), holder_weak = std::weak_ptr(holder_weak),
          taskContext = std::move(taskContext), f = std::move(f)] () mutable

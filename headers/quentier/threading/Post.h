@@ -27,13 +27,10 @@
 #include <QThread>
 #endif
 
-#include <functional>
 #include <memory>
 #include <utility>
 
-class QRunnable;
-
-namespace quentier::utility {
+namespace quentier::threading {
 
 template <typename Function>
 void postToObject(QObject * pObject, Function && function)
@@ -84,11 +81,4 @@ void postToThread(QThread * pThread, Function && function)
 #endif
 }
 
-/**
- * Create QRunnable from a function - sort of a workaround for Qt < 5.15
- * where QRunnable::create does the same job
- */
-[[nodiscard]] QRunnable * createFunctionRunnable(
-    std::function<void()> function);
-
-} // namespace quentier::utility
+} // namespace quentier::threading

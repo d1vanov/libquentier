@@ -29,9 +29,8 @@
 #include <local_storage/sql/tests/mocks/MockIUsersHandler.h>
 #include <local_storage/sql/tests/mocks/MockIVersionHandler.h>
 
-#include <utility/Threading.h>
-
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <gtest/gtest.h>
@@ -49,21 +48,17 @@ protected:
     [[nodiscard]] ILocalStoragePtr createLocalStorage()
     {
         return std::make_shared<LocalStorage>(
-            m_mockLinkedNotebooksHandler,
-            m_mockNotebooksHandler,
-            m_mockNotesHandler,
-            m_mockResourcesHandler,
-            m_mockSavedSearchesHandler,
-            m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler,
-            m_mockVersionHandler,
-            m_mockUsersHandler,
+            m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
+            m_mockNotesHandler, m_mockResourcesHandler,
+            m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
+            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
             m_notifier.get());
     }
 
 protected:
-    std::shared_ptr<mocks::MockILinkedNotebooksHandler> m_mockLinkedNotebooksHandler =
-        std::make_shared<StrictMock<mocks::MockILinkedNotebooksHandler>>();
+    std::shared_ptr<mocks::MockILinkedNotebooksHandler>
+        m_mockLinkedNotebooksHandler =
+            std::make_shared<StrictMock<mocks::MockILinkedNotebooksHandler>>();
 
     std::shared_ptr<mocks::MockINotebooksHandler> m_mockNotebooksHandler =
         std::make_shared<StrictMock<mocks::MockINotebooksHandler>>();
@@ -74,11 +69,13 @@ protected:
     std::shared_ptr<mocks::MockIResourcesHandler> m_mockResourcesHandler =
         std::make_shared<StrictMock<mocks::MockIResourcesHandler>>();
 
-    std::shared_ptr<mocks::MockISavedSearchesHandler> m_mockSavedSearchesHandler =
-        std::make_shared<StrictMock<mocks::MockISavedSearchesHandler>>();
+    std::shared_ptr<mocks::MockISavedSearchesHandler>
+        m_mockSavedSearchesHandler =
+            std::make_shared<StrictMock<mocks::MockISavedSearchesHandler>>();
 
-    std::shared_ptr<mocks::MockISynchronizationInfoHandler> m_mockSynchronizationInfoHandler =
-        std::make_shared<StrictMock<mocks::MockISynchronizationInfoHandler>>();
+    std::shared_ptr<mocks::MockISynchronizationInfoHandler>
+        m_mockSynchronizationInfoHandler = std::make_shared<
+            StrictMock<mocks::MockISynchronizationInfoHandler>>();
 
     std::shared_ptr<mocks::MockITagsHandler> m_mockTagsHandler =
         std::make_shared<StrictMock<mocks::MockITagsHandler>>();
@@ -105,11 +102,10 @@ TEST_F(LocalStorageTest, CtorNullLinkedNotebooksHandler)
 {
     EXPECT_THROW(
         (LocalStorage{
-            nullptr, m_mockNotebooksHandler,
-            m_mockNotesHandler, m_mockResourcesHandler,
-            m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            nullptr, m_mockNotebooksHandler, m_mockNotesHandler,
+            m_mockResourcesHandler, m_mockSavedSearchesHandler,
+            m_mockSynchronizationInfoHandler, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -117,11 +113,10 @@ TEST_F(LocalStorageTest, CtorNullNotebooksHandler)
 {
     EXPECT_THROW(
         (LocalStorage{
-            m_mockLinkedNotebooksHandler, nullptr,
-            m_mockNotesHandler, m_mockResourcesHandler,
-            m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockLinkedNotebooksHandler, nullptr, m_mockNotesHandler,
+            m_mockResourcesHandler, m_mockSavedSearchesHandler,
+            m_mockSynchronizationInfoHandler, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -129,11 +124,10 @@ TEST_F(LocalStorageTest, CtorNullNotesHandler)
 {
     EXPECT_THROW(
         (LocalStorage{
-            m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
-            nullptr, m_mockResourcesHandler,
-            m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockLinkedNotebooksHandler, m_mockNotebooksHandler, nullptr,
+            m_mockResourcesHandler, m_mockSavedSearchesHandler,
+            m_mockSynchronizationInfoHandler, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -142,10 +136,9 @@ TEST_F(LocalStorageTest, CtorNullResourcesHandler)
     EXPECT_THROW(
         (LocalStorage{
             m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
-            m_mockNotesHandler, nullptr,
-            m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockNotesHandler, nullptr, m_mockSavedSearchesHandler,
+            m_mockSynchronizationInfoHandler, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -154,10 +147,9 @@ TEST_F(LocalStorageTest, CtorNullSavedSearchesHandler)
     EXPECT_THROW(
         (LocalStorage{
             m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
-            m_mockNotesHandler, m_mockResourcesHandler,
-            nullptr, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockNotesHandler, m_mockResourcesHandler, nullptr,
+            m_mockSynchronizationInfoHandler, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -167,9 +159,8 @@ TEST_F(LocalStorageTest, CtorNullSynchronizationInfoHandler)
         (LocalStorage{
             m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
             m_mockNotesHandler, m_mockResourcesHandler,
-            m_mockSavedSearchesHandler, nullptr,
-            m_mockTagsHandler, m_mockVersionHandler, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockSavedSearchesHandler, nullptr, m_mockTagsHandler,
+            m_mockVersionHandler, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -192,8 +183,7 @@ TEST_F(LocalStorageTest, CtorNullVersionHandler)
             m_mockLinkedNotebooksHandler, m_mockNotebooksHandler,
             m_mockNotesHandler, m_mockResourcesHandler,
             m_mockSavedSearchesHandler, m_mockSynchronizationInfoHandler,
-            m_mockTagsHandler, nullptr, m_mockUsersHandler,
-            m_notifier.get()}),
+            m_mockTagsHandler, nullptr, m_mockUsersHandler, m_notifier.get()}),
         InvalidArgument);
 }
 
@@ -226,7 +216,7 @@ TEST_F(LocalStorageTest, ForwardIsVersionTooHighToVersionHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockVersionHandler, isVersionTooHigh)
-        .WillOnce(Return(utility::makeReadyFuture<bool>(false)));
+        .WillOnce(Return(threading::makeReadyFuture<bool>(false)));
 
     const auto res = localStorage->isVersionTooHigh();
     ASSERT_TRUE(res.isFinished());
@@ -239,7 +229,7 @@ TEST_F(LocalStorageTest, ForwardRequiresUpgradeToVersionHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockVersionHandler, requiresUpgrade)
-        .WillOnce(Return(utility::makeReadyFuture<bool>(true)));
+        .WillOnce(Return(threading::makeReadyFuture<bool>(true)));
 
     const auto res = localStorage->requiresUpgrade();
     ASSERT_TRUE(res.isFinished());
@@ -252,7 +242,7 @@ TEST_F(LocalStorageTest, ForwardRequiredPatchesToVersionHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockVersionHandler, requiredPatches)
-        .WillOnce(Return(utility::makeReadyFuture<QList<IPatchPtr>>({})));
+        .WillOnce(Return(threading::makeReadyFuture<QList<IPatchPtr>>({})));
 
     const auto res = localStorage->requiredPatches();
     ASSERT_TRUE(res.isFinished());
@@ -265,7 +255,7 @@ TEST_F(LocalStorageTest, ForwardVersionToVersionHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockVersionHandler, version)
-        .WillOnce(Return(utility::makeReadyFuture<qint32>(3)));
+        .WillOnce(Return(threading::makeReadyFuture<qint32>(3)));
 
     const auto res = localStorage->version();
     ASSERT_TRUE(res.isFinished());
@@ -278,7 +268,7 @@ TEST_F(LocalStorageTest, ForwardHighestSupportedVersionToVersionHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockVersionHandler, highestSupportedVersion)
-        .WillOnce(Return(utility::makeReadyFuture<qint32>(3)));
+        .WillOnce(Return(threading::makeReadyFuture<qint32>(3)));
 
     const auto res = localStorage->highestSupportedVersion();
     ASSERT_TRUE(res.isFinished());
@@ -292,7 +282,7 @@ TEST_F(LocalStorageTest, ForwardUserCountToUsersHandler)
 
     const quint32 userCount = 3;
     EXPECT_CALL(*m_mockUsersHandler, userCount)
-        .WillOnce(Return(utility::makeReadyFuture(userCount)));
+        .WillOnce(Return(threading::makeReadyFuture(userCount)));
 
     const auto res = localStorage->userCount();
     ASSERT_TRUE(res.isFinished());
@@ -305,7 +295,7 @@ TEST_F(LocalStorageTest, ForwardPutUserToUsersHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockUsersHandler, putUser)
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putUser(qevercloud::User{});
     ASSERT_TRUE(res.isFinished());
@@ -321,7 +311,7 @@ TEST_F(LocalStorageTest, ForwardFindUserByIdToUsersHandler)
     EXPECT_CALL(*m_mockUsersHandler, findUserById)
         .WillOnce([=](qevercloud::UserID id) mutable {
             EXPECT_EQ(id, user.id());
-            return utility::makeReadyFuture(
+            return threading::makeReadyFuture(
                 std::make_optional(std::move(user)));
         });
 
@@ -339,12 +329,10 @@ TEST_F(LocalStorageTest, ForwardExpungeUserByIdToUsersHandler)
     user.setId(qevercloud::UserID{42});
 
     EXPECT_CALL(*m_mockUsersHandler, expungeUserById)
-        .WillOnce(
-            [&](qevercloud::UserID id)
-            {
-                EXPECT_EQ(id, user.id());
-                return utility::makeReadyFuture();
-            });
+        .WillOnce([&](qevercloud::UserID id) {
+            EXPECT_EQ(id, user.id());
+            return threading::makeReadyFuture();
+        });
 
     const auto res = localStorage->expungeUserById(user.id().value());
     ASSERT_TRUE(res.isFinished());
@@ -356,7 +344,7 @@ TEST_F(LocalStorageTest, ForwardNotebookCountToNotebooksHandler)
 
     const quint32 notebookCount = 4;
     EXPECT_CALL(*m_mockNotebooksHandler, notebookCount)
-        .WillOnce(Return(utility::makeReadyFuture(notebookCount)));
+        .WillOnce(Return(threading::makeReadyFuture(notebookCount)));
 
     const auto res = localStorage->notebookCount();
     ASSERT_TRUE(res.isFinished());
@@ -370,7 +358,7 @@ TEST_F(LocalStorageTest, ForwardPutNotebookToNotebooksHandler)
 
     const auto notebook = qevercloud::Notebook{};
     EXPECT_CALL(*m_mockNotebooksHandler, putNotebook(notebook))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putNotebook(notebook);
     ASSERT_TRUE(res.isFinished());
@@ -387,7 +375,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByLocalIdToNotebooksHandler)
 
     EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByLocalId(localId))
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(notebook))));
+            Return(threading::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -408,7 +396,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByGuidToNotebooksHandler)
 
     EXPECT_CALL(*m_mockNotebooksHandler, findNotebookByGuid(guid))
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(notebook))));
+            Return(threading::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -432,7 +420,7 @@ TEST_F(LocalStorageTest, ForwardFindNotebookByNameToNotebooksHandler)
     EXPECT_CALL(
         *m_mockNotebooksHandler, findNotebookByName(name, linkedNotebookGuid))
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(notebook))));
+            Return(threading::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findNotebookByName(name, linkedNotebookGuid);
     ASSERT_TRUE(res.isFinished());
@@ -449,7 +437,7 @@ TEST_F(LocalStorageTest, ForwardFindDefaultNotebookToNotebooksHandler)
 
     EXPECT_CALL(*m_mockNotebooksHandler, findDefaultNotebook)
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(notebook))));
+            Return(threading::makeReadyFuture(std::make_optional(notebook))));
 
     const auto res = localStorage->findDefaultNotebook();
     ASSERT_TRUE(res.isFinished());
@@ -463,7 +451,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByLocalIdToNotebooksHandler)
 
     const auto localId = UidGenerator::Generate();
     EXPECT_CALL(*m_mockNotebooksHandler, expungeNotebookByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeNotebookByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -475,7 +463,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByGuidToNotebooksHandler)
 
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(*m_mockNotebooksHandler, expungeNotebookByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeNotebookByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -491,7 +479,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNotebookByNameToNotebooksHandler)
     EXPECT_CALL(
         *m_mockNotebooksHandler,
         expungeNotebookByName(name, std::make_optional(linkedNotebookGuid)))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res =
         localStorage->expungeNotebookByName(name, linkedNotebookGuid);
@@ -512,7 +500,7 @@ TEST_F(LocalStorageTest, ForwardListNotebooksToNotebooksHandler)
         ILocalStorage::ListObjectsOption::ListAll};
 
     EXPECT_CALL(*m_mockNotebooksHandler, listNotebooks(listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notebooks)));
+        .WillOnce(Return(threading::makeReadyFuture(notebooks)));
 
     const auto res = localStorage->listNotebooks(listOptions);
     ASSERT_TRUE(res.isFinished());
@@ -529,7 +517,7 @@ TEST_F(LocalStorageTest, ForwardListSharedNotebooksToNotebooksHandler)
         << qevercloud::SharedNotebook{};
 
     EXPECT_CALL(*m_mockNotebooksHandler, listSharedNotebooks(guid))
-        .WillOnce(Return(utility::makeReadyFuture(sharedNotebooks)));
+        .WillOnce(Return(threading::makeReadyFuture(sharedNotebooks)));
 
     const auto res = localStorage->listSharedNotebooks(guid);
     ASSERT_TRUE(res.isFinished());
@@ -543,7 +531,7 @@ TEST_F(LocalStorageTest, ForwardLinkedNotebookCountToLinkedNotebooksHandler)
 
     const quint32 linkedNotebookCount = 5;
     EXPECT_CALL(*m_mockLinkedNotebooksHandler, linkedNotebookCount)
-        .WillOnce(Return(utility::makeReadyFuture(linkedNotebookCount)));
+        .WillOnce(Return(threading::makeReadyFuture(linkedNotebookCount)));
 
     const auto res = localStorage->linkedNotebookCount();
     ASSERT_TRUE(res.isFinished());
@@ -556,7 +544,7 @@ TEST_F(LocalStorageTest, ForwardPutLinkedNotebookToLinkedNotebooksHandler)
     const auto localStorage = createLocalStorage();
 
     EXPECT_CALL(*m_mockLinkedNotebooksHandler, putLinkedNotebook)
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res =
         localStorage->putLinkedNotebook(qevercloud::LinkedNotebook{});
@@ -577,7 +565,7 @@ TEST_F(
     EXPECT_CALL(*m_mockLinkedNotebooksHandler, findLinkedNotebookByGuid)
         .WillOnce([=](qevercloud::Guid guid) mutable { // NOLINT
             EXPECT_EQ(guid, linkedNotebook.guid());
-            return utility::makeReadyFuture(
+            return threading::makeReadyFuture(
                 std::make_optional(std::move(linkedNotebook)));
         });
 
@@ -598,15 +586,13 @@ TEST_F(
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(
         *m_mockLinkedNotebooksHandler, expungeLinkedNotebookByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeLinkedNotebookByGuid(guid);
     ASSERT_TRUE(res.isFinished());
 }
 
-TEST_F(
-    LocalStorageTest,
-    ForwardListLinkedNotebooksToLinkedNotebooksHandler)
+TEST_F(LocalStorageTest, ForwardListLinkedNotebooksToLinkedNotebooksHandler)
 {
     const auto localStorage = createLocalStorage();
 
@@ -614,7 +600,7 @@ TEST_F(
         << qevercloud::LinkedNotebook{};
 
     EXPECT_CALL(*m_mockLinkedNotebooksHandler, listLinkedNotebooks)
-        .WillOnce(Return(utility::makeReadyFuture(linkedNotebooks)));
+        .WillOnce(Return(threading::makeReadyFuture(linkedNotebooks)));
 
     const auto res = localStorage->listLinkedNotebooks();
     ASSERT_TRUE(res.isFinished());
@@ -634,7 +620,7 @@ TEST_F(LocalStorageTest, ForwardNoteCountToNotesHandler)
         ILocalStorage::NoteCountOption::IncludeDeletedNotes;
 
     EXPECT_CALL(*m_mockNotesHandler, noteCount(options))
-        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+        .WillOnce(Return(threading::makeReadyFuture(noteCount)));
 
     const auto res = localStorage->noteCount(options);
     ASSERT_TRUE(res.isFinished());
@@ -657,10 +643,10 @@ TEST_F(LocalStorageTest, ForwardNoteCountPerNotebookLocalIdToNotesHandler)
     EXPECT_CALL(
         *m_mockNotesHandler,
         noteCountPerNotebookLocalId(notebookLocalId, options))
-        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+        .WillOnce(Return(threading::makeReadyFuture(noteCount)));
 
-    const auto res = localStorage->noteCountPerNotebookLocalId(
-        notebookLocalId, options);
+    const auto res =
+        localStorage->noteCountPerNotebookLocalId(notebookLocalId, options);
 
     ASSERT_TRUE(res.isFinished());
     ASSERT_EQ(res.resultCount(), 1);
@@ -680,9 +666,8 @@ TEST_F(LocalStorageTest, ForwardNoteCountPerTagLocalIdToNotesHandler)
         ILocalStorage::NoteCountOption::IncludeDeletedNotes;
 
     EXPECT_CALL(
-        *m_mockNotesHandler,
-        noteCountPerTagLocalId(tagLocalId, options))
-        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+        *m_mockNotesHandler, noteCountPerTagLocalId(tagLocalId, options))
+        .WillOnce(Return(threading::makeReadyFuture(noteCount)));
 
     const auto res = localStorage->noteCountPerTagLocalId(tagLocalId, options);
     ASSERT_TRUE(res.isFinished());
@@ -709,7 +694,7 @@ TEST_F(LocalStorageTest, ForwardNoteCountPerTagsToNotesHandler)
     EXPECT_CALL(
         *m_mockNotesHandler,
         noteCountsPerTags(listTagsOptions, noteCountOptions))
-        .WillOnce(Return(utility::makeReadyFuture(noteCounts)));
+        .WillOnce(Return(threading::makeReadyFuture(noteCounts)));
 
     const auto res =
         localStorage->noteCountsPerTags(listTagsOptions, noteCountOptions);
@@ -737,7 +722,7 @@ TEST_F(
         *m_mockNotesHandler,
         noteCountPerNotebookAndTagLocalIds(
             notebookLocalIds, tagLocalIds, options))
-        .WillOnce(Return(utility::makeReadyFuture(noteCount)));
+        .WillOnce(Return(threading::makeReadyFuture(noteCount)));
 
     const auto res = localStorage->noteCountPerNotebookAndTagLocalIds(
         notebookLocalIds, tagLocalIds, options);
@@ -753,7 +738,7 @@ TEST_F(LocalStorageTest, ForwardPutNoteToNotesHandler)
 
     const auto note = qevercloud::Note{};
     EXPECT_CALL(*m_mockNotesHandler, putNote(note))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putNote(note);
     ASSERT_TRUE(res.isFinished());
@@ -765,13 +750,14 @@ TEST_F(LocalStorageTest, ForwardUpdateNoteToNotesHandler)
 
     const auto note = qevercloud::Note{};
 
-    const auto options = ILocalStorage::UpdateNoteOptions{
-        ILocalStorage::UpdateNoteOption::UpdateResourceMetadata} |
+    const auto options =
+        ILocalStorage::UpdateNoteOptions{
+            ILocalStorage::UpdateNoteOption::UpdateResourceMetadata} |
         ILocalStorage::UpdateNoteOption::UpdateResourceBinaryData |
         ILocalStorage::UpdateNoteOption::UpdateTags;
 
     EXPECT_CALL(*m_mockNotesHandler, updateNote(note, options))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->updateNote(note, options);
     ASSERT_TRUE(res.isFinished());
@@ -784,12 +770,13 @@ TEST_F(LocalStorageTest, ForwardFindNoteByLocalIdToNotesHandler)
     const auto note = qevercloud::Note{};
     const auto & localId = note.localId();
 
-    const auto options = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto options =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     EXPECT_CALL(*m_mockNotesHandler, findNoteByLocalId(localId, options))
-        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(note))));
+        .WillOnce(Return(threading::makeReadyFuture(std::make_optional(note))));
 
     const auto res = localStorage->findNoteByLocalId(localId, options);
     ASSERT_TRUE(res.isFinished());
@@ -806,12 +793,13 @@ TEST_F(LocalStorageTest, ForwardFindNoteByGuidToNotesHandler)
 
     const auto guid = note.guid().value();
 
-    const auto options = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto options =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     EXPECT_CALL(*m_mockNotesHandler, findNoteByGuid(guid, options))
-        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(note))));
+        .WillOnce(Return(threading::makeReadyFuture(std::make_optional(note))));
 
     const auto res = localStorage->findNoteByGuid(guid, options);
     ASSERT_TRUE(res.isFinished());
@@ -825,8 +813,9 @@ TEST_F(LocalStorageTest, ForwardListNotesToNotesHandler)
 
     const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     auto listOptions = ILocalStorage::ListNotesOptions{};
@@ -835,7 +824,7 @@ TEST_F(LocalStorageTest, ForwardListNotesToNotesHandler)
         ILocalStorage::ListObjectsOption::ListAll};
 
     EXPECT_CALL(*m_mockNotesHandler, listNotes(fetchOptions, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->listNotes(fetchOptions, listOptions);
     ASSERT_TRUE(res.isFinished());
@@ -850,8 +839,9 @@ TEST_F(LocalStorageTest, ForwardListNotesPerNotebookLocalIdToNotesHandler)
     const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
     const auto notebookLocalId = UidGenerator::Generate();
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     auto listOptions = ILocalStorage::ListNotesOptions{};
@@ -862,7 +852,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerNotebookLocalIdToNotesHandler)
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesPerNotebookLocalId(notebookLocalId, fetchOptions, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->listNotesPerNotebookLocalId(
         notebookLocalId, fetchOptions, listOptions);
@@ -879,8 +869,9 @@ TEST_F(LocalStorageTest, ForwardListNotesPerTagLocalIdToNotesHandler)
     const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
     const auto tagLocalId = UidGenerator::Generate();
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     auto listOptions = ILocalStorage::ListNotesOptions{};
@@ -891,7 +882,7 @@ TEST_F(LocalStorageTest, ForwardListNotesPerTagLocalIdToNotesHandler)
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesPerTagLocalId(tagLocalId, fetchOptions, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->listNotesPerTagLocalId(
         tagLocalId, fetchOptions, listOptions);
@@ -910,8 +901,9 @@ TEST_F(
     const auto notebookLocalIds = QStringList{} << UidGenerator::Generate();
     const auto tagLocalIds = QStringList{} << UidGenerator::Generate();
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     auto listOptions = ILocalStorage::ListNotesOptions{};
@@ -923,7 +915,7 @@ TEST_F(
         *m_mockNotesHandler,
         listNotesPerNotebookAndTagLocalIds(
             notebookLocalIds, tagLocalIds, fetchOptions, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->listNotesPerNotebookAndTagLocalIds(
         notebookLocalIds, tagLocalIds, fetchOptions, listOptions);
@@ -940,8 +932,9 @@ TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
     const auto notes = QList<qevercloud::Note>{} << qevercloud::Note{};
     const auto noteLocalIds = QStringList{} << notes.begin()->localId();
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     auto listOptions = ILocalStorage::ListNotesOptions{};
@@ -952,7 +945,7 @@ TEST_F(LocalStorageTest, ForwardListNotesByLocalIdsToNotesHandler)
     EXPECT_CALL(
         *m_mockNotesHandler,
         listNotesByLocalIds(noteLocalIds, fetchOptions, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->listNotesByLocalIds(
         noteLocalIds, fetchOptions, listOptions);
@@ -974,12 +967,13 @@ TEST_F(LocalStorageTest, ForwardQueryNotesToNotesHandler)
     ASSERT_TRUE(
         query.setQueryString(QStringLiteral("Something"), errorDescription));
 
-    const auto fetchOptions = ILocalStorage::FetchNoteOptions{
-        ILocalStorage::FetchNoteOption::WithResourceMetadata} |
+    const auto fetchOptions =
+        ILocalStorage::FetchNoteOptions{
+            ILocalStorage::FetchNoteOption::WithResourceMetadata} |
         ILocalStorage::FetchNoteOption::WithResourceBinaryData;
 
     EXPECT_CALL(*m_mockNotesHandler, queryNotes(query, fetchOptions))
-        .WillOnce(Return(utility::makeReadyFuture(notes)));
+        .WillOnce(Return(threading::makeReadyFuture(notes)));
 
     const auto res = localStorage->queryNotes(query, fetchOptions);
     ASSERT_TRUE(res.isFinished());
@@ -1000,7 +994,7 @@ TEST_F(LocalStorageTest, ForwardQueryNoteLocalIdsToNotesHandler)
         query.setQueryString(QStringLiteral("Something"), errorDescription));
 
     EXPECT_CALL(*m_mockNotesHandler, queryNoteLocalIds(query))
-        .WillOnce(Return(utility::makeReadyFuture(noteLocalIds)));
+        .WillOnce(Return(threading::makeReadyFuture(noteLocalIds)));
 
     const auto res = localStorage->queryNoteLocalIds(query);
     ASSERT_TRUE(res.isFinished());
@@ -1014,7 +1008,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNoteByLocalIdToNotesHandler)
 
     const auto localId = UidGenerator::Generate();
     EXPECT_CALL(*m_mockNotesHandler, expungeNoteByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeNoteByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1026,7 +1020,7 @@ TEST_F(LocalStorageTest, ForwardExpungeNoteByGuidToNotesHandler)
 
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(*m_mockNotesHandler, expungeNoteByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeNoteByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1038,7 +1032,7 @@ TEST_F(LocalStorageTest, ForwardTagCountToTagsHandler)
 
     const quint32 tagCount = 12;
     EXPECT_CALL(*m_mockTagsHandler, tagCount)
-        .WillOnce(Return(utility::makeReadyFuture(tagCount)));
+        .WillOnce(Return(threading::makeReadyFuture(tagCount)));
 
     const auto res = localStorage->tagCount();
     ASSERT_TRUE(res.isFinished());
@@ -1052,7 +1046,7 @@ TEST_F(LocalStorageTest, ForwardPutTagToTagsHandler)
 
     const auto tag = qevercloud::Tag{};
     EXPECT_CALL(*m_mockTagsHandler, putTag(tag))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putTag(tag);
     ASSERT_TRUE(res.isFinished());
@@ -1068,7 +1062,7 @@ TEST_F(LocalStorageTest, ForwardFindTagByLocalIdToTagsHandler)
     const auto & localId = tag.localId();
 
     EXPECT_CALL(*m_mockTagsHandler, findTagByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
+        .WillOnce(Return(threading::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1088,7 +1082,7 @@ TEST_F(LocalStorageTest, ForwardFindTagByGuidToTagsHandler)
     const auto guid = tag.guid().value();
 
     EXPECT_CALL(*m_mockTagsHandler, findTagByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
+        .WillOnce(Return(threading::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1109,9 +1103,8 @@ TEST_F(LocalStorageTest, ForwardFindTagByNameToTagsHandler)
     const auto name = tag.name().value();
     const auto & linkedNotebookGuid = tag.linkedNotebookGuid();
 
-    EXPECT_CALL(
-        *m_mockTagsHandler, findTagByName(name, linkedNotebookGuid))
-        .WillOnce(Return(utility::makeReadyFuture(std::make_optional(tag))));
+    EXPECT_CALL(*m_mockTagsHandler, findTagByName(name, linkedNotebookGuid))
+        .WillOnce(Return(threading::makeReadyFuture(std::make_optional(tag))));
 
     const auto res = localStorage->findTagByName(name, linkedNotebookGuid);
     ASSERT_TRUE(res.isFinished());
@@ -1131,7 +1124,7 @@ TEST_F(LocalStorageTest, ForwardListTagsToTagsHandler)
         ILocalStorage::ListObjectsOption::ListAll};
 
     EXPECT_CALL(*m_mockTagsHandler, listTags(listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(tags)));
+        .WillOnce(Return(threading::makeReadyFuture(tags)));
 
     const auto res = localStorage->listTags(listOptions);
     ASSERT_TRUE(res.isFinished());
@@ -1154,7 +1147,7 @@ TEST_F(LocalStorageTest, ForwardListTagsPerNoteLocalIdToNotesHandler)
 
     EXPECT_CALL(
         *m_mockTagsHandler, listTagsPerNoteLocalId(localId, listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(tags)));
+        .WillOnce(Return(threading::makeReadyFuture(tags)));
 
     const auto res = localStorage->listTagsPerNoteLocalId(localId, listOptions);
     ASSERT_TRUE(res.isFinished());
@@ -1168,7 +1161,7 @@ TEST_F(LocalStorageTest, ForwardExpungeTagByLocalIdToTagsHandler)
 
     const auto localId = UidGenerator::Generate();
     EXPECT_CALL(*m_mockTagsHandler, expungeTagByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeTagByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1180,7 +1173,7 @@ TEST_F(LocalStorageTest, ForwardExpungeTagByGuidToTagsHandler)
 
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(*m_mockTagsHandler, expungeTagByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeTagByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1196,10 +1189,9 @@ TEST_F(LocalStorageTest, ForwardExpungeTagByNameToTagsHandler)
     EXPECT_CALL(
         *m_mockTagsHandler,
         expungeTagByName(name, std::make_optional(linkedNotebookGuid)))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
-    const auto res =
-        localStorage->expungeTagByName(name, linkedNotebookGuid);
+    const auto res = localStorage->expungeTagByName(name, linkedNotebookGuid);
 
     ASSERT_TRUE(res.isFinished());
 }
@@ -1216,7 +1208,7 @@ TEST_F(LocalStorageTest, ForwardResourceCountToResourcesHandler)
         ILocalStorage::NoteCountOption::IncludeDeletedNotes;
 
     EXPECT_CALL(*m_mockResourcesHandler, resourceCount(options))
-        .WillOnce(Return(utility::makeReadyFuture(resourceCount)));
+        .WillOnce(Return(threading::makeReadyFuture(resourceCount)));
 
     const auto res = localStorage->resourceCount(options);
     ASSERT_TRUE(res.isFinished());
@@ -1233,7 +1225,7 @@ TEST_F(LocalStorageTest, ForwardResourceCountPerNoteLocalIdToResourcesHandler)
 
     EXPECT_CALL(
         *m_mockResourcesHandler, resourceCountPerNoteLocalId(noteLocalId))
-        .WillOnce(Return(utility::makeReadyFuture(resourceCount)));
+        .WillOnce(Return(threading::makeReadyFuture(resourceCount)));
 
     const auto res = localStorage->resourceCountPerNoteLocalId(noteLocalId);
     ASSERT_TRUE(res.isFinished());
@@ -1248,7 +1240,7 @@ TEST_F(LocalStorageTest, ForwardPutResourceToResourcesHandler)
     const auto resource = qevercloud::Resource{};
     const int indexInNote = 0;
     EXPECT_CALL(*m_mockResourcesHandler, putResource(resource, indexInNote))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->putResource(resource, indexInNote);
     ASSERT_TRUE(res.isFinished());
@@ -1267,7 +1259,7 @@ TEST_F(LocalStorageTest, ForwardFindResourceByLocalIdToNotesHandler)
     EXPECT_CALL(
         *m_mockResourcesHandler, findResourceByLocalId(localId, options))
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(resource))));
+            Return(threading::makeReadyFuture(std::make_optional(resource))));
 
     const auto res = localStorage->findResourceByLocalId(localId, options);
     ASSERT_TRUE(res.isFinished());
@@ -1289,7 +1281,7 @@ TEST_F(LocalStorageTest, ForwardFindResourceByGuidToResourcesHandler)
 
     EXPECT_CALL(*m_mockResourcesHandler, findResourceByGuid(guid, options))
         .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(resource))));
+            Return(threading::makeReadyFuture(std::make_optional(resource))));
 
     const auto res = localStorage->findResourceByGuid(guid, options);
     ASSERT_TRUE(res.isFinished());
@@ -1303,7 +1295,7 @@ TEST_F(LocalStorageTest, ForwardExpungeResourceByLocalIdToResourcesHandler)
 
     const auto localId = UidGenerator::Generate();
     EXPECT_CALL(*m_mockResourcesHandler, expungeResourceByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeResourceByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1315,7 +1307,7 @@ TEST_F(LocalStorageTest, ForwardExpungeResourceByGuidToResourcesHandler)
 
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(*m_mockResourcesHandler, expungeResourceByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeResourceByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1327,7 +1319,7 @@ TEST_F(LocalStorageTest, ForwardSavedSearchCountToSavedSearchesHandler)
 
     const quint32 savedSearchCount = 15;
     EXPECT_CALL(*m_mockSavedSearchesHandler, savedSearchCount)
-        .WillOnce(Return(utility::makeReadyFuture(savedSearchCount)));
+        .WillOnce(Return(threading::makeReadyFuture(savedSearchCount)));
 
     const auto res = localStorage->savedSearchCount();
     ASSERT_TRUE(res.isFinished());
@@ -1341,7 +1333,7 @@ TEST_F(LocalStorageTest, ForwardPutSavedSearchToSavedSearchesHandler)
 
     const auto savedSearch = qevercloud::SavedSearch{};
     EXPECT_CALL(*m_mockSavedSearchesHandler, putSavedSearch(savedSearch))
-        .WillOnce(Return(utility::makeReadyFuture(savedSearch)));
+        .WillOnce(Return(threading::makeReadyFuture(savedSearch)));
 
     const auto res = localStorage->putSavedSearch(savedSearch);
     ASSERT_TRUE(res.isFinished());
@@ -1355,8 +1347,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByLocalIdToSavedSearchesHandler)
     const auto & localId = savedSearch.localId();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByLocalId(localId))
-        .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
+        .WillOnce(Return(
+            threading::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1374,8 +1366,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByGuidToSavedSearchesHandler)
     const auto guid = savedSearch.guid().value();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByGuid(guid))
-        .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
+        .WillOnce(Return(
+            threading::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1393,8 +1385,8 @@ TEST_F(LocalStorageTest, ForwardFindSavedSearchByNameToSavedSearchesHandler)
     const auto name = savedSearch.name().value();
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, findSavedSearchByName(name))
-        .WillOnce(
-            Return(utility::makeReadyFuture(std::make_optional(savedSearch))));
+        .WillOnce(Return(
+            threading::makeReadyFuture(std::make_optional(savedSearch))));
 
     const auto res = localStorage->findSavedSearchByName(name);
     ASSERT_TRUE(res.isFinished());
@@ -1415,7 +1407,7 @@ TEST_F(LocalStorageTest, ForwardListSavedSearchesToSavedSearchesHandler)
         ILocalStorage::ListObjectsOption::ListAll};
 
     EXPECT_CALL(*m_mockSavedSearchesHandler, listSavedSearches(listOptions))
-        .WillOnce(Return(utility::makeReadyFuture(savedSearches)));
+        .WillOnce(Return(threading::makeReadyFuture(savedSearches)));
 
     const auto res = localStorage->listSavedSearches(listOptions);
     ASSERT_TRUE(res.isFinished());
@@ -1431,7 +1423,7 @@ TEST_F(
     const auto localId = UidGenerator::Generate();
     EXPECT_CALL(
         *m_mockSavedSearchesHandler, expungeSavedSearchByLocalId(localId))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeSavedSearchByLocalId(localId);
     ASSERT_TRUE(res.isFinished());
@@ -1443,7 +1435,7 @@ TEST_F(LocalStorageTest, ForwardExpungeSavedSearchByGuidToSavedSearchesHandler)
 
     const auto guid = UidGenerator::Generate();
     EXPECT_CALL(*m_mockSavedSearchesHandler, expungeSavedSearchByGuid(guid))
-        .WillOnce(Return(utility::makeReadyFuture()));
+        .WillOnce(Return(threading::makeReadyFuture()));
 
     const auto res = localStorage->expungeSavedSearchByGuid(guid);
     ASSERT_TRUE(res.isFinished());
@@ -1460,7 +1452,7 @@ TEST_F(
 
     EXPECT_CALL(
         *m_mockSynchronizationInfoHandler, highestUpdateSequenceNumber(option))
-        .WillOnce(Return(utility::makeReadyFuture(usn)));
+        .WillOnce(Return(threading::makeReadyFuture(usn)));
 
     const auto res = localStorage->highestUpdateSequenceNumber(option);
     ASSERT_TRUE(res.isFinished());
@@ -1480,7 +1472,7 @@ TEST_F(
     EXPECT_CALL(
         *m_mockSynchronizationInfoHandler,
         highestUpdateSequenceNumber(linkedNotebookGuid))
-        .WillOnce(Return(utility::makeReadyFuture(usn)));
+        .WillOnce(Return(threading::makeReadyFuture(usn)));
 
     const auto res =
         localStorage->highestUpdateSequenceNumber(linkedNotebookGuid);

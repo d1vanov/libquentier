@@ -21,47 +21,47 @@
 #include <QtGlobal>
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include "Qt5FutureHelpers.h"
-#include "Qt5Promise.h"
-#include "QtFutureWatcherUtils.h"
-#include "ThreadingUtils.h"
-#include <quentier/exception/RuntimeError.h>
 #include <QRunnable>
 #include <QThreadPool>
+#include <quentier/exception/RuntimeError.h>
+#include <quentier/threading/Future.h>
+#include <quentier/threading/Qt5FutureHelpers.h>
+#include <quentier/threading/Qt5Promise.h>
+#include <quentier/threading/QtFutureWatcherUtils.h>
 #endif
 
-namespace quentier::utility {
+namespace quentier::threading {
 
 // implementation for Qt6
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, Function && function)
 {
-    return future.then(std::forward(function));
+    return future.then(std::move(function));
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QtFuture::Launch policy, Function && function)
 {
-    return future.then(policy, std::forward(function));
+    return future.then(policy, std::move(function));
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QThreadPool * pool, Function && function)
 {
-    return future.then(pool, std::forward(function));
+    return future.then(pool, std::move(function));
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QObject * context, Function && function)
 {
-    return future.then(context, std::forward(function));
+    return future.then(context, std::move(function));
 }
 
 template <
@@ -91,7 +91,8 @@ namespace detail {
 
 template <class T, class Function>
 void processParentFuture(
-    QPromise<T> && promise, QFuture<T> && future, Function && function)
+    QPromise<typename ResultTypeHelper<Function, T>::ResultType> && promise,
+    QFuture<T> && future, Function && function)
 {
     using ResultType = typename ResultTypeHelper<Function, T>::ResultType;
 
@@ -136,8 +137,7 @@ void processParentFuture(
     }
     catch (const std::exception & e) {
         ErrorString error{QT_TRANSLATE_NOOP(
-            "utility",
-            "Unknown std::exception in then future handler")};
+            "utility", "Unknown std::exception in then future handler")};
         error.details() = QString::fromStdString(std::string{e.what()});
         promise.setException(RuntimeError{std::move(error)});
     }
@@ -153,17 +153,18 @@ void processParentFuture(
 } // namespace detail
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, Function && function)
 {
-    using ResultType = typename ResultTypeHelper<Function, T>::ResultType;
+    using ResultType =
+        typename detail::ResultTypeHelper<Function, T>::ResultType;
 
     QPromise<ResultType> promise;
     auto result = promise.future();
 
     if (future.isFinished()) {
         detail::processParentFuture(
-            std::move(promise), std::forward(future), std::forward(function));
+            std::move(promise), std::move(future), std::move(function));
         return result;
     }
 
@@ -172,45 +173,44 @@ QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
-        [watcher = std::move(watcher), function = std::forward(function),
+        [watcher = std::move(watcher), function = std::move(function),
          promise = std::move(promise)]() mutable {
             detail::processParentFuture(
-                std::move(promise), watcher->future(), std::forward(function));
+                std::move(promise), watcher->future(), std::move(function));
         });
 
     return result;
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QtFuture::Launch policy, Function && function)
 {
     if (policy == QtFuture::Launch::Sync) {
-        return then(std::forward(future), std::forward(function));
+        return then(std::move(future), std::move(function));
     }
 
     return then(
-        std::forward(future), QThreadPool::globalInstance(),
-        std::forward(function));
+        std::move(future), QThreadPool::globalInstance(), std::move(function));
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QThreadPool * pool, Function && function)
 {
-    using ResultType = typename ResultTypeHelper<Function, T>::ResultType;
+    using ResultType =
+        typename detail::ResultTypeHelper<Function, T>::ResultType;
 
     QPromise<ResultType> promise;
     auto result = promise.future();
 
     if (future.isFinished()) {
         auto * runnable = createFunctionRunnable(
-            [future = std::forward(future), promise = std::move(promise),
-             function = std::forward(function)]() mutable {
+            [future = std::move(future), promise = std::move(promise),
+             function = std::move(function)]() mutable {
                 detail::processParentFuture(
-                    std::move(promise), std::forward(future),
-                    std::forward(function));
-             });
+                    std::move(promise), std::move(future), std::move(function));
+            });
         runnable->setAutoDelete(true);
         pool->start(runnable);
         return result;
@@ -221,15 +221,15 @@ QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
-        [watcher = std::move(watcher), function = std::forward(function),
+        [watcher = std::move(watcher), function = std::move(function),
          promise = std::move(promise), pool]() mutable {
             auto * runnable = createFunctionRunnable(
-                [watcher = std::move(watcher), function = std::forward(function),
+                [watcher = std::move(watcher), function = std::move(function),
                  promise = std::move(promise)]() mutable {
                     detail::processParentFuture(
                         std::move(promise), watcher->future(),
-                        std::forward(function));
-                 });
+                        std::move(function));
+                });
             runnable->setAutoDelete(true);
             pool->start(runnable);
         });
@@ -238,10 +238,11 @@ QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
 }
 
 template <class T, class Function>
-QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
+QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QFuture<T> && future, QObject * context, Function && function)
 {
-    using ResultType = typename ResultTypeHelper<Function, T>::ResultType;
+    using ResultType =
+        typename detail::ResultTypeHelper<Function, T>::ResultType;
 
     QPromise<ResultType> promise;
     auto result = promise.future();
@@ -249,12 +250,11 @@ QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
     if (future.isFinished()) {
         postToObject(
             context,
-            [future = std::forward(future), promise = std::move(promise),
-             function = std::forward(function)]() mutable {
+            [future = std::move(future), promise = std::move(promise),
+             function = std::move(function)]() mutable {
                 detail::processParentFuture(
-                    std::move(promise), std::forward(future),
-                    std::forward(function));
-             });
+                    std::move(promise), std::move(future), std::move(function));
+            });
         return result;
     }
 
@@ -263,16 +263,16 @@ QFuture<typename ResultTypeHelper<Function, T>::ResultType> then(
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
-        [watcher = std::move(watcher), function = std::forward(function),
+        [watcher = std::move(watcher), function = std::move(function),
          promise = std::move(promise), context]() mutable {
             postToObject(
                 context,
-                [watcher = std::move(watcher), function = std::forward(function),
+                [watcher = std::move(watcher), function = std::move(function),
                  promise = std::move(promise)]() mutable {
                     detail::processParentFuture(
                         std::move(promise), watcher->future(),
-                        std::forward(function));
-                 });
+                        std::move(function));
+                });
         });
 
     return result;
@@ -362,7 +362,7 @@ QFuture<T> onFailed(QFuture<T> && future, Function && handler)
 
     if (future.isFinished()) {
         detail::processPossibleFutureException(
-            std::move(promise), std::forward(future), std::forward(handler));
+            std::move(promise), std::move(future), std::forward(handler));
         return result;
     }
 
@@ -372,11 +372,10 @@ QFuture<T> onFailed(QFuture<T> && future, Function && handler)
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
         [watcher = std::move(watcher), promise = std::move(promise),
-         future = std::forward(future),
+         future = std::move(future),
          handler = std::forward(handler)]() mutable {
-             detail::processPossibleFutureException(
-                std::move(promise), std::forward(future),
-                std::forward(handler));
+            detail::processPossibleFutureException(
+                std::move(promise), std::move(future), std::forward(handler));
         });
 
     return result;
@@ -395,10 +394,10 @@ QFuture<T> onFailed(
     if (future.isFinished()) {
         postToObject(
             context,
-            [promise = std::move(promise), future = std::forward(future),
+            [promise = std::move(promise), future = std::move(future),
              handler = std::forward(handler)]() mutable {
-                 detail::processPossibleFutureException(
-                    std::move(promise), std::forward(future),
+                detail::processPossibleFutureException(
+                    std::move(promise), std::move(future),
                     std::forward(handler));
             });
         return result;
@@ -410,14 +409,14 @@ QFuture<T> onFailed(
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
         [watcher = std::move(watcher), promise = std::move(promise),
-         future = std::forward(future), context,
+         future = std::move(future), context,
          handler = std::forward(handler)]() mutable {
             postToObject(
                 context,
-                [promise = std::move(promise), future = std::forward(future),
+                [promise = std::move(promise), future = std::move(future),
                  handler = std::forward(handler)]() mutable {
-                     detail::processPossibleFutureException(
-                        std::move(promise), std::forward(future),
+                    detail::processPossibleFutureException(
+                        std::move(promise), std::move(future),
                         std::forward(handler));
                 });
         });
@@ -427,4 +426,4 @@ QFuture<T> onFailed(
 
 #endif // QT_VERSION
 
-} // namespace quentier::utility
+} // namespace quentier::threading

@@ -24,16 +24,13 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Post.h>
 #include <quentier/types/ErrorString.h>
-
-#include <utility/Threading.h>
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include <utility/Qt5Promise.h>
-#endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 namespace quentier::local_storage::sql {
@@ -72,7 +69,7 @@ QFuture<void> PatchBase::backupLocalStorage()
     promise.setProgressRange(0, 100);
     promise.start();
 
-    utility::postToThread(
+    threading::postToThread(
         m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
@@ -119,7 +116,7 @@ QFuture<void> PatchBase::restoreLocalStorageFromBackup()
     promise.setProgressRange(0, 100);
     promise.start();
 
-    utility::postToThread(
+    threading::postToThread(
         m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
@@ -164,7 +161,7 @@ QFuture<void> PatchBase::removeLocalStorageBackup()
     auto future = promise.future();
     promise.start();
 
-    utility::postToThread(
+    threading::postToThread(
         m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {
@@ -209,7 +206,7 @@ QFuture<void> PatchBase::apply()
     promise.setProgressRange(0, 100);
     promise.start();
 
-    utility::postToThread(
+    threading::postToThread(
         m_writerThread.get(),
         [self_weak = weak_from_this(), promise = std::move(promise)] () mutable
         {

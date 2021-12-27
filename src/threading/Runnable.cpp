@@ -16,29 +16,34 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include <quentier/threading/Runnable.h>
 
-#include <QFutureWatcher>
+#include <QRunnable>
+#include <QtGlobal>
 
-namespace quentier::utility {
+namespace quentier::threading {
 
-/**
- * Delete later deleter function for QFutureWatchers
- */
-template <class T>
-void deleteFutureWatcherLater(QFutureWatcher<T> * watcher) noexcept
+class Q_DECL_HIDDEN FunctionRunnable final: public QRunnable
 {
-    watcher->deleteLater();
+public:
+    explicit FunctionRunnable(std::function<void()> function)
+        : m_function{std::move(function)}
+    {
+        Q_ASSERT(m_function);
+    }
+
+    void run() override
+    {
+        m_function();
+    }
+
+private:
+    std::function<void()> m_function;
+};
+
+[[nodiscard]] QRunnable * createFunctionRunnable(std::function<void()> function)
+{
+    return new FunctionRunnable(std::move(function));
 }
 
-/**
- * Create QFutureWatcher which would be deleter through a call to deleteLater
- */
-template <class T>
-[[nodiscard]] std::shared_ptr<QFutureWatcher<T>> makeFutureWatcher()
-{
-    return std::shared_ptr<QFutureWatcher<T>>(
-        new QFutureWatcher<T>, deleteFutureWatcherLater<T>);
-}
-
-} // namespace quentier::utility
+} // namespace quentier::threading

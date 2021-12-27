@@ -18,16 +18,17 @@
 
 #include "SimpleSyncConflictResolver.h"
 
-#include <utility/Threading.h>
-
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
+#include <quentier/threading/QtFutureContinuations.h>
+#include <quentier/threading/QtFutureWatcherUtils.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
-#include <utility/Qt5Promise.h>
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 #include <QCoreApplication>
@@ -59,7 +60,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     using Result = ISyncConflictResolver::NotebookConflictResolution;
 
     if (Q_UNLIKELY(!theirs.guid())) {
-        return utility::makeExceptionalFuture<Result>(
+        return threading::makeExceptionalFuture<Result>(
             InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::SimpleSyncConflictResolver",
                 "Cannot resolve notebook sync conflict: remote notebook "
@@ -67,7 +68,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     }
 
     if (Q_UNLIKELY(!theirs.name())) {
-        return utility::makeExceptionalFuture<Result>(
+        return threading::makeExceptionalFuture<Result>(
             InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::SimpleSyncConflictResolver",
                 "Cannot resolve notebook sync conflict: remote notebook "
@@ -75,7 +76,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     }
 
     if (Q_UNLIKELY(!mine.guid() && !mine.name())) {
-        return utility::makeExceptionalFuture<Result>(
+        return threading::makeExceptionalFuture<Result>(
             InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
                 "synchronization::SimpleSyncConflictResolver",
                 "Cannot resolve notebook sync conflict: local notebook "
@@ -123,7 +124,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
             "synchronization::SimpleSyncConflictResolver",
             "Conflicting notebooks match by name and guid => taking the remote "
                 << "version");
-        return utility::makeReadyFuture<NotebookConflictResolution>(
+        return threading::makeReadyFuture<NotebookConflictResolution>(
             ConflictResolution::UseTheirs{});
     }
 
@@ -140,7 +141,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
                 << "notebook guids don't match => they are either from "
                 << "different linked notebooks or one is from user's own "
                 << "account while the other is from some linked notebook");
-        return utility::makeReadyFuture<NotebookConflictResolution>(
+        return threading::makeReadyFuture<NotebookConflictResolution>(
             ConflictResolution::IgnoreMine{});
     }
 
@@ -149,21 +150,15 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
         "Both conflicting notebooks are either from user's own account or from "
             << "the same linked notebook");
 
-    QPromise<NotebookConflictResolution> promise;
-    auto future = promise.future();
-
     auto renameNotebookFuture = renameConflictingNotebook(std::move(mine));
-    utility::bindPromiseToFuture(
-        std::move(promise), std::move(renameNotebookFuture),
-        std::function{[](QPromise<NotebookConflictResolution> & promise,
-                         QList<qevercloud::Notebook> && notebooks) {
-            Q_ASSERT(notebooks.size() == 1);
-            promise.addResult(NotebookConflictResolution{
+    return threading::then(
+        std::move(renameNotebookFuture),
+        [](qevercloud::Notebook notebook)
+        {
+            return NotebookConflictResolution{
                 ConflictResolution::MoveMine<qevercloud::Notebook>{
-                    std::move(notebooks[0])}});
-        }});
-
-    return future;
+                    std::move(notebook)}};
+        });
 }
 
 QFuture<ISyncConflictResolver::NotebookConflictResolution>
@@ -205,14 +200,14 @@ QFuture<qevercloud::Notebook>
         }
         catch (const QException & e) {
             // Future contains exception, return it directly to the caller
-            return utility::makeExceptionalFuture<qevercloud::Notebook>(e);
+            return threading::makeExceptionalFuture<qevercloud::Notebook>(e);
         }
 
         if (findNotebookFuture.resultCount() == 0) {
             // No conflict by name was found in the local storage, can use
             // the suggested notebook name
             notebook.setName(newNotebookName);
-            return utility::makeReadyFuture<qevercloud::Notebook>(
+            return threading::makeReadyFuture<qevercloud::Notebook>(
                 std::move(notebook));
         }
 
@@ -225,7 +220,7 @@ QFuture<qevercloud::Notebook>
 
     promise.start();
 
-    auto watcher = utility::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
+    auto watcher = threading::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
     watcher->setFuture(findNotebookFuture);
     auto * rawWatcher = watcher.get();
     QObject::connect(
@@ -270,7 +265,13 @@ QFuture<qevercloud::Notebook>
             auto newFuture =
                 self->renameConflictingNotebook(notebook, ++counter);
 
-            utility::bindPromiseToFuture(std::move(promise), newFuture);
+            threading::then(
+                std::move(newFuture),
+                [promise = std::move(promise)](
+                    qevercloud::Notebook notebook) mutable {
+                    promise.addResult(std::move(notebook));
+                    promise.finish();
+                });
         });
 
     return future;

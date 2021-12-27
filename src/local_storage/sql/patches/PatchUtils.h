@@ -20,10 +20,10 @@
 
 #include <QtGlobal>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include <utility/Qt5Promise.h>
-#else
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 namespace quentier {

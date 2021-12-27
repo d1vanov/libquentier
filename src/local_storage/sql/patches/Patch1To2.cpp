@@ -25,6 +25,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/ApplicationSettings.h>
 #include <quentier/utility/EventLoopWithExitStatus.h>
@@ -33,14 +34,10 @@
 #include <quentier/utility/StandardPaths.h>
 #include <quentier/utility/StringUtils.h>
 
-#include <utility/Threading.h>
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#include <utility/Qt5Promise.h>
-#endif
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 #include <QSqlRecord>

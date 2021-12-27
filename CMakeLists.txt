@@ -128,6 +128,17 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncChunksDataCounters.h
     headers/quentier/synchronization/SynchronizationManager.h)
 
+set(THREADING_HEADERS
+    headers/quentier/threading/Post.h
+    headers/quentier/threading/QtFutureContinuations.h
+    headers/quentier/threading/QtFutureWatcherUtils.h)
+
+if(NOT BUILD_WITH_QT6)
+  list(APPEND THREADING_HEADERS
+    headers/quentier/threading/Qt5FutureHelpers.h
+    headers/quentier/threading/Qt5Promise.h)
+endif()
+
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/AuthenticationManager.h)
@@ -183,13 +194,14 @@ set(UTILITY_HEADERS
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h)
 
-set(PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
-list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
-list(APPEND PUBLIC_HEADERS ${ENML_HEADERS})
-list(APPEND PUBLIC_HEADERS ${LOCAL_STORAGE_HEADERS})
-list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_HEADERS})
-list(APPEND PUBLIC_HEADERS ${LOGGING_HEADERS})
+set(PUBLIC_HEADERS ${ENML_HEADERS})
 list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
+list(APPEND PUBLIC_HEADERS ${LOCAL_STORAGE_HEADERS})
+list(APPEND PUBLIC_HEADERS ${LOGGING_HEADERS})
+list(APPEND PUBLIC_HEADERS ${NOTE_EDITOR_HEADERS})
+list(APPEND PUBLIC_HEADERS ${SYNCHRONIZATION_HEADERS})
+list(APPEND PUBLIC_HEADERS ${THREADING_HEADERS})
+list(APPEND PUBLIC_HEADERS ${TYPES_HEADERS})
 list(APPEND PUBLIC_HEADERS ${UTILITY_HEADERS})
 
 set(PRIVATE_HEADERS
@@ -242,11 +254,6 @@ set(PRIVATE_HEADERS
     src/utility/ShortcutManager_p.h
     src/utility/SysInfo_p.h
     src/utility/StringUtils_p.h)
-
-if(NOT BUILD_WITH_QT6)
-  list(APPEND PRIVATE_HEADERS
-    src/utility/Qt5Promise.h)
-endif()
 
 if(BUILD_WITH_AUTHENTICATION_MANAGER)
   list(APPEND PRIVATE_HEADERS
@@ -743,14 +750,15 @@ find_package(GTest)
 
 add_subdirectory(src/local_storage/sql)
 add_subdirectory(src/synchronization)
-add_subdirectory(src/utility)
+add_subdirectory(src/threading)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
   ${QT_LIBRARIES}
   PRIVATE
   ${THIRDPARTY_LIBS}
-  ${LIBNAME}_local_storage_sql)
+  ${LIBNAME}_local_storage_sql
+  ${LIBNAME}_threading)
 
 add_sanitizers(${LIBNAME})
 

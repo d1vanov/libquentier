@@ -19,9 +19,8 @@
 #include "Notifier.h"
 #include "NotifierProxy.h"
 
-#include <utility/Threading.h>
-
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/threading/Post.h>
 
 namespace quentier::local_storage::sql {
 
@@ -55,7 +54,7 @@ void NotifierProxy::notifyUserPut(qevercloud::User user)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, user = std::move(user)] () mutable
         {
@@ -70,7 +69,7 @@ void NotifierProxy::notifyUserExpunged(qevercloud::UserID userId)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, userId] () mutable
         {
@@ -85,7 +84,7 @@ void NotifierProxy::notifyNotebookPut(qevercloud::Notebook notebook)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, notebook = std::move(notebook)] () mutable
         {
@@ -100,7 +99,7 @@ void NotifierProxy::notifyNotebookExpunged(QString notebookLocalId)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          notebookLocalId = std::move(notebookLocalId)]() mutable {
@@ -116,7 +115,7 @@ void NotifierProxy::notifyLinkedNotebookPut(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          linkedNotebook = std::move(linkedNotebook)]() mutable {
@@ -132,7 +131,7 @@ void NotifierProxy::notifyLinkedNotebookExpunged(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          linkedNotebookGuid = std::move(linkedNotebookGuid)]() mutable {
@@ -148,7 +147,7 @@ void NotifierProxy::notifyNotePut(qevercloud::Note note)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, note = std::move(note)] () mutable
         {
@@ -164,7 +163,7 @@ void NotifierProxy::notifyNoteUpdated(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, note = std::move(note), options] () mutable
         {
@@ -183,7 +182,7 @@ void NotifierProxy::notifyNoteNotebookChanged(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, noteLocalId = std::move(noteLocalId),
          previousNotebookLocalId = std::move(previousNotebookLocalId),
@@ -205,7 +204,7 @@ void NotifierProxy::notifyNoteTagListChanged(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, noteLocalId = std::move(noteLocalId),
          previousNoteTagLocalIds = std::move(previousNoteTagLocalIds),
@@ -223,7 +222,7 @@ void NotifierProxy::notifyNoteExpunged(QString noteLocalId)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          noteLocalId = std::move(noteLocalId)]() mutable {
@@ -238,7 +237,7 @@ void NotifierProxy::notifyTagPut(qevercloud::Tag tag)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, tag = std::move(tag)] () mutable
         {
@@ -255,7 +254,7 @@ void NotifierProxy::notifyTagExpunged(
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, tagLocalId = std::move(tagLocalId),
          expungedChildTagLocalIds =
@@ -272,7 +271,7 @@ void NotifierProxy::notifyResourcePut(qevercloud::Resource resource)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, resource = std::move(resource)] () mutable
         {
@@ -287,7 +286,7 @@ void NotifierProxy::notifyResourceExpunged(QString resourceLocalId)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          resourceLocalId = std::move(resourceLocalId)]() mutable {
@@ -302,7 +301,7 @@ void NotifierProxy::notifySavedSearchPut(qevercloud::SavedSearch savedSearch)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier, savedSearch = std::move(savedSearch)] () mutable
         {
@@ -317,7 +316,7 @@ void NotifierProxy::notifySavedSearchExpunged(QString savedSearchLocalId)
         return;
     }
 
-    utility::postToObject(
+    threading::postToObject(
         m_notifier,
         [notifier = m_notifier,
          savedSearchLocalId = std::move(savedSearchLocalId)]() mutable {

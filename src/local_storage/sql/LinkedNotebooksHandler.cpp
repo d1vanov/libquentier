@@ -31,13 +31,12 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
-
-#include <utility/Threading.h>
+#include <quentier/threading/Future.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
 #else
-#include <utility/Qt5Promise.h>
+#include <quentier/threading/Qt5Promise.h>
 #endif
 
 #include <QSqlRecord>
