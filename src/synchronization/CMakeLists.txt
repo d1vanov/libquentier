@@ -6,6 +6,10 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  Fwd.h
+  ISimpleNotebookSyncConflictResolver.h
+  SimpleNotebookSyncConflictResolver.cpp
+  SimpleNotebookSyncConflictResolver.h
   SimpleSyncConflictResolver.cpp
   SimpleSyncConflictResolver.h)
 

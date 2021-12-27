@@ -18,36 +18,41 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "ISimpleNotebookSyncConflictResolver.h"
 
-#include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/local_storage/Fwd.h>
+
+#include <qevercloud/types/Notebook.h>
+
+#include <memory>
 
 namespace quentier::synchronization {
 
-class SimpleSyncConflictResolver final :
-    public std::enable_shared_from_this<SimpleSyncConflictResolver>,
-    public ISyncConflictResolver
+class SimpleNotebookSyncConflictResolver final :
+    public std::enable_shared_from_this<SimpleNotebookSyncConflictResolver>,
+    public ISimpleNotebookSyncConflictResolver
 {
 public:
-    explicit SimpleSyncConflictResolver(
-        ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver);
+    explicit SimpleNotebookSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
     [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebooksConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine) override;
 
-    [[nodiscard]] QFuture<NoteConflictResolution> resolveNoteConflict(
-        qevercloud::Note theirs, qevercloud::Note mine) override;
+private:
+    [[nodiscard]] QFuture<NotebookConflictResolution>
+        processNotebooksConflictByName(
+            const qevercloud::Notebook & theirs,
+            qevercloud::Notebook mine);
 
-    [[nodiscard]] QFuture<SavedSearchConflictResolution>
-        resolveSavedSearchConflict(
-            qevercloud::SavedSearch theirs,
-            qevercloud::SavedSearch mine) override;
+    [[nodiscard]] QFuture<NotebookConflictResolution>
+        processNotebooksConflictByGuid(qevercloud::Notebook theirs);
 
-    [[nodiscard]] QFuture<TagConflictResolution> resolveTagConflict(
-        qevercloud::Tag theirs, qevercloud::Tag mine) override;
+    [[nodiscard]] QFuture<qevercloud::Notebook> renameConflictingNotebook(
+        qevercloud::Notebook notebook, int counter = 1);
 
 private:
-    ISimpleNotebookSyncConflictResolverPtr m_notebookConflictResolver;
+    local_storage::ILocalStoragePtr m_localStorage;
 };
 
 } // namespace quentier::synchronization
