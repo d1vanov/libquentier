@@ -7,14 +7,14 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
-  ISimpleNotebookSyncConflictResolver.h
-  ISimpleSavedSearchSyncConflictResolver.h
-  SimpleNotebookSyncConflictResolver.cpp
-  SimpleNotebookSyncConflictResolver.h
-  SimpleSavedSearchSyncConflictResolver.cpp
-  SimpleSavedSearchSyncConflictResolver.h
-  SimpleSyncConflictResolver.cpp
-  SimpleSyncConflictResolver.h)
+  conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
+  conflict_resolvers/ISimpleSavedSearchSyncConflictResolver.h
+  conflict_resolvers/SimpleNotebookSyncConflictResolver.cpp
+  conflict_resolvers/SimpleNotebookSyncConflictResolver.h
+  conflict_resolvers/SimpleSavedSearchSyncConflictResolver.cpp
+  conflict_resolvers/SimpleSavedSearchSyncConflictResolver.h
+  conflict_resolvers/SimpleSyncConflictResolver.cpp
+  conflict_resolvers/SimpleSyncConflictResolver.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
