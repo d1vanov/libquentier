@@ -87,7 +87,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
         return processNotebooksConflictByName(theirs, std::move(mine));
     }
 
-    return processNotebooksConflictByGuid(theirs, mine);
+    return processNotebooksConflictByGuid(std::move(theirs));
 }
 
 QFuture<ISyncConflictResolver::NoteConflictResolution>
@@ -124,8 +124,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     SimpleSyncConflictResolver::processNotebooksConflictByName(
         const qevercloud::Notebook & theirs, qevercloud::Notebook mine)
 {
-    if (mine.guid() && *mine.guid() == theirs.guid().value())
-    {
+    if (mine.guid() && *mine.guid() == theirs.guid().value()) {
         QNDEBUG(
             "synchronization::SimpleSyncConflictResolver",
             "Conflicting notebooks match by name and guid => taking the remote "
@@ -158,9 +157,7 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
 
     auto renameNotebookFuture = renameConflictingNotebook(std::move(mine));
     return threading::then(
-        std::move(renameNotebookFuture),
-        [](qevercloud::Notebook notebook)
-        {
+        std::move(renameNotebookFuture), [](qevercloud::Notebook notebook) {
             return NotebookConflictResolution{
                 ConflictResolution::MoveMine<qevercloud::Notebook>{
                     std::move(notebook)}};
@@ -169,15 +166,59 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
 
 QFuture<ISyncConflictResolver::NotebookConflictResolution>
     SimpleSyncConflictResolver::processNotebooksConflictByGuid(
-        const qevercloud::Notebook & theirs, const qevercloud::Notebook & mine)
+        qevercloud::Notebook theirs)
 {
     // Notebooks conflict by guid, let's understand whether there is a notebook
     // with the same name as theirs in the local storage
+    Q_ASSERT(theirs.name());
+    auto findNotebookFuture =
+        m_localStorage->findNotebookByName(theirs.name().value());
 
-    // TODO: implement
-    Q_UNUSED(theirs)
-    Q_UNUSED(mine)
-    return {};
+    auto promise = std::make_shared<QPromise<NotebookConflictResolution>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    threading::then(
+        std::move(findNotebookFuture),
+        [theirs = std::move(theirs), promise = std::move(promise),
+         self_weak = weak_from_this()](
+            std::optional<qevercloud::Notebook> notebook) mutable {
+            if (!notebook) {
+                // There is no conflict by name in the local storage
+                promise->addResult(NotebookConflictResolution{
+                    ConflictResolution::UseTheirs{}});
+                return;
+            }
+
+            auto self = self_weak.lock();
+            if (!self) {
+                // The resolver is dead, the result doesn't matter
+                promise->addResult(NotebookConflictResolution{
+                    ConflictResolution::UseTheirs{}});
+                return;
+            }
+
+            // There is a notebook in the local storage which conflicts by name
+            // with theirs notebook
+            auto future = self->processNotebooksConflictByName(
+                theirs, std::move(*notebook));
+
+            auto thenFuture = threading::then(
+                std::move(future),
+                [promise](NotebookConflictResolution resolution) {
+                    promise->addResult(resolution);
+                    promise->finish();
+                });
+
+            threading::onFailed(
+                std::move(thenFuture), [promise](const QException & e) {
+                    promise->setException(e);
+                    promise->finish();
+                });
+        });
+
+    return future;
 }
 
 QFuture<qevercloud::Notebook>
@@ -228,19 +269,16 @@ QFuture<qevercloud::Notebook>
 
     promise->start();
 
-    auto watcher = threading::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
+    auto watcher =
+        threading::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
     watcher->setFuture(findNotebookFuture);
     auto * rawWatcher = watcher.get();
     QObject::connect(
-        rawWatcher,
-        &QFutureWatcher<qevercloud::Notebook>::finished,
-        rawWatcher,
+        rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
         [self_weak = weak_from_this(), promise = std::move(promise),
-         watcher = std::move(watcher),
-         notebook = std::move(notebook),
+         watcher = std::move(watcher), notebook = std::move(notebook),
          newNotebookName = std::move(newNotebookName),
-         counter = counter] () mutable
-        {
+         counter = counter]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
                 return;
@@ -275,15 +313,13 @@ QFuture<qevercloud::Notebook>
 
             QFuture<void> thenFuture = threading::then(
                 std::move(newFuture),
-                [promise](
-                    qevercloud::Notebook notebook) mutable {
+                [promise](qevercloud::Notebook notebook) mutable {
                     promise->addResult(std::move(notebook));
                     promise->finish();
                 });
 
             threading::onFailed(
-                std::move(thenFuture),
-                [promise](const QException & e) mutable {
+                std::move(thenFuture), [promise](const QException & e) mutable {
                     promise->setException(e);
                     promise->finish();
                 });

@@ -53,9 +53,7 @@ private:
             qevercloud::Notebook mine);
 
     [[nodiscard]] QFuture<NotebookConflictResolution>
-        processNotebooksConflictByGuid(
-            const qevercloud::Notebook & theirs,
-            const qevercloud::Notebook & mine);
+        processNotebooksConflictByGuid(qevercloud::Notebook theirs);
 
     [[nodiscard]] QFuture<qevercloud::Notebook> renameConflictingNotebook(
         qevercloud::Notebook notebook, int counter = 1);
