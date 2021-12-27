@@ -95,6 +95,8 @@ QFuture<ISyncConflictResolver::NoteConflictResolution>
         qevercloud::Note theirs, qevercloud::Note mine)
 {
     // TODO: implement
+    Q_UNUSED(theirs)
+    Q_UNUSED(mine)
     return {};
 }
 
@@ -103,6 +105,8 @@ QFuture<ISyncConflictResolver::SavedSearchConflictResolution>
         qevercloud::SavedSearch theirs, qevercloud::SavedSearch mine)
 {
     // TODO: implement
+    Q_UNUSED(theirs)
+    Q_UNUSED(mine)
     return {};
 }
 
@@ -111,6 +115,8 @@ QFuture<ISyncConflictResolver::TagConflictResolution>
         qevercloud::Tag theirs, qevercloud::Tag mine)
 {
     // TODO: implement
+    Q_UNUSED(theirs)
+    Q_UNUSED(mine)
     return {};
 }
 
@@ -169,6 +175,8 @@ QFuture<ISyncConflictResolver::NotebookConflictResolution>
     // with the same name as theirs in the local storage
 
     // TODO: implement
+    Q_UNUSED(theirs)
+    Q_UNUSED(mine)
     return {};
 }
 
@@ -215,10 +223,10 @@ QFuture<qevercloud::Notebook>
         return renameConflictingNotebook(notebook, ++counter);
     }
 
-    QPromise<qevercloud::Notebook> promise;
-    auto future = promise.future();
+    auto promise = std::make_shared<QPromise<qevercloud::Notebook>>();
+    auto future = promise->future();
 
-    promise.start();
+    promise->start();
 
     auto watcher = threading::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
     watcher->setFuture(findNotebookFuture);
@@ -245,8 +253,8 @@ QFuture<qevercloud::Notebook>
             catch (const QException & e) {
                 // Failed to check whether notebook with conflicting name
                 // exists in the local storage
-                promise.setException(e);
-                promise.finish();
+                promise->setException(e);
+                promise->finish();
                 return;
             }
 
@@ -255,8 +263,8 @@ QFuture<qevercloud::Notebook>
                 // No conflict by name was found in the local storage, can use
                 // the suggested notebook name
                 notebook.setName(newNotebookName);
-                promise.addResult(std::move(notebook));
-                promise.finish();
+                promise->addResult(std::move(notebook));
+                promise->finish();
                 return;
             }
 
@@ -265,12 +273,19 @@ QFuture<qevercloud::Notebook>
             auto newFuture =
                 self->renameConflictingNotebook(notebook, ++counter);
 
-            threading::then(
+            QFuture<void> thenFuture = threading::then(
                 std::move(newFuture),
-                [promise = std::move(promise)](
+                [promise](
                     qevercloud::Notebook notebook) mutable {
-                    promise.addResult(std::move(notebook));
-                    promise.finish();
+                    promise->addResult(std::move(notebook));
+                    promise->finish();
+                });
+
+            threading::onFailed(
+                std::move(thenFuture),
+                [promise](const QException & e) mutable {
+                    promise->setException(e);
+                    promise->finish();
                 });
         });
 
