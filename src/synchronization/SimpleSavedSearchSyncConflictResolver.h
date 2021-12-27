@@ -18,18 +18,29 @@
 
 #pragma once
 
+#include "ISimpleSavedSearchSyncConflictResolver.h"
+
+#include <quentier/local_storage/Fwd.h>
+
 #include <memory>
 
 namespace quentier::synchronization {
 
-class ISimpleNotebookSyncConflictResolver;
+class SimpleSavedSearchSyncConflictResolver final :
+    public std::enable_shared_from_this<SimpleSavedSearchSyncConflictResolver>,
+    public ISimpleSavedSearchSyncConflictResolver
+{
+public:
+    explicit SimpleSavedSearchSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
-using ISimpleNotebookSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleNotebookSyncConflictResolver>;
+    [[nodiscard]] QFuture<SavedSearchConflictResolution>
+        resolveSavedSearchConflict(
+            qevercloud::SavedSearch theirs,
+            qevercloud::SavedSearch mine) override;
 
-class ISimpleSavedSearchSyncConflictResolver;
-
-using ISimpleSavedSearchSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleSavedSearchSyncConflictResolver>;
+private:
+    local_storage::ILocalStoragePtr m_localStorage;
+};
 
 } // namespace quentier::synchronization

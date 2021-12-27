@@ -18,18 +18,24 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/synchronization/ISyncConflictResolver.h>
 
 namespace quentier::synchronization {
 
-class ISimpleNotebookSyncConflictResolver;
+class ISimpleSavedSearchSyncConflictResolver
+{
+public:
+    virtual ~ISimpleSavedSearchSyncConflictResolver() = default;
 
-using ISimpleNotebookSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleNotebookSyncConflictResolver>;
+    using ConflictResolution = ISyncConflictResolver::ConflictResolution;
 
-class ISimpleSavedSearchSyncConflictResolver;
+    using SavedSearchConflictResolution =
+        ISyncConflictResolver::SavedSearchConflictResolution;
 
-using ISimpleSavedSearchSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleSavedSearchSyncConflictResolver>;
+    [[nodiscard]] virtual QFuture<SavedSearchConflictResolution>
+        resolveSavedSearchConflict(
+            qevercloud::SavedSearch theirs,
+            qevercloud::SavedSearch mine) = 0;
+};
 
 } // namespace quentier::synchronization

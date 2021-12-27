@@ -17,6 +17,7 @@
  */
 
 #include "ISimpleNotebookSyncConflictResolver.h"
+#include "ISimpleSavedSearchSyncConflictResolver.h"
 #include "SimpleSyncConflictResolver.h"
 
 #include <quentier/exception/InvalidArgument.h>
@@ -24,13 +25,22 @@
 namespace quentier::synchronization {
 
 SimpleSyncConflictResolver::SimpleSyncConflictResolver(
-    ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver) :
-    m_notebookConflictResolver{std::move(notebookConflictResolver)}
+    ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver,
+    ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver) :
+    m_notebookConflictResolver{std::move(notebookConflictResolver)},
+    m_savedSearchConflictResolver{std::move(savedSearchConflictResolver)}
 {
     if (Q_UNLIKELY(!m_notebookConflictResolver)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::SimpleSyncConflictResolver",
             "SimpleSyncConflictResolver ctor: null notebook conflict "
+            "resolver")}};
+    }
+
+    if (Q_UNLIKELY(!m_savedSearchConflictResolver)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::SimpleSyncConflictResolver",
+            "SimpleSyncConflictResolver ctor: null saved search conflict "
             "resolver")}};
     }
 }
@@ -57,10 +67,8 @@ QFuture<ISyncConflictResolver::SavedSearchConflictResolution>
     SimpleSyncConflictResolver::resolveSavedSearchConflict(
         qevercloud::SavedSearch theirs, qevercloud::SavedSearch mine)
 {
-    // TODO: implement
-    Q_UNUSED(theirs)
-    Q_UNUSED(mine)
-    return {};
+    return m_savedSearchConflictResolver->resolveSavedSearchConflict(
+        std::move(theirs), std::move(mine));
 }
 
 QFuture<ISyncConflictResolver::TagConflictResolution>

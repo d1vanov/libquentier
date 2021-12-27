@@ -8,8 +8,11 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
   ISimpleNotebookSyncConflictResolver.h
+  ISimpleSavedSearchSyncConflictResolver.h
   SimpleNotebookSyncConflictResolver.cpp
   SimpleNotebookSyncConflictResolver.h
+  SimpleSavedSearchSyncConflictResolver.cpp
+  SimpleSavedSearchSyncConflictResolver.h
   SimpleSyncConflictResolver.cpp
   SimpleSyncConflictResolver.h)
 
