@@ -203,9 +203,9 @@ QFuture<qevercloud::Notebook>
         try {
             findNotebookFuture.waitForFinished();
         }
-        catch (...) {
+        catch (const QException & e) {
             // Future contains exception, return it directly to the caller
-            return findNotebookFuture;
+            return utility::makeExceptionalFuture<qevercloud::Notebook>(e);
         }
 
         if (findNotebookFuture.resultCount() == 0) {
@@ -225,7 +225,7 @@ QFuture<qevercloud::Notebook>
 
     promise.start();
 
-    auto watcher = utility::makeFutureWatcher<qevercloud::Notebook>();
+    auto watcher = utility::makeFutureWatcher<std::optional<qevercloud::Notebook>>();
     watcher->setFuture(findNotebookFuture);
     auto * rawWatcher = watcher.get();
     QObject::connect(
@@ -255,7 +255,8 @@ QFuture<qevercloud::Notebook>
                 return;
             }
 
-            if (future.resultCount() == 0) {
+            const auto result = future.result();
+            if (!result) {
                 // No conflict by name was found in the local storage, can use
                 // the suggested notebook name
                 notebook.setName(newNotebookName);
