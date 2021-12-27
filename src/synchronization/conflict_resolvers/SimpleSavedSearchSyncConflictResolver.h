@@ -40,6 +40,18 @@ public:
             qevercloud::SavedSearch mine) override;
 
 private:
+    [[nodiscard]] QFuture<SavedSearchConflictResolution>
+        processSavedSearchesConflictByName(
+            const qevercloud::SavedSearch & theirs,
+            qevercloud::SavedSearch mine);
+
+    [[nodiscard]] QFuture<SavedSearchConflictResolution>
+        processSavedSearchesConflictByGuid(qevercloud::SavedSearch theirs);
+
+    [[nodiscard]] QFuture<qevercloud::SavedSearch> renameConflictingSavedSearch(
+        qevercloud::SavedSearch savedSearch, int counter = 1);
+
+private:
     local_storage::ILocalStoragePtr m_localStorage;
 };
 
