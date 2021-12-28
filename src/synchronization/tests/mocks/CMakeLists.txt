@@ -9,15 +9,10 @@ endif()
 
 target_sources(${MOCKS_NAME}
   PUBLIC
-    MockILinkedNotebooksHandler.h
-    MockINotebooksHandler.h
-    MockINotesHandler.h
-    MockIResourcesHandler.h
-    MockISavedSearchesHandler.h
-    MockISynchronizationInfoHandler.h
-    MockITagsHandler.h
-    MockIUsersHandler.h
-    MockIVersionHandler.h
+    MockISimpleNotebookSyncConflictResolver.h
+    MockISimpleNoteSyncConflictResolver.h
+    MockISimpleSavedSearchSyncConflictResolver.h
+    MockISimpleTagSyncConflictResolver.h
   PRIVATE
     CheckBuild.cpp
 )

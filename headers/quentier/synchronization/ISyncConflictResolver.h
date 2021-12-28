@@ -76,7 +76,7 @@ public:
     virtual ~ISyncConflictResolver() = default;
 
     [[nodiscard]] virtual QFuture<NotebookConflictResolution>
-        resolveNotebooksConflict(
+        resolveNotebookConflict(
             qevercloud::Notebook theirs, qevercloud::Notebook mine) = 0;
 
     [[nodiscard]] virtual QFuture<NoteConflictResolution> resolveNoteConflict(

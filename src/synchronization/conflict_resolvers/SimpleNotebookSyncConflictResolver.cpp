@@ -31,7 +31,7 @@ SimpleNotebookSyncConflictResolver::SimpleNotebookSyncConflictResolver(
 {}
 
 QFuture<ISyncConflictResolver::NotebookConflictResolution>
-    SimpleNotebookSyncConflictResolver::resolveNotebooksConflict(
+    SimpleNotebookSyncConflictResolver::resolveNotebookConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine)
 {
     return m_genericResolver->resolveConflict(std::move(theirs), std::move(mine));

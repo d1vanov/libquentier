@@ -64,10 +64,10 @@ SimpleSyncConflictResolver::SimpleSyncConflictResolver(
 }
 
 QFuture<ISyncConflictResolver::NotebookConflictResolution>
-    SimpleSyncConflictResolver::resolveNotebooksConflict(
+    SimpleSyncConflictResolver::resolveNotebookConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine)
 {
-    return m_notebookConflictResolver->resolveNotebooksConflict(
+    return m_notebookConflictResolver->resolveNotebookConflict(
         std::move(theirs), std::move(mine));
 }
 

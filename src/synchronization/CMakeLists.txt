@@ -28,9 +28,13 @@ target_sources(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_private
-  ${LIBNAME}_utility
+  ${LIBNAME}_threading
   Qt5::Core)
 
 target_compile_definitions(${LIBRARY_NAME}
   PRIVATE
   "-DBUILDING_LIBQUENTIER_STATIC_LIBRARY")
+
+if(GMOCK_FOUND AND GTEST_FOUND)
+  add_subdirectory(tests)
+endif()

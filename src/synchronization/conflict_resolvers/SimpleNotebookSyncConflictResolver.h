@@ -30,7 +30,7 @@ public:
     explicit SimpleNotebookSyncConflictResolver(
         local_storage::ILocalStoragePtr localStorage);
 
-    [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebooksConflict(
+    [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebookConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine) override;
 
 private:

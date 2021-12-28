@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "Fwd.h"
-
 #include <quentier/synchronization/ISyncConflictResolver.h>
+
+#include <synchronization/Fwd.h>
 
 namespace quentier::synchronization {
 
@@ -35,7 +35,7 @@ public:
         ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver,
         ISimpleTagSyncConflictResolverPtr tagConflictResolver);
 
-    [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebooksConflict(
+    [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebookConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine) override;
 
     [[nodiscard]] QFuture<NoteConflictResolution> resolveNoteConflict(

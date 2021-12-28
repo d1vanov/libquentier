@@ -18,21 +18,19 @@
 
 #pragma once
 
-#include <quentier/synchronization/ISyncConflictResolver.h>
+#include <synchronization/conflict_resolvers/ISimpleNoteSyncConflictResolver.h>
 
-namespace quentier::synchronization {
+#include <gmock/gmock.h>
 
-class ISimpleNotebookSyncConflictResolver
+namespace quentier::synchronization::tests::mocks {
+
+class MockISimpleNoteSyncConflictResolver :
+    public ISimpleNoteSyncConflictResolver
 {
 public:
-    virtual ~ISimpleNotebookSyncConflictResolver() = default;
-
-    using NotebookConflictResolution =
-        ISyncConflictResolver::NotebookConflictResolution;
-
-    [[nodiscard]] virtual QFuture<NotebookConflictResolution>
-        resolveNotebookConflict(
-            qevercloud::Notebook theirs, qevercloud::Notebook mine) = 0;
+    MOCK_METHOD(
+        QFuture<NoteConflictResolution>, resolveNoteConflict,
+        (qevercloud::Note theirs, qevercloud::Note mine), (override));
 };
 
-} // namespace quentier::synchronization
+} // namespace quentier::synchronization::tests::mocks
