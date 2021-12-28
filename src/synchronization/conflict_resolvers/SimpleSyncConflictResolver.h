@@ -31,6 +31,7 @@ class SimpleSyncConflictResolver final :
 public:
     explicit SimpleSyncConflictResolver(
         ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver,
+        ISimpleNoteSyncConflictResolverPtr noteConflictResolver,
         ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver,
         ISimpleTagSyncConflictResolverPtr tagConflictResolver);
 
@@ -50,6 +51,7 @@ public:
 
 private:
     ISimpleNotebookSyncConflictResolverPtr m_notebookConflictResolver;
+    ISimpleNoteSyncConflictResolverPtr m_noteConflictResolver;
     ISimpleSavedSearchSyncConflictResolverPtr m_savedSearchConflictResolver;
     ISimpleTagSyncConflictResolverPtr m_tagConflictResolver;
 };

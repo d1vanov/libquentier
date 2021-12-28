@@ -10,11 +10,14 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/Factory.cpp
   conflict_resolvers/Factory.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
+  conflict_resolvers/ISimpleNoteSyncConflictResolver.h
   conflict_resolvers/ISimpleSavedSearchSyncConflictResolver.h
   conflict_resolvers/ISimpleTagSyncConflictResolver.h
   conflict_resolvers/SimpleGenericSyncConflictResolver.h
   conflict_resolvers/SimpleNotebookSyncConflictResolver.cpp
   conflict_resolvers/SimpleNotebookSyncConflictResolver.h
+  conflict_resolvers/SimpleNoteSyncConflictResolver.cpp
+  conflict_resolvers/SimpleNoteSyncConflictResolver.h
   conflict_resolvers/SimpleSavedSearchSyncConflictResolver.cpp
   conflict_resolvers/SimpleSavedSearchSyncConflictResolver.h
   conflict_resolvers/SimpleSyncConflictResolver.cpp

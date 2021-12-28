@@ -17,6 +17,7 @@
  */
 
 #include "ISimpleNotebookSyncConflictResolver.h"
+#include "ISimpleNoteSyncConflictResolver.h"
 #include "ISimpleSavedSearchSyncConflictResolver.h"
 #include "ISimpleTagSyncConflictResolver.h"
 #include "SimpleSyncConflictResolver.h"
@@ -27,9 +28,11 @@ namespace quentier::synchronization {
 
 SimpleSyncConflictResolver::SimpleSyncConflictResolver(
     ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver,
+    ISimpleNoteSyncConflictResolverPtr noteConflictResolver,
     ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver,
     ISimpleTagSyncConflictResolverPtr tagConflictResolver) :
     m_notebookConflictResolver{std::move(notebookConflictResolver)},
+    m_noteConflictResolver{std::move(noteConflictResolver)},
     m_savedSearchConflictResolver{std::move(savedSearchConflictResolver)},
     m_tagConflictResolver{std::move(tagConflictResolver)}
 {
@@ -38,6 +41,12 @@ SimpleSyncConflictResolver::SimpleSyncConflictResolver(
             "synchronization::SimpleSyncConflictResolver",
             "SimpleSyncConflictResolver ctor: null notebook conflict "
             "resolver")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteConflictResolver)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::SimpleSyncConflictResolver",
+            "SimpleSyncConflictResolver ctor: null note conflict resolver")}};
     }
 
     if (Q_UNLIKELY(!m_savedSearchConflictResolver)) {
@@ -66,10 +75,8 @@ QFuture<ISyncConflictResolver::NoteConflictResolution>
     SimpleSyncConflictResolver::resolveNoteConflict(
         qevercloud::Note theirs, qevercloud::Note mine)
 {
-    // TODO: implement
-    Q_UNUSED(theirs)
-    Q_UNUSED(mine)
-    return {};
+    return m_noteConflictResolver->resolveNoteConflict(
+        std::move(theirs), std::move(mine));
 }
 
 QFuture<ISyncConflictResolver::SavedSearchConflictResolution>
