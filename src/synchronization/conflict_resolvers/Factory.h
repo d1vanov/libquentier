@@ -18,23 +18,22 @@
 
 #pragma once
 
-#include <memory>
+#include "../Fwd.h"
+
+#include <quentier/local_storage/Fwd.h>
 
 namespace quentier::synchronization {
 
-class ISimpleNotebookSyncConflictResolver;
+[[nodiscard]] ISimpleNotebookSyncConflictResolverPtr
+    createSimpleNotebookSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
-using ISimpleNotebookSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleNotebookSyncConflictResolver>;
+[[nodiscard]] ISimpleSavedSearchSyncConflictResolverPtr
+    createSimpleSavedSearchSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
-class ISimpleSavedSearchSyncConflictResolver;
-
-using ISimpleSavedSearchSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleSavedSearchSyncConflictResolver>;
-
-class ISimpleTagSyncConflictResolver;
-
-using ISimpleTagSyncConflictResolverPtr =
-    std::shared_ptr<ISimpleTagSyncConflictResolver>;
+[[nodiscard]] ISimpleTagSyncConflictResolverPtr
+    createSimpleTagSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage);
 
 } // namespace quentier::synchronization
