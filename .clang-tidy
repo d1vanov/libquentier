@@ -13,6 +13,7 @@ Checks: >
         -readability-convert-member-functions-to-static,
         -readability-isolate-declaration,
         -readability-magic-numbers,
+        -readability-function-cognitive-complexity,
         -readability-function-size,
         -readability-redundant-access-specifiers,
         bugprone-*,
