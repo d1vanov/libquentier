@@ -27,8 +27,6 @@ class ISimpleSavedSearchSyncConflictResolver
 public:
     virtual ~ISimpleSavedSearchSyncConflictResolver() = default;
 
-    using ConflictResolution = ISyncConflictResolver::ConflictResolution;
-
     using SavedSearchConflictResolution =
         ISyncConflictResolver::SavedSearchConflictResolution;
 

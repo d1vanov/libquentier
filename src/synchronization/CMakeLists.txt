@@ -9,12 +9,16 @@ target_sources(${LIBRARY_NAME}
   Fwd.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
   conflict_resolvers/ISimpleSavedSearchSyncConflictResolver.h
+  conflict_resolvers/ISimpleTagSyncConflictResolver.h
+  conflict_resolvers/SimpleGenericSyncConflictResolver.h
   conflict_resolvers/SimpleNotebookSyncConflictResolver.cpp
   conflict_resolvers/SimpleNotebookSyncConflictResolver.h
   conflict_resolvers/SimpleSavedSearchSyncConflictResolver.cpp
   conflict_resolvers/SimpleSavedSearchSyncConflictResolver.h
   conflict_resolvers/SimpleSyncConflictResolver.cpp
-  conflict_resolvers/SimpleSyncConflictResolver.h)
+  conflict_resolvers/SimpleSyncConflictResolver.h
+  conflict_resolvers/SimpleTagSyncConflictResolver.cpp
+  conflict_resolvers/SimpleTagSyncConflictResolver.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

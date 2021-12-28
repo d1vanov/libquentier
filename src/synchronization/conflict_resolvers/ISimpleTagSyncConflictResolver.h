@@ -22,17 +22,15 @@
 
 namespace quentier::synchronization {
 
-class ISimpleNotebookSyncConflictResolver
+class ISimpleTagSyncConflictResolver
 {
 public:
-    virtual ~ISimpleNotebookSyncConflictResolver() = default;
+    virtual ~ISimpleTagSyncConflictResolver() = default;
 
-    using NotebookConflictResolution =
-        ISyncConflictResolver::NotebookConflictResolution;
+    using TagConflictResolution = ISyncConflictResolver::TagConflictResolution;
 
-    [[nodiscard]] virtual QFuture<NotebookConflictResolution>
-        resolveNotebooksConflict(
-            qevercloud::Notebook theirs, qevercloud::Notebook mine) = 0;
+    [[nodiscard]] virtual QFuture<TagConflictResolution> resolveTagConflict(
+        qevercloud::Tag theirs, qevercloud::Tag mine) = 0;
 };
 
 } // namespace quentier::synchronization

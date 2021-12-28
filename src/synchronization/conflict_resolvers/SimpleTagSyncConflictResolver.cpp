@@ -16,23 +16,26 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "SimpleTagSyncConflictResolver.h"
 
-#include <quentier/synchronization/ISyncConflictResolver.h>
+#include <quentier/local_storage/ILocalStorage.h>
 
 namespace quentier::synchronization {
 
-class ISimpleNotebookSyncConflictResolver
+SimpleTagSyncConflictResolver::SimpleTagSyncConflictResolver(
+    local_storage::ILocalStoragePtr localStorage) :
+    m_genericResolver{std::make_shared<GenericResolver>(
+        std::move(localStorage),
+        &local_storage::ILocalStorage::findTagByName,
+        QStringLiteral("tag"))}
+{}
+
+QFuture<ISyncConflictResolver::TagConflictResolution>
+    SimpleTagSyncConflictResolver::resolveTagConflict(
+        qevercloud::Tag theirs, qevercloud::Tag mine)
 {
-public:
-    virtual ~ISimpleNotebookSyncConflictResolver() = default;
-
-    using NotebookConflictResolution =
-        ISyncConflictResolver::NotebookConflictResolution;
-
-    [[nodiscard]] virtual QFuture<NotebookConflictResolution>
-        resolveNotebooksConflict(
-            qevercloud::Notebook theirs, qevercloud::Notebook mine) = 0;
-};
+    return m_genericResolver->resolveConflict(
+        std::move(theirs), std::move(mine));
+}
 
 } // namespace quentier::synchronization

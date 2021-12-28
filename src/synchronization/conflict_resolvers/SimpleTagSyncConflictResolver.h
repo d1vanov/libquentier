@@ -18,36 +18,32 @@
 
 #pragma once
 
-#include "ISimpleSavedSearchSyncConflictResolver.h"
+#include "ISimpleTagSyncConflictResolver.h"
 #include "SimpleGenericSyncConflictResolver.h"
-
-#include <qevercloud/types/SavedSearch.h>
 
 namespace quentier::synchronization {
 
-class SimpleSavedSearchSyncConflictResolver final :
-    public ISimpleSavedSearchSyncConflictResolver
+class SimpleTagSyncConflictResolver final :
+    public ISimpleTagSyncConflictResolver
 {
 public:
-    explicit SimpleSavedSearchSyncConflictResolver(
+    explicit SimpleTagSyncConflictResolver(
         local_storage::ILocalStoragePtr localStorage);
 
-    [[nodiscard]] QFuture<SavedSearchConflictResolution>
-        resolveSavedSearchConflict(
-            qevercloud::SavedSearch theirs,
-            qevercloud::SavedSearch mine) override;
+    [[nodiscard]] QFuture<TagConflictResolution> resolveTagConflict(
+        qevercloud::Tag theirs, qevercloud::Tag mine) override;
 
 private:
     // Declaring pointer to method of local_storage::ILocalStorage
-    // to find saved search by name
-    QFuture<std::optional<qevercloud::SavedSearch>> (
-        local_storage::ILocalStorage::*findSavedSearchByNameMemFn)(
-        QString) const;
+    // to find notebook by name
+    QFuture<std::optional<qevercloud::Tag>> (
+        local_storage::ILocalStorage::*findTagByNameMemFn)(
+        QString, std::optional<qevercloud::Guid>) const;
 
     using GenericResolver = SimpleGenericSyncConflictResolver<
-        qevercloud::SavedSearch,
-        SavedSearchConflictResolution,
-        decltype(findSavedSearchByNameMemFn)>;
+        qevercloud::Tag,
+        TagConflictResolution,
+        decltype(findTagByNameMemFn)>;
 
     using GenericResolverPtr = std::shared_ptr<GenericResolver>;
 

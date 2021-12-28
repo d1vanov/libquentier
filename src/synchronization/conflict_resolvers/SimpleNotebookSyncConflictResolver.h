@@ -19,17 +19,11 @@
 #pragma once
 
 #include "ISimpleNotebookSyncConflictResolver.h"
-
-#include <quentier/local_storage/Fwd.h>
-
-#include <qevercloud/types/Notebook.h>
-
-#include <memory>
+#include "SimpleGenericSyncConflictResolver.h"
 
 namespace quentier::synchronization {
 
 class SimpleNotebookSyncConflictResolver final :
-    public std::enable_shared_from_this<SimpleNotebookSyncConflictResolver>,
     public ISimpleNotebookSyncConflictResolver
 {
 public:
@@ -40,19 +34,21 @@ public:
         qevercloud::Notebook theirs, qevercloud::Notebook mine) override;
 
 private:
-    [[nodiscard]] QFuture<NotebookConflictResolution>
-        processNotebooksConflictByName(
-            const qevercloud::Notebook & theirs,
-            qevercloud::Notebook mine);
+    // Declaring pointer to method of local_storage::ILocalStorage
+    // to find notebook by name
+    QFuture<std::optional<qevercloud::Notebook>> (
+        local_storage::ILocalStorage::*findNotebookByNameMemFn)(
+        QString, std::optional<qevercloud::Guid>) const;
 
-    [[nodiscard]] QFuture<NotebookConflictResolution>
-        processNotebooksConflictByGuid(qevercloud::Notebook theirs);
+    using GenericResolver = SimpleGenericSyncConflictResolver<
+        qevercloud::Notebook,
+        NotebookConflictResolution,
+        decltype(findNotebookByNameMemFn)>;
 
-    [[nodiscard]] QFuture<qevercloud::Notebook> renameConflictingNotebook(
-        qevercloud::Notebook notebook, int counter = 1);
+    using GenericResolverPtr = std::shared_ptr<GenericResolver>;
 
 private:
-    local_storage::ILocalStoragePtr m_localStorage;
+    GenericResolverPtr m_genericResolver;
 };
 
 } // namespace quentier::synchronization
