@@ -31,7 +31,8 @@ class SimpleSyncConflictResolver final :
 public:
     explicit SimpleSyncConflictResolver(
         ISimpleNotebookSyncConflictResolverPtr notebookConflictResolver,
-        ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver);
+        ISimpleSavedSearchSyncConflictResolverPtr savedSearchConflictResolver,
+        ISimpleTagSyncConflictResolverPtr tagConflictResolver);
 
     [[nodiscard]] QFuture<NotebookConflictResolution> resolveNotebooksConflict(
         qevercloud::Notebook theirs, qevercloud::Notebook mine) override;
@@ -50,6 +51,7 @@ public:
 private:
     ISimpleNotebookSyncConflictResolverPtr m_notebookConflictResolver;
     ISimpleSavedSearchSyncConflictResolverPtr m_savedSearchConflictResolver;
+    ISimpleTagSyncConflictResolverPtr m_tagConflictResolver;
 };
 
 } // namespace quentier::synchronization
