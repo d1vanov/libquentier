@@ -297,16 +297,18 @@ QFuture<T> SimpleGenericSyncConflictResolver<
     Q_ASSERT(item.name());
 
     QString newItemName;
-    QTextStream strm{&newItemName};
-    strm << item.name().value();
-    strm << " - ";
-    strm << QCoreApplication::translate(
-        "synchronization::SimplegenericSyncConflictResolver", "conflicting");
+    {
+        QTextStream strm{&newItemName};
+        strm << item.name().value();
+        strm << " - ";
+        strm << QCoreApplication::translate(
+            "synchronization::SimplegenericSyncConflictResolver", "conflicting");
 
-    if (counter > 1) {
-        strm << " (";
-        strm << counter;
-        strm << ")";
+        if (counter > 1) {
+            strm << " (";
+            strm << counter;
+            strm << ")";
+        }
     }
 
     QFuture<std::optional<T>> findItemFuture;
@@ -357,6 +359,13 @@ QFuture<T> SimpleGenericSyncConflictResolver<
          counter = counter]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
+                promise->setException(
+                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+                        "synchronization::SimpleGenericSyncConflictResolver",
+                        "Cannot resolve sync conflict: "
+                        "SimpleGenericSyncConflictResolver instance is "
+                        "dead")}});
+                promise->finish();
                 return;
             }
 
