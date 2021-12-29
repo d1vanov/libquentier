@@ -6,6 +6,7 @@ set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 
 add_executable(${TESTS_NAME}
   main.cpp
+  SimpleNotebookSyncConflictResolverTest.cpp
   SimpleSyncConflictResolverTest.cpp)
 
 target_link_libraries(${TESTS_NAME}

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
@@ -48,9 +49,8 @@ class SimpleGenericSyncConflictResolver :
 public:
     SimpleGenericSyncConflictResolver(
         local_storage::ILocalStoragePtr localStorage,
-        FindByNameMemFn findByNameMemFn,
-        QString typeName);
-    
+        FindByNameMemFn findByNameMemFn, QString typeName);
+
     [[nodiscard]] QFuture<Resolution> resolveConflict(T theirs, T mine);
 
 private:
@@ -86,12 +86,13 @@ struct hasLinkedNoteookGuid<qevercloud::Tag> : std::true_type
 } // namespace detail
 
 template <class T, class Resolution, class FindByNameMemFn>
-SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::SimpleGenericSyncConflictResolver(
-    local_storage::ILocalStoragePtr localStorage,
-    FindByNameMemFn findByNameMemFn, QString typeName) :
+SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::
+    SimpleGenericSyncConflictResolver(
+        local_storage::ILocalStoragePtr localStorage,
+        FindByNameMemFn findByNameMemFn, QString typeName) :
     m_localStorage{std::move(localStorage)},
-    m_findByNameMemFn{std::move(findByNameMemFn)},
-    m_typeName{std::move(typeName)}
+    m_findByNameMemFn{std::move(findByNameMemFn)}, m_typeName{
+                                                       std::move(typeName)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         ErrorString error{QT_TRANSLATE_NOOP(
@@ -125,8 +126,9 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
 {
     QNDEBUG(
         "synchronization::SimpleGenericSyncConflictResolver",
-        "SimpleGenericSyncConflictResolver<" << m_typeName
-            << ">::resolveConflict: theirs: " << theirs << "\nMine: " << mine);
+        "SimpleGenericSyncConflictResolver<"
+            << m_typeName << ">::resolveConflict: theirs: " << theirs
+            << "\nMine: " << mine);
 
     if (Q_UNLIKELY(!theirs.guid())) {
         ErrorString error{QT_TRANSLATE_NOOP(
@@ -160,19 +162,25 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
         return processConflictByName(theirs, std::move(mine));
     }
 
-    return processConflictByGuid(std::move(theirs));
+    if (mine.guid() && (*mine.guid() == *theirs.guid())) {
+        return processConflictByGuid(std::move(theirs));
+    }
+
+    return threading::makeReadyFuture<Resolution>(
+        ISyncConflictResolver::ConflictResolution::IgnoreMine{});
 }
 
 template <class T, class Resolution, class FindByNameMemFn>
-QFuture<Resolution>
-    SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::processConflictByName(
-        const T & theirs, T mine)
+QFuture<Resolution> SimpleGenericSyncConflictResolver<
+    T, Resolution,
+    FindByNameMemFn>::processConflictByName(const T & theirs, T mine)
 {
     if (mine.guid() && *mine.guid() == theirs.guid().value()) {
         QNDEBUG(
             "synchronization::SimpleGenericSyncConflictResolver",
-            "Conflicting " << m_typeName << " items match by name and guid => "
-            "taking the remote version");
+            "Conflicting " << m_typeName
+                           << " items match by name and guid => "
+                              "taking the remote version");
         return threading::makeReadyFuture<Resolution>(
             ISyncConflictResolver::ConflictResolution::UseTheirs{});
     }
@@ -181,14 +189,14 @@ QFuture<Resolution>
         "synchronization::SimpleGenericSyncConflictResolver",
         "Conflicting " << m_typeName << "items match by name but not by guid");
 
-    if constexpr (detail::hasLinkedNoteookGuid<T>::value)
-    {
+    if constexpr (detail::hasLinkedNoteookGuid<T>::value) {
         const auto & mineLinkedNotebookGuid = mine.linkedNotebookGuid();
         const auto & theirsLinkedNotebookGuid = theirs.linkedNotebookGuid();
         if (mineLinkedNotebookGuid != theirsLinkedNotebookGuid) {
             QNDEBUG(
                 "synchronization::SimpleGenericSyncConflictResolver",
-                "Conflicting " << m_typeName << " items have the same name but "
+                "Conflicting "
+                    << m_typeName << " items have the same name but "
                     << "their linked notebook guids don't match => they are "
                     << "either from different linked notebooks or one is from "
                     << "user's own account while the other is from some linked "
@@ -199,23 +207,22 @@ QFuture<Resolution>
 
         QNDEBUG(
             "synchronization::SimpleGenericSyncConflictResolver",
-            "Both conflicting " << m_typeName << " items are either from "
+            "Both conflicting "
+                << m_typeName << " items are either from "
                 << "user's own account or from the same linked notebook");
     }
 
     auto renameItemFuture = renameConflictingItem(std::move(mine));
-    return threading::then(
-        std::move(renameItemFuture), [](T item) {
-            return Resolution{
-                ISyncConflictResolver::ConflictResolution::MoveMine<T>{
-                    std::move(item)}};
-        });
+    return threading::then(std::move(renameItemFuture), [](T item) {
+        return Resolution{
+            ISyncConflictResolver::ConflictResolution::MoveMine<T>{
+                std::move(item)}};
+    });
 }
 
 template <class T, class Resolution, class FindByNameMemFn>
-QFuture<Resolution>
-    SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::processConflictByGuid(
-        T theirs)
+QFuture<Resolution> SimpleGenericSyncConflictResolver<
+    T, Resolution, FindByNameMemFn>::processConflictByGuid(T theirs)
 {
     // Items conflict by guid, let's understand whether there is an item with
     // the same name as theirs in the local storage
@@ -240,30 +247,35 @@ QFuture<Resolution>
     threading::then(
         std::move(findItemFuture),
         [theirs = std::move(theirs), promise = std::move(promise),
-         self_weak = SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::weak_from_this()](std::optional<T> item) mutable {
+         self_weak = SimpleGenericSyncConflictResolver<
+             T, Resolution, FindByNameMemFn>::weak_from_this()](
+            std::optional<T> item) mutable {
             if (!item) {
                 // There is no conflict by name in the local storage
                 promise->addResult(Resolution{
                     ISyncConflictResolver::ConflictResolution::UseTheirs{}});
+                promise->finish();
                 return;
             }
 
             auto self = self_weak.lock();
             if (!self) {
-                // The resolver is dead, the result doesn't matter
-                promise->addResult(Resolution{
-                    ISyncConflictResolver::ConflictResolution::UseTheirs{}});
+                promise->setException(
+                    RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+                        "synchronization::SimpleGenericSyncConflictResolver",
+                        "Cannot resolve sync conflict: "
+                        "SimpleGenericSyncConflictResolver instance is "
+                        "dead")}});
+                promise->finish();
                 return;
             }
 
             // There is a notebook in the local storage which conflicts by name
             // with theirs notebook
-            auto future = self->processConflictByName(
-                theirs, std::move(*item));
+            auto future = self->processConflictByName(theirs, std::move(*item));
 
             auto thenFuture = threading::then(
-                std::move(future),
-                [promise](Resolution resolution) {
+                std::move(future), [promise](Resolution resolution) {
                     promise->addResult(resolution);
                     promise->finish();
                 });
@@ -279,8 +291,8 @@ QFuture<Resolution>
 }
 
 template <class T, class Resolution, class FindByNameMemFn>
-QFuture<T> SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::renameConflictingItem(
-    T item, int counter)
+QFuture<T> SimpleGenericSyncConflictResolver<
+    T, Resolution, FindByNameMemFn>::renameConflictingItem(T item, int counter)
 {
     Q_ASSERT(item.name());
 
@@ -304,8 +316,8 @@ QFuture<T> SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::re
             item.linkedNotebookGuid());
     }
     else {
-        findItemFuture = std::invoke(
-            m_findByNameMemFn, m_localStorage.get(), newItemName);
+        findItemFuture =
+            std::invoke(m_findByNameMemFn, m_localStorage.get(), newItemName);
     }
 
     if (findItemFuture.isFinished()) {
@@ -338,9 +350,10 @@ QFuture<T> SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::re
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
-        [self_weak = SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::weak_from_this(), promise = std::move(promise),
-         watcher = std::move(watcher), item = std::move(item),
-         newItemName = std::move(newItemName),
+        [self_weak = SimpleGenericSyncConflictResolver<
+             T, Resolution, FindByNameMemFn>::weak_from_this(),
+         promise = std::move(promise), watcher = std::move(watcher),
+         item = std::move(item), newItemName = std::move(newItemName),
          counter = counter]() mutable {
             const auto self = self_weak.lock();
             if (!self) {
@@ -374,8 +387,7 @@ QFuture<T> SimpleGenericSyncConflictResolver<T, Resolution, FindByNameMemFn>::re
             auto newFuture = self->renameConflictingItem(item, ++counter);
 
             QFuture<void> thenFuture = threading::then(
-                std::move(newFuture),
-                [promise](T item) mutable {
+                std::move(newFuture), [promise](T item) mutable {
                     promise->addResult(std::move(item));
                     promise->finish();
                 });

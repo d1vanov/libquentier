@@ -31,23 +31,55 @@
 
 namespace quentier::synchronization {
 
+/**
+ * @brief The ISyncConflictResolver interface provides methods used to resolve
+ * conflicts between local and remote versions of the same data item.
+ */
 class QUENTIER_EXPORT ISyncConflictResolver
 {
 public:
+    /**
+     * @brief The ConflictResolution struct is a namespace inside which
+     * several other structs determining actual conflict resolutions.
+     */
     struct ConflictResolution
     {
+        /**
+         * @brief The UseTheirs conflict resolution means "override mine version
+         * with theirs version".
+         */
         struct UseTheirs
         {};
 
+        /**
+         * @brief The UseMine conflict resolution means "override theirs version
+         * with mine version".
+         */
         struct UseMine
         {};
 
+        /**
+         * @brief The IgnoreMine conflict resolution means "use theirs version
+         * and ignore mine version as it doesn't really conflict with theirs
+         * version".
+         */
         struct IgnoreMine
         {};
 
+        /**
+         * @brief The MoveMine conflict resolution means "before using theirs
+         * version change mine version as specified". Note: the data item inside
+         * this conflict resolution might refer to something different than mine
+         * version passed to the conflict resolution function. It can be that
+         * way because the actual conflict might be with another local data item
+         * instead of the passed one.
+         */
         template <class T>
         struct MoveMine
         {
+            /**
+             * The changed value of mine data item.
+             */
             T mine;
         };
     };
