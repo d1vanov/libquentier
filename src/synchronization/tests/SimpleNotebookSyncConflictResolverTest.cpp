@@ -21,7 +21,10 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/utility/UidGenerator.h>
+
+#include <QCoreApplication>
 
 #include <gtest/gtest.h>
 
@@ -47,9 +50,7 @@ TEST_F(SimpleNotebookSyncConflictResolverTest, Ctor)
 
 TEST_F(SimpleNotebookSyncConflictResolverTest, CtorNullLocalStorage)
 {
-    EXPECT_THROW(
-        SimpleNotebookSyncConflictResolver{nullptr},
-        InvalidArgument);
+    EXPECT_THROW(SimpleNotebookSyncConflictResolver{nullptr}, InvalidArgument);
 }
 
 TEST_F(SimpleNotebookSyncConflictResolverTest, ConflictWhenTheirsHasNoGuid)
@@ -381,8 +382,7 @@ TEST_F(
     notebook.setLinkedNotebookGuid(linkedNotebookGuid);
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findNotebookByName(newName1, linkedNotebookGuid))
+        *m_mockLocalStorage, findNotebookByName(newName1, linkedNotebookGuid))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
                 notebook)));
@@ -390,8 +390,7 @@ TEST_F(
     const QString newName2 = newName1 + QStringLiteral(" (2)");
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findNotebookByName(newName2, linkedNotebookGuid))
+        *m_mockLocalStorage, findNotebookByName(newName2, linkedNotebookGuid))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
                 std::nullopt)));
@@ -440,8 +439,7 @@ TEST_F(
     notebook.setLinkedNotebookGuid(linkedNotebookGuid);
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findNotebookByName(newName1, linkedNotebookGuid))
+        *m_mockLocalStorage, findNotebookByName(newName1, linkedNotebookGuid))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
                 notebook)));
@@ -450,8 +448,7 @@ TEST_F(
     notebook.setName(newName2);
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findNotebookByName(newName2, linkedNotebookGuid))
+        *m_mockLocalStorage, findNotebookByName(newName2, linkedNotebookGuid))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
                 notebook)));
@@ -459,8 +456,7 @@ TEST_F(
     const QString newName3 = newName1 + QStringLiteral(" (3)");
 
     EXPECT_CALL(
-        *m_mockLocalStorage,
-        findNotebookByName(newName3, linkedNotebookGuid))
+        *m_mockLocalStorage, findNotebookByName(newName3, linkedNotebookGuid))
         .WillOnce(Return(
             threading::makeReadyFuture<std::optional<qevercloud::Notebook>>(
                 std::nullopt)));
@@ -571,6 +567,111 @@ TEST_F(
     ASSERT_TRUE(resolution.mine.name());
     EXPECT_EQ(*resolution.mine.name(), newName);
     EXPECT_EQ(resolution.mine.guid(), notebook.guid());
+}
+
+TEST_F(
+    SimpleNotebookSyncConflictResolverTest,
+    HandleSelfDeletionDuringConflictingNameCheckingOnConflictByName)
+{
+    auto resolver = std::make_shared<SimpleNotebookSyncConflictResolver>(
+        m_mockLocalStorage);
+
+    qevercloud::Notebook theirs;
+    theirs.setGuid(UidGenerator::Generate());
+    theirs.setName(QStringLiteral("name"));
+
+    qevercloud::Notebook mine;
+    mine.setGuid(UidGenerator::Generate());
+    mine.setName(QStringLiteral("name"));
+
+    const QString newName =
+        theirs.name().value() + QStringLiteral(" - conflicting");
+
+    auto signalToResetPromise = std::make_shared<QPromise<void>>();
+    auto signalToResetFuture = signalToResetPromise->future();
+    signalToResetPromise->start();
+
+    auto waitForResetPromise = std::make_shared<QPromise<void>>();
+
+    auto findNotebookPromise =
+        std::make_shared<QPromise<std::optional<qevercloud::Notebook>>>();
+
+    auto findNotebookFuture = findNotebookPromise->future();
+
+    std::weak_ptr<SimpleNotebookSyncConflictResolver> resolverWeak{resolver};
+
+    // NOTE: there's the only one place in this test where blocking waiting
+    // is used - in its end. Attempts to use blocking waiting in other places
+    // of the test lead to QFuture<T>::waitForFinished() calls returning
+    // before the future is really finished or canceled.
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNotebookByName(newName, std::optional<qevercloud::Guid>{}))
+        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
+                      QString newName, // NOLINT
+                      std::optional<qevercloud::Guid>
+                          linkedNotebookGuid) mutable // NOLINT
+                  {
+                      Q_UNUSED(newName)
+                      Q_UNUSED(linkedNotebookGuid)
+
+                      EXPECT_FALSE(resolverWeak.expired());
+
+                      threading::then(
+                          waitForResetPromise->future(),
+                          [=] () mutable {
+                              EXPECT_TRUE(resolverWeak.expired());
+
+                              // Now can fulfill the promise to find notebook
+                              findNotebookPromise->start();
+                              findNotebookPromise->addResult(std::nullopt);
+                              findNotebookPromise->finish();
+
+                              // Trigger the execution of lambda attached to the
+                              // fulfilled promise's future via watcher
+                              QCoreApplication::processEvents();
+                          });
+
+                      signalToResetPromise->finish();
+
+                      // Trigger the execution of lambda attached to the
+                      // fulfilled promise's future via watcher
+                      QCoreApplication::processEvents();
+
+                      return findNotebookFuture;
+                  });
+
+    auto resultFuture =
+        resolver->resolveNotebookConflict(std::move(theirs), std::move(mine));
+
+    threading::then(
+        std::move(signalToResetFuture),
+        [=, resolver = std::move(resolver)]() mutable {
+            resolver.reset();
+
+            waitForResetPromise->start();
+            waitForResetPromise->finish();
+
+            // Trigger the execution of lambda attached to the
+            // fulfilled promise's future via watcher
+            QCoreApplication::processEvents();
+        });
+
+    threading::then(
+        std::move(findNotebookFuture),
+        [=](std::optional<qevercloud::Notebook> notebook) mutable { // NOLINT
+            Q_UNUSED(notebook)
+            // Trigger the execution of lambda inside
+            // SimpleGenericSyncConflictResolver::processConflictByName
+            QCoreApplication::processEvents();
+        });
+
+    // Trigger the execution of lambda attached to findNotebookByName
+    // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
+    QCoreApplication::processEvents();
+
+    EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 
 } // namespace quentier::synchronization::tests
