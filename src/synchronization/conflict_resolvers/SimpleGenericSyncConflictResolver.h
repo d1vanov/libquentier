@@ -244,9 +244,9 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
 
     promise->start();
 
-    threading::then(
+    auto thenFuture = threading::then(
         std::move(findItemFuture),
-        [theirs = std::move(theirs), promise = std::move(promise),
+        [promise, theirs = std::move(theirs),
          self_weak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this()](
             std::optional<T> item) mutable {
@@ -285,6 +285,12 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
                     promise->setException(e);
                     promise->finish();
                 });
+        });
+
+    threading::onFailed(
+        std::move(thenFuture), [promise](const QException & e) {
+            promise->setException(e);
+            promise->finish();
         });
 
     return future;
@@ -395,7 +401,7 @@ QFuture<T> SimpleGenericSyncConflictResolver<
             // name
             auto newFuture = self->renameConflictingItem(item, ++counter);
 
-            QFuture<void> thenFuture = threading::then(
+            auto thenFuture = threading::then(
                 std::move(newFuture), [promise](T item) mutable {
                     promise->addResult(std::move(item));
                     promise->finish();
