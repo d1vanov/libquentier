@@ -7,6 +7,7 @@ set(TESTS_NAME ${LIBRARY_NAME}_unit_tests)
 add_executable(${TESTS_NAME}
   main.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
+  SimpleNoteSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
   SimpleSyncConflictResolverTest.cpp
   SimpleTagSyncConflictResolverTest.cpp)
