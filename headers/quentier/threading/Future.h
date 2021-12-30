@@ -24,6 +24,7 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
+#include <exception>
 #else
 #include <quentier/threading/Qt5Promise.h>
 #endif
@@ -72,10 +73,31 @@ template <
 [[nodiscard]] QFuture<void> makeReadyFuture();
 
 /**
- * Create QFuture already containing exception instead of the result
+ * Create QFuture already containing exception instead of the result -
+ * version accepting const reference to QException subclass
  */
-template <class T, class E>
-[[nodiscard]] QFuture<T> makeExceptionalFuture(E e)
+template <
+    class T, class E,
+    typename = std::enable_if_t<std::is_base_of_v<QException, E>>>
+[[nodiscard]] QFuture<T> makeExceptionalFuture(const E & e)
+{
+    QPromise<std::decay_t<T>> promise;
+    QFuture<std::decay_t<T>> future = promise.future();
+
+    promise.start();
+    promise.setException(e);
+    promise.finish();
+
+    return future;
+}
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+/**
+ * Create QFuture already containing exception instead of the result -
+ * version accepting std::exception_ptr
+ */
+template <class T>
+[[nodiscard]] QFuture<T> makeExceptionalFuture(std::exception_ptr e)
 {
     QPromise<std::decay_t<T>> promise;
     QFuture<std::decay_t<T>> future = promise.future();
@@ -86,5 +108,6 @@ template <class T, class E>
 
     return future;
 }
+#endif // QT_VERSION
 
 } // namespace quentier::threading
