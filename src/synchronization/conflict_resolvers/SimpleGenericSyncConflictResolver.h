@@ -250,14 +250,6 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
          self_weak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this()](
             std::optional<T> item) mutable {
-            if (!item) {
-                // There is no conflict by name in the local storage
-                promise->addResult(Resolution{
-                    ISyncConflictResolver::ConflictResolution::UseTheirs{}});
-                promise->finish();
-                return;
-            }
-
             auto self = self_weak.lock();
             if (!self) {
                 promise->setException(
@@ -266,6 +258,14 @@ QFuture<Resolution> SimpleGenericSyncConflictResolver<
                         "Cannot resolve sync conflict: "
                         "SimpleGenericSyncConflictResolver instance is "
                         "dead")}});
+                promise->finish();
+                return;
+            }
+
+            if (!item) {
+                // There is no conflict by name in the local storage
+                promise->addResult(Resolution{
+                    ISyncConflictResolver::ConflictResolution::UseTheirs{}});
                 promise->finish();
                 return;
             }

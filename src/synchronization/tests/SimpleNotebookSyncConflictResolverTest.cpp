@@ -600,11 +600,6 @@ TEST_F(
 
     std::weak_ptr<SimpleNotebookSyncConflictResolver> resolverWeak{resolver};
 
-    // NOTE: there's the only one place in this test where blocking waiting
-    // is used - in its end. Attempts to use blocking waiting in other places
-    // of the test lead to QFuture<T>::waitForFinished() calls returning
-    // before the future is really finished or canceled.
-
     EXPECT_CALL(
         *m_mockLocalStorage,
         findNotebookByName(newName, std::optional<qevercloud::Guid>{}))
@@ -614,6 +609,106 @@ TEST_F(
                           linkedNotebookGuid) mutable // NOLINT
                   {
                       Q_UNUSED(newName)
+                      Q_UNUSED(linkedNotebookGuid)
+
+                      EXPECT_FALSE(resolverWeak.expired());
+
+                      threading::then(
+                          waitForResetPromise->future(),
+                          [=] () mutable {
+                              EXPECT_TRUE(resolverWeak.expired());
+
+                              // Now can fulfill the promise to find notebook
+                              findNotebookPromise->start();
+                              findNotebookPromise->addResult(std::nullopt);
+                              findNotebookPromise->finish();
+
+                              // Trigger the execution of lambda attached to the
+                              // fulfilled promise's future via watcher
+                              QCoreApplication::processEvents();
+                          });
+
+                      signalToResetPromise->finish();
+
+                      // Trigger the execution of lambda attached to the
+                      // fulfilled promise's future via watcher
+                      QCoreApplication::processEvents();
+
+                      return findNotebookFuture;
+                  });
+
+    auto resultFuture =
+        resolver->resolveNotebookConflict(std::move(theirs), std::move(mine));
+
+    threading::then(
+        std::move(signalToResetFuture),
+        [=, resolver = std::move(resolver)]() mutable {
+            resolver.reset();
+
+            waitForResetPromise->start();
+            waitForResetPromise->finish();
+
+            // Trigger the execution of lambda attached to the
+            // fulfilled promise's future via watcher
+            QCoreApplication::processEvents();
+        });
+
+    threading::then(
+        std::move(findNotebookFuture),
+        [=](std::optional<qevercloud::Notebook> notebook) mutable { // NOLINT
+            Q_UNUSED(notebook)
+            // Trigger the execution of lambda inside
+            // SimpleGenericSyncConflictResolver::processConflictByName
+            QCoreApplication::processEvents();
+        });
+
+    // Trigger the execution of lambda attached to findNotebookByName
+    // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
+    QCoreApplication::processEvents();
+
+    EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
+}
+
+TEST_F(
+    SimpleNotebookSyncConflictResolverTest,
+    HandleSelfDeletionDuringConflictingNameCheckingOnConflictByGuid)
+{
+    auto resolver = std::make_shared<SimpleNotebookSyncConflictResolver>(
+        m_mockLocalStorage);
+
+    const auto guid = UidGenerator::Generate();
+
+    qevercloud::Notebook theirs;
+    theirs.setGuid(guid);
+    theirs.setName(QStringLiteral("name1"));
+
+    qevercloud::Notebook mine;
+    mine.setGuid(guid);
+    mine.setName(QStringLiteral("name2"));
+
+    auto signalToResetPromise = std::make_shared<QPromise<void>>();
+    auto signalToResetFuture = signalToResetPromise->future();
+    signalToResetPromise->start();
+
+    auto waitForResetPromise = std::make_shared<QPromise<void>>();
+
+    auto findNotebookPromise =
+        std::make_shared<QPromise<std::optional<qevercloud::Notebook>>>();
+
+    auto findNotebookFuture = findNotebookPromise->future();
+
+    std::weak_ptr<SimpleNotebookSyncConflictResolver> resolverWeak{resolver};
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNotebookByName(
+            theirs.name().value(), std::optional<qevercloud::Guid>{}))
+        .WillOnce([=, signalToResetPromise = std::move(signalToResetPromise)](
+                      QString name, // NOLINT
+                      std::optional<qevercloud::Guid>
+                          linkedNotebookGuid) mutable // NOLINT
+                  {
+                      Q_UNUSED(name)
                       Q_UNUSED(linkedNotebookGuid)
 
                       EXPECT_FALSE(resolverWeak.expired());
