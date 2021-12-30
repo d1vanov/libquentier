@@ -8,7 +8,8 @@ add_executable(${TESTS_NAME}
   main.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
-  SimpleSyncConflictResolverTest.cpp)
+  SimpleSyncConflictResolverTest.cpp
+  SimpleTagSyncConflictResolverTest.cpp)
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE

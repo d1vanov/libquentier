@@ -464,7 +464,7 @@ TEST_F(
             QCoreApplication::processEvents();
         });
 
-    // Trigger the execution of lambda attached to findNotebookByName
+    // Trigger the execution of lambda attached to findSavedSearchByName
     // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
     QCoreApplication::processEvents();
 
@@ -560,7 +560,7 @@ TEST_F(
             QCoreApplication::processEvents();
         });
 
-    // Trigger the execution of lambda attached to findNotebookByName
+    // Trigger the execution of lambda attached to findSavedSearchByName
     // future inside SimpleGenericSyncConflictResolver::renameConflictingItem
     QCoreApplication::processEvents();
 
