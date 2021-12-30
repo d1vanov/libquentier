@@ -769,4 +769,64 @@ TEST_F(
     EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
 }
 
+TEST_F(
+    SimpleNotebookSyncConflictResolverTest,
+    ForwardFindNotebookByNameErrorOnConflictByName)
+{
+    SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
+
+    qevercloud::Notebook theirs;
+    theirs.setGuid(UidGenerator::Generate());
+    theirs.setName(QStringLiteral("name"));
+
+    qevercloud::Notebook mine;
+    mine.setGuid(UidGenerator::Generate());
+    mine.setName(QStringLiteral("name"));
+
+    const QString newName =
+        theirs.name().value() + QStringLiteral(" - conflicting");
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNotebookByName(newName, std::optional<qevercloud::Guid>{}))
+        .WillOnce(Return(threading::makeExceptionalFuture<
+                         std::optional<qevercloud::Notebook>>(
+            RuntimeError{ErrorString{QStringLiteral("error")}})));
+
+    auto resultFuture =
+        resolver.resolveNotebookConflict(std::move(theirs), std::move(mine));
+
+    EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
+}
+
+TEST_F(
+    SimpleNotebookSyncConflictResolverTest,
+    ForwardFindNotebookByNameErrorOnConflictByGuid)
+{
+    SimpleNotebookSyncConflictResolver resolver{m_mockLocalStorage};
+
+    const auto guid = UidGenerator::Generate();
+
+    qevercloud::Notebook theirs;
+    theirs.setGuid(guid);
+    theirs.setName(QStringLiteral("name1"));
+
+    qevercloud::Notebook mine;
+    mine.setGuid(guid);
+    mine.setName(QStringLiteral("name2"));
+
+    EXPECT_CALL(
+        *m_mockLocalStorage,
+        findNotebookByName(
+            theirs.name().value(), std::optional<qevercloud::Guid>{}))
+        .WillOnce(Return(threading::makeExceptionalFuture<
+                         std::optional<qevercloud::Notebook>>(
+            RuntimeError{ErrorString{QStringLiteral("error")}})));
+
+    auto resultFuture =
+        resolver.resolveNotebookConflict(std::move(theirs), std::move(mine));
+
+    EXPECT_THROW(resultFuture.waitForFinished(), RuntimeError);
+}
+
 } // namespace quentier::synchronization::tests
