@@ -20,22 +20,18 @@
 
 #include "ISimpleNoteSyncConflictResolver.h"
 
-#include <quentier/local_storage/Fwd.h>
-
 namespace quentier::synchronization {
 
 class SimpleNoteSyncConflictResolver final :
     public ISimpleNoteSyncConflictResolver
 {
 public:
-    explicit SimpleNoteSyncConflictResolver(
-        local_storage::ILocalStoragePtr localStorage);
-
     [[nodiscard]] QFuture<NoteConflictResolution> resolveNoteConflict(
         qevercloud::Note theirs, qevercloud::Note mine) override;
 
 private:
-    local_storage::ILocalStoragePtr m_localStorage;
+    void markAsLocalConflictingNote(
+        qevercloud::Guid theirsGuid, qevercloud::Note & mine) const;
 };
 
 } // namespace quentier::synchronization
