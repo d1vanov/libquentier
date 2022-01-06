@@ -51,17 +51,6 @@ void registerMetatypes()
 {
     qRegisterMetaType<Account>("Account");
 
-    qRegisterMetaType<qevercloud::Guid>("qevercloud::Guid");
-    qRegisterMetaType<qevercloud::Notebook>("qevercloud::Notebook");
-    qRegisterMetaType<qevercloud::Note>("qevercloud::Note");
-    qRegisterMetaType<qevercloud::Tag>("qevercloud::Tag");
-    qRegisterMetaType<qevercloud::Resource>("qevercloud::Resource");
-    qRegisterMetaType<qevercloud::User>("qevercloud::User");
-    qRegisterMetaType<qevercloud::LinkedNotebook>("qevercloud::LinkedNotebook");
-    qRegisterMetaType<qevercloud::SavedSearch>("qevercloud::SavedSearch");
-    qRegisterMetaType<qevercloud::UserID>("qevercloud::UserID");
-    qRegisterMetaType<qevercloud::Timestamp>("qevercloud::Timestamp");
-
     qRegisterMetaType<QVector<LinkedNotebookAuthData>>(
         "QVector<LinkedNotebookAuthData>");
 
