@@ -32,7 +32,7 @@ namespace quentier {
 
 void initializeLibquentier()
 {
-    qevercloud::initializeQEverCloud();
+    qevercloud::registerMetatypes();
 
     registerMetatypes();
 
