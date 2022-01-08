@@ -2307,7 +2307,7 @@ void LocalStorageManagerAsync::onListTagsWithNoteLocalIdsRequest(
             SAVE_WARNINGS
             CLANG_SUPPRESS_WARNING(-Wrange-loop-analysis)
             // clang-format off
-            for (const auto it: // NOLINT clazy:exclude=range-loop
+            for (const auto it: // clazy:exclude=range-loop-reference
                  qevercloud::toRange(qAsConst(tagsWithNoteLocalIds))) {
                 d->m_pLocalStorageCacheManager->cacheTag(it->first);
             }
