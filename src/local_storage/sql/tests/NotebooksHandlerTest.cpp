@@ -236,10 +236,6 @@ Q_DECLARE_FLAGS(CreateNotebookOptions, CreateNotebookOption);
     notebook.setLocalOnly(false);
     notebook.setLocallyFavorited(true);
 
-    QHash<QString, QVariant> localData;
-    localData[QStringLiteral("hey")] = QStringLiteral("hi");
-    notebook.setLocalData(std::move(localData));
-
     notebook.setGuid(UidGenerator::Generate());
     notebook.setName(QStringLiteral("name"));
     notebook.setUpdateSequenceNum(1);
@@ -1093,7 +1089,6 @@ TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
     notebook.setServiceCreated(1);
     notebook.setServiceUpdated(1);
     notebook.setDefaultNotebook(true);
-    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     notebook.setPublishing(qevercloud::Publishing{});
     notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
@@ -1173,7 +1168,6 @@ TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
     updatedNotebook.setServiceCreated(1);
     updatedNotebook.setServiceUpdated(1);
     updatedNotebook.setDefaultNotebook(true);
-    updatedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     updatedNotebook.setPublishing(qevercloud::Publishing{});
     updatedNotebook.mutablePublishing()->setUri(
@@ -1205,7 +1199,7 @@ TEST_F(NotebooksHandlerTest, RemoveNotebookFieldsOnUpdate)
 
     foundNotebookFuture.waitForFinished();
     ASSERT_EQ(foundNotebookFuture.resultCount(), 1);
-    EXPECT_EQ(foundNotebookFuture.result(), updatedNotebook);
+    EXPECT_EQ(*foundNotebookFuture.result(), updatedNotebook);
 }
 
 // The test checks that NotebooksHandler properly considers affiliation when

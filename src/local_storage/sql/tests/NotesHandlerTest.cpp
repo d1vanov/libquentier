@@ -108,7 +108,7 @@ private:
 namespace {
 
 [[nodiscard]] QList<qevercloud::SharedNote> createSharedNotes(
-    const std::optional<qevercloud::Guid> & noteGuid)
+    const qevercloud::Guid & noteGuid)
 {
     const int sharedNoteCount = 5;
     QList<qevercloud::SharedNote> sharedNotes;
@@ -309,10 +309,6 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
     note.setNotebookLocalId(notebook.localId());
     note.setNotebookGuid(notebook.guid());
 
-    QHash<QString, QVariant> localData;
-    localData[QStringLiteral("hey")] = QStringLiteral("hi");
-    note.setLocalData(std::move(localData));
-
     note.setGuid(UidGenerator::Generate());
     note.setUpdateSequenceNum(1);
 
@@ -341,7 +337,7 @@ Q_DECLARE_FLAGS(CreateNoteOptions, CreateNoteOption);
     }
 
     if (createNoteOptions.testFlag(CreateNoteOption::WithSharedNotes)) {
-        note.setSharedNotes(createSharedNotes(note.guid()));
+        note.setSharedNotes(createSharedNotes(note.guid().value()));
     }
 
     if (createNoteOptions.testFlag(CreateNoteOption::WithRestrictions)) {
@@ -1292,7 +1288,7 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
 
         if (note.sharedNotes() && !note.sharedNotes()->isEmpty()) {
             for (auto & sharedNote: *note.mutableSharedNotes()) {
-                sharedNote.setNoteGuid(note.guid());
+                sharedNote.setNoteGuid(note.guid().value());
 
                 if (sharedNote.recipientIdentity()) {
                     sharedNote.mutableRecipientIdentity()->setId(

@@ -84,10 +84,6 @@ namespace {
     qevercloud::LinkedNotebook linkedNotebook;
     linkedNotebook.setLocallyModified(true);
 
-    QHash<QString, QVariant> localData;
-    localData[QStringLiteral("hey")] = QStringLiteral("hi");
-    linkedNotebook.setLocalData(std::move(localData));
-
     linkedNotebook.setShareName(QStringLiteral("shareName"));
     linkedNotebook.setUsername(QStringLiteral("username"));
     linkedNotebook.setShardId(QStringLiteral("shardId"));

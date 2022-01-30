@@ -99,10 +99,6 @@ Q_DECLARE_FLAGS(CreateTagOptions, CreateTagOption);
     tag.setLocallyFavorited(true);
     tag.setLocalOnly(false);
 
-    QHash<QString, QVariant> localData;
-    localData[QStringLiteral("hey")] = QStringLiteral("hi");
-    tag.setLocalData(std::move(localData));
-
     tag.setGuid(UidGenerator::Generate());
     tag.setName(QStringLiteral("name"));
     tag.setUpdateSequenceNum(1);
@@ -396,13 +392,13 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     foundByLocalIdTagFuture.waitForFinished();
     ASSERT_EQ(foundByLocalIdTagFuture.resultCount(), 1);
     ASSERT_TRUE(foundByLocalIdTagFuture.result());
-    EXPECT_EQ(foundByLocalIdTagFuture.result(), tag);
+    EXPECT_EQ(*foundByLocalIdTagFuture.result(), tag);
 
     auto foundByGuidTagFuture = tagsHandler->findTagByGuid(tag.guid().value());
     foundByGuidTagFuture.waitForFinished();
     ASSERT_EQ(foundByGuidTagFuture.resultCount(), 1);
     ASSERT_TRUE(foundByGuidTagFuture.result());
-    EXPECT_EQ(foundByGuidTagFuture.result(), tag);
+    EXPECT_EQ(*foundByGuidTagFuture.result(), tag);
 
     auto foundByNameTagFuture = tagsHandler->findTagByName(
         tag.name().value(), tag.linkedNotebookGuid());
@@ -410,7 +406,7 @@ TEST_P(TagsHandlerSingleTagTest, HandleSingleTag)
     foundByNameTagFuture.waitForFinished();
     ASSERT_EQ(foundByNameTagFuture.resultCount(), 1);
     ASSERT_TRUE(foundByNameTagFuture.result());
-    EXPECT_EQ(foundByNameTagFuture.result(), tag);
+    EXPECT_EQ(*foundByNameTagFuture.result(), tag);
 
     auto listTagsOptions = ILocalStorage::ListTagsOptions{};
 
