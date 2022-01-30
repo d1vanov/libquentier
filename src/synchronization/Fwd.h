@@ -22,6 +22,8 @@
 
 namespace quentier::synchronization {
 
+////////////////////////////////////////////////////////////////////////////////
+
 class ISimpleNotebookSyncConflictResolver;
 
 using ISimpleNotebookSyncConflictResolverPtr =
@@ -41,5 +43,10 @@ class ISimpleTagSyncConflictResolver;
 
 using ISimpleTagSyncConflictResolverPtr =
     std::shared_ptr<ISimpleTagSyncConflictResolver>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+class ISyncChunksProvider;
+using ISyncChunksProviderPtr = std::shared_ptr<ISyncChunksProvider>;
 
 } // namespace quentier::synchronization

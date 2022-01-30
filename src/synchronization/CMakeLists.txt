@@ -23,7 +23,11 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleSyncConflictResolver.cpp
   conflict_resolvers/SimpleSyncConflictResolver.h
   conflict_resolvers/SimpleTagSyncConflictResolver.cpp
-  conflict_resolvers/SimpleTagSyncConflictResolver.h)
+  conflict_resolvers/SimpleTagSyncConflictResolver.h
+  sync_chunks/ISyncChunksProvider.h
+  sync_chunks/ISyncChunksStorage.h
+  sync_chunks/SyncChunksStorage.cpp
+  sync_chunks/SyncChunksStorage.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
