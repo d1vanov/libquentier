@@ -154,7 +154,6 @@ bool localStorageManagerNoteSearchQueryTest(QString & errorDescription)
 
         notebook.setUpdateSequenceNum(i);
         notebook.setDefaultNotebook(i == 0);
-        notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = (i == 1);
         notebook.setServiceCreated(i);
         notebook.setServiceUpdated(i + 1);
     }

@@ -1626,7 +1626,6 @@ void TestListNotebooks()
         notebook.setServiceUpdated(i + 1);
 
         notebook.setDefaultNotebook(false);
-        notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
         notebook.setPublishing(qevercloud::Publishing{});
         notebook.mutablePublishing()->setUri(

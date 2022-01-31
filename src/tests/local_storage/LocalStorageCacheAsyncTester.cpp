@@ -1141,8 +1141,6 @@ void LocalStorageCacheAsyncTester::addNotebook()
 
     m_currentNotebook.setDefaultNotebook(m_addedNotebooksCount == 0);
 
-    m_currentNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
-
     m_state = State::STATE_SENT_NOTEBOOK_ADD_REQUEST;
     Q_EMIT addNotebookRequest(m_currentNotebook, QUuid::createUuid());
 }

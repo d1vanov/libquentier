@@ -1830,7 +1830,6 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
     notebook.setServiceCreated(1);
     notebook.setServiceUpdated(1);
     notebook.setDefaultNotebook(true);
-    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
     notebook.setPublishing(qevercloud::Publishing{});
     notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
     notebook.mutablePublishing()->setOrder(qevercloud::NoteSortOrder::CREATED);
@@ -2051,7 +2050,6 @@ void TestNotebookAddFindUpdateDeleteExpungeInLocalStorage()
         notebook.name().value() + QStringLiteral("_modified"));
 
     modifiedNotebook.setDefaultNotebook(false);
-    modifiedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = true;
 
     modifiedNotebook.setServiceUpdated(
         notebook.serviceUpdated().value() + 1);
@@ -2650,7 +2648,6 @@ void TestSequentialUpdatesInLocalStorage()
     notebook.setServiceCreated(1);
     notebook.setServiceUpdated(1);
     notebook.setDefaultNotebook(true);
-    notebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     notebook.setPublishing(qevercloud::Publishing{});
     notebook.mutablePublishing()->setUri(QStringLiteral("Fake publishing uri"));
@@ -2732,7 +2729,6 @@ void TestSequentialUpdatesInLocalStorage()
     updatedNotebook.setServiceCreated(1);
     updatedNotebook.setServiceUpdated(1);
     updatedNotebook.setDefaultNotebook(true);
-    updatedNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     updatedNotebook.setPublishing(qevercloud::Publishing{});
     updatedNotebook.mutablePublishing()->setUri(
@@ -2978,7 +2974,6 @@ void TestAccountHighUsnInLocalStorage()
     firstNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
     firstNotebook.setServiceUpdated(firstNotebook.serviceCreated());
     firstNotebook.setDefaultNotebook(true);
-    firstNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     qevercloud::Notebook secondNotebook;
     secondNotebook.setGuid(UidGenerator::Generate());
@@ -2987,7 +2982,6 @@ void TestAccountHighUsnInLocalStorage()
     secondNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
     secondNotebook.setServiceUpdated(secondNotebook.serviceCreated());
     secondNotebook.setDefaultNotebook(false);
-    secondNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = false;
 
     qevercloud::Notebook thirdNotebook;
     thirdNotebook.setGuid(UidGenerator::Generate());
@@ -2996,7 +2990,6 @@ void TestAccountHighUsnInLocalStorage()
     thirdNotebook.setServiceCreated(QDateTime::currentMSecsSinceEpoch());
     thirdNotebook.setServiceUpdated(thirdNotebook.serviceCreated());
     thirdNotebook.setDefaultNotebook(false);
-    thirdNotebook.mutableLocalData()[QStringLiteral("isLastUsed")] = true;
 
     errorMessage.clear();
 
