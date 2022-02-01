@@ -21,6 +21,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/utility/FileSystem.h>
 
 #include <qevercloud/serialization/json/SyncChunk.h>
 
@@ -246,6 +247,15 @@ void putSyncChunks(
     }
 }
 
+void removeDirWithLog(const QString & dirPath)
+{
+    if (!removeDir(dirPath)) {
+        QNWARNING(
+            "synchronization::SyncChunksStorage",
+            "Failed to remove dir with contents: " << dirPath);
+    }
+}
+
 } // namespace
 
 SyncChunksStorage::SyncChunksStorage(const QDir & rootDir) :
@@ -362,19 +372,27 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
 void SyncChunksStorage::clearUserOwnSyncChunks()
 {
-    // TODO: implement
+    removeDirWithLog(m_userOwnSyncChunksDir.absolutePath());
 }
 
 void SyncChunksStorage::clearLinkedNotebookSyncChunks(
     const qevercloud::Guid & linkedNotebookGuid)
 {
-    // TODO: implement
-    Q_UNUSED(linkedNotebookGuid)
+    removeDirWithLog(m_rootDir.absoluteFilePath(linkedNotebookGuid));
 }
 
 void SyncChunksStorage::clearAllSyncChunks()
 {
-    // TODO: implement
+    const auto entries = m_rootDir.entryInfoList(QDir::NoDotAndDotDot);
+    for (const auto & entry: qAsConst(entries))
+    {
+        if (entry.isDir()) {
+            removeDirWithLog(entry.absoluteFilePath());
+        }
+        else {
+            Q_UNUSED(removeFile(entry.absoluteFilePath()))
+        }
+    }
 }
 
 } // namespace quentier::synchronization

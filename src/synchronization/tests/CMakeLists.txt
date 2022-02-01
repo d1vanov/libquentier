@@ -10,7 +10,8 @@ add_executable(${TESTS_NAME}
   SimpleNoteSyncConflictResolverTest.cpp
   SimpleSavedSearchSyncConflictResolverTest.cpp
   SimpleSyncConflictResolverTest.cpp
-  SimpleTagSyncConflictResolverTest.cpp)
+  SimpleTagSyncConflictResolverTest.cpp
+  SyncChunksStorageTest.cpp)
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE
