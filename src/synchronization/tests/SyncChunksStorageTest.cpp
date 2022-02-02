@@ -21,12 +21,14 @@
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/serialization/json/SyncChunk.h>
 #include <qevercloud/types/SyncChunk.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/SavedSearchBuilder.h>
 #include <qevercloud/types/builders/TagBuilder.h>
 
+#include <QJsonDocument>
 #include <QList>
 #include <QTemporaryDir>
 
@@ -150,6 +152,88 @@ TEST_F(SyncChunksStorageTest, FetchNonexistentLinkedNotebookSyncChunks)
         UidGenerator::Generate(), 0);
 
     EXPECT_TRUE(syncChunks.empty());
+}
+
+TEST_F(SyncChunksStorageTest, FetchExistingUserOwnSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    QDir ownSubdir{temporaryDir.absoluteFilePath(QStringLiteral("user_own"))};
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> expectedSyncChunks;
+    expectedSyncChunks.reserve(syncChunkCount);
+    for (int i = 0; i < syncChunkCount; ++i) {
+        const auto syncChunk = generateSyncChunk(i * 12, (i + 1) * 12);
+        const auto jsonObject = qevercloud::serializeToJson(syncChunk);
+        expectedSyncChunks << syncChunk;
+
+        const auto json =
+            QJsonDocument(jsonObject).toJson(QJsonDocument::Indented);
+
+        const auto fileName = QString::number(i * 12) + QStringLiteral("_") +
+            QString::number((i + 1) * 12) + QStringLiteral(".json");
+
+        QFile file{ownSubdir.absoluteFilePath(fileName)};
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(json);
+        file.close();
+    }
+
+    const auto syncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_EQ(syncChunks, expectedSyncChunks);
+}
+
+TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> expectedSyncChunks;
+    expectedSyncChunks.reserve(syncChunkCount * linkedNotebookCount);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        for (int i = 0; i < syncChunkCount; ++i) {
+            const auto syncChunk = generateSyncChunk(i * 12, (i + 1) * 12);
+            const auto jsonObject = qevercloud::serializeToJson(syncChunk);
+            expectedSyncChunks << syncChunk;
+
+            const auto json =
+                QJsonDocument(jsonObject).toJson(QJsonDocument::Indented);
+
+            const auto fileName = QString::number(i * 12) + QStringLiteral("_") +
+                QString::number((i + 1) * 12) + QStringLiteral(".json");
+
+            temporaryDir.mkpath(
+                temporaryDir.absoluteFilePath(linkedNotebookGuid));
+
+            QDir linkedNotebookSubdir{
+                temporaryDir.absoluteFilePath(linkedNotebookGuid)};
+
+            QFile file{linkedNotebookSubdir.absoluteFilePath(fileName)};
+            ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+            file.write(json);
+            file.close();
+        }
+    }
+
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount * linkedNotebookCount);
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        syncChunks << storage.fetchRelevantLinkedNotebookSyncChunks(
+            linkedNotebookGuid, 0);
+    }
+
+    EXPECT_EQ(syncChunks, expectedSyncChunks);
 }
 
 } // namespace quentier::synchronization::tests
