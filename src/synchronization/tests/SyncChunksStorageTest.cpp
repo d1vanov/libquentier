@@ -29,6 +29,7 @@
 #include <qevercloud/types/builders/TagBuilder.h>
 
 #include <QJsonDocument>
+#include <QHash>
 #include <QList>
 #include <QTemporaryDir>
 
@@ -112,6 +113,7 @@ namespace {
         }
     }
 
+    result.setChunkHighUSN(lowUsn);
     return result;
 }
 
@@ -234,6 +236,66 @@ TEST_F(SyncChunksStorageTest, FetchExistingLinkedNotebookSyncChunks)
     }
 
     EXPECT_EQ(syncChunks, expectedSyncChunks);
+}
+
+TEST_F(SyncChunksStorageTest, PutAndFetchUserOwnSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+    for (int i = 0; i < syncChunkCount; ++i) {
+        syncChunks << generateSyncChunk(i * 12, (i + 1) * 12);
+    }
+
+    storage.putUserOwnSyncChunks(syncChunks);
+    const auto fetchedSyncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_EQ(fetchedSyncChunks, syncChunks);
+}
+
+TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+
+    QHash<qevercloud::Guid, QList<qevercloud::SyncChunk>>
+        syncChunksPerLinkedNotebookGuid;
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        syncChunks.clear();
+        for (int i = 0; i < syncChunkCount; ++i) {
+            syncChunks << generateSyncChunk(i * 12, (i + 1) * 12);
+        }
+        storage.putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
+
+        syncChunksPerLinkedNotebookGuid[linkedNotebookGuid] = syncChunks;
+    }
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto it =
+            syncChunksPerLinkedNotebookGuid.find(linkedNotebookGuid);
+
+        ASSERT_FALSE(it == syncChunksPerLinkedNotebookGuid.end());
+
+        const auto fetchedSyncChunks =
+            storage.fetchRelevantLinkedNotebookSyncChunks(
+                linkedNotebookGuid, 0);
+
+        EXPECT_EQ(fetchedSyncChunks, it.value());
+    }
 }
 
 } // namespace quentier::synchronization::tests
