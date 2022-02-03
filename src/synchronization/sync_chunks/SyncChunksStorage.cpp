@@ -30,6 +30,8 @@
 #include <QJsonDocument>
 #include <QTextStream>
 
+#include <optional>
+
 namespace quentier::synchronization {
 
 namespace {
@@ -108,59 +110,6 @@ namespace {
     return syncChunk;
 }
 
-[[nodiscard]] QList<qevercloud::SyncChunk> fetchRelevantSyncChunks(
-    const QDir & dir,
-    const qint32 afterUsn)
-{
-    QList<qevercloud::SyncChunk> result;
-
-    const auto storedSyncChunkFileInfos =
-        dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-
-    const auto tryToDeserializeSyncChunk = [&](const QString & filePath)
-    {
-        auto syncChunk = deserializeSyncChunk(filePath);
-        if (syncChunk) {
-            result << *syncChunk;
-        }
-        else {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Failed to deserialize one of stored sync chunks: "
-                << filePath);
-        }
-    };
-
-    for (const auto & fileInfo: qAsConst(storedSyncChunkFileInfos)) {
-        if (Q_UNLIKELY(!fileInfo.isReadable())) {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Detected unreadable sync chunk file: "
-                    << fileInfo.absoluteFilePath());
-            continue;
-        }
-
-        if (afterUsn == 0) {
-            tryToDeserializeSyncChunk(fileInfo.absoluteFilePath());
-            continue;
-        }
-
-        const auto usns = splitSyncChunkFileNameIntoUsns(fileInfo.fileName());
-        if (!usns) {
-            QNWARNING(
-                "synchronization::SyncChunksStorage",
-                "Failed to parse usns from sync chunk file name: "
-                    << fileInfo.fileName());
-        }
-
-        if (usns->first > afterUsn) {
-            tryToDeserializeSyncChunk(fileInfo.absoluteFilePath());
-        }
-    }
-
-    return result;
-}
-
 [[nodiscard]] std::optional<qint32> syncChunkLowUsn(
     const qevercloud::SyncChunk & syncChunk)
 {
@@ -202,6 +151,120 @@ namespace {
     }
 
     return lowUsn;
+}
+
+void filterLowUsnsForSyncChunk(
+    const qint32 afterUsn, qevercloud::SyncChunk & syncChunk)
+{
+    const auto filterLowUsnItems = [&](auto & items)
+    {
+        for (auto it = items.begin(); it != items.end(); )
+        {
+            if (it->updateSequenceNum() &&
+                (*it->updateSequenceNum() <= afterUsn))
+            {
+                it = items.erase(it);
+                continue;
+            }
+
+            ++it;
+        }
+    };
+
+    if (syncChunk.notes()) {
+        filterLowUsnItems(*syncChunk.mutableNotes());
+    }
+
+    if (syncChunk.notebooks()) {
+        filterLowUsnItems(*syncChunk.mutableNotebooks());
+    }
+
+    if (syncChunk.tags()) {
+        filterLowUsnItems(*syncChunk.mutableTags());
+    }
+
+    if (syncChunk.searches()) {
+        filterLowUsnItems(*syncChunk.mutableSearches());
+    }
+
+    if (syncChunk.resources()) {
+        filterLowUsnItems(*syncChunk.mutableResources());
+    }
+
+    if (syncChunk.linkedNotebooks()) {
+        filterLowUsnItems(*syncChunk.mutableLinkedNotebooks());
+    }
+}
+
+[[nodiscard]] QList<qevercloud::SyncChunk> fetchRelevantSyncChunks(
+    const QDir & dir,
+    const qint32 afterUsn)
+{
+    QList<qevercloud::SyncChunk> result;
+
+    const auto storedSyncChunkFileInfos =
+        dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+
+    const auto tryToDeserializeSyncChunk =
+        [&](const QString & filePath, std::optional<qint32> lowUsn)
+        {
+            auto syncChunk = deserializeSyncChunk(filePath);
+            if (syncChunk) {
+                if (!lowUsn) {
+                    lowUsn = syncChunkLowUsn(*syncChunk);
+                }
+
+                if (!lowUsn) {
+                    QNWARNING(
+                        "synchronization::SyncChunksStorage",
+                        "Failed to fetch low usn for sync chunk: "
+                            << *syncChunk);
+                    return;
+                }
+
+                if (afterUsn != 0 && *lowUsn <= afterUsn) {
+                    filterLowUsnsForSyncChunk(afterUsn, *syncChunk);
+                }
+
+                result << *syncChunk;
+            }
+            else {
+                QNWARNING(
+                    "synchronization::SyncChunksStorage",
+                    "Failed to deserialize one of stored sync chunks: "
+                    << filePath);
+            }
+        };
+
+    for (const auto & fileInfo: qAsConst(storedSyncChunkFileInfos)) {
+        if (Q_UNLIKELY(!fileInfo.isReadable())) {
+            QNWARNING(
+                "synchronization::SyncChunksStorage",
+                "Detected unreadable sync chunk file: "
+                    << fileInfo.absoluteFilePath());
+            continue;
+        }
+
+        if (afterUsn == 0) {
+            tryToDeserializeSyncChunk(
+                fileInfo.absoluteFilePath(), std::nullopt);
+            continue;
+        }
+
+        const auto usns = splitSyncChunkFileNameIntoUsns(fileInfo.fileName());
+        if (!usns) {
+            QNWARNING(
+                "synchronization::SyncChunksStorage",
+                "Failed to parse usns from sync chunk file name: "
+                    << fileInfo.fileName());
+        }
+
+        if (usns->second > afterUsn) {
+            tryToDeserializeSyncChunk(fileInfo.absoluteFilePath(), usns->first);
+        }
+    }
+
+    return result;
 }
 
 void putSyncChunks(
