@@ -574,4 +574,117 @@ TEST_F(
     }
 }
 
+TEST_F(SyncChunksStorageTest, ClearUserOwnSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+    for (int i = 0; i < syncChunkCount; ++i) {
+        syncChunks << generateSyncChunk(i * 18, (i + 1) * 18);
+    }
+
+    storage.putUserOwnSyncChunks(syncChunks);
+    auto fetchedSyncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_FALSE(fetchedSyncChunks.isEmpty());
+
+    storage.clearUserOwnSyncChunks();
+    fetchedSyncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+}
+
+TEST_F(SyncChunksStorageTest, ClearLinkedNotebookSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        syncChunks.clear();
+        for (int i = 0; i < syncChunkCount; ++i) {
+            syncChunks << generateSyncChunk(i * 18, (i + 1) * 18);
+        }
+        storage.putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
+    }
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        auto fetchedSyncChunks = storage.fetchRelevantLinkedNotebookSyncChunks(
+            linkedNotebookGuid, 0);
+
+        EXPECT_FALSE(fetchedSyncChunks.isEmpty());
+
+        storage.clearLinkedNotebookSyncChunks(linkedNotebookGuid);
+
+        fetchedSyncChunks = storage.fetchRelevantLinkedNotebookSyncChunks(
+            linkedNotebookGuid, 0);
+
+        EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+    }
+}
+
+TEST_F(SyncChunksStorageTest, ClearAllSyncChunks)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+    SyncChunksStorage storage{temporaryDir};
+
+    constexpr int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+
+    for (int i = 0; i < syncChunkCount; ++i) {
+        syncChunks << generateSyncChunk(i * 18, (i + 1) * 18);
+    }
+
+    storage.putUserOwnSyncChunks(syncChunks);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        syncChunks.clear();
+        for (int i = 0; i < syncChunkCount; ++i) {
+            syncChunks << generateSyncChunk(i * 18, (i + 1) * 18);
+        }
+        storage.putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
+    }
+
+    auto fetchedSyncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_FALSE(fetchedSyncChunks.isEmpty());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        fetchedSyncChunks = storage.fetchRelevantLinkedNotebookSyncChunks(
+            linkedNotebookGuid, 0);
+
+        EXPECT_FALSE(fetchedSyncChunks.isEmpty());
+    }
+
+    storage.clearAllSyncChunks();
+
+    fetchedSyncChunks = storage.fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        fetchedSyncChunks = storage.fetchRelevantLinkedNotebookSyncChunks(
+            linkedNotebookGuid, 0);
+
+        EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+    }
+}
+
 } // namespace quentier::synchronization::tests
