@@ -464,7 +464,9 @@ void SyncChunksStorage::clearLinkedNotebookSyncChunks(
 
 void SyncChunksStorage::clearAllSyncChunks()
 {
-    const auto entries = m_rootDir.entryInfoList(QDir::NoDotAndDotDot);
+    const auto entries = m_rootDir.entryInfoList(
+        QDir::Filters{} | QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+
     for (const auto & entry: qAsConst(entries))
     {
         if (entry.isDir()) {
