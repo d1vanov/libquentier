@@ -173,26 +173,44 @@ void filterLowUsnsForSyncChunk(
 
     if (syncChunk.notes()) {
         filterLowUsnItems(*syncChunk.mutableNotes());
+        if (syncChunk.notes()->isEmpty()) {
+            syncChunk.setNotes(std::nullopt);
+        }
     }
 
     if (syncChunk.notebooks()) {
         filterLowUsnItems(*syncChunk.mutableNotebooks());
+        if (syncChunk.notebooks()->isEmpty()) {
+            syncChunk.setNotebooks(std::nullopt);
+        }
     }
 
     if (syncChunk.tags()) {
         filterLowUsnItems(*syncChunk.mutableTags());
+        if (syncChunk.tags()->isEmpty()) {
+            syncChunk.setTags(std::nullopt);
+        }
     }
 
     if (syncChunk.searches()) {
         filterLowUsnItems(*syncChunk.mutableSearches());
+        if (syncChunk.searches()->isEmpty()) {
+            syncChunk.setSearches(std::nullopt);
+        }
     }
 
     if (syncChunk.resources()) {
         filterLowUsnItems(*syncChunk.mutableResources());
+        if (syncChunk.resources()->isEmpty()) {
+            syncChunk.setResources(std::nullopt);
+        }
     }
 
     if (syncChunk.linkedNotebooks()) {
         filterLowUsnItems(*syncChunk.mutableLinkedNotebooks());
+        if (syncChunk.linkedNotebooks()->isEmpty()) {
+            syncChunk.setLinkedNotebooks(std::nullopt);
+        }
     }
 }
 
@@ -232,7 +250,7 @@ void filterLowUsnsForSyncChunk(
                 QNWARNING(
                     "synchronization::SyncChunksStorage",
                     "Failed to deserialize one of stored sync chunks: "
-                    << filePath);
+                        << filePath);
             }
         };
 
