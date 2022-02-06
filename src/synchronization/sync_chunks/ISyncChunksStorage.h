@@ -23,12 +23,21 @@
 
 #include <QList>
 
+#include <utility>
+
 namespace quentier::synchronization {
 
 class ISyncChunksStorage
 {
 public:
     virtual ~ISyncChunksStorage() = default;
+
+    [[nodiscard]] virtual QList<std::pair<qint32, qint32>>
+        fetchUserOwnSyncChunksLowAndHighUsns() const = 0;
+
+    [[nodiscard]] virtual QList<std::pair<qint32, qint32>>
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(
+            const qevercloud::Guid & linkedNotebookGuid) const = 0;
 
     [[nodiscard]] virtual QList<qevercloud::SyncChunk>
         fetchRelevantUserOwnSyncChunks(qint32 afterUsn) const = 0;

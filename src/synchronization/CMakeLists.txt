@@ -27,7 +27,9 @@ target_sources(${LIBRARY_NAME}
   sync_chunks/ISyncChunksProvider.h
   sync_chunks/ISyncChunksStorage.h
   sync_chunks/SyncChunksStorage.cpp
-  sync_chunks/SyncChunksStorage.h)
+  sync_chunks/SyncChunksStorage.h
+  sync_chunks/Utils.cpp
+  sync_chunks/Utils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

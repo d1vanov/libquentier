@@ -21,15 +21,30 @@
 #include <synchronization/sync_chunks/ISyncChunksStorage.h>
 
 #include <QDir>
+#include <QFuture>
+#include <QList>
 
 #include <utility>
 
+class QThreadPool;
+
 namespace quentier::synchronization {
 
-class SyncChunksStorage final: public ISyncChunksStorage
+/**
+ * @brief The SyncChunksStorage class is the implementation of
+ * ISyncChunksStorage interface. It is not thread-safe!
+ */
+class SyncChunksStorage final : public ISyncChunksStorage
 {
 public:
-    explicit SyncChunksStorage(const QDir & rootDir);
+    explicit SyncChunksStorage(const QDir & rootDir, QThreadPool * threadPool);
+
+    [[nodiscard]] QList<std::pair<qint32, qint32>>
+        fetchUserOwnSyncChunksLowAndHighUsns() const override;
+
+    [[nodiscard]] QList<std::pair<qint32, qint32>>
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(
+            const qevercloud::Guid & linkedNotebookGuid) const override;
 
     [[nodiscard]] QList<qevercloud::SyncChunk> fetchRelevantUserOwnSyncChunks(
         qint32 afterUsn) const override;
@@ -56,6 +71,39 @@ public:
 private:
     QDir m_rootDir;
     QDir m_userOwnSyncChunksDir;
+
+    class LowAndHighUsnsDataAccessor
+    {
+    public:
+        struct LowAndHighUsnsData
+        {
+            using LowAndHighUsnsList = QList<std::pair<qint32, qint32>>;
+
+            LowAndHighUsnsList m_userOwnSyncChunkLowAndHighUsns;
+
+            QHash<qevercloud::Guid, LowAndHighUsnsList>
+                m_linkedNotebookSyncChunkLowAndHighUsns;
+        };
+
+    public:
+        explicit LowAndHighUsnsDataAccessor(
+            const QDir & rootDir, const QDir & userOwnSyncChunksDir,
+            QThreadPool * threadPool);
+
+        [[nodiscard]] LowAndHighUsnsData & data();
+
+        void reset();
+
+    private:
+        void waitForLowAndHighUsnsDataInit();
+
+    private:
+        std::optional<QFuture<LowAndHighUsnsData>> m_lowAndHighUsnsDataFuture;
+
+        LowAndHighUsnsData m_lowAndHighUsnsData;
+    };
+
+    mutable LowAndHighUsnsDataAccessor m_lowAndHighUsnsDataAccessor;
 };
 
 } // namespace quentier::synchronization
