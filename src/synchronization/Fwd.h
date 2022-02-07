@@ -46,7 +46,13 @@ using ISimpleTagSyncConflictResolverPtr =
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class ISyncChunksDownloader;
+using ISyncChunksDownloaderPtr = std::shared_ptr<ISyncChunksDownloader>;
+
 class ISyncChunksProvider;
 using ISyncChunksProviderPtr = std::shared_ptr<ISyncChunksProvider>;
+
+class ISyncChunksStorage;
+using ISyncChunksStoragePtr = std::shared_ptr<ISyncChunksStorage>;
 
 } // namespace quentier::synchronization

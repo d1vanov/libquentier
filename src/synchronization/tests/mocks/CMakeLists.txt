@@ -13,6 +13,7 @@ target_sources(${MOCKS_NAME}
     MockISimpleNoteSyncConflictResolver.h
     MockISimpleSavedSearchSyncConflictResolver.h
     MockISimpleTagSyncConflictResolver.h
+    MockISyncChunksDownloader.h
   PRIVATE
     CheckBuild.cpp
 )

@@ -24,8 +24,11 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleSyncConflictResolver.h
   conflict_resolvers/SimpleTagSyncConflictResolver.cpp
   conflict_resolvers/SimpleTagSyncConflictResolver.h
+  sync_chunks/ISyncChunksDownloader.h
   sync_chunks/ISyncChunksProvider.h
   sync_chunks/ISyncChunksStorage.h
+  sync_chunks/SyncChunksProvider.cpp
+  sync_chunks/SyncChunksProvider.h
   sync_chunks/SyncChunksStorage.cpp
   sync_chunks/SyncChunksStorage.h
   sync_chunks/Utils.cpp
