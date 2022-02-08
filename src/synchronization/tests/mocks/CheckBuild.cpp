@@ -3,3 +3,4 @@
 #include "MockISimpleSavedSearchSyncConflictResolver.h"
 #include "MockISimpleTagSyncConflictResolver.h"
 #include "MockISyncChunksDownloader.h"
+#include "MockISyncChunksStorage.h"

@@ -21,13 +21,9 @@
 #include <synchronization/Fwd.h>
 #include <synchronization/sync_chunks/ISyncChunksProvider.h>
 
-#include <memory>
-
 namespace quentier::synchronization {
 
-class SyncChunksProvider final :
-    public ISyncChunksProvider,
-    public std::enable_shared_from_this<SyncChunksProvider>
+class SyncChunksProvider final : public ISyncChunksProvider
 {
 public:
     explicit SyncChunksProvider(

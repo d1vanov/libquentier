@@ -68,7 +68,7 @@ using StoredSyncChunksFetcher =
         storedSyncChunksUsnRange.end(),
         std::pair<qint32, qint32>{afterUsn, 0});
     if ((nextSyncChunkLowUsnIt == storedSyncChunksUsnRange.end()) ||
-        (nextSyncChunkLowUsnIt->first != (afterUsn + 1)))
+        (afterUsn != 0 && nextSyncChunkLowUsnIt->first != (afterUsn + 1)))
     {
         // There are no stored sync chunks corresponding to the range
         // we are looking for, will download the sync chunks right away
@@ -112,12 +112,14 @@ using StoredSyncChunksFetcher =
             chunksLowUsn = *lowUsn;
         }
 
-        if (!chunksHighUsn || (*chunksHighUsn > *highUsn)) {
+        if (!chunksHighUsn || (*chunksHighUsn < *highUsn)) {
             chunksHighUsn = *highUsn;
         }
     }
 
-    if (!chunksLowUsn || !chunksHighUsn || (*chunksLowUsn != afterUsn + 1)) {
+    if (!chunksLowUsn || !chunksHighUsn ||
+        (afterUsn != 0 && *chunksLowUsn != afterUsn + 1))
+    {
         if (Q_UNLIKELY(!chunksLowUsn || !chunksHighUsn)) {
             QNWARNING(
                 "synchronization::SyncChunksProvider",
@@ -125,7 +127,7 @@ using StoredSyncChunksFetcher =
                 "of stored sync chunks");
         }
 
-            return syncChunksDownloader(afterUsn, std::move(ctx));
+        return syncChunksDownloader(afterUsn, std::move(ctx));
     }
 
     // At this point we can be sure that stored sync chunks indeed start
@@ -136,7 +138,7 @@ using StoredSyncChunksFetcher =
     auto future = promise.future();
 
     auto downloaderFuture = syncChunksDownloader(
-        afterUsn, std::move(ctx));
+        *chunksHighUsn + 1, std::move(ctx));
 
     promise.start();
 
