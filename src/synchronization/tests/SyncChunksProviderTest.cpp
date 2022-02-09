@@ -48,9 +48,8 @@ protected:
         m_mockSyncChunksDownloader =
             std::make_shared<StrictMock<mocks::MockISyncChunksDownloader>>();
 
-    std::shared_ptr<mocks::MockISyncChunksStorage>
-        m_mockSyncChunksStorage =
-            std::make_shared<StrictMock<mocks::MockISyncChunksStorage>>();
+    std::shared_ptr<mocks::MockISyncChunksStorage> m_mockSyncChunksStorage =
+        std::make_shared<StrictMock<mocks::MockISyncChunksStorage>>();
 };
 
 TEST_F(SyncChunksProviderTest, Ctor)
@@ -139,7 +138,7 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
     EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
         .WillOnce(Return(syncChunks));
 
-    EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(83, _))
+    EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(82, _))
         .WillOnce(Return(
             threading::makeReadyFuture<QList<qevercloud::SyncChunk>>({})));
 
@@ -147,6 +146,257 @@ TEST_F(SyncChunksProviderTest, FetchUserOwnSyncChunksFromStorage)
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), syncChunks);
+}
+
+TEST_F(SyncChunksProviderTest, FetchPartOfUserOwnSyncChunksFromStorage)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const QList<std::pair<qint32, qint32>> usnsRange =
+        QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
+                                           << std::make_pair<qint32>(36, 54);
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockSyncChunksStorage, fetchUserOwnSyncChunksLowAndHighUsns)
+        .WillOnce(Return(usnsRange));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build();
+
+    EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
+        .WillOnce(Return(syncChunks));
+
+    auto downloadedSyncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    auto fullSyncChunks = syncChunks;
+    fullSyncChunks << downloadedSyncChunks;
+
+    EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(54, _))
+        .WillOnce(
+            [downloadedSyncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+
+                return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                    std::move(downloadedSyncChunks));
+            });
+
+    auto future = provider.fetchSyncChunks(0, qevercloud::newRequestContext());
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), fullSyncChunks);
+}
+
+TEST_F(
+    SyncChunksProviderTest, DownloadUserOwnSyncChunksWhenThereAreNoneInStorage)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockSyncChunksStorage, fetchUserOwnSyncChunksLowAndHighUsns)
+        .WillOnce(Return(QList<std::pair<qint32, qint32>>{}));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(0, _))
+        .WillOnce(
+            Return(threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                QList{syncChunks})));
+
+    auto future = provider.fetchSyncChunks(0, qevercloud::newRequestContext());
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), syncChunks);
+}
+
+TEST_F(
+    SyncChunksProviderTest,
+    DownloadUserOwnSyncChunksWhenStorageGivesIncompleteSyncChunks)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const QList<std::pair<qint32, qint32>> usnsRange =
+        QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
+                                           << std::make_pair<qint32>(36, 54)
+                                           << std::make_pair(55, 82);
+
+    InSequence s;
+
+    EXPECT_CALL(*m_mockSyncChunksStorage, fetchUserOwnSyncChunksLowAndHighUsns)
+        .WillOnce(Return(usnsRange));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build();
+
+    EXPECT_CALL(*m_mockSyncChunksStorage, fetchRelevantUserOwnSyncChunks(0))
+        .WillOnce(Return(syncChunks));
+
+    auto downloadedSyncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    auto fullSyncChunks = syncChunks;
+    fullSyncChunks << downloadedSyncChunks;
+
+    EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(54, _))
+        .WillOnce(
+            [downloadedSyncChunks](
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx) mutable // NOLINT
+            {
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+
+                return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                    std::move(downloadedSyncChunks));
+            });
+
+    auto future = provider.fetchSyncChunks(0, qevercloud::newRequestContext());
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), fullSyncChunks);
 }
 
 } // namespace quentier::synchronization::tests

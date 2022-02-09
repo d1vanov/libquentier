@@ -123,7 +123,7 @@ using StoredSyncChunksFetcher =
         if (Q_UNLIKELY(!chunksLowUsn || !chunksHighUsn)) {
             QNWARNING(
                 "synchronization::SyncChunksProvider",
-                "Failed to determint overall low or high USN for a set "
+                "Failed to determine overall low or high USN for a set "
                 "of stored sync chunks");
         }
 
@@ -137,8 +137,8 @@ using StoredSyncChunksFetcher =
     QPromise<QList<qevercloud::SyncChunk>> promise;
     auto future = promise.future();
 
-    auto downloaderFuture = syncChunksDownloader(
-        *chunksHighUsn + 1, std::move(ctx));
+    auto downloaderFuture =
+        syncChunksDownloader(*chunksHighUsn, std::move(ctx));
 
     promise.start();
 
