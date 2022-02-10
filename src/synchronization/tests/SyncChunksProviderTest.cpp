@@ -25,6 +25,7 @@
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/RequestContext.h>
+#include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 
@@ -394,6 +395,388 @@ TEST_F(
             });
 
     auto future = provider.fetchSyncChunks(0, qevercloud::newRequestContext());
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), fullSyncChunks);
+}
+
+TEST_F(SyncChunksProviderTest, FetchLinkedNotebookSyncChunksFromStorage)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    const QList<std::pair<qint32, qint32>> usnsRange =
+        QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
+                                           << std::make_pair<qint32>(36, 54)
+                                           << std::make_pair(55, 82);
+
+    InSequence s;
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(linkedNotebookGuid))
+        .WillOnce(Return(usnsRange));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchRelevantLinkedNotebookSyncChunks(linkedNotebookGuid, 0))
+        .WillOnce(Return(syncChunks));
+
+    const auto linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}.setGuid(linkedNotebookGuid).build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksDownloader,
+        downloadLinkedNotebookSyncChunks(linkedNotebook, 82, _))
+        .WillOnce(Return(
+            threading::makeReadyFuture<QList<qevercloud::SyncChunk>>({})));
+
+    auto future = provider.fetchLinkedNotebookSyncChunks(
+        linkedNotebook, 0, qevercloud::newRequestContext());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), syncChunks);
+}
+
+TEST_F(SyncChunksProviderTest, FetchPartOfLinkedNotebookSyncChunksFromStorage)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    const QList<std::pair<qint32, qint32>> usnsRange =
+        QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
+                                           << std::make_pair<qint32>(36, 54);
+
+    InSequence s;
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(linkedNotebookGuid))
+        .WillOnce(Return(usnsRange));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchRelevantLinkedNotebookSyncChunks(linkedNotebookGuid, 0))
+        .WillOnce(Return(syncChunks));
+
+    auto downloadedSyncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    auto fullSyncChunks = syncChunks;
+    fullSyncChunks << downloadedSyncChunks;
+
+    const auto linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}.setGuid(linkedNotebookGuid).build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksDownloader,
+        downloadLinkedNotebookSyncChunks(linkedNotebook, 54, _))
+        .WillOnce(
+            [downloadedSyncChunks, &linkedNotebook](
+                qevercloud::LinkedNotebook ln, // NOLINT
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx) mutable // NOLINT
+            {
+                EXPECT_EQ(ln, linkedNotebook);
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+
+                return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                    std::move(downloadedSyncChunks));
+            });
+
+    auto future = provider.fetchLinkedNotebookSyncChunks(
+        linkedNotebook, 0, qevercloud::newRequestContext());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), fullSyncChunks);
+}
+
+TEST_F(
+    SyncChunksProviderTest,
+    DownloadLinkedNotebookSyncChunksWhenThereAreNoneInStorage)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    InSequence s;
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(linkedNotebookGuid))
+        .WillOnce(Return(QList<std::pair<qint32, qint32>>{}));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    const auto linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}.setGuid(linkedNotebookGuid).build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksDownloader,
+        downloadLinkedNotebookSyncChunks(linkedNotebook, 0, _))
+        .WillOnce(
+            Return(threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                QList{syncChunks})));
+
+    auto future = provider.fetchLinkedNotebookSyncChunks(
+        linkedNotebook, 0, qevercloud::newRequestContext());
+
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_TRUE(future.resultCount());
+    EXPECT_EQ(future.result(), syncChunks);
+}
+
+TEST_F(
+    SyncChunksProviderTest,
+    DownloadLinkedNotebookSyncChunksWhenStorageGivesIncompleteSyncChunks)
+{
+    SyncChunksProvider provider{
+        m_mockSyncChunksDownloader, m_mockSyncChunksStorage};
+
+    const qevercloud::Guid linkedNotebookGuid = UidGenerator::Generate();
+
+    const QList<std::pair<qint32, qint32>> usnsRange =
+        QList<std::pair<qint32, qint32>>{} << std::make_pair<qint32>(0, 35)
+                                           << std::make_pair<qint32>(36, 54)
+                                           << std::make_pair(55, 82);
+
+    InSequence s;
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchLinkedNotebookSyncChunksLowAndHighUsns(linkedNotebookGuid))
+        .WillOnce(Return(usnsRange));
+
+    const QList<qevercloud::SyncChunk> syncChunks =
+        QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #1"))
+                          .setUpdateSequenceNum(0)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #2"))
+                          .setUpdateSequenceNum(35)
+                          .build())
+               .setChunkHighUSN(35)
+               .build()
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #3"))
+                          .setUpdateSequenceNum(36)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #4"))
+                          .setUpdateSequenceNum(54)
+                          .build())
+               .setChunkHighUSN(54)
+               .build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksStorage,
+        fetchRelevantLinkedNotebookSyncChunks(linkedNotebookGuid, 0))
+        .WillOnce(Return(syncChunks));
+
+    auto downloadedSyncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(
+                   QList<qevercloud::Notebook>{}
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #5"))
+                          .setUpdateSequenceNum(55)
+                          .build()
+                   << qevercloud::NotebookBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setName(QStringLiteral("Notebook #6"))
+                          .setUpdateSequenceNum(82)
+                          .build())
+               .setChunkHighUSN(82)
+               .build();
+
+    auto fullSyncChunks = syncChunks;
+    fullSyncChunks << downloadedSyncChunks;
+
+    const auto linkedNotebook =
+        qevercloud::LinkedNotebookBuilder{}.setGuid(linkedNotebookGuid).build();
+
+    EXPECT_CALL(
+        *m_mockSyncChunksDownloader,
+        downloadLinkedNotebookSyncChunks(linkedNotebook, 54, _))
+        .WillOnce(
+            [downloadedSyncChunks, &linkedNotebook](
+                qevercloud::LinkedNotebook ln, // NOLINT
+                qint32 afterUsn,
+                qevercloud::IRequestContextPtr ctx) mutable // NOLINT
+            {
+                EXPECT_EQ(ln, linkedNotebook);
+                Q_UNUSED(afterUsn)
+                Q_UNUSED(ctx)
+
+                return threading::makeReadyFuture<QList<qevercloud::SyncChunk>>(
+                    std::move(downloadedSyncChunks));
+            });
+
+    auto future = provider.fetchLinkedNotebookSyncChunks(
+        linkedNotebook, 0, qevercloud::newRequestContext());
+
     ASSERT_TRUE(future.isFinished());
     ASSERT_TRUE(future.resultCount());
     EXPECT_EQ(future.result(), fullSyncChunks);
