@@ -161,12 +161,12 @@ private:
     using IRequestContextPtr = qevercloud::IRequestContextPtr;
 
     void onGetNoteAsyncFinished(
-        const QVariant & result,
+        const qevercloud::Note & result,
         const std::exception_ptr & e,
         const IRequestContextPtr & ctx);
 
     void onGetResourceAsyncFinished(
-        const QVariant & result,
+        const qevercloud::Resource & result,
         const std::exception_ptr & e,
         const IRequestContextPtr & ctx);
 
@@ -239,11 +239,18 @@ private:
     qevercloud::INoteStorePtr m_pNoteStore;
     QString m_authenticationToken;
 
-    struct RequestData
+    struct NoteRequestData
     {
         QString m_guid;
-        QFuture<QVariant> m_future;
-        QFutureWatcher<QVariant> * m_pFutureWatcher;
+        QFuture<qevercloud::Note> m_future;
+        QFutureWatcher<qevercloud::Note> * m_pFutureWatcher;
+    };
+
+    struct ResourceRequestData
+    {
+        QString m_guid;
+        QFuture<qevercloud::Resource> m_future;
+        QFutureWatcher<qevercloud::Resource> * m_pFutureWatcher;
     };
 
     struct GetNoteRequest
@@ -266,8 +273,8 @@ private:
 
     QQueue<GetNoteRequest> m_pendingGetNoteRequests;
 
-    QHash<QUuid, RequestData> m_noteRequestDataById;
-    QHash<QUuid, RequestData> m_resourceRequestDataById;
+    QHash<QUuid, NoteRequestData> m_noteRequestDataById;
+    QHash<QUuid, ResourceRequestData> m_resourceRequestDataById;
 };
 
 } // namespace quentier

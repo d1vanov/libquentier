@@ -683,7 +683,7 @@ bool NoteStore::getNoteAsync(
         requestData.m_pFutureWatcher->deleteLater();
     }
 
-    requestData.m_pFutureWatcher = new QFutureWatcher<QVariant>(this);
+    requestData.m_pFutureWatcher = new QFutureWatcher<qevercloud::Note>(this);
     requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
@@ -700,7 +700,7 @@ bool NoteStore::getNoteAsync(
             auto * pWatcher = it->m_pFutureWatcher;
 
             std::exception_ptr e;
-            QVariant value;
+            qevercloud::Note value;
 
             try
             {
@@ -817,7 +817,8 @@ bool NoteStore::getResourceAsync(
         requestData.m_pFutureWatcher->deleteLater();
     }
 
-    requestData.m_pFutureWatcher = new QFutureWatcher<QVariant>(this);
+    requestData.m_pFutureWatcher =
+        new QFutureWatcher<qevercloud::Resource>(this);
     requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
@@ -834,7 +835,7 @@ bool NoteStore::getResourceAsync(
             auto * pWatcher = it->m_pFutureWatcher;
 
             std::exception_ptr e;
-            QVariant value;
+            qevercloud::Resource value;
 
             try
             {
@@ -945,7 +946,7 @@ qint32 NoteStore::authenticateToSharedNotebook(
 }
 
 void NoteStore::onGetNoteAsyncFinished(
-    const QVariant & result, const std::exception_ptr & e,
+    const qevercloud::Note & result, const std::exception_ptr & e,
     const IRequestContextPtr & ctx)
 {
     QNDEBUG("synchronization:note_store", "NoteStore::onGetNoteAsyncFinished");
@@ -1004,7 +1005,7 @@ void NoteStore::onGetNoteAsyncFinished(
         return;
     }
 
-    note = result.value<qevercloud::Note>();
+    note = result;
     Q_EMIT getNoteAsyncFinished(
         errorCode, note, rateLimitSeconds, errorDescription);
 
@@ -1012,7 +1013,7 @@ void NoteStore::onGetNoteAsyncFinished(
 }
 
 void NoteStore::onGetResourceAsyncFinished(
-    const QVariant & result, const std::exception_ptr & e,
+    const qevercloud::Resource & result, const std::exception_ptr & e,
     const IRequestContextPtr & ctx)
 {
     QNDEBUG(
@@ -1068,7 +1069,7 @@ void NoteStore::onGetResourceAsyncFinished(
         return;
     }
 
-    resource = result.value<qevercloud::Resource>();
+    resource = result;
     Q_EMIT getResourceAsyncFinished(
         errorCode, resource, rateLimitSeconds, errorDescription);
 }

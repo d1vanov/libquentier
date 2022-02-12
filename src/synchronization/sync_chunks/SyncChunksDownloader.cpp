@@ -68,17 +68,9 @@ namespace {
     auto thenFuture = threading::then(
         noteStore.getFilteredSyncChunkAsync(
             afterUsn, maxEntries, filter, std::move(ctx)),
-        [promise](QVariant value) mutable // NOLINT
+        [promise](qevercloud::SyncChunk syncChunk) mutable // NOLINT
         {
-            if (value.canConvert<qevercloud::SyncChunk>()) {
-                promise->addResult(value.value<qevercloud::SyncChunk>());
-            }
-            else {
-                promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                    "synchronization::SyncChunksDownloader",
-                    "Failed to convert QVariant to SyncChunk on async "
-                    "downloading of user own sync chunk")}});
-            }
+            promise->addResult(std::move(syncChunk));
             promise->finish();
         });
 
@@ -109,17 +101,9 @@ namespace {
         noteStore.getLinkedNotebookSyncChunkAsync(
             linkedNotebook, afterUsn, maxEntries,
             (synchronizationMode == SynchronizationMode::Full), std::move(ctx)),
-        [promise = std::move(promise)](QVariant value) mutable // NOLINT
+        [promise = std::move(promise)](qevercloud::SyncChunk syncChunk) mutable // NOLINT
         {
-            if (value.canConvert<qevercloud::SyncChunk>()) {
-                promise->addResult(value.value<qevercloud::SyncChunk>());
-            }
-            else {
-                promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-                    "synchronization::SyncChunksDownloader",
-                    "Failed to convert QVariant to SyncChunk on async "
-                    "downloading of linked notebook sync chunks")}});
-            }
+            promise->addResult(std::move(syncChunk));
             promise->finish();
         });
 
@@ -132,7 +116,6 @@ namespace {
 
     return future;
 }
-
 
 using SingleSyncChunkDownloader = std::function<QFuture<qevercloud::SyncChunk>(
     qint32, SynchronizationMode, qevercloud::INoteStore &,
