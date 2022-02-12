@@ -162,7 +162,9 @@ protected:
     void TearDown() override
     {
         QDir dir{m_temporaryDir.path()};
-        const auto entries = dir.entryInfoList(QDir::NoDotAndDotDot);
+        const auto entries =
+            dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+
         for (const auto & entry: qAsConst(entries)) {
             if (entry.isDir()) {
                 ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
@@ -430,6 +432,101 @@ TEST_F(SyncChunksStorageTest, PutAndFetchLinkedNotebookSyncChunks)
 
             EXPECT_EQ(fetchedUsnsRange, it.value());
         }
+    }
+}
+
+TEST_F(
+    SyncChunksStorageTest,
+    ProtectFromPuttingUserOwnSyncChunksWithInconsistentUsnsOrder)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+
+    auto storage = std::make_shared<SyncChunksStorage>(
+        temporaryDir, QThreadPool::globalInstance());
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+
+    QList<std::pair<qint32, qint32>> usnsRange;
+    usnsRange.reserve(syncChunkCount);
+
+    for (int i = 0; i < syncChunkCount; ++i) {
+        const qint32 lowUsn = i * 18;
+        const qint32 highUsn = (i + 1) * 18 - 1;
+        usnsRange << std::make_pair(lowUsn, highUsn);
+        syncChunks << generateSyncChunk(lowUsn, highUsn);
+    }
+
+    storage->putUserOwnSyncChunks(syncChunks);
+
+    const auto newPutSyncChunks = QList<qevercloud::SyncChunk>{}
+        << syncChunks[2];
+
+    storage->putUserOwnSyncChunks(newPutSyncChunks);
+
+    const auto fetchedSyncChunks = storage->fetchRelevantUserOwnSyncChunks(0);
+    EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+
+    const auto fetchedUsnsRange =
+        storage->fetchUserOwnSyncChunksLowAndHighUsns();
+
+    EXPECT_TRUE(fetchedUsnsRange.isEmpty());
+}
+
+TEST_F(
+    SyncChunksStorageTest,
+    ProtectFromPuttingLinkedNotebookSyncChunksWithInconsistentUsnsOrder)
+{
+    QDir temporaryDir{m_temporaryDir.path()};
+
+    auto storage = std::make_shared<SyncChunksStorage>(
+        temporaryDir, QThreadPool::globalInstance());
+
+    constexpr int linkedNotebookCount = 3;
+    QList<qevercloud::Guid> linkedNotebookGuids;
+    linkedNotebookGuids.reserve(linkedNotebookCount);
+    for (int i = 0; i < linkedNotebookCount; ++i) {
+        linkedNotebookGuids << UidGenerator::Generate();
+    }
+
+    constexpr int syncChunkCount = 3;
+    QList<qevercloud::SyncChunk> syncChunks;
+    syncChunks.reserve(syncChunkCount);
+
+    QList<std::pair<qint32, qint32>> usnsRange;
+    usnsRange.reserve(syncChunkCount);
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        syncChunks.clear();
+        usnsRange.clear();
+        for (int i = 0; i < syncChunkCount; ++i) {
+            const qint32 lowUsn = i * 18;
+            const qint32 highUsn = (i + 1) * 18 - 1;
+            usnsRange << std::make_pair(lowUsn, highUsn);
+            syncChunks << generateSyncChunk(lowUsn, highUsn);
+        }
+        storage->putLinkedNotebookSyncChunks(linkedNotebookGuid, syncChunks);
+    }
+
+    for (const auto & linkedNotebookGuid: qAsConst(linkedNotebookGuids)) {
+        const auto newPutSyncChunks = QList<qevercloud::SyncChunk>{}
+            << generateSyncChunk(36, 53);
+
+        storage->putLinkedNotebookSyncChunks(
+            linkedNotebookGuid, newPutSyncChunks);
+
+        const auto fetchedSyncChunks =
+            storage->fetchRelevantLinkedNotebookSyncChunks(
+                linkedNotebookGuid, 0);
+
+        EXPECT_TRUE(fetchedSyncChunks.isEmpty());
+
+        const auto fetchedUsnsRange =
+            storage->fetchLinkedNotebookSyncChunksLowAndHighUsns(
+                linkedNotebookGuid);
+
+        EXPECT_TRUE(fetchedUsnsRange.isEmpty());
     }
 }
 

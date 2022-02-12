@@ -434,6 +434,22 @@ void SyncChunksStorage::putUserOwnSyncChunks(
 
     auto usns = putSyncChunks(m_userOwnSyncChunksDir, syncChunks);
 
+    if (!userOwnSyncChunkLowAndHighUsns.isEmpty()) {
+        const auto & lastExistingUsnRange =
+            userOwnSyncChunkLowAndHighUsns.constLast();
+
+        for (const auto & usnRange: qAsConst(usns)) {
+            if (usnRange.first <= lastExistingUsnRange.second) {
+                // At least one of new sync chunks put to the storage has
+                // USN range which is interleaving with existing stored sync
+                // chunks; the storage doesn't allow that, hence will clear
+                // all stored user's own sync chunks
+                clearUserOwnSyncChunks();
+                return;
+            }
+        }
+    }
+
     userOwnSyncChunkLowAndHighUsns << usns;
     std::sort(
         userOwnSyncChunkLowAndHighUsns.begin(),
@@ -476,6 +492,22 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
 
     auto & lowAndHighUsnsData =
         linkedNotebookSyncChunkLowAndHighUsns[linkedNotebookGuid];
+
+    if (!lowAndHighUsnsData.isEmpty()) {
+        const auto & lastExistingUsnRange =
+            lowAndHighUsnsData.constLast();
+
+        for (const auto & usnRange: qAsConst(usns)) {
+            if (usnRange.first <= lastExistingUsnRange.second) {
+                // At least one of new sync chunks put to the storage has
+                // USN range which is interleaving with existing stored sync
+                // chunks; the storage doesn't allow that, hence will clear
+                // all stored sync chunks for this linked notebook
+                clearLinkedNotebookSyncChunks(linkedNotebookGuid);
+                return;
+            }
+        }
+    }
 
     lowAndHighUsnsData << usns;
     std::sort(lowAndHighUsnsData.begin(), lowAndHighUsnsData.end());
