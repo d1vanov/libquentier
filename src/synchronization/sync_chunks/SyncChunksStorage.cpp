@@ -429,10 +429,10 @@ QList<qevercloud::SyncChunk>
 void SyncChunksStorage::putUserOwnSyncChunks(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
-    auto usns = putSyncChunks(m_userOwnSyncChunksDir, syncChunks);
-
     auto & userOwnSyncChunkLowAndHighUsns =
         m_lowAndHighUsnsDataAccessor.data().m_userOwnSyncChunkLowAndHighUsns;
+
+    auto usns = putSyncChunks(m_userOwnSyncChunksDir, syncChunks);
 
     userOwnSyncChunkLowAndHighUsns << usns;
     std::sort(
@@ -465,14 +465,14 @@ void SyncChunksStorage::putLinkedNotebookSyncChunks(
         return;
     }
 
+    auto & linkedNotebookSyncChunkLowAndHighUsns =
+        m_lowAndHighUsnsDataAccessor.data()
+            .m_linkedNotebookSyncChunkLowAndHighUsns;
+
     auto usns = putSyncChunks(linkedNotebookDir, syncChunks);
     if (Q_UNLIKELY(usns.isEmpty())) {
         return;
     }
-
-    auto & linkedNotebookSyncChunkLowAndHighUsns =
-        m_lowAndHighUsnsDataAccessor.data()
-            .m_linkedNotebookSyncChunkLowAndHighUsns;
 
     auto & lowAndHighUsnsData =
         linkedNotebookSyncChunkLowAndHighUsns[linkedNotebookGuid];
