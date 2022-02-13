@@ -19,11 +19,14 @@
 #pragma once
 
 #include <qevercloud/Fwd.h>
+#include <qevercloud/exceptions/EverCloudException.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/SyncChunk.h>
 
 #include <QFuture>
 #include <QList>
+
+#include <memory>
 
 namespace quentier::synchronization {
 
@@ -32,11 +35,16 @@ class ISyncChunksDownloader
 public:
     virtual ~ISyncChunksDownloader() = default;
 
-    [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
-        downloadSyncChunks(
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx) = 0;
+    struct SyncChunksResult
+    {
+        QList<qevercloud::SyncChunk> m_syncChunks;
+        std::shared_ptr<qevercloud::EverCloudException> m_exception;
+    };
 
-    [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
+    [[nodiscard]] virtual QFuture<SyncChunksResult> downloadSyncChunks(
+        qint32 afterUsn, qevercloud::IRequestContextPtr ctx) = 0;
+
+    [[nodiscard]] virtual QFuture<SyncChunksResult>
         downloadLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
             qevercloud::IRequestContextPtr ctx) = 0;

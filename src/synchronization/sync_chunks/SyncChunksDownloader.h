@@ -33,13 +33,12 @@ public:
         SynchronizationMode synchronizationMode,
         qevercloud::INoteStorePtr noteStore);
 
-    [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>> downloadSyncChunks(
+    [[nodiscard]] QFuture<SyncChunksResult> downloadSyncChunks(
         qint32 afterUsn, qevercloud::IRequestContextPtr ctx) override;
 
-    [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>>
-        downloadLinkedNotebookSyncChunks(
-            qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-            qevercloud::IRequestContextPtr ctx) override;
+    [[nodiscard]] QFuture<SyncChunksResult> downloadLinkedNotebookSyncChunks(
+        qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
+        qevercloud::IRequestContextPtr ctx) override;
 
 private:
     const SynchronizationMode m_synchronizationMode;
