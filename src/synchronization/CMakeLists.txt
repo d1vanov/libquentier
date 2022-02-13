@@ -27,6 +27,8 @@ target_sources(${LIBRARY_NAME}
   sync_chunks/ISyncChunksDownloader.h
   sync_chunks/ISyncChunksProvider.h
   sync_chunks/ISyncChunksStorage.h
+  sync_chunks/SyncChunksDownloader.cpp
+  sync_chunks/SyncChunksDownloader.h
   sync_chunks/SyncChunksProvider.cpp
   sync_chunks/SyncChunksProvider.h
   sync_chunks/SyncChunksStorage.cpp
