@@ -4,3 +4,4 @@
 #include "MockISimpleTagSyncConflictResolver.h"
 #include "MockISyncChunksDownloader.h"
 #include "MockISyncChunksStorage.h"
+#include "qevercloud/services/MockINoteStore.h"

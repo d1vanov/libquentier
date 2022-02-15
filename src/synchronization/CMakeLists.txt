@@ -7,6 +7,7 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
+  SynchronizationMode.h
   conflict_resolvers/Factory.cpp
   conflict_resolvers/Factory.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h
