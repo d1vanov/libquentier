@@ -29,7 +29,7 @@ namespace quentier {
 
 UserStore::UserStore(QString evernoteHost)
 {
-    m_pUserStore.reset(qevercloud::newUserStore(std::move(evernoteHost)));
+    m_pUserStore = qevercloud::newUserStore(std::move(evernoteHost));
 }
 
 void UserStore::setAuthData(
