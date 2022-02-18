@@ -11,6 +11,7 @@ add_executable(${TESTS_NAME}
   SimpleSavedSearchSyncConflictResolverTest.cpp
   SimpleSyncConflictResolverTest.cpp
   SimpleTagSyncConflictResolverTest.cpp
+  SyncChunksDownloaderTest.cpp
   SyncChunksProviderTest.cpp
   SyncChunksStorageTest.cpp)
 
