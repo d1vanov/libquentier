@@ -23,6 +23,7 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
+#include <qevercloud/types/builders/LinkedNotebookBuilder.h>
 #include <qevercloud/types/builders/NotebookBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 #include <qevercloud/types/builders/SyncChunkFilterBuilder.h>
@@ -218,7 +219,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     SyncChunksDownloader downloader{testData.m_syncMode, m_mockNoteStore};
 
     const QString authToken = QStringLiteral("token");
-    auto ctx = qevercloud::newRequestContext(authToken);
+    const auto ctx = qevercloud::newRequestContext(authToken);
 
     constexpr qint32 afterUsnInitial = 0;
     constexpr qint32 maxEntries = 50;
@@ -251,6 +252,117 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
 
     const auto syncChunksFuture =
         downloader.downloadSyncChunks(afterUsnInitial, ctx);
+
+    ASSERT_TRUE(syncChunksFuture.isFinished())
+        << testData.m_testName.toStdString();
+
+    ASSERT_EQ(syncChunksFuture.resultCount(), 1)
+        << testData.m_testName.toStdString();
+
+    const auto syncChunksResult = syncChunksFuture.result();
+    ASSERT_EQ(syncChunksResult.m_exception, nullptr)
+        << testData.m_testName.toStdString();
+
+    ASSERT_EQ(syncChunksResult.m_syncChunks, testData.m_syncChunks)
+        << testData.m_testName.toStdString();
+}
+
+struct LinkedNotebookSyncChunksTestData
+{
+    QString m_testName;
+    SynchronizationMode m_syncMode = SynchronizationMode::Full;
+    QList<qevercloud::SyncChunk> m_syncChunks;
+};
+
+class SyncChunksDownloaderLinkedNotebookSyncChunksTest :
+    public SyncChunksDownloaderTest,
+    public testing::WithParamInterface<LinkedNotebookSyncChunksTestData>
+{};
+
+std::array gLinkedNotebookSyncChunksTestData{
+    LinkedNotebookSyncChunksTestData{
+        QStringLiteral("Single linked notebook sync chunk with full sync"),
+        SynchronizationMode::Full,
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1,
+    },
+    LinkedNotebookSyncChunksTestData{
+        QStringLiteral(
+            "Single linked notebook sync chunk with incremental sync"),
+        SynchronizationMode::Incremental,
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1,
+    },
+    LinkedNotebookSyncChunksTestData{
+        QStringLiteral("Multiple linked notebook sync chunks with full sync"),
+        SynchronizationMode::Full,
+        adjustSyncChunksUpdateCounts(
+            QList<qevercloud::SyncChunk>{}
+            << sampleSyncChunk1 << sampleSyncChunk2 << sampleSyncChunk3),
+    },
+    LinkedNotebookSyncChunksTestData{
+        QStringLiteral(
+            "Multiple linked notebook sync chunks with incremental sync"),
+        SynchronizationMode::Incremental,
+        adjustSyncChunksUpdateCounts(
+            QList<qevercloud::SyncChunk>{}
+            << sampleSyncChunk1 << sampleSyncChunk2 << sampleSyncChunk3),
+    },
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    SyncChunksDownloaderLinkedNotebookSyncChunksTestInstance,
+    SyncChunksDownloaderLinkedNotebookSyncChunksTest,
+    testing::ValuesIn(gLinkedNotebookSyncChunksTestData));
+
+TEST_P(
+    SyncChunksDownloaderLinkedNotebookSyncChunksTest,
+    DownloadLinkedNotebookSyncChunks)
+{
+    const auto & testData = GetParam();
+
+    SyncChunksDownloader downloader{testData.m_syncMode, m_mockNoteStore};
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(UidGenerator::Generate())
+                                    .build();
+
+    constexpr qint32 afterUsnInitial = 0;
+    constexpr qint32 maxEntries = 50;
+    qint32 afterUsn = afterUsnInitial;
+
+    InSequence s;
+
+    std::optional<qint32> previousChunkHighUsn;
+    for (const auto & syncChunk: qAsConst(testData.m_syncChunks)) {
+        if (previousChunkHighUsn) {
+            afterUsn = *previousChunkHighUsn;
+        }
+
+        EXPECT_CALL(*m_mockNoteStore, getLinkedNotebookSyncChunkAsync)
+            .WillOnce(
+                [&, afterUsnCurrent = afterUsn](
+                    const qevercloud::LinkedNotebook & linkedNotebookParam,
+                    const qint32 afterUsnParam, const qint32 maxEntriesParam,
+                    const bool fullSyncOnly,
+                    const qevercloud::IRequestContextPtr & ctxParam) {
+                    EXPECT_EQ(linkedNotebookParam, linkedNotebook);
+                    EXPECT_EQ(afterUsnParam, afterUsnCurrent);
+                    EXPECT_EQ(maxEntriesParam, maxEntries);
+                    EXPECT_EQ(
+                        fullSyncOnly,
+                        (testData.m_syncMode == SynchronizationMode::Full));
+                    EXPECT_EQ(ctxParam, ctx);
+                    return threading::makeReadyFuture(syncChunk);
+                });
+
+        ASSERT_TRUE(syncChunk.chunkHighUSN());
+        previousChunkHighUsn = *syncChunk.chunkHighUSN();
+    }
+
+    const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
+        linkedNotebook, afterUsnInitial, ctx);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
