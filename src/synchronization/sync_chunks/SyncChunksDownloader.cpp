@@ -158,19 +158,10 @@ void downloadSyncChunksList(
     threading::onFailed(
         std::move(thenFuture),
         [promise, runningResult](const QException & e) mutable {
-            const auto * everCloudException =
-                dynamic_cast<const qevercloud::EverCloudException *>(&e);
-
-            if (Q_UNLIKELY(!everCloudException)) {
-                promise->setException(e);
-                promise->finish();
-                return;
-            }
-
             promise->addResult(ISyncChunksDownloader::SyncChunksResult{
                 std::move(runningResult),
-                std::shared_ptr<qevercloud::EverCloudException>(
-                    everCloudException->clone())});
+                std::shared_ptr<QException>(
+                    e.clone())});
 
             promise->finish();
         });
@@ -185,9 +176,12 @@ void processSingleDownloadedSyncChunk(
     qevercloud::SyncChunk syncChunk) // NOLINT
 {
     if (Q_UNLIKELY(!syncChunk.chunkHighUSN())) {
-        promise->setException(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+        promise->addResult(ISyncChunksDownloader::SyncChunksResult{
+            std::move(runningResult),
+            std::make_shared<RuntimeError>(ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::SyncChunksDownloader",
-            "Got sync chunk without chunkHighUSN")}});
+            "Got sync chunk without chunkHighUSN")})});
+
         promise->finish();
         return;
     }

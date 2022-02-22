@@ -19,7 +19,6 @@
 #pragma once
 
 #include <qevercloud/Fwd.h>
-#include <qevercloud/exceptions/EverCloudException.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/SyncChunk.h>
 
@@ -27,6 +26,8 @@
 #include <QList>
 
 #include <memory>
+
+class QException;
 
 namespace quentier::synchronization {
 
@@ -38,7 +39,7 @@ public:
     struct SyncChunksResult
     {
         QList<qevercloud::SyncChunk> m_syncChunks;
-        std::shared_ptr<qevercloud::EverCloudException> m_exception;
+        std::shared_ptr<QException> m_exception;
     };
 
     [[nodiscard]] virtual QFuture<SyncChunksResult> downloadSyncChunks(
