@@ -99,7 +99,7 @@ namespace {
         noteStore.getLinkedNotebookSyncChunkAsync(
             linkedNotebook, afterUsn, maxEntries,
             (synchronizationMode == SynchronizationMode::Full), std::move(ctx)),
-        [promise = std::move(promise)](
+        [promise](
             qevercloud::SyncChunk syncChunk) mutable // NOLINT
         {
             promise->addResult(std::move(syncChunk));
