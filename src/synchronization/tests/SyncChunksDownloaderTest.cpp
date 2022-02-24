@@ -531,4 +531,167 @@ TEST_F(
     EXPECT_EQ(syncChunksResult.m_syncChunks, partialSyncChunks);
 }
 
+TEST_F(
+    SyncChunksDownloaderTest,
+    ReturnPartialLinkedNotebookSyncChunksIfEverCloudExceptionOccursInTheProcess)
+{
+    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(UidGenerator::Generate())
+                                    .build();
+
+    constexpr qint32 afterUsnInitial = 0;
+    constexpr qint32 maxEntries = 50;
+    qint32 afterUsn = afterUsnInitial;
+
+    qevercloud::EDAMSystemExceptionRateLimitReached e;
+    e.setRateLimitDuration(30000);
+
+    InSequence s;
+
+    const auto syncChunks = adjustSyncChunksUpdateCounts(
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
+                                       << sampleSyncChunk3);
+
+    std::optional<qint32> previousChunkHighUsn;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (previousChunkHighUsn) {
+            afterUsn = *previousChunkHighUsn;
+        }
+
+        EXPECT_CALL(*m_mockNoteStore, getLinkedNotebookSyncChunkAsync)
+            .WillOnce(
+                [&, afterUsnCurrent = afterUsn](
+                    const qevercloud::LinkedNotebook & linkedNotebookParam,
+                    const qint32 afterUsnParam, const qint32 maxEntriesParam,
+                    const bool fullSyncOnly,
+                    const qevercloud::IRequestContextPtr & ctxParam) {
+                    EXPECT_EQ(linkedNotebookParam, linkedNotebook);
+                    EXPECT_EQ(afterUsnParam, afterUsnCurrent);
+                    EXPECT_EQ(maxEntriesParam, maxEntries);
+                    EXPECT_TRUE(fullSyncOnly);
+                    EXPECT_EQ(ctxParam, ctx);
+
+                    if (afterUsnParam == sampleSyncChunk2.updateCount()) {
+                        return threading::makeExceptionalFuture<
+                            qevercloud::SyncChunk>(e);
+                    }
+
+                    return threading::makeReadyFuture(syncChunk);
+                });
+
+        ASSERT_TRUE(syncChunk.chunkHighUSN());
+        previousChunkHighUsn = *syncChunk.chunkHighUSN();
+    }
+
+    const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
+        linkedNotebook, afterUsnInitial, ctx);
+
+    ASSERT_TRUE(syncChunksFuture.isFinished());
+    ASSERT_EQ(syncChunksFuture.resultCount(), 1);
+
+    const auto syncChunksResult = syncChunksFuture.result();
+
+    const auto * exc =
+        dynamic_cast<const qevercloud::EDAMSystemExceptionRateLimitReached *>(
+            syncChunksResult.m_exception.get());
+
+    ASSERT_TRUE(exc);
+    EXPECT_EQ(exc->rateLimitDuration(), e.rateLimitDuration());
+
+    const auto partialSyncChunks = [&]
+    {
+        auto chunks = syncChunks;
+        Q_UNUSED(chunks.takeLast());
+        return chunks;
+    }();
+
+    EXPECT_EQ(syncChunksResult.m_syncChunks, partialSyncChunks);
+}
+
+TEST_F(
+    SyncChunksDownloaderTest,
+    ReturnPartialLinkedNotebookSyncChunksIfNonEverCloudExceptionOccursInTheProcess)
+{
+    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(UidGenerator::Generate())
+                                    .build();
+
+    constexpr qint32 afterUsnInitial = 0;
+    constexpr qint32 maxEntries = 50;
+    qint32 afterUsn = afterUsnInitial;
+
+    const RuntimeError e{ErrorString{QStringLiteral("Error")}};
+
+    InSequence s;
+
+    const auto syncChunks = adjustSyncChunksUpdateCounts(
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
+                                       << sampleSyncChunk3);
+
+    std::optional<qint32> previousChunkHighUsn;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (previousChunkHighUsn) {
+            afterUsn = *previousChunkHighUsn;
+        }
+
+        EXPECT_CALL(*m_mockNoteStore, getLinkedNotebookSyncChunkAsync)
+            .WillOnce(
+                [&, afterUsnCurrent = afterUsn](
+                    const qevercloud::LinkedNotebook & linkedNotebookParam,
+                    const qint32 afterUsnParam, const qint32 maxEntriesParam,
+                    const bool fullSyncOnly,
+                    const qevercloud::IRequestContextPtr & ctxParam) {
+                    EXPECT_EQ(linkedNotebookParam, linkedNotebook);
+                    EXPECT_EQ(afterUsnParam, afterUsnCurrent);
+                    EXPECT_EQ(maxEntriesParam, maxEntries);
+                    EXPECT_TRUE(fullSyncOnly);
+                    EXPECT_EQ(ctxParam, ctx);
+
+                    if (afterUsnParam == sampleSyncChunk2.updateCount()) {
+                        return threading::makeExceptionalFuture<
+                            qevercloud::SyncChunk>(e);
+                    }
+
+                    return threading::makeReadyFuture(syncChunk);
+                });
+
+        ASSERT_TRUE(syncChunk.chunkHighUSN());
+        previousChunkHighUsn = *syncChunk.chunkHighUSN();
+    }
+
+    const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
+        linkedNotebook, afterUsnInitial, ctx);
+
+    ASSERT_TRUE(syncChunksFuture.isFinished());
+    ASSERT_EQ(syncChunksFuture.resultCount(), 1);
+
+    const auto syncChunksResult = syncChunksFuture.result();
+
+    const auto * exc =
+        dynamic_cast<const RuntimeError *>(
+            syncChunksResult.m_exception.get());
+
+    ASSERT_TRUE(exc);
+    EXPECT_EQ(exc->nonLocalizedErrorMessage(), e.nonLocalizedErrorMessage());
+
+    const auto partialSyncChunks = [&]
+    {
+        auto chunks = syncChunks;
+        Q_UNUSED(chunks.takeLast());
+        return chunks;
+    }();
+
+    EXPECT_EQ(syncChunksResult.m_syncChunks, partialSyncChunks);
+}
+
 } // namespace quentier::synchronization::tests
