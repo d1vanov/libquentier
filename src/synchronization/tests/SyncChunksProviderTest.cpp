@@ -302,8 +302,7 @@ TEST_F(
     EXPECT_CALL(*m_mockSyncChunksDownloader, downloadSyncChunks(0, _))
         .WillOnce(Return(
             threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{
-                    QList{syncChunks}, nullptr})));
+                ISyncChunksDownloader::SyncChunksResult{syncChunks, nullptr})));
 
     auto future = provider.fetchSyncChunks(0, qevercloud::newRequestContext());
     ASSERT_TRUE(future.isFinished());
@@ -468,7 +467,7 @@ TEST_F(
         .WillOnce(Return(
             threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
                 ISyncChunksDownloader::SyncChunksResult{
-                    QList{syncChunks},
+                    syncChunks,
                     std::make_shared<qevercloud::EverCloudException>(
                         QStringLiteral("something"))})));
 
@@ -842,8 +841,7 @@ TEST_F(
         downloadLinkedNotebookSyncChunks(linkedNotebook, 0, _))
         .WillOnce(Return(
             threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
-                ISyncChunksDownloader::SyncChunksResult{
-                    QList{syncChunks}, nullptr})));
+                ISyncChunksDownloader::SyncChunksResult{syncChunks, nullptr})));
 
     auto future = provider.fetchLinkedNotebookSyncChunks(
         linkedNotebook, 0, qevercloud::newRequestContext());
@@ -1034,7 +1032,7 @@ TEST_F(
         .WillOnce(Return(
             threading::makeReadyFuture<ISyncChunksDownloader::SyncChunksResult>(
                 ISyncChunksDownloader::SyncChunksResult{
-                    QList{syncChunks},
+                    syncChunks,
                     std::make_shared<qevercloud::EverCloudException>(
                         QStringLiteral("something"))})));
 
