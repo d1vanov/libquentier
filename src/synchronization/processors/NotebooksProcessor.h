@@ -23,11 +23,20 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
 #include <optional>
 
 namespace quentier::synchronization {
 
-class NotebooksProcessor final : public INotebooksProcessor
+class NotebooksProcessor final :
+    public INotebooksProcessor,
+    public std::enable_shared_from_this<NotebooksProcessor>
 {
 public:
     explicit NotebooksProcessor(
@@ -36,6 +45,12 @@ public:
 
     [[nodiscard]] QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
+
+private:
+    void onFoundDuplicateByGuid(
+        std::shared_ptr<QPromise<void>> notebookPromise,
+        qevercloud::Notebook updatedNotebook,
+        qevercloud::Notebook localNotebook);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

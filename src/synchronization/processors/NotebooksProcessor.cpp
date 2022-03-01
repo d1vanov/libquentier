@@ -20,13 +20,9 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
+#include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QPromise>
-#else
-#include <quentier/threading/Qt5Promise.h>
-#endif
+#include <quentier/threading/QtFutureContinuations.h>
 
 namespace quentier::synchronization {
 
@@ -54,12 +50,170 @@ NotebooksProcessor::NotebooksProcessor(
 QFuture<void> NotebooksProcessor::processNotebooks(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
+    QNDEBUG(
+        "synchronization::NotebooksProcessor",
+        "NotebooksProcessor::processNotebooks");
+
     auto promise = std::make_shared<QPromise<void>>();
     auto future = promise->future();
 
-    // TODO: implement
+    promise->start();
+
+    QList<qevercloud::Notebook> notebooks;
+    QList<qevercloud::Guid> expungedNotebooks;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        if (syncChunk.notebooks() && !syncChunk.notebooks()->isEmpty()) {
+            for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+                if (Q_UNLIKELY(!notebook.guid())) {
+                    QNWARNING(
+                        "synchronization::NotebooksProcessor",
+                        "Detected notebook without guid, skipping it: "
+                            << notebook);
+                    continue;
+                }
+
+                if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
+                    QNWARNING(
+                        "synchronization::NotebooksProcessor",
+                        "Detected notebook without update sequence number, "
+                            << "skipping it: " << notebook);
+                    continue;
+                }
+
+                notebooks << notebook;
+            }
+        }
+
+        if (syncChunk.expungedNotebooks() &&
+            !syncChunk.expungedNotebooks()->isEmpty()) {
+            expungedNotebooks << *syncChunk.expungedNotebooks();
+        }
+    }
+
+    if (notebooks.isEmpty() && expungedNotebooks.isEmpty()) {
+        QNDEBUG(
+            "synchronization::NotebooksProcessor",
+            "No new/updated/expunged notebooks in the sync chunks");
+
+        promise->finish();
+        return future;
+    }
+
+    const auto selfWeak = weak_from_this();
+    QList<QFuture<void>> notebookFutures;
+
+    for (const auto & notebook: qAsConst(notebooks)) {
+        auto notebookPromise = std::make_shared<QPromise<void>>();
+        notebookFutures << notebookPromise->future();
+        notebookPromise->start();
+
+        auto findNotebookByGuidFuture = m_localStorage->findNotebookByGuid(
+            *notebook.guid());
+
+        auto thenFuture = threading::then(
+            std::move(findNotebookByGuidFuture),
+            [this, selfWeak, updatedNotebook = notebook, notebookPromise](
+                const std::optional<qevercloud::Notebook> & notebook) mutable
+            {
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                if (notebook)
+                {
+                    onFoundDuplicateByGuid(
+                        std::move(notebookPromise), std::move(updatedNotebook),
+                        *notebook);
+                    return;
+                }
+
+                // TODO: continue from here
+            });
+
+        threading::onFailed(
+            std::move(thenFuture),
+            [notebookPromise = std::move(notebookPromise)](const QException & e)
+            {
+                notebookPromise->setException(e);
+                notebookPromise->finish();
+            });
+    }
+
+    // TODO: implement further
 
     return future;
+}
+
+void NotebooksProcessor::onFoundDuplicateByGuid(
+    std::shared_ptr<QPromise<void>> notebookPromise,
+    qevercloud::Notebook updatedNotebook, qevercloud::Notebook localNotebook)
+{
+    using ConflictResolution = ISyncConflictResolver::ConflictResolution;
+    using NotebookConflictResolution =
+        ISyncConflictResolver::NotebookConflictResolution;
+
+    auto statusFuture =
+        m_syncConflictResolver->resolveNotebookConflict(
+            updatedNotebook,
+            std::move(localNotebook));
+
+    const auto selfWeak = weak_from_this();
+
+    auto thenFuture = threading::then(
+        std::move(statusFuture),
+        [this, selfWeak, notebookPromise,
+         updatedNotebook = std::move(updatedNotebook)](
+            const NotebookConflictResolution & resolution) mutable
+        {
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                    resolution) ||
+                std::holds_alternative<ConflictResolution::IgnoreMine>(
+                    resolution))
+            {
+                auto putNotebookFuture =
+                    m_localStorage->putNotebook(std::move(updatedNotebook));
+
+                auto thenFuture = threading::then(
+                    std::move(putNotebookFuture),
+                    [notebookPromise]() mutable { notebookPromise->finish(); });
+
+                threading::onFailed(
+                    std::move(thenFuture),
+                    [notebookPromise](const QException & e) {
+                        notebookPromise->setException(e);
+                        notebookPromise->finish();
+                    });
+
+                return;
+            }
+
+            if (std::holds_alternative<ConflictResolution::UseMine>(resolution))
+            {
+                notebookPromise->finish();
+                return;
+            }
+
+            if (std::holds_alternative<
+                    ConflictResolution::MoveMine<qevercloud::Notebook>>(
+                    resolution))
+            {
+                // TODO: implement
+            }
+        });
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [notebookPromise = std::move(notebookPromise)](const QException & e)
+        {
+            notebookPromise->setException(e);
+            notebookPromise->finish();
+        });
 }
 
 } // namespace quentier::synchronization
