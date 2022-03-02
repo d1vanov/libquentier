@@ -64,21 +64,16 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     return future.then(context, std::forward<decltype(function)>(function));
 }
 
-template <
-    class T, class Function,
-    typename =
-        std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs>>
-QFuture<T> onFailed(QFuture<T> && future, Function && handler)
+template <class T, class Function>
+std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
+    onFailed(QFuture<T> && future, Function && handler)
 {
     return future.onFailed(std::forward<decltype(handler)>(handler));
 }
 
-template <
-    class T, class Function,
-    typename =
-        std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs>>
-QFuture<T> onFailed(
-    QFuture<T> && future, QObject * context, Function && handler)
+template <class T, class Function>
+std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
+    onFailed(QFuture<T> && future, QObject * context, Function && handler)
 {
     return future.onFailed(context, std::forward<decltype(handler)>(handler));
 }
@@ -291,12 +286,10 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
 
 namespace detail {
 
-template <
-    class T, class Function,
-    typename =
-        std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs>>
-void processPossibleFutureException(
-    QPromise<T> && promise, QFuture<T> && future, Function && handler)
+template <class T, class Function>
+std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, void>
+    processPossibleFutureException(
+        QPromise<T> && promise, QFuture<T> && future, Function && handler)
 {
     using ArgType = typename QtPrivate::ArgResolver<Function>::First;
     using ResultType =
@@ -366,11 +359,9 @@ void processPossibleFutureException(
 // storage is implemented in Qt5. In Qt6 is was made to store std::exception_ptr
 // so there's no requirement to use QExceptions in Qt6.
 
-template <
-    class T, class Function,
-    typename =
-        std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs>>
-QFuture<T> onFailed(QFuture<T> && future, Function && handler)
+template <class T, class Function>
+std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
+    onFailed(QFuture<T> && future, Function && handler)
 {
     QPromise<T> promise;
     auto result = promise.future();
@@ -398,12 +389,9 @@ QFuture<T> onFailed(QFuture<T> && future, Function && handler)
     return result;
 }
 
-template <
-    class T, class Function,
-    typename =
-        std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs>>
-QFuture<T> onFailed(
-    QFuture<T> && future, QObject * context, Function && handler)
+template <class T, class Function>
+std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
+    onFailed(QFuture<T> && future, QObject * context, Function && handler)
 {
     QPromise<T> promise;
     auto result = promise.future();
