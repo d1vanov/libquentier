@@ -33,17 +33,15 @@ NotebooksProcessor::NotebooksProcessor(
     m_syncConflictResolver{std::move(syncConflictResolver)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "synchronization::NotebooksProcessor",
-                "NotebooksProcessor ctor: local storage is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::NotebooksProcessor",
+            "NotebooksProcessor ctor: local storage is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncConflictResolver)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "synchronization::NotebooksProcessor",
-                "NotebooksProcessor ctor: sync conflict resolver is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::NotebooksProcessor",
+            "NotebooksProcessor ctor: sync conflict resolver is null")}};
     }
 }
 
@@ -107,36 +105,25 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         notebookFutures << notebookPromise->future();
         notebookPromise->start();
 
-        auto findNotebookByGuidFuture = m_localStorage->findNotebookByGuid(
-            *notebook.guid());
+        auto findNotebookByGuidFuture =
+            m_localStorage->findNotebookByGuid(*notebook.guid());
 
-        auto thenFuture = threading::then(
-            std::move(findNotebookByGuidFuture),
+        threading::thenOrFailed(
+            std::move(findNotebookByGuidFuture), notebookPromise,
             [this, selfWeak, updatedNotebook = notebook, notebookPromise](
-                const std::optional<qevercloud::Notebook> & notebook) mutable
-            {
+                const std::optional<qevercloud::Notebook> & notebook) mutable {
                 const auto self = selfWeak.lock();
                 if (!self) {
                     return;
                 }
 
-                if (notebook)
-                {
+                if (notebook) {
                     onFoundDuplicateByGuid(
-                        std::move(notebookPromise), std::move(updatedNotebook),
-                        *notebook);
+                        notebookPromise, std::move(updatedNotebook), *notebook);
                     return;
                 }
 
                 // TODO: continue from here
-            });
-
-        threading::onFailed(
-            std::move(thenFuture),
-            [notebookPromise = std::move(notebookPromise)](const QException & e)
-            {
-                notebookPromise->setException(e);
-                notebookPromise->finish();
             });
     }
 
@@ -146,26 +133,23 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 }
 
 void NotebooksProcessor::onFoundDuplicateByGuid(
-    std::shared_ptr<QPromise<void>> notebookPromise,
+    const std::shared_ptr<QPromise<void>> & notebookPromise,
     qevercloud::Notebook updatedNotebook, qevercloud::Notebook localNotebook)
 {
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
     using NotebookConflictResolution =
         ISyncConflictResolver::NotebookConflictResolution;
 
-    auto statusFuture =
-        m_syncConflictResolver->resolveNotebookConflict(
-            updatedNotebook,
-            std::move(localNotebook));
+    auto statusFuture = m_syncConflictResolver->resolveNotebookConflict(
+        updatedNotebook, std::move(localNotebook));
 
     const auto selfWeak = weak_from_this();
 
-    auto thenFuture = threading::then(
-        std::move(statusFuture),
+    threading::thenOrFailed(
+        std::move(statusFuture), notebookPromise,
         [this, selfWeak, notebookPromise,
          updatedNotebook = std::move(updatedNotebook)](
-            const NotebookConflictResolution & resolution) mutable
-        {
+            const NotebookConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -179,16 +163,8 @@ void NotebooksProcessor::onFoundDuplicateByGuid(
                 auto putNotebookFuture =
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
-                auto thenFuture = threading::then(
-                    std::move(putNotebookFuture),
-                    [notebookPromise]() mutable { notebookPromise->finish(); });
-
-                threading::onFailed(
-                    std::move(thenFuture),
-                    [notebookPromise](const QException & e) {
-                        notebookPromise->setException(e);
-                        notebookPromise->finish();
-                    });
+                threading::thenOrFailed(
+                    std::move(putNotebookFuture), notebookPromise);
 
                 return;
             }
@@ -203,16 +179,39 @@ void NotebooksProcessor::onFoundDuplicateByGuid(
                     ConflictResolution::MoveMine<qevercloud::Notebook>>(
                     resolution))
             {
-                // TODO: implement
-            }
-        });
+                const auto mineResolution = std::get<
+                    ConflictResolution::MoveMine<qevercloud::Notebook>>(
+                    resolution);
 
-    threading::onFailed(
-        std::move(thenFuture),
-        [notebookPromise = std::move(notebookPromise)](const QException & e)
-        {
-            notebookPromise->setException(e);
-            notebookPromise->finish();
+                auto updateLocalNotebookFuture =
+                    m_localStorage->putNotebook(mineResolution.mine);
+
+                threading::thenOrFailed(
+                    std::move(updateLocalNotebookFuture), notebookPromise,
+                    [this, selfWeak, notebookPromise,
+                     updatedNotebook = std::move(updatedNotebook)]() mutable {
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            return;
+                        }
+
+                        auto putNotebookFuture = m_localStorage->putNotebook(
+                            std::move(updatedNotebook));
+
+                        auto thenFuture = threading::then(
+                            std::move(putNotebookFuture),
+                            [notebookPromise]() mutable {
+                                notebookPromise->finish();
+                            });
+
+                        threading::onFailed(
+                            std::move(thenFuture),
+                            [notebookPromise](const QException & e) {
+                                notebookPromise->setException(e);
+                                notebookPromise->finish();
+                            });
+                    });
+            }
         });
 }
 

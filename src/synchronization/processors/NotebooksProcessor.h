@@ -48,7 +48,7 @@ public:
 
 private:
     void onFoundDuplicateByGuid(
-        std::shared_ptr<QPromise<void>> notebookPromise,
+        const std::shared_ptr<QPromise<void>> & notebookPromise,
         qevercloud::Notebook updatedNotebook,
         qevercloud::Notebook localNotebook);
 
