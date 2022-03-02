@@ -30,6 +30,9 @@
 #include <quentier/threading/QtFutureWatcherUtils.h>
 #endif
 
+#include <memory>
+#include <type_traits>
+
 namespace quentier::threading {
 
 // implementation for Qt6
@@ -430,5 +433,32 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
 }
 
 #endif // QT_VERSION
+
+// Convenience functions for both Qt versions
+
+template <class T, class U, class Function>
+void thenOrFailed(
+    QFuture<T> && future, std::shared_ptr<QPromise<U>> promise,
+    Function && function)
+{
+    auto thenFuture = then(
+        std::move(future),
+        std::forward<decltype(function)>(function));
+
+    onFailed(
+        std::move(thenFuture),
+        [promise](const QException & e)
+        {
+            promise->setException(e);
+            promise->finish();
+        });
+}
+
+template <class T, class U>
+void thenOrFailed(
+    QFuture<T> && future, std::shared_ptr<QPromise<U>> promise)
+{
+    thenOrFailed(std::move(future), promise, [promise] { promise->finish(); });
+}
 
 } // namespace quentier::threading
