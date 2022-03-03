@@ -47,7 +47,7 @@ public:
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
-    void onFoundDuplicateByGuid(
+    void onFoundDuplicate(
         const std::shared_ptr<QPromise<void>> & notebookPromise,
         qevercloud::Notebook updatedNotebook,
         qevercloud::Notebook localNotebook);
