@@ -47,6 +47,16 @@ public:
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
+    [[nodiscard]] QList<qevercloud::Notebook> collectNotebooks(
+        const qevercloud::SyncChunk & syncChunk) const;
+
+    [[nodiscard]] QList<qevercloud::Guid> collectExpungedNotebookGuids(
+        const qevercloud::SyncChunk & syncChunk) const;
+
+    void tryToFindDuplicateByName(
+        const std::shared_ptr<QPromise<void>> & notebookPromise,
+        qevercloud::Notebook updatedNotebook);
+
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<void>> & notebookPromise,
         qevercloud::Notebook updatedNotebook,

@@ -63,40 +63,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     QList<qevercloud::Notebook> notebooks;
     QList<qevercloud::Guid> expungedNotebooks;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        if (syncChunk.notebooks() && !syncChunk.notebooks()->isEmpty()) {
-            for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
-                if (Q_UNLIKELY(!notebook.guid())) {
-                    QNWARNING(
-                        "synchronization::NotebooksProcessor",
-                        "Detected notebook without guid, skipping it: "
-                            << notebook);
-                    continue;
-                }
-
-                if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
-                    QNWARNING(
-                        "synchronization::NotebooksProcessor",
-                        "Detected notebook without update sequence number, "
-                            << "skipping it: " << notebook);
-                    continue;
-                }
-
-                if (Q_UNLIKELY(!notebook.name())) {
-                    QNWARNING(
-                        "synchronization::NotebooksProcessor",
-                        "Detected notebook without name, skipping it: "
-                            << notebook);
-                    continue;
-                }
-
-                notebooks << notebook;
-            }
-        }
-
-        if (syncChunk.expungedNotebooks() &&
-            !syncChunk.expungedNotebooks()->isEmpty()) {
-            expungedNotebooks << *syncChunk.expungedNotebooks();
-        }
+        notebooks << collectNotebooks(syncChunk);
+        expungedNotebooks << collectExpungedNotebookGuids(syncChunk);
     }
 
     if (notebooks.isEmpty() && expungedNotebooks.isEmpty()) {
@@ -140,35 +108,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
                     return;
                 }
 
-                auto findNotebookByNameFuture =
-                    m_localStorage->findNotebookByName(*updatedNotebook.name());
-
-                threading::thenOrFailed(
-                    std::move(findNotebookByNameFuture), notebookPromise,
-                    [this, selfWeak,
-                     updatedNotebook = std::move(updatedNotebook),
-                     notebookPromise](
-                        const std::optional<qevercloud::Notebook> & notebook) mutable {
-                        const auto self = selfWeak.lock();
-                        if (!self) {
-                            return;
-                        }
-
-                        if (notebook) {
-                            onFoundDuplicate(
-                                notebookPromise, std::move(updatedNotebook),
-                                *notebook);
-                            return;
-                        }
-
-                        // No duplicate by either guid or name was found,
-                        // just put the updated notebook to the local storage
-                        auto putNotebookFuture = m_localStorage->putNotebook(
-                            std::move(updatedNotebook));
-
-                        threading::thenOrFailed(
-                            std::move(putNotebookFuture), notebookPromise);
-                    });
+                tryToFindDuplicateByName(
+                    notebookPromise, std::move(updatedNotebook));
             });
     }
 
@@ -177,8 +118,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         notebookFutures << notebookPromise->future();
         notebookPromise->start();
 
-        auto expungeNotebookFuture = m_localStorage->expungeNotebookByGuid(
-            guid);
+        auto expungeNotebookFuture =
+            m_localStorage->expungeNotebookByGuid(guid);
 
         threading::thenOrFailed(
             std::move(expungeNotebookFuture), notebookPromise);
@@ -192,8 +133,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         auto thenFuture = threading::then(
             std::move(notebookFuture),
             [promise, processedItemsCount, totalItemCount, exceptionFlag,
-             mutex]
-            {
+             mutex] {
                 int count = 0;
                 {
                     const QMutexLocker locker{mutex.get()};
@@ -214,8 +154,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
 
         threading::onFailed(
             std::move(thenFuture),
-            [promise, mutex, exceptionFlag](const QException & e)
-            {
+            [promise, mutex, exceptionFlag](const QException & e) {
                 {
                     const QMutexLocker locker{mutex.get()};
 
@@ -232,6 +171,93 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     }
 
     return future;
+}
+
+QList<qevercloud::Notebook> NotebooksProcessor::collectNotebooks(
+    const qevercloud::SyncChunk & syncChunk) const
+{
+    if (!syncChunk.notebooks() || syncChunk.notebooks()->isEmpty()) {
+        return {};
+    }
+
+    QList<qevercloud::Notebook> notebooks;
+    notebooks.reserve(syncChunk.notebooks()->size());
+    for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+        if (Q_UNLIKELY(!notebook.guid())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without guid, skipping it: " << notebook);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without update sequence number, "
+                    << "skipping it: " << notebook);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!notebook.name())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without name, skipping it: " << notebook);
+            continue;
+        }
+
+        notebooks << notebook;
+    }
+
+    return notebooks;
+}
+
+QList<qevercloud::Guid> NotebooksProcessor::collectExpungedNotebookGuids(
+    const qevercloud::SyncChunk & syncChunk) const
+{
+    if (!syncChunk.expungedNotebooks() ||
+        syncChunk.expungedNotebooks()->isEmpty()) {
+        return {};
+    }
+
+    return *syncChunk.expungedNotebooks();
+}
+
+void NotebooksProcessor::tryToFindDuplicateByName(
+    const std::shared_ptr<QPromise<void>> & notebookPromise,
+    qevercloud::Notebook updatedNotebook)
+{
+    const auto selfWeak = weak_from_this();
+
+    auto findNotebookByNameFuture =
+        m_localStorage->findNotebookByName(*updatedNotebook.name());
+
+    threading::thenOrFailed(
+        std::move(findNotebookByNameFuture), notebookPromise,
+        [this, selfWeak,
+        updatedNotebook = std::move(updatedNotebook),
+        notebookPromise](
+            const std::optional<qevercloud::Notebook> &
+            notebook) mutable {
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            if (notebook) {
+                onFoundDuplicate(
+                    notebookPromise, std::move(updatedNotebook),
+                    *notebook);
+                return;
+            }
+
+            // No duplicate by either guid or name was found,
+            // just put the updated notebook to the local storage
+            auto putNotebookFuture = m_localStorage->putNotebook(
+                std::move(updatedNotebook));
+
+            threading::thenOrFailed(
+                std::move(putNotebookFuture), notebookPromise);
+        });
 }
 
 void NotebooksProcessor::onFoundDuplicate(
@@ -281,7 +307,7 @@ void NotebooksProcessor::onFoundDuplicate(
                     ConflictResolution::MoveMine<qevercloud::Notebook>>(
                     resolution))
             {
-                const auto mineResolution = std::get<
+                const auto & mineResolution = std::get<
                     ConflictResolution::MoveMine<qevercloud::Notebook>>(
                     resolution);
 
