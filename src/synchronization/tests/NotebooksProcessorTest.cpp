@@ -409,4 +409,165 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     EXPECT_EQ(notebooksPutIntoLocalStorage, notebooks);
 }
 
+TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
+{
+    const auto notebook = qevercloud::NotebookBuilder{}
+                              .setGuid(UidGenerator::Generate())
+                              .setName(QStringLiteral("Notebook #1"))
+                              .setUpdateSequenceNum(1)
+                              .build();
+
+    const auto localConflict =
+        qevercloud::NotebookBuilder{}.setName(notebook.name()).build();
+
+    QList<qevercloud::Notebook> notebooksPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+    QSet<QString> triedNames;
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            EXPECT_FALSE(triedGuids.contains(guid));
+            triedGuids.insert(guid);
+
+            const auto it = std::find_if(
+                notebooksPutIntoLocalStorage.constBegin(),
+                notebooksPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Notebook & notebook) {
+                    return notebook.guid() && (*notebook.guid() == guid);
+                });
+            if (it != notebooksPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(*it);
+            }
+
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::Notebook>>(std::nullopt);
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, findNotebookByName)
+        .WillRepeatedly([&, conflictName = notebook.name()](const QString & name,
+                            const std::optional<QString> & linkedNotebookGuid) {
+            EXPECT_FALSE(triedNames.contains(name));
+            triedNames.insert(name);
+
+            EXPECT_FALSE(linkedNotebookGuid);
+
+            const auto it = std::find_if(
+                notebooksPutIntoLocalStorage.constBegin(),
+                notebooksPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Notebook & notebook) {
+                    return notebook.name() && (*notebook.name() == name);
+                });
+            if (it != notebooksPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(*it);
+            }
+
+            if (name == conflictName) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Notebook>>(localConflict);
+            }
+
+            return threading::makeReadyFuture<
+                std::optional<qevercloud::Notebook>>(std::nullopt);
+        });
+
+    auto resolution = GetParam();
+    std::optional<qevercloud::Notebook> movedLocalConflict;
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Notebook>>(resolution))
+    {
+        movedLocalConflict =
+            qevercloud::NotebookBuilder{}
+                .setGuid(UidGenerator::Generate())
+                .setName(
+                    localConflict.name().value() + QStringLiteral("_moved"))
+                .build();
+
+        resolution = ISyncConflictResolver::NotebookConflictResolution{
+            ISyncConflictResolver::ConflictResolution::MoveMine<
+                qevercloud::Notebook>{*movedLocalConflict}};
+    }
+
+    EXPECT_CALL(*m_mockSyncConflictResolver, resolveNotebookConflict)
+        .WillOnce([&, resolution](
+                      const qevercloud::Notebook & theirs,
+                      const qevercloud::Notebook & mine) mutable {
+            EXPECT_EQ(theirs, notebook);
+            EXPECT_EQ(mine, localConflict);
+            return threading::makeReadyFuture<
+                ISyncConflictResolver::NotebookConflictResolution>(
+                std::move(resolution));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putNotebook)
+        .WillRepeatedly([&, conflictGuid = notebook.guid()](
+                            const qevercloud::Notebook & notebook) {
+            if (Q_UNLIKELY(!notebook.guid())) {
+                return threading::makeExceptionalFuture<void>(RuntimeError{
+                    ErrorString{"Detected notebook without guid"}});
+            }
+
+            EXPECT_TRUE(
+                triedGuids.contains(*notebook.guid()) ||
+                (movedLocalConflict && movedLocalConflict == notebook));
+
+            if (Q_UNLIKELY(!notebook.name())) {
+                return threading::makeExceptionalFuture<void>(RuntimeError{
+                    ErrorString{"Detected notebook without name"}});
+            }
+
+            EXPECT_TRUE(
+                triedNames.contains(*notebook.name()) ||
+                notebook.guid() == conflictGuid ||
+                (movedLocalConflict && movedLocalConflict == notebook));
+
+            notebooksPutIntoLocalStorage << notebook;
+            return threading::makeReadyFuture();
+        });
+
+    auto notebooks = QList<qevercloud::Notebook>{}
+        << notebook
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #2"))
+               .setUpdateSequenceNum(35)
+               .build()
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #3"))
+               .setUpdateSequenceNum(36)
+               .build()
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #4"))
+               .setUpdateSequenceNum(54)
+               .build();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setNotebooks(notebooks).build();
+
+    const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver);
+
+    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        notebooks.removeAt(0);
+    }
+    else if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                        MoveMine<qevercloud::Notebook>>(
+                 resolution))
+    {
+        ASSERT_TRUE(movedLocalConflict);
+        notebooks.push_front(*movedLocalConflict);
+    }
+
+    EXPECT_EQ(notebooksPutIntoLocalStorage, notebooks);
+}
+
 } // namespace quentier::synchronization::tests
