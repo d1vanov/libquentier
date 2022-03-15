@@ -26,8 +26,11 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleTagSyncConflictResolver.cpp
   conflict_resolvers/SimpleTagSyncConflictResolver.h
   processors/INotebooksProcessor.h
+  processors/ISavedSearchesProcessor.h
   processors/NotebooksProcessor.cpp
   processors/NotebooksProcessor.h
+  processors/SavedSearchesProcessor.cpp
+  processors/SavedSearchesProcessor.h
   sync_chunks/ISyncChunksDownloader.h
   sync_chunks/ISyncChunksProvider.h
   sync_chunks/ISyncChunksStorage.h
