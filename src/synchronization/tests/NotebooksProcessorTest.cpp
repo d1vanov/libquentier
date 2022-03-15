@@ -77,7 +77,7 @@ TEST_F(NotebooksProcessorTest, CtorNullSyncConflictResolver)
         InvalidArgument);
 }
 
-TEST_F(NotebooksProcessorTest, HandleCaseWithoutNotebooksToProcess)
+TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
 {
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.build();
