@@ -22,7 +22,7 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
-#include <quentier/threading/QtFutureContinuations.h>
+#include <quentier/threading/Future.h>
 
 #include <QMutex>
 #include <QMutexLocker>
@@ -55,11 +55,6 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         "synchronization::NotebooksProcessor",
         "NotebooksProcessor::processNotebooks");
 
-    auto promise = std::make_shared<QPromise<void>>();
-    auto future = promise->future();
-
-    promise->start();
-
     QList<qevercloud::Notebook> notebooks;
     QList<qevercloud::Guid> expungedNotebooks;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
@@ -72,14 +67,10 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             "synchronization::NotebooksProcessor",
             "No new/updated/expunged notebooks in the sync chunks");
 
-        promise->finish();
-        return future;
+        return threading::makeReadyFuture();
     }
 
     const int totalItemCount = notebooks.size() + expungedNotebooks.size();
-
-    promise->setProgressRange(0, totalItemCount);
-    promise->setProgressValue(0);
 
     const auto selfWeak = weak_from_this();
     QList<QFuture<void>> notebookFutures;
@@ -125,52 +116,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             std::move(expungeNotebookFuture), notebookPromise);
     }
 
-    auto processedItemsCount = std::make_shared<int>(0);
-    auto exceptionFlag = std::make_shared<bool>(false);
-    auto mutex = std::make_shared<QMutex>();
-
-    for (auto notebookFuture: qAsConst(notebookFutures)) {
-        auto thenFuture = threading::then(
-            std::move(notebookFuture),
-            [promise, processedItemsCount, totalItemCount, exceptionFlag,
-             mutex] {
-                int count = 0;
-                {
-                    const QMutexLocker locker{mutex.get()};
-
-                    if (*exceptionFlag) {
-                        return;
-                    }
-
-                    ++(*processedItemsCount);
-                    count = *processedItemsCount;
-                    promise->setProgressValue(count);
-                }
-
-                if (count == totalItemCount) {
-                    promise->finish();
-                }
-            });
-
-        threading::onFailed(
-            std::move(thenFuture),
-            [promise, mutex, exceptionFlag](const QException & e) {
-                {
-                    const QMutexLocker locker{mutex.get()};
-
-                    if (*exceptionFlag) {
-                        return;
-                    }
-
-                    *exceptionFlag = true;
-                }
-
-                promise->setException(e);
-                promise->finish();
-            });
-    }
-
-    return future;
+    return threading::whenAll(std::move(notebookFutures));
 }
 
 QList<qevercloud::Notebook> NotebooksProcessor::collectNotebooks(
@@ -226,6 +172,8 @@ void NotebooksProcessor::tryToFindDuplicateByName(
     const std::shared_ptr<QPromise<void>> & notebookPromise,
     qevercloud::Notebook updatedNotebook)
 {
+    Q_ASSERT(updatedNotebook.name());
+
     const auto selfWeak = weak_from_this();
 
     auto findNotebookByNameFuture =
