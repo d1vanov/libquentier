@@ -20,6 +20,8 @@
 
 #include <QFutureWatcher>
 
+#include <memory>
+
 namespace quentier::threading {
 
 /**
