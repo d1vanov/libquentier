@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/utility/Linkage.h>
+
 #include <functional>
 
 class QRunnable;
@@ -28,7 +30,7 @@ namespace quentier::threading {
  * Create QRunnable from a function - sort of a workaround for Qt < 5.15
  * where QRunnable::create does the same job
  */
-[[nodiscard]] QRunnable * createFunctionRunnable(
+[[nodiscard]] QRunnable * QUENTIER_EXPORT createFunctionRunnable(
     std::function<void()> function);
 
 } // namespace quentier::threading
