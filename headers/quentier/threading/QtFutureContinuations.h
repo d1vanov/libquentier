@@ -24,7 +24,6 @@
 #include <QRunnable>
 #include <QThreadPool>
 #include <quentier/exception/RuntimeError.h>
-#include <quentier/threading/Future.h>
 #include <quentier/threading/Qt5FutureHelpers.h>
 #include <quentier/threading/Qt5Promise.h>
 #include <quentier/threading/QtFutureWatcherUtils.h>

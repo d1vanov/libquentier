@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,9 +18,15 @@
 
 #pragma once
 
+#include <quentier/utility/Linkage.h>
+
 #include <QAbstractEventDispatcher>
 #include <QFuture>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QObject>
+
+#include <quentier/threading/QtFutureContinuations.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -29,6 +35,7 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <memory>
 #include <type_traits>
 
 namespace quentier::threading {
@@ -36,12 +43,12 @@ namespace quentier::threading {
 /**
  * Create QFuture already containing the result
  */
-template <
-    class T,
-    typename = std::enable_if_t<
-        std::is_fundamental_v<std::decay_t<T>> &&
-        std::negation_v<std::is_same<std::decay_t<T>, void>>>>
-[[nodiscard]] QFuture<std::decay_t<T>> makeReadyFuture(T t)
+template <class T>
+[[nodiscard]] std::enable_if_t<
+    std::is_fundamental_v<std::decay_t<T>> &&
+        std::negation_v<std::is_same<std::decay_t<T>, void>>,
+    QFuture<std::decay_t<T>>>
+    makeReadyFuture(T t)
 {
     QPromise<std::decay_t<T>> promise;
     QFuture<std::decay_t<T>> future = promise.future();
@@ -53,12 +60,12 @@ template <
     return future;
 }
 
-template <
-    class T,
-    typename = std::enable_if_t<
-        std::negation_v<std::is_fundamental<std::decay_t<T>>> &&
-        std::negation_v<std::is_same<std::decay_t<T>, void>>>>
-[[nodiscard]] QFuture<std::decay_t<T>> makeReadyFuture(T && t)
+template <class T>
+[[nodiscard]] std::enable_if_t<
+    std::negation_v<std::is_fundamental<std::decay_t<T>>> &&
+        std::negation_v<std::is_same<std::decay_t<T>, void>>,
+    QFuture<std::decay_t<T>>>
+    makeReadyFuture(T && t)
 {
     QPromise<std::decay_t<T>> promise;
     QFuture<std::decay_t<T>> future = promise.future();
@@ -70,16 +77,15 @@ template <
     return future;
 }
 
-[[nodiscard]] QFuture<void> makeReadyFuture();
+[[nodiscard]] QFuture<void> QUENTIER_EXPORT makeReadyFuture();
 
 /**
  * Create QFuture already containing exception instead of the result -
  * version accepting const reference to QException subclass
  */
-template <
-    class T, class E,
-    typename = std::enable_if_t<std::is_base_of_v<QException, E>>>
-[[nodiscard]] QFuture<T> makeExceptionalFuture(const E & e)
+template <class T, class E>
+[[nodiscard]] std::enable_if_t<std::is_base_of_v<QException, E>, QFuture<T>>
+    makeExceptionalFuture(const E & e)
 {
     QPromise<std::decay_t<T>> promise;
     QFuture<std::decay_t<T>> future = promise.future();
@@ -109,5 +115,94 @@ template <class T>
     return future;
 }
 #endif // QT_VERSION
+
+/**
+ * Create QFuture<void> which would only become finished when either all passed
+ * in futures are finished successfully (without exception) or at least one of
+ * passed in futures is finished unsuccessfully (with exception) in which case
+ * "all future" is considered unsuccessful as well and would contain the first
+ * occurred exception inside it.
+ */
+[[nodiscard]] QFuture<void> QUENTIER_EXPORT
+    whenAll(QList<QFuture<void>> futures);
+
+/**
+ * Create non-void QFuture which would only become finished when either all
+ * passed in futures are finished successfully (without exception) or at least
+ * one of passed in futures is finished unsuccessfully (with exception) in which
+ * case "all future" is considered unsuccessful as well and would contain the
+ * first occurred exception inside it. In case of success of all passed in
+ * futures the result future would contain the list with results of all
+ * passed in futures.
+ */
+template <class T>
+[[nodiscard]] std::enable_if_t<
+    !std::is_void_v<T>, QFuture<QList<std::decay_t<T>>>>
+    whenAll(QList<QFuture<std::decay_t<T>>> futures)
+{
+    if (Q_UNLIKELY(futures.isEmpty())) {
+        return makeReadyFuture<QList<T>>({});
+    }
+
+    auto promise = std::make_shared<QPromise<QList<std::decay_t<T>>>>();
+    auto future = promise->future();
+
+    const int totalItemCount = futures.size();
+    promise->setProgressRange(0, totalItemCount);
+    promise->setProgressValue(0);
+
+    promise->start();
+
+    auto resultList = std::make_shared<QList<std::decay_t<T>>>();
+    auto processedItemsCount = std::make_shared<int>(0);
+    auto exceptionFlag = std::make_shared<bool>(false);
+    auto mutex = std::make_shared<QMutex>();
+
+    for (auto & future: futures) {
+        auto thenFuture = then(
+            std::move(future),
+            [promise, processedItemsCount, totalItemCount, exceptionFlag,
+             mutex, resultList](auto result) {
+                int count = 0;
+                {
+                    const QMutexLocker locker{mutex.get()};
+
+                    if (*exceptionFlag) {
+                        return;
+                    }
+
+                    ++(*processedItemsCount);
+                    count = *processedItemsCount;
+                    promise->setProgressValue(count);
+
+                    resultList->append(std::move(result));
+                }
+
+                if (count == totalItemCount) {
+                    promise->addResult(*resultList);
+                    promise->finish();
+                }
+            });
+
+        onFailed(
+            std::move(thenFuture),
+            [promise, mutex, exceptionFlag](const QException & e) {
+                {
+                    const QMutexLocker locker{mutex.get()};
+
+                    if (*exceptionFlag) {
+                        return;
+                    }
+
+                    *exceptionFlag = true;
+                }
+
+                promise->setException(e);
+                promise->finish();
+            });
+    }
+
+    return future;
+}
 
 } // namespace quentier::threading
