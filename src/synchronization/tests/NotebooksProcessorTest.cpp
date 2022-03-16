@@ -222,6 +222,63 @@ TEST_F(NotebooksProcessorTest, ProcessExpungedNotebooks)
     EXPECT_EQ(processedNotebookGuids, expungedNotebookGuids);
 }
 
+TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
+{
+    const auto notebooks = QList<qevercloud::Notebook>{}
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #1"))
+               .setUpdateSequenceNum(0)
+               .build()
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #2"))
+               .setUpdateSequenceNum(35)
+               .build()
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #3"))
+               .setUpdateSequenceNum(36)
+               .build()
+        << qevercloud::NotebookBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Notebook #4"))
+               .setUpdateSequenceNum(54)
+               .build();
+
+    const auto expungedNotebookGuids = [&]
+    {
+        QList<qevercloud::Guid> guids;
+        guids.reserve(notebooks.size());
+        for (const auto & notebook: qAsConst(notebooks)) {
+            guids << notebook.guid().value();
+        }
+        return guids;
+    }();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotebooks(notebooks)
+               .setExpungedNotebooks(expungedNotebookGuids)
+               .build();
+
+    const auto notebooksProcessor = std::make_shared<NotebooksProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver);
+
+    QList<qevercloud::Guid> processedNotebookGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeNotebookByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & notebookGuid) {
+            processedNotebookGuids << notebookGuid;
+            return threading::makeReadyFuture();
+        });
+
+    auto future = notebooksProcessor->processNotebooks(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(processedNotebookGuids, expungedNotebookGuids);
+}
+
 class NotebooksProcessorTestWithConflict :
     public NotebooksProcessorTest,
     public testing::WithParamInterface<

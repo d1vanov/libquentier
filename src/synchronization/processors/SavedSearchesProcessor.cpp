@@ -17,6 +17,7 @@
  */
 
 #include "SavedSearchesProcessor.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -61,6 +62,8 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         savedSearches << collectSavedSearches(syncChunk);
         expungedSavedSearches << collectExpungedSavedSearchGuids(syncChunk);
     }
+
+    utils::filterOutExpungedItems(expungedSavedSearches, savedSearches);
 
     if (savedSearches.isEmpty() && expungedSavedSearches.isEmpty()) {
         QNDEBUG(

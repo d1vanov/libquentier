@@ -226,6 +226,66 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
 }
 
+TEST_F(
+    SavedSearchesProcessorTest,
+    FilterOutExpungesSavedSearchesFromSyncChunkSavedSearches)
+{
+    const auto savedSearches = QList<qevercloud::SavedSearch>{}
+        << qevercloud::SavedSearchBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Saved search #1"))
+               .setUpdateSequenceNum(0)
+               .build()
+        << qevercloud::SavedSearchBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Saved search #2"))
+               .setUpdateSequenceNum(35)
+               .build()
+        << qevercloud::SavedSearchBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Saved search #3"))
+               .setUpdateSequenceNum(36)
+               .build()
+        << qevercloud::SavedSearchBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Saved search #4"))
+               .setUpdateSequenceNum(54)
+               .build();
+
+    const auto expungedSavedSearchGuids = [&]
+    {
+        QList<qevercloud::Guid> guids;
+        guids.reserve(savedSearches.size());
+        for (const auto & savedSearch: qAsConst(savedSearches)) {
+            guids << savedSearch.guid().value();
+        }
+        return guids;
+    }();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setSearches(savedSearches)
+               .setExpungedSearches(expungedSavedSearchGuids)
+               .build();
+
+    const auto savedSearchesProcessor =
+        std::make_shared<SavedSearchesProcessor>(
+            m_mockLocalStorage, m_mockSyncConflictResolver);
+
+    QList<qevercloud::Guid> processedSavedSearchGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & savedSearchGuid) {
+            processedSavedSearchGuids << savedSearchGuid;
+            return threading::makeReadyFuture();
+        });
+
+    auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
+}
+
 class SavedSearchesProcessorTestWithConflict :
     public SavedSearchesProcessorTest,
     public testing::WithParamInterface<

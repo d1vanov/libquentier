@@ -31,6 +31,7 @@ target_sources(${LIBRARY_NAME}
   processors/NotebooksProcessor.h
   processors/SavedSearchesProcessor.cpp
   processors/SavedSearchesProcessor.h
+  processors/Utils.h
   sync_chunks/ISyncChunksDownloader.h
   sync_chunks/ISyncChunksProvider.h
   sync_chunks/ISyncChunksStorage.h

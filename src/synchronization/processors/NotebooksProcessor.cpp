@@ -17,6 +17,7 @@
  */
 
 #include "NotebooksProcessor.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -61,6 +62,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         notebooks << collectNotebooks(syncChunk);
         expungedNotebooks << collectExpungedNotebookGuids(syncChunk);
     }
+
+    utils::filterOutExpungedItems(expungedNotebooks, notebooks);
 
     if (notebooks.isEmpty() && expungedNotebooks.isEmpty()) {
         QNDEBUG(
