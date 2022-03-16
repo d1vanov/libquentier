@@ -86,6 +86,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         notebookFutures << notebookPromise->future();
         notebookPromise->start();
 
+        Q_ASSERT(notebook.guid());
+
         auto findNotebookByGuidFuture =
             m_localStorage->findNotebookByGuid(*notebook.guid());
 
@@ -165,12 +167,7 @@ QList<qevercloud::Notebook> NotebooksProcessor::collectNotebooks(
 QList<qevercloud::Guid> NotebooksProcessor::collectExpungedNotebookGuids(
     const qevercloud::SyncChunk & syncChunk) const
 {
-    if (!syncChunk.expungedNotebooks() ||
-        syncChunk.expungedNotebooks()->isEmpty()) {
-        return {};
-    }
-
-    return *syncChunk.expungedNotebooks();
+    return syncChunk.expungedNotebooks().value_or(QList<qevercloud::Guid>{});
 }
 
 void NotebooksProcessor::tryToFindDuplicateByName(

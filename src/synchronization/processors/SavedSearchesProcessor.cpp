@@ -87,6 +87,8 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         savedSearchFutures << savedSearchPromise->future();
         savedSearchPromise->start();
 
+        Q_ASSERT(savedSearch.guid());
+
         auto findSavedSearchByGuidFuture =
             m_localStorage->findSavedSearchByGuid(*savedSearch.guid());
 
@@ -170,12 +172,7 @@ QList<qevercloud::SavedSearch> SavedSearchesProcessor::collectSavedSearches(
 QList<qevercloud::Guid> SavedSearchesProcessor::collectExpungedSavedSearchGuids(
     const qevercloud::SyncChunk & syncChunk) const
 {
-    if (!syncChunk.expungedSearches() ||
-        syncChunk.expungedSearches()->isEmpty()) {
-        return {};
-    }
-
-    return *syncChunk.expungedSearches();
+    return syncChunk.expungedSearches().value_or(QList<qevercloud::Guid>{});
 }
 
 void SavedSearchesProcessor::tryToFindDuplicateByName(
