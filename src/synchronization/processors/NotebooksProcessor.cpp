@@ -25,6 +25,8 @@
 #include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 
+#include <qevercloud/types/SyncChunk.h>
+
 #include <QMutex>
 #include <QMutexLocker>
 

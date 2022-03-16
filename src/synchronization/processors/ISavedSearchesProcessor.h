@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <qevercloud/types/SyncChunk.h>
+#include <qevercloud/types/Fwd.h>
 
 #include <QFuture>
 #include <QList>

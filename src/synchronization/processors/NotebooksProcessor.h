@@ -29,6 +29,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <qevercloud/types/TypeAliases.h>
+
 #include <memory>
 #include <optional>
 
