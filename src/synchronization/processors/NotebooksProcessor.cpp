@@ -19,6 +19,8 @@
 #include "NotebooksProcessor.h"
 #include "Utils.h"
 
+#include <synchronization/SyncChunksDataCounters.h>
+
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -30,13 +32,17 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+#include <algorithm>
+
 namespace quentier::synchronization {
 
 NotebooksProcessor::NotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver) :
+    ISyncConflictResolverPtr syncConflictResolver,
+    SyncChunksDataCountersPtr syncChunksDataCounters) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)}
+    m_syncConflictResolver{std::move(syncConflictResolver)},
+    m_syncChunksDataCounters{std::move(syncChunksDataCounters)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -48,6 +54,12 @@ NotebooksProcessor::NotebooksProcessor(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::NotebooksProcessor",
             "NotebooksProcessor ctor: sync conflict resolver is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncChunksDataCounters)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::NotebooksProcessor",
+            "NotebooksProcessor ctor: sync chuks data counters is null")}};
     }
 }
 
@@ -66,6 +78,12 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     }
 
     utils::filterOutExpungedItems(expungedNotebooks, notebooks);
+
+    m_syncChunksDataCounters->m_totalNotebooks =
+        static_cast<quint64>(std::max<int>(notebooks.size(), 0));
+
+    m_syncChunksDataCounters->m_totalExpungedNotebooks =
+        static_cast<quint64>(std::max<int>(expungedNotebooks.size(), 0));
 
     if (notebooks.isEmpty() && expungedNotebooks.isEmpty()) {
         QNDEBUG(
@@ -119,8 +137,20 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         auto expungeNotebookFuture =
             m_localStorage->expungeNotebookByGuid(guid);
 
+        auto thenFuture = threading::then(
+            std::move(expungeNotebookFuture),
+            [selfWeak]
+            {
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                ++self->m_syncChunksDataCounters->m_expungedNotebooks;
+            });
+
         threading::thenOrFailed(
-            std::move(expungeNotebookFuture), notebookPromise);
+            std::move(thenFuture), notebookPromise);
     }
 
     return threading::whenAll(std::move(notebookFutures));
@@ -205,8 +235,20 @@ void NotebooksProcessor::tryToFindDuplicateByName(
             auto putNotebookFuture = m_localStorage->putNotebook(
                 std::move(updatedNotebook));
 
+            auto thenFuture = threading::then(
+                std::move(putNotebookFuture),
+                [selfWeak]
+                {
+                    const auto self = selfWeak.lock();
+                    if (!self) {
+                        return;
+                    }
+
+                    ++self->m_syncChunksDataCounters->m_addedNotebooks;
+                });
+
             threading::thenOrFailed(
-                std::move(putNotebookFuture), notebookPromise);
+                std::move(thenFuture), notebookPromise);
         });
 }
 
@@ -241,8 +283,20 @@ void NotebooksProcessor::onFoundDuplicate(
                 auto putNotebookFuture =
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
+                auto thenFuture = threading::then(
+                    std::move(putNotebookFuture),
+                    [selfWeak]
+                    {
+                        const auto self = selfWeak.lock();
+                        if (!self) {
+                            return;
+                        }
+
+                        ++self->m_syncChunksDataCounters->m_updatedNotebooks;
+                    });
+
                 threading::thenOrFailed(
-                    std::move(putNotebookFuture), notebookPromise);
+                    std::move(thenFuture), notebookPromise);
 
                 return;
             }
@@ -278,7 +332,12 @@ void NotebooksProcessor::onFoundDuplicate(
 
                         auto thenFuture = threading::then(
                             std::move(putNotebookFuture),
-                            [notebookPromise]() mutable {
+                            [selfWeak, notebookPromise]() mutable {
+                                if (const auto self = selfWeak.lock()) {
+                                    ++self->m_syncChunksDataCounters
+                                          ->m_addedNotebooks;
+                                }
+
                                 notebookPromise->finish();
                             });
 

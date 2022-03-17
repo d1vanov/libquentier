@@ -8,6 +8,8 @@ target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
   SynchronizationMode.h
+  SyncChunksDataCounters.cpp
+  SyncChunksDataCounters.h
   conflict_resolvers/Factory.cpp
   conflict_resolvers/Factory.h
   conflict_resolvers/ISimpleNotebookSyncConflictResolver.h

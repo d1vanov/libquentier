@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -31,122 +31,124 @@ namespace quentier {
  * representing the current progress on processing the data from downloaded
  * sync chunks
  */
-struct QUENTIER_EXPORT ISyncChunksDataCounters: public Printable
+struct QUENTIER_EXPORT ISyncChunksDataCounters : public Printable
 {
     // ================= Saved searches =================
 
     /**
      * Total number of new or updated saved searches in downloaded sync chunks
      */
-    virtual quint64 totalSavedSearches() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalSavedSearches() const noexcept = 0;
 
     /**
      * Total number of expunged saved searches in downloaded sync chunks
      */
-    virtual quint64 totalExpungedSavedSearches() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalExpungedSavedSearches()
+        const noexcept = 0;
 
     /**
      * Number of saved searches from sync chunks added to the local storage
      * so far
      */
-    virtual quint64 addedSavedSearches() const noexcept = 0;
+    [[nodiscard]] virtual quint64 addedSavedSearches() const noexcept = 0;
 
     /**
      * Number of saved searches from sync chunks updated in the local storage
      * so far
      */
-    virtual quint64 updatedSavedSearches() const noexcept = 0;
+    [[nodiscard]] virtual quint64 updatedSavedSearches() const noexcept = 0;
 
     /**
      * Number of saved searches from sync chunks expunged from the local storage
      * so far
      */
-    virtual quint64 expungedSavedSearches() const noexcept = 0;
+    [[nodiscard]] virtual quint64 expungedSavedSearches() const noexcept = 0;
 
     // ================= Tags =================
 
     /**
      * Total number of new or updated tags in downloaded sync chunks
      */
-    virtual quint64 totalTags() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalTags() const noexcept = 0;
 
     /**
      * Total number of expunged tags in downloaded sync chunks
      */
-    virtual quint64 totalExpungedTags() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalExpungedTags() const noexcept = 0;
 
     /**
      * Number of tags from sync chunks added to the local storage so far
      */
-    virtual quint64 addedTags() const noexcept = 0;
+    [[nodiscard]] virtual quint64 addedTags() const noexcept = 0;
 
     /**
      * Number of tags from sync chunks updated in the local storage so far
      */
-    virtual quint64 updatedTags() const noexcept = 0;
+    [[nodiscard]] virtual quint64 updatedTags() const noexcept = 0;
 
     /**
      * Number of tags from sync chunks expunged from the local storage so far
      */
-    virtual quint64 expungedTags() const noexcept = 0;
+    [[nodiscard]] virtual quint64 expungedTags() const noexcept = 0;
 
     // ================= Linked notebooks =================
 
     /**
      * Total number of new or updated linked notebooks in downloaded sync chunks
      */
-    virtual quint64 totalLinkedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalLinkedNotebooks() const noexcept = 0;
 
     /**
      * Total number of expunged saved searches in downloaded sync chunks
      */
-    virtual quint64 totalExpungedLinkedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalExpungedLinkedNotebooks()
+        const noexcept = 0;
 
     /**
      * Number of linked notebooks from sync chunks added to the local storage
      * so far
      */
-    virtual quint64 addedLinkedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 addedLinkedNotebooks() const noexcept = 0;
 
     /**
      * Number of linked notebooks from sync chunks updated in the local storage
      * so far
      */
-    virtual quint64 updatedLinkedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 updatedLinkedNotebooks() const noexcept = 0;
 
     /**
      * Number of linked notebooks from sync chunks expunged from the local
      * storage so far
      */
-    virtual quint64 expungedLinkedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 expungedLinkedNotebooks() const noexcept = 0;
 
     // ================= Notebooks =================
 
     /**
      * Total number of new or updated notebooks in downloaded sync chunks
      */
-    virtual quint64 totalNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalNotebooks() const noexcept = 0;
 
     /**
      * Total number of expunged notebooks in downloaded sync chunks
      */
-    virtual quint64 totalExpungedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 totalExpungedNotebooks() const noexcept = 0;
 
     /**
      * Number of notebooks from sync chunks added to the local storage so far
      */
-    virtual quint64 addedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 addedNotebooks() const noexcept = 0;
 
     /**
      * Number of notebooks from sync chunks updated in the local storage so far
      */
-    virtual quint64 updatedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 updatedNotebooks() const noexcept = 0;
 
     /**
      * Number of notebooks from sync chunks expunged from the local storage
      * so far
      */
-    virtual quint64 expungedNotebooks() const noexcept = 0;
+    [[nodiscard]] virtual quint64 expungedNotebooks() const noexcept = 0;
 };
 
 } // namespace quentier

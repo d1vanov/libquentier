@@ -56,3 +56,10 @@ class ISyncChunksStorage;
 using ISyncChunksStoragePtr = std::shared_ptr<ISyncChunksStorage>;
 
 } // namespace quentier::synchronization
+
+namespace quentier {
+
+struct SyncChunksDataCounters;
+using SyncChunksDataCountersPtr = std::shared_ptr<SyncChunksDataCounters>;
+
+} // namespace quentier

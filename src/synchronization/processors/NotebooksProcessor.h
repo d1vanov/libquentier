@@ -19,6 +19,7 @@
 #pragma once
 
 #include "INotebooksProcessor.h"
+#include <synchronization/Fwd.h>
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
@@ -43,7 +44,8 @@ class NotebooksProcessor final :
 public:
     explicit NotebooksProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver);
+        ISyncConflictResolverPtr syncConflictResolver,
+        SyncChunksDataCountersPtr syncChunksDataCounters);
 
     [[nodiscard]] QFuture<void> processNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
@@ -67,6 +69,7 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
+    const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization

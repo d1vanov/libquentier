@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -28,132 +28,132 @@ namespace quentier {
  * representing the current progress on processing the data from downloaded
  * sync chunks
  */
-struct SyncChunksDataCounters : public ISyncChunksDataCounters
+struct SyncChunksDataCounters final : public ISyncChunksDataCounters
 {
     // ISyncChunksDataCounters
-    quint64 totalSavedSearches() const noexcept override
+    [[nodiscard]] quint64 totalSavedSearches() const noexcept override
     {
         return m_totalSavedSearches;
     }
 
-    quint64 totalExpungedSavedSearches() const noexcept override
+    [[nodiscard]] quint64 totalExpungedSavedSearches() const noexcept override
     {
         return m_totalExpungedSavedSearches;
     }
 
-    quint64 addedSavedSearches() const noexcept override
+    [[nodiscard]] quint64 addedSavedSearches() const noexcept override
     {
         return m_addedSavedSearches;
     }
 
-    quint64 updatedSavedSearches() const noexcept override
+    [[nodiscard]] quint64 updatedSavedSearches() const noexcept override
     {
         return m_updatedSavedSearches;
     }
 
-    quint64 expungedSavedSearches() const noexcept override
+    [[nodiscard]] quint64 expungedSavedSearches() const noexcept override
     {
         return m_expungedSavedSearches;
     }
 
-    quint64 totalTags() const noexcept override
+    [[nodiscard]] quint64 totalTags() const noexcept override
     {
         return m_totalTags;
     }
 
-    quint64 totalExpungedTags() const noexcept override
+    [[nodiscard]] quint64 totalExpungedTags() const noexcept override
     {
         return m_totalExpungedTags;
     }
 
-    quint64 addedTags() const noexcept override
+    [[nodiscard]] quint64 addedTags() const noexcept override
     {
         return m_addedTags;
     }
 
-    quint64 updatedTags() const noexcept override
+    [[nodiscard]] quint64 updatedTags() const noexcept override
     {
         return m_updatedTags;
     }
 
-    quint64 expungedTags() const noexcept override
+    [[nodiscard]] quint64 expungedTags() const noexcept override
     {
         return m_expungedTags;
     }
 
-    quint64 totalLinkedNotebooks() const noexcept override
+    [[nodiscard]] quint64 totalLinkedNotebooks() const noexcept override
     {
         return m_totalLinkedNotebooks;
     }
 
-    quint64 totalExpungedLinkedNotebooks() const noexcept override
+    [[nodiscard]] quint64 totalExpungedLinkedNotebooks() const noexcept override
     {
         return m_totalExpungedLinkedNotebooks;
     }
 
-    quint64 addedLinkedNotebooks() const noexcept override
+    [[nodiscard]] quint64 addedLinkedNotebooks() const noexcept override
     {
         return m_addedLinkedNotebooks;
     }
 
-    quint64 updatedLinkedNotebooks() const noexcept override
+    [[nodiscard]] quint64 updatedLinkedNotebooks() const noexcept override
     {
         return m_updatedLinkedNotebooks;
     }
 
-    quint64 expungedLinkedNotebooks() const noexcept override
+    [[nodiscard]] quint64 expungedLinkedNotebooks() const noexcept override
     {
         return m_expungedLinkedNotebooks;
     }
 
-    quint64 totalNotebooks() const noexcept override
+    [[nodiscard]] quint64 totalNotebooks() const noexcept override
     {
         return m_totalNotebooks;
     }
 
-    quint64 totalExpungedNotebooks() const noexcept override
+    [[nodiscard]] quint64 totalExpungedNotebooks() const noexcept override
     {
         return m_totalExpungedNotebooks;
     }
 
-    quint64 addedNotebooks() const noexcept override
+    [[nodiscard]] quint64 addedNotebooks() const noexcept override
     {
         return m_addedNotebooks;
     }
 
-    quint64 updatedNotebooks() const noexcept override
+    [[nodiscard]] quint64 updatedNotebooks() const noexcept override
     {
         return m_updatedNotebooks;
     }
 
-    quint64 expungedNotebooks() const noexcept override
+    [[nodiscard]] quint64 expungedNotebooks() const noexcept override
     {
         return m_expungedNotebooks;
     }
 
-    quint64 m_totalSavedSearches = 0ul;
-    quint64 m_totalExpungedSavedSearches = 0ul;
-    quint64 m_addedSavedSearches = 0ul;
-    quint64 m_updatedSavedSearches = 0ul;
-    quint64 m_expungedSavedSearches = 0ul;
+    quint64 m_totalSavedSearches = 0UL;
+    quint64 m_totalExpungedSavedSearches = 0UL;
+    quint64 m_addedSavedSearches = 0UL;
+    quint64 m_updatedSavedSearches = 0UL;
+    quint64 m_expungedSavedSearches = 0UL;
 
-    quint64 m_totalTags = 0ul;
-    quint64 m_totalExpungedTags = 0ul;
-    quint64 m_addedTags = 0ul;
-    quint64 m_updatedTags = 0ul;
-    quint64 m_expungedTags = 0ul;
+    quint64 m_totalTags = 0UL;
+    quint64 m_totalExpungedTags = 0UL;
+    quint64 m_addedTags = 0UL;
+    quint64 m_updatedTags = 0UL;
+    quint64 m_expungedTags = 0UL;
 
-    quint64 m_totalLinkedNotebooks = 0ul;
-    quint64 m_totalExpungedLinkedNotebooks = 0ul;
-    quint64 m_addedLinkedNotebooks = 0ul;
-    quint64 m_updatedLinkedNotebooks = 0ul;
-    quint64 m_expungedLinkedNotebooks = 0ul;
+    quint64 m_totalLinkedNotebooks = 0UL;
+    quint64 m_totalExpungedLinkedNotebooks = 0UL;
+    quint64 m_addedLinkedNotebooks = 0UL;
+    quint64 m_updatedLinkedNotebooks = 0UL;
+    quint64 m_expungedLinkedNotebooks = 0UL;
 
-    quint64 m_totalNotebooks = 0ul;
-    quint64 m_totalExpungedNotebooks = 0ul;
-    quint64 m_addedNotebooks = 0ul;
-    quint64 m_updatedNotebooks = 0ul;
-    quint64 m_expungedNotebooks = 0ul;
+    quint64 m_totalNotebooks = 0UL;
+    quint64 m_totalExpungedNotebooks = 0UL;
+    quint64 m_addedNotebooks = 0UL;
+    quint64 m_updatedNotebooks = 0UL;
+    quint64 m_expungedNotebooks = 0UL;
 
     QTextStream & print(QTextStream & strm) const override;
 };
