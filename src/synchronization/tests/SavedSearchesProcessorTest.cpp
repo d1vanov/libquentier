@@ -17,6 +17,7 @@
  */
 
 #include <synchronization/processors/SavedSearchesProcessor.h>
+#include <synchronization/SyncChunksDataCounters.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -45,13 +46,16 @@ using testing::StrictMock;
 class SavedSearchesProcessorTest : public testing::Test
 {
 protected:
-    std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
+    const std::shared_ptr<local_storage::tests::mocks::MockILocalStorage>
         m_mockLocalStorage = std::make_shared<
             StrictMock<local_storage::tests::mocks::MockILocalStorage>>();
 
-    std::shared_ptr<mocks::MockISyncConflictResolver>
+    const std::shared_ptr<mocks::MockISyncConflictResolver>
         m_mockSyncConflictResolver =
             std::make_shared<StrictMock<mocks::MockISyncConflictResolver>>();
+
+    const SyncChunksDataCountersPtr m_syncChunksDataCounters =
+        std::make_shared<SyncChunksDataCounters>();
 };
 
 TEST_F(SavedSearchesProcessorTest, Ctor)
@@ -59,7 +63,8 @@ TEST_F(SavedSearchesProcessorTest, Ctor)
     EXPECT_NO_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, m_mockSyncConflictResolver));
+                m_mockLocalStorage, m_mockSyncConflictResolver,
+                m_syncChunksDataCounters));
 }
 
 TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
@@ -67,7 +72,7 @@ TEST_F(SavedSearchesProcessorTest, CtorNullLocalStorage)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                nullptr, m_mockSyncConflictResolver),
+                nullptr, m_mockSyncConflictResolver, m_syncChunksDataCounters),
         InvalidArgument);
 }
 
@@ -76,7 +81,16 @@ TEST_F(SavedSearchesProcessorTest, CtorNullSyncConflictResolver)
     EXPECT_THROW(
         const auto savedSearchesProcessor =
             std::make_shared<SavedSearchesProcessor>(
-                m_mockLocalStorage, nullptr),
+                m_mockLocalStorage, nullptr, m_syncChunksDataCounters),
+        InvalidArgument);
+}
+
+TEST_F(SavedSearchesProcessorTest, CtorNullSyncChunksDataCounters)
+{
+    EXPECT_THROW(
+        const auto savedSearchesProcessor =
+            std::make_shared<SavedSearchesProcessor>(
+                m_mockLocalStorage, m_mockSyncConflictResolver, nullptr),
         InvalidArgument);
 }
 
@@ -88,11 +102,18 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->expungedSavedSearches(), 0UL);
 }
 
 TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
@@ -188,13 +209,27 @@ TEST_F(SavedSearchesProcessorTest, ProcessSavedSearchesWithoutConflicts)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalSavedSearches(),
+        static_cast<quint64>(savedSearches.size()));
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->addedSavedSearches(),
+        static_cast<quint64>(savedSearches.size()));
+
+    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->expungedSavedSearches(), 0UL);
 }
 
 TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
@@ -210,7 +245,8 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
@@ -224,6 +260,19 @@ TEST_F(SavedSearchesProcessorTest, ProcessExpungedSavedSearches)
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalExpungedSavedSearches(),
+        static_cast<quint64>(expungedSavedSearchGuids.size()));
+
+    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->expungedSavedSearches(),
+        static_cast<quint64>(expungedSavedSearchGuids.size()));
 }
 
 TEST_F(
@@ -270,7 +319,8 @@ TEST_F(
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     QList<qevercloud::Guid> processedSavedSearchGuids;
     EXPECT_CALL(*m_mockLocalStorage, expungeSavedSearchByGuid)
@@ -284,6 +334,19 @@ TEST_F(
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedSavedSearchGuids, expungedSavedSearchGuids);
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalSavedSearches(), 0UL);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalExpungedSavedSearches(),
+        static_cast<quint64>(expungedSavedSearchGuids.size()));
+
+    EXPECT_EQ(m_syncChunksDataCounters->addedSavedSearches(), 0UL);
+    EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->expungedSavedSearches(),
+        static_cast<quint64>(expungedSavedSearchGuids.size()));
 }
 
 class SavedSearchesProcessorTestWithConflict :
@@ -445,12 +508,15 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
                .setUpdateSequenceNum(54)
                .build();
 
+    const auto originalSavedSearchesSize = savedSearches.size();
+
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setSearches(savedSearches).build();
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
     ASSERT_TRUE(future.isFinished());
@@ -470,6 +536,42 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     }
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalSavedSearches(),
+        static_cast<quint64>(originalSavedSearchesSize));
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedSavedSearches(),
+            static_cast<quint64>(originalSavedSearchesSize - 1));
+
+        if (std::holds_alternative<
+                ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+        {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+        }
+        else
+        {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
+        }
+    }
+    else
+    {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedSavedSearches(),
+            static_cast<quint64>(originalSavedSearchesSize));
+
+        EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+    }
 }
 
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
@@ -606,12 +708,15 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
                .setUpdateSequenceNum(54)
                .build();
 
+    const auto originalSavedSearchesSize = savedSearches.size();
+
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setSearches(savedSearches).build();
 
     const auto savedSearchesProcessor =
         std::make_shared<SavedSearchesProcessor>(
-            m_mockLocalStorage, m_mockSyncConflictResolver);
+            m_mockLocalStorage, m_mockSyncConflictResolver,
+            m_syncChunksDataCounters);
 
     auto future = savedSearchesProcessor->processSavedSearches(syncChunks);
     ASSERT_TRUE(future.isFinished());
@@ -631,6 +736,42 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     }
 
     EXPECT_EQ(savedSearchesPutIntoLocalStorage, savedSearches);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalSavedSearches(),
+        static_cast<quint64>(originalSavedSearchesSize));
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedSavedSearches(), 0UL);
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedSavedSearches(),
+            static_cast<quint64>(originalSavedSearchesSize - 1));
+
+        if (std::holds_alternative<
+                ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+        {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+        }
+        else
+        {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
+        }
+    }
+    else
+    {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedSavedSearches(),
+            static_cast<quint64>(originalSavedSearchesSize));
+
+        EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
+    }
 }
 
 } // namespace quentier::synchronization::tests
