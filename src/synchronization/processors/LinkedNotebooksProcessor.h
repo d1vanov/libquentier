@@ -20,6 +20,8 @@
 
 #include "ILinkedNotebooksProcessor.h"
 
+#include <synchronization/Fwd.h>
+
 #include <quentier/local_storage/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -41,7 +43,8 @@ class LinkedNotebooksProcessor final :
 {
 public:
     explicit LinkedNotebooksProcessor(
-        local_storage::ILocalStoragePtr localStorage);
+        local_storage::ILocalStoragePtr localStorage,
+        SyncChunksDataCountersPtr syncChunksDataCounters);
 
     [[nodiscard]] QFuture<void> processLinkedNotebooks(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
@@ -55,6 +58,7 @@ private:
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
+    const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };
 
 } // namespace quentier::synchronization

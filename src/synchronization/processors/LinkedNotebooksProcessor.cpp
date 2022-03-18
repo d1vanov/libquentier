@@ -19,6 +19,8 @@
 #include "LinkedNotebooksProcessor.h"
 #include "Utils.h"
 
+#include <synchronization/SyncChunksDataCounters.h>
+
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -29,16 +31,27 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+#include <algorithm>
+
 namespace quentier::synchronization {
 
 LinkedNotebooksProcessor::LinkedNotebooksProcessor(
-    local_storage::ILocalStoragePtr localStorage) :
-    m_localStorage{std::move(localStorage)}
+    local_storage::ILocalStoragePtr localStorage,
+    SyncChunksDataCountersPtr syncChunksDataCounters) :
+    m_localStorage{std::move(localStorage)},
+    m_syncChunksDataCounters{std::move(syncChunksDataCounters)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::LinkedNotebooksProcessor",
             "LinkedNotebooksProcessor ctor: local storage is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_syncChunksDataCounters)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::LinkedNotebooksProcessor",
+            "LinkedNotebooksProcessor ctor: sync chuks data counters is "
+            "null")}};
     }
 }
 
@@ -58,6 +71,12 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
     }
 
     utils::filterOutExpungedItems(expungedLinkedNotebooks, linkedNotebooks);
+
+    m_syncChunksDataCounters->m_totalLinkedNotebooks =
+        static_cast<quint64>(std::max(linkedNotebooks.size(), 0));
+
+    m_syncChunksDataCounters->m_totalExpungedLinkedNotebooks =
+        static_cast<quint64>(std::max(expungedLinkedNotebooks.size(), 0));
 
     if (linkedNotebooks.isEmpty() && expungedLinkedNotebooks.isEmpty()) {
         QNDEBUG(
@@ -87,8 +106,21 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         auto putLinkedNotebookFuture =
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
+        auto thenFuture = threading::then(
+            std::move(putLinkedNotebookFuture),
+            [selfWeak]
+            {
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                ++self->m_syncChunksDataCounters->m_updatedLinkedNotebooks;
+            });
+
         threading::thenOrFailed(
-            std::move(putLinkedNotebookFuture), linkedNotebookPromise);
+            std::move(thenFuture),
+            std::move(linkedNotebookPromise));
     }
 
     for (const auto & guid: qAsConst(expungedLinkedNotebooks)) {
@@ -98,6 +130,21 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
 
         auto expungeLinkedNotebookFuture =
             m_localStorage->expungeLinkedNotebookByGuid(guid);
+
+        auto thenFuture = threading::then(
+            std::move(expungeLinkedNotebookFuture),
+            [selfWeak]
+            {
+                const auto self = selfWeak.lock();
+                if (!self) {
+                    return;
+                }
+
+                ++self->m_syncChunksDataCounters->m_expungedLinkedNotebooks;
+            });
+
+        threading::thenOrFailed(
+            std::move(thenFuture), std::move(linkedNotebookPromise));
     }
 
     return threading::whenAll(std::move(linkedNotebookFutures));
