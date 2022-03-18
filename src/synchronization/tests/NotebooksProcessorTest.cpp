@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/NotebooksProcessor.h>
+#include <synchronization/SyncChunksDataCounters.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>

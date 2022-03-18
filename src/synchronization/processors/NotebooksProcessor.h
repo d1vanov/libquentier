@@ -19,6 +19,7 @@
 #pragma once
 
 #include "INotebooksProcessor.h"
+
 #include <synchronization/Fwd.h>
 
 #include <quentier/local_storage/Fwd.h>

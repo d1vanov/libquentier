@@ -150,7 +150,7 @@ QFuture<void> NotebooksProcessor::processNotebooks(
             });
 
         threading::thenOrFailed(
-            std::move(thenFuture), notebookPromise);
+            std::move(thenFuture), std::move(notebookPromise));
     }
 
     return threading::whenAll(std::move(notebookFutures));
