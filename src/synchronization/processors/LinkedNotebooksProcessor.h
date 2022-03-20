@@ -50,13 +50,6 @@ public:
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
-    [[nodiscard]] QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
-        const qevercloud::SyncChunk & syncChunk) const;
-
-    [[nodiscard]] QList<qevercloud::Guid> collectExpungedLinkedNotebookGuids(
-        const qevercloud::SyncChunk & syncChunk) const;
-
-private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const SyncChunksDataCountersPtr m_syncChunksDataCounters;
 };

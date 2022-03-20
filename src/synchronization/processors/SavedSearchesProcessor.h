@@ -52,12 +52,6 @@ public:
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
-    [[nodiscard]] QList<qevercloud::SavedSearch> collectSavedSearches(
-        const qevercloud::SyncChunk & syncChunk) const;
-
-    [[nodiscard]] QList<qevercloud::Guid> collectExpungedSavedSearchGuids(
-        const qevercloud::SyncChunk & syncChunk) const;
-
     void tryToFindDuplicateByName(
         const std::shared_ptr<QPromise<void>> & savedSearchPromise,
         qevercloud::SavedSearch updatedSavedSearch);

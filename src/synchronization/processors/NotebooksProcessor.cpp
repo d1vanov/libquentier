@@ -36,6 +36,54 @@
 
 namespace quentier::synchronization {
 
+namespace {
+
+QList<qevercloud::Notebook> collectNotebooks(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    if (!syncChunk.notebooks() || syncChunk.notebooks()->isEmpty()) {
+        return {};
+    }
+
+    QList<qevercloud::Notebook> notebooks;
+    notebooks.reserve(syncChunk.notebooks()->size());
+    for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
+        if (Q_UNLIKELY(!notebook.guid())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without guid, skipping it: " << notebook);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without update sequence number, "
+                    << "skipping it: " << notebook);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!notebook.name())) {
+            QNWARNING(
+                "synchronization::NotebooksProcessor",
+                "Detected notebook without name, skipping it: " << notebook);
+            continue;
+        }
+
+        notebooks << notebook;
+    }
+
+    return notebooks;
+}
+
+QList<qevercloud::Guid> collectExpungedNotebookGuids(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    return syncChunk.expungedNotebooks().value_or(QList<qevercloud::Guid>{});
+}
+
+} // namespace
+
 NotebooksProcessor::NotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
     ISyncConflictResolverPtr syncConflictResolver,
@@ -137,10 +185,8 @@ QFuture<void> NotebooksProcessor::processNotebooks(
         auto expungeNotebookFuture =
             m_localStorage->expungeNotebookByGuid(guid);
 
-        auto thenFuture = threading::then(
-            std::move(expungeNotebookFuture),
-            [selfWeak]
-            {
+        auto thenFuture =
+            threading::then(std::move(expungeNotebookFuture), [selfWeak] {
                 const auto self = selfWeak.lock();
                 if (!self) {
                     return;
@@ -156,50 +202,6 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     return threading::whenAll(std::move(notebookFutures));
 }
 
-QList<qevercloud::Notebook> NotebooksProcessor::collectNotebooks(
-    const qevercloud::SyncChunk & syncChunk) const
-{
-    if (!syncChunk.notebooks() || syncChunk.notebooks()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::Notebook> notebooks;
-    notebooks.reserve(syncChunk.notebooks()->size());
-    for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
-        if (Q_UNLIKELY(!notebook.guid())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without guid, skipping it: " << notebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without update sequence number, "
-                    << "skipping it: " << notebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!notebook.name())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without name, skipping it: " << notebook);
-            continue;
-        }
-
-        notebooks << notebook;
-    }
-
-    return notebooks;
-}
-
-QList<qevercloud::Guid> NotebooksProcessor::collectExpungedNotebookGuids(
-    const qevercloud::SyncChunk & syncChunk) const
-{
-    return syncChunk.expungedNotebooks().value_or(QList<qevercloud::Guid>{});
-}
-
 void NotebooksProcessor::tryToFindDuplicateByName(
     const std::shared_ptr<QPromise<void>> & notebookPromise,
     qevercloud::Notebook updatedNotebook)
@@ -213,11 +215,9 @@ void NotebooksProcessor::tryToFindDuplicateByName(
 
     threading::thenOrFailed(
         std::move(findNotebookByNameFuture), notebookPromise,
-        [this, selfWeak,
-        updatedNotebook = std::move(updatedNotebook),
-        notebookPromise](
-            const std::optional<qevercloud::Notebook> &
-            notebook) mutable {
+        [this, selfWeak, updatedNotebook = std::move(updatedNotebook),
+         notebookPromise](
+            const std::optional<qevercloud::Notebook> & notebook) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -225,20 +225,17 @@ void NotebooksProcessor::tryToFindDuplicateByName(
 
             if (notebook) {
                 onFoundDuplicate(
-                    notebookPromise, std::move(updatedNotebook),
-                    *notebook);
+                    notebookPromise, std::move(updatedNotebook), *notebook);
                 return;
             }
 
             // No duplicate by either guid or name was found,
             // just put the updated notebook to the local storage
-            auto putNotebookFuture = m_localStorage->putNotebook(
-                std::move(updatedNotebook));
+            auto putNotebookFuture =
+                m_localStorage->putNotebook(std::move(updatedNotebook));
 
-            auto thenFuture = threading::then(
-                std::move(putNotebookFuture),
-                [selfWeak]
-                {
+            auto thenFuture =
+                threading::then(std::move(putNotebookFuture), [selfWeak] {
                     const auto self = selfWeak.lock();
                     if (!self) {
                         return;
@@ -247,8 +244,7 @@ void NotebooksProcessor::tryToFindDuplicateByName(
                     ++self->m_syncChunksDataCounters->m_addedNotebooks;
                 });
 
-            threading::thenOrFailed(
-                std::move(thenFuture), notebookPromise);
+            threading::thenOrFailed(std::move(thenFuture), notebookPromise);
         });
 }
 
@@ -283,10 +279,8 @@ void NotebooksProcessor::onFoundDuplicate(
                 auto putNotebookFuture =
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
-                auto thenFuture = threading::then(
-                    std::move(putNotebookFuture),
-                    [selfWeak]
-                    {
+                auto thenFuture =
+                    threading::then(std::move(putNotebookFuture), [selfWeak] {
                         const auto self = selfWeak.lock();
                         if (!self) {
                             return;
@@ -295,8 +289,7 @@ void NotebooksProcessor::onFoundDuplicate(
                         ++self->m_syncChunksDataCounters->m_updatedNotebooks;
                     });
 
-                threading::thenOrFailed(
-                    std::move(thenFuture), notebookPromise);
+                threading::thenOrFailed(std::move(thenFuture), notebookPromise);
 
                 return;
             }

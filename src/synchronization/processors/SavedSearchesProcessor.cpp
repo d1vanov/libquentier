@@ -34,6 +34,56 @@
 
 namespace quentier::synchronization {
 
+namespace {
+
+QList<qevercloud::SavedSearch> collectSavedSearches(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    if (!syncChunk.searches() || syncChunk.searches()->isEmpty()) {
+        return {};
+    }
+
+    QList<qevercloud::SavedSearch> savedSearches;
+    savedSearches.reserve(syncChunk.searches()->size());
+    for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
+        if (Q_UNLIKELY(!savedSearch.guid())) {
+            QNWARNING(
+                "synchronization::SavedSearchesProcessor",
+                "Detected saved search without guid, skipping it: "
+                    << savedSearch);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!savedSearch.updateSequenceNum())) {
+            QNWARNING(
+                "synchronization::SavedSearchesProcessor",
+                "Detected saved search without update sequence number, "
+                    << "skipping it: " << savedSearch);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!savedSearch.name())) {
+            QNWARNING(
+                "synchronization::SavedSearchesProcessor",
+                "Detected saved search without name, skipping it: "
+                    << savedSearch);
+            continue;
+        }
+
+        savedSearches << savedSearch;
+    }
+
+    return savedSearches;
+}
+
+QList<qevercloud::Guid> collectExpungedSavedSearchGuids(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    return syncChunk.expungedSearches().value_or(QList<qevercloud::Guid>{});
+}
+
+} // namespace
+
 SavedSearchesProcessor::SavedSearchesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     ISyncConflictResolverPtr syncConflictResolver,
@@ -153,52 +203,6 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
     }
 
     return threading::whenAll(std::move(savedSearchFutures));
-}
-
-QList<qevercloud::SavedSearch> SavedSearchesProcessor::collectSavedSearches(
-    const qevercloud::SyncChunk & syncChunk) const
-{
-    if (!syncChunk.searches() || syncChunk.searches()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::SavedSearch> savedSearches;
-    savedSearches.reserve(syncChunk.searches()->size());
-    for (const auto & savedSearch: qAsConst(*syncChunk.searches())) {
-        if (Q_UNLIKELY(!savedSearch.guid())) {
-            QNWARNING(
-                "synchronization::SavedSearchesProcessor",
-                "Detected saved search without guid, skipping it: "
-                    << savedSearch);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!savedSearch.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::SavedSearchesProcessor",
-                "Detected saved search without update sequence number, "
-                    << "skipping it: " << savedSearch);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!savedSearch.name())) {
-            QNWARNING(
-                "synchronization::SavedSearchesProcessor",
-                "Detected saved search without name, skipping it: "
-                    << savedSearch);
-            continue;
-        }
-
-        savedSearches << savedSearch;
-    }
-
-    return savedSearches;
-}
-
-QList<qevercloud::Guid> SavedSearchesProcessor::collectExpungedSavedSearchGuids(
-    const qevercloud::SyncChunk & syncChunk) const
-{
-    return syncChunk.expungedSearches().value_or(QList<qevercloud::Guid>{});
 }
 
 void SavedSearchesProcessor::tryToFindDuplicateByName(

@@ -35,6 +35,50 @@
 
 namespace quentier::synchronization {
 
+namespace {
+
+QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    if (!syncChunk.linkedNotebooks() || syncChunk.linkedNotebooks()->isEmpty())
+    {
+        return {};
+    }
+
+    QList<qevercloud::LinkedNotebook> linkedNotebooks;
+    linkedNotebooks.reserve(syncChunk.linkedNotebooks()->size());
+    for (const auto & linkedNotebook: qAsConst(*syncChunk.linkedNotebooks())) {
+        if (Q_UNLIKELY(!linkedNotebook.guid())) {
+            QNWARNING(
+                "synchronization::LinkedNotebooksProcessor",
+                "Detected linked notebook without guid, skipping it: "
+                    << linkedNotebook);
+            continue;
+        }
+
+        if (Q_UNLIKELY(!linkedNotebook.updateSequenceNum())) {
+            QNWARNING(
+                "synchronization::LinkedNotebooksProcessor",
+                "Detected linked notebook without update sequence number, "
+                    << "skipping it: " << linkedNotebook);
+            continue;
+        }
+
+        linkedNotebooks << linkedNotebook;
+    }
+
+    return linkedNotebooks;
+}
+
+QList<qevercloud::Guid> collectExpungedLinkedNotebookGuids(
+    const qevercloud::SyncChunk & syncChunk)
+{
+    return syncChunk.expungedLinkedNotebooks().value_or(
+        QList<qevercloud::Guid>{});
+}
+
+} // namespace
+
 LinkedNotebooksProcessor::LinkedNotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
     SyncChunksDataCountersPtr syncChunksDataCounters) :
@@ -106,10 +150,8 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         auto putLinkedNotebookFuture =
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
-        auto thenFuture = threading::then(
-            std::move(putLinkedNotebookFuture),
-            [selfWeak]
-            {
+        auto thenFuture =
+            threading::then(std::move(putLinkedNotebookFuture), [selfWeak] {
                 const auto self = selfWeak.lock();
                 if (!self) {
                     return;
@@ -119,8 +161,7 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
             });
 
         threading::thenOrFailed(
-            std::move(thenFuture),
-            std::move(linkedNotebookPromise));
+            std::move(thenFuture), std::move(linkedNotebookPromise));
     }
 
     for (const auto & guid: qAsConst(expungedLinkedNotebooks)) {
@@ -131,10 +172,8 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         auto expungeLinkedNotebookFuture =
             m_localStorage->expungeLinkedNotebookByGuid(guid);
 
-        auto thenFuture = threading::then(
-            std::move(expungeLinkedNotebookFuture),
-            [selfWeak]
-            {
+        auto thenFuture =
+            threading::then(std::move(expungeLinkedNotebookFuture), [selfWeak] {
                 const auto self = selfWeak.lock();
                 if (!self) {
                     return;
@@ -148,48 +187,6 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
     }
 
     return threading::whenAll(std::move(linkedNotebookFutures));
-}
-
-QList<qevercloud::LinkedNotebook>
-    LinkedNotebooksProcessor::collectLinkedNotebooks(
-        const qevercloud::SyncChunk & syncChunk) const
-{
-    if (!syncChunk.linkedNotebooks() || syncChunk.linkedNotebooks()->isEmpty())
-    {
-        return {};
-    }
-
-    QList<qevercloud::LinkedNotebook> linkedNotebooks;
-    linkedNotebooks.reserve(syncChunk.linkedNotebooks()->size());
-    for (const auto & linkedNotebook: qAsConst(*syncChunk.linkedNotebooks())) {
-        if (Q_UNLIKELY(!linkedNotebook.guid())) {
-            QNWARNING(
-                "synchronization::LinkedNotebooksProcessor",
-                "Detected linked notebook without guid, skipping it: "
-                    << linkedNotebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!linkedNotebook.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::LinkedNotebooksProcessor",
-                "Detected linked notebook without update sequence number, "
-                    << "skipping it: " << linkedNotebook);
-            continue;
-        }
-
-        linkedNotebooks << linkedNotebook;
-    }
-
-    return linkedNotebooks;
-}
-
-QList<qevercloud::Guid>
-    LinkedNotebooksProcessor::collectExpungedLinkedNotebookGuids(
-        const qevercloud::SyncChunk & syncChunk) const
-{
-    return syncChunk.expungedLinkedNotebooks().value_or(
-        QList<qevercloud::Guid>{});
 }
 
 } // namespace quentier::synchronization
