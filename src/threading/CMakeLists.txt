@@ -13,3 +13,7 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC
   ${LIBNAME}_interface
   Qt5::Core)
+
+if(GMOCK_FOUND AND GTEST_FOUND)
+  add_subdirectory(tests)
+endif()
