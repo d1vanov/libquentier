@@ -26,17 +26,15 @@
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/TrackedTask.h>
 
 #include <qevercloud/types/SyncChunk.h>
-
-#include <QMutex>
-#include <QMutexLocker>
 
 namespace quentier::synchronization {
 
 namespace {
 
-QList<qevercloud::SavedSearch> collectSavedSearches(
+[[nodiscard]] QList<qevercloud::SavedSearch> collectSavedSearches(
     const qevercloud::SyncChunk & syncChunk)
 {
     if (!syncChunk.searches() || syncChunk.searches()->isEmpty()) {
@@ -76,7 +74,7 @@ QList<qevercloud::SavedSearch> collectSavedSearches(
     return savedSearches;
 }
 
-QList<qevercloud::Guid> collectExpungedSavedSearchGuids(
+[[nodiscard]] QList<qevercloud::Guid> collectExpungedSavedSearchGuids(
     const qevercloud::SyncChunk & syncChunk)
 {
     return syncChunk.expungedSearches().value_or(QList<qevercloud::Guid>{});
@@ -160,23 +158,21 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
 
         threading::thenOrFailed(
             std::move(findSavedSearchByGuidFuture), savedSearchPromise,
-            [this, selfWeak, updatedSavedSearch = savedSearch,
-             savedSearchPromise](const std::optional<qevercloud::SavedSearch> &
-                                     savedSearch) mutable {
-                const auto self = selfWeak.lock();
-                if (!self) {
-                    return;
-                }
+            threading::TrackedTask{
+                selfWeak,
+                [this, updatedSavedSearch = savedSearch, savedSearchPromise](
+                    const std::optional<qevercloud::SavedSearch> &
+                        savedSearch) mutable {
+                    if (savedSearch) {
+                        onFoundDuplicate(
+                            savedSearchPromise, std::move(updatedSavedSearch),
+                            *savedSearch);
+                        return;
+                    }
 
-                if (savedSearch) {
-                    onFoundDuplicate(
-                        savedSearchPromise, std::move(updatedSavedSearch),
-                        *savedSearch);
-                    return;
-                }
-
-                tryToFindDuplicateByName(
-                    savedSearchPromise, std::move(updatedSavedSearch));
+                    tryToFindDuplicateByName(
+                        savedSearchPromise, std::move(updatedSavedSearch));
+                },
             });
     }
 
@@ -188,14 +184,11 @@ QFuture<void> SavedSearchesProcessor::processSavedSearches(
         auto expungeSavedSearchFuture =
             m_localStorage->expungeSavedSearchByGuid(guid);
 
-        auto thenFuture =
-            threading::then(std::move(expungeSavedSearchFuture), [selfWeak] {
-                const auto self = selfWeak.lock();
-                if (!self) {
-                    return;
-                }
-
-                ++self->m_syncChunksDataCounters->m_expungedSavedSearches;
+        auto thenFuture = threading::then(
+            std::move(expungeSavedSearchFuture),
+            threading::TrackedTask{
+                selfWeak,
+                [this] { ++m_syncChunksDataCounters->m_expungedSavedSearches; },
             });
 
         threading::thenOrFailed(
@@ -218,38 +211,33 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
 
     threading::thenOrFailed(
         std::move(findSavedSearchByNameFuture), savedSearchPromise,
-        [this, selfWeak, updatedSavedSearch = std::move(updatedSavedSearch),
-         savedSearchPromise](const std::optional<qevercloud::SavedSearch> &
-                                 savedSearch) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+        threading::TrackedTask{
+            selfWeak,
+            [this, selfWeak, updatedSavedSearch = std::move(updatedSavedSearch),
+             savedSearchPromise](const std::optional<qevercloud::SavedSearch> &
+                                     savedSearch) mutable {
+                if (savedSearch) {
+                    onFoundDuplicate(
+                        savedSearchPromise, std::move(updatedSavedSearch),
+                        *savedSearch);
+                    return;
+                }
 
-            if (savedSearch) {
-                onFoundDuplicate(
-                    savedSearchPromise, std::move(updatedSavedSearch),
-                    *savedSearch);
-                return;
-            }
+                // No duplicate by either guid or name was found, just put
+                // the updated saved search to the local storage
+                auto putSavedSearchFuture = m_localStorage->putSavedSearch(
+                    std::move(updatedSavedSearch));
 
-            // No duplicate by either guid or name was found, just put
-            // the updated saved search to the local storage
-            auto putSavedSearchFuture =
-                m_localStorage->putSavedSearch(std::move(updatedSavedSearch));
+                auto thenFuture = threading::then(
+                    std::move(putSavedSearchFuture),
+                    threading::TrackedTask{
+                        selfWeak, [this] {
+                            ++m_syncChunksDataCounters->m_addedSavedSearches;
+                        }});
 
-            auto thenFuture =
-                threading::then(std::move(putSavedSearchFuture), [selfWeak] {
-                    const auto self = selfWeak.lock();
-                    if (!self) {
-                        return;
-                    }
-
-                    ++self->m_syncChunksDataCounters->m_addedSavedSearches;
-                });
-
-            threading::thenOrFailed(std::move(thenFuture), savedSearchPromise);
-        });
+                threading::thenOrFailed(
+                    std::move(thenFuture), savedSearchPromise);
+            }});
 }
 
 void SavedSearchesProcessor::onFoundDuplicate(
@@ -268,90 +256,83 @@ void SavedSearchesProcessor::onFoundDuplicate(
 
     threading::thenOrFailed(
         std::move(statusFuture), savedSearchPromise,
-        [this, selfWeak, savedSearchPromise,
-         updatedSavedSearch = std::move(updatedSavedSearch)](
-            const SavedSearchConflictResolution & resolution) mutable {
-            const auto self = selfWeak.lock();
-            if (!self) {
-                return;
-            }
+        threading::TrackedTask{
+            selfWeak,
+            [this, selfWeak, savedSearchPromise,
+             updatedSavedSearch = std::move(updatedSavedSearch)](
+                const SavedSearchConflictResolution & resolution) mutable {
+                if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                        resolution) ||
+                    std::holds_alternative<ConflictResolution::IgnoreMine>(
+                        resolution))
+                {
+                    auto putSavedSearchFuture = m_localStorage->putSavedSearch(
+                        std::move(updatedSavedSearch));
 
-            if (std::holds_alternative<ConflictResolution::UseTheirs>(
-                    resolution) ||
-                std::holds_alternative<ConflictResolution::IgnoreMine>(
-                    resolution))
-            {
-                auto putSavedSearchFuture = m_localStorage->putSavedSearch(
-                    std::move(updatedSavedSearch));
+                    auto thenFuture = threading::then(
+                        std::move(putSavedSearchFuture),
+                        threading::TrackedTask{
+                            selfWeak, [this] {
+                                ++m_syncChunksDataCounters
+                                      ->m_updatedSavedSearches;
+                            }});
 
-                auto thenFuture = threading::then(
-                    std::move(putSavedSearchFuture), [selfWeak] {
-                        const auto self = selfWeak.lock();
-                        if (!self) {
-                            return;
-                        }
+                    threading::thenOrFailed(
+                        std::move(thenFuture), savedSearchPromise);
 
-                        ++self->m_syncChunksDataCounters
-                              ->m_updatedSavedSearches;
-                    });
+                    return;
+                }
 
-                threading::thenOrFailed(
-                    std::move(thenFuture), savedSearchPromise);
+                if (std::holds_alternative<ConflictResolution::UseMine>(
+                        resolution)) {
+                    savedSearchPromise->finish();
+                    return;
+                }
 
-                return;
-            }
+                if (std::holds_alternative<
+                        ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
+                        resolution))
+                {
+                    const auto & mineResolution = std::get<
+                        ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
+                        resolution);
 
-            if (std::holds_alternative<ConflictResolution::UseMine>(resolution))
-            {
-                savedSearchPromise->finish();
-                return;
-            }
+                    auto updateLocalSavedSearchFuture =
+                        m_localStorage->putSavedSearch(mineResolution.mine);
 
-            if (std::holds_alternative<
-                    ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
-                    resolution))
-            {
-                const auto & mineResolution = std::get<
-                    ConflictResolution::MoveMine<qevercloud::SavedSearch>>(
-                    resolution);
+                    threading::thenOrFailed(
+                        std::move(updateLocalSavedSearchFuture),
+                        savedSearchPromise,
+                        threading::TrackedTask{
+                            selfWeak,
+                            [this, selfWeak, savedSearchPromise,
+                             updatedSavedSearch =
+                                 std::move(updatedSavedSearch)]() mutable {
+                                auto putSavedSearchFuture =
+                                    m_localStorage->putSavedSearch(
+                                        std::move(updatedSavedSearch));
 
-                auto updateLocalSavedSearchFuture =
-                    m_localStorage->putSavedSearch(mineResolution.mine);
+                                auto thenFuture = threading::then(
+                                    std::move(putSavedSearchFuture),
+                                    [this, selfWeak,
+                                     savedSearchPromise]() mutable {
+                                        if (const auto self = selfWeak.lock()) {
+                                            ++m_syncChunksDataCounters
+                                                  ->m_addedSavedSearches;
+                                        }
 
-                threading::thenOrFailed(
-                    std::move(updateLocalSavedSearchFuture), savedSearchPromise,
-                    [this, selfWeak, savedSearchPromise,
-                     updatedSavedSearch =
-                         std::move(updatedSavedSearch)]() mutable {
-                        const auto self = selfWeak.lock();
-                        if (!self) {
-                            return;
-                        }
+                                        savedSearchPromise->finish();
+                                    });
 
-                        auto putSavedSearchFuture =
-                            m_localStorage->putSavedSearch(
-                                std::move(updatedSavedSearch));
-
-                        auto thenFuture = threading::then(
-                            std::move(putSavedSearchFuture),
-                            [selfWeak, savedSearchPromise]() mutable {
-                                if (const auto self = selfWeak.lock()) {
-                                    ++self->m_syncChunksDataCounters
-                                          ->m_addedSavedSearches;
-                                }
-
-                                savedSearchPromise->finish();
-                            });
-
-                        threading::onFailed(
-                            std::move(thenFuture),
-                            [savedSearchPromise](const QException & e) {
-                                savedSearchPromise->setException(e);
-                                savedSearchPromise->finish();
-                            });
-                    });
-            }
-        });
+                                threading::onFailed(
+                                    std::move(thenFuture),
+                                    [savedSearchPromise](const QException & e) {
+                                        savedSearchPromise->setException(e);
+                                        savedSearchPromise->finish();
+                                    });
+                            }});
+                }
+            }});
 }
 
 } // namespace quentier::synchronization

@@ -25,11 +25,9 @@
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/TrackedTask.h>
 
 #include <qevercloud/types/SyncChunk.h>
-
-#include <QMutex>
-#include <QMutexLocker>
 
 #include <algorithm>
 
@@ -37,7 +35,7 @@ namespace quentier::synchronization {
 
 namespace {
 
-QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
+[[nodiscard]] QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
     const qevercloud::SyncChunk & syncChunk)
 {
     if (!syncChunk.linkedNotebooks() || syncChunk.linkedNotebooks()->isEmpty())
@@ -70,7 +68,7 @@ QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
     return linkedNotebooks;
 }
 
-QList<qevercloud::Guid> collectExpungedLinkedNotebookGuids(
+[[nodiscard]] QList<qevercloud::Guid> collectExpungedLinkedNotebookGuids(
     const qevercloud::SyncChunk & syncChunk)
 {
     return syncChunk.expungedLinkedNotebooks().value_or(
@@ -150,15 +148,12 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         auto putLinkedNotebookFuture =
             m_localStorage->putLinkedNotebook(linkedNotebook);
 
-        auto thenFuture =
-            threading::then(std::move(putLinkedNotebookFuture), [selfWeak] {
-                const auto self = selfWeak.lock();
-                if (!self) {
-                    return;
-                }
-
-                ++self->m_syncChunksDataCounters->m_updatedLinkedNotebooks;
-            });
+        auto thenFuture = threading::then(
+            std::move(putLinkedNotebookFuture),
+            threading::TrackedTask{
+                selfWeak, [this] {
+                    ++m_syncChunksDataCounters->m_updatedLinkedNotebooks;
+                }});
 
         threading::thenOrFailed(
             std::move(thenFuture), std::move(linkedNotebookPromise));
@@ -172,15 +167,12 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
         auto expungeLinkedNotebookFuture =
             m_localStorage->expungeLinkedNotebookByGuid(guid);
 
-        auto thenFuture =
-            threading::then(std::move(expungeLinkedNotebookFuture), [selfWeak] {
-                const auto self = selfWeak.lock();
-                if (!self) {
-                    return;
-                }
-
-                ++self->m_syncChunksDataCounters->m_expungedLinkedNotebooks;
-            });
+        auto thenFuture = threading::then(
+            std::move(expungeLinkedNotebookFuture),
+            threading::TrackedTask{
+                selfWeak, [this] {
+                    ++m_syncChunksDataCounters->m_expungedLinkedNotebooks;
+                }});
 
         threading::thenOrFailed(
             std::move(thenFuture), std::move(linkedNotebookPromise));
