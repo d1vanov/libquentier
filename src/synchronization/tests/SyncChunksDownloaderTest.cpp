@@ -17,6 +17,7 @@
  */
 
 #include <synchronization/sync_chunks/SyncChunksDownloader.h>
+#include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
 #include <quentier/exception/InvalidArgument.h>
@@ -376,7 +377,13 @@ TEST_P(
     EXPECT_EQ(syncChunksResult.m_exception, nullptr)
         << testData.m_testName.toStdString();
 
-    EXPECT_EQ(syncChunksResult.m_syncChunks, testData.m_syncChunks)
+    auto expectedSyncChunks = testData.m_syncChunks;
+    for (auto & syncChunk: expectedSyncChunks) {
+        utils::setLinkedNotebookGuidToSyncChunkEntries(
+            linkedNotebook.guid().value(), syncChunk);
+    }
+
+    EXPECT_EQ(syncChunksResult.m_syncChunks, expectedSyncChunks)
         << testData.m_testName.toStdString();
 }
 
@@ -446,8 +453,7 @@ TEST_F(
     ASSERT_TRUE(exc);
     EXPECT_EQ(exc->rateLimitDuration(), e.rateLimitDuration());
 
-    const auto partialSyncChunks = [&]
-    {
+    const auto partialSyncChunks = [&] {
         auto chunks = syncChunks;
         Q_UNUSED(chunks.takeLast());
         return chunks;
@@ -515,14 +521,12 @@ TEST_F(
     const auto syncChunksResult = syncChunksFuture.result();
 
     const auto * exc =
-        dynamic_cast<const RuntimeError *>(
-            syncChunksResult.m_exception.get());
+        dynamic_cast<const RuntimeError *>(syncChunksResult.m_exception.get());
 
     ASSERT_TRUE(exc);
     EXPECT_EQ(exc->nonLocalizedErrorMessage(), e.nonLocalizedErrorMessage());
 
-    const auto partialSyncChunks = [&]
-    {
+    const auto partialSyncChunks = [&] {
         auto chunks = syncChunks;
         Q_UNUSED(chunks.takeLast());
         return chunks;
@@ -603,10 +607,13 @@ TEST_F(
     ASSERT_TRUE(exc);
     EXPECT_EQ(exc->rateLimitDuration(), e.rateLimitDuration());
 
-    const auto partialSyncChunks = [&]
-    {
+    const auto partialSyncChunks = [&] {
         auto chunks = syncChunks;
         Q_UNUSED(chunks.takeLast());
+        for (auto & syncChunk: chunks) {
+            utils::setLinkedNotebookGuidToSyncChunkEntries(
+                linkedNotebook.guid().value(), syncChunk);
+        }
         return chunks;
     }();
 
@@ -678,16 +685,18 @@ TEST_F(
     const auto syncChunksResult = syncChunksFuture.result();
 
     const auto * exc =
-        dynamic_cast<const RuntimeError *>(
-            syncChunksResult.m_exception.get());
+        dynamic_cast<const RuntimeError *>(syncChunksResult.m_exception.get());
 
     ASSERT_TRUE(exc);
     EXPECT_EQ(exc->nonLocalizedErrorMessage(), e.nonLocalizedErrorMessage());
 
-    const auto partialSyncChunks = [&]
-    {
+    const auto partialSyncChunks = [&] {
         auto chunks = syncChunks;
         Q_UNUSED(chunks.takeLast());
+        for (auto & syncChunk: chunks) {
+            utils::setLinkedNotebookGuidToSyncChunkEntries(
+                linkedNotebook.guid().value(), syncChunk);
+        }
         return chunks;
     }();
 

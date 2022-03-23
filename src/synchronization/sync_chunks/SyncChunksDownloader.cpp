@@ -17,6 +17,7 @@
  */
 
 #include "SyncChunksDownloader.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -88,6 +89,8 @@ namespace {
         const qint32 afterUsn, const SynchronizationMode synchronizationMode,
         qevercloud::INoteStore & noteStore, qevercloud::IRequestContextPtr ctx)
 {
+    Q_ASSERT(linkedNotebook.guid());
+
     constexpr qint32 maxEntries = 50;
 
     auto promise = std::make_shared<QPromise<qevercloud::SyncChunk>>();
@@ -99,9 +102,12 @@ namespace {
         noteStore.getLinkedNotebookSyncChunkAsync(
             linkedNotebook, afterUsn, maxEntries,
             (synchronizationMode == SynchronizationMode::Full), std::move(ctx)),
-        [promise](
+        [promise, linkedNotebookGuid = *linkedNotebook.guid()](
             qevercloud::SyncChunk syncChunk) mutable // NOLINT
         {
+            utils::setLinkedNotebookGuidToSyncChunkEntries(
+                linkedNotebookGuid, syncChunk);
+
             promise->addResult(std::move(syncChunk));
             promise->finish();
         });
@@ -245,6 +251,15 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
         qevercloud::IRequestContextPtr ctx)
 {
+    if (Q_UNLIKELY(!linkedNotebook.guid())) {
+        return threading::makeExceptionalFuture<
+            ISyncChunksDownloader::SyncChunksResult>(
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::SyncChunksDownloader",
+                "Cannot download linked notebook sync chunks: linked notebook "
+                "has no guid")}});
+    }
+
     auto promise =
         std::make_shared<QPromise<ISyncChunksDownloader::SyncChunksResult>>();
 

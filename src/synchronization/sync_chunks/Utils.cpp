@@ -65,4 +65,25 @@ namespace quentier::synchronization::utils {
     return lowUsn;
 }
 
+void setLinkedNotebookGuidToSyncChunkEntries(
+    const qevercloud::Guid & linkedNotebookGuid,
+    qevercloud::SyncChunk & syncChunk)
+{
+    if (syncChunk.notebooks())
+    {
+        for (auto & notebook: *syncChunk.mutableNotebooks())
+        {
+            notebook.setLinkedNotebookGuid(linkedNotebookGuid);
+        }
+    }
+
+    if (syncChunk.tags())
+    {
+        for (auto & tag: *syncChunk.mutableTags())
+        {
+            tag.setLinkedNotebookGuid(linkedNotebookGuid);
+        }
+    }
+}
+
 } // namespace quentier::synchronization::utils

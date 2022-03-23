@@ -19,6 +19,7 @@
 #pragma once
 
 #include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QtGlobal>
 
@@ -28,5 +29,9 @@ namespace quentier::synchronization::utils {
 
 [[nodiscard]] std::optional<qint32> syncChunkLowUsn(
     const qevercloud::SyncChunk & syncChunk);
+
+void setLinkedNotebookGuidToSyncChunkEntries(
+    const qevercloud::Guid & linkedNotebookGuid,
+    qevercloud::SyncChunk & syncChunk);
 
 } // namespace quentier::synchronization::utils
