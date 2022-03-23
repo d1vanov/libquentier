@@ -16,7 +16,8 @@ add_executable(${TESTS_NAME}
   SimpleTagSyncConflictResolverTest.cpp
   SyncChunksDownloaderTest.cpp
   SyncChunksProviderTest.cpp
-  SyncChunksStorageTest.cpp)
+  SyncChunksStorageTest.cpp
+  TagsProcessorTest.cpp)
 
 target_link_libraries(${TESTS_NAME}
   PRIVATE
