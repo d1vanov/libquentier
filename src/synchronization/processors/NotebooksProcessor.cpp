@@ -203,15 +203,15 @@ void NotebooksProcessor::tryToFindDuplicateByName(
 
     const auto selfWeak = weak_from_this();
 
-    auto findNotebookByNameFuture =
-        m_localStorage->findNotebookByName(*updatedNotebook.name());
+    auto findNotebookByNameFuture = m_localStorage->findNotebookByName(
+        *updatedNotebook.name(), updatedNotebook.linkedNotebookGuid());
 
     threading::thenOrFailed(
         std::move(findNotebookByNameFuture), notebookPromise,
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, updatedNotebook = std::move(updatedNotebook),
-             notebookPromise](
+             notebookPromise = notebookPromise](
                 const std::optional<qevercloud::Notebook> & notebook) mutable {
                 if (notebook) {
                     onFoundDuplicate(
@@ -220,21 +220,19 @@ void NotebooksProcessor::tryToFindDuplicateByName(
                 }
 
                 // No duplicate by either guid or name was found,
-                // just put the updated notebook to the local storage
+                // just put the updated notebook into the local storage
                 auto putNotebookFuture =
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 
-                auto thenFuture =
-                    threading::then(std::move(putNotebookFuture), [selfWeak] {
-                        const auto self = selfWeak.lock();
-                        if (!self) {
-                            return;
-                        }
+                auto thenFuture = threading::then(
+                    std::move(putNotebookFuture),
+                    threading::TrackedTask{
+                        selfWeak, [this] {
+                            ++m_syncChunksDataCounters->m_addedNotebooks;
+                        }});
 
-                        ++self->m_syncChunksDataCounters->m_addedNotebooks;
-                    });
-
-                threading::thenOrFailed(std::move(thenFuture), notebookPromise);
+                threading::thenOrFailed(
+                    std::move(thenFuture), std::move(notebookPromise));
             }});
 }
 

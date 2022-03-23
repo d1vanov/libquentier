@@ -214,8 +214,9 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, updatedSavedSearch = std::move(updatedSavedSearch),
-             savedSearchPromise](const std::optional<qevercloud::SavedSearch> &
-                                     savedSearch) mutable {
+             savedSearchPromise = savedSearchPromise](
+                const std::optional<qevercloud::SavedSearch> &
+                    savedSearch) mutable {
                 if (savedSearch) {
                     onFoundDuplicate(
                         savedSearchPromise, std::move(updatedSavedSearch),
@@ -224,7 +225,7 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                 }
 
                 // No duplicate by either guid or name was found, just put
-                // the updated saved search to the local storage
+                // the updated saved search into the local storage
                 auto putSavedSearchFuture = m_localStorage->putSavedSearch(
                     std::move(updatedSavedSearch));
 
@@ -236,7 +237,7 @@ void SavedSearchesProcessor::tryToFindDuplicateByName(
                         }});
 
                 threading::thenOrFailed(
-                    std::move(thenFuture), savedSearchPromise);
+                    std::move(thenFuture), std::move(savedSearchPromise));
             }});
 }
 

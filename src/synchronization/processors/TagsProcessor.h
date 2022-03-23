@@ -57,7 +57,16 @@ private:
     [[nodiscard]] QFuture<void> processExpungedTags(
         QList<qevercloud::Guid> expungedTags);
 
-    [[nodiscard]] QFuture<void> processTag(qevercloud::Tag tag);
+    enum class CheckParentTag
+    {
+        Yes,
+        No
+    };
+
+    [[nodiscard]] QFuture<void> processTag(
+        const QList<qevercloud::Tag> & tags,
+        int tagIndex,
+        CheckParentTag checkParentTag = CheckParentTag::Yes);
 
     void processTagsOneByOne(
         QList<qevercloud::Tag> tags,
