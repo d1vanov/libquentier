@@ -132,6 +132,7 @@ QFuture<void> TagsProcessor::processTags(
     // after another.
     for (auto it = tags.begin(); it != tags.end();) {
         if (!it->parentGuid()) {
+            ++it;
             continue;
         }
 
