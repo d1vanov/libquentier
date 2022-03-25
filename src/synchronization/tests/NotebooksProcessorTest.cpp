@@ -112,6 +112,8 @@ TEST_F(NotebooksProcessorTest, ProcessSyncChunksWithoutNotebooksToProcess)
 
 TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
 {
+    const auto linkedNotebookGuid = UidGenerator::Generate();
+
     const auto notebooks = QList<qevercloud::Notebook>{}
         << qevercloud::NotebookBuilder{}
                .setGuid(UidGenerator::Generate())
@@ -127,11 +129,13 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Notebook #3"))
                .setUpdateSequenceNum(36)
+               .setLinkedNotebookGuid(linkedNotebookGuid)
                .build()
         << qevercloud::NotebookBuilder{}
                .setGuid(UidGenerator::Generate())
                .setName(QStringLiteral("Notebook #4"))
                .setUpdateSequenceNum(54)
+               .setLinkedNotebookGuid(linkedNotebookGuid)
                .build();
 
     QList<qevercloud::Notebook> notebooksPutIntoLocalStorage;
@@ -164,7 +168,16 @@ TEST_F(NotebooksProcessorTest, ProcessNotebooksWithoutConflicts)
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
 
-            EXPECT_FALSE(linkedNotebookGuid);
+            const bool isLinkedNotebookTag =
+                (name == QStringLiteral("Notebook #3") ||
+                 name == QStringLiteral("Notebook #4"));
+
+            if (isLinkedNotebookTag) {
+                EXPECT_TRUE(linkedNotebookGuid);
+            }
+            else {
+                EXPECT_FALSE(linkedNotebookGuid);
+            }
 
             const auto it = std::find_if(
                 notebooksPutIntoLocalStorage.constBegin(),
@@ -414,7 +427,6 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     {
         movedLocalConflict =
             qevercloud::NotebookBuilder{}
-                .setGuid(UidGenerator::Generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -462,6 +474,14 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
         .WillRepeatedly([&, conflictGuid = notebook.guid()](
                             const qevercloud::Notebook & notebook) {
             if (Q_UNLIKELY(!notebook.guid())) {
+                if (std::holds_alternative<
+                        ISyncConflictResolver::ConflictResolution::MoveMine<
+                            qevercloud::Notebook>>(resolution))
+                {
+                    notebooksPutIntoLocalStorage << notebook;
+                    return threading::makeReadyFuture();
+                }
+
                 return threading::makeExceptionalFuture<void>(RuntimeError{
                     ErrorString{"Detected notebook without guid"}});
             }
@@ -637,7 +657,6 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
     {
         movedLocalConflict =
             qevercloud::NotebookBuilder{}
-                .setGuid(UidGenerator::Generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -662,6 +681,14 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
         .WillRepeatedly([&, conflictGuid = notebook.guid()](
                             const qevercloud::Notebook & notebook) {
             if (Q_UNLIKELY(!notebook.guid())) {
+                if (std::holds_alternative<
+                        ISyncConflictResolver::ConflictResolution::MoveMine<
+                            qevercloud::Notebook>>(resolution))
+                {
+                    notebooksPutIntoLocalStorage << notebook;
+                    return threading::makeReadyFuture();
+                }
+
                 return threading::makeExceptionalFuture<void>(RuntimeError{
                     ErrorString{"Detected notebook without guid"}});
             }
