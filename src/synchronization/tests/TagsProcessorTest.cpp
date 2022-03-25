@@ -469,7 +469,6 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
     {
         movedLocalConflict =
             qevercloud::TagBuilder{}
-                .setGuid(UidGenerator::Generate())
                 .setName(
                     localConflict.name().value() + QStringLiteral("_moved"))
                 .build();
@@ -517,6 +516,226 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
         .WillRepeatedly(
             [&, conflictGuid = tag.guid()](const qevercloud::Tag & tag) {
                 if (Q_UNLIKELY(!tag.guid())) {
+                    if (std::holds_alternative<
+                            ISyncConflictResolver::ConflictResolution::MoveMine<
+                                qevercloud::Tag>>(resolution))
+                    {
+                        tagsPutIntoLocalStorage << tag;
+                        return threading::makeReadyFuture();
+                    }
+
+                    return threading::makeExceptionalFuture<void>(
+                        RuntimeError{ErrorString{"Detected tag without guid"}});
+                }
+
+                EXPECT_TRUE(
+                    triedGuids.contains(*tag.guid()) ||
+                    (movedLocalConflict && movedLocalConflict == tag));
+
+                if (Q_UNLIKELY(!tag.name())) {
+                    return threading::makeExceptionalFuture<void>(
+                        RuntimeError{ErrorString{"Detected tag without name"}});
+                }
+
+                EXPECT_TRUE(
+                    triedNames.contains(*tag.name()) ||
+                    tag.guid() == conflictGuid ||
+                    (movedLocalConflict && movedLocalConflict == tag));
+
+                tagsPutIntoLocalStorage << tag;
+                return threading::makeReadyFuture();
+            });
+
+    auto tags = QList<qevercloud::Tag>{}
+        << tag
+        << qevercloud::TagBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Tag #2"))
+               .setUpdateSequenceNum(35)
+               .build()
+        << qevercloud::TagBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Tag #3"))
+               .setUpdateSequenceNum(36)
+               .build()
+        << qevercloud::TagBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setName(QStringLiteral("Tag #4"))
+               .setUpdateSequenceNum(54)
+               .build();
+
+    const auto originalTagsSize = tags.size();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setTags(tags).build();
+
+    const auto tagsProcessor = std::make_shared<TagsProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver,
+        m_syncChunksDataCounters);
+
+    auto future = tagsProcessor->processTags(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        tags.removeAt(0);
+    }
+
+    auto sortedTags = tags;
+    ErrorString error;
+    ASSERT_TRUE(sortTagsByParentChildRelations(sortedTags, error))
+        << error.nonLocalizedString().toStdString();
+
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Tag>>(resolution))
+    {
+        ASSERT_TRUE(movedLocalConflict);
+        sortedTags.insert(std::prev(sortedTags.end()), *movedLocalConflict);
+    }
+
+    EXPECT_EQ(tagsPutIntoLocalStorage, sortedTags);
+
+    EXPECT_EQ(
+        m_syncChunksDataCounters->totalTags(),
+        static_cast<quint64>(originalTagsSize));
+
+    EXPECT_EQ(m_syncChunksDataCounters->totalExpungedTags(), 0UL);
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(
+            resolution) ||
+        std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedTags(),
+            static_cast<quint64>(originalTagsSize - 1));
+
+        if (std::holds_alternative<
+                ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+        {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+        }
+        else {
+            EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 1UL);
+        }
+    }
+    else {
+        EXPECT_EQ(
+            m_syncChunksDataCounters->addedTags(),
+            static_cast<quint64>(originalTagsSize));
+
+        EXPECT_EQ(m_syncChunksDataCounters->updatedTags(), 0UL);
+    }
+}
+
+TEST_P(TagsProcessorTestWithConflict, HandleConflictByName)
+{
+    const auto tag = qevercloud::TagBuilder{}
+                         .setGuid(UidGenerator::Generate())
+                         .setName(QStringLiteral("Tag #1"))
+                         .setUpdateSequenceNum(1)
+                         .build();
+
+    const auto localConflict =
+        qevercloud::TagBuilder{}.setName(tag.name()).build();
+
+    QList<qevercloud::Tag> tagsPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+    QSet<QString> triedNames;
+
+    EXPECT_CALL(*m_mockLocalStorage, findTagByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid) {
+            EXPECT_FALSE(triedGuids.contains(guid));
+            triedGuids.insert(guid);
+
+            const auto it = std::find_if(
+                tagsPutIntoLocalStorage.constBegin(),
+                tagsPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Tag & tag) {
+                    return tag.guid() && (*tag.guid() == guid);
+                });
+            if (it != tagsPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Tag>>(*it);
+            }
+
+            return threading::makeReadyFuture<std::optional<qevercloud::Tag>>(
+                std::nullopt);
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, findTagByName)
+        .WillRepeatedly([&, conflictName = tag.name()](
+                            const QString & name,
+                            const std::optional<QString> & linkedNotebookGuid) {
+            EXPECT_FALSE(triedNames.contains(name));
+            triedNames.insert(name);
+
+            EXPECT_FALSE(linkedNotebookGuid);
+
+            const auto it = std::find_if(
+                tagsPutIntoLocalStorage.constBegin(),
+                tagsPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Tag & tag) {
+                    return tag.name() && (*tag.name() == name);
+                });
+            if (it != tagsPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Tag>>(*it);
+            }
+
+            if (name == conflictName) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Tag>>(localConflict);
+            }
+
+            return threading::makeReadyFuture<std::optional<qevercloud::Tag>>(
+                std::nullopt);
+        });
+
+    auto resolution = GetParam();
+    std::optional<qevercloud::Tag> movedLocalConflict;
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Tag>>(resolution))
+    {
+        movedLocalConflict =
+            qevercloud::TagBuilder{}
+                .setName(
+                    localConflict.name().value() + QStringLiteral("_moved"))
+                .build();
+
+        resolution = ISyncConflictResolver::TagConflictResolution{
+            ISyncConflictResolver::ConflictResolution::MoveMine<
+                qevercloud::Tag>{*movedLocalConflict}};
+    }
+
+    EXPECT_CALL(*m_mockSyncConflictResolver, resolveTagConflict)
+        .WillOnce([&, resolution](
+                      const qevercloud::Tag & theirs,
+                      const qevercloud::Tag & mine) mutable {
+            EXPECT_EQ(theirs, tag);
+            EXPECT_EQ(mine, localConflict);
+            return threading::makeReadyFuture<
+                ISyncConflictResolver::TagConflictResolution>(
+                std::move(resolution));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putTag)
+        .WillRepeatedly(
+            [&, conflictGuid = tag.guid()](const qevercloud::Tag & tag) {
+                if (Q_UNLIKELY(!tag.guid())) {
+                    if (std::holds_alternative<
+                            ISyncConflictResolver::ConflictResolution::MoveMine<
+                                qevercloud::Tag>>(resolution))
+                    {
+                        tagsPutIntoLocalStorage << tag;
+                        return threading::makeReadyFuture();
+                    }
+
                     return threading::makeExceptionalFuture<void>(
                         RuntimeError{ErrorString{"Detected tag without guid"}});
                 }
