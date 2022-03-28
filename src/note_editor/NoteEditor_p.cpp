@@ -6595,6 +6595,10 @@ void NoteEditorPrivate::setupNoteEditorPage()
 {
     QNDEBUG("note_editor", "NoteEditorPrivate::setupNoteEditorPage");
 
+    if (page()) {
+        return;
+    }
+
     NoteEditorPage * page = new NoteEditorPage(*this);
 
     page->settings()->setAttribute(
