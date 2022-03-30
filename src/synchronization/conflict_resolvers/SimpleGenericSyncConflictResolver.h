@@ -358,12 +358,12 @@ QFuture<T> SimpleGenericSyncConflictResolver<
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
-        [self_weak = SimpleGenericSyncConflictResolver<
+        [selfWeak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this(),
          promise = std::move(promise), watcher = std::move(watcher),
          item = std::move(item), newItemName = std::move(newItemName),
          counter = counter]() mutable {
-            const auto self = self_weak.lock();
+            const auto self = selfWeak.lock();
             if (!self) {
                 promise->setException(
                     RuntimeError{ErrorString{QT_TRANSLATE_NOOP(

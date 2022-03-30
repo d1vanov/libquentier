@@ -23,6 +23,12 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
 #include <qevercloud/services/Fwd.h>
 
 namespace quentier::synchronization {
@@ -39,6 +45,17 @@ public:
 
     [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
+
+private:
+    enum class ProcessNoteStatus
+    {
+        AddedNote,
+        UpdatedNote
+    };
+
+    void onFoundDuplicate(
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+        qevercloud::Note updatedNote, qevercloud::Note localNote);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
