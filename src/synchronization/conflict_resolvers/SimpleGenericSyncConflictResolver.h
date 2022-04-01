@@ -353,16 +353,19 @@ QFuture<T> SimpleGenericSyncConflictResolver<
 
     promise->start();
 
-    auto watcher = threading::makeFutureWatcher<std::optional<T>>();
+    auto watcher = std::make_unique<QFutureWatcher<std::optional<T>>>();
     watcher->setFuture(findItemFuture);
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
         [selfWeak = SimpleGenericSyncConflictResolver<
              T, Resolution, FindByNameMemFn>::weak_from_this(),
-         promise = std::move(promise), watcher = std::move(watcher),
+         promise = std::move(promise), rawWatcher,
          item = std::move(item), newItemName = std::move(newItemName),
          counter = counter]() mutable {
+            auto future = rawWatcher->future();
+            rawWatcher->deleteLater();
+
             const auto self = selfWeak.lock();
             if (!self) {
                 promise->setException(
@@ -375,7 +378,6 @@ QFuture<T> SimpleGenericSyncConflictResolver<
                 return;
             }
 
-            auto future = watcher->future();
             try {
                 future.waitForFinished();
             }
@@ -414,6 +416,11 @@ QFuture<T> SimpleGenericSyncConflictResolver<
                 });
         });
 
+    QObject::connect(
+        rawWatcher, &QFutureWatcher<qevercloud::Notebook>::canceled, rawWatcher,
+        [rawWatcher] { rawWatcher->deleteLater(); });
+
+    Q_UNUSED(watcher.release())
     return future;
 }
 
