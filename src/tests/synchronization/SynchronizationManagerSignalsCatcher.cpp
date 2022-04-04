@@ -62,29 +62,33 @@ bool SynchronizationManagerSignalsCatcher::
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressEmpty(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkSyncChunksDataProcessingProgressEmpty(
+        ErrorString & errorDescription) const
 {
     return checkSyncChunksDataProcessingProgressEmptyImpl(
         m_syncChunksDataCounters, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressOrder(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkSyncChunksDataProcessingProgressOrder(
+        ErrorString & errorDescription) const
 {
     return checkSyncChunksDataProcessingProgressOrderImpl(
         m_syncChunksDataCounters, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+        ErrorString & errorDescription) const
 {
     return checkSyncChunksDataProcessingProgressEmptyImpl(
         m_linkedNotebookSyncChunksDataCounters, errorDescription);
 }
 
-bool SynchronizationManagerSignalsCatcher::checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+        ErrorString & errorDescription) const
 {
     return checkSyncChunksDataProcessingProgressOrderImpl(
         m_linkedNotebookSyncChunksDataCounters, errorDescription);
@@ -273,8 +277,8 @@ void SynchronizationManagerSignalsCatcher::onSyncChunksDataCounters(
     m_syncChunksDataCounters << counters;
 }
 
-void SynchronizationManagerSignalsCatcher::onLinkedNotebookSyncChunksDataCounters(
-    ISyncChunksDataCountersPtr counters)
+void SynchronizationManagerSignalsCatcher::
+    onLinkedNotebookSyncChunksDataCounters(ISyncChunksDataCountersPtr counters)
 {
     m_linkedNotebookSyncChunksDataCounters << counters;
 }
@@ -584,9 +588,10 @@ bool SynchronizationManagerSignalsCatcher::checkSingleSyncChunkDownloadProgress(
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressEmptyImpl(
-    const QVector<ISyncChunksDataCountersPtr> & counters,
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkSyncChunksDataProcessingProgressEmptyImpl(
+        const QVector<ISyncChunksDataCountersPtr> & counters,
+        ErrorString & errorDescription) const
 {
     if (!counters.isEmpty()) {
         errorDescription.setBase(
@@ -598,9 +603,10 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgress
     return true;
 }
 
-bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgressOrderImpl(
-    const QVector<ISyncChunksDataCountersPtr> & counters,
-    ErrorString & errorDescription) const
+bool SynchronizationManagerSignalsCatcher::
+    checkSyncChunksDataProcessingProgressOrderImpl(
+        const QVector<ISyncChunksDataCountersPtr> & counters,
+        ErrorString & errorDescription) const
 {
     if (counters.isEmpty()) {
         errorDescription.setBase(
@@ -610,8 +616,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgress
     }
 
     ISyncChunksDataCountersPtr lastSyncChunksDataCounters;
-    for (const auto & currentCounters: ::qAsConst(counters))
-    {
+    for (const auto & currentCounters: ::qAsConst(counters)) {
         Q_ASSERT(currentCounters);
 
         if (!lastSyncChunksDataCounters) {
@@ -640,8 +645,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgress
         }
 
         if (currentCounters->totalTags() !=
-            lastSyncChunksDataCounters->totalTags())
-        {
+            lastSyncChunksDataCounters->totalTags()) {
             errorDescription.setBase(
                 QStringLiteral("The number of total tags is different in "
                                "consequent sync chunks data counters"));
@@ -728,8 +732,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgress
         }
 
         if (currentCounters->addedTags() <
-            lastSyncChunksDataCounters->addedTags())
-        {
+            lastSyncChunksDataCounters->addedTags()) {
             errorDescription.setBase(
                 QStringLiteral("The number of added tags is unexpectedly "
                                "declining in consequent sync chunks data "
@@ -738,8 +741,7 @@ bool SynchronizationManagerSignalsCatcher::checkSyncChunksDataProcessingProgress
         }
 
         if (currentCounters->updatedTags() <
-            lastSyncChunksDataCounters->updatedTags())
-        {
+            lastSyncChunksDataCounters->updatedTags()) {
             errorDescription.setBase(
                 QStringLiteral("The number of updated tags is unexpectedly "
                                "declining in consequent sync chunks data "

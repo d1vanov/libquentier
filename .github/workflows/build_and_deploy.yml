@@ -70,7 +70,7 @@ jobs:
       - name: Fetch clang-format
         id: fetch_clang_format
         run: |
-          curl -Ls "https://github.com/muttleyxd/clang-format-static-binaries/releases/download/master-5b56bb49/clang-format-10_linux-amd64" -o "/tmp/clang-format"
+          curl -Ls "https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-208096c1/clang-format-13_linux-amd64" -o "/tmp/clang-format"
           chmod +x /tmp/clang-format
           sudo mv /tmp/clang-format /usr/bin/clang-format
         shell: bash
@@ -416,7 +416,7 @@ jobs:
           cd ..
           dirty=$(git ls-files --modified)
           cd build
-          if [ ! -z $dirty ]; then
+          if [ ! -z "$dirty" ]; then
             echo "Detected source code files not formatted with clang-format: "
             echo $dirty
             exit 1
@@ -830,7 +830,7 @@ jobs:
       - name: Cache OpenSSL x86
         id: cache_openssl_x86
         env:
-          OPENSSL_CACHE_VERSION: '1'
+          OPENSSL_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/openssl_win_x86'
@@ -844,9 +844,9 @@ jobs:
         run: |
           if not exist %RUNNER_WORKSPACE%\openssl_win_x86 (set DOWNLOAD_OPENSSL=1) else (set DOWNLOAD_OPENSSL=0)
           if %DOWNLOAD_OPENSSL%==1 mkdir %RUNNER_WORKSPACE%\openssl_win_x86
-          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1i-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\openssl_win_x86\openssl-1_1_1i-msvc2019_x86.zip
+          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1n-msvc2019_x86.zip -o %RUNNER_WORKSPACE%\openssl_win_x86\openssl-1_1_1n-msvc2019_x86.zip
           if %DOWNLOAD_OPENSSL%==1 cd %RUNNER_WORKSPACE%\openssl_win_x86
-          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1i-msvc2019_x86.zip
+          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1n-msvc2019_x86.zip
         shell: cmd
         if: ${{ matrix.target_arch == 'x86' }}
 
@@ -1069,7 +1069,7 @@ jobs:
       - name: Cache OpenSSL x64
         id: cache_openssl_x64
         env:
-          OPENSSL_CACHE_VERSION: '1'
+          OPENSSL_CACHE_VERSION: '2'
         uses: actions/cache@v1
         with:
           path: '${{ runner.workspace }}/openssl_win_x64'
@@ -1083,9 +1083,9 @@ jobs:
         run: |
           if not exist %RUNNER_WORKSPACE%\openssl_win_x64 (set DOWNLOAD_OPENSSL=1) else (set DOWNLOAD_OPENSSL=0)
           if %DOWNLOAD_OPENSSL%==1 mkdir %RUNNER_WORKSPACE%\openssl_win_x64
-          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1i-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\openssl_win_x64\openssl-1_1_1i-msvc2019_x64.zip
+          if %DOWNLOAD_OPENSSL%==1 curl -fsSL https://github.com/d1vanov/quentier-dependencies-windows/releases/download/continuous/openssl-1_1_1n-msvc2019_x64.zip -o %RUNNER_WORKSPACE%\openssl_win_x64\openssl-1_1_1n-msvc2019_x64.zip
           if %DOWNLOAD_OPENSSL%==1 cd %RUNNER_WORKSPACE%\openssl_win_x64
-          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1i-msvc2019_x64.zip
+          if %DOWNLOAD_OPENSSL%==1 7z x openssl-1_1_1n-msvc2019_x64.zip
         shell: cmd
         if: ${{ matrix.target_arch == 'x64' }}
 

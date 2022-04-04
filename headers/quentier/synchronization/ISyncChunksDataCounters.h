@@ -31,7 +31,7 @@ namespace quentier {
  * representing the current progress on processing the data from downloaded
  * sync chunks
  */
-struct QUENTIER_EXPORT ISyncChunksDataCounters: public Printable
+struct QUENTIER_EXPORT ISyncChunksDataCounters : public Printable
 {
     // ================= Saved searches =================
 

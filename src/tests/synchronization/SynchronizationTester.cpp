@@ -7420,8 +7420,9 @@ void SynchronizationTester::checkSyncChunksDataProcessingProgressOrder(
     }
 }
 
-void SynchronizationTester::checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
-    const SynchronizationManagerSignalsCatcher & catcher)
+void SynchronizationTester::
+    checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
+        const SynchronizationManagerSignalsCatcher & catcher)
 {
     ErrorString errorDescription;
     if (!catcher.checkLinkedNotebookSyncChunksDataProcessingProgressEmpty(
@@ -7431,8 +7432,9 @@ void SynchronizationTester::checkLinkedNotebookSyncChunksDataProcessingProgressE
     }
 }
 
-void SynchronizationTester::checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
-    const SynchronizationManagerSignalsCatcher & catcher)
+void SynchronizationTester::
+    checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
+        const SynchronizationManagerSignalsCatcher & catcher)
 {
     ErrorString errorDescription;
     if (!catcher.checkLinkedNotebookSyncChunksDataProcessingProgressOrder(
@@ -7468,8 +7470,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         QHash<QString, qevercloud::Tag> currentLocalTags;
         listTagsFromLocalStorage(0, linkedNotebookGuid, currentLocalTags);
 
-        for (const auto it: qevercloud::toRange(::qAsConst(currentLocalTags)))
-        {
+        for (const auto it: qevercloud::toRange(::qAsConst(currentLocalTags))) {
             localTags[it.key()] = it.value();
         }
 
@@ -7486,8 +7487,8 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
         QHash<QString, qevercloud::Note> currentLocalNotes;
         listNotesFromLocalStorage(0, linkedNotebookGuid, currentLocalNotes);
 
-        for (const auto it:
-             qevercloud::toRange(::qAsConst(currentLocalNotes))) {
+        for (const auto it: qevercloud::toRange(::qAsConst(currentLocalNotes)))
+        {
             localNotes[it.key()] = it.value();
         }
     }
@@ -7539,8 +7540,7 @@ void SynchronizationTester::checkIdentityOfLocalAndRemoteItems()
             QString::number(remoteLinkedNotebooks.size()) +
             QString::fromUtf8(" remote ones")));
 
-    for (const auto it: qevercloud::toRange(::qAsConst(localLinkedNotebooks)))
-    {
+    for (const auto it: qevercloud::toRange(::qAsConst(localLinkedNotebooks))) {
         auto rit = remoteLinkedNotebooks.find(it.key());
 
         QVERIFY2(
@@ -7905,8 +7905,8 @@ void SynchronizationTester::checkExpectedNamesOfConflictingItemsAfterSync()
         onceChecked = true;
     }
 
-    for (const auto it:
-         qevercloud::toRange(qAsConst(m_expectedTagNamesByGuid))) {
+    for (const auto it: qevercloud::toRange(qAsConst(m_expectedTagNamesByGuid)))
+    {
         Tag tag;
         tag.setLocalUid(QString());
         tag.setGuid(it.key());
