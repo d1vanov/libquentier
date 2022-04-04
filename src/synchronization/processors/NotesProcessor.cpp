@@ -113,45 +113,46 @@ void mapProgress(
 
     auto promiseProgressMutex = std::make_shared<QMutex>();
 
-    const auto computePromiseProgress = [promiseProgressMutex](
-        const int currentFutureProgressRange,
-        const int currentFutureProgress, // NOLINT
-        const int otherFutureProgressRange,
-        const std::shared_ptr<double> & currentFutureProgressPercentage,
-        const std::shared_ptr<double> & otherFutureProgressPercentage)
-    {
-        Q_ASSERT(currentFutureProgressRange);
-        Q_ASSERT(otherFutureProgressRange);
+    const auto computePromiseProgress =
+        [promiseProgressMutex](
+            const int currentFutureProgressRange,
+            const int currentFutureProgress, // NOLINT
+            const int otherFutureProgressRange,
+            const std::shared_ptr<double> & currentFutureProgressPercentage,
+            const std::shared_ptr<double> & otherFutureProgressPercentage) {
+            Q_ASSERT(currentFutureProgressRange);
+            Q_ASSERT(otherFutureProgressRange);
 
-        // Convert current future progress into a percentage
-        *currentFutureProgressPercentage = [&] {
-            if (currentFutureProgressRange == 0) {
-                return 0.0;
-            }
+            // Convert current future progress into a percentage
+            *currentFutureProgressPercentage = [&] {
+                if (currentFutureProgressRange == 0) {
+                    return 0.0;
+                }
+
+                return std::clamp(
+                    static_cast<double>(currentFutureProgress) /
+                        currentFutureProgressRange,
+                    0.0, 1.0);
+            }();
+
+            const QMutexLocker lock{promiseProgressMutex.get()};
+
+            const double newProgress = [&] {
+                if (currentFutureProgressRange == 0 &&
+                    otherFutureProgressRange == 0) {
+                    return 0.0;
+                }
+
+                return (*currentFutureProgressPercentage *
+                            currentFutureProgressRange +
+                        *otherFutureProgressPercentage *
+                            otherFutureProgressRange) /
+                    (currentFutureProgressRange + otherFutureProgressRange);
+            }();
 
             return std::clamp(
-                static_cast<double>(currentFutureProgress) /
-                    currentFutureProgressRange,
-                0.0, 1.0);
-        }();
-
-        const QMutexLocker lock{promiseProgressMutex.get()};
-
-        const double newProgress = [&] {
-            if (currentFutureProgressRange == 0 &&
-                otherFutureProgressRange == 0) {
-                return 0.0;
-            }
-
-            return (*currentFutureProgressPercentage *
-                        currentFutureProgressRange +
-                    *otherFutureProgressPercentage * otherFutureProgressRange) /
-                (currentFutureProgressRange + otherFutureProgressRange);
-        }();
-
-        return std::clamp(
-            static_cast<int>(std::round(newProgress * 100.0)), 0, 100);
-    };
+                static_cast<int>(std::round(newProgress * 100.0)), 0, 100);
+        };
 
     auto firstFutureProgressPercentage = std::make_shared<double>(0.0);
     auto secondFutureProgressPercentage = std::make_shared<double>(0.0);
@@ -212,7 +213,7 @@ void mapProgress(
 
             promise->setProgressValue(
                 std::max(promise->future().progressValue(), newProgress));
-         });
+        });
 
     QObject::connect(
         secondFutureWatcher.get(), &QFutureWatcher<U>::finished,
@@ -319,8 +320,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
             std::move(findNoteByGuidFuture), notePromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, updatedNote = note, notePromise, status](
-                    const std::optional<qevercloud::Note> & note) mutable {
+                [this, updatedNote = note, notePromise,
+                 status](const std::optional<qevercloud::Note> & note) mutable {
                     if (note) {
                         ++status->m_totalUpdatedNotes;
                         onFoundDuplicate(
@@ -353,7 +354,58 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
     mapProgress(processNotesFuture, expungeNotesFuture, promise);
 
-    // TODO: set up handling of finalization and errors of both futures
+    auto exceptionFlag = std::make_shared<bool>(false);
+    auto mutex = std::make_shared<QMutex>();
+
+    const auto processException = [promise, exceptionFlag,
+                                   mutex](const QException & e) {
+        const QMutexLocker locker{mutex.get()};
+
+        if (*exceptionFlag) {
+            return;
+        }
+
+        *exceptionFlag = true;
+        promise->setException(e);
+        promise->finish();
+    };
+
+    auto processNotesThenFuture = threading::then(
+        QFuture{processNotesFuture},
+        [promise, expungeNotesFuture, exceptionFlag, mutex,
+         status](const QList<ProcessNoteStatus> & statuses) {
+            Q_UNUSED(statuses)
+
+            const QMutexLocker locker{mutex.get()};
+
+            if (*exceptionFlag) {
+                return;
+            }
+
+            if (expungeNotesFuture.isFinished()) {
+                promise->addResult(*status);
+                promise->finish();
+            }
+        });
+
+    threading::onFailed(std::move(processNotesThenFuture), processException);
+
+    auto expungeNotesThenFuture = threading::then(
+        QFuture{expungeNotesFuture},
+        [promise, processNotesFuture, exceptionFlag, mutex, status] {
+            const QMutexLocker locker{mutex.get()};
+
+            if (*exceptionFlag) {
+                return;
+            }
+
+            if (processNotesFuture.isFinished()) {
+                promise->addResult(*status);
+                promise->finish();
+            }
+        });
+
+    threading::onFailed(std::move(expungeNotesThenFuture), processException);
 
     return future;
 }
