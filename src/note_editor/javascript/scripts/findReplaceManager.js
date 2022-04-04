@@ -177,33 +177,43 @@ function FindReplaceManager() {
 
     // TODO: should replace this with some more proper way
     this.clearHighlightTags = function(html) {
-        var highlightOpenTagStart = 0;
-        while(true) {
-            highlightOpenTagStart = html.indexOf("<span", highlightOpenTagStart);
-            if (highlightOpenTagStart < 0) {
-                break;
+        var savedSelection = null;
+        try {
+            savedSelection = selectionManager.saveSelection();
+
+            var highlightOpenTagStart = 0;
+            while(true) {
+                highlightOpenTagStart = html.indexOf("<span", highlightOpenTagStart);
+                if (highlightOpenTagStart < 0) {
+                    break;
+                }
+
+                var highlightOpenTagEnd = html.indexOf(">", highlightOpenTagStart);
+                if (highlightOpenTagEnd < 0) {
+                    break;
+                }
+
+                var highlightCloseTagStart = html.indexOf("</span>", highlightOpenTagEnd);
+                if (highlightCloseTagStart < 0) {
+                    break;
+                }
+
+                var classAttributeValueStart = html.indexOf("hilitorHelper");
+                if ((classAttributeValueStart <= highlightOpenTagStart) || (classAttributeValueStart >= highlightOpenTagEnd)) {
+                    continue;
+                }
+
+                var highlightedText = html.substring(highlightOpenTagEnd + 1, highlightCloseTagStart);
+                html = html.substring(0, highlightOpenTagStart) + highlightedText + html.substring(highlightCloseTagStart + 7, html.length);
             }
 
-            var highlightOpenTagEnd = html.indexOf(">", highlightOpenTagStart);
-            if (highlightOpenTagEnd < 0) {
-                break;
-            }
-
-            var highlightCloseTagStart = html.indexOf("</span>", highlightOpenTagEnd);
-            if (highlightCloseTagStart < 0) {
-                break;
-            }
-
-            var classAttributeValueStart = html.indexOf("hilitorHelper");
-            if ((classAttributeValueStart <= highlightOpenTagStart) || (classAttributeValueStart >= highlightOpenTagEnd)) {
-                continue;
-            }
-
-            var highlightedText = html.substring(highlightOpenTagEnd + 1, highlightCloseTagStart);
-            html = html.substring(0, highlightOpenTagStart) + highlightedText + html.substring(highlightCloseTagStart + 7, html.length);
+            return html;
         }
-
-        return html;
+        finally {
+            if (savedSelection) {
+                selectionManager.restoreSelection(savedSelection);
+            }
+        }
     }
 
     this.replaceAll = function(textToReplace, replacementText, matchCase) {
