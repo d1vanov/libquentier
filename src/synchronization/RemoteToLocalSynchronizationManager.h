@@ -982,7 +982,8 @@ private:
     QVector<qevercloud::SyncChunk> m_linkedNotebookSyncChunks;
     QSet<QString> m_linkedNotebookGuidsForWhichSyncChunksWereDownloaded;
     std::shared_ptr<SyncChunksDataCounters> m_syncChunksDataCounters;
-    std::shared_ptr<SyncChunksDataCounters> m_linkedNotebookSyncChunksDataCounters;
+    std::shared_ptr<SyncChunksDataCounters>
+        m_linkedNotebookSyncChunksDataCounters;
 
     qevercloud::AccountLimits m_accountLimits;
 

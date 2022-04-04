@@ -1160,8 +1160,7 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(
         m_pRemoteToLocalSyncManager,
         &RemoteToLocalSynchronizationManager::syncChunksDataProcessingProgress,
-        this,
-        &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
+        this, &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
