@@ -8459,8 +8459,7 @@ void RemoteToLocalSynchronizationManager::clear()
     m_fullSyncStaleDataItemsExpungersByLinkedNotebookGuid.clear();
 
     for (const auto it:
-         qevercloud::toRange(m_notesToAddPerAPICallPostponeTimerId))
-    {
+         qevercloud::toRange(m_notesToAddPerAPICallPostponeTimerId)) {
         int key = it.key();
         killTimer(key);
     }

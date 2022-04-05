@@ -349,8 +349,7 @@ void ResourceDataInTemporaryFileStorageManager::onCurrentNoteChanged(Note note)
     }
 
     for (const auto it:
-         qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath)))
-    {
+         qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath))) {
         m_fileSystemWatcher.removePath(it.key());
         QNTRACE("note_editor", "Stopped watching for file " << it.key());
     }
@@ -421,8 +420,7 @@ void ResourceDataInTemporaryFileStorageManager::onRequestDiagnostics(
 
     strm << "  Resource local uids by file paths: \n";
     for (const auto it:
-         qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath)))
-    {
+         qevercloud::toRange(qAsConst(m_resourceLocalUidByFilePath))) {
         strm << "    [" << it.key() << "]: " << it.value() << "\n";
     }
 
