@@ -276,7 +276,7 @@ jobs:
               cmake --build . --target install
             fi
           fi
-        if: ${{ matrix.qt_version == '5.15.3' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
+        if: ${{ matrix.qt_version == '5.15.2' && ((github.event_name == 'push' && github.ref != 'refs/heads/development') || (github.event_name == 'pull_request' && github.base_ref != 'development')) }}
         shell: bash
 
       - name: Download or build QEverCloud development for Qt 5.15.2
