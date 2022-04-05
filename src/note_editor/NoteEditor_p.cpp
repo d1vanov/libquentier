@@ -7300,12 +7300,9 @@ void NoteEditorPrivate::onPageHtmlReceived(
     if (m_pendingConversionToNoteForSavingInLocalStorage) {
         m_pendingConversionToNoteForSavingInLocalStorage = false;
 
-        if (m_needConversionToNote) {
-            m_pNote->setDirty(true);
-
-            m_pNote->setModificationTimestamp(
-                QDateTime::currentMSecsSinceEpoch());
-        }
+        m_pNote->setDirty(true);
+        m_pNote->setModificationTimestamp(
+            QDateTime::currentMSecsSinceEpoch());
 
         saveNoteToLocalStorage();
     }
@@ -8928,19 +8925,7 @@ void NoteEditorPrivate::saveNoteToLocalStorage()
 
     if (m_pendingNoteSavingInLocalStorage) {
         QNDEBUG("note_editor", "Note is already being saved to local storage");
-
-        if (m_needConversionToNote) {
-            QNDEBUG(
-                "note_editor",
-                "It appears the note editor content has "
-                    << "been changed since save note request was last issued; "
-                       "will "
-                    << "repeat the attempt to save the note after the current "
-                    << "attempt is finished");
-
-            m_shouldRepeatSavingNoteInLocalStorage = true;
-        }
-
+        m_shouldRepeatSavingNoteInLocalStorage = true;
         return;
     }
 
