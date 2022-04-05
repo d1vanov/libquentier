@@ -7301,8 +7301,7 @@ void NoteEditorPrivate::onPageHtmlReceived(
         m_pendingConversionToNoteForSavingInLocalStorage = false;
 
         m_pNote->setDirty(true);
-        m_pNote->setModificationTimestamp(
-            QDateTime::currentMSecsSinceEpoch());
+        m_pNote->setModificationTimestamp(QDateTime::currentMSecsSinceEpoch());
 
         saveNoteToLocalStorage();
     }
