@@ -1160,8 +1160,7 @@ bool ENMLConverterPrivate::validateAndFixupEnml(
         QNTRACE("enml", "Parsed forbidden attributes per element: ");
 
         for (const auto it:
-             qevercloud::toRange(qAsConst(elementToForbiddenAttributes)))
-        {
+             qevercloud::toRange(qAsConst(elementToForbiddenAttributes))) {
             QNTRACE("enml", "[" << it.key() << "]: " << it.value());
         }
     }
