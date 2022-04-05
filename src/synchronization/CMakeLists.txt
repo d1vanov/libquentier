@@ -29,12 +29,15 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleTagSyncConflictResolver.h
   processors/ILinkedNotebooksProcessor.h
   processors/INotebooksProcessor.h
+  processors/INoteFullDataDownloader.h
   processors/ISavedSearchesProcessor.h
   processors/ITagsProcessor.h
   processors/LinkedNotebooksProcessor.cpp
   processors/LinkedNotebooksProcessor.h
   processors/NotebooksProcessor.cpp
   processors/NotebooksProcessor.h
+  processors/NoteFullDataDownloader.cpp
+  processors/NoteFullDataDownloader.h
   processors/SavedSearchesProcessor.cpp
   processors/SavedSearchesProcessor.h
   processors/TagsProcessor.cpp
