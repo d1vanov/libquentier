@@ -23,11 +23,21 @@
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
 #include <qevercloud/RequestContext.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/NoteResultSpecBuilder.h>
 
+#include <QCoreApplication>
+
 #include <gtest/gtest.h>
+
+#include <memory>
 
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
@@ -126,6 +136,82 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
     EXPECT_EQ(future.result(), note);
+}
+
+TEST_P(
+    NoteFullDataDownloaderGroupTest, DownloadSeveralNotesInParallelWithinLimit)
+{
+    const quint32 noteCount = 5;
+
+    const auto noteFullDataDownloader =
+        std::make_shared<NoteFullDataDownloader>(m_mockNoteStore, noteCount);
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto expectedNoteResultSpec =
+        qevercloud::NoteResultSpecBuilder{}
+            .setIncludeContent(true)
+            .setIncludeResourcesData(true)
+            .setIncludeResourcesRecognition(true)
+            .setIncludeResourcesAlternateData(true)
+            .setIncludeSharedNotes(true)
+            .setIncludeNoteAppDataValues(true)
+            .setIncludeResourceAppDataValues(true)
+            .setIncludeAccountLimits(
+                GetParam() == INoteFullDataDownloader::IncludeNoteLimits::Yes)
+            .build();
+
+    const QList<qevercloud::Note> notes = [&] {
+        QList<qevercloud::Note> result;
+        result.reserve(noteCount);
+        for (quint32 i = 0; i < noteCount; ++i) {
+            result << qevercloud::NoteBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(i + 1U)
+                          .setNotebookGuid(UidGenerator::Generate())
+                          .build();
+        }
+        return result;
+    }();
+
+    QList<std::shared_ptr<QPromise<qevercloud::Note>>> promises;
+    promises.reserve(static_cast<int>(noteCount));
+
+    EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
+        .WillRepeatedly([&](const qevercloud::Guid &,
+                            const qevercloud::NoteResultSpec &,
+                            const qevercloud::IRequestContextPtr &) {
+            auto promise = std::make_shared<QPromise<qevercloud::Note>>();
+            promise->start();
+            auto future = promise->future();
+            promises << promise;
+            return future;
+        });
+
+    QList<QFuture<qevercloud::Note>> futures;
+    futures.reserve(noteCount);
+
+    for (const auto & note: qAsConst(notes)) {
+        futures << noteFullDataDownloader->downloadFullNoteData(
+            note.guid().value(), ctx, GetParam());
+        EXPECT_FALSE(futures.back().isFinished());
+    }
+
+    for (int i = 0; i < static_cast<int>(noteCount); ++i) {
+        auto & promise = promises[i];
+        promise->addResult(notes[i]);
+        promise->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    for (int i = 0; i < static_cast<int>(noteCount); ++i) {
+        const auto & future = futures[i];
+        ASSERT_TRUE(future.isFinished()) << i;
+        ASSERT_EQ(future.resultCount(), 1);
+        EXPECT_EQ(future.result(), notes[i]);
+    }
 }
 
 } // namespace quentier::synchronization::tests
