@@ -29,6 +29,8 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <synchronization/Fwd.h>
+
 #include <qevercloud/services/Fwd.h>
 
 namespace quentier::synchronization {
@@ -41,6 +43,7 @@ public:
     explicit NotesProcessor(
         local_storage::ILocalStoragePtr localStorage,
         ISyncConflictResolverPtr syncConflictResolver,
+        INoteFullDataDownloaderPtr noteFullDataDownloader,
         qevercloud::INoteStorePtr noteStore);
 
     [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
@@ -57,9 +60,18 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         qevercloud::Note updatedNote, qevercloud::Note localNote);
 
+    void downloadFullNoteData(
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+        const qevercloud::Note & note);
+
+    void putNoteToLocalStorage(
+        const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+        qevercloud::Note note);
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
+    const INoteFullDataDownloaderPtr m_noteFullDataDownloader;
     const qevercloud::INoteStorePtr m_noteStore;
 };
 

@@ -20,10 +20,12 @@
 #include "Utils.h"
 
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/processors/INoteFullDataDownloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -243,9 +245,11 @@ void mapProgress(
 NotesProcessor::NotesProcessor(
     local_storage::ILocalStoragePtr localStorage,
     ISyncConflictResolverPtr syncConflictResolver,
+    INoteFullDataDownloaderPtr noteFullDataDownloader,
     qevercloud::INoteStorePtr noteStore) :
     m_localStorage{std::move(localStorage)},
     m_syncConflictResolver{std::move(syncConflictResolver)},
+    m_noteFullDataDownloader{std::move(noteFullDataDownloader)},
     m_noteStore{std::move(noteStore)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
@@ -258,6 +262,12 @@ NotesProcessor::NotesProcessor(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::NotesProcessor",
             "NotesProcessor ctor: sync conflict resolver is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteFullDataDownloader)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::NotesProcessor",
+            "NotesProcessor ctor: note full data downloader is null")}};
     }
 
     if (Q_UNLIKELY(!m_noteStore)) {
@@ -303,7 +313,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
     using FetchNoteOption = local_storage::ILocalStorage::FetchNoteOption;
 
     auto status = std::make_shared<ProcessNotesStatus>();
-    status->m_totalExpungedNotes = expungedNotes.size();
+    status->m_totalExpungedNotes =
+        static_cast<quint64>(std::max(expungedNoteCount, 0));
 
     for (const auto & note: qAsConst(notes)) {
         auto notePromise = std::make_shared<QPromise<ProcessNoteStatus>>();
@@ -320,8 +331,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
             std::move(findNoteByGuidFuture), notePromise,
             threading::TrackedTask{
                 selfWeak,
-                [this, updatedNote = note, notePromise,
-                 status](const std::optional<qevercloud::Note> & note) mutable {
+                [this, updatedNote = note, notePromise, status, selfWeak](
+                    const std::optional<qevercloud::Note> & note) mutable {
                     if (note) {
                         ++status->m_totalUpdatedNotes;
                         onFoundDuplicate(
@@ -330,9 +341,10 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
                     }
 
                     ++status->m_totalNewNotes;
+
                     // No duplicate by guid was found, will download full note
                     // data and then put it into the local storage
-                    // TODO: continue from here
+                    downloadFullNoteData(notePromise, updatedNote);
                 }});
     }
 
@@ -408,6 +420,105 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
     threading::onFailed(std::move(expungeNotesThenFuture), processException);
 
     return future;
+}
+
+void NotesProcessor::onFoundDuplicate(
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+    qevercloud::Note updatedNote, qevercloud::Note localNote)
+{
+    using ConflictResolution = ISyncConflictResolver::ConflictResolution;
+    using NoteConflictResolution =
+        ISyncConflictResolver::NoteConflictResolution;
+
+    auto statusFuture = m_syncConflictResolver->resolveNoteConflict(
+        updatedNote, std::move(localNote));
+
+    const auto selfWeak = weak_from_this();
+
+    threading::thenOrFailed(
+        std::move(statusFuture), notePromise,
+        [this, selfWeak, notePromise, updatedNote = std::move(updatedNote)](
+            const NoteConflictResolution & resolution) mutable {
+            const auto self = selfWeak.lock();
+            if (!self) {
+                return;
+            }
+
+            if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                    resolution) ||
+                std::holds_alternative<ConflictResolution::IgnoreMine>(
+                    resolution))
+            {
+                putNoteToLocalStorage(notePromise, std::move(updatedNote));
+                return;
+            }
+
+            if (std::holds_alternative<ConflictResolution::UseMine>(resolution))
+            {
+                notePromise->finish();
+                return;
+            }
+
+            if (std::holds_alternative<
+                    ConflictResolution::MoveMine<qevercloud::Note>>(resolution))
+            {
+                const auto & mineResolution =
+                    std::get<ConflictResolution::MoveMine<qevercloud::Note>>(
+                        resolution);
+
+                auto updateLocalNoteFuture =
+                    m_localStorage->putNote(mineResolution.mine);
+
+                threading::thenOrFailed(
+                    std::move(updateLocalNoteFuture), notePromise,
+                    threading::TrackedTask{
+                        selfWeak,
+                        [this, notePromise,
+                         updatedNote = std::move(updatedNote)]() mutable {
+                            downloadFullNoteData(notePromise, updatedNote);
+                        }});
+            }
+        });
+}
+
+void NotesProcessor::downloadFullNoteData(
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+    const qevercloud::Note & note)
+{
+    Q_ASSERT(note.guid());
+
+    auto downloadFullNoteDataFuture =
+        m_noteFullDataDownloader->downloadFullNoteData(
+            *note.guid(),
+            m_noteStore->linkedNotebookGuid().has_value()
+            ? INoteFullDataDownloader::IncludeNoteLimits::Yes
+            : INoteFullDataDownloader::IncludeNoteLimits::No);
+
+    const auto selfWeak = weak_from_this();
+
+    auto thenFuture = threading::then(
+        std::move(downloadFullNoteDataFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, notePromise](qevercloud::Note note) {
+                putNoteToLocalStorage(
+                    notePromise, std::move(note));
+            }});
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [notePromise](const QException & e) {
+            notePromise->setException(e);
+            notePromise->finish();
+        });
+}
+
+void NotesProcessor::putNoteToLocalStorage(
+    const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
+    qevercloud::Note note)
+{
+    auto putNoteFuture = m_localStorage->putNote(std::move(note));
+    threading::thenOrFailed(std::move(putNoteFuture), notePromise);
 }
 
 } // namespace quentier::synchronization

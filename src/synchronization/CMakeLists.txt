@@ -30,6 +30,7 @@ target_sources(${LIBRARY_NAME}
   processors/ILinkedNotebooksProcessor.h
   processors/INotebooksProcessor.h
   processors/INoteFullDataDownloader.h
+  processors/INotesProcessor.h
   processors/ISavedSearchesProcessor.h
   processors/ITagsProcessor.h
   processors/LinkedNotebooksProcessor.cpp
@@ -38,6 +39,8 @@ target_sources(${LIBRARY_NAME}
   processors/NotebooksProcessor.h
   processors/NoteFullDataDownloader.cpp
   processors/NoteFullDataDownloader.h
+  processors/NotesProcessor.cpp
+  processors/NotesProcessor.h
   processors/SavedSearchesProcessor.cpp
   processors/SavedSearchesProcessor.h
   processors/TagsProcessor.cpp
