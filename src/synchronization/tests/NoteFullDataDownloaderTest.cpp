@@ -179,9 +179,10 @@ TEST_P(
     promises.reserve(static_cast<int>(noteCount));
 
     EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
-        .WillRepeatedly([&](const qevercloud::Guid &,
-                            const qevercloud::NoteResultSpec &,
-                            const qevercloud::IRequestContextPtr &) {
+        .WillRepeatedly([&](const qevercloud::Guid &, // NOLINT
+                            const qevercloud::NoteResultSpec & noteResultSpec,
+                            const qevercloud::IRequestContextPtr &) { // NOLINT
+            EXPECT_EQ(noteResultSpec, expectedNoteResultSpec);
             auto promise = std::make_shared<QPromise<qevercloud::Note>>();
             promise->start();
             auto future = promise->future();
@@ -198,6 +199,7 @@ TEST_P(
         EXPECT_FALSE(futures.back().isFinished());
     }
 
+    ASSERT_EQ(promises.size(), noteCount);
     for (int i = 0; i < static_cast<int>(noteCount); ++i) {
         auto & promise = promises[i];
         promise->addResult(notes[i]);
@@ -207,6 +209,113 @@ TEST_P(
     QCoreApplication::processEvents();
 
     for (int i = 0; i < static_cast<int>(noteCount); ++i) {
+        const auto & future = futures[i];
+        ASSERT_TRUE(future.isFinished()) << i;
+        ASSERT_EQ(future.resultCount(), 1);
+        EXPECT_EQ(future.result(), notes[i]);
+    }
+}
+
+TEST_P(
+    NoteFullDataDownloaderGroupTest, DownloadSeveralNotesInParallelBeyondLimit)
+{
+    const quint32 noteCount = 10;
+
+    const auto noteFullDataDownloader =
+        std::make_shared<NoteFullDataDownloader>(
+            m_mockNoteStore, noteCount / 2);
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto expectedNoteResultSpec =
+        qevercloud::NoteResultSpecBuilder{}
+            .setIncludeContent(true)
+            .setIncludeResourcesData(true)
+            .setIncludeResourcesRecognition(true)
+            .setIncludeResourcesAlternateData(true)
+            .setIncludeSharedNotes(true)
+            .setIncludeNoteAppDataValues(true)
+            .setIncludeResourceAppDataValues(true)
+            .setIncludeAccountLimits(
+                GetParam() == INoteFullDataDownloader::IncludeNoteLimits::Yes)
+            .build();
+
+    const QList<qevercloud::Note> notes = [&] {
+        QList<qevercloud::Note> result;
+        result.reserve(noteCount);
+        for (quint32 i = 0; i < noteCount; ++i) {
+            result << qevercloud::NoteBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setUpdateSequenceNum(i + 1U)
+                          .setNotebookGuid(UidGenerator::Generate())
+                          .build();
+        }
+        return result;
+    }();
+
+    QList<std::shared_ptr<QPromise<qevercloud::Note>>> promises;
+    promises.reserve(static_cast<int>(noteCount));
+
+    EXPECT_CALL(*m_mockNoteStore, getNoteWithResultSpecAsync)
+        .WillRepeatedly([&](const qevercloud::Guid &, // NOLINT
+                            const qevercloud::NoteResultSpec & noteResultSpec,
+                            const qevercloud::IRequestContextPtr &) { // NOLINT
+            EXPECT_EQ(noteResultSpec, expectedNoteResultSpec);
+            auto promise = std::make_shared<QPromise<qevercloud::Note>>();
+            promise->start();
+            auto future = promise->future();
+            promises << promise;
+            return future;
+        });
+
+    QList<QFuture<qevercloud::Note>> futures;
+    futures.reserve(noteCount);
+
+    for (const auto & note: qAsConst(notes)) {
+        futures << noteFullDataDownloader->downloadFullNoteData(
+            note.guid().value(), ctx, GetParam());
+        EXPECT_FALSE(futures.back().isFinished());
+    }
+
+    ASSERT_EQ(promises.size(), noteCount / 2);
+    for (int i = 0; i < static_cast<int>(noteCount / 2); ++i) {
+        auto & promise = promises[i];
+        promise->addResult(notes[i]);
+        promise->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    for (int i = 0; i < static_cast<int>(noteCount / 2); ++i) {
+        const auto & future = futures[i];
+        ASSERT_TRUE(future.isFinished()) << i;
+        ASSERT_EQ(future.resultCount(), 1);
+        EXPECT_EQ(future.result(), notes[i]);
+    }
+
+    for (int i = static_cast<int>(noteCount / 2) + 1;
+         i < static_cast<int>(noteCount); ++i)
+    {
+        const auto & future = futures[i];
+        EXPECT_FALSE(future.isFinished());
+    }
+
+    ASSERT_EQ(promises.size(), noteCount);
+
+    for (int i = static_cast<int>(noteCount / 2);
+         i < static_cast<int>(noteCount); ++i)
+    {
+        auto & promise = promises[i];
+        promise->addResult(notes[i]);
+        promise->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    for (int i = static_cast<int>(noteCount / 2) + 1;
+         i < static_cast<int>(noteCount); ++i)
+    {
         const auto & future = futures[i];
         ASSERT_TRUE(future.isFinished()) << i;
         ASSERT_EQ(future.resultCount(), 1);
