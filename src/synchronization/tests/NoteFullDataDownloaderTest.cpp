@@ -131,7 +131,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
         .WillOnce(Return(threading::makeReadyFuture(note)));
 
     auto future = noteFullDataDownloader->downloadFullNoteData(
-        note.guid().value(), ctx, GetParam());
+        note.guid().value(),GetParam(), ctx);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
@@ -195,7 +195,7 @@ TEST_P(
 
     for (const auto & note: qAsConst(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
-            note.guid().value(), ctx, GetParam());
+            note.guid().value(), GetParam(), ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 
@@ -274,7 +274,7 @@ TEST_P(
 
     for (const auto & note: qAsConst(notes)) {
         futures << noteFullDataDownloader->downloadFullNoteData(
-            note.guid().value(), ctx, GetParam());
+            note.guid().value(), GetParam(), ctx);
         EXPECT_FALSE(futures.back().isFinished());
     }
 

@@ -43,13 +43,13 @@ public:
         qevercloud::INoteStorePtr noteStore, quint32 maxInFlightDownloads);
 
     [[nodiscard]] QFuture<qevercloud::Note> downloadFullNoteData(
-        qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
-        IncludeNoteLimits includeNoteLimitsOption) override;
+        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::IRequestContextPtr ctx = {}) override;
 
 private:
     void downloadFullNoteDataImpl(
-        qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
-        IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::IRequestContextPtr ctx,
         const std::shared_ptr<QPromise<qevercloud::Note>> & promise);
 
     void onNoteFullDataDownloadFinished();

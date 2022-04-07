@@ -48,8 +48,8 @@ NoteFullDataDownloader::NoteFullDataDownloader(
 }
 
 QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
-    qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
-    const IncludeNoteLimits includeNoteLimitsOption)
+    qevercloud::Guid noteGuid, const IncludeNoteLimits includeNoteLimitsOption,
+    qevercloud::IRequestContextPtr ctx)
 {
     auto promise = std::make_shared<QPromise<qevercloud::Note>>();
     auto future = promise->future();
@@ -65,14 +65,14 @@ QFuture<qevercloud::Note> NoteFullDataDownloader::downloadFullNoteData(
     }
 
     downloadFullNoteDataImpl(
-        std::move(noteGuid), std::move(ctx), includeNoteLimitsOption, promise);
+        std::move(noteGuid), includeNoteLimitsOption, std::move(ctx), promise);
 
     return future;
 }
 
 void NoteFullDataDownloader::downloadFullNoteDataImpl(
-    qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
-    const IncludeNoteLimits includeNoteLimitsOption,
+    qevercloud::Guid noteGuid, const IncludeNoteLimits includeNoteLimitsOption,
+    qevercloud::IRequestContextPtr ctx,
     const std::shared_ptr<QPromise<qevercloud::Note>> & promise)
 {
     Q_ASSERT(promise);
@@ -138,8 +138,8 @@ void NoteFullDataDownloader::onNoteFullDataDownloadFinished()
     }
 
     downloadFullNoteDataImpl(
-        std::move(request.m_noteGuid), std::move(request.m_ctx),
-        request.m_includeNoteLimits, request.m_promise);
+        std::move(request.m_noteGuid), request.m_includeNoteLimits,
+        std::move(request.m_ctx), request.m_promise);
 }
 
 } // namespace quentier::synchronization

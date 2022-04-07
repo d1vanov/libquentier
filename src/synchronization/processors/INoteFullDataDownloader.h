@@ -35,8 +35,8 @@ public:
     };
 
     [[nodiscard]] virtual QFuture<qevercloud::Note> downloadFullNoteData(
-        qevercloud::Guid noteGuid, qevercloud::IRequestContextPtr ctx,
-        IncludeNoteLimits includeNoteLimitsOption) = 0;
+        qevercloud::Guid noteGuid, IncludeNoteLimits includeNoteLimitsOption,
+        qevercloud::IRequestContextPtr ctx = {}) = 0;
 };
 
 } // namespace quentier::synchronization
