@@ -9,6 +9,7 @@ add_executable(${TESTS_NAME}
   LinkedNotebooksProcessorTest.cpp
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
+  NotesProcessorTest.cpp
   SavedSearchesProcessorTest.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleNoteSyncConflictResolverTest.cpp
