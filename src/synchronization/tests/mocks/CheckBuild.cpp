@@ -1,3 +1,5 @@
+#include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
+#include "MockINoteFullDataDownloader.h"
 #include "MockISimpleNotebookSyncConflictResolver.h"
 #include "MockISimpleNoteSyncConflictResolver.h"
 #include "MockISimpleSavedSearchSyncConflictResolver.h"

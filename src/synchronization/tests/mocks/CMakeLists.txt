@@ -9,11 +9,14 @@ endif()
 
 target_sources(${MOCKS_NAME}
   PUBLIC
+    ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncConflictResolver.h
+    MockINoteFullDataDownloader.h
     MockISimpleNotebookSyncConflictResolver.h
     MockISimpleNoteSyncConflictResolver.h
     MockISimpleSavedSearchSyncConflictResolver.h
     MockISimpleTagSyncConflictResolver.h
     MockISyncChunksDownloader.h
+    qevercloud/services/MockINoteStore.h
   PRIVATE
     CheckBuild.cpp
 )
@@ -22,4 +25,6 @@ target_link_libraries(${MOCKS_NAME}
   PUBLIC
     ${LIBRARY_NAME}
     ${GMOCK_LIBRARIES}
+  PRIVATE
+    ${LIBNAME}
 )
