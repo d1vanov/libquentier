@@ -16,6 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 #include <qevercloud/Fwd.h>
 #include <qevercloud/types/Note.h>
 
