@@ -6449,6 +6449,14 @@ void NoteEditorPrivate::setupGeneralSignalSlotConnections()
         m_pActionsWatcher, &ActionsWatcher::pasteActionToggled, this,
         &NoteEditorPrivate::paste);
 
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::undoActionToggled, this,
+        &NoteEditorPrivate::undo);
+
+    QObject::connect(
+        m_pActionsWatcher, &ActionsWatcher::redoActionToggled, this,
+        &NoteEditorPrivate::redo);
+
     // Connect with NoteEditorLocalStorageBroker
 
     auto & noteEditorLocalStorageBroker =

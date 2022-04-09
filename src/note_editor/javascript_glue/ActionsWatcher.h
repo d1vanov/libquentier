@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Dmitry Ivanov
+ * Copyright 2017-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -37,10 +37,14 @@ public:
 Q_SIGNALS:
     void cutActionToggled();
     void pasteActionToggled();
+    void undoActionToggled();
+    void redoActionToggled();
 
 public Q_SLOTS:
     void onCutActionToggled();
     void onPasteActionToggled();
+    void onUndoActionToggled();
+    void onRedoActionToggled();
 };
 
 } // namespace quentier

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Dmitry Ivanov
+ * Copyright 2017-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -34,6 +34,18 @@ void ActionsWatcher::onPasteActionToggled()
 {
     QNDEBUG("note_editor:js_glue", "ActionsWatcher::onPasteActionToggled");
     Q_EMIT pasteActionToggled();
+}
+
+void ActionsWatcher::onUndoActionToggled()
+{
+    QNDEBUG("note_editor:js_glue", "ActionsWatcher::onUndoActionToggled");
+    Q_EMIT undoActionToggled();
+}
+
+void ActionsWatcher::onRedoActionToggled()
+{
+    QNDEBUG("note_editor:js_glue", "ActionsWatcher::onRedoActionToggled");
+    Q_EMIT redoActionToggled();
 }
 
 } // namespace quentier
