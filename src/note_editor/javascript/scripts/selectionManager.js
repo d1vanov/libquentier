@@ -94,6 +94,11 @@ function SelectionManager() {
             }
         }
 
+        if (!foundStart) {
+            console.log("Could not restore the selection: start not found");
+            return;
+        }
+
         var selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
