@@ -113,21 +113,6 @@ private Q_SLOTS:
     void onFindNotebookFailed(
         Notebook notebook, ErrorString errorDescription, QUuid requestId);
 
-    void onAddResourceComplete(Resource resource, QUuid requestId);
-
-    void onAddResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onUpdateResourceComplete(Resource resource, QUuid requestId);
-
-    void onUpdateResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
-    void onExpungeResourceComplete(Resource resource, QUuid requestId);
-
-    void onExpungeResourceFailed(
-        Resource resource, ErrorString errorDescription, QUuid requestId);
-
     void onExpungeNoteComplete(Note note, QUuid requestId);
     void onExpungeNotebookComplete(Notebook notebook, QUuid requestId);
 
@@ -148,7 +133,15 @@ private:
         LocalStorageManagerAsync & localStorageManagerAsync);
 
     void emitFindNoteRequest(const QString & noteLocalUid);
-    void emitUpdateNoteRequest(const Note & note);
+
+    enum class UpdateNoteOption
+    {
+        WithResourceBinaryData,
+        WithoutResourceBinaryData
+    };
+
+    void emitUpdateNoteRequest(
+        const Note & note, const UpdateNoteOption option);
 
     void emitFindNotebookForNoteByLocalUidRequest(
         const QString & notebookLocalUid, const Note & note);
@@ -166,19 +159,6 @@ private:
     void saveNoteToLocalStorageImpl(
         const Note & previousNoteVersion, const Note & updatedNoteVersion);
 
-    class SaveNoteInfo : public Printable
-    {
-    public:
-        virtual QTextStream & print(QTextStream & strm) const override;
-
-        bool hasPendingResourceOperations() const;
-
-        Note m_notePendingSaving;
-        quint32 m_pendingAddResourceRequests = 0;
-        quint32 m_pendingUpdateResourceRequests = 0;
-        quint32 m_pendingExpungeResourceRequests = 0;
-    };
-
 private:
     Q_DISABLE_COPY(NoteEditorLocalStorageBroker)
 
@@ -195,10 +175,6 @@ private:
         m_notesPendingNotebookFindingByNotebookLocalUid;
     NotesPendingNotebookFindingHash m_notesPendingNotebookFindingByNotebookGuid;
 
-    QHash<QUuid, QString> m_noteLocalUidsByAddResourceRequestIds;
-    QHash<QUuid, QString> m_noteLocalUidsByUpdateResourceRequestIds;
-    QHash<QUuid, QString> m_noteLocalUidsByExpungeResourceRequestIds;
-
     LRUCache<QString, Notebook> m_notebooksCache;
     LRUCache<QString, Note> m_notesCache;
 
@@ -208,7 +184,6 @@ private:
      */
     LRUCache<QString, Resource> m_resourcesCache;
 
-    QHash<QString, SaveNoteInfo> m_saveNoteInfoByNoteLocalUids;
     QSet<QUuid> m_updateNoteRequestIds;
 };
 
