@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -1161,7 +1161,7 @@ private:
     QString m_managedPageActionJs;
     QString m_setInitialCaretPositionJs;
     QString m_toDoCheckboxAutomaticInsertionJs;
-    QString m_disablePasteJs;
+    QString m_setupActionsJs;
     QString m_findAndReplaceDOMTextJs;
     QString m_tabAndShiftTabIndentAndUnindentReplacerJs;
     QString m_replaceStyleJs;

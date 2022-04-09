@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 Dmitry Ivanov
+ * Copyright 2016-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -534,7 +534,7 @@ void NoteEditorPrivate::onNoteLoadFinished(bool ok)
     // Disable the keyboard modifiers to prevent auto-triggering of note editor
     // page actions - they should go through the preprocessing of the note
     // editor
-    page->executeJavaScript(m_disablePasteJs);
+    page->executeJavaScript(m_setupActionsJs);
 
     // NOTE: executing page mutation observer's script last
     // so that it doesn't catch the mutations originating from the above scripts
@@ -6279,7 +6279,7 @@ void NoteEditorPrivate::setupScripts()
         "javascript/scripts/toDoCheckboxAutomaticInserter.js",
         m_toDoCheckboxAutomaticInsertionJs);
 
-    SETUP_SCRIPT("javascript/scripts/disablePaste.js", m_disablePasteJs);
+    SETUP_SCRIPT("javascript/scripts/setupActions.js", m_setupActionsJs);
 
     SETUP_SCRIPT(
         "javascript/scripts/updateResourceHash.js", m_updateResourceHashJs);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 Dmitry Ivanov
+ * Copyright 2016-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
