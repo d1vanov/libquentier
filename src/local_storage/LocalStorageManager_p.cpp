@@ -14179,6 +14179,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
 
         Resource resource;
         resource.setLocalUid(record.value(resourceLocalUidIndex).toString());
+        resource.setNoteLocalUid(noteLocalUid);
 
         fillResourceFromSqlRecord(record, resource);
         previousNoteResources << resource;
