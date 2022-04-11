@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -269,13 +269,12 @@ void NoteEditorLocalStorageBroker::onUpdateNoteComplete(
         }
     }
 
-    auto it = m_updateNoteRequestIds.find(requestId);
-    if (it != m_updateNoteRequestIds.end()) {
+    auto it = m_updateNoteRequestIdsWithAttemptCounts.find(requestId);
+    if (it != m_updateNoteRequestIdsWithAttemptCounts.end()) {
         QNDEBUG(
             "note_editor",
-            "Note was successfully saved within "
-                << "the local storage");
-        m_updateNoteRequestIds.erase(it);
+            "Note was successfully saved within the local storage");
+        m_updateNoteRequestIdsWithAttemptCounts.erase(it);
         Q_EMIT noteSavedToLocalStorage(note.localUid());
         return;
     }
@@ -287,9 +286,100 @@ void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
     Note note, LocalStorageManager::UpdateNoteOptions options,
     ErrorString errorDescription, QUuid requestId)
 {
-    auto it = m_updateNoteRequestIds.find(requestId);
-    if (it == m_updateNoteRequestIds.end()) {
+    auto it = m_updateNoteRequestIdsWithAttemptCounts.find(requestId);
+    if (it == m_updateNoteRequestIdsWithAttemptCounts.end()) {
         return;
+    }
+
+    // If we tried to update note's resources binary data but tried to do it
+    // with some of the note's resources lacking dataBody and/or
+    // alternateDataBody, need to try again but with binary data actually
+    // being present in the note.
+    if (it.value() == 1 && note.hasResources() &&
+        (options &
+         LocalStorageManager::UpdateNoteOption::UpdateResourceBinaryData))
+    {
+        QNDEBUG(
+            "note_editor",
+            "Failed to update the note along with its resources binary data in "
+            << "the local storage: " << errorDescription << ", note: " << note
+            << "\nUpdate options: " << options
+            << ", request id = " << requestId);
+
+        m_updateNoteRequestIdsWithAttemptCounts.erase(it);
+
+        // See if resources lacking binary data can be provided with this
+        // data synchronously, from cache. If yes, we can send another
+        // update note request right away. Otherwise we'd have to do it
+        // asynchronously.
+        QList<Resource> resourcesWithoutCachedBinaryData;
+        bool addedBinaryDataToSomeResource = false;
+
+        auto resources = note.resources();
+        for (auto & resource: resources)
+        {
+            const bool dataBodyOk =
+                (!resource.hasData() || resource.hasDataBody());
+
+            const bool alternateDataBodyOk =
+                (!resource.hasAlternateData() ||
+                 resource.hasAlternateDataBody());
+
+            if (dataBodyOk && alternateDataBodyOk) {
+                // This resource already has binary data or has no corresponding
+                // data entry at all
+                continue;
+            }
+
+            const auto * pCachedResource =
+                m_resourcesCache.get(resource.localUid());
+            if (pCachedResource) {
+                // Found cached resource with binary data
+                if (pCachedResource->hasDataBody()) {
+                    resource.setDataBody(pCachedResource->dataBody());
+                    addedBinaryDataToSomeResource = true;
+                }
+
+                if (pCachedResource->hasAlternateDataBody()) {
+                    resource.setAlternateDataBody(
+                        pCachedResource->alternateDataBody());
+                    addedBinaryDataToSomeResource = true;
+                }
+            }
+            else {
+                // Haven't found resource with binary data, will have to
+                // fetch the binary data asynchronously
+                resourcesWithoutCachedBinaryData << resource;
+            }
+        }
+
+        if (addedBinaryDataToSomeResource &&
+            resourcesWithoutCachedBinaryData.isEmpty())
+        {
+            // We were lucky to find cached binary data for all of the needed
+            // resources synchronously, can now set the updated resources to
+            // the note and try to repeat the update
+            QUuid requestId = QUuid::createUuid();
+            m_updateNoteRequestIdsWithAttemptCounts[requestId] = 2;
+
+            note.setResources(resources);
+
+            QNDEBUG(
+                "note_editor",
+                "Emitting the second attempt request to update note in the "
+                "local storage: request id = " << requestId << ", note: "
+                << note);
+
+            Q_EMIT updateNote(note, options, requestId);
+            return;
+        }
+
+        if (!resourcesWithoutCachedBinaryData.isEmpty()) {
+            // We haven't found the binary data for some of the note's
+            // resources, need to fetch them asynchronously
+            // TODO: set up asynchronous resource binary data fetching
+            return;
+        }
     }
 
     QNWARNING(
@@ -299,7 +389,7 @@ void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
             << "\nUpdate options: " << options
             << ", request id = " << requestId);
 
-    m_updateNoteRequestIds.erase(it);
+    m_updateNoteRequestIdsWithAttemptCounts.erase(it);
     Q_EMIT failedToSaveNoteToLocalStorage(note.localUid(), errorDescription);
 }
 
@@ -725,7 +815,7 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(
     m_notesCache.clear();
     m_resourcesCache.clear();
 
-    m_updateNoteRequestIds.clear();
+    m_updateNoteRequestIdsWithAttemptCounts.clear();
 }
 
 void NoteEditorLocalStorageBroker::createConnections(
@@ -968,7 +1058,7 @@ void NoteEditorLocalStorageBroker::emitUpdateNoteRequest(
     }
 
     QUuid requestId = QUuid::createUuid();
-    Q_UNUSED(m_updateNoteRequestIds.insert(requestId))
+    m_updateNoteRequestIdsWithAttemptCounts[requestId] = 1;
     QNDEBUG(
         "note_editor",
         "Emitting the request to update note in the local "

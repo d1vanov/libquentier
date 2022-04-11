@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -184,7 +184,9 @@ private:
      */
     LRUCache<QString, Resource> m_resourcesCache;
 
-    QSet<QUuid> m_updateNoteRequestIds;
+    // Request id to the number of attempts to update a particular note
+    // (it can recoverably fail from the first attempt)
+    QHash<QUuid, int> m_updateNoteRequestIdsWithAttemptCounts;
 };
 
 } // namespace quentier
