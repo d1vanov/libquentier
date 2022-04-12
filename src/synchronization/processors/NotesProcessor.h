@@ -60,13 +60,19 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         qevercloud::Note updatedNote, qevercloud::Note localNote);
 
+    enum class NoteKind
+    {
+        NewNote,
+        UpdatedNote
+    };
+
     void downloadFullNoteData(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const qevercloud::Note & note);
+        const qevercloud::Note & note, NoteKind noteKind);
 
     void putNoteToLocalStorage(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        qevercloud::Note note);
+        qevercloud::Note note, NoteKind putNoteKind);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

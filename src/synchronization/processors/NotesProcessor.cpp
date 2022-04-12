@@ -122,9 +122,6 @@ void mapProgress(
             const int otherFutureProgressRange,
             const std::shared_ptr<double> & currentFutureProgressPercentage,
             const std::shared_ptr<double> & otherFutureProgressPercentage) {
-            Q_ASSERT(currentFutureProgressRange);
-            Q_ASSERT(otherFutureProgressRange);
-
             // Convert current future progress into a percentage
             *currentFutureProgressPercentage = [&] {
                 if (currentFutureProgressRange == 0) {
@@ -344,7 +341,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
                     // No duplicate by guid was found, will download full note
                     // data and then put it into the local storage
-                    downloadFullNoteData(notePromise, updatedNote);
+                    downloadFullNoteData(
+                        notePromise, updatedNote, NoteKind::NewNote);
                 }});
     }
 
@@ -445,11 +443,19 @@ void NotesProcessor::onFoundDuplicate(
             }
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
-                    resolution) ||
-                std::holds_alternative<ConflictResolution::IgnoreMine>(
                     resolution))
             {
-                putNoteToLocalStorage(notePromise, std::move(updatedNote));
+                putNoteToLocalStorage(
+                    notePromise, std::move(updatedNote),
+                    NoteKind::UpdatedNote);
+                return;
+            }
+
+            if (std::holds_alternative<ConflictResolution::IgnoreMine>(
+                    resolution))
+            {
+                putNoteToLocalStorage(
+                    notePromise, std::move(updatedNote), NoteKind::NewNote);
                 return;
             }
 
@@ -475,7 +481,8 @@ void NotesProcessor::onFoundDuplicate(
                         selfWeak,
                         [this, notePromise,
                          updatedNote = std::move(updatedNote)]() mutable {
-                            downloadFullNoteData(notePromise, updatedNote);
+                            downloadFullNoteData(
+                                notePromise, updatedNote, NoteKind::NewNote);
                         }});
             }
         });
@@ -483,7 +490,7 @@ void NotesProcessor::onFoundDuplicate(
 
 void NotesProcessor::downloadFullNoteData(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    const qevercloud::Note & note)
+    const qevercloud::Note & note, NoteKind noteKind)
 {
     Q_ASSERT(note.guid());
 
@@ -500,9 +507,9 @@ void NotesProcessor::downloadFullNoteData(
         std::move(downloadFullNoteDataFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, notePromise](qevercloud::Note note) {
+            [this, notePromise, noteKind](qevercloud::Note note) {
                 putNoteToLocalStorage(
-                    notePromise, std::move(note));
+                    notePromise, std::move(note), noteKind);
             }});
 
     threading::onFailed(
@@ -515,10 +522,22 @@ void NotesProcessor::downloadFullNoteData(
 
 void NotesProcessor::putNoteToLocalStorage(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    qevercloud::Note note)
+    qevercloud::Note note, NoteKind putNoteKind)
 {
     auto putNoteFuture = m_localStorage->putNote(std::move(note));
-    threading::thenOrFailed(std::move(putNoteFuture), notePromise);
+    threading::thenOrFailed(
+        std::move(putNoteFuture),
+        notePromise,
+        [notePromise, putNoteKind]
+        {
+            if (putNoteKind == NoteKind::NewNote) {
+                notePromise->addResult(ProcessNoteStatus::AddedNote);
+            }
+            else {
+                notePromise->addResult(ProcessNoteStatus::UpdatedNote);
+            }
+            notePromise->finish();
+        });
 }
 
 } // namespace quentier::synchronization
