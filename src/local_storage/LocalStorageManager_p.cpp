@@ -8594,8 +8594,7 @@ bool LocalStorageManagerPrivate::insertOrReplaceNote(
     }
 
     const bool committed = transaction.commit(errorDescription);
-    if (committed)
-    {
+    if (committed) {
         // Now it is safe to remove resource data files, if any
         if (options & UpdateNoteOption::UpdateResourceMetadata) {
             if (!note.hasResources()) {
@@ -14268,8 +14267,7 @@ bool LocalStorageManagerPrivate::partialUpdateNoteResources(
         QString removeResourcesQueryString =
             QString::fromUtf8(
                 "DELETE FROM Resources WHERE resourceLocalUid IN ('%1')")
-                .arg(localUidsOfExpungedResources.join(
-                    QStringLiteral(",")));
+                .arg(localUidsOfExpungedResources.join(QStringLiteral(",")));
         res = query.exec(removeResourcesQueryString);
         DATABASE_CHECK_AND_SET_ERROR()
     }
