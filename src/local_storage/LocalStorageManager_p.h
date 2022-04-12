@@ -338,6 +338,14 @@ private:
 
     bool createTables(ErrorString & errorDescription);
 
+    bool listNoteLocalUidsPerNotebook(
+        const QString & notebookLocalUid, QStringList & noteLocalUids,
+        ErrorString & errorDescription) const;
+
+    bool listNoteLocalUidsPerLinkedNotebook(
+        const QString & linkedNotebookGuid, QStringList & noteLocalUids,
+        ErrorString & errorDescription) const;
+
     bool insertOrReplaceNotebookRestrictions(
         const QString & localUid,
         const qevercloud::NotebookRestrictions & notebookRestrictions,
@@ -497,11 +505,8 @@ private:
     bool removeResourceDataFilesForNote(
         const QString & noteLocalUid, ErrorString & errorDescription);
 
-    bool removeResourceDataFilesForNotebook(
-        const Notebook & notebook, ErrorString & errorDescription);
-
-    bool removeResourceDataFilesForLinkedNotebook(
-        const LinkedNotebook & linkedNotebook, ErrorString & errorDescription);
+    bool removeResourceDataFilesForNotes(
+        const QStringList & noteLocalUids, ErrorString & errorDescription);
 
     bool
     checkAndPrepareInsertOrReplaceResourceMetadataWithDataPropertiesQuery();
@@ -661,7 +666,8 @@ private:
     bool partialUpdateNoteResources(
         const QString & noteLocalUid,
         const QList<Resource> & updatedNoteResources,
-        const bool UpdateResourceBinaryData, ErrorString & errorDescription);
+        const bool UpdateResourceBinaryData, ErrorString & errorDescription,
+        QStringList & localUidsOfExpungedResources);
 
     template <class T>
     QString listObjectsOptionsToSqlQueryConditions(
