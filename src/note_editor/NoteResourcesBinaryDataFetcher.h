@@ -20,6 +20,7 @@
 #define LIB_QUENTIER_NOTE_EDITOR_NOTE_RESOURCES_BINARY_DATA_FETCHER_H
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
+#include <quentier/types/ErrorString.h>
 #include <quentier/types/Note.h>
 
 #include <QObject>
@@ -38,6 +39,7 @@ public:
 
 Q_SIGNALS:
     void finished(Note note, QUuid requestId);
+    void error(QUuid requestId, ErrorString errorDescription);
 
     // private signals
     void findResource(

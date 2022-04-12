@@ -17,6 +17,7 @@
  */
 
 #include "NoteEditorLocalStorageBroker.h"
+#include "NoteResourcesBinaryDataFetcher.h"
 
 #include "../synchronization/SynchronizationShared.h"
 
@@ -377,7 +378,30 @@ void NoteEditorLocalStorageBroker::onUpdateNoteFailed(
         if (!resourcesWithoutCachedBinaryData.isEmpty()) {
             // We haven't found the binary data for some of the note's
             // resources, need to fetch them asynchronously
-            // TODO: set up asynchronous resource binary data fetching
+            const QUuid fetchResourcesRequestId = QUuid::createUuid();
+
+            m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids
+                [fetchResourcesRequestId] = note.localUid();
+
+            auto * fetcher = new NoteResourcesBinaryDataFetcher(
+                *m_pLocalStorageManagerAsync, this);
+
+            QObject::connect(
+                this, &NoteEditorLocalStorageBroker::fetchResourcesBinaryData,
+                fetcher,
+                &NoteResourcesBinaryDataFetcher::onFetchResourceBinaryData);
+
+            QObject::connect(
+                fetcher, &NoteResourcesBinaryDataFetcher::finished,
+                this,
+                &NoteEditorLocalStorageBroker::onNoteBinaryDataFetcherFinished);
+
+            QObject::connect(
+                fetcher, &NoteResourcesBinaryDataFetcher::error,
+                this,
+                &NoteEditorLocalStorageBroker::onNoteBinaryDataFetcherError);
+
+            Q_EMIT fetchResourcesBinaryData(note, fetchResourcesRequestId);
             return;
         }
     }
@@ -816,6 +840,44 @@ void NoteEditorLocalStorageBroker::onSwitchUserComplete(
     m_resourcesCache.clear();
 
     m_updateNoteRequestIdsWithAttemptCounts.clear();
+}
+
+void NoteEditorLocalStorageBroker::onNoteBinaryDataFetcherFinished(
+    Note note, QUuid requestId)
+{
+    m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids.remove(requestId);
+
+    auto * fetcher = qobject_cast<NoteResourcesBinaryDataFetcher*>(sender());
+    Q_ASSERT(fetcher);
+
+    fetcher->disconnect(this);
+    fetcher->deleteLater();
+
+    emitUpdateNoteRequest(note, UpdateNoteOption::WithResourceBinaryData);
+}
+
+void NoteEditorLocalStorageBroker::onNoteBinaryDataFetcherError(
+    QUuid requestId, ErrorString errorDescription)
+{
+    QString noteLocalUid;
+
+    auto it =
+        m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids.find(requestId);
+
+    if (it != m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids.end()) {
+        noteLocalUid = it.value();
+        m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids.erase(it);
+    }
+
+    auto * fetcher = qobject_cast<NoteResourcesBinaryDataFetcher*>(sender());
+    Q_ASSERT(fetcher);
+
+    fetcher->disconnect(this);
+    fetcher->deleteLater();
+
+    if (!noteLocalUid.isEmpty()) {
+        Q_EMIT failedToSaveNoteToLocalStorage(noteLocalUid, errorDescription);
+    }
 }
 
 void NoteEditorLocalStorageBroker::createConnections(

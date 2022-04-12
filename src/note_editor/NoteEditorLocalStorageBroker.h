@@ -84,6 +84,8 @@ Q_SIGNALS:
         Resource resource, LocalStorageManager::GetResourceOptions options,
         QUuid requestId);
 
+    void fetchResourcesBinaryData(Note note, QUuid requestId);
+
 public Q_SLOTS:
     void saveNoteToLocalStorage(const Note & note);
     void findNoteAndNotebook(const QString & noteLocalUid);
@@ -125,6 +127,11 @@ private Q_SLOTS:
         ErrorString errorDescription, QUuid requestId);
 
     void onSwitchUserComplete(Account account, QUuid requestId);
+
+    void onNoteBinaryDataFetcherFinished(Note note, QUuid requestId);
+
+    void onNoteBinaryDataFetcherError(
+        QUuid requestId, ErrorString errorDescription);
 
 private:
     void createConnections(LocalStorageManagerAsync & localStorageManagerAsync);
@@ -187,6 +194,8 @@ private:
     // Request id to the number of attempts to update a particular note
     // (it can recoverably fail from the first attempt)
     QHash<QUuid, int> m_updateNoteRequestIdsWithAttemptCounts;
+
+    QHash<QUuid, QString> m_fetchNoteResourcesBinaryDataRequestIdsToNoteLocalUids;
 };
 
 } // namespace quentier
