@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include <qevercloud/exceptions/EverCloudException.h>
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>
 
+#include <QException>
 #include <QFuture>
 #include <QList>
 
@@ -41,12 +41,12 @@ public:
         quint64 m_totalUpdatedNotes = 0;
         quint64 m_totalExpungedNotes = 0;
 
-        QList<std::pair<
-            qevercloud::Note, std::shared_ptr<qevercloud::EverCloudException>>>
-            m_notesWhichFailedToDownload;
+        using Errors =
+            QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>;
 
-        QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
-            m_notesWhichFailedToProcess;
+        Errors m_notesWhichFailedToDownload;
+        Errors m_notesWhichFailedToProcess;
+        Errors m_notesWhichFailedToExpunge;
     };
 
     [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
