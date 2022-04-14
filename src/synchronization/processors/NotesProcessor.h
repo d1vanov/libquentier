@@ -57,7 +57,8 @@ private:
         ExpungedNote,
         FailedToDownloadFullNoteData,
         FailedToPutNoteToLocalStorage,
-        FailedToExpungeNote
+        FailedToExpungeNote,
+        FailedToResolveNoteConflict
     };
 
     void onFoundDuplicate(

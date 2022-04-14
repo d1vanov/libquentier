@@ -41,12 +41,14 @@ public:
         quint64 m_totalUpdatedNotes = 0;
         quint64 m_totalExpungedNotes = 0;
 
-        using Errors =
-            QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>;
+        QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
+            m_notesWhichFailedToDownload;
 
-        Errors m_notesWhichFailedToDownload;
-        Errors m_notesWhichFailedToProcess;
-        Errors m_notesWhichFailedToExpunge;
+        QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
+            m_notesWhichFailedToProcess;
+
+        QList<std::pair<qevercloud::Guid, std::shared_ptr<QException>>>
+            m_noteGuidsWhichFailedToExpunge;
     };
 
     [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(

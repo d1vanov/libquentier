@@ -547,11 +547,11 @@ void NotesProcessor::onFoundDuplicate(
         std::move(thenFuture),
         [notePromise, status,
          note = std::move(updatedNote)](const QException & e) mutable {
-            status->m_notesWhichFailedToDownload << std::make_pair(
+            status->m_notesWhichFailedToProcess << std::make_pair(
                 std::move(note), std::shared_ptr<QException>(e.clone()));
 
             notePromise->addResult(
-                ProcessNoteStatus::FailedToDownloadFullNoteData);
+                ProcessNoteStatus::FailedToResolveNoteConflict);
 
             notePromise->finish();
         });
