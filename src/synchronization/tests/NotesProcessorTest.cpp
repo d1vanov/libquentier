@@ -1045,6 +1045,68 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     EXPECT_NO_THROW(future.waitForFinished());
 
     EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(
+        status.m_totalExpungedNotes,
+        static_cast<quint64>(expungedNoteGuids.size()));
+
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+}
+
+TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
+{
+    const auto expungedNoteGuids = QList<qevercloud::Guid>{}
+        << UidGenerator::Generate() << UidGenerator::Generate()
+        << UidGenerator::Generate();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setExpungedNotes(expungedNoteGuids)
+               .build();
+
+    const auto notesProcessor = std::make_shared<NotesProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver,
+        m_mockNoteFullDataDownloader, m_mockNoteStore);
+
+    QList<qevercloud::Guid> processedNoteGuids;
+    EXPECT_CALL(*m_mockLocalStorage, expungeNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
+            processedNoteGuids << noteGuid;
+            if (noteGuid == expungedNoteGuids[1]) {
+                return threading::makeExceptionalFuture<void>(RuntimeError{
+                    ErrorString{"failed to expunge note"}});
+            }
+            return threading::makeReadyFuture();
+        });
+
+    auto future = notesProcessor->processNotes(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(processedNoteGuids, expungedNoteGuids);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(
+        status.m_totalExpungedNotes,
+        static_cast<quint64>(expungedNoteGuids.size()));
+
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(status.m_noteGuidsWhichFailedToExpunge.size(), 1);
+    EXPECT_EQ(
+        status.m_noteGuidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
 }
 
 TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
