@@ -403,7 +403,7 @@ class TagsProcessorTestWithConflict :
         ISyncConflictResolver::TagConflictResolution>
 {};
 
-const auto gConflictResolutions = std::array{
+const std::array gConflictResolutions{
     ISyncConflictResolver::TagConflictResolution{
         ISyncConflictResolver::ConflictResolution::UseTheirs{}},
     ISyncConflictResolver::TagConflictResolution{

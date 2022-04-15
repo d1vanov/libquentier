@@ -81,7 +81,7 @@ TEST_F(NoteFullDataDownloaderTest, CtorZeroMaxInFlightDownloads)
         InvalidArgument);
 }
 
-std::array gIncludeNoteLimits{
+const std::array gIncludeNoteLimits{
     INoteFullDataDownloader::IncludeNoteLimits::Yes,
     INoteFullDataDownloader::IncludeNoteLimits::No,
 };

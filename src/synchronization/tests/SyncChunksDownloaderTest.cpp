@@ -179,7 +179,7 @@ class SyncChunksDownloaderUserOwnSyncChunksTest :
     public testing::WithParamInterface<UserOwnSyncChunksTestData>
 {};
 
-std::array gUserOwnSyncChunksTestData{
+const std::array gUserOwnSyncChunksTestData{
     UserOwnSyncChunksTestData{
         QStringLiteral("Single user own sync chunk with full sync"),
         SynchronizationMode::Full,
@@ -282,7 +282,7 @@ class SyncChunksDownloaderLinkedNotebookSyncChunksTest :
     public testing::WithParamInterface<LinkedNotebookSyncChunksTestData>
 {};
 
-std::array gLinkedNotebookSyncChunksTestData{
+const std::array gLinkedNotebookSyncChunksTestData{
     LinkedNotebookSyncChunksTestData{
         QStringLiteral("Single linked notebook sync chunk with full sync"),
         SynchronizationMode::Full,

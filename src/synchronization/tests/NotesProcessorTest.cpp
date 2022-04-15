@@ -136,7 +136,7 @@ class NotesProcessorTestWithLinkedNotebookParam :
     public testing::WithParamInterface<std::optional<qevercloud::Guid>>
 {};
 
-std::array g_test_linked_notebook_guids{
+const std::array g_test_linked_notebook_guids{
     std::optional<qevercloud::Guid>{},
     std::make_optional<qevercloud::Guid>(UidGenerator::Generate())};
 
@@ -1115,5 +1115,7 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
 }
+
+
 
 } // namespace quentier::synchronization::tests

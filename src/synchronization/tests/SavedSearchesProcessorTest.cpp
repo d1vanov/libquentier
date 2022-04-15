@@ -355,7 +355,7 @@ class SavedSearchesProcessorTestWithConflict :
         ISyncConflictResolver::SavedSearchConflictResolution>
 {};
 
-const auto gConflictResolutions = std::array{
+const std::array gConflictResolutions{
     ISyncConflictResolver::SavedSearchConflictResolution{
         ISyncConflictResolver::ConflictResolution::UseTheirs{}},
     ISyncConflictResolver::SavedSearchConflictResolution{

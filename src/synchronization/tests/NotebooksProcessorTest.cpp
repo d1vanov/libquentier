@@ -360,7 +360,7 @@ class NotebooksProcessorTestWithConflict :
         ISyncConflictResolver::NotebookConflictResolution>
 {};
 
-const auto gConflictResolutions = std::array{
+const std::array gConflictResolutions{
     ISyncConflictResolver::NotebookConflictResolution{
         ISyncConflictResolver::ConflictResolution::UseTheirs{}},
     ISyncConflictResolver::NotebookConflictResolution{
