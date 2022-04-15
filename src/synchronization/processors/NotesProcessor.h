@@ -55,6 +55,7 @@ private:
         AddedNote,
         UpdatedNote,
         ExpungedNote,
+        IgnoredNote,
         FailedToDownloadFullNoteData,
         FailedToPutNoteToLocalStorage,
         FailedToExpungeNote,

@@ -347,8 +347,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
         threading::onFailed(
             std::move(thenFuture),
-            [notePromise, status, note](const QException & e)
-            {
+            [notePromise, status, note](const QException & e) {
                 status->m_notesWhichFailedToProcess << std::make_pair(
                     note, std::shared_ptr<QException>(e.clone()));
 
@@ -371,20 +370,17 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
         auto expungeNoteByGuidFuture = m_localStorage->expungeNoteByGuid(guid);
 
-        auto thenFuture = threading::then(
-            std::move(expungeNoteByGuidFuture),
-            [promise]
-            {
+        auto thenFuture =
+            threading::then(std::move(expungeNoteByGuidFuture), [promise] {
                 promise->addResult(ProcessNoteStatus::ExpungedNote);
                 promise->finish();
             });
 
         threading::onFailed(
             std::move(thenFuture),
-            [promise, status, guid](const QException & e)
-            {
-                status->m_noteGuidsWhichFailedToExpunge
-                    << std::make_pair(guid, std::shared_ptr<QException>(e.clone()));
+            [promise, status, guid](const QException & e) {
+                status->m_noteGuidsWhichFailedToExpunge << std::make_pair(
+                    guid, std::shared_ptr<QException>(e.clone()));
 
                 promise->addResult(ProcessNoteStatus::FailedToExpungeNote);
                 promise->finish();
@@ -438,8 +434,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
     auto expungeNotesThenFuture = threading::then(
         QFuture{expungeNotesFuture},
-        [promise, processNotesFuture, exceptionFlag, mutex, status](
-            const QList<ProcessNoteStatus> & statuses) {
+        [promise, processNotesFuture, exceptionFlag, mutex,
+         status](const QList<ProcessNoteStatus> & statuses) {
             Q_UNUSED(statuses)
 
             const QMutexLocker locker{mutex.get()};
@@ -475,33 +471,30 @@ void NotesProcessor::onFoundDuplicate(
 
     auto thenFuture = threading::then(
         std::move(statusFuture),
-        [this, selfWeak, notePromise, status, updatedNote](
-            const NoteConflictResolution & resolution) mutable {
+        [this, selfWeak, notePromise, status,
+         updatedNote](const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
             }
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
-                    resolution))
-            {
-                putNoteToLocalStorage(
-                    notePromise, status, std::move(updatedNote),
-                    NoteKind::UpdatedNote);
+                    resolution)) {
+                downloadFullNoteData(
+                    notePromise, status, updatedNote, NoteKind::UpdatedNote);
                 return;
             }
 
             if (std::holds_alternative<ConflictResolution::IgnoreMine>(
-                    resolution))
-            {
-                putNoteToLocalStorage(
-                    notePromise, status, std::move(updatedNote),
-                    NoteKind::NewNote);
+                    resolution)) {
+                downloadFullNoteData(
+                    notePromise, status, updatedNote, NoteKind::NewNote);
                 return;
             }
 
             if (std::holds_alternative<ConflictResolution::UseMine>(resolution))
             {
+                notePromise->addResult(ProcessNoteStatus::IgnoredNote);
                 notePromise->finish();
                 return;
             }
@@ -568,8 +561,8 @@ void NotesProcessor::downloadFullNoteData(
         m_noteFullDataDownloader->downloadFullNoteData(
             *note.guid(),
             m_noteStore->linkedNotebookGuid().has_value()
-            ? INoteFullDataDownloader::IncludeNoteLimits::Yes
-            : INoteFullDataDownloader::IncludeNoteLimits::No);
+                ? INoteFullDataDownloader::IncludeNoteLimits::Yes
+                : INoteFullDataDownloader::IncludeNoteLimits::No);
 
     const auto selfWeak = weak_from_this();
 
@@ -597,15 +590,13 @@ void NotesProcessor::downloadFullNoteData(
 
 void NotesProcessor::putNoteToLocalStorage(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    const std::shared_ptr<ProcessNotesStatus> & status,
-    qevercloud::Note note, NoteKind putNoteKind)
+    const std::shared_ptr<ProcessNotesStatus> & status, qevercloud::Note note,
+    NoteKind putNoteKind)
 {
     auto putNoteFuture = m_localStorage->putNote(note);
 
-    auto thenFuture = threading::then(
-        std::move(putNoteFuture),
-        [notePromise, putNoteKind]
-        {
+    auto thenFuture =
+        threading::then(std::move(putNoteFuture), [notePromise, putNoteKind] {
             if (putNoteKind == NoteKind::NewNote) {
                 notePromise->addResult(ProcessNoteStatus::AddedNote);
             }
