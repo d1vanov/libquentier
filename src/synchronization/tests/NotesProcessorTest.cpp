@@ -468,6 +468,7 @@ TEST_P(
     EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
 
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 }
 
 TEST_P(
@@ -642,6 +643,7 @@ TEST_P(
     EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
@@ -815,6 +817,7 @@ TEST_P(
     EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
 
@@ -1009,6 +1012,7 @@ TEST_P(
     EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
@@ -1116,6 +1120,254 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
 }
 
+class NotesProcessorTestWithConflict :
+    public NotesProcessorTest,
+    public testing::WithParamInterface<
+        ISyncConflictResolver::NoteConflictResolution>
+{};
 
+const std::array gConflictResolutions{
+    ISyncConflictResolver::NoteConflictResolution{
+        ISyncConflictResolver::ConflictResolution::UseTheirs{}},
+    ISyncConflictResolver::NoteConflictResolution{
+        ISyncConflictResolver::ConflictResolution::UseMine{}},
+    ISyncConflictResolver::NoteConflictResolution{
+        ISyncConflictResolver::ConflictResolution::IgnoreMine{}},
+    ISyncConflictResolver::NoteConflictResolution{
+        ISyncConflictResolver::ConflictResolution::MoveMine<qevercloud::Note>{
+            qevercloud::Note{}}}};
+
+INSTANTIATE_TEST_SUITE_P(
+    NotesProcessorTestWithConflictInstance, NotesProcessorTestWithConflict,
+    testing::ValuesIn(gConflictResolutions));
+
+TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
+{
+    const auto notebookGuid = UidGenerator::Generate();
+
+    const auto note = qevercloud::NoteBuilder{}
+                          .setGuid(UidGenerator::Generate())
+                          .setNotebookGuid(notebookGuid)
+                          .setUpdateSequenceNum(1)
+                          .setTitle(QStringLiteral("Note #1"))
+                          .build();
+
+    const auto localConflict =
+        qevercloud::NoteBuilder{}
+            .setGuid(note.guid())
+            .setTitle(note.title())
+            .setUpdateSequenceNum(note.updateSequenceNum().value() - 1)
+            .build();
+
+    QList<qevercloud::Note> notesPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt;
+
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
+
+    EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid,
+                            const local_storage::ILocalStorage::FetchNoteOptions
+                                fetchNoteOptions) {
+            Q_UNUSED(fetchNoteOptions)
+
+            EXPECT_FALSE(triedGuids.contains(guid));
+            triedGuids.insert(guid);
+
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == guid);
+                });
+            if (it != notesPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Note>>(*it);
+            }
+
+            if (guid == note.guid()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Note>>(localConflict);
+            }
+
+            return threading::makeReadyFuture<std::optional<qevercloud::Note>>(
+                std::nullopt);
+        });
+
+    auto resolution = GetParam();
+    std::optional<qevercloud::Note> movedLocalConflict;
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Note>>(resolution))
+    {
+        movedLocalConflict =
+            qevercloud::NoteBuilder{}
+                .setTitle(
+                    localConflict.title().value() + QStringLiteral("_moved"))
+                .build();
+
+        resolution = ISyncConflictResolver::NoteConflictResolution{
+            ISyncConflictResolver::ConflictResolution::MoveMine<
+                qevercloud::Note>{*movedLocalConflict}};
+    }
+
+    EXPECT_CALL(*m_mockSyncConflictResolver, resolveNoteConflict)
+        .WillOnce([&, resolution](
+                      const qevercloud::Note & theirs,
+                      const qevercloud::Note & mine) mutable {
+            EXPECT_EQ(theirs, note);
+            EXPECT_EQ(mine, localConflict);
+            return threading::makeReadyFuture<
+                ISyncConflictResolver::NoteConflictResolution>(
+                std::move(resolution));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillRepeatedly(
+            [&, conflictGuid = note.guid()](const qevercloud::Note & note) {
+                if (Q_UNLIKELY(!note.guid())) {
+                    if (std::holds_alternative<
+                            ISyncConflictResolver::ConflictResolution::MoveMine<
+                                qevercloud::Note>>(resolution))
+                    {
+                        notesPutIntoLocalStorage << note;
+                        return threading::makeReadyFuture();
+                    }
+
+                    return threading::makeExceptionalFuture<void>(RuntimeError{
+                        ErrorString{"Detected note without guid"}});
+                }
+
+                EXPECT_TRUE(
+                    triedGuids.contains(*note.guid()) ||
+                    (movedLocalConflict && movedLocalConflict == note));
+
+                notesPutIntoLocalStorage << note;
+                return threading::makeReadyFuture();
+            });
+
+    auto notes = QList<qevercloud::Note>{}
+        << note
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(2)
+               .setTitle(QStringLiteral("Note #2"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(3)
+               .setTitle(QStringLiteral("Note #3"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(4)
+               .setTitle(QStringLiteral("Note #4"))
+               .build();
+
+    const auto originalNotesSize = notes.size();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
+
+    const auto addContentToNote = [](qevercloud::Note note,
+                                     const int index) -> qevercloud::Note {
+        note.setContent(
+            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
+                .arg(index));
+        return note;
+    };
+
+    EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const INoteFullDataDownloader::IncludeNoteLimits
+                                includeNoteLimitsOption,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            Q_UNUSED(ctx)
+
+            EXPECT_EQ(
+                includeNoteLimitsOption,
+                INoteFullDataDownloader::IncludeNoteLimits::No);
+
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
+
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
+
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
+
+    const auto notesProcessor = std::make_shared<NotesProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver,
+        m_mockNoteFullDataDownloader, m_mockNoteStore);
+
+    auto future = notesProcessor->processNotes(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        notes.removeAt(0);
+    }
+    else if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                        MoveMine<qevercloud::Note>>(resolution))
+    {
+        ASSERT_TRUE(movedLocalConflict);
+        notes.push_front(*movedLocalConflict);
+    }
+
+    ASSERT_EQ(notesPutIntoLocalStorage.size(), notes.size());
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
+    {
+        for (int i = 0, size = notes.size(); i < size; ++i) {
+            const auto noteWithContent = addContentToNote(notes[i], i + 1);
+            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+        }
+    }
+    else if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                        MoveMine<qevercloud::Note>>(resolution))
+    {
+        ASSERT_FALSE(notesPutIntoLocalStorage.isEmpty());
+        EXPECT_EQ(notesPutIntoLocalStorage[0], notes[0]);
+        for (int i = 1, size = notes.size(); i < size; ++i) {
+            const auto noteWithContent = addContentToNote(notes[i], i - 1);
+            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+        }
+    }
+    else {
+        for (int i = 0, size = notes.size(); i < size; ++i) {
+            const auto noteWithContent = addContentToNote(notes[i], i);
+            EXPECT_EQ(notesPutIntoLocalStorage[i], noteWithContent);
+        }
+    }
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(
+        status.m_totalNewNotes, static_cast<quint64>(originalNotesSize - 1));
+
+    EXPECT_EQ(status.m_totalUpdatedNotes, 1UL);
+
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
+
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+}
 
 } // namespace quentier::synchronization::tests
