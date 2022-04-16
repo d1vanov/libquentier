@@ -37,9 +37,9 @@ public:
 
     struct ProcessNotesStatus
     {
-        quint64 m_totalNewNotes = 0;
-        quint64 m_totalUpdatedNotes = 0;
-        quint64 m_totalExpungedNotes = 0;
+        quint64 m_totalNewNotes = 0UL;
+        quint64 m_totalUpdatedNotes = 0UL;
+        quint64 m_totalExpungedNotes = 0UL;
 
         QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
             m_notesWhichFailedToDownload;

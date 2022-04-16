@@ -38,7 +38,6 @@
 #include <QPointer>
 
 #include <algorithm>
-#include <cmath>
 #include <type_traits>
 
 namespace quentier::synchronization {
@@ -87,154 +86,6 @@ namespace {
     const qevercloud::SyncChunk & syncChunk)
 {
     return syncChunk.expungedNotes().value_or(QList<qevercloud::Guid>{});
-}
-
-// Maps progress values from two futures into the progress for the separate
-// progress
-template <class T, class U, class V>
-void mapProgress(
-    QFuture<T> firstFuture, QFuture<U> secondFuture,
-    std::shared_ptr<QPromise<V>> promise)
-{
-    Q_ASSERT(firstFuture.progressMaximum() >= 0);
-    Q_ASSERT(firstFuture.progressMinimum() >= 0);
-    Q_ASSERT(firstFuture.progressMaximum() >= firstFuture.progressMinimum());
-
-    Q_ASSERT(secondFuture.progressMaximum() >= 0);
-    Q_ASSERT(secondFuture.progressMinimum() >= 0);
-    Q_ASSERT(secondFuture.progressMaximum() >= secondFuture.progressMinimum());
-
-    const int firstFutureProgressRange =
-        firstFuture.progressMaximum() - firstFuture.progressMinimum();
-
-    const int secondFutureProgressRange =
-        secondFuture.progressMaximum() - secondFuture.progressMinimum();
-
-    promise->setProgressRange(0, 100);
-    promise->setProgressValue(0);
-
-    auto promiseProgressMutex = std::make_shared<QMutex>();
-
-    const auto computePromiseProgress =
-        [promiseProgressMutex](
-            const int currentFutureProgressRange,
-            const int currentFutureProgress, // NOLINT
-            const int otherFutureProgressRange,
-            const std::shared_ptr<double> & currentFutureProgressPercentage,
-            const std::shared_ptr<double> & otherFutureProgressPercentage) {
-            // Convert current future progress into a percentage
-            *currentFutureProgressPercentage = [&] {
-                if (currentFutureProgressRange == 0) {
-                    return 0.0;
-                }
-
-                return std::clamp(
-                    static_cast<double>(currentFutureProgress) /
-                        currentFutureProgressRange,
-                    0.0, 1.0);
-            }();
-
-            const QMutexLocker lock{promiseProgressMutex.get()};
-
-            const double newProgress = [&] {
-                if (currentFutureProgressRange == 0 &&
-                    otherFutureProgressRange == 0) {
-                    return 0.0;
-                }
-
-                return (*currentFutureProgressPercentage *
-                            currentFutureProgressRange +
-                        *otherFutureProgressPercentage *
-                            otherFutureProgressRange) /
-                    (currentFutureProgressRange + otherFutureProgressRange);
-            }();
-
-            return std::clamp(
-                static_cast<int>(std::round(newProgress * 100.0)), 0, 100);
-        };
-
-    auto firstFutureProgressPercentage = std::make_shared<double>(0.0);
-    auto secondFutureProgressPercentage = std::make_shared<double>(0.0);
-
-    auto firstFutureWatcher = std::make_unique<QFutureWatcher<T>>();
-    firstFutureWatcher->setFuture(firstFuture);
-
-    QObject::connect(
-        firstFutureWatcher.get(), &QFutureWatcher<T>::progressValueChanged,
-        firstFutureWatcher.get(),
-        [firstFutureProgressPercentage, secondFutureProgressPercentage,
-         firstFutureProgressRange, secondFutureProgressRange, promise,
-         promiseProgressMutex, computePromiseProgress](int progressValue) {
-            const int newProgress = computePromiseProgress(
-                firstFutureProgressRange, progressValue,
-                secondFutureProgressRange, firstFutureProgressPercentage,
-                secondFutureProgressPercentage);
-
-            promise->setProgressValue(
-                std::max(promise->future().progressValue(), newProgress));
-        });
-
-    QObject::connect(
-        firstFutureWatcher.get(), &QFutureWatcher<T>::finished,
-        firstFutureWatcher.get(),
-        [firstFutureWatcher =
-             QPointer<QFutureWatcher<T>>(firstFutureWatcher.get())] {
-            if (!firstFutureWatcher.isNull()) {
-                firstFutureWatcher->deleteLater();
-            }
-        });
-
-    QObject::connect(
-        firstFutureWatcher.get(), &QFutureWatcher<T>::canceled,
-        firstFutureWatcher.get(),
-        [firstFutureWatcher =
-             QPointer<QFutureWatcher<T>>(firstFutureWatcher.get())] {
-            if (!firstFutureWatcher.isNull()) {
-                firstFutureWatcher->deleteLater();
-            }
-        });
-
-    Q_UNUSED(firstFutureWatcher.release())
-
-    auto secondFutureWatcher = std::make_unique<QFutureWatcher<U>>();
-    secondFutureWatcher->setFuture(secondFuture);
-
-    QObject::connect(
-        secondFutureWatcher.get(), &QFutureWatcher<U>::progressValueChanged,
-        secondFutureWatcher.get(),
-        [firstFutureProgressPercentage, secondFutureProgressPercentage,
-         firstFutureProgressRange, secondFutureProgressRange, promise,
-         promiseProgressMutex, computePromiseProgress](int progressValue) {
-            const int newProgress = computePromiseProgress(
-                secondFutureProgressRange, progressValue,
-                firstFutureProgressRange, secondFutureProgressPercentage,
-                firstFutureProgressPercentage);
-
-            promise->setProgressValue(
-                std::max(promise->future().progressValue(), newProgress));
-        });
-
-    QObject::connect(
-        secondFutureWatcher.get(), &QFutureWatcher<U>::finished,
-        secondFutureWatcher.get(),
-        [secondFutureWatcher =
-             QPointer<QFutureWatcher<U>>(secondFutureWatcher.get())] {
-            if (!secondFutureWatcher.isNull()) {
-                secondFutureWatcher->deleteLater();
-            }
-        });
-
-    QObject::connect(
-        secondFutureWatcher.get(), &QFutureWatcher<U>::canceled,
-        secondFutureWatcher.get(),
-        [secondFutureWatcher =
-             QPointer<QFutureWatcher<U>>(secondFutureWatcher.get())] {
-            if (!secondFutureWatcher.isNull()) {
-                secondFutureWatcher->deleteLater();
-            }
-        });
-
-    Q_UNUSED(secondFutureWatcher.release());
 }
 
 } // namespace
@@ -304,7 +155,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
     const auto selfWeak = weak_from_this();
 
     QList<QFuture<ProcessNoteStatus>> noteFutures;
-    noteFutures.reserve(noteCount);
+    noteFutures.reserve(noteCount + expungedNoteCount);
 
     using FetchNoteOptions = local_storage::ILocalStorage::FetchNoteOptions;
     using FetchNoteOption = local_storage::ILocalStorage::FetchNoteOption;
@@ -358,14 +209,9 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
             });
     }
 
-    auto processNotesFuture =
-        threading::whenAll<ProcessNoteStatus>(std::move(noteFutures));
-
-    QList<QFuture<ProcessNoteStatus>> expungedNoteFutures;
-    expungedNoteFutures.reserve(noteCount);
     for (const auto & guid: qAsConst(expungedNotes)) {
         auto promise = std::make_shared<QPromise<ProcessNoteStatus>>();
-        expungedNoteFutures << promise->future();
+        noteFutures << promise->future();
         promise->start();
 
         auto expungeNoteByGuidFuture = m_localStorage->expungeNoteByGuid(guid);
@@ -387,70 +233,27 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
             });
     }
 
-    auto expungeNotesFuture =
-        threading::whenAll<ProcessNoteStatus>(std::move(expungedNoteFutures));
+    auto allNotesFuture =
+        threading::whenAll<ProcessNoteStatus>(std::move(noteFutures));
 
-    const auto promise = std::make_shared<QPromise<ProcessNotesStatus>>();
+    auto promise = std::make_shared<QPromise<ProcessNotesStatus>>();
     auto future = promise->future();
+
+    promise->setProgressRange(0, 100);
+    promise->setProgressValue(0);
+    threading::mapFutureProgress(allNotesFuture, promise);
+
     promise->start();
 
-    mapProgress(processNotesFuture, expungeNotesFuture, promise);
-
-    auto exceptionFlag = std::make_shared<bool>(false);
-    auto mutex = std::make_shared<QMutex>();
-
-    const auto processException = [promise, exceptionFlag,
-                                   mutex](const QException & e) {
-        const QMutexLocker locker{mutex.get()};
-
-        if (*exceptionFlag) {
-            return;
-        }
-
-        *exceptionFlag = true;
-        promise->setException(e);
-        promise->finish();
-    };
-
-    auto processNotesThenFuture = threading::then(
-        QFuture{processNotesFuture},
-        [promise, expungeNotesFuture, exceptionFlag, mutex,
-         status](const QList<ProcessNoteStatus> & statuses) {
+    threading::thenOrFailed(
+        std::move(allNotesFuture), promise,
+        [promise, status](const QList<ProcessNoteStatus> & statuses)
+        {
             Q_UNUSED(statuses)
 
-            const QMutexLocker locker{mutex.get()};
-
-            if (*exceptionFlag) {
-                return;
-            }
-
-            if (expungeNotesFuture.isFinished()) {
-                promise->addResult(*status);
-                promise->finish();
-            }
+            promise->addResult(*status);
+            promise->finish();
         });
-
-    threading::onFailed(std::move(processNotesThenFuture), processException);
-
-    auto expungeNotesThenFuture = threading::then(
-        QFuture{expungeNotesFuture},
-        [promise, processNotesFuture, exceptionFlag, mutex,
-         status](const QList<ProcessNoteStatus> & statuses) {
-            Q_UNUSED(statuses)
-
-            const QMutexLocker locker{mutex.get()};
-
-            if (*exceptionFlag) {
-                return;
-            }
-
-            if (processNotesFuture.isFinished()) {
-                promise->addResult(*status);
-                promise->finish();
-            }
-        });
-
-    threading::onFailed(std::move(expungeNotesThenFuture), processException);
 
     return future;
 }
