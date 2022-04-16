@@ -22,6 +22,7 @@
 
 #include <QAbstractEventDispatcher>
 #include <QFuture>
+#include <QFutureWatcher>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QObject>
@@ -35,6 +36,7 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <cmath>
 #include <memory>
 #include <type_traits>
 
@@ -161,8 +163,8 @@ template <class T>
     for (auto & future: futures) {
         auto thenFuture = then(
             std::move(future),
-            [promise, processedItemsCount, totalItemCount, exceptionFlag,
-             mutex, resultList](auto result) {
+            [promise, processedItemsCount, totalItemCount, exceptionFlag, mutex,
+             resultList](auto result) {
                 int count = 0;
                 {
                     const QMutexLocker locker{mutex.get()};
@@ -203,6 +205,69 @@ template <class T>
     }
 
     return future;
+}
+
+/**
+ * Maps updates of progress values from the passed in future into the passed in
+ * promise. Takes into account that progress minimum and maximum might be
+ * different for the future and the promise.
+ */
+template <class T, class U>
+void mapFutureProgress(
+    const QFuture<T> & future, const std::shared_ptr<QPromise<U>> & promise)
+{
+    auto futureWatcher = std::make_unique<QFutureWatcher<T>>();
+
+    const auto futureProgressRange =
+        future.progressMaximum() - future.progressMinimum();
+
+    Q_ASSERT(futureProgressRange >= 0);
+
+    const auto promiseFuture = promise->future();
+    const auto promiseProgressMinimum = promiseFuture.progressMinimum();
+    const auto promiseProgressMaximum = promiseFuture.progressMaximum();
+
+    const auto promiseProgressRange =
+        promiseProgressMaximum - promiseProgressMinimum;
+
+    Q_ASSERT(promiseProgressRange >= 0);
+
+    QObject::connect(
+        futureWatcher.get(), &QFutureWatcher<T>::progressValueChanged,
+        futureWatcher.get(),
+        [promise, futureProgressRange, promiseProgressRange,
+         promiseProgressMinimum, promiseProgressMaximum](int progressValue) {
+            if (Q_UNLIKELY(futureProgressRange == 0)) {
+                promise->setProgressValue(0);
+                return;
+            }
+
+            const auto progressPart = static_cast<double>(progressValue) /
+                static_cast<double>(futureProgressRange);
+
+            const auto mappedProgressValue = static_cast<int>(
+                std::round(progressPart * promiseProgressRange));
+
+            promise->setProgressValue(std::clamp(
+                promiseProgressMinimum + mappedProgressValue,
+                promiseProgressMinimum, promiseProgressMaximum));
+        });
+
+    QObject::connect(
+        futureWatcher.get(), &QFutureWatcher<T>::finished, futureWatcher.get(),
+        [futureWatcherWeak = QPointer<QFutureWatcher<T>>(futureWatcher.get())] {
+            if (!futureWatcherWeak.isNull()) {
+                futureWatcherWeak->deleteLater();
+            }
+        });
+
+    QObject::connect(
+        futureWatcher.get(), &QFutureWatcher<T>::canceled, futureWatcher.get(),
+        [futureWatcherWeak = QPointer<QFutureWatcher<T>>(futureWatcher.get())] {
+            if (!futureWatcherWeak.isNull()) {
+                futureWatcherWeak->deleteLater();
+            }
+        });
 }
 
 } // namespace quentier::threading
