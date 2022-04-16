@@ -268,6 +268,8 @@ void mapFutureProgress(
                 futureWatcherWeak->deleteLater();
             }
         });
+
+    Q_UNUSED(futureWatcher.release());
 }
 
 } // namespace quentier::threading
