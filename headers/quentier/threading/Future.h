@@ -26,6 +26,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QObject>
+#include <QPointer>
 
 #include <quentier/threading/QtFutureContinuations.h>
 
@@ -216,10 +217,9 @@ template <class T, class U>
 void mapFutureProgress(
     const QFuture<T> & future, const std::shared_ptr<QPromise<U>> & promise)
 {
-    auto futureWatcher = std::make_unique<QFutureWatcher<T>>();
-
+    const auto futureProgressMinimum = future.progressMinimum();
     const auto futureProgressRange =
-        future.progressMaximum() - future.progressMinimum();
+        future.progressMaximum() - futureProgressMinimum;
 
     Q_ASSERT(futureProgressRange >= 0);
 
@@ -232,17 +232,21 @@ void mapFutureProgress(
 
     Q_ASSERT(promiseProgressRange >= 0);
 
+    auto futureWatcher = std::make_unique<QFutureWatcher<T>>();
+
     QObject::connect(
         futureWatcher.get(), &QFutureWatcher<T>::progressValueChanged,
         futureWatcher.get(),
-        [promise, futureProgressRange, promiseProgressRange,
-         promiseProgressMinimum, promiseProgressMaximum](int progressValue) {
+        [promise, futureProgressMinimum, futureProgressRange,
+         promiseProgressRange, promiseProgressMinimum,
+         promiseProgressMaximum](int progressValue) {
             if (Q_UNLIKELY(futureProgressRange == 0)) {
                 promise->setProgressValue(0);
                 return;
             }
 
-            const auto progressPart = static_cast<double>(progressValue) /
+            const auto progressPart =
+                static_cast<double>(progressValue - futureProgressMinimum) /
                 static_cast<double>(futureProgressRange);
 
             const auto mappedProgressValue = static_cast<int>(
@@ -269,6 +273,7 @@ void mapFutureProgress(
             }
         });
 
+    futureWatcher->setFuture(future);
     Q_UNUSED(futureWatcher.release());
 }
 
