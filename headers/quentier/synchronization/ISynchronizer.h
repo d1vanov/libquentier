@@ -28,6 +28,7 @@
 
 #include <QDir>
 #include <QFuture>
+#include <QHash>
 #include <QList>
 #include <QNetworkCookie>
 
@@ -86,6 +87,19 @@ public:
         quint64 notesSent = 0;
     };
 
+    struct SyncState
+    {
+        qint32 updateCount = 0;
+        qevercloud::Timestamp lastSyncTime = 0;
+    };
+
+    struct SyncResult
+    {
+        SyncState userAccountSyncState;
+        QHash<qevercloud::Guid, SyncState> linkedNotebookSyncStates;
+        SyncStats syncStats;
+    };
+
 public:
     virtual ~ISynchronizer() = default;
 
@@ -105,7 +119,7 @@ public:
     [[nodiscard]] virtual QFuture<AuthResult> authenticateAccount(
         Account account) = 0;
 
-    [[nodiscard]] virtual QFuture<SyncStats> synchronizeAccount(
+    [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
         Account account,
         ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,

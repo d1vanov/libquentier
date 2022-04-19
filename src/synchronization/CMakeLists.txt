@@ -7,6 +7,7 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
+  IReceiver.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
