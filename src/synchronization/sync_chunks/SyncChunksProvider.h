@@ -39,8 +39,8 @@ public:
             qevercloud::IRequestContextPtr ctx) override;
 
 private:
-    ISyncChunksDownloaderPtr m_syncChunksDownloader;
-    ISyncChunksStoragePtr m_syncChunksStorage;
+    const ISyncChunksDownloaderPtr m_syncChunksDownloader;
+    const ISyncChunksStoragePtr m_syncChunksStorage;
 };
 
 } // namespace quentier::synchronization

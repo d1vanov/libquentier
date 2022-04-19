@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,17 +59,16 @@ void postToThread(QThread * pThread, Function && function)
         // destroyed after the job is done and use postToObject.
         auto pDummyObj = std::make_unique<QObject>();
         pDummyObj->moveToThread(pThread);
-        auto * pObj = pDummyObj.release();
         postToObject(
-            pObj,
-            [pObj, function = std::forward<Function>(function)]() mutable {
-                function();
+            pDummyObj.get(),
+            [pObj = pDummyObj.get(),
+             function = std::forward<Function>(function)]() mutable {
                 pObj->deleteLater();
+                function();
             });
+        Q_UNUSED(pDummyObj.release())
         return;
     }
-
-    Q_ASSERT(pObject);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     QMetaObject::invokeMethod(pObject, std::forward<Function>(function));

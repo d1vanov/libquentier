@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -397,10 +397,10 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
         [rawWatcher, promise = std::move(promise), future = std::move(future),
          handler = std::forward<decltype(handler)>(handler)]() mutable {
+            rawWatcher->deleteLater();
             detail::processPossibleFutureException(
                 std::move(promise), std::move(future),
                 std::forward<decltype(handler)>(handler));
-            rawWatcher->deleteLater();
         });
 
     Q_UNUSED(watcher.release())
@@ -434,6 +434,7 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
         [rawWatcher, promise = std::move(promise), future = std::move(future),
          context,
          handler = std::forward<decltype(handler)>(handler)]() mutable {
+            rawWatcher->deleteLater();
             postToObject(
                 context,
                 [promise = std::move(promise), future = std::move(future),
@@ -442,7 +443,6 @@ std::enable_if_t<!QtPrivate::ArgResolver<Function>::HasExtraArgs, QFuture<T>>
                         std::move(promise), std::move(future),
                         std::forward<decltype(handler)>(handler));
                 });
-            rawWatcher->deleteLater();
         });
 
     Q_UNUSED(watcher.release())
