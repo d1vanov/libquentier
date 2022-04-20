@@ -131,7 +131,7 @@ TEST_P(NoteFullDataDownloaderGroupTest, DownloadSingleNote)
         .WillOnce(Return(threading::makeReadyFuture(note)));
 
     auto future = noteFullDataDownloader->downloadFullNoteData(
-        note.guid().value(),GetParam(), ctx);
+        note.guid().value(), GetParam(), ctx);
 
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);

@@ -10,6 +10,7 @@ add_executable(${TESTS_NAME}
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
   NotesProcessorTest.cpp
+  ResourceFullDataDownloaderTest.cpp
   SavedSearchesProcessorTest.cpp
   SimpleNotebookSyncConflictResolverTest.cpp
   SimpleNoteSyncConflictResolverTest.cpp

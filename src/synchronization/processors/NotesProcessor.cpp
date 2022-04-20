@@ -19,7 +19,6 @@
 #include "NotesProcessor.h"
 #include "Utils.h"
 
-#include <synchronization/SyncChunksDataCounters.h>
 #include <synchronization/processors/INoteFullDataDownloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
