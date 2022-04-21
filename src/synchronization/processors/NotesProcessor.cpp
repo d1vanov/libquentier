@@ -56,7 +56,7 @@ namespace {
         if (Q_UNLIKELY(!note.guid())) {
             QNWARNING(
                 "synchronization::NotesProcessor",
-                "Detected note without guid, skippint it: " << note);
+                "Detected note without guid, skipping it: " << note);
             continue;
         }
 
