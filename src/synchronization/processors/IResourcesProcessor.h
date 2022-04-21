@@ -39,16 +39,12 @@ public:
     {
         quint64 m_totalNewResources = 0UL;
         quint64 m_totalUpdatedResources = 0UL;
-        quint64 m_totalExpungedResources = 0UL;
 
         QList<std::pair<qevercloud::Resource, std::shared_ptr<QException>>>
             m_resourcesWhichFailedToDownload;
 
         QList<std::pair<qevercloud::Resource, std::shared_ptr<QException>>>
             m_resourcesWhichFailedToProcess;
-
-        QList<std::pair<qevercloud::Guid, std::shared_ptr<QException>>>
-            m_resourceGuidsWhichFailedToExpunge;
     };
 
     [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(

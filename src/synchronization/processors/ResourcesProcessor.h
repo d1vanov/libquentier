@@ -43,7 +43,7 @@ public:
     explicit ResourcesProcessor(
         local_storage::ILocalStoragePtr localStorage,
         ISyncConflictResolverPtr syncConflictResolver,
-        INoteFullDataDownloaderPtr noteFullDataDownloader,
+        IResourceFullDataDownloaderPtr resourceFullDataDownloader,
         qevercloud::INoteStorePtr noteStore);
 
     [[nodiscard]] QFuture<ProcessResourcesStatus> processResources(
@@ -54,11 +54,9 @@ private:
     {
         AddedResource,
         UpdatedResource,
-        ExpungedResource,
         IgnoredResource,
         FailedToDownloadFullResourceData,
         FailedToPutResourceToLocalStorage,
-        FailedToExpungeResource,
         FailedToResolveResourceConflict
     };
 
@@ -87,7 +85,7 @@ private:
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;
-    const INoteFullDataDownloaderPtr m_noteFullDataDownloader;
+    const IResourceFullDataDownloaderPtr m_resourceFullDataDownloader;
     const qevercloud::INoteStorePtr m_noteStore;
 };
 

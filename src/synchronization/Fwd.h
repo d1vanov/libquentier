@@ -27,6 +27,9 @@ namespace quentier::synchronization {
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 
+class IResourceFullDataDownloader;
+using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class ISimpleNotebookSyncConflictResolver;
