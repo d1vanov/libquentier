@@ -250,6 +250,8 @@ void SavedSearchesProcessor::onFoundDuplicate(
     using SavedSearchConflictResolution =
         ISyncConflictResolver::SavedSearchConflictResolution;
 
+    auto localSavedSearchLocalId = localSavedSearch.localId();
+
     auto statusFuture = m_syncConflictResolver->resolveSavedSearchConflict(
         updatedSavedSearch, std::move(localSavedSearch));
 
@@ -260,13 +262,20 @@ void SavedSearchesProcessor::onFoundDuplicate(
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, savedSearchPromise,
-             updatedSavedSearch = std::move(updatedSavedSearch)](
+             updatedSavedSearch = std::move(updatedSavedSearch),
+             localSavedSearchLocalId = std::move(localSavedSearchLocalId)](
                 const SavedSearchConflictResolution & resolution) mutable {
                 if (std::holds_alternative<ConflictResolution::UseTheirs>(
                         resolution) ||
                     std::holds_alternative<ConflictResolution::IgnoreMine>(
                         resolution))
                 {
+                    if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                            resolution)) {
+                        updatedSavedSearch.setLocalId(
+                            localSavedSearchLocalId);
+                    }
+
                     auto putSavedSearchFuture = m_localStorage->putSavedSearch(
                         std::move(updatedSavedSearch));
 

@@ -266,6 +266,8 @@ void NotesProcessor::onFoundDuplicate(
     using NoteConflictResolution =
         ISyncConflictResolver::NoteConflictResolution;
 
+    auto localNoteLocalId = localNote.localId();
+
     auto statusFuture = m_syncConflictResolver->resolveNoteConflict(
         updatedNote, std::move(localNote));
 
@@ -273,8 +275,8 @@ void NotesProcessor::onFoundDuplicate(
 
     auto thenFuture = threading::then(
         std::move(statusFuture),
-        [this, selfWeak, notePromise, status,
-         updatedNote](const NoteConflictResolution & resolution) mutable {
+        [this, selfWeak, notePromise, status, updatedNote,
+         localNoteLocalId](const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -282,6 +284,7 @@ void NotesProcessor::onFoundDuplicate(
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
                     resolution)) {
+                updatedNote.setLocalId(localNoteLocalId);
                 downloadFullNoteData(
                     notePromise, status, updatedNote, NoteKind::UpdatedNote);
                 return;

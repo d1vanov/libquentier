@@ -420,11 +420,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
 {
-    const auto tag = qevercloud::TagBuilder{}
-                         .setGuid(UidGenerator::Generate())
-                         .setName(QStringLiteral("Tag #1"))
-                         .setUpdateSequenceNum(1)
-                         .build();
+    auto tag = qevercloud::TagBuilder{}
+                   .setGuid(UidGenerator::Generate())
+                   .setName(QStringLiteral("Tag #1"))
+                   .setUpdateSequenceNum(1)
+                   .build();
 
     const auto localConflict =
         qevercloud::TagBuilder{}
@@ -545,6 +545,12 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
                 tagsPutIntoLocalStorage << tag;
                 return threading::makeReadyFuture();
             });
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        tag.setLocalId(localConflict.localId());
+    }
 
     auto tags = QList<qevercloud::Tag>{}
         << tag

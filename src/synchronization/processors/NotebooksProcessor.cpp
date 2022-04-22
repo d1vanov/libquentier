@@ -244,6 +244,8 @@ void NotebooksProcessor::onFoundDuplicate(
     using NotebookConflictResolution =
         ISyncConflictResolver::NotebookConflictResolution;
 
+    auto localNotebookLocalId = localNotebook.localId();
+
     auto statusFuture = m_syncConflictResolver->resolveNotebookConflict(
         updatedNotebook, std::move(localNotebook));
 
@@ -252,7 +254,8 @@ void NotebooksProcessor::onFoundDuplicate(
     threading::thenOrFailed(
         std::move(statusFuture), notebookPromise,
         [this, selfWeak, notebookPromise,
-         updatedNotebook = std::move(updatedNotebook)](
+         updatedNotebook = std::move(updatedNotebook),
+         localNotebookLocalId = std::move(localNotebookLocalId)](
             const NotebookConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
@@ -264,6 +267,11 @@ void NotebooksProcessor::onFoundDuplicate(
                 std::holds_alternative<ConflictResolution::IgnoreMine>(
                     resolution))
             {
+                if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                        resolution)) {
+                    updatedNotebook.setLocalId(localNotebookLocalId);
+                }
+
                 auto putNotebookFuture =
                     m_localStorage->putNotebook(std::move(updatedNotebook));
 

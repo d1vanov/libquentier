@@ -1080,8 +1080,8 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
         .WillRepeatedly([&](const qevercloud::Guid & noteGuid) {
             processedNoteGuids << noteGuid;
             if (noteGuid == expungedNoteGuids[1]) {
-                return threading::makeExceptionalFuture<void>(RuntimeError{
-                    ErrorString{"failed to expunge note"}});
+                return threading::makeExceptionalFuture<void>(
+                    RuntimeError{ErrorString{"failed to expunge note"}});
             }
             return threading::makeReadyFuture();
         });
@@ -1207,12 +1207,12 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 {
     const auto notebookGuid = UidGenerator::Generate();
 
-    const auto note = qevercloud::NoteBuilder{}
-                          .setGuid(UidGenerator::Generate())
-                          .setNotebookGuid(notebookGuid)
-                          .setUpdateSequenceNum(1)
-                          .setTitle(QStringLiteral("Note #1"))
-                          .build();
+    auto note = qevercloud::NoteBuilder{}
+                    .setGuid(UidGenerator::Generate())
+                    .setNotebookGuid(notebookGuid)
+                    .setUpdateSequenceNum(1)
+                    .setTitle(QStringLiteral("Note #1"))
+                    .build();
 
     const auto localConflict =
         qevercloud::NoteBuilder{}
@@ -1308,6 +1308,12 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
                 notesPutIntoLocalStorage << note;
                 return threading::makeReadyFuture();
             });
+
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        note.setLocalId(localConflict.localId());
+    }
 
     auto notes = QList<qevercloud::Note>{}
         << note

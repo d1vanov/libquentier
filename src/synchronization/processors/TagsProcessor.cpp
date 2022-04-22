@@ -400,6 +400,8 @@ void TagsProcessor::onFoundDuplicate(
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
     using TagConflictResolution = ISyncConflictResolver::TagConflictResolution;
 
+    auto localTagLocalId = localTag.localId();
+
     auto statusFuture = m_syncConflictResolver->resolveTagConflict(
         updatedTag, std::move(localTag));
 
@@ -407,7 +409,8 @@ void TagsProcessor::onFoundDuplicate(
 
     threading::thenOrFailed(
         std::move(statusFuture), tagPromise,
-        [this, selfWeak, tagPromise, updatedTag = std::move(updatedTag)](
+        [this, selfWeak, tagPromise, updatedTag = std::move(updatedTag),
+         localTagLocalId = std::move(localTagLocalId)](
             const TagConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
@@ -419,6 +422,11 @@ void TagsProcessor::onFoundDuplicate(
                 std::holds_alternative<ConflictResolution::IgnoreMine>(
                     resolution))
             {
+                if (std::holds_alternative<ConflictResolution::UseTheirs>(
+                        resolution)) {
+                    updatedTag.setLocalId(localTagLocalId);
+                }
+
                 auto putTagFuture =
                     m_localStorage->putTag(std::move(updatedTag));
 

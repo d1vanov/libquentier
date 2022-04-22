@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/processors/NotebooksProcessor.h>
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/processors/NotebooksProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -307,8 +307,7 @@ TEST_F(NotebooksProcessorTest, FilterOutExpungedNotebooksFromSyncChunkNotebooks)
                .setUpdateSequenceNum(54)
                .build();
 
-    const auto expungedNotebookGuids = [&]
-    {
+    const auto expungedNotebookGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(notebooks.size());
         for (const auto & notebook: qAsConst(notebooks)) {
@@ -378,11 +377,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
 {
-    const auto notebook = qevercloud::NotebookBuilder{}
-                              .setGuid(UidGenerator::Generate())
-                              .setName(QStringLiteral("Notebook #1"))
-                              .setUpdateSequenceNum(1)
-                              .build();
+    auto notebook = qevercloud::NotebookBuilder{}
+                        .setGuid(UidGenerator::Generate())
+                        .setName(QStringLiteral("Notebook #1"))
+                        .setUpdateSequenceNum(1)
+                        .build();
 
     const auto localConflict =
         qevercloud::NotebookBuilder{}
@@ -504,6 +503,12 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
             return threading::makeReadyFuture();
         });
 
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        notebook.setLocalId(localConflict.localId());
+    }
+
     auto notebooks = QList<qevercloud::Notebook>{}
         << notebook
         << qevercloud::NotebookBuilder{}
@@ -559,7 +564,8 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
         std::holds_alternative<
-            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(
+            resolution) ||
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
@@ -572,13 +578,11 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
         {
             EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
         }
-        else
-        {
+        else {
             EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 1UL);
         }
     }
-    else
-    {
+    else {
         EXPECT_EQ(
             m_syncChunksDataCounters->addedNotebooks(),
             static_cast<quint64>(originalNotebooksSize));
@@ -623,7 +627,8 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
         });
 
     EXPECT_CALL(*m_mockLocalStorage, findNotebookByName)
-        .WillRepeatedly([&, conflictName = notebook.name()](const QString & name,
+        .WillRepeatedly([&, conflictName = notebook.name()](
+                            const QString & name,
                             const std::optional<QString> & linkedNotebookGuid) {
             EXPECT_FALSE(triedNames.contains(name));
             triedNames.insert(name);
@@ -766,7 +771,8 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
         std::holds_alternative<
-            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(
+            resolution) ||
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
@@ -779,13 +785,11 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByName)
         {
             EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 0UL);
         }
-        else
-        {
+        else {
             EXPECT_EQ(m_syncChunksDataCounters->updatedNotebooks(), 1UL);
         }
     }
-    else
-    {
+    else {
         EXPECT_EQ(
             m_syncChunksDataCounters->addedNotebooks(),
             static_cast<quint64>(originalNotebooksSize));

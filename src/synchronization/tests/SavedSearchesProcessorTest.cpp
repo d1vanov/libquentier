@@ -16,8 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/processors/SavedSearchesProcessor.h>
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/processors/SavedSearchesProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -301,8 +301,7 @@ TEST_F(
                .setUpdateSequenceNum(54)
                .build();
 
-    const auto expungedSavedSearchGuids = [&]
-    {
+    const auto expungedSavedSearchGuids = [&] {
         QList<qevercloud::Guid> guids;
         guids.reserve(savedSearches.size());
         for (const auto & savedSearch: qAsConst(savedSearches)) {
@@ -373,11 +372,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
 {
-    const auto savedSearch = qevercloud::SavedSearchBuilder{}
-                                 .setGuid(UidGenerator::Generate())
-                                 .setName(QStringLiteral("Saved search #1"))
-                                 .setUpdateSequenceNum(1)
-                                 .build();
+    auto savedSearch = qevercloud::SavedSearchBuilder{}
+                           .setGuid(UidGenerator::Generate())
+                           .setName(QStringLiteral("Saved search #1"))
+                           .setUpdateSequenceNum(1)
+                           .build();
 
     const auto localConflict =
         qevercloud::SavedSearchBuilder{}
@@ -490,6 +489,12 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
             return threading::makeReadyFuture();
         });
 
+    if (std::holds_alternative<
+            ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
+    {
+        savedSearch.setLocalId(localConflict.localId());
+    }
+
     auto savedSearches = QList<qevercloud::SavedSearch>{}
         << savedSearch
         << qevercloud::SavedSearchBuilder{}
@@ -546,7 +551,8 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
         std::holds_alternative<
-            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(
+            resolution) ||
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
@@ -559,13 +565,11 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
         {
             EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
         }
-        else
-        {
+        else {
             EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
         }
     }
-    else
-    {
+    else {
         EXPECT_EQ(
             m_syncChunksDataCounters->addedSavedSearches(),
             static_cast<quint64>(originalSavedSearchesSize));
@@ -746,7 +750,8 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
     if (std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution) ||
         std::holds_alternative<
-            ISyncConflictResolver::ConflictResolution::IgnoreMine>(resolution) ||
+            ISyncConflictResolver::ConflictResolution::IgnoreMine>(
+            resolution) ||
         std::holds_alternative<
             ISyncConflictResolver::ConflictResolution::UseMine>(resolution))
     {
@@ -759,13 +764,11 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByName)
         {
             EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 0UL);
         }
-        else
-        {
+        else {
             EXPECT_EQ(m_syncChunksDataCounters->updatedSavedSearches(), 1UL);
         }
     }
-    else
-    {
+    else {
         EXPECT_EQ(
             m_syncChunksDataCounters->addedSavedSearches(),
             static_cast<quint64>(originalSavedSearchesSize));
