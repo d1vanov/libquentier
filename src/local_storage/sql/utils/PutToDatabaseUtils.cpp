@@ -223,7 +223,7 @@ struct NoteTagIds
     return result;
 }
 
-bool removeResourceMetadataByNoteLocalId(
+[[nodiscard]] bool removeResourceMetadataByNoteLocalId(
     const QString & noteLocalId, QSqlDatabase & database,
     ErrorString & errorDescription)
 {
