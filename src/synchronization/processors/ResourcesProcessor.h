@@ -82,6 +82,13 @@ private:
         const std::shared_ptr<ProcessResourcesStatus> & status,
         qevercloud::Resource resource, ResourceKind putResourceKind);
 
+    // Removed guid, noteGuid and other Evernote identity properties
+    // from the resource, marks the resource as locally modified and
+    // stores it in the local storage so that the resource becomes "new"
+    // from Evernote service's POV.
+    [[nodiscard]] QFuture<void> makeLocalConflictNewResource(
+        qevercloud::Resource localResource);
+
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
     const ISyncConflictResolverPtr m_syncConflictResolver;

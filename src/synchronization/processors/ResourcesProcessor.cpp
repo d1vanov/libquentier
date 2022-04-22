@@ -226,4 +226,48 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
     return future;
 }
 
+void ResourcesProcessor::onFoundDuplicate(
+    const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+    const std::shared_ptr<ProcessResourcesStatus> & status,
+    qevercloud::Resource updatedResource,
+    qevercloud::Resource localResource)
+{
+    Q_ASSERT(updatedResource.noteGuid());
+
+    bool shouldMakeLocalConflictNewResource = false;
+
+    if (Q_UNLIKELY(!localResource.noteGuid())) {
+        QNWARNING(
+            "synchronization::ResourcesProcessor",
+            "ResourcesProcessor::onFoundDuplicate: local resource has no "
+                << "note guid: " << localResource);
+        shouldMakeLocalConflictNewResource = true;
+    }
+    else if (*localResource.noteGuid() == *updatedResource.noteGuid()) {
+        QNWARNING(
+            "synchronization::ResourcesProcessor",
+            "ResourcesProcessor::onFoundDuplicate: local resource belongs "
+                << "to a different note than updated resource; local resource: "
+                << localResource << "\nUpdated resource: " << updatedResource);
+        shouldMakeLocalConflictNewResource = true;
+    }
+    else if (localResource.isLocallyModified()) {
+        QNDEBUG(
+            "synchronization::ResourcesProcessor",
+            "ResourcesProcessor::onFoundDuplicate: local resource with local "
+                << "id " << localResource.localId() << " is marked as locally "
+                << "modified, will make it a local conflicting resource");
+        shouldMakeLocalConflictNewResource = true;
+    }
+
+    if (shouldMakeLocalConflictNewResource) {
+        localResource.setGuid(std::nullopt);
+        localResource.setNoteGuid(std::nullopt);
+        localResource.setUpdateSequenceNum(std::nullopt);
+        localResource.setLocallyModified(true);
+
+        // TODO: implement further
+    }
+}
+
 } // namespace quentier::synchronization
