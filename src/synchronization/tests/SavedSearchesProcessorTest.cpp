@@ -383,6 +383,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
             .setGuid(savedSearch.guid())
             .setName(savedSearch.name())
             .setUpdateSequenceNum(savedSearch.updateSequenceNum().value() - 1)
+            .setLocallyFavorited(true)
             .build();
 
     QList<qevercloud::SavedSearch> savedSearchesPutIntoLocalStorage;
@@ -493,6 +494,7 @@ TEST_P(SavedSearchesProcessorTestWithConflict, HandleConflictByGuid)
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
     {
         savedSearch.setLocalId(localConflict.localId());
+        savedSearch.setLocallyFavorited(localConflict.isLocallyFavorited());
     }
 
     auto savedSearches = QList<qevercloud::SavedSearch>{}

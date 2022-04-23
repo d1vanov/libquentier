@@ -388,6 +388,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
             .setGuid(notebook.guid())
             .setName(notebook.name())
             .setUpdateSequenceNum(notebook.updateSequenceNum().value() - 1)
+            .setLocallyFavorited(true)
             .build();
 
     QList<qevercloud::Notebook> notebooksPutIntoLocalStorage;
@@ -507,6 +508,7 @@ TEST_P(NotebooksProcessorTestWithConflict, HandleConflictByGuid)
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
     {
         notebook.setLocalId(localConflict.localId());
+        notebook.setLocallyFavorited(localConflict.isLocallyFavorited());
     }
 
     auto notebooks = QList<qevercloud::Notebook>{}

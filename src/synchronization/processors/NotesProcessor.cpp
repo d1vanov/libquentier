@@ -246,8 +246,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 
     threading::thenOrFailed(
         std::move(allNotesFuture), promise,
-        [promise, status](const QList<ProcessNoteStatus> & statuses)
-        {
+        [promise, status](const QList<ProcessNoteStatus> & statuses) {
             Q_UNUSED(statuses)
 
             promise->addResult(*status);
@@ -267,6 +266,7 @@ void NotesProcessor::onFoundDuplicate(
         ISyncConflictResolver::NoteConflictResolution;
 
     auto localNoteLocalId = localNote.localId();
+    const auto localNoteLocallyFavorited = localNote.isLocallyFavorited();
 
     auto statusFuture = m_syncConflictResolver->resolveNoteConflict(
         updatedNote, std::move(localNote));
@@ -275,8 +275,9 @@ void NotesProcessor::onFoundDuplicate(
 
     auto thenFuture = threading::then(
         std::move(statusFuture),
-        [this, selfWeak, notePromise, status, updatedNote,
-         localNoteLocalId](const NoteConflictResolution & resolution) mutable {
+        [this, selfWeak, notePromise, status, updatedNote, localNoteLocalId,
+         localNoteLocallyFavorited](
+            const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
@@ -285,6 +286,7 @@ void NotesProcessor::onFoundDuplicate(
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
                     resolution)) {
                 updatedNote.setLocalId(localNoteLocalId);
+                updatedNote.setLocallyFavorited(localNoteLocallyFavorited);
                 downloadFullNoteData(
                     notePromise, status, updatedNote, NoteKind::UpdatedNote);
                 return;

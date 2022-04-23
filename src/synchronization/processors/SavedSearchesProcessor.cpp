@@ -252,6 +252,9 @@ void SavedSearchesProcessor::onFoundDuplicate(
 
     auto localSavedSearchLocalId = localSavedSearch.localId();
 
+    const auto localSavedSearchLocallyFavorited =
+        localSavedSearch.isLocallyFavorited();
+
     auto statusFuture = m_syncConflictResolver->resolveSavedSearchConflict(
         updatedSavedSearch, std::move(localSavedSearch));
 
@@ -263,7 +266,8 @@ void SavedSearchesProcessor::onFoundDuplicate(
             selfWeak,
             [this, selfWeak, savedSearchPromise,
              updatedSavedSearch = std::move(updatedSavedSearch),
-             localSavedSearchLocalId = std::move(localSavedSearchLocalId)](
+             localSavedSearchLocalId = std::move(localSavedSearchLocalId),
+             localSavedSearchLocallyFavorited](
                 const SavedSearchConflictResolution & resolution) mutable {
                 if (std::holds_alternative<ConflictResolution::UseTheirs>(
                         resolution) ||
@@ -272,8 +276,10 @@ void SavedSearchesProcessor::onFoundDuplicate(
                 {
                     if (std::holds_alternative<ConflictResolution::UseTheirs>(
                             resolution)) {
-                        updatedSavedSearch.setLocalId(
-                            localSavedSearchLocalId);
+                        updatedSavedSearch.setLocalId(localSavedSearchLocalId);
+
+                        updatedSavedSearch.setLocallyFavorited(
+                            localSavedSearchLocallyFavorited);
                     }
 
                     auto putSavedSearchFuture = m_localStorage->putSavedSearch(

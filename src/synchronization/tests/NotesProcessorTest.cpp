@@ -1219,6 +1219,7 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
             .setGuid(note.guid())
             .setTitle(note.title())
             .setUpdateSequenceNum(note.updateSequenceNum().value() - 1)
+            .setLocallyFavorited(true)
             .build();
 
     QList<qevercloud::Note> notesPutIntoLocalStorage;

@@ -431,6 +431,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
             .setGuid(tag.guid())
             .setName(tag.name())
             .setUpdateSequenceNum(tag.updateSequenceNum().value() - 1)
+            .setLocallyFavorited(true)
             .build();
 
     QList<qevercloud::Tag> tagsPutIntoLocalStorage;
@@ -550,6 +551,7 @@ TEST_P(TagsProcessorTestWithConflict, HandleConflictByGuid)
             ISyncConflictResolver::ConflictResolution::UseTheirs>(resolution))
     {
         tag.setLocalId(localConflict.localId());
+        tag.setLocallyFavorited(localConflict.isLocallyFavorited());
     }
 
     auto tags = QList<qevercloud::Tag>{}
