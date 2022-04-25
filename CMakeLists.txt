@@ -196,7 +196,10 @@ set(UTILITY_HEADERS
     headers/quentier/utility/SysInfo.h
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
-    headers/quentier/utility/UidGenerator.h)
+    headers/quentier/utility/UidGenerator.h
+    headers/quentier/utility/cancelers/Fwd.h
+    headers/quentier/utility/cancelers/ICanceler.h
+    headers/quentier/utility/cancelers/ManualCanceler.h)
 
 set(PUBLIC_HEADERS ${ENML_HEADERS})
 list(APPEND PUBLIC_HEADERS ${EXCEPTION_HEADERS})
@@ -429,6 +432,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/data/AccountData.cpp
     src/types/data/ResourceRecognitionIndexItemData.cpp
     src/types/data/ResourceRecognitionIndicesData.cpp
+    src/utility/cancelers/ManualCanceler.cpp
     src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp
     src/utility/keychain/MigratingKeychainService.cpp
