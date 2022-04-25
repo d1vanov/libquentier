@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/utility/cancelers/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -59,12 +60,14 @@ private:
         FailedToDownloadFullNoteData,
         FailedToPutNoteToLocalStorage,
         FailedToExpungeNote,
-        FailedToResolveNoteConflict
+        FailedToResolveNoteConflict,
+        Canceled
     };
 
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<ProcessNotesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Note updatedNote, qevercloud::Note localNote);
 
     enum class NoteKind
@@ -76,6 +79,7 @@ private:
     void downloadFullNoteData(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<ProcessNotesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         const qevercloud::Note & note, NoteKind noteKind);
 
     void putNoteToLocalStorage(

@@ -27,6 +27,7 @@
 #include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/types/SyncChunk.h>
@@ -163,6 +164,18 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
     status->m_totalExpungedNotes =
         static_cast<quint64>(std::max(expungedNoteCount, 0));
 
+    // Processing of all notes might need to be globally canceled if certain
+    // kind of exceptional situation occurs, for example:
+    // 1. Evernote API rate limit gets exceeded - once this happens, all further
+    //    immediate attempts to download full note data would fail with the same
+    //    exception so it doesn't make sense to continue processing
+    // 2. Authentication token expires during the attempt to download full note
+    //    data - it's pretty unlikely as the first step of sync should ensure
+    //    the auth token isn't close to expiration and re-acquire the token if
+    //    it is close to expiration. But still need to be able to handle this
+    //    situation.
+    auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
+
     for (const auto & note: qAsConst(notes)) {
         auto notePromise = std::make_shared<QPromise<ProcessNoteStatus>>();
         noteFutures << notePromise->future();
@@ -178,12 +191,19 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
             std::move(findNoteByGuidFuture),
             threading::TrackedTask{
                 selfWeak,
-                [this, updatedNote = note, notePromise, status, selfWeak](
+                [this, updatedNote = note, notePromise, status, selfWeak,
+                 canceler](
                     const std::optional<qevercloud::Note> & note) mutable {
+                    if (canceler->isCanceled()) {
+                        notePromise->addResult(ProcessNoteStatus::Canceled);
+                        notePromise->finish();
+                    }
+
                     if (note) {
                         ++status->m_totalUpdatedNotes;
                         onFoundDuplicate(
-                            notePromise, status, std::move(updatedNote), *note);
+                            notePromise, status, canceler,
+                            std::move(updatedNote), *note);
                         return;
                     }
 
@@ -192,7 +212,8 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
                     // No duplicate by guid was found, will download full note
                     // data and then put it into the local storage
                     downloadFullNoteData(
-                        notePromise, status, updatedNote, NoteKind::NewNote);
+                        notePromise, status, canceler, updatedNote,
+                        NoteKind::NewNote);
                 }});
 
         threading::onFailed(
@@ -259,6 +280,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
 void NotesProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
     const std::shared_ptr<ProcessNotesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
     qevercloud::Note updatedNote, qevercloud::Note localNote)
 {
     using ConflictResolution = ISyncConflictResolver::ConflictResolution;
@@ -276,11 +298,16 @@ void NotesProcessor::onFoundDuplicate(
     auto thenFuture = threading::then(
         std::move(statusFuture),
         [this, selfWeak, notePromise, status, updatedNote, localNoteLocalId,
-         localNoteLocallyFavorited](
-            const NoteConflictResolution & resolution) mutable {
+         localNoteLocallyFavorited,
+         canceler](const NoteConflictResolution & resolution) mutable {
             const auto self = selfWeak.lock();
             if (!self) {
                 return;
+            }
+
+            if (canceler->isCanceled()) {
+                notePromise->addResult(ProcessNoteStatus::Canceled);
+                notePromise->finish();
             }
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
@@ -288,14 +315,16 @@ void NotesProcessor::onFoundDuplicate(
                 updatedNote.setLocalId(localNoteLocalId);
                 updatedNote.setLocallyFavorited(localNoteLocallyFavorited);
                 downloadFullNoteData(
-                    notePromise, status, updatedNote, NoteKind::UpdatedNote);
+                    notePromise, status, canceler, updatedNote,
+                    NoteKind::UpdatedNote);
                 return;
             }
 
             if (std::holds_alternative<ConflictResolution::IgnoreMine>(
                     resolution)) {
                 downloadFullNoteData(
-                    notePromise, status, updatedNote, NoteKind::NewNote);
+                    notePromise, status, canceler, updatedNote,
+                    NoteKind::NewNote);
                 return;
             }
 
@@ -320,10 +349,10 @@ void NotesProcessor::onFoundDuplicate(
                     std::move(updateLocalNoteFuture),
                     threading::TrackedTask{
                         selfWeak,
-                        [this, notePromise, status,
+                        [this, notePromise, status, canceler,
                          updatedNote = std::move(updatedNote)]() mutable {
                             downloadFullNoteData(
-                                notePromise, status, updatedNote,
+                                notePromise, status, canceler, updatedNote,
                                 NoteKind::NewNote);
                         }});
 
@@ -360,6 +389,7 @@ void NotesProcessor::onFoundDuplicate(
 void NotesProcessor::downloadFullNoteData(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
     const std::shared_ptr<ProcessNotesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
     const qevercloud::Note & note, NoteKind noteKind)
 {
     Q_ASSERT(note.guid());
@@ -384,9 +414,31 @@ void NotesProcessor::downloadFullNoteData(
 
     threading::onFailed(
         std::move(thenFuture),
-        [notePromise, status, note](const QException & e) {
+        [notePromise, status, note, canceler](const QException & e) {
             status->m_notesWhichFailedToDownload
                 << std::make_pair(note, std::shared_ptr<QException>(e.clone()));
+
+            bool shouldCancelProcessing = false;
+            try {
+                e.raise();
+            }
+            catch (const qevercloud::EDAMSystemException & se) {
+                if ((se.errorCode() ==
+                     qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) ||
+                    (se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED))
+                {
+                    shouldCancelProcessing = true;
+                }
+            }
+            catch (...) {
+            }
+
+            if (shouldCancelProcessing) {
+                canceler->cancel();
+                notePromise->setException(e);
+                notePromise->finish();
+                return;
+            }
 
             notePromise->addResult(
                 ProcessNoteStatus::FailedToDownloadFullNoteData);
