@@ -197,6 +197,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotes(
                     if (canceler->isCanceled()) {
                         notePromise->addResult(ProcessNoteStatus::Canceled);
                         notePromise->finish();
+                        return;
                     }
 
                     if (note) {
@@ -308,6 +309,7 @@ void NotesProcessor::onFoundDuplicate(
             if (canceler->isCanceled()) {
                 notePromise->addResult(ProcessNoteStatus::Canceled);
                 notePromise->finish();
+                return;
             }
 
             if (std::holds_alternative<ConflictResolution::UseTheirs>(
@@ -351,6 +353,13 @@ void NotesProcessor::onFoundDuplicate(
                         selfWeak,
                         [this, notePromise, status, canceler,
                          updatedNote = std::move(updatedNote)]() mutable {
+                            if (canceler->isCanceled()) {
+                                notePromise->addResult(
+                                    ProcessNoteStatus::Canceled);
+                                notePromise->finish();
+                                return;
+                            }
+
                             downloadFullNoteData(
                                 notePromise, status, canceler, updatedNote,
                                 NoteKind::NewNote);
@@ -435,7 +444,7 @@ void NotesProcessor::downloadFullNoteData(
 
             if (shouldCancelProcessing) {
                 canceler->cancel();
-                notePromise->setException(e);
+                notePromise->addResult(ProcessNoteStatus::Canceled);
                 notePromise->finish();
                 return;
             }
