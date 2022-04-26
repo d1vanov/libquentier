@@ -31,8 +31,11 @@
 #include <synchronization/tests/mocks/MockINoteFullDataDownloader.h>
 #include <synchronization/tests/mocks/qevercloud/services/MockINoteStore.h>
 
+#include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
+
+#include <QCoreApplication>
 
 #include <gtest/gtest.h>
 
@@ -1016,6 +1019,211 @@ TEST_P(
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
+}
+
+TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
+{
+    const auto notebookGuid = UidGenerator::Generate();
+
+    const auto notes = QList<qevercloud::Note>{}
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(1)
+               .setTitle(QStringLiteral("Note #1"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(2)
+               .setTitle(QStringLiteral("Note #2"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(3)
+               .setTitle(QStringLiteral("Note #3"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(4)
+               .setTitle(QStringLiteral("Note #4"))
+               .build();
+
+    QList<qevercloud::Note> notesPutIntoLocalStorage;
+    QSet<qevercloud::Guid> triedGuids;
+
+    const auto addContentToNote = [](qevercloud::Note note,
+                                     const int index) -> qevercloud::Note {
+        note.setContent(
+            QString::fromUtf8("<en-note>Hello world from note #%1</en-note>")
+                .arg(index));
+        return note;
+    };
+
+    const std::optional<qevercloud::Guid> linkedNotebookGuid = std::nullopt;
+
+    EXPECT_CALL(*m_mockNoteStore, linkedNotebookGuid)
+        .WillRepeatedly(ReturnRef(linkedNotebookGuid));
+
+    QList<std::shared_ptr<QPromise<std::optional<qevercloud::Note>>>>
+        findNoteByGuidPromises;
+
+    findNoteByGuidPromises.reserve(notes.size());
+
+    EXPECT_CALL(*m_mockLocalStorage, findNoteByGuid)
+        .WillRepeatedly([&](const qevercloud::Guid & guid,
+                            const local_storage::ILocalStorage::FetchNoteOptions
+                                fetchNoteOptions) {
+            using FetchNoteOptions =
+                local_storage::ILocalStorage::FetchNoteOptions;
+            using FetchNoteOption =
+                local_storage::ILocalStorage::FetchNoteOption;
+
+            EXPECT_EQ(
+                fetchNoteOptions,
+                FetchNoteOptions{} | FetchNoteOption::WithResourceMetadata);
+
+            EXPECT_FALSE(triedGuids.contains(guid));
+            triedGuids.insert(guid);
+
+            const auto it = std::find_if(
+                notesPutIntoLocalStorage.constBegin(),
+                notesPutIntoLocalStorage.constEnd(),
+                [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == guid);
+                });
+            EXPECT_EQ(it, notesPutIntoLocalStorage.constEnd());
+            if (it != notesPutIntoLocalStorage.constEnd()) {
+                return threading::makeReadyFuture<
+                    std::optional<qevercloud::Note>>(*it);
+            }
+
+            findNoteByGuidPromises << std::make_shared<
+                QPromise<std::optional<qevercloud::Note>>>();
+
+            findNoteByGuidPromises.back()->start();
+            return findNoteByGuidPromises.back()->future();
+        });
+
+    int downloadFullNoteDataCallCount = 0;
+    EXPECT_CALL(*m_mockNoteFullDataDownloader, downloadFullNoteData)
+        .WillRepeatedly([&](qevercloud::Guid noteGuid,
+                            const INoteFullDataDownloader::IncludeNoteLimits
+                                includeNoteLimitsOption,
+                            const qevercloud::IRequestContextPtr & ctx) {
+            Q_UNUSED(ctx)
+
+            ++downloadFullNoteDataCallCount;
+
+            EXPECT_EQ(
+                includeNoteLimitsOption,
+                INoteFullDataDownloader::IncludeNoteLimits::No);
+
+            const auto it = std::find_if(
+                notes.begin(), notes.end(), [&](const qevercloud::Note & note) {
+                    return note.guid() && (*note.guid() == noteGuid);
+                });
+            if (Q_UNLIKELY(it == notes.end())) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    RuntimeError{ErrorString{
+                        "Detected attempt to download unrecognized note"}});
+            }
+
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
+
+            if (it->updateSequenceNum().value() == 2) {
+                return threading::makeExceptionalFuture<qevercloud::Note>(
+                    qevercloud::EDAMSystemExceptionBuilder{}
+                        .setErrorCode(
+                            qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED)
+                        .build());
+            }
+
+            return threading::makeReadyFuture<qevercloud::Note>(
+                addContentToNote(*it, index));
+        });
+
+    EXPECT_CALL(*m_mockLocalStorage, putNote)
+        .WillRepeatedly([&](const qevercloud::Note & note) {
+            if (Q_UNLIKELY(!note.guid())) {
+                return threading::makeExceptionalFuture<void>(
+                    RuntimeError{ErrorString{"Detected note without guid"}});
+            }
+
+            EXPECT_TRUE(triedGuids.contains(*note.guid()));
+
+            notesPutIntoLocalStorage << note;
+            return threading::makeReadyFuture();
+        });
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
+
+    const auto notesProcessor = std::make_shared<NotesProcessor>(
+        m_mockLocalStorage, m_mockSyncConflictResolver,
+        m_mockNoteFullDataDownloader, m_mockNoteStore);
+
+    auto future = notesProcessor->processNotes(syncChunks);
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullNoteDataCallCount, 0);
+
+    ASSERT_EQ(findNoteByGuidPromises.size(), notes.size());
+    for (int i = 0; i < 2; ++i) {
+        findNoteByGuidPromises[i]->addResult(std::nullopt);
+        findNoteByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+
+    ASSERT_FALSE(future.isFinished());
+    EXPECT_EQ(downloadFullNoteDataCallCount, 2);
+
+    for (int i = 2; i < notes.size(); ++i) {
+        findNoteByGuidPromises[i]->addResult(std::nullopt);
+        findNoteByGuidPromises[i]->finish();
+    }
+
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
+    ASSERT_TRUE(future.isFinished());
+    EXPECT_NO_THROW(future.waitForFinished());
+
+    EXPECT_EQ(downloadFullNoteDataCallCount, 2);
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status.m_totalNewNotes, 2UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
+
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+
+    ASSERT_EQ(status.m_notesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
+
+    bool caughtEdamSystemExceptionWithRateLimit = false;
+    try
+    {
+        status.m_notesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e)
+    {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            caughtEdamSystemExceptionWithRateLimit = true;
+        }
+    }
+    catch (...)
+    {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
 }
 
 TEST_F(NotesProcessorTest, ProcessExpungedNotes)
