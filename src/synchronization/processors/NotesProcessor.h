@@ -50,7 +50,14 @@ public:
     [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
+    [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
+        const QList<qevercloud::Note> & notes) override;
+
 private:
+    [[nodiscard]] QFuture<ProcessNotesStatus> processNotesImpl(
+        const QList<qevercloud::Note> & notes,
+        const QList<qevercloud::Guid> & expungedNoteGuids);
+
     enum class ProcessNoteStatus
     {
         AddedNote,

@@ -72,6 +72,9 @@ public:
 
     [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+
+    [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
+        const QList<qevercloud::Note> & notes) = 0;
 };
 
 } // namespace quentier::synchronization
