@@ -468,7 +468,7 @@ TEST_P(
     EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
     ASSERT_EQ(status.m_notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
+    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].m_note, notes[1]);
 
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
@@ -649,7 +649,7 @@ TEST_P(
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
+    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].m_note, notes[1]);
 }
 
 TEST_P(
@@ -825,7 +825,7 @@ TEST_P(
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
 
     EXPECT_EQ(
-        status.m_notesWhichFailedToProcess[0].first,
+        status.m_notesWhichFailedToProcess[0].m_note,
         addContentToNote(notes[1], 1));
 }
 
@@ -1018,7 +1018,7 @@ TEST_P(
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
+    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].m_note, notes[1]);
 }
 
 TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
@@ -1206,12 +1206,12 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
 
     ASSERT_EQ(status.m_notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
+    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].m_note, notes[1]);
 
     bool caughtEdamSystemExceptionWithRateLimit = false;
     try
     {
-        status.m_notesWhichFailedToDownload[0].second->raise();
+        status.m_notesWhichFailedToDownload[0].m_exception->raise();
     }
     catch (const qevercloud::EDAMSystemException & e)
     {
@@ -1314,7 +1314,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     ASSERT_EQ(status.m_noteGuidsWhichFailedToExpunge.size(), 1);
     EXPECT_EQ(
-        status.m_noteGuidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
+        status.m_noteGuidsWhichFailedToExpunge[0].m_guid, expungedNoteGuids[1]);
 }
 
 TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)

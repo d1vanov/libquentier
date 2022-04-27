@@ -23,6 +23,7 @@
 
 #include <QException>
 #include <QFuture>
+#include <QHash>
 #include <QList>
 
 #include <memory>
@@ -41,14 +42,32 @@ public:
         quint64 m_totalUpdatedNotes = 0UL;
         quint64 m_totalExpungedNotes = 0UL;
 
-        QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
-            m_notesWhichFailedToDownload;
+        struct NoteWithException
+        {
+            qevercloud::Note m_note;
+            std::shared_ptr<QException> m_exception;
+        };
 
-        QList<std::pair<qevercloud::Note, std::shared_ptr<QException>>>
-            m_notesWhichFailedToProcess;
+        struct GuidWithException
+        {
+            qevercloud::Guid m_guid;
+            std::shared_ptr<QException> m_exception;
+        };
 
-        QList<std::pair<qevercloud::Guid, std::shared_ptr<QException>>>
-            m_noteGuidsWhichFailedToExpunge;
+        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
+
+        struct GuidWithUsn
+        {
+            qevercloud::Guid m_guid;
+            qint32 m_updateSequenceNumber = 0;
+        };
+
+        QList<NoteWithException> m_notesWhichFailedToDownload;
+        QList<NoteWithException> m_notesWhichFailedToProcess;
+        QList<GuidWithException> m_noteGuidsWhichFailedToExpunge;
+
+        UpdateSequenceNumbersByGuid m_processedNoteGuidsAndUsns;
+        UpdateSequenceNumbersByGuid m_cancelledNoteGuidsAndUsns;
     };
 
     [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
