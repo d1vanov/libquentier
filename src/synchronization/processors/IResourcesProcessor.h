@@ -40,11 +40,19 @@ public:
         quint64 m_totalNewResources = 0UL;
         quint64 m_totalUpdatedResources = 0UL;
 
-        QList<std::pair<qevercloud::Resource, std::shared_ptr<QException>>>
-            m_resourcesWhichFailedToDownload;
+        struct ResourceWithException
+        {
+            qevercloud::Resource m_resource;
+            std::shared_ptr<QException> m_exception;
+        };
 
-        QList<std::pair<qevercloud::Resource, std::shared_ptr<QException>>>
-            m_resourcesWhichFailedToProcess;
+        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
+
+        QList<ResourceWithException> m_resourcesWhichFailedToDownload;
+        QList<ResourceWithException> m_resourcesWhichFailedToProcess;
+
+        UpdateSequenceNumbersByGuid m_processedResourceGuidsAndUsns;
+        UpdateSequenceNumbersByGuid m_cancelledResourceGuidsAndUsns;
     };
 
     [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(

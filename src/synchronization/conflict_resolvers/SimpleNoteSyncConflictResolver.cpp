@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -17,6 +17,7 @@
  */
 
 #include "SimpleNoteSyncConflictResolver.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -112,37 +113,7 @@ void SimpleNoteSyncConflictResolver::markAsLocalConflictingNote(
     }
 
     mine.mutableAttributes()->setConflictSourceNoteGuid(std::move(theirsGuid));
-
-    QString conflictingNoteTitle;
-    if (mine.title()) {
-        conflictingNoteTitle =
-            *mine.title() + QStringLiteral(" - ") +
-            QCoreApplication::translate(
-                "synchronization::SimpleNoteSyncConflictResolver",
-                "conflicting");
-    }
-    else {
-        QString previewText =
-            (mine.content()
-             ? noteContentToPlainText(*mine.content())
-             : QString{});
-
-        if (!previewText.isEmpty()) {
-            previewText.truncate(12);
-            conflictingNoteTitle =
-                previewText + QStringLiteral("... - ") +
-                QCoreApplication::translate(
-                    "synchronization::SimpleNoteSyncConflictResolver",
-                    "conflicting");
-        }
-        else {
-            conflictingNoteTitle = QCoreApplication::translate(
-                "synchronization::SimpleNoteSyncConflictResolver",
-                "Conflicting note");
-        }
-    }
-
-    mine.setTitle(conflictingNoteTitle);
+    mine.setTitle(utils::makeLocalConflictingNoteTitle(mine));
 
     if (mine.resources() &&
         !mine.resources()->isEmpty())

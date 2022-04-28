@@ -28,6 +28,8 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleSyncConflictResolver.h
   conflict_resolvers/SimpleTagSyncConflictResolver.cpp
   conflict_resolvers/SimpleTagSyncConflictResolver.h
+  conflict_resolvers/Utils.cpp
+  conflict_resolvers/Utils.h
   processors/ILinkedNotebooksProcessor.h
   processors/INotebooksProcessor.h
   processors/INoteFullDataDownloader.h

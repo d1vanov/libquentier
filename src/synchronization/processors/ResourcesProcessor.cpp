@@ -20,7 +20,10 @@
 
 #include "IResourceFullDataDownloader.h"
 
+#include <synchronization/conflict_resolvers/Utils.h>
+
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/local_storage/ILocalStorage.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/synchronization/ISyncConflictResolver.h>
@@ -189,10 +192,10 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
 
         threading::onFailed(
             std::move(thenFuture),
-            [resourcePromise, status, resource](const QException & e)
-            {
-                status->m_resourcesWhichFailedToProcess << std::make_pair(
-                    resource, std::shared_ptr<QException>(e.clone()));
+            [resourcePromise, status, resource](const QException & e) {
+                status->m_resourcesWhichFailedToProcess
+                    << ProcessResourcesStatus::ResourceWithException{
+                           resource, std::shared_ptr<QException>(e.clone())};
 
                 resourcePromise->addResult(
                     ProcessResourceStatus::FailedToPutResourceToLocalStorage);
@@ -243,7 +246,7 @@ void ResourcesProcessor::onFoundDuplicate(
                 << "note guid: " << localResource);
         shouldMakeLocalConflictNewResource = true;
     }
-    else if (*localResource.noteGuid() == *updatedResource.noteGuid()) {
+    else if (*localResource.noteGuid() != *updatedResource.noteGuid()) {
         QNWARNING(
             "synchronization::ResourcesProcessor",
             "ResourcesProcessor::onFoundDuplicate: local resource belongs "
@@ -265,6 +268,97 @@ void ResourcesProcessor::onFoundDuplicate(
         localResource.setNoteGuid(std::nullopt);
         localResource.setUpdateSequenceNum(std::nullopt);
         localResource.setLocallyModified(true);
+
+        auto findNoteByGuidFuture = m_localStorage->findNoteByGuid(
+            *updatedResource.noteGuid(),
+            local_storage::ILocalStorage::FetchNoteOptions{} |
+                local_storage::ILocalStorage::FetchNoteOption::
+                    WithResourceMetadata);
+
+        const auto selfWeak = weak_from_this();
+
+        auto thenFuture = threading::then(
+            std::move(findNoteByGuidFuture),
+            threading::TrackedTask{
+                selfWeak,
+                [this, status, resourcePromise,
+                 localResource = std::move(localResource),
+                 updatedResource = std::move(updatedResource)](
+                     std::optional<qevercloud::Note> note) mutable {
+                     if (Q_UNLIKELY(!note)) {
+                         ErrorString error{QT_TRANSLATE_NOOP(
+                             "synchronization::ResourcesProcessor",
+                             "Failed to resolve resources conflict: note "
+                             "owning the conflicting resource was not found by "
+                             "guid")};
+                         error.details() = *updatedResource.noteGuid();
+
+                         status->m_resourcesWhichFailedToProcess
+                             << ProcessResourcesStatus::ResourceWithException{
+                                 std::move(updatedResource),
+                                 std::make_shared<RuntimeError>(
+                                     std::move(error))};
+
+                         resourcePromise->addResult(
+                             ProcessResourceStatus::
+                                 FailedToResolveResourceConflict);
+
+                         resourcePromise->finish();
+                         return;
+                     }
+
+                     auto noteCopy = *note;
+                     if (noteCopy.resources())
+                     {
+                         Q_ASSERT(updatedResource.guid());
+
+                         const auto it = std::find_if(
+                             noteCopy.mutableResources()->begin(),
+                             noteCopy.mutableResources()->end(),
+                             [updatedResourceGuid = *updatedResource.guid()](
+                                 const qevercloud::Resource & resource)
+                             {
+                                 return resource.guid() == updatedResourceGuid;
+                             });
+                         if (it == noteCopy.mutableResources()->end()) {
+                             noteCopy.setResources(
+                                 QList<qevercloud::Resource>{}
+                                 << updatedResource);
+                         }
+                         else {
+                             *it = updatedResource;
+                         }
+                     }
+                     else
+                     {
+                         noteCopy.setResources(
+                             QList<qevercloud::Resource>{}
+                             << updatedResource);
+                     }
+
+                     note->setGuid(std::nullopt);
+                     note->setUpdateSequenceNum(std::nullopt);
+                     note->setLocallyModified(true);
+
+                     if (note->resources()) {
+                        for (auto & resource: *note->mutableResources()) {
+                            resource.setGuid(std::nullopt);
+                            resource.setUpdateSequenceNum(std::nullopt);
+                            resource.setNoteGuid(std::nullopt);
+                        }
+                     }
+
+                     if (!note->attributes()) {
+                         note->setAttributes(qevercloud::NoteAttributes{});
+                     }
+                     note->mutableAttributes()->setConflictSourceNoteGuid(
+                         updatedResource.guid());
+
+                     note->setTitle(
+                         utils::makeLocalConflictingNoteTitle(*note));
+
+                     // TODO: implement this branch further
+                 }});
 
         // TODO: implement further
     }

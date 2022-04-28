@@ -57,7 +57,8 @@ private:
         IgnoredResource,
         FailedToDownloadFullResourceData,
         FailedToPutResourceToLocalStorage,
-        FailedToResolveResourceConflict
+        FailedToResolveResourceConflict,
+        Canceled
     };
 
     void onFoundDuplicate(
