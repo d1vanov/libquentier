@@ -67,6 +67,13 @@ private:
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
+    void onFoundNoteOwningConflictingResource(
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const qevercloud::Resource & localResource,
+        qevercloud::Note localNote,
+        qevercloud::Resource updatedResource);
+
     enum class ResourceKind
     {
         NewResource,
