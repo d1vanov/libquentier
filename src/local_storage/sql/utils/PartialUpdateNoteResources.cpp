@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -115,8 +115,8 @@ void classifyNoteResources(
     const QList<qevercloud::Resource> & previousNoteResources,
     const QList<qevercloud::Resource> & updatedNoteResources,
     QSet<QString> & localIdsOfRemovedResources,
-    QList<qevercloud::Resource> & addedResources,
-    QList<qevercloud::Resource> & updatedResources)
+    QList<qevercloud::Resource> & addedResources, // NOLINT
+    QList<qevercloud::Resource> & updatedResources) // NOLINT
 {
     for (const auto & previousNoteResource: qAsConst(previousNoteResources))
     {
@@ -452,32 +452,9 @@ bool partialUpdateNoteResources(
 
     for (auto & resource: updatedResources)
     {
-        const auto remainingResourceIt = std::find_if(
-            remainingResources.constBegin(),
-            remainingResources.constEnd(),
-            [&resource](const qevercloud::Resource & remainingResource)
-            {
-                return remainingResource.localId() == resource.localId();
-            });
-
-        if (remainingResourceIt == remainingResources.constEnd()) {
-            errorDescription.setBase(QT_TRANSLATE_NOOP(
-                "local_storage::sql::utils",
-                "Cannot perform partial update of note resources: updated "
-                "resource's index in note was not found"));
-            errorDescription.details() = error.details();
-            QNWARNING(
-                "local_storage::sql::utils",
-                errorDescription << ", resource: " << resource);
-            return false;
-        }
-
-        const int indexInNote = static_cast<int>(std::distance(
-            remainingResources.constBegin(), remainingResourceIt));
-
         error.clear();
         if (!putResource(
-                localStorageDir, resource, indexInNote, database, error,
+                localStorageDir, resource, database, error,
                 (updateResourceBinaryData
                  ? PutResourceBinaryDataOption::WithBinaryData
                  : PutResourceBinaryDataOption::WithoutBinaryData),
@@ -496,14 +473,12 @@ bool partialUpdateNoteResources(
         }
     }
 
-    int counter = 0;
     for (auto & resource: addedResources)
     {
         ErrorString error;
-        const int indexInNote = remainingResources.size() + counter;
         error.clear();
         if (!putResource(
-                localStorageDir, resource, indexInNote, database, error,
+                localStorageDir, resource, database, error,
                 (updateResourceBinaryData
                  ? PutResourceBinaryDataOption::WithBinaryData
                  : PutResourceBinaryDataOption::WithoutBinaryData),
@@ -520,8 +495,6 @@ bool partialUpdateNoteResources(
                 errorDescription << ", resource: " << resource);
             return false;
         }
-
-        ++counter;
     }
 
     return true;

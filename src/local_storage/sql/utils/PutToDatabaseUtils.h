@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -116,7 +116,7 @@ QDebug & operator<<(QDebug & dbg, PutResourceBinaryDataOption option);
 
 [[nodiscard]] bool putResource(
     const QDir & localStorageDir, qevercloud::Resource & resource,
-    int indexInNote, QSqlDatabase & database, ErrorString & errorDescription,
+    QSqlDatabase & database, ErrorString & errorDescription,
     PutResourceBinaryDataOption putResourceBinaryDataOption =
         PutResourceBinaryDataOption::WithBinaryData,
     TransactionOption transactionOption =
@@ -129,7 +129,7 @@ enum class PutResourceMetadataOption
 };
 
 [[nodiscard]] bool putCommonResourceData(
-    const qevercloud::Resource & resource, int indexInNote,
+    const qevercloud::Resource & resource,
     PutResourceMetadataOption putResourceMetadataOption,
     QSqlDatabase & database, ErrorString & errorDescription);
 

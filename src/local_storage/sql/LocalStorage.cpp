@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -444,9 +444,9 @@ QFuture<quint32> LocalStorage::resourceCountPerNoteLocalId(
 }
 
 QFuture<void> LocalStorage::putResource(
-    qevercloud::Resource resource, int indexInNote)
+    qevercloud::Resource resource)
 {
-    return m_resourcesHandler->putResource(std::move(resource), indexInNote);
+    return m_resourcesHandler->putResource(std::move(resource));
 }
 
 QFuture<std::optional<qevercloud::Resource>>

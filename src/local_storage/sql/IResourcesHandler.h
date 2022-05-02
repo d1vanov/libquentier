@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,10 +47,10 @@ public:
         QString noteLocalId) const = 0;
 
     [[nodiscard]] virtual QFuture<void> putResource(
-        qevercloud::Resource resource, int indexInNote) = 0;
+        qevercloud::Resource resource) = 0;
 
     [[nodiscard]] virtual QFuture<void> putResourceMetadata(
-        qevercloud::Resource resource, int indexInNote) = 0;
+        qevercloud::Resource resource) = 0;
 
     using FetchResourceOption = ILocalStorage::FetchResourceOption;
     using FetchResourceOptions = ILocalStorage::FetchResourceOptions;

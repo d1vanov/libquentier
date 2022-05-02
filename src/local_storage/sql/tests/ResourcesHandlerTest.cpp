@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -517,7 +517,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     auto resource = GetParam();
 
-    auto putResourceFuture = resourcesHandler->putResource(resource, 0);
+    auto putResourceFuture = resourcesHandler->putResource(resource);
     putResourceFuture.waitForFinished();
 
     QCoreApplication::processEvents();
@@ -572,7 +572,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     resource.setUpdateSequenceNum(resource.updateSequenceNum().value() + 1);
 
-    putResourceFuture = resourcesHandler->putResourceMetadata(resource, 0);
+    putResourceFuture = resourcesHandler->putResourceMetadata(resource);
     putResourceFuture.waitForFinished();
 
     QCoreApplication::processEvents();
@@ -644,7 +644,7 @@ TEST_P(ResourcesHandlerSingleResourceTest, HandleSingleResource)
 
     checkResourceExpunged();
 
-    putResourceFuture = resourcesHandler->putResource(resource, 0);
+    putResourceFuture = resourcesHandler->putResource(resource);
     putResourceFuture.waitForFinished();
 
     auto expungeResourceByGuidFuture =
@@ -708,12 +708,10 @@ TEST_F(ResourcesHandlerTest, HandleMultipleResources)
     }
 
     QFutureSynchronizer<void> putResourcesSynchronizer;
-    int indexInNote = 0;
     for (auto resource: resources) {
         auto putResourceFuture =
-            resourcesHandler->putResource(std::move(resource), indexInNote);
+            resourcesHandler->putResource(std::move(resource));
         putResourcesSynchronizer.addFuture(putResourceFuture);
-        ++indexInNote;
     }
 
     EXPECT_NO_THROW(putResourcesSynchronizer.waitForFinished());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -47,10 +47,10 @@ public:
         QString noteLocalId) const override;
 
     [[nodiscard]] QFuture<void> putResource(
-        qevercloud::Resource resource, int indexInNote) override;
+        qevercloud::Resource resource) override;
 
     [[nodiscard]] QFuture<void> putResourceMetadata(
-        qevercloud::Resource resource, int indexInNote) override;
+        qevercloud::Resource resource) override;
 
     [[nodiscard]] QFuture<std::optional<qevercloud::Resource>>
         findResourceByLocalId(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -49,6 +49,10 @@ namespace quentier::local_storage::sql::utils {
 
 [[nodiscard]] QString resourceLocalIdByGuid(
     const qevercloud::Guid & resourceGuid, QSqlDatabase & database,
+    ErrorString & errorDescription);
+
+[[nodiscard]] std::optional<int> resourceIndexInNote(
+    const QString & resourceLocalId, QSqlDatabase & database,
     ErrorString & errorDescription);
 
 enum class FetchResourceOption

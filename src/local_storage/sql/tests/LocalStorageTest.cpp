@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -1238,11 +1238,10 @@ TEST_F(LocalStorageTest, ForwardPutResourceToResourcesHandler)
     const auto localStorage = createLocalStorage();
 
     const auto resource = qevercloud::Resource{};
-    const int indexInNote = 0;
-    EXPECT_CALL(*m_mockResourcesHandler, putResource(resource, indexInNote))
+    EXPECT_CALL(*m_mockResourcesHandler, putResource(resource))
         .WillOnce(Return(threading::makeReadyFuture()));
 
-    const auto res = localStorage->putResource(resource, indexInNote);
+    const auto res = localStorage->putResource(resource);
     ASSERT_TRUE(res.isFinished());
 }
 

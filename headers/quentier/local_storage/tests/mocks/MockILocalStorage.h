@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -237,7 +237,7 @@ public:
 
     MOCK_METHOD(
         QFuture<void>, putResource,
-        (qevercloud::Resource resource, int indexInNote), (override));
+        (qevercloud::Resource resource), (override));
 
     MOCK_METHOD(
         QFuture<std::optional<qevercloud::Resource>>, findResourceByLocalId,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -362,24 +362,18 @@ public:
             m_writerThread, testData.m_localStorageDirPath,
             m_resourceDataFilesLock);
 
-        int indexInNote = 0;
-
         auto putFirstResourceFuture = resourcesHandler->putResource(
-            testData.m_firstResource, indexInNote);
+            testData.m_firstResource);
 
         putFirstResourceFuture.waitForFinished();
 
-        ++indexInNote;
-
         auto putSecondResourceFuture = resourcesHandler->putResource(
-            testData.m_secondResource, indexInNote);
+            testData.m_secondResource);
 
         putSecondResourceFuture.waitForFinished();
 
-        ++indexInNote;
-
         auto putThirdResourceFuture = resourcesHandler->putResource(
-            testData.m_thirdResource, indexInNote);
+            testData.m_thirdResource);
 
         putThirdResourceFuture.waitForFinished();
 

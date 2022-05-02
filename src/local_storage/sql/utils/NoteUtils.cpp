@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -375,8 +375,8 @@ void encryptionItemInNoteSearchQueryToSql(
 }
 
 void contentSearchTermToSqlQueryParts(
-    QString & frontSearchTermModifier, QString & searchTerm,
-    QString & backSearchTermModifier, QString & matchStatement)
+    QString & frontSearchTermModifier, QString & searchTerm, // NOLINT
+    QString & backSearchTermModifier, QString & matchStatement) // NOLINT
 {
     static const QRegularExpression whitespaceRegex{QStringLiteral("\\p{Z}")};
     static const QString asterisk = QStringLiteral("*");
@@ -604,7 +604,7 @@ void contentSearchTermToSqlQueryParts(
         (queryHasAnyModifier ? QStringLiteral("OR") : QStringLiteral("AND"));
 
     const auto extendError = [&](ErrorString & error,
-                                 const QString & defaultBase,
+                                 const QString & defaultBase, // NOLINT
                                  QString defaultDetails) {
         if (error.isEmpty()) {
             error.setBase(defaultBase);
@@ -1156,7 +1156,7 @@ QStringList queryNoteLocalIds(
         errorDescription.appendBase(error.additionalBases());
         errorDescription.details() = error.details();
         QNWARNING("local_storage::sql::utils", errorDescription);
-        return QStringList();
+        return {};
     }
 
     QSqlQuery query{database};
@@ -1227,6 +1227,55 @@ QStringList noteResourceLocalIds(
     }
 
     return result;
+}
+
+int noteResourceCount(
+    const QString & noteLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT COUNT(localResource) FROM NoteResources "
+        "WHERE localNote = :localNote");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot count resources by note local id: failed to "
+            "prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":localNote"), noteLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot count resources by note local id"),
+        {});
+
+    if (!query.next()) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot count resources by note local id: no result from query"));
+        return -1;
+    }
+
+    bool conversionResult = false;
+    int count = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot count resources by note local id: no result from query: "
+            "failed to convert count to int"));
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return -1;
+    }
+
+    return count;
 }
 
 } // namespace quentier::local_storage::sql::utils

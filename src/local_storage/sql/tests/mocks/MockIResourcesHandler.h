@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -36,12 +36,12 @@ public:
         (const, override));
 
     MOCK_METHOD(
-        QFuture<void>, putResource,
-        (qevercloud::Resource resource, int indexInNote), (override));
+        QFuture<void>, putResource, (qevercloud::Resource resource),
+        (override));
 
     MOCK_METHOD(
-        QFuture<void>, putResourceMetadata,
-        (qevercloud::Resource resource, int indexInNote), (override));
+        QFuture<void>, putResourceMetadata, (qevercloud::Resource resource),
+        (override));
 
     MOCK_METHOD(
         QFuture<std::optional<qevercloud::Resource>>, findResourceByLocalId,
@@ -54,12 +54,12 @@ public:
         (const, override));
 
     MOCK_METHOD(
-        QFuture<void>, expungeResourceByLocalId,
-        (QString resourceLocalId), (override));
+        QFuture<void>, expungeResourceByLocalId, (QString resourceLocalId),
+        (override));
 
     MOCK_METHOD(
-        QFuture<void>, expungeResourceByGuid,
-        (qevercloud::Guid resourceGuid), (override));
+        QFuture<void>, expungeResourceByGuid, (qevercloud::Guid resourceGuid),
+        (override));
 };
 
 } // namespace quentier::local_storage::sql::tests::mocks

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -131,6 +131,57 @@ QString resourceLocalIdByGuid(
     }
 
     return query.value(0).toString();
+}
+
+std::optional<int> resourceIndexInNote(
+    const QString & resourceLocalId, QSqlDatabase & database,
+    ErrorString & errorDescription)
+{
+    static const QString queryString = QStringLiteral(
+        "SELECT resourceIndexInNote FROM Resources WHERE resourceLocalUid = "
+        ":resourceLocalUid");
+
+    QSqlQuery query{database};
+    bool res = query.prepare(queryString);
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot get resource index in note by resource local id: failed to "
+            "prepare query"),
+        {});
+
+    query.bindValue(QStringLiteral(":resourceLocalUid"), resourceLocalId);
+
+    res = query.exec();
+    ENSURE_DB_REQUEST_RETURN(
+        res, query, "local_storage::sql::utils",
+        QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Cannot get resource index in note by resource local id: failed to "
+            "prepare query"),
+        {});
+
+    if (!query.next()) {
+        QNDEBUG(
+            "local_storage::sql::utils",
+            "Could not find resource index in note corresponding to resource "
+                << "local id " << resourceLocalId);
+        return std::nullopt;
+    }
+
+    bool conversionResult = false;
+    int index = query.value(0).toInt(&conversionResult);
+    if (Q_UNLIKELY(!conversionResult)) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "local_storage::sql::utils",
+            "Could not find resource index in note corresponding to resource "
+            "local id: failed to convert index in note to int"));
+        QNWARNING("local_storage::sql::utils", errorDescription);
+        return std::nullopt;
+    }
+
+    return index;
 }
 
 std::optional<qevercloud::Resource> findResourceByLocalId(

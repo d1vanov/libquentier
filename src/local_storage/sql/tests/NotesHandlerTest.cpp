@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,9 +16,9 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../NotesHandler.h"
 #include "../ConnectionPool.h"
 #include "../NotebooksHandler.h"
+#include "../NotesHandler.h"
 #include "../Notifier.h"
 #include "../TablesInitializer.h"
 #include "../TagsHandler.h"
@@ -119,7 +119,7 @@ namespace {
 
         if (i % 2 == 0) {
             qevercloud::Identity recipientIdentity;
-            recipientIdentity.setId(qevercloud::IdentityID{i * 20});
+            recipientIdentity.setId(qevercloud::IdentityID{i * 20}); // NOLINT
 
             if (i % 4 == 0) {
                 qevercloud::Contact contact;
@@ -1053,7 +1053,8 @@ TEST_P(NotesHandlerSingleNoteTest, HandleSingleNote)
     if (note.tagLocalIds().isEmpty() && note.tagGuids() &&
         !note.tagGuids()->isEmpty())
     {
-        EXPECT_FALSE(foundByLocalIdNoteFuture.result()->tagLocalIds().isEmpty());
+        EXPECT_FALSE(
+            foundByLocalIdNoteFuture.result()->tagLocalIds().isEmpty());
         note.setTagLocalIds(foundByLocalIdNoteFuture.result()->tagLocalIds());
     }
 
@@ -1292,7 +1293,8 @@ TEST_F(NotesHandlerTest, HandleMultipleNotes)
 
                 if (sharedNote.recipientIdentity()) {
                     sharedNote.mutableRecipientIdentity()->setId(
-                        qevercloud::IdentityID{sharedNoteCounter * 20});
+                        qevercloud::IdentityID{
+                            sharedNoteCounter * 20}); // NOLINT
                 }
 
                 ++sharedNoteCounter;
@@ -2040,7 +2042,7 @@ class NotesHandlerNoteSearchQueryTest :
         const int dayOfWeek = datetime.date().dayOfWeek();
 
         // go to the closest previous Sunday
-        datetime = datetime.addDays(-1 * dayOfWeek);
+        datetime = datetime.addDays(-1L * dayOfWeek);
 
         timestampForDateTimeString[QStringLiteral("week")] =
             datetime.toMSecsSinceEpoch();
@@ -2670,8 +2672,7 @@ const std::array gNoteSearchQueryTestData{
     NoteSearchQueryTestData{
         QStringLiteral("-applicationData:*"), QSet<int>{} << 3 << 4 << 5},
     // Single simple search term
-    NoteSearchQueryTestData{
-        QStringLiteral("cAnOniCal"), QSet<int>{} << 1},
+    NoteSearchQueryTestData{QStringLiteral("cAnOniCal"), QSet<int>{} << 1},
     NoteSearchQueryTestData{
         QStringLiteral("-canOnIcal"),
         QSet<int>{} << 0 << 2 << 3 << 4 << 5 << 6 << 7 << 8},
@@ -2694,18 +2695,16 @@ const std::array gNoteSearchQueryTestData{
     // Search by tag names as well as note contents
     NoteSearchQueryTestData{
         QStringLiteral("any: CaNonIcAl colLeGE UniCODe foOtLOCkeR"),
-        QSet<int>{} << 0 << 1 << 3 << 5 << 6  << 7},
+        QSet<int>{} << 0 << 1 << 3 << 5 << 6 << 7},
     NoteSearchQueryTestData{
         QStringLiteral("CaNonIcAl sERveR"), QSet<int>{} << 1},
-    NoteSearchQueryTestData{
-        QStringLiteral("wiLl -colLeGe"), QSet<int>{} << 6},
+    NoteSearchQueryTestData{QStringLiteral("wiLl -colLeGe"), QSet<int>{} << 6},
     // Search by note titles as well as note contents
     NoteSearchQueryTestData{
         QStringLiteral("any: CaNonIcAl eGGs"), QSet<int>{} << 1 << 6 << 7 << 8},
     NoteSearchQueryTestData{
         QStringLiteral("CaNonIcAl PotAto"), QSet<int>{} << 1},
-    NoteSearchQueryTestData{
-        QStringLiteral("unIQue -EGgs"), QSet<int>{} << 0},
+    NoteSearchQueryTestData{QStringLiteral("unIQue -EGgs"), QSet<int>{} << 0},
     NoteSearchQueryTestData{
         QStringLiteral("any: cONSiDERed -hAm"),
         QSet<int>{} << 0 << 1 << 2 << 5 << 6 << 7 << 8},
@@ -2722,8 +2721,7 @@ const std::array gNoteSearchQueryTestData{
         QStringLiteral("infoRMAtion wikiPEDiA any:"),
         QSet<int>{} << 0 << 1 << 2 << 3 << 4 << 5},
     NoteSearchQueryTestData{
-        QStringLiteral("-inFORMation -wikiPEDiA"),
-        QSet<int>{} << 6 << 7 << 8},
+        QStringLiteral("-inFORMation -wikiPEDiA"), QSet<int>{} << 6 << 7 << 8},
     NoteSearchQueryTestData{
         QStringLiteral("inFOrMATioN tHe poTaTO serVEr"), QSet<int>{} << 0 << 1},
     NoteSearchQueryTestData{
@@ -2735,8 +2733,7 @@ const std::array gNoteSearchQueryTestData{
         QStringLiteral("wikiPEDiA traNSActioN any: -PotaTo -biNARy"),
         QSet<int>{} << 3 << 4 << 5 << 6 << 7 << 8},
     // Search by phrases
-    NoteSearchQueryTestData{
-        QStringLiteral("\"The list\""), QSet<int>{} << 8},
+    NoteSearchQueryTestData{QStringLiteral("\"The list\""), QSet<int>{} << 8},
     NoteSearchQueryTestData{
         QStringLiteral("\"tHe lIsT\" \"tHE lASt\" any: \"tHE xhTMl\""),
         QSet<int>{} << 1 << 7 << 8},
@@ -2750,8 +2747,7 @@ const std::array gNoteSearchQueryTestData{
         QStringLiteral("\"the canonic*\""), QSet<int>{} << 1},
     NoteSearchQueryTestData{
         QStringLiteral("\"the can*cal\""), QSet<int>{} << 1},
-    NoteSearchQueryTestData{
-        QStringLiteral("\"*onical\""), QSet<int>{} << 1},
+    NoteSearchQueryTestData{QStringLiteral("\"*onical\""), QSet<int>{} << 1},
     NoteSearchQueryTestData{
         QStringLiteral("\"*code characters\""), QSet<int>{} << 3 << 5},
     // Search by terms in Greek with diacritics
@@ -2806,25 +2802,20 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
     ASSERT_EQ(queryNotesFuture.resultCount(), 1);
     const auto notes = queryNotesFuture.result();
 
-    if (notes.isEmpty())
-    {
-        EXPECT_TRUE(testData.expectedContainedNotesIndices.isEmpty())
-            << ([&] {
-                QString res;
-                QTextStream strm{&res};
-                strm << "Internal error: no notes corresponding to note search "
-                    << "query were found; query string: "
-                    << testData.queryString << "\nNote search query: "
-                    << noteSearchQuery;
-                return res.toStdString();
-            }());
+    if (notes.isEmpty()) {
+        EXPECT_TRUE(testData.expectedContainedNotesIndices.isEmpty()) << ([&] {
+            QString res;
+            QTextStream strm{&res};
+            strm << "Internal error: no notes corresponding to note search "
+                 << "query were found; query string: " << testData.queryString
+                 << "\nNote search query: " << noteSearchQuery;
+            return res.toStdString();
+        }());
     }
-    else
-    {
+    else {
         QSet<int> containedNoteIndices;
         const int originalNoteCount = m_notes.size();
-        for (int i = 0; i < originalNoteCount; ++i)
-        {
+        for (int i = 0; i < originalNoteCount; ++i) {
             if (notes.contains(m_notes.at(i))) {
                 containedNoteIndices.insert(i);
             }
@@ -2832,38 +2823,40 @@ TEST_P(NotesHandlerNoteSearchQueryTest, QueryNotes)
 
         EXPECT_EQ(containedNoteIndices, testData.expectedContainedNotesIndices)
             << ([&] {
-                QString res;
-                QTextStream strm{&res};
-                strm << "unexpected result of note search query processing: ";
-                strm << "Expected note indices: ";
-                for (const int i:
-                     qAsConst(testData.expectedContainedNotesIndices)) {
-                    strm << i << "; ";
-                }
-                strm << "received note indices: ";
-                for (const int i: qAsConst(containedNoteIndices)) {
-                    strm << i << "; ";
-                }
+                   QString res;
+                   QTextStream strm{&res};
+                   strm
+                       << "unexpected result of note search query processing: ";
+                   strm << "Expected note indices: ";
+                   for (const int i:
+                        qAsConst(testData.expectedContainedNotesIndices)) {
+                       strm << i << "; ";
+                   }
+                   strm << "received note indices: ";
+                   for (const int i: qAsConst(containedNoteIndices)) {
+                       strm << i << "; ";
+                   }
 
-                strm << "\nExpected notes: ";
-                for (int i = 0; i < originalNoteCount; ++i) {
-                    if (!testData.expectedContainedNotesIndices.contains(i)) {
-                        continue;
-                    }
+                   strm << "\nExpected notes: ";
+                   for (int i = 0; i < originalNoteCount; ++i) {
+                       if (!testData.expectedContainedNotesIndices.contains(i))
+                       {
+                           continue;
+                       }
 
-                    strm << m_notes.at(i) << "\n";
-                }
+                       strm << m_notes.at(i) << "\n";
+                   }
 
-                strm << "\nActual found notes: ";
-                for (const auto & note: qAsConst(notes)) {
-                    strm << note << "\n";
-                }
+                   strm << "\nActual found notes: ";
+                   for (const auto & note: qAsConst(notes)) {
+                       strm << note << "\n";
+                   }
 
-                strm << "\nQuery string: " << testData.queryString
-                    << "\nNote search query: " << noteSearchQuery;
+                   strm << "\nQuery string: " << testData.queryString
+                        << "\nNote search query: " << noteSearchQuery;
 
-                return res.toStdString();
-            }());
+                   return res.toStdString();
+               }());
     }
 }
 

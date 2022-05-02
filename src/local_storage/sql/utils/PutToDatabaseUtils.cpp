@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -56,7 +56,7 @@ namespace quentier::local_storage::sql::utils {
 
 namespace {
 
-Q_GLOBAL_STATIC(QVariant, gNullValue);
+Q_GLOBAL_STATIC(QVariant, gNullValue); // NOLINT
 
 void setNoteIdsToNoteResources(qevercloud::Note & note)
 {
@@ -2539,8 +2539,7 @@ bool putSavedSearch(
 
 bool putResource(
     const QDir & localStorageDir, qevercloud::Resource & resource,
-    const int indexInNote, QSqlDatabase & database,
-    ErrorString & errorDescription,
+    QSqlDatabase & database, ErrorString & errorDescription,
     const PutResourceBinaryDataOption putResourceBinaryDataOption,
     const TransactionOption transactionOption)
 {
@@ -2588,7 +2587,7 @@ bool putResource(
     }
 
     if (!putCommonResourceData(
-            resource, indexInNote,
+            resource,
             (putResourceBinaryDataOption ==
                      PutResourceBinaryDataOption::WithBinaryData
                  ? PutResourceMetadataOption::WithBinaryDataProperties
@@ -2787,10 +2786,38 @@ bool putResource(
 }
 
 bool putCommonResourceData(
-    const qevercloud::Resource & resource, const int indexInNote,
+    const qevercloud::Resource & resource,
     const PutResourceMetadataOption putResourceMetadataOption,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
+    int indexInNote = -1;
+    {
+        ErrorString error;
+        const auto index = resourceIndexInNote(
+            resource.localId(), database, error);
+        if (!index && !error.isEmpty()) {
+            errorDescription = error;
+            QNWARNING("local_storage::sql::utils", errorDescription);
+            return false;
+        }
+
+        if (index) {
+            indexInNote = *index;
+        }
+        else {
+            error.clear();
+            indexInNote = noteResourceCount(
+                resource.noteLocalId(), database, error);
+            if (Q_UNLIKELY(indexInNote < 0)) {
+                errorDescription = error;
+                QNWARNING("local_storage::sql::utils", errorDescription);
+                return false;
+            }
+        }
+    }
+
+    Q_ASSERT(indexInNote >= 0);
+
     QString queryString;
     {
         QTextStream strm{&queryString};
@@ -2926,7 +2953,7 @@ bool putCommonResourceData(
 }
 
 bool putResourceRecognitionData(
-    const QString & resourceLocalId, const QString & noteLocalId,
+    const QString & resourceLocalId, const QString & noteLocalId, // NOLINT
     const QByteArray & resourceRecognitionData,
     QSqlDatabase & database, ErrorString & errorDescription)
 {
