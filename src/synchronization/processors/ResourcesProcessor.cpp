@@ -261,73 +261,15 @@ void ResourcesProcessor::onFoundDuplicate(
     }
 
     if (shouldMakeLocalConflictNewResource) {
-        localResource.setGuid(std::nullopt);
-        localResource.setNoteGuid(std::nullopt);
-        localResource.setUpdateSequenceNum(std::nullopt);
-        localResource.setLocallyModified(true);
-
-        auto findNoteByGuidFuture = m_localStorage->findNoteByGuid(
-            *updatedResource.noteGuid(),
-            local_storage::ILocalStorage::FetchNoteOptions{} |
-                local_storage::ILocalStorage::FetchNoteOption::
-                    WithResourceMetadata);
-
-        const auto selfWeak = weak_from_this();
-
-        auto thenFuture = threading::then(
-            std::move(findNoteByGuidFuture),
-            threading::TrackedTask{
-                selfWeak,
-                [this, status, resourcePromise,
-                 localResource = std::move(localResource),
-                 updatedResource = std::move(updatedResource)](
-                    std::optional<qevercloud::Note> note) mutable {
-                    if (Q_UNLIKELY(!note)) {
-                        ErrorString error{QT_TRANSLATE_NOOP(
-                            "synchronization::ResourcesProcessor",
-                            "Failed to resolve resources conflict: note "
-                            "owning the conflicting resource was not found by "
-                            "guid")};
-                        error.details() = *updatedResource.noteGuid();
-
-                        status->m_resourcesWhichFailedToProcess
-                            << ProcessResourcesStatus::ResourceWithException{
-                                   std::move(updatedResource),
-                                   std::make_shared<RuntimeError>(
-                                       std::move(error))};
-
-                        resourcePromise->addResult(
-                            ProcessResourceStatus::
-                                FailedToResolveResourceConflict);
-
-                        resourcePromise->finish();
-                        return;
-                    }
-
-                    onFoundNoteOwningConflictingResource(
-                        resourcePromise, status, localResource,
-                        std::move(*note), std::move(updatedResource));
-                }});
-
-        threading::onFailed(
-            std::move(thenFuture),
-            [resourcePromise, status, updatedResource = std::move(updatedResource)](
-                const QException & e) mutable {
-                status->m_resourcesWhichFailedToProcess
-                    << ProcessResourcesStatus::ResourceWithException{
-                        std::move(updatedResource),
-                        std::shared_ptr<QException>(e.clone())};
-
-                resourcePromise->addResult(
-                    ProcessResourceStatus::FailedToResolveResourceConflict);
-
-                resourcePromise->finish();
-            });
-
+        handleResourceConflict(
+            resourcePromise, status, std::move(updatedResource),
+            std::move(localResource));
         return;
     }
 
-    // TODO: implement further
+    putResourceToLocalStorage(
+        resourcePromise, status, std::move(updatedResource),
+        ResourceKind::UpdatedResource);
 }
 
 void ResourcesProcessor::onFoundNoteOwningConflictingResource(
@@ -343,32 +285,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     const auto updatedResourceUsn = *updatedResource.updateSequenceNum();
 
     // Local note would be turned into the conflicting local one with local
-    // duplicates of all resources while noteCopy would be the note holding
-    // the updated resource as the actual value of it.
-    auto noteCopy = localNote;
-
-    // Putting updatedResource into noteCopy
-    if (noteCopy.resources()) {
-        const auto it = std::find_if(
-            noteCopy.mutableResources()->begin(),
-            noteCopy.mutableResources()->end(),
-            [updatedResourceGuid](const qevercloud::Resource & resource) {
-                return resource.guid() == updatedResourceGuid;
-            });
-        if (it == noteCopy.mutableResources()->end()) {
-            noteCopy.setResources(
-                QList<qevercloud::Resource>{} << updatedResource);
-        }
-        else {
-            *it = updatedResource;
-        }
-    }
-    else {
-        noteCopy.setResources(QList<qevercloud::Resource>{} << updatedResource);
-    }
-
-    // Putting localResource (from which guid, usn etc were cleared) into
-    // localNote
+    // duplicates of all resources.
     if (localNote.resources()) {
         const auto it = std::find_if(
             localNote.mutableResources()->begin(),
@@ -422,42 +339,10 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(putLocalNoteFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, resourcePromise, status, updatedResource,
-             note = std::move(noteCopy)]() mutable {
-                auto putUpdatedNoteFuture =
-                    m_localStorage->putNote(std::move(note));
-
-                auto thenFuture = threading::then(
-                    std::move(putUpdatedNoteFuture),
-                    [resourcePromise, status,
-                     updatedResourceGuid = *updatedResource.guid(),
-                     updatedResourceUsn =
-                         *updatedResource.updateSequenceNum()] {
-                        status->m_processedResourceGuidsAndUsns
-                            [updatedResourceGuid] = updatedResourceUsn;
-
-                        resourcePromise->addResult(
-                            ProcessResourceStatus::UpdatedResource);
-
-                        resourcePromise->finish();
-                    });
-
-                threading::onFailed(
-                    std::move(thenFuture),
-                    [resourcePromise, status,
-                     updatedResource = std::move(updatedResource)](
-                        const QException & e) mutable {
-                        status->m_resourcesWhichFailedToProcess
-                            << ProcessResourcesStatus::ResourceWithException{
-                                   std::move(updatedResource),
-                                   std::shared_ptr<QException>(e.clone())};
-
-                        resourcePromise->addResult(
-                            ProcessResourceStatus::
-                                FailedToPutResourceToLocalStorage);
-
-                        resourcePromise->finish();
-                    });
+            [this, selfWeak, resourcePromise, status, updatedResource]() mutable {
+                putResourceToLocalStorage(
+                    resourcePromise, status, std::move(updatedResource),
+                    ResourceKind::UpdatedResource);
             }});
 
     threading::onFailed(
@@ -474,6 +359,82 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
 
             resourcePromise->finish();
         });
+}
+
+void ResourcesProcessor::handleResourceConflict(
+    const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+    const std::shared_ptr<ProcessResourcesStatus> & status,
+    qevercloud::Resource updatedResource, qevercloud::Resource localResource)
+{
+    localResource.setGuid(std::nullopt);
+    localResource.setNoteGuid(std::nullopt);
+    localResource.setUpdateSequenceNum(std::nullopt);
+    localResource.setLocallyModified(true);
+
+    auto findNoteByGuidFuture = m_localStorage->findNoteByGuid(
+        *updatedResource.noteGuid(),
+        local_storage::ILocalStorage::FetchNoteOptions{} |
+            local_storage::ILocalStorage::FetchNoteOption::
+                WithResourceMetadata);
+
+    const auto selfWeak = weak_from_this();
+
+    auto thenFuture = threading::then(
+        std::move(findNoteByGuidFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, status, resourcePromise,
+             localResource = std::move(localResource),
+             updatedResource = std::move(updatedResource)](
+                std::optional<qevercloud::Note> note) mutable {
+                if (Q_UNLIKELY(!note)) {
+                    ErrorString error{QT_TRANSLATE_NOOP(
+                        "synchronization::ResourcesProcessor",
+                        "Failed to resolve resources conflict: note "
+                        "owning the conflicting resource was not found by "
+                        "guid")};
+                    error.details() = *updatedResource.noteGuid();
+
+                    status->m_resourcesWhichFailedToProcess
+                        << ProcessResourcesStatus::ResourceWithException{
+                               std::move(updatedResource),
+                               std::make_shared<RuntimeError>(
+                                   std::move(error))};
+
+                    resourcePromise->addResult(
+                        ProcessResourceStatus::FailedToResolveResourceConflict);
+
+                    resourcePromise->finish();
+                    return;
+                }
+
+                onFoundNoteOwningConflictingResource(
+                    resourcePromise, status, localResource, std::move(*note),
+                    std::move(updatedResource));
+            }});
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [resourcePromise, status, updatedResource = std::move(updatedResource)](
+            const QException & e) mutable {
+            status->m_resourcesWhichFailedToProcess
+                << ProcessResourcesStatus::ResourceWithException{
+                       std::move(updatedResource),
+                       std::shared_ptr<QException>(e.clone())};
+
+            resourcePromise->addResult(
+                ProcessResourceStatus::FailedToResolveResourceConflict);
+
+            resourcePromise->finish();
+        });
+}
+
+void ResourcesProcessor::putResourceToLocalStorage(
+    const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+    const std::shared_ptr<ProcessResourcesStatus> & status,
+    qevercloud::Resource resource, ResourceKind putResourceKind)
+{
+    // TODO: implement
 }
 
 } // namespace quentier::synchronization

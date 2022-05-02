@@ -80,13 +80,20 @@ private:
         UpdatedResource
     };
 
+    void handleResourceConflict(
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+        const std::shared_ptr<ProcessResourcesStatus> & status,
+        qevercloud::Resource updatedResource,
+        qevercloud::Resource localResource);
+
     void downloadFullResourceData(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
         const qevercloud::Resource & resource, ResourceKind resourceKind);
 
     void putResourceToLocalStorage(
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & notePromise,
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> &
+            resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
         qevercloud::Resource resource, ResourceKind putResourceKind);
 
