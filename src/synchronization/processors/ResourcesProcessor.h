@@ -22,6 +22,7 @@
 
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/utility/cancelers/Fwd.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -64,12 +65,14 @@ private:
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void onFoundNoteOwningConflictingResource(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         const qevercloud::Resource & localResource,
         qevercloud::Note localNote,
         qevercloud::Resource updatedResource);
@@ -83,12 +86,14 @@ private:
     void handleResourceConflict(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void downloadFullResourceData(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
+        const utility::cancelers::ManualCancelerPtr & canceler,
         const qevercloud::Resource & resource, ResourceKind resourceKind);
 
     void putResourceToLocalStorage(
@@ -96,13 +101,6 @@ private:
             resourcePromise,
         const std::shared_ptr<ProcessResourcesStatus> & status,
         qevercloud::Resource resource, ResourceKind putResourceKind);
-
-    // Removed guid, noteGuid and other Evernote identity properties
-    // from the resource, marks the resource as locally modified and
-    // stores it in the local storage so that the resource becomes "new"
-    // from Evernote service's POV.
-    [[nodiscard]] QFuture<void> makeLocalConflictNewResource(
-        qevercloud::Resource localResource);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

@@ -194,6 +194,7 @@ QFuture<INotesProcessor::ProcessNotesStatus> NotesProcessor::processNotesImpl(
         notePromise->start();
 
         Q_ASSERT(note.guid());
+        Q_ASSERT(note.updateSequenceNum());
 
         auto findNoteByGuidFuture = m_localStorage->findNoteByGuid(
             *note.guid(),

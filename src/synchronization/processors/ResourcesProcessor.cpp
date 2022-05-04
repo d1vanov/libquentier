@@ -29,6 +29,8 @@
 #include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
+#include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/services/INoteStore.h>
 #include <qevercloud/types/SyncChunk.h>
@@ -153,6 +155,19 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
         local_storage::ILocalStorage::FetchResourceOptions;
 
     auto status = std::make_shared<ProcessResourcesStatus>();
+
+    // Processing of all resources might need to be globally canceled if certain
+    // kind of exceptional situation occurs, for example:
+    // 1. Evernote API rate limit gets exceeded - once this happens, all further
+    //    immediate attempts to download full resource data would fail with the
+    //    same exception so it doesn't make sense to continue processing
+    // 2. Authentication token expires during the attempt to download full
+    //    resource data - it's pretty unlikely as the first step of sync should
+    //    ensure the auth token isn't close to expiration and re-acquire the
+    //    token if it is close to expiration. But still need to be able to
+    //    handle this situation.
+    auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
+
     for (const auto & resource: qAsConst(resources)) {
         auto resourcePromise =
             std::make_shared<QPromise<ProcessResourceStatus>>();
@@ -161,6 +176,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
         resourcePromise->start();
 
         Q_ASSERT(resource.guid());
+        Q_ASSERT(resource.updateSequenceNum());
 
         auto findResourceByGuidFuture = m_localStorage->findResourceByGuid(
             *resource.guid(), FetchResourceOptions{});
@@ -170,13 +186,25 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
             threading::TrackedTask{
                 selfWeak,
                 [this, updatedResource = resource, resourcePromise, status,
-                 selfWeak](const std::optional<qevercloud::Resource> &
+                 selfWeak, canceler](const std::optional<qevercloud::Resource> &
                                resource) mutable {
+                    if (canceler->isCanceled()) {
+                        const auto & guid = *updatedResource.guid();
+                        status->m_cancelledResourceGuidsAndUsns[guid] =
+                            updatedResource.updateSequenceNum().value();
+
+                        resourcePromise->addResult(
+                            ProcessResourceStatus::Canceled);
+
+                        resourcePromise->finish();
+                        return;
+                    }
+
                     if (resource) {
                         ++status->m_totalUpdatedResources;
                         onFoundDuplicate(
-                            resourcePromise, status, std::move(updatedResource),
-                            *resource);
+                            resourcePromise, status, canceler,
+                            std::move(updatedResource), *resource);
                         return;
                     }
 
@@ -185,7 +213,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
                     // No duplicate by guid was found, will download full
                     // resource data and then put it into the local storage
                     downloadFullResourceData(
-                        resourcePromise, status, updatedResource,
+                        resourcePromise, status, canceler, updatedResource,
                         ResourceKind::NewResource);
                 }});
 
@@ -230,6 +258,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
 void ResourcesProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<ProcessResourcesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
     Q_ASSERT(updatedResource.noteGuid());
@@ -262,28 +291,23 @@ void ResourcesProcessor::onFoundDuplicate(
 
     if (shouldMakeLocalConflictNewResource) {
         handleResourceConflict(
-            resourcePromise, status, std::move(updatedResource),
+            resourcePromise, status, canceler, std::move(updatedResource),
             std::move(localResource));
         return;
     }
 
-    putResourceToLocalStorage(
-        resourcePromise, status, std::move(updatedResource),
+    downloadFullResourceData(
+        resourcePromise, status, canceler, updatedResource,
         ResourceKind::UpdatedResource);
 }
 
 void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<ProcessResourcesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
     const qevercloud::Resource & localResource, qevercloud::Note localNote,
     qevercloud::Resource updatedResource)
 {
-    Q_ASSERT(updatedResource.guid());
-    Q_ASSERT(updatedResource.updateSequenceNum());
-
-    const auto updatedResourceGuid = *updatedResource.guid();
-    const auto updatedResourceUsn = *updatedResource.updateSequenceNum();
-
     // Local note would be turned into the conflicting local one with local
     // duplicates of all resources.
     if (localNote.resources()) {
@@ -311,15 +335,18 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     Q_ASSERT(localNote.guid());
     const auto noteGuid = *localNote.guid();
 
+    localNote.setLocalId(UidGenerator::Generate());
     localNote.setGuid(std::nullopt);
     localNote.setUpdateSequenceNum(std::nullopt);
     localNote.setLocallyModified(true);
 
     if (localNote.resources()) {
         for (auto & resource: *localNote.mutableResources()) {
+            resource.setLocalId(UidGenerator::Generate());
             resource.setGuid(std::nullopt);
             resource.setUpdateSequenceNum(std::nullopt);
             resource.setNoteGuid(std::nullopt);
+            resource.setLocalId(localNote.localId());
             resource.setLocallyModified(true);
         }
     }
@@ -339,10 +366,11 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(putLocalNoteFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, resourcePromise, status, updatedResource]() mutable {
-                putResourceToLocalStorage(
-                    resourcePromise, status, std::move(updatedResource),
-                    ResourceKind::UpdatedResource);
+            [this, selfWeak, resourcePromise, status, canceler,
+             updatedResource]() mutable {
+                downloadFullResourceData(
+                    resourcePromise, status, canceler,
+                    updatedResource, ResourceKind::UpdatedResource);
             }});
 
     threading::onFailed(
@@ -364,8 +392,10 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
 void ResourcesProcessor::handleResourceConflict(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<ProcessResourcesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
+    localResource.setLocalId(UidGenerator::Generate());
     localResource.setGuid(std::nullopt);
     localResource.setNoteGuid(std::nullopt);
     localResource.setUpdateSequenceNum(std::nullopt);
@@ -383,7 +413,7 @@ void ResourcesProcessor::handleResourceConflict(
         std::move(findNoteByGuidFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, status, resourcePromise,
+            [this, status, resourcePromise, canceler,
              localResource = std::move(localResource),
              updatedResource = std::move(updatedResource)](
                 std::optional<qevercloud::Note> note) mutable {
@@ -409,8 +439,8 @@ void ResourcesProcessor::handleResourceConflict(
                 }
 
                 onFoundNoteOwningConflictingResource(
-                    resourcePromise, status, localResource, std::move(*note),
-                    std::move(updatedResource));
+                    resourcePromise, status, canceler, localResource,
+                    std::move(*note), std::move(updatedResource));
             }});
 
     threading::onFailed(
@@ -429,12 +459,103 @@ void ResourcesProcessor::handleResourceConflict(
         });
 }
 
+void ResourcesProcessor::downloadFullResourceData(
+    const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
+    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const utility::cancelers::ManualCancelerPtr & canceler,
+    const qevercloud::Resource & resource, ResourceKind resourceKind)
+{
+    Q_ASSERT(resource.guid());
+
+    auto downloadFullResourceDataFuture =
+        m_resourceFullDataDownloader->downloadFullResourceData(
+            *resource.guid());
+
+    const auto selfWeak = weak_from_this();
+
+    auto thenFuture = threading::then(
+        std::move(downloadFullResourceDataFuture),
+        threading::TrackedTask{
+            selfWeak,
+            [this, resourcePromise, status, resourceKind](
+                qevercloud::Resource resource) {
+                putResourceToLocalStorage(
+                    resourcePromise, status, std::move(resource), resourceKind);
+            }});
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [resourcePromise, status, resource, canceler](const QException & e) {
+            status->m_resourcesWhichFailedToDownload
+                << ProcessResourcesStatus::ResourceWithException{
+                        resource, std::shared_ptr<QException>(e.clone())};
+
+            bool shouldCancelProcessing = false;
+            try {
+                e.raise();
+            }
+            catch (const qevercloud::EDAMSystemException & se) {
+                if ((se.errorCode() ==
+                     qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) ||
+                    (se.errorCode() == qevercloud::EDAMErrorCode::AUTH_EXPIRED))
+                {
+                    shouldCancelProcessing = true;
+                }
+            }
+            catch (...) {
+            }
+
+            if (shouldCancelProcessing) {
+                canceler->cancel();
+            }
+
+            resourcePromise->addResult(
+                ProcessResourceStatus::FailedToDownloadFullResourceData);
+
+            resourcePromise->finish();
+        });
+}
+
 void ResourcesProcessor::putResourceToLocalStorage(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<ProcessResourcesStatus> & status,
     qevercloud::Resource resource, ResourceKind putResourceKind)
 {
-    // TODO: implement
+    Q_ASSERT(resource.guid());
+    Q_ASSERT(resource.updateSequenceNum());
+
+    auto putResourceFuture = m_localStorage->putResource(resource);
+
+    auto thenFuture = threading::then(
+        std::move(putResourceFuture),
+        [resourcePromise, status, putResourceKind,
+         resourceGuid = *resource.guid(),
+         resourceUsn = *resource.updateSequenceNum()]
+        {
+            status->m_processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
+
+            resourcePromise->addResult(
+                putResourceKind == ResourceKind::NewResource
+                ? ProcessResourceStatus::AddedResource
+                : ProcessResourceStatus::UpdatedResource);
+
+            resourcePromise->finish();
+        });
+
+    threading::onFailed(
+        std::move(thenFuture),
+        [resourcePromise, status, resource = std::move(resource)](
+            const QException & e) mutable {
+            status->m_resourcesWhichFailedToProcess
+                << ProcessResourcesStatus::ResourceWithException{
+                       std::move(resource),
+                       std::shared_ptr<QException>(e.clone())};
+
+            resourcePromise->addResult(
+                ProcessResourceStatus::FailedToPutResourceToLocalStorage);
+
+            resourcePromise->finish();
+        });
 }
 
 } // namespace quentier::synchronization
