@@ -32,8 +32,6 @@
 
 #include <synchronization/Fwd.h>
 
-#include <qevercloud/services/Fwd.h>
-
 namespace quentier::synchronization {
 
 class ResourcesProcessor final :
@@ -43,12 +41,13 @@ class ResourcesProcessor final :
 public:
     explicit ResourcesProcessor(
         local_storage::ILocalStoragePtr localStorage,
-        ISyncConflictResolverPtr syncConflictResolver,
-        IResourceFullDataDownloaderPtr resourceFullDataDownloader,
-        qevercloud::INoteStorePtr noteStore);
+        IResourceFullDataDownloaderPtr resourceFullDataDownloader);
 
     [[nodiscard]] QFuture<ProcessResourcesStatus> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
+
+    [[nodiscard]] QFuture<ProcessResourcesStatus> processResources(
+        const QList<qevercloud::Resource> & resources) override;
 
 private:
     enum class ProcessResourceStatus
@@ -104,9 +103,7 @@ private:
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;
-    const ISyncConflictResolverPtr m_syncConflictResolver;
     const IResourceFullDataDownloaderPtr m_resourceFullDataDownloader;
-    const qevercloud::INoteStorePtr m_noteStore;
 };
 
 } // namespace quentier::synchronization

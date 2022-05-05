@@ -57,6 +57,9 @@ public:
 
     [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+
+    [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(
+        const QList<qevercloud::Resource> & resources) = 0;
 };
 
 } // namespace quentier::synchronization

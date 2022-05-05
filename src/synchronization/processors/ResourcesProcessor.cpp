@@ -29,10 +29,10 @@
 #include <quentier/synchronization/ISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
-#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
-#include <qevercloud/services/INoteStore.h>
+#include <qevercloud/exceptions/EDAMSystemException.h>
 #include <qevercloud/types/SyncChunk.h>
 
 #include <QFutureWatcher>
@@ -90,13 +90,9 @@ namespace {
 
 ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
-    ISyncConflictResolverPtr syncConflictResolver,
-    IResourceFullDataDownloaderPtr resourceFullDataDownloader,
-    qevercloud::INoteStorePtr noteStore) :
+    IResourceFullDataDownloaderPtr resourceFullDataDownloader) :
     m_localStorage{std::move(localStorage)},
-    m_syncConflictResolver{std::move(syncConflictResolver)},
-    m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)},
-    m_noteStore{std::move(noteStore)}
+    m_resourceFullDataDownloader{std::move(resourceFullDataDownloader)}
 {
     if (Q_UNLIKELY(!m_localStorage)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -104,22 +100,10 @@ ResourcesProcessor::ResourcesProcessor(
             "ResourcesProcessor ctor: local storage is null")}};
     }
 
-    if (Q_UNLIKELY(!m_syncConflictResolver)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourcesProcessor",
-            "ResourcesProcessor ctor: sync conflict resolver is null")}};
-    }
-
     if (Q_UNLIKELY(!m_resourceFullDataDownloader)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::ResourcesProcessor",
             "ResourcesProcessor ctor: resource full data downloader is null")}};
-    }
-
-    if (Q_UNLIKELY(!m_noteStore)) {
-        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::ResourcesProcessor",
-            "ResourcesProcessor ctor: note store is null")}};
     }
 }
 
@@ -127,19 +111,25 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
     ResourcesProcessor::processResources(
         const QList<qevercloud::SyncChunk> & syncChunks)
 {
-    QNDEBUG(
-        "synchronization::ResourcesProcessor",
-        "ResourcesProcessor::processResources");
-
     QList<qevercloud::Resource> resources;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
         resources << collectResources(syncChunk);
     }
 
+    return processResources(resources);
+}
+
+QFuture<IResourcesProcessor::ProcessResourcesStatus>
+    ResourcesProcessor::processResources(
+        const QList<qevercloud::Resource> & resources)
+{
+    QNDEBUG(
+        "synchronization::ResourcesProcessor",
+        "ResourcesProcessor::processResources");
+
     if (resources.isEmpty()) {
         QNDEBUG(
-            "synchronization::ResourcesProcessor",
-            "No new/updated resources in the sync chunks");
+            "synchronization::ResourcesProcessor", "No new/updated resources");
 
         return threading::makeReadyFuture<ProcessResourcesStatus>({});
     }
@@ -187,7 +177,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
                 selfWeak,
                 [this, updatedResource = resource, resourcePromise, status,
                  selfWeak, canceler](const std::optional<qevercloud::Resource> &
-                               resource) mutable {
+                                         resource) mutable {
                     if (canceler->isCanceled()) {
                         const auto & guid = *updatedResource.guid();
                         status->m_cancelledResourceGuidsAndUsns[guid] =
@@ -315,8 +305,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
             localNote.mutableResources()->begin(),
             localNote.mutableResources()->end(),
             [localResourceLocalId = localResource.localId()](
-                const qevercloud::Resource & resource)
-            {
+                const qevercloud::Resource & resource) {
                 return resource.localId() == localResourceLocalId;
             });
         if (it == localNote.mutableResources()->end()) {
@@ -328,8 +317,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         }
     }
     else {
-        localNote.setResources(
-            QList<qevercloud::Resource>{} << localResource);
+        localNote.setResources(QList<qevercloud::Resource>{} << localResource);
     }
 
     Q_ASSERT(localNote.guid());
@@ -369,8 +357,8 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
             [this, selfWeak, resourcePromise, status, canceler,
              updatedResource]() mutable {
                 downloadFullResourceData(
-                    resourcePromise, status, canceler,
-                    updatedResource, ResourceKind::UpdatedResource);
+                    resourcePromise, status, canceler, updatedResource,
+                    ResourceKind::UpdatedResource);
             }});
 
     threading::onFailed(
@@ -477,8 +465,8 @@ void ResourcesProcessor::downloadFullResourceData(
         std::move(downloadFullResourceDataFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, resourcePromise, status, resourceKind](
-                qevercloud::Resource resource) {
+            [this, resourcePromise, status,
+             resourceKind](qevercloud::Resource resource) {
                 putResourceToLocalStorage(
                     resourcePromise, status, std::move(resource), resourceKind);
             }});
@@ -488,7 +476,7 @@ void ResourcesProcessor::downloadFullResourceData(
         [resourcePromise, status, resource, canceler](const QException & e) {
             status->m_resourcesWhichFailedToDownload
                 << ProcessResourcesStatus::ResourceWithException{
-                        resource, std::shared_ptr<QException>(e.clone())};
+                       resource, std::shared_ptr<QException>(e.clone())};
 
             bool shouldCancelProcessing = false;
             try {
@@ -530,22 +518,21 @@ void ResourcesProcessor::putResourceToLocalStorage(
         std::move(putResourceFuture),
         [resourcePromise, status, putResourceKind,
          resourceGuid = *resource.guid(),
-         resourceUsn = *resource.updateSequenceNum()]
-        {
+         resourceUsn = *resource.updateSequenceNum()] {
             status->m_processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
 
             resourcePromise->addResult(
                 putResourceKind == ResourceKind::NewResource
-                ? ProcessResourceStatus::AddedResource
-                : ProcessResourceStatus::UpdatedResource);
+                    ? ProcessResourceStatus::AddedResource
+                    : ProcessResourceStatus::UpdatedResource);
 
             resourcePromise->finish();
         });
 
     threading::onFailed(
         std::move(thenFuture),
-        [resourcePromise, status, resource = std::move(resource)](
-            const QException & e) mutable {
+        [resourcePromise, status,
+         resource = std::move(resource)](const QException & e) mutable {
             status->m_resourcesWhichFailedToProcess
                 << ProcessResourcesStatus::ResourceWithException{
                        std::move(resource),
