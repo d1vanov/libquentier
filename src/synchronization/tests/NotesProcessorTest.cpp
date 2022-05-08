@@ -406,14 +406,14 @@ TEST_P(
                         "Detected attempt to download unrecognized note"}});
             }
 
-            const int index =
-                static_cast<int>(std::distance(notes.begin(), it));
-
             if (it->updateSequenceNum().value() == 2) {
                 return threading::makeExceptionalFuture<qevercloud::Note>(
                     RuntimeError{
                         ErrorString{"Failed to download full note data"}});
             }
+
+            const int index =
+                static_cast<int>(std::distance(notes.begin(), it));
 
             return threading::makeReadyFuture<qevercloud::Note>(
                 addContentToNote(*it, index));
@@ -455,10 +455,7 @@ TEST_P(
         return n;
     }();
 
-    ASSERT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (int i = 0, size = expectedProcessedNotes.size(); i < size; ++i) {
-        EXPECT_EQ(notesPutIntoLocalStorage[i], expectedProcessedNotes[i]);
-    }
+    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -630,10 +627,7 @@ TEST_P(
         return n;
     }();
 
-    ASSERT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (int i = 0, size = expectedProcessedNotes.size(); i < size; ++i) {
-        EXPECT_EQ(notesPutIntoLocalStorage[i], expectedProcessedNotes[i]);
-    }
+    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();

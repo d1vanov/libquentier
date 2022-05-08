@@ -256,14 +256,17 @@ void ResourcesProcessor::onFoundDuplicate(
     bool shouldMakeLocalConflictNewResource = false;
 
     if (Q_UNLIKELY(!localResource.noteGuid())) {
-        QNWARNING(
+        // Although it is unlikely, the resource might have been moved to a note
+        // which has not yet been synchronized with Evernote and hence has no
+        // guid
+        QNDEBUG(
             "synchronization::ResourcesProcessor",
             "ResourcesProcessor::onFoundDuplicate: local resource has no "
                 << "note guid: " << localResource);
         shouldMakeLocalConflictNewResource = true;
     }
     else if (*localResource.noteGuid() != *updatedResource.noteGuid()) {
-        QNWARNING(
+        QNDEBUG(
             "synchronization::ResourcesProcessor",
             "ResourcesProcessor::onFoundDuplicate: local resource belongs "
                 << "to a different note than updated resource; local resource: "
