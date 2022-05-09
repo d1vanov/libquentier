@@ -297,6 +297,16 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
     EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size());
+
+    for (const auto & note: qAsConst(notes)) {
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_P(
@@ -469,6 +479,20 @@ TEST_P(
 
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.updateSequenceNum().value() == 2) {
+            continue;
+        }
+
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_P(
@@ -644,6 +668,20 @@ TEST_P(
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.m_notesWhichFailedToProcess[0].m_note, notes[1]);
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_P(
@@ -801,10 +839,7 @@ TEST_P(
         return n;
     }();
 
-    ASSERT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (int i = 0, size = expectedProcessedNotes.size(); i < size; ++i) {
-        EXPECT_EQ(notesPutIntoLocalStorage[i], expectedProcessedNotes[i]);
-    }
+    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -821,6 +856,20 @@ TEST_P(
     EXPECT_EQ(
         status.m_notesWhichFailedToProcess[0].m_note,
         addContentToNote(notes[1], 1));
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_P(
@@ -993,10 +1042,7 @@ TEST_P(
         return n;
     }();
 
-    ASSERT_EQ(notesPutIntoLocalStorage.size(), expectedProcessedNotes.size());
-    for (int i = 0, size = expectedProcessedNotes.size(); i < size; ++i) {
-        EXPECT_EQ(notesPutIntoLocalStorage[i], expectedProcessedNotes[i]);
-    }
+    EXPECT_EQ(notesPutIntoLocalStorage, expectedProcessedNotes);
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
@@ -1013,6 +1059,20 @@ TEST_P(
 
     ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.m_notesWhichFailedToProcess[0].m_note, notes[1]);
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
@@ -1203,21 +1263,41 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     EXPECT_EQ(status.m_notesWhichFailedToDownload[0].m_note, notes[1]);
 
     bool caughtEdamSystemExceptionWithRateLimit = false;
-    try
-    {
+    try {
         status.m_notesWhichFailedToDownload[0].m_exception->raise();
     }
-    catch (const qevercloud::EDAMSystemException & e)
-    {
+    catch (const qevercloud::EDAMSystemException & e) {
         if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
             caughtEdamSystemExceptionWithRateLimit = true;
         }
     }
-    catch (...)
-    {
+    catch (...) {
     }
 
     EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
+
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        status.m_processedNoteGuidsAndUsns.begin().key(),
+        notes[0].guid().value());
+
+    EXPECT_EQ(
+        status.m_processedNoteGuidsAndUsns.begin().value(),
+        notes[0].updateSequenceNum().value());
+
+    ASSERT_EQ(status.m_cancelledNoteGuidsAndUsns.size(), notes.size() - 2);
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            status.m_cancelledNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_cancelledNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 TEST_F(NotesProcessorTest, ProcessExpungedNotes)
@@ -1639,6 +1719,30 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Note>>(resolution))
+    {
+        ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size() + 1, notes.size());
+    }
+    else {
+        ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size());
+    }
+
+    for (const auto & note: qAsConst(notes)) {
+        if (!note.guid()) {
+            ASSERT_TRUE(movedLocalConflict);
+            EXPECT_EQ(note, *movedLocalConflict);
+            continue;
+        }
+
+        const auto it =
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
 }
 
 } // namespace quentier::synchronization::tests
