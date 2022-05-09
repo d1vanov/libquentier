@@ -47,14 +47,14 @@ public:
         INoteFullDataDownloaderPtr noteFullDataDownloader,
         qevercloud::INoteStorePtr noteStore);
 
-    [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
+    [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
-    [[nodiscard]] QFuture<ProcessNotesStatus> processNotes(
+    [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::Note> & notes) override;
 
 private:
-    [[nodiscard]] QFuture<ProcessNotesStatus> processNotesImpl(
+    [[nodiscard]] QFuture<DownloadNotesStatus> processNotesImpl(
         const QList<qevercloud::Note> & notes,
         const QList<qevercloud::Guid> & expungedNoteGuids);
 
@@ -73,7 +73,7 @@ private:
 
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const std::shared_ptr<ProcessNotesStatus> & status,
+        const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Note updatedNote, qevercloud::Note localNote);
 
@@ -85,13 +85,13 @@ private:
 
     void downloadFullNoteData(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const std::shared_ptr<ProcessNotesStatus> & status,
+        const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
         const qevercloud::Note & note, NoteKind noteKind);
 
     void putNoteToLocalStorage(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const std::shared_ptr<ProcessNotesStatus> & status,
+        const std::shared_ptr<DownloadNotesStatus> & status,
         qevercloud::Note note, NoteKind putNoteKind);
 
 private:

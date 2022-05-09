@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/synchronization/ISynchronizer.h>
+
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>
 
@@ -36,44 +38,12 @@ class INotesProcessor
 public:
     virtual ~INotesProcessor() = default;
 
-    struct ProcessNotesStatus
-    {
-        quint64 m_totalNewNotes = 0UL;
-        quint64 m_totalUpdatedNotes = 0UL;
-        quint64 m_totalExpungedNotes = 0UL;
+    using DownloadNotesStatus = ISynchronizer::DownloadNotesStatus;
 
-        struct NoteWithException
-        {
-            qevercloud::Note m_note;
-            std::shared_ptr<QException> m_exception;
-        };
-
-        struct GuidWithException
-        {
-            qevercloud::Guid m_guid;
-            std::shared_ptr<QException> m_exception;
-        };
-
-        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
-
-        struct GuidWithUsn
-        {
-            qevercloud::Guid m_guid;
-            qint32 m_updateSequenceNumber = 0;
-        };
-
-        QList<NoteWithException> m_notesWhichFailedToDownload;
-        QList<NoteWithException> m_notesWhichFailedToProcess;
-        QList<GuidWithException> m_noteGuidsWhichFailedToExpunge;
-
-        UpdateSequenceNumbersByGuid m_processedNoteGuidsAndUsns;
-        UpdateSequenceNumbersByGuid m_cancelledNoteGuidsAndUsns;
-    };
-
-    [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
+    [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;
 
-    [[nodiscard]] virtual QFuture<ProcessNotesStatus> processNotes(
+    [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::Note> & notes) = 0;
 };
 

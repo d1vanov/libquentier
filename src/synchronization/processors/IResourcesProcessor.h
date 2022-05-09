@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/synchronization/ISynchronizer.h>
+
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Resource.h>
 
@@ -35,30 +37,12 @@ class IResourcesProcessor
 public:
     virtual ~IResourcesProcessor() = default;
 
-    struct ProcessResourcesStatus
-    {
-        quint64 m_totalNewResources = 0UL;
-        quint64 m_totalUpdatedResources = 0UL;
+    using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
 
-        struct ResourceWithException
-        {
-            qevercloud::Resource m_resource;
-            std::shared_ptr<QException> m_exception;
-        };
-
-        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
-
-        QList<ResourceWithException> m_resourcesWhichFailedToDownload;
-        QList<ResourceWithException> m_resourcesWhichFailedToProcess;
-
-        UpdateSequenceNumbersByGuid m_processedResourceGuidsAndUsns;
-        UpdateSequenceNumbersByGuid m_cancelledResourceGuidsAndUsns;
-    };
-
-    [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(
+    [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;
 
-    [[nodiscard]] virtual QFuture<ProcessResourcesStatus> processResources(
+    [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
         const QList<qevercloud::Resource> & resources) = 0;
 };
 

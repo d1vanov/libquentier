@@ -24,14 +24,17 @@
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
+#include <qevercloud/types/Note.h>
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QDir>
+#include <QException>
 #include <QFuture>
 #include <QHash>
 #include <QList>
 #include <QNetworkCookie>
 
+#include <memory>
 #include <optional>
 
 namespace quentier {
@@ -46,13 +49,13 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct Options
+    struct QUENTIER_EXPORT Options
     {
         bool downloadNoteThumbnails = false;
         std::optional<QDir> inkNoteImagesStorageDir;
     };
 
-    struct AuthResult
+    struct QUENTIER_EXPORT AuthResult
     {
         qevercloud::UserID userId = 0;
         QString authToken;
@@ -63,7 +66,7 @@ public:
         QList<QNetworkCookie> userStoreCookies;
     };
 
-    struct SyncStats
+    struct QUENTIER_EXPORT SyncStats
     {
         quint64 syncChunksDownloaded = 0;
 
@@ -87,16 +90,79 @@ public:
         quint64 notesSent = 0;
     };
 
-    struct SyncState
+    struct QUENTIER_EXPORT SyncState
     {
         qint32 updateCount = 0;
         qevercloud::Timestamp lastSyncTime = 0;
     };
 
-    struct SyncResult
+    struct QUENTIER_EXPORT DownloadNotesStatus
+    {
+        quint64 totalNewNotes = 0UL;
+        quint64 totalUpdatedNotes = 0UL;
+        quint64 totalExpungedNotes = 0UL;
+
+        struct QUENTIER_EXPORT NoteWithException
+        {
+            qevercloud::Note note;
+            std::shared_ptr<QException> exception;
+        };
+
+        struct QUENTIER_EXPORT GuidWithException
+        {
+            qevercloud::Guid guid;
+            std::shared_ptr<QException> exception;
+        };
+
+        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
+
+        struct QUENTIER_EXPORT GuidWithUsn
+        {
+            qevercloud::Guid guid;
+            qint32 updateSequenceNumber = 0;
+        };
+
+        QList<NoteWithException> notesWhichFailedToDownload;
+        QList<NoteWithException> notesWhichFailedToProcess;
+        QList<GuidWithException> noteGuidsWhichFailedToExpunge;
+
+        UpdateSequenceNumbersByGuid processedNoteGuidsAndUsns;
+        UpdateSequenceNumbersByGuid cancelledNoteGuidsAndUsns;
+    };
+
+    struct QUENTIER_EXPORT DownloadResourcesStatus
+    {
+        quint64 totalNewResources = 0UL;
+        quint64 totalUpdatedResources = 0UL;
+
+        struct QUENTIER_EXPORT ResourceWithException
+        {
+            qevercloud::Resource resource;
+            std::shared_ptr<QException> exception;
+        };
+
+        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
+
+        QList<ResourceWithException> resourcesWhichFailedToDownload;
+        QList<ResourceWithException> resourcesWhichFailedToProcess;
+
+        UpdateSequenceNumbersByGuid processedResourceGuidsAndUsns;
+        UpdateSequenceNumbersByGuid cancelledResourceGuidsAndUsns;
+    };
+
+    struct QUENTIER_EXPORT SyncResult
     {
         SyncState userAccountSyncState;
         QHash<qevercloud::Guid, SyncState> linkedNotebookSyncStates;
+
+        DownloadNotesStatus userAccountDownloadNotesStatus;
+        QHash<qevercloud::Guid, DownloadNotesStatus>
+            linkedNotebookDownloadNotesStatuses;
+
+        DownloadResourcesStatus userAccountDownloadResourcesStatus;
+        QHash<qevercloud::Guid, DownloadResourcesStatus>
+            linkedNotebookDownloadResourcesStatuses;
+
         SyncStats syncStats;
     };
 

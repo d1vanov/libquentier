@@ -43,10 +43,10 @@ public:
         local_storage::ILocalStoragePtr localStorage,
         IResourceFullDataDownloaderPtr resourceFullDataDownloader);
 
-    [[nodiscard]] QFuture<ProcessResourcesStatus> processResources(
+    [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
-    [[nodiscard]] QFuture<ProcessResourcesStatus> processResources(
+    [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
         const QList<qevercloud::Resource> & resources) override;
 
 private:
@@ -62,18 +62,19 @@ private:
     };
 
     void onFoundDuplicate(
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> &
+            resourcePromise,
+        const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void onFoundNoteOwningConflictingResource(
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> &
+            resourcePromise,
+        const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        const qevercloud::Resource & localResource,
-        qevercloud::Note localNote,
+        const qevercloud::Resource & localResource, qevercloud::Note localNote,
         qevercloud::Resource updatedResource);
 
     enum class ResourceKind
@@ -83,22 +84,24 @@ private:
     };
 
     void handleResourceConflict(
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> &
+            resourcePromise,
+        const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void downloadFullResourceData(
-        const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const std::shared_ptr<QPromise<ProcessResourceStatus>> &
+            resourcePromise,
+        const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
         const qevercloud::Resource & resource, ResourceKind resourceKind);
 
     void putResourceToLocalStorage(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
-        const std::shared_ptr<ProcessResourcesStatus> & status,
+        const std::shared_ptr<DownloadResourcesStatus> & status,
         qevercloud::Resource resource, ResourceKind putResourceKind);
 
 private:

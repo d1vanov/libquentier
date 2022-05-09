@@ -107,7 +107,7 @@ ResourcesProcessor::ResourcesProcessor(
     }
 }
 
-QFuture<IResourcesProcessor::ProcessResourcesStatus>
+QFuture<IResourcesProcessor::DownloadResourcesStatus>
     ResourcesProcessor::processResources(
         const QList<qevercloud::SyncChunk> & syncChunks)
 {
@@ -119,7 +119,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
     return processResources(resources);
 }
 
-QFuture<IResourcesProcessor::ProcessResourcesStatus>
+QFuture<IResourcesProcessor::DownloadResourcesStatus>
     ResourcesProcessor::processResources(
         const QList<qevercloud::Resource> & resources)
 {
@@ -131,7 +131,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
         QNDEBUG(
             "synchronization::ResourcesProcessor", "No new/updated resources");
 
-        return threading::makeReadyFuture<ProcessResourcesStatus>({});
+        return threading::makeReadyFuture<DownloadResourcesStatus>({});
     }
 
     const int resourceCount = resources.size();
@@ -144,7 +144,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
     using FetchResourceOptions =
         local_storage::ILocalStorage::FetchResourceOptions;
 
-    auto status = std::make_shared<ProcessResourcesStatus>();
+    auto status = std::make_shared<DownloadResourcesStatus>();
 
     // Processing of all resources might need to be globally canceled if certain
     // kind of exceptional situation occurs, for example:
@@ -180,7 +180,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
                                          resource) mutable {
                     if (canceler->isCanceled()) {
                         const auto & guid = *updatedResource.guid();
-                        status->m_cancelledResourceGuidsAndUsns[guid] =
+                        status->cancelledResourceGuidsAndUsns[guid] =
                             updatedResource.updateSequenceNum().value();
 
                         resourcePromise->addResult(
@@ -191,14 +191,14 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
                     }
 
                     if (resource) {
-                        ++status->m_totalUpdatedResources;
+                        ++status->totalUpdatedResources;
                         onFoundDuplicate(
                             resourcePromise, status, canceler,
                             std::move(updatedResource), *resource);
                         return;
                     }
 
-                    ++status->m_totalNewResources;
+                    ++status->totalNewResources;
 
                     // No duplicate by guid was found, will download full
                     // resource data and then put it into the local storage
@@ -210,8 +210,8 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
         threading::onFailed(
             std::move(thenFuture),
             [resourcePromise, status, resource](const QException & e) {
-                status->m_resourcesWhichFailedToProcess
-                    << ProcessResourcesStatus::ResourceWithException{
+                status->resourcesWhichFailedToProcess
+                    << DownloadResourcesStatus::ResourceWithException{
                            resource, std::shared_ptr<QException>(e.clone())};
 
                 resourcePromise->addResult(
@@ -224,7 +224,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
     auto allResourcesFuture =
         threading::whenAll<ProcessResourceStatus>(std::move(resourceFutures));
 
-    auto promise = std::make_shared<QPromise<ProcessResourcesStatus>>();
+    auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
     auto future = promise->future();
 
     promise->setProgressRange(0, 100);
@@ -247,7 +247,7 @@ QFuture<IResourcesProcessor::ProcessResourcesStatus>
 
 void ResourcesProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const std::shared_ptr<DownloadResourcesStatus> & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
@@ -296,7 +296,7 @@ void ResourcesProcessor::onFoundDuplicate(
 
 void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const std::shared_ptr<DownloadResourcesStatus> & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     const qevercloud::Resource & localResource, qevercloud::Note localNote,
     qevercloud::Resource updatedResource)
@@ -369,8 +369,8 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(thenFuture),
         [resourcePromise, status, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
-            status->m_resourcesWhichFailedToProcess
-                << ProcessResourcesStatus::ResourceWithException{
+            status->resourcesWhichFailedToProcess
+                << DownloadResourcesStatus::ResourceWithException{
                        std::move(updatedResource),
                        std::shared_ptr<QException>(e.clone())};
 
@@ -383,7 +383,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
 
 void ResourcesProcessor::handleResourceConflict(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const std::shared_ptr<DownloadResourcesStatus> & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     qevercloud::Resource updatedResource, qevercloud::Resource localResource)
 {
@@ -406,8 +406,8 @@ void ResourcesProcessor::handleResourceConflict(
         threading::TrackedTask{
             selfWeak,
             [this, status, resourcePromise, canceler,
-             localResource = std::move(localResource), updatedResource](
-                std::optional<qevercloud::Note> note) mutable {
+             localResource = std::move(localResource),
+             updatedResource](std::optional<qevercloud::Note> note) mutable {
                 if (Q_UNLIKELY(!note)) {
                     ErrorString error{QT_TRANSLATE_NOOP(
                         "synchronization::ResourcesProcessor",
@@ -416,8 +416,8 @@ void ResourcesProcessor::handleResourceConflict(
                         "guid")};
                     error.details() = *updatedResource.noteGuid();
 
-                    status->m_resourcesWhichFailedToProcess
-                        << ProcessResourcesStatus::ResourceWithException{
+                    status->resourcesWhichFailedToProcess
+                        << DownloadResourcesStatus::ResourceWithException{
                                std::move(updatedResource),
                                std::make_shared<RuntimeError>(
                                    std::move(error))};
@@ -438,8 +438,8 @@ void ResourcesProcessor::handleResourceConflict(
         std::move(thenFuture),
         [resourcePromise, status, updatedResource = std::move(updatedResource)](
             const QException & e) mutable {
-            status->m_resourcesWhichFailedToProcess
-                << ProcessResourcesStatus::ResourceWithException{
+            status->resourcesWhichFailedToProcess
+                << DownloadResourcesStatus::ResourceWithException{
                        std::move(updatedResource),
                        std::shared_ptr<QException>(e.clone())};
 
@@ -452,7 +452,7 @@ void ResourcesProcessor::handleResourceConflict(
 
 void ResourcesProcessor::downloadFullResourceData(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const std::shared_ptr<DownloadResourcesStatus> & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     const qevercloud::Resource & resource, ResourceKind resourceKind)
 {
@@ -477,8 +477,8 @@ void ResourcesProcessor::downloadFullResourceData(
     threading::onFailed(
         std::move(thenFuture),
         [resourcePromise, status, resource, canceler](const QException & e) {
-            status->m_resourcesWhichFailedToDownload
-                << ProcessResourcesStatus::ResourceWithException{
+            status->resourcesWhichFailedToDownload
+                << DownloadResourcesStatus::ResourceWithException{
                        resource, std::shared_ptr<QException>(e.clone())};
 
             bool shouldCancelProcessing = false;
@@ -509,7 +509,7 @@ void ResourcesProcessor::downloadFullResourceData(
 
 void ResourcesProcessor::putResourceToLocalStorage(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
-    const std::shared_ptr<ProcessResourcesStatus> & status,
+    const std::shared_ptr<DownloadResourcesStatus> & status,
     qevercloud::Resource resource, ResourceKind putResourceKind)
 {
     Q_ASSERT(resource.guid());
@@ -522,7 +522,7 @@ void ResourcesProcessor::putResourceToLocalStorage(
         [resourcePromise, status, putResourceKind,
          resourceGuid = *resource.guid(),
          resourceUsn = *resource.updateSequenceNum()] {
-            status->m_processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
+            status->processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
 
             resourcePromise->addResult(
                 putResourceKind == ResourceKind::NewResource
@@ -536,8 +536,8 @@ void ResourcesProcessor::putResourceToLocalStorage(
         std::move(thenFuture),
         [resourcePromise, status,
          resource = std::move(resource)](const QException & e) mutable {
-            status->m_resourcesWhichFailedToProcess
-                << ProcessResourcesStatus::ResourceWithException{
+            status->resourcesWhichFailedToProcess
+                << DownloadResourcesStatus::ResourceWithException{
                        std::move(resource),
                        std::shared_ptr<QException>(e.clone())};
 

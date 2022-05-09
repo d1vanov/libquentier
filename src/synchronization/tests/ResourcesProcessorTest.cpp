@@ -92,12 +92,12 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(status.m_totalNewResources, 0UL);
-    EXPECT_EQ(status.m_totalUpdatedResources, 0UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_resourcesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.m_processedResourceGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.totalNewResources, 0UL);
+    EXPECT_EQ(status.totalUpdatedResources, 0UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.processedResourceGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 }
 
 TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
@@ -226,20 +226,19 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size()));
-    EXPECT_EQ(status.m_totalUpdatedResources, 0UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_resourcesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.totalNewResources, static_cast<quint64>(resources.size()));
+    EXPECT_EQ(status.totalUpdatedResources, 0UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_processedResourceGuidsAndUsns.size(), resources.size());
+    ASSERT_EQ(status.processedResourceGuidsAndUsns.size(), resources.size());
 
     for (const auto & resource: qAsConst(resources)) {
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -384,28 +383,26 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size()));
-    EXPECT_EQ(status.m_totalUpdatedResources, 0UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.totalNewResources, static_cast<quint64>(resources.size()));
+    EXPECT_EQ(status.totalUpdatedResources, 0UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_resourcesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(
-        status.m_resourcesWhichFailedToDownload[0].m_resource, resources[1]);
+    ASSERT_EQ(status.resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status.resourcesWhichFailedToDownload[0].resource, resources[1]);
 
     ASSERT_EQ(
-        status.m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+        status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
     for (const auto & resource: qAsConst(resources)) {
         if (resource.updateSequenceNum().value() == 2) {
             continue;
         }
 
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -553,27 +550,26 @@ TEST_F(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
     EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size()) - 1);
-    EXPECT_EQ(status.m_totalUpdatedResources, 0UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+        status.totalNewResources, static_cast<quint64>(resources.size()) - 1);
+    EXPECT_EQ(status.totalUpdatedResources, 0UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_resourcesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(
-        status.m_resourcesWhichFailedToProcess[0].m_resource, resources[1]);
+    ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(status.resourcesWhichFailedToProcess[0].resource, resources[1]);
 
     ASSERT_EQ(
-        status.m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+        status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
     for (const auto & resource: qAsConst(resources)) {
         if (resource.guid().value() == resources[1].guid().value()) {
             continue;
         }
 
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -717,29 +713,28 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size()));
-    EXPECT_EQ(status.m_totalUpdatedResources, 0UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.totalNewResources, static_cast<quint64>(resources.size()));
+    EXPECT_EQ(status.totalUpdatedResources, 0UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_resourcesWhichFailedToProcess.size(), 1);
+    ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.m_resourcesWhichFailedToProcess[0].m_resource,
+        status.resourcesWhichFailedToProcess[0].resource,
         addDataToResource(resources[1], 1));
 
     ASSERT_EQ(
-        status.m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+        status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
     for (const auto & resource: qAsConst(resources)) {
         if (resource.guid().value() == resources[1].guid().value()) {
             continue;
         }
 
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -884,19 +879,19 @@ TEST_F(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
     EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size() - 1));
-    EXPECT_EQ(status.m_totalUpdatedResources, 1UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_resourcesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+        status.totalNewResources, static_cast<quint64>(resources.size() - 1));
+    EXPECT_EQ(status.totalUpdatedResources, 1UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_processedResourceGuidsAndUsns.size(), resources.size());
+    ASSERT_EQ(status.processedResourceGuidsAndUsns.size(), resources.size());
 
     for (const auto & resource: qAsConst(resources)) {
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1086,19 +1081,19 @@ TEST_F(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
     EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size() - 1));
-    EXPECT_EQ(status.m_totalUpdatedResources, 1UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_resourcesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+        status.totalNewResources, static_cast<quint64>(resources.size() - 1));
+    EXPECT_EQ(status.totalUpdatedResources, 1UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_processedResourceGuidsAndUsns.size(), resources.size());
+    ASSERT_EQ(status.processedResourceGuidsAndUsns.size(), resources.size());
 
     for (const auto & resource: qAsConst(resources)) {
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1265,28 +1260,27 @@ TEST_F(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
     EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size() - 1));
-    EXPECT_EQ(status.m_totalUpdatedResources, 1UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+        status.totalNewResources, static_cast<quint64>(resources.size() - 1));
+    EXPECT_EQ(status.totalUpdatedResources, 1UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_resourcesWhichFailedToProcess.size(), 1);
+    ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.m_resourcesWhichFailedToProcess.begin()->m_resource,
-        resources[1]);
+        status.resourcesWhichFailedToProcess.begin()->resource, resources[1]);
 
     ASSERT_EQ(
-        status.m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+        status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
     for (const auto & resource: qAsConst(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
 
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1453,28 +1447,27 @@ TEST_F(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
     EXPECT_EQ(
-        status.m_totalNewResources, static_cast<quint64>(resources.size() - 1));
-    EXPECT_EQ(status.m_totalUpdatedResources, 1UL);
-    EXPECT_TRUE(status.m_resourcesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.m_cancelledResourceGuidsAndUsns.isEmpty());
+        status.totalNewResources, static_cast<quint64>(resources.size() - 1));
+    EXPECT_EQ(status.totalUpdatedResources, 1UL);
+    EXPECT_TRUE(status.resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.m_resourcesWhichFailedToProcess.size(), 1);
+    ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.m_resourcesWhichFailedToProcess.begin()->m_resource,
-        resources[1]);
+        status.resourcesWhichFailedToProcess.begin()->resource, resources[1]);
 
     ASSERT_EQ(
-        status.m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+        status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
 
     for (const auto & resource: qAsConst(resources)) {
         if (resource.guid() == resources[1].guid()) {
             continue;
         }
 
-        const auto it = status.m_processedResourceGuidsAndUsns.find(
-            resource.guid().value());
+        const auto it =
+            status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
-        ASSERT_NE(it, status.m_processedResourceGuidsAndUsns.end());
+        ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
