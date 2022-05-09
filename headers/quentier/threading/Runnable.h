@@ -30,7 +30,7 @@ namespace quentier::threading {
  * Create QRunnable from a function - sort of a workaround for Qt < 5.15
  * where QRunnable::create does the same job
  */
-[[nodiscard]] QRunnable * QUENTIER_EXPORT createFunctionRunnable(
-    std::function<void()> function);
+[[nodiscard]] auto QUENTIER_EXPORT
+    createFunctionRunnable(std::function<void()> function) -> QRunnable *;
 
 } // namespace quentier::threading
