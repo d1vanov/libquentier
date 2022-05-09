@@ -313,7 +313,8 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
             });
         if (it == localNote.mutableResources()->end()) {
             localNote.setResources(
-                QList<qevercloud::Resource>{} << localResource);
+                QList<qevercloud::Resource>{} << *localNote.resources()
+                                              << localResource);
         }
         else {
             *it = localResource;
@@ -405,8 +406,7 @@ void ResourcesProcessor::handleResourceConflict(
         threading::TrackedTask{
             selfWeak,
             [this, status, resourcePromise, canceler,
-             localResource = std::move(localResource),
-             updatedResource = std::move(updatedResource)](
+             localResource = std::move(localResource), updatedResource](
                 std::optional<qevercloud::Note> note) mutable {
                 if (Q_UNLIKELY(!note)) {
                     ErrorString error{QT_TRANSLATE_NOOP(
