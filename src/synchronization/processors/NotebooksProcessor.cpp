@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -33,54 +34,6 @@
 #include <algorithm>
 
 namespace quentier::synchronization {
-
-namespace {
-
-[[nodiscard]] QList<qevercloud::Notebook> collectNotebooks(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    if (!syncChunk.notebooks() || syncChunk.notebooks()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::Notebook> notebooks;
-    notebooks.reserve(syncChunk.notebooks()->size());
-    for (const auto & notebook: qAsConst(*syncChunk.notebooks())) {
-        if (Q_UNLIKELY(!notebook.guid())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without guid, skipping it: " << notebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!notebook.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without update sequence number, "
-                    << "skipping it: " << notebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!notebook.name())) {
-            QNWARNING(
-                "synchronization::NotebooksProcessor",
-                "Detected notebook without name, skipping it: " << notebook);
-            continue;
-        }
-
-        notebooks << notebook;
-    }
-
-    return notebooks;
-}
-
-[[nodiscard]] QList<qevercloud::Guid> collectExpungedNotebookGuids(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    return syncChunk.expungedNotebooks().value_or(QList<qevercloud::Guid>{});
-}
-
-} // namespace
 
 NotebooksProcessor::NotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -119,8 +72,10 @@ QFuture<void> NotebooksProcessor::processNotebooks(
     QList<qevercloud::Notebook> notebooks;
     QList<qevercloud::Guid> expungedNotebooks;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        notebooks << collectNotebooks(syncChunk);
-        expungedNotebooks << collectExpungedNotebookGuids(syncChunk);
+        notebooks << utils::collectNotebooksFromSyncChunk(syncChunk);
+
+        expungedNotebooks << utils::collectExpungedNotebookGuidsFromSyncChunk(
+            syncChunk);
     }
 
     utils::filterOutExpungedItems(expungedNotebooks, notebooks);

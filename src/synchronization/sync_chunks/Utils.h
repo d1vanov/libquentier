@@ -19,6 +19,9 @@
 #pragma once
 
 #include <qevercloud/types/Fwd.h>
+#include <qevercloud/types/LinkedNotebook.h>
+#include <qevercloud/types/Note.h>
+#include <qevercloud/types/Notebook.h>
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QtGlobal>
@@ -33,5 +36,41 @@ namespace quentier::synchronization::utils {
 void setLinkedNotebookGuidToSyncChunkEntries(
     const qevercloud::Guid & linkedNotebookGuid,
     qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Notebook> collectNotebooksFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Guid> collectExpungedNotebookGuidsFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::LinkedNotebook>
+    collectLinkedNotebooksFromSyncChunk(
+        const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Guid>
+    collectExpungedLinkedNotebookGuidsFromSyncChunk(
+        const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Note> collectNotesFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Guid> collectExpungedNoteGuidsFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Resource> collectResourcesFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::SavedSearch> collectSavedSearchesFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Guid>
+    collectExpungedSavedSearchGuidsFromSyncChunk(
+        const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Tag> collectTagsFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
+
+[[nodiscard]] QList<qevercloud::Guid> collectExpungedTagGuidsFromSyncChunk(
+    const qevercloud::SyncChunk & syncChunk);
 
 } // namespace quentier::synchronization::utils

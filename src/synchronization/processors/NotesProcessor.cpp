@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <synchronization/processors/INoteFullDataDownloader.h>
+#include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -41,54 +42,6 @@
 #include <type_traits>
 
 namespace quentier::synchronization {
-
-namespace {
-
-[[nodiscard]] QList<qevercloud::Note> collectNotes(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    if (!syncChunk.notes() || syncChunk.notes()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::Note> notes;
-    notes.reserve(syncChunk.notes()->size());
-    for (const auto & note: qAsConst(*syncChunk.notes())) {
-        if (Q_UNLIKELY(!note.guid())) {
-            QNWARNING(
-                "synchronization::NotesProcessor",
-                "Detected note without guid, skipping it: " << note);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!note.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::NotesProcessor",
-                "Detected note without update sequence number, skipping it: "
-                    << note);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!note.notebookGuid())) {
-            QNWARNING(
-                "synchronization::NotesProcessor",
-                "Detected note without notebook guid, skipping it: " << note);
-            continue;
-        }
-
-        notes << note;
-    }
-
-    return notes;
-}
-
-[[nodiscard]] QList<qevercloud::Guid> collectExpungedNoteGuids(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    return syncChunk.expungedNotes().value_or(QList<qevercloud::Guid>{});
-}
-
-} // namespace
 
 NotesProcessor::NotesProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -133,8 +86,10 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotes(
     QList<qevercloud::Note> notes;
     QList<qevercloud::Guid> expungedNotes;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        notes << collectNotes(syncChunk);
-        expungedNotes << collectExpungedNoteGuids(syncChunk);
+        notes << utils::collectNotesFromSyncChunk(syncChunk);
+
+        expungedNotes << utils::collectExpungedNoteGuidsFromSyncChunk(
+            syncChunk);
     }
 
     utils::filterOutExpungedItems(expungedNotes, notes);
@@ -255,8 +210,8 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
 
         auto expungeNoteByGuidFuture = m_localStorage->expungeNoteByGuid(guid);
 
-        auto thenFuture =
-            threading::then(std::move(expungeNoteByGuidFuture), [guid, promise] {
+        auto thenFuture = threading::then(
+            std::move(expungeNoteByGuidFuture), [guid, promise] {
                 promise->addResult(ProcessNoteStatus::ExpungedNote);
                 promise->finish();
             });
@@ -266,7 +221,7 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
             [promise, status, guid](const QException & e) {
                 status->noteGuidsWhichFailedToExpunge
                     << DownloadNotesStatus::GuidWithException{
-                        guid, std::shared_ptr<QException>(e.clone())};
+                           guid, std::shared_ptr<QException>(e.clone())};
 
                 promise->addResult(ProcessNoteStatus::FailedToExpungeNote);
                 promise->finish();
@@ -496,8 +451,8 @@ void NotesProcessor::putNoteToLocalStorage(
 
     auto thenFuture = threading::then(
         std::move(putNoteFuture),
-        [notePromise, putNoteKind, status,
-         noteGuid = note.guid(), noteUsn = note.updateSequenceNum()] {
+        [notePromise, putNoteKind, status, noteGuid = note.guid(),
+         noteUsn = note.updateSequenceNum()] {
             if (noteGuid.has_value() && noteUsn.has_value()) {
                 status->processedNoteGuidsAndUsns[*noteGuid] = *noteUsn;
             }
@@ -517,7 +472,7 @@ void NotesProcessor::putNoteToLocalStorage(
          note = std::move(note)](const QException & e) mutable {
             status->notesWhichFailedToProcess
                 << DownloadNotesStatus::NoteWithException{
-                    std::move(note), std::shared_ptr<QException>(e.clone())};
+                       std::move(note), std::shared_ptr<QException>(e.clone())};
 
             notePromise->addResult(
                 ProcessNoteStatus::FailedToPutNoteToLocalStorage);

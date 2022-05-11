@@ -21,6 +21,7 @@
 #include "IResourceFullDataDownloader.h"
 
 #include <synchronization/conflict_resolvers/Utils.h>
+#include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -44,49 +45,6 @@
 #include <type_traits>
 
 namespace quentier::synchronization {
-
-namespace {
-
-[[nodiscard]] QList<qevercloud::Resource> collectResources(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    if (!syncChunk.resources() || syncChunk.resources()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::Resource> resources;
-    resources.reserve(syncChunk.resources()->size());
-    for (const auto & resource: qAsConst(*syncChunk.resources())) {
-        if (Q_UNLIKELY(!resource.guid())) {
-            QNWARNING(
-                "synchronization::ResourcesProcessor",
-                "Detected resource without guid, skipping it: " << resource);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!resource.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::ResourcesProcessor",
-                "Detected resource without update sequence number, skipping "
-                    << "it: " << resource);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!resource.noteGuid())) {
-            QNWARNING(
-                "synchronization::ResourcesProcessor",
-                "Detected resource without note guid, skipping it: "
-                    << resource);
-            continue;
-        }
-
-        resources << resource;
-    }
-
-    return resources;
-}
-
-} // namespace
 
 ResourcesProcessor::ResourcesProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -113,7 +71,7 @@ QFuture<IResourcesProcessor::DownloadResourcesStatus>
 {
     QList<qevercloud::Resource> resources;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        resources << collectResources(syncChunk);
+        resources << utils::collectResourcesFromSyncChunk(syncChunk);
     }
 
     return processResources(resources);

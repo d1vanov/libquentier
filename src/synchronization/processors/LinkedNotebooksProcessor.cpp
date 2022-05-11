@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -32,50 +33,6 @@
 #include <algorithm>
 
 namespace quentier::synchronization {
-
-namespace {
-
-[[nodiscard]] QList<qevercloud::LinkedNotebook> collectLinkedNotebooks(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    if (!syncChunk.linkedNotebooks() || syncChunk.linkedNotebooks()->isEmpty())
-    {
-        return {};
-    }
-
-    QList<qevercloud::LinkedNotebook> linkedNotebooks;
-    linkedNotebooks.reserve(syncChunk.linkedNotebooks()->size());
-    for (const auto & linkedNotebook: qAsConst(*syncChunk.linkedNotebooks())) {
-        if (Q_UNLIKELY(!linkedNotebook.guid())) {
-            QNWARNING(
-                "synchronization::LinkedNotebooksProcessor",
-                "Detected linked notebook without guid, skipping it: "
-                    << linkedNotebook);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!linkedNotebook.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::LinkedNotebooksProcessor",
-                "Detected linked notebook without update sequence number, "
-                    << "skipping it: " << linkedNotebook);
-            continue;
-        }
-
-        linkedNotebooks << linkedNotebook;
-    }
-
-    return linkedNotebooks;
-}
-
-[[nodiscard]] QList<qevercloud::Guid> collectExpungedLinkedNotebookGuids(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    return syncChunk.expungedLinkedNotebooks().value_or(
-        QList<qevercloud::Guid>{});
-}
-
-} // namespace
 
 LinkedNotebooksProcessor::LinkedNotebooksProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -107,9 +64,12 @@ QFuture<void> LinkedNotebooksProcessor::processLinkedNotebooks(
     QList<qevercloud::LinkedNotebook> linkedNotebooks;
     QList<qevercloud::Guid> expungedLinkedNotebooks;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        linkedNotebooks << collectLinkedNotebooks(syncChunk);
+        linkedNotebooks << utils::collectLinkedNotebooksFromSyncChunk(
+            syncChunk);
+
         expungedLinkedNotebooks
-            << collectExpungedLinkedNotebookGuids(syncChunk);
+            << utils::collectExpungedLinkedNotebookGuidsFromSyncChunk(
+                   syncChunk);
     }
 
     utils::filterOutExpungedItems(expungedLinkedNotebooks, linkedNotebooks);

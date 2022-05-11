@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <synchronization/SyncChunksDataCounters.h>
+#include <synchronization/sync_chunks/Utils.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -35,54 +36,6 @@
 #include <algorithm>
 
 namespace quentier::synchronization {
-
-namespace {
-
-[[nodiscard]] QList<qevercloud::Tag> collectTags(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    if (!syncChunk.tags() || syncChunk.tags()->isEmpty()) {
-        return {};
-    }
-
-    QList<qevercloud::Tag> tags;
-    tags.reserve(syncChunk.tags()->size());
-    for (const auto & tag: qAsConst(*syncChunk.tags())) {
-        if (Q_UNLIKELY(!tag.guid())) {
-            QNWARNING(
-                "synchronization::TagsProcessor",
-                "Detected tag without guid, skipping it: " << tag);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!tag.updateSequenceNum())) {
-            QNWARNING(
-                "synchronization::TagsProcessor",
-                "Detected tag without update sequence number, "
-                    << "skipping it: " << tag);
-            continue;
-        }
-
-        if (Q_UNLIKELY(!tag.name())) {
-            QNWARNING(
-                "synchronization::TagsProcessor",
-                "Detected tag without name, skipping it: " << tag);
-            continue;
-        }
-
-        tags << tag;
-    }
-
-    return tags;
-}
-
-[[nodiscard]] QList<qevercloud::Guid> collectExpungedTagGuids(
-    const qevercloud::SyncChunk & syncChunk)
-{
-    return syncChunk.expungedTags().value_or(QList<qevercloud::Guid>{});
-}
-
-} // namespace
 
 TagsProcessor::TagsProcessor(
     local_storage::ILocalStoragePtr localStorage,
@@ -119,8 +72,8 @@ QFuture<void> TagsProcessor::processTags(
     QList<qevercloud::Tag> tags;
     QList<qevercloud::Guid> expungedTags;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
-        tags << collectTags(syncChunk);
-        expungedTags << collectExpungedTagGuids(syncChunk);
+        tags << utils::collectTagsFromSyncChunk(syncChunk);
+        expungedTags << utils::collectExpungedTagGuidsFromSyncChunk(syncChunk);
     }
 
     utils::filterOutExpungedItems(expungedTags, tags);
