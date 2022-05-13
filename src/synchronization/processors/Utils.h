@@ -18,11 +18,14 @@
 
 #pragma once
 
+#include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QList>
 
 #include <algorithm>
+
+class QDir;
 
 namespace quentier::synchronization::utils {
 
@@ -49,5 +52,16 @@ void filterOutExpungedItems(
         }
     }
 }
+
+// Persists information abour processed note inside the passed in dir
+void writeProcessedNoteInfo(
+    const qevercloud::Guid & noteGuid, qint32 updateSequenceNum,
+    const QDir & lastSyncNotesDir);
+
+void writeFailedToDownloadNote(
+    const qevercloud::Note & note, const QDir & lastSyncNotesDir);
+
+void writeFailedToProcessNote(
+    const qevercloud::Note & note, const QDir & lastSyncNotesDir);
 
 } // namespace quentier::synchronization::utils

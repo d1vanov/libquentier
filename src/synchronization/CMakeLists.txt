@@ -54,6 +54,7 @@ target_sources(${LIBRARY_NAME}
   processors/SavedSearchesProcessor.h
   processors/TagsProcessor.cpp
   processors/TagsProcessor.h
+  processors/Utils.cpp
   processors/Utils.h
   sync_chunks/ISyncChunksDownloader.h
   sync_chunks/ISyncChunksProvider.h
