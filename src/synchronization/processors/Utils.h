@@ -29,6 +29,9 @@ class QDir;
 
 namespace quentier::synchronization::utils {
 
+// Given the list of items and a list of item guids meant to be expunged from
+// the local storage, removed the items meant to be expunged from the list
+// of items
 template <class T>
 void filterOutExpungedItems(
     const QList<qevercloud::Guid> & expungedGuids,
@@ -53,15 +56,38 @@ void filterOutExpungedItems(
     }
 }
 
-// Persists information abour processed note inside the passed in dir
+////////////////////////////////////////////////////////////////////////////////
+
+// Functions below serve the purpose of persisting the information about running
+// sync before it is finished. The reason for such persistence is to prevent
+// duplicate work from occurring during subsequent sync attempts if the first
+// attempt did not succeed/finish properly.
+//
+// When the sync finishes properly, all this persisted information is cleared
+// from the filesystem as it is no longer needed by then.
+
+// Persists information about processed note inside the passed in dir
 void writeProcessedNoteInfo(
     const qevercloud::Guid & noteGuid, qint32 updateSequenceNum,
     const QDir & lastSyncNotesDir);
 
+// Persists information about note which content and/or resources failed to get
+// downloaded inside the passed in dir
 void writeFailedToDownloadNote(
     const qevercloud::Note & note, const QDir & lastSyncNotesDir);
 
+// Persists information about note which processing has failed for some reason
+// inside the passed in dir
 void writeFailedToProcessNote(
     const qevercloud::Note & note, const QDir & lastSyncNotesDir);
+
+// Persists information about note which processing was cancelled inside
+// the passed in dir
+void writeCancelledNote(
+    const qevercloud::Note & note, const QDir & lastSyncNotesDir);
+
+// Persists information about expunged note guid inside the passed in dir
+void writeExpungedNote(
+    const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir);
 
 } // namespace quentier::synchronization::utils

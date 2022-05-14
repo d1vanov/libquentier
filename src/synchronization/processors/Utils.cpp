@@ -192,4 +192,23 @@ void writeFailedToProcessNote(
         QDir{lastSyncNotesDir.absoluteFilePath(gFailedToProcessNotesDirName)});
 }
 
+void writeCancelledNote(
+    const qevercloud::Note & note, const QDir & lastSyncNotesDir)
+{
+    writeNote(
+        note,
+        QDir{lastSyncNotesDir.absoluteFilePath(gCancelledNotesDirName)});
+}
+
+void writeExpungedNote(
+    const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir)
+{
+    QSettings notesWhichFailedToExpunge{
+        lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
+        QSettings::IniFormat};
+
+    notesWhichFailedToExpunge.setValue(expungedNoteGuid, {});
+    notesWhichFailedToExpunge.sync();
+}
+
 } // namespace quentier::synchronization::utils
