@@ -128,6 +128,7 @@ public:
 
         UpdateSequenceNumbersByGuid processedNoteGuidsAndUsns;
         UpdateSequenceNumbersByGuid cancelledNoteGuidsAndUsns;
+        QList<qevercloud::Guid> expungedNoteGuids;
     };
 
     struct QUENTIER_EXPORT DownloadResourcesStatus

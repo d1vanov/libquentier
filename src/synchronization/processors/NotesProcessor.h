@@ -48,15 +48,18 @@ public:
         qevercloud::INoteStorePtr noteStore);
 
     [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak = {}) override;
 
     [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
-        const QList<qevercloud::Note> & notes) override;
+        const QList<qevercloud::Note> & notes,
+        ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
     [[nodiscard]] QFuture<DownloadNotesStatus> processNotesImpl(
         const QList<qevercloud::Note> & notes,
-        const QList<qevercloud::Guid> & expungedNoteGuids);
+        const QList<qevercloud::Guid> & expungedNoteGuids,
+        ICallbackWeakPtr && callbackWeak);
 
     enum class ProcessNoteStatus
     {
@@ -75,6 +78,7 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         qevercloud::Note updatedNote, qevercloud::Note localNote);
 
     enum class NoteKind
@@ -87,11 +91,13 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         const qevercloud::Note & note, NoteKind noteKind);
 
     void putNoteToLocalStorage(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
+        ICallbackWeakPtr && callbackWeak,
         qevercloud::Note note, NoteKind putNoteKind);
 
 private:
