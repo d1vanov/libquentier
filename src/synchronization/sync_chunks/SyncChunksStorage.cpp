@@ -555,7 +555,7 @@ void SyncChunksStorage::clearAllSyncChunks()
 }
 
 SyncChunksStorage::LowAndHighUsnsDataAccessor::LowAndHighUsnsDataAccessor(
-    const QDir & rootDir, const QDir & userOwnSyncChunksDir,
+    const QDir & rootDir, const QDir & userOwnSyncChunksDir, // NOLINT
     QThreadPool * threadPool)
 {
     if (Q_UNLIKELY(!threadPool)) {

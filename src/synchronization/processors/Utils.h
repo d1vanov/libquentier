@@ -90,4 +90,35 @@ void writeCancelledNote(
 void writeExpungedNote(
     const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir);
 
+////////////////////////////////////////////////////////////////////////////////
+
+// Functions below retrieve the persistently stored information from the last
+// sync. If the last sync was not finished completely and successfully, these
+// functions might return non-empty results, otherwise the results would be
+// empty.
+
+// Returns a hash from guid to USN for notes which were fully processed
+// during the last sync.
+[[nodiscard]] QHash<qevercloud::Guid, qint32> processedNotesInfoFromLastSync(
+    const QDir & lastSyncNotesDir);
+
+// Returns a list of notes which full content failed to be downloaded during
+// the last sync.
+[[nodiscard]] QList<qevercloud::Note> notesWhichFailedToDownloadDuringLastSync(
+    const QDir & lastSyncNotesDir);
+
+// Returns a list of notes which processing has failed for some reason during
+// the last sync.
+[[nodiscard]] QList<qevercloud::Note> notesWhichFailedToProcessDuringLastSync(
+    const QDir & lastSyncNotesDir);
+
+// Returns a list of notes which processing was cancelled during the last sync
+// (because the sync was stopped prematurately for some reason).
+[[nodiscard]] QList<qevercloud::Note> notesCancelledDuringLastSync(
+    const QDir & lastSyncNotesDir);
+
+// Returns a list of guids of notes which were expunged during the last sync.
+[[nodiscard]] QList<qevercloud::Guid> noteGuidsExpungedDuringLastSync(
+    const QDir & lastSyncNotesDir);
+
 } // namespace quentier::synchronization::utils

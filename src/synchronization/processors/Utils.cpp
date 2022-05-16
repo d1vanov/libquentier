@@ -86,6 +86,66 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
     file.close();
 }
 
+[[nodiscard]] QList<qevercloud::Note> readNotes(const QDir & dir)
+{
+    if (!dir.exists()) {
+        return {};
+    }
+
+    const auto fileNames = dir.entryList(
+        QDir::NoDotAndDotDot | QDir::Files);
+
+    QList<qevercloud::Note> result;
+    result.reserve(fileNames.size());
+
+    for (const auto & fileName: qAsConst(fileNames)) {
+        QFile file{dir.absoluteFilePath(fileName)};
+        if (Q_UNLIKELY(!file.open(QIODevice::ReadOnly))) {
+            QNWARNING(
+                "synchronization::utils",
+                "Failed to open file with note for reading: "
+                    << dir.absoluteFilePath(fileName));
+            continue;
+        }
+
+        const QByteArray contents = file.readAll();
+        file.close();
+
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson(contents, &error);
+        if (Q_UNLIKELY(doc.isNull())) {
+            QNWARNING(
+                "synchronization::utils",
+                "Failed to parse serialized note from file to json document: "
+                    << error.errorString() << "; file: "
+                    << dir.absoluteFilePath(fileName));
+            continue;
+        }
+
+        if (Q_UNLIKELY(!doc.isObject())) {
+            QNWARNING(
+                "synchronization::utils",
+                "Cannot parse serialized note: json is not an object; file: "
+                    << dir.absoluteFilePath(fileName));
+            continue;
+        }
+
+        const QJsonObject obj = doc.object();
+        qevercloud::Note note;
+        if (Q_UNLIKELY(!qevercloud::deserializeFromJson(obj, note))) {
+            QNWARNING(
+                "synchronization::utils",
+                "Failed to deserialized note from json; file: "
+                    << dir.absoluteFilePath(fileName));
+            continue;
+        }
+
+        result << note;
+    }
+
+    return result;
+}
+
 } // namespace
 
 void writeProcessedNoteInfo(
@@ -209,6 +269,90 @@ void writeExpungedNote(
 
     notesWhichFailedToExpunge.setValue(expungedNoteGuid, {});
     notesWhichFailedToExpunge.sync();
+}
+
+QHash<qevercloud::Guid, qint32> processedNotesInfoFromLastSync(
+    const QDir & lastSyncNotesDir)
+{
+    if (!lastSyncNotesDir.exists()) {
+        return {};
+    }
+
+    QSettings processedNotesSettings{
+        lastSyncNotesDir.absoluteFilePath(gProcessedNotesIniFileName),
+        QSettings::IniFormat};
+
+    const QStringList noteGuids = processedNotesSettings.allKeys();
+    if (noteGuids.isEmpty()) {
+        return {};
+    }
+
+    QHash<qevercloud::Guid, qint32> result;
+    result.reserve(noteGuids.size());
+    for (const auto & noteGuid: qAsConst(noteGuids)) {
+        const auto value = processedNotesSettings.value(noteGuid);
+        if (Q_UNLIKELY(!value.isValid())) {
+            QNWARNING(
+                "synchronization::utils",
+                "Detected corrupted processed note USN value for note guid "
+                    << noteGuid);
+            // Try to remove this key so that it doesn't interfere the next time
+            processedNotesSettings.remove(noteGuid);
+            continue;
+        }
+
+        bool conversionResult = false;
+        qint32 usn = value.toInt(&conversionResult);
+        if (Q_UNLIKELY(!conversionResult)) {
+            QNWARNING(
+                "synchronization::utils",
+                "Detected non-integer processed note USN value for note guid "
+                    << noteGuid);
+            // Try to remove this key so that it doesn't interfere the next time
+            processedNotesSettings.remove(noteGuid);
+            continue;
+        }
+
+        result[noteGuid] = usn;
+    }
+
+    return result;
+}
+
+QList<qevercloud::Note> notesWhichFailedToDownloadDuringLastSync(
+    const QDir & lastSyncNotesDir)
+{
+    return readNotes(
+        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToDownloadNotesDirName)});
+}
+
+QList<qevercloud::Note> notesWhichFailedToProcessDuringLastSync(
+    const QDir & lastSyncNotesDir)
+{
+    return readNotes(
+        QDir{lastSyncNotesDir.absoluteFilePath(gFailedToProcessNotesDirName)});
+}
+
+QList<qevercloud::Note> notesCancelledDuringLastSync(
+    const QDir & lastSyncNotesDir)
+{
+    return readNotes(
+        QDir{lastSyncNotesDir.absoluteFilePath(gCancelledNotesDirName)});
+}
+
+QList<qevercloud::Guid> noteGuidsExpungedDuringLastSync(
+    const QDir & lastSyncNotesDir)
+{
+    QSettings notesWhichFailedToExpunge{
+        lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
+        QSettings::IniFormat};
+
+    // NOTE: implicitly converting QStringList to QList<qevercloud::Guid> here.
+    // It works because QStringList inherits QList<QString> and qevercloud::Guid
+    // is just a type alias for QString. It is ok to do such conversion because
+    // QStringList is layout-compatible with QList<QString> and just adds
+    // convenience methods.
+    return notesWhichFailedToExpunge.allKeys();
 }
 
 } // namespace quentier::synchronization::utils
