@@ -201,7 +201,7 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
             [notePromise, status, note,
              callbackWeak](const QException & e) mutable {
                 if (const auto callback = callbackWeak.lock()) {
-                    callback->onNoteFailedToDownload(note, e);
+                    callback->onNoteFailedToProcess(note, e);
                 }
 
                 status->notesWhichFailedToProcess
