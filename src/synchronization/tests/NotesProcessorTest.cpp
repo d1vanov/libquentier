@@ -92,16 +92,14 @@ struct NotesProcessorCallback final : public INotesProcessor::ICallback
     }
 
     void onNoteFailedToDownload(
-        const qevercloud::Note & note,
-        const QException & e) noexcept override
+        const qevercloud::Note & note, const QException & e) noexcept override
     {
         m_notesWhichFailedToDownload
             << std::make_pair(note, std::shared_ptr<QException>(e.clone()));
     }
 
     void onNoteFailedToProcess(
-        const qevercloud::Note & note,
-        const QException & e) noexcept override
+        const qevercloud::Note & note, const QException & e) noexcept override
     {
         m_notesWhichFailedToProcess
             << std::make_pair(note, std::shared_ptr<QException>(e.clone()));
@@ -755,7 +753,9 @@ TEST_P(
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStore);
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -785,6 +785,8 @@ TEST_P(
 
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.notesWhichFailedToProcess[0].note, notes[1]);
@@ -800,6 +802,28 @@ TEST_P(
             status.processedNoteGuidsAndUsns.find(note.guid().value());
 
         ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(callback->m_notesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(callback->m_notesWhichFailedToProcess[0].first, notes[1]);
+
+    ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, callback->m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 }
@@ -943,7 +967,9 @@ TEST_P(
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStore);
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -970,6 +996,8 @@ TEST_P(
 
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
 
@@ -988,6 +1016,31 @@ TEST_P(
             status.processedNoteGuidsAndUsns.find(note.guid().value());
 
         ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(callback->m_notesWhichFailedToProcess.size(), 1);
+
+    EXPECT_EQ(
+        callback->m_notesWhichFailedToProcess[0].first,
+        addContentToNote(notes[1], 1));
+
+    ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, callback->m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 }
@@ -1146,7 +1199,9 @@ TEST_P(
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStore);
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1176,6 +1231,8 @@ TEST_P(
 
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(status.notesWhichFailedToProcess[0].note, notes[1]);
@@ -1191,6 +1248,28 @@ TEST_P(
             status.processedNoteGuidsAndUsns.find(note.guid().value());
 
         ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(callback->m_notesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(callback->m_notesWhichFailedToProcess[0].first, notes[1]);
+
+    ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
+
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it =
+            callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, callback->m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 }
@@ -1340,7 +1419,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStore);
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
 
@@ -1378,6 +1459,7 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
     EXPECT_EQ(status.notesWhichFailedToDownload[0].note, notes[1]);
@@ -1418,6 +1500,54 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
         ASSERT_NE(it, status.cancelledNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_expungedNoteGuids.isEmpty());
+
+    ASSERT_EQ(callback->m_notesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(callback->m_notesWhichFailedToDownload[0].first, notes[1]);
+
+    caughtEdamSystemExceptionWithRateLimit = false;
+    try {
+        callback->m_notesWhichFailedToDownload[0].second->raise();
+    }
+    catch (const qevercloud::EDAMSystemException & e) {
+        if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
+            caughtEdamSystemExceptionWithRateLimit = true;
+        }
+    }
+    catch (...) {
+    }
+
+    EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
+
+    ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), 1);
+
+    EXPECT_EQ(
+        callback->m_processedNoteGuidsAndUsns.begin().key(),
+        notes[0].guid().value());
+
+    EXPECT_EQ(
+        callback->m_processedNoteGuidsAndUsns.begin().value(),
+        notes[0].updateSequenceNum().value());
+
+    ASSERT_EQ(callback->m_cancelledNotes.size(), notes.size() - 2);
+    for (const auto & note: qAsConst(notes)) {
+        if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
+            continue;
+        }
+
+        const auto it = std::find_if(
+            callback->m_cancelledNotes.begin(),
+            callback->m_cancelledNotes.end(),
+            [guid = note.guid().value()](const qevercloud::Note & note) {
+                return note.guid().value() == guid;
+            });
+
+        ASSERT_NE(it, callback->m_cancelledNotes.end());
+        EXPECT_EQ(*it, note);
+    }
 }
 
 TEST_F(NotesProcessorTest, ProcessExpungedNotes)
@@ -1442,7 +1572,9 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
             return threading::makeReadyFuture();
         });
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1460,6 +1592,18 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.expungedNoteGuids, expungedNoteGuids);
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+
+    ASSERT_EQ(callback->m_expungedNoteGuids.size(), expungedNoteGuids.size());
+    for (const auto & guid: qAsConst(expungedNoteGuids)) {
+        EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
+    }
 }
 
 TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
@@ -1488,7 +1632,9 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
             return threading::makeReadyFuture();
         });
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1505,10 +1651,36 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.processedNoteGuidsAndUsns.isEmpty());
 
     ASSERT_EQ(status.noteGuidsWhichFailedToExpunge.size(), 1);
     EXPECT_EQ(
         status.noteGuidsWhichFailedToExpunge[0].guid, expungedNoteGuids[1]);
+
+    const QList<qevercloud::Guid> expectedExpungedNoteGuids = [&] {
+        auto guids = expungedNoteGuids;
+        guids.removeAt(1);
+        return guids;
+    }();
+
+    EXPECT_EQ(status.expungedNoteGuids, expectedExpungedNoteGuids);
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_processedNoteGuidsAndUsns.isEmpty());
+
+    ASSERT_EQ(callback->m_guidsWhichFailedToExpunge.size(), 1);
+    EXPECT_EQ(
+        callback->m_guidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
+
+    ASSERT_EQ(
+        callback->m_expungedNoteGuids.size(), expectedExpungedNoteGuids.size());
+
+    for (const auto & guid: qAsConst(expectedExpungedNoteGuids)) {
+        EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
+    }
 }
 
 TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
@@ -1567,7 +1739,9 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
             return threading::makeReadyFuture();
         });
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1580,8 +1754,25 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
     EXPECT_EQ(
         status.totalExpungedNotes,
         static_cast<quint64>(expungedNoteGuids.size()));
+
     EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.processedNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_EQ(status.expungedNoteGuids, expungedNoteGuids);
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+    EXPECT_TRUE(callback->m_processedNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+
+    ASSERT_EQ(callback->m_expungedNoteGuids.size(), expungedNoteGuids.size());
+
+    for (const auto & guid: qAsConst(expungedNoteGuids)) {
+        EXPECT_TRUE(callback->m_expungedNoteGuids.contains(guid));
+    }
 }
 
 class NotesProcessorTestWithConflict :
@@ -1784,7 +1975,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         m_mockLocalStorage, m_mockSyncConflictResolver,
         m_mockNoteFullDataDownloader, m_mockNoteStore);
 
-    auto future = notesProcessor->processNotes(syncChunks);
+    const auto callback = std::make_shared<NotesProcessorCallback>();
+
+    auto future = notesProcessor->processNotes(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1860,6 +2053,35 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
             status.processedNoteGuidsAndUsns.find(note.guid().value());
 
         ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), note.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_guidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledNotes.isEmpty());
+
+    if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
+                                   MoveMine<qevercloud::Note>>(resolution))
+    {
+        ASSERT_EQ(
+            callback->m_processedNoteGuidsAndUsns.size() + 1, notes.size());
+    }
+    else {
+        ASSERT_EQ(callback->m_processedNoteGuidsAndUsns.size(), notes.size());
+    }
+
+    for (const auto & note: qAsConst(notes)) {
+        if (!note.guid()) {
+            ASSERT_TRUE(movedLocalConflict);
+            EXPECT_EQ(note, *movedLocalConflict);
+            continue;
+        }
+
+        const auto it =
+            callback->m_processedNoteGuidsAndUsns.find(note.guid().value());
+
+        ASSERT_NE(it, callback->m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 }
