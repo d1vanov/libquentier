@@ -11,6 +11,7 @@ target_sources(${MOCKS_NAME}
   PUBLIC
     ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/synchronization/tests/mocks/MockISyncConflictResolver.h
     MockINoteFullDataDownloader.h
+    MockINotesProcessor.h
     MockIResourceFullDataDownloader.h
     MockISimpleNotebookSyncConflictResolver.h
     MockISimpleNoteSyncConflictResolver.h
