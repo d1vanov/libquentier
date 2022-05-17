@@ -9,6 +9,7 @@ add_executable(${TESTS_NAME}
   LinkedNotebooksProcessorTest.cpp
   NotebooksProcessorTest.cpp
   NoteFullDataDownloaderTest.cpp
+  NotesDownloaderTest.cpp
   NotesProcessorTest.cpp
   ResourceFullDataDownloaderTest.cpp
   ResourcesProcessorTest.cpp

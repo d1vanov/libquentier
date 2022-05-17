@@ -90,6 +90,11 @@ void writeCancelledNote(
 void writeExpungedNote(
     const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir);
 
+// Persists information about a note which failed to expunge inside the passed
+// in dir
+void writeFailedToExpungeNote(
+    const qevercloud::Guid & noteGuid, const QDir & lastSyncNotesDir);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Functions below retrieve the persistently stored information from the last

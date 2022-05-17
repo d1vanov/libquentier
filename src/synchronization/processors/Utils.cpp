@@ -44,6 +44,8 @@ const QString gFailedToDownloadNotesDirName =
 const QString gFailedToProcessNotesDirName =
     QStringLiteral("failedToProcessNotes");
 
+const QString gExpungeNotesIniFileName = QStringLiteral("expungedNotes.ini");
+
 const QString gFailedToExpungeNotesIniFileName =
     QStringLiteral("failedToExpungeNotes.ini");
 
@@ -263,12 +265,23 @@ void writeCancelledNote(
 void writeExpungedNote(
     const qevercloud::Guid & expungedNoteGuid, const QDir & lastSyncNotesDir)
 {
-    QSettings notesWhichFailedToExpunge{
+    QSettings expungedNotes{
+        lastSyncNotesDir.absoluteFilePath(gExpungeNotesIniFileName),
+        QSettings::IniFormat};
+
+    expungedNotes.setValue(expungedNoteGuid, {});
+    expungedNotes.sync();
+}
+
+void writeFailedToExpungeNote(
+    const qevercloud::Guid & noteGuid, const QDir & lastSyncNotesDir)
+{
+    QSettings failedToExpungeNotes{
         lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
         QSettings::IniFormat};
 
-    notesWhichFailedToExpunge.setValue(expungedNoteGuid, {});
-    notesWhichFailedToExpunge.sync();
+    failedToExpungeNotes.setValue(noteGuid, {});
+    failedToExpungeNotes.sync();
 }
 
 QHash<qevercloud::Guid, qint32> processedNotesInfoFromLastSync(

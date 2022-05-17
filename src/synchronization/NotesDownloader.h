@@ -19,6 +19,7 @@
 #pragma once
 
 #include "INotesDownloader.h"
+#include "processors/INotesProcessor.h"
 
 #include <qevercloud/types/Note.h>
 
@@ -34,14 +35,41 @@ namespace quentier::synchronization {
 
 class NotesDownloader final :
     public INotesDownloader,
+    public INotesProcessor::ICallback,
     public std::enable_shared_from_this<NotesDownloader>
 {
 public:
     NotesDownloader(
-        INotesProcessorPtr notesProcessor, QDir syncPersistentStorageDir);
+        INotesProcessorPtr notesProcessor,
+        const QDir & syncPersistentStorageDir);
 
+    // INotesDownloader
     [[nodiscard]] QFuture<DownloadNotesStatus> downloadNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
+
+private:
+    // INotesProcessor::ICallback
+    void onProcessedNote(
+        const qevercloud::Guid & noteGuid,
+        qint32 noteUpdateSequenceNum) noexcept override;
+
+    void onExpungedNote(
+        const qevercloud::Guid & noteGuid) noexcept override;
+
+    void onFailedToExpungeNote(
+        const qevercloud::Guid & noteGuid,
+        const QException & e) noexcept override;
+
+    void onNoteFailedToDownload(
+        const qevercloud::Note & note,
+        const QException & e) noexcept override;
+
+    void onNoteFailedToProcess(
+        const qevercloud::Note & note,
+        const QException & e) noexcept override;
+
+    void onNoteProcessingCancelled(
+        const qevercloud::Note & note) noexcept override;
 
 private:
     [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync() const;
@@ -52,17 +80,12 @@ private:
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes);
 
-    [[nodiscard]] QFuture<DownloadNotesStatus> processNotesFromPreviousSync(
-        const QList<qevercloud::Note> & notes);
-
-    void processPostSyncStatus(const DownloadNotesStatus & status);
-
     [[nodiscard]] DownloadNotesStatus mergeStatus(
         DownloadNotesStatus lhs, const DownloadNotesStatus & rhs) const;
 
 private:
     const INotesProcessorPtr m_notesProcessor;
-    const QDir m_syncPersistentStorageDir;
+    const QDir m_syncNotesDir;
 };
 
 } // namespace quentier::synchronization

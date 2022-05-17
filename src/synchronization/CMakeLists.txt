@@ -7,7 +7,10 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
+  INotesDownloader.h
   IReceiver.h
+  NotesDownloader.cpp
+  NotesDownloader.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
