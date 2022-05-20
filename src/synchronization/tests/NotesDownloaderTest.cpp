@@ -17,6 +17,7 @@
  */
 
 #include <synchronization/NotesDownloader.h>
+#include <synchronization/processors/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/tests/mocks/MockINotesProcessor.h>
 
@@ -28,6 +29,7 @@
 #include <qevercloud/types/SyncChunk.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
+#include <qevercloud/utility/ToRange.h>
 
 #include <QSettings>
 #include <QTemporaryDir>
@@ -131,8 +133,7 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
 
-            const QList<qevercloud::Note> syncChunkNotes = [&]
-            {
+            const QList<qevercloud::Note> syncChunkNotes = [&] {
                 QList<qevercloud::Note> result;
                 for (const auto & syncChunk: qAsConst(syncChunks)) {
                     result << utils::collectNotesFromSyncChunk(syncChunk);
@@ -177,8 +178,7 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
         }
     }
 
-    QDir lastSyncNotesDir = [&]
-    {
+    QDir lastSyncNotesDir = [&] {
         QDir syncPersistentStorageDir{m_temporaryDir.path()};
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
             QStringLiteral("lastSyncData"))};
@@ -196,8 +196,7 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             status.processedNoteGuidsAndUsns.find(processedNoteGuid);
 
         EXPECT_NE(it, status.processedNoteGuidsAndUsns.end());
-        if (it != status.processedNoteGuidsAndUsns.end())
-        {
+        if (it != status.processedNoteGuidsAndUsns.end()) {
             const auto value = processedNotes.value(processedNoteGuid);
             EXPECT_TRUE(value.isValid());
 
@@ -207,6 +206,128 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             EXPECT_EQ(usn, it.value());
         }
     }
+}
+
+struct TestData
+{
+    QHash<qevercloud::Guid, qint32> m_processedNotesInfo;
+    QList<qevercloud::Guid> m_expungedNoteGuids;
+
+    QList<qevercloud::Note> m_notesWhichFailedToDownloadDuringPreviousSync;
+    QList<qevercloud::Note> m_notesWhichFailedToProcessDuringPreviousSync;
+    QList<qevercloud::Note> m_notesCancelledDuringPreviousSync;
+    QList<qevercloud::Guid> m_noteGuidsWhichFailedToExpungeDuringPreviousSync;
+};
+
+class NotesDownloaderTestWithPreviousSyncData :
+    public NotesDownloaderTest,
+    public testing::WithParamInterface<TestData>
+{};
+
+const std::array gTestData{
+    TestData{},
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    NotesDownloaderTestWithPreviousSyncDataInstance,
+    NotesDownloaderTestWithPreviousSyncData, testing::ValuesIn(gTestData));
+
+TEST_P(
+    NotesDownloaderTestWithPreviousSyncData,
+    ProcessSyncChunksWithPreviousSyncInfo)
+{
+    const auto notebookGuid = UidGenerator::Generate();
+
+    const auto notes = QList<qevercloud::Note>{}
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(10)
+               .setTitle(QStringLiteral("Note #10"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(11)
+               .setTitle(QStringLiteral("Note #11"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(12)
+               .setTitle(QStringLiteral("Note #12"))
+               .build()
+        << qevercloud::NoteBuilder{}
+               .setGuid(UidGenerator::Generate())
+               .setNotebookGuid(notebookGuid)
+               .setUpdateSequenceNum(13)
+               .setTitle(QStringLiteral("Note #13"))
+               .build();
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
+
+    QDir syncPersistentStorageDir{m_temporaryDir.path()};
+
+    const auto notesDownloader = std::make_shared<NotesDownloader>(
+        m_mockNotesProcessor, syncPersistentStorageDir);
+
+    QDir syncNotesDir = [&] {
+        QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
+            QStringLiteral("lastSyncData"))};
+
+        return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
+    }();
+
+    const auto & testData = GetParam();
+
+    // Prepare test data
+    if (!testData.m_processedNotesInfo.isEmpty()) {
+        for (const auto it: qevercloud::toRange(testData.m_processedNotesInfo))
+        {
+            utils::writeProcessedNoteInfo(it.key(), it.value(), syncNotesDir);
+        }
+    }
+
+    if (!testData.m_expungedNoteGuids.isEmpty()) {
+        for (const auto & guid: qAsConst(testData.m_expungedNoteGuids)) {
+            utils::writeExpungedNote(guid, syncNotesDir);
+        }
+    }
+
+    if (!testData.m_notesWhichFailedToDownloadDuringPreviousSync.isEmpty()) {
+        for (const auto & note:
+             qAsConst(testData.m_notesWhichFailedToDownloadDuringPreviousSync))
+        {
+            utils::writeFailedToDownloadNote(note, syncNotesDir);
+        }
+    }
+
+    if (!testData.m_notesWhichFailedToProcessDuringPreviousSync.isEmpty()) {
+        for (const auto & note:
+             qAsConst(testData.m_notesWhichFailedToProcessDuringPreviousSync))
+        {
+            utils::writeFailedToProcessNote(note, syncNotesDir);
+        }
+    }
+
+    if (!testData.m_notesCancelledDuringPreviousSync.isEmpty()) {
+        for (const auto & note:
+             qAsConst(testData.m_notesCancelledDuringPreviousSync)) {
+            utils::writeCancelledNote(note, syncNotesDir);
+        }
+    }
+
+    if (!testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync.isEmpty()) {
+        for (const auto & guid: qAsConst(
+                 testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync))
+        {
+            utils::writeFailedToExpungeNote(guid, syncNotesDir);
+        }
+    }
+
+    // Check whether test data is being processed
+    // TODO: continue from here
 }
 
 } // namespace quentier::synchronization::tests
