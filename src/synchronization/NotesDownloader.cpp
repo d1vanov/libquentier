@@ -58,7 +58,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotes(
     // or which processing was cancelled. If such notes exist, they need to be
     // processed first.
     auto previousNotes = notesFromPreviousSync();
-    auto previousExpungedNotes = expungedNotesFromPreviousSync();
+    auto previousExpungedNotes = failedToExpungeNotesFromPreviousSync();
 
     // Also need to check whether there are notes which were fully processed
     // during the last sync within the sync chunks. If so, such notes should
@@ -265,13 +265,14 @@ QList<qevercloud::Note> NotesDownloader::notesFromPreviousSync() const
     return result;
 }
 
-QList<qevercloud::Guid> NotesDownloader::expungedNotesFromPreviousSync() const
+QList<qevercloud::Guid> NotesDownloader::failedToExpungeNotesFromPreviousSync()
+    const
 {
     if (!m_syncNotesDir.exists()) {
         return {};
     }
 
-    return utils::noteGuidsExpungedDuringLastSync(m_syncNotesDir);
+    return utils::noteGuidsWhichFailedToExpungeDuringLastSync(m_syncNotesDir);
 }
 
 QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotesImpl(

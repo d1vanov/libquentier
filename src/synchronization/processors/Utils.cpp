@@ -356,6 +356,21 @@ QList<qevercloud::Note> notesCancelledDuringLastSync(
 QList<qevercloud::Guid> noteGuidsExpungedDuringLastSync(
     const QDir & lastSyncNotesDir)
 {
+    QSettings expungedNotes{
+        lastSyncNotesDir.absoluteFilePath(gExpungeNotesIniFileName),
+        QSettings::IniFormat};
+
+    // NOTE: implicitly converting QStringList to QList<qevercloud::Guid> here.
+    // It works because QStringList inherits QList<QString> and qevercloud::Guid
+    // is just a type alias for QString. It is ok to do such conversion because
+    // QStringList is layout-compatible with QList<QString> and just adds
+    // convenience methods.
+    return expungedNotes.allKeys();
+}
+
+QList<qevercloud::Guid> noteGuidsWhichFailedToExpungeDuringLastSync(
+    const QDir & lastSyncNotesDir)
+{
     QSettings notesWhichFailedToExpunge{
         lastSyncNotesDir.absoluteFilePath(gFailedToExpungeNotesIniFileName),
         QSettings::IniFormat};

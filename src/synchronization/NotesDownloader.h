@@ -73,7 +73,9 @@ private:
 
 private:
     [[nodiscard]] QList<qevercloud::Note> notesFromPreviousSync() const;
-    [[nodiscard]] QList<qevercloud::Guid> expungedNotesFromPreviousSync() const;
+
+    [[nodiscard]] QList<qevercloud::Guid> failedToExpungeNotesFromPreviousSync()
+        const;
 
     [[nodiscard]] QFuture<DownloadNotesStatus> downloadNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,

@@ -126,4 +126,9 @@ void writeFailedToExpungeNote(
 [[nodiscard]] QList<qevercloud::Guid> noteGuidsExpungedDuringLastSync(
     const QDir & lastSyncNotesDir);
 
+// Returns a list of guids of notes which failed to get expunged during the last
+// sync.
+[[nodiscard]] QList<qevercloud::Guid>
+    noteGuidsWhichFailedToExpungeDuringLastSync(const QDir & lastSyncNotesDir);
+
 } // namespace quentier::synchronization::utils
