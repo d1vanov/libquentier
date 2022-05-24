@@ -43,6 +43,7 @@ namespace quentier::synchronization::tests {
 
 using testing::_;
 using testing::Matcher;
+using testing::Return;
 using testing::StrictMock;
 using testing::TypedEq;
 
@@ -269,9 +270,6 @@ TEST_P(
 
     QDir syncPersistentStorageDir{m_temporaryDir.path()};
 
-    const auto notesDownloader = std::make_shared<NotesDownloader>(
-        m_mockNotesProcessor, syncPersistentStorageDir);
-
     QDir syncNotesDir = [&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
             QStringLiteral("lastSyncData"))};
@@ -326,8 +324,83 @@ TEST_P(
         }
     }
 
-    // Check whether test data is being processed
-    // TODO: continue from here
+    const QList<qevercloud::Note> notesFromPreviousSync = [&] {
+        QList<qevercloud::Note> result;
+        result << testData.m_notesWhichFailedToDownloadDuringPreviousSync;
+        result << testData.m_notesWhichFailedToProcessDuringPreviousSync;
+        result << testData.m_notesCancelledDuringPreviousSync;
+
+        for (auto it = result.begin(); it != result.end();) {
+            EXPECT_TRUE(it->guid().has_value());
+            if (it->guid().has_value()) {
+                const auto pit =
+                    testData.m_processedNotesInfo.find(*it->guid());
+
+                if (pit != testData.m_processedNotesInfo.end() &&
+                    it->updateSequenceNum() == pit.value())
+                {
+                    it = result.erase(it);
+                    continue;
+                }
+            }
+
+            ++it;
+        }
+
+        return result;
+    }();
+
+    const QList<qevercloud::Guid> expungedNoteGuidsFromPreviousSync = [&] {
+        QList<qevercloud::Guid> result;
+        result << testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync;
+
+        for (auto it = result.begin(); it != result.end();) {
+            const int i = testData.m_expungedNoteGuids.indexOf(*it);
+            if (i >= 0) {
+                it = result.erase(it);
+                continue;
+            }
+
+            ++it;
+        }
+
+        return result;
+    }();
+
+    if (!expungedNoteGuidsFromPreviousSync.isEmpty()) {
+        const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
+            << qevercloud::SyncChunkBuilder{}
+                   .setExpungedNotes(expungedNoteGuidsFromPreviousSync)
+                   .build();
+
+        EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
+            .WillOnce(Return(threading::makeReadyFuture<
+                             INotesDownloader::DownloadNotesStatus>({})));
+    }
+
+    if (!notesFromPreviousSync.isEmpty()) {
+        const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
+            << qevercloud::SyncChunkBuilder{}
+                   .setNotes(notesFromPreviousSync)
+                   .build();
+
+        EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
+            .WillOnce(Return(threading::makeReadyFuture<
+                             INotesDownloader::DownloadNotesStatus>({})));
+    }
+
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
+        .WillOnce(Return(
+            threading::makeReadyFuture<INotesDownloader::DownloadNotesStatus>(
+                {})));
+
+    const auto notesDownloader = std::make_shared<NotesDownloader>(
+        m_mockNotesProcessor, syncPersistentStorageDir);
+
+    auto future = notesDownloader->downloadNotes(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+
+    // TODO: use some actual DownloadNotesStatus to verify it here
 }
 
 } // namespace quentier::synchronization::tests
