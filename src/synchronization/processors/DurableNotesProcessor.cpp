@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NotesDownloader.h"
+#include "DurableNotesProcessor.h"
 
 #include <synchronization/processors/INotesProcessor.h>
 #include <synchronization/processors/Utils.h>
@@ -35,7 +35,7 @@
 
 namespace quentier::synchronization {
 
-NotesDownloader::NotesDownloader(
+DurableNotesProcessor::DurableNotesProcessor(
     INotesProcessorPtr notesProcessor, const QDir & syncPersistentStorageDir) :
     m_notesProcessor{std::move(notesProcessor)},
     m_syncNotesDir{[&] {
@@ -46,12 +46,12 @@ NotesDownloader::NotesDownloader(
 {
     if (Q_UNLIKELY(!m_notesProcessor)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::NotesDownloader",
-            "NotesDownloader ctor: notes processor is null")}};
+            "synchronization::DurableNotesProcessor",
+            "DurableNotesProcessor ctor: notes processor is null")}};
     }
 }
 
-QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotes(
+QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
     // First need to check whether there are notes which failed to be processed
@@ -83,7 +83,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotes(
             for (auto it = notes.begin(); it != notes.end();) {
                 if (Q_UNLIKELY(!it->guid())) {
                     QNWARNING(
-                        "synchronization::NotesDownloader",
+                        "synchronization::DurableNotesProcessor",
                         "Detected note within sync chunks without guid: "
                             << *it);
                     ++it;
@@ -124,7 +124,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotes(
         std::move(previousExpungedNotes));
 }
 
-void NotesDownloader::onProcessedNote(
+void DurableNotesProcessor::onProcessedNote(
     const qevercloud::Guid & noteGuid, qint32 noteUpdateSequenceNum) noexcept
 {
     try {
@@ -133,40 +133,40 @@ void NotesDownloader::onProcessedNote(
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write processed note info: "
                 << e.what() << ", note guid = " << noteGuid
                 << ", note usn = " << noteUpdateSequenceNum);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write processed note info: unknown exception, "
                 << "note guid = " << noteGuid
                 << ", note usn = " << noteUpdateSequenceNum);
     }
 }
 
-void NotesDownloader::onExpungedNote(const qevercloud::Guid & noteGuid) noexcept
+void DurableNotesProcessor::onExpungedNote(const qevercloud::Guid & noteGuid) noexcept
 {
     try {
         utils::writeExpungedNote(noteGuid, m_syncNotesDir);
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write expunged note guid: "
                 << e.what() << ", note guid = " << noteGuid);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write expunged note guid: unknown exception, "
                 << "note guid = " << noteGuid);
     }
 }
 
-void NotesDownloader::onFailedToExpungeNote(
+void DurableNotesProcessor::onFailedToExpungeNote(
     const qevercloud::Guid & noteGuid, const QException & e) noexcept
 {
     Q_UNUSED(e)
@@ -176,19 +176,19 @@ void NotesDownloader::onFailedToExpungeNote(
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to expunge note guid: "
                 << e.what() << ", note guid = " << noteGuid);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to expunge note guid: unknown exception, "
                 << "note guid = " << noteGuid);
     }
 }
 
-void NotesDownloader::onNoteFailedToDownload(
+void DurableNotesProcessor::onNoteFailedToDownload(
     const qevercloud::Note & note, const QException & e) noexcept
 {
     Q_UNUSED(e)
@@ -198,19 +198,19 @@ void NotesDownloader::onNoteFailedToDownload(
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to download note: " << e.what()
                                                         << ", note: " << note);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to download note: unknown exception, "
                 << "note: " << note);
     }
 }
 
-void NotesDownloader::onNoteFailedToProcess(
+void DurableNotesProcessor::onNoteFailedToProcess(
     const qevercloud::Note & note, const QException & e) noexcept
 {
     Q_UNUSED(e)
@@ -220,19 +220,19 @@ void NotesDownloader::onNoteFailedToProcess(
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to process note: " << e.what()
                                                        << ", note: " << note);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write failed to process note: unknown exception, "
                 << "note: " << note);
     }
 }
 
-void NotesDownloader::onNoteProcessingCancelled(
+void DurableNotesProcessor::onNoteProcessingCancelled(
     const qevercloud::Note & note) noexcept
 {
     try {
@@ -240,19 +240,19 @@ void NotesDownloader::onNoteProcessingCancelled(
     }
     catch (const std::exception & e) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write cancelled note: " << e.what()
                                                << ", note: " << note);
     }
     catch (...) {
         QNWARNING(
-            "synchronization::NotesDownloader",
+            "synchronization::DurableNotesProcessor",
             "Failed to write cancelled note: unknown exception, note: "
                 << note);
     }
 }
 
-QList<qevercloud::Note> NotesDownloader::notesFromPreviousSync() const
+QList<qevercloud::Note> DurableNotesProcessor::notesFromPreviousSync() const
 {
     if (!m_syncNotesDir.exists()) {
         return {};
@@ -265,7 +265,7 @@ QList<qevercloud::Note> NotesDownloader::notesFromPreviousSync() const
     return result;
 }
 
-QList<qevercloud::Guid> NotesDownloader::failedToExpungeNotesFromPreviousSync()
+QList<qevercloud::Guid> DurableNotesProcessor::failedToExpungeNotesFromPreviousSync()
     const
 {
     if (!m_syncNotesDir.exists()) {
@@ -275,7 +275,7 @@ QList<qevercloud::Guid> NotesDownloader::failedToExpungeNotesFromPreviousSync()
     return utils::noteGuidsWhichFailedToExpungeDuringLastSync(m_syncNotesDir);
 }
 
-QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotesImpl(
+QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::downloadNotesImpl(
     const QList<qevercloud::SyncChunk> & syncChunks,
     QList<qevercloud::Note> previousNotes,
     QList<qevercloud::Guid> previousExpungedNotes)
@@ -385,7 +385,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> NotesDownloader::downloadNotesImpl(
     return future;
 }
 
-NotesDownloader::DownloadNotesStatus NotesDownloader::mergeStatus(
+DurableNotesProcessor::DownloadNotesStatus DurableNotesProcessor::mergeStatus(
     DownloadNotesStatus lhs, const DownloadNotesStatus & rhs) const
 {
     lhs.totalNewNotes += rhs.totalNewNotes;

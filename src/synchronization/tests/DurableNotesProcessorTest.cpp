@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <synchronization/NotesDownloader.h>
+#include <synchronization/processors/DurableNotesProcessor.h>
 #include <synchronization/processors/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
 #include <synchronization/tests/mocks/MockINotesProcessor.h>
@@ -47,7 +47,7 @@ using testing::Return;
 using testing::StrictMock;
 using testing::TypedEq;
 
-class NotesDownloaderTest : public testing::Test
+class DurableNotesProcessorTest : public testing::Test
 {
 protected:
     void TearDown() override
@@ -73,22 +73,24 @@ protected:
     QTemporaryDir m_temporaryDir;
 };
 
-TEST_F(NotesDownloaderTest, Ctor)
+TEST_F(DurableNotesProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
-        const auto notesDownloader = std::make_shared<NotesDownloader>(
-            m_mockNotesProcessor, QDir{m_temporaryDir.path()}));
+        const auto durableNotesProcessor =
+            std::make_shared<DurableNotesProcessor>(
+                m_mockNotesProcessor, QDir{m_temporaryDir.path()}));
 }
 
-TEST_F(NotesDownloaderTest, CtorNullNotesProcessor)
+TEST_F(DurableNotesProcessorTest, CtorNullNotesProcessor)
 {
     EXPECT_THROW(
-        const auto notesDownloader = std::make_shared<NotesDownloader>(
-            nullptr, QDir{m_temporaryDir.path()}),
+        const auto durableNotesProcessor =
+            std::make_shared<DurableNotesProcessor>(
+                nullptr, QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
-TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
+TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 {
     const auto notebookGuid = UidGenerator::Generate();
 
@@ -121,7 +123,7 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
 
-    const auto notesDownloader = std::make_shared<NotesDownloader>(
+    const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, QDir{m_temporaryDir.path()});
 
     EXPECT_CALL(
@@ -144,7 +146,7 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
             EXPECT_EQ(syncChunkNotes, notes);
 
-            INotesDownloader::DownloadNotesStatus status;
+            IDurableNotesProcessor::DownloadNotesStatus status;
             status.totalNewNotes = static_cast<quint64>(syncChunkNotes.size());
 
             for (const auto & note: qAsConst(notes)) {
@@ -158,10 +160,10 @@ TEST_F(NotesDownloaderTest, ProcessSyncChunksWithoutPreviousSyncInfo)
             }
 
             return threading::makeReadyFuture<
-                INotesDownloader::DownloadNotesStatus>(std::move(status));
+                IDurableNotesProcessor::DownloadNotesStatus>(std::move(status));
         });
 
-    auto future = notesDownloader->downloadNotes(syncChunks);
+    auto future = durableNotesProcessor->processNotes(syncChunks);
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -221,7 +223,7 @@ struct TestData
 };
 
 class NotesDownloaderTestWithPreviousSyncData :
-    public NotesDownloaderTest,
+    public DurableNotesProcessorTest,
     public testing::WithParamInterface<TestData>
 {};
 
@@ -375,7 +377,7 @@ TEST_P(
 
         EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
             .WillOnce(Return(threading::makeReadyFuture<
-                             INotesDownloader::DownloadNotesStatus>({})));
+                             IDurableNotesProcessor::DownloadNotesStatus>({})));
     }
 
     if (!notesFromPreviousSync.isEmpty()) {
@@ -386,18 +388,17 @@ TEST_P(
 
         EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
             .WillOnce(Return(threading::makeReadyFuture<
-                             INotesDownloader::DownloadNotesStatus>({})));
+                             IDurableNotesProcessor::DownloadNotesStatus>({})));
     }
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
-        .WillOnce(Return(
-            threading::makeReadyFuture<INotesDownloader::DownloadNotesStatus>(
-                {})));
+        .WillOnce(Return(threading::makeReadyFuture<
+                         IDurableNotesProcessor::DownloadNotesStatus>({})));
 
-    const auto notesDownloader = std::make_shared<NotesDownloader>(
+    const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, syncPersistentStorageDir);
 
-    auto future = notesDownloader->downloadNotes(syncChunks);
+    auto future = durableNotesProcessor->processNotes(syncChunks);
     ASSERT_TRUE(future.isFinished());
 
     // TODO: use some actual DownloadNotesStatus to verify it here

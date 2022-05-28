@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "Fwd.h"
+#include "../Fwd.h"
 
 #include <quentier/synchronization/ISynchronizer.h>
 
@@ -29,14 +29,19 @@
 
 namespace quentier::synchronization {
 
-class INotesDownloader
+/**
+ * @brief The IDurableNotesProcessor interface represents a notes processor
+ * which retries downloading and processing of notes which for some reason
+ * failed during the previous sync attempt.
+ */
+class IDurableNotesProcessor
 {
 public:
-    virtual ~INotesDownloader() = default;
+    virtual ~IDurableNotesProcessor() = default;
 
     using DownloadNotesStatus = ISynchronizer::DownloadNotesStatus;
 
-    [[nodiscard]] virtual QFuture<DownloadNotesStatus> downloadNotes(
+    [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;
 };
 

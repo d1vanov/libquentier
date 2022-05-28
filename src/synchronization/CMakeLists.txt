@@ -7,10 +7,7 @@ add_library(${LIBRARY_NAME} STATIC)
 target_sources(${LIBRARY_NAME}
   PRIVATE
   Fwd.h
-  INotesDownloader.h
   IReceiver.h
-  NotesDownloader.cpp
-  NotesDownloader.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h
@@ -33,6 +30,9 @@ target_sources(${LIBRARY_NAME}
   conflict_resolvers/SimpleTagSyncConflictResolver.h
   conflict_resolvers/Utils.cpp
   conflict_resolvers/Utils.h
+  processors/DurableNotesProcessor.cpp
+  processors/DurableNotesProcessor.h
+  processors/IDurableNotesProcessor.h
   processors/ILinkedNotebooksProcessor.h
   processors/INotebooksProcessor.h
   processors/INoteFullDataDownloader.h

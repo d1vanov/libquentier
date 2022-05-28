@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "INotesDownloader.h"
-#include "processors/INotesProcessor.h"
+#include "IDurableNotesProcessor.h"
+#include "INotesProcessor.h"
 
 #include <qevercloud/types/Note.h>
 
@@ -33,18 +33,18 @@
 
 namespace quentier::synchronization {
 
-class NotesDownloader final :
-    public INotesDownloader,
+class DurableNotesProcessor final :
+    public IDurableNotesProcessor,
     public INotesProcessor::ICallback,
-    public std::enable_shared_from_this<NotesDownloader>
+    public std::enable_shared_from_this<DurableNotesProcessor>
 {
 public:
-    NotesDownloader(
+    DurableNotesProcessor(
         INotesProcessorPtr notesProcessor,
         const QDir & syncPersistentStorageDir);
 
-    // INotesDownloader
-    [[nodiscard]] QFuture<DownloadNotesStatus> downloadNotes(
+    // IDurableNotesProcessor
+    [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
