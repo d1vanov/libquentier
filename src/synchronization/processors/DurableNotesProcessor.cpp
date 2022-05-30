@@ -70,7 +70,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::processNotes(
 
     if (alreadyProcessedNotesInfo.isEmpty() &&
         alreadyExpungedNoteGuids.isEmpty()) {
-        return downloadNotesImpl(
+        return processNotesImpl(
             syncChunks, std::move(previousNotes),
             std::move(previousExpungedNotes));
     }
@@ -118,7 +118,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::processNotes(
         }
     }
 
-    return downloadNotesImpl(
+    return processNotesImpl(
         filteredSyncChunks, std::move(previousNotes),
         std::move(previousExpungedNotes));
 }
@@ -276,7 +276,7 @@ QList<qevercloud::Guid>
 }
 
 QFuture<ISynchronizer::DownloadNotesStatus>
-    DurableNotesProcessor::downloadNotesImpl(
+    DurableNotesProcessor::processNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes)
@@ -317,7 +317,7 @@ QFuture<ISynchronizer::DownloadNotesStatus>
                 [this, selfWeak, promise, syncChunks = syncChunks,
                  previousNotes = std::move(previousNotes)](
                     DownloadNotesStatus expungeNotesStatus) mutable {
-                    auto processNotesFuture = downloadNotesImpl(
+                    auto processNotesFuture = processNotesImpl(
                         syncChunks, std::move(previousNotes), {});
 
                     threading::thenOrFailed(
@@ -355,7 +355,7 @@ QFuture<ISynchronizer::DownloadNotesStatus>
                 [this, selfWeak, promise,
                  syncChunks = syncChunks](DownloadNotesStatus status) mutable {
                     auto processNotesFuture =
-                        downloadNotesImpl(syncChunks, {}, {});
+                        processNotesImpl(syncChunks, {}, {});
 
                     threading::thenOrFailed(
                         std::move(processNotesFuture), promise,

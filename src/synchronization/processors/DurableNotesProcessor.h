@@ -77,7 +77,7 @@ private:
     [[nodiscard]] QList<qevercloud::Guid> failedToExpungeNotesFromPreviousSync()
         const;
 
-    [[nodiscard]] QFuture<DownloadNotesStatus> downloadNotesImpl(
+    [[nodiscard]] QFuture<DownloadNotesStatus> processNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes);
