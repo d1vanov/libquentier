@@ -82,9 +82,6 @@ private:
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes);
 
-    [[nodiscard]] DownloadNotesStatus mergeStatus(
-        DownloadNotesStatus lhs, const DownloadNotesStatus & rhs) const;
-
 private:
     const INotesProcessorPtr m_notesProcessor;
     const QDir m_syncNotesDir;

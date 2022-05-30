@@ -36,6 +36,8 @@
 
 #include <gtest/gtest.h>
 
+#include <optional>
+
 // clazy:excludeall=non-pod-global-static
 // clazy:excludeall=returning-void-expression
 
@@ -369,26 +371,58 @@ TEST_P(
         return result;
     }();
 
+    using DownloadNotesStatus = INotesProcessor::DownloadNotesStatus;
+
+    std::optional<DownloadNotesStatus> previousExpungedNotesStatus;
     if (!expungedNoteGuidsFromPreviousSync.isEmpty()) {
         const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
             << qevercloud::SyncChunkBuilder{}
                    .setExpungedNotes(expungedNoteGuidsFromPreviousSync)
                    .build();
 
+        previousExpungedNotesStatus.emplace();
+        previousExpungedNotesStatus->totalExpungedNotes = static_cast<quint64>(
+            std::max<int>(expungedNoteGuidsFromPreviousSync.size(), 0));
+
+        previousExpungedNotesStatus->expungedNoteGuids =
+            expungedNoteGuidsFromPreviousSync;
+
         EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
             .WillOnce(Return(threading::makeReadyFuture<
-                             IDurableNotesProcessor::DownloadNotesStatus>({})));
+                             IDurableNotesProcessor::DownloadNotesStatus>(
+                DownloadNotesStatus{*previousExpungedNotesStatus})));
     }
 
+    std::optional<DownloadNotesStatus> previousNotesStatus;
     if (!notesFromPreviousSync.isEmpty()) {
         const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
             << qevercloud::SyncChunkBuilder{}
                    .setNotes(notesFromPreviousSync)
                    .build();
 
+        previousNotesStatus.emplace();
+        previousNotesStatus->totalUpdatedNotes = static_cast<quint64>(
+            std::max<int>(notesFromPreviousSync.size(), 0));
+
+        for (const auto & note: qAsConst(notesFromPreviousSync)) {
+            EXPECT_TRUE(note.guid());
+            if (!note.guid()) {
+                continue;
+            }
+
+            EXPECT_TRUE(note.updateSequenceNum());
+            if (!note.updateSequenceNum()) {
+                continue;
+            }
+
+            previousNotesStatus->processedNoteGuidsAndUsns[*note.guid()] =
+                *note.updateSequenceNum();
+        }
+
         EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
             .WillOnce(Return(threading::makeReadyFuture<
-                             IDurableNotesProcessor::DownloadNotesStatus>({})));
+                             IDurableNotesProcessor::DownloadNotesStatus>(
+                DownloadNotesStatus{*previousNotesStatus})));
     }
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
