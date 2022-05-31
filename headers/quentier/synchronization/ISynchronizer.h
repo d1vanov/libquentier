@@ -98,10 +98,6 @@ public:
 
     struct QUENTIER_EXPORT DownloadNotesStatus
     {
-        quint64 totalNewNotes = 0UL;
-        quint64 totalUpdatedNotes = 0UL;
-        quint64 totalExpungedNotes = 0UL;
-
         struct QUENTIER_EXPORT NoteWithException
         {
             qevercloud::Note note;
@@ -121,6 +117,10 @@ public:
             qevercloud::Guid guid;
             qint32 updateSequenceNumber = 0;
         };
+
+        quint64 totalNewNotes = 0UL;
+        quint64 totalUpdatedNotes = 0UL;
+        quint64 totalExpungedNotes = 0UL;
 
         QList<NoteWithException> notesWhichFailedToDownload;
         QList<NoteWithException> notesWhichFailedToProcess;
@@ -187,15 +187,69 @@ public:
         Account account) = 0;
 
     [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
-        Account account,
-        ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage,
-        Options options) = 0;
+        Account account, ISyncConflictResolverPtr syncConflictResolver,
+        local_storage::ILocalStoragePtr localStorage, Options options) = 0;
 
     [[nodiscard]] virtual QFuture<void> revokeAuthentication(
         qevercloud::UserID userId) = 0;
 
     [[nodiscard]] virtual ISyncEventsNotifier * notifier() const = 0;
 };
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::Options & lhs,
+    const ISynchronizer::Options & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::Options & lhs,
+    const ISynchronizer::Options & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::AuthResult & lhs,
+    const ISynchronizer::AuthResult & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::AuthResult & lhs,
+    const ISynchronizer::AuthResult & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::SyncState & lhs,
+    const ISynchronizer::SyncState & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::SyncState & lhs,
+    const ISynchronizer::SyncState & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadNotesStatus & lhs,
+    const ISynchronizer::DownloadNotesStatus & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadNotesStatus & lhs,
+    const ISynchronizer::DownloadNotesStatus & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadNotesStatus::NoteWithException & lhs,
+    const ISynchronizer::DownloadNotesStatus::NoteWithException & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadNotesStatus::NoteWithException & lhs,
+    const ISynchronizer::DownloadNotesStatus::NoteWithException & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadNotesStatus::GuidWithException & lhs,
+    const ISynchronizer::DownloadNotesStatus::GuidWithException & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadNotesStatus::GuidWithException & lhs,
+    const ISynchronizer::DownloadNotesStatus::GuidWithException & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & lhs,
+    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & lhs,
+    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & rhs) noexcept;
 
 } // namespace quentier::synchronization

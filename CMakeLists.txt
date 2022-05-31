@@ -400,6 +400,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
+    src/synchronization/ISynchronizer.cpp
     src/synchronization/ISyncStateStorage.cpp
     src/synchronization/IUserStore.cpp
     src/synchronization/NoteStore.cpp
