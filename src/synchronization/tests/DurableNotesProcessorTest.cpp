@@ -425,17 +425,56 @@ TEST_P(
                 DownloadNotesStatus{*previousNotesStatus})));
     }
 
+    DownloadNotesStatus currentNotesStatus;
+    currentNotesStatus.totalNewNotes = static_cast<quint64>(std::max<int>(notes.size(), 0));
+    for (const auto & note: qAsConst(notes)) {
+        EXPECT_TRUE(note.guid());
+        if (!note.guid()) {
+            continue;
+        }
+
+        EXPECT_TRUE(note.updateSequenceNum());
+        if (!note.updateSequenceNum()) {
+            continue;
+        }
+
+        currentNotesStatus.processedNoteGuidsAndUsns[*note.guid()] =
+            *note.updateSequenceNum();
+    }
+
     EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
         .WillOnce(Return(threading::makeReadyFuture<
-                         IDurableNotesProcessor::DownloadNotesStatus>({})));
+                         IDurableNotesProcessor::DownloadNotesStatus>(
+            DownloadNotesStatus{currentNotesStatus})));
 
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, syncPersistentStorageDir);
 
     auto future = durableNotesProcessor->processNotes(syncChunks);
     ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
 
-    // TODO: use some actual DownloadNotesStatus to verify it here
+    const DownloadNotesStatus expectedStatus = [&]
+    {
+        DownloadNotesStatus expectedStatus;
+        if (previousExpungedNotesStatus)
+        {
+            expectedStatus = utils::mergeDownloadNotesStatuses(
+                std::move(expectedStatus), *previousExpungedNotesStatus);
+        }
+
+        if (previousNotesStatus)
+        {
+            expectedStatus = utils::mergeDownloadNotesStatuses(
+                std::move(expectedStatus), *previousNotesStatus);
+        }
+
+        return utils::mergeDownloadNotesStatuses(
+            std::move(expectedStatus), currentNotesStatus);
+    }();
+
+    EXPECT_EQ(status, expectedStatus);
 }
 
 } // namespace quentier::synchronization::tests
