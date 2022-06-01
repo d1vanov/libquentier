@@ -36,6 +36,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <optional>
 
 // clazy:excludeall=non-pod-global-static
@@ -48,6 +49,17 @@ using testing::Matcher;
 using testing::Return;
 using testing::StrictMock;
 using testing::TypedEq;
+
+namespace {
+
+template <class T>
+QList<T> sorted(QList<T> lst)
+{
+    std::sort(lst.begin(), lst.end());
+    return lst;
+}
+
+} // namespace
 
 class DurableNotesProcessorTest : public testing::Test
 {
@@ -224,21 +236,49 @@ struct TestData
     QList<qevercloud::Guid> m_noteGuidsWhichFailedToExpungeDuringPreviousSync;
 };
 
-class NotesDownloaderTestWithPreviousSyncData :
+class DurableNotesProcessorTestWithPreviousSyncData :
     public DurableNotesProcessorTest,
     public testing::WithParamInterface<TestData>
 {};
 
+[[nodiscard]] QHash<qevercloud::Guid, qint32> testProcessedNotesInfo()
+{
+    QHash<qevercloud::Guid, qint32> result;
+    for (qint32 i = 2; i < 6; ++i) {
+        result[UidGenerator::Generate()] = i;
+    }
+    return result;
+}
+
 const std::array gTestData{
     TestData{},
+    TestData{
+        testProcessedNotesInfo(), // m_processedNotesInfo
+        {},                       // m_expungedNoteGuids
+        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
+        {}, // m_notesWhichFailedToProcessDuringPreviousSync
+        {}, // m_notesCancelledDuringPreviousSync
+        {}, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    TestData{
+        testProcessedNotesInfo(), // m_processedNotesInfo
+        QList<qevercloud::Guid>{}
+            << UidGenerator::Generate() << UidGenerator::Generate()
+            << UidGenerator::Generate(), // m_expungedNoteGuids
+        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
+        {}, // m_notesWhichFailedToProcessDuringPreviousSync
+        {}, // m_notesCancelledDuringPreviousSync
+        {}, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    NotesDownloaderTestWithPreviousSyncDataInstance,
-    NotesDownloaderTestWithPreviousSyncData, testing::ValuesIn(gTestData));
+    DurableNotesProcessorTestWithPreviousSyncDataInstance,
+    DurableNotesProcessorTestWithPreviousSyncData,
+    testing::ValuesIn(gTestData));
 
 TEST_P(
-    NotesDownloaderTestWithPreviousSyncData,
+    DurableNotesProcessorTestWithPreviousSyncData,
     ProcessSyncChunksWithPreviousSyncInfo)
 {
     const auto notebookGuid = UidGenerator::Generate();
@@ -426,7 +466,8 @@ TEST_P(
     }
 
     DownloadNotesStatus currentNotesStatus;
-    currentNotesStatus.totalNewNotes = static_cast<quint64>(std::max<int>(notes.size(), 0));
+    currentNotesStatus.totalNewNotes =
+        static_cast<quint64>(std::max<int>(notes.size(), 0));
     for (const auto & note: qAsConst(notes)) {
         EXPECT_TRUE(note.guid());
         if (!note.guid()) {
@@ -455,17 +496,14 @@ TEST_P(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    const DownloadNotesStatus expectedStatus = [&]
-    {
+    const DownloadNotesStatus expectedStatus = [&] {
         DownloadNotesStatus expectedStatus;
-        if (previousExpungedNotesStatus)
-        {
+        if (previousExpungedNotesStatus) {
             expectedStatus = utils::mergeDownloadNotesStatuses(
                 std::move(expectedStatus), *previousExpungedNotesStatus);
         }
 
-        if (previousNotesStatus)
-        {
+        if (previousNotesStatus) {
             expectedStatus = utils::mergeDownloadNotesStatuses(
                 std::move(expectedStatus), *previousNotesStatus);
         }
@@ -475,6 +513,58 @@ TEST_P(
     }();
 
     EXPECT_EQ(status, expectedStatus);
+
+    const auto processedNotesInfo =
+        utils::processedNotesInfoFromLastSync(syncNotesDir);
+
+    const auto expectedProcessedNotesInfo = [&] {
+        QHash<qevercloud::Guid, qint32> result;
+
+        if (!testData.m_processedNotesInfo.isEmpty()) {
+            for (const auto it:
+                 qevercloud::toRange(testData.m_processedNotesInfo)) {
+                result.insert(it.key(), it.value());
+            }
+        }
+
+        const auto appendNotes =
+            [&result](const QList<qevercloud::Note> & notes) {
+                if (notes.isEmpty()) {
+                    return;
+                }
+
+                for (const auto & note: qAsConst(notes)) {
+                    EXPECT_TRUE(note.guid());
+                    if (Q_UNLIKELY(!note.guid())) {
+                        continue;
+                    }
+
+                    EXPECT_TRUE(note.updateSequenceNum());
+                    if (Q_UNLIKELY(!note.updateSequenceNum())) {
+                        continue;
+                    }
+
+                    result[*note.guid()] = *note.updateSequenceNum();
+                }
+            };
+
+        appendNotes(testData.m_notesWhichFailedToDownloadDuringPreviousSync);
+        appendNotes(testData.m_notesWhichFailedToProcessDuringPreviousSync);
+        appendNotes(testData.m_notesCancelledDuringPreviousSync);
+        return result;
+    }();
+
+    EXPECT_EQ(processedNotesInfo, expectedProcessedNotesInfo);
+
+    const auto expungedNoteGuids =
+        utils::noteGuidsExpungedDuringLastSync(syncNotesDir);
+
+    const auto expectedExpungedNoteGuids = [&] {
+        return testData.m_noteGuidsWhichFailedToExpungeDuringPreviousSync +
+            testData.m_expungedNoteGuids;
+    }();
+
+    EXPECT_EQ(sorted(expungedNoteGuids), sorted(expectedExpungedNoteGuids));
 }
 
 } // namespace quentier::synchronization::tests
