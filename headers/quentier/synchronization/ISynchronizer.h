@@ -23,6 +23,7 @@
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
+#include <quentier/utility/Printable.h>
 
 #include <qevercloud/types/Note.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -49,14 +50,18 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct QUENTIER_EXPORT Options
+    struct QUENTIER_EXPORT Options : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         bool downloadNoteThumbnails = false;
         std::optional<QDir> inkNoteImagesStorageDir;
     };
 
-    struct QUENTIER_EXPORT AuthResult
+    struct QUENTIER_EXPORT AuthResult : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         qevercloud::UserID userId = 0;
         QString authToken;
         qevercloud::Timestamp authTokenExpirationTime = 0;
@@ -66,8 +71,10 @@ public:
         QList<QNetworkCookie> userStoreCookies;
     };
 
-    struct QUENTIER_EXPORT SyncStats
+    struct QUENTIER_EXPORT SyncStats : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         quint64 syncChunksDownloaded = 0;
 
         quint64 linkedNotebooksDownloaded = 0;
@@ -90,30 +97,63 @@ public:
         quint64 notesSent = 0;
     };
 
-    struct QUENTIER_EXPORT SyncState
+    struct QUENTIER_EXPORT SyncState : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         qint32 updateCount = 0;
         qevercloud::Timestamp lastSyncTime = 0;
     };
 
-    struct QUENTIER_EXPORT DownloadNotesStatus
+    struct QUENTIER_EXPORT DownloadNotesStatus : public Printable
     {
-        struct QUENTIER_EXPORT NoteWithException
+        QTextStream & print(QTextStream & strm) const override;
+
+        struct QUENTIER_EXPORT NoteWithException : public Printable
         {
+            NoteWithException() = default;
+
+            NoteWithException(
+                qevercloud::Note n, std::shared_ptr<QException> e) :
+                note{std::move(n)},
+                exception{std::move(e)}
+            {}
+
+            QTextStream & print(QTextStream & strm) const override;
+
             qevercloud::Note note;
             std::shared_ptr<QException> exception;
         };
 
-        struct QUENTIER_EXPORT GuidWithException
+        struct QUENTIER_EXPORT GuidWithException : public Printable
         {
+            GuidWithException() = default;
+
+            GuidWithException(
+                qevercloud::Guid g, std::shared_ptr<QException> e) :
+                guid{std::move(g)},
+                exception{std::move(e)}
+            {}
+
+            QTextStream & print(QTextStream & strm) const override;
+
             qevercloud::Guid guid;
             std::shared_ptr<QException> exception;
         };
 
         using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
 
-        struct QUENTIER_EXPORT GuidWithUsn
+        struct QUENTIER_EXPORT GuidWithUsn : public Printable
         {
+            GuidWithUsn() = default;
+
+            GuidWithUsn(qevercloud::Guid g, qint32 u) :
+                guid{std::move(g)},
+                updateSequenceNumber{u}
+            {}
+
+            QTextStream & print(QTextStream & strm) const override;
+
             qevercloud::Guid guid;
             qint32 updateSequenceNumber = 0;
         };
@@ -131,18 +171,30 @@ public:
         QList<qevercloud::Guid> expungedNoteGuids;
     };
 
-    struct QUENTIER_EXPORT DownloadResourcesStatus
+    struct QUENTIER_EXPORT DownloadResourcesStatus : public Printable
     {
-        quint64 totalNewResources = 0UL;
-        quint64 totalUpdatedResources = 0UL;
+        QTextStream & print(QTextStream & strm) const override;
 
-        struct QUENTIER_EXPORT ResourceWithException
+        struct QUENTIER_EXPORT ResourceWithException : public Printable
         {
+            ResourceWithException() = default;
+
+            ResourceWithException(
+                qevercloud::Resource r, std::shared_ptr<QException> e) :
+                resource{std::move(r)},
+                exception{std::move(e)}
+            {}
+
+            QTextStream & print(QTextStream & strm) const override;
+
             qevercloud::Resource resource;
             std::shared_ptr<QException> exception;
         };
 
         using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
+
+        quint64 totalNewResources = 0UL;
+        quint64 totalUpdatedResources = 0UL;
 
         QList<ResourceWithException> resourcesWhichFailedToDownload;
         QList<ResourceWithException> resourcesWhichFailedToProcess;
@@ -151,8 +203,10 @@ public:
         UpdateSequenceNumbersByGuid cancelledResourceGuidsAndUsns;
     };
 
-    struct QUENTIER_EXPORT SyncResult
+    struct QUENTIER_EXPORT SyncResult : public Printable
     {
+        QTextStream & print(QTextStream & strm) const override;
+
         SyncState userAccountSyncState;
         QHash<qevercloud::Guid, SyncState> linkedNotebookSyncStates;
 

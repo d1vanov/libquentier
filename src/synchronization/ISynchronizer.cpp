@@ -17,8 +17,338 @@
  */
 
 #include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/utility/DateTime.h>
+
+#include <qevercloud/utility/ToRange.h>
 
 namespace quentier::synchronization {
+
+QTextStream & ISynchronizer::Options::print(QTextStream & strm) const
+{
+    strm << "ISynchronizer::Options: downloadNoteThumbnails = "
+         << (downloadNoteThumbnails ? "true" : "false")
+         << ", inkNoteImagesStorageDir = "
+         << (inkNoteImagesStorageDir ? inkNoteImagesStorageDir->absolutePath()
+                                     : QString::fromUtf8("<not set>"));
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::AuthResult::print(QTextStream & strm) const
+{
+    strm << "ISynchronizer::AuthResult: userId = " << userId
+         << ", authToken size = " << authToken.size()
+         << ", authTokenExpirationTime = "
+         << printableDateTimeFromTimestamp(authTokenExpirationTime)
+         << ", shardId = " << shardId << ", noteStoreUrl = " << noteStoreUrl
+         << ", webApiUrlPrefix = " << webApiUrlPrefix;
+
+    strm << ", userStoreCookies: ";
+    if (userStoreCookies.isEmpty()) {
+        strm << "<empty>";
+    }
+    else {
+        for (const auto & cookie: qAsConst(userStoreCookies)) {
+            strm << "{" << QString::fromUtf8(cookie.toRawForm()) << "};";
+        }
+    }
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::SyncStats::print(QTextStream & strm) const
+{
+    strm << "ISynchronizer::SyncStats: syncChunksDownloaded = "
+         << syncChunksDownloaded
+         << ", linkedNotebooksDownloaded = " << linkedNotebooksDownloaded
+         << ", notebooksDownloaded = " << notebooksDownloaded
+         << ", savedSearchesDownloaded = " << savedSearchesDownloaded
+         << ", tagsDownloaded = " << tagsDownloaded
+         << ", notesDownloaded = " << notesDownloaded
+         << ", resourcesDownloaded = " << resourcesDownloaded
+         << ", linkedNotebooksExpunged = " << linkedNotebooksExpunged
+         << ", notebooksExpunged = " << notebooksExpunged
+         << ", savedSearchesExpunged = " << savedSearchesExpunged
+         << ", tagsExpunged = " << tagsExpunged
+         << ", notesExpunged = " << notesExpunged
+         << ", resourcesExpunged = " << resourcesExpunged
+         << ", notebooksSent = " << notebooksSent
+         << ", savedSearchesSent = " << savedSearchesSent
+         << ", tagsSent = " << tagsSent << ", notesSent = " << notesSent;
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::SyncState::print(QTextStream & strm) const
+{
+    strm << "ISynchronizer::SyncState: updateCount = " << updateCount
+         << ", lastSyncTime = " << printableDateTimeFromTimestamp(lastSyncTime);
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::DownloadNotesStatus::print(
+    QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadNotesStatus: totalNewNotes = "
+         << totalNewNotes << ", totalUpdatedNotes = " << totalUpdatedNotes
+         << ", totalExpungedNotes = " << totalExpungedNotes;
+
+    const auto printNoteWithExceptionList =
+        [&strm](
+            const QList<ISynchronizer::DownloadNotesStatus::NoteWithException> &
+                values) {
+            if (values.isEmpty()) {
+                strm << "<empty>, ";
+                return;
+            }
+
+            for (const auto & noteWithException: qAsConst(values)) {
+                strm << "{" << noteWithException << "};";
+            }
+            strm << " ";
+        };
+
+    strm << ", notesWhichFailedToDownload = ";
+    printNoteWithExceptionList(notesWhichFailedToDownload);
+
+    strm << "notesWhichFailedToProcess = ";
+    printNoteWithExceptionList(notesWhichFailedToProcess);
+
+    strm << "noteGuidsWhichFailedToExpunge = ";
+    if (noteGuidsWhichFailedToExpunge.isEmpty()) {
+        strm << "<empty>, ";
+    }
+    else {
+        for (const auto & guidWithException:
+             qAsConst(noteGuidsWhichFailedToExpunge)) {
+            strm << "{" << guidWithException.guid;
+            strm << ": ";
+
+            if (guidWithException.exception) {
+                try {
+                    guidWithException.exception->raise();
+                }
+                catch (const QException & e) {
+                    strm << e.what();
+                }
+            }
+            else {
+                strm << "<no exception info>";
+            }
+
+            strm << "};";
+        }
+
+        strm << " ";
+    }
+
+    const auto printNoteGuidsAndUsns =
+        [&strm](const ISynchronizer::DownloadNotesStatus::
+                    UpdateSequenceNumbersByGuid & usns) {
+            if (usns.isEmpty()) {
+                strm << "<empty>, ";
+                return;
+            }
+
+            for (const auto it: qevercloud::toRange(qAsConst(usns))) {
+                strm << "{" << it.key() << ": " << it.value() << "};";
+            }
+            strm << " ";
+        };
+
+    strm << "processedNoteGuidsAndUsns = ";
+    printNoteGuidsAndUsns(processedNoteGuidsAndUsns);
+
+    strm << "cancelledNoteGuidsAndUsns = ";
+    printNoteGuidsAndUsns(cancelledNoteGuidsAndUsns);
+
+    strm << "expungedNoteGuids = ";
+    if (expungedNoteGuids.isEmpty()) {
+        strm << "<empty>";
+    }
+    else {
+        for (const auto & guid: qAsConst(expungedNoteGuids)) {
+            strm << "{" << guid << "};";
+        }
+    }
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::DownloadNotesStatus::NoteWithException::print(
+    QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadNotesStatus::NoteWithException: note = "
+         << note << ", exception: ";
+
+    if (exception) {
+        try {
+            exception->raise();
+        }
+        catch (const QException & e) {
+            strm << e.what();
+        }
+    }
+    else {
+        strm << "<no info>";
+    }
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::DownloadNotesStatus::GuidWithException::print(
+    QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadNotesStatus::GuidWithException: guid = "
+         << guid << ", exception: ";
+
+    if (exception) {
+        try {
+            exception->raise();
+        }
+        catch (const QException & e) {
+            strm << e.what();
+        }
+    }
+    else {
+        strm << "<no info>";
+    }
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::DownloadNotesStatus::GuidWithUsn::print(
+    QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadNotesStatus::GuidWithUsn: guid = " << guid
+         << ", usn = " << updateSequenceNumber;
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::DownloadResourcesStatus::print(
+    QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadResourcesStatus: "
+         << "totalNewResources = " << totalNewResources
+         << ", totalUpdatedResources = " << totalUpdatedResources;
+
+    const auto printResourceWithExceptionList =
+        [&strm](const QList<
+                ISynchronizer::DownloadResourcesStatus::ResourceWithException> &
+                    values) {
+            if (values.isEmpty()) {
+                strm << "<empty>, ";
+                return;
+            }
+
+            for (const auto & resourceWithException: qAsConst(values)) {
+                strm << "{" << resourceWithException << "};";
+            }
+            strm << " ";
+        };
+
+    strm << ", resourcesWhichFailedToDownload = ";
+    printResourceWithExceptionList(resourcesWhichFailedToDownload);
+
+    strm << "resourcesWhichFailedToProcess = ";
+    printResourceWithExceptionList(resourcesWhichFailedToProcess);
+
+    const auto printResourceGuidsAndUsns =
+        [&strm](const ISynchronizer::DownloadResourcesStatus::
+                    UpdateSequenceNumbersByGuid & usns) {
+            if (usns.isEmpty()) {
+                strm << "<empty>, ";
+                return;
+            }
+
+            for (const auto it: qevercloud::toRange(qAsConst(usns))) {
+                strm << "{" << it.key() << ": " << it.value() << "};";
+            }
+            strm << " ";
+        };
+
+    strm << "processedResourceGuidsAndUsns = ";
+    printResourceGuidsAndUsns(processedResourceGuidsAndUsns);
+
+    strm << "cancelledResourceGuidsAndUsns = ";
+    printResourceGuidsAndUsns(cancelledResourceGuidsAndUsns);
+
+    return strm;
+}
+
+QTextStream &
+    ISynchronizer::DownloadResourcesStatus::ResourceWithException::print(
+        QTextStream & strm) const
+{
+    strm << "ISynchronizer::DownloadNotesStatus::ResourceWithException: "
+            "resource = "
+         << resource << ", exception: ";
+
+    if (exception) {
+        try {
+            exception->raise();
+        }
+        catch (const QException & e) {
+            strm << e.what();
+        }
+    }
+    else {
+        strm << "<no info>";
+    }
+
+    return strm;
+}
+
+QTextStream & ISynchronizer::SyncResult::print(QTextStream & strm) const
+{
+    strm << "ISynchronizer::SyncResult: userAccountSyncState = "
+         << userAccountSyncState << ", linkedNotebookSyncStates = ";
+
+    if (linkedNotebookSyncStates.isEmpty()) {
+        strm << "<empty>, ";
+    }
+    else {
+        for (const auto it: qevercloud::toRange(linkedNotebookSyncStates)) {
+            strm << "{" << it.key() << ": " << it.value() << "};";
+        }
+        strm << " ";
+    }
+
+    strm << "userAccountDownloadNotesStatus = "
+         << userAccountDownloadNotesStatus
+         << ", linkedNotebookDownloadNotesStatuses = ";
+
+    if (linkedNotebookDownloadNotesStatuses.isEmpty()) {
+        strm << "<empty>, ";
+    }
+    else {
+        for (const auto it:
+             qevercloud::toRange(linkedNotebookDownloadNotesStatuses)) {
+            strm << "{" << it.key() << ": " << it.value() << "};";
+        }
+        strm << " ";
+    }
+
+    strm << "userAccountDownloadResourcesStatus = "
+         << userAccountDownloadResourcesStatus
+         << ", linkedNotebookDownloadResourcesStatuses = ";
+    if (linkedNotebookDownloadResourcesStatuses.isEmpty()) {
+        strm << "<empty>, ";
+    }
+    else {
+        for (const auto it:
+             qevercloud::toRange(linkedNotebookDownloadResourcesStatuses))
+        {
+            strm << "{" << it.key() << ": " << it.value() << "};";
+        }
+        strm << " ";
+    }
+
+    strm << "syncStats = " << syncStats;
+    return strm;
+}
 
 bool operator==(
     const ISynchronizer::Options & lhs,
