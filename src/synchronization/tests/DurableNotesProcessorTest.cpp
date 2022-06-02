@@ -59,6 +59,57 @@ QList<T> sorted(QList<T> lst)
     return lst;
 }
 
+[[nodiscard]] QList<qevercloud::Note> generateTestNotes(
+    const qint32 startUsn, const qint32 endUsn)
+{
+    EXPECT_GE(endUsn, startUsn);
+    if (endUsn < startUsn) {
+        return {};
+    }
+
+    const auto notebookGuid = UidGenerator::Generate();
+
+    QList<qevercloud::Note> result;
+    result.reserve(endUsn - startUsn + 1);
+    for (qint32 i = startUsn; i <= endUsn; ++i) {
+        result << qevercloud::NoteBuilder{}
+                      .setGuid(UidGenerator::Generate())
+                      .setNotebookGuid(notebookGuid)
+                      .setUpdateSequenceNum(i)
+                      .setTitle(QString::fromUtf8("Note #%1").arg(i))
+                      .build();
+    }
+
+    return result;
+}
+
+[[nodiscard]] QList<qevercloud::Guid> generateTestGuids(const qint32 count)
+{
+    QList<qevercloud::Guid> result;
+    result.reserve(count);
+    for (qint32 i = 0; i < count; ++i) {
+        result << UidGenerator::Generate();
+    }
+
+    return result;
+}
+
+[[nodiscard]] QHash<qevercloud::Guid, qint32> generateTestProcessedNotesInfo(
+    const qint32 startUsn, const qint32 endUsn)
+{
+    EXPECT_GT(endUsn, startUsn);
+    if (endUsn < startUsn) {
+        return {};
+    }
+
+    QHash<qevercloud::Guid, qint32> result;
+    for (qint32 i = startUsn; i <= endUsn; ++i) {
+        result[UidGenerator::Generate()] = i;
+    }
+
+    return result;
+}
+
 } // namespace
 
 class DurableNotesProcessorTest : public testing::Test
@@ -106,33 +157,7 @@ TEST_F(DurableNotesProcessorTest, CtorNullNotesProcessor)
 
 TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 {
-    const auto notebookGuid = UidGenerator::Generate();
-
-    const auto notes = QList<qevercloud::Note>{}
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(1)
-               .setTitle(QStringLiteral("Note #1"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(2)
-               .setTitle(QStringLiteral("Note #2"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(3)
-               .setTitle(QStringLiteral("Note #3"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(4)
-               .setTitle(QStringLiteral("Note #4"))
-               .build();
+    const auto notes = generateTestNotes(1, 4);
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
@@ -227,13 +252,16 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
 struct TestData
 {
-    QHash<qevercloud::Guid, qint32> m_processedNotesInfo;
-    QList<qevercloud::Guid> m_expungedNoteGuids;
+    QList<qevercloud::Note> m_notesToProcess;
 
-    QList<qevercloud::Note> m_notesWhichFailedToDownloadDuringPreviousSync;
-    QList<qevercloud::Note> m_notesWhichFailedToProcessDuringPreviousSync;
-    QList<qevercloud::Note> m_notesCancelledDuringPreviousSync;
-    QList<qevercloud::Guid> m_noteGuidsWhichFailedToExpungeDuringPreviousSync;
+    QHash<qevercloud::Guid, qint32> m_processedNotesInfo = {};
+    QList<qevercloud::Guid> m_expungedNoteGuids = {};
+
+    QList<qevercloud::Note> m_notesWhichFailedToDownloadDuringPreviousSync = {};
+    QList<qevercloud::Note> m_notesWhichFailedToProcessDuringPreviousSync = {};
+    QList<qevercloud::Note> m_notesCancelledDuringPreviousSync = {};
+    QList<qevercloud::Guid> m_noteGuidsWhichFailedToExpungeDuringPreviousSync =
+        {};
 };
 
 class DurableNotesProcessorTestWithPreviousSyncData :
@@ -241,34 +269,18 @@ class DurableNotesProcessorTestWithPreviousSyncData :
     public testing::WithParamInterface<TestData>
 {};
 
-[[nodiscard]] QHash<qevercloud::Guid, qint32> testProcessedNotesInfo()
-{
-    QHash<qevercloud::Guid, qint32> result;
-    for (qint32 i = 2; i < 6; ++i) {
-        result[UidGenerator::Generate()] = i;
-    }
-    return result;
-}
-
 const std::array gTestData{
-    TestData{},
     TestData{
-        testProcessedNotesInfo(), // m_processedNotesInfo
-        {},                       // m_expungedNoteGuids
-        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
-        {}, // m_notesWhichFailedToProcessDuringPreviousSync
-        {}, // m_notesCancelledDuringPreviousSync
-        {}, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+        generateTestNotes(10, 13), // m_notesToProcess
     },
     TestData{
-        testProcessedNotesInfo(), // m_processedNotesInfo
-        QList<qevercloud::Guid>{}
-            << UidGenerator::Generate() << UidGenerator::Generate()
-            << UidGenerator::Generate(), // m_expungedNoteGuids
-        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
-        {}, // m_notesWhichFailedToProcessDuringPreviousSync
-        {}, // m_notesCancelledDuringPreviousSync
-        {}, // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+    },
+    TestData{
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
     },
 };
 
@@ -281,33 +293,8 @@ TEST_P(
     DurableNotesProcessorTestWithPreviousSyncData,
     ProcessSyncChunksWithPreviousSyncInfo)
 {
-    const auto notebookGuid = UidGenerator::Generate();
-
-    const auto notes = QList<qevercloud::Note>{}
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(10)
-               .setTitle(QStringLiteral("Note #10"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(11)
-               .setTitle(QStringLiteral("Note #11"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(12)
-               .setTitle(QStringLiteral("Note #12"))
-               .build()
-        << qevercloud::NoteBuilder{}
-               .setGuid(UidGenerator::Generate())
-               .setNotebookGuid(notebookGuid)
-               .setUpdateSequenceNum(13)
-               .setTitle(QStringLiteral("Note #13"))
-               .build();
+    const auto & testData = GetParam();
+    const auto & notes = testData.m_notesToProcess;
 
     const auto syncChunks = QList<qevercloud::SyncChunk>{}
         << qevercloud::SyncChunkBuilder{}.setNotes(notes).build();
@@ -320,8 +307,6 @@ TEST_P(
 
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }();
-
-    const auto & testData = GetParam();
 
     // Prepare test data
     if (!testData.m_processedNotesInfo.isEmpty()) {
@@ -413,6 +398,29 @@ TEST_P(
 
     using DownloadNotesStatus = INotesProcessor::DownloadNotesStatus;
 
+    DownloadNotesStatus currentNotesStatus;
+    currentNotesStatus.totalNewNotes =
+        static_cast<quint64>(std::max<int>(notes.size(), 0));
+    for (const auto & note: qAsConst(notes)) {
+        EXPECT_TRUE(note.guid());
+        if (!note.guid()) {
+            continue;
+        }
+
+        EXPECT_TRUE(note.updateSequenceNum());
+        if (!note.updateSequenceNum()) {
+            continue;
+        }
+
+        currentNotesStatus.processedNoteGuidsAndUsns[*note.guid()] =
+            *note.updateSequenceNum();
+    }
+
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture<
+                         IDurableNotesProcessor::DownloadNotesStatus>(
+            DownloadNotesStatus{currentNotesStatus})));
+
     std::optional<DownloadNotesStatus> previousExpungedNotesStatus;
     if (!expungedNoteGuidsFromPreviousSync.isEmpty()) {
         const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
@@ -464,29 +472,6 @@ TEST_P(
                              IDurableNotesProcessor::DownloadNotesStatus>(
                 DownloadNotesStatus{*previousNotesStatus})));
     }
-
-    DownloadNotesStatus currentNotesStatus;
-    currentNotesStatus.totalNewNotes =
-        static_cast<quint64>(std::max<int>(notes.size(), 0));
-    for (const auto & note: qAsConst(notes)) {
-        EXPECT_TRUE(note.guid());
-        if (!note.guid()) {
-            continue;
-        }
-
-        EXPECT_TRUE(note.updateSequenceNum());
-        if (!note.updateSequenceNum()) {
-            continue;
-        }
-
-        currentNotesStatus.processedNoteGuidsAndUsns[*note.guid()] =
-            *note.updateSequenceNum();
-    }
-
-    EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture<
-                         IDurableNotesProcessor::DownloadNotesStatus>(
-            DownloadNotesStatus{currentNotesStatus})));
 
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, syncPersistentStorageDir);
