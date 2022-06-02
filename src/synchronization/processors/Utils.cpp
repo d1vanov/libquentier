@@ -73,7 +73,8 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
         }
     }
 
-    QFile file{QString::fromUtf8("%1.json").arg(*note.guid())};
+    QFile file{
+        dir.absoluteFilePath(QString::fromUtf8("%1.json").arg(*note.guid()))};
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         QNWARNING(
             "synchronization::utils",
