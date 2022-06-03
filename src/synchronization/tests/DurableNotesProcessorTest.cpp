@@ -48,7 +48,6 @@ using testing::_;
 using testing::Matcher;
 using testing::Return;
 using testing::StrictMock;
-using testing::TypedEq;
 
 namespace {
 
@@ -108,6 +107,67 @@ QList<T> sorted(QList<T> lst)
     }
 
     return result;
+}
+
+MATCHER_P(
+    EqSyncChunksWithSortedNotes, syncChunks,
+    "Check sync chunks with sorted notes equality")
+{
+    const auto sortSyncChunkNotes = [](qevercloud::SyncChunk & syncChunk) {
+        if (!syncChunk.notes()) {
+            return;
+        }
+
+        std::sort(
+            syncChunk.mutableNotes()->begin(), syncChunk.mutableNotes()->end(),
+            [](const qevercloud::Note & lhs, const qevercloud::Note & rhs) {
+                return lhs.updateSequenceNum() < rhs.updateSequenceNum();
+            });
+    };
+
+    QList<qevercloud::SyncChunk> argSyncChunks = arg;
+    for (auto & syncChunk: argSyncChunks) {
+        sortSyncChunkNotes(syncChunk);
+    }
+
+    QList<qevercloud::SyncChunk> expectedSyncChunks = syncChunks;
+    for (auto & syncChunk: expectedSyncChunks) {
+        sortSyncChunkNotes(syncChunk);
+    }
+
+    testing::Matcher<QList<qevercloud::SyncChunk>> matcher =
+        testing::Eq(expectedSyncChunks);
+    return matcher.MatchAndExplain(argSyncChunks, result_listener);
+}
+
+MATCHER_P(
+    EqSyncChunksWithSortedExpungedNotes, syncChunks,
+    "Check sync chunks with sorted expunged notes equality")
+{
+    const auto sortSyncChunkExpungedNotes =
+        [](qevercloud::SyncChunk & syncChunk) {
+            if (!syncChunk.expungedNotes()) {
+                return;
+            }
+
+            std::sort(
+                syncChunk.mutableExpungedNotes()->begin(),
+                syncChunk.mutableExpungedNotes()->end());
+        };
+
+    QList<qevercloud::SyncChunk> argSyncChunks = arg;
+    for (auto & syncChunk: argSyncChunks) {
+        sortSyncChunkExpungedNotes(syncChunk);
+    }
+
+    QList<qevercloud::SyncChunk> expectedSyncChunks = syncChunks;
+    for (auto & syncChunk: expectedSyncChunks) {
+        sortSyncChunkExpungedNotes(syncChunk);
+    }
+
+    testing::Matcher<QList<qevercloud::SyncChunk>> matcher =
+        testing::Eq(expectedSyncChunks);
+    return matcher.MatchAndExplain(argSyncChunks, result_listener);
 }
 
 } // namespace
@@ -250,7 +310,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     }
 }
 
-struct TestData
+struct PreviousSyncTestData
 {
     QList<qevercloud::Note> m_notesToProcess;
 
@@ -266,21 +326,126 @@ struct TestData
 
 class DurableNotesProcessorTestWithPreviousSyncData :
     public DurableNotesProcessorTest,
-    public testing::WithParamInterface<TestData>
+    public testing::WithParamInterface<PreviousSyncTestData>
 {};
 
 const std::array gTestData{
-    TestData{
+    PreviousSyncTestData{
         generateTestNotes(10, 13), // m_notesToProcess
     },
-    TestData{
+    PreviousSyncTestData{
         generateTestNotes(10, 13),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
     },
-    TestData{
+    PreviousSyncTestData{
         generateTestNotes(10, 13),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
+    },
+    PreviousSyncTestData{
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        generateTestNotes(10, 13),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {},                                   // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {},                   // m_notesToProcess
+        {},                   // m_processedNotesInfo
+        generateTestGuids(3), // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {}, // m_notesToProcess
+        {}, // m_processedNotesInfo
+        {}, // m_expungedNoteGuids
+        generateTestNotes(
+            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {}, // m_notesToProcess
+        {}, // m_processedNotesInfo
+        {}, // m_expungedNoteGuids
+        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {}, // m_notesToProcess
+        {}, // m_processedNotesInfo
+        {}, // m_expungedNoteGuids
+        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
+        {}, // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
+    },
+    PreviousSyncTestData{
+        {}, // m_notesToProcess
+        {}, // m_processedNotesInfo
+        {}, // m_expungedNoteGuids
+        {}, // m_notesWhichFailedToDownloadDuringPreviousSync
+        {}, // m_notesWhichFailedToProcessDuringPreviousSync
+        {}, // m_notesCancelledDuringPreviousSync
+        generateTestGuids(
+            3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
 };
 
@@ -435,10 +600,34 @@ TEST_P(
         previousExpungedNotesStatus->expungedNoteGuids =
             expungedNoteGuidsFromPreviousSync;
 
-        EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
-            .WillOnce(Return(threading::makeReadyFuture<
-                             IDurableNotesProcessor::DownloadNotesStatus>(
-                DownloadNotesStatus{*previousExpungedNotesStatus})));
+        EXPECT_CALL(
+            *m_mockNotesProcessor,
+            processNotes(
+                testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
+                    EqSyncChunksWithSortedExpungedNotes(expectedSyncChunks)),
+                _))
+            .WillOnce(
+                [&](const QList<qevercloud::SyncChunk> & syncChunks,
+                    const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+                    const auto callback = callbackWeak.lock();
+                    EXPECT_TRUE(callback);
+                    if (callback) {
+                        for (const auto & syncChunk: qAsConst(syncChunks)) {
+                            if (!syncChunk.expungedNotes()) {
+                                continue;
+                            }
+
+                            for (const auto & noteGuid:
+                                 *syncChunk.expungedNotes()) {
+                                callback->onExpungedNote(noteGuid);
+                            }
+                        }
+                    }
+
+                    return threading::makeReadyFuture<
+                        IDurableNotesProcessor::DownloadNotesStatus>(
+                        DownloadNotesStatus{*previousExpungedNotesStatus});
+                });
     }
 
     std::optional<DownloadNotesStatus> previousNotesStatus;
@@ -467,10 +656,44 @@ TEST_P(
                 *note.updateSequenceNum();
         }
 
-        EXPECT_CALL(*m_mockNotesProcessor, processNotes(expectedSyncChunks, _))
-            .WillOnce(Return(threading::makeReadyFuture<
-                             IDurableNotesProcessor::DownloadNotesStatus>(
-                DownloadNotesStatus{*previousNotesStatus})));
+        EXPECT_CALL(
+            *m_mockNotesProcessor,
+            processNotes(
+                testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
+                    EqSyncChunksWithSortedNotes(expectedSyncChunks)),
+                _))
+            .WillOnce(
+                [&](const QList<qevercloud::SyncChunk> & syncChunks,
+                    const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+                    const auto callback = callbackWeak.lock();
+                    EXPECT_TRUE(callback);
+                    if (callback) {
+                        for (const auto & syncChunk: qAsConst(syncChunks)) {
+                            if (!syncChunk.notes()) {
+                                continue;
+                            }
+
+                            for (const auto & note: *syncChunk.notes()) {
+                                EXPECT_TRUE(note.guid());
+                                if (!note.guid()) {
+                                    continue;
+                                }
+
+                                EXPECT_TRUE(note.updateSequenceNum());
+                                if (!note.updateSequenceNum()) {
+                                    continue;
+                                }
+
+                                callback->onProcessedNote(
+                                    *note.guid(), *note.updateSequenceNum());
+                            }
+                        }
+                    }
+
+                    return threading::makeReadyFuture<
+                        IDurableNotesProcessor::DownloadNotesStatus>(
+                        DownloadNotesStatus{*previousNotesStatus});
+                });
     }
 
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
