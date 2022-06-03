@@ -371,6 +371,8 @@ QFuture<ISynchronizer::DownloadNotesStatus>
                                 promise->finish();
                             }});
                 }});
+
+        return future;
     }
 
     auto processSyncChunksFuture =
