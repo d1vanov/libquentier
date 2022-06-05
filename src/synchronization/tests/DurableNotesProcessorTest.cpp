@@ -22,6 +22,7 @@
 #include <synchronization/tests/mocks/MockINotesProcessor.h>
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/UidGenerator.h>
@@ -287,26 +288,252 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
         return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
     }();
 
-    QSettings processedNotes{
-        lastSyncNotesDir.absoluteFilePath(QStringLiteral("processedNotes.ini")),
-        QSettings::IniFormat};
+    const auto processedNotesInfo =
+        utils::processedNotesInfoFromLastSync(lastSyncNotesDir);
+    ASSERT_EQ(processedNotesInfo.size(), notes.size());
 
-    const auto processedNoteGuids = processedNotes.allKeys();
-    ASSERT_EQ(processedNoteGuids.size(), notes.size());
-    for (const auto & processedNoteGuid: qAsConst(processedNoteGuids)) {
-        const auto it =
-            status.processedNoteGuidsAndUsns.find(processedNoteGuid);
+    for (const auto it: qevercloud::toRange(qAsConst(processedNotesInfo))) {
+        const auto sit = status.processedNoteGuidsAndUsns.find(it.key());
 
-        EXPECT_NE(it, status.processedNoteGuidsAndUsns.end());
-        if (it != status.processedNoteGuidsAndUsns.end()) {
-            const auto value = processedNotes.value(processedNoteGuid);
-            EXPECT_TRUE(value.isValid());
-
-            bool conversionResult = false;
-            const int usn = value.toInt(&conversionResult);
-            EXPECT_TRUE(conversionResult);
-            EXPECT_EQ(usn, it.value());
+        EXPECT_NE(sit, status.processedNoteGuidsAndUsns.end());
+        if (sit != status.processedNoteGuidsAndUsns.end()) {
+            EXPECT_EQ(sit.value(), it.value());
         }
+    }
+}
+
+TEST_F(
+    DurableNotesProcessorTest,
+    HandleDifferentCallbacksDuringSyncChunksProcessing)
+{
+    const auto notes = generateTestNotes(1, 5);
+    const auto expungedNotes = generateTestGuids(4);
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}
+               .setNotes(notes)
+               .setExpungedNotes(expungedNotes)
+               .build();
+
+    const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
+        m_mockNotesProcessor, QDir{m_temporaryDir.path()});
+
+    EXPECT_CALL(
+        *m_mockNotesProcessor,
+        processNotes(
+            Matcher<const QList<qevercloud::SyncChunk> &>(_),
+            Matcher<INotesProcessor::ICallbackWeakPtr>(_)))
+        .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                      const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+            const auto callback = callbackWeak.lock();
+            EXPECT_TRUE(callback);
+
+            const QList<qevercloud::Note> syncChunkNotes = [&] {
+                QList<qevercloud::Note> result;
+                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                    result << utils::collectNotesFromSyncChunk(syncChunk);
+                }
+                return result;
+            }();
+
+            EXPECT_EQ(syncChunkNotes, notes);
+
+            EXPECT_EQ(syncChunkNotes.size(), 5);
+            if (syncChunkNotes.size() != 5) {
+                return threading::makeExceptionalFuture<
+                    IDurableNotesProcessor::DownloadNotesStatus>(
+                    RuntimeError{ErrorString{"Invalid note count"}});
+            }
+
+            IDurableNotesProcessor::DownloadNotesStatus status;
+            status.totalNewNotes = static_cast<quint64>(syncChunkNotes.size());
+
+            // First note gets marked as a successfully processed one
+            status.processedNoteGuidsAndUsns[syncChunkNotes[0].guid().value()] =
+                syncChunkNotes[0].updateSequenceNum().value();
+
+            if (callback) {
+                callback->onProcessedNote(
+                    *syncChunkNotes[0].guid(),
+                    *syncChunkNotes[0].updateSequenceNum());
+            }
+
+            // Second note is marked as failed to process one
+            status.notesWhichFailedToProcess << IDurableNotesProcessor::
+                    DownloadNotesStatus::NoteWithException{
+                        syncChunkNotes[1],
+                        std::make_shared<RuntimeError>(
+                            ErrorString{"Failed to process note"})};
+
+            if (callback) {
+                callback->onNoteFailedToProcess(
+                    status.notesWhichFailedToProcess.last().note,
+                    *status.notesWhichFailedToProcess.last().exception);
+            }
+
+            // Third note is marked as failed to download one
+            status.notesWhichFailedToDownload << IDurableNotesProcessor::
+                    DownloadNotesStatus::NoteWithException{
+                        syncChunkNotes[2],
+                        std::make_shared<RuntimeError>(
+                            ErrorString{"Failed to download note"})};
+
+            if (callback) {
+                callback->onNoteFailedToDownload(
+                    status.notesWhichFailedToDownload.last().note,
+                    *status.notesWhichFailedToDownload.last().exception);
+            }
+
+            // Fourth and fifth notes are marked as cancelled because, for
+            // example, the download error was API rate limit exceeding.
+            for (int i = 3; i < 5; ++i) {
+                status.cancelledNoteGuidsAndUsns
+                    [syncChunkNotes[i].guid().value()] =
+                    syncChunkNotes[i].updateSequenceNum().value();
+
+                if (callback) {
+                    callback->onNoteProcessingCancelled(syncChunkNotes[i]);
+                }
+            }
+
+            const QList<qevercloud::Guid> syncChunkExpungedNotes = [&] {
+                QList<qevercloud::Guid> result;
+                for (const auto & syncChunk: qAsConst(syncChunks)) {
+                    result << utils::collectExpungedNoteGuidsFromSyncChunk(
+                        syncChunk);
+                }
+                return result;
+            }();
+
+            EXPECT_EQ(syncChunkExpungedNotes, expungedNotes);
+
+            EXPECT_EQ(syncChunkExpungedNotes.size(), 4);
+            if (syncChunkExpungedNotes.size() != 4) {
+                return threading::makeExceptionalFuture<
+                    IDurableNotesProcessor::DownloadNotesStatus>(
+                    RuntimeError{ErrorString{"Invalid expunged note count"}});
+            }
+
+            status.totalExpungedNotes =
+                static_cast<quint64>(syncChunkExpungedNotes.size());
+
+            // First two expunged notes are marked as successfully processed
+            // ones
+            status.expungedNoteGuids = QList<qevercloud::Guid>{}
+                << syncChunkExpungedNotes[0] << syncChunkExpungedNotes[1];
+
+            if (callback) {
+                callback->onExpungedNote(syncChunkExpungedNotes[0]);
+                callback->onExpungedNote(syncChunkExpungedNotes[1]);
+            }
+
+            // Other two expunged notes are marked as failed to expunged ones
+            for (int i = 2; i < 4; ++i) {
+                status.noteGuidsWhichFailedToExpunge << IDurableNotesProcessor::
+                        DownloadNotesStatus::GuidWithException{
+                            syncChunkExpungedNotes[i],
+                            std::make_shared<RuntimeError>(
+                                ErrorString{"Failed to expunge note"})};
+
+                if (callback) {
+                    callback->onFailedToExpungeNote(
+                        status.noteGuidsWhichFailedToExpunge.last().guid,
+                        *status.noteGuidsWhichFailedToExpunge.last().exception);
+                }
+            }
+
+            return threading::makeReadyFuture<
+                IDurableNotesProcessor::DownloadNotesStatus>(std::move(status));
+        });
+
+    auto future = durableNotesProcessor->processNotes(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    EXPECT_EQ(status.totalNewNotes, notes.size());
+    EXPECT_EQ(status.totalExpungedNotes, expungedNotes.size());
+
+    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), 1);
+    EXPECT_EQ(
+        status.processedNoteGuidsAndUsns.constBegin().key(),
+        notes[0].guid().value());
+    EXPECT_EQ(
+        status.processedNoteGuidsAndUsns.constBegin().value(),
+        notes[0].updateSequenceNum().value());
+
+    ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(status.notesWhichFailedToProcess.constBegin()->note, notes[1]);
+
+    ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status.notesWhichFailedToDownload.constBegin()->note, notes[2]);
+
+    ASSERT_EQ(status.cancelledNoteGuidsAndUsns.size(), 2);
+    for (int i = 3; i < 5; ++i) {
+        const auto it =
+            status.cancelledNoteGuidsAndUsns.constFind(notes[i].guid().value());
+        EXPECT_NE(it, status.cancelledNoteGuidsAndUsns.constEnd());
+
+        if (it != status.cancelledNoteGuidsAndUsns.constEnd()) {
+            EXPECT_EQ(it.value(), notes[i].updateSequenceNum().value());
+        }
+    }
+
+    QDir lastSyncNotesDir = [&] {
+        QDir syncPersistentStorageDir{m_temporaryDir.path()};
+        QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
+            QStringLiteral("lastSyncData"))};
+        return QDir{lastSyncDataDir.absoluteFilePath(QStringLiteral("notes"))};
+    }();
+
+    const auto processedNotesInfo =
+        utils::processedNotesInfoFromLastSync(lastSyncNotesDir);
+    ASSERT_EQ(processedNotesInfo.size(), 1);
+    EXPECT_EQ(processedNotesInfo.constBegin().key(), notes[0].guid().value());
+    EXPECT_EQ(
+        processedNotesInfo.constBegin().value(),
+        notes[0].updateSequenceNum().value());
+
+    const auto failedToProcessNotes =
+        utils::notesWhichFailedToProcessDuringLastSync(lastSyncNotesDir);
+    ASSERT_EQ(failedToProcessNotes.size(), 1);
+    EXPECT_EQ(*failedToProcessNotes.constBegin(), notes[1]);
+
+    const auto failedToDownloadNotes =
+        utils::notesWhichFailedToDownloadDuringLastSync(lastSyncNotesDir);
+    ASSERT_EQ(failedToDownloadNotes.size(), 1);
+    EXPECT_EQ(*failedToDownloadNotes.constBegin(), notes[2]);
+
+    const auto cancelledNotes = [&] {
+        auto cancelledNotes =
+            utils::notesCancelledDuringLastSync(lastSyncNotesDir);
+
+        std::sort(
+            cancelledNotes.begin(), cancelledNotes.end(),
+            [](const qevercloud::Note & lhs, const qevercloud::Note & rhs) {
+                return lhs.updateSequenceNum() < rhs.updateSequenceNum();
+            });
+
+        return cancelledNotes;
+    }();
+
+    ASSERT_EQ(cancelledNotes.size(), 2);
+    for (int i = 3, j = 0; i < 5 && j < cancelledNotes.size(); ++i, ++j) {
+        EXPECT_EQ(cancelledNotes[j], notes[i]);
+    }
+
+    const auto expungedNoteGuids =
+        utils::noteGuidsExpungedDuringLastSync(lastSyncNotesDir);
+    ASSERT_EQ(expungedNoteGuids.size(), 2);
+    EXPECT_TRUE(expungedNoteGuids.contains(expungedNotes[0]));
+    EXPECT_TRUE(expungedNoteGuids.contains(expungedNotes[1]));
+
+    const auto failedToExpungeNoteGuids =
+        utils::noteGuidsWhichFailedToExpungeDuringLastSync(lastSyncNotesDir);
+    ASSERT_EQ(failedToExpungeNoteGuids.size(), 2);
+    for (int i = 2; i < 4; ++i) {
+        EXPECT_TRUE(failedToExpungeNoteGuids.contains(expungedNotes[i]));
     }
 }
 
