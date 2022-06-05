@@ -46,7 +46,6 @@
 namespace quentier::synchronization::tests {
 
 using testing::_;
-using testing::Matcher;
 using testing::Return;
 using testing::StrictMock;
 
@@ -226,11 +225,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, QDir{m_temporaryDir.path()});
 
-    EXPECT_CALL(
-        *m_mockNotesProcessor,
-        processNotes(
-            Matcher<const QList<qevercloud::SyncChunk> &>(_),
-            Matcher<INotesProcessor::ICallbackWeakPtr>(_)))
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
             const auto callback = callbackWeak.lock();
@@ -318,11 +313,7 @@ TEST_F(
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, QDir{m_temporaryDir.path()});
 
-    EXPECT_CALL(
-        *m_mockNotesProcessor,
-        processNotes(
-            Matcher<const QList<qevercloud::SyncChunk> &>(_),
-            Matcher<INotesProcessor::ICallbackWeakPtr>(_)))
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
             const auto callback = callbackWeak.lock();

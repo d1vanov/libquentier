@@ -94,21 +94,8 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotes(
     }
 
     utils::filterOutExpungedItems(expungedNotes, notes);
-    return processNotesImpl(notes, expungedNotes, std::move(callbackWeak));
-}
 
-QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotes(
-    const QList<qevercloud::Note> & notes, ICallbackWeakPtr callbackWeak)
-{
-    return processNotesImpl(notes, {}, std::move(callbackWeak));
-}
-
-QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
-    const QList<qevercloud::Note> & notes,
-    const QList<qevercloud::Guid> & expungedNoteGuids,
-    ICallbackWeakPtr && callbackWeak)
-{
-    if (notes.isEmpty() && expungedNoteGuids.isEmpty()) {
+    if (notes.isEmpty() && expungedNotes.isEmpty()) {
         QNDEBUG(
             "synchronization::NotesProcessor",
             "No new/updated/expunged notes in the sync chunks");
@@ -117,7 +104,7 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
     }
 
     const int noteCount = notes.size();
-    const int expungedNoteCount = expungedNoteGuids.size();
+    const int expungedNoteCount = expungedNotes.size();
     const int totalItemCount = noteCount + expungedNoteCount;
     Q_ASSERT(totalItemCount > 0);
 
@@ -215,7 +202,7 @@ QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotesImpl(
             });
     }
 
-    for (const auto & guid: qAsConst(expungedNoteGuids)) {
+    for (const auto & guid: qAsConst(expungedNotes)) {
         auto promise = std::make_shared<QPromise<ProcessNoteStatus>>();
         noteFutures << promise->future();
         promise->start();

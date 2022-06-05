@@ -73,10 +73,6 @@ public:
     [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         ICallbackWeakPtr callbackWeak = {}) = 0;
-
-    [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
-        const QList<qevercloud::Note> & notes,
-        ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 
 } // namespace quentier::synchronization

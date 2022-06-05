@@ -32,12 +32,6 @@ public:
         (const QList<qevercloud::SyncChunk> & syncChunks,
          ICallbackWeakPtr callbackWeak),
         (override));
-
-    MOCK_METHOD(
-        QFuture<DownloadNotesStatus>, processNotes,
-        (const QList<qevercloud::Note> & notes,
-         ICallbackWeakPtr callbackWeak),
-        (override));
 };
 
 } // namespace quentier::synchronization::tests::mocks

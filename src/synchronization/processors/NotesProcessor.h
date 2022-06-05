@@ -51,16 +51,7 @@ public:
         const QList<qevercloud::SyncChunk> & syncChunks,
         ICallbackWeakPtr callbackWeak = {}) override;
 
-    [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
-        const QList<qevercloud::Note> & notes,
-        ICallbackWeakPtr callbackWeak = {}) override;
-
 private:
-    [[nodiscard]] QFuture<DownloadNotesStatus> processNotesImpl(
-        const QList<qevercloud::Note> & notes,
-        const QList<qevercloud::Guid> & expungedNoteGuids,
-        ICallbackWeakPtr && callbackWeak);
-
     enum class ProcessNoteStatus
     {
         AddedNote,
