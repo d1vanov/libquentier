@@ -55,6 +55,47 @@ protected:
             StrictMock<mocks::MockIResourceFullDataDownloader>>();
 };
 
+struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
+{
+    void onProcessedResource(
+        const qevercloud::Guid & resourceGuid,
+        qint32 resourceUpdateSequenceNum) noexcept override
+    {
+        m_processedResourceGuidsAndUsns[resourceGuid] =
+            resourceUpdateSequenceNum;
+    }
+
+    void onResourceFailedToDownload(
+        const qevercloud::Resource & resource,
+        const QException & e) noexcept override
+    {
+        m_resourcesWhichFailedToDownload
+            << std::make_pair(resource, std::shared_ptr<QException>(e.clone()));
+    }
+
+    void onResourceFailedToProcess(
+        const qevercloud::Resource & resource,
+        const QException & e) noexcept override
+    {
+        m_resourcesWhichFailedToProcess
+            << std::make_pair(resource, std::shared_ptr<QException>(e.clone()));
+    }
+
+    void onResourceProcessingCancelled(
+        const qevercloud::Resource & resource) noexcept override
+    {
+        m_cancelledResources << resource;
+    }
+
+    using ResourceWithException =
+        std::pair<qevercloud::Resource, std::shared_ptr<QException>>;
+
+    QHash<qevercloud::Guid, qint32> m_processedResourceGuidsAndUsns;
+    QList<ResourceWithException> m_resourcesWhichFailedToDownload;
+    QList<ResourceWithException> m_resourcesWhichFailedToProcess;
+    QList<qevercloud::Resource> m_cancelledResources;
+};
+
 TEST_F(ResourcesProcessorTest, Ctor)
 {
     EXPECT_NO_THROW(
@@ -86,7 +127,9 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -98,6 +141,11 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
     EXPECT_TRUE(status.resourcesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.processedResourceGuidsAndUsns.isEmpty());
     EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_processedResourceGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
 }
 
 TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
@@ -214,7 +262,9 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -239,6 +289,21 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size());
+
+    for (const auto & resource: qAsConst(resources)) {
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -363,7 +428,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -403,6 +470,29 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToDownload.constBegin()->first,
+        resources[1]);
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.updateSequenceNum().value() == 2) {
+            continue;
+        }
+
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -529,7 +619,9 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -570,6 +662,29 @@ TEST_F(
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToProcess.constBegin()->first,
+        resources[1]);
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.updateSequenceNum().value() == 2) {
+            continue;
+        }
+
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -693,7 +808,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -735,6 +852,29 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToProcess.constBegin()->first,
+        addDataToResource(resources[1], 1));
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.updateSequenceNum().value() == 2) {
+            continue;
+        }
+
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -866,7 +1006,9 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -892,6 +1034,21 @@ TEST_F(
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size());
+
+    for (const auto & resource: qAsConst(resources)) {
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1068,7 +1225,9 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1094,6 +1253,21 @@ TEST_F(
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size());
+
+    for (const auto & resource: qAsConst(resources)) {
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1237,7 +1411,9 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1281,6 +1457,29 @@ TEST_F(
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToProcess.constBegin()->first,
+        resources[1]);
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[1].guid()) {
+            continue;
+        }
+
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }
@@ -1424,7 +1623,9 @@ TEST_F(
     const auto resourcesProcessor = std::make_shared<ResourcesProcessor>(
         m_mockLocalStorage, m_mockResourceFullDataDownloader);
 
-    auto future = resourcesProcessor->processResources(syncChunks);
+    const auto callback = std::make_shared<ResourcesProcessorCallback>();
+
+    auto future = resourcesProcessor->processResources(syncChunks, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1468,6 +1669,29 @@ TEST_F(
             status.processedResourceGuidsAndUsns.find(resource.guid().value());
 
         ASSERT_NE(it, status.processedResourceGuidsAndUsns.end());
+        EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
+    }
+
+    EXPECT_TRUE(callback->m_resourcesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(callback->m_cancelledResources.isEmpty());
+
+    ASSERT_EQ(callback->m_resourcesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(
+        callback->m_resourcesWhichFailedToProcess.constBegin()->first,
+        resources[1]);
+
+    ASSERT_EQ(
+        callback->m_processedResourceGuidsAndUsns.size(), resources.size() - 1);
+
+    for (const auto & resource: qAsConst(resources)) {
+        if (resource.guid() == resources[1].guid()) {
+            continue;
+        }
+
+        const auto it = callback->m_processedResourceGuidsAndUsns.find(
+            resource.guid().value());
+
+        ASSERT_NE(it, callback->m_processedResourceGuidsAndUsns.end());
         EXPECT_EQ(it.value(), resource.updateSequenceNum().value());
     }
 }

@@ -39,11 +39,31 @@ public:
 
     using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
 
-    [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
+    struct ICallback
+    {
+        virtual ~ICallback() = default;
+
+        virtual void onProcessedResource(
+            const qevercloud::Guid & resourceGuid,
+            qint32 resourceUpdateSequenceNum) noexcept = 0;
+
+        virtual void onResourceFailedToDownload(
+            const qevercloud::Resource & resource,
+            const QException & e) noexcept = 0;
+
+        virtual void onResourceFailedToProcess(
+            const qevercloud::Resource & resource,
+            const QException & e) noexcept = 0;
+
+        virtual void onResourceProcessingCancelled(
+            const qevercloud::Resource & resource) noexcept = 0;
+    };
+
+    using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
     [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
-        const QList<qevercloud::Resource> & resources) = 0;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 
 } // namespace quentier::synchronization

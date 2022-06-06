@@ -44,10 +44,8 @@ public:
         IResourceFullDataDownloaderPtr resourceFullDataDownloader);
 
     [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
-
-    [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
-        const QList<qevercloud::Resource> & resources) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        ICallbackWeakPtr callbackWeak) override;
 
 private:
     enum class ProcessResourceStatus
@@ -66,6 +64,7 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
@@ -74,6 +73,7 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         const qevercloud::Resource & localResource, qevercloud::Note localNote,
         qevercloud::Resource updatedResource);
 
@@ -88,6 +88,7 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
@@ -96,12 +97,14 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
+        ICallbackWeakPtr && callbackWeak,
         const qevercloud::Resource & resource, ResourceKind resourceKind);
 
     void putResourceToLocalStorage(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
+        ICallbackWeakPtr && callbackWeak,
         qevercloud::Resource resource, ResourceKind putResourceKind);
 
 private:
