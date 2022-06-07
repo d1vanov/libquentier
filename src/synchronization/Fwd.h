@@ -68,6 +68,9 @@ using ISyncChunksStoragePtr = std::shared_ptr<ISyncChunksStorage>;
 class INotesProcessor;
 using INotesProcessorPtr = std::shared_ptr<INotesProcessor>;
 
+class IResourcesProcessor;
+using IResourcesProcessorPtr = std::shared_ptr<IResourcesProcessor>;
+
 } // namespace quentier::synchronization
 
 namespace quentier {

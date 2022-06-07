@@ -31,6 +31,8 @@
 
 #include <QDir>
 
+#include <memory>
+
 namespace quentier::synchronization {
 
 class DurableNotesProcessor final :

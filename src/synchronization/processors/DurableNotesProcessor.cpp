@@ -17,7 +17,6 @@
  */
 
 #include "DurableNotesProcessor.h"
-#include "Utils.h"
 
 #include <synchronization/processors/INotesProcessor.h>
 #include <synchronization/processors/Utils.h>
