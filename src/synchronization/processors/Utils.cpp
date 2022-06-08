@@ -22,6 +22,7 @@
 #include <quentier/utility/FileSystem.h>
 
 #include <qevercloud/serialization/json/Note.h>
+#include <qevercloud/serialization/json/Resource.h>
 #include <qevercloud/utility/ToRange.h>
 
 #include <QDir>
@@ -54,12 +55,27 @@ const QString gFailedToExpungeNotesIniFileName =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void writeNote(const qevercloud::Note & note, const QDir & dir)
+const QString gProcessedResourcesIniFileName =
+    QStringLiteral("processedResources.ini");
+
+const QString gCancelledResourcesDirName = QStringLiteral("cancelledResources");
+
+const QString gFailedToDownloadResourcesDirName =
+    QStringLiteral("failedToDownloadResources");
+
+const QString gFailedToProcessResourcesDirName =
+    QStringLiteral("failedToProcessResources");
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+void writeItem(const T & item, const QString & itemTypeName, const QDir & dir)
 {
-    if (Q_UNLIKELY(!note.guid())) {
+    if (Q_UNLIKELY(!item.guid())) {
         QNWARNING(
             "synchronization::utils",
-            "Cannot write note to file: note has no guid: " << note);
+            "Cannot write " << itemTypeName << " to file: " << itemTypeName
+                            << " has no guid: " << item);
         return;
     }
 
@@ -67,24 +83,27 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
         if (!dir.mkpath(dir.absolutePath())) {
             QNWARNING(
                 "synchronization::utils",
-                "Cannot write note to file: failed to create dir for note: "
-                    << dir.absolutePath());
+                "Cannot write " << itemTypeName << " to file: failed to create "
+                                << " dir for " << itemTypeName << ": "
+                                << dir.absolutePath());
             return;
         }
     }
 
     QFile file{
-        dir.absoluteFilePath(QString::fromUtf8("%1.json").arg(*note.guid()))};
+        dir.absoluteFilePath(QString::fromUtf8("%1.json").arg(*item.guid()))};
     if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly))) {
         QNWARNING(
             "synchronization::utils",
-            "Cannot write note to file: failed to open file for writing: "
-                << dir.absoluteFilePath(*note.guid() + QStringLiteral(".json"))
+            "Cannot write "
+                << itemTypeName << " to file: failed to open file "
+                << "for writing: "
+                << dir.absoluteFilePath(*item.guid() + QStringLiteral(".json"))
                 << " (" << file.errorString() << ")");
         return;
     }
 
-    const QJsonObject obj = qevercloud::serializeToJson(note);
+    const QJsonObject obj = qevercloud::serializeToJson(item);
     QJsonDocument doc;
     doc.setObject(obj);
 
@@ -92,7 +111,8 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
     file.close();
 }
 
-[[nodiscard]] QList<qevercloud::Note> readNotes(const QDir & dir)
+template <class T>
+[[nodiscard]] QList<T> readItems(const QString & itemTypeName, const QDir & dir)
 {
     if (!dir.exists()) {
         return {};
@@ -100,7 +120,7 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
 
     const auto fileNames = dir.entryList(QDir::NoDotAndDotDot | QDir::Files);
 
-    QList<qevercloud::Note> result;
+    QList<T> result;
     result.reserve(fileNames.size());
 
     for (const auto & fileName: qAsConst(fileNames)) {
@@ -108,8 +128,8 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
         if (Q_UNLIKELY(!file.open(QIODevice::ReadOnly))) {
             QNWARNING(
                 "synchronization::utils",
-                "Failed to open file with note for reading: "
-                    << dir.absoluteFilePath(fileName));
+                "Failed to open file with " << itemTypeName << " for reading: "
+                                            << dir.absoluteFilePath(fileName));
             continue;
         }
 
@@ -121,8 +141,9 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
         if (Q_UNLIKELY(doc.isNull())) {
             QNWARNING(
                 "synchronization::utils",
-                "Failed to parse serialized note from file to json document: "
-                    << error.errorString()
+                "Failed to parse serialized "
+                    << itemTypeName
+                    << " from file to json document: " << error.errorString()
                     << "; file: " << dir.absoluteFilePath(fileName));
             continue;
         }
@@ -130,22 +151,94 @@ void writeNote(const qevercloud::Note & note, const QDir & dir)
         if (Q_UNLIKELY(!doc.isObject())) {
             QNWARNING(
                 "synchronization::utils",
-                "Cannot parse serialized note: json is not an object; file: "
-                    << dir.absoluteFilePath(fileName));
+                "Cannot parse serialized " << itemTypeName
+                                           << ": json is not an object; file: "
+                                           << dir.absoluteFilePath(fileName));
             continue;
         }
 
         const QJsonObject obj = doc.object();
-        qevercloud::Note note;
-        if (Q_UNLIKELY(!qevercloud::deserializeFromJson(obj, note))) {
+        T item;
+        if (Q_UNLIKELY(!qevercloud::deserializeFromJson(obj, item))) {
             QNWARNING(
                 "synchronization::utils",
-                "Failed to deserialized note from json; file: "
-                    << dir.absoluteFilePath(fileName));
+                "Failed to deserialized "
+                    << itemTypeName
+                    << " from json; file: " << dir.absoluteFilePath(fileName));
             continue;
         }
 
-        result << note;
+        result << item;
+    }
+
+    return result;
+}
+
+void writeNote(const qevercloud::Note & note, const QDir & dir)
+{
+    writeItem<qevercloud::Note>(note, QStringLiteral("note"), dir);
+}
+
+[[nodiscard]] QList<qevercloud::Note> readNotes(const QDir & dir)
+{
+    return readItems<qevercloud::Note>(QStringLiteral("note"), dir);
+}
+
+void writeResource(const qevercloud::Resource & resource, const QDir & dir)
+{
+    writeItem<qevercloud::Resource>(resource, QStringLiteral("resource"), dir);
+}
+
+[[nodiscard]] QList<qevercloud::Resource> readResources(const QDir & dir)
+{
+    return readItems<qevercloud::Resource>(QStringLiteral("resource"), dir);
+}
+
+[[nodiscard]] QHash<qevercloud::Guid, qint32> processedItemsInfoFromLastSync(
+    const QDir & dir, const QString & itemTypeName,
+    const QString & processedItemsIniFileName)
+{
+    if (!dir.exists()) {
+        return {};
+    }
+
+    QSettings processedItemsSettings{
+        dir.absoluteFilePath(processedItemsIniFileName), QSettings::IniFormat};
+
+    const QStringList guids = processedItemsSettings.allKeys();
+    if (guids.isEmpty()) {
+        return {};
+    }
+
+    QHash<qevercloud::Guid, qint32> result;
+    result.reserve(guids.size());
+    for (const auto & guid: qAsConst(guids)) {
+        const auto value = processedItemsSettings.value(guid);
+        if (Q_UNLIKELY(!value.isValid())) {
+            QNWARNING(
+                "synchronization::utils",
+                "Detected corrupted processed "
+                    << itemTypeName << " USN value for " << itemTypeName
+                    << " guid " << guid);
+            // Try to remove this key so that it doesn't interfere the next time
+            processedItemsSettings.remove(guid);
+            continue;
+        }
+
+        bool conversionResult = false;
+        qint32 usn = value.toInt(&conversionResult);
+        if (Q_UNLIKELY(!conversionResult)) {
+            QNWARNING(
+                "synchronization::utils",
+                "Detected non-integer processed "
+                    << itemTypeName << " USN value for " << itemTypeName
+                    << " guid " << guid);
+            // Try to remove this key so that it doesn't interfere the next time
+            processedItemsSettings.remove(guid);
+            continue;
+        }
+
+        result[guid] = usn;
     }
 
     return result;
@@ -248,7 +341,7 @@ void writeProcessedNoteInfo(
         if (!lastSyncNotesDir.mkpath(lastSyncNotesDir.absolutePath())) {
             QNWARNING(
                 "synchronization::utils",
-                "Failed to create dir for last sync notes data persistence");
+                "Failed to create dir for last sync notes persistence");
             return;
         }
     }
@@ -263,7 +356,7 @@ void writeProcessedNoteInfo(
     processedNotesSettings.sync();
 
     // Now see whether there are files corresponding to this note guid
-    // with notes which failed to download or process or was cancelled
+    // with notes which failed to download or process or were cancelled
     // during the previous sync
     const auto getNoteFileInfo = [&noteGuid](const QDir & dir) {
         return dir.absoluteFilePath(QString::fromUtf8("%1.json").arg(noteGuid));
@@ -373,52 +466,124 @@ void writeFailedToExpungeNote(
     failedToExpungeNotes.sync();
 }
 
+void writeProcessedResourceInfo(
+    const qevercloud::Guid & resourceGuid, qint32 updateSequenceNum,
+    const QDir & lastSyncResourcesDir)
+{
+    if (Q_UNLIKELY(!lastSyncResourcesDir.exists())) {
+        if (!lastSyncResourcesDir.mkpath(lastSyncResourcesDir.absolutePath())) {
+            QNWARNING(
+                "synchronization::utils",
+                "Failed to create dir for last sync resources persistence");
+            return;
+        }
+    }
+
+    // First, write the info into a file containing the list of guids and USNs
+    // of processed resources
+    QSettings processedResourcesSettings{
+        lastSyncResourcesDir.absoluteFilePath(gProcessedResourcesIniFileName),
+        QSettings::IniFormat};
+
+    processedResourcesSettings.setValue(resourceGuid, updateSequenceNum);
+    processedResourcesSettings.sync();
+
+    // Now see whether there are files corresponding to this resource guif
+    // with resources which failed to download or process or were cancelled
+    // during the previous sync
+    const auto getResourceFileInfo = [&resourceGuid](const QDir & dir) {
+        return dir.absoluteFilePath(
+            QString::fromUtf8("%1.json").arg(resourceGuid));
+    };
+
+    // 1. Cancelled resources
+    const QDir cancelledResourcesDir{
+        lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)};
+
+    const QFileInfo cancelledResourceFileInfo{
+        getResourceFileInfo(cancelledResourcesDir)};
+
+    if (cancelledResourceFileInfo.exists() &&
+        !removeFile(cancelledResourceFileInfo.absoluteFilePath()))
+    {
+        QNWARNING(
+            "synchronization::utils",
+            "Failed to remove file corresponding to resource which sync was "
+                << "cancelled: "
+                << cancelledResourceFileInfo.absoluteFilePath());
+    }
+
+    // 2. Resources which failed to download
+    const QDir failedToDownloadResourcesDir{
+        lastSyncResourcesDir.absoluteFilePath(
+            gFailedToDownloadResourcesDirName)};
+
+    const QFileInfo failedToDownloadResourceFileInfo{
+        getResourceFileInfo(failedToDownloadResourcesDir)};
+
+    if (failedToDownloadResourceFileInfo.exists() &&
+        !removeFile(failedToDownloadResourceFileInfo.absoluteFilePath()))
+    {
+        QNWARNING(
+            "synchronization::utils",
+            "Failed to remove file corresponding to resource which failed to "
+                << "download during the last sync: "
+                << failedToDownloadResourceFileInfo.absoluteFilePath());
+    }
+
+    // 3. Resources which failed to process
+    const QDir failedToProcessResourcesDir{
+        lastSyncResourcesDir.absoluteFilePath(
+            gFailedToProcessResourcesDirName)};
+
+    const QFileInfo failedToProcessResourceFileInfo{
+        getResourceFileInfo(failedToProcessResourcesDir)};
+
+    if (failedToProcessResourceFileInfo.exists() &&
+        !removeFile(failedToProcessResourceFileInfo.absoluteFilePath()))
+    {
+        QNWARNING(
+            "synchronization::utils",
+            "Failed to remove file corresponding to resource which failed to "
+                << "process during the last sync: "
+                << failedToProcessResourceFileInfo.absoluteFilePath());
+    }
+}
+
+void writeFailedToDownloadResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir)
+{
+    writeResource(
+        resource,
+        QDir{lastSyncResourcesDir.absoluteFilePath(
+            gFailedToDownloadResourcesDirName)});
+}
+
+void writeFailedToProcessResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir)
+{
+    writeResource(
+        resource,
+        QDir{lastSyncResourcesDir.absoluteFilePath(
+            gFailedToProcessResourcesDirName)});
+}
+
+void writeCancelledResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir)
+{
+    writeResource(
+        resource,
+        QDir{
+            lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)});
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 QHash<qevercloud::Guid, qint32> processedNotesInfoFromLastSync(
     const QDir & lastSyncNotesDir)
 {
-    if (!lastSyncNotesDir.exists()) {
-        return {};
-    }
-
-    QSettings processedNotesSettings{
-        lastSyncNotesDir.absoluteFilePath(gProcessedNotesIniFileName),
-        QSettings::IniFormat};
-
-    const QStringList noteGuids = processedNotesSettings.allKeys();
-    if (noteGuids.isEmpty()) {
-        return {};
-    }
-
-    QHash<qevercloud::Guid, qint32> result;
-    result.reserve(noteGuids.size());
-    for (const auto & noteGuid: qAsConst(noteGuids)) {
-        const auto value = processedNotesSettings.value(noteGuid);
-        if (Q_UNLIKELY(!value.isValid())) {
-            QNWARNING(
-                "synchronization::utils",
-                "Detected corrupted processed note USN value for note guid "
-                    << noteGuid);
-            // Try to remove this key so that it doesn't interfere the next time
-            processedNotesSettings.remove(noteGuid);
-            continue;
-        }
-
-        bool conversionResult = false;
-        qint32 usn = value.toInt(&conversionResult);
-        if (Q_UNLIKELY(!conversionResult)) {
-            QNWARNING(
-                "synchronization::utils",
-                "Detected non-integer processed note USN value for note guid "
-                    << noteGuid);
-            // Try to remove this key so that it doesn't interfere the next time
-            processedNotesSettings.remove(noteGuid);
-            continue;
-        }
-
-        result[noteGuid] = usn;
-    }
-
-    return result;
+    return processedItemsInfoFromLastSync(
+        lastSyncNotesDir, QStringLiteral("note"), gProcessedNotesIniFileName);
 }
 
 QList<qevercloud::Note> notesWhichFailedToDownloadDuringLastSync(
@@ -470,6 +635,35 @@ QList<qevercloud::Guid> noteGuidsWhichFailedToExpungeDuringLastSync(
     // QStringList is layout-compatible with QList<QString> and just adds
     // convenience methods.
     return notesWhichFailedToExpunge.allKeys();
+}
+
+QHash<qevercloud::Guid, qint32> processedResourcesInfoFromLastSync(
+    const QDir & lastSyncResourcesDir)
+{
+    return processedItemsInfoFromLastSync(
+        lastSyncResourcesDir, QStringLiteral("resource"),
+        gProcessedResourcesIniFileName);
+}
+
+QList<qevercloud::Resource> resourcesWhichFailedToDownloadDuringLastSync(
+    const QDir & lastSyncResourcesDir)
+{
+    return readResources(QDir{lastSyncResourcesDir.absoluteFilePath(
+        gFailedToDownloadResourcesDirName)});
+}
+
+QList<qevercloud::Resource> resourcesWhichFailedToProcessDuringLastSync(
+    const QDir & lastSyncResourcesDir)
+{
+    return readResources(QDir{lastSyncResourcesDir.absoluteFilePath(
+        gFailedToProcessResourcesDirName)});
+}
+
+QList<qevercloud::Resource> resourcesCancelledDuringLastSync(
+    const QDir & lastSyncResourcesDir)
+{
+    return readResources(QDir{
+        lastSyncResourcesDir.absoluteFilePath(gCancelledResourcesDirName)});
 }
 
 } // namespace quentier::synchronization::utils

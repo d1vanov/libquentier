@@ -36,19 +36,15 @@ namespace quentier::synchronization::utils {
 // of items
 template <class T>
 void filterOutExpungedItems(
-    const QList<qevercloud::Guid> & expungedGuids,
-    QList<T> & items)
+    const QList<qevercloud::Guid> & expungedGuids, QList<T> & items)
 {
     if (expungedGuids.isEmpty()) {
         return;
     }
 
     for (const auto & guid: qAsConst(expungedGuids)) {
-        auto it = std::find_if(
-            items.begin(),
-            items.end(),
-            [&guid](const T & item)
-            {
+        auto it =
+            std::find_if(items.begin(), items.end(), [&guid](const T & item) {
                 return item.guid() && (*item.guid() == guid);
             });
 
@@ -104,6 +100,26 @@ void writeExpungedNote(
 void writeFailedToExpungeNote(
     const qevercloud::Guid & noteGuid, const QDir & lastSyncNotesDir);
 
+// Persists information about processed resource inside the passed in dir
+void writeProcessedResourceInfo(
+    const qevercloud::Guid & resourceGuid, qint32 updateSequenceNum,
+    const QDir & lastSyncResourcesDir);
+
+// Persists information about resource which data failed to get downloaded
+// inside the passed in dir
+void writeFailedToDownloadResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir);
+
+// Persists information about resource which processing has failed for some
+// reason inside the passed in dir
+void writeFailedToProcessResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir);
+
+// Persists information about resource which processing was cancelled inside
+// the passed in dir
+void writeCancelledResource(
+    const qevercloud::Resource & resource, const QDir & lastSyncResourcesDir);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Functions below retrieve the persistently stored information from the last
@@ -139,5 +155,27 @@ void writeFailedToExpungeNote(
 // sync.
 [[nodiscard]] QList<qevercloud::Guid>
     noteGuidsWhichFailedToExpungeDuringLastSync(const QDir & lastSyncNotesDir);
+
+// Returns a hash from guid to USN for resources which were fully processed
+// during the last sync.
+[[nodiscard]] QHash<qevercloud::Guid, qint32>
+    processedResourcesInfoFromLastSync(const QDir & lastSyncResourcesDir);
+
+// Returns a list of resources which full content failed to be downloaded during
+// the last sync.
+[[nodiscard]] QList<qevercloud::Resource>
+    resourcesWhichFailedToDownloadDuringLastSync(
+        const QDir & lastSyncResourcesDir);
+
+// Returns a list of resources which processing has failed for some reason
+// during the last sync.
+[[nodiscard]] QList<qevercloud::Resource>
+    resourcesWhichFailedToProcessDuringLastSync(
+        const QDir & lastSyncResourcesDir);
+
+// Returns a list of resources which processing was cancelled during the last
+// sync (because the sync was stopped prematurately for some reason).
+[[nodiscard]] QList<qevercloud::Resource> resourcesCancelledDuringLastSync(
+    const QDir & lastSyncResourcesDir);
 
 } // namespace quentier::synchronization::utils
