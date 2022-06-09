@@ -331,6 +331,79 @@ INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
     return lhs;
 }
 
+IResourcesProcessor::DownloadResourcesStatus
+    mergeDownloadResourcesStatuses(
+        IResourcesProcessor::DownloadResourcesStatus lhs,
+        const IResourcesProcessor::DownloadResourcesStatus & rhs)
+{
+    using DownloadResourcesStatus =
+        IResourcesProcessor::DownloadResourcesStatus;
+
+    lhs.totalNewResources += rhs.totalNewResources;
+    lhs.totalUpdatedResources += rhs.totalUpdatedResources;
+
+    const auto mergeResourceLists =
+        [](QList<DownloadResourcesStatus::ResourceWithException> lhs,
+           const QList<DownloadResourcesStatus::ResourceWithException> & rhs) {
+            using Iter =
+                QList<DownloadResourcesStatus::ResourceWithException>::const_iterator;
+            QHash<qevercloud::Guid, Iter> rhsResourcesByGuid;
+            rhsResourcesByGuid.reserve(rhs.size());
+            for (auto it = rhs.constBegin(); it != rhs.constEnd(); ++it) {
+                const auto & resourceWithException = *it;
+                const auto & resource = resourceWithException.resource;
+                if (Q_UNLIKELY(!resource.guid())) {
+                    continue;
+                }
+                rhsResourcesByGuid[*resource.guid()] = it;
+            }
+
+            std::set<Iter> replacedIters;
+            for (auto it = lhs.begin(); it != lhs.end();) {
+                if (Q_UNLIKELY(!it->resource.guid())) {
+                    it = lhs.erase(it);
+                    continue;
+                }
+
+                const auto rit = rhsResourcesByGuid.find(*it->resource.guid());
+                if (rit != rhsResourcesByGuid.end()) {
+                    *it = *(*rit);
+                    replacedIters.insert(*rit);
+                }
+
+                ++it;
+            }
+
+            for (auto it = rhs.constBegin(); it != rhs.constEnd(); ++it) {
+                if (replacedIters.find(it) != replacedIters.end()) {
+                    continue;
+                }
+
+                lhs << *it;
+            }
+
+            return lhs;
+        };
+
+    lhs.resourcesWhichFailedToDownload = mergeResourceLists(
+        lhs.resourcesWhichFailedToDownload, rhs.resourcesWhichFailedToDownload);
+
+    lhs.resourcesWhichFailedToProcess = mergeResourceLists(
+        lhs.resourcesWhichFailedToProcess, rhs.resourcesWhichFailedToProcess);
+
+    for (const auto it: qevercloud::toRange(rhs.processedResourceGuidsAndUsns))
+    {
+        lhs.processedResourceGuidsAndUsns[it.key()] = it.value();
+    }
+
+    for (const auto it: qevercloud::toRange(rhs.cancelledResourceGuidsAndUsns))
+    {
+        lhs.cancelledResourceGuidsAndUsns[it.key()] = it.value();
+    }
+
+    return lhs;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void writeProcessedNoteInfo(

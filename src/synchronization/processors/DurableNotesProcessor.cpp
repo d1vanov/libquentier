@@ -84,7 +84,7 @@ QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::processNotes(
                         "synchronization::DurableNotesProcessor",
                         "Detected note within sync chunks without guid: "
                             << *it);
-                    ++it;
+                    it = notes.erase(it);
                     continue;
                 }
 
@@ -352,7 +352,7 @@ QFuture<ISynchronizer::DownloadNotesStatus>
             threading::TrackedTask{
                 selfWeak,
                 [this, selfWeak, promise,
-                 syncChunks = syncChunks](DownloadNotesStatus status) mutable {
+                 syncChunks](DownloadNotesStatus status) mutable {
                     auto processNotesFuture =
                         processNotesImpl(syncChunks, {}, {});
 

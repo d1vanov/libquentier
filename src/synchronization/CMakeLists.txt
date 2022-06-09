@@ -33,6 +33,9 @@ target_sources(${LIBRARY_NAME}
   processors/DurableNotesProcessor.cpp
   processors/DurableNotesProcessor.h
   processors/IDurableNotesProcessor.h
+  processors/DurableResourcesProcessor.cpp
+  processors/DurableResourcesProcessor.h
+  processors/IDurableResourcesProcessor.h
   processors/ILinkedNotebooksProcessor.h
   processors/INotebooksProcessor.h
   processors/INoteFullDataDownloader.h

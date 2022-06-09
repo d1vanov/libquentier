@@ -75,7 +75,7 @@ private:
 
 private:
     const IResourcesProcessorPtr m_resourcesProcessor;
-    const QDir m_syncNotesDir;
+    const QDir m_syncResourcesDir;
 };
 
 } // namespace quentier::synchronization

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "INotesProcessor.h"
+#include "IResourcesProcessor.h"
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
@@ -60,6 +61,12 @@ void filterOutExpungedItems(
 [[nodiscard]] INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
     INotesProcessor::DownloadNotesStatus lhs,
     const INotesProcessor::DownloadNotesStatus & rhs);
+
+// Merges DownloadResourcesStatuses: rhs into lhs.
+[[nodiscard]] IResourcesProcessor::DownloadResourcesStatus
+    mergeDownloadResourcesStatuses(
+        IResourcesProcessor::DownloadResourcesStatus lhs,
+        const IResourcesProcessor::DownloadResourcesStatus & rhs);
 
 ////////////////////////////////////////////////////////////////////////////////
 
