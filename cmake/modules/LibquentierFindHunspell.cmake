@@ -27,12 +27,13 @@ message(STATUS "Found hunspell library: ${HUNSPELL_LIBRARIES}")
 include_directories(SYSTEM ${HUNSPELL_INCLUDE_DIR})
 
 add_library(Hunspell::Libhunspell SHARED IMPORTED)
+set_target_properties(Hunspell::Libhunspell PROPERTIES
+  IMPORTED_LOCATION ${HUNSPELL_LIBRARIES}
+)
 if(MSVC)
   set_target_properties(Hunspell::Libhunspell PROPERTIES
-    IMPORTED_IMPLIB ${HUNSPELL_LIBRARIES})
-else()
-  set_target_properties(Hunspell::Libhunspell PROPERTIES
-    IMPORTED_LOCATION ${HUNSPELL_LIBRARIES})
+    IMPORTED_IMPLIB ${HUNSPELL_LIBRARIES}
+  )
 endif()
 
 try_compile(HUNSPELL_NEW_API_AVAILABLE "${CMAKE_BINARY_DIR}/hunspell_api_check"
