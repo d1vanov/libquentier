@@ -47,6 +47,7 @@ add_library(tidy_html5 SHARED IMPORTED)
 if(MSVC)
   set_target_properties(tidy_html5 PROPERTIES
     IMPORTED_IMPLIB ${TIDY_HTML5_IMPORT_LIBRARY}
+    IMPORTED_LOCATION ${TIDY_HTML5_IMPORT_LIBRARY}
   )
 else()
   set_target_properties(tidy_html5 PROPERTIES
