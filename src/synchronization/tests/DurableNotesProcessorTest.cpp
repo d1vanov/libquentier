@@ -102,6 +102,7 @@ QList<T> sorted(QList<T> lst)
     }
 
     QHash<qevercloud::Guid, qint32> result;
+    result.reserve(endUsn - startUsn + 1);
     for (qint32 i = startUsn; i <= endUsn; ++i) {
         result[UidGenerator::Generate()] = i;
     }
