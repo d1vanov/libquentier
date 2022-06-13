@@ -34,14 +34,6 @@ QTextStream & ISynchronizer::Options::print(QTextStream & strm) const
     return strm;
 }
 
-QTextStream & ISynchronizer::SyncState::print(QTextStream & strm) const
-{
-    strm << "ISynchronizer::SyncState: updateCount = " << updateCount
-         << ", lastSyncTime = " << printableDateTimeFromTimestamp(lastSyncTime);
-
-    return strm;
-}
-
 QTextStream & ISynchronizer::DownloadNotesStatus::print(
     QTextStream & strm) const
 {
@@ -316,21 +308,6 @@ bool operator==(
 bool operator!=(
     const ISynchronizer::Options & lhs,
     const ISynchronizer::Options & rhs) noexcept
-{
-    return !(lhs == rhs);
-}
-
-bool operator==(
-    const ISynchronizer::SyncState & lhs,
-    const ISynchronizer::SyncState & rhs) noexcept
-{
-    return lhs.updateCount == rhs.updateCount &&
-        lhs.lastSyncTime == rhs.lastSyncTime;
-}
-
-bool operator!=(
-    const ISynchronizer::SyncState & lhs,
-    const ISynchronizer::SyncState & rhs) noexcept
 {
     return !(lhs == rhs);
 }

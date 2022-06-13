@@ -22,6 +22,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/AuthenticationInfo.h>
+#include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
@@ -58,14 +59,6 @@ public:
 
         bool downloadNoteThumbnails = false;
         std::optional<QDir> inkNoteImagesStorageDir;
-    };
-
-    struct QUENTIER_EXPORT SyncState : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        qint32 updateCount = 0;
-        qevercloud::Timestamp lastSyncTime = 0;
     };
 
     struct QUENTIER_EXPORT DownloadNotesStatus : public Printable
@@ -220,14 +213,6 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ISynchronizer::Options & lhs,
     const ISynchronizer::Options & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::SyncState & lhs,
-    const ISynchronizer::SyncState & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::SyncState & lhs,
-    const ISynchronizer::SyncState & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const ISynchronizer::DownloadNotesStatus & lhs,

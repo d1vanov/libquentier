@@ -131,6 +131,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
     headers/quentier/synchronization/types/AuthenticationInfo.h
+    headers/quentier/synchronization/types/SyncState.h
     headers/quentier/synchronization/types/SyncStats.h)
 
 set(THREADING_HEADERS
@@ -426,6 +427,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
     src/synchronization/types/AuthenticationInfo.cpp
+    src/synchronization/types/SyncState.cpp
     src/synchronization/types/SyncStats.cpp
     src/types/Account.cpp
     src/types/ErrorString.cpp
