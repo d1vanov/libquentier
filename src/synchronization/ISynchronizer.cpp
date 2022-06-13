@@ -34,29 +34,6 @@ QTextStream & ISynchronizer::Options::print(QTextStream & strm) const
     return strm;
 }
 
-QTextStream & ISynchronizer::SyncStats::print(QTextStream & strm) const
-{
-    strm << "ISynchronizer::SyncStats: syncChunksDownloaded = "
-         << syncChunksDownloaded
-         << ", linkedNotebooksDownloaded = " << linkedNotebooksDownloaded
-         << ", notebooksDownloaded = " << notebooksDownloaded
-         << ", savedSearchesDownloaded = " << savedSearchesDownloaded
-         << ", tagsDownloaded = " << tagsDownloaded
-         << ", notesDownloaded = " << notesDownloaded
-         << ", resourcesDownloaded = " << resourcesDownloaded
-         << ", linkedNotebooksExpunged = " << linkedNotebooksExpunged
-         << ", notebooksExpunged = " << notebooksExpunged
-         << ", savedSearchesExpunged = " << savedSearchesExpunged
-         << ", tagsExpunged = " << tagsExpunged
-         << ", notesExpunged = " << notesExpunged
-         << ", resourcesExpunged = " << resourcesExpunged
-         << ", notebooksSent = " << notebooksSent
-         << ", savedSearchesSent = " << savedSearchesSent
-         << ", tagsSent = " << tagsSent << ", notesSent = " << notesSent;
-
-    return strm;
-}
-
 QTextStream & ISynchronizer::SyncState::print(QTextStream & strm) const
 {
     strm << "ISynchronizer::SyncState: updateCount = " << updateCount

@@ -22,6 +22,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/AuthenticationInfo.h>
+#include <quentier/synchronization/types/SyncStats.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -57,32 +58,6 @@ public:
 
         bool downloadNoteThumbnails = false;
         std::optional<QDir> inkNoteImagesStorageDir;
-    };
-
-    struct QUENTIER_EXPORT SyncStats : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        quint64 syncChunksDownloaded = 0;
-
-        quint64 linkedNotebooksDownloaded = 0;
-        quint64 notebooksDownloaded = 0;
-        quint64 savedSearchesDownloaded = 0;
-        quint64 tagsDownloaded = 0;
-        quint64 notesDownloaded = 0;
-        quint64 resourcesDownloaded = 0;
-
-        quint64 linkedNotebooksExpunged = 0;
-        quint64 notebooksExpunged = 0;
-        quint64 savedSearchesExpunged = 0;
-        quint64 tagsExpunged = 0;
-        quint64 notesExpunged = 0;
-        quint64 resourcesExpunged = 0;
-
-        quint64 notebooksSent = 0;
-        quint64 savedSearchesSent = 0;
-        quint64 tagsSent = 0;
-        quint64 notesSent = 0;
     };
 
     struct QUENTIER_EXPORT SyncState : public Printable
