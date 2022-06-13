@@ -38,6 +38,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <optional>
 
 // clazy:excludeall=non-pod-global-static
@@ -45,6 +46,8 @@
 
 namespace quentier::synchronization::tests {
 
+using testing::_;
+using testing::Return;
 using testing::StrictMock;
 
 namespace {
@@ -438,6 +441,339 @@ TEST_F(
     for (int i = 3, j = 0; i < 5 && j < cancelledResources.size(); ++i, ++j) {
         EXPECT_EQ(cancelledResources[j], resources[i]);
     }
+}
+
+struct PreviousResourceSyncTestData
+{
+    QList<qevercloud::Resource> m_resourcesToProcess;
+
+    QHash<qevercloud::Guid, qint32> m_processedResourcesInfo = {};
+
+    QList<qevercloud::Resource>
+        m_resourcesWhichFailedToDownloadDuringPreviousSync = {};
+
+    QList<qevercloud::Resource>
+        m_resourcesWhichFailedToProcessDuringPreviousSync = {};
+
+    QList<qevercloud::Resource> m_resourcesCancelledDuringPreviousSync = {};
+};
+
+class DurableResourcesProcessorTestWithPreviousSyncData :
+    public DurableResourcesProcessorTest,
+    public testing::WithParamInterface<PreviousResourceSyncTestData>
+{};
+
+const std::array gTestData{
+    PreviousResourceSyncTestData{
+        generateTestResources(14, 18), // m_resourcesToProcess
+    },
+    PreviousResourceSyncTestData{
+        generateTestResources(14, 18),            // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+    },
+    PreviousResourceSyncTestData{
+        generateTestResources(14, 18),            // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(
+            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        generateTestResources(14, 18),            // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(
+            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        generateTestResources(
+            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        generateTestResources(14, 18),            // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(
+            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        generateTestResources(
+            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        {},                                       // m_resourcesToProcess
+        generateTestProcessedResourcesInfo(1, 4), // m_processedResourcesInfo
+        generateTestResources(
+            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        generateTestResources(
+            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        {}, // m_resourcesToProcess
+        {}, // m_processedResourcesInfo
+        generateTestResources(
+            5, 7), // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        generateTestResources(
+            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        {}, // m_resourcesToProcess
+        {}, // m_processedResourcesInfo
+        {}, // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        generateTestResources(
+            8, 10), // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+    },
+    PreviousResourceSyncTestData{
+        {}, // m_resourcesToProcess
+        {}, // m_processedResourcesInfo
+        {}, // m_resourcesWhichFailedToDownloadDuringPreviousSync
+        {}, // m_resourcesWhichFailedToProcessDuringPreviousSync
+        generateTestResources(11, 13), // m_resourcesCancelledDuringPreviousSync
+    },
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    DurableResourcesProcessorTestWithPreviousSyncDataInstance,
+    DurableResourcesProcessorTestWithPreviousSyncData,
+    testing::ValuesIn(gTestData));
+
+TEST_P(
+    DurableResourcesProcessorTestWithPreviousSyncData,
+    ProcessSyncChunksWithPreviousSyncInfo)
+{
+    const auto & testData = GetParam();
+    const auto & resources = testData.m_resourcesToProcess;
+
+    const auto syncChunks = QList<qevercloud::SyncChunk>{}
+        << qevercloud::SyncChunkBuilder{}.setResources(resources).build();
+
+    QDir syncPersistentStorageDir{m_temporaryDir.path()};
+
+    QDir syncResourcesDir = [&] {
+        QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
+            QStringLiteral("lastSyncData"))};
+
+        return QDir{
+            lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
+    }();
+
+    // Prepare test data
+    if (!testData.m_processedResourcesInfo.isEmpty()) {
+        for (const auto it:
+             qevercloud::toRange(testData.m_processedResourcesInfo)) {
+            utils::writeProcessedResourceInfo(
+                it.key(), it.value(), syncResourcesDir);
+        }
+    }
+
+    if (!testData.m_resourcesWhichFailedToDownloadDuringPreviousSync.isEmpty())
+    {
+        for (const auto & resource: qAsConst(
+                 testData.m_resourcesWhichFailedToDownloadDuringPreviousSync))
+        {
+            utils::writeFailedToDownloadResource(resource, syncResourcesDir);
+        }
+    }
+
+    if (!testData.m_resourcesWhichFailedToProcessDuringPreviousSync.isEmpty()) {
+        for (const auto & resource: qAsConst(
+                 testData.m_resourcesWhichFailedToProcessDuringPreviousSync))
+        {
+            utils::writeFailedToProcessResource(resource, syncResourcesDir);
+        }
+    }
+
+    if (!testData.m_resourcesCancelledDuringPreviousSync.isEmpty()) {
+        for (const auto & resource:
+             qAsConst(testData.m_resourcesCancelledDuringPreviousSync))
+        {
+            utils::writeCancelledResource(resource, syncResourcesDir);
+        }
+    }
+
+    const QList<qevercloud::Resource> resourcesFromPreviousSync = [&] {
+        QList<qevercloud::Resource> result;
+        result << testData.m_resourcesWhichFailedToDownloadDuringPreviousSync;
+        result << testData.m_resourcesWhichFailedToProcessDuringPreviousSync;
+        result << testData.m_resourcesCancelledDuringPreviousSync;
+
+        for (auto it = result.begin(); it != result.end();) {
+            EXPECT_TRUE(it->guid().has_value());
+            if (it->guid().has_value()) {
+                const auto pit =
+                    testData.m_processedResourcesInfo.find(*it->guid());
+
+                if (pit != testData.m_processedResourcesInfo.end() &&
+                    it->updateSequenceNum() == pit.value())
+                {
+                    it = result.erase(it);
+                    continue;
+                }
+            }
+
+            ++it;
+        }
+
+        return result;
+    }();
+
+    using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
+
+    DownloadResourcesStatus currentResourcesStatus;
+    currentResourcesStatus.totalNewResources =
+        static_cast<quint64>(std::max<int>(resources.size(), 0));
+    for (const auto & resource: qAsConst(resources)) {
+        EXPECT_TRUE(resource.guid());
+        if (!resource.guid()) {
+            continue;
+        }
+
+        EXPECT_TRUE(resource.updateSequenceNum());
+        if (!resource.updateSequenceNum()) {
+            continue;
+        }
+
+        currentResourcesStatus.processedResourceGuidsAndUsns[*resource.guid()] =
+            *resource.updateSequenceNum();
+    }
+
+    EXPECT_CALL(*m_mockResourcesProcessor, processResources(syncChunks, _))
+        .WillOnce(Return(threading::makeReadyFuture<
+                         IDurableResourcesProcessor::DownloadResourcesStatus>(
+            DownloadResourcesStatus{currentResourcesStatus})));
+
+    std::optional<DownloadResourcesStatus> previousResourcesStatus;
+    if (!resourcesFromPreviousSync.isEmpty()) {
+        const auto expectedSyncChunks = QList<qevercloud::SyncChunk>{}
+            << qevercloud::SyncChunkBuilder{}
+                   .setResources(resourcesFromPreviousSync)
+                   .build();
+
+        previousResourcesStatus.emplace();
+        previousResourcesStatus->totalUpdatedResources = static_cast<quint64>(
+            std::max<int>(resourcesFromPreviousSync.size(), 0));
+
+        for (const auto & resource: qAsConst(resourcesFromPreviousSync)) {
+            EXPECT_TRUE(resource.guid());
+            if (!resource.guid()) {
+                continue;
+            }
+
+            EXPECT_TRUE(resource.updateSequenceNum());
+            if (!resource.updateSequenceNum()) {
+                continue;
+            }
+
+            previousResourcesStatus
+                ->processedResourceGuidsAndUsns[*resource.guid()] =
+                *resource.updateSequenceNum();
+        }
+
+        EXPECT_CALL(
+            *m_mockResourcesProcessor,
+            processResources(
+                testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
+                    EqSyncChunksWithSortedResources(expectedSyncChunks)),
+                _))
+            .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                          const IResourcesProcessor::ICallbackWeakPtr &
+                              callbackWeak) {
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
+                if (callback) {
+                    for (const auto & syncChunk: qAsConst(syncChunks)) {
+                        if (!syncChunk.resources()) {
+                            continue;
+                        }
+
+                        for (const auto & resource: *syncChunk.resources()) {
+                            EXPECT_TRUE(resource.guid());
+                            if (!resource.guid()) {
+                                continue;
+                            }
+
+                            EXPECT_TRUE(resource.updateSequenceNum());
+                            if (!resource.updateSequenceNum()) {
+                                continue;
+                            }
+
+                            callback->onProcessedResource(
+                                *resource.guid(),
+                                *resource.updateSequenceNum());
+                        }
+                    }
+                }
+
+                return threading::makeReadyFuture<
+                    IDurableResourcesProcessor::DownloadResourcesStatus>(
+                    DownloadResourcesStatus{*previousResourcesStatus});
+            });
+    }
+
+    const auto durableResourcesProcessor =
+        std::make_shared<DurableResourcesProcessor>(
+            m_mockResourcesProcessor, QDir{m_temporaryDir.path()});
+
+    auto future = durableResourcesProcessor->processResources(syncChunks);
+    ASSERT_TRUE(future.isFinished());
+    ASSERT_EQ(future.resultCount(), 1);
+    const auto status = future.result();
+
+    const DownloadResourcesStatus expectedStatus = [&] {
+        DownloadResourcesStatus expectedStatus;
+        if (previousResourcesStatus) {
+            expectedStatus = utils::mergeDownloadResourcesStatuses(
+                std::move(expectedStatus), *previousResourcesStatus);
+        }
+
+        return utils::mergeDownloadResourcesStatuses(
+            std::move(expectedStatus), currentResourcesStatus);
+    }();
+
+    EXPECT_EQ(status, expectedStatus);
+
+    const auto processedResourcesInfo =
+        utils::processedResourcesInfoFromLastSync(syncResourcesDir);
+
+    const auto expectedProcessedResourcesInfo = [&] {
+        QHash<qevercloud::Guid, qint32> result;
+
+        if (!testData.m_processedResourcesInfo.isEmpty()) {
+            for (const auto it:
+                 qevercloud::toRange(testData.m_processedResourcesInfo)) {
+                result.insert(it.key(), it.value());
+            }
+        }
+
+        const auto appendResources =
+            [&result](const QList<qevercloud::Resource> & resources) {
+                if (resources.isEmpty()) {
+                    return;
+                }
+
+                for (const auto & resource: qAsConst(resources)) {
+                    EXPECT_TRUE(resource.guid());
+                    if (Q_UNLIKELY(!resource.guid())) {
+                        continue;
+                    }
+
+                    EXPECT_TRUE(resource.updateSequenceNum());
+                    if (Q_UNLIKELY(!resource.updateSequenceNum())) {
+                        continue;
+                    }
+
+                    result[*resource.guid()] = *resource.updateSequenceNum();
+                }
+            };
+
+        appendResources(
+            testData.m_resourcesWhichFailedToDownloadDuringPreviousSync);
+
+        appendResources(
+            testData.m_resourcesWhichFailedToProcessDuringPreviousSync);
+
+        appendResources(testData.m_resourcesCancelledDuringPreviousSync);
+        return result;
+    }();
+
+    EXPECT_EQ(processedResourcesInfo, expectedProcessedResourcesInfo);
 }
 
 } // namespace quentier::synchronization::tests
