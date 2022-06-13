@@ -148,8 +148,7 @@ public:
             GuidWithUsn() = default;
 
             GuidWithUsn(qevercloud::Guid g, qint32 u) :
-                guid{std::move(g)},
-                updateSequenceNumber{u}
+                guid{std::move(g)}, updateSequenceNumber{u}
             {}
 
             QTextStream & print(QTextStream & strm) const override;
@@ -305,5 +304,23 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ISynchronizer::DownloadNotesStatus::GuidWithUsn & lhs,
     const ISynchronizer::DownloadNotesStatus::GuidWithUsn & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadResourcesStatus & lhs,
+    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadResourcesStatus & lhs,
+    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator==(
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
+        rhs) noexcept;
+
+[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
+        rhs) noexcept;
 
 } // namespace quentier::synchronization

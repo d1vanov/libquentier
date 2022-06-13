@@ -464,4 +464,44 @@ bool operator!=(
     return !(lhs == rhs);
 }
 
+bool operator==(
+    const ISynchronizer::DownloadResourcesStatus & lhs,
+    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept
+{
+    // clang-format off
+    return lhs.totalNewResources == rhs.totalNewResources &&
+        lhs.totalUpdatedResources == rhs.totalUpdatedResources &&
+        lhs.resourcesWhichFailedToDownload ==
+            rhs.resourcesWhichFailedToDownload &&
+        lhs.resourcesWhichFailedToProcess ==
+            rhs.resourcesWhichFailedToProcess &&
+        lhs.processedResourceGuidsAndUsns ==
+            rhs.processedResourceGuidsAndUsns &&
+        lhs.cancelledResourceGuidsAndUsns == rhs.cancelledResourceGuidsAndUsns;
+    // clang-format on
+}
+
+bool operator!=(
+    const ISynchronizer::DownloadResourcesStatus & lhs,
+    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
+bool operator==(
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
+        rhs) noexcept
+{
+    return lhs.resource == rhs.resource && lhs.exception == rhs.exception;
+}
+
+bool operator!=(
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
+    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
+        rhs) noexcept
+{
+    return !(lhs == rhs);
+}
+
 } // namespace quentier::synchronization
