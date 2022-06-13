@@ -38,6 +38,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <optional>
 
 // clazy:excludeall=non-pod-global-static
@@ -529,7 +530,7 @@ TEST_F(
     }
 }
 
-struct PreviousSyncTestData
+struct PreviousNoteSyncTestData
 {
     QList<qevercloud::Note> m_notesToProcess;
 
@@ -545,118 +546,118 @@ struct PreviousSyncTestData
 
 class DurableNotesProcessorTestWithPreviousSyncData :
     public DurableNotesProcessorTest,
-    public testing::WithParamInterface<PreviousSyncTestData>
+    public testing::WithParamInterface<PreviousNoteSyncTestData>
 {};
 
 const std::array gTestData{
-    PreviousSyncTestData{
-        generateTestNotes(10, 13), // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17), // m_notesToProcess
     },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
     },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
-        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
-        generateTestGuids(3),                 // m_expungedNoteGuids
-    },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
-        generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
     },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
-        generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
     },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
     },
-    PreviousSyncTestData{
-        generateTestNotes(10, 13),            // m_notesToProcess
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
+    },
+    PreviousNoteSyncTestData{
+        generateTestNotes(14, 17),            // m_notesToProcess
+        generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
+        generateTestGuids(3),                 // m_expungedNoteGuids
+        generateTestNotes(
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
+        generateTestNotes(
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {},                                   // m_notesToProcess
         generateTestProcessedNotesInfo(1, 4), // m_processedNotesInfo
         generateTestGuids(3),                 // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {},                   // m_notesToProcess
         {},                   // m_processedNotesInfo
         generateTestGuids(3), // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {}, // m_notesToProcess
         {}, // m_processedNotesInfo
         {}, // m_expungedNoteGuids
         generateTestNotes(
-            1, 4), // m_notesWhichFailedToDownloadDuringPreviousSync
+            5, 7), // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {}, // m_notesToProcess
         {}, // m_processedNotesInfo
         {}, // m_expungedNoteGuids
         {}, // m_notesWhichFailedToDownloadDuringPreviousSync
         generateTestNotes(
-            5, 7), // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+            8, 10), // m_notesWhichFailedToProcessDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {}, // m_notesToProcess
         {}, // m_processedNotesInfo
         {}, // m_expungedNoteGuids
         {}, // m_notesWhichFailedToDownloadDuringPreviousSync
         {}, // m_notesWhichFailedToProcessDuringPreviousSync
-        generateTestNotes(8, 9), // m_notesCancelledDuringPreviousSync
+        generateTestNotes(11, 13), // m_notesCancelledDuringPreviousSync
         generateTestGuids(
             3), // m_noteGuidsWhichFailedToExpungeDuringPreviousSync
     },
-    PreviousSyncTestData{
+    PreviousNoteSyncTestData{
         {}, // m_notesToProcess
         {}, // m_processedNotesInfo
         {}, // m_expungedNoteGuids
