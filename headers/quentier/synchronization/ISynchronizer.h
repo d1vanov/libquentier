@@ -21,6 +21,7 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
+#include <quentier/synchronization/types/AuthenticationInfo.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -56,19 +57,6 @@ public:
 
         bool downloadNoteThumbnails = false;
         std::optional<QDir> inkNoteImagesStorageDir;
-    };
-
-    struct QUENTIER_EXPORT AuthResult : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        qevercloud::UserID userId = 0;
-        QString authToken;
-        qevercloud::Timestamp authTokenExpirationTime = 0;
-        QString shardId;
-        QString noteStoreUrl;
-        QString webApiUrlPrefix;
-        QList<QNetworkCookie> userStoreCookies;
     };
 
     struct QUENTIER_EXPORT SyncStats : public Printable
@@ -234,9 +222,10 @@ public:
      */
     [[nodiscard]] virtual Options options() const = 0;
 
-    [[nodiscard]] virtual QFuture<AuthResult> authenticateNewAccount() = 0;
+    [[nodiscard]] virtual QFuture<AuthenticationInfo>
+        authenticateNewAccount() = 0;
 
-    [[nodiscard]] virtual QFuture<AuthResult> authenticateAccount(
+    [[nodiscard]] virtual QFuture<AuthenticationInfo> authenticateAccount(
         Account account) = 0;
 
     [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
@@ -256,14 +245,6 @@ public:
 [[nodiscard]] QUENTIER_EXPORT bool operator!=(
     const ISynchronizer::Options & lhs,
     const ISynchronizer::Options & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::AuthResult & lhs,
-    const ISynchronizer::AuthResult & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::AuthResult & lhs,
-    const ISynchronizer::AuthResult & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const ISynchronizer::SyncState & lhs,

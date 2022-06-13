@@ -34,28 +34,6 @@ QTextStream & ISynchronizer::Options::print(QTextStream & strm) const
     return strm;
 }
 
-QTextStream & ISynchronizer::AuthResult::print(QTextStream & strm) const
-{
-    strm << "ISynchronizer::AuthResult: userId = " << userId
-         << ", authToken size = " << authToken.size()
-         << ", authTokenExpirationTime = "
-         << printableDateTimeFromTimestamp(authTokenExpirationTime)
-         << ", shardId = " << shardId << ", noteStoreUrl = " << noteStoreUrl
-         << ", webApiUrlPrefix = " << webApiUrlPrefix;
-
-    strm << ", userStoreCookies: ";
-    if (userStoreCookies.isEmpty()) {
-        strm << "<empty>";
-    }
-    else {
-        for (const auto & cookie: qAsConst(userStoreCookies)) {
-            strm << "{" << QString::fromUtf8(cookie.toRawForm()) << "};";
-        }
-    }
-
-    return strm;
-}
-
 QTextStream & ISynchronizer::SyncStats::print(QTextStream & strm) const
 {
     strm << "ISynchronizer::SyncStats: syncChunksDownloaded = "
@@ -361,24 +339,6 @@ bool operator==(
 bool operator!=(
     const ISynchronizer::Options & lhs,
     const ISynchronizer::Options & rhs) noexcept
-{
-    return !(lhs == rhs);
-}
-
-bool operator==(
-    const ISynchronizer::AuthResult & lhs,
-    const ISynchronizer::AuthResult & rhs) noexcept
-{
-    return lhs.userId == rhs.userId && lhs.authToken == rhs.authToken &&
-        lhs.authTokenExpirationTime == rhs.authTokenExpirationTime &&
-        lhs.shardId == rhs.shardId && lhs.noteStoreUrl == rhs.noteStoreUrl &&
-        lhs.webApiUrlPrefix == rhs.webApiUrlPrefix &&
-        lhs.userStoreCookies == rhs.userStoreCookies;
-}
-
-bool operator!=(
-    const ISynchronizer::AuthResult & lhs,
-    const ISynchronizer::AuthResult & rhs) noexcept
 {
     return !(lhs == rhs);
 }
