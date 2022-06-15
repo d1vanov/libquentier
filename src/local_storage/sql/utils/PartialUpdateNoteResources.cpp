@@ -203,13 +203,17 @@ void classifyNoteResources(
 
     static const QChar apostrophe = QChar::fromLatin1('\'');
     static const QChar comma = QChar::fromLatin1(',');
-    for (const auto & localId: localIds)
+    for (auto it = localIds.constBegin(), end = localIds.constEnd();
+         it != end; ++it)
     {
+        const QString & localId = *it;
+
         strm << apostrophe;
         strm << sqlEscape(localId);
         strm << apostrophe;
 
-        if (&localId != &(*std::prev(localIds.constEnd()))) {
+        const bool isLast = (std::next(it) == end);
+        if (!isLast) {
             strm << comma;
         }
     }
