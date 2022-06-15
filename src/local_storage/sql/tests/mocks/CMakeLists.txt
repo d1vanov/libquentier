@@ -25,5 +25,5 @@ target_sources(${MOCKS_NAME}
 target_link_libraries(${MOCKS_NAME}
   PUBLIC
     ${LIBRARY_NAME}
-    ${GMOCK_LIBRARIES}
+    GTest::gmock
 )
