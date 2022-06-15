@@ -37,6 +37,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <memory>
 
 // clazy:excludeall=non-pod-global-static
