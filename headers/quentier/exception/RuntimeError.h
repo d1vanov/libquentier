@@ -26,6 +26,7 @@ class QUENTIER_EXPORT RuntimeError : public IQuentierException
 {
 public:
     explicit RuntimeError(ErrorString message);
+    ~RuntimeError() noexcept override;
 
     [[nodiscard]] RuntimeError * clone() const override;
     void raise() const override;

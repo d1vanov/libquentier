@@ -24,6 +24,8 @@ RuntimeError::RuntimeError(ErrorString message) :
     IQuentierException(std::move(message))
 {}
 
+RuntimeError::~RuntimeError() noexcept = default;
+
 RuntimeError * RuntimeError::clone() const
 {
     return new RuntimeError{errorMessage()};
