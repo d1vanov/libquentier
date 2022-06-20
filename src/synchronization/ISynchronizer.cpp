@@ -23,17 +23,6 @@
 
 namespace quentier::synchronization {
 
-QTextStream & ISynchronizer::Options::print(QTextStream & strm) const
-{
-    strm << "ISynchronizer::Options: downloadNoteThumbnails = "
-         << (downloadNoteThumbnails ? "true" : "false")
-         << ", inkNoteImagesStorageDir = "
-         << (inkNoteImagesStorageDir ? inkNoteImagesStorageDir->absolutePath()
-                                     : QString::fromUtf8("<not set>"));
-
-    return strm;
-}
-
 QTextStream & ISynchronizer::DownloadNotesStatus::print(
     QTextStream & strm) const
 {
@@ -295,21 +284,6 @@ QTextStream & ISynchronizer::SyncResult::print(QTextStream & strm) const
 
     strm << "syncStats = " << syncStats;
     return strm;
-}
-
-bool operator==(
-    const ISynchronizer::Options & lhs,
-    const ISynchronizer::Options & rhs) noexcept
-{
-    return lhs.downloadNoteThumbnails == rhs.downloadNoteThumbnails &&
-        lhs.inkNoteImagesStorageDir == rhs.inkNoteImagesStorageDir;
-}
-
-bool operator!=(
-    const ISynchronizer::Options & lhs,
-    const ISynchronizer::Options & rhs) noexcept
-{
-    return !(lhs == rhs);
 }
 
 bool operator==(

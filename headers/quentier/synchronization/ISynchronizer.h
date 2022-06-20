@@ -22,6 +22,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/AuthenticationInfo.h>
+#include <quentier/synchronization/types/SyncOptions.h>
 #include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
 #include <quentier/utility/Fwd.h>
@@ -53,14 +54,6 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct QUENTIER_EXPORT Options : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        bool downloadNoteThumbnails = false;
-        std::optional<QDir> inkNoteImagesStorageDir;
-    };
-
     struct QUENTIER_EXPORT DownloadNotesStatus : public Printable
     {
         QTextStream & print(QTextStream & strm) const override;
@@ -188,7 +181,7 @@ public:
     /**
      * @return options passed to ISynchronizer on the last sync
      */
-    [[nodiscard]] virtual Options options() const = 0;
+    [[nodiscard]] virtual SyncOptions options() const = 0;
 
     [[nodiscard]] virtual QFuture<AuthenticationInfo>
         authenticateNewAccount() = 0;
@@ -198,21 +191,13 @@ public:
 
     [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
         Account account, ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage, Options options) = 0;
+        local_storage::ILocalStoragePtr localStorage, SyncOptions options) = 0;
 
     [[nodiscard]] virtual QFuture<void> revokeAuthentication(
         qevercloud::UserID userId) = 0;
 
     [[nodiscard]] virtual ISyncEventsNotifier * notifier() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::Options & lhs,
-    const ISynchronizer::Options & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::Options & lhs,
-    const ISynchronizer::Options & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const ISynchronizer::DownloadNotesStatus & lhs,
