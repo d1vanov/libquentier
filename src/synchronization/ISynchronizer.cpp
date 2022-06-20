@@ -17,59 +17,9 @@
  */
 
 #include <quentier/synchronization/ISynchronizer.h>
-#include <quentier/utility/DateTime.h>
-
-#include <qevercloud/utility/ToRange.h>
 
 namespace quentier::synchronization {
 
-QTextStream & ISynchronizer::SyncResult::print(QTextStream & strm) const
-{
-    strm << "ISynchronizer::SyncResult: userAccountSyncState = "
-         << userAccountSyncState << ", linkedNotebookSyncStates = ";
-
-    if (linkedNotebookSyncStates.isEmpty()) {
-        strm << "<empty>, ";
-    }
-    else {
-        for (const auto it: qevercloud::toRange(linkedNotebookSyncStates)) {
-            strm << "{" << it.key() << ": " << it.value() << "};";
-        }
-        strm << " ";
-    }
-
-    strm << "userAccountDownloadNotesStatus = "
-         << userAccountDownloadNotesStatus
-         << ", linkedNotebookDownloadNotesStatuses = ";
-
-    if (linkedNotebookDownloadNotesStatuses.isEmpty()) {
-        strm << "<empty>, ";
-    }
-    else {
-        for (const auto it:
-             qevercloud::toRange(linkedNotebookDownloadNotesStatuses)) {
-            strm << "{" << it.key() << ": " << it.value() << "};";
-        }
-        strm << " ";
-    }
-
-    strm << "userAccountDownloadResourcesStatus = "
-         << userAccountDownloadResourcesStatus
-         << ", linkedNotebookDownloadResourcesStatuses = ";
-    if (linkedNotebookDownloadResourcesStatuses.isEmpty()) {
-        strm << "<empty>, ";
-    }
-    else {
-        for (const auto it:
-             qevercloud::toRange(linkedNotebookDownloadResourcesStatuses))
-        {
-            strm << "{" << it.key() << ": " << it.value() << "};";
-        }
-        strm << " ";
-    }
-
-    strm << "syncStats = " << syncStats;
-    return strm;
-}
+ISynchronizer::~ISynchronizer() noexcept = default;
 
 } // namespace quentier::synchronization

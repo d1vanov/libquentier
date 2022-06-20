@@ -134,6 +134,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/DownloadNotesStatus.h
     headers/quentier/synchronization/types/DownloadResourcesStatus.h
     headers/quentier/synchronization/types/SyncOptions.h
+    headers/quentier/synchronization/types/SyncResult.h
     headers/quentier/synchronization/types/SyncState.h
     headers/quentier/synchronization/types/SyncStats.h)
 
@@ -433,6 +434,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/DownloadNotesStatus.cpp
     src/synchronization/types/DownloadResourcesStatus.cpp
     src/synchronization/types/SyncOptions.cpp
+    src/synchronization/types/SyncResult.cpp
     src/synchronization/types/SyncState.cpp
     src/synchronization/types/SyncStats.cpp
     src/types/Account.cpp

@@ -25,6 +25,7 @@
 #include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/SyncOptions.h>
+#include <quentier/synchronization/types/SyncResult.h>
 #include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
 #include <quentier/utility/Fwd.h>
@@ -47,7 +48,6 @@
 namespace quentier {
 
 class Account;
-class ErrorString;
 
 } // namespace quentier
 
@@ -56,26 +56,7 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct QUENTIER_EXPORT SyncResult : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        SyncState userAccountSyncState;
-        QHash<qevercloud::Guid, SyncState> linkedNotebookSyncStates;
-
-        DownloadNotesStatus userAccountDownloadNotesStatus;
-        QHash<qevercloud::Guid, DownloadNotesStatus>
-            linkedNotebookDownloadNotesStatuses;
-
-        DownloadResourcesStatus userAccountDownloadResourcesStatus;
-        QHash<qevercloud::Guid, DownloadResourcesStatus>
-            linkedNotebookDownloadResourcesStatuses;
-
-        SyncStats syncStats;
-    };
-
-public:
-    virtual ~ISynchronizer() = default;
+    virtual ~ISynchronizer() noexcept;
 
     /**
      * @return true if synchronization is being performed at the moment,
