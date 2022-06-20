@@ -34,10 +34,6 @@ target_link_libraries(${TESTS_NAME}
     GTest::GTest
     Qt5::Core)
 
-target_compile_definitions(${TESTS_NAME}
-  PRIVATE
-  "-DBUILDING_LIBQUENTIER_STATIC_LIBRARY")
-
 include(GoogleTest)
 
 gtest_discover_tests(${TESTS_NAME})

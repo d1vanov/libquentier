@@ -770,8 +770,7 @@ generate_export_header(
   ${LIBNAME}
   BASE_NAME ${LIBNAME}
   EXPORT_MACRO_NAME QUENTIER_EXPORT
-  EXPORT_FILE_NAME quentier/utility/Linkage.h
-  STATIC_DEFINE BUILDING_LIBQUENTIER_STATIC_LIBRARY)
+  EXPORT_FILE_NAME quentier/utility/Linkage.h)
 
 find_package(GMock)
 find_package(GTest)
