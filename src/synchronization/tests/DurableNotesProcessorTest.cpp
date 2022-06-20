@@ -243,7 +243,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
             EXPECT_EQ(syncChunkNotes, notes);
 
-            IDurableNotesProcessor::DownloadNotesStatus status;
+            DownloadNotesStatus status;
             status.totalNewNotes = static_cast<quint64>(syncChunkNotes.size());
 
             for (const auto & note: qAsConst(notes)) {
@@ -256,8 +256,8 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
                 }
             }
 
-            return threading::makeReadyFuture<
-                IDurableNotesProcessor::DownloadNotesStatus>(std::move(status));
+            return threading::makeReadyFuture<DownloadNotesStatus>(
+                std::move(status));
         });
 
     auto future = durableNotesProcessor->processNotes(syncChunks);
@@ -333,12 +333,11 @@ TEST_F(
 
             EXPECT_EQ(syncChunkNotes.size(), 5);
             if (syncChunkNotes.size() != 5) {
-                return threading::makeExceptionalFuture<
-                    IDurableNotesProcessor::DownloadNotesStatus>(
+                return threading::makeExceptionalFuture<DownloadNotesStatus>(
                     RuntimeError{ErrorString{"Invalid note count"}});
             }
 
-            IDurableNotesProcessor::DownloadNotesStatus status;
+            DownloadNotesStatus status;
             status.totalNewNotes = static_cast<quint64>(syncChunkNotes.size());
 
             // First note gets marked as a successfully processed one
@@ -352,29 +351,29 @@ TEST_F(
             }
 
             // Second note is marked as failed to process one
-            status.notesWhichFailedToProcess << IDurableNotesProcessor::
-                    DownloadNotesStatus::NoteWithException{
-                        syncChunkNotes[1],
-                        std::make_shared<RuntimeError>(
-                            ErrorString{"Failed to process note"})};
+            status.notesWhichFailedToProcess
+                << DownloadNotesStatus::NoteWithException{
+                       syncChunkNotes[1],
+                       std::make_shared<RuntimeError>(
+                           ErrorString{"Failed to process note"})};
 
             if (callback) {
                 callback->onNoteFailedToProcess(
-                    status.notesWhichFailedToProcess.last().note,
-                    *status.notesWhichFailedToProcess.last().exception);
+                    status.notesWhichFailedToProcess.last().first,
+                    *status.notesWhichFailedToProcess.last().second);
             }
 
             // Third note is marked as failed to download one
-            status.notesWhichFailedToDownload << IDurableNotesProcessor::
-                    DownloadNotesStatus::NoteWithException{
-                        syncChunkNotes[2],
-                        std::make_shared<RuntimeError>(
-                            ErrorString{"Failed to download note"})};
+            status.notesWhichFailedToDownload
+                << DownloadNotesStatus::NoteWithException{
+                       syncChunkNotes[2],
+                       std::make_shared<RuntimeError>(
+                           ErrorString{"Failed to download note"})};
 
             if (callback) {
                 callback->onNoteFailedToDownload(
-                    status.notesWhichFailedToDownload.last().note,
-                    *status.notesWhichFailedToDownload.last().exception);
+                    status.notesWhichFailedToDownload.last().first,
+                    *status.notesWhichFailedToDownload.last().second);
             }
 
             // Fourth and fifth notes are marked as cancelled because, for
@@ -402,8 +401,7 @@ TEST_F(
 
             EXPECT_EQ(syncChunkExpungedNotes.size(), 4);
             if (syncChunkExpungedNotes.size() != 4) {
-                return threading::makeExceptionalFuture<
-                    IDurableNotesProcessor::DownloadNotesStatus>(
+                return threading::makeExceptionalFuture<DownloadNotesStatus>(
                     RuntimeError{ErrorString{"Invalid expunged note count"}});
             }
 
@@ -422,21 +420,21 @@ TEST_F(
 
             // Other two expunged notes are marked as failed to expunged ones
             for (int i = 2; i < 4; ++i) {
-                status.noteGuidsWhichFailedToExpunge << IDurableNotesProcessor::
-                        DownloadNotesStatus::GuidWithException{
-                            syncChunkExpungedNotes[i],
-                            std::make_shared<RuntimeError>(
-                                ErrorString{"Failed to expunge note"})};
+                status.noteGuidsWhichFailedToExpunge
+                    << DownloadNotesStatus::GuidWithException{
+                           syncChunkExpungedNotes[i],
+                           std::make_shared<RuntimeError>(
+                               ErrorString{"Failed to expunge note"})};
 
                 if (callback) {
                     callback->onFailedToExpungeNote(
-                        status.noteGuidsWhichFailedToExpunge.last().guid,
-                        *status.noteGuidsWhichFailedToExpunge.last().exception);
+                        status.noteGuidsWhichFailedToExpunge.last().first,
+                        *status.noteGuidsWhichFailedToExpunge.last().second);
                 }
             }
 
-            return threading::makeReadyFuture<
-                IDurableNotesProcessor::DownloadNotesStatus>(std::move(status));
+            return threading::makeReadyFuture<DownloadNotesStatus>(
+                std::move(status));
         });
 
     auto future = durableNotesProcessor->processNotes(syncChunks);
@@ -457,10 +455,10 @@ TEST_F(
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToProcess.constBegin()->note, notes[1]);
+    EXPECT_EQ(status.notesWhichFailedToProcess.constBegin()->first, notes[1]);
 
     ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToDownload.constBegin()->note, notes[2]);
+    EXPECT_EQ(status.notesWhichFailedToDownload.constBegin()->first, notes[2]);
 
     ASSERT_EQ(status.cancelledNoteGuidsAndUsns.size(), 2);
     for (int i = 3; i < 5; ++i) {
@@ -781,8 +779,6 @@ TEST_P(
         return result;
     }();
 
-    using DownloadNotesStatus = INotesProcessor::DownloadNotesStatus;
-
     DownloadNotesStatus currentNotesStatus;
     currentNotesStatus.totalNewNotes =
         static_cast<quint64>(std::max<int>(notes.size(), 0));
@@ -802,8 +798,7 @@ TEST_P(
     }
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture<
-                         IDurableNotesProcessor::DownloadNotesStatus>(
+        .WillOnce(Return(threading::makeReadyFuture<DownloadNotesStatus>(
             DownloadNotesStatus{currentNotesStatus})));
 
     std::optional<DownloadNotesStatus> previousExpungedNotesStatus;
@@ -844,8 +839,7 @@ TEST_P(
                         }
                     }
 
-                    return threading::makeReadyFuture<
-                        IDurableNotesProcessor::DownloadNotesStatus>(
+                    return threading::makeReadyFuture<DownloadNotesStatus>(
                         DownloadNotesStatus{*previousExpungedNotesStatus});
                 });
     }
@@ -910,8 +904,7 @@ TEST_P(
                         }
                     }
 
-                    return threading::makeReadyFuture<
-                        IDurableNotesProcessor::DownloadNotesStatus>(
+                    return threading::makeReadyFuture<DownloadNotesStatus>(
                         DownloadNotesStatus{*previousNotesStatus});
                 });
     }

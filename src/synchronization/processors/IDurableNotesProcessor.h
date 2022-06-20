@@ -20,7 +20,7 @@
 
 #include "../Fwd.h"
 
-#include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/DownloadNotesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 
@@ -38,8 +38,6 @@ class IDurableNotesProcessor
 {
 public:
     virtual ~IDurableNotesProcessor() = default;
-
-    using DownloadNotesStatus = ISynchronizer::DownloadNotesStatus;
 
     [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;

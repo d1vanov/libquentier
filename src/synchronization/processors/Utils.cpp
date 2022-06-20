@@ -195,7 +195,7 @@ void writeResource(const qevercloud::Resource & resource, const QDir & dir)
 }
 
 [[nodiscard]] QHash<qevercloud::Guid, qint32> processedItemsInfoFromLastSync(
-    const QDir & dir, const QString & itemTypeName,
+    const QDir & dir, const QString & itemTypeName, // NOLINT
     const QString & processedItemsIniFileName)
 {
     if (!dir.exists()) {
@@ -246,12 +246,9 @@ void writeResource(const qevercloud::Resource & resource, const QDir & dir)
 
 } // namespace
 
-INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
-    INotesProcessor::DownloadNotesStatus lhs,
-    const INotesProcessor::DownloadNotesStatus & rhs)
+DownloadNotesStatus mergeDownloadNotesStatuses(
+    DownloadNotesStatus lhs, const DownloadNotesStatus & rhs)
 {
-    using DownloadNotesStatus = INotesProcessor::DownloadNotesStatus;
-
     lhs.totalNewNotes += rhs.totalNewNotes;
     lhs.totalUpdatedNotes += rhs.totalUpdatedNotes;
     lhs.totalExpungedNotes += rhs.totalExpungedNotes;
@@ -265,7 +262,7 @@ INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
             rhsNotesByGuid.reserve(rhs.size());
             for (auto it = rhs.constBegin(); it != rhs.constEnd(); ++it) {
                 const auto & noteWithException = *it;
-                const auto & note = noteWithException.note;
+                const auto & note = noteWithException.first;
                 if (Q_UNLIKELY(!note.guid())) {
                     continue;
                 }
@@ -274,12 +271,12 @@ INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
 
             std::set<Iter> replacedIters;
             for (auto it = lhs.begin(); it != lhs.end();) {
-                if (Q_UNLIKELY(!it->note.guid())) {
+                if (Q_UNLIKELY(!it->first.guid())) {
                     it = lhs.erase(it);
                     continue;
                 }
 
-                const auto rit = rhsNotesByGuid.find(*it->note.guid());
+                const auto rit = rhsNotesByGuid.find(*it->first.guid());
                 if (rit != rhsNotesByGuid.end()) {
                     *it = *(*rit);
                     replacedIters.insert(*rit);
@@ -311,7 +308,7 @@ INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
             lhs.noteGuidsWhichFailedToExpunge.begin(),
             lhs.noteGuidsWhichFailedToExpunge.end(),
             [](const auto & lhs, const auto & rhs) {
-                return lhs.guid == rhs.guid;
+                return lhs.first == rhs.first;
             }),
         lhs.noteGuidsWhichFailedToExpunge.end());
 
@@ -331,10 +328,9 @@ INotesProcessor::DownloadNotesStatus mergeDownloadNotesStatuses(
     return lhs;
 }
 
-IResourcesProcessor::DownloadResourcesStatus
-    mergeDownloadResourcesStatuses(
-        IResourcesProcessor::DownloadResourcesStatus lhs,
-        const IResourcesProcessor::DownloadResourcesStatus & rhs)
+IResourcesProcessor::DownloadResourcesStatus mergeDownloadResourcesStatuses(
+    IResourcesProcessor::DownloadResourcesStatus lhs,
+    const IResourcesProcessor::DownloadResourcesStatus & rhs)
 {
     using DownloadResourcesStatus =
         IResourcesProcessor::DownloadResourcesStatus;
@@ -345,8 +341,8 @@ IResourcesProcessor::DownloadResourcesStatus
     const auto mergeResourceLists =
         [](QList<DownloadResourcesStatus::ResourceWithException> lhs,
            const QList<DownloadResourcesStatus::ResourceWithException> & rhs) {
-            using Iter =
-                QList<DownloadResourcesStatus::ResourceWithException>::const_iterator;
+            using Iter = QList<
+                DownloadResourcesStatus::ResourceWithException>::const_iterator;
             QHash<qevercloud::Guid, Iter> rhsResourcesByGuid;
             rhsResourcesByGuid.reserve(rhs.size());
             for (auto it = rhs.constBegin(); it != rhs.constEnd(); ++it) {

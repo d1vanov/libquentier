@@ -49,7 +49,7 @@ DurableNotesProcessor::DurableNotesProcessor(
     }
 }
 
-QFuture<ISynchronizer::DownloadNotesStatus> DurableNotesProcessor::processNotes(
+QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
     // First need to check whether there are notes which failed to be processed
@@ -274,11 +274,10 @@ QList<qevercloud::Guid>
     return utils::noteGuidsWhichFailedToExpungeDuringLastSync(m_syncNotesDir);
 }
 
-QFuture<ISynchronizer::DownloadNotesStatus>
-    DurableNotesProcessor::processNotesImpl(
-        const QList<qevercloud::SyncChunk> & syncChunks,
-        QList<qevercloud::Note> previousNotes,
-        QList<qevercloud::Guid> previousExpungedNotes)
+QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    QList<qevercloud::Note> previousNotes,
+    QList<qevercloud::Guid> previousExpungedNotes)
 {
     const auto selfWeak = weak_from_this();
 

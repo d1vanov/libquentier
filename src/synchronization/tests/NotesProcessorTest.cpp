@@ -569,7 +569,7 @@ TEST_P(
     EXPECT_EQ(status.totalExpungedNotes, 0UL);
 
     ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToDownload[0].note, notes[1]);
+    EXPECT_EQ(status.notesWhichFailedToDownload[0].first, notes[1]);
 
     EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
     EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
@@ -789,7 +789,7 @@ TEST_P(
     EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToProcess[0].note, notes[1]);
+    EXPECT_EQ(status.notesWhichFailedToProcess[0].first, notes[1]);
 
     ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
@@ -1002,7 +1002,7 @@ TEST_P(
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
 
     EXPECT_EQ(
-        status.notesWhichFailedToProcess[0].note,
+        status.notesWhichFailedToProcess[0].first,
         addContentToNote(notes[1], 1));
 
     ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
@@ -1235,7 +1235,7 @@ TEST_P(
     EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToProcess[0].note, notes[1]);
+    EXPECT_EQ(status.notesWhichFailedToProcess[0].first, notes[1]);
 
     ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
@@ -1462,11 +1462,11 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
 
     ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToDownload[0].note, notes[1]);
+    EXPECT_EQ(status.notesWhichFailedToDownload[0].first, notes[1]);
 
     bool caughtEdamSystemExceptionWithRateLimit = false;
     try {
-        status.notesWhichFailedToDownload[0].exception->raise();
+        status.notesWhichFailedToDownload[0].second->raise();
     }
     catch (const qevercloud::EDAMSystemException & e) {
         if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
@@ -1656,7 +1656,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     ASSERT_EQ(status.noteGuidsWhichFailedToExpunge.size(), 1);
     EXPECT_EQ(
-        status.noteGuidsWhichFailedToExpunge[0].guid, expungedNoteGuids[1]);
+        status.noteGuidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
 
     const QList<qevercloud::Guid> expectedExpungedNoteGuids = [&] {
         auto guids = expungedNoteGuids;

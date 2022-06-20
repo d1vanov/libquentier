@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/DownloadNotesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>
@@ -39,8 +39,6 @@ class INotesProcessor
 public:
     virtual ~INotesProcessor() = default;
 
-    using DownloadNotesStatus = ISynchronizer::DownloadNotesStatus;
-
     struct ICallback
     {
         virtual ~ICallback() = default;
@@ -57,12 +55,10 @@ public:
             const QException & e) noexcept = 0;
 
         virtual void onNoteFailedToDownload(
-            const qevercloud::Note & note,
-            const QException & e) noexcept = 0;
+            const qevercloud::Note & note, const QException & e) noexcept = 0;
 
         virtual void onNoteFailedToProcess(
-            const qevercloud::Note & note,
-            const QException & e) noexcept = 0;
+            const qevercloud::Note & note, const QException & e) noexcept = 0;
 
         virtual void onNoteProcessingCancelled(
             const qevercloud::Note & note) noexcept = 0;

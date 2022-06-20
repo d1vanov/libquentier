@@ -78,7 +78,7 @@ NotesProcessor::NotesProcessor(
     }
 }
 
-QFuture<INotesProcessor::DownloadNotesStatus> NotesProcessor::processNotes(
+QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks,
     ICallbackWeakPtr callbackWeak)
 {
@@ -483,8 +483,8 @@ void NotesProcessor::downloadFullNoteData(
 void NotesProcessor::putNoteToLocalStorage(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
     const std::shared_ptr<DownloadNotesStatus> & status,
-    ICallbackWeakPtr && callbackWeak,
-    qevercloud::Note note, NoteKind putNoteKind)
+    ICallbackWeakPtr && callbackWeak, qevercloud::Note note,
+    NoteKind putNoteKind)
 {
     auto putNoteFuture = m_localStorage->putNote(note);
 

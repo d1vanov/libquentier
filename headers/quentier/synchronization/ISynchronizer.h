@@ -22,6 +22,7 @@
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/AuthenticationInfo.h>
+#include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/SyncOptions.h>
 #include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
@@ -54,71 +55,6 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct QUENTIER_EXPORT DownloadNotesStatus : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        struct QUENTIER_EXPORT NoteWithException : public Printable
-        {
-            NoteWithException() = default;
-
-            NoteWithException(
-                qevercloud::Note n, std::shared_ptr<QException> e) :
-                note{std::move(n)},
-                exception{std::move(e)}
-            {}
-
-            QTextStream & print(QTextStream & strm) const override;
-
-            qevercloud::Note note;
-            std::shared_ptr<QException> exception;
-        };
-
-        struct QUENTIER_EXPORT GuidWithException : public Printable
-        {
-            GuidWithException() = default;
-
-            GuidWithException(
-                qevercloud::Guid g, std::shared_ptr<QException> e) :
-                guid{std::move(g)},
-                exception{std::move(e)}
-            {}
-
-            QTextStream & print(QTextStream & strm) const override;
-
-            qevercloud::Guid guid;
-            std::shared_ptr<QException> exception;
-        };
-
-        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
-
-        struct QUENTIER_EXPORT GuidWithUsn : public Printable
-        {
-            GuidWithUsn() = default;
-
-            GuidWithUsn(qevercloud::Guid g, qint32 u) :
-                guid{std::move(g)}, updateSequenceNumber{u}
-            {}
-
-            QTextStream & print(QTextStream & strm) const override;
-
-            qevercloud::Guid guid;
-            qint32 updateSequenceNumber = 0;
-        };
-
-        quint64 totalNewNotes = 0UL;
-        quint64 totalUpdatedNotes = 0UL;
-        quint64 totalExpungedNotes = 0UL;
-
-        QList<NoteWithException> notesWhichFailedToDownload;
-        QList<NoteWithException> notesWhichFailedToProcess;
-        QList<GuidWithException> noteGuidsWhichFailedToExpunge;
-
-        UpdateSequenceNumbersByGuid processedNoteGuidsAndUsns;
-        UpdateSequenceNumbersByGuid cancelledNoteGuidsAndUsns;
-        QList<qevercloud::Guid> expungedNoteGuids;
-    };
-
     struct QUENTIER_EXPORT DownloadResourcesStatus : public Printable
     {
         QTextStream & print(QTextStream & strm) const override;
@@ -198,38 +134,6 @@ public:
 
     [[nodiscard]] virtual ISyncEventsNotifier * notifier() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadNotesStatus & lhs,
-    const ISynchronizer::DownloadNotesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadNotesStatus & lhs,
-    const ISynchronizer::DownloadNotesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadNotesStatus::NoteWithException & lhs,
-    const ISynchronizer::DownloadNotesStatus::NoteWithException & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadNotesStatus::NoteWithException & lhs,
-    const ISynchronizer::DownloadNotesStatus::NoteWithException & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadNotesStatus::GuidWithException & lhs,
-    const ISynchronizer::DownloadNotesStatus::GuidWithException & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadNotesStatus::GuidWithException & lhs,
-    const ISynchronizer::DownloadNotesStatus::GuidWithException & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & lhs,
-    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & lhs,
-    const ISynchronizer::DownloadNotesStatus::GuidWithUsn & rhs) noexcept;
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(
     const ISynchronizer::DownloadResourcesStatus & lhs,
