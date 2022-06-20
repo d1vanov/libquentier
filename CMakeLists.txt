@@ -113,6 +113,7 @@ set(LOCAL_STORAGE_HEADERS
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
     headers/quentier/local_storage/ILocalStoragePatch.h
+    headers/quentier/local_storage/IPatch.h
     headers/quentier/local_storage/DefaultLocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/Fwd.h
     headers/quentier/local_storage/Lists.h
@@ -390,6 +391,7 @@ set(${PROJECT_NAME}_SOURCES
     src/exception/RuntimeError.cpp
     src/local_storage/ILocalStorage.cpp
     src/local_storage/ILocalStorageCacheExpiryChecker.cpp
+    src/local_storage/IPatch.cpp
     src/local_storage/DefaultLocalStorageCacheExpiryChecker.cpp
     src/local_storage/LocalStorageManager.cpp
     src/local_storage/LocalStorageManager_p.cpp

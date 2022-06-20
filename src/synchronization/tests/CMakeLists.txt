@@ -30,6 +30,7 @@ target_link_libraries(${TESTS_NAME}
     ${LIBNAME}_private
     ${LIBNAME}
     ${LIBRARY_NAME}
+    ${LIBRARY_NAME}_testing_mocks
     ${GMOCK_LIBRARIES}
     GTest::GTest
     Qt5::Core)
