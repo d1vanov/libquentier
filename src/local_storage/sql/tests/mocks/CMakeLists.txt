@@ -25,5 +25,10 @@ target_sources(${MOCKS_NAME}
 target_link_libraries(${MOCKS_NAME}
   PUBLIC
     ${LIBRARY_NAME}
-    GTest::gmock
+    ${GMOCK_LIBRARIES}
+)
+
+target_include_directories(${MOCKS_NAME}
+  PUBLIC
+    ${GMOCK_INCLUDE_DIRS}
 )
