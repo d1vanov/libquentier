@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Dmitry Ivanov
+ * Copyright 2021-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -42,20 +42,20 @@ public:
      * @brief The ConflictResolution struct is a namespace inside which
      * several other structs determining actual conflict resolutions.
      */
-    struct ConflictResolution
+    struct QUENTIER_EXPORT ConflictResolution
     {
         /**
          * @brief The UseTheirs conflict resolution means "override mine version
          * with theirs version".
          */
-        struct UseTheirs
+        struct QUENTIER_EXPORT UseTheirs
         {};
 
         /**
          * @brief The UseMine conflict resolution means "override theirs version
          * with mine version".
          */
-        struct UseMine
+        struct QUENTIER_EXPORT UseMine
         {};
 
         /**
@@ -63,7 +63,7 @@ public:
          * and ignore mine version as it doesn't really conflict with theirs
          * version".
          */
-        struct IgnoreMine
+        struct QUENTIER_EXPORT IgnoreMine
         {};
 
         /**
@@ -105,7 +105,7 @@ public:
         ConflictResolution::MoveMine<qevercloud::Tag>>;
 
 public:
-    virtual ~ISyncConflictResolver() = default;
+    virtual ~ISyncConflictResolver() noexcept;
 
     [[nodiscard]] virtual QFuture<NotebookConflictResolution>
         resolveNotebookConflict(

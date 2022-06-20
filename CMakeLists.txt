@@ -128,6 +128,7 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncStateStorage.h
     headers/quentier/synchronization/IUserStore.h
     headers/quentier/synchronization/ISyncChunksDataCounters.h
+    headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
     headers/quentier/synchronization/types/AuthenticationInfo.h
@@ -408,6 +409,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/IAuthenticationManager.cpp
     src/synchronization/InkNoteImageDownloader.cpp
     src/synchronization/INoteStore.cpp
+    src/synchronization/ISyncConflictResolver.cpp
     src/synchronization/ISynchronizer.cpp
     src/synchronization/ISyncStateStorage.cpp
     src/synchronization/IUserStore.cpp
