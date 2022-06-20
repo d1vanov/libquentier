@@ -65,10 +65,9 @@ ResourcesProcessor::ResourcesProcessor(
     }
 }
 
-QFuture<IResourcesProcessor::DownloadResourcesStatus>
-    ResourcesProcessor::processResources(
-        const QList<qevercloud::SyncChunk> & syncChunks,
-        ICallbackWeakPtr callbackWeak)
+QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG(
         "synchronization::ResourcesProcessor",
@@ -396,10 +395,9 @@ void ResourcesProcessor::handleResourceConflict(
 
                     if (const auto callback = callbackWeak.lock()) {
                         callback->onResourceFailedToProcess(
-                            status->resourcesWhichFailedToProcess.last()
-                                .resource,
+                            status->resourcesWhichFailedToProcess.last().first,
                             *status->resourcesWhichFailedToProcess.last()
-                                 .exception);
+                                 .second);
                     }
 
                     resourcePromise->addResult(

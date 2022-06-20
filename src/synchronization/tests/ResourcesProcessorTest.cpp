@@ -456,7 +456,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
     EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
     ASSERT_EQ(status.resourcesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.resourcesWhichFailedToDownload[0].resource, resources[1]);
+    EXPECT_EQ(status.resourcesWhichFailedToDownload[0].first, resources[1]);
 
     ASSERT_EQ(
         status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
@@ -648,7 +648,7 @@ TEST_F(
     EXPECT_TRUE(status.cancelledResourceGuidsAndUsns.isEmpty());
 
     ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.resourcesWhichFailedToProcess[0].resource, resources[1]);
+    EXPECT_EQ(status.resourcesWhichFailedToProcess[0].first, resources[1]);
 
     ASSERT_EQ(
         status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
@@ -837,7 +837,7 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
     ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.resourcesWhichFailedToProcess[0].resource,
+        status.resourcesWhichFailedToProcess[0].first,
         addDataToResource(resources[1], 1));
 
     ASSERT_EQ(
@@ -1443,7 +1443,7 @@ TEST_F(
 
     ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.resourcesWhichFailedToProcess.begin()->resource, resources[1]);
+        status.resourcesWhichFailedToProcess.begin()->first, resources[1]);
 
     ASSERT_EQ(
         status.processedResourceGuidsAndUsns.size(), resources.size() - 1);
@@ -1655,7 +1655,7 @@ TEST_F(
 
     ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.resourcesWhichFailedToProcess.begin()->resource, resources[1]);
+        status.resourcesWhichFailedToProcess.begin()->first, resources[1]);
 
     ASSERT_EQ(
         status.processedResourceGuidsAndUsns.size(), resources.size() - 1);

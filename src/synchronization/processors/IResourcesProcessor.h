@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/DownloadResourcesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Resource.h>
@@ -36,8 +36,6 @@ class IResourcesProcessor
 {
 public:
     virtual ~IResourcesProcessor() = default;
-
-    using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
 
     struct ICallback
     {

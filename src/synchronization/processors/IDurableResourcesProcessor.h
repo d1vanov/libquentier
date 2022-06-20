@@ -20,7 +20,7 @@
 
 #include "../Fwd.h"
 
-#include <quentier/synchronization/ISynchronizer.h>
+#include <quentier/synchronization/types/DownloadResourcesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 
@@ -38,8 +38,6 @@ class IDurableResourcesProcessor
 {
 public:
     virtual ~IDurableResourcesProcessor() = default;
-
-    using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
 
     [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) = 0;

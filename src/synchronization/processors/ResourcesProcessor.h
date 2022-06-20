@@ -64,8 +64,7 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        ICallbackWeakPtr && callbackWeak,
-        qevercloud::Resource updatedResource,
+        ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void onFoundNoteOwningConflictingResource(
@@ -88,8 +87,7 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        ICallbackWeakPtr && callbackWeak,
-        qevercloud::Resource updatedResource,
+        ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
     void downloadFullResourceData(
@@ -97,15 +95,15 @@ private:
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        ICallbackWeakPtr && callbackWeak,
-        const qevercloud::Resource & resource, ResourceKind resourceKind);
+        ICallbackWeakPtr && callbackWeak, const qevercloud::Resource & resource,
+        ResourceKind resourceKind);
 
     void putResourceToLocalStorage(
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
-        ICallbackWeakPtr && callbackWeak,
-        qevercloud::Resource resource, ResourceKind putResourceKind);
+        ICallbackWeakPtr && callbackWeak, qevercloud::Resource resource,
+        ResourceKind putResourceKind);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

@@ -200,7 +200,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
             EXPECT_EQ(syncChunkResources, resources);
 
-            IDurableResourcesProcessor::DownloadResourcesStatus status;
+            DownloadResourcesStatus status;
             status.totalNewResources =
                 static_cast<quint64>(syncChunkResources.size());
 
@@ -215,8 +215,7 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
                 }
             }
 
-            return threading::makeReadyFuture<
-                IDurableResourcesProcessor::DownloadResourcesStatus>(
+            return threading::makeReadyFuture<DownloadResourcesStatus>(
                 std::move(status));
         });
 
@@ -274,88 +273,87 @@ TEST_F(
             m_mockResourcesProcessor, QDir{m_temporaryDir.path()});
 
     EXPECT_CALL(*m_mockResourcesProcessor, processResources)
-        .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
-                      const IResourcesProcessor::ICallbackWeakPtr &
-                          callbackWeak) {
-            const auto callback = callbackWeak.lock();
-            EXPECT_TRUE(callback);
+        .WillOnce(
+            [&](const QList<qevercloud::SyncChunk> & syncChunks,
+                const IResourcesProcessor::ICallbackWeakPtr & callbackWeak) {
+                const auto callback = callbackWeak.lock();
+                EXPECT_TRUE(callback);
 
-            const QList<qevercloud::Resource> syncChunkResources = [&] {
-                QList<qevercloud::Resource> result;
-                for (const auto & syncChunk: qAsConst(syncChunks)) {
-                    result << utils::collectResourcesFromSyncChunk(syncChunk);
+                const QList<qevercloud::Resource> syncChunkResources = [&] {
+                    QList<qevercloud::Resource> result;
+                    for (const auto & syncChunk: qAsConst(syncChunks)) {
+                        result
+                            << utils::collectResourcesFromSyncChunk(syncChunk);
+                    }
+                    return result;
+                }();
+
+                EXPECT_EQ(syncChunkResources, resources);
+
+                EXPECT_EQ(syncChunkResources.size(), 5);
+                if (syncChunkResources.size() != 5) {
+                    return threading::makeExceptionalFuture<
+                        DownloadResourcesStatus>(
+                        RuntimeError{ErrorString{"Invalid resource count"}});
                 }
-                return result;
-            }();
 
-            EXPECT_EQ(syncChunkResources, resources);
+                DownloadResourcesStatus status;
+                status.totalNewResources =
+                    static_cast<quint64>(syncChunkResources.size());
 
-            EXPECT_EQ(syncChunkResources.size(), 5);
-            if (syncChunkResources.size() != 5) {
-                return threading::makeExceptionalFuture<
-                    IDurableResourcesProcessor::DownloadResourcesStatus>(
-                    RuntimeError{ErrorString{"Invalid resource count"}});
-            }
+                // First resource gets marked as a successfully processed one
+                status.processedResourceGuidsAndUsns
+                    [syncChunkResources[0].guid().value()] =
+                    syncChunkResources[0].updateSequenceNum().value();
 
-            IDurableResourcesProcessor::DownloadResourcesStatus status;
-            status.totalNewResources =
-                static_cast<quint64>(syncChunkResources.size());
+                if (callback) {
+                    callback->onProcessedResource(
+                        *syncChunkResources[0].guid(),
+                        *syncChunkResources[0].updateSequenceNum());
+                }
 
-            // First resource gets marked as a successfully processed one
-            status.processedResourceGuidsAndUsns
-                [syncChunkResources[0].guid().value()] =
-                syncChunkResources[0].updateSequenceNum().value();
+                // Second resource is marked as failed to process one
+                status.resourcesWhichFailedToProcess
+                    << DownloadResourcesStatus::ResourceWithException{
+                           syncChunkResources[1],
+                           std::make_shared<RuntimeError>(
+                               ErrorString{"Failed to process resource"})};
 
-            if (callback) {
-                callback->onProcessedResource(
-                    *syncChunkResources[0].guid(),
-                    *syncChunkResources[0].updateSequenceNum());
-            }
+                if (callback) {
+                    callback->onResourceFailedToProcess(
+                        status.resourcesWhichFailedToProcess.last().first,
+                        *status.resourcesWhichFailedToProcess.last().second);
+                }
 
-            // Second resource is marked as failed to process one
-            status.resourcesWhichFailedToProcess << IDurableResourcesProcessor::
-                    DownloadResourcesStatus::ResourceWithException{
-                        syncChunkResources[1],
-                        std::make_shared<RuntimeError>(
-                            ErrorString{"Failed to process resource"})};
-
-            if (callback) {
-                callback->onResourceFailedToProcess(
-                    status.resourcesWhichFailedToProcess.last().resource,
-                    *status.resourcesWhichFailedToProcess.last().exception);
-            }
-
-            // Third resource is marked as failed to download one
-            status.resourcesWhichFailedToDownload
-                << IDurableResourcesProcessor::DownloadResourcesStatus::
-                       ResourceWithException{
+                // Third resource is marked as failed to download one
+                status.resourcesWhichFailedToDownload
+                    << DownloadResourcesStatus::ResourceWithException{
                            syncChunkResources[2],
                            std::make_shared<RuntimeError>(
                                ErrorString{"Failed to download resource"})};
 
-            if (callback) {
-                callback->onResourceFailedToDownload(
-                    status.resourcesWhichFailedToDownload.last().resource,
-                    *status.resourcesWhichFailedToDownload.last().exception);
-            }
-
-            // Fourth and fifth resources are marked as cancelled because, for
-            // example, the download error was API rate limit exceeding.
-            for (int i = 3; i < 5; ++i) {
-                status.cancelledResourceGuidsAndUsns
-                    [syncChunkResources[i].guid().value()] =
-                    syncChunkResources[i].updateSequenceNum().value();
-
                 if (callback) {
-                    callback->onResourceProcessingCancelled(
-                        syncChunkResources[i]);
+                    callback->onResourceFailedToDownload(
+                        status.resourcesWhichFailedToDownload.last().first,
+                        *status.resourcesWhichFailedToDownload.last().second);
                 }
-            }
 
-            return threading::makeReadyFuture<
-                IDurableResourcesProcessor::DownloadResourcesStatus>(
-                std::move(status));
-        });
+                // Fourth and fifth resources are marked as cancelled because,
+                // for example, the download error was API rate limit exceeding.
+                for (int i = 3; i < 5; ++i) {
+                    status.cancelledResourceGuidsAndUsns
+                        [syncChunkResources[i].guid().value()] =
+                        syncChunkResources[i].updateSequenceNum().value();
+
+                    if (callback) {
+                        callback->onResourceProcessingCancelled(
+                            syncChunkResources[i]);
+                    }
+                }
+
+                return threading::makeReadyFuture<DownloadResourcesStatus>(
+                    std::move(status));
+            });
 
     auto future = durableResourcesProcessor->processResources(syncChunks);
     ASSERT_TRUE(future.isFinished());
@@ -375,12 +373,11 @@ TEST_F(
 
     ASSERT_EQ(status.resourcesWhichFailedToProcess.size(), 1);
     EXPECT_EQ(
-        status.resourcesWhichFailedToProcess.constBegin()->resource,
-        resources[1]);
+        status.resourcesWhichFailedToProcess.constBegin()->first, resources[1]);
 
     ASSERT_EQ(status.resourcesWhichFailedToDownload.size(), 1);
     EXPECT_EQ(
-        status.resourcesWhichFailedToDownload.constBegin()->resource,
+        status.resourcesWhichFailedToDownload.constBegin()->first,
         resources[2]);
 
     ASSERT_EQ(status.cancelledResourceGuidsAndUsns.size(), 2);
@@ -614,8 +611,6 @@ TEST_P(
         return result;
     }();
 
-    using DownloadResourcesStatus = ISynchronizer::DownloadResourcesStatus;
-
     DownloadResourcesStatus currentResourcesStatus;
     currentResourcesStatus.totalNewResources =
         static_cast<quint64>(std::max<int>(resources.size(), 0));
@@ -635,8 +630,7 @@ TEST_P(
     }
 
     EXPECT_CALL(*m_mockResourcesProcessor, processResources(syncChunks, _))
-        .WillOnce(Return(threading::makeReadyFuture<
-                         IDurableResourcesProcessor::DownloadResourcesStatus>(
+        .WillOnce(Return(threading::makeReadyFuture<DownloadResourcesStatus>(
             DownloadResourcesStatus{currentResourcesStatus})));
 
     std::optional<DownloadResourcesStatus> previousResourcesStatus;
@@ -701,8 +695,7 @@ TEST_P(
                     }
                 }
 
-                return threading::makeReadyFuture<
-                    IDurableResourcesProcessor::DownloadResourcesStatus>(
+                return threading::makeReadyFuture<DownloadResourcesStatus>(
                     DownloadResourcesStatus{*previousResourcesStatus});
             });
     }

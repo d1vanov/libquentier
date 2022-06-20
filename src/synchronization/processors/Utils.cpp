@@ -328,13 +328,9 @@ DownloadNotesStatus mergeDownloadNotesStatuses(
     return lhs;
 }
 
-IResourcesProcessor::DownloadResourcesStatus mergeDownloadResourcesStatuses(
-    IResourcesProcessor::DownloadResourcesStatus lhs,
-    const IResourcesProcessor::DownloadResourcesStatus & rhs)
+DownloadResourcesStatus mergeDownloadResourcesStatuses(
+    DownloadResourcesStatus lhs, const DownloadResourcesStatus & rhs)
 {
-    using DownloadResourcesStatus =
-        IResourcesProcessor::DownloadResourcesStatus;
-
     lhs.totalNewResources += rhs.totalNewResources;
     lhs.totalUpdatedResources += rhs.totalUpdatedResources;
 
@@ -347,7 +343,7 @@ IResourcesProcessor::DownloadResourcesStatus mergeDownloadResourcesStatuses(
             rhsResourcesByGuid.reserve(rhs.size());
             for (auto it = rhs.constBegin(); it != rhs.constEnd(); ++it) {
                 const auto & resourceWithException = *it;
-                const auto & resource = resourceWithException.resource;
+                const auto & resource = resourceWithException.first;
                 if (Q_UNLIKELY(!resource.guid())) {
                     continue;
                 }
@@ -356,12 +352,12 @@ IResourcesProcessor::DownloadResourcesStatus mergeDownloadResourcesStatuses(
 
             std::set<Iter> replacedIters;
             for (auto it = lhs.begin(); it != lhs.end();) {
-                if (Q_UNLIKELY(!it->resource.guid())) {
+                if (Q_UNLIKELY(!it->first.guid())) {
                     it = lhs.erase(it);
                     continue;
                 }
 
-                const auto rit = rhsResourcesByGuid.find(*it->resource.guid());
+                const auto rit = rhsResourcesByGuid.find(*it->first.guid());
                 if (rit != rhsResourcesByGuid.end()) {
                     *it = *(*rit);
                     replacedIters.insert(*rit);

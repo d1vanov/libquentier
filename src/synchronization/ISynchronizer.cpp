@@ -23,80 +23,6 @@
 
 namespace quentier::synchronization {
 
-QTextStream & ISynchronizer::DownloadResourcesStatus::print(
-    QTextStream & strm) const
-{
-    strm << "ISynchronizer::DownloadResourcesStatus: "
-         << "totalNewResources = " << totalNewResources
-         << ", totalUpdatedResources = " << totalUpdatedResources;
-
-    const auto printResourceWithExceptionList =
-        [&strm](const QList<
-                ISynchronizer::DownloadResourcesStatus::ResourceWithException> &
-                    values) {
-            if (values.isEmpty()) {
-                strm << "<empty>, ";
-                return;
-            }
-
-            for (const auto & resourceWithException: qAsConst(values)) {
-                strm << "{" << resourceWithException << "};";
-            }
-            strm << " ";
-        };
-
-    strm << ", resourcesWhichFailedToDownload = ";
-    printResourceWithExceptionList(resourcesWhichFailedToDownload);
-
-    strm << "resourcesWhichFailedToProcess = ";
-    printResourceWithExceptionList(resourcesWhichFailedToProcess);
-
-    const auto printResourceGuidsAndUsns =
-        [&strm](const ISynchronizer::DownloadResourcesStatus::
-                    UpdateSequenceNumbersByGuid & usns) {
-            if (usns.isEmpty()) {
-                strm << "<empty>, ";
-                return;
-            }
-
-            for (const auto it: qevercloud::toRange(qAsConst(usns))) {
-                strm << "{" << it.key() << ": " << it.value() << "};";
-            }
-            strm << " ";
-        };
-
-    strm << "processedResourceGuidsAndUsns = ";
-    printResourceGuidsAndUsns(processedResourceGuidsAndUsns);
-
-    strm << "cancelledResourceGuidsAndUsns = ";
-    printResourceGuidsAndUsns(cancelledResourceGuidsAndUsns);
-
-    return strm;
-}
-
-QTextStream &
-    ISynchronizer::DownloadResourcesStatus::ResourceWithException::print(
-        QTextStream & strm) const
-{
-    strm << "ISynchronizer::DownloadResourcesStatus::ResourceWithException: "
-            "resource = "
-         << resource << ", exception: ";
-
-    if (exception) {
-        try {
-            exception->raise();
-        }
-        catch (const QException & e) {
-            strm << e.what();
-        }
-    }
-    else {
-        strm << "<no info>";
-    }
-
-    return strm;
-}
-
 QTextStream & ISynchronizer::SyncResult::print(QTextStream & strm) const
 {
     strm << "ISynchronizer::SyncResult: userAccountSyncState = "
@@ -144,46 +70,6 @@ QTextStream & ISynchronizer::SyncResult::print(QTextStream & strm) const
 
     strm << "syncStats = " << syncStats;
     return strm;
-}
-
-bool operator==(
-    const ISynchronizer::DownloadResourcesStatus & lhs,
-    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept
-{
-    // clang-format off
-    return lhs.totalNewResources == rhs.totalNewResources &&
-        lhs.totalUpdatedResources == rhs.totalUpdatedResources &&
-        lhs.resourcesWhichFailedToDownload ==
-            rhs.resourcesWhichFailedToDownload &&
-        lhs.resourcesWhichFailedToProcess ==
-            rhs.resourcesWhichFailedToProcess &&
-        lhs.processedResourceGuidsAndUsns ==
-            rhs.processedResourceGuidsAndUsns &&
-        lhs.cancelledResourceGuidsAndUsns == rhs.cancelledResourceGuidsAndUsns;
-    // clang-format on
-}
-
-bool operator!=(
-    const ISynchronizer::DownloadResourcesStatus & lhs,
-    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept
-{
-    return !(lhs == rhs);
-}
-
-bool operator==(
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
-        rhs) noexcept
-{
-    return lhs.resource == rhs.resource && lhs.exception == rhs.exception;
-}
-
-bool operator!=(
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
-        rhs) noexcept
-{
-    return !(lhs == rhs);
 }
 
 } // namespace quentier::synchronization

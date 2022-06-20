@@ -40,8 +40,8 @@ DurableResourcesProcessor::DurableResourcesProcessor(
     m_syncResourcesDir{[&] {
         QDir lastSyncDataDir{syncPersistentStorageDir.absoluteFilePath(
             QStringLiteral("lastSyncData"))};
-        return QDir{lastSyncDataDir.absoluteFilePath(
-            QStringLiteral("resources"))};
+        return QDir{
+            lastSyncDataDir.absoluteFilePath(QStringLiteral("resources"))};
     }()}
 {
     if (Q_UNLIKELY(!m_resourcesProcessor)) {
@@ -51,9 +51,8 @@ DurableResourcesProcessor::DurableResourcesProcessor(
     }
 }
 
-QFuture<ISynchronizer::DownloadResourcesStatus>
-    DurableResourcesProcessor::processResources(
-        const QList<qevercloud::SyncChunk> & syncChunks)
+QFuture<DownloadResourcesStatus> DurableResourcesProcessor::processResources(
+    const QList<qevercloud::SyncChunk> & syncChunks)
 {
     // First need to check whether there are resources which failed to be
     // processed or which processing was cancelled. If such resources exist,
@@ -67,8 +66,7 @@ QFuture<ISynchronizer::DownloadResourcesStatus>
         utils::processedResourcesInfoFromLastSync(m_syncResourcesDir);
 
     if (alreadyProcessedResourcesInfo.isEmpty()) {
-        return processResourcesImpl(
-            syncChunks, std::move(previousResources));
+        return processResourcesImpl(syncChunks, std::move(previousResources));
     }
 
     auto filteredSyncChunks = syncChunks;
@@ -181,8 +179,8 @@ void DurableResourcesProcessor::onResourceProcessingCancelled(
     catch (const std::exception & e) {
         QNWARNING(
             "synchronization::DurableResourcesProcessor",
-            "Failed to write cancelled resource: "
-                << e.what() << ", resource: " << resource);
+            "Failed to write cancelled resource: " << e.what() << ", resource: "
+                                                   << resource);
     }
     catch (...) {
         QNWARNING(
@@ -211,7 +209,7 @@ QList<qevercloud::Resource>
     return result;
 }
 
-QFuture<ISynchronizer::DownloadResourcesStatus>
+QFuture<DownloadResourcesStatus>
     DurableResourcesProcessor::processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Resource> previousResources)
@@ -241,8 +239,8 @@ QFuture<ISynchronizer::DownloadResourcesStatus>
                .setResources(std::move(previousResources))
                .build();
 
-    auto resourcesFuture = m_resourcesProcessor->processResources(
-        pseudoSyncChunks, selfWeak);
+    auto resourcesFuture =
+        m_resourcesProcessor->processResources(pseudoSyncChunks, selfWeak);
 
     threading::thenOrFailed(
         std::move(resourcesFuture), promise,
@@ -250,23 +248,23 @@ QFuture<ISynchronizer::DownloadResourcesStatus>
             selfWeak,
             [this, selfWeak, promise,
              syncChunks](DownloadResourcesStatus status) mutable {
-                 auto processResourcesFuture =
-                     processResourcesImpl(syncChunks, {});
+                auto processResourcesFuture =
+                    processResourcesImpl(syncChunks, {});
 
-                 threading::thenOrFailed(
-                     std::move(processResourcesFuture), promise,
-                     threading::TrackedTask{
-                         selfWeak,
-                         [selfWeak, promise,
-                          processResourcesStatus = std::move(status)](
-                              DownloadResourcesStatus status) mutable {
-                              status = utils::mergeDownloadResourcesStatuses(
-                                  std::move(status), processResourcesStatus);
+                threading::thenOrFailed(
+                    std::move(processResourcesFuture), promise,
+                    threading::TrackedTask{
+                        selfWeak,
+                        [selfWeak, promise,
+                         processResourcesStatus = std::move(status)](
+                            DownloadResourcesStatus status) mutable {
+                            status = utils::mergeDownloadResourcesStatuses(
+                                std::move(status), processResourcesStatus);
 
-                              promise->addResult(std::move(status));
-                              promise->finish();
-                          }});
-             }});
+                            promise->addResult(std::move(status));
+                            promise->finish();
+                        }});
+            }});
 
     return future;
 }

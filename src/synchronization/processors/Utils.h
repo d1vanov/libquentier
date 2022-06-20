@@ -62,10 +62,8 @@ void filterOutExpungedItems(
     DownloadNotesStatus lhs, const DownloadNotesStatus & rhs);
 
 // Merges DownloadResourcesStatuses: rhs into lhs.
-[[nodiscard]] IResourcesProcessor::DownloadResourcesStatus
-    mergeDownloadResourcesStatuses(
-        IResourcesProcessor::DownloadResourcesStatus lhs,
-        const IResourcesProcessor::DownloadResourcesStatus & rhs);
+[[nodiscard]] DownloadResourcesStatus mergeDownloadResourcesStatuses(
+    DownloadResourcesStatus lhs, const DownloadResourcesStatus & rhs);
 
 ////////////////////////////////////////////////////////////////////////////////
 

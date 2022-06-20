@@ -23,6 +23,7 @@
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
 #include <quentier/synchronization/types/AuthenticationInfo.h>
 #include <quentier/synchronization/types/DownloadNotesStatus.h>
+#include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/SyncOptions.h>
 #include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
@@ -55,38 +56,6 @@ namespace quentier::synchronization {
 class QUENTIER_EXPORT ISynchronizer
 {
 public:
-    struct QUENTIER_EXPORT DownloadResourcesStatus : public Printable
-    {
-        QTextStream & print(QTextStream & strm) const override;
-
-        struct QUENTIER_EXPORT ResourceWithException : public Printable
-        {
-            ResourceWithException() = default;
-
-            ResourceWithException(
-                qevercloud::Resource r, std::shared_ptr<QException> e) :
-                resource{std::move(r)},
-                exception{std::move(e)}
-            {}
-
-            QTextStream & print(QTextStream & strm) const override;
-
-            qevercloud::Resource resource;
-            std::shared_ptr<QException> exception;
-        };
-
-        using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
-
-        quint64 totalNewResources = 0UL;
-        quint64 totalUpdatedResources = 0UL;
-
-        QList<ResourceWithException> resourcesWhichFailedToDownload;
-        QList<ResourceWithException> resourcesWhichFailedToProcess;
-
-        UpdateSequenceNumbersByGuid processedResourceGuidsAndUsns;
-        UpdateSequenceNumbersByGuid cancelledResourceGuidsAndUsns;
-    };
-
     struct QUENTIER_EXPORT SyncResult : public Printable
     {
         QTextStream & print(QTextStream & strm) const override;
@@ -134,23 +103,5 @@ public:
 
     [[nodiscard]] virtual ISyncEventsNotifier * notifier() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadResourcesStatus & lhs,
-    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadResourcesStatus & lhs,
-    const ISynchronizer::DownloadResourcesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
-        rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException & lhs,
-    const ISynchronizer::DownloadResourcesStatus::ResourceWithException &
-        rhs) noexcept;
 
 } // namespace quentier::synchronization
