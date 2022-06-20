@@ -439,6 +439,8 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncResult.cpp
     src/synchronization/types/SyncState.cpp
     src/synchronization/types/SyncStats.cpp
+    src/threading/Future.cpp
+    src/threading/Runnable.cpp
     src/types/Account.cpp
     src/types/ErrorString.cpp
     src/types/NoteUtils.cpp

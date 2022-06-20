@@ -6,8 +6,7 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
-  Future.cpp
-  Runnable.cpp)
+  main.cpp)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
