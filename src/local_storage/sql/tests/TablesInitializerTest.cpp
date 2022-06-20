@@ -24,6 +24,7 @@
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QSqlQuery>
+#include <QTemporaryDir>
 #include <QTextStream>
 #include <QVariant>
 
@@ -60,9 +61,12 @@ TEST(TablesInitializerTest, InitializeTables)
 
     QFile referenceMasterTableFile{QStringLiteral(":/expected_db_schema.txt")};
     EXPECT_TRUE(referenceMasterTableFile.open(QIODevice::ReadOnly));
-    const auto referenceMasterTable = QString::fromUtf8(referenceMasterTableFile.readAll()).simplified();
+    const auto referenceMasterTable =
+        QString::fromUtf8(referenceMasterTableFile.readAll()).simplified();
 
-    QFile updatedMasterTable{QStringLiteral("/tmp/master_table_schema.txt")};
+    QTemporaryDir tempDir;
+    QFile updatedMasterTable{
+        tempDir.path() + QStringLiteral("/master_table_schema.txt")};
     EXPECT_TRUE(updatedMasterTable.open(QIODevice::WriteOnly));
     updatedMasterTable.write(masterTable.toUtf8());
     updatedMasterTable.close();
