@@ -110,6 +110,7 @@ set(ENML_HEADERS
     headers/quentier/enml/HTMLCleaner.h)
 
 set(LOCAL_STORAGE_HEADERS
+    headers/quentier/local_storage/ILocalStorage.h
     headers/quentier/local_storage/ILocalStorageCacheExpiryChecker.h
     headers/quentier/local_storage/ILocalStorageNotifier.h
     headers/quentier/local_storage/ILocalStoragePatch.h
