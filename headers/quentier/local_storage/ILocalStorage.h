@@ -230,20 +230,20 @@ public:
 
     struct QUENTIER_EXPORT ListOptionsBase
     {
-        ListOptionsBase() noexcept;
+        ListOptionsBase() noexcept {}; // NOLINT
 
-        ListObjectsOptions m_flags;
-        quint64 m_limit;
-        quint64 m_offset;
-        OrderDirection m_direction;
+        ListObjectsOptions m_flags = {};
+        quint64 m_limit = 0UL;
+        quint64 m_offset = 0UL;
+        OrderDirection m_direction = OrderDirection::Ascending;
     };
 
     struct QUENTIER_EXPORT ListNotebooksOptions : public ListOptionsBase
     {
-        ListNotebooksOptions() noexcept;
+        ListNotebooksOptions() noexcept {}; // NOLINT
 
-        ListNotebooksOrder m_order;
-        Affiliation m_affiliation;
+        ListNotebooksOrder m_order = ListNotebooksOrder::NoOrder;
+        Affiliation m_affiliation = Affiliation::Any;
         QList<qevercloud::Guid> m_linkedNotebookGuids;
     };
 
@@ -255,9 +255,9 @@ public:
 
     struct QUENTIER_EXPORT ListLinkedNotebooksOptions : public ListOptionsBase
     {
-        ListLinkedNotebooksOptions() noexcept;
+        ListLinkedNotebooksOptions() noexcept {}; // NOLINT
 
-        ListLinkedNotebooksOrder m_order;
+        ListLinkedNotebooksOrder m_order = ListLinkedNotebooksOrder::NoOrder;
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
@@ -268,9 +268,9 @@ public:
 
     struct QUENTIER_EXPORT ListSavedSearchesOptions : public ListOptionsBase
     {
-        ListSavedSearchesOptions() noexcept;
+        ListSavedSearchesOptions() noexcept {}; // NOLINT
 
-        ListSavedSearchesOrder m_order;
+        ListSavedSearchesOrder m_order = ListSavedSearchesOrder::NoOrder;
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
@@ -281,9 +281,9 @@ public:
 
     struct QUENTIER_EXPORT ListNotesOptions : public ListOptionsBase
     {
-        ListNotesOptions() noexcept;
+        ListNotesOptions() noexcept {}; // NOLINT
 
-        ListNotesOrder m_order;
+        ListNotesOrder m_order = ListNotesOrder::NoOrder;
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(
@@ -306,12 +306,12 @@ public:
 
     struct QUENTIER_EXPORT ListTagsOptions : public ListOptionsBase
     {
-        ListTagsOptions() noexcept;
+        ListTagsOptions() noexcept {}; // NOLINT
 
-        ListTagsOrder m_order;
-        Affiliation m_affiliation;
+        ListTagsOrder m_order = ListTagsOrder::NoOrder;
+        Affiliation m_affiliation = Affiliation::Any;
         QList<qevercloud::Guid> m_linkedNotebookGuids;
-        TagNotesRelation m_tagNotesRelation;
+        TagNotesRelation m_tagNotesRelation = TagNotesRelation::Any;
     };
 
     friend QUENTIER_EXPORT QTextStream & operator<<(

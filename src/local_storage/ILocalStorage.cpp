@@ -627,38 +627,6 @@ bool compareListOptionsBase(
 
 } // namespace
 
-ILocalStorage::ListOptionsBase::ListOptionsBase() noexcept :
-    m_flags{ILocalStorage::ListObjectsOptions{
-        ILocalStorage::ListObjectsOption::ListAll}},
-    m_limit{0}, m_offset{0}, m_direction{
-                                 ILocalStorage::OrderDirection::Ascending}
-{}
-
-ILocalStorage::ListNotebooksOptions::ListNotebooksOptions() noexcept :
-    ListOptionsBase(), m_order{ILocalStorage::ListNotebooksOrder::NoOrder},
-    m_affiliation{ILocalStorage::Affiliation::Any}
-{}
-
-ILocalStorage::ListLinkedNotebooksOptions::ListLinkedNotebooksOptions() noexcept
-    :
-    ListOptionsBase(),
-    m_order{ILocalStorage::ListLinkedNotebooksOrder::NoOrder}
-{}
-
-ILocalStorage::ListSavedSearchesOptions::ListSavedSearchesOptions() noexcept :
-    ListOptionsBase(), m_order{ILocalStorage::ListSavedSearchesOrder::NoOrder}
-{}
-
-ILocalStorage::ListNotesOptions::ListNotesOptions() noexcept :
-    ListOptionsBase(), m_order{ILocalStorage::ListNotesOrder::NoOrder}
-{}
-
-ILocalStorage::ListTagsOptions::ListTagsOptions() noexcept :
-    ListOptionsBase(), m_order{ILocalStorage::ListTagsOrder::NoOrder},
-    m_affiliation{ILocalStorage::Affiliation::Any},
-    m_tagNotesRelation{ILocalStorage::TagNotesRelation::Any}
-{}
-
 QTextStream & operator<<(
     QTextStream & strm, const ILocalStorage::StartupOption option)
 {
