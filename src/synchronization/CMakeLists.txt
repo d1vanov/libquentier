@@ -6,7 +6,10 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  Downloader.cpp
+  Downloader.h
   Fwd.h
+  IDownloader.h
   IReceiver.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
