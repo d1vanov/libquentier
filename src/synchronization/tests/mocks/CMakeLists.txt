@@ -21,6 +21,8 @@ target_sources(${MOCKS_NAME}
     MockISimpleSavedSearchSyncConflictResolver.h
     MockISimpleTagSyncConflictResolver.h
     MockISyncChunksDownloader.h
+    MockISyncChunksProvider.h
+    MockISyncChunksStorage.h
     qevercloud/services/MockINoteStore.h
   PRIVATE
     CheckBuild.cpp
