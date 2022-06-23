@@ -1,5 +1,6 @@
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include "MockIDurableNotesProcessor.h"
+#include "MockIDurableResourcesProcessor.h"
 #include "MockINoteFullDataDownloader.h"
 #include "MockINotesProcessor.h"
 #include "MockISimpleNotebookSyncConflictResolver.h"
