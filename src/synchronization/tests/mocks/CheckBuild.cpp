@@ -6,6 +6,7 @@
 #include "MockINoteFullDataDownloader.h"
 #include "MockINotesProcessor.h"
 #include "MockISavedSearchesProcessor.h"
+#include "MockITagsProcessor.h"
 #include "MockISimpleNotebookSyncConflictResolver.h"
 #include "MockISimpleNoteSyncConflictResolver.h"
 #include "MockISimpleSavedSearchSyncConflictResolver.h"

@@ -19,6 +19,7 @@ target_sources(${MOCKS_NAME}
     MockIResourceFullDataDownloader.h
     MockIResourcesProcessor.h
     MockISavedSearchesProcessor.h
+    MockITagsProcessor.h
     MockISimpleNotebookSyncConflictResolver.h
     MockISimpleNoteSyncConflictResolver.h
     MockISimpleSavedSearchSyncConflictResolver.h
