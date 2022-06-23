@@ -2,6 +2,7 @@
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
 #include "MockILinkedNotebooksProcessor.h"
+#include "MockINotebooksProcessor.h"
 #include "MockINoteFullDataDownloader.h"
 #include "MockINotesProcessor.h"
 #include "MockISimpleNotebookSyncConflictResolver.h"

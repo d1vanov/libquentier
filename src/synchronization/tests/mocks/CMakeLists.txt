@@ -13,6 +13,7 @@ target_sources(${MOCKS_NAME}
     MockIDurableNotesProcessor.h
     MockIDurableResourcesProcessor.h
     MockILinkedNotebooksProcessor.h
+    MockINotebooksProcessor.h
     MockINoteFullDataDownloader.h
     MockINotesProcessor.h
     MockIResourceFullDataDownloader.h
