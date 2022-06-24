@@ -1,4 +1,5 @@
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
+#include "MockIAuthenticator.h"
 #include "MockIDurableNotesProcessor.h"
 #include "MockIDurableResourcesProcessor.h"
 #include "MockILinkedNotebooksProcessor.h"

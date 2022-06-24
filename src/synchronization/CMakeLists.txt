@@ -9,6 +9,7 @@ target_sources(${LIBRARY_NAME}
   Downloader.cpp
   Downloader.h
   Fwd.h
+  IAuthenticator.h
   IDownloader.h
   IReceiver.h
   SynchronizationMode.h
