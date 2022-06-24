@@ -21,6 +21,8 @@
 #include "IDownloader.h"
 #include "Fwd.h"
 
+#include <QDir>
+
 namespace quentier::synchronization {
 
 class Downloader final :
@@ -35,7 +37,8 @@ public:
         INotesProcessorPtr notesProcessor,
         IResourcesProcessorPtr resourcesProcessor,
         ISavedSearchesProcessorPtr savedSearchesProcessor,
-        ITagsProcessorPtr tagsProcessor);
+        ITagsProcessorPtr tagsProcessor,
+        const QDir & syncPersistentStorageDir);
 
     [[nodiscard]] QFuture<Result> download() override;
 
@@ -47,6 +50,7 @@ private:
     IResourcesProcessorPtr m_resourcesProcessor;
     ISavedSearchesProcessorPtr m_savedSearchesProcessor;
     ITagsProcessorPtr m_tagsProcessor;
+    QDir m_syncPersistentStorageDir;
 };
 
 } // namespace quentier::synchronization

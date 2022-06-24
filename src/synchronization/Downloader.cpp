@@ -30,14 +30,16 @@ Downloader::Downloader(
     INotesProcessorPtr notesProcessor,
     IResourcesProcessorPtr resourcesProcessor,
     ISavedSearchesProcessorPtr savedSearchesProcessor,
-    ITagsProcessorPtr tagsProcessor) :
+    ITagsProcessorPtr tagsProcessor,
+    const QDir & syncPersistentStorageDir) :
     m_syncChunksProvider{std::move(syncChunksProvider)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
     m_notebooksProcessor{std::move(notebooksProcessor)},
     m_notesProcessor{std::move(notesProcessor)},
     m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
-    m_tagsProcessor{std::move(tagsProcessor)}
+    m_tagsProcessor{std::move(tagsProcessor)},
+    m_syncPersistentStorageDir{syncPersistentStorageDir}
 {
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(

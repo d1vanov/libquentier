@@ -19,6 +19,7 @@
 #include "synchronization/Downloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/utility/FileSystem.h>
 
 #include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
 #include <synchronization/tests/mocks/MockINotebooksProcessor.h>
@@ -27,6 +28,8 @@
 #include <synchronization/tests/mocks/MockISavedSearchesProcessor.h>
 #include <synchronization/tests/mocks/MockISyncChunksProvider.h>
 #include <synchronization/tests/mocks/MockITagsProcessor.h>
+
+#include <QTemporaryDir>
 
 #include <gtest/gtest.h>
 
@@ -39,6 +42,23 @@ using testing::StrictMock;
 
 class DownloaderTest : public testing::Test
 {
+protected:
+    void TearDown() override
+    {
+        QDir dir{m_temporaryDir.path()};
+        const auto entries =
+            dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+
+        for (const auto & entry: qAsConst(entries)) {
+            if (entry.isDir()) {
+                ASSERT_TRUE(removeDir(entry.absoluteFilePath()));
+            }
+            else {
+                ASSERT_TRUE(removeFile(entry.absoluteFilePath()));
+            }
+        }
+    }
+
 protected:
     const std::shared_ptr<mocks::MockISyncChunksProvider>
         m_mockSyncChunksProvider =
@@ -65,6 +85,8 @@ protected:
 
     const std::shared_ptr<mocks::MockITagsProcessor> m_mockTagsProcessor =
         std::make_shared<StrictMock<mocks::MockITagsProcessor>>();
+
+    QTemporaryDir m_temporaryDir;
 };
 
 TEST_F(DownloaderTest, Ctor)
@@ -77,7 +99,8 @@ TEST_F(DownloaderTest, Ctor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor));
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}));
 }
 
 TEST_F(DownloaderTest, CtorNullSyncChunksProvider)
@@ -90,7 +113,8 @@ TEST_F(DownloaderTest, CtorNullSyncChunksProvider)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -104,7 +128,8 @@ TEST_F(DownloaderTest, CtorNullLinkedNotebooksProcessor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -118,7 +143,8 @@ TEST_F(DownloaderTest, CtorNullNotebooksProcessor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -132,7 +158,8 @@ TEST_F(DownloaderTest, CtorNullNotesProcessor)
             nullptr,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -146,7 +173,8 @@ TEST_F(DownloaderTest, CtorNullResourcesProcessor)
             m_mockNotesProcessor,
             nullptr,
             m_mockSavedSearchesProcessor,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -160,7 +188,8 @@ TEST_F(DownloaderTest, CtorNullSavedSearchesProcessor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             nullptr,
-            m_mockTagsProcessor),
+            m_mockTagsProcessor,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
@@ -174,7 +203,8 @@ TEST_F(DownloaderTest, CtorNullTagsProcessor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
-            nullptr),
+            nullptr,
+            QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
 
