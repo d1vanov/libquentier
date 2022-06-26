@@ -21,9 +21,10 @@
 #include <quentier/local_storage/Fwd.h>
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/ISyncChunksDataCounters.h>
-#include <quentier/synchronization/types/AuthenticationInfo.h>
 #include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
+#include <quentier/synchronization/types/Fwd.h>
+#include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/synchronization/types/SyncOptions.h>
 #include <quentier/synchronization/types/SyncResult.h>
 #include <quentier/synchronization/types/SyncState.h>
@@ -69,10 +70,10 @@ public:
      */
     [[nodiscard]] virtual SyncOptions options() const = 0;
 
-    [[nodiscard]] virtual QFuture<AuthenticationInfo>
+    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateNewAccount() = 0;
 
-    [[nodiscard]] virtual QFuture<AuthenticationInfo> authenticateAccount(
+    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) = 0;
 
     [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(

@@ -30,44 +30,42 @@
 namespace quentier::synchronization {
 
 /**
- * @brief The AuthenticationInfo structure represents the information
+ * @brief The IAuthenticationInfo interface represents the information
  * obtained through OAuth and necessary to access Evernote API
  */
-struct QUENTIER_EXPORT AuthenticationInfo : public Printable
+struct QUENTIER_EXPORT IAuthenticationInfo : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
-
     /**
      * Identifier of the authenticated user
      */
-    qevercloud::UserID userId = 0;
+    [[nodiscard]] virtual qevercloud::UserID userId() const = 0;
 
     /**
      * Authentication token which needs to be used for access to Evernote API
      */
-    QString authToken;
+    [[nodiscard]] virtual QString authToken() const = 0;
 
     /**
      * Expiration timestamp for the authentication token
      */
-    qevercloud::Timestamp authTokenExpirationTime = 0;
+    [[nodiscard]] virtual qevercloud::Timestamp authTokenExpirationTime() const = 0;
 
     /**
      * Shard identifier which needs to be used for access to Evernote API
      * along with the authentication token
      */
-    QString shardId;
+    [[nodiscard]] virtual QString shardId() const = 0;
 
     /**
      * Url of the note store service for this user
      */
-    QString noteStoreUrl;
+    [[nodiscard]] virtual QString noteStoreUrl() const = 0;
 
     /**
      * Url prefix for Evernote Web API.
      * @see qevercloud::PublicUserInfo::webApiUrlPrefix
      */
-    QString webApiUrlPrefix;
+    [[nodiscard]] virtual QString webApiUrlPrefix() const = 0;
 
     /**
      * The list of network cookies received during OAuth procedure. Although
@@ -75,13 +73,7 @@ struct QUENTIER_EXPORT AuthenticationInfo : public Printable
      * to be used for access to user store. See this discussion for reference:
      * https://discussion.evernote.com/forums/topic/124257-calls-to-userstore-from-evernote-api-stopped-working/#comment-562695
      */
-    QList<QNetworkCookie> userStoreCookies;
+    [[nodiscard]] virtual QList<QNetworkCookie> userStoreCookies() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const AuthenticationInfo & lhs, const AuthenticationInfo & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const AuthenticationInfo & lhs, const AuthenticationInfo & rhs) noexcept;
 
 } // namespace quentier::synchronization

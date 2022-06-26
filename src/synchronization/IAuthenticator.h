@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/AuthenticationInfo.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
 
 #include <QFuture>
@@ -30,10 +30,10 @@ class IAuthenticator
 public:
     virtual ~IAuthenticator() = default;
 
-    [[nodiscard]] virtual QFuture<AuthenticationInfo>
+    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateNewAccount() = 0;
 
-    [[nodiscard]] virtual QFuture<AuthenticationInfo> authenticateAccount(
+    [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) = 0;
 };
 

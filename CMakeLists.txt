@@ -133,9 +133,10 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/types/AuthenticationInfo.h
     headers/quentier/synchronization/types/DownloadNotesStatus.h
     headers/quentier/synchronization/types/DownloadResourcesStatus.h
+    headers/quentier/synchronization/types/Fwd.h
+    headers/quentier/synchronization/types/IAuthenticationInfo.h
     headers/quentier/synchronization/types/SyncOptions.h
     headers/quentier/synchronization/types/SyncResult.h
     headers/quentier/synchronization/types/SyncState.h
@@ -258,6 +259,7 @@ set(PRIVATE_HEADERS
     src/synchronization/NoteSyncConflictResolver.h
     src/synchronization/NoteSyncCache.h
     src/synchronization/FullSyncStaleDataItemsExpunger.h
+    src/synchronization/types/AuthenticationInfo.h
     src/utility/keychain/CompositeKeychainService.h
     src/utility/keychain/MigratingKeychainService.h
     src/utility/keychain/QtKeychainService.h

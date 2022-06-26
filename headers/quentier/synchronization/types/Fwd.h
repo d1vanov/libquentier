@@ -18,22 +18,11 @@
 
 #pragma once
 
-#include <synchronization/IAuthenticator.h>
+#include <memory>
 
-#include <gmock/gmock.h>
+namespace quentier::synchronization {
 
-namespace quentier::synchronization::tests::mocks {
+struct IAuthenticationInfo;
+using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
 
-class MockIAuthenticator : public IAuthenticator
-{
-public:
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateNewAccount, (),
-        (override));
-
-    MOCK_METHOD(
-        QFuture<IAuthenticationInfoPtr>, authenticateAccount, (Account account),
-        (override));
-};
-
-} // namespace quentier::synchronization::tests::mocks
+} // namespace quentier::synchronization

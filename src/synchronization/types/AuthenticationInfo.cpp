@@ -16,7 +16,8 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/AuthenticationInfo.h>
+#include "AuthenticationInfo.h"
+
 #include <quentier/utility/DateTime.h>
 
 #include <QTextStream>
@@ -25,19 +26,19 @@ namespace quentier::synchronization {
 
 QTextStream & AuthenticationInfo::print(QTextStream & strm) const
 {
-    strm << "AuthenticationInfo: userId = " << userId
-         << ", authToken size = " << authToken.size()
+    strm << "AuthenticationInfo: userId = " << m_userId
+         << ", authToken size = " << m_authToken.size()
          << ", authTokenExpirationTime = "
-         << printableDateTimeFromTimestamp(authTokenExpirationTime)
-         << ", shardId = " << shardId << ", noteStoreUrl = " << noteStoreUrl
-         << ", webApiUrlPrefix = " << webApiUrlPrefix;
+         << printableDateTimeFromTimestamp(m_authTokenExpirationTime)
+         << ", shardId = " << m_shardId << ", noteStoreUrl = " << m_noteStoreUrl
+         << ", webApiUrlPrefix = " << m_webApiUrlPrefix;
 
     strm << ", userStoreCookies: ";
-    if (userStoreCookies.isEmpty()) {
+    if (m_userStoreCookies.isEmpty()) {
         strm << "<empty>";
     }
     else {
-        for (const auto & cookie: qAsConst(userStoreCookies)) {
+        for (const auto & cookie: qAsConst(m_userStoreCookies)) {
             strm << "{" << QString::fromUtf8(cookie.toRawForm()) << "};";
         }
     }
@@ -45,14 +46,51 @@ QTextStream & AuthenticationInfo::print(QTextStream & strm) const
     return strm;
 }
 
+qevercloud::UserID AuthenticationInfo::userId() const noexcept
+{
+    return m_userId;
+}
+
+QString AuthenticationInfo::authToken() const
+{
+    return m_authToken;
+}
+
+qevercloud::Timestamp AuthenticationInfo::authTokenExpirationTime()
+    const noexcept
+{
+    return m_authTokenExpirationTime;
+}
+
+QString AuthenticationInfo::shardId() const
+{
+    return m_shardId;
+}
+
+QString AuthenticationInfo::noteStoreUrl() const
+{
+    return m_noteStoreUrl;
+}
+
+QString AuthenticationInfo::webApiUrlPrefix() const
+{
+    return m_webApiUrlPrefix;
+}
+
+QList<QNetworkCookie> AuthenticationInfo::userStoreCookies() const
+{
+    return m_userStoreCookies;
+}
+
 bool operator==(
     const AuthenticationInfo & lhs, const AuthenticationInfo & rhs) noexcept
 {
-    return lhs.userId == rhs.userId && lhs.authToken == rhs.authToken &&
-        lhs.authTokenExpirationTime == rhs.authTokenExpirationTime &&
-        lhs.shardId == rhs.shardId && lhs.noteStoreUrl == rhs.noteStoreUrl &&
-        lhs.webApiUrlPrefix == rhs.webApiUrlPrefix &&
-        lhs.userStoreCookies == rhs.userStoreCookies;
+    return lhs.m_userId == rhs.m_userId && lhs.m_authToken == rhs.m_authToken &&
+        lhs.m_authTokenExpirationTime == rhs.m_authTokenExpirationTime &&
+        lhs.m_shardId == rhs.m_shardId &&
+        lhs.m_noteStoreUrl == rhs.m_noteStoreUrl &&
+        lhs.m_webApiUrlPrefix == rhs.m_webApiUrlPrefix &&
+        lhs.m_userStoreCookies == rhs.m_userStoreCookies;
 }
 
 bool operator!=(
