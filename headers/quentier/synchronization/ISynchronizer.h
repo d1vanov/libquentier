@@ -25,7 +25,7 @@
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
-#include <quentier/synchronization/types/SyncOptions.h>
+#include <quentier/synchronization/types/ISyncOptions.h>
 #include <quentier/synchronization/types/SyncResult.h>
 #include <quentier/synchronization/types/SyncState.h>
 #include <quentier/synchronization/types/SyncStats.h>
@@ -68,7 +68,7 @@ public:
     /**
      * @return options passed to ISynchronizer on the last sync
      */
-    [[nodiscard]] virtual SyncOptions options() const = 0;
+    [[nodiscard]] virtual ISyncOptionsPtr options() const = 0;
 
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateNewAccount() = 0;
@@ -78,7 +78,8 @@ public:
 
     [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
         Account account, ISyncConflictResolverPtr syncConflictResolver,
-        local_storage::ILocalStoragePtr localStorage, SyncOptions options) = 0;
+        local_storage::ILocalStoragePtr localStorage,
+        ISyncOptionsPtr options) = 0;
 
     [[nodiscard]] virtual QFuture<void> revokeAuthentication(
         qevercloud::UserID userId) = 0;

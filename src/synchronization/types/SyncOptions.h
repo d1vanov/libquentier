@@ -18,28 +18,23 @@
 
 #pragma once
 
-#include <quentier/utility/Linkage.h>
-#include <quentier/utility/Printable.h>
-
-#include <QDir>
-
-#include <optional>
+#include <quentier/synchronization/types/ISyncOptions.h>
 
 namespace quentier::synchronization {
 
 /**
  * @brief Options for synchronization process
  */
-struct QUENTIER_EXPORT SyncOptions : public Printable
+struct SyncOptions final : public ISyncOptions
 {
-    QTextStream & print(QTextStream & strm) const override;
+    ~SyncOptions() noexcept override = default;
 
     /**
      * Flag to enable or disable downloading of note thumbnails during the sync.
      * Note thumbnails are stored inside the local storage along with other
      * note data.
      */
-    bool downloadNoteThumbnails = false;
+    [[nodiscard]] bool downloadNoteThumbnails() const noexcept override;
 
     /**
      * Directory to store the downloaded ink note images in. If not set, ink
@@ -54,7 +49,12 @@ struct QUENTIER_EXPORT SyncOptions : public Printable
      *
      * TODO: clarify the storage layout within this directory.
      */
-    std::optional<QDir> inkNoteImagesStorageDir;
+    [[nodiscard]] std::optional<QDir> inkNoteImagesStorageDir() const override;
+
+    QTextStream & print(QTextStream & strm) const override;
+
+    bool m_downloadNoteThumbnails = false;
+    std::optional<QDir> m_inkNoteImagesStorageDir;
 };
 
 [[nodiscard]] QUENTIER_EXPORT bool operator==(

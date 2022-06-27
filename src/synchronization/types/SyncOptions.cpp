@@ -16,30 +16,41 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/SyncOptions.h>
+#include "SyncOptions.h"
 
 namespace quentier::synchronization {
 
-bool operator==(const SyncOptions & lhs, const SyncOptions & rhs) noexcept
+bool SyncOptions::downloadNoteThumbnails() const noexcept
 {
-    return lhs.downloadNoteThumbnails == rhs.downloadNoteThumbnails &&
-        lhs.inkNoteImagesStorageDir == rhs.inkNoteImagesStorageDir;
+    return m_downloadNoteThumbnails;
 }
 
-bool operator!=(const SyncOptions & lhs, const SyncOptions & rhs) noexcept
+std::optional<QDir> SyncOptions::inkNoteImagesStorageDir() const
 {
-    return !(lhs == rhs);
+    return m_inkNoteImagesStorageDir;
 }
 
 QTextStream & SyncOptions::print(QTextStream & strm) const
 {
     strm << "SyncOptions: downloadNoteThumbnails = "
-         << (downloadNoteThumbnails ? "true" : "false")
+         << (m_downloadNoteThumbnails ? "true" : "false")
          << ", inkNoteImagesStorageDir = "
-         << (inkNoteImagesStorageDir ? inkNoteImagesStorageDir->absolutePath()
-                                     : QString::fromUtf8("<not set>"));
+         << (m_inkNoteImagesStorageDir
+                 ? m_inkNoteImagesStorageDir->absolutePath()
+                 : QString::fromUtf8("<not set>"));
 
     return strm;
+}
+
+bool operator==(const SyncOptions & lhs, const SyncOptions & rhs) noexcept
+{
+    return lhs.m_downloadNoteThumbnails == rhs.m_downloadNoteThumbnails &&
+        lhs.m_inkNoteImagesStorageDir == rhs.m_inkNoteImagesStorageDir;
+}
+
+bool operator!=(const SyncOptions & lhs, const SyncOptions & rhs) noexcept
+{
+    return !(lhs == rhs);
 }
 
 } // namespace quentier::synchronization

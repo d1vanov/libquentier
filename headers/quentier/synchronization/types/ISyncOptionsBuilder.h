@@ -18,17 +18,27 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/synchronization/types/Fwd.h>
+#include <quentier/utility/Linkage.h>
+
+#include <QDir>
+
+#include <optional>
 
 namespace quentier::synchronization {
 
-struct IAuthenticationInfo;
-using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
+struct QUENTIER_EXPORT ISyncOptionsBuilder
+{
+    virtual ~ISyncOptionsBuilder() noexcept = default;
 
-struct ISyncOptions;
-using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
+    virtual ISyncOptionsBuilder & setDownloadNoteThumbnails(bool value) = 0;
 
-struct ISyncOptionsBuilder;
-using ISyncOptionsBuilderPtr = std::shared_ptr<ISyncOptionsBuilder>;
+    virtual ISyncOptionsBuilder & setInkNoteImagesStorageDir(
+        std::optional<QDir> dir) = 0;
+
+    [[nodiscard]] virtual ISyncOptionsPtr build() = 0;
+};
+
+[[nodiscard]] ISyncOptionsBuilderPtr QUENTIER_EXPORT createSyncOptionsBuilder();
 
 } // namespace quentier::synchronization

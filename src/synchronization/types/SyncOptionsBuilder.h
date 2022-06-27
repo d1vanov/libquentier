@@ -18,17 +18,24 @@
 
 #pragma once
 
-#include <memory>
+#include <quentier/synchronization/types/ISyncOptionsBuilder.h>
 
 namespace quentier::synchronization {
 
-struct IAuthenticationInfo;
-using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
+class SyncOptionsBuilder final : public ISyncOptionsBuilder
+{
+public:
+    ISyncOptionsBuilder & setDownloadNoteThumbnails(
+        bool value) noexcept override;
 
-struct ISyncOptions;
-using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
+    ISyncOptionsBuilder & setInkNoteImagesStorageDir(
+        std::optional<QDir> dir) override;
 
-struct ISyncOptionsBuilder;
-using ISyncOptionsBuilderPtr = std::shared_ptr<ISyncOptionsBuilder>;
+    [[nodiscard]] ISyncOptionsPtr build() override;
+
+private:
+    bool m_downloadNoteThumbnails = false;
+    std::optional<QDir> m_inkNoteImagesStorageDir;
+};
 
 } // namespace quentier::synchronization
