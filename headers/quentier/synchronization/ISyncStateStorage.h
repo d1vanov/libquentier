@@ -20,6 +20,8 @@
 #define LIB_QUENTIER_SYNCHRONIZATION_I_SYNC_STATE_STORAGE_H
 
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/synchronization/types/Fwd.h>
+#include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/types/Account.h>
 #include <quentier/utility/Linkage.h>
 
@@ -42,28 +44,8 @@ class QUENTIER_EXPORT ISyncStateStorage : public QObject
 {
     Q_OBJECT
 public:
-    /**
-     * @brief The ISyncState interface provides accessory methods to determine
-     * the sync state for the account
-     */
-    class QUENTIER_EXPORT ISyncState : public Printable
-    {
-    public:
-        [[nodiscard]] virtual qint32 userDataUpdateCount() const = 0;
-
-        [[nodiscard]] virtual qevercloud::Timestamp userDataLastSyncTime()
-            const = 0;
-
-        [[nodiscard]] virtual QHash<QString, qint32>
-        linkedNotebookUpdateCounts() const = 0;
-
-        [[nodiscard]] virtual QHash<QString, qevercloud::Timestamp>
-        linkedNotebookLastSyncTimes() const = 0;
-
-        QTextStream & print(QTextStream & strm) const override;
-    };
-
-    using ISyncStatePtr = std::shared_ptr<ISyncState>;
+    using ISyncState = synchronization::ISyncState;
+    using ISyncStatePtr = synchronization::ISyncStatePtr;
 
 public:
     explicit ISyncStateStorage(QObject * parent = nullptr) : QObject(parent) {}

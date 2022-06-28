@@ -16,25 +16,74 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/SyncState.h>
+#include "SyncState.h"
+
 #include <quentier/utility/DateTime.h>
+
+#include <qevercloud/utility/ToRange.h>
 
 #include <QTextStream>
 
 namespace quentier::synchronization {
 
+qint32 SyncState::userDataUpdateCount() const noexcept
+{
+    return m_userDataUpdateCount;
+}
+
+qevercloud::Timestamp SyncState::userDataLastSyncTime() const noexcept
+{
+    return m_userDataLastSyncTime;
+}
+
+QHash<qevercloud::Guid, qint32> SyncState::linkedNotebookUpdateCounts() const
+{
+    return m_linkedNotebookUpdateCounts;
+}
+
+QHash<qevercloud::Guid, qevercloud::Timestamp>
+    SyncState::linkedNotebookLastSyncTimes() const
+{
+    return m_linkedNotebookLastSyncTimes;
+}
+
 QTextStream & SyncState::print(QTextStream & strm) const
 {
-    strm << "SyncState: updateCount = " << updateCount
-         << ", lastSyncTime = " << printableDateTimeFromTimestamp(lastSyncTime);
+    strm << "SyncState: userDataUpdateCount = " << m_userDataUpdateCount
+         << ", userDataLastSyncTime = "
+         << printableDateTimeFromTimestamp(m_userDataLastSyncTime);
+
+    strm << ", linked notebook update counts: ";
+    if (m_linkedNotebookUpdateCounts.isEmpty()) {
+        strm << "<empty>, ";
+    }
+    else {
+        for (const auto it: qevercloud::toRange(m_linkedNotebookUpdateCounts)) {
+            strm << "[" << it.key() << " => " << it.value() << "]; ";
+        }
+    }
+
+    strm << "linked notebook last sync times: ";
+    if (m_linkedNotebookLastSyncTimes.isEmpty()) {
+        strm << "<empty>";
+    }
+    else {
+        for (const auto it: qevercloud::toRange(m_linkedNotebookLastSyncTimes))
+        {
+            strm << "[" << it.key() << " => "
+                 << printableDateTimeFromTimestamp(it.value()) << "]; ";
+        }
+    }
 
     return strm;
 }
 
 bool operator==(const SyncState & lhs, const SyncState & rhs) noexcept
 {
-    return lhs.updateCount == rhs.updateCount &&
-        lhs.lastSyncTime == rhs.lastSyncTime;
+    return lhs.m_userDataUpdateCount == rhs.m_userDataUpdateCount &&
+        lhs.m_userDataLastSyncTime == rhs.m_userDataLastSyncTime &&
+        lhs.m_linkedNotebookUpdateCounts == rhs.m_linkedNotebookUpdateCounts &&
+        lhs.m_linkedNotebookLastSyncTimes == rhs.m_linkedNotebookLastSyncTimes;
 }
 
 bool operator!=(const SyncState & lhs, const SyncState & rhs) noexcept

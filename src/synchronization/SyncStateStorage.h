@@ -27,42 +27,6 @@ class Q_DECL_HIDDEN SyncStateStorage final : public ISyncStateStorage
 {
     Q_OBJECT
 public:
-    class Q_DECL_HIDDEN SyncState final : public ISyncState
-    {
-    public:
-        qint32 m_userDataUpdateCount = 0;
-        qevercloud::Timestamp m_userDataLastSyncTime = 0;
-
-        QHash<QString, qint32> m_updateCountsByLinkedNotebookGuid;
-
-        QHash<QString, qevercloud::Timestamp>
-            m_lastSyncTimesByLinkedNotebookGuid;
-
-        [[nodiscard]] qint32 userDataUpdateCount() const override
-        {
-            return m_userDataUpdateCount;
-        }
-
-        [[nodiscard]] qevercloud::Timestamp userDataLastSyncTime()
-            const override
-        {
-            return m_userDataLastSyncTime;
-        }
-
-        [[nodiscard]] QHash<QString, qint32>
-        linkedNotebookUpdateCounts() const override
-        {
-            return m_updateCountsByLinkedNotebookGuid;
-        }
-
-        [[nodiscard]] QHash<QString, qevercloud::Timestamp>
-        linkedNotebookLastSyncTimes() const override
-        {
-            return m_lastSyncTimesByLinkedNotebookGuid;
-        }
-    };
-
-public:
     explicit SyncStateStorage(QObject * parent);
 
     ~SyncStateStorage() override = default;

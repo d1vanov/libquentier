@@ -23,31 +23,28 @@
 
 #include <qevercloud/types/TypeAliases.h>
 
+#include <QHash>
+#include <QString>
+
 namespace quentier::synchronization {
 
 /**
- * @brief The SyncState structure represents the information about the state
- * of the sync process which would need to be used during the next sync.
+ * @brief The ISyncState interface provides accessory methods to determine
+ * the sync state for the account
  */
-struct QUENTIER_EXPORT SyncState : public Printable
+class QUENTIER_EXPORT ISyncState : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
+public:
+    [[nodiscard]] virtual qint32 userDataUpdateCount() const = 0;
 
-    /**
-     * Update sequence number from which the next sync should be started
-     */
-    qint32 updateCount = 0;
+    [[nodiscard]] virtual qevercloud::Timestamp userDataLastSyncTime()
+        const = 0;
 
-    /**
-     * Timestamp of the last synchronization procedure.
-     */
-    qevercloud::Timestamp lastSyncTime = 0;
+    [[nodiscard]] virtual QHash<qevercloud::Guid, qint32>
+        linkedNotebookUpdateCounts() const = 0;
+
+    [[nodiscard]] virtual QHash<qevercloud::Guid, qevercloud::Timestamp>
+        linkedNotebookLastSyncTimes() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const SyncState & lhs, const SyncState & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const SyncState & lhs, const SyncState & rhs) noexcept;
 
 } // namespace quentier::synchronization

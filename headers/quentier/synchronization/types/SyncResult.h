@@ -20,7 +20,7 @@
 
 #include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
-#include <quentier/synchronization/types/SyncState.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/synchronization/types/SyncStats.h>
 
 #include <quentier/utility/Linkage.h>
@@ -34,8 +34,7 @@ struct QUENTIER_EXPORT SyncResult : public Printable
 {
     QTextStream & print(QTextStream & strm) const override;
 
-    SyncState userAccountSyncState;
-    QHash<qevercloud::Guid, SyncState> linkedNotebookSyncStates;
+    ISyncStatePtr syncState;
 
     DownloadNotesStatus userAccountDownloadNotesStatus;
     QHash<qevercloud::Guid, DownloadNotesStatus>

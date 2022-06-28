@@ -31,4 +31,7 @@ using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 struct ISyncOptionsBuilder;
 using ISyncOptionsBuilderPtr = std::shared_ptr<ISyncOptionsBuilder>;
 
+class ISyncState;
+using ISyncStatePtr = std::shared_ptr<ISyncState>;
+
 } // namespace quentier::synchronization

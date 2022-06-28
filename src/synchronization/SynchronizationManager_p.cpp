@@ -23,6 +23,8 @@
 #include "SynchronizationShared.h"
 #include "UserStore.h"
 
+#include "types/SyncState.h"
+
 #include "../utility/keychain/QtKeychainService.h"
 
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
@@ -323,8 +325,9 @@ void SynchronizationManagerPrivate::revokeAuthentication(
         QStringLiteral("_") + m_host + QStringLiteral("_") +
         QString::number(userId);
 
-    const auto deleteAuthTokenJobId = m_pKeychainService->startDeletePasswordJob(
-        deleteAuthTokenService, deleteAuthTokenKey);
+    const auto deleteAuthTokenJobId =
+        m_pKeychainService->startDeletePasswordJob(
+            deleteAuthTokenService, deleteAuthTokenKey);
 
     m_deleteAuthTokenJobIdsWithUserIds.insert(
         KeychainJobIdWithUserId::value_type(userId, deleteAuthTokenJobId));
@@ -663,8 +666,9 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
                 << "guid = " << readAuthTokenIt->second);
 
         if (errorCode == IKeychainService::ErrorCode::NoError) {
-            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[
-                readAuthTokenIt->second].first = password;
+            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[readAuthTokenIt
+                                                                  ->second]
+                .first = password;
         }
         else if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
             Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
@@ -1157,8 +1161,7 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(
         m_pRemoteToLocalSyncManager,
         &RemoteToLocalSynchronizationManager::syncChunksDataProcessingProgress,
-        this,
-        &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
+        this, &SynchronizationManagerPrivate::syncChunksDataProcessingProgress,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
@@ -1867,15 +1870,15 @@ void SynchronizationManagerPrivate::removeNonSecretPersistentAuthInfo(
     if (accountName.isEmpty()) {
         QNWARNING(
             "synchronization",
-            "Failed to detect existing Evernote account for user id " << userId
-                << ", cannot remove its persistent auth info");
+            "Failed to detect existing Evernote account for user id "
+                << userId << ", cannot remove its persistent auth info");
         return;
     }
 
     QNDEBUG(
         "synchronization",
-        "Found Evernote account corresponding to user id " << userId
-            << ": name = " << accountName << ", host = " << host);
+        "Found Evernote account corresponding to user id "
+            << userId << ": name = " << accountName << ", host = " << host);
 
     // Now can actually create this account and mess with its persistent
     // settings
@@ -2063,7 +2066,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
     QSet<QString> linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain;
 
-    for (auto it = m_linkedNotebookAuthDataPendingAuthentication.begin(); // NOLINT
+    for (auto it = // NOLINT
+             m_linkedNotebookAuthDataPendingAuthentication.begin(); // NOLINT
          it != m_linkedNotebookAuthDataPendingAuthentication.end();)
     {
         const LinkedNotebookAuthData & authData = *it;
@@ -2163,8 +2167,8 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
                                 << "token's expiration time from QVariant "
                                 << "retrieved from app settings "
                                 << "into timestamp: linked notebook guid = "
-                                << guid << ", variant = "
-                                << expirationTimeVariant);
+                                << guid
+                                << ", variant = " << expirationTimeVariant);
                     }
                 }
             }
@@ -2467,8 +2471,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     }
 
     QNDEBUG(
-        "synchronization",
-        "Successfully restored the authentication token");
+        "synchronization", "Successfully restored the authentication token");
     m_OAuthResult.m_authToken = password;
 
     if (!m_authenticationInProgress &&
@@ -2571,8 +2574,7 @@ void SynchronizationManagerPrivate::onWriteShardIdFinished(
     }
 
     QNDEBUG(
-        "synchronization",
-        "Successfully stored the shard id in the keychain");
+        "synchronization", "Successfully stored the shard id in the keychain");
 
     if (!m_authenticationInProgress &&
         !isReadingAuthToken(m_OAuthResult.m_userId) &&
@@ -2780,8 +2782,8 @@ void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()
             QNDEBUG(
                 "synchronization",
                 "Got updated sync state for linked notebook with guid "
-                    << it.key() << ", update count = "
-                    << it.value() << ", last sync time = " << lastSyncTime);
+                    << it.key() << ", update count = " << it.value()
+                    << ", last sync time = " << lastSyncTime);
             shouldUpdatePersistentSyncSettings = true;
         }
     }
@@ -2797,15 +2799,15 @@ void SynchronizationManagerPrivate::updatePersistentSyncSettings()
         "synchronization",
         "SynchronizationManagerPrivate::updatePersistentSyncSettings");
 
-    const auto syncState = std::make_shared<SyncStateStorage::SyncState>();
+    const auto syncState = std::make_shared<synchronization::SyncState>();
 
     syncState->m_userDataUpdateCount = m_lastUpdateCount;
     syncState->m_userDataLastSyncTime = m_lastSyncTime;
 
-    syncState->m_updateCountsByLinkedNotebookGuid =
+    syncState->m_linkedNotebookUpdateCounts =
         m_cachedLinkedNotebookLastUpdateCountByGuid;
 
-    syncState->m_lastSyncTimesByLinkedNotebookGuid =
+    syncState->m_linkedNotebookLastSyncTimes =
         m_cachedLinkedNotebookLastSyncTimeByGuid;
 
     m_pSyncStateStorage->setSyncState(
@@ -2936,8 +2938,8 @@ LocalStorageManagerAsync & SynchronizationManagerPrivate::
     return m_localStorageManagerAsync;
 }
 
-INoteStore &
-SynchronizationManagerPrivate::SendLocalChangesManagerController::noteStore()
+INoteStore & SynchronizationManagerPrivate::SendLocalChangesManagerController::
+    noteStore()
 {
     return *m_syncManager.m_pNoteStore;
 }

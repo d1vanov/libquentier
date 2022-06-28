@@ -139,8 +139,8 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/IAuthenticationInfo.h
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
+    headers/quentier/synchronization/types/ISyncState.h
     headers/quentier/synchronization/types/SyncResult.h
-    headers/quentier/synchronization/types/SyncState.h
     headers/quentier/synchronization/types/SyncStats.h)
 
 set(THREADING_HEADERS
@@ -448,6 +448,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncResult.cpp
     src/synchronization/types/SyncState.cpp
+    src/synchronization/types/SyncState.h
     src/synchronization/types/SyncStats.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp

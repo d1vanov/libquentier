@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/synchronization/types/SyncResult.h>
 
 #include <qevercloud/utility/ToRange.h>
@@ -24,18 +25,8 @@ namespace quentier::synchronization {
 
 QTextStream & SyncResult::print(QTextStream & strm) const
 {
-    strm << "SyncResult: userAccountSyncState = " << userAccountSyncState
-         << ", linkedNotebookSyncStates = ";
-
-    if (linkedNotebookSyncStates.isEmpty()) {
-        strm << "<empty>, ";
-    }
-    else {
-        for (const auto it: qevercloud::toRange(linkedNotebookSyncStates)) {
-            strm << "{" << it.key() << ": " << it.value() << "};";
-        }
-        strm << " ";
-    }
+    strm << "SyncResult: sync state = ";
+    syncState->print(strm);
 
     strm << "userAccountDownloadNotesStatus = "
          << userAccountDownloadNotesStatus
