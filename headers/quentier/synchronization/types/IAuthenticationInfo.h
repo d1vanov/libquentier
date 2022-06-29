@@ -33,8 +33,9 @@ namespace quentier::synchronization {
  * @brief The IAuthenticationInfo interface represents the information
  * obtained through OAuth and necessary to access Evernote API
  */
-struct QUENTIER_EXPORT IAuthenticationInfo : public Printable
+class QUENTIER_EXPORT IAuthenticationInfo : public Printable
 {
+public:
     /**
      * Identifier of the authenticated user
      */

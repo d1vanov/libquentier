@@ -140,8 +140,8 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncState.h
-    headers/quentier/synchronization/types/SyncResult.h
-    headers/quentier/synchronization/types/SyncStats.h)
+    headers/quentier/synchronization/types/ISyncStats.h
+    headers/quentier/synchronization/types/SyncResult.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Future.h
@@ -450,6 +450,7 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/types/SyncState.cpp
     src/synchronization/types/SyncState.h
     src/synchronization/types/SyncStats.cpp
+    src/synchronization/types/SyncStats.h
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp

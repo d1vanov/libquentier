@@ -21,7 +21,6 @@
 #include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/Fwd.h>
-#include <quentier/synchronization/types/SyncStats.h>
 
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -44,7 +43,7 @@ struct QUENTIER_EXPORT SyncResult : public Printable
     QHash<qevercloud::Guid, DownloadResourcesStatus>
         linkedNotebookDownloadResourcesStatuses;
 
-    SyncStats syncStats;
+    ISyncStatsPtr syncStats;
 };
 
 [[nodiscard]] bool operator==(

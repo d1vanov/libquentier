@@ -27,8 +27,9 @@
 
 namespace quentier::synchronization {
 
-struct QUENTIER_EXPORT ISyncOptionsBuilder
+class QUENTIER_EXPORT ISyncOptionsBuilder
 {
+public:
     virtual ~ISyncOptionsBuilder() noexcept = default;
 
     virtual ISyncOptionsBuilder & setDownloadNoteThumbnails(bool value) = 0;

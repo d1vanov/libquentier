@@ -27,7 +27,6 @@
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/synchronization/types/ISyncOptions.h>
 #include <quentier/synchronization/types/SyncResult.h>
-#include <quentier/synchronization/types/SyncStats.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>

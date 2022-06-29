@@ -17,6 +17,7 @@
  */
 
 #include <quentier/synchronization/types/ISyncState.h>
+#include <quentier/synchronization/types/ISyncStats.h>
 #include <quentier/synchronization/types/SyncResult.h>
 
 #include <qevercloud/utility/ToRange.h>
@@ -25,8 +26,12 @@ namespace quentier::synchronization {
 
 QTextStream & SyncResult::print(QTextStream & strm) const
 {
-    strm << "SyncResult: sync state = ";
-    syncState->print(strm);
+    strm << "SyncResult: ";
+
+    if (syncState) {
+        strm << "sync state = ";
+        syncState->print(strm);
+    }
 
     strm << "userAccountDownloadNotesStatus = "
          << userAccountDownloadNotesStatus
@@ -58,7 +63,10 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << " ";
     }
 
-    strm << "syncStats = " << syncStats;
+    if (syncStats) {
+        strm << "syncStats = ";
+        syncStats->print(strm);
+    }
     return strm;
 }
 

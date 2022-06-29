@@ -26,109 +26,101 @@
 namespace quentier::synchronization {
 
 /**
- * @brief The SyncStats structure encapsulates counters for various data items
+ * @brief The ISyncStats interface provides counters for various data items
  * representing the result of synchronization process.
  */
-struct QUENTIER_EXPORT SyncStats : public Printable
+class QUENTIER_EXPORT ISyncStats : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
-
     /**
      * The amount of downloaded sync chunks - containers with other Evernote
      * data items.
      */
-    quint64 syncChunksDownloaded = 0;
+    [[nodiscard]] virtual quint64 syncChunksDownloaded() const = 0;
 
     /**
      * The amount of downloaded linked notebooks - "pointers" to notebooks
      * belonging to other users which were shared with the current user.
      */
-    quint64 linkedNotebooksDownloaded = 0;
+    [[nodiscard]] virtual quint64 linkedNotebooksDownloaded() const = 0;
 
     /**
      * The amount of downloaded user's own notebooks.
      */
-    quint64 notebooksDownloaded = 0;
+    [[nodiscard]] virtual quint64 notebooksDownloaded() const = 0;
 
     /**
      * The amount of downloaded saved searches.
      */
-    quint64 savedSearchesDownloaded = 0;
+    [[nodiscard]] virtual quint64 savedSearchesDownloaded() const = 0;
 
     /**
      * The amount of downloaded tags.
      */
-    quint64 tagsDownloaded = 0;
+    [[nodiscard]] virtual quint64 tagsDownloaded() const = 0;
 
     /**
      * The amount of downloaded notes.
      */
-    quint64 notesDownloaded = 0;
+    [[nodiscard]] virtual quint64 notesDownloaded() const = 0;
 
     /**
      * The amount of downloaded resources (attachments to notes).
      */
-    quint64 resourcesDownloaded = 0;
+    [[nodiscard]] virtual quint64 resourcesDownloaded() const = 0;
 
     /**
      * The amount of linked notebooks which were expunged during sync.
      */
-    quint64 linkedNotebooksExpunged = 0;
+    [[nodiscard]] virtual quint64 linkedNotebooksExpunged() const = 0;
 
     /**
      * The amount of user's own notebooks which were expunged during sync.
      */
-    quint64 notebooksExpunged = 0;
+    [[nodiscard]] virtual quint64 notebooksExpunged() const = 0;
 
     /**
      * The amount of saved searches which were expunged during sync.
      */
-    quint64 savedSearchesExpunged = 0;
+    [[nodiscard]] virtual quint64 savedSearchesExpunged() const = 0;
 
     /**
      * The amount of tags which were expunged during sync.
      */
-    quint64 tagsExpunged = 0;
+    [[nodiscard]] virtual quint64 tagsExpunged() const = 0;
 
     /**
      * The amount of notes which were expunged during sync.
      */
-    quint64 notesExpunged = 0;
+    [[nodiscard]] virtual quint64 notesExpunged() const = 0;
 
     /**
      * The amount of resources which were expunged during sync
      */
-    quint64 resourcesExpunged = 0;
+    [[nodiscard]] virtual quint64 resourcesExpunged() const = 0;
 
     /**
      * The amount of new or locally updated notebooks which were sent
      * to Evernote during sync.
      */
-    quint64 notebooksSent = 0;
+    [[nodiscard]] virtual quint64 notebooksSent() const = 0;
 
     /**
      * The amount of new or locally updated saved searches which were sent
      * to Evernote during sync.
      */
-    quint64 savedSearchesSent = 0;
+    [[nodiscard]] virtual quint64 savedSearchesSent() const = 0;
 
     /**
      * The amount of new or locally updated tags which were sent to Evernote
      * during sync.
      */
-    quint64 tagsSent = 0;
+    [[nodiscard]] virtual quint64 tagsSent() const = 0;
 
     /**
      * The amount of new or locally updated notes which were sent to Evernote
      * during sync.
      */
-    quint64 notesSent = 0;
+    [[nodiscard]] virtual quint64 notesSent() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const SyncStats & lhs, const SyncStats & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const SyncStats & lhs, const SyncStats & rhs) noexcept;
 
 } // namespace quentier::synchronization

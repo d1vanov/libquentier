@@ -22,16 +22,19 @@
 
 namespace quentier::synchronization {
 
-struct IAuthenticationInfo;
+class IAuthenticationInfo;
 using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
 
-struct ISyncOptions;
+class ISyncOptions;
 using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 
-struct ISyncOptionsBuilder;
+class ISyncOptionsBuilder;
 using ISyncOptionsBuilderPtr = std::shared_ptr<ISyncOptionsBuilder>;
 
 class ISyncState;
 using ISyncStatePtr = std::shared_ptr<ISyncState>;
+
+class ISyncStats;
+using ISyncStatsPtr = std::shared_ptr<ISyncStats>;
 
 } // namespace quentier::synchronization
