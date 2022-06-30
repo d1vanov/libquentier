@@ -133,10 +133,10 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/ISyncConflictResolver.h
     headers/quentier/synchronization/ISynchronizer.h
     headers/quentier/synchronization/SynchronizationManager.h
-    headers/quentier/synchronization/types/DownloadNotesStatus.h
     headers/quentier/synchronization/types/DownloadResourcesStatus.h
     headers/quentier/synchronization/types/Fwd.h
     headers/quentier/synchronization/types/IAuthenticationInfo.h
+    headers/quentier/synchronization/types/IDownloadNotesStatus.h
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
     headers/quentier/synchronization/types/ISyncState.h
@@ -442,15 +442,8 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
-    src/synchronization/types/AuthenticationInfo.cpp
-    src/synchronization/types/DownloadNotesStatus.cpp
     src/synchronization/types/DownloadResourcesStatus.cpp
-    src/synchronization/types/SyncOptions.cpp
     src/synchronization/types/SyncResult.cpp
-    src/synchronization/types/SyncState.cpp
-    src/synchronization/types/SyncState.h
-    src/synchronization/types/SyncStats.cpp
-    src/synchronization/types/SyncStats.h
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp
@@ -797,6 +790,7 @@ target_link_libraries(${LIBNAME}
   PRIVATE
   ${THIRDPARTY_LIBS}
   ${LIBNAME}_local_storage_sql
+  ${LIBNAME}_synchronization
   ${LIBNAME}_threading)
 
 add_sanitizers(${LIBNAME})

@@ -117,7 +117,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
     using FetchNoteOption = local_storage::ILocalStorage::FetchNoteOption;
 
     auto status = std::make_shared<DownloadNotesStatus>();
-    status->totalExpungedNotes =
+    status->m_totalExpungedNotes =
         static_cast<quint64>(std::max(expungedNoteCount, 0));
 
     // Processing of all notes might need to be globally canceled if certain
@@ -153,7 +153,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
                     const std::optional<qevercloud::Note> & note) mutable {
                     if (canceler->isCanceled()) {
                         const auto & guid = *updatedNote.guid();
-                        status->cancelledNoteGuidsAndUsns[guid] =
+                        status->m_cancelledNoteGuidsAndUsns[guid] =
                             updatedNote.updateSequenceNum().value();
 
                         if (const auto callback = callbackWeak.lock()) {
@@ -166,7 +166,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
                     }
 
                     if (note) {
-                        ++status->totalUpdatedNotes;
+                        ++status->m_totalUpdatedNotes;
                         onFoundDuplicate(
                             notePromise, status, canceler,
                             std::move(callbackWeak), std::move(updatedNote),
@@ -174,7 +174,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
                         return;
                     }
 
-                    ++status->totalNewNotes;
+                    ++status->m_totalNewNotes;
 
                     // No duplicate by guid was found, will download full note
                     // data and then put it into the local storage
@@ -191,7 +191,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
                     callback->onNoteFailedToProcess(note, e);
                 }
 
-                status->notesWhichFailedToProcess
+                status->m_notesWhichFailedToProcess
                     << DownloadNotesStatus::NoteWithException{
                            note, std::shared_ptr<QException>(e.clone())};
 
@@ -212,7 +212,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
         auto thenFuture = threading::then(
             std::move(expungeNoteByGuidFuture),
             [guid, status, promise, callbackWeak] {
-                status->expungedNoteGuids << guid;
+                status->m_expungedNoteGuids << guid;
 
                 if (const auto callback = callbackWeak.lock()) {
                     callback->onExpungedNote(guid);
@@ -225,7 +225,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
         threading::onFailed(
             std::move(thenFuture),
             [promise, status, guid, callbackWeak](const QException & e) {
-                status->noteGuidsWhichFailedToExpunge
+                status->m_noteGuidsWhichFailedToExpunge
                     << DownloadNotesStatus::GuidWithException{
                            guid, std::shared_ptr<QException>(e.clone())};
 
@@ -297,7 +297,7 @@ void NotesProcessor::onFoundDuplicate(
             }
 
             if (canceler->isCanceled()) {
-                status->cancelledNoteGuidsAndUsns[updatedNoteGuid] =
+                status->m_cancelledNoteGuidsAndUsns[updatedNoteGuid] =
                     updatedNoteUsn;
 
                 if (const auto callback = callbackWeak.lock()) {
@@ -352,7 +352,7 @@ void NotesProcessor::onFoundDuplicate(
                          updatedNote = std::move(updatedNote)]() mutable {
                             if (canceler->isCanceled()) {
                                 const auto & guid = *updatedNote.guid();
-                                status->cancelledNoteGuidsAndUsns[guid] =
+                                status->m_cancelledNoteGuidsAndUsns[guid] =
                                     updatedNote.updateSequenceNum().value();
 
                                 if (const auto callback = callbackWeak.lock()) {
@@ -381,7 +381,7 @@ void NotesProcessor::onFoundDuplicate(
                             callback->onNoteFailedToProcess(note, e);
                         }
 
-                        status->notesWhichFailedToProcess
+                        status->m_notesWhichFailedToProcess
                             << DownloadNotesStatus::NoteWithException{
                                    std::move(note),
                                    std::shared_ptr<QException>(e.clone())};
@@ -402,7 +402,7 @@ void NotesProcessor::onFoundDuplicate(
                 callback->onNoteFailedToProcess(note, e);
             }
 
-            status->notesWhichFailedToProcess
+            status->m_notesWhichFailedToProcess
                 << DownloadNotesStatus::NoteWithException{
                        std::move(note), std::shared_ptr<QException>(e.clone())};
 
@@ -446,7 +446,7 @@ void NotesProcessor::downloadFullNoteData(
         std::move(thenFuture),
         [notePromise, status, note, canceler,
          callbackWeak](const QException & e) {
-            status->notesWhichFailedToDownload
+            status->m_notesWhichFailedToDownload
                 << DownloadNotesStatus::NoteWithException{
                        note, std::shared_ptr<QException>(e.clone())};
 
@@ -493,7 +493,7 @@ void NotesProcessor::putNoteToLocalStorage(
         [notePromise, putNoteKind, status, callbackWeak, noteGuid = note.guid(),
          noteUsn = note.updateSequenceNum()] {
             if (noteGuid.has_value() && noteUsn.has_value()) {
-                status->processedNoteGuidsAndUsns[*noteGuid] = *noteUsn;
+                status->m_processedNoteGuidsAndUsns[*noteGuid] = *noteUsn;
 
                 if (const auto callback = callbackWeak.lock()) {
                     callback->onProcessedNote(*noteGuid, *noteUsn);
@@ -517,7 +517,7 @@ void NotesProcessor::putNoteToLocalStorage(
                 callback->onNoteFailedToProcess(note, e);
             }
 
-            status->notesWhichFailedToProcess
+            status->m_notesWhichFailedToProcess
                 << DownloadNotesStatus::NoteWithException{
                        std::move(note), std::shared_ptr<QException>(e.clone())};
 

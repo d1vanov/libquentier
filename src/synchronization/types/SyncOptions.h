@@ -57,10 +57,10 @@ struct SyncOptions final : public ISyncOptions
     std::optional<QDir> m_inkNoteImagesStorageDir;
 };
 
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
+[[nodiscard]] bool operator==(
     const SyncOptions & lhs, const SyncOptions & rhs) noexcept;
 
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+[[nodiscard]] bool operator!=(
     const SyncOptions & lhs, const SyncOptions & rhs) noexcept;
 
 } // namespace quentier::synchronization

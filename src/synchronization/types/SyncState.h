@@ -50,10 +50,10 @@ struct SyncState final : public ISyncState
         m_linkedNotebookLastSyncTimes;
 };
 
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
+[[nodiscard]] bool operator==(
     const SyncState & lhs, const SyncState & rhs) noexcept;
 
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+[[nodiscard]] bool operator!=(
     const SyncState & lhs, const SyncState & rhs) noexcept;
 
 } // namespace quentier::synchronization

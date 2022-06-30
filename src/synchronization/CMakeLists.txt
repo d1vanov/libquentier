@@ -76,7 +76,16 @@ target_sources(${LIBRARY_NAME}
   sync_chunks/SyncChunksStorage.cpp
   sync_chunks/SyncChunksStorage.h
   sync_chunks/Utils.cpp
-  sync_chunks/Utils.h)
+  sync_chunks/Utils.h
+  types/AuthenticationInfo.cpp
+  types/AuthenticationInfo.h
+  types/DownloadNotesStatus.cpp
+  types/DownloadNotesStatus.h
+  types/SyncOptions.cpp
+  types/SyncState.cpp
+  types/SyncState.h
+  types/SyncStats.cpp
+  types/SyncStats.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

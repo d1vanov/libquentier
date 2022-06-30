@@ -16,6 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/synchronization/types/ISyncStats.h>
 #include <quentier/synchronization/types/SyncResult.h>
@@ -33,9 +34,10 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         syncState->print(strm);
     }
 
-    strm << "userAccountDownloadNotesStatus = "
-         << userAccountDownloadNotesStatus
-         << ", linkedNotebookDownloadNotesStatuses = ";
+    if (userAccountDownloadNotesStatus) {
+        strm << "userAccountDownloadNotesStatus = ";
+        userAccountDownloadNotesStatus->print(strm);
+    }
 
     if (linkedNotebookDownloadNotesStatuses.isEmpty()) {
         strm << "<empty>, ";
@@ -43,7 +45,13 @@ QTextStream & SyncResult::print(QTextStream & strm) const
     else {
         for (const auto it:
              qevercloud::toRange(linkedNotebookDownloadNotesStatuses)) {
-            strm << "{" << it.key() << ": " << it.value() << "};";
+            if (Q_UNLIKELY(!it.value())) {
+                continue;
+            }
+
+            strm << "{" << it.key() << ": ";
+            it.value()->print(strm);
+            strm << "};";
         }
         strm << " ";
     }

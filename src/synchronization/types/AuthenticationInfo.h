@@ -45,10 +45,10 @@ struct AuthenticationInfo final : public IAuthenticationInfo
     QList<QNetworkCookie> m_userStoreCookies;
 };
 
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
+[[nodiscard]] bool operator==(
     const AuthenticationInfo & lhs, const AuthenticationInfo & rhs) noexcept;
 
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
+[[nodiscard]] bool operator!=(
     const AuthenticationInfo & lhs, const AuthenticationInfo & rhs) noexcept;
 
 } // namespace quentier::synchronization

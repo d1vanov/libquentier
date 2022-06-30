@@ -19,7 +19,7 @@
 #pragma once
 
 #include <quentier/synchronization/Fwd.h>
-#include <quentier/synchronization/types/DownloadNotesStatus.h>
+#include <quentier/synchronization/types/Fwd.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
 
 #include <QFuture>
@@ -34,7 +34,7 @@ public:
     struct Result
     {
         ISyncChunksDataCountersPtr syncChunksDataCounters;
-        DownloadNotesStatus downloadNotesStatus;
+        IDownloadNotesStatusPtr downloadNotesStatus;
         DownloadResourcesStatus downloadResourcesStatus;
     };
 

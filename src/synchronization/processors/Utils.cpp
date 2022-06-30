@@ -249,9 +249,9 @@ void writeResource(const qevercloud::Resource & resource, const QDir & dir)
 DownloadNotesStatus mergeDownloadNotesStatuses(
     DownloadNotesStatus lhs, const DownloadNotesStatus & rhs)
 {
-    lhs.totalNewNotes += rhs.totalNewNotes;
-    lhs.totalUpdatedNotes += rhs.totalUpdatedNotes;
-    lhs.totalExpungedNotes += rhs.totalExpungedNotes;
+    lhs.m_totalNewNotes += rhs.m_totalNewNotes;
+    lhs.m_totalUpdatedNotes += rhs.m_totalUpdatedNotes;
+    lhs.m_totalExpungedNotes += rhs.m_totalExpungedNotes;
 
     const auto mergeNoteLists =
         [](QList<DownloadNotesStatus::NoteWithException> lhs,
@@ -296,34 +296,35 @@ DownloadNotesStatus mergeDownloadNotesStatuses(
             return lhs;
         };
 
-    lhs.notesWhichFailedToDownload = mergeNoteLists(
-        lhs.notesWhichFailedToDownload, rhs.notesWhichFailedToDownload);
+    lhs.m_notesWhichFailedToDownload = mergeNoteLists(
+        lhs.m_notesWhichFailedToDownload, rhs.m_notesWhichFailedToDownload);
 
-    lhs.notesWhichFailedToProcess = mergeNoteLists(
-        lhs.notesWhichFailedToProcess, rhs.notesWhichFailedToProcess);
+    lhs.m_notesWhichFailedToProcess = mergeNoteLists(
+        lhs.m_notesWhichFailedToProcess, rhs.m_notesWhichFailedToProcess);
 
-    lhs.noteGuidsWhichFailedToExpunge << rhs.noteGuidsWhichFailedToExpunge;
-    lhs.noteGuidsWhichFailedToExpunge.erase(
+    lhs.m_noteGuidsWhichFailedToExpunge << rhs.m_noteGuidsWhichFailedToExpunge;
+    lhs.m_noteGuidsWhichFailedToExpunge.erase(
         std::unique(
-            lhs.noteGuidsWhichFailedToExpunge.begin(),
-            lhs.noteGuidsWhichFailedToExpunge.end(),
+            lhs.m_noteGuidsWhichFailedToExpunge.begin(),
+            lhs.m_noteGuidsWhichFailedToExpunge.end(),
             [](const auto & lhs, const auto & rhs) {
                 return lhs.first == rhs.first;
             }),
-        lhs.noteGuidsWhichFailedToExpunge.end());
+        lhs.m_noteGuidsWhichFailedToExpunge.end());
 
-    for (const auto it: qevercloud::toRange(rhs.processedNoteGuidsAndUsns)) {
-        lhs.processedNoteGuidsAndUsns[it.key()] = it.value();
+    for (const auto it: qevercloud::toRange(rhs.m_processedNoteGuidsAndUsns)) {
+        lhs.m_processedNoteGuidsAndUsns[it.key()] = it.value();
     }
 
-    for (const auto it: qevercloud::toRange(rhs.cancelledNoteGuidsAndUsns)) {
-        lhs.cancelledNoteGuidsAndUsns[it.key()] = it.value();
+    for (const auto it: qevercloud::toRange(rhs.m_cancelledNoteGuidsAndUsns)) {
+        lhs.m_cancelledNoteGuidsAndUsns[it.key()] = it.value();
     }
 
-    lhs.expungedNoteGuids << rhs.expungedNoteGuids;
-    lhs.expungedNoteGuids.erase(
-        std::unique(lhs.expungedNoteGuids.begin(), lhs.expungedNoteGuids.end()),
-        lhs.expungedNoteGuids.end());
+    lhs.m_expungedNoteGuids << rhs.m_expungedNoteGuids;
+    lhs.m_expungedNoteGuids.erase(
+        std::unique(
+            lhs.m_expungedNoteGuids.begin(), lhs.m_expungedNoteGuids.end()),
+        lhs.m_expungedNoteGuids.end());
 
     return lhs;
 }

@@ -16,17 +16,67 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/DownloadNotesStatus.h>
+#include "DownloadNotesStatus.h"
 
 #include <qevercloud/utility/ToRange.h>
 
 namespace quentier::synchronization {
 
+quint64 DownloadNotesStatus::totalNewNotes() const noexcept
+{
+    return m_totalNewNotes;
+}
+
+quint64 DownloadNotesStatus::totalUpdatedNotes() const noexcept
+{
+    return m_totalUpdatedNotes;
+}
+
+quint64 DownloadNotesStatus::totalExpungedNotes() const noexcept
+{
+    return m_totalExpungedNotes;
+}
+
+QList<DownloadNotesStatus::NoteWithException>
+    DownloadNotesStatus::notesWhichFailedToDownload() const
+{
+    return m_notesWhichFailedToDownload;
+}
+
+QList<DownloadNotesStatus::NoteWithException>
+    DownloadNotesStatus::notesWhichFailedToProcess() const
+{
+    return m_notesWhichFailedToProcess;
+}
+
+QList<DownloadNotesStatus::GuidWithException>
+    DownloadNotesStatus::noteGuidsWhichFailedToExpunge() const
+{
+    return m_noteGuidsWhichFailedToExpunge;
+}
+
+DownloadNotesStatus::UpdateSequenceNumbersByGuid
+    DownloadNotesStatus::processedNoteGuidsAndUsns() const
+{
+    return m_processedNoteGuidsAndUsns;
+}
+
+DownloadNotesStatus::UpdateSequenceNumbersByGuid
+    DownloadNotesStatus::cancelledNoteGuidsAndUsns() const
+{
+    return m_cancelledNoteGuidsAndUsns;
+}
+
+QList<qevercloud::Guid> DownloadNotesStatus::expungedNoteGuids() const
+{
+    return m_expungedNoteGuids;
+}
+
 QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
 {
-    strm << "DownloadNotesStatus: totalNewNotes = " << totalNewNotes
-         << ", totalUpdatedNotes = " << totalUpdatedNotes
-         << ", totalExpungedNotes = " << totalExpungedNotes;
+    strm << "DownloadNotesStatus: totalNewNotes = " << m_totalNewNotes
+         << ", totalUpdatedNotes = " << m_totalUpdatedNotes
+         << ", totalExpungedNotes = " << m_totalExpungedNotes;
 
     const auto printNoteWithExceptionList =
         [&strm](const QList<DownloadNotesStatus::NoteWithException> & values) {
@@ -56,18 +106,18 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
         };
 
     strm << ", notesWhichFailedToDownload = ";
-    printNoteWithExceptionList(notesWhichFailedToDownload);
+    printNoteWithExceptionList(m_notesWhichFailedToDownload);
 
     strm << "notesWhichFailedToProcess = ";
-    printNoteWithExceptionList(notesWhichFailedToProcess);
+    printNoteWithExceptionList(m_notesWhichFailedToProcess);
 
     strm << "noteGuidsWhichFailedToExpunge = ";
-    if (noteGuidsWhichFailedToExpunge.isEmpty()) {
+    if (m_noteGuidsWhichFailedToExpunge.isEmpty()) {
         strm << "<empty>, ";
     }
     else {
         for (const auto & guidWithException:
-             qAsConst(noteGuidsWhichFailedToExpunge)) {
+             qAsConst(m_noteGuidsWhichFailedToExpunge)) {
             strm << "{" << guidWithException.first;
             strm << ": ";
 
@@ -103,17 +153,17 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
         };
 
     strm << "processedNoteGuidsAndUsns = ";
-    printNoteGuidsAndUsns(processedNoteGuidsAndUsns);
+    printNoteGuidsAndUsns(m_processedNoteGuidsAndUsns);
 
     strm << "cancelledNoteGuidsAndUsns = ";
-    printNoteGuidsAndUsns(cancelledNoteGuidsAndUsns);
+    printNoteGuidsAndUsns(m_cancelledNoteGuidsAndUsns);
 
     strm << "expungedNoteGuids = ";
-    if (expungedNoteGuids.isEmpty()) {
+    if (m_expungedNoteGuids.isEmpty()) {
         strm << "<empty>";
     }
     else {
-        for (const auto & guid: qAsConst(expungedNoteGuids)) {
+        for (const auto & guid: qAsConst(m_expungedNoteGuids)) {
             strm << "{" << guid << "};";
         }
     }
@@ -124,16 +174,16 @@ QTextStream & DownloadNotesStatus::print(QTextStream & strm) const
 bool operator==(
     const DownloadNotesStatus & lhs, const DownloadNotesStatus & rhs) noexcept
 {
-    return lhs.totalNewNotes == rhs.totalNewNotes &&
-        lhs.totalUpdatedNotes == rhs.totalUpdatedNotes &&
-        lhs.totalExpungedNotes == rhs.totalExpungedNotes &&
-        lhs.notesWhichFailedToDownload == rhs.notesWhichFailedToDownload &&
-        lhs.notesWhichFailedToProcess == rhs.notesWhichFailedToProcess &&
-        lhs.noteGuidsWhichFailedToExpunge ==
-        rhs.noteGuidsWhichFailedToExpunge &&
-        lhs.processedNoteGuidsAndUsns == rhs.processedNoteGuidsAndUsns &&
-        lhs.cancelledNoteGuidsAndUsns == rhs.cancelledNoteGuidsAndUsns &&
-        lhs.expungedNoteGuids == rhs.expungedNoteGuids;
+    return lhs.m_totalNewNotes == rhs.m_totalNewNotes &&
+        lhs.m_totalUpdatedNotes == rhs.m_totalUpdatedNotes &&
+        lhs.m_totalExpungedNotes == rhs.m_totalExpungedNotes &&
+        lhs.m_notesWhichFailedToDownload == rhs.m_notesWhichFailedToDownload &&
+        lhs.m_notesWhichFailedToProcess == rhs.m_notesWhichFailedToProcess &&
+        lhs.m_noteGuidsWhichFailedToExpunge ==
+        rhs.m_noteGuidsWhichFailedToExpunge &&
+        lhs.m_processedNoteGuidsAndUsns == rhs.m_processedNoteGuidsAndUsns &&
+        lhs.m_cancelledNoteGuidsAndUsns == rhs.m_cancelledNoteGuidsAndUsns &&
+        lhs.m_expungedNoteGuids == rhs.m_expungedNoteGuids;
 }
 
 bool operator!=(

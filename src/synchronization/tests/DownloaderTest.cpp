@@ -19,6 +19,7 @@
 #include "synchronization/Downloader.h"
 
 #include <quentier/exception/InvalidArgument.h>
+#include <quentier/synchronization/types/IDownloadNotesStatus.h>
 #include <quentier/utility/FileSystem.h>
 
 #include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>

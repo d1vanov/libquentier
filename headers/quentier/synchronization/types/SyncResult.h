@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/DownloadNotesStatus.h>
 #include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/Fwd.h>
 
@@ -35,8 +34,8 @@ struct QUENTIER_EXPORT SyncResult : public Printable
 
     ISyncStatePtr syncState;
 
-    DownloadNotesStatus userAccountDownloadNotesStatus;
-    QHash<qevercloud::Guid, DownloadNotesStatus>
+    IDownloadNotesStatusPtr userAccountDownloadNotesStatus;
+    QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
         linkedNotebookDownloadNotesStatuses;
 
     DownloadResourcesStatus userAccountDownloadResourcesStatus;

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/DownloadNotesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>

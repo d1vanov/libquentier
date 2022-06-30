@@ -31,32 +31,34 @@
 
 namespace quentier::synchronization {
 
-struct QUENTIER_EXPORT DownloadNotesStatus : public Printable
+class QUENTIER_EXPORT IDownloadNotesStatus : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
-
+public:
     using QExceptionPtr = std::shared_ptr<QException>;
     using NoteWithException = std::pair<qevercloud::Note, QExceptionPtr>;
     using GuidWithException = std::pair<qevercloud::Guid, QExceptionPtr>;
     using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
 
-    quint64 totalNewNotes = 0UL;
-    quint64 totalUpdatedNotes = 0UL;
-    quint64 totalExpungedNotes = 0UL;
+    [[nodiscard]] virtual quint64 totalNewNotes() const = 0;
+    [[nodiscard]] virtual quint64 totalUpdatedNotes() const = 0;
+    [[nodiscard]] virtual quint64 totalExpungedNotes() const = 0;
 
-    QList<NoteWithException> notesWhichFailedToDownload;
-    QList<NoteWithException> notesWhichFailedToProcess;
-    QList<GuidWithException> noteGuidsWhichFailedToExpunge;
+    [[nodiscard]] virtual QList<NoteWithException> notesWhichFailedToDownload()
+        const = 0;
 
-    UpdateSequenceNumbersByGuid processedNoteGuidsAndUsns;
-    UpdateSequenceNumbersByGuid cancelledNoteGuidsAndUsns;
-    QList<qevercloud::Guid> expungedNoteGuids;
+    [[nodiscard]] virtual QList<NoteWithException> notesWhichFailedToProcess()
+        const = 0;
+
+    [[nodiscard]] virtual QList<GuidWithException>
+        noteGuidsWhichFailedToExpunge() const = 0;
+
+    [[nodiscard]] virtual UpdateSequenceNumbersByGuid
+        processedNoteGuidsAndUsns() const = 0;
+
+    [[nodiscard]] virtual UpdateSequenceNumbersByGuid
+        cancelledNoteGuidsAndUsns() const = 0;
+
+    [[nodiscard]] virtual QList<qevercloud::Guid> expungedNoteGuids() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const DownloadNotesStatus & lhs, const DownloadNotesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const DownloadNotesStatus & lhs, const DownloadNotesStatus & rhs) noexcept;
 
 } // namespace quentier::synchronization

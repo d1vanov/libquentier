@@ -69,8 +69,8 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        ICallbackWeakPtr && callbackWeak,
-        qevercloud::Note updatedNote, qevercloud::Note localNote);
+        ICallbackWeakPtr && callbackWeak, qevercloud::Note updatedNote,
+        qevercloud::Note localNote);
 
     enum class NoteKind
     {
@@ -82,14 +82,14 @@ private:
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
         const utility::cancelers::ManualCancelerPtr & canceler,
-        ICallbackWeakPtr && callbackWeak,
-        const qevercloud::Note & note, NoteKind noteKind);
+        ICallbackWeakPtr && callbackWeak, const qevercloud::Note & note,
+        NoteKind noteKind);
 
     void putNoteToLocalStorage(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const std::shared_ptr<DownloadNotesStatus> & status,
-        ICallbackWeakPtr && callbackWeak,
-        qevercloud::Note note, NoteKind putNoteKind);
+        ICallbackWeakPtr && callbackWeak, qevercloud::Note note,
+        NoteKind putNoteKind);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

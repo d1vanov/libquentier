@@ -187,15 +187,15 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(status.totalNewNotes, 0UL);
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.processedNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_processedNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
     EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
@@ -365,22 +365,22 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(status.totalNewNotes, static_cast<quint64>(notes.size()));
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_EQ(status.m_totalNewNotes, static_cast<quint64>(notes.size()));
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size());
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size());
 
     for (const auto & note: qAsConst(notes)) {
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -564,19 +564,19 @@ TEST_P(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    EXPECT_EQ(status.totalNewNotes, static_cast<quint64>(notes.size()));
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, static_cast<quint64>(notes.size()));
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToDownload[0].first, notes[1]);
+    ASSERT_EQ(status.m_notesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
 
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
     for (const auto & note: qAsConst(notes)) {
         if (note.updateSequenceNum().value() == 2) {
@@ -584,9 +584,9 @@ TEST_P(
         }
 
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -777,21 +777,21 @@ TEST_P(
     const auto status = future.result();
 
     EXPECT_EQ(
-        status.totalNewNotes,
+        status.m_totalNewNotes,
         static_cast<quint64>(expectedProcessedNotes.size()));
 
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToProcess[0].first, notes[1]);
+    ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
     for (const auto & note: qAsConst(notes)) {
         if (note.guid() == notes[1].guid()) {
@@ -799,9 +799,9 @@ TEST_P(
         }
 
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -990,22 +990,22 @@ TEST_P(
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    EXPECT_EQ(status.totalNewNotes, static_cast<quint64>(notes.size()));
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, static_cast<quint64>(notes.size()));
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
+    ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
 
     EXPECT_EQ(
-        status.notesWhichFailedToProcess[0].first,
+        status.m_notesWhichFailedToProcess[0].first,
         addContentToNote(notes[1], 1));
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
     for (const auto & note: qAsConst(notes)) {
         if (note.guid() == notes[1].guid()) {
@@ -1013,9 +1013,9 @@ TEST_P(
         }
 
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -1223,21 +1223,21 @@ TEST_P(
     const auto status = future.result();
 
     EXPECT_EQ(
-        status.totalNewNotes,
+        status.m_totalNewNotes,
         static_cast<quint64>(expectedProcessedNotes.size()));
 
-    EXPECT_EQ(status.totalUpdatedNotes, 1UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 1UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToProcess[0].first, notes[1]);
+    ASSERT_EQ(status.m_notesWhichFailedToProcess.size(), 1);
+    EXPECT_EQ(status.m_notesWhichFailedToProcess[0].first, notes[1]);
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size() - 1);
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size() - 1);
 
     for (const auto & note: qAsConst(notes)) {
         if (note.guid() == notes[1].guid()) {
@@ -1245,9 +1245,9 @@ TEST_P(
         }
 
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -1453,20 +1453,20 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    EXPECT_EQ(status.totalNewNotes, 2UL);
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, 2UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.expungedNoteGuids.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_expungedNoteGuids.isEmpty());
 
-    ASSERT_EQ(status.notesWhichFailedToDownload.size(), 1);
-    EXPECT_EQ(status.notesWhichFailedToDownload[0].first, notes[1]);
+    ASSERT_EQ(status.m_notesWhichFailedToDownload.size(), 1);
+    EXPECT_EQ(status.m_notesWhichFailedToDownload[0].first, notes[1]);
 
     bool caughtEdamSystemExceptionWithRateLimit = false;
     try {
-        status.notesWhichFailedToDownload[0].second->raise();
+        status.m_notesWhichFailedToDownload[0].second->raise();
     }
     catch (const qevercloud::EDAMSystemException & e) {
         if (e.errorCode() == qevercloud::EDAMErrorCode::RATE_LIMIT_REACHED) {
@@ -1478,26 +1478,26 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     EXPECT_TRUE(caughtEdamSystemExceptionWithRateLimit);
 
-    ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), 1);
+    ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), 1);
 
     EXPECT_EQ(
-        status.processedNoteGuidsAndUsns.begin().key(),
+        status.m_processedNoteGuidsAndUsns.begin().key(),
         notes[0].guid().value());
 
     EXPECT_EQ(
-        status.processedNoteGuidsAndUsns.begin().value(),
+        status.m_processedNoteGuidsAndUsns.begin().value(),
         notes[0].updateSequenceNum().value());
 
-    ASSERT_EQ(status.cancelledNoteGuidsAndUsns.size(), notes.size() - 2);
+    ASSERT_EQ(status.m_cancelledNoteGuidsAndUsns.size(), notes.size() - 2);
     for (const auto & note: qAsConst(notes)) {
         if (note.guid() == notes[0].guid() || note.guid() == notes[1].guid()) {
             continue;
         }
 
         const auto it =
-            status.cancelledNoteGuidsAndUsns.find(note.guid().value());
+            status.m_cancelledNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.cancelledNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_cancelledNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 
@@ -1583,17 +1583,17 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    EXPECT_EQ(status.totalNewNotes, 0UL);
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
     EXPECT_EQ(
-        status.totalExpungedNotes,
+        status.m_totalExpungedNotes,
         static_cast<quint64>(expungedNoteGuids.size()));
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_EQ(status.expungedNoteGuids, expungedNoteGuids);
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_EQ(status.m_expungedNoteGuids, expungedNoteGuids);
 
     EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
@@ -1643,20 +1643,20 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
 
-    EXPECT_EQ(status.totalNewNotes, 0UL);
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
     EXPECT_EQ(
-        status.totalExpungedNotes,
+        status.m_totalExpungedNotes,
         static_cast<quint64>(expungedNoteGuids.size()));
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.processedNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_processedNoteGuidsAndUsns.isEmpty());
 
-    ASSERT_EQ(status.noteGuidsWhichFailedToExpunge.size(), 1);
+    ASSERT_EQ(status.m_noteGuidsWhichFailedToExpunge.size(), 1);
     EXPECT_EQ(
-        status.noteGuidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
+        status.m_noteGuidsWhichFailedToExpunge[0].first, expungedNoteGuids[1]);
 
     const QList<qevercloud::Guid> expectedExpungedNoteGuids = [&] {
         auto guids = expungedNoteGuids;
@@ -1664,7 +1664,7 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
         return guids;
     }();
 
-    EXPECT_EQ(status.expungedNoteGuids, expectedExpungedNoteGuids);
+    EXPECT_EQ(status.m_expungedNoteGuids, expectedExpungedNoteGuids);
 
     EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
@@ -1749,18 +1749,18 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();
-    EXPECT_EQ(status.totalNewNotes, 0UL);
-    EXPECT_EQ(status.totalUpdatedNotes, 0UL);
+    EXPECT_EQ(status.m_totalNewNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 0UL);
     EXPECT_EQ(
-        status.totalExpungedNotes,
+        status.m_totalExpungedNotes,
         static_cast<quint64>(expungedNoteGuids.size()));
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.processedNoteGuidsAndUsns.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_EQ(status.expungedNoteGuids, expungedNoteGuids);
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_processedNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_EQ(status.m_expungedNoteGuids, expungedNoteGuids);
 
     EXPECT_TRUE(callback->m_notesWhichFailedToDownload.isEmpty());
     EXPECT_TRUE(callback->m_notesWhichFailedToProcess.isEmpty());
@@ -2023,23 +2023,23 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
     const auto status = future.result();
 
     EXPECT_EQ(
-        status.totalNewNotes, static_cast<quint64>(originalNotesSize - 1));
+        status.m_totalNewNotes, static_cast<quint64>(originalNotesSize - 1));
 
-    EXPECT_EQ(status.totalUpdatedNotes, 1UL);
-    EXPECT_EQ(status.totalExpungedNotes, 0UL);
+    EXPECT_EQ(status.m_totalUpdatedNotes, 1UL);
+    EXPECT_EQ(status.m_totalExpungedNotes, 0UL);
 
-    EXPECT_TRUE(status.notesWhichFailedToDownload.isEmpty());
-    EXPECT_TRUE(status.notesWhichFailedToProcess.isEmpty());
-    EXPECT_TRUE(status.noteGuidsWhichFailedToExpunge.isEmpty());
-    EXPECT_TRUE(status.cancelledNoteGuidsAndUsns.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToDownload.isEmpty());
+    EXPECT_TRUE(status.m_notesWhichFailedToProcess.isEmpty());
+    EXPECT_TRUE(status.m_noteGuidsWhichFailedToExpunge.isEmpty());
+    EXPECT_TRUE(status.m_cancelledNoteGuidsAndUsns.isEmpty());
 
     if (std::holds_alternative<ISyncConflictResolver::ConflictResolution::
                                    MoveMine<qevercloud::Note>>(resolution))
     {
-        ASSERT_EQ(status.processedNoteGuidsAndUsns.size() + 1, notes.size());
+        ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size() + 1, notes.size());
     }
     else {
-        ASSERT_EQ(status.processedNoteGuidsAndUsns.size(), notes.size());
+        ASSERT_EQ(status.m_processedNoteGuidsAndUsns.size(), notes.size());
     }
 
     for (const auto & note: qAsConst(notes)) {
@@ -2050,9 +2050,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
         }
 
         const auto it =
-            status.processedNoteGuidsAndUsns.find(note.guid().value());
+            status.m_processedNoteGuidsAndUsns.find(note.guid().value());
 
-        ASSERT_NE(it, status.processedNoteGuidsAndUsns.end());
+        ASSERT_NE(it, status.m_processedNoteGuidsAndUsns.end());
         EXPECT_EQ(it.value(), note.updateSequenceNum().value());
     }
 

@@ -55,20 +55,17 @@ private:
         const qevercloud::Guid & noteGuid,
         qint32 noteUpdateSequenceNum) noexcept override;
 
-    void onExpungedNote(
-        const qevercloud::Guid & noteGuid) noexcept override;
+    void onExpungedNote(const qevercloud::Guid & noteGuid) noexcept override;
 
     void onFailedToExpungeNote(
         const qevercloud::Guid & noteGuid,
         const QException & e) noexcept override;
 
     void onNoteFailedToDownload(
-        const qevercloud::Note & note,
-        const QException & e) noexcept override;
+        const qevercloud::Note & note, const QException & e) noexcept override;
 
     void onNoteFailedToProcess(
-        const qevercloud::Note & note,
-        const QException & e) noexcept override;
+        const qevercloud::Note & note, const QException & e) noexcept override;
 
     void onNoteProcessingCancelled(
         const qevercloud::Note & note) noexcept override;
