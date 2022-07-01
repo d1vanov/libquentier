@@ -46,7 +46,7 @@ public:
         const QDir & syncPersistentStorageDir);
 
     // IDurableNotesProcessor
-    [[nodiscard]] QFuture<DownloadNotesStatus> processNotes(
+    [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
@@ -76,7 +76,7 @@ private:
     [[nodiscard]] QList<qevercloud::Guid> failedToExpungeNotesFromPreviousSync()
         const;
 
-    [[nodiscard]] QFuture<DownloadNotesStatus> processNotesImpl(
+    [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes);

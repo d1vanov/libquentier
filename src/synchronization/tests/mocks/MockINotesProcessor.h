@@ -28,7 +28,7 @@ class MockINotesProcessor : public INotesProcessor
 {
 public:
     MOCK_METHOD(
-        QFuture<DownloadNotesStatus>, processNotes,
+        QFuture<DownloadNotesStatusPtr>, processNotes,
         (const QList<qevercloud::SyncChunk> & syncChunks,
          ICallbackWeakPtr callbackWeak),
         (override));

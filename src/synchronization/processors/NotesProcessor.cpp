@@ -21,6 +21,7 @@
 
 #include <synchronization/processors/INoteFullDataDownloader.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/types/DownloadNotesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/local_storage/ILocalStorage.h>
@@ -78,7 +79,7 @@ NotesProcessor::NotesProcessor(
     }
 }
 
-QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
+QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks,
     ICallbackWeakPtr callbackWeak)
 {
@@ -100,7 +101,8 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
             "synchronization::NotesProcessor",
             "No new/updated/expunged notes in the sync chunks");
 
-        return threading::makeReadyFuture<DownloadNotesStatus>({});
+        return threading::makeReadyFuture<DownloadNotesStatusPtr>(
+            std::make_shared<DownloadNotesStatus>());
     }
 
     const int noteCount = notes.size();
@@ -241,7 +243,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
     auto allNotesFuture =
         threading::whenAll<ProcessNoteStatus>(std::move(noteFutures));
 
-    auto promise = std::make_shared<QPromise<DownloadNotesStatus>>();
+    auto promise = std::make_shared<QPromise<DownloadNotesStatusPtr>>();
     auto future = promise->future();
 
     promise->setProgressRange(0, 100);
@@ -252,10 +254,10 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
 
     threading::thenOrFailed(
         std::move(allNotesFuture), promise,
-        [promise, status](const QList<ProcessNoteStatus> & statuses) {
+        [promise, status](const QList<ProcessNoteStatus> & statuses) mutable {
             Q_UNUSED(statuses)
 
-            promise->addResult(*status);
+            promise->addResult(std::move(status));
             promise->finish();
         });
 
@@ -264,7 +266,7 @@ QFuture<DownloadNotesStatus> NotesProcessor::processNotes(
 
 void NotesProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    const std::shared_ptr<DownloadNotesStatus> & status,
+    const DownloadNotesStatusPtr & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     ICallbackWeakPtr && callbackWeak, qevercloud::Note updatedNote,
     qevercloud::Note localNote)
@@ -415,7 +417,7 @@ void NotesProcessor::onFoundDuplicate(
 
 void NotesProcessor::downloadFullNoteData(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    const std::shared_ptr<DownloadNotesStatus> & status,
+    const DownloadNotesStatusPtr & status,
     const utility::cancelers::ManualCancelerPtr & canceler,
     ICallbackWeakPtr && callbackWeak, const qevercloud::Note & note,
     NoteKind noteKind)
@@ -482,7 +484,7 @@ void NotesProcessor::downloadFullNoteData(
 
 void NotesProcessor::putNoteToLocalStorage(
     const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-    const std::shared_ptr<DownloadNotesStatus> & status,
+    const DownloadNotesStatusPtr & status,
     ICallbackWeakPtr && callbackWeak, qevercloud::Note note,
     NoteKind putNoteKind)
 {

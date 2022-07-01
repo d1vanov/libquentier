@@ -81,6 +81,7 @@ target_sources(${LIBRARY_NAME}
   types/AuthenticationInfo.h
   types/DownloadNotesStatus.cpp
   types/DownloadNotesStatus.h
+  types/Fwd.h
   types/SyncOptions.cpp
   types/SyncState.cpp
   types/SyncState.h

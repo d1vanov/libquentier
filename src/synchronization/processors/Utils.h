@@ -21,6 +21,8 @@
 #include "INotesProcessor.h"
 #include "IResourcesProcessor.h"
 
+#include <synchronization/types/DownloadNotesStatus.h>
+
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/TypeAliases.h>
 

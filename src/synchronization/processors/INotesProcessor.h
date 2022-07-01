@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Note.h>
@@ -66,7 +66,7 @@ public:
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
-    [[nodiscard]] virtual QFuture<DownloadNotesStatus> processNotes(
+    [[nodiscard]] virtual QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };

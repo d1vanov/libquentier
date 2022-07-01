@@ -18,29 +18,11 @@
 
 #pragma once
 
-#include "../Fwd.h"
-
-#include <synchronization/types/Fwd.h>
-
-#include <qevercloud/types/Fwd.h>
-
-#include <QFuture>
-#include <QList>
+#include <memory>
 
 namespace quentier::synchronization {
 
-/**
- * @brief The IDurableNotesProcessor interface represents a notes processor
- * which retries downloading and processing of notes which for some reason
- * failed during the previous sync attempt.
- */
-class IDurableNotesProcessor
-{
-public:
-    virtual ~IDurableNotesProcessor() = default;
-
-    [[nodiscard]] virtual QFuture<DownloadNotesStatusPtr> processNotes(
-        const QList<qevercloud::SyncChunk> & syncChunks) = 0;
-};
+struct DownloadNotesStatus;
+using DownloadNotesStatusPtr = std::shared_ptr<DownloadNotesStatus>;
 
 } // namespace quentier::synchronization

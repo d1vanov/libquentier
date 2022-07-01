@@ -21,6 +21,7 @@
 #include <synchronization/processors/INotesProcessor.h>
 #include <synchronization/processors/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/types/DownloadNotesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -49,7 +50,7 @@ DurableNotesProcessor::DurableNotesProcessor(
     }
 }
 
-QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotes(
+QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
     // First need to check whether there are notes which failed to be processed
@@ -274,14 +275,14 @@ QList<qevercloud::Guid>
     return utils::noteGuidsWhichFailedToExpungeDuringLastSync(m_syncNotesDir);
 }
 
-QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
+QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     const QList<qevercloud::SyncChunk> & syncChunks,
     QList<qevercloud::Note> previousNotes,
     QList<qevercloud::Guid> previousExpungedNotes)
 {
     const auto selfWeak = weak_from_this();
 
-    auto promise = std::make_shared<QPromise<DownloadNotesStatus>>();
+    auto promise = std::make_shared<QPromise<DownloadNotesStatusPtr>>();
     auto future = promise->future();
     promise->start();
 
@@ -291,7 +292,7 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
-            [promise](DownloadNotesStatus status) {
+            [promise](DownloadNotesStatusPtr status) {
                 promise->addResult(std::move(status));
                 promise->finish();
             });
@@ -314,7 +315,7 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
                 selfWeak,
                 [this, selfWeak, promise, syncChunks = syncChunks,
                  previousNotes = std::move(previousNotes)](
-                    DownloadNotesStatus expungeNotesStatus) mutable {
+                    DownloadNotesStatusPtr expungeNotesStatus) mutable {
                     auto processNotesFuture = processNotesImpl(
                         syncChunks, std::move(previousNotes), {});
 
@@ -325,9 +326,9 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
                             [selfWeak, promise,
                              expungeNotesStatus = std::move(expungeNotesStatus),
                              syncChunks = std::move(syncChunks)](
-                                DownloadNotesStatus status) mutable {
-                                status = utils::mergeDownloadNotesStatuses(
-                                    std::move(status), expungeNotesStatus);
+                                DownloadNotesStatusPtr status) mutable {
+                                *status = utils::mergeDownloadNotesStatuses(
+                                    std::move(*status), *expungeNotesStatus);
 
                                 promise->addResult(std::move(status));
                                 promise->finish();
@@ -351,7 +352,7 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
             threading::TrackedTask{
                 selfWeak,
                 [this, selfWeak, promise,
-                 syncChunks](DownloadNotesStatus status) mutable {
+                 syncChunks](DownloadNotesStatusPtr status) mutable {
                     auto processNotesFuture =
                         processNotesImpl(syncChunks, {}, {});
 
@@ -361,9 +362,9 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
                             selfWeak,
                             [selfWeak, promise,
                              processNotesStatus = std::move(status)](
-                                DownloadNotesStatus status) mutable {
-                                status = utils::mergeDownloadNotesStatuses(
-                                    std::move(status), processNotesStatus);
+                                DownloadNotesStatusPtr status) mutable {
+                                *status = utils::mergeDownloadNotesStatuses(
+                                    std::move(*status), *processNotesStatus);
 
                                 promise->addResult(std::move(status));
                                 promise->finish();
@@ -378,7 +379,7 @@ QFuture<DownloadNotesStatus> DurableNotesProcessor::processNotesImpl(
 
     threading::thenOrFailed(
         std::move(processSyncChunksFuture), promise,
-        [promise](DownloadNotesStatus status) {
+        [promise](DownloadNotesStatusPtr status) {
             promise->addResult(std::move(status));
             promise->finish();
         });
