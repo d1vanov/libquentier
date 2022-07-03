@@ -120,6 +120,39 @@ template <class T>
 #endif // QT_VERSION
 
 /**
+ * Sets up the connection between the cancellation of two futures: if "from"
+ * future gets canceled, then "to" future gets canceled as well
+ */
+template <class T, class U>
+void bindCancellation(QFuture<T> & from, QFuture<U> & to)
+{
+    auto watcher = std::make_unique<QFutureWatcher<T>>();
+    auto * rawWatcher = watcher.get();
+
+    QObject::connect(
+        rawWatcher,
+        &QFutureWatcher<T>::canceled,
+        rawWatcher,
+        [rawWatcher, to]() mutable
+        {
+            to.cancel();
+            rawWatcher->deleteLater();
+        });
+
+    QObject::connect(
+        rawWatcher,
+        &QFutureWatcher<T>::finished,
+        rawWatcher,
+        [rawWatcher]
+        {
+            rawWatcher->deleteLater();
+        });
+
+    watcher->setFuture(from);
+    Q_UNUSED(watcher.release());
+}
+
+/**
  * Create QFuture<void> which would only become finished when either all passed
  * in futures are finished successfully (without exception) or at least one of
  * passed in futures is finished unsuccessfully (with exception) in which case
@@ -150,6 +183,10 @@ template <class T>
     auto promise = std::make_shared<QPromise<QList<std::decay_t<T>>>>();
     auto future = promise->future();
 
+    for (auto & f: futures) {
+        threading::bindCancellation(future, f);
+    }
+
     const int totalItemCount = futures.size();
     promise->setProgressRange(0, totalItemCount);
     promise->setProgressValue(0);
@@ -161,11 +198,15 @@ template <class T>
     auto exceptionFlag = std::make_shared<bool>(false);
     auto mutex = std::make_shared<QMutex>();
 
-    for (auto & future: futures) {
+    for (auto & f: futures) {
         auto thenFuture = then(
-            std::move(future),
+            std::move(f),
             [promise, processedItemsCount, totalItemCount, exceptionFlag, mutex,
              resultList](auto result) {
+                if (promise->isCanceled()) {
+                    return;
+                }
+
                 int count = 0;
                 {
                     const QMutexLocker locker{mutex.get()};
@@ -190,6 +231,10 @@ template <class T>
         onFailed(
             std::move(thenFuture),
             [promise, mutex, exceptionFlag](const QException & e) {
+                if (promise->isCanceled()) {
+                    return;
+                }
+
                 {
                     const QMutexLocker locker{mutex.get()};
 

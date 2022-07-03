@@ -40,6 +40,10 @@ QFuture<void> whenAll(QList<QFuture<void>> futures)
     auto promise = std::make_shared<QPromise<void>>();
     auto future = promise->future();
 
+    for (auto & f: futures) {
+        threading::bindCancellation(future, f);
+    }
+
     const int totalItemCount = futures.size();
     promise->setProgressRange(0, totalItemCount);
     promise->setProgressValue(0);
@@ -50,11 +54,15 @@ QFuture<void> whenAll(QList<QFuture<void>> futures)
     auto exceptionFlag = std::make_shared<bool>(false);
     auto mutex = std::make_shared<QMutex>();
 
-    for (auto & future: futures) {
+    for (auto & f: futures) {
         auto thenFuture = threading::then(
-            std::move(future),
+            std::move(f),
             [promise, processedItemsCount, totalItemCount, exceptionFlag,
              mutex] {
+                if (promise->isCanceled()) {
+                    return;
+                }
+
                 int count = 0;
                 {
                     const QMutexLocker locker{mutex.get()};
@@ -76,6 +84,10 @@ QFuture<void> whenAll(QList<QFuture<void>> futures)
         threading::onFailed(
             std::move(thenFuture),
             [promise, mutex, exceptionFlag](const QException & e) {
+                if (promise->isCanceled()) {
+                    return;
+                }
+
                 {
                     const QMutexLocker locker{mutex.get()};
 
