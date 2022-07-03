@@ -684,7 +684,6 @@ bool NoteStore::getNoteAsync(
     }
 
     requestData.m_pFutureWatcher = new QFutureWatcher<qevercloud::Note>(this);
-    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
         requestData.m_pFutureWatcher,
@@ -713,6 +712,8 @@ bool NoteStore::getNoteAsync(
 
             onGetNoteAsyncFinished(value, e, ctx);
         });
+
+    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     ++m_getNoteAsyncRequestCount;
     return true;
@@ -819,7 +820,6 @@ bool NoteStore::getResourceAsync(
 
     requestData.m_pFutureWatcher =
         new QFutureWatcher<qevercloud::Resource>(this);
-    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
 
     QObject::connect(
         requestData.m_pFutureWatcher,
@@ -849,6 +849,7 @@ bool NoteStore::getResourceAsync(
             onGetResourceAsyncFinished(value, e, ctx);
         });
 
+    requestData.m_pFutureWatcher->setFuture(requestData.m_future);
     return true;
 }
 

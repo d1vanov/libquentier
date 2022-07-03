@@ -75,7 +75,6 @@ void NoteThumbnailDownloader::start()
         m_noteGuid, m_noteFromPublicLinkedNotebook,
         /* is resource guid = */ false);
 
-    m_futureWatcher.setFuture(m_future);
     QObject::connect(
         &m_futureWatcher,
         &QFutureWatcher<QVariant>::finished,
@@ -96,6 +95,8 @@ void NoteThumbnailDownloader::start()
 
             onDownloadFinished(value, e);
         });
+
+    m_futureWatcher.setFuture(m_future);
 }
 
 void NoteThumbnailDownloader::onDownloadFinished(

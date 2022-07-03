@@ -354,7 +354,6 @@ QFuture<T> SimpleGenericSyncConflictResolver<
     promise->start();
 
     auto watcher = std::make_unique<QFutureWatcher<std::optional<T>>>();
-    watcher->setFuture(findItemFuture);
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<qevercloud::Notebook>::finished, rawWatcher,
@@ -419,6 +418,8 @@ QFuture<T> SimpleGenericSyncConflictResolver<
     QObject::connect(
         rawWatcher, &QFutureWatcher<qevercloud::Notebook>::canceled, rawWatcher,
         [rawWatcher] { rawWatcher->deleteLater(); });
+
+    watcher->setFuture(findItemFuture);
 
     Q_UNUSED(watcher.release())
     return future;

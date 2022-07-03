@@ -167,7 +167,6 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     }
 
     auto watcher = std::make_unique<QFutureWatcher<T>>();
-    watcher->setFuture(std::move(future));
     auto * rawWatcher = watcher.get();
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::finished, rawWatcher,
@@ -182,6 +181,8 @@ QFuture<typename detail::ResultTypeHelper<Function, T>::ResultType> then(
     QObject::connect(
         rawWatcher, &QFutureWatcher<T>::canceled, rawWatcher,
         [rawWatcher] { rawWatcher->deleteLater(); });
+
+    watcher->setFuture(std::move(future));
 
     Q_UNUSED(watcher.release())
     return result;
