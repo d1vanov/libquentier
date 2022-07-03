@@ -202,6 +202,10 @@ void processSingleDownloadedSyncChunk(
         return;
     }
 
+    if (promise->isCanceled()) {
+        return;
+    }
+
     downloadSyncChunksList(
         *syncChunk.chunkHighUSN(), synchronizationMode, std::move(noteStore),
         std::move(ctx), std::move(singleSyncChunkDownloader),
