@@ -76,8 +76,13 @@ using SyncChunksStorer =
             auto future = promise->future();
             promise->start();
 
+            auto syncChunksDownloaderFuture =
+                syncChunksDownloader(afterUsn, std::move(ctx));
+
+            threading::bindCancellation(future, syncChunksDownloaderFuture);
+
             auto thenFuture = threading::then(
-                syncChunksDownloader(afterUsn, std::move(ctx)),
+                std::move(syncChunksDownloaderFuture),
                 [promise, syncChunksStorer = std::move(syncChunksStorer)](
                     ISyncChunksDownloader::SyncChunksResult result) mutable
                 {
@@ -187,6 +192,8 @@ using SyncChunksStorer =
         downloadSyncChunks(*chunksHighUsn, std::move(ctx));
 
     promise->start();
+
+    threading::bindCancellation(future, downloaderFuture);
 
     auto thenFuture = threading::then(
         std::move(downloaderFuture),
