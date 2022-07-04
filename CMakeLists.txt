@@ -210,7 +210,9 @@ set(UTILITY_HEADERS
     headers/quentier/utility/System.h
     headers/quentier/utility/TagSortByParentChildRelations.h
     headers/quentier/utility/UidGenerator.h
+    headers/quentier/utility/cancelers/AnyOfCanceler.h
     headers/quentier/utility/cancelers/Fwd.h
+    headers/quentier/utility/cancelers/FutureCanceler.h
     headers/quentier/utility/cancelers/ICanceler.h
     headers/quentier/utility/cancelers/ManualCanceler.h)
 
@@ -457,6 +459,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/data/AccountData.cpp
     src/types/data/ResourceRecognitionIndexItemData.cpp
     src/types/data/ResourceRecognitionIndicesData.cpp
+    src/utility/cancelers/AnyOfCanceler.cpp
     src/utility/cancelers/ManualCanceler.cpp
     src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp

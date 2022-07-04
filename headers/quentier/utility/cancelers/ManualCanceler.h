@@ -21,18 +21,32 @@
 #include <quentier/utility/cancelers/ICanceler.h>
 
 #include <atomic>
+#include <memory>
 
 namespace quentier::utility::cancelers {
 
+/**
+ * ICanceler which allows one to manually call cancel method to cancel
+ * some task
+ */
 class QUENTIER_EXPORT ManualCanceler : public ICanceler
 {
 public:
-    void cancel();
+    ManualCanceler();
+    ManualCanceler(ManualCanceler && other) noexcept;
+    ManualCanceler & operator=(ManualCanceler && other) noexcept;
+    ~ManualCanceler() noexcept override;
+
+    /**
+     * Manually cancel a task
+     */
+    void cancel() noexcept;
 
     [[nodiscard]] bool isCanceled() const noexcept override;
 
 private:
-    std::atomic<bool> m_canceled{false};
+    class Impl;
+    std::unique_ptr<Impl> m_impl;
 };
 
 } // namespace quentier::utility::cancelers

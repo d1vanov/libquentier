@@ -16,37 +16,28 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/cancelers/ManualCanceler.h>
+#pragma once
 
-#include <atomic>
+#include <quentier/utility/cancelers/Fwd.h>
+#include <quentier/utility/cancelers/ICanceler.h>
+
+#include <QList>
 
 namespace quentier::utility::cancelers {
 
-class ManualCanceler::Impl
+class QUENTIER_EXPORT AnyOfCanceler : public ICanceler
 {
 public:
-    std::atomic<bool> m_canceled{false};
+    explicit AnyOfCanceler(QList<ICancelerPtr> cancelers);
+    AnyOfCanceler(AnyOfCanceler && other) noexcept;
+    AnyOfCanceler & operator=(AnyOfCanceler && other) noexcept;
+    ~AnyOfCanceler() noexcept override;
+
+    [[nodiscard]] bool isCanceled() const noexcept override;
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> m_impl;
 };
-
-ManualCanceler::ManualCanceler()
-    : m_impl{std::make_unique<ManualCanceler::Impl>()}
-{}
-
-ManualCanceler::ManualCanceler(ManualCanceler && other) noexcept = default;
-
-ManualCanceler & ManualCanceler::operator=(ManualCanceler && other) noexcept =
-    default;
-
-ManualCanceler::~ManualCanceler() noexcept = default;
-
-void ManualCanceler::cancel() noexcept
-{
-    m_impl->m_canceled.store(true, std::memory_order_release);
-}
-
-bool ManualCanceler::isCanceled() const noexcept
-{
-    return m_impl->m_canceled.load(std::memory_order_acquire);
-}
 
 } // namespace quentier::utility::cancelers

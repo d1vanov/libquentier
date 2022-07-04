@@ -16,37 +16,30 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/utility/cancelers/ManualCanceler.h>
+#pragma once
 
-#include <atomic>
+#include <quentier/utility/cancelers/ICanceler.h>
+
+#include <QFuture>
 
 namespace quentier::utility::cancelers {
 
-class ManualCanceler::Impl
+/**
+ * ICanceler implementation which tracks the canceled status of a future.
+ */
+template <class T>
+class FutureCanceler : public ICanceler
 {
 public:
-    std::atomic<bool> m_canceled{false};
+    explicit FutureCanceler(QFuture<T> future) : m_future{std::move(future)} {}
+
+    [[nodiscard]] bool isCanceled() const noexcept override
+    {
+        return m_future.isCanceled();
+    }
+
+private:
+    QFuture<T> m_future;
 };
-
-ManualCanceler::ManualCanceler()
-    : m_impl{std::make_unique<ManualCanceler::Impl>()}
-{}
-
-ManualCanceler::ManualCanceler(ManualCanceler && other) noexcept = default;
-
-ManualCanceler & ManualCanceler::operator=(ManualCanceler && other) noexcept =
-    default;
-
-ManualCanceler::~ManualCanceler() noexcept = default;
-
-void ManualCanceler::cancel() noexcept
-{
-    m_impl->m_canceled.store(true, std::memory_order_release);
-}
-
-bool ManualCanceler::isCanceled() const noexcept
-{
-    return m_impl->m_canceled.load(std::memory_order_acquire);
-}
 
 } // namespace quentier::utility::cancelers
