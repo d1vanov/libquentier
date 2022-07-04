@@ -68,7 +68,8 @@ private:
     void onFoundDuplicate(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const DownloadNotesStatusPtr & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
+        const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
         ICallbackWeakPtr && callbackWeak, qevercloud::Note updatedNote,
         qevercloud::Note localNote);
 
@@ -81,7 +82,7 @@ private:
     void downloadFullNoteData(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
         const DownloadNotesStatusPtr & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
         ICallbackWeakPtr && callbackWeak, const qevercloud::Note & note,
         NoteKind noteKind);
 

@@ -22,6 +22,9 @@
 
 namespace quentier::utility::cancelers {
 
+class AnyOfCanceler;
+using AnyOfCancelerPtr = std::shared_ptr<AnyOfCanceler>;
+
 class ICanceler;
 using ICancelerPtr = std::shared_ptr<ICanceler>;
 
