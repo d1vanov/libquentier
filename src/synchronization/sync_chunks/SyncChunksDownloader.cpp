@@ -143,6 +143,9 @@ void downloadSyncChunksList(
     Q_ASSERT(singleSyncChunkDownloader);
 
     if (promise->isCanceled()) {
+        // FIXME: cannot really returning running result here because if
+        // the promise is already canceled, QPromise::addResult has no effect
+        promise->finish();
         return;
     }
 
@@ -199,10 +202,6 @@ void processSingleDownloadedSyncChunk(
             std::move(runningResult), nullptr});
 
         promise->finish();
-        return;
-    }
-
-    if (promise->isCanceled()) {
         return;
     }
 

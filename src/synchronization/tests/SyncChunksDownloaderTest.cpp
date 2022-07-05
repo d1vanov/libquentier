@@ -31,6 +31,8 @@
 #include <qevercloud/types/builders/SyncChunkBuilder.h>
 #include <qevercloud/types/builders/SyncChunkFilterBuilder.h>
 
+#include <QCoreApplication>
+
 #include <gtest/gtest.h>
 
 #include <array>
@@ -533,6 +535,80 @@ TEST_F(
     }();
 
     EXPECT_EQ(syncChunksResult.m_syncChunks, partialSyncChunks);
+}
+
+TEST_F(
+    SyncChunksDownloaderTest,
+    ReturnPartialUserOwnSyncChunksIfDownloadingIsCancelled)
+{
+    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    constexpr qint32 afterUsnInitial = 0;
+    constexpr qint32 maxEntries = 50;
+    qint32 afterUsn = afterUsnInitial;
+
+    InSequence s;
+
+    const auto syncChunks = adjustSyncChunksUpdateCounts(
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
+                                       << sampleSyncChunk3);
+
+    std::optional<qint32> previousChunkHighUsn;
+    QPromise<qevercloud::SyncChunk> promise;
+    promise.start();
+
+    int i = 0;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        ++i;
+        if (i == 3)
+        {
+            break;
+        }
+
+        if (previousChunkHighUsn) {
+            afterUsn = *previousChunkHighUsn;
+        }
+
+        EXPECT_CALL(*m_mockNoteStore, getFilteredSyncChunkAsync)
+            .WillOnce([&, afterUsnCurrent = afterUsn, i = i](
+                          const qint32 afterUsnParam,
+                          const qint32 maxEntriesParam,
+                          const qevercloud::SyncChunkFilter & syncChunkFilter,
+                          const qevercloud::IRequestContextPtr & ctxParam) {
+                EXPECT_EQ(afterUsnParam, afterUsnCurrent);
+                EXPECT_EQ(maxEntriesParam, maxEntries);
+                EXPECT_EQ(syncChunkFilter, sampleFullSyncSyncChunkFilter);
+                EXPECT_EQ(ctxParam, ctx);
+
+                if (i == 2) {
+                    return promise.future();
+                }
+
+                return threading::makeReadyFuture(syncChunk);
+            });
+
+        ASSERT_TRUE(syncChunk.chunkHighUSN());
+        previousChunkHighUsn = *syncChunk.chunkHighUSN();
+    }
+
+    auto syncChunksFuture = downloader.downloadSyncChunks(afterUsnInitial, ctx);
+    ASSERT_FALSE(syncChunksFuture.isFinished());
+
+    syncChunksFuture.cancel();
+
+    promise.addResult(syncChunks.at(1));
+    promise.finish();
+
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
+    syncChunksFuture.waitForFinished();
+
+    // Unfortunately, canceled QFutures are unable to propagate the results
+    ASSERT_EQ(syncChunksFuture.resultCount(), 0);
 }
 
 TEST_F(
