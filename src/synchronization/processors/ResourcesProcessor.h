@@ -63,7 +63,8 @@ private:
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
+        const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
         ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
@@ -71,7 +72,8 @@ private:
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
+        const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
         ICallbackWeakPtr && callbackWeak,
         const qevercloud::Resource & localResource, qevercloud::Note localNote,
         qevercloud::Resource updatedResource);
@@ -86,7 +88,8 @@ private:
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
+        const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
         ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
         qevercloud::Resource localResource);
 
@@ -94,7 +97,7 @@ private:
         const std::shared_ptr<QPromise<ProcessResourceStatus>> &
             resourcePromise,
         const std::shared_ptr<DownloadResourcesStatus> & status,
-        const utility::cancelers::ManualCancelerPtr & canceler,
+        const utility::cancelers::ManualCancelerPtr & manualCanceler,
         ICallbackWeakPtr && callbackWeak, const qevercloud::Resource & resource,
         ResourceKind resourceKind);
 

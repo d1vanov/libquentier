@@ -31,6 +31,8 @@
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/AnyOfCanceler.h>
+#include <quentier/utility/cancelers/FutureCanceler.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/exceptions/EDAMSystemException.h>
@@ -107,7 +109,17 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
     //    ensure the auth token isn't close to expiration and re-acquire the
     //    token if it is close to expiration. But still need to be able to
     //    handle this situation.
-    auto canceler = std::make_shared<utility::cancelers::ManualCanceler>();
+    auto manualCanceler = std::make_shared<utility::cancelers::ManualCanceler>();
+
+    auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
+    auto future = promise->future();
+
+    auto futureCanceler = std::make_shared<
+        utility::cancelers::FutureCanceler<DownloadResourcesStatus>>(future);
+
+    auto anyOfCanceler = std::make_shared<utility::cancelers::AnyOfCanceler>(
+        QList<utility::cancelers::ICancelerPtr>{
+            manualCanceler, std::move(futureCanceler)});
 
     for (const auto & resource: qAsConst(resources)) {
         auto resourcePromise =
@@ -127,10 +139,10 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
             threading::TrackedTask{
                 selfWeak,
                 [this, updatedResource = resource, resourcePromise, status,
-                 selfWeak, canceler,
+                 selfWeak, manualCanceler, anyOfCanceler,
                  callbackWeak](const std::optional<qevercloud::Resource> &
                                    resource) mutable {
-                    if (canceler->isCanceled()) {
+                    if (anyOfCanceler->isCanceled()) {
                         const auto & guid = *updatedResource.guid();
                         status->cancelledResourceGuidsAndUsns[guid] =
                             updatedResource.updateSequenceNum().value();
@@ -150,9 +162,9 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                     if (resource) {
                         ++status->totalUpdatedResources;
                         onFoundDuplicate(
-                            resourcePromise, status, canceler,
-                            std::move(callbackWeak), std::move(updatedResource),
-                            *resource);
+                            resourcePromise, status, manualCanceler,
+                            anyOfCanceler, std::move(callbackWeak),
+                            std::move(updatedResource), *resource);
                         return;
                     }
 
@@ -161,7 +173,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                     // No duplicate by guid was found, will download full
                     // resource data and then put it into the local storage
                     downloadFullResourceData(
-                        resourcePromise, status, canceler,
+                        resourcePromise, status, manualCanceler,
                         std::move(callbackWeak), updatedResource,
                         ResourceKind::NewResource);
                 }});
@@ -188,9 +200,6 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
     auto allResourcesFuture =
         threading::whenAll<ProcessResourceStatus>(std::move(resourceFutures));
 
-    auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
-    auto future = promise->future();
-
     promise->setProgressRange(0, 100);
     promise->setProgressValue(0);
     threading::mapFutureProgress(allResourcesFuture, promise);
@@ -212,7 +221,8 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
 void ResourcesProcessor::onFoundDuplicate(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<DownloadResourcesStatus> & status,
-    const utility::cancelers::ManualCancelerPtr & canceler,
+    const utility::cancelers::ManualCancelerPtr & manualCanceler,
+    const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
     ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
     qevercloud::Resource localResource)
 {
@@ -249,24 +259,28 @@ void ResourcesProcessor::onFoundDuplicate(
 
     if (shouldMakeLocalConflictNewResource) {
         handleResourceConflict(
-            resourcePromise, status, canceler, std::move(callbackWeak),
-            std::move(updatedResource), std::move(localResource));
+            resourcePromise, status, manualCanceler, anyOfCanceler,
+            std::move(callbackWeak), std::move(updatedResource),
+            std::move(localResource));
         return;
     }
 
     downloadFullResourceData(
-        resourcePromise, status, canceler, std::move(callbackWeak),
+        resourcePromise, status, manualCanceler, std::move(callbackWeak),
         updatedResource, ResourceKind::UpdatedResource);
 }
 
 void ResourcesProcessor::onFoundNoteOwningConflictingResource(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<DownloadResourcesStatus> & status,
-    const utility::cancelers::ManualCancelerPtr & canceler,
+    const utility::cancelers::ManualCancelerPtr & manualCanceler,
+    const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
     ICallbackWeakPtr && callbackWeak,
     const qevercloud::Resource & localResource, qevercloud::Note localNote,
     qevercloud::Resource updatedResource)
 {
+    Q_ASSERT(updatedResource.guid());
+
     // Local note would be turned into the conflicting local one with local
     // duplicates of all resources.
     if (localNote.resources()) {
@@ -324,11 +338,29 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
         std::move(putLocalNoteFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, resourcePromise, status, canceler, callbackWeak,
-             updatedResource]() mutable {
+            [this, selfWeak, resourcePromise, status, manualCanceler,
+             anyOfCanceler, callbackWeak, updatedResource]() mutable {
+                if (anyOfCanceler->isCanceled()) {
+                    const auto & guid = *updatedResource.guid();
+                    status->cancelledResourceGuidsAndUsns[guid] =
+                        updatedResource.updateSequenceNum().value();
+
+                    if (const auto callback = callbackWeak.lock()) {
+                        callback->onResourceProcessingCancelled(
+                            updatedResource);
+                    }
+
+                    resourcePromise->addResult(
+                        ProcessResourceStatus::Canceled);
+
+                    resourcePromise->finish();
+                    return;
+                }
+
                 downloadFullResourceData(
-                    resourcePromise, status, canceler, std::move(callbackWeak),
-                    updatedResource, ResourceKind::UpdatedResource);
+                    resourcePromise, status, manualCanceler,
+                    std::move(callbackWeak), updatedResource,
+                    ResourceKind::UpdatedResource);
             }});
 
     threading::onFailed(
@@ -354,7 +386,8 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
 void ResourcesProcessor::handleResourceConflict(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<DownloadResourcesStatus> & status,
-    const utility::cancelers::ManualCancelerPtr & canceler,
+    const utility::cancelers::ManualCancelerPtr & manualCanceler,
+    const utility::cancelers::AnyOfCancelerPtr & anyOfCanceler,
     ICallbackWeakPtr && callbackWeak, qevercloud::Resource updatedResource,
     qevercloud::Resource localResource)
 {
@@ -376,8 +409,8 @@ void ResourcesProcessor::handleResourceConflict(
         std::move(findNoteByGuidFuture),
         threading::TrackedTask{
             selfWeak,
-            [this, status, resourcePromise, canceler, callbackWeak,
-             localResource = std::move(localResource),
+            [this, status, resourcePromise, manualCanceler, anyOfCanceler,
+             callbackWeak, localResource = std::move(localResource),
              updatedResource](std::optional<qevercloud::Note> note) mutable {
                 if (Q_UNLIKELY(!note)) {
                     ErrorString error{QT_TRANSLATE_NOOP(
@@ -408,8 +441,8 @@ void ResourcesProcessor::handleResourceConflict(
                 }
 
                 onFoundNoteOwningConflictingResource(
-                    resourcePromise, status, canceler, std::move(callbackWeak),
-                    localResource, std::move(*note),
+                    resourcePromise, status, manualCanceler, anyOfCanceler,
+                    std::move(callbackWeak), localResource, std::move(*note),
                     std::move(updatedResource));
             }});
 
@@ -437,7 +470,7 @@ void ResourcesProcessor::handleResourceConflict(
 void ResourcesProcessor::downloadFullResourceData(
     const std::shared_ptr<QPromise<ProcessResourceStatus>> & resourcePromise,
     const std::shared_ptr<DownloadResourcesStatus> & status,
-    const utility::cancelers::ManualCancelerPtr & canceler,
+    const utility::cancelers::ManualCancelerPtr & manualCanceler,
     ICallbackWeakPtr && callbackWeak, const qevercloud::Resource & resource,
     ResourceKind resourceKind)
 {
@@ -462,7 +495,7 @@ void ResourcesProcessor::downloadFullResourceData(
 
     threading::onFailed(
         std::move(thenFuture),
-        [resourcePromise, status, resource, canceler,
+        [resourcePromise, status, resource, manualCanceler,
          callbackWeak = std::move(callbackWeak)](const QException & e) {
             status->resourcesWhichFailedToDownload
                 << DownloadResourcesStatus::ResourceWithException{
@@ -488,7 +521,7 @@ void ResourcesProcessor::downloadFullResourceData(
             }
 
             if (shouldCancelProcessing) {
-                canceler->cancel();
+                manualCanceler->cancel();
             }
 
             resourcePromise->addResult(
