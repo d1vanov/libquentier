@@ -124,7 +124,7 @@ template <class T>
  * future gets canceled, then "to" future gets canceled as well
  */
 template <class T, class U>
-void bindCancellation(QFuture<T> & from, QFuture<U> & to)
+void bindCancellation(const QFuture<T> & from, QFuture<U> to)
 {
     auto watcher = std::make_unique<QFutureWatcher<T>>();
     auto * rawWatcher = watcher.get();
