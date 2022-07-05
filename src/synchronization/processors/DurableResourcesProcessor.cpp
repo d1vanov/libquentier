@@ -24,6 +24,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -224,6 +225,8 @@ QFuture<DownloadResourcesStatus>
         auto processSyncChunksFuture =
             m_resourcesProcessor->processResources(syncChunks, selfWeak);
 
+        threading::bindCancellation(future, processSyncChunksFuture);
+
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
             [promise](DownloadResourcesStatus status) {
@@ -242,6 +245,8 @@ QFuture<DownloadResourcesStatus>
     auto resourcesFuture =
         m_resourcesProcessor->processResources(pseudoSyncChunks, selfWeak);
 
+    threading::bindCancellation(future, resourcesFuture);
+
     threading::thenOrFailed(
         std::move(resourcesFuture), promise,
         threading::TrackedTask{
@@ -250,6 +255,9 @@ QFuture<DownloadResourcesStatus>
              syncChunks](DownloadResourcesStatus status) mutable {
                 auto processResourcesFuture =
                     processResourcesImpl(syncChunks, {});
+
+                threading::bindCancellation(
+                    promise->future(), processResourcesFuture);
 
                 threading::thenOrFailed(
                     std::move(processResourcesFuture), promise,
