@@ -28,6 +28,9 @@ using IAuthenticationInfoPtr = std::shared_ptr<IAuthenticationInfo>;
 class IDownloadNotesStatus;
 using IDownloadNotesStatusPtr = std::shared_ptr<IDownloadNotesStatus>;
 
+class IDownloadResourcesStatus;
+using IDownloadResourcesStatusPtr = std::shared_ptr<IDownloadResourcesStatus>;
+
 class ISyncOptions;
 using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 

@@ -20,7 +20,6 @@
 
 #include <quentier/synchronization/Fwd.h>
 #include <quentier/synchronization/types/Fwd.h>
-#include <quentier/synchronization/types/DownloadResourcesStatus.h>
 
 #include <QFuture>
 
@@ -35,7 +34,7 @@ public:
     {
         ISyncChunksDataCountersPtr syncChunksDataCounters;
         IDownloadNotesStatusPtr downloadNotesStatus;
-        DownloadResourcesStatus downloadResourcesStatus;
+        IDownloadResourcesStatusPtr downloadResourcesStatus;
     };
 
     [[nodiscard]] virtual QFuture<Result> download() = 0;

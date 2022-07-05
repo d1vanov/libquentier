@@ -16,17 +16,51 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/DownloadResourcesStatus.h>
+#include "DownloadResourcesStatus.h"
 
 #include <qevercloud/utility/ToRange.h>
 
 namespace quentier::synchronization {
 
+quint64 DownloadResourcesStatus::totalNewResources() const noexcept
+{
+    return m_totalNewResources;
+}
+
+quint64 DownloadResourcesStatus::totalUpdatedResources() const noexcept
+{
+    return m_totalUpdatedResources;
+}
+
+QList<IDownloadResourcesStatus::ResourceWithException>
+    DownloadResourcesStatus::resourcesWhichFailedToDownload() const
+{
+    return m_resourcesWhichFailedToDownload;
+}
+
+QList<IDownloadResourcesStatus::ResourceWithException>
+    DownloadResourcesStatus::resourcesWhichFailedToProcess() const
+{
+    return m_resourcesWhichFailedToProcess;
+}
+
+IDownloadResourcesStatus::UpdateSequenceNumbersByGuid
+    DownloadResourcesStatus::processedResourceGuidsAndUsns() const
+{
+    return m_processedResourceGuidsAndUsns;
+}
+
+IDownloadResourcesStatus::UpdateSequenceNumbersByGuid
+    DownloadResourcesStatus::cancelledResourceGuidsAndUsns() const
+{
+    return m_cancelledResourceGuidsAndUsns;
+}
+
 QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
 {
     strm << "DownloadResourcesStatus: "
-         << "totalNewResources = " << totalNewResources
-         << ", totalUpdatedResources = " << totalUpdatedResources;
+         << "totalNewResources = " << m_totalNewResources
+         << ", totalUpdatedResources = " << m_totalUpdatedResources;
 
     const auto printResourceWithExceptionList =
         [&strm](const QList<DownloadResourcesStatus::ResourceWithException> &
@@ -58,10 +92,10 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
         };
 
     strm << ", resourcesWhichFailedToDownload = ";
-    printResourceWithExceptionList(resourcesWhichFailedToDownload);
+    printResourceWithExceptionList(m_resourcesWhichFailedToDownload);
 
     strm << "resourcesWhichFailedToProcess = ";
-    printResourceWithExceptionList(resourcesWhichFailedToProcess);
+    printResourceWithExceptionList(m_resourcesWhichFailedToProcess);
 
     const auto printResourceGuidsAndUsns =
         [&strm](
@@ -78,10 +112,10 @@ QTextStream & DownloadResourcesStatus::print(QTextStream & strm) const
         };
 
     strm << "processedResourceGuidsAndUsns = ";
-    printResourceGuidsAndUsns(processedResourceGuidsAndUsns);
+    printResourceGuidsAndUsns(m_processedResourceGuidsAndUsns);
 
     strm << "cancelledResourceGuidsAndUsns = ";
-    printResourceGuidsAndUsns(cancelledResourceGuidsAndUsns);
+    printResourceGuidsAndUsns(m_cancelledResourceGuidsAndUsns);
 
     return strm;
 }
@@ -91,15 +125,16 @@ bool operator==(
     const DownloadResourcesStatus & rhs) noexcept
 {
     // clang-format off
-    return lhs.totalNewResources == rhs.totalNewResources &&
-        lhs.totalUpdatedResources == rhs.totalUpdatedResources &&
-        lhs.resourcesWhichFailedToDownload ==
-            rhs.resourcesWhichFailedToDownload &&
-        lhs.resourcesWhichFailedToProcess ==
-            rhs.resourcesWhichFailedToProcess &&
-        lhs.processedResourceGuidsAndUsns ==
-            rhs.processedResourceGuidsAndUsns &&
-        lhs.cancelledResourceGuidsAndUsns == rhs.cancelledResourceGuidsAndUsns;
+    return lhs.m_totalNewResources == rhs.m_totalNewResources &&
+        lhs.m_totalUpdatedResources == rhs.m_totalUpdatedResources &&
+        lhs.m_resourcesWhichFailedToDownload ==
+            rhs.m_resourcesWhichFailedToDownload &&
+        lhs.m_resourcesWhichFailedToProcess ==
+            rhs.m_resourcesWhichFailedToProcess &&
+        lhs.m_processedResourceGuidsAndUsns ==
+            rhs.m_processedResourceGuidsAndUsns &&
+        lhs.m_cancelledResourceGuidsAndUsns ==
+            rhs.m_cancelledResourceGuidsAndUsns;
     // clang-format on
 }
 

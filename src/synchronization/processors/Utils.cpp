@@ -332,8 +332,8 @@ DownloadNotesStatus mergeDownloadNotesStatuses(
 DownloadResourcesStatus mergeDownloadResourcesStatuses(
     DownloadResourcesStatus lhs, const DownloadResourcesStatus & rhs)
 {
-    lhs.totalNewResources += rhs.totalNewResources;
-    lhs.totalUpdatedResources += rhs.totalUpdatedResources;
+    lhs.m_totalNewResources += rhs.m_totalNewResources;
+    lhs.m_totalUpdatedResources += rhs.m_totalUpdatedResources;
 
     const auto mergeResourceLists =
         [](QList<DownloadResourcesStatus::ResourceWithException> lhs,
@@ -378,20 +378,22 @@ DownloadResourcesStatus mergeDownloadResourcesStatuses(
             return lhs;
         };
 
-    lhs.resourcesWhichFailedToDownload = mergeResourceLists(
-        lhs.resourcesWhichFailedToDownload, rhs.resourcesWhichFailedToDownload);
+    lhs.m_resourcesWhichFailedToDownload = mergeResourceLists(
+        lhs.m_resourcesWhichFailedToDownload,
+        rhs.m_resourcesWhichFailedToDownload);
 
-    lhs.resourcesWhichFailedToProcess = mergeResourceLists(
-        lhs.resourcesWhichFailedToProcess, rhs.resourcesWhichFailedToProcess);
+    lhs.m_resourcesWhichFailedToProcess = mergeResourceLists(
+        lhs.m_resourcesWhichFailedToProcess,
+        rhs.m_resourcesWhichFailedToProcess);
 
-    for (const auto it: qevercloud::toRange(rhs.processedResourceGuidsAndUsns))
-    {
-        lhs.processedResourceGuidsAndUsns[it.key()] = it.value();
+    for (const auto it:
+         qevercloud::toRange(rhs.m_processedResourceGuidsAndUsns)) {
+        lhs.m_processedResourceGuidsAndUsns[it.key()] = it.value();
     }
 
-    for (const auto it: qevercloud::toRange(rhs.cancelledResourceGuidsAndUsns))
-    {
-        lhs.cancelledResourceGuidsAndUsns[it.key()] = it.value();
+    for (const auto it:
+         qevercloud::toRange(rhs.m_cancelledResourceGuidsAndUsns)) {
+        lhs.m_cancelledResourceGuidsAndUsns[it.key()] = it.value();
     }
 
     return lhs;

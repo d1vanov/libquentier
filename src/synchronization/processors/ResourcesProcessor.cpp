@@ -109,7 +109,8 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
     //    ensure the auth token isn't close to expiration and re-acquire the
     //    token if it is close to expiration. But still need to be able to
     //    handle this situation.
-    auto manualCanceler = std::make_shared<utility::cancelers::ManualCanceler>();
+    auto manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
 
     auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
     auto future = promise->future();
@@ -144,7 +145,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                                    resource) mutable {
                     if (anyOfCanceler->isCanceled()) {
                         const auto & guid = *updatedResource.guid();
-                        status->cancelledResourceGuidsAndUsns[guid] =
+                        status->m_cancelledResourceGuidsAndUsns[guid] =
                             updatedResource.updateSequenceNum().value();
 
                         if (const auto callback = callbackWeak.lock()) {
@@ -160,7 +161,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                     }
 
                     if (resource) {
-                        ++status->totalUpdatedResources;
+                        ++status->m_totalUpdatedResources;
                         onFoundDuplicate(
                             resourcePromise, status, manualCanceler,
                             anyOfCanceler, std::move(callbackWeak),
@@ -168,7 +169,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                         return;
                     }
 
-                    ++status->totalNewResources;
+                    ++status->m_totalNewResources;
 
                     // No duplicate by guid was found, will download full
                     // resource data and then put it into the local storage
@@ -186,7 +187,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
                     callback->onResourceFailedToProcess(resource, e);
                 }
 
-                status->resourcesWhichFailedToProcess
+                status->m_resourcesWhichFailedToProcess
                     << DownloadResourcesStatus::ResourceWithException{
                            resource, std::shared_ptr<QException>(e.clone())};
 
@@ -342,7 +343,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
              anyOfCanceler, callbackWeak, updatedResource]() mutable {
                 if (anyOfCanceler->isCanceled()) {
                     const auto & guid = *updatedResource.guid();
-                    status->cancelledResourceGuidsAndUsns[guid] =
+                    status->m_cancelledResourceGuidsAndUsns[guid] =
                         updatedResource.updateSequenceNum().value();
 
                     if (const auto callback = callbackWeak.lock()) {
@@ -350,8 +351,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
                             updatedResource);
                     }
 
-                    resourcePromise->addResult(
-                        ProcessResourceStatus::Canceled);
+                    resourcePromise->addResult(ProcessResourceStatus::Canceled);
 
                     resourcePromise->finish();
                     return;
@@ -371,7 +371,7 @@ void ResourcesProcessor::onFoundNoteOwningConflictingResource(
                 callback->onResourceFailedToProcess(updatedResource, e);
             }
 
-            status->resourcesWhichFailedToProcess
+            status->m_resourcesWhichFailedToProcess
                 << DownloadResourcesStatus::ResourceWithException{
                        std::move(updatedResource),
                        std::shared_ptr<QException>(e.clone())};
@@ -420,7 +420,7 @@ void ResourcesProcessor::handleResourceConflict(
                         "guid")};
                     error.details() = *updatedResource.noteGuid();
 
-                    status->resourcesWhichFailedToProcess
+                    status->m_resourcesWhichFailedToProcess
                         << DownloadResourcesStatus::ResourceWithException{
                                std::move(updatedResource),
                                std::make_shared<RuntimeError>(
@@ -428,8 +428,9 @@ void ResourcesProcessor::handleResourceConflict(
 
                     if (const auto callback = callbackWeak.lock()) {
                         callback->onResourceFailedToProcess(
-                            status->resourcesWhichFailedToProcess.last().first,
-                            *status->resourcesWhichFailedToProcess.last()
+                            status->m_resourcesWhichFailedToProcess.last()
+                                .first,
+                            *status->m_resourcesWhichFailedToProcess.last()
                                  .second);
                     }
 
@@ -455,7 +456,7 @@ void ResourcesProcessor::handleResourceConflict(
                 callback->onResourceFailedToProcess(updatedResource, e);
             }
 
-            status->resourcesWhichFailedToProcess
+            status->m_resourcesWhichFailedToProcess
                 << DownloadResourcesStatus::ResourceWithException{
                        std::move(updatedResource),
                        std::shared_ptr<QException>(e.clone())};
@@ -497,7 +498,7 @@ void ResourcesProcessor::downloadFullResourceData(
         std::move(thenFuture),
         [resourcePromise, status, resource, manualCanceler,
          callbackWeak = std::move(callbackWeak)](const QException & e) {
-            status->resourcesWhichFailedToDownload
+            status->m_resourcesWhichFailedToDownload
                 << DownloadResourcesStatus::ResourceWithException{
                        resource, std::shared_ptr<QException>(e.clone())};
 
@@ -547,7 +548,7 @@ void ResourcesProcessor::putResourceToLocalStorage(
         [resourcePromise, status, putResourceKind, callbackWeak,
          resourceGuid = *resource.guid(),
          resourceUsn = *resource.updateSequenceNum()] {
-            status->processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
+            status->m_processedResourceGuidsAndUsns[resourceGuid] = resourceUsn;
 
             if (const auto callback = callbackWeak.lock()) {
                 callback->onProcessedResource(resourceGuid, resourceUsn);
@@ -569,7 +570,7 @@ void ResourcesProcessor::putResourceToLocalStorage(
                 callback->onResourceFailedToProcess(resource, e);
             }
 
-            status->resourcesWhichFailedToProcess
+            status->m_resourcesWhichFailedToProcess
                 << DownloadResourcesStatus::ResourceWithException{
                        std::move(resource),
                        std::shared_ptr<QException>(e.clone())};

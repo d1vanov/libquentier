@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <quentier/synchronization/types/DownloadResourcesStatus.h>
 #include <quentier/synchronization/types/Fwd.h>
-
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
+
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QHash>
 
@@ -38,8 +38,8 @@ struct QUENTIER_EXPORT SyncResult : public Printable
     QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
         linkedNotebookDownloadNotesStatuses;
 
-    DownloadResourcesStatus userAccountDownloadResourcesStatus;
-    QHash<qevercloud::Guid, DownloadResourcesStatus>
+    IDownloadResourcesStatusPtr userAccountDownloadResourcesStatus;
+    QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
         linkedNotebookDownloadResourcesStatuses;
 
     ISyncStatsPtr syncStats;

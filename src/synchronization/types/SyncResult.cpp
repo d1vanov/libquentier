@@ -17,6 +17,7 @@
  */
 
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
+#include <quentier/synchronization/types/IDownloadResourcesStatus.h>
 #include <quentier/synchronization/types/ISyncState.h>
 #include <quentier/synchronization/types/ISyncStats.h>
 #include <quentier/synchronization/types/SyncResult.h>
@@ -39,6 +40,7 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         userAccountDownloadNotesStatus->print(strm);
     }
 
+    strm << ", linkedNotebookDownloadNotesStatuses = ";
     if (linkedNotebookDownloadNotesStatuses.isEmpty()) {
         strm << "<empty>, ";
     }
@@ -56,9 +58,12 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << " ";
     }
 
-    strm << "userAccountDownloadResourcesStatus = "
-         << userAccountDownloadResourcesStatus
-         << ", linkedNotebookDownloadResourcesStatuses = ";
+    if (userAccountDownloadResourcesStatus) {
+        strm << "userAccountDownloadResourcesStatus = ";
+        userAccountDownloadResourcesStatus->print(strm);
+    }
+
+    strm << ", linkedNotebookDownloadResourcesStatuses = ";
     if (linkedNotebookDownloadResourcesStatuses.isEmpty()) {
         strm << "<empty>, ";
     }
@@ -66,7 +71,13 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         for (const auto it:
              qevercloud::toRange(linkedNotebookDownloadResourcesStatuses))
         {
-            strm << "{" << it.key() << ": " << it.value() << "};";
+            if (Q_UNLIKELY(!it.value())) {
+                continue;
+            }
+
+            strm << "{" << it.key() << ": ";
+            it.value()->print(strm);
+            strm << "};";
         }
         strm << " ";
     }

@@ -31,10 +31,9 @@
 
 namespace quentier::synchronization {
 
-struct QUENTIER_EXPORT DownloadResourcesStatus : public Printable
+class QUENTIER_EXPORT IDownloadResourcesStatus : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
-
+public:
     using QExceptionPtr = std::shared_ptr<QException>;
 
     using ResourceWithException =
@@ -42,22 +41,20 @@ struct QUENTIER_EXPORT DownloadResourcesStatus : public Printable
 
     using UpdateSequenceNumbersByGuid = QHash<qevercloud::Guid, qint32>;
 
-    quint64 totalNewResources = 0UL;
-    quint64 totalUpdatedResources = 0UL;
+    [[nodiscard]] virtual quint64 totalNewResources() const = 0;
+    [[nodiscard]] virtual quint64 totalUpdatedResources() const = 0;
 
-    QList<ResourceWithException> resourcesWhichFailedToDownload;
-    QList<ResourceWithException> resourcesWhichFailedToProcess;
+    [[nodiscard]] virtual QList<ResourceWithException>
+        resourcesWhichFailedToDownload() const = 0;
 
-    UpdateSequenceNumbersByGuid processedResourceGuidsAndUsns;
-    UpdateSequenceNumbersByGuid cancelledResourceGuidsAndUsns;
+    [[nodiscard]] virtual QList<ResourceWithException>
+        resourcesWhichFailedToProcess() const = 0;
+
+    [[nodiscard]] virtual UpdateSequenceNumbersByGuid
+        processedResourceGuidsAndUsns() const = 0;
+
+    [[nodiscard]] virtual UpdateSequenceNumbersByGuid
+        cancelledResourceGuidsAndUsns() const = 0;
 };
-
-[[nodiscard]] QUENTIER_EXPORT bool operator==(
-    const DownloadResourcesStatus & lhs,
-    const DownloadResourcesStatus & rhs) noexcept;
-
-[[nodiscard]] QUENTIER_EXPORT bool operator!=(
-    const DownloadResourcesStatus & lhs,
-    const DownloadResourcesStatus & rhs) noexcept;
 
 } // namespace quentier::synchronization

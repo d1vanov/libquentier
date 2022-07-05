@@ -20,7 +20,7 @@
 
 #include "../Fwd.h"
 
-#include <quentier/synchronization/types/DownloadResourcesStatus.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <qevercloud/types/Fwd.h>
 
