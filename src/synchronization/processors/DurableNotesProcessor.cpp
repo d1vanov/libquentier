@@ -25,6 +25,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -290,6 +291,8 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
         auto processSyncChunksFuture =
             m_notesProcessor->processNotes(syncChunks, selfWeak);
 
+        threading::bindCancellation(future, processSyncChunksFuture);
+
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
             [promise](DownloadNotesStatusPtr status) {
@@ -309,6 +312,8 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
         auto expungeNotesFuture =
             m_notesProcessor->processNotes(pseudoSyncChunks, selfWeak);
 
+        threading::bindCancellation(future, expungeNotesFuture);
+
         threading::thenOrFailed(
             std::move(expungeNotesFuture), promise,
             threading::TrackedTask{
@@ -318,6 +323,9 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                     DownloadNotesStatusPtr expungeNotesStatus) mutable {
                     auto processNotesFuture = processNotesImpl(
                         syncChunks, std::move(previousNotes), {});
+
+                    threading::bindCancellation(
+                        promise->future(), processNotesFuture);
 
                     threading::thenOrFailed(
                         std::move(processNotesFuture), promise,
@@ -347,6 +355,8 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
         auto notesFuture =
             m_notesProcessor->processNotes(pseudoSyncChunks, selfWeak);
 
+        threading::bindCancellation(future, notesFuture);
+
         threading::thenOrFailed(
             std::move(notesFuture), promise,
             threading::TrackedTask{
@@ -355,6 +365,9 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                  syncChunks](DownloadNotesStatusPtr status) mutable {
                     auto processNotesFuture =
                         processNotesImpl(syncChunks, {}, {});
+
+                    threading::bindCancellation(
+                        promise->future(), processNotesFuture);
 
                     threading::thenOrFailed(
                         std::move(processNotesFuture), promise,
@@ -376,6 +389,8 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
 
     auto processSyncChunksFuture =
         m_notesProcessor->processNotes(syncChunks, selfWeak);
+
+    threading::bindCancellation(future, processSyncChunksFuture);
 
     threading::thenOrFailed(
         std::move(processSyncChunksFuture), promise,
