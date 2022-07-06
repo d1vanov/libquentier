@@ -37,6 +37,9 @@ using ISyncOptionsPtr = std::shared_ptr<ISyncOptions>;
 class ISyncOptionsBuilder;
 using ISyncOptionsBuilderPtr = std::shared_ptr<ISyncOptionsBuilder>;
 
+class ISyncResult;
+using ISyncResultPtr = std::shared_ptr<ISyncResult>;
+
 class ISyncState;
 using ISyncStatePtr = std::shared_ptr<ISyncState>;
 

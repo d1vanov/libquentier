@@ -16,37 +16,87 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <quentier/synchronization/types/IDownloadNotesStatus.h>
-#include <quentier/synchronization/types/IDownloadResourcesStatus.h>
-#include <quentier/synchronization/types/ISyncState.h>
-#include <quentier/synchronization/types/ISyncStats.h>
-#include <quentier/synchronization/types/SyncResult.h>
+#include "SyncResult.h"
+
+#include <synchronization/types/DownloadNotesStatus.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
+#include <synchronization/types/SyncState.h>
+#include <synchronization/types/SyncStats.h>
 
 #include <qevercloud/utility/ToRange.h>
 
 namespace quentier::synchronization {
 
+ISyncStatePtr SyncResult::syncState() const noexcept
+{
+    return m_syncState;
+}
+
+IDownloadNotesStatusPtr SyncResult::userAccountDownloadNotesStatus()
+    const noexcept
+{
+    return m_userAccountDownloadNotesStatus;
+}
+
+QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
+    SyncResult::linkedNotebookDownloadNotesStatuses() const
+{
+    QHash<qevercloud::Guid, IDownloadNotesStatusPtr> result;
+    result.reserve(m_linkedNotebookDownloadNotesStatuses.size());
+    for (const auto it:
+         qevercloud::toRange(qAsConst(m_linkedNotebookDownloadNotesStatuses)))
+    {
+        result[it.key()] = it.value();
+    }
+
+    return result;
+}
+
+IDownloadResourcesStatusPtr SyncResult::userAccountDownloadResourcesStatus()
+    const noexcept
+{
+    return m_userAccountDownloadResourcesStatus;
+}
+
+QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
+    SyncResult::linkedNotebookDownloadResourcesStatuses() const
+{
+    QHash<qevercloud::Guid, IDownloadResourcesStatusPtr> result;
+    result.reserve(m_linkedNotebookDownloadResourcesStatuses.size());
+    for (const auto it: qevercloud::toRange(
+             qAsConst(m_linkedNotebookDownloadResourcesStatuses)))
+    {
+        result[it.key()] = it.value();
+    }
+    return result;
+}
+
+ISyncStatsPtr SyncResult::syncStats() const noexcept
+{
+    return m_syncStats;
+}
+
 QTextStream & SyncResult::print(QTextStream & strm) const
 {
     strm << "SyncResult: ";
 
-    if (syncState) {
+    if (m_syncState) {
         strm << "sync state = ";
-        syncState->print(strm);
+        m_syncState->print(strm);
     }
 
-    if (userAccountDownloadNotesStatus) {
+    if (m_userAccountDownloadNotesStatus) {
         strm << "userAccountDownloadNotesStatus = ";
-        userAccountDownloadNotesStatus->print(strm);
+        m_userAccountDownloadNotesStatus->print(strm);
     }
 
     strm << ", linkedNotebookDownloadNotesStatuses = ";
-    if (linkedNotebookDownloadNotesStatuses.isEmpty()) {
+    if (m_linkedNotebookDownloadNotesStatuses.isEmpty()) {
         strm << "<empty>, ";
     }
     else {
         for (const auto it:
-             qevercloud::toRange(linkedNotebookDownloadNotesStatuses)) {
+             qevercloud::toRange(m_linkedNotebookDownloadNotesStatuses)) {
             if (Q_UNLIKELY(!it.value())) {
                 continue;
             }
@@ -58,18 +108,18 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << " ";
     }
 
-    if (userAccountDownloadResourcesStatus) {
+    if (m_userAccountDownloadResourcesStatus) {
         strm << "userAccountDownloadResourcesStatus = ";
-        userAccountDownloadResourcesStatus->print(strm);
+        m_userAccountDownloadResourcesStatus->print(strm);
     }
 
     strm << ", linkedNotebookDownloadResourcesStatuses = ";
-    if (linkedNotebookDownloadResourcesStatuses.isEmpty()) {
+    if (m_linkedNotebookDownloadResourcesStatuses.isEmpty()) {
         strm << "<empty>, ";
     }
     else {
         for (const auto it:
-             qevercloud::toRange(linkedNotebookDownloadResourcesStatuses))
+             qevercloud::toRange(m_linkedNotebookDownloadResourcesStatuses))
         {
             if (Q_UNLIKELY(!it.value())) {
                 continue;
@@ -82,9 +132,9 @@ QTextStream & SyncResult::print(QTextStream & strm) const
         strm << " ";
     }
 
-    if (syncStats) {
+    if (m_syncStats) {
         strm << "syncStats = ";
-        syncStats->print(strm);
+        m_syncStats->print(strm);
     }
     return strm;
 }

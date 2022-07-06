@@ -28,27 +28,24 @@
 
 namespace quentier::synchronization {
 
-struct QUENTIER_EXPORT SyncResult : public Printable
+class QUENTIER_EXPORT ISyncResult : public Printable
 {
-    QTextStream & print(QTextStream & strm) const override;
+public:
+    [[nodiscard]] virtual ISyncStatePtr syncState() const = 0;
 
-    ISyncStatePtr syncState;
+    [[nodiscard]] virtual IDownloadNotesStatusPtr
+        userAccountDownloadNotesStatus() const = 0;
 
-    IDownloadNotesStatusPtr userAccountDownloadNotesStatus;
-    QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
-        linkedNotebookDownloadNotesStatuses;
+    [[nodiscard]] virtual QHash<qevercloud::Guid, IDownloadNotesStatusPtr>
+        linkedNotebookDownloadNotesStatuses() const = 0;
 
-    IDownloadResourcesStatusPtr userAccountDownloadResourcesStatus;
-    QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
-        linkedNotebookDownloadResourcesStatuses;
+    [[nodiscard]] virtual IDownloadResourcesStatusPtr
+        userAccountDownloadResourcesStatus() const = 0;
 
-    ISyncStatsPtr syncStats;
+    [[nodiscard]] virtual QHash<qevercloud::Guid, IDownloadResourcesStatusPtr>
+        linkedNotebookDownloadResourcesStatuses() const = 0;
+
+    [[nodiscard]] virtual ISyncStatsPtr syncStats() const = 0;
 };
-
-[[nodiscard]] bool operator==(
-    const SyncResult & lhs, const SyncResult & rhs) noexcept;
-
-[[nodiscard]] bool operator!=(
-    const SyncResult & lhs, const SyncResult & rhs) noexcept;
 
 } // namespace quentier::synchronization

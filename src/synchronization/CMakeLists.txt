@@ -85,6 +85,11 @@ target_sources(${LIBRARY_NAME}
   types/DownloadResourcesStatus.h
   types/Fwd.h
   types/SyncOptions.cpp
+  types/SyncOptions.h
+  types/SyncOptionsBuilder.cpp
+  types/SyncOptionsBuilder.h
+  types/SyncResult.cpp
+  types/SyncResult.h
   types/SyncState.cpp
   types/SyncState.h
   types/SyncStats.cpp

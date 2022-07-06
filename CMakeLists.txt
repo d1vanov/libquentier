@@ -139,9 +139,9 @@ set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/types/IDownloadResourcesStatus.h
     headers/quentier/synchronization/types/ISyncOptions.h
     headers/quentier/synchronization/types/ISyncOptionsBuilder.h
+    headers/quentier/synchronization/types/ISyncResult.h
     headers/quentier/synchronization/types/ISyncState.h
-    headers/quentier/synchronization/types/ISyncStats.h
-    headers/quentier/synchronization/types/SyncResult.h)
+    headers/quentier/synchronization/types/ISyncStats.h)
 
 set(THREADING_HEADERS
     headers/quentier/threading/Future.h
@@ -444,7 +444,6 @@ set(${PROJECT_NAME}_SOURCES
     src/synchronization/NoteSyncCache.cpp
     src/synchronization/FullSyncStaleDataItemsExpunger.cpp
     src/synchronization/SyncChunksDataCounters.cpp
-    src/synchronization/types/SyncResult.cpp
     src/threading/Future.cpp
     src/threading/Runnable.cpp
     src/types/Account.cpp

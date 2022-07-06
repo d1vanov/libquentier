@@ -28,4 +28,7 @@ using DownloadNotesStatusPtr = std::shared_ptr<DownloadNotesStatus>;
 struct DownloadResourcesStatus;
 using DownloadResourcesStatusPtr = std::shared_ptr<DownloadResourcesStatus>;
 
+struct SyncState;
+using SyncStatePtr = std::shared_ptr<SyncState>;
+
 } // namespace quentier::synchronization

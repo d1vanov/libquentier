@@ -24,7 +24,7 @@
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/synchronization/types/IAuthenticationInfo.h>
 #include <quentier/synchronization/types/ISyncOptions.h>
-#include <quentier/synchronization/types/SyncResult.h>
+#include <quentier/synchronization/types/ISyncResult.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 #include <quentier/utility/Printable.h>
@@ -72,7 +72,7 @@ public:
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr> authenticateAccount(
         Account account) = 0;
 
-    [[nodiscard]] virtual QFuture<SyncResult> synchronizeAccount(
+    [[nodiscard]] virtual QFuture<ISyncResultPtr> synchronizeAccount(
         Account account, ISyncConflictResolverPtr syncConflictResolver,
         local_storage::ILocalStoragePtr localStorage,
         ISyncOptionsPtr options) = 0;
