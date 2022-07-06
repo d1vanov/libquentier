@@ -28,7 +28,7 @@ class MockIResourcesProcessor : public IResourcesProcessor
 {
 public:
     MOCK_METHOD(
-        QFuture<DownloadResourcesStatus>, processResources,
+        QFuture<DownloadResourcesStatusPtr>, processResources,
         (const QList<qevercloud::SyncChunk> & syncChunks,
          ICallbackWeakPtr callbackWeak),
         (override));

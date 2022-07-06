@@ -18,10 +18,11 @@
 
 #pragma once
 
-#include <synchronization/types/DownloadResourcesStatus.h>
+#include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/Fwd.h>
 #include <qevercloud/types/Resource.h>
+#include <qevercloud/types/TypeAliases.h>
 
 #include <QException>
 #include <QFuture>
@@ -59,7 +60,7 @@ public:
 
     using ICallbackWeakPtr = std::weak_ptr<ICallback>;
 
-    [[nodiscard]] virtual QFuture<DownloadResourcesStatus> processResources(
+    [[nodiscard]] virtual QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };

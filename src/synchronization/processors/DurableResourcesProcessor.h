@@ -46,7 +46,7 @@ public:
         const QDir & syncPersistentStorageDir);
 
     // IDurableResourcesProcessor
-    [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
+    [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks) override;
 
 private:
@@ -69,7 +69,7 @@ private:
 private:
     [[nodiscard]] QList<qevercloud::Resource> resourcesFromPreviousSync() const;
 
-    [[nodiscard]] QFuture<DownloadResourcesStatus> processResourcesImpl(
+    [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Resource> previousResources);
 

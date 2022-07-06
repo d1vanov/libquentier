@@ -43,7 +43,7 @@ public:
         local_storage::ILocalStoragePtr localStorage,
         IResourceFullDataDownloaderPtr resourceFullDataDownloader);
 
-    [[nodiscard]] QFuture<DownloadResourcesStatus> processResources(
+    [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
         ICallbackWeakPtr callbackWeak) override;
 

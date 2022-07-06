@@ -22,6 +22,7 @@
 
 #include <synchronization/conflict_resolvers/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
@@ -67,7 +68,7 @@ ResourcesProcessor::ResourcesProcessor(
     }
 }
 
-QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
+QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
     ICallbackWeakPtr callbackWeak)
 {
@@ -84,7 +85,8 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
         QNDEBUG(
             "synchronization::ResourcesProcessor", "No new/updated resources");
 
-        return threading::makeReadyFuture<DownloadResourcesStatus>({});
+        return threading::makeReadyFuture<DownloadResourcesStatusPtr>(
+            std::make_shared<DownloadResourcesStatus>());
     }
 
     const int resourceCount = resources.size();
@@ -112,11 +114,11 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
     auto manualCanceler =
         std::make_shared<utility::cancelers::ManualCanceler>();
 
-    auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
+    auto promise = std::make_shared<QPromise<DownloadResourcesStatusPtr>>();
     auto future = promise->future();
 
     auto futureCanceler = std::make_shared<
-        utility::cancelers::FutureCanceler<DownloadResourcesStatus>>(future);
+        utility::cancelers::FutureCanceler<DownloadResourcesStatusPtr>>(future);
 
     auto anyOfCanceler = std::make_shared<utility::cancelers::AnyOfCanceler>(
         QList<utility::cancelers::ICancelerPtr>{
@@ -212,7 +214,7 @@ QFuture<DownloadResourcesStatus> ResourcesProcessor::processResources(
         [promise, status](const QList<ProcessResourceStatus> & statuses) {
             Q_UNUSED(statuses)
 
-            promise->addResult(*status);
+            promise->addResult(status);
             promise->finish();
         });
 

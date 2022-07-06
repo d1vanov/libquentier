@@ -21,6 +21,7 @@
 #include <synchronization/processors/IResourcesProcessor.h>
 #include <synchronization/processors/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
+#include <synchronization/types/DownloadResourcesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -52,7 +53,7 @@ DurableResourcesProcessor::DurableResourcesProcessor(
     }
 }
 
-QFuture<DownloadResourcesStatus> DurableResourcesProcessor::processResources(
+QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks)
 {
     // First need to check whether there are resources which failed to be
@@ -210,14 +211,14 @@ QList<qevercloud::Resource>
     return result;
 }
 
-QFuture<DownloadResourcesStatus>
+QFuture<DownloadResourcesStatusPtr>
     DurableResourcesProcessor::processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
         QList<qevercloud::Resource> previousResources)
 {
     const auto selfWeak = weak_from_this();
 
-    auto promise = std::make_shared<QPromise<DownloadResourcesStatus>>();
+    auto promise = std::make_shared<QPromise<DownloadResourcesStatusPtr>>();
     auto future = promise->future();
     promise->start();
 
@@ -229,7 +230,7 @@ QFuture<DownloadResourcesStatus>
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
-            [promise](DownloadResourcesStatus status) {
+            [promise](DownloadResourcesStatusPtr status) {
                 promise->addResult(std::move(status));
                 promise->finish();
             });
@@ -252,7 +253,7 @@ QFuture<DownloadResourcesStatus>
         threading::TrackedTask{
             selfWeak,
             [this, selfWeak, promise,
-             syncChunks](DownloadResourcesStatus status) mutable {
+             syncChunks](DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture =
                     processResourcesImpl(syncChunks, {});
 
@@ -265,9 +266,9 @@ QFuture<DownloadResourcesStatus>
                         selfWeak,
                         [selfWeak, promise,
                          processResourcesStatus = std::move(status)](
-                            DownloadResourcesStatus status) mutable {
-                            status = utils::mergeDownloadResourcesStatuses(
-                                std::move(status), processResourcesStatus);
+                            DownloadResourcesStatusPtr status) mutable {
+                            *status = utils::mergeDownloadResourcesStatuses(
+                                std::move(*status), *processResourcesStatus);
 
                             promise->addResult(std::move(status));
                             promise->finish();
