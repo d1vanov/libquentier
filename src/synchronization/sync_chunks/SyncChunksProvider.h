@@ -31,12 +31,14 @@ public:
         ISyncChunksStoragePtr syncChunksStorage);
 
     [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx) override;
+        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler) override;
 
     [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>>
         fetchLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-            qevercloud::IRequestContextPtr ctx) override;
+            qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler) override;
 
 private:
     const ISyncChunksDownloaderPtr m_syncChunksDownloader;

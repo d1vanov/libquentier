@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/utility/cancelers/Fwd.h>
+
 #include <qevercloud/Fwd.h>
 #include <qevercloud/types/LinkedNotebook.h>
 #include <qevercloud/types/SyncChunk.h>
@@ -33,12 +35,14 @@ public:
     virtual ~ISyncChunksProvider() = default;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx) = 0;
+        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler) = 0;
 
     [[nodiscard]] virtual QFuture<QList<qevercloud::SyncChunk>>
         fetchLinkedNotebookSyncChunks(
             qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-            qevercloud::IRequestContextPtr ctx) = 0;
+            qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler) = 0;
 };
 
 } // namespace quentier::synchronization

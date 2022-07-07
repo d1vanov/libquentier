@@ -21,9 +21,9 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
-
 #include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
+#include <quentier/utility/cancelers/ICanceler.h>
 
 #include <qevercloud/services/INoteStore.h>
 
@@ -127,6 +127,7 @@ using SingleSyncChunkDownloader = std::function<QFuture<qevercloud::SyncChunk>(
 void processSingleDownloadedSyncChunk(
     SynchronizationMode synchronizationMode,
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult,
@@ -135,16 +136,21 @@ void processSingleDownloadedSyncChunk(
 void downloadSyncChunksList(
     const qint32 afterUsn, const SynchronizationMode synchronizationMode,
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult = {})
 {
     Q_ASSERT(noteStore);
     Q_ASSERT(singleSyncChunkDownloader);
+    Q_ASSERT(canceler);
 
-    if (promise->isCanceled()) {
-        // FIXME: cannot really returning running result here because if
-        // the promise is already canceled, QPromise::addResult has no effect
+    if (canceler->isCanceled()) {
+        promise->addResult(ISyncChunksDownloader::SyncChunksResult{
+            std::move(runningResult),
+            std::make_shared<RuntimeError>(ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::SyncChunksDownloader",
+                "Sync chunks downloading was canceled")})});
         promise->finish();
         return;
     }
@@ -155,13 +161,15 @@ void downloadSyncChunksList(
     auto thenFuture = threading::then(
         std::move(singleSyncChunkFuture),
         [synchronizationMode, promise, runningResult, ctx = std::move(ctx),
+         canceler = std::move(canceler),
          singleSyncChunkDownloader = std::move(singleSyncChunkDownloader),
          noteStore =
              std::move(noteStore)](qevercloud::SyncChunk syncChunk) mutable {
             processSingleDownloadedSyncChunk(
                 synchronizationMode, std::move(noteStore), std::move(ctx),
-                std::move(singleSyncChunkDownloader), std::move(promise),
-                std::move(runningResult), std::move(syncChunk));
+                std::move(canceler), std::move(singleSyncChunkDownloader),
+                std::move(promise), std::move(runningResult),
+                std::move(syncChunk));
         });
 
     threading::onFailed(
@@ -179,6 +187,7 @@ void downloadSyncChunksList(
 void processSingleDownloadedSyncChunk(
     const SynchronizationMode synchronizationMode,
     qevercloud::INoteStorePtr noteStore, qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler,
     SingleSyncChunkDownloader singleSyncChunkDownloader,
     std::shared_ptr<QPromise<ISyncChunksDownloader::SyncChunksResult>> promise,
     QList<qevercloud::SyncChunk> runningResult,
@@ -207,8 +216,9 @@ void processSingleDownloadedSyncChunk(
 
     downloadSyncChunksList(
         *syncChunk.chunkHighUSN(), synchronizationMode, std::move(noteStore),
-        std::move(ctx), std::move(singleSyncChunkDownloader),
-        std::move(promise), std::move(runningResult));
+        std::move(ctx), std::move(canceler),
+        std::move(singleSyncChunkDownloader), std::move(promise),
+        std::move(runningResult));
 }
 
 } // namespace
@@ -228,7 +238,8 @@ SyncChunksDownloader::SyncChunksDownloader(
 
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadSyncChunks(
-        qint32 afterUsn, qevercloud::IRequestContextPtr ctx)
+        qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler)
 {
     auto promise =
         std::make_shared<QPromise<ISyncChunksDownloader::SyncChunksResult>>();
@@ -238,6 +249,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 
     downloadSyncChunksList(
         afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
+        std::move(canceler),
         [](const qint32 afterUsn, const SynchronizationMode synchronizationMode,
            qevercloud::INoteStore & noteStore,
            qevercloud::IRequestContextPtr ctx) {
@@ -252,7 +264,8 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 QFuture<ISyncChunksDownloader::SyncChunksResult>
     SyncChunksDownloader::downloadLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-        qevercloud::IRequestContextPtr ctx)
+        qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler)
 {
     if (Q_UNLIKELY(!linkedNotebook.guid())) {
         return threading::makeExceptionalFuture<
@@ -271,6 +284,7 @@ QFuture<ISyncChunksDownloader::SyncChunksResult>
 
     downloadSyncChunksList(
         afterUsn, m_synchronizationMode, m_noteStore, std::move(ctx),
+        std::move(canceler),
         [linkedNotebook = std::move(linkedNotebook)](
             const qint32 afterUsn,
             const SynchronizationMode synchronizationMode,

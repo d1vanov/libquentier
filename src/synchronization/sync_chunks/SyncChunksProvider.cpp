@@ -24,8 +24,9 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/threading/Future.h>
+#include <quentier/threading/QtFutureContinuations.h>
+#include <quentier/utility/cancelers/ICanceler.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QPromise>
@@ -45,16 +46,17 @@ using StoredSyncChunksUsnRangeFetcher =
 
 using SyncChunksDownloader =
     std::function<QFuture<ISyncChunksDownloader::SyncChunksResult>(
-        qint32, qevercloud::IRequestContextPtr)>;
+        qint32, qevercloud::IRequestContextPtr,
+        utility::cancelers::ICancelerPtr)>;
 
 using StoredSyncChunksFetcher =
     std::function<QList<qevercloud::SyncChunk>(qint32)>;
 
-using SyncChunksStorer =
-    std::function<void(QList<qevercloud::SyncChunk>)>;
+using SyncChunksStorer = std::function<void(QList<qevercloud::SyncChunk>)>;
 
 [[nodiscard]] QFuture<QList<qevercloud::SyncChunk>> fetchSyncChunksImpl(
     qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler,
     const StoredSyncChunksUsnRangeFetcher & storedSyncChunksUsnRangeFetcher,
     SyncChunksDownloader syncChunksDownloader,
     const StoredSyncChunksFetcher & storedSyncChunksFetcher,
@@ -64,28 +66,26 @@ using SyncChunksStorer =
     Q_ASSERT(syncChunksDownloader);
     Q_ASSERT(storedSyncChunksFetcher);
     Q_ASSERT(syncChunksStorer);
+    Q_ASSERT(canceler);
 
     auto downloadSyncChunks =
         [syncChunksDownloader = std::move(syncChunksDownloader),
          syncChunksStorer = std::move(syncChunksStorer)](
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx) mutable
-        {
+            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler) mutable {
             auto promise =
                 std::make_shared<QPromise<QList<qevercloud::SyncChunk>>>();
 
             auto future = promise->future();
             promise->start();
 
-            auto syncChunksDownloaderFuture =
-                syncChunksDownloader(afterUsn, std::move(ctx));
-
-            threading::bindCancellation(future, syncChunksDownloaderFuture);
+            auto syncChunksDownloaderFuture = syncChunksDownloader(
+                afterUsn, std::move(ctx), std::move(canceler));
 
             auto thenFuture = threading::then(
                 std::move(syncChunksDownloaderFuture),
                 [promise, syncChunksStorer = std::move(syncChunksStorer)](
-                    ISyncChunksDownloader::SyncChunksResult result) mutable
-                {
+                    ISyncChunksDownloader::SyncChunksResult result) mutable {
                     if (!result.m_exception) {
                         promise->addResult(std::move(result.m_syncChunks));
                         promise->finish();
@@ -101,9 +101,7 @@ using SyncChunksStorer =
                 });
 
             threading::onFailed(
-                std::move(thenFuture),
-                [promise](const QException & e)
-                {
+                std::move(thenFuture), [promise](const QException & e) {
                     promise->setException(e);
                     promise->finish();
                 });
@@ -115,15 +113,15 @@ using SyncChunksStorer =
         storedSyncChunksUsnRangeFetcher();
 
     const auto nextSyncChunkLowUsnIt = std::upper_bound(
-        storedSyncChunksUsnRange.begin(),
-        storedSyncChunksUsnRange.end(),
+        storedSyncChunksUsnRange.begin(), storedSyncChunksUsnRange.end(),
         std::pair<qint32, qint32>{afterUsn, 0});
     if ((nextSyncChunkLowUsnIt == storedSyncChunksUsnRange.end()) ||
         (afterUsn != 0 && nextSyncChunkLowUsnIt->first != (afterUsn + 1)))
     {
         // There are no stored sync chunks corresponding to the range
         // we are looking for, will download the sync chunks right away
-        return downloadSyncChunks(afterUsn, std::move(ctx));
+        return downloadSyncChunks(
+            afterUsn, std::move(ctx), std::move(canceler));
     }
 
     auto storedSyncChunks = storedSyncChunksFetcher(afterUsn);
@@ -139,24 +137,24 @@ using SyncChunksStorer =
         if (Q_UNLIKELY(!highUsn)) {
             QNWARNING(
                 "synchronization::SyncChunksProvider",
-                "Detected stored sync chunk without high USN: "
-                    << syncChunk);
+                "Detected stored sync chunk without high USN: " << syncChunk);
 
             // Something is wrong with the stored sync chunks, falling back to
             // downloading the sync chunks right away
-            return downloadSyncChunks(afterUsn, std::move(ctx));
+            return downloadSyncChunks(
+                afterUsn, std::move(ctx), std::move(canceler));
         }
 
         const auto lowUsn = utils::syncChunkLowUsn(syncChunk);
         if (Q_UNLIKELY(!lowUsn)) {
             QNWARNING(
                 "synchronization::SyncChunksProvider",
-                "Failed to find low USN for stored sync chunk: "
-                    << syncChunk);
+                "Failed to find low USN for stored sync chunk: " << syncChunk);
 
             // Something is wrong with the stored sync chunks, falling back to
             // downloading the sync chunks right away
-            return downloadSyncChunks(afterUsn, std::move(ctx));
+            return downloadSyncChunks(
+                afterUsn, std::move(ctx), std::move(canceler));
         }
 
         if (!chunksLowUsn || (*chunksLowUsn > *lowUsn)) {
@@ -178,7 +176,8 @@ using SyncChunksStorer =
                 "of stored sync chunks");
         }
 
-        return downloadSyncChunks(afterUsn, std::move(ctx));
+        return downloadSyncChunks(
+            afterUsn, std::move(ctx), std::move(canceler));
     }
 
     // At this point we can be sure that stored sync chunks indeed start
@@ -189,28 +188,24 @@ using SyncChunksStorer =
     auto future = promise->future();
 
     auto downloaderFuture =
-        downloadSyncChunks(*chunksHighUsn, std::move(ctx));
+        downloadSyncChunks(*chunksHighUsn, std::move(ctx), std::move(canceler));
 
     promise->start();
-
-    threading::bindCancellation(future, downloaderFuture);
 
     auto thenFuture = threading::then(
         std::move(downloaderFuture),
         [promise, storedSyncChunks = std::move(storedSyncChunks)](
-            QList<qevercloud::SyncChunk> downloadedSyncChunks) mutable { // NOLINT
+            QList<qevercloud::SyncChunk>
+                downloadedSyncChunks) mutable { // NOLINT
             storedSyncChunks << downloadedSyncChunks;
             promise->addResult(storedSyncChunks);
             promise->finish();
         });
 
-    threading::onFailed(
-        std::move(thenFuture),
-        [promise](const QException & e)
-        {
-            promise->setException(e);
-            promise->finish();
-        });
+    threading::onFailed(std::move(thenFuture), [promise](const QException & e) {
+        promise->setException(e);
+        promise->finish();
+    });
 
     return future;
 }
@@ -224,41 +219,38 @@ SyncChunksProvider::SyncChunksProvider(
     m_syncChunksStorage{std::move(syncChunksStorage)}
 {
     if (Q_UNLIKELY(!m_syncChunksDownloader)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksProvider",
-                "SyncChunksProvider ctor: sync chunks downloader is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::SyncChunksProvider",
+            "SyncChunksProvider ctor: sync chunks downloader is null")}};
     }
 
     if (Q_UNLIKELY(!m_syncChunksStorage)) {
-        throw InvalidArgument{ErrorString{
-            QT_TRANSLATE_NOOP(
-                "synchronization::SyncChunksProvider",
-                "SyncChunksProvider ctor: sync chunks storage is null")}};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::SyncChunksProvider",
+            "SyncChunksProvider ctor: sync chunks storage is null")}};
     }
 }
 
 QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
-    qint32 afterUsn, qevercloud::IRequestContextPtr ctx)
+    qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+    utility::cancelers::ICancelerPtr canceler)
 {
     return fetchSyncChunksImpl(
-        afterUsn, std::move(ctx),
-        [this]
-        {
+        afterUsn, std::move(ctx), std::move(canceler),
+        [this] {
             return m_syncChunksStorage->fetchUserOwnSyncChunksLowAndHighUsns();
         },
-        [this](qint32 afterUsn, qevercloud::IRequestContextPtr ctx)
-        {
+        [this](
+            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler) {
             return m_syncChunksDownloader->downloadSyncChunks(
-                afterUsn, std::move(ctx));
+                afterUsn, std::move(ctx), std::move(canceler));
         },
-        [this](qint32 afterUsn)
-        {
+        [this](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantUserOwnSyncChunks(
                 afterUsn);
         },
-        [this](const QList<qevercloud::SyncChunk> & syncChunks)
-        {
+        [this](const QList<qevercloud::SyncChunk> & syncChunks) {
             m_syncChunksStorage->putUserOwnSyncChunks(syncChunks);
         });
 }
@@ -266,39 +258,38 @@ QFuture<QList<qevercloud::SyncChunk>> SyncChunksProvider::fetchSyncChunks(
 QFuture<QList<qevercloud::SyncChunk>>
     SyncChunksProvider::fetchLinkedNotebookSyncChunks(
         qevercloud::LinkedNotebook linkedNotebook, qint32 afterUsn,
-        qevercloud::IRequestContextPtr ctx)
+        qevercloud::IRequestContextPtr ctx,
+        utility::cancelers::ICancelerPtr canceler)
 {
     const auto linkedNotebookGuid = linkedNotebook.guid(); // NOLINT
     if (!linkedNotebookGuid) {
         return threading::makeExceptionalFuture<QList<qevercloud::SyncChunk>>(
-            InvalidArgument{ErrorString{
-                QT_TRANSLATE_NOOP(
-                    "synchronization::SyncChunksProvider",
-                    "Can't fetch linked notebook sync chunks: linked notebook "
-                    "guid is empty")}});
+            InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::SyncChunksProvider",
+                "Can't fetch linked notebook sync chunks: linked notebook "
+                "guid is empty")}});
     }
 
     return fetchSyncChunksImpl(
-        afterUsn, std::move(ctx),
-        [this, linkedNotebookGuid = *linkedNotebookGuid]
-        {
-            return m_syncChunksStorage->fetchLinkedNotebookSyncChunksLowAndHighUsns(
-                linkedNotebookGuid);
+        afterUsn, std::move(ctx), std::move(canceler),
+        [this, linkedNotebookGuid = *linkedNotebookGuid] {
+            return m_syncChunksStorage
+                ->fetchLinkedNotebookSyncChunksLowAndHighUsns(
+                    linkedNotebookGuid);
         },
         [this, linkedNotebook = std::move(linkedNotebook)](
-            qint32 afterUsn, qevercloud::IRequestContextPtr ctx) mutable
-        {
+            qint32 afterUsn, qevercloud::IRequestContextPtr ctx,
+            utility::cancelers::ICancelerPtr canceler) mutable {
             return m_syncChunksDownloader->downloadLinkedNotebookSyncChunks(
-                std::move(linkedNotebook), afterUsn, std::move(ctx));
+                std::move(linkedNotebook), afterUsn, std::move(ctx),
+                std::move(canceler));
         },
-        [this, linkedNotebookGuid = *linkedNotebookGuid](qint32 afterUsn)
-        {
+        [this, linkedNotebookGuid = *linkedNotebookGuid](qint32 afterUsn) {
             return m_syncChunksStorage->fetchRelevantLinkedNotebookSyncChunks(
                 linkedNotebookGuid, afterUsn);
         },
         [this, linkedNotebookGuid = *linkedNotebookGuid](
-            const QList<qevercloud::SyncChunk> & syncChunks)
-        {
+            const QList<qevercloud::SyncChunk> & syncChunks) {
             m_syncChunksStorage->putLinkedNotebookSyncChunks(
                 linkedNotebookGuid, syncChunks);
         });

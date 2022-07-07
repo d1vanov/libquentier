@@ -23,6 +23,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/UidGenerator.h>
 
 #include <qevercloud/exceptions/EDAMSystemExceptionRateLimitReached.h>
@@ -153,6 +154,9 @@ class SyncChunksDownloaderTest : public ::testing::Test
 protected:
     std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<mocks::qevercloud::MockINoteStore>();
+
+    utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
 };
 
 TEST_F(SyncChunksDownloaderTest, Ctor)
@@ -256,7 +260,7 @@ TEST_P(SyncChunksDownloaderUserOwnSyncChunksTest, DownloadUserOwnSyncChunks)
     }
 
     const auto syncChunksFuture =
-        downloader.downloadSyncChunks(afterUsnInitial, ctx);
+        downloader.downloadSyncChunks(afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -367,7 +371,7 @@ TEST_P(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished())
         << testData.m_testName.toStdString();
@@ -440,8 +444,8 @@ TEST_F(
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
     }
 
-    const auto syncChunksFuture =
-        downloader.downloadSyncChunks(afterUsnInitial, ctx);
+    const auto syncChunksFuture = downloader.downloadSyncChunks(
+        afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -514,8 +518,8 @@ TEST_F(
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
     }
 
-    const auto syncChunksFuture =
-        downloader.downloadSyncChunks(afterUsnInitial, ctx);
+    const auto syncChunksFuture = downloader.downloadSyncChunks(
+        afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -539,7 +543,7 @@ TEST_F(
 
 TEST_F(
     SyncChunksDownloaderTest,
-    ReturnPartialUserOwnSyncChunksIfDownloadingIsCancelled)
+    ReturnPartialUserOwnSyncChunksIfDownloadingIsCanceled)
 {
     SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
 
@@ -594,10 +598,12 @@ TEST_F(
         previousChunkHighUsn = *syncChunk.chunkHighUSN();
     }
 
-    auto syncChunksFuture = downloader.downloadSyncChunks(afterUsnInitial, ctx);
+    auto syncChunksFuture = downloader.downloadSyncChunks(
+        afterUsnInitial, ctx, m_manualCanceler);
+
     ASSERT_FALSE(syncChunksFuture.isFinished());
 
-    syncChunksFuture.cancel();
+    m_manualCanceler->cancel();
 
     promise.addResult(syncChunks.at(1));
     promise.finish();
@@ -607,8 +613,12 @@ TEST_F(
 
     syncChunksFuture.waitForFinished();
 
-    // Unfortunately, canceled QFutures are unable to propagate the results
-    ASSERT_EQ(syncChunksFuture.resultCount(), 0);
+    ASSERT_EQ(syncChunksFuture.resultCount(), 1);
+    const auto syncChunksResult = syncChunksFuture.result();
+    EXPECT_TRUE(syncChunksResult.m_exception);
+    EXPECT_EQ(
+        syncChunksResult.m_syncChunks,
+        QList<qevercloud::SyncChunk>{} << syncChunks.at(0) << syncChunks.at(1));
 }
 
 TEST_F(
@@ -669,7 +679,7 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -753,7 +763,7 @@ TEST_F(
     }
 
     const auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
-        linkedNotebook, afterUsnInitial, ctx);
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
 
     ASSERT_TRUE(syncChunksFuture.isFinished());
     ASSERT_EQ(syncChunksFuture.resultCount(), 1);
@@ -765,6 +775,101 @@ TEST_F(
 
     ASSERT_TRUE(exc);
     EXPECT_EQ(exc->nonLocalizedErrorMessage(), e.nonLocalizedErrorMessage());
+
+    const auto partialSyncChunks = [&] {
+        auto chunks = syncChunks;
+        Q_UNUSED(chunks.takeLast());
+        for (auto & syncChunk: chunks) {
+            utils::setLinkedNotebookGuidToSyncChunkEntries(
+                linkedNotebook.guid().value(), syncChunk);
+        }
+        return chunks;
+    }();
+
+    EXPECT_EQ(syncChunksResult.m_syncChunks, partialSyncChunks);
+}
+
+TEST_F(
+    SyncChunksDownloaderTest,
+    ReturnPartialLinkedNotebookSyncChunksIfDownloadingIsCanceled)
+{
+    SyncChunksDownloader downloader{SynchronizationMode::Full, m_mockNoteStore};
+
+    const QString authToken = QStringLiteral("token");
+    const auto ctx = qevercloud::newRequestContext(authToken);
+
+    const auto linkedNotebook = qevercloud::LinkedNotebookBuilder{}
+                                    .setGuid(UidGenerator::Generate())
+                                    .build();
+
+    constexpr qint32 afterUsnInitial = 0;
+    constexpr qint32 maxEntries = 50;
+    qint32 afterUsn = afterUsnInitial;
+
+    InSequence s;
+
+    const auto syncChunks = adjustSyncChunksUpdateCounts(
+        QList<qevercloud::SyncChunk>{} << sampleSyncChunk1 << sampleSyncChunk2
+                                       << sampleSyncChunk3);
+
+    std::optional<qint32> previousChunkHighUsn;
+    QPromise<qevercloud::SyncChunk> promise;
+    promise.start();
+
+    int i = 0;
+    for (const auto & syncChunk: qAsConst(syncChunks)) {
+        ++i;
+        if (i == 3)
+        {
+            break;
+        }
+
+        if (previousChunkHighUsn) {
+            afterUsn = *previousChunkHighUsn;
+        }
+
+        EXPECT_CALL(*m_mockNoteStore, getLinkedNotebookSyncChunkAsync)
+            .WillOnce(
+                [&, afterUsnCurrent = afterUsn, i = i](
+                    const qevercloud::LinkedNotebook & linkedNotebookParam,
+                    const qint32 afterUsnParam, const qint32 maxEntriesParam,
+                    const bool fullSyncOnly,
+                    const qevercloud::IRequestContextPtr & ctxParam) {
+                    EXPECT_EQ(linkedNotebookParam, linkedNotebook);
+                    EXPECT_EQ(afterUsnParam, afterUsnCurrent);
+                    EXPECT_EQ(maxEntriesParam, maxEntries);
+                    EXPECT_TRUE(fullSyncOnly);
+                    EXPECT_EQ(ctxParam, ctx);
+
+                    if (i == 2) {
+                        return promise.future();
+                    }
+
+                    return threading::makeReadyFuture(syncChunk);
+                });
+
+        ASSERT_TRUE(syncChunk.chunkHighUSN());
+        previousChunkHighUsn = *syncChunk.chunkHighUSN();
+    }
+
+    auto syncChunksFuture = downloader.downloadLinkedNotebookSyncChunks(
+        linkedNotebook, afterUsnInitial, ctx, m_manualCanceler);
+
+    ASSERT_FALSE(syncChunksFuture.isFinished());
+
+    m_manualCanceler->cancel();
+
+    promise.addResult(syncChunks.at(1));
+    promise.finish();
+
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+
+    syncChunksFuture.waitForFinished();
+
+    ASSERT_EQ(syncChunksFuture.resultCount(), 1);
+    const auto syncChunksResult = syncChunksFuture.result();
+    EXPECT_TRUE(syncChunksResult.m_exception);
 
     const auto partialSyncChunks = [&] {
         auto chunks = syncChunks;
