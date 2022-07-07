@@ -19,14 +19,15 @@
 #include <synchronization/processors/DurableNotesProcessor.h>
 #include <synchronization/processors/Utils.h>
 #include <synchronization/sync_chunks/Utils.h>
-#include <synchronization/types/DownloadNotesStatus.h>
 #include <synchronization/tests/mocks/MockINotesProcessor.h>
+#include <synchronization/types/DownloadNotesStatus.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/types/SyncChunk.h>
 #include <qevercloud/types/builders/NoteBuilder.h>
@@ -198,6 +199,9 @@ protected:
     const std::shared_ptr<mocks::MockINotesProcessor> m_mockNotesProcessor =
         std::make_shared<StrictMock<mocks::MockINotesProcessor>>();
 
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
     QTemporaryDir m_temporaryDir;
 };
 
@@ -230,7 +234,10 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                      const utility::cancelers::ICancelerPtr & canceler,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+            EXPECT_TRUE(canceler);
+
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
 
@@ -262,7 +269,9 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
                 std::move(status));
         });
 
-    auto future = durableNotesProcessor->processNotes(syncChunks);
+    auto future =
+        durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -319,7 +328,10 @@ TEST_F(
 
     EXPECT_CALL(*m_mockNotesProcessor, processNotes)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                      const utility::cancelers::ICancelerPtr & canceler,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+            EXPECT_TRUE(canceler);
+
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
 
@@ -344,8 +356,8 @@ TEST_F(
                 static_cast<quint64>(syncChunkNotes.size());
 
             // First note gets marked as a successfully processed one
-            status
-                ->m_processedNoteGuidsAndUsns[syncChunkNotes[0].guid().value()] =
+            status->m_processedNoteGuidsAndUsns
+                [syncChunkNotes[0].guid().value()] =
                 syncChunkNotes[0].updateSequenceNum().value();
 
             if (callback) {
@@ -441,7 +453,9 @@ TEST_F(
                 std::move(status));
         });
 
-    auto future = durableNotesProcessor->processNotes(syncChunks);
+    auto future =
+        durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -459,7 +473,8 @@ TEST_F(
         notes[0].updateSequenceNum().value());
 
     ASSERT_EQ(status->m_notesWhichFailedToProcess.size(), 1);
-    EXPECT_EQ(status->m_notesWhichFailedToProcess.constBegin()->first, notes[1]);
+    EXPECT_EQ(
+        status->m_notesWhichFailedToProcess.constBegin()->first, notes[1]);
 
     ASSERT_EQ(status->m_notesWhichFailedToDownload.size(), 1);
     EXPECT_EQ(
@@ -802,7 +817,7 @@ TEST_P(
             *note.updateSequenceNum();
     }
 
-    EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _))
+    EXPECT_CALL(*m_mockNotesProcessor, processNotes(syncChunks, _, _))
         .WillOnce(Return(threading::makeReadyFuture<DownloadNotesStatusPtr>(
             std::make_shared<DownloadNotesStatus>(currentNotesStatus))));
 
@@ -826,10 +841,13 @@ TEST_P(
             processNotes(
                 testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
                     EqSyncChunksWithSortedExpungedNotes(expectedSyncChunks)),
-                _))
+                _, _))
             .WillOnce(
                 [&](const QList<qevercloud::SyncChunk> & syncChunks,
+                    const utility::cancelers::ICancelerPtr & canceler,
                     const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+                    EXPECT_TRUE(canceler);
+
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
                     if (callback) {
@@ -882,10 +900,13 @@ TEST_P(
             processNotes(
                 testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
                     EqSyncChunksWithSortedNotes(expectedSyncChunks)),
-                _))
+                _, _))
             .WillOnce(
                 [&](const QList<qevercloud::SyncChunk> & syncChunks,
+                    const utility::cancelers::ICancelerPtr & canceler,
                     const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
+                    EXPECT_TRUE(canceler);
+
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
                     if (callback) {
@@ -920,7 +941,9 @@ TEST_P(
     const auto durableNotesProcessor = std::make_shared<DurableNotesProcessor>(
         m_mockNotesProcessor, syncPersistentStorageDir);
 
-    auto future = durableNotesProcessor->processNotes(syncChunks);
+    auto future =
+        durableNotesProcessor->processNotes(syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
 

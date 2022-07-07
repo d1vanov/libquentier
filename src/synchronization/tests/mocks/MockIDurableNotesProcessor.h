@@ -29,7 +29,8 @@ class MockIDurableNotesProcessor : public IDurableNotesProcessor
 public:
     MOCK_METHOD(
         QFuture<DownloadNotesStatusPtr>, processNotes,
-        (const QList<qevercloud::SyncChunk> & syncChunks),
+        (const QList<qevercloud::SyncChunk> & syncChunks,
+         utility::cancelers::ICancelerPtr canceler),
         (override));
 };
 

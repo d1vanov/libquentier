@@ -30,7 +30,6 @@
 #include <quentier/threading/Future.h>
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/cancelers/AnyOfCanceler.h>
-#include <quentier/utility/cancelers/FutureCanceler.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/services/INoteStore.h>
@@ -83,9 +82,11 @@ NotesProcessor::NotesProcessor(
 
 QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     const QList<qevercloud::SyncChunk> & syncChunks,
-    ICallbackWeakPtr callbackWeak)
+    utility::cancelers::ICancelerPtr canceler, ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG("synchronization::NotesProcessor", "NotesProcessor::processNotes");
+
+    Q_ASSERT(canceler);
 
     QList<qevercloud::Note> notes;
     QList<qevercloud::Guid> expungedNotes;
@@ -140,12 +141,9 @@ QFuture<DownloadNotesStatusPtr> NotesProcessor::processNotes(
     auto promise = std::make_shared<QPromise<DownloadNotesStatusPtr>>();
     auto future = promise->future();
 
-    auto futureCanceler = std::make_shared<
-        utility::cancelers::FutureCanceler<DownloadNotesStatusPtr>>(future);
-
     auto anyOfCanceler = std::make_shared<utility::cancelers::AnyOfCanceler>(
         QList<utility::cancelers::ICancelerPtr>{
-            manualCanceler, std::move(futureCanceler)});
+            manualCanceler, std::move(canceler)});
 
     for (const auto & note: qAsConst(notes)) {
         auto notePromise = std::make_shared<QPromise<ProcessNoteStatus>>();

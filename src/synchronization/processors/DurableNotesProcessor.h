@@ -47,7 +47,8 @@ public:
 
     // IDurableNotesProcessor
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler) override;
 
 private:
     // INotesProcessor::ICallback
@@ -78,6 +79,7 @@ private:
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Note> previousNotes,
         QList<qevercloud::Guid> previousExpungedNotes);
 

@@ -49,6 +49,7 @@ public:
 
     [[nodiscard]] QFuture<DownloadNotesStatusPtr> processNotes(
         const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak = {}) override;
 
 private:
@@ -88,9 +89,8 @@ private:
 
     void putNoteToLocalStorage(
         const std::shared_ptr<QPromise<ProcessNoteStatus>> & notePromise,
-        const DownloadNotesStatusPtr & status,
-        ICallbackWeakPtr && callbackWeak, qevercloud::Note note,
-        NoteKind putNoteKind);
+        const DownloadNotesStatusPtr & status, ICallbackWeakPtr && callbackWeak,
+        qevercloud::Note note, NoteKind putNoteKind);
 
 private:
     const local_storage::ILocalStoragePtr m_localStorage;

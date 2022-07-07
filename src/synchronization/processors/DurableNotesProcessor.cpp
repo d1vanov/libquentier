@@ -25,7 +25,6 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
-#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/threading/TrackedTask.h>
 
@@ -52,8 +51,11 @@ DurableNotesProcessor::DurableNotesProcessor(
 }
 
 QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    utility::cancelers::ICancelerPtr canceler)
 {
+    Q_ASSERT(canceler);
+
     // First need to check whether there are notes which failed to be processed
     // or which processing was cancelled. If such notes exist, they need to be
     // processed first.
@@ -72,7 +74,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
     if (alreadyProcessedNotesInfo.isEmpty() &&
         alreadyExpungedNoteGuids.isEmpty()) {
         return processNotesImpl(
-            syncChunks, std::move(previousNotes),
+            syncChunks, std::move(canceler), std::move(previousNotes),
             std::move(previousExpungedNotes));
     }
 
@@ -120,7 +122,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotes(
     }
 
     return processNotesImpl(
-        filteredSyncChunks, std::move(previousNotes),
+        filteredSyncChunks, std::move(canceler), std::move(previousNotes),
         std::move(previousExpungedNotes));
 }
 
@@ -278,6 +280,7 @@ QList<qevercloud::Guid>
 
 QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     const QList<qevercloud::SyncChunk> & syncChunks,
+    utility::cancelers::ICancelerPtr canceler,
     QList<qevercloud::Note> previousNotes,
     QList<qevercloud::Guid> previousExpungedNotes)
 {
@@ -288,10 +291,8 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     promise->start();
 
     if (previousNotes.isEmpty() && previousExpungedNotes.isEmpty()) {
-        auto processSyncChunksFuture =
-            m_notesProcessor->processNotes(syncChunks, selfWeak);
-
-        threading::bindCancellation(future, processSyncChunksFuture);
+        auto processSyncChunksFuture = m_notesProcessor->processNotes(
+            syncChunks, std::move(canceler), selfWeak);
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
@@ -309,23 +310,20 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                    .setExpungedNotes(std::move(previousExpungedNotes))
                    .build();
 
-        auto expungeNotesFuture =
-            m_notesProcessor->processNotes(pseudoSyncChunks, selfWeak);
-
-        threading::bindCancellation(future, expungeNotesFuture);
+        auto expungeNotesFuture = m_notesProcessor->processNotes(
+            pseudoSyncChunks, canceler, selfWeak);
 
         threading::thenOrFailed(
             std::move(expungeNotesFuture), promise,
             threading::TrackedTask{
                 selfWeak,
                 [this, selfWeak, promise, syncChunks = syncChunks,
-                 previousNotes = std::move(previousNotes)](
+                 previousNotes = std::move(previousNotes),
+                 canceler = std::move(canceler)](
                     DownloadNotesStatusPtr expungeNotesStatus) mutable {
                     auto processNotesFuture = processNotesImpl(
-                        syncChunks, std::move(previousNotes), {});
-
-                    threading::bindCancellation(
-                        promise->future(), processNotesFuture);
+                        syncChunks, std::move(canceler),
+                        std::move(previousNotes), {});
 
                     threading::thenOrFailed(
                         std::move(processNotesFuture), promise,
@@ -352,22 +350,17 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
                    .setNotes(std::move(previousNotes))
                    .build();
 
-        auto notesFuture =
-            m_notesProcessor->processNotes(pseudoSyncChunks, selfWeak);
-
-        threading::bindCancellation(future, notesFuture);
+        auto notesFuture = m_notesProcessor->processNotes(
+            pseudoSyncChunks, canceler, selfWeak);
 
         threading::thenOrFailed(
             std::move(notesFuture), promise,
             threading::TrackedTask{
                 selfWeak,
-                [this, selfWeak, promise,
+                [this, selfWeak, promise, canceler = std::move(canceler),
                  syncChunks](DownloadNotesStatusPtr status) mutable {
                     auto processNotesFuture =
-                        processNotesImpl(syncChunks, {}, {});
-
-                    threading::bindCancellation(
-                        promise->future(), processNotesFuture);
+                        processNotesImpl(syncChunks, canceler, {}, {});
 
                     threading::thenOrFailed(
                         std::move(processNotesFuture), promise,
@@ -388,9 +381,7 @@ QFuture<DownloadNotesStatusPtr> DurableNotesProcessor::processNotesImpl(
     }
 
     auto processSyncChunksFuture =
-        m_notesProcessor->processNotes(syncChunks, selfWeak);
-
-    threading::bindCancellation(future, processSyncChunksFuture);
+        m_notesProcessor->processNotes(syncChunks, canceler, selfWeak);
 
     threading::thenOrFailed(
         std::move(processSyncChunksFuture), promise,

@@ -25,6 +25,7 @@
 #include <quentier/synchronization/tests/mocks/MockISyncConflictResolver.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 // NOTE: strange but with these headers moved higher, above "quentier/" ones,
 // build fails. Probably something related to #pragma once not being perfectly
@@ -68,6 +69,9 @@ protected:
 
     const std::shared_ptr<mocks::qevercloud::MockINoteStore> m_mockNoteStore =
         std::make_shared<StrictMock<mocks::qevercloud::MockINoteStore>>();
+
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
 };
 
 struct NotesProcessorCallback final : public INotesProcessor::ICallback
@@ -182,7 +186,9 @@ TEST_F(NotesProcessorTest, ProcessSyncChunksWithoutNotesToProcess)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -354,7 +360,9 @@ TEST_P(NotesProcessorTestWithLinkedNotebookParam, ProcessNotesWithoutConflicts)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -544,7 +552,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -756,7 +766,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -970,7 +982,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1202,7 +1216,9 @@ TEST_P(
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1422,7 +1438,9 @@ TEST_F(NotesProcessorTest, CancelFurtherNoteDownloadingOnApiRateLimitExceeding)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_FALSE(future.isFinished());
     EXPECT_EQ(downloadFullNoteDataCallCount, 0);
 
@@ -1575,7 +1593,9 @@ TEST_F(NotesProcessorTest, ProcessExpungedNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1635,7 +1655,9 @@ TEST_F(NotesProcessorTest, TolerateFailuresToExpungeNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1742,7 +1764,9 @@ TEST_F(NotesProcessorTest, FilterOutExpungedNotesFromSyncChunkNotes)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1978,7 +2002,9 @@ TEST_P(NotesProcessorTestWithConflict, HandleConflictByGuid)
 
     const auto callback = std::make_shared<NotesProcessorCallback>();
 
-    auto future = notesProcessor->processNotes(syncChunks, callback);
+    auto future =
+        notesProcessor->processNotes(syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
