@@ -30,6 +30,7 @@ public:
     MOCK_METHOD(
         QFuture<DownloadResourcesStatusPtr>, processResources,
         (const QList<qevercloud::SyncChunk> & syncChunks,
+         utility::cancelers::ICancelerPtr canceler,
          ICallbackWeakPtr callbackWeak),
         (override));
 };

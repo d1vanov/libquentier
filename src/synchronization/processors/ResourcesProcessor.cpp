@@ -33,7 +33,6 @@
 #include <quentier/threading/TrackedTask.h>
 #include <quentier/utility/UidGenerator.h>
 #include <quentier/utility/cancelers/AnyOfCanceler.h>
-#include <quentier/utility/cancelers/FutureCanceler.h>
 #include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/exceptions/EDAMSystemException.h>
@@ -70,11 +69,14 @@ ResourcesProcessor::ResourcesProcessor(
 
 QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     const QList<qevercloud::SyncChunk> & syncChunks,
+    utility::cancelers::ICancelerPtr canceler,
     ICallbackWeakPtr callbackWeak)
 {
     QNDEBUG(
         "synchronization::ResourcesProcessor",
         "ResourcesProcessor::processResources");
+
+    Q_ASSERT(canceler);
 
     QList<qevercloud::Resource> resources;
     for (const auto & syncChunk: qAsConst(syncChunks)) {
@@ -117,12 +119,9 @@ QFuture<DownloadResourcesStatusPtr> ResourcesProcessor::processResources(
     auto promise = std::make_shared<QPromise<DownloadResourcesStatusPtr>>();
     auto future = promise->future();
 
-    auto futureCanceler = std::make_shared<
-        utility::cancelers::FutureCanceler<DownloadResourcesStatusPtr>>(future);
-
     auto anyOfCanceler = std::make_shared<utility::cancelers::AnyOfCanceler>(
         QList<utility::cancelers::ICancelerPtr>{
-            manualCanceler, std::move(futureCanceler)});
+            manualCanceler, std::move(canceler)});
 
     for (const auto & resource: qAsConst(resources)) {
         auto resourcePromise =

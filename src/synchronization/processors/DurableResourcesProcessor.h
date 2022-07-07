@@ -47,7 +47,8 @@ public:
 
     // IDurableResourcesProcessor
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResources(
-        const QList<qevercloud::SyncChunk> & syncChunks) override;
+        const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler) override;
 
 private:
     // IResourcesProcessor::ICallback
@@ -71,6 +72,7 @@ private:
 
     [[nodiscard]] QFuture<DownloadResourcesStatusPtr> processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Resource> previousResources);
 
 private:

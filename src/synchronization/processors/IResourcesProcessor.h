@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <quentier/utility/cancelers/Fwd.h>
+
 #include <synchronization/types/Fwd.h>
 
 #include <qevercloud/types/Fwd.h>
@@ -62,6 +64,7 @@ public:
 
     [[nodiscard]] virtual QFuture<DownloadResourcesStatusPtr> processResources(
         const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler,
         ICallbackWeakPtr callbackWeak = {}) = 0;
 };
 

@@ -25,6 +25,7 @@
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/exception/RuntimeError.h>
 #include <quentier/threading/Future.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/FileSystem.h>
 #include <quentier/utility/UidGenerator.h>
 
@@ -153,6 +154,9 @@ protected:
         m_mockResourcesProcessor =
             std::make_shared<StrictMock<mocks::MockIResourcesProcessor>>();
 
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
     QTemporaryDir m_temporaryDir;
 };
 
@@ -186,8 +190,11 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
 
     EXPECT_CALL(*m_mockResourcesProcessor, processResources)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                      const utility::cancelers::ICancelerPtr & canceler,
                       const IResourcesProcessor::ICallbackWeakPtr &
                           callbackWeak) {
+            EXPECT_TRUE(canceler);
+
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
 
@@ -221,7 +228,9 @@ TEST_F(DurableResourcesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
                 std::move(status));
         });
 
-    auto future = durableResourcesProcessor->processResources(syncChunks);
+    auto future = durableResourcesProcessor->processResources(
+        syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -276,8 +285,11 @@ TEST_F(
 
     EXPECT_CALL(*m_mockResourcesProcessor, processResources)
         .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                      const utility::cancelers::ICancelerPtr & canceler,
                       const IResourcesProcessor::ICallbackWeakPtr &
                           callbackWeak) {
+            EXPECT_TRUE(canceler);
+
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
 
@@ -356,7 +368,9 @@ TEST_F(
                 std::move(status));
         });
 
-    auto future = durableResourcesProcessor->processResources(syncChunks);
+    auto future = durableResourcesProcessor->processResources(
+        syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
 
     ASSERT_EQ(future.resultCount(), 1);
@@ -632,7 +646,7 @@ TEST_P(
             *resource.updateSequenceNum();
     }
 
-    EXPECT_CALL(*m_mockResourcesProcessor, processResources(syncChunks, _))
+    EXPECT_CALL(*m_mockResourcesProcessor, processResources(syncChunks, _, _))
         .WillOnce(Return(threading::makeReadyFuture<DownloadResourcesStatusPtr>(
             std::make_shared<DownloadResourcesStatus>(
                 currentResourcesStatus))));
@@ -669,10 +683,13 @@ TEST_P(
             processResources(
                 testing::MatcherCast<const QList<qevercloud::SyncChunk> &>(
                     EqSyncChunksWithSortedResources(expectedSyncChunks)),
-                _))
+                _, _))
             .WillOnce([&](const QList<qevercloud::SyncChunk> & syncChunks,
+                          const utility::cancelers::ICancelerPtr & canceler,
                           const IResourcesProcessor::ICallbackWeakPtr &
                               callbackWeak) {
+                EXPECT_TRUE(canceler);
+
                 const auto callback = callbackWeak.lock();
                 EXPECT_TRUE(callback);
                 if (callback) {
@@ -709,7 +726,9 @@ TEST_P(
         std::make_shared<DurableResourcesProcessor>(
             m_mockResourcesProcessor, QDir{m_temporaryDir.path()});
 
-    auto future = durableResourcesProcessor->processResources(syncChunks);
+    auto future = durableResourcesProcessor->processResources(
+        syncChunks, m_manualCanceler);
+
     ASSERT_TRUE(future.isFinished());
     ASSERT_EQ(future.resultCount(), 1);
     const auto status = future.result();

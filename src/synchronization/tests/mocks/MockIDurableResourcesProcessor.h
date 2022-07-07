@@ -29,7 +29,8 @@ class MockIDurableResourcesProcessor : public IDurableResourcesProcessor
 public:
     MOCK_METHOD(
         QFuture<DownloadResourcesStatusPtr>, processResources,
-        (const QList<qevercloud::SyncChunk> & syncChunks),
+        (const QList<qevercloud::SyncChunk> & syncChunks,
+         utility::cancelers::ICancelerPtr canceler),
         (override));
 };
 

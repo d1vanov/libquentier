@@ -54,8 +54,11 @@ DurableResourcesProcessor::DurableResourcesProcessor(
 }
 
 QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
-    const QList<qevercloud::SyncChunk> & syncChunks)
+    const QList<qevercloud::SyncChunk> & syncChunks,
+    utility::cancelers::ICancelerPtr canceler)
 {
+    Q_ASSERT(canceler);
+
     // First need to check whether there are resources which failed to be
     // processed or which processing was cancelled. If such resources exist,
     // they need to be processed first.
@@ -68,7 +71,8 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
         utils::processedResourcesInfoFromLastSync(m_syncResourcesDir);
 
     if (alreadyProcessedResourcesInfo.isEmpty()) {
-        return processResourcesImpl(syncChunks, std::move(previousResources));
+        return processResourcesImpl(
+            syncChunks, std::move(canceler), std::move(previousResources));
     }
 
     auto filteredSyncChunks = syncChunks;
@@ -101,7 +105,7 @@ QFuture<DownloadResourcesStatusPtr> DurableResourcesProcessor::processResources(
     }
 
     return processResourcesImpl(
-        filteredSyncChunks, std::move(previousResources));
+        filteredSyncChunks, std::move(canceler), std::move(previousResources));
 }
 
 void DurableResourcesProcessor::onProcessedResource(
@@ -214,6 +218,7 @@ QList<qevercloud::Resource>
 QFuture<DownloadResourcesStatusPtr>
     DurableResourcesProcessor::processResourcesImpl(
         const QList<qevercloud::SyncChunk> & syncChunks,
+        utility::cancelers::ICancelerPtr canceler,
         QList<qevercloud::Resource> previousResources)
 {
     const auto selfWeak = weak_from_this();
@@ -223,10 +228,8 @@ QFuture<DownloadResourcesStatusPtr>
     promise->start();
 
     if (previousResources.isEmpty()) {
-        auto processSyncChunksFuture =
-            m_resourcesProcessor->processResources(syncChunks, selfWeak);
-
-        threading::bindCancellation(future, processSyncChunksFuture);
+        auto processSyncChunksFuture = m_resourcesProcessor->processResources(
+            syncChunks, std::move(canceler), selfWeak);
 
         threading::thenOrFailed(
             std::move(processSyncChunksFuture), promise,
@@ -243,22 +246,17 @@ QFuture<DownloadResourcesStatusPtr>
                .setResources(std::move(previousResources))
                .build();
 
-    auto resourcesFuture =
-        m_resourcesProcessor->processResources(pseudoSyncChunks, selfWeak);
-
-    threading::bindCancellation(future, resourcesFuture);
+    auto resourcesFuture = m_resourcesProcessor->processResources(
+        pseudoSyncChunks, canceler, selfWeak);
 
     threading::thenOrFailed(
         std::move(resourcesFuture), promise,
         threading::TrackedTask{
             selfWeak,
-            [this, selfWeak, promise,
+            [this, selfWeak, promise, canceler = std::move(canceler),
              syncChunks](DownloadResourcesStatusPtr status) mutable {
                 auto processResourcesFuture =
-                    processResourcesImpl(syncChunks, {});
-
-                threading::bindCancellation(
-                    promise->future(), processResourcesFuture);
+                    processResourcesImpl(syncChunks, std::move(canceler), {});
 
                 threading::thenOrFailed(
                     std::move(processResourcesFuture), promise,

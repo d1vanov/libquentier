@@ -24,6 +24,7 @@
 #include <quentier/local_storage/tests/mocks/MockILocalStorage.h>
 #include <quentier/threading/Future.h>
 #include <quentier/utility/UidGenerator.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 
 #include <qevercloud/exceptions/builders/EDAMSystemExceptionBuilder.h>
 #include <qevercloud/types/builders/DataBuilder.h>
@@ -54,6 +55,9 @@ protected:
     const std::shared_ptr<mocks::MockIResourceFullDataDownloader>
         m_mockResourceFullDataDownloader = std::make_shared<
             StrictMock<mocks::MockIResourceFullDataDownloader>>();
+
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
 };
 
 struct ResourcesProcessorCallback final : public IResourcesProcessor::ICallback
@@ -130,7 +134,9 @@ TEST_F(ResourcesProcessorTest, ProcessSyncChunksWithoutResourcesToProcess)
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -265,7 +271,9 @@ TEST_F(ResourcesProcessorTest, ProcessResourcesWithoutConflicts)
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -432,7 +440,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToDownloadFullResourceData)
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -624,7 +634,9 @@ TEST_F(
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -814,7 +826,9 @@ TEST_F(ResourcesProcessorTest, TolerateFailuresToPutResourceIntoLocalStorage)
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1013,7 +1027,8 @@ TEST_F(
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1233,7 +1248,9 @@ TEST_F(
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1420,7 +1437,9 @@ TEST_F(
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
@@ -1633,7 +1652,9 @@ TEST_F(
 
     const auto callback = std::make_shared<ResourcesProcessorCallback>();
 
-    auto future = resourcesProcessor->processResources(syncChunks, callback);
+    auto future = resourcesProcessor->processResources(
+        syncChunks, m_manualCanceler, callback);
+
     ASSERT_TRUE(future.isFinished());
     EXPECT_NO_THROW(future.waitForFinished());
 
