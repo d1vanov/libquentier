@@ -21,6 +21,8 @@
 #include "IDownloader.h"
 #include "Fwd.h"
 
+#include <quentier/utility/cancelers/Fwd.h>
+
 #include <QDir>
 
 namespace quentier::synchronization {
@@ -38,19 +40,21 @@ public:
         IResourcesProcessorPtr resourcesProcessor,
         ISavedSearchesProcessorPtr savedSearchesProcessor,
         ITagsProcessorPtr tagsProcessor,
+        utility::cancelers::ICancelerPtr canceler,
         const QDir & syncPersistentStorageDir);
 
     [[nodiscard]] QFuture<Result> download() override;
 
 private:
-    ISyncChunksProviderPtr m_syncChunksProvider;
-    ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
-    INotebooksProcessorPtr m_notebooksProcessor;
-    INotesProcessorPtr m_notesProcessor;
-    IResourcesProcessorPtr m_resourcesProcessor;
-    ISavedSearchesProcessorPtr m_savedSearchesProcessor;
-    ITagsProcessorPtr m_tagsProcessor;
-    QDir m_syncPersistentStorageDir;
+    const ISyncChunksProviderPtr m_syncChunksProvider;
+    const ILinkedNotebooksProcessorPtr m_linkedNotebooksProcessor;
+    const INotebooksProcessorPtr m_notebooksProcessor;
+    const INotesProcessorPtr m_notesProcessor;
+    const IResourcesProcessorPtr m_resourcesProcessor;
+    const ISavedSearchesProcessorPtr m_savedSearchesProcessor;
+    const ITagsProcessorPtr m_tagsProcessor;
+    const utility::cancelers::ICancelerPtr m_canceler;
+    const QDir m_syncPersistentStorageDir;
 };
 
 } // namespace quentier::synchronization

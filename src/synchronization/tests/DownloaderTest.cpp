@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
+#include <quentier/utility/cancelers/ManualCanceler.h>
 #include <quentier/utility/FileSystem.h>
 
 #include <synchronization/tests/mocks/MockILinkedNotebooksProcessor.h>
@@ -87,6 +88,9 @@ protected:
     const std::shared_ptr<mocks::MockITagsProcessor> m_mockTagsProcessor =
         std::make_shared<StrictMock<mocks::MockITagsProcessor>>();
 
+    const utility::cancelers::ManualCancelerPtr m_manualCanceler =
+        std::make_shared<utility::cancelers::ManualCanceler>();
+
     QTemporaryDir m_temporaryDir;
 };
 
@@ -101,6 +105,7 @@ TEST_F(DownloaderTest, Ctor)
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}));
 }
 
@@ -115,6 +120,7 @@ TEST_F(DownloaderTest, CtorNullSyncChunksProvider)
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -130,6 +136,7 @@ TEST_F(DownloaderTest, CtorNullLinkedNotebooksProcessor)
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -145,6 +152,7 @@ TEST_F(DownloaderTest, CtorNullNotebooksProcessor)
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -160,6 +168,7 @@ TEST_F(DownloaderTest, CtorNullNotesProcessor)
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -175,6 +184,7 @@ TEST_F(DownloaderTest, CtorNullResourcesProcessor)
             nullptr,
             m_mockSavedSearchesProcessor,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -190,6 +200,7 @@ TEST_F(DownloaderTest, CtorNullSavedSearchesProcessor)
             m_mockResourcesProcessor,
             nullptr,
             m_mockTagsProcessor,
+            m_manualCanceler,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);
 }
@@ -204,6 +215,23 @@ TEST_F(DownloaderTest, CtorNullTagsProcessor)
             m_mockNotesProcessor,
             m_mockResourcesProcessor,
             m_mockSavedSearchesProcessor,
+            nullptr,
+            m_manualCanceler,
+            QDir{m_temporaryDir.path()}),
+        InvalidArgument);
+}
+
+TEST_F(DownloaderTest, CtorNullCanceler)
+{
+    EXPECT_THROW(
+        const auto downloader = std::make_shared<Downloader>(
+            m_mockSyncChunksProvider,
+            m_mockLinkedNotebooksProcessor,
+            m_mockNotebooksProcessor,
+            m_mockNotesProcessor,
+            m_mockResourcesProcessor,
+            m_mockSavedSearchesProcessor,
+            m_mockTagsProcessor,
             nullptr,
             QDir{m_temporaryDir.path()}),
         InvalidArgument);

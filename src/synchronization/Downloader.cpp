@@ -20,6 +20,7 @@
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/threading/Future.h>
+#include <quentier/utility/cancelers/ICanceler.h>
 
 namespace quentier::synchronization {
 
@@ -31,6 +32,7 @@ Downloader::Downloader(
     IResourcesProcessorPtr resourcesProcessor,
     ISavedSearchesProcessorPtr savedSearchesProcessor,
     ITagsProcessorPtr tagsProcessor,
+    utility::cancelers::ICancelerPtr canceler,
     const QDir & syncPersistentStorageDir) :
     m_syncChunksProvider{std::move(syncChunksProvider)},
     m_linkedNotebooksProcessor{std::move(linkedNotebooksProcessor)},
@@ -39,6 +41,7 @@ Downloader::Downloader(
     m_resourcesProcessor{std::move(resourcesProcessor)},
     m_savedSearchesProcessor{std::move(savedSearchesProcessor)},
     m_tagsProcessor{std::move(tagsProcessor)},
+    m_canceler{std::move(canceler)},
     m_syncPersistentStorageDir{syncPersistentStorageDir}
 {
     if (Q_UNLIKELY(!m_syncChunksProvider)) {
@@ -81,6 +84,12 @@ Downloader::Downloader(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::Downloader",
             "Downloader ctor: tags processor is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_canceler)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::Downloader",
+            "Downloader ctor: canceler is null")}};
     }
 }
 
