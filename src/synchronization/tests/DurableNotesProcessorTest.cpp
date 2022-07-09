@@ -237,6 +237,7 @@ TEST_F(DurableNotesProcessorTest, ProcessSyncChunksWithoutPreviousSyncInfo)
                       const utility::cancelers::ICancelerPtr & canceler,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
             EXPECT_TRUE(canceler);
+            EXPECT_EQ(canceler.get(), m_manualCanceler.get());
 
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
@@ -331,6 +332,7 @@ TEST_F(
                       const utility::cancelers::ICancelerPtr & canceler,
                       const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
             EXPECT_TRUE(canceler);
+            EXPECT_EQ(canceler.get(), m_manualCanceler.get());
 
             const auto callback = callbackWeak.lock();
             EXPECT_TRUE(callback);
@@ -847,6 +849,7 @@ TEST_P(
                     const utility::cancelers::ICancelerPtr & canceler,
                     const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
                     EXPECT_TRUE(canceler);
+                    EXPECT_EQ(canceler.get(), m_manualCanceler.get());
 
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
@@ -906,6 +909,7 @@ TEST_P(
                     const utility::cancelers::ICancelerPtr & canceler,
                     const INotesProcessor::ICallbackWeakPtr & callbackWeak) {
                     EXPECT_TRUE(canceler);
+                    EXPECT_EQ(canceler.get(), m_manualCanceler.get());
 
                     const auto callback = callbackWeak.lock();
                     EXPECT_TRUE(callback);
