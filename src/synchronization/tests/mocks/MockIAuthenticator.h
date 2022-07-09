@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <synchronization/IAuthenticator.h>
+#include <quentier/synchronization/IAuthenticator.h>
 
 #include <gmock/gmock.h>
 

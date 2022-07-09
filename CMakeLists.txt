@@ -126,6 +126,7 @@ set(LOCAL_STORAGE_HEADERS
 set(SYNCHRONIZATION_HEADERS
     headers/quentier/synchronization/Fwd.h
     headers/quentier/synchronization/IAuthenticationManager.h
+    headers/quentier/synchronization/IAuthenticator.h
     headers/quentier/synchronization/INoteStore.h
     headers/quentier/synchronization/ISyncStateStorage.h
     headers/quentier/synchronization/IUserStore.h

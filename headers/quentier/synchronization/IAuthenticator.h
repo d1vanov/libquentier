@@ -20,12 +20,13 @@
 
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
+#include <quentier/utility/Linkage.h>
 
 #include <QFuture>
 
 namespace quentier::synchronization {
 
-class IAuthenticator
+class QUENTIER_EXPORT IAuthenticator
 {
 public:
     virtual ~IAuthenticator() = default;
