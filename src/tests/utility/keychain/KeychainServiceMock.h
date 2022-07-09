@@ -68,6 +68,15 @@ public:
     void setDeletePasswordHandler(DeletePasswordHandler handler);
 
 public:
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
+
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) override;
+
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
+
     [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
         const QString & password) override;

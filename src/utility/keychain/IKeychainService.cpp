@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -29,6 +29,25 @@
 #include <QTextStream>
 
 namespace quentier {
+
+namespace {
+
+[[nodiscard]] ErrorString errorStringForErrorCode(
+    const IKeychainService::ErrorCode errorCode)
+{
+    ErrorString error{QT_TRANSLATE_NOOP(
+        "utility::keychain::IKeychainService",
+        "Keychain job failed")};
+
+    QString errorCodeStr;
+    QTextStream strm{&errorCodeStr};
+    strm << errorCode;
+
+    error.details() = errorCodeStr;
+    return error;
+}
+
+} // namespace
 
 IKeychainService::IKeychainService(QObject * parent) : QObject(parent) {}
 
@@ -68,6 +87,30 @@ QTextStream & operator<<(
     }
 
     return strm;
+}
+
+IKeychainService::Exception::Exception(
+    IKeychainService::ErrorCode errorCode) noexcept :
+    IQuentierException{errorStringForErrorCode(errorCode)},
+    m_errorCode{errorCode}
+{}
+
+IKeychainService::Exception::Exception(
+    IKeychainService::ErrorCode errorCode,
+    ErrorString errorDescription) noexcept :
+    IQuentierException{std::move(errorDescription)},
+    m_errorCode{errorCode}
+{}
+
+IKeychainService::ErrorCode IKeychainService::Exception::errorCode()
+    const noexcept
+{
+    return m_errorCode;
+}
+
+QString IKeychainService::Exception::exceptionDisplayName() const
+{
+    return QStringLiteral("IKeychainService::Exception");
 }
 
 QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)

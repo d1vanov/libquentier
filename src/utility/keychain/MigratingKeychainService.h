@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_MIGRATING_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_MIGRATING_KEYCHAIN_SERVICE_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 #include <quentier/utility/SuppressWarnings.h>
@@ -56,6 +55,32 @@ public:
         QObject * parent = nullptr);
 
     ~MigratingKeychainService() noexcept override;
+
+    /**
+     * Passwords are written only to the sink keychain.
+     */
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
+
+    /**
+     * Passwords are first attempted to read from the sink keychain.
+     * If the resulting error code is "entry not found", the attempt is made
+     * to read from the source keychain. If reading from the source keychain
+     * succeeds, the password is written to the sink keychain and then
+     * returned to the user. After successful writing to the sink keychain
+     * the attempt to delete the password from the source keychain is being
+     * made.
+     */
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) override;
+
+    /**
+     * Passwords are first attempted to be deleted from the sink keychain. If
+     * the resulting error code response code is "entry not found", the attempt
+     * is made to delete the password from the source keychain.
+     */
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 
     /**
      * Write password jobs go to the sink keychain only. The idea is that new
@@ -143,5 +168,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_MIGRATING_KEYCHAIN_SERVICE_H

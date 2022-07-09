@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
-#define LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 
@@ -41,6 +40,15 @@ class Q_DECL_HIDDEN QtKeychainWrapper final : public QObject
 public:
     explicit QtKeychainWrapper();
     ~QtKeychainWrapper() noexcept override;
+
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password);
+
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key);
+
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key);
 
 public Q_SLOTS:
     void onStartWritePasswordJob(
@@ -71,15 +79,9 @@ private Q_SLOTS:
     void onDeletePasswordJobFinished(QKeychain::Job * pJob);
 
 private:
-    [[nodiscard]] IKeychainService::ErrorCode translateErrorCode(
-        QKeychain::Error errorCode) const;
-
-private:
     QHash<QKeychain::ReadPasswordJob *, QUuid> m_readPasswordJobs;
     QHash<QKeychain::WritePasswordJob *, QUuid> m_writePasswordJobs;
     QHash<QKeychain::DeletePasswordJob *, QUuid> m_deletePasswordJobs;
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_QT_KEYCHAIN_WRAPPER_H

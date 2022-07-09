@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -59,6 +59,25 @@ QtKeychainService::~QtKeychainService() noexcept
 {
     m_pQtKeychainWrapper->disconnect();
     m_pQtKeychainWrapper->deleteLater();
+}
+
+QFuture<void> QtKeychainService::writePassword(
+    QString service, QString key, QString password)
+{
+    return m_pQtKeychainWrapper->writePassword(
+        std::move(service), std::move(key), std::move(password));
+}
+
+QFuture<QString> QtKeychainService::readPassword(QString service, QString key)
+{
+    return m_pQtKeychainWrapper->readPassword(
+        std::move(service), std::move(key));
+}
+
+QFuture<void> QtKeychainService::deletePassword(QString service, QString key)
+{
+    return m_pQtKeychainWrapper->deletePassword(
+        std::move(service), std::move(key));
 }
 
 QUuid QtKeychainService::startWritePasswordJob(

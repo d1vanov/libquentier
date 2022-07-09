@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 
@@ -33,6 +32,15 @@ class FakeKeychainService final: public IKeychainService
 public:
     explicit FakeKeychainService(QObject * parent = nullptr);
     ~FakeKeychainService() override;
+
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
+
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) override;
+
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 
     [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -59,5 +67,3 @@ private:
 using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_TESTS_SYNCHRONIZATION_FAKE_KEYCHAIN_SERVICE_H

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -18,10 +18,12 @@
 
 #include "ObfuscatingKeychainService.h"
 
+#include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 
 #include <QMetaObject>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace quentier {
@@ -38,36 +40,20 @@ namespace {
 
 constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
-} // namespace
-
-////////////////////////////////////////////////////////////////////////////////
-
-ObfuscatingKeychainService::ObfuscatingKeychainService(QObject * parent) :
-    IKeychainService(parent)
-{}
-
-ObfuscatingKeychainService::~ObfuscatingKeychainService() noexcept = default;
-
-QUuid ObfuscatingKeychainService::startWritePasswordJob(
-    const QString & service, const QString & key, const QString & password)
+[[nodiscard]] bool writePasswordImpl(
+    EncryptionManager & encryptionManager, const QString & service,
+    const QString & key, const QString & password,
+    ErrorString & errorDescription)
 {
-    const QUuid requestId = QUuid::createUuid();
-
-    ErrorString errorDescription;
     QString encryptedString;
     QString cipher;
-    size_t keyLength = 0;
+    std::size_t keyLength = 0;
 
-    if (!m_encryptionManager.encrypt(
+    if (!encryptionManager.encrypt(
             password, key, cipher, keyLength, encryptedString,
             errorDescription))
     {
-        QMetaObject::invokeMethod(
-            this, "writePasswordJobFinished", Qt::QueuedConnection,
-            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
-            Q_ARG(ErrorString, errorDescription));
-
-        return requestId;
+        return false;
     }
 
     ApplicationSettings obfuscatedKeychainStorage{
@@ -85,10 +71,126 @@ QUuid ObfuscatingKeychainService::startWritePasswordJob(
     obfuscatedKeychainStorage.endGroup();
     obfuscatedKeychainStorage.sync();
 
-    QMetaObject::invokeMethod(
-        this, "writePasswordJobFinished", Qt::QueuedConnection,
-        Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
-        Q_ARG(ErrorString, ErrorString()));
+    return true;
+}
+
+[[nodiscard]] bool readPasswordImpl(
+    EncryptionManager & encryptionManager, const QString & service,
+    const QString & key, QString & password, ErrorString & errorDescription)
+{
+    ApplicationSettings obfuscatedKeychainStorage{
+        QString::fromUtf8(settingsFileName)};
+
+    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+    QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
+
+    bool conversionResult = false;
+    std::size_t keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
+                                .toULongLong(&conversionResult);
+    if (!conversionResult) {
+        errorDescription.setBase(QT_TRANSLATE_NOOP(
+            "utility::keychain::ObfuscatingKeychainService",
+            "Could not convert key length to unsigned long"));
+        return false;
+    }
+
+    QString encryptedText = QString::fromUtf8(QByteArray::fromBase64(
+        obfuscatedKeychainStorage.value(keys::value).toByteArray()));
+
+    obfuscatedKeychainStorage.endGroup();
+
+    return encryptionManager.decrypt(
+        encryptedText, key, cipher, keyLength, password, errorDescription);
+}
+
+[[nodiscard]] IKeychainService::ErrorCode deletePasswordImpl(
+    const QString & service, const QString & key)
+{
+    ApplicationSettings obfuscatedKeychainStorage{
+        QString::fromUtf8(settingsFileName)};
+
+    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+
+    if (obfuscatedKeychainStorage.allKeys().isEmpty()) {
+        obfuscatedKeychainStorage.endGroup();
+        return IKeychainService::ErrorCode::EntryNotFound;
+    }
+
+    obfuscatedKeychainStorage.remove(QStringLiteral(""));
+    obfuscatedKeychainStorage.endGroup();
+    return IKeychainService::ErrorCode::NoError;
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
+ObfuscatingKeychainService::ObfuscatingKeychainService(QObject * parent) :
+    IKeychainService(parent)
+{}
+
+ObfuscatingKeychainService::~ObfuscatingKeychainService() noexcept = default;
+
+QFuture<void> ObfuscatingKeychainService::writePassword(
+    QString service, QString key, QString password)
+{
+    ErrorString errorDescription;
+    if (writePasswordImpl(
+            m_encryptionManager, service, key, password, errorDescription))
+    {
+        return threading::makeReadyFuture();
+    }
+
+    return threading::makeExceptionalFuture<void>(
+        Exception{ErrorCode::OtherError, std::move(errorDescription)});
+}
+
+QFuture<QString> ObfuscatingKeychainService::readPassword(
+    QString service, QString key)
+{
+    QString password;
+    ErrorString errorDescription;
+    if (readPasswordImpl(
+            m_encryptionManager, service, key, password, errorDescription))
+    {
+        return threading::makeReadyFuture<QString>(std::move(password));
+    }
+
+    return threading::makeExceptionalFuture<QString>(
+        Exception{ErrorCode::OtherError, std::move(errorDescription)});
+}
+
+QFuture<void> ObfuscatingKeychainService::deletePassword(
+    QString service, QString key)
+{
+    const auto errorCode = deletePasswordImpl(service, key);
+    if (errorCode == ErrorCode::NoError) {
+        return threading::makeReadyFuture();
+    }
+
+    return threading::makeExceptionalFuture<void>(Exception{errorCode});
+}
+
+QUuid ObfuscatingKeychainService::startWritePasswordJob(
+    const QString & service, const QString & key, const QString & password)
+{
+    const QUuid requestId = QUuid::createUuid();
+
+    ErrorString errorDescription;
+    if (writePasswordImpl(
+            m_encryptionManager, service, key, password, errorDescription))
+    {
+        QMetaObject::invokeMethod(
+            this, "writePasswordJobFinished", Qt::QueuedConnection,
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
+            Q_ARG(ErrorString, ErrorString()));
+    }
+    else {
+        QMetaObject::invokeMethod(
+            this, "writePasswordJobFinished", Qt::QueuedConnection,
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
+            Q_ARG(ErrorString, errorDescription));
+    }
 
     return requestId;
 }
@@ -98,53 +200,22 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
 {
     const QUuid requestId = QUuid::createUuid();
 
-    ApplicationSettings obfuscatedKeychainStorage{
-        QString::fromUtf8(settingsFileName)};
-
-    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
-    QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
-
-    bool conversionResult = false;
-    std::size_t keyLength = obfuscatedKeychainStorage.value(keys::keyLength)
-                    .toULongLong(&conversionResult);
-    if (!conversionResult) {
-        QMetaObject::invokeMethod(
-            this, "readPasswordJobFinished", Qt::QueuedConnection,
-            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::EntryNotFound),
-            Q_ARG(
-                ErrorString,
-                ErrorString(QT_TR_NOOP(
-                    "could not convert key length to unsigned long"))),
-            Q_ARG(QString, QString()));
-
-        return requestId;
-    }
-
-    QString encryptedText = QString::fromUtf8(QByteArray::fromBase64(
-        obfuscatedKeychainStorage.value(keys::value).toByteArray()));
-
-    obfuscatedKeychainStorage.endGroup();
-
-    QString decryptedText;
+    QString password;
     ErrorString errorDescription;
-    if (!m_encryptionManager.decrypt(
-            encryptedText, key, cipher, keyLength, decryptedText,
-            errorDescription))
+    if (readPasswordImpl(
+            m_encryptionManager, service, key, password, errorDescription))
     {
         QMetaObject::invokeMethod(
             this, "readPasswordJobFinished", Qt::QueuedConnection,
-            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
-            Q_ARG(
-                ErrorString, ErrorString(QT_TR_NOOP("failed to decrypt text"))),
-            Q_ARG(QString, QString()));
-
-        return requestId;
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
+            Q_ARG(ErrorString, ErrorString()), Q_ARG(QString, password));
     }
-
-    QMetaObject::invokeMethod(
-        this, "readPasswordJobFinished", Qt::QueuedConnection,
-        Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
-        Q_ARG(ErrorString, ErrorString()), Q_ARG(QString, decryptedText));
+    else {
+        QMetaObject::invokeMethod(
+            this, "readPasswordJobFinished", Qt::QueuedConnection,
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
+            Q_ARG(ErrorString, errorDescription), Q_ARG(QString, QString()));
+    }
 
     return requestId;
 }
@@ -154,30 +225,25 @@ QUuid ObfuscatingKeychainService::startDeletePasswordJob(
 {
     const QUuid requestId = QUuid::createUuid();
 
-    ApplicationSettings obfuscatedKeychainStorage{
-        QString::fromUtf8(settingsFileName)};
-
-    obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
-
-    if (obfuscatedKeychainStorage.allKeys().isEmpty()) {
+    const auto errorCode = deletePasswordImpl(service, key);
+    if (errorCode == ErrorCode::NoError) {
+        QMetaObject::invokeMethod(
+            this, "deletePasswordJobFinished", Qt::QueuedConnection,
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
+            Q_ARG(ErrorString, ErrorString()));
+    }
+    else if (errorCode == ErrorCode::EntryNotFound) {
         QMetaObject::invokeMethod(
             this, "deletePasswordJobFinished", Qt::QueuedConnection,
             Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::EntryNotFound),
             Q_ARG(
                 ErrorString,
                 ErrorString(QT_TR_NOOP("could not find entry to delete"))));
-
-        obfuscatedKeychainStorage.endGroup();
-        return requestId;
     }
-
-    obfuscatedKeychainStorage.remove(QStringLiteral(""));
-    obfuscatedKeychainStorage.endGroup();
-
-    QMetaObject::invokeMethod(
-        this, "deletePasswordJobFinished", Qt::QueuedConnection,
-        Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::NoError),
-        Q_ARG(ErrorString, ErrorString()));
+    else {
+        // This branch must be unreachable
+        Q_ASSERT(false);
+    }
 
     return requestId;
 }

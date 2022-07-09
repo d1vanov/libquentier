@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,13 +16,14 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H
+#pragma once
 
+#include <quentier/exception/IQuentierException.h>
 #include <quentier/types/ErrorString.h>
 #include <quentier/utility/Fwd.h>
 #include <quentier/utility/Linkage.h>
 
+#include <QFuture>
 #include <QObject>
 #include <QUuid>
 
@@ -89,6 +90,69 @@ public:
         QTextStream & strm, ErrorCode errorCode);
 
     friend QDebug & operator<<(QDebug & dbg, ErrorCode errorCode);
+
+    class QUENTIER_EXPORT Exception : public IQuentierException
+    {
+    public:
+        explicit Exception(ErrorCode errorCode) noexcept;
+
+        explicit Exception(
+            ErrorCode errorCode, ErrorString errorDescription) noexcept;
+
+        [[nodiscard]] ErrorCode errorCode() const noexcept;
+        [[nodiscard]] QString exceptionDisplayName() const override;
+
+    private:
+        const ErrorCode m_errorCode;
+    };
+
+public:
+    /**
+     * writePassword method potentially asynchronously writes password to the
+     * keychain.
+     *
+     * @param service                   Name of service within the keychain
+     * @param key                       Key to store the password under
+     * @param password                  Password to store in the keychain
+     *
+     * @return                          Future which becomes finished when the
+     *                                  operation is comlete. If the operation
+     *                                  fails, the future would contain an
+     *                                  exception.
+     */
+    [[nodiscard]] virtual QFuture<void> writePassword(
+        QString service, QString key, QString password) = 0;
+
+    /**
+     * readPassword method potentially asynchronously reads password from the
+     * keychain.
+     *
+     * @param service                   Name of service within the keychain
+     * @param key                       Key under which the password is stored
+     *
+     * @return                          Future which becomes finished when the
+     *                                  operation is complete. The value inside
+     *                                  the future would be the read password.
+     *                                  If the operation fails, the future
+     *                                  would contain an exception.
+     */
+    [[nodiscard]] virtual QFuture<QString> readPassword(
+        QString service, QString key) = 0;
+
+    /**
+     * deletePassword potentially asynchronously deletes password from the
+     * keychain.
+     *
+     * @param service                   Name of service within the keychain
+     * @param key                       Key under which the password is stored
+     *
+     * @return                          Future which becomes finished when the
+     *                                  operation is comlete. If the operation
+     *                                  fails, the future would contain an
+     *                                  exception.
+     */
+    [[nodiscard]] virtual QFuture<void> deletePassword(
+        QString service, QString key) = 0;
 
 public:
     /**
@@ -202,5 +266,3 @@ newObfuscatingKeychainService(QObject * parent = nullptr);
     QObject * parent = nullptr);
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_I_KEYCHAIN_SERVICE_H

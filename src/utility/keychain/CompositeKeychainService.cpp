@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,20 +19,39 @@
 #include "CompositeKeychainService.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 
 #include <QMetaObject>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
 #include <stdexcept>
 
 #define CKDEBUG(message)                                                       \
-    QNDEBUG("utility:keychain_composite", "[" << m_name << "]: " << message)
+    QNDEBUG(                                                                   \
+        "utility::keychain::CompositeKeychainService", "[" << m_name << "]: "  \
+            << message)
 
 #define CKINFO(message)                                                        \
-    QNINFO("utility:keychain_composite", "[" << m_name << "]: " << message)
+    QNINFO(                                                                    \
+        "utility::keychain::CompositeKeychainService", "[" << m_name << "]: "  \
+            << message)
+
+#define CKWARNING(message)                                                     \
+    QNWARNING(                                                                 \
+        "utility::keychain::CompositeKeychainService", "[" << m_name << "]: "  \
+            << message)
 
 #define CKERROR(message)                                                       \
-    QNERROR("utility:keychain_composite", "[" << m_name << "]: " << message)
+    QNERROR(                                                                   \
+        "utility:keychain::CompositeKeychainService", "[" << m_name << "]: "   \
+            << message)
 
 namespace quentier {
 
@@ -49,6 +68,26 @@ constexpr const char * service = "Service";
 constexpr const char * key = "Key";
 
 } // namespace keys
+
+namespace {
+
+[[nodiscard]] bool isNoEntryError(const QException & e) noexcept
+{
+    bool isNoEntryError = false;
+    try {
+        e.raise();
+    }
+    catch (const IKeychainService::Exception & exc) {
+        isNoEntryError =
+            (exc.errorCode() == IKeychainService::ErrorCode::EntryNotFound);
+    }
+    catch (...) {
+    }
+
+    return isNoEntryError;
+}
+
+} // namespace
 
 CompositeKeychainService::CompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
@@ -76,6 +115,324 @@ CompositeKeychainService::CompositeKeychainService(
 }
 
 CompositeKeychainService::~CompositeKeychainService() noexcept = default;
+
+QFuture<void> CompositeKeychainService::writePassword(
+    QString service, QString key, QString password)
+{
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    QFuture<void> primaryKeychainFuture =
+        m_primaryKeychain->writePassword(service, key, password);
+
+    QFuture<void> secondaryKeychainFuture =
+        m_secondaryKeychain->writePassword(service, key, password);
+
+    QFuture<void> allFuture = threading::whenAll(
+        QList<QFuture<void>>{} << primaryKeychainFuture
+                               << secondaryKeychainFuture);
+
+    auto allThenFuture =
+        threading::then(std::move(allFuture), [promise] { promise->finish(); });
+
+    threading::onFailed(
+        std::move(allThenFuture),
+        [promise, primaryKeychainFuture, secondaryKeychainFuture,
+         selfWeak = weak_from_this(), service = std::move(service),
+         key = std::move(key)](const QException & e) mutable {
+            QString allFutureError = [&] {
+                QString str;
+                QTextStream strm{&str};
+                strm << e.what();
+                return str;
+            }();
+
+            auto primaryKeychainThenFuture = threading::then(
+                std::move(primaryKeychainFuture),
+                [promise, selfWeak, service, key,
+                 allFutureError = std::move(allFutureError)] {
+                    // Writing to primary keychain succeeded but allThenFuture
+                    // is in a failed state. That means writing to the secondary
+                    // keychain has failed.
+                    if (const auto self = selfWeak.lock()) {
+                        self->unmarkServiceKeyPairAsUnavailableInPrimaryKeychain(
+                            service, key);
+
+                        self->markServiceKeyPairAsUnavailableInSecondaryKeychain(
+                            service, key);
+
+                        QNWARNING(
+                            "utility::keychain::CompositeKeychainService",
+                            "Failed to write password to secondary keychain: "
+                                << "name = " << self->m_name << ", service = "
+                                << service << ", key = " << key
+                                << ", error: " << allFutureError);
+                    }
+
+                    promise->finish();
+                });
+
+            threading::onFailed(
+                std::move(primaryKeychainThenFuture),
+                [promise, selfWeak, service = std::move(service),
+                 key = std::move(key),
+                 secondaryKeychainFuture](const QException & e) mutable {
+                    auto primaryKeychainError =
+                        std::shared_ptr<QException>(e.clone());
+
+                    // Writing to primary keychain has failed. Need to figure
+                    // out the state of writing to the secondary keychain.
+                    if (const auto self = selfWeak.lock()) {
+                        self->markServiceKeyPairAsUnavailableInPrimaryKeychain(
+                            service, key);
+
+                        QNWARNING(
+                            "utility::keychain::CompositeKeychainService",
+                            "Failed to write password to primary keychain: "
+                                << "name = " << self->m_name << ", service = "
+                                << service << ", key = " << key
+                                << ", error: " << e.what());
+                    }
+
+                    auto secondaryKeychainThenFuture = threading::then(
+                        std::move(secondaryKeychainFuture),
+                        [promise, selfWeak, service, key] {
+                            // Writing to secondary keychain succeeded.
+                            if (const auto self = selfWeak.lock()) {
+                                self->unmarkServiceKeyPairAsUnavailableInSecondaryKeychain(
+                                    service, key);
+                            }
+
+                            promise->finish();
+                        });
+
+                    threading::onFailed(
+                        std::move(secondaryKeychainThenFuture),
+                        [promise, selfWeak, service = std::move(service),
+                         key = std::move(key),
+                         primaryKeychainError](const QException & e) {
+                            // Writing to secondary keychain failed as well
+                            if (const auto self = selfWeak.lock()) {
+                                self->markServiceKeyPairAsUnavailableInSecondaryKeychain(
+                                    service, key);
+
+                                QNWARNING(
+                                    "utility::keychain::"
+                                    "CompositeKeychainService",
+                                    "Failed to write password to primary "
+                                    "keychain: "
+                                        << "name = " << self->m_name
+                                        << ", service = " << service
+                                        << ", key = " << key
+                                        << ", error: " << e.what());
+                            }
+
+                            promise->setException(*primaryKeychainError);
+                            promise->finish();
+                        });
+                });
+        });
+
+    return future;
+}
+
+QFuture<QString> CompositeKeychainService::readPassword(
+    QString service, QString key)
+{
+    auto promise = std::make_shared<QPromise<QString>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    QFuture<QString> primaryKeychainFuture = [&] {
+        if (isServiceKeyPairAvailableInPrimaryKeychain(service, key)) {
+            return m_primaryKeychain->readPassword(service, key);
+        }
+
+        return threading::makeExceptionalFuture<QString>(
+            Exception{ErrorCode::EntryNotFound});
+    }();
+
+    auto primaryKeychainThenFuture = threading::then(
+        std::move(primaryKeychainFuture), [promise](QString password) {
+            promise->addResult(std::move(password));
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(primaryKeychainThenFuture),
+        [promise, selfWeak = weak_from_this(), service = std::move(service),
+         key = std::move(key)](const QException & e) mutable {
+            if (const auto self = selfWeak.lock()) {
+                if (!isNoEntryError(e)) {
+                    QNWARNING(
+                        "utility::keychain::CompositeKeychainService",
+                        "Failed to read password from the primary keychain: "
+                            << "name = " << self->m_name
+                            << ", service = " << service << ", key = " << key
+                            << ", error: " << e.what());
+                }
+
+                QFuture<QString> secondaryKeychainFuture = [&] {
+                    if (self->isServiceKeyPairAvailableInSecondaryKeychain(
+                            service, key)) {
+                        return self->m_secondaryKeychain->readPassword(
+                            service, key);
+                    }
+
+                    return threading::makeExceptionalFuture<QString>(
+                        Exception{ErrorCode::EntryNotFound});
+                }();
+
+                auto secondaryKeychainThenFuture = threading::then(
+                    std::move(secondaryKeychainFuture),
+                    [promise](QString password) {
+                        promise->addResult(std::move(password));
+                        promise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(secondaryKeychainThenFuture),
+                    [promise, selfWeak, service = std::move(service),
+                     key = std::move(key)](const QException & e) {
+                        if (const auto self = selfWeak.lock()) {
+                            if (!isNoEntryError(e)) {
+                                QNWARNING(
+                                    "utility::keychain::"
+                                    "CompositeKeychainService",
+                                    "Failed to read password from the "
+                                    "secondary keychain: "
+                                        << "name = " << self->m_name
+                                        << ", service = " << service
+                                        << ", key = " << key
+                                        << ", error: " << e.what());
+                            }
+                        }
+
+                        promise->setException(e);
+                        promise->finish();
+                    });
+
+                return;
+            }
+
+            promise->setException(e);
+            promise->finish();
+        });
+
+    return future;
+}
+
+QFuture<void> CompositeKeychainService::deletePassword(
+    QString service, QString key)
+{
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    QFuture<void> primaryKeychainFuture =
+        m_primaryKeychain->deletePassword(service, key);
+
+    QFuture<void> secondaryKeychainFuture =
+        m_secondaryKeychain->deletePassword(service, key);
+
+    QFuture<void> allFuture = threading::whenAll(
+        QList<QFuture<void>>{} << primaryKeychainFuture
+                               << secondaryKeychainFuture);
+
+    auto allThenFuture =
+        threading::then(std::move(allFuture), [promise] { promise->finish(); });
+
+    threading::onFailed(
+        std::move(allThenFuture),
+        [promise, selfWeak = weak_from_this(), service = std::move(service),
+         key = std::move(key), primaryKeychainFuture,
+         secondaryKeychainFuture](const QException & e) mutable {
+            QString allFutureError = [&] {
+                QString str;
+                QTextStream strm{&str};
+                strm << e.what();
+                return str;
+            }();
+
+            auto primaryKeychainThenFuture = threading::then(
+                std::move(primaryKeychainFuture),
+                [promise, selfWeak, service, key,
+                 allFutureError = std::move(allFutureError)] {
+                    // Deleting from primary keychain succeeded but
+                    // allThenFuture is in a failed state. That means deleting
+                    // from the secondary keychain has failed.
+                    if (const auto self = selfWeak.lock()) {
+                        self->markServiceKeyPairAsUnavailableInSecondaryKeychain(
+                            service, key);
+
+                        QNWARNING(
+                            "utility::keychain::CompositeKeychainService",
+                            "Failed to delete password from secondary "
+                            "keychain: "
+                                << "name = " << self->m_name << ", service = "
+                                << service << ", key = " << key
+                                << ", error: " << allFutureError);
+                    }
+
+                    promise->finish();
+                });
+
+            threading::onFailed(
+                std::move(primaryKeychainThenFuture),
+                [promise, selfWeak, service = std::move(service),
+                 key = std::move(key),
+                 secondaryKeychainFuture = std::move(secondaryKeychainFuture)](
+                    const QException & e) mutable {
+                    // Deleting from primary keychain has failed
+                    if (const auto self = selfWeak.lock()) {
+                        self->markServiceKeyPairAsUnavailableInPrimaryKeychain(
+                            service, key);
+
+                        QNWARNING(
+                            "utility::keychain::CompositeKeychainService",
+                            "Failed to delete password from primary keychain: "
+                                << "name = " << self->m_name << ", service = "
+                                << service << ", key = " << key
+                                << ", error: " << e.what());
+                    }
+
+                    auto secondaryKeychainThenFuture = threading::then(
+                        std::move(secondaryKeychainFuture), [promise] {
+                            // Deleting from secondary keychain succeeded
+                            promise->finish();
+                        });
+
+                    threading::onFailed(
+                        std::move(secondaryKeychainThenFuture),
+                        [promise, selfWeak, service = std::move(service),
+                         key = std::move(key)](const QException & e) {
+                            // Deleting from secondary keychain failed
+                            if (const auto self = selfWeak.lock()) {
+                                self->markServiceKeyPairAsUnavailableInSecondaryKeychain(
+                                    service, key);
+
+                                QNWARNING(
+                                    "utility::keychain::"
+                                    "CompositeKeychainService",
+                                    "Failed to delete password from secondary "
+                                    "keychain: "
+                                        << "name = " << self->m_name
+                                        << ", service = " << service
+                                        << ", key = " << key
+                                        << ", error: " << e.what());
+                            }
+
+                            promise->finish();
+                        });
+                });
+        });
+
+    return future;
+}
 
 QUuid CompositeKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)

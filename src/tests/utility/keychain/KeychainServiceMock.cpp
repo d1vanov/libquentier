@@ -18,6 +18,8 @@
 
 #include "KeychainServiceMock.h"
 
+#include <quentier/threading/Future.h>
+
 #include <QMetaObject>
 
 #include <stdexcept>
@@ -42,6 +44,34 @@ void KeychainServiceMock::setDeletePasswordHandler(
     DeletePasswordHandler handler)
 {
     m_deletePasswordHandler = std::move(handler);
+}
+
+QFuture<void> KeychainServiceMock::writePassword(
+    QString service, QString key, QString password)
+{
+    // TODO: implement
+    Q_UNUSED(service)
+    Q_UNUSED(key)
+    Q_UNUSED(password)
+    return threading::makeReadyFuture();
+}
+
+QFuture<QString> KeychainServiceMock::readPassword(
+    QString service, QString key)
+{
+    // TODO: implement
+    Q_UNUSED(service)
+    Q_UNUSED(key)
+    return threading::makeReadyFuture<QString>({});
+}
+
+QFuture<void> KeychainServiceMock::deletePassword(
+    QString service, QString key)
+{
+    // TODO: implement
+    Q_UNUSED(service)
+    Q_UNUSED(key)
+    return threading::makeReadyFuture();
 }
 
 QUuid KeychainServiceMock::startWritePasswordJob(

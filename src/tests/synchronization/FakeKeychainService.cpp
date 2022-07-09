@@ -18,6 +18,7 @@
 
 #include "FakeKeychainService.h"
 
+#include <quentier/threading/Future.h>
 #include <quentier/utility/ApplicationSettings.h>
 
 #include <QTimerEvent>
@@ -29,6 +30,49 @@ FakeKeychainService::FakeKeychainService(QObject * parent) :
 {}
 
 FakeKeychainService::~FakeKeychainService() = default;
+
+QFuture<void> FakeKeychainService::writePassword(
+    QString service, QString key, QString password)
+{
+    ApplicationSettings appSettings;
+    appSettings.beginGroup(service);
+    appSettings.setValue(key, password);
+    appSettings.endGroup();
+    return threading::makeReadyFuture();
+}
+
+QFuture<QString> FakeKeychainService::readPassword(
+    QString service, QString key)
+{
+    ApplicationSettings appSettings;
+    appSettings.beginGroup(service);
+    QString password = appSettings.value(key).toString();
+    appSettings.endGroup();
+
+    if (password.isEmpty()) {
+        return threading::makeExceptionalFuture<QString>(
+            Exception{ErrorCode::EntryNotFound});
+    }
+
+    return threading::makeReadyFuture<QString>(std::move(password));
+}
+
+QFuture<void> FakeKeychainService::deletePassword(
+    QString service, QString key)
+{
+    ApplicationSettings appSettings;
+    appSettings.beginGroup(service);
+
+    if (appSettings.contains(key)) {
+        appSettings.remove(key);
+        appSettings.endGroup();
+        return threading::makeReadyFuture();
+    }
+
+    appSettings.endGroup();
+    return threading::makeExceptionalFuture<QString>(
+        Exception{ErrorCode::EntryNotFound});
+}
 
 QUuid FakeKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)

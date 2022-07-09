@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 
@@ -32,6 +31,15 @@ public:
     explicit QtKeychainService(QObject * parent = nullptr);
 
     ~QtKeychainService() noexcept override;
+
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
+
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) override;
+
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 
     [[nodiscard]] QUuid startWritePasswordJob(
         const QString & service, const QString & key,
@@ -58,5 +66,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_QT_KEYCHAIN_SERVICE_H

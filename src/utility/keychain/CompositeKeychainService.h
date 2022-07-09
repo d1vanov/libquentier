@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -16,8 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIB_QUENTIER_UTILITY_KEYCHAIN_COMPOSITE_KEYCHAIN_SERVICE_H
-#define LIB_QUENTIER_UTILITY_KEYCHAIN_COMPOSITE_KEYCHAIN_SERVICE_H
+#pragma once
 
 #include <quentier/utility/IKeychainService.h>
 #include <quentier/utility/SuppressWarnings.h>
@@ -33,13 +32,17 @@ MSVC_SUPPRESS_WARNING(4834)
 
 RESTORE_WARNINGS
 
+#include <memory>
+
 namespace quentier {
 
 /**
  * @brief The CompositeKeychainService class implements IKeychainService
  * interface; it uses two other keychain services to implement its functionality
  */
-class Q_DECL_HIDDEN CompositeKeychainService final : public IKeychainService
+class Q_DECL_HIDDEN CompositeKeychainService final :
+    public IKeychainService,
+    public std::enable_shared_from_this<CompositeKeychainService>
 {
     Q_OBJECT
 public:
@@ -56,6 +59,51 @@ public:
         IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
 
     ~CompositeKeychainService() noexcept override;
+
+    /**
+     * Passwords are written to both primary and secondary keychains. The
+     * results are handled as follows:
+     * 1. If writing to both primary and secondary keychain succeeds, the status
+     *    is reported to the user.
+     * 2. If writing fails for the primary keychain but succeeds for the
+     *    secondary one, service + key pair is stored persistently as the one
+     *    for which the password is available only in the secondary keychain.
+     *    Successful status of writing is reported to the user.
+     * 3. If writing fails for the secondary keychain but succeeds for the
+     *    primary one, service + key pair is stored persistently as the one
+     *    for which the password is available only in the primary keychain.
+     *    Succesful status of writing is reported to the user.
+     * 4. If writing to both keychains fails, the error from the primary
+     *    keychain is returned to the user.
+     */
+    [[nodiscard]] QFuture<void> writePassword(
+        QString service, QString key, QString password) override;
+
+    /**
+     * Passwords are read as follows:
+     * 1. If service and key pair is not marked as the one for which the
+     *    password is not available in the primary keychain, the read is first
+     *    attempted from the primary keychain.
+     * 2. If reading from the primary keychain fails or if it is skipped
+     *    altogether due to the reasons from p. 1, an attempt is made to read
+     *    the password from the secondary keychain unless service and key pair
+     *    is marked as the one for which the password is not available in the
+     *    secondary keychain.
+     * 3. If the password is not available in either keychain, reading fails.
+     *    Otherwise the first successful result (if any) is set into the future.
+     */
+    [[nodiscard]] QFuture<QString> readPassword(
+        QString service, QString key) override;
+
+    /**
+     * Passwords are deleted from both primary and secondary keychains unless
+     * service and key pair is marked as unavailable in either of these
+     * keychains. The mark is stored persistently. If deletion fails for either
+     * keychain, service and key pair is marked as the one for which the
+     * password is not available in the corresponding keychain.
+     */
+    [[nodiscard]] QFuture<void> deletePassword(
+        QString service, QString key) override;
 
     /**
      * Write password jobs go to both primary and secondary keychains. The
@@ -234,5 +282,3 @@ private:
 };
 
 } // namespace quentier
-
-#endif // LIB_QUENTIER_UTILITY_KEYCHAIN_COMPOSITE_KEYCHAIN_SERVICE_H

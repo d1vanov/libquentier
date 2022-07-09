@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Dmitry Ivanov
+ * Copyright 2020-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -19,7 +19,15 @@
 #include "MigratingKeychainService.h"
 
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/QtFutureContinuations.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
+#include <memory>
 #include <stdexcept>
 
 namespace quentier {
@@ -45,6 +53,167 @@ MigratingKeychainService::MigratingKeychainService(
 }
 
 MigratingKeychainService::~MigratingKeychainService() noexcept = default;
+
+QFuture<void> MigratingKeychainService::writePassword(
+    QString service, QString key, QString password)
+{
+    return m_sinkKeychain->writePassword(
+        std::move(service), std::move(key), std::move(password));
+}
+
+QFuture<QString> MigratingKeychainService::readPassword(
+    QString service, QString key)
+{
+    auto promise = std::make_shared<QPromise<QString>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    auto sinkKeychainFuture = m_sinkKeychain->readPassword(service, key);
+
+    auto sinkKeychainThenFuture = threading::then(
+        std::move(sinkKeychainFuture), [promise](QString password) {
+            promise->addResult(std::move(password));
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(sinkKeychainThenFuture),
+        [promise, sourceKeychain = m_sourceKeychain,
+         sinkKeychain = m_sinkKeychain, service = std::move(service),
+         key = std::move(key)](const QException & e) mutable {
+            bool isNoEntryError = false;
+            try {
+                e.raise();
+            }
+            catch (const IKeychainService::Exception & exc) {
+                isNoEntryError =
+                    (exc.errorCode() ==
+                     IKeychainService::ErrorCode::EntryNotFound);
+            }
+            catch (...) {
+            }
+
+            if (!isNoEntryError) {
+                promise->setException(e);
+                promise->finish();
+                return;
+            }
+
+            // Otherwise fallback to source keychain
+            auto sourceKeychainFuture =
+                sourceKeychain->readPassword(service, key);
+
+            threading::thenOrFailed(
+                std::move(sourceKeychainFuture), promise,
+                [promise, sinkKeychain, sourceKeychain,
+                 service = std::move(service),
+                 key = std::move(key)](QString password) {
+                    auto writeToSinkFuture =
+                        sinkKeychain->writePassword(service, key, password);
+
+                    auto thenFuture = threading::then(
+                        std::move(writeToSinkFuture),
+                        [promise, password, service, key,
+                         sourceKeychain]() mutable {
+                            auto deleteFromSourceFuture =
+                                sourceKeychain->deletePassword(service, key);
+
+                            auto thenFuture = threading::then(
+                                std::move(deleteFromSourceFuture),
+                                [promise, password]() mutable {
+                                    promise->addResult(std::move(password));
+                                    promise->finish();
+                                });
+
+                            threading::onFailed(
+                                std::move(thenFuture),
+                                [promise, password = std::move(password),
+                                 service = std::move(service),
+                                 key = std::move(key)](
+                                    const QException & e) mutable {
+                                    // Failed to delete from source keychain,
+                                    // will just return the migrated password
+                                    QNWARNING(
+                                        "utility::keychain::"
+                                        "MigratingKeychainService",
+                                        "Failed to delete password from source "
+                                        "keychain: service = "
+                                            << service << ", key = " << key
+                                            << ": " << e.what());
+
+                                    promise->addResult(std::move(password));
+                                    promise->finish();
+                                });
+                        });
+
+                    threading::onFailed(
+                        std::move(thenFuture),
+                        [promise, password, service,
+                         key](const QException & e) mutable {
+                            // Failed to write to sink keychain, will just
+                            // return the result from the source keychain
+                            QNWARNING(
+                                "utility::keychain::MigratingKeychainService",
+                                "Failed to write password from source keychain "
+                                "to sink keychain: service = "
+                                    << service << ", key = " << key << ": "
+                                    << e.what());
+
+                            promise->addResult(std::move(password));
+                            promise->finish();
+                        });
+                });
+        });
+
+    return future;
+}
+
+QFuture<void> MigratingKeychainService::deletePassword(
+    QString service, QString key)
+{
+    auto promise = std::make_shared<QPromise<void>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    auto sinkKeychainFuture = m_sinkKeychain->deletePassword(service, key);
+
+    auto sinkKeychainThenFuture = threading::then(
+        std::move(sinkKeychainFuture), [promise] { promise->finish(); });
+
+    threading::onFailed(
+        std::move(sinkKeychainThenFuture),
+        [promise, sourceKeychain = m_sourceKeychain,
+         service = std::move(service),
+         key = std::move(key)](const QException & e) mutable {
+            bool isNoEntryError = false;
+            try {
+                e.raise();
+            }
+            catch (const IKeychainService::Exception & exc) {
+                isNoEntryError =
+                    (exc.errorCode() ==
+                     IKeychainService::ErrorCode::EntryNotFound);
+            }
+            catch (...) {
+            }
+
+            if (!isNoEntryError) {
+                promise->setException(e);
+                promise->finish();
+                return;
+            }
+
+            // Otherwise try to delete from the source keychain
+            auto sourceKeychainFuture = sourceKeychain->deletePassword(
+                std::move(service), std::move(key));
+
+            threading::thenOrFailed(std::move(sourceKeychainFuture), promise);
+        });
+
+    return future;
+}
 
 QUuid MigratingKeychainService::startWritePasswordJob(
     const QString & service, const QString & key, const QString & password)
@@ -146,7 +315,8 @@ void MigratingKeychainService::onSinkKeychainWritePasswordJobFinished(
 
 void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode,
-    ErrorString errorDescription, QString password) // NOLINT
+    ErrorString errorDescription, // NOLINT
+    QString password)             // NOLINT
 {
     const auto it = m_sinkKeychainReadRequestIdsToServiceAndKey.find(requestId);
     if (it == m_sinkKeychainReadRequestIdsToServiceAndKey.end()) {
@@ -180,7 +350,8 @@ void MigratingKeychainService::onSinkKeychainReadPasswordJobFinished(
 
 void MigratingKeychainService::onSourceKeychainReadPasswordJobFinished(
     QUuid requestId, ErrorCode errorCode,
-    ErrorString errorDescription, QString password) // NOLINT
+    ErrorString errorDescription, // NOLINT
+    QString password)             // NOLINT
 {
     const auto it = m_sourceKeychainReadRequestData.find(requestId);
     if (it == m_sourceKeychainReadRequestData.end()) {
