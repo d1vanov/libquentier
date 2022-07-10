@@ -93,7 +93,7 @@ public:
      *    Otherwise the first successful result (if any) is set into the future.
      */
     [[nodiscard]] QFuture<QString> readPassword(
-        QString service, QString key) override;
+        QString service, QString key) const override;
 
     /**
      * Passwords are deleted from both primary and secondary keychains unless

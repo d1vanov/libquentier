@@ -68,7 +68,8 @@ QFuture<void> QtKeychainService::writePassword(
         std::move(service), std::move(key), std::move(password));
 }
 
-QFuture<QString> QtKeychainService::readPassword(QString service, QString key)
+QFuture<QString> QtKeychainService::readPassword(
+    QString service, QString key) const
 {
     return m_pQtKeychainWrapper->readPassword(
         std::move(service), std::move(key));

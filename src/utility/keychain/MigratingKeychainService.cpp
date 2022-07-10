@@ -62,7 +62,7 @@ QFuture<void> MigratingKeychainService::writePassword(
 }
 
 QFuture<QString> MigratingKeychainService::readPassword(
-    QString service, QString key)
+    QString service, QString key) const
 {
     auto promise = std::make_shared<QPromise<QString>>();
     auto future = promise->future();

@@ -42,7 +42,7 @@ QFuture<void> FakeKeychainService::writePassword(
 }
 
 QFuture<QString> FakeKeychainService::readPassword(
-    QString service, QString key)
+    QString service, QString key) const
 {
     ApplicationSettings appSettings;
     appSettings.beginGroup(service);

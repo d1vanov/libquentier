@@ -57,7 +57,7 @@ QFuture<void> KeychainServiceMock::writePassword(
 }
 
 QFuture<QString> KeychainServiceMock::readPassword(
-    QString service, QString key)
+    QString service, QString key) const
 {
     // TODO: implement
     Q_UNUSED(service)

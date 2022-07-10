@@ -45,7 +45,7 @@ public:
         QString service, QString key, QString password);
 
     [[nodiscard]] QFuture<QString> readPassword(
-        QString service, QString key);
+        QString service, QString key) const;
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key);

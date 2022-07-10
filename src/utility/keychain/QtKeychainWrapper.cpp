@@ -124,7 +124,8 @@ QFuture<void> QtKeychainWrapper::writePassword(
     return future;
 }
 
-QFuture<QString> QtKeychainWrapper::readPassword(QString service, QString key) // NOLINT
+QFuture<QString> QtKeychainWrapper::readPassword(
+    QString service, QString key) const // NOLINT
 {
     auto promise = std::make_shared<QPromise<QString>>();
     auto future = promise->future();

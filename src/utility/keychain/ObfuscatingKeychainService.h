@@ -41,7 +41,7 @@ public:
         QString service, QString key, QString password) override;
 
     [[nodiscard]] QFuture<QString> readPassword(
-        QString service, QString key) override;
+        QString service, QString key) const override;
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;
@@ -57,7 +57,7 @@ public:
         const QString & service, const QString & key) override;
 
 private:
-    EncryptionManager m_encryptionManager;
+    mutable EncryptionManager m_encryptionManager;
 };
 
 } // namespace quentier

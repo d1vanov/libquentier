@@ -239,7 +239,7 @@ QFuture<void> CompositeKeychainService::writePassword(
 }
 
 QFuture<QString> CompositeKeychainService::readPassword(
-    QString service, QString key)
+    QString service, QString key) const
 {
     auto promise = std::make_shared<QPromise<QString>>();
     auto future = promise->future();
@@ -1112,7 +1112,7 @@ void CompositeKeychainService::
 }
 
 bool CompositeKeychainService::isServiceKeyPairAvailableInPrimaryKeychain(
-    const QString & service, const QString & key) const
+    const QString & service, const QString & key) const // NOLINT
 {
     checkAndInitializeServiceKeysCaches();
 
@@ -1155,7 +1155,7 @@ void CompositeKeychainService::
 }
 
 bool CompositeKeychainService::isServiceKeyPairAvailableInSecondaryKeychain(
-    const QString & service, const QString & key) const
+    const QString & service, const QString & key) const // NOLINT
 {
     checkAndInitializeServiceKeysCaches();
 

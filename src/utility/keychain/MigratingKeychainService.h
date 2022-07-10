@@ -72,7 +72,7 @@ public:
      * made.
      */
     [[nodiscard]] QFuture<QString> readPassword(
-        QString service, QString key) override;
+        QString service, QString key) const override;
 
     /**
      * Passwords are first attempted to be deleted from the sink keychain. If

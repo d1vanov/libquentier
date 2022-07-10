@@ -41,7 +41,7 @@ namespace {
 constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
 [[nodiscard]] bool writePasswordImpl(
-    EncryptionManager & encryptionManager, const QString & service,
+    EncryptionManager & encryptionManager, const QString & service, // NOLINT
     const QString & key, const QString & password,
     ErrorString & errorDescription)
 {
@@ -75,7 +75,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 }
 
 [[nodiscard]] bool readPasswordImpl(
-    EncryptionManager & encryptionManager, const QString & service,
+    EncryptionManager & encryptionManager, const QString & service, // NOLINT
     const QString & key, QString & password, ErrorString & errorDescription)
 {
     ApplicationSettings obfuscatedKeychainStorage{
@@ -104,7 +104,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 }
 
 [[nodiscard]] IKeychainService::ErrorCode deletePasswordImpl(
-    const QString & service, const QString & key)
+    const QString & service, const QString & key) // NOLINT
 {
     ApplicationSettings obfuscatedKeychainStorage{
         QString::fromUtf8(settingsFileName)};
@@ -146,7 +146,7 @@ QFuture<void> ObfuscatingKeychainService::writePassword(
 }
 
 QFuture<QString> ObfuscatingKeychainService::readPassword(
-    QString service, QString key)
+    QString service, QString key) const
 {
     QString password;
     ErrorString errorDescription;

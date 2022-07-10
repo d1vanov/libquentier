@@ -1,0 +1,55 @@
+/*
+ * Copyright 2022 Dmitry Ivanov
+ *
+ * This file is part of libquentier
+ *
+ * libquentier is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * libquentier is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <quentier/utility/IKeychainService.h>
+
+#include <gmock/gmock.h>
+
+namespace quentier::utility::tests::mocks {
+
+class MockIKeychainService : public IKeychainService
+{
+    Q_OBJECT
+public:
+    MOCK_METHOD(
+        QFuture<void>, writePassword,
+        (QString service, QString key, QString password), (override));
+
+    MOCK_METHOD(
+        QFuture<QString>, readPassword,
+        (QString service, QString key), (const, override));
+
+    MOCK_METHOD(
+        QFuture<void>, deletePassword, (QString service, QString key),
+        (override));
+
+    MOCK_METHOD(
+        QUuid, startWritePasswordJob,
+        (const QString & service, const QString & key,
+         const QString & password), (override));
+
+    MOCK_METHOD(
+        QUuid, startReadPasswordJob,
+        (const QString & service, const QString & key), (override));
+
+    MOCK_METHOD(
+        QUuid, startDeletePasswordJob,
+        (const QString & service, const QString & key), (override));
+};
+
+} // namespace quentier::utility::tests::mocks

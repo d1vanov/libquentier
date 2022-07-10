@@ -72,7 +72,7 @@ public:
         QString service, QString key, QString password) override;
 
     [[nodiscard]] QFuture<QString> readPassword(
-        QString service, QString key) override;
+        QString service, QString key) const override;
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;

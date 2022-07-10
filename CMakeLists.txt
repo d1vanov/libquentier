@@ -786,6 +786,10 @@ add_subdirectory(src/local_storage/sql)
 add_subdirectory(src/synchronization)
 add_subdirectory(src/threading)
 
+if(GMOCK_FOUND)
+  add_subdirectory(src/utility/tests/mocks)
+endif()
+
 target_link_libraries(${LIBNAME}
   PUBLIC
   ${QT_LIBRARIES}
@@ -1047,6 +1051,12 @@ foreach(ITEM ${UTILITY_HEADERS})
 endforeach()
 
 install(FILES ${PROJECT_BINARY_DIR}/quentier/utility/Linkage.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
+
+if(GMOCK_FOUND)
+  install(
+    FILES ${PROJECT_SOURCE_DIR}/headers/quentier/utility/tests/mocks/MockIKeychainService.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility/tests/mocks)
+endif()
 
 # install translations
 foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})

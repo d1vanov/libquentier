@@ -137,7 +137,7 @@ public:
      *                                  would contain an exception.
      */
     [[nodiscard]] virtual QFuture<QString> readPassword(
-        QString service, QString key) = 0;
+        QString service, QString key) const = 0;
 
     /**
      * deletePassword potentially asynchronously deletes password from the
