@@ -21,6 +21,7 @@
 
 #include "../../TestMacros.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/utility/ApplicationSettings.h>
 
 #include <QSignalSpy>
@@ -39,7 +40,7 @@ void CompositeKeychainTester::throwExceptionWhenGivenNullPrimaryKeychain()
     QVERIFY_EXCEPTION_THROWN(
         const auto compositeKeychain = newCompositeKeychainService(
             m_name, nullptr, std::make_shared<KeychainServiceMock>()),
-        std::invalid_argument);
+        InvalidArgument);
 }
 
 void CompositeKeychainTester::throwExceptionWhenGivenNullSecondaryKeychain()
@@ -47,7 +48,7 @@ void CompositeKeychainTester::throwExceptionWhenGivenNullSecondaryKeychain()
     QVERIFY_EXCEPTION_THROWN(
         const auto compositeKeychain = newCompositeKeychainService(
             m_name, std::make_shared<KeychainServiceMock>(), nullptr),
-        std::invalid_argument);
+        InvalidArgument);
 }
 
 void CompositeKeychainTester::writePasswordToBothKeychains()
