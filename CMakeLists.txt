@@ -779,28 +779,6 @@ generate_export_header(
   EXPORT_MACRO_NAME QUENTIER_EXPORT
   EXPORT_FILE_NAME quentier/utility/Linkage.h)
 
-find_package(GMock)
-find_package(GTest)
-
-add_subdirectory(src/local_storage/sql)
-add_subdirectory(src/synchronization)
-add_subdirectory(src/threading)
-
-if(GMOCK_FOUND)
-  add_subdirectory(src/utility/tests/mocks)
-endif()
-
-target_link_libraries(${LIBNAME}
-  PUBLIC
-  ${QT_LIBRARIES}
-  PRIVATE
-  ${THIRDPARTY_LIBS}
-  ${LIBNAME}_local_storage_sql
-  ${LIBNAME}_synchronization
-  ${LIBNAME}_threading)
-
-add_sanitizers(${LIBNAME})
-
 # installation settings, needed for target properties
 if(NOT CMAKE_INSTALL_LIBDIR)
   set(CMAKE_INSTALL_LIBDIR "lib")
@@ -826,6 +804,28 @@ if(NOT INSTALL_CMAKE_DIR)
   endif()
   set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 endif()
+
+find_package(GMock)
+find_package(GTest)
+
+add_subdirectory(src/local_storage/sql)
+add_subdirectory(src/synchronization)
+add_subdirectory(src/threading)
+
+if(GMOCK_FOUND)
+  add_subdirectory(src/utility/tests/mocks)
+endif()
+
+target_link_libraries(${LIBNAME}
+  PUBLIC
+  ${QT_LIBRARIES}
+  PRIVATE
+  ${THIRDPARTY_LIBS}
+  ${LIBNAME}_local_storage_sql
+  ${LIBNAME}_synchronization
+  ${LIBNAME}_threading)
+
+add_sanitizers(${LIBNAME})
 
 # library target properties
 set_target_properties(${LIBNAME} PROPERTIES
@@ -1051,12 +1051,6 @@ foreach(ITEM ${UTILITY_HEADERS})
 endforeach()
 
 install(FILES ${PROJECT_BINARY_DIR}/quentier/utility/Linkage.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility)
-
-if(GMOCK_FOUND)
-  install(
-    FILES ${PROJECT_SOURCE_DIR}/headers/quentier/utility/tests/mocks/MockIKeychainService.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility/tests/mocks)
-endif()
 
 # install translations
 foreach(QM_FILE ${${PROJECT_NAME}_QM_FILES})

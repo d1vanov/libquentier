@@ -26,3 +26,8 @@ target_include_directories(${MOCKS_NAME}
   PUBLIC
     ${GMOCK_INCLUDE_DIRS}
 )
+
+install(
+  FILES ${LIBQUENTIER_SOURCE_ROOT_DIR}/headers/quentier/utility/tests/mocks/MockIKeychainService.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/quentier/utility/tests/mocks
+)
