@@ -46,7 +46,7 @@ namespace quentier {
  * been migrated from the old keychain to the new one via the migrating
  * keychain.
  */
-class Q_DECL_HIDDEN MigratingKeychainService final : public IKeychainService
+class MigratingKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:

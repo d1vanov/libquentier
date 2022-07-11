@@ -24,7 +24,7 @@ namespace quentier {
 
 class QtKeychainWrapper;
 
-class Q_DECL_HIDDEN QtKeychainService final : public IKeychainService
+class QtKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:

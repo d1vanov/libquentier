@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-set(MOCKS_NAME ${LIBNAME}_utility_testing_mocks)
+set(MOCKS_NAME ${LIBRARY_NAME}_testing_mocks)
 add_library(${MOCKS_NAME} STATIC)
-
-message(STATUS "MOCKS_NAME = ${MOCKS_NAME}")
 
 if(POLICY CMP0076)
   cmake_policy(SET CMP0076 NEW)

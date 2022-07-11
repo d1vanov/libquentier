@@ -40,7 +40,7 @@ namespace quentier {
  * @brief The CompositeKeychainService class implements IKeychainService
  * interface; it uses two other keychain services to implement its functionality
  */
-class Q_DECL_HIDDEN CompositeKeychainService final :
+class CompositeKeychainService final :
     public IKeychainService,
     public std::enable_shared_from_this<CompositeKeychainService>
 {

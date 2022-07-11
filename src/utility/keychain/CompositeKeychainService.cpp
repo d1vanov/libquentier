@@ -44,11 +44,6 @@
         "utility::keychain::CompositeKeychainService", "[" << m_name << "]: "  \
             << message)
 
-#define CKWARNING(message)                                                     \
-    QNWARNING(                                                                 \
-        "utility::keychain::CompositeKeychainService", "[" << m_name << "]: "  \
-            << message)
-
 #define CKERROR(message)                                                       \
     QNERROR(                                                                   \
         "utility:keychain::CompositeKeychainService", "[" << m_name << "]: "   \

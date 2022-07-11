@@ -29,7 +29,7 @@ namespace quentier {
  * obfuscated form. It is not really a secure storage and should not be used for
  * data which *must* be stored securely.
  */
-class Q_DECL_HIDDEN ObfuscatingKeychainService final : public IKeychainService
+class ObfuscatingKeychainService final : public IKeychainService
 {
     Q_OBJECT
 public:

@@ -34,7 +34,7 @@ namespace quentier {
  * and is not intended to be moved into any thread past creation. The
  * communication with this wrapper object occurs via signals and slots.
  */
-class Q_DECL_HIDDEN QtKeychainWrapper final : public QObject
+class QtKeychainWrapper final : public QObject
 {
     Q_OBJECT
 public:
