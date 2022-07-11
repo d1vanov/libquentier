@@ -86,10 +86,11 @@ public:
         OtherError
     };
 
-    friend QTextStream & operator<<(
+    friend QUENTIER_EXPORT QTextStream & operator<<(
         QTextStream & strm, ErrorCode errorCode);
 
-    friend QDebug & operator<<(QDebug & dbg, ErrorCode errorCode);
+    friend QUENTIER_EXPORT QDebug & operator<<(
+        QDebug & dbg, ErrorCode errorCode);
 
     class QUENTIER_EXPORT Exception : public IQuentierException
     {
@@ -101,6 +102,9 @@ public:
 
         [[nodiscard]] ErrorCode errorCode() const noexcept;
         [[nodiscard]] QString exceptionDisplayName() const override;
+
+        void raise() const override;
+        [[nodiscard]] Exception * clone() const override;
 
     private:
         const ErrorCode m_errorCode;

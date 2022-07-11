@@ -113,6 +113,16 @@ QString IKeychainService::Exception::exceptionDisplayName() const
     return QStringLiteral("IKeychainService::Exception");
 }
 
+void IKeychainService::Exception::raise() const
+{
+    throw *this;
+}
+
+IKeychainService::Exception * IKeychainService::Exception::clone() const
+{
+    return new Exception{m_errorCode, errorMessage()};
+}
+
 QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
 {
     dbg << ToString(errorCode);
