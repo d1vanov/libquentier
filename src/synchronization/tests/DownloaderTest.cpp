@@ -16,7 +16,7 @@
  * along with libquentier. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "synchronization/Downloader.h"
+#include <synchronization/Downloader.h>
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/synchronization/types/IDownloadNotesStatus.h>
