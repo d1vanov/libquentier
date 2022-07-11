@@ -268,11 +268,6 @@ set(PRIVATE_HEADERS
     src/synchronization/types/SyncOptions.h
     src/synchronization/types/SyncOptionsBuilder.cpp
     src/synchronization/types/SyncOptionsBuilder.h
-    src/utility/keychain/CompositeKeychainService.h
-    src/utility/keychain/MigratingKeychainService.h
-    src/utility/keychain/QtKeychainService.h
-    src/utility/keychain/ObfuscatingKeychainService.h
-    src/utility/keychain/QtKeychainWrapper.h
     src/utility/tag_topological_sort/TagDirectedGraph.h
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.h
     src/utility/EncryptionManager_p.h
@@ -460,12 +455,7 @@ set(${PROJECT_NAME}_SOURCES
     src/types/data/ResourceRecognitionIndicesData.cpp
     src/utility/cancelers/AnyOfCanceler.cpp
     src/utility/cancelers/ManualCanceler.cpp
-    src/utility/keychain/CompositeKeychainService.cpp
     src/utility/keychain/IKeychainService.cpp
-    src/utility/keychain/MigratingKeychainService.cpp
-    src/utility/keychain/QtKeychainService.cpp
-    src/utility/keychain/ObfuscatingKeychainService.cpp
-    src/utility/keychain/QtKeychainWrapper.cpp
     src/utility/tag_topological_sort/TagDirectedGraph.cpp
     src/utility/tag_topological_sort/TagDirectedGraphDepthFirstSearch.cpp
     src/utility/ApplicationSettings.cpp
@@ -811,10 +801,7 @@ find_package(GTest)
 add_subdirectory(src/local_storage/sql)
 add_subdirectory(src/synchronization)
 add_subdirectory(src/threading)
-
-if(GMOCK_FOUND)
-  add_subdirectory(src/utility/tests/mocks)
-endif()
+add_subdirectory(src/utility)
 
 target_link_libraries(${LIBNAME}
   PUBLIC
@@ -823,7 +810,8 @@ target_link_libraries(${LIBNAME}
   ${THIRDPARTY_LIBS}
   ${LIBNAME}_local_storage_sql
   ${LIBNAME}_synchronization
-  ${LIBNAME}_threading)
+  ${LIBNAME}_threading
+  ${LIBNAME}_utility)
 
 add_sanitizers(${LIBNAME})
 
