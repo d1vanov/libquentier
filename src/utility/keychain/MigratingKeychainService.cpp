@@ -17,8 +17,11 @@
  */
 
 #include "MigratingKeychainService.h"
+#include "Utils.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
+#include <quentier/threading/Future.h>
 #include <quentier/threading/QtFutureContinuations.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -40,13 +43,15 @@ MigratingKeychainService::MigratingKeychainService(
     m_sinkKeychain(std::move(sinkKeychain))
 {
     if (Q_UNLIKELY(!m_sourceKeychain)) {
-        throw std::invalid_argument{
-            "MigratingKeychainService ctor: source keychain is null"};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "utility::keychain::MigratingKeychainService",
+            "MigratingKeychainService ctor: source keychain is null")}};
     }
 
     if (Q_UNLIKELY(!m_sinkKeychain)) {
-        throw std::invalid_argument{
-            "MigratingKeychainService ctor: sink keychain is null"};
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "utility::keychain::MigratingKeychainService",
+            "MigratingKeychainService ctor: sink keychain is null")}};
     }
 
     createConnections();
@@ -178,38 +183,86 @@ QFuture<void> MigratingKeychainService::deletePassword(
     promise->start();
 
     auto sinkKeychainFuture = m_sinkKeychain->deletePassword(service, key);
+    auto sourceKeychainFuture = m_sourceKeychain->deletePassword(service, key);
 
-    auto sinkKeychainThenFuture = threading::then(
-        std::move(sinkKeychainFuture), [promise] { promise->finish(); });
+    QFuture<void> allFuture = threading::whenAll(
+        QList<QFuture<void>>{} << sinkKeychainFuture
+                               << sourceKeychainFuture);
+
+    auto allThenFuture =
+        threading::then(std::move(allFuture), [promise] { promise->finish(); });
 
     threading::onFailed(
-        std::move(sinkKeychainThenFuture),
-        [promise, sourceKeychain = m_sourceKeychain,
-         service = std::move(service),
-         key = std::move(key)](const QException & e) mutable {
-            bool isNoEntryError = false;
-            try {
-                e.raise();
-            }
-            catch (const IKeychainService::Exception & exc) {
-                isNoEntryError =
-                    (exc.errorCode() ==
-                     IKeychainService::ErrorCode::EntryNotFound);
-            }
-            catch (...) {
-            }
+        std::move(allThenFuture),
+        [promise, sinkKeychainFuture, sourceKeychainFuture,
+         service = std::move(service), key = std::move(key)](
+            const QException & e) mutable {
+            std::shared_ptr<QException> allFutureError{e.clone()};
 
-            if (!isNoEntryError) {
-                promise->setException(e);
-                promise->finish();
-                return;
-            }
+            auto sinkKeychainThenFuture = threading::then(
+                std::move(sinkKeychainFuture),
+                [promise, allFutureError = std::move(allFutureError)] {
+                    // Deleting from sink keychain succeeded but allThenFuture
+                    // is in a failed state. It means deleting from the source
+                    // keychain has failed.
+                    if (utility::utils::isNoEntryError(*allFutureError)) {
+                        // EntryNotFound when deleting is factually equivalent
+                        // to no error as the net result is the same -
+                        // the source keychain doesn't have the key which
+                        // deletion was attempted.
+                        promise->finish();
+                        return;
+                    }
 
-            // Otherwise try to delete from the source keychain
-            auto sourceKeychainFuture = sourceKeychain->deletePassword(
-                std::move(service), std::move(key));
+                    promise->setException(*allFutureError);
+                    promise->finish();
+                });
 
-            threading::thenOrFailed(std::move(sourceKeychainFuture), promise);
+            threading::onFailed(
+                std::move(sinkKeychainThenFuture),
+                [promise,
+                 sourceKeychainFuture = std::move(sourceKeychainFuture)](
+                     const QException & e) mutable {
+                    // Deleting from the sink keychain has failed.
+                    if (!utility::utils::isNoEntryError(e)) {
+                        promise->setException(e);
+                        promise->finish();
+                        return;
+                    }
+
+                    // EntryNotFound when deleting is factually equivalent
+                    // to no error as the net result is the same -
+                    // the sink keychain doesn't have the key which
+                    // deletion was attempted.
+                    // So will see what is the result of deleting from the
+                    // source keychain.
+                    auto sourceKeychainThenFuture = threading::then(
+                        std::move(sourceKeychainFuture),
+                        [promise] {
+                            // Deleting from source keychain succeeded, so
+                            // considering the overall deletion successful.
+                            promise->finish();
+                        });
+
+                    threading::onFailed(
+                        std::move(sourceKeychainThenFuture),
+                        [promise](const QException & e)
+                        {
+                            if (utility::utils::isNoEntryError(e)) {
+                                // EntryNotFound when deleting is factually
+                                // equivalent to no error as the net result is
+                                // the same - the source keychain doesn't have
+                                // the key which deletion was attempted.
+                                // So considering the overall deletion
+                                // successful.
+                                promise->finish();
+                                return;
+                            }
+
+                            promise->setException(e);
+                            promise->finish();
+                        });
+                });
         });
 
     return future;

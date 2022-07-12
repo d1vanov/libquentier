@@ -21,6 +21,7 @@
 
 #include "../../TestMacros.h"
 
+#include <quentier/exception/InvalidArgument.h>
 #include <quentier/utility/IKeychainService.h>
 
 #include <QSignalSpy>
@@ -39,7 +40,7 @@ void MigratingKeychainTester::throwExceptionWhenGivenNullSourceKeychain()
     QVERIFY_EXCEPTION_THROWN(
         const auto migratingKeychain = newMigratingKeychainService(
             nullptr, std::make_shared<KeychainServiceMock>()),
-        std::invalid_argument);
+        InvalidArgument);
 }
 
 void MigratingKeychainTester::throwExceptionWhenGivenNullSinkKeychain()
@@ -47,7 +48,7 @@ void MigratingKeychainTester::throwExceptionWhenGivenNullSinkKeychain()
     QVERIFY_EXCEPTION_THROWN(
         const auto migratingKeychain = newMigratingKeychainService(
             std::make_shared<KeychainServiceMock>(), nullptr),
-        std::invalid_argument);
+        InvalidArgument);
 }
 
 void MigratingKeychainTester::writePasswordToSinkKeychainOnly()

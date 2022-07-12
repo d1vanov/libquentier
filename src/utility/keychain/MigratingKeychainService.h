@@ -75,9 +75,8 @@ public:
         QString service, QString key) const override;
 
     /**
-     * Passwords are first attempted to be deleted from the sink keychain. If
-     * the resulting error code response code is "entry not found", the attempt
-     * is made to delete the password from the source keychain.
+     * Passwords are attempted to be deleted from both sink and source
+     * keychains.
      */
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;

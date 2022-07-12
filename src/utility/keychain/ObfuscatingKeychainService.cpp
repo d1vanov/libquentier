@@ -74,7 +74,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
     return true;
 }
 
-[[nodiscard]] bool readPasswordImpl(
+[[nodiscard]] IKeychainService::ErrorCode readPasswordImpl(
     EncryptionManager & encryptionManager, const QString & service, // NOLINT
     const QString & key, QString & password, ErrorString & errorDescription)
 {
@@ -82,6 +82,14 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
         QString::fromUtf8(settingsFileName)};
 
     obfuscatedKeychainStorage.beginGroup(service + QStringLiteral("/") + key);
+
+    if (!obfuscatedKeychainStorage.contains(keys::cipher) &&
+        !obfuscatedKeychainStorage.contains(keys::keyLength) &&
+        !obfuscatedKeychainStorage.contains(keys::value))
+    {
+        return IKeychainService::ErrorCode::EntryNotFound;
+    }
+
     QString cipher = obfuscatedKeychainStorage.value(keys::cipher).toString();
 
     bool conversionResult = false;
@@ -91,7 +99,7 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
         errorDescription.setBase(QT_TRANSLATE_NOOP(
             "utility::keychain::ObfuscatingKeychainService",
             "Could not convert key length to unsigned long"));
-        return false;
+        return IKeychainService::ErrorCode::OtherError;
     }
 
     QString encryptedText = QString::fromUtf8(QByteArray::fromBase64(
@@ -99,8 +107,13 @@ constexpr const char * settingsFileName = "obfuscatingKeychainStorage";
 
     obfuscatedKeychainStorage.endGroup();
 
-    return encryptionManager.decrypt(
-        encryptedText, key, cipher, keyLength, password, errorDescription);
+    if (!encryptionManager.decrypt(
+        encryptedText, key, cipher, keyLength, password, errorDescription))
+    {
+        return IKeychainService::ErrorCode::OtherError;
+    }
+
+    return IKeychainService::ErrorCode::NoError;
 }
 
 [[nodiscard]] IKeychainService::ErrorCode deletePasswordImpl(
@@ -150,14 +163,15 @@ QFuture<QString> ObfuscatingKeychainService::readPassword(
 {
     QString password;
     ErrorString errorDescription;
-    if (readPasswordImpl(
-            m_encryptionManager, service, key, password, errorDescription))
+    const auto errorCode = readPasswordImpl(
+        m_encryptionManager, service, key, password, errorDescription);
+    if (errorCode == IKeychainService::ErrorCode::NoError)
     {
         return threading::makeReadyFuture<QString>(std::move(password));
     }
 
     return threading::makeExceptionalFuture<QString>(
-        Exception{ErrorCode::OtherError, std::move(errorDescription)});
+        Exception{errorCode, std::move(errorDescription)});
 }
 
 QFuture<void> ObfuscatingKeychainService::deletePassword(
@@ -202,8 +216,9 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
 
     QString password;
     ErrorString errorDescription;
-    if (readPasswordImpl(
-            m_encryptionManager, service, key, password, errorDescription))
+    const auto errorCode = readPasswordImpl(
+        m_encryptionManager, service, key, password, errorDescription);
+    if (errorCode == IKeychainService::ErrorCode::NoError)
     {
         QMetaObject::invokeMethod(
             this, "readPasswordJobFinished", Qt::QueuedConnection,
@@ -213,7 +228,7 @@ QUuid ObfuscatingKeychainService::startReadPasswordJob(
     else {
         QMetaObject::invokeMethod(
             this, "readPasswordJobFinished", Qt::QueuedConnection,
-            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, ErrorCode::OtherError),
+            Q_ARG(QUuid, requestId), Q_ARG(ErrorCode, errorCode),
             Q_ARG(ErrorString, errorDescription), Q_ARG(QString, QString()));
     }
 

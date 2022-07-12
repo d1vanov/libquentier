@@ -15,7 +15,9 @@ target_sources(${LIBRARY_NAME}
   keychain/QtKeychainService.cpp
   keychain/QtKeychainService.h
   keychain/QtKeychainWrapper.cpp
-  keychain/QtKeychainWrapper.h)
+  keychain/QtKeychainWrapper.h
+  keychain/Utils.cpp
+  keychain/Utils.h)
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC

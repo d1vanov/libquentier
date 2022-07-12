@@ -17,6 +17,7 @@
  */
 
 #include "CompositeKeychainService.h"
+#include "Utils.h"
 
 #include <quentier/exception/InvalidArgument.h>
 #include <quentier/logging/QuentierLogger.h>
@@ -64,26 +65,6 @@ constexpr const char * service = "Service";
 constexpr const char * key = "Key";
 
 } // namespace keys
-
-namespace {
-
-[[nodiscard]] bool isNoEntryError(const QException & e) noexcept
-{
-    bool isNoEntryError = false;
-    try {
-        e.raise();
-    }
-    catch (const IKeychainService::Exception & exc) {
-        isNoEntryError =
-            (exc.errorCode() == IKeychainService::ErrorCode::EntryNotFound);
-    }
-    catch (...) {
-    }
-
-    return isNoEntryError;
-}
-
-} // namespace
 
 CompositeKeychainService::CompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
@@ -138,7 +119,8 @@ QFuture<void> CompositeKeychainService::writePassword(
 
     threading::onFailed(
         std::move(allThenFuture),
-        [promise, primaryKeychainFuture, secondaryKeychainFuture,
+        [promise, primaryKeychainFuture = std::move(primaryKeychainFuture),
+         secondaryKeychainFuture = std::move(secondaryKeychainFuture),
          selfWeak = weak_from_this(), service = std::move(service),
          key = std::move(key)](const QException & e) mutable {
             QString allFutureError = [&] {
@@ -265,7 +247,7 @@ QFuture<QString> CompositeKeychainService::readPassword(
         [promise, selfWeak = weak_from_this(), service = std::move(service),
          key = std::move(key)](const QException & e) mutable {
             if (const auto self = selfWeak.lock()) {
-                if (!isNoEntryError(e)) {
+                if (!utility::utils::isNoEntryError(e)) {
                     QNWARNING(
                         "utility::keychain::CompositeKeychainService",
                         "Failed to read password from the primary keychain: "
@@ -297,7 +279,7 @@ QFuture<QString> CompositeKeychainService::readPassword(
                     [promise, selfWeak, service = std::move(service),
                      key = std::move(key)](const QException & e) {
                         if (const auto self = selfWeak.lock()) {
-                            if (!isNoEntryError(e)) {
+                            if (!utility::utils::isNoEntryError(e)) {
                                 QNWARNING(
                                     "utility::keychain::"
                                     "CompositeKeychainService",
