@@ -27,6 +27,7 @@
 
 #include "../utility/keychain/QtKeychainService.h"
 
+#include <quentier/threading/QtFutureContinuations.h>
 #include <quentier/local_storage/LocalStorageManagerAsync.h>
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/DateTime.h>
@@ -632,26 +633,6 @@ void SynchronizationManagerPrivate::onReadPasswordJobFinished(
         "SynchronizationManagerPrivate::onReadPasswordJobFinished: job id = "
             << jobId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
-
-    {
-        const auto it = m_readAuthTokenJobIdsWithUserIds.right.find(jobId);
-        if (it != m_readAuthTokenJobIdsWithUserIds.right.end()) {
-            // TODO: make use of userId from the bimap
-            m_readAuthTokenJobIdsWithUserIds.right.erase(it);
-            onReadAuthTokenFinished(errorCode, errorDescription, password);
-            return;
-        }
-    }
-
-    {
-        const auto it = m_readShardIdJobIdsWithUserIds.right.find(jobId);
-        if (it != m_readShardIdJobIdsWithUserIds.right.end()) {
-            // TODO: make use of userId from the bimap
-            m_readShardIdJobIdsWithUserIds.right.erase(it);
-            onReadShardIdFinished(errorCode, errorDescription, password);
-            return;
-        }
-    }
 
     const auto readAuthTokenIt =
         m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(
@@ -1532,11 +1513,64 @@ void SynchronizationManagerPrivate::authenticateImpl(
         QStringLiteral("_auth_token_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
-    const auto readAuthTokenJobId = m_pKeychainService->startReadPasswordJob(
+    m_userIdsPendingAuthTokenReading.insert(m_OAuthResult.m_userId);
+
+    QFuture<QString> readAuthTokenFuture = m_pKeychainService->readPassword(
         readAuthTokenService, readAuthTokenKey);
 
-    m_readAuthTokenJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
-        m_OAuthResult.m_userId, readAuthTokenJobId));
+    auto readAuthTokenThenFuture = threading::then(
+        std::move(readAuthTokenFuture),
+        this,
+        [userId = m_OAuthResult.m_userId,
+         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+            const QString & authToken) {
+            if (selfWeak.isNull()) {
+                return;
+            }
+
+            auto * self = selfWeak.data();
+            self->m_userIdsPendingAuthTokenReading.remove(userId);
+            self->onReadAuthTokenFinished(
+                IKeychainService::ErrorCode::NoError, ErrorString{}, authToken);
+        });
+
+    threading::onFailed(
+        std::move(readAuthTokenThenFuture),
+        this,
+        [userId = m_OAuthResult.m_userId,
+         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+            const QException & e) {
+            if (selfWeak.isNull()) {
+                return;
+            }
+
+            auto * self = selfWeak.data();
+            self->m_userIdsPendingAuthTokenReading.remove(userId);
+
+            const std::pair<IKeychainService::ErrorCode, ErrorString> result =
+                [&]
+                {
+                    try {
+                        e.raise();
+                    }
+                    catch (const IKeychainService::Exception & exc) {
+                        return std::make_pair(
+                            exc.errorCode(), exc.errorMessage());
+                    }
+                    catch (const QException & exc) {
+                        return std::make_pair(
+                            IKeychainService::ErrorCode::OtherError,
+                            ErrorString{exc.what()});
+                    }
+
+                    return std::make_pair(
+                        IKeychainService::ErrorCode::OtherError,
+                        ErrorString{});
+                }();
+
+            self->onReadAuthTokenFinished(
+                result.first, result.second, QString{});
+        });
 
     const QString readShardIdService =
         QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
@@ -1545,11 +1579,63 @@ void SynchronizationManagerPrivate::authenticateImpl(
         QStringLiteral("_shard_id_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
-    const auto readShardIdJobId = m_pKeychainService->startReadPasswordJob(
+    m_userIdsPendingShardIdReading.insert(m_OAuthResult.m_userId);
+
+    QFuture<QString> readShardIdFuture = m_pKeychainService->readPassword(
         readShardIdService, readShardIdKey);
 
-    m_readShardIdJobIdsWithUserIds.insert(KeychainJobIdWithUserId::value_type(
-        m_OAuthResult.m_userId, readShardIdJobId));
+    auto readShardIdThenFuture = threading::then(
+        std::move(readShardIdFuture),
+        this,
+        [userId = m_OAuthResult.m_userId,
+         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+            const QString & shardId) {
+            if (selfWeak.isNull()) {
+                return;
+            }
+
+            auto * self = selfWeak.data();
+            self->m_userIdsPendingShardIdReading.remove(userId);
+            self->onReadShardIdFinished(
+                IKeychainService::ErrorCode::NoError, ErrorString{}, shardId);
+        });
+
+    threading::onFailed(
+        std::move(readShardIdThenFuture),
+        [userId = m_OAuthResult.m_userId,
+         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+            const QException & e) {
+            if (selfWeak.isNull()) {
+                return;
+            }
+
+            auto * self = selfWeak.data();
+            self->m_userIdsPendingShardIdReading.remove(userId);
+
+            const std::pair<IKeychainService::ErrorCode, ErrorString> result =
+                [&]
+                {
+                    try {
+                        e.raise();
+                    }
+                    catch (const IKeychainService::Exception & exc) {
+                        return std::make_pair(
+                            exc.errorCode(), exc.errorMessage());
+                    }
+                    catch (const QException & exc) {
+                        return std::make_pair(
+                            IKeychainService::ErrorCode::OtherError,
+                            ErrorString{exc.what()});
+                    }
+
+                    return std::make_pair(
+                        IKeychainService::ErrorCode::OtherError,
+                        ErrorString{});
+                }();
+
+            self->onReadShardIdFinished(
+                result.first, result.second, QString{});
+        });
 }
 
 void SynchronizationManagerPrivate::launchOAuth()
@@ -2671,9 +2757,7 @@ bool SynchronizationManagerPrivate::isReadingAuthToken(
         return false;
     }
 
-    return (
-        m_readAuthTokenJobIdsWithUserIds.left.find(userId) !=
-        m_readAuthTokenJobIdsWithUserIds.left.end());
+    return m_userIdsPendingAuthTokenReading.contains(userId);
 }
 
 bool SynchronizationManagerPrivate::isReadingShardId(
@@ -2683,9 +2767,7 @@ bool SynchronizationManagerPrivate::isReadingShardId(
         return false;
     }
 
-    return (
-        m_readShardIdJobIdsWithUserIds.left.find(userId) !=
-        m_readShardIdJobIdsWithUserIds.left.end());
+    return m_userIdsPendingShardIdReading.contains(userId);
 }
 
 bool SynchronizationManagerPrivate::isWritingAuthToken(

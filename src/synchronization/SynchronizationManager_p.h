@@ -36,6 +36,7 @@ MSVC_SUPPRESS_WARNING(4834)
 RESTORE_WARNINGS
 
 #include <QObject>
+#include <QSet>
 
 #include <memory>
 #include <utility>
@@ -367,8 +368,8 @@ private:
 
     IKeychainServicePtr m_pKeychainService;
 
-    KeychainJobIdWithUserId m_readAuthTokenJobIdsWithUserIds;
-    KeychainJobIdWithUserId m_readShardIdJobIdsWithUserIds;
+    QSet<qevercloud::UserID> m_userIdsPendingAuthTokenReading;
+    QSet<qevercloud::UserID> m_userIdsPendingShardIdReading;
 
     KeychainJobIdWithUserId m_writeAuthTokenJobIdsWithUserIds;
     KeychainJobIdWithUserId m_writeShardIdJobIdsWithUserIds;
