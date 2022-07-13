@@ -38,7 +38,9 @@ void postToObject(QObject * pObject, Function && function)
     Q_ASSERT(pObject);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QMetaObject::invokeMethod(pObject, std::forward<Function>(function));
+    QMetaObject::invokeMethod(
+        pObject, std::forward<Function>(function),
+        Qt::QueuedConnection);
 #else
     QObject src;
     QObject::connect(
