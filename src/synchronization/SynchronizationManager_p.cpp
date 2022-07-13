@@ -59,6 +59,30 @@ namespace quentier {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+namespace {
+
+[[nodiscard]] std::pair<IKeychainService::ErrorCode, ErrorString> toErrorInfo(
+    const QException & e)
+{
+    try {
+        e.raise();
+    }
+    catch (const IKeychainService::Exception & exc) {
+        return std::make_pair(exc.errorCode(), exc.errorMessage());
+    }
+    catch (const QException & exc) {
+        return std::make_pair(
+            IKeychainService::ErrorCode::OtherError, ErrorString{exc.what()});
+    }
+
+    return std::make_pair(
+        IKeychainService::ErrorCode::OtherError, ErrorString{});
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+
 class SynchronizationManagerPrivate::
     RemoteToLocalSynchronizationManagerController final :
     public RemoteToLocalSynchronizationManager::IManager
@@ -624,122 +648,6 @@ void SynchronizationManagerPrivate::onWritePasswordJobFinished(
         "Couldn't identify the write password from keychain job");
 }
 
-void SynchronizationManagerPrivate::onReadPasswordJobFinished(
-    QUuid jobId, IKeychainService::ErrorCode errorCode,
-    ErrorString errorDescription, QString password) // NOLINT
-{
-    QNDEBUG(
-        "synchronization",
-        "SynchronizationManagerPrivate::onReadPasswordJobFinished: job id = "
-            << jobId << ", error code = " << errorCode
-            << ", error description = " << errorDescription);
-
-    const auto readAuthTokenIt =
-        m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.find(
-            jobId);
-
-    if (readAuthTokenIt !=
-        m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.right.end())
-    {
-        QNDEBUG(
-            "synchronization",
-            "Read linked notebook auth token job finished: linked notebook "
-                << "guid = " << readAuthTokenIt->second);
-
-        if (errorCode == IKeychainService::ErrorCode::NoError) {
-            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[readAuthTokenIt
-                                                                  ->second]
-                .first = password;
-        }
-        else if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
-                readAuthTokenIt->second))
-        }
-        else {
-            QNWARNING(
-                "synchronization",
-                "Failed to read linked notebook's authentication token from "
-                    << "the keychain: error code = " << errorCode
-                    << ", error description: " << errorDescription);
-
-            /**
-             * Try to recover by making user to authenticate again in the blind
-             * hope that the next time the persistence of auth settings in the
-             * keychain would work
-             */
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
-                readAuthTokenIt->second))
-        }
-
-        Q_UNUSED(m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids
-                     .right.erase(readAuthTokenIt))
-
-        if (m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids
-                .empty() &&
-            m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty())
-        {
-            QNDEBUG(
-                "synchronization",
-                "No pending read linked notebook auth token or shard id job");
-            authenticateToLinkedNotebooks();
-        }
-
-        return;
-    }
-
-    const auto readShardIdIt =
-        m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.find(
-            jobId);
-
-    if (readShardIdIt !=
-        m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right.end())
-    {
-        QNDEBUG(
-            "synchronization",
-            "Read linked notebook shard id job finished: linked notebook guid "
-                << "= " << readShardIdIt->second);
-
-        if (errorCode == IKeychainService::ErrorCode::NoError) {
-            m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[readAuthTokenIt
-                                                                  ->second]
-                .second = password;
-        }
-        else if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
-                readShardIdIt->second))
-        }
-        else {
-            QNWARNING(
-                "synchronization",
-                "Failed to read linked notebook's authentication token from "
-                    << "the keychain: error code = " << errorCode
-                    << ", error description: " << errorDescription);
-
-            /**
-             * Try to recover by making user to authenticate again in the blind
-             * hope that the next time the persistence of auth settings in the
-             * keychain would work
-             */
-            Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
-                readShardIdIt->second))
-        }
-
-        Q_UNUSED(m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.right
-                     .erase(readShardIdIt))
-
-        if (m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.empty() &&
-            m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.empty())
-        {
-            QNDEBUG(
-                "synchronization",
-                "No pending read linked notebook auth token or shard id job");
-            authenticateToLinkedNotebooks();
-        }
-
-        return;
-    }
-}
-
 void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
     QUuid jobId, IKeychainService::ErrorCode errorCode,
     ErrorString errorDescription) // NOLINT
@@ -1060,11 +968,6 @@ void SynchronizationManagerPrivate::createConnections(
     QObject::connect(
         m_pKeychainService.get(), &IKeychainService::writePasswordJobFinished,
         this, &SynchronizationManagerPrivate::onWritePasswordJobFinished,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    QObject::connect(
-        m_pKeychainService.get(), &IKeychainService::readPasswordJobFinished,
-        this, &SynchronizationManagerPrivate::onReadPasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     QObject::connect(
@@ -1547,27 +1450,7 @@ void SynchronizationManagerPrivate::authenticateImpl(
             auto * self = selfWeak.data();
             self->m_userIdsPendingAuthTokenReading.remove(userId);
 
-            const std::pair<IKeychainService::ErrorCode, ErrorString> result =
-                [&]
-                {
-                    try {
-                        e.raise();
-                    }
-                    catch (const IKeychainService::Exception & exc) {
-                        return std::make_pair(
-                            exc.errorCode(), exc.errorMessage());
-                    }
-                    catch (const QException & exc) {
-                        return std::make_pair(
-                            IKeychainService::ErrorCode::OtherError,
-                            ErrorString{exc.what()});
-                    }
-
-                    return std::make_pair(
-                        IKeychainService::ErrorCode::OtherError,
-                        ErrorString{});
-                }();
-
+            const auto result = toErrorInfo(e);
             self->onReadAuthTokenFinished(
                 result.first, result.second, QString{});
         });
@@ -1612,27 +1495,7 @@ void SynchronizationManagerPrivate::authenticateImpl(
             auto * self = selfWeak.data();
             self->m_userIdsPendingShardIdReading.remove(userId);
 
-            const std::pair<IKeychainService::ErrorCode, ErrorString> result =
-                [&]
-                {
-                    try {
-                        e.raise();
-                    }
-                    catch (const IKeychainService::Exception & exc) {
-                        return std::make_pair(
-                            exc.errorCode(), exc.errorMessage());
-                    }
-                    catch (const QException & exc) {
-                        return std::make_pair(
-                            IKeychainService::ErrorCode::OtherError,
-                            ErrorString{exc.what()});
-                    }
-
-                    return std::make_pair(
-                        IKeychainService::ErrorCode::OtherError,
-                        ErrorString{});
-                }();
-
+            const auto result = toErrorInfo(e);
             self->onReadShardIdFinished(
                 result.first, result.second, QString{});
         });
@@ -2055,8 +1918,9 @@ void SynchronizationManagerPrivate::clear()
 
     m_authenticateToLinkedNotebooksPostponeTimerId = -1;
 
-    m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.clear();
-    m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.clear();
+    m_linkedNotebookGuidsPendingAuthTokenReading.clear();
+    m_linkedNotebookGuidsPendingShardIdReading.clear();
+
     m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.clear();
     m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.clear();
 
@@ -2418,39 +2282,90 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         for (const auto & guid:
              linkedNotebookGuidsPendingReadAuthTokenAndShardIdInKeychain)
         {
-            // 1) Set up the job of reading the authentication token
-            const auto readAuthTokenJobIt =
-                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left
-                    .find(guid);
+            // 1) Read authentication token
+            const auto readAuthTokenIt =
+                m_linkedNotebookGuidsPendingAuthTokenReading.find(guid);
 
-            if (readAuthTokenJobIt ==
-                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left
-                    .end())
-            {
-                const QUuid jobId = m_pKeychainService->startReadPasswordJob(
+            if (readAuthTokenIt ==
+                m_linkedNotebookGuidsPendingAuthTokenReading.end()) {
+                m_linkedNotebookGuidsPendingAuthTokenReading.insert(guid);
+
+                auto readPasswordFuture = m_pKeychainService->readPassword(
                     READ_LINKED_NOTEBOOK_AUTH_TOKEN_JOB,
                     keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid);
 
-                m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids
-                    .insert(
-                        KeychainJobIdWithGuidBimap::value_type(guid, jobId));
+                auto readPasswordThenFuture = threading::then(
+                    std::move(readPasswordFuture), this,
+                    [guid = guid,
+                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+                        const QString & authToken) {
+                        if (selfWeak.isNull()) {
+                            return;
+                        }
+
+                        auto * self = selfWeak.data();
+                        self->onReadLinkedNotebookAuthTokenFinished(
+                            IKeychainService::ErrorCode::NoError, ErrorString{},
+                            authToken, guid);
+                    });
+
+                threading::onFailed(
+                    std::move(readPasswordThenFuture), this,
+                    [guid = guid,
+                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+                        const QException & e) {
+                        if (selfWeak.isNull()) {
+                            return;
+                        }
+
+                        auto * self = selfWeak.data();
+                        const auto result = toErrorInfo(e);
+                        self->onReadLinkedNotebookAuthTokenFinished(
+                            result.first, result.second, {}, guid);
+                    });
             }
 
-            // 2) Set up the job reading the shard id
-            const auto readShardIdJobIt =
-                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left
-                    .find(guid);
+            // 2) Read shard id
+            const auto readShardIdIt =
+                m_linkedNotebookGuidsPendingShardIdReading.find(guid);
 
-            if (readShardIdJobIt ==
-                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left
-                    .end())
-            {
-                const QUuid jobId = m_pKeychainService->startReadPasswordJob(
+            if (readShardIdIt ==
+                m_linkedNotebookGuidsPendingShardIdReading.end()) {
+                m_linkedNotebookGuidsPendingShardIdReading.insert(guid);
+
+                auto readPasswordFuture = m_pKeychainService->readPassword(
                     READ_LINKED_NOTEBOOK_SHARD_ID_JOB,
                     keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid);
 
-                m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
-                    KeychainJobIdWithGuidBimap::value_type(guid, jobId));
+                auto readPasswordThenFuture = threading::then(
+                    std::move(readPasswordFuture), this,
+                    [guid = guid,
+                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+                        const QString & shardId) {
+                        if (selfWeak.isNull()) {
+                            return;
+                        }
+
+                        auto * self = selfWeak.data();
+                        self->onReadLinkedNotebookShardIdFinished(
+                            IKeychainService::ErrorCode::NoError, ErrorString{},
+                            shardId, guid);
+                    });
+
+                threading::onFailed(
+                    std::move(readPasswordThenFuture), this,
+                    [guid = guid,
+                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
+                        const QException & e) {
+                        if (selfWeak.isNull()) {
+                            return;
+                        }
+
+                        auto * self = selfWeak.data();
+                        const auto result = toErrorInfo(e);
+                        self->onReadLinkedNotebookShardIdFinished(
+                            result.first, result.second, {}, guid);
+                    });
             }
         }
 
@@ -2530,7 +2445,7 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
 void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription, const QString & password)
+    const ErrorString & errorDescription, const QString & authToken)
 {
     QNDEBUG(
         "synchronization",
@@ -2558,7 +2473,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
 
     QNDEBUG(
         "synchronization", "Successfully restored the authentication token");
-    m_OAuthResult.m_authToken = password;
+    m_OAuthResult.m_authToken = authToken;
 
     if (!m_authenticationInProgress &&
         !isReadingShardId(m_OAuthResult.m_userId) &&
@@ -2570,7 +2485,7 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
 
 void SynchronizationManagerPrivate::onReadShardIdFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription, const QString & password)
+    const ErrorString & errorDescription, const QString & shardId)
 {
     QNDEBUG(
         "synchronization",
@@ -2597,13 +2512,110 @@ void SynchronizationManagerPrivate::onReadShardIdFinished(
     }
 
     QNDEBUG("synchronization", "Successfully restored the shard id");
-    m_OAuthResult.m_shardId = password;
+    m_OAuthResult.m_shardId = shardId;
 
     if (!m_authenticationInProgress &&
         !isReadingAuthToken(m_OAuthResult.m_userId) &&
         !isWritingAuthToken(m_OAuthResult.m_userId))
     {
         finalizeAuthentication();
+    }
+}
+
+void SynchronizationManagerPrivate::onReadLinkedNotebookAuthTokenFinished(
+    IKeychainService::ErrorCode errorCode,
+    const ErrorString & errorDescription, const QString & authToken, // NOLINT
+    const qevercloud::Guid & linkedNotebookGuid)
+{
+    QNDEBUG(
+        "synchronization",
+        "SynchronizationManagerPrivate::onReadLinkedNotebookAuthTokenFinished: "
+            << "error code = " << errorCode << ", error description = "
+            << errorDescription << ", linked notebook guid = "
+            << linkedNotebookGuid);
+
+    if (errorCode == IKeychainService::ErrorCode::NoError) {
+        m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[linkedNotebookGuid]
+            .first = authToken;
+    }
+    else if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
+        Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+            linkedNotebookGuid))
+    }
+    else {
+        QNWARNING(
+            "synchronization",
+            "Failed to read linked notebook's authentication token from "
+                << "the keychain: error code = " << errorCode
+                << ", error description: " << errorDescription
+                << ", linked notebook guid: " << linkedNotebookGuid);
+
+        /**
+          * Try to recover by making user to authenticate again in the blind
+          * hope that the next time the persistence of auth settings in the
+          * keychain would work
+          */
+        Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+            linkedNotebookGuid))
+    }
+
+    m_linkedNotebookGuidsPendingAuthTokenReading.remove(linkedNotebookGuid);
+
+    if (m_linkedNotebookGuidsPendingAuthTokenReading.empty() &&
+        m_linkedNotebookGuidsPendingShardIdReading.empty())
+    {
+        QNDEBUG(
+            "synchronization",
+            "No pending read linked notebook auth token or shard id job");
+        authenticateToLinkedNotebooks();
+    }
+}
+
+void SynchronizationManagerPrivate::onReadLinkedNotebookShardIdFinished(
+    IKeychainService::ErrorCode errorCode,
+    const ErrorString & errorDescription, const QString & shardId, // NOLINT
+    const qevercloud::Guid & linkedNotebookGuid)
+{
+    QNDEBUG(
+        "synchronization",
+        "SynchronizationManagerPrivate::onReadLinkedNotebookShardIdFinished: "
+            << "error code = " << errorCode << ", error description = "
+            << errorDescription << ", linked notebook guid = "
+            << linkedNotebookGuid);
+
+    if (errorCode == IKeychainService::ErrorCode::NoError) {
+        m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[linkedNotebookGuid]
+            .second = shardId;
+    }
+    else if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
+        Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+            linkedNotebookGuid))
+    }
+    else {
+        QNWARNING(
+            "synchronization",
+            "Failed to read linked notebook's authentication token from "
+                << "the keychain: error code = " << errorCode
+                << ", error description: " << errorDescription);
+
+        /**
+            * Try to recover by making user to authenticate again in the blind
+            * hope that the next time the persistence of auth settings in the
+            * keychain would work
+            */
+        Q_UNUSED(m_linkedNotebookGuidsWithoutLocalAuthData.insert(
+            linkedNotebookGuid))
+    }
+
+    m_linkedNotebookGuidsPendingShardIdReading.remove(linkedNotebookGuid);
+
+    if (m_linkedNotebookGuidsPendingAuthTokenReading.empty() &&
+        m_linkedNotebookGuidsPendingShardIdReading.empty())
+    {
+        QNDEBUG(
+            "synchronization",
+            "No pending read linked notebook auth token or shard id job");
+        authenticateToLinkedNotebooks();
     }
 }
 

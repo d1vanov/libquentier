@@ -174,10 +174,6 @@ private Q_SLOTS:
         QUuid jobId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription);
 
-    void onReadPasswordJobFinished(
-        QUuid jobId, IKeychainService::ErrorCode errorCode,
-        ErrorString errorDescription, QString password);
-
     void onDeletePasswordJobFinished(
         QUuid jobId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription);
@@ -259,11 +255,21 @@ private:
 
     void onReadAuthTokenFinished(
         IKeychainService::ErrorCode errorCode,
-        const ErrorString & errorDescription, const QString & password);
+        const ErrorString & errorDescription, const QString & authToken);
 
     void onReadShardIdFinished(
         IKeychainService::ErrorCode errorCode,
-        const ErrorString & errorDescription, const QString & password);
+        const ErrorString & errorDescription, const QString & shardId);
+
+    void onReadLinkedNotebookAuthTokenFinished(
+        IKeychainService::ErrorCode errorCode,
+        const ErrorString & errorDescription, const QString & authToken,
+        const qevercloud::Guid & linkedNotebookGuid);
+
+    void onReadLinkedNotebookShardIdFinished(
+        IKeychainService::ErrorCode errorCode,
+        const ErrorString & errorDescription, const QString & shardId,
+        const qevercloud::Guid & linkedNotebookGuid);
 
     void onWriteAuthTokenFinished(
         IKeychainService::ErrorCode errorCode,
@@ -379,11 +385,8 @@ private:
     KeychainJobIdWithUserId m_deleteAuthTokenJobIdsWithUserIds;
     KeychainJobIdWithUserId m_deleteShardIdJobIdsWithUserIds;
 
-    KeychainJobIdWithGuidBimap
-        m_readLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
-
-    KeychainJobIdWithGuidBimap
-        m_readLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
+    QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingAuthTokenReading;
+    QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingShardIdReading;
 
     KeychainJobIdWithGuidBimap
         m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
