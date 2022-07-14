@@ -343,32 +343,8 @@ void SynchronizationManagerPrivate::revokeAuthentication(
         "SynchronizationManagerPrivate::revokeAuthentication: user id = "
             << userId);
 
-    const QString deleteAuthTokenService =
-        QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
-
-    const QString deleteAuthTokenKey = QCoreApplication::applicationName() +
-        QStringLiteral("_") + m_host + QStringLiteral("_") +
-        QString::number(userId);
-
-    const auto deleteAuthTokenJobId =
-        m_pKeychainService->startDeletePasswordJob(
-            deleteAuthTokenService, deleteAuthTokenKey);
-
-    m_deleteAuthTokenJobIdsWithUserIds.insert(
-        KeychainJobIdWithUserId::value_type(userId, deleteAuthTokenJobId));
-
-    const QString deleteShardIdService =
-        QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
-
-    const QString deleteShardIdKey = QCoreApplication::applicationName() +
-        QStringLiteral("_") + m_host + QStringLiteral("_") +
-        QString::number(userId);
-
-    const auto deleteShardIdJobId = m_pKeychainService->startDeletePasswordJob(
-        deleteShardIdService, deleteShardIdKey);
-
-    m_deleteShardIdJobIdsWithUserIds.insert(
-        KeychainJobIdWithUserId::value_type(userId, deleteShardIdJobId));
+    deleteAuthToken(userId);
+    deleteShardId(userId);
 }
 
 void SynchronizationManagerPrivate::setDownloadNoteThumbnails(const bool flag)
@@ -478,41 +454,6 @@ void SynchronizationManagerPrivate::onOAuthResult(
     }
 
     launchStoreOAuthResult(authData);
-}
-
-void SynchronizationManagerPrivate::onDeletePasswordJobFinished(
-    QUuid jobId, IKeychainService::ErrorCode errorCode,
-    ErrorString errorDescription) // NOLINT
-{
-    QNDEBUG(
-        "synchronization",
-        "SynchronizationManagerPrivate::onDeletePasswordJobFinished: job id = "
-            << jobId << ", error code = " << errorCode
-            << ", error description = " << errorDescription);
-
-    {
-        const auto it = m_deleteAuthTokenJobIdsWithUserIds.right.find(jobId);
-        if (it != m_deleteAuthTokenJobIdsWithUserIds.right.end()) {
-            auto userId = it->second;
-            m_deleteAuthTokenJobIdsWithUserIds.right.erase(it);
-            onDeleteAuthTokenFinished(errorCode, userId, errorDescription);
-            return;
-        }
-    }
-
-    {
-        const auto it = m_deleteShardIdJobIdsWithUserIds.right.find(jobId);
-        if (it != m_deleteShardIdJobIdsWithUserIds.right.end()) {
-            auto userId = it->second;
-            m_deleteShardIdJobIdsWithUserIds.right.erase(it);
-            onDeleteShardIdFinished(errorCode, userId, errorDescription);
-            return;
-        }
-    }
-
-    QNDEBUG(
-        "synchronization",
-        "Couldn't identify the delete password from keychain job");
 }
 
 void SynchronizationManagerPrivate::onRequestAuthenticationToken()
@@ -794,12 +735,6 @@ void SynchronizationManagerPrivate::createConnections(
         &authenticationManager,
         &IAuthenticationManager::sendAuthenticationResult, this,
         &SynchronizationManagerPrivate::onOAuthResult,
-        Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
-
-    // Connections with keychain service
-    QObject::connect(
-        m_pKeychainService.get(), &IKeychainService::deletePasswordJobFinished,
-        this, &SynchronizationManagerPrivate::onDeletePasswordJobFinished,
         Qt::ConnectionType(Qt::UniqueConnection | Qt::QueuedConnection));
 
     // Connections with remote to local synchronization manager
@@ -1695,9 +1630,6 @@ void SynchronizationManagerPrivate::clear()
     m_linkedNotebookGuidsPendingAuthTokenReading.clear();
     m_linkedNotebookGuidsPendingShardIdReading.clear();
 
-    m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.clear();
-    m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.clear();
-
     m_linkedNotebookAuthTokensPendingWritingByGuid.clear();
     m_linkedNotebookShardIdsPendingWritingByGuid.clear();
 
@@ -2143,45 +2075,15 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
         const QString & token = it.value().first;
         const QString & shardId = it.value().second;
 
-        // 1) Set up the job writing the auth token to the keychain
-        auto jobIt = // clazy:exclude=rule-of-two-soft
-            m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left
-                .find(guid); // clazy:exclude=rule-of-two-soft
-
-        if (jobIt ==
-            m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.left
-                .end())
-        {
-            const QString key =
-                keyPrefix + LINKED_NOTEBOOK_AUTH_TOKEN_KEY_PART + guid;
-
-            const QUuid jobId = m_pKeychainService->startWritePasswordJob(
-                WRITE_LINKED_NOTEBOOK_AUTH_TOKEN_JOB, key, token);
-
-            m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids.insert(
-                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
+        if (!m_linkedNotebookGuidsPendingAuthTokenWriting.contains(guid)) {
+            writeLinkedNotebookAuthToken(token, guid);
         }
         else {
             m_linkedNotebookAuthTokensPendingWritingByGuid[guid] = token;
         }
 
-        // 2) Set up the job writing the shard id to the keychain
-        jobIt = // clazy:exclude=rule-of-two-soft
-            m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left.find(
-                guid); // clazy:exclude=rule-of-two-soft
-
-        if (jobIt ==
-            m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.left
-                .end())
-        {
-            const QString key =
-                keyPrefix + LINKED_NOTEBOOK_SHARD_ID_KEY_PART + guid;
-
-            const QUuid jobId = m_pKeychainService->startWritePasswordJob(
-                WRITE_LINKED_NOTEBOOK_SHARD_ID_JOB, key, shardId);
-
-            m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids.insert(
-                KeychainJobIdWithGuidBimap::value_type(guid, jobId));
+        if (!m_linkedNotebookGuidsPendingShardIdWriting.contains(guid)) {
+            writeLinkedNotebookShardId(shardId, guid);
         }
         else {
             m_linkedNotebookShardIdsPendingWritingByGuid[guid] = shardId;
@@ -2193,15 +2095,16 @@ void SynchronizationManagerPrivate::writeAuthToken(const QString & authToken)
 {
     m_userIdsPendingAuthTokenWriting.insert(m_OAuthResult.m_userId);
 
-    const QString writeAuthTokenService =
+    QString writeAuthTokenService =
         QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
 
-    const QString writeAuthTokenKey = QCoreApplication::applicationName() +
+    QString writeAuthTokenKey = QCoreApplication::applicationName() +
         QStringLiteral("_auth_token_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
     auto writePasswordFuture = m_pKeychainService->writePassword(
-        writeAuthTokenService, writeAuthTokenKey, authToken);
+        std::move(writeAuthTokenService), std::move(writeAuthTokenKey),
+        authToken);
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
@@ -2225,15 +2128,15 @@ void SynchronizationManagerPrivate::writeShardId(const QString & shardId)
 {
     m_userIdsPendingShardIdWriting.insert(m_OAuthResult.m_userId);
 
-    const QString writeShardIdService =
+    QString writeShardIdService =
         QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
 
-    const QString writeShardIdKey = QCoreApplication::applicationName() +
+    QString writeShardIdKey = QCoreApplication::applicationName() +
         QStringLiteral("_shard_id_") + m_host + QStringLiteral("_") +
         QString::number(m_OAuthResult.m_userId);
 
     auto writePasswordFuture = m_pKeychainService->writePassword(
-        writeShardIdService, writeShardIdKey, shardId);
+        std::move(writeShardIdService), std::move(writeShardIdKey), shardId);
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
@@ -2324,6 +2227,66 @@ void SynchronizationManagerPrivate::writeLinkedNotebookShardId(
             const auto result = toErrorInfo(e);
             onWriteLinkedNotebookShardIdFinished(
                 result.first, result.second, linkedNotebookGuid);
+        });
+}
+
+void SynchronizationManagerPrivate::deleteAuthToken(
+    const qevercloud::UserID userId)
+{
+    m_userIdsPendingAuthTokenDeleting.insert(userId);
+
+    QString deleteAuthTokenService =
+        QCoreApplication::applicationName() + AUTH_TOKEN_KEYCHAIN_KEY_PART;
+
+    QString deleteAuthTokenKey = QCoreApplication::applicationName() +
+        QStringLiteral("_") + m_host + QStringLiteral("_") +
+        QString::number(userId);
+
+    auto deletePasswordFuture = m_pKeychainService->deletePassword(
+        std::move(deleteAuthTokenService), std::move(deleteAuthTokenKey));
+
+    auto deletePasswordThenFuture = threading::then(
+        std::move(deletePasswordFuture), this,
+        [this, userId] {
+            onDeleteAuthTokenFinished(
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{});
+        });
+
+    threading::onFailed(
+        std::move(deletePasswordThenFuture), this,
+        [this, userId](const QException & e) {
+            const auto result = toErrorInfo(e);
+            onDeleteAuthTokenFinished(result.first, userId, result.second);
+        });
+}
+
+void SynchronizationManagerPrivate::deleteShardId(
+    const qevercloud::UserID userId)
+{
+    m_userIdsPendingShardIdDeleting.insert(userId);
+
+    QString deleteShardIdService =
+        QCoreApplication::applicationName() + SHARD_ID_KEYCHAIN_KEY_PART;
+
+    QString deleteShardIdKey = QCoreApplication::applicationName() +
+        QStringLiteral("_") + m_host + QStringLiteral("_") +
+        QString::number(userId);
+
+    auto deletePasswordFuture = m_pKeychainService->deletePassword(
+        std::move(deleteShardIdService), std::move(deleteShardIdKey));
+
+    auto deletePasswordThenFuture = threading::then(
+        std::move(deletePasswordFuture), this,
+        [this, userId] {
+            onDeleteShardIdFinished(
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{});
+        });
+
+    threading::onFailed(
+        std::move(deletePasswordThenFuture), this,
+        [this, userId](const QException & e) {
+            const auto result = toErrorInfo(e);
+            onDeleteShardIdFinished(result.first, userId, result.second);
         });
 }
 
@@ -2664,14 +2627,11 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
             << userId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
 
+    m_userIdsPendingAuthTokenDeleting.remove(userId);
+
     if ((errorCode != IKeychainService::ErrorCode::NoError) &&
         (errorCode != IKeychainService::ErrorCode::EntryNotFound))
     {
-        const auto it = m_deleteShardIdJobIdsWithUserIds.left.find(userId);
-        if (it != m_deleteShardIdJobIdsWithUserIds.left.end()) {
-            m_deleteShardIdJobIdsWithUserIds.left.erase(it);
-        }
-
         QNWARNING(
             "synchronization",
             "Attempt to delete the auth token "
@@ -2708,11 +2668,6 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
     if ((errorCode != IKeychainService::ErrorCode::NoError) &&
         (errorCode != IKeychainService::ErrorCode::EntryNotFound))
     {
-        auto it = m_deleteAuthTokenJobIdsWithUserIds.left.find(userId);
-        if (it != m_deleteAuthTokenJobIdsWithUserIds.left.end()) {
-            m_deleteAuthTokenJobIdsWithUserIds.left.erase(it);
-        }
-
         QNWARNING(
             "synchronization",
             "Attempt to delete the shard id returned with error: "
@@ -2781,9 +2736,7 @@ bool SynchronizationManagerPrivate::isDeletingAuthToken(
         return false;
     }
 
-    return (
-        m_deleteAuthTokenJobIdsWithUserIds.left.find(userId) !=
-        m_deleteAuthTokenJobIdsWithUserIds.left.end());
+    return m_userIdsPendingAuthTokenDeleting.contains(userId);
 }
 
 bool SynchronizationManagerPrivate::isDeletingShardId(
@@ -2793,9 +2746,7 @@ bool SynchronizationManagerPrivate::isDeletingShardId(
         return false;
     }
 
-    return (
-        m_deleteShardIdJobIdsWithUserIds.left.find(userId) !=
-        m_deleteShardIdJobIdsWithUserIds.left.end());
+    return m_userIdsPendingShardIdDeleting.contains(userId);
 }
 
 void SynchronizationManagerPrivate::tryUpdateLastSyncStatus()

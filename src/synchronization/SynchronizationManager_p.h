@@ -27,14 +27,6 @@
 #include <quentier/utility/IKeychainService.h>
 #include <quentier/utility/SuppressWarnings.h>
 
-SAVE_WARNINGS
-
-MSVC_SUPPRESS_WARNING(4834)
-
-#include <boost/bimap.hpp>
-
-RESTORE_WARNINGS
-
 #include <QObject>
 #include <QSet>
 
@@ -170,10 +162,6 @@ private Q_SLOTS:
         QString noteStoreUrl, QString webApiUrlPrefix,
         QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
-    void onDeletePasswordJobFinished(
-        QUuid jobId, IKeychainService::ErrorCode errorCode,
-        ErrorString errorDescription);
-
     void onRequestAuthenticationToken();
     void onRequestAuthenticationTokensForLinkedNotebooks(
         QVector<LinkedNotebookAuthData> linkedNotebookAuthData);
@@ -258,6 +246,9 @@ private:
     void writeLinkedNotebookShardId(
         const QString & shardId, const qevercloud::Guid & linkedNotebookGuid);
 
+    void deleteAuthToken(qevercloud::UserID userId);
+    void deleteShardId(qevercloud::UserID userId);
+
     void onReadAuthTokenFinished(
         IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & authToken);
@@ -329,9 +320,6 @@ private:
     class RemoteToLocalSynchronizationManagerController;
     friend class RemoteToLocalSynchronizationManagerController;
 
-    using KeychainJobIdWithGuidBimap = boost::bimap<QString, QUuid>;
-    using KeychainJobIdWithUserId = boost::bimap<qevercloud::UserID, QUuid>;
-
 private:
     Q_DISABLE_COPY(SynchronizationManagerPrivate)
 
@@ -397,20 +385,14 @@ private:
 
     QHash<qevercloud::UserID, AuthData> m_writtenOAuthResultByUserId;
 
-    KeychainJobIdWithUserId m_deleteAuthTokenJobIdsWithUserIds;
-    KeychainJobIdWithUserId m_deleteShardIdJobIdsWithUserIds;
+    QSet<qevercloud::UserID> m_userIdsPendingAuthTokenDeleting;
+    QSet<qevercloud::UserID> m_userIdsPendingShardIdDeleting;
 
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingAuthTokenReading;
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingShardIdReading;
 
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingAuthTokenWriting;
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingShardIdWriting;
-
-    KeychainJobIdWithGuidBimap
-        m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
-
-    KeychainJobIdWithGuidBimap
-        m_writeLinkedNotebookShardIdJobIdsWithLinkedNotebookGuids;
 
     QHash<QString, QString> m_linkedNotebookAuthTokensPendingWritingByGuid;
     QHash<QString, QString> m_linkedNotebookShardIdsPendingWritingByGuid;
