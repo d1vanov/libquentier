@@ -1187,20 +1187,18 @@ void SynchronizationManagerPrivate::authenticateImpl(
         std::move(readAuthTokenFuture),
         this,
         [this, userId = m_OAuthResult.m_userId](const QString & authToken) {
-            m_userIdsPendingAuthTokenReading.remove(userId);
             onReadAuthTokenFinished(
-                IKeychainService::ErrorCode::NoError, ErrorString{}, authToken);
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{},
+                authToken);
         });
 
     threading::onFailed(
         std::move(readAuthTokenThenFuture),
         this,
         [this, userId = m_OAuthResult.m_userId](const QException & e) {
-            m_userIdsPendingAuthTokenReading.remove(userId);
-
             const auto result = toErrorInfo(e);
             onReadAuthTokenFinished(
-                result.first, result.second, QString{});
+                result.first, userId, result.second, QString{});
         });
 
     const QString readShardIdService =
@@ -1219,19 +1217,17 @@ void SynchronizationManagerPrivate::authenticateImpl(
         std::move(readShardIdFuture),
         this,
         [this, userId = m_OAuthResult.m_userId](const QString & shardId) {
-            m_userIdsPendingShardIdReading.remove(userId);
             onReadShardIdFinished(
-                IKeychainService::ErrorCode::NoError, ErrorString{}, shardId);
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{},
+                shardId);
         });
 
     threading::onFailed(
         std::move(readShardIdThenFuture),
         [this, userId = m_OAuthResult.m_userId](const QException & e) {
-            m_userIdsPendingShardIdReading.remove(userId);
-
             const auto result = toErrorInfo(e);
             onReadShardIdFinished(
-                result.first, result.second, QString{});
+                result.first, userId, result.second, QString{});
         });
 }
 
@@ -1634,6 +1630,21 @@ void SynchronizationManagerPrivate::clear()
     m_linkedNotebookShardIdsPendingWritingByGuid.clear();
 
     m_linkedNotebookGuidsWithoutLocalAuthData.clear();
+
+    m_userIdsPendingAuthTokenDeleting.clear();
+    m_userIdsPendingShardIdDeleting.clear();
+
+    m_userIdsPendingAuthTokenWriting.clear();
+    m_userIdsPendingShardIdWriting.clear();
+
+    m_linkedNotebookGuidsPendingAuthTokenWriting.clear();
+    m_linkedNotebookGuidsPendingShardIdWriting.clear();
+
+    m_userIdsPendingAuthTokenReading.clear();
+    m_userIdsPendingShardIdReading.clear();
+
+    m_linkedNotebookGuidsPendingAuthTokenReading.clear();
+    m_linkedNotebookGuidsPendingShardIdReading.clear();
 
     m_shouldRepeatIncrementalSyncAfterSendingChanges = false;
 }
@@ -2109,18 +2120,15 @@ void SynchronizationManagerPrivate::writeAuthToken(const QString & authToken)
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
         [this, userId = m_OAuthResult.m_userId] {
-            m_userIdsPendingAuthTokenWriting.remove(userId);
             onWriteAuthTokenFinished(
-                IKeychainService::ErrorCode::NoError, ErrorString{});
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{});
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
         [this, userId = m_OAuthResult.m_userId](const QException & e) {
-            m_userIdsPendingAuthTokenWriting.remove(userId);
-
             const auto result = toErrorInfo(e);
-            onWriteAuthTokenFinished(result.first, result.second);
+            onWriteAuthTokenFinished(result.first, userId, result.second);
         });
 }
 
@@ -2141,18 +2149,15 @@ void SynchronizationManagerPrivate::writeShardId(const QString & shardId)
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
         [this, userId = m_OAuthResult.m_userId] {
-            m_userIdsPendingShardIdWriting.remove(userId);
             onWriteShardIdFinished(
-                IKeychainService::ErrorCode::NoError, ErrorString{});
+                IKeychainService::ErrorCode::NoError, userId, ErrorString{});
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
         [this, userId = m_OAuthResult.m_userId](const QException & e) {
-            m_userIdsPendingShardIdWriting.remove(userId);
-
             const auto result = toErrorInfo(e);
-            onWriteShardIdFinished(result.first, result.second);
+            onWriteShardIdFinished(result.first, userId, result.second);
         });
 }
 
@@ -2173,9 +2178,6 @@ void SynchronizationManagerPrivate::writeLinkedNotebookAuthToken(
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
         [this, linkedNotebookGuid] {
-            m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
-                linkedNotebookGuid);
-
             onWriteLinkedNotebookAuthTokenFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{},
                 linkedNotebookGuid);
@@ -2184,9 +2186,6 @@ void SynchronizationManagerPrivate::writeLinkedNotebookAuthToken(
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
         [this, linkedNotebookGuid](const QException & e) {
-            m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
-                linkedNotebookGuid);
-
             const auto result = toErrorInfo(e);
             onWriteLinkedNotebookAuthTokenFinished(
                 result.first, result.second, linkedNotebookGuid);
@@ -2210,9 +2209,6 @@ void SynchronizationManagerPrivate::writeLinkedNotebookShardId(
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
         [this, linkedNotebookGuid] {
-            m_linkedNotebookGuidsPendingShardIdWriting.remove(
-                linkedNotebookGuid);
-
             onWriteLinkedNotebookShardIdFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{},
                 linkedNotebookGuid);
@@ -2221,9 +2217,6 @@ void SynchronizationManagerPrivate::writeLinkedNotebookShardId(
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
         [this, linkedNotebookGuid](const QException & e) {
-            m_linkedNotebookGuidsPendingShardIdWriting.remove(
-                linkedNotebookGuid);
-
             const auto result = toErrorInfo(e);
             onWriteLinkedNotebookShardIdFinished(
                 result.first, result.second, linkedNotebookGuid);
@@ -2292,12 +2285,20 @@ void SynchronizationManagerPrivate::deleteShardId(
 
 void SynchronizationManagerPrivate::onReadAuthTokenFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription, const QString & authToken)
+    const qevercloud::UserID userId, const ErrorString & errorDescription,
+    const QString & authToken)
 {
     QNDEBUG(
         "synchronization",
         "SynchronizationManagerPrivate::onReadAuthTokenFinished: error code = "
             << errorCode << ", error description = " << errorDescription);
+
+    const auto it = m_userIdsPendingAuthTokenReading.find(userId);
+    if (it == m_userIdsPendingAuthTokenReading.end()) {
+        return;
+    }
+
+    m_userIdsPendingAuthTokenReading.erase(it);
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
         QNWARNING(
@@ -2332,12 +2333,20 @@ void SynchronizationManagerPrivate::onReadAuthTokenFinished(
 
 void SynchronizationManagerPrivate::onReadShardIdFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription, const QString & shardId)
+    const qevercloud::UserID userId, const ErrorString & errorDescription,
+    const QString & shardId)
 {
     QNDEBUG(
         "synchronization",
         "SynchronizationManagerPrivate::onReadShardIdFinished: error code = "
             << errorCode << ", error description = " << errorDescription);
+
+    const auto it = m_userIdsPendingShardIdReading.find(userId);
+    if (it == m_userIdsPendingShardIdReading.end()) {
+        return;
+    }
+
+    m_userIdsPendingShardIdReading.erase(it);
 
     if (errorCode == IKeychainService::ErrorCode::EntryNotFound) {
         QNWARNING(
@@ -2381,6 +2390,14 @@ void SynchronizationManagerPrivate::onReadLinkedNotebookAuthTokenFinished(
             << errorDescription << ", linked notebook guid = "
             << linkedNotebookGuid);
 
+    const auto it =
+        m_linkedNotebookGuidsPendingAuthTokenReading.find(linkedNotebookGuid);
+    if (it == m_linkedNotebookGuidsPendingAuthTokenReading.end()) {
+        return;
+    }
+
+    m_linkedNotebookGuidsPendingAuthTokenReading.erase(it);
+
     if (errorCode == IKeychainService::ErrorCode::NoError) {
         m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[linkedNotebookGuid]
             .first = authToken;
@@ -2406,8 +2423,6 @@ void SynchronizationManagerPrivate::onReadLinkedNotebookAuthTokenFinished(
             linkedNotebookGuid))
     }
 
-    m_linkedNotebookGuidsPendingAuthTokenReading.remove(linkedNotebookGuid);
-
     if (m_linkedNotebookGuidsPendingAuthTokenReading.empty() &&
         m_linkedNotebookGuidsPendingShardIdReading.empty())
     {
@@ -2429,6 +2444,14 @@ void SynchronizationManagerPrivate::onReadLinkedNotebookShardIdFinished(
             << "error code = " << errorCode << ", error description = "
             << errorDescription << ", linked notebook guid = "
             << linkedNotebookGuid);
+
+    const auto it =
+        m_linkedNotebookGuidsPendingShardIdReading.find(linkedNotebookGuid);
+    if (it == m_linkedNotebookGuidsPendingShardIdReading.end()) {
+        return;
+    }
+
+    m_linkedNotebookGuidsPendingShardIdReading.erase(it);
 
     if (errorCode == IKeychainService::ErrorCode::NoError) {
         m_cachedLinkedNotebookAuthTokensAndShardIdsByGuid[linkedNotebookGuid]
@@ -2454,8 +2477,6 @@ void SynchronizationManagerPrivate::onReadLinkedNotebookShardIdFinished(
             linkedNotebookGuid))
     }
 
-    m_linkedNotebookGuidsPendingShardIdReading.remove(linkedNotebookGuid);
-
     if (m_linkedNotebookGuidsPendingAuthTokenReading.empty() &&
         m_linkedNotebookGuidsPendingShardIdReading.empty())
     {
@@ -2468,12 +2489,19 @@ void SynchronizationManagerPrivate::onReadLinkedNotebookShardIdFinished(
 
 void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription)
+    const qevercloud::UserID userId, const ErrorString & errorDescription)
 {
     QNDEBUG(
         "synchronization",
         "SynchronizationManagerPrivate::onWriteAuthTokenFinished: error code = "
             << errorCode << ", error description = " << errorDescription);
+
+    const auto it = m_userIdsPendingAuthTokenWriting.find(userId);
+    if (it == m_userIdsPendingAuthTokenWriting.end()) {
+        return;
+    }
+
+    m_userIdsPendingAuthTokenWriting.erase(it);
 
     if (errorCode != IKeychainService::ErrorCode::NoError) {
         ErrorString error(
@@ -2500,12 +2528,19 @@ void SynchronizationManagerPrivate::onWriteAuthTokenFinished(
 
 void SynchronizationManagerPrivate::onWriteShardIdFinished(
     const IKeychainService::ErrorCode errorCode,
-    const ErrorString & errorDescription)
+    const qevercloud::UserID userId, const ErrorString & errorDescription)
 {
     QNDEBUG(
         "synchronization",
         "SynchronizationManagerPrivate::onWriteShardIdFinished: error code = "
             << errorCode << ", error description = " << errorDescription);
+
+    const auto it = m_userIdsPendingShardIdWriting.find(userId);
+    if (it == m_userIdsPendingShardIdWriting.end()) {
+        return;
+    }
+
+    m_userIdsPendingShardIdWriting.erase(it);
 
     if (errorCode != IKeychainService::ErrorCode::NoError) {
         ErrorString error(
@@ -2534,6 +2569,14 @@ void SynchronizationManagerPrivate::onWriteLinkedNotebookAuthTokenFinished(
     const ErrorString & errorDescription,
     const qevercloud::Guid & linkedNotebookGuid)
 {
+    const auto it =
+        m_linkedNotebookGuidsPendingAuthTokenWriting.find(linkedNotebookGuid);
+    if (it == m_linkedNotebookGuidsPendingAuthTokenWriting.end()) {
+        return;
+    }
+
+    m_linkedNotebookGuidsPendingAuthTokenWriting.erase(it);
+
     const auto pendingItemIt =
         m_linkedNotebookAuthTokensPendingWritingByGuid.find(linkedNotebookGuid);
 
@@ -2578,6 +2621,14 @@ void SynchronizationManagerPrivate::onWriteLinkedNotebookShardIdFinished(
     const ErrorString & errorDescription,
     const qevercloud::Guid & linkedNotebookGuid)
 {
+    const auto it =
+        m_linkedNotebookGuidsPendingShardIdWriting.find(linkedNotebookGuid);
+    if (it == m_linkedNotebookGuidsPendingShardIdWriting.end()) {
+        return;
+    }
+
+    m_linkedNotebookGuidsPendingShardIdWriting.erase(it);
+
     const auto pendingItemIt =
         m_linkedNotebookShardIdsPendingWritingByGuid.find(linkedNotebookGuid);
 
@@ -2627,7 +2678,12 @@ void SynchronizationManagerPrivate::onDeleteAuthTokenFinished(
             << userId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
 
-    m_userIdsPendingAuthTokenDeleting.remove(userId);
+    const auto it = m_userIdsPendingAuthTokenDeleting.find(userId);
+    if (it == m_userIdsPendingAuthTokenDeleting.end()) {
+        return;
+    }
+
+    m_userIdsPendingAuthTokenDeleting.erase(it);
 
     if ((errorCode != IKeychainService::ErrorCode::NoError) &&
         (errorCode != IKeychainService::ErrorCode::EntryNotFound))
@@ -2664,6 +2720,13 @@ void SynchronizationManagerPrivate::onDeleteShardIdFinished(
         "SynchronizationManagerPrivate::onDeleteShardIdFinished: user id = "
             << userId << ", error code = " << errorCode
             << ", error description = " << errorDescription);
+
+    const auto it = m_userIdsPendingShardIdDeleting.find(userId);
+    if (it == m_userIdsPendingShardIdDeleting.end()) {
+        return;
+    }
+
+    m_userIdsPendingShardIdDeleting.erase(it);
 
     if ((errorCode != IKeychainService::ErrorCode::NoError) &&
         (errorCode != IKeychainService::ErrorCode::EntryNotFound))

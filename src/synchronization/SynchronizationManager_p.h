@@ -250,11 +250,11 @@ private:
     void deleteShardId(qevercloud::UserID userId);
 
     void onReadAuthTokenFinished(
-        IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode, qevercloud::UserID userId,
         const ErrorString & errorDescription, const QString & authToken);
 
     void onReadShardIdFinished(
-        IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode, qevercloud::UserID userId,
         const ErrorString & errorDescription, const QString & shardId);
 
     void onReadLinkedNotebookAuthTokenFinished(
@@ -268,11 +268,11 @@ private:
         const qevercloud::Guid & linkedNotebookGuid);
 
     void onWriteAuthTokenFinished(
-        IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode, qevercloud::UserID userId,
         const ErrorString & errorDescription);
 
     void onWriteShardIdFinished(
-        IKeychainService::ErrorCode errorCode,
+        IKeychainService::ErrorCode errorCode, qevercloud::UserID userId,
         const ErrorString & errorDescription);
 
     void onWriteLinkedNotebookAuthTokenFinished(
