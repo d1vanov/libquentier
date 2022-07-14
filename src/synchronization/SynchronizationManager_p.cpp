@@ -1251,34 +1251,20 @@ void SynchronizationManagerPrivate::authenticateImpl(
     auto readAuthTokenThenFuture = threading::then(
         std::move(readAuthTokenFuture),
         this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QString & authToken) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingAuthTokenReading.remove(userId);
-            self->onReadAuthTokenFinished(
+        [this, userId = m_OAuthResult.m_userId](const QString & authToken) {
+            m_userIdsPendingAuthTokenReading.remove(userId);
+            onReadAuthTokenFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{}, authToken);
         });
 
     threading::onFailed(
         std::move(readAuthTokenThenFuture),
         this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingAuthTokenReading.remove(userId);
+        [this, userId = m_OAuthResult.m_userId](const QException & e) {
+            m_userIdsPendingAuthTokenReading.remove(userId);
 
             const auto result = toErrorInfo(e);
-            self->onReadAuthTokenFinished(
+            onReadAuthTokenFinished(
                 result.first, result.second, QString{});
         });
 
@@ -1297,33 +1283,19 @@ void SynchronizationManagerPrivate::authenticateImpl(
     auto readShardIdThenFuture = threading::then(
         std::move(readShardIdFuture),
         this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QString & shardId) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingShardIdReading.remove(userId);
-            self->onReadShardIdFinished(
+        [this, userId = m_OAuthResult.m_userId](const QString & shardId) {
+            m_userIdsPendingShardIdReading.remove(userId);
+            onReadShardIdFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{}, shardId);
         });
 
     threading::onFailed(
         std::move(readShardIdThenFuture),
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingShardIdReading.remove(userId);
+        [this, userId = m_OAuthResult.m_userId](const QException & e) {
+            m_userIdsPendingShardIdReading.remove(userId);
 
             const auto result = toErrorInfo(e);
-            self->onReadShardIdFinished(
+            onReadShardIdFinished(
                 result.first, result.second, QString{});
         });
 }
@@ -2098,31 +2070,17 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
                 auto readPasswordThenFuture = threading::then(
                     std::move(readPasswordFuture), this,
-                    [guid = guid,
-                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-                        const QString & authToken) {
-                        if (selfWeak.isNull()) {
-                            return;
-                        }
-
-                        auto * self = selfWeak.data();
-                        self->onReadLinkedNotebookAuthTokenFinished(
+                    [this, guid](const QString & authToken) {
+                        onReadLinkedNotebookAuthTokenFinished(
                             IKeychainService::ErrorCode::NoError, ErrorString{},
                             authToken, guid);
                     });
 
                 threading::onFailed(
                     std::move(readPasswordThenFuture), this,
-                    [guid = guid,
-                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-                        const QException & e) {
-                        if (selfWeak.isNull()) {
-                            return;
-                        }
-
-                        auto * self = selfWeak.data();
+                    [this, guid](const QException & e) {
                         const auto result = toErrorInfo(e);
-                        self->onReadLinkedNotebookAuthTokenFinished(
+                        onReadLinkedNotebookAuthTokenFinished(
                             result.first, result.second, {}, guid);
                     });
             }
@@ -2141,31 +2099,17 @@ void SynchronizationManagerPrivate::authenticateToLinkedNotebooks()
 
                 auto readPasswordThenFuture = threading::then(
                     std::move(readPasswordFuture), this,
-                    [guid = guid,
-                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-                        const QString & shardId) {
-                        if (selfWeak.isNull()) {
-                            return;
-                        }
-
-                        auto * self = selfWeak.data();
-                        self->onReadLinkedNotebookShardIdFinished(
+                    [this, guid](const QString & shardId) {
+                        onReadLinkedNotebookShardIdFinished(
                             IKeychainService::ErrorCode::NoError, ErrorString{},
                             shardId, guid);
                     });
 
                 threading::onFailed(
                     std::move(readPasswordThenFuture), this,
-                    [guid = guid,
-                     selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-                        const QException & e) {
-                        if (selfWeak.isNull()) {
-                            return;
-                        }
-
-                        auto * self = selfWeak.data();
+                    [this, guid](const QException & e) {
                         const auto result = toErrorInfo(e);
-                        self->onReadLinkedNotebookShardIdFinished(
+                        onReadLinkedNotebookShardIdFinished(
                             result.first, result.second, {}, guid);
                     });
             }
@@ -2261,33 +2205,19 @@ void SynchronizationManagerPrivate::writeAuthToken(const QString & authToken)
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}]
-        {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingAuthTokenWriting.remove(userId);
-            self->onWriteAuthTokenFinished(
+        [this, userId = m_OAuthResult.m_userId] {
+            m_userIdsPendingAuthTokenWriting.remove(userId);
+            onWriteAuthTokenFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{});
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingAuthTokenWriting.remove(userId);
+        [this, userId = m_OAuthResult.m_userId](const QException & e) {
+            m_userIdsPendingAuthTokenWriting.remove(userId);
 
             const auto result = toErrorInfo(e);
-            self->onWriteAuthTokenFinished(result.first, result.second);
+            onWriteAuthTokenFinished(result.first, result.second);
         });
 }
 
@@ -2307,39 +2237,24 @@ void SynchronizationManagerPrivate::writeShardId(const QString & shardId)
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}] {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingShardIdWriting.remove(userId);
-
-            self->onWriteShardIdFinished(
+        [this, userId = m_OAuthResult.m_userId] {
+            m_userIdsPendingShardIdWriting.remove(userId);
+            onWriteShardIdFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{});
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
-        [userId = m_OAuthResult.m_userId,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_userIdsPendingShardIdWriting.remove(userId);
+        [this, userId = m_OAuthResult.m_userId](const QException & e) {
+            m_userIdsPendingShardIdWriting.remove(userId);
 
             const auto result = toErrorInfo(e);
-            self->onWriteShardIdFinished(
-                result.first, result.second);
+            onWriteShardIdFinished(result.first, result.second);
         });
 }
 
 void SynchronizationManagerPrivate::writeLinkedNotebookAuthToken(
-    const QString & authToken, const qevercloud::Guid & linkedNotebookGuid)
+    const QString & authToken, const qevercloud::Guid & linkedNotebookGuid) // NOLINT
 {
     m_linkedNotebookGuidsPendingAuthTokenWriting.insert(linkedNotebookGuid);
 
@@ -2354,42 +2269,29 @@ void SynchronizationManagerPrivate::writeLinkedNotebookAuthToken(
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
-        [linkedNotebookGuid,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}] {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
+        [this, linkedNotebookGuid] {
+            m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
                 linkedNotebookGuid);
 
-            self->onWriteLinkedNotebookAuthTokenFinished(
+            onWriteLinkedNotebookAuthTokenFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{},
                 linkedNotebookGuid);
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
-        [linkedNotebookGuid,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
+        [this, linkedNotebookGuid](const QException & e) {
+            m_linkedNotebookGuidsPendingAuthTokenWriting.remove(
                 linkedNotebookGuid);
 
             const auto result = toErrorInfo(e);
-            self->onWriteLinkedNotebookAuthTokenFinished(
+            onWriteLinkedNotebookAuthTokenFinished(
                 result.first, result.second, linkedNotebookGuid);
         });
 }
 
 void SynchronizationManagerPrivate::writeLinkedNotebookShardId(
-    const QString & shardId, const qevercloud::Guid & linkedNotebookGuid)
+    const QString & shardId, const qevercloud::Guid & linkedNotebookGuid) // NOLINT
 {
     m_linkedNotebookGuidsPendingShardIdWriting.insert(linkedNotebookGuid);
 
@@ -2404,36 +2306,23 @@ void SynchronizationManagerPrivate::writeLinkedNotebookShardId(
 
     auto writePasswordThenFuture = threading::then(
         std::move(writePasswordFuture), this,
-        [linkedNotebookGuid,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}] {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_linkedNotebookGuidsPendingShardIdWriting.remove(
+        [this, linkedNotebookGuid] {
+            m_linkedNotebookGuidsPendingShardIdWriting.remove(
                 linkedNotebookGuid);
 
-            self->onWriteLinkedNotebookShardIdFinished(
+            onWriteLinkedNotebookShardIdFinished(
                 IKeychainService::ErrorCode::NoError, ErrorString{},
                 linkedNotebookGuid);
         });
 
     threading::onFailed(
         std::move(writePasswordThenFuture), this,
-        [linkedNotebookGuid,
-         selfWeak = QPointer<SynchronizationManagerPrivate>{this}](
-            const QException & e) {
-            if (selfWeak.isNull()) {
-                return;
-            }
-
-            auto * self = selfWeak.data();
-            self->m_linkedNotebookGuidsPendingShardIdWriting.remove(
+        [this, linkedNotebookGuid](const QException & e) {
+            m_linkedNotebookGuidsPendingShardIdWriting.remove(
                 linkedNotebookGuid);
 
             const auto result = toErrorInfo(e);
-            self->onWriteLinkedNotebookShardIdFinished(
+            onWriteLinkedNotebookShardIdFinished(
                 result.first, result.second, linkedNotebookGuid);
         });
 }
