@@ -170,10 +170,6 @@ private Q_SLOTS:
         QString noteStoreUrl, QString webApiUrlPrefix,
         QList<QNetworkCookie> userStoreCookies, ErrorString errorDescription);
 
-    void onWritePasswordJobFinished(
-        QUuid jobId, IKeychainService::ErrorCode errorCode,
-        ErrorString errorDescription);
-
     void onDeletePasswordJobFinished(
         QUuid jobId, IKeychainService::ErrorCode errorCode,
         ErrorString errorDescription);
@@ -253,6 +249,15 @@ private:
 
     void authenticateToLinkedNotebooks();
 
+    void writeAuthToken(const QString & authToken);
+    void writeShardId(const QString & shardId);
+
+    void writeLinkedNotebookAuthToken(
+        const QString & authToken, const qevercloud::Guid & linkedNotebookGuid);
+
+    void writeLinkedNotebookShardId(
+        const QString & shardId, const qevercloud::Guid & linkedNotebookGuid);
+
     void onReadAuthTokenFinished(
         IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription, const QString & authToken);
@@ -278,6 +283,16 @@ private:
     void onWriteShardIdFinished(
         IKeychainService::ErrorCode errorCode,
         const ErrorString & errorDescription);
+
+    void onWriteLinkedNotebookAuthTokenFinished(
+        IKeychainService::ErrorCode errorCode,
+        const ErrorString & errorDescription,
+        const qevercloud::Guid & linkedNotebookGuid);
+
+    void onWriteLinkedNotebookShardIdFinished(
+        IKeychainService::ErrorCode errorCode,
+        const ErrorString & errorDescription,
+        const qevercloud::Guid & linkedNotebookGuid);
 
     void onDeleteAuthTokenFinished(
         IKeychainService::ErrorCode errorCode,
@@ -377,8 +392,8 @@ private:
     QSet<qevercloud::UserID> m_userIdsPendingAuthTokenReading;
     QSet<qevercloud::UserID> m_userIdsPendingShardIdReading;
 
-    KeychainJobIdWithUserId m_writeAuthTokenJobIdsWithUserIds;
-    KeychainJobIdWithUserId m_writeShardIdJobIdsWithUserIds;
+    QSet<qevercloud::UserID> m_userIdsPendingAuthTokenWriting;
+    QSet<qevercloud::UserID> m_userIdsPendingShardIdWriting;
 
     QHash<qevercloud::UserID, AuthData> m_writtenOAuthResultByUserId;
 
@@ -387,6 +402,9 @@ private:
 
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingAuthTokenReading;
     QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingShardIdReading;
+
+    QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingAuthTokenWriting;
+    QSet<qevercloud::Guid> m_linkedNotebookGuidsPendingShardIdWriting;
 
     KeychainJobIdWithGuidBimap
         m_writeLinkedNotebookAuthTokenJobIdsWithLinkedNotebookGuids;
