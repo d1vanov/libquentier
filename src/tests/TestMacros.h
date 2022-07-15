@@ -39,28 +39,6 @@
         QFAIL(qPrintable(msg));                                                \
     }
 
-#define VERIFY_THROW(condition)                                                \
-    if (!(condition)) {                                                        \
-        QString msg;                                                           \
-        {                                                                      \
-            QDebug dbg(&msg);                                                  \
-            VERIFY_QDEBUG_HELPER();                                            \
-            dbg << "Condition failed: (" << #condition << ")";                 \
-        }                                                                      \
-        throw std::logic_error{qPrintable(msg)};                               \
-    }
-
-#define VERIFY2_THROW(condition, message)                                      \
-    if (!(condition)) {                                                        \
-        QString msg;                                                           \
-        {                                                                      \
-            QDebug dbg(&msg);                                                  \
-            VERIFY_QDEBUG_HELPER();                                            \
-            dbg << message;                                                    \
-        }                                                                      \
-        throw std::logic_error{qPrintable(msg)};                               \
-    }
-
 // 10 minutes should be enough
 #define MAX_ALLOWED_TEST_DURATION_MSEC 600000
 

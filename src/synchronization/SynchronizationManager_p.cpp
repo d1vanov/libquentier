@@ -166,10 +166,7 @@ SynchronizationManagerPrivate::SynchronizationManagerPrivate(
     }
 
     if (!m_pKeychainService) {
-        m_pKeychainService = newQtKeychainService(this);
-    }
-    else {
-        m_pKeychainService->setParent(this);
+        m_pKeychainService = newQtKeychainService();
     }
 
     if (!m_pSyncStateStorage) {

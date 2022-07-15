@@ -24,28 +24,19 @@
 #include <quentier/utility/Linkage.h>
 
 #include <QFuture>
-#include <QObject>
-#include <QUuid>
-
-#include <memory>
 
 class QDebug;
 
 namespace quentier {
 
 /**
- * @brief The IKeychainService interface provides methods intended to start
- * potentially asynchronous interaction with the keychain and signals intended
- * to notify listeners about the completion of asynchronous interactions.
+ * @brief The IKeychainService interface provides the ability to interact with
+ * the storage of sensitive data - read, write and delete it.
  */
-class QUENTIER_EXPORT IKeychainService : public QObject
+class QUENTIER_EXPORT IKeychainService
 {
-    Q_OBJECT
-protected:
-    explicit IKeychainService(QObject * parent = nullptr);
-
 public:
-    ~IKeychainService() noexcept override = default;
+    virtual ~IKeychainService() noexcept;
 
     /**
      * Error codes for results of operations with the keychain service
@@ -92,6 +83,10 @@ public:
     friend QUENTIER_EXPORT QDebug & operator<<(
         QDebug & dbg, ErrorCode errorCode);
 
+    /**
+     * @brief The IKeychainService::Exception class is the base class for
+     * exceptions returned inside QFutures from methods of IKeychainService
+     */
     class QUENTIER_EXPORT Exception : public IQuentierException
     {
     public:
@@ -157,116 +152,18 @@ public:
      */
     [[nodiscard]] virtual QFuture<void> deletePassword(
         QString service, QString key) = 0;
-
-public:
-    /**
-     * startWritePasswordJob slot should start the potentially asynchronous
-     * process of storing the password in the keychain. When ready, this slot
-     * is expected to emit writePasswordJobFinished signal.
-     *
-     * @param service                   Name of service within the keychain
-     * @param key                       Key to store the password under
-     * @param password                  Password to store in the keychain
-     *
-     * @return                          Unique identifier assigned to this
-     *                                  write password request
-     */
-    [[nodiscard]] virtual QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) = 0;
-
-    /**
-     * startReadPasswordJob slot should start the potentially asynchronous
-     * process of reading the password from the keychain. When ready, this slot
-     * is expected to emit readPasswordJobFinished signal.
-     *
-     * @param service                   Name of service within the keychain
-     * @param key                       Key under which the password is stored
-     *
-     * @return                          Unique identifier assigned to this
-     *                                  read password request
-     */
-    [[nodiscard]] virtual QUuid startReadPasswordJob(
-        const QString & service, const QString & key) = 0;
-
-    /**
-     * startDeletePasswordJob slot should start the potentially asynchronous
-     * process of deleting the password from the keychain. When ready, this slot
-     * is expected to emit deletePasswordJobFinished signal.
-     *
-     * @param service                   Name of service within the keychain
-     * @param key                       Key under which the password is stored
-     *
-     * @return                          Unique identifier assigned to this
-     *                                  delete password request
-     */
-    [[nodiscard]] virtual QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) = 0;
-
-Q_SIGNALS:
-    /**
-     * writePasswordJobFinished signal should be emitted in response to
-     * the call of startWritePasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startWritePasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     */
-    void writePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-    /**
-     * readPasswordJobFinished signal should be emitted in response to
-     * the call of startReadPasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startReadPasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     * @param password                  Password read from the keychain
-     */
-    void readPasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-        QString password);
-
-    /**
-     * deletePasswordJobFinished signal should be emitted in response to
-     * the call of startDeletePasswordJob method
-     *
-     * @param requestId                 Request id returned from
-     *                                  startDeletePasswordJob method
-     * @param errorCode                 Error code determining whether
-     *                                  the operation was successful or some
-     *                                  error has occurred
-     * @param errorDescription          Textual description of error in case
-     *                                  of unsuccessful execution
-     */
-    void deletePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-private:
-    Q_DISABLE_COPY(IKeychainService);
 };
 
-[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr
-newQtKeychainService(QObject * parent = nullptr);
+[[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newQtKeychainService();
 
 [[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr
-newObfuscatingKeychainService(QObject * parent = nullptr);
+    newObfuscatingKeychainService();
 
 [[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain, QObject * parent = nullptr);
+    IKeychainServicePtr secondaryKeychain);
 
 [[nodiscard]] QUENTIER_EXPORT IKeychainServicePtr newMigratingKeychainService(
-    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
-    QObject * parent = nullptr);
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain);
 
 } // namespace quentier

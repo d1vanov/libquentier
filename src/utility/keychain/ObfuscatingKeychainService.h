@@ -31,10 +31,7 @@ namespace quentier {
  */
 class ObfuscatingKeychainService final : public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit ObfuscatingKeychainService(QObject * parent = nullptr);
-
     ~ObfuscatingKeychainService() noexcept override;
 
     [[nodiscard]] QFuture<void> writePassword(
@@ -45,16 +42,6 @@ public:
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;
-
-    [[nodiscard]] QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
-
-    [[nodiscard]] QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
-
-    [[nodiscard]] QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
 
 private:
     mutable EncryptionManager m_encryptionManager;

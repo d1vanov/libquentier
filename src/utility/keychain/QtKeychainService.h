@@ -22,14 +22,9 @@
 
 namespace quentier {
 
-class QtKeychainWrapper;
-
 class QtKeychainService final : public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit QtKeychainService(QObject * parent = nullptr);
-
     ~QtKeychainService() noexcept override;
 
     [[nodiscard]] QFuture<void> writePassword(
@@ -40,29 +35,6 @@ public:
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;
-
-    [[nodiscard]] QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
-
-    [[nodiscard]] QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
-
-    [[nodiscard]] QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
-
-Q_SIGNALS:
-    // private signals
-    void notifyStartWritePasswordJob(
-        QUuid jobId, QString service, QString key, QString password);
-
-    void notifyStartReadPasswordJob(QUuid jobId, QString service, QString key);
-
-    void notifyStartDeletePasswordJob(
-        QUuid jobId, QString service, QString key);
-
-private:
-    QtKeychainWrapper * m_pQtKeychainWrapper;
 };
 
 } // namespace quentier

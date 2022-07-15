@@ -14,8 +14,6 @@ target_sources(${LIBRARY_NAME}
   keychain/ObfuscatingKeychainService.h
   keychain/QtKeychainService.cpp
   keychain/QtKeychainService.h
-  keychain/QtKeychainWrapper.cpp
-  keychain/QtKeychainWrapper.h
   keychain/Utils.cpp
   keychain/Utils.h)
 

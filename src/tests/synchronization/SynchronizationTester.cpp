@@ -135,7 +135,7 @@ void SynchronizationTester::init()
     m_pFakeAuthenticationManager->setUserId(m_testAccount.id());
     m_pFakeAuthenticationManager->setAuthToken(authToken);
 
-    m_pFakeKeychainService = std::make_shared<FakeKeychainService>(this);
+    m_pFakeKeychainService = std::make_shared<FakeKeychainService>();
 
     m_pSyncStateStorage = newSyncStateStorage(this);
 

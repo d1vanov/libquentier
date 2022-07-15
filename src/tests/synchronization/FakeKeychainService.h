@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Dmitry Ivanov
+ * Copyright 2018-2022 Dmitry Ivanov
  *
  * This file is part of libquentier
  *
@@ -20,18 +20,12 @@
 
 #include <quentier/utility/IKeychainService.h>
 
-#include <QHash>
-
-#include <utility>
-
 namespace quentier {
 
 class FakeKeychainService final: public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit FakeKeychainService(QObject * parent = nullptr);
-    ~FakeKeychainService() override;
+    ~FakeKeychainService() noexcept override;
 
     [[nodiscard]] QFuture<void> writePassword(
         QString service, QString key, QString password) override;
@@ -41,27 +35,6 @@ public:
 
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;
-
-    [[nodiscard]] QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
-
-    [[nodiscard]] QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
-
-    [[nodiscard]] QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
-
-private:
-    void timerEvent(QTimerEvent * pEvent) override;
-
-private:
-    QHash<int, QUuid> m_writePasswordRequestIdByTimerId;
-
-    QHash<int, std::pair<QUuid, QString>>
-        m_readPasswordRequestIdWithPasswordByTimerId;
-
-    QHash<int, std::pair<QUuid, bool>> m_deletePasswordRequestIdByTimerId;
 };
 
 using FakeKeychainServicePtr = std::shared_ptr<FakeKeychainService>;

@@ -19,18 +19,6 @@
 #pragma once
 
 #include <quentier/utility/IKeychainService.h>
-#include <quentier/utility/SuppressWarnings.h>
-
-#include <QHash>
-#include <QSet>
-
-SAVE_WARNINGS
-
-MSVC_SUPPRESS_WARNING(4834)
-
-#include <boost/bimap.hpp>
-
-RESTORE_WARNINGS
 
 namespace quentier {
 
@@ -48,11 +36,9 @@ namespace quentier {
  */
 class MigratingKeychainService final : public IKeychainService
 {
-    Q_OBJECT
 public:
-    explicit MigratingKeychainService(
-        IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
-        QObject * parent = nullptr);
+    MigratingKeychainService(
+        IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain);
 
     ~MigratingKeychainService() noexcept override;
 
@@ -81,89 +67,9 @@ public:
     [[nodiscard]] QFuture<void> deletePassword(
         QString service, QString key) override;
 
-    /**
-     * Write password jobs go to the sink keychain only. The idea is that new
-     * data should go only to the sink keychain.
-     */
-    [[nodiscard]] QUuid startWritePasswordJob(
-        const QString & service, const QString & key,
-        const QString & password) override;
-
-    /**
-     * Read password jobs try to read from the sink keychain first. If response
-     * code is "entry not found", it attempts to read from the source keychain.
-     * If successful, it returns the password to the user and silently writes
-     * the password to the sink keychain so that the next time it can be read
-     * from there. After successful writing to the sink keychain it also tries
-     * to delete the password from the source keychain.
-     */
-    [[nodiscard]] QUuid startReadPasswordJob(
-        const QString & service, const QString & key) override;
-
-    /**
-     * Delete password jobs go to the sink keychain first. If response code is
-     * "entry not found", it attempts to delete the password from the source
-     * keychain.
-     */
-    [[nodiscard]] QUuid startDeletePasswordJob(
-        const QString & service, const QString & key) override;
-
-private Q_SLOTS:
-    void onSinkKeychainWritePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-    void onSinkKeychainReadPasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-        QString password);
-
-    void onSourceKeychainReadPasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription,
-        QString password);
-
-    void onSinkKeychainDeletePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-    void onSourceKeychainDeletePasswordJobFinished(
-        QUuid requestId, ErrorCode errorCode, ErrorString errorDescription);
-
-private:
-    void createConnections();
-
-    using RequestIdToServiceAndKey = QHash<QUuid, std::pair<QString, QString>>;
-
-    using IdBimap = boost::bimap<QUuid, QUuid>;
-
-    struct ReadPasswordJobData
-    {
-        QUuid m_sinkKeychainReadRequestId;
-        QString m_service;
-        QString m_key;
-        QString m_password;
-    };
-
-    struct DeletePasswordJobStatus
-    {
-        ErrorCode m_errorCode = ErrorCode::NoError;
-        ErrorString m_errorDescription;
-    };
-
 private:
     const IKeychainServicePtr m_sourceKeychain;
     const IKeychainServicePtr m_sinkKeychain;
-
-    QSet<QUuid> m_sinkKeychainWriteRequestIds;
-
-    RequestIdToServiceAndKey m_sinkKeychainReadRequestIdsToServiceAndKey;
-    QHash<QUuid, ReadPasswordJobData> m_sourceKeychainReadRequestData;
-
-    // sink <=> source keychains
-    IdBimap m_deletePasswordJobIds;
-    QHash<QUuid, DeletePasswordJobStatus> m_completedDeletePasswordJobs;
-
-    RequestIdToServiceAndKey
-        m_internalSinkKeychainWriteRequestIdsToServiceAndKey;
-
-    QSet<QUuid> m_internalSourceKeychainDeleteRequestIds;
 };
 
 } // namespace quentier

@@ -24,7 +24,6 @@ namespace quentier::utility::tests::mocks {
 
 class MockIKeychainService : public IKeychainService
 {
-    Q_OBJECT
 public:
     MOCK_METHOD(
         QFuture<void>, writePassword,
@@ -37,19 +36,6 @@ public:
     MOCK_METHOD(
         QFuture<void>, deletePassword, (QString service, QString key),
         (override));
-
-    MOCK_METHOD(
-        QUuid, startWritePasswordJob,
-        (const QString & service, const QString & key,
-         const QString & password), (override));
-
-    MOCK_METHOD(
-        QUuid, startReadPasswordJob,
-        (const QString & service, const QString & key), (override));
-
-    MOCK_METHOD(
-        QUuid, startDeletePasswordJob,
-        (const QString & service, const QString & key), (override));
 };
 
 } // namespace quentier::utility::tests::mocks

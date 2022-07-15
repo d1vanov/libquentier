@@ -22,9 +22,6 @@
 #include "synchronization/SynchronizationTester.h"
 #include "types/TypesTester.h"
 #include "utility/UtilityTester.h"
-#include "utility/keychain/CompositeKeychainTester.h"
-#include "utility/keychain/MigratingKeychainTester.h"
-#include "utility/keychain/ObfuscatingKeychainTester.h"
 
 #include <quentier/logging/QuentierLogger.h>
 #include <quentier/utility/FileSystem.h>
@@ -94,9 +91,6 @@ int main(int argc, char * argv[])
     RUN_TESTS(TypesTester)
     RUN_TESTS(ENMLTester)
     RUN_TESTS(UtilityTester)
-    RUN_TESTS(CompositeKeychainTester)
-    RUN_TESTS(MigratingKeychainTester)
-    RUN_TESTS(ObfuscatingKeychainTester)
     RUN_TESTS(LocalStorageManagerTester)
     RUN_TESTS(FullSyncStaleDataItemsExpungerTester)
     RUN_TESTS(SynchronizationTester)

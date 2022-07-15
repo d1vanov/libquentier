@@ -49,7 +49,7 @@ namespace {
 
 } // namespace
 
-IKeychainService::IKeychainService(QObject * parent) : QObject(parent) {}
+IKeychainService::~IKeychainService() noexcept = default;
 
 QTextStream & operator<<(
     QTextStream & strm, const IKeychainService::ErrorCode errorCode)
@@ -129,31 +129,30 @@ QDebug & operator<<(QDebug & dbg, const IKeychainService::ErrorCode errorCode)
     return dbg;
 }
 
-IKeychainServicePtr newQtKeychainService(QObject * parent)
+IKeychainServicePtr newQtKeychainService()
 {
-    return std::make_shared<QtKeychainService>(parent);
+    return std::make_shared<QtKeychainService>();
 }
 
-IKeychainServicePtr newObfuscatingKeychainService(QObject * parent)
+IKeychainServicePtr newObfuscatingKeychainService()
 {
-    return std::make_shared<ObfuscatingKeychainService>(parent);
+    return std::make_shared<ObfuscatingKeychainService>();
 }
 
 IKeychainServicePtr newCompositeKeychainService(
     QString name, IKeychainServicePtr primaryKeychain,
-    IKeychainServicePtr secondaryKeychain, QObject * parent)
+    IKeychainServicePtr secondaryKeychain)
 {
     return std::make_shared<CompositeKeychainService>(
         std::move(name), std::move(primaryKeychain),
-        std::move(secondaryKeychain), parent);
+        std::move(secondaryKeychain));
 }
 
 IKeychainServicePtr newMigratingKeychainService(
-    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain,
-    QObject * parent)
+    IKeychainServicePtr sourceKeychain, IKeychainServicePtr sinkKeychain)
 {
     return std::make_shared<MigratingKeychainService>(
-        std::move(sourceKeychain), std::move(sinkKeychain), parent);
+        std::move(sourceKeychain), std::move(sinkKeychain));
 }
 
 } // namespace quentier
