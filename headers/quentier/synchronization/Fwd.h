@@ -39,6 +39,9 @@ using ISyncChunksDataCountersPtr = std::shared_ptr<ISyncChunksDataCounters>;
 
 namespace synchronization {
 
+class IAuthenticator;
+using IAuthenticatorPtr = std::shared_ptr<IAuthenticator>;
+
 class ISyncConflictResolver;
 using ISyncConflictResolverPtr = std::shared_ptr<ISyncConflictResolver>;
 

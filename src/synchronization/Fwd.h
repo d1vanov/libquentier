@@ -24,6 +24,10 @@ namespace quentier::synchronization {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class IAuthenticationInfoProvider;
+using IAuthenticationInfoProviderPtr =
+    std::shared_ptr<IAuthenticationInfoProvider>;
+
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 

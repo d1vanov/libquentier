@@ -6,9 +6,12 @@ add_library(${LIBRARY_NAME} STATIC)
 
 target_sources(${LIBRARY_NAME}
   PRIVATE
+  AuthenticationInfoProvider.cpp
+  AuthenticationInfoProvider.h
   Downloader.cpp
   Downloader.h
   Fwd.h
+  IAuthenticationInfoProvider.h
   IDownloader.h
   IReceiver.h
   SynchronizationMode.h
