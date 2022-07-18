@@ -52,6 +52,11 @@ public:
     [[nodiscard]] virtual qevercloud::Timestamp authTokenExpirationTime() const = 0;
 
     /**
+     * Timestamp at which authentication info was received from Evernote
+     */
+    [[nodiscard]] virtual qevercloud::Timestamp authenticationTime() const = 0;
+
+    /**
      * Shard identifier which needs to be used for access to Evernote API
      * along with the authentication token
      */

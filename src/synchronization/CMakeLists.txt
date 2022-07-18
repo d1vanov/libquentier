@@ -14,6 +14,7 @@ target_sources(${LIBRARY_NAME}
   IAuthenticationInfoProvider.h
   IDownloader.h
   IReceiver.h
+  IUserInfoProvider.h
   SynchronizationMode.h
   SyncChunksDataCounters.cpp
   SyncChunksDataCounters.h

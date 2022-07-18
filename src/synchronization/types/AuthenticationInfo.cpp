@@ -30,6 +30,8 @@ QTextStream & AuthenticationInfo::print(QTextStream & strm) const
          << ", authToken size = " << m_authToken.size()
          << ", authTokenExpirationTime = "
          << printableDateTimeFromTimestamp(m_authTokenExpirationTime)
+         << ", authenticationTime = "
+         << printableDateTimeFromTimestamp(m_authenticationTime)
          << ", shardId = " << m_shardId << ", noteStoreUrl = " << m_noteStoreUrl
          << ", webApiUrlPrefix = " << m_webApiUrlPrefix;
 
@@ -62,6 +64,11 @@ qevercloud::Timestamp AuthenticationInfo::authTokenExpirationTime()
     return m_authTokenExpirationTime;
 }
 
+qevercloud::Timestamp AuthenticationInfo::authenticationTime() const noexcept
+{
+    return m_authenticationTime;
+}
+
 QString AuthenticationInfo::shardId() const
 {
     return m_shardId;
@@ -87,6 +94,7 @@ bool operator==(
 {
     return lhs.m_userId == rhs.m_userId && lhs.m_authToken == rhs.m_authToken &&
         lhs.m_authTokenExpirationTime == rhs.m_authTokenExpirationTime &&
+        lhs.m_authenticationTime == rhs.m_authenticationTime &&
         lhs.m_shardId == rhs.m_shardId &&
         lhs.m_noteStoreUrl == rhs.m_noteStoreUrl &&
         lhs.m_webApiUrlPrefix == rhs.m_webApiUrlPrefix &&

@@ -34,6 +34,9 @@ using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 class IResourceFullDataDownloader;
 using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
 
+class IUserInfoProvider;
+using IUserInfoProviderPtr = std::shared_ptr<IUserInfoProvider>;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class ISimpleNotebookSyncConflictResolver;

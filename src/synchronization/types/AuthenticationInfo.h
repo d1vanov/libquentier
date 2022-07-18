@@ -31,6 +31,9 @@ struct AuthenticationInfo final : public IAuthenticationInfo
     [[nodiscard]] qevercloud::Timestamp authTokenExpirationTime()
         const noexcept override;
 
+    [[nodiscard]] qevercloud::Timestamp authenticationTime()
+        const noexcept override;
+
     [[nodiscard]] QString shardId() const override;
     [[nodiscard]] QString noteStoreUrl() const override;
     [[nodiscard]] QString webApiUrlPrefix() const override;
@@ -39,6 +42,7 @@ struct AuthenticationInfo final : public IAuthenticationInfo
     qevercloud::UserID m_userId;
     QString m_authToken;
     qevercloud::Timestamp m_authTokenExpirationTime;
+    qevercloud::Timestamp m_authenticationTime;
     QString m_shardId;
     QString m_noteStoreUrl;
     QString m_webApiUrlPrefix;

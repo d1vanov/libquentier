@@ -19,18 +19,24 @@
 #pragma once
 
 #include <quentier/synchronization/Fwd.h>
+#include <quentier/types/Account.h>
 #include <quentier/utility/Fwd.h>
 
+#include <synchronization/Fwd.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
+
+#include <memory>
 
 namespace quentier::synchronization {
 
-class AuthenticationInfoProvider final : public IAuthenticationInfoProvider
+class AuthenticationInfoProvider final :
+    public IAuthenticationInfoProvider,
+    public std::enable_shared_from_this<AuthenticationInfoProvider>
 {
 public:
     AuthenticationInfoProvider(
-        IAuthenticatorPtr authenticator,
-        IKeychainServicePtr keychainService);
+        IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
+        IUserInfoProviderPtr userInfoProvider, QString host);
 
 public:
     // IAuthenticationInfoProvider
@@ -47,8 +53,17 @@ public:
             Mode mode = Mode::Cache) override;
 
 private:
+    [[nodiscard]] QFuture<Account> findAccountForUserId(
+        qevercloud::UserID userId, QString shardId);
+
+    [[nodiscard]] QFuture<void> storeAuthenticationInfo(
+        IAuthenticationInfoPtr info, Account account);
+
+private:
     const IAuthenticatorPtr m_authenticator;
     const IKeychainServicePtr m_keychainService;
+    const IUserInfoProviderPtr m_userInfoProvider;
+    const QString m_host;
 };
 
 } // namespace quentier::synchronization
