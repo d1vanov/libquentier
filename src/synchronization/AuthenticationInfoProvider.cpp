@@ -29,15 +29,12 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/IKeychainService.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QPromise>
-#else
-#include <quentier/threading/Qt5Promise.h>
-#endif
-
+#include <synchronization/types/AuthenticationInfo.h>
 #include <synchronization/IUserInfoProvider.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QTimeZone>
 
 namespace quentier::synchronization {
 
@@ -122,7 +119,7 @@ QFuture<IAuthenticationInfoPtr>
     const auto selfWeak = weak_from_this();
 
     threading::thenOrFailed(
-        std::move(future), promise,
+        std::move(authResultFuture), promise,
         threading::TrackedTask{
             selfWeak,
             [this, promise,
@@ -199,13 +196,32 @@ QFuture<IAuthenticationInfoPtr>
 QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
     Account account, Mode mode)
 {
-    // TODO: implement
-    Q_UNUSED(account)
-    Q_UNUSED(mode)
-    return threading::makeExceptionalFuture<
-        IAuthenticationInfoPtr>(RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-        "synchronization::AuthenticationInfoProvider",
-        "AuthenticationInfoProvider::authenticateAccount: not implemented")}});
+    if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
+        return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::AuthenticationInfoProvider",
+                "Detected attempt to authenticate non-Evernote account")}});
+    }
+
+    auto promise = std::make_shared<QPromise<IAuthenticationInfoPtr>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    if (mode == Mode::NoCache) {
+        authenticateAccountWithoutCache(std::move(account), promise);
+        return future;
+    }
+
+    auto authenticationInfo = readAuthenticationInfoPart(account);
+    if (!authenticationInfo) {
+        authenticateAccountWithoutCache(std::move(account), promise);
+        return future;
+    }
+
+    // TODO: implement further
+
+    return future;
 }
 
 QFuture<IAuthenticationInfoPtr>
@@ -225,6 +241,146 @@ QFuture<IAuthenticationInfoPtr>
             "synchronization::AuthenticationInfoProvider",
             "AuthenticationInfoProvider::authenticateToLinkedNotebook: "
             "not implemented")}});
+}
+
+void AuthenticationInfoProvider::authenticateAccountWithoutCache(
+    Account account,
+    const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
+{
+    const auto selfWeak = weak_from_this();
+
+    auto authResultFuture = m_authenticator->authenticateAccount(account);
+
+    threading::thenOrFailed(
+        std::move(authResultFuture), promise,
+        threading::TrackedTask{
+            selfWeak,
+            [this, promise, account = std::move(account),
+             selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
+                Q_ASSERT(authenticationInfo);
+                Q_ASSERT(account.id() == authenticationInfo->userId());
+
+                auto storeAuthInfoFuture = storeAuthenticationInfo(
+                    authenticationInfo, std::move(account));
+
+                auto storeAuthInfoThenFuture = threading::then(
+                    std::move(storeAuthInfoFuture),
+                    [promise, authenticationInfo]() mutable {
+                        promise->addResult(std::move(authenticationInfo));
+                        promise->finish();
+                    });
+
+                threading::onFailed(
+                    std::move(storeAuthInfoThenFuture),
+                    [promise,
+                     authenticationInfo = std::move(authenticationInfo)](
+                        const QException & e) mutable {
+                        QNWARNING(
+                            "synchronization::"
+                            "AuthenticationInfoProvider",
+                            "Failed to store authentication info: "
+                                << e.what());
+
+                        // Even though we failed to save the
+                        // authentication info locally, we still got
+                        // it from Evernote so it should be returned
+                        // to the original caller.
+                        promise->addResult(std::move(authenticationInfo));
+                        promise->finish();
+                    });
+            }});
+}
+
+std::shared_ptr<AuthenticationInfo>
+    AuthenticationInfoProvider::readAuthenticationInfoPart(
+        const Account & account) const
+{
+    ApplicationSettings settings{
+        account, gSynchronizationPersistence};
+
+    const QString keyGroup = QString::fromUtf8("Authentication/%1/%2/")
+                                 .arg(m_host, QString::number(account.id()));
+
+    settings.beginGroup(keyGroup);
+    ApplicationSettings::GroupCloser groupCloser{settings};
+
+    if (!settings.contains(gAuthenticationTimestampKey) ||
+        !settings.contains(gExpirationTimestampKey) ||
+        !settings.contains(gNoteStoreUrlKey) ||
+        !settings.contains(gWebApiUrlPrefixKey))
+    {
+        return nullptr;
+    }
+
+    auto authenticationInfo = std::make_shared<AuthenticationInfo>();
+
+    const QVariant authenticationTimestamp =
+        settings.value(gAuthenticationTimestampKey);
+
+    QDateTime authenticationDateTime;
+    if (!authenticationTimestamp.isNull()) {
+        bool conversionResult = false;
+
+        const qint64 authenticationTimestampInt =
+            authenticationTimestamp.toLongLong(&conversionResult);
+
+        if (!conversionResult) {
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "Stored authentication timestamp is not a valid integer: "
+                    << authenticationTimestamp);
+            return nullptr;
+        }
+
+        authenticationDateTime =
+            QDateTime::fromMSecsSinceEpoch(authenticationTimestampInt);
+    }
+
+    if (!authenticationDateTime.isValid()) {
+        QNDEBUG(
+            "synchronization::AuthenticationInfoProvider",
+            "Authentication timestamp is not valid: "
+                << authenticationTimestamp);
+        return nullptr;
+    }
+
+    if (authenticationDateTime <
+        QDateTime(QDate(2020, 4, 22), QTime(0, 0), QTimeZone::utc()))
+    {
+        QNINFO(
+            "synchronization::AuthenticationInfoProvider",
+            "Last authentication was performed before Evernote introduced a "
+                << "bug which requires to set a particular cookie into API "
+                << "calls which was received during OAuth. Forcing new OAuth");
+        return nullptr;
+    }
+
+    authenticationInfo->m_authenticationTime =
+        authenticationDateTime.toMSecsSinceEpoch();
+
+    const QVariant tokenExpirationValue =
+        settings.value(gExpirationTimestampKey);
+
+    if (!tokenExpirationValue.isNull()) {
+        bool conversionResult = false;
+
+        const qevercloud::Timestamp tokenExpirationTimestamp =
+            tokenExpirationValue.toLongLong(&conversionResult);
+
+        if (!conversionResult) {
+            QNWARNING(
+                "synchronization::AuthenticationInfoProvider",
+                "Stored authentication token expiration timestamp is not a "
+                    << "valid integer: " << tokenExpirationValue);
+            return nullptr;
+        }
+
+        authenticationInfo->m_authTokenExpirationTime =
+            tokenExpirationTimestamp;
+    }
+
+    // TODO: continue from here
+    return authenticationInfo;
 }
 
 QFuture<Account> AuthenticationInfoProvider::findAccountForUserId(
@@ -327,26 +483,28 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                 ApplicationSettings settings{
                     account, gSynchronizationPersistence};
 
-                const QString keyGroup =
+                settings.beginGroup(
                     QString::fromUtf8("Authentication/%1/%2/")
                         .arg(
                             m_host,
-                            QString::number(authenticationInfo->userId()));
+                            QString::number(authenticationInfo->userId())));
+
+                ApplicationSettings::GroupCloser groupCloser{settings};
 
                 settings.setValue(
-                    keyGroup + gNoteStoreUrlKey,
+                    gNoteStoreUrlKey,
                     authenticationInfo->noteStoreUrl());
 
                 settings.setValue(
-                    keyGroup + gExpirationTimestampKey,
+                    gExpirationTimestampKey,
                     authenticationInfo->authTokenExpirationTime());
 
                 settings.setValue(
-                    keyGroup + gAuthenticationTimestampKey,
+                    gAuthenticationTimestampKey,
                     authenticationInfo->authenticationTime());
 
                 settings.setValue(
-                    keyGroup + gWebApiUrlPrefixKey,
+                    gWebApiUrlPrefixKey,
                     authenticationInfo->webApiUrlPrefix());
 
                 const auto userStoreCookies =
@@ -365,7 +523,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                     }
 
                     settings.setValue(
-                        keyGroup + gUserStoreCookieKey, cookie.toRawForm());
+                        gUserStoreCookieKey, cookie.toRawForm());
                     QNDEBUG(
                         "synchronization::AuthenticationInfoProvider",
                         "Persisted cookie " << cookie.name());

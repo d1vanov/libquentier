@@ -25,9 +25,17 @@
 #include <synchronization/Fwd.h>
 #include <synchronization/IAuthenticationInfoProvider.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QPromise>
+#else
+#include <quentier/threading/Qt5Promise.h>
+#endif
+
 #include <memory>
 
 namespace quentier::synchronization {
+
+struct AuthenticationInfo;
 
 class AuthenticationInfoProvider final :
     public IAuthenticationInfoProvider,
@@ -53,6 +61,13 @@ public:
             Mode mode = Mode::Cache) override;
 
 private:
+    void authenticateAccountWithoutCache(
+        Account account,
+        const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
+
+    [[nodiscard]] std::shared_ptr<AuthenticationInfo>
+        readAuthenticationInfoPart(const Account & account) const;
+
     [[nodiscard]] QFuture<Account> findAccountForUserId(
         qevercloud::UserID userId, QString shardId);
 
