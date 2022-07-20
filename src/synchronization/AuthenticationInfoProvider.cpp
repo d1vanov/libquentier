@@ -29,8 +29,8 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/IKeychainService.h>
 
-#include <synchronization/types/AuthenticationInfo.h>
 #include <synchronization/IUserInfoProvider.h>
+#include <synchronization/types/AuthenticationInfo.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -70,6 +70,34 @@ const QString gAuthenticationTimestampKey =
 
     Q_ASSERT(false); // Unreachable code
     return Account::EvernoteAccountType::Free;
+}
+
+[[nodiscard]] QString authTokenKeychainServiceName()
+{
+    static const QString appName = QCoreApplication::applicationName();
+    return QString::fromUtf8("%1_%2").arg(appName, gAuthTokenKeychainKeyPart);
+}
+
+[[nodiscard]] QString authTokenKeychainKeyName(
+    const QString & host, const QString & userId)
+{
+    static const QString appName = QCoreApplication::applicationName();
+    return QString::fromUtf8("%1_%2_%3_%4")
+        .arg(appName, gAuthTokenKeychainKeyPart, host, userId);
+}
+
+[[nodiscard]] QString shardIdKeychainServiceName()
+{
+    static const QString appName = QCoreApplication::applicationName();
+    return QString::fromUtf8("%1_%2").arg(appName, gShardIdKeychainKeyPart);
+}
+
+[[nodiscard]] QString shardIdKeychainKeyName(
+    const QString & host, const QString & userId)
+{
+    static const QString appName = QCoreApplication::applicationName();
+    return QString::fromUtf8("%1_%2_%3_%4")
+        .arg(appName, gShardIdKeychainKeyPart, host, userId);
 }
 
 } // namespace
@@ -219,7 +247,45 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         return future;
     }
 
-    // TODO: implement further
+    Q_ASSERT(authenticationInfo->userId() == account.id());
+    const auto userIdStr = QString::number(authenticationInfo->userId());
+
+    auto readAuthTokenFuture = m_keychainService->readPassword(
+        authTokenKeychainServiceName(),
+        authTokenKeychainKeyName(m_host, userIdStr));
+
+    auto readShardIdFuture = m_keychainService->readPassword(
+        shardIdKeychainServiceName(),
+        shardIdKeychainKeyName(m_host, userIdStr));
+
+    auto readAllFuture = threading::whenAll<QString>(
+        QList<QFuture<QString>>{} << readAuthTokenFuture << readShardIdFuture);
+
+    auto readAllThenFuture = threading::then(
+        std::move(readAllFuture),
+        [promise, authenticationInfo = std::move(authenticationInfo)](
+            QList<QString> tokenAndShardId) mutable {
+            Q_ASSERT(tokenAndShardId.size() == 2);
+            authenticationInfo->m_authToken = std::move(tokenAndShardId[0]);
+            authenticationInfo->m_shardId = std::move(tokenAndShardId[1]);
+            promise->addResult(std::move(authenticationInfo));
+            promise->finish();
+        });
+
+    threading::onFailed(
+        std::move(readAllThenFuture),
+        [promise, account = std::move(account),
+         selfWeak = weak_from_this()](const QException & e) mutable {
+            QNINFO(
+                "synchronization::AuthenticationInfoProvider",
+                "Could not read auth token or shard id from the keychain "
+                    << "for user with id " << account.id() << ": " << e.what());
+
+            if (const auto self = selfWeak.lock()) {
+                self->authenticateAccountWithoutCache(
+                    std::move(account), promise);
+            }
+        });
 
     return future;
 }
@@ -295,8 +361,7 @@ std::shared_ptr<AuthenticationInfo>
     AuthenticationInfoProvider::readAuthenticationInfoPart(
         const Account & account) const
 {
-    ApplicationSettings settings{
-        account, gSynchronizationPersistence};
+    ApplicationSettings settings{account, gSynchronizationPersistence};
 
     const QString keyGroup = QString::fromUtf8("Authentication/%1/%2/")
                                  .arg(m_host, QString::number(account.id()));
@@ -304,6 +369,8 @@ std::shared_ptr<AuthenticationInfo>
     settings.beginGroup(keyGroup);
     ApplicationSettings::GroupCloser groupCloser{settings};
 
+    // NOTE: user store cookies are optional, so not considering them a hard
+    // requirement
     if (!settings.contains(gAuthenticationTimestampKey) ||
         !settings.contains(gExpirationTimestampKey) ||
         !settings.contains(gNoteStoreUrlKey) ||
@@ -316,12 +383,10 @@ std::shared_ptr<AuthenticationInfo>
 
     const QVariant authenticationTimestamp =
         settings.value(gAuthenticationTimestampKey);
-
-    QDateTime authenticationDateTime;
-    if (!authenticationTimestamp.isNull()) {
+    {
         bool conversionResult = false;
 
-        const qint64 authenticationTimestampInt =
+        authenticationInfo->m_authenticationTime =
             authenticationTimestamp.toLongLong(&conversionResult);
 
         if (!conversionResult) {
@@ -331,40 +396,14 @@ std::shared_ptr<AuthenticationInfo>
                     << authenticationTimestamp);
             return nullptr;
         }
-
-        authenticationDateTime =
-            QDateTime::fromMSecsSinceEpoch(authenticationTimestampInt);
     }
-
-    if (!authenticationDateTime.isValid()) {
-        QNDEBUG(
-            "synchronization::AuthenticationInfoProvider",
-            "Authentication timestamp is not valid: "
-                << authenticationTimestamp);
-        return nullptr;
-    }
-
-    if (authenticationDateTime <
-        QDateTime(QDate(2020, 4, 22), QTime(0, 0), QTimeZone::utc()))
-    {
-        QNINFO(
-            "synchronization::AuthenticationInfoProvider",
-            "Last authentication was performed before Evernote introduced a "
-                << "bug which requires to set a particular cookie into API "
-                << "calls which was received during OAuth. Forcing new OAuth");
-        return nullptr;
-    }
-
-    authenticationInfo->m_authenticationTime =
-        authenticationDateTime.toMSecsSinceEpoch();
 
     const QVariant tokenExpirationValue =
         settings.value(gExpirationTimestampKey);
-
-    if (!tokenExpirationValue.isNull()) {
+    {
         bool conversionResult = false;
 
-        const qevercloud::Timestamp tokenExpirationTimestamp =
+        authenticationInfo->m_authTokenExpirationTime =
             tokenExpirationValue.toLongLong(&conversionResult);
 
         if (!conversionResult) {
@@ -374,12 +413,34 @@ std::shared_ptr<AuthenticationInfo>
                     << "valid integer: " << tokenExpirationValue);
             return nullptr;
         }
-
-        authenticationInfo->m_authTokenExpirationTime =
-            tokenExpirationTimestamp;
     }
 
-    // TODO: continue from here
+    const QVariant noteStoreUrlValue = settings.value(gNoteStoreUrlKey);
+    authenticationInfo->m_noteStoreUrl = noteStoreUrlValue.toString();
+    if (authenticationInfo->m_noteStoreUrl.isEmpty()) {
+        QNWARNING(
+            "synchronization::AuthenticationInfoProvider",
+            "Stored note store url is not a string or empty string: "
+                << noteStoreUrlValue);
+        return nullptr;
+    }
+
+    const QVariant webApiUrlPrefixValue = settings.value(gWebApiUrlPrefixKey);
+    authenticationInfo->m_webApiUrlPrefix = webApiUrlPrefixValue.toString();
+    if (authenticationInfo->m_webApiUrlPrefix.isEmpty()) {
+        QNWARNING(
+            "synchronization::AuthenticationInfoProvider",
+            "Stored web api url prefix is not a string or empty string: "
+                << webApiUrlPrefixValue);
+        return nullptr;
+    }
+
+    const QByteArray userStoreCookies =
+        settings.value(gUserStoreCookieKey).toByteArray();
+
+    authenticationInfo->m_userStoreCookies =
+        QNetworkCookie::parseCookies(userStoreCookies);
+
     return authenticationInfo;
 }
 
@@ -446,29 +507,16 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
 
     promise->start();
 
-    const auto appName = QCoreApplication::applicationName();
+    Q_ASSERT(authenticationInfo->userId() == account.id());
     const auto userIdStr = QString::number(authenticationInfo->userId());
 
-    QString writeAuthTokenService =
-        QString::fromUtf8("%1_%2").arg(appName, gAuthTokenKeychainKeyPart);
-
-    QString writeAuthTokenKey =
-        QString::fromUtf8("%1_%2_%3_%4")
-            .arg(appName, gAuthTokenKeychainKeyPart, m_host, userIdStr);
-
     auto writeAuthTokenFuture = m_keychainService->writePassword(
-        std::move(writeAuthTokenService), std::move(writeAuthTokenKey),
+        authTokenKeychainServiceName(),
+        authTokenKeychainKeyName(m_host, userIdStr),
         authenticationInfo->authToken());
 
-    QString writeShardIdService =
-        QString::fromUtf8("%1_%2").arg(appName, gShardIdKeychainKeyPart);
-
-    QString writeShardIdKey =
-        QString::fromUtf8("%1_%2_%3_%4")
-            .arg(appName, gShardIdKeychainKeyPart, m_host, userIdStr);
-
     auto writeShardIdFuture = m_keychainService->writePassword(
-        std::move(writeShardIdService), std::move(writeShardIdKey),
+        shardIdKeychainServiceName(), shardIdKeychainKeyName(m_host, userIdStr),
         authenticationInfo->shardId());
 
     auto writeAuthTokenAndShardIdFuture = threading::whenAll(
@@ -492,8 +540,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                 ApplicationSettings::GroupCloser groupCloser{settings};
 
                 settings.setValue(
-                    gNoteStoreUrlKey,
-                    authenticationInfo->noteStoreUrl());
+                    gNoteStoreUrlKey, authenticationInfo->noteStoreUrl());
 
                 settings.setValue(
                     gExpirationTimestampKey,
@@ -504,8 +551,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                     authenticationInfo->authenticationTime());
 
                 settings.setValue(
-                    gWebApiUrlPrefixKey,
-                    authenticationInfo->webApiUrlPrefix());
+                    gWebApiUrlPrefixKey, authenticationInfo->webApiUrlPrefix());
 
                 const auto userStoreCookies =
                     authenticationInfo->userStoreCookies();
@@ -522,8 +568,7 @@ QFuture<void> AuthenticationInfoProvider::storeAuthenticationInfo(
                         continue;
                     }
 
-                    settings.setValue(
-                        gUserStoreCookieKey, cookie.toRawForm());
+                    settings.setValue(gUserStoreCookieKey, cookie.toRawForm());
                     QNDEBUG(
                         "synchronization::AuthenticationInfoProvider",
                         "Persisted cookie " << cookie.name());
