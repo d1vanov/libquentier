@@ -31,6 +31,11 @@
 #include <quentier/threading/Qt5Promise.h>
 #endif
 
+#include <qevercloud/Fwd.h>
+#include <qevercloud/types/TypeAliases.h>
+
+#include <QHash>
+
 #include <memory>
 
 namespace quentier::synchronization {
@@ -44,7 +49,9 @@ class AuthenticationInfoProvider final :
 public:
     AuthenticationInfoProvider(
         IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
-        IUserInfoProviderPtr userInfoProvider, QString host);
+        IUserInfoProviderPtr userInfoProvider,
+        INoteStoreFactoryPtr noteStoreFactory,
+        qevercloud::IRequestContextPtr ctx, QString host);
 
 public:
     // IAuthenticationInfoProvider
@@ -63,6 +70,11 @@ public:
 private:
     void authenticateAccountWithoutCache(
         Account account,
+        const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
+
+    void authenticateToLinkedNotebookWithoutCache(
+        Account account, qevercloud::Guid linkedNotebookGuid,
+        QString sharedNotebookGlobalId, QString noteStoreUrl,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     /**
@@ -85,7 +97,14 @@ private:
     const IAuthenticatorPtr m_authenticator;
     const IKeychainServicePtr m_keychainService;
     const IUserInfoProviderPtr m_userInfoProvider;
+    const INoteStoreFactoryPtr m_noteStoreFactory;
+    const qevercloud::IRequestContextPtr m_ctx;
     const QString m_host;
+
+    QHash<qevercloud::UserID, IAuthenticationInfoPtr> m_authenticationInfos;
+
+    QHash<qevercloud::Guid, IAuthenticationInfoPtr>
+        m_linkedNotebookAuthenticationInfos;
 };
 
 } // namespace quentier::synchronization

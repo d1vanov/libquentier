@@ -13,6 +13,7 @@ target_sources(${LIBRARY_NAME}
   Fwd.h
   IAuthenticationInfoProvider.h
   IDownloader.h
+  INoteStoreFactory.h
   IReceiver.h
   IUserInfoProvider.h
   SynchronizationMode.h

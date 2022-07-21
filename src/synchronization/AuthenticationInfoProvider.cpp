@@ -29,8 +29,12 @@
 #include <quentier/utility/DateTime.h>
 #include <quentier/utility/IKeychainService.h>
 
+#include <synchronization/INoteStoreFactory.h>
 #include <synchronization/IUserInfoProvider.h>
 #include <synchronization/types/AuthenticationInfo.h>
+
+#include <qevercloud/RequestContext.h>
+#include <qevercloud/services/INoteStore.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -104,10 +108,14 @@ const QString gAuthenticationTimestampKey =
 
 AuthenticationInfoProvider::AuthenticationInfoProvider(
     IAuthenticatorPtr authenticator, IKeychainServicePtr keychainService,
-    IUserInfoProviderPtr userInfoProvider, QString host) :
+    IUserInfoProviderPtr userInfoProvider,
+    INoteStoreFactoryPtr noteStoreFactory,
+    qevercloud::IRequestContextPtr ctx, QString host) :
     m_authenticator{std::move(authenticator)},
     m_keychainService{std::move(keychainService)},
-    m_userInfoProvider{std::move(userInfoProvider)}, m_host{std::move(host)}
+    m_userInfoProvider{std::move(userInfoProvider)},
+    m_noteStoreFactory{std::move(noteStoreFactory)}, m_ctx{std::move(ctx)},
+    m_host{std::move(host)}
 {
     if (Q_UNLIKELY(!m_authenticator)) {
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
@@ -125,6 +133,18 @@ AuthenticationInfoProvider::AuthenticationInfoProvider(
         throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
             "synchronization::AuthenticationInfoProvider",
             "AuthenticationInfoProvider ctor: user info provider is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_noteStoreFactory)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::AuthenticationInfoProvider",
+            "AuthenticationInfoProvider ctor: note store factory is null")}};
+    }
+
+    if (Q_UNLIKELY(!m_ctx)) {
+        throw InvalidArgument{ErrorString{QT_TRANSLATE_NOOP(
+            "synchronization::AuthenticationInfoProvider",
+            "AuthenticationInfoProvider ctor: request context is null")}};
     }
 
     if (Q_UNLIKELY(m_host.isEmpty())) {
@@ -153,6 +173,9 @@ QFuture<IAuthenticationInfoPtr>
             [this, promise,
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
+
+                m_authenticationInfos[authenticationInfo->userId()] =
+                    authenticationInfo;
 
                 auto accountFuture = findAccountForUserId(
                     authenticationInfo->userId(),
@@ -241,6 +264,13 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         return future;
     }
 
+    if (const auto it = m_authenticationInfos.find(account.id());
+        it != m_authenticationInfos.end())
+    {
+        return threading::makeReadyFuture<IAuthenticationInfoPtr>(
+            IAuthenticationInfoPtr{it.value()});
+    }
+
     auto authenticationInfo = readAuthenticationInfoPart(account);
     if (!authenticationInfo) {
         authenticateAccountWithoutCache(std::move(account), promise);
@@ -261,21 +291,29 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
     auto readAllFuture = threading::whenAll<QString>(
         QList<QFuture<QString>>{} << readAuthTokenFuture << readShardIdFuture);
 
+    const auto selfWeak = weak_from_this();
+
     auto readAllThenFuture = threading::then(
         std::move(readAllFuture),
-        [promise, authenticationInfo = std::move(authenticationInfo)](
+        [promise, selfWeak, authenticationInfo = std::move(authenticationInfo)](
             QList<QString> tokenAndShardId) mutable {
             Q_ASSERT(tokenAndShardId.size() == 2);
             authenticationInfo->m_authToken = std::move(tokenAndShardId[0]);
             authenticationInfo->m_shardId = std::move(tokenAndShardId[1]);
+
+            if (const auto self = selfWeak.lock()) {
+                self->m_authenticationInfos[authenticationInfo->userId()] =
+                    authenticationInfo;
+            }
+
             promise->addResult(std::move(authenticationInfo));
             promise->finish();
         });
 
     threading::onFailed(
         std::move(readAllThenFuture),
-        [promise, account = std::move(account),
-         selfWeak = weak_from_this()](const QException & e) mutable {
+        [promise, selfWeak, account = std::move(account)](
+            const QException & e) mutable {
             QNINFO(
                 "synchronization::AuthenticationInfoProvider",
                 "Could not read auth token or shard id from the keychain "
@@ -296,17 +334,52 @@ QFuture<IAuthenticationInfoPtr>
         QString sharedNotebookGlobalId, QString noteStoreUrl,
         Mode mode) // NOLINT
 {
-    // TODO: implement
-    Q_UNUSED(account)
-    Q_UNUSED(linkedNotebookGuid)
-    Q_UNUSED(sharedNotebookGlobalId)
-    Q_UNUSED(noteStoreUrl)
-    Q_UNUSED(mode)
-    return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
-        RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
-            "synchronization::AuthenticationInfoProvider",
-            "AuthenticationInfoProvider::authenticateToLinkedNotebook: "
-            "not implemented")}});
+    if (Q_UNLIKELY(account.type() != Account::Type::Evernote)) {
+        return threading::makeExceptionalFuture<IAuthenticationInfoPtr>(
+            RuntimeError{ErrorString{QT_TRANSLATE_NOOP(
+                "synchronization::AuthenticationInfoProvider",
+                "Detected attempt to authenticate to linked notebook for "
+                "non-Evernote account")}});
+    }
+
+    auto promise = std::make_shared<QPromise<IAuthenticationInfoPtr>>();
+    auto future = promise->future();
+
+    promise->start();
+
+    if (mode == Mode::NoCache) {
+        authenticateToLinkedNotebookWithoutCache(
+            std::move(account), std::move(linkedNotebookGuid),
+            std::move(sharedNotebookGlobalId),
+            std::move(noteStoreUrl), promise);
+        return future;
+    }
+
+    if (const auto it =
+            m_linkedNotebookAuthenticationInfos.find(linkedNotebookGuid);
+        it != m_linkedNotebookAuthenticationInfos.end())
+    {
+        const auto & authenticationInfo = it.value();
+        Q_ASSERT(authenticationInfo);
+
+        if (authenticationInfo->noteStoreUrl() == noteStoreUrl &&
+            authenticationInfo->userId() == account.id())
+        {
+            promise->addResult(authenticationInfo);
+            promise->finish();
+            return future;
+        }
+    }
+
+    // TODO: implement: try to read linked notebook auth token and shard id
+    // from the keychain
+
+    authenticateToLinkedNotebookWithoutCache(
+        std::move(account), std::move(linkedNotebookGuid),
+        std::move(sharedNotebookGlobalId),
+        std::move(noteStoreUrl), promise);
+
+    return future;
 }
 
 void AuthenticationInfoProvider::authenticateAccountWithoutCache(
@@ -355,6 +428,19 @@ void AuthenticationInfoProvider::authenticateAccountWithoutCache(
                         promise->finish();
                     });
             }});
+}
+
+void AuthenticationInfoProvider::authenticateToLinkedNotebookWithoutCache(
+    Account account, qevercloud::Guid linkedNotebookGuid, // NOLINT
+    QString sharedNotebookGlobalId, QString noteStoreUrl, // NOLINT
+    const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise)
+{
+    Q_UNUSED(account)
+    Q_UNUSED(linkedNotebookGuid)
+    Q_UNUSED(sharedNotebookGlobalId)
+    Q_UNUSED(noteStoreUrl)
+    Q_UNUSED(promise)
+    // TODO: implement
 }
 
 std::shared_ptr<AuthenticationInfo>

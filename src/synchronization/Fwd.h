@@ -31,6 +31,9 @@ using IAuthenticationInfoProviderPtr =
 class INoteFullDataDownloader;
 using INoteFullDataDownloaderPtr = std::shared_ptr<INoteFullDataDownloader>;
 
+class INoteStoreFactory;
+using INoteStoreFactoryPtr = std::shared_ptr<INoteStoreFactory>;
+
 class IResourceFullDataDownloader;
 using IResourceFullDataDownloaderPtr = std::shared_ptr<IResourceFullDataDownloader>;
 
