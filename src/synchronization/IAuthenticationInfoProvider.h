@@ -21,7 +21,7 @@
 #include <quentier/synchronization/types/Fwd.h>
 #include <quentier/types/Account.h>
 
-#include <qevercloud/types/TypeAliases.h>
+#include <qevercloud/types/LinkedNotebook.h>
 
 #include <QFuture>
 
@@ -93,14 +93,8 @@ public:
      *
      * @param account                   Account for which linked notebook the
      *                                  authentication info is requested.
-     * @param linkedNotebookGuid        Guid of the linked notebook for which
+     * @param linkedNotebook            Linked notebook for which
      *                                  authentication info is required.
-     * @param sharedNotebookGlobalId    Global id of the shared notebook
-     *                                  corresponding to the linked notebook.
-     * @param noteStoreUrl              URL of the note store corresponding
-     *                                  to the linked notebook.
-     * @param uri                       URI corresponding to the linked
-     *                                  notebook.
      * @param mode                      Mode determining the source of
      *                                  authentication info.
      * @return                          QFuture with authentication info for the
@@ -109,9 +103,8 @@ public:
      */
     [[nodiscard]] virtual QFuture<IAuthenticationInfoPtr>
         authenticateToLinkedNotebook(
-            Account account, qevercloud::Guid linkedNotebookGuid,
-            QString sharedNotebookGlobalId, QString noteStoreUrl,
-            QString uri, Mode mode = Mode::Cache) = 0;
+            Account account, qevercloud::LinkedNotebook linkedNotebook,
+            Mode mode = Mode::Cache) = 0;
 };
 
 } // namespace quentier::synchronization

@@ -64,9 +64,8 @@ public:
 
     [[nodiscard]] QFuture<IAuthenticationInfoPtr>
         authenticateToLinkedNotebook(
-            Account account, qevercloud::Guid linkedNotebookGuid,
-            QString sharedNotebookGlobalId, QString noteStoreUrl,
-            QString uri, Mode mode = Mode::Cache) override;
+            Account account, qevercloud::LinkedNotebook linkedNotebook,
+            Mode mode = Mode::Cache) override;
 
 private:
     void authenticateAccountWithoutCache(
@@ -74,8 +73,7 @@ private:
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     void authenticateToLinkedNotebookWithoutCache(
-        Account account, qevercloud::Guid linkedNotebookGuid,
-        QString sharedNotebookGlobalId, QString noteStoreUrl, QString uri,
+        Account account, qevercloud::LinkedNotebook linkedNotebook,
         const std::shared_ptr<QPromise<IAuthenticationInfoPtr>> & promise);
 
     /**
