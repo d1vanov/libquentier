@@ -38,7 +38,9 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QReadLocker>
 #include <QTimeZone>
+#include <QWriteLocker>
 
 namespace quentier::synchronization {
 
@@ -174,8 +176,11 @@ QFuture<IAuthenticationInfoPtr>
              selfWeak](IAuthenticationInfoPtr authenticationInfo) mutable {
                 Q_ASSERT(authenticationInfo);
 
-                m_authenticationInfos[authenticationInfo->userId()] =
-                    authenticationInfo;
+                {
+                    const QWriteLocker locker{&m_authenticationInfosRWLock};
+                    m_authenticationInfos[authenticationInfo->userId()] =
+                        authenticationInfo;
+                }
 
                 auto accountFuture = findAccountForUserId(
                     authenticationInfo->userId(),
@@ -264,11 +269,14 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
         return future;
     }
 
-    if (const auto it = m_authenticationInfos.find(account.id());
-        it != m_authenticationInfos.end())
     {
-        return threading::makeReadyFuture<IAuthenticationInfoPtr>(
-            IAuthenticationInfoPtr{it.value()});
+        const QReadLocker locker{&m_authenticationInfosRWLock};
+        if (const auto it = m_authenticationInfos.find(account.id());
+            it != m_authenticationInfos.end())
+        {
+            return threading::makeReadyFuture<IAuthenticationInfoPtr>(
+                IAuthenticationInfoPtr{it.value()});
+        }
     }
 
     auto authenticationInfo = readAuthenticationInfoPart(account);
@@ -302,6 +310,7 @@ QFuture<IAuthenticationInfoPtr> AuthenticationInfoProvider::authenticateAccount(
             authenticationInfo->m_shardId = std::move(tokenAndShardId[1]);
 
             if (const auto self = selfWeak.lock()) {
+                const QWriteLocker locker{&self->m_authenticationInfosRWLock};
                 self->m_authenticationInfos[authenticationInfo->userId()] =
                     authenticationInfo;
             }
@@ -355,19 +364,24 @@ QFuture<IAuthenticationInfoPtr>
         return future;
     }
 
-    if (const auto it =
-            m_linkedNotebookAuthenticationInfos.find(linkedNotebookGuid);
-        it != m_linkedNotebookAuthenticationInfos.end())
     {
-        const auto & authenticationInfo = it.value();
-        Q_ASSERT(authenticationInfo);
-
-        if (authenticationInfo->noteStoreUrl() == noteStoreUrl &&
-            authenticationInfo->userId() == account.id())
+        QReadLocker locker{&m_linkedNotebookAuthenticationInfosRWLock};
+        if (const auto it =
+                m_linkedNotebookAuthenticationInfos.find(linkedNotebookGuid);
+            it != m_linkedNotebookAuthenticationInfos.end())
         {
-            promise->addResult(authenticationInfo);
-            promise->finish();
-            return future;
+            const auto authenticationInfo = it.value();
+
+            locker.unlock();
+            Q_ASSERT(authenticationInfo);
+
+            if (authenticationInfo->noteStoreUrl() == noteStoreUrl &&
+                authenticationInfo->userId() == account.id())
+            {
+                promise->addResult(authenticationInfo);
+                promise->finish();
+                return future;
+            }
         }
     }
 

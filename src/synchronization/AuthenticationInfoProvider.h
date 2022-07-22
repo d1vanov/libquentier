@@ -35,6 +35,7 @@
 #include <qevercloud/types/TypeAliases.h>
 
 #include <QHash>
+#include <QReadWriteLock>
 
 #include <memory>
 
@@ -101,8 +102,10 @@ private:
     const qevercloud::IRequestContextPtr m_ctx;
     const QString m_host;
 
+    QReadWriteLock m_authenticationInfosRWLock;
     QHash<qevercloud::UserID, IAuthenticationInfoPtr> m_authenticationInfos;
 
+    QReadWriteLock m_linkedNotebookAuthenticationInfosRWLock;
     QHash<qevercloud::Guid, IAuthenticationInfoPtr>
         m_linkedNotebookAuthenticationInfos;
 };
